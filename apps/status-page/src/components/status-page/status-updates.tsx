@@ -1,6 +1,9 @@
 "use client";
 
-import { FormSubscribeEmail } from "@/components/forms/form-subscribe-email";
+import {
+  FormSubscribeEmail,
+  type FormValues,
+} from "@/components/forms/form-subscribe-email";
 import { getBaseUrl } from "@/lib/base-url";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -42,7 +45,7 @@ function getUpdateLink(type: "rss" | "json" | "atom", page?: Page | null) {
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   types?: StatusUpdateType[];
   page?: Page | null;
-  onSubscribe?: (value: string) => Promise<void> | void;
+  onSubscribe?: (values: FormValues) => Promise<void> | void;
 }
 
 export function StatusUpdates({
@@ -92,19 +95,21 @@ export function StatusUpdates({
               <SuccessMessage />
             ) : (
               <>
-                <div className="flex flex-col gap-2 border-b px-2 pb-2">
-                  <p className="text-sm">
+                <div className="flex flex-col gap-2">
+                  <p className="px-2 text-sm">
                     Get email notifications whenever a report has been created
                     or resolved
                   </p>
                   <FormSubscribeEmail
                     id="email-form"
+                    page={page}
                     onSubmit={async (values) => {
-                      await onSubscribe?.(values.email);
+                      await onSubscribe?.(values);
                       setSuccess(true);
                     }}
                   />
                 </div>
+                <Separator />
                 <div className="px-2 pb-2">
                   <Button className="w-full" type="submit" form="email-form">
                     Subscribe

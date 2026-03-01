@@ -45,6 +45,7 @@ builders:
       - packages/upstash/package.json
       - packages/utils/package.json
       - packages/tsconfig/package.json
+      - packages/subscriptions/package.json
       - packages/assertions/package.json
       - packages/theme-store/package.json
     run: bun install --production --frozen-lockfile --verbose

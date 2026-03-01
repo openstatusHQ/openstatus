@@ -1,7 +1,19 @@
-import { expect, test } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
 
 import { app } from "@/index";
 import { StatusReportUpdateSchema } from "./schema";
+
+// biome-ignore lint/suspicious/noExplicitAny: test utility
+const spies = (globalThis as any).__subscriptionSpies as {
+  dispatchStatusReportUpdate: {
+    mockClear: () => void;
+    mock: { calls: number[][] };
+  };
+};
+
+beforeEach(() => {
+  spies.dispatchStatusReportUpdate.mockClear();
+});
 
 test("create a valid status report update", async () => {
   const res = await app.request("/v1/status_report_update", {
@@ -264,4 +276,44 @@ test("create status report update with empty message should return 400", async (
   });
 
   expect(res.status).toBe(400);
+});
+
+test("create status report update with non-existent statusReportId should return 404", async () => {
+  const res = await app.request("/v1/status_report_update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      date: new Date().toISOString(),
+      message: "Update for non-existent report",
+      statusReportId: 9999,
+    }),
+  });
+
+  expect(res.status).toBe(404);
+});
+
+test("create a status report update calls dispatchStatusReportUpdate", async () => {
+  const res = await app.request("/v1/status_report_update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      date: new Date().toISOString(),
+      message: "Testing dispatcher integration",
+      statusReportId: 1,
+    }),
+  });
+
+  expect(res.status).toBe(200);
+  const result = StatusReportUpdateSchema.safeParse(await res.json());
+  expect(result.success).toBe(true);
+  expect(spies.dispatchStatusReportUpdate.mock.calls.length).toBe(1);
+  expect(spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBeNumber();
 });

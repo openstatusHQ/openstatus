@@ -393,6 +393,13 @@
       "when": 1769675142003,
       "tag": "0055_spicy_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1772280814493,
+      "tag": "0056_violet_shotgun",
+      "breakpoints": true
     }
   ]
 }

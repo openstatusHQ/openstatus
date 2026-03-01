@@ -85,7 +85,6 @@ export function Header(props: React.ComponentProps<"header">) {
   const subscribeMutation = useMutation(
     trpc.statusPage.subscribe.mutationOptions({
       onSuccess: (id) => {
-        console.log("subscribeMutation onSuccess", id);
         if (!id) return;
         sendPageSubscriptionMutation.mutate(
           { id },
@@ -148,8 +147,8 @@ export function Header(props: React.ComponentProps<"header">) {
           ) : null}
           <StatusUpdates
             types={getStatusUpdateTypes(page)}
-            onSubscribe={async (email) => {
-              await subscribeMutation.mutateAsync({ slug: domain, email });
+            onSubscribe={async (values) => {
+              await subscribeMutation.mutateAsync({ slug: domain, ...values });
             }}
             page={page}
           />

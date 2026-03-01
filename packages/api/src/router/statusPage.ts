@@ -6,7 +6,6 @@ import {
   page,
   pageComponent,
   pageConfigurationSchema,
-  pageSubscriber,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPublicMonitorSchema,
@@ -16,6 +15,14 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
+import {
+  getSubscriptionByToken,
+  hasPendingUnexpiredSubscription,
+  unsubscribe,
+  updateSubscriptionScope,
+  upsertEmailSubscription,
+  verifySubscription,
+} from "@openstatus/subscriptions";
 
 import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
@@ -1004,7 +1011,14 @@ export const statusPageRouter = createTRPCRouter({
 
   subscribe: publicProcedure
     .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
-    .input(z.object({ slug: z.string().toLowerCase(), email: z.email() }))
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        email: z.email(),
+        subscribeComponents: z.boolean(),
+        pageComponents: z.array(z.number().int().positive()),
+      }),
+    )
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -1012,6 +1026,7 @@ export const statusPageRouter = createTRPCRouter({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           workspace: true,
+          pageComponents: true,
         },
       });
 
@@ -1020,6 +1035,18 @@ export const statusPageRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Page not found",
         });
+      }
+
+      if (opts.input.pageComponents.length > 0) {
+        const validComponents = _page.pageComponents.filter((c) =>
+          opts.input.pageComponents.includes(c.id),
+        );
+        if (validComponents.length !== opts.input.pageComponents.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid page component IDs",
+          });
+        }
       }
 
       const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
@@ -1038,71 +1065,86 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      // Check for existing subscriber (active or unsubscribed)
-      const _existingSubscriber =
-        await opts.ctx.db.query.pageSubscriber.findFirst({
-          where: and(
-            eq(pageSubscriber.pageId, _page.id),
-            eq(pageSubscriber.email, opts.input.email),
-          ),
+      // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
+      const isPending = await hasPendingUnexpiredSubscription(
+        opts.input.email,
+        _page.id,
+      );
+      if (isPending) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "A confirmation link was already sent. Please check your email or wait until it expires to request a new one.",
         });
+      }
 
-      // If already subscribed and verified (not unsubscribed), reject
-      if (
-        _existingSubscriber?.acceptedAt &&
-        !_existingSubscriber.unsubscribedAt
-      ) {
+      const subscription = await upsertEmailSubscription({
+        email: opts.input.email,
+        pageId: _page.id,
+        componentIds: opts.input.subscribeComponents
+          ? opts.input.pageComponents
+          : [],
+      });
+
+      // Already verified — no need to send another verification email
+      if (subscription.acceptedAt) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Email already subscribed",
         });
       }
 
-      // Handle re-subscription: clear unsubscribedAt, regenerate token, reset acceptedAt
-      if (_existingSubscriber?.unsubscribedAt) {
-        const updatedSubscriber = await opts.ctx.db
-          .update(pageSubscriber)
-          .set({
-            unsubscribedAt: null,
-            acceptedAt: null,
-            token: crypto.randomUUID(),
-            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-          })
-          .where(eq(pageSubscriber.id, _existingSubscriber.id))
-          .returning()
-          .get();
+      return subscription.id;
+    }),
 
-        return updatedSubscriber.id;
+  getSubscriptionByToken: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase(), token: z.uuid() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const subscription = await getSubscriptionByToken(
+        opts.input.token,
+        opts.input.slug,
+      );
+
+      if (!subscription) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscription not found",
+        });
       }
 
-      // Handle pending re-subscription (not yet verified): regenerate token
-      if (_existingSubscriber && !_existingSubscriber.acceptedAt) {
-        const updatedSubscriber = await opts.ctx.db
-          .update(pageSubscriber)
-          .set({
-            token: crypto.randomUUID(),
-            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-          })
-          .where(eq(pageSubscriber.id, _existingSubscriber.id))
-          .returning()
-          .get();
+      return subscription;
+    }),
 
-        return updatedSubscriber.id;
+  updateSubscription: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        token: z.uuid(),
+        subscribeComponents: z.boolean(),
+        pageComponents: z.array(z.number().int().positive()),
+      }),
+    )
+    .mutation(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      try {
+        await updateSubscriptionScope({
+          token: opts.input.token,
+          componentIds: opts.input.subscribeComponents
+            ? opts.input.pageComponents
+            : [],
+          domain: opts.input.slug,
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+        }
+        throw error;
       }
 
-      // New subscription
-      const _pageSubscriber = await opts.ctx.db
-        .insert(pageSubscriber)
-        .values({
-          pageId: _page.id,
-          email: opts.input.email,
-          token: crypto.randomUUID(),
-          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-        })
-        .returning()
-        .get();
-
-      return _pageSubscriber.id;
+      return { success: true };
     }),
 
   validateEmailDomain: publicProcedure
@@ -1148,46 +1190,31 @@ export const statusPageRouter = createTRPCRouter({
 
   verifyEmail: publicProcedure
     .meta({ track: Events.VerifySubscribePage, trackProps: ["slug"] })
-    .input(z.object({ slug: z.string().toLowerCase(), token: z.string() }))
+    .input(z.object({ slug: z.string().toLowerCase(), token: z.uuid() }))
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-      });
+      try {
+        const subscription = await verifySubscription(
+          opts.input.token,
+          opts.input.slug,
+        );
 
-      if (!_page) return null;
+        if (!subscription) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Subscription not found",
+          });
+        }
 
-      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.token, opts.input.token),
-          eq(pageSubscriber.pageId, _page.id),
-        ),
-      });
-
-      if (_pageSubscriber?.acceptedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Email already verified",
-        });
+        return subscription;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        if (error instanceof Error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+        }
+        throw error;
       }
-
-      if (!_pageSubscriber) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Subscription not found",
-        });
-      }
-
-      await opts.ctx.db
-        .update(pageSubscriber)
-        .set({
-          acceptedAt: new Date(),
-        })
-        .where(eq(pageSubscriber.id, _pageSubscriber.id))
-        .execute();
-
-      return _pageSubscriber;
     }),
 
   verifyPassword: publicProcedure
@@ -1224,94 +1251,34 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   getSubscriberByToken: publicProcedure
-    .input(
-      z.object({ token: z.string().uuid(), domain: z.string().toLowerCase() }),
-    )
+    .input(z.object({ token: z.uuid(), domain: z.string().toLowerCase() }))
     .query(async (opts) => {
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.domain} OR  lower(${page.customDomain}) = ${opts.input.domain}`,
-      });
+      const subscription = await getSubscriptionByToken(
+        opts.input.token,
+        opts.input.domain,
+      );
 
-      if (!_page) return null;
-
-      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.token, opts.input.token),
-          eq(pageSubscriber.pageId, _page.id),
-        ),
-      });
-
-      // Return null if not found or already unsubscribed
-      if (!_pageSubscriber) {
+      if (!subscription || subscription.unsubscribedAt) {
         return null;
       }
-
-      if (_pageSubscriber.unsubscribedAt) {
-        return null;
-      }
-
-      // Mask email: show first character, then ***, then @domain
-      const email = _pageSubscriber.email;
-      const [localPart, domain] = email.split("@");
-      const maskedEmail =
-        localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
       return {
-        pageName: _page.title,
-        maskedEmail,
+        pageName: subscription.pageName,
+        maskedEmail: subscription.email,
       };
     }),
 
   unsubscribe: publicProcedure
-    .input(
-      z.object({ token: z.string().uuid(), domain: z.string().toLowerCase() }),
-    )
+    .input(z.object({ token: z.uuid(), domain: z.string().toLowerCase() }))
     .mutation(async (opts) => {
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.domain} OR  lower(${page.customDomain}) = ${opts.input.domain}`,
-      });
-
-      if (!_page) return null;
-
-      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.token, opts.input.token),
-          eq(pageSubscriber.pageId, _page.id),
-        ),
-      });
-
-      if (!_pageSubscriber) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Subscription not found",
-        });
+      try {
+        await unsubscribe(opts.input.token, opts.input.domain);
+        return { success: true };
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+        }
+        throw error;
       }
-
-      if (!_pageSubscriber.acceptedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Subscription not yet verified",
-        });
-      }
-
-      if (_pageSubscriber.unsubscribedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Already unsubscribed",
-        });
-      }
-
-      await opts.ctx.db
-        .update(pageSubscriber)
-        .set({
-          unsubscribedAt: new Date(),
-        })
-        .where(eq(pageSubscriber.id, _pageSubscriber.id))
-        .execute();
-
-      return {
-        success: true,
-        pageName: _page.title,
-      };
     }),
 });

@@ -1,5 +1,19 @@
 import { mock } from "bun:test";
 
+// Subscription dispatch spies — accessible in tests via globalThis.__subscriptionSpies
+const dispatchStatusReportUpdateSpy = mock((_id: number) => Promise.resolve());
+const dispatchMaintenanceUpdateSpy = mock((_id: number) => Promise.resolve());
+
+(globalThis as Record<string, unknown>).__subscriptionSpies = {
+  dispatchStatusReportUpdate: dispatchStatusReportUpdateSpy,
+  dispatchMaintenanceUpdate: dispatchMaintenanceUpdateSpy,
+};
+
+mock.module("@openstatus/subscriptions", () => ({
+  dispatchStatusReportUpdate: dispatchStatusReportUpdateSpy,
+  dispatchMaintenanceUpdate: dispatchMaintenanceUpdateSpy,
+}));
+
 const testRedisStore = new Map<string, string>();
 (globalThis as Record<string, unknown>).__testRedisStore = testRedisStore;
 

@@ -1,20 +1,12 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
-import {
-  page,
-  pageSubscriber,
-  statusReport,
-  statusReportUpdate,
-} from "@openstatus/db/src/schema";
+import { and, db, eq } from "@openstatus/db";
+import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
-import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { EmailClient } from "@openstatus/emails";
+import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 import type { statusReportUpdatesApi } from "./index";
 import { StatusReportUpdateSchema } from "./schema";
-
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 const createStatusUpdate = createRoute({
   method: "post",
@@ -73,65 +65,30 @@ export function registerPostStatusReportUpdate(
       });
     }
 
-    const _statusReportUpdate = await db
-      .insert(statusReportUpdate)
-      .values({
-        ...input,
-        date: new Date(input.date),
-        statusReportId: _statusReport.id,
-      })
-      .returning()
-      .get();
+    const _statusReportUpdate = await db.transaction(async (tx) => {
+      const update = await tx
+        .insert(statusReportUpdate)
+        .values({
+          ...input,
+          date: new Date(input.date),
+          statusReportId: _statusReport.id,
+        })
+        .returning()
+        .get();
 
-    await db
-      .update(statusReport)
-      .set({
-        status: input.status,
-        updatedAt: new Date(),
-      })
-      .where(eq(statusReport.id, _statusReport.id));
+      await tx
+        .update(statusReport)
+        .set({
+          status: input.status,
+          updatedAt: new Date(),
+        })
+        .where(eq(statusReport.id, _statusReport.id));
+
+      return update;
+    });
 
     if (limits["status-subscribers"] && _statusReport.pageId) {
-      const subscribers = await db
-        .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt),
-            isNull(pageSubscriber.unsubscribedAt),
-          ),
-        )
-        .all();
-
-      const _page = await db.query.page.findFirst({
-        where: eq(page.id, _statusReport.pageId),
-      });
-
-      const validSubscribers = subscribers.filter(
-        (s): s is typeof s & { token: string } =>
-          s.token !== null &&
-          s.acceptedAt !== null &&
-          s.unsubscribedAt === null,
-      );
-      if (_page && validSubscribers.length > 0) {
-        await emailClient.sendStatusReportUpdate({
-          subscribers: validSubscribers.map((subscriber) => ({
-            email: subscriber.email,
-            token: subscriber.token,
-          })),
-          pageTitle: _page.title,
-          pageSlug: _page.slug,
-          customDomain: _page.customDomain,
-          reportTitle: _statusReport.title,
-          status: _statusReportUpdate.status,
-          message: _statusReportUpdate.message,
-          date: _statusReportUpdate.date.toISOString(),
-          pageComponents: _statusReport.statusReportsToPageComponents.map(
-            (i) => i.pageComponent.name,
-          ),
-        });
-      }
+      await dispatchStatusReportUpdate(_statusReportUpdate.id);
     }
 
     const data = StatusReportUpdateSchema.parse(_statusReportUpdate);

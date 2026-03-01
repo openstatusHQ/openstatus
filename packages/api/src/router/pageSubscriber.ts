@@ -1,11 +1,216 @@
 import { and, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
+import {
+  getSubscriptionByToken,
+  unsubscribe,
+  updateSubscriptionScope,
+  upsertEmailSubscription,
+  verifySubscription,
+} from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const pageSubscriberRouter = createTRPCRouter({
+  /**
+   * PUBLIC: Subscribe to a status page (or update existing subscription)
+   */
+  upsert: publicProcedure
+    .input(
+      z.object({
+        email: z.email(),
+        pageId: z.number().int().positive(),
+        componentIds: z.array(z.number().int().positive()).optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      try {
+        const subscription = await upsertEmailSubscription({
+          email: opts.input.email,
+          pageId: opts.input.pageId,
+          componentIds: opts.input.componentIds,
+        });
+
+        return {
+          success: true,
+          subscription: {
+            id: subscription.id,
+            acceptedAt: subscription.acceptedAt,
+            componentIds: subscription.componentIds,
+          },
+        };
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to create subscription",
+        });
+      }
+    }),
+
+  /**
+   * PUBLIC: Verify email subscription by token
+   */
+  verify: publicProcedure
+    .input(
+      z.object({
+        token: z.string(),
+        domain: z.string().toLowerCase().optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      try {
+        const subscription = await verifySubscription(
+          opts.input.token,
+          opts.input.domain,
+        );
+
+        if (!subscription) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Subscription not found or token invalid",
+          });
+        }
+
+        return {
+          success: true,
+          subscription: {
+            id: subscription.id,
+            email: subscription.email,
+            pageSlug: subscription.pageSlug,
+            pageName: subscription.pageName,
+            componentIds: subscription.componentIds,
+          },
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to verify subscription",
+        });
+      }
+    }),
+
+  /**
+   * PUBLIC: Get subscription by token (for management UI)
+   */
+  getByToken: publicProcedure
+    .input(
+      z.object({
+        token: z.string(),
+        domain: z.string().toLowerCase().optional(),
+      }),
+    )
+    .query(async (opts) => {
+      const subscription = await getSubscriptionByToken(
+        opts.input.token,
+        opts.input.domain,
+      );
+
+      if (!subscription) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscription not found",
+        });
+      }
+
+      return {
+        id: subscription.id,
+        email: subscription.email,
+        pageName: subscription.pageName,
+        pageSlug: subscription.pageSlug,
+        customDomain: subscription.customDomain,
+        channelType: subscription.channelType,
+        componentIds: subscription.componentIds,
+        acceptedAt: subscription.acceptedAt,
+        unsubscribedAt: subscription.unsubscribedAt,
+      };
+    }),
+
+  /**
+   * PUBLIC: Update subscription scope (replace components)
+   */
+  updateScope: publicProcedure
+    .input(
+      z.object({
+        token: z.string(),
+        componentIds: z.array(z.number().int().positive()),
+        domain: z.string().toLowerCase().optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      try {
+        const subscription = await updateSubscriptionScope({
+          token: opts.input.token,
+          componentIds: opts.input.componentIds,
+          domain: opts.input.domain,
+        });
+
+        return {
+          success: true,
+          subscription: {
+            id: subscription.id,
+            componentIds: subscription.componentIds,
+          },
+        };
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to update subscription scope",
+        });
+      }
+    }),
+
+  /**
+   * PUBLIC: Unsubscribe by token
+   */
+  unsubscribe: publicProcedure
+    .input(
+      z.object({
+        token: z.string(),
+        domain: z.string().toLowerCase().optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      try {
+        await unsubscribe(opts.input.token, opts.input.domain);
+
+        return { success: true };
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to unsubscribe",
+        });
+      }
+    }),
+
+  /**
+   * PROTECTED: List all subscriptions for a page (dashboard)
+   */
   list: protectedProcedure
     .input(
       z.object({
@@ -29,14 +234,44 @@ export const pageSubscriberRouter = createTRPCRouter({
           });
         }
 
-        return await tx.query.pageSubscriber.findMany({
+        const subscriptions = await tx.query.pageSubscriber.findMany({
           where: eq(pageSubscriber.pageId, _page.id),
+          with: {
+            components: {
+              with: {
+                pageComponent: true,
+              },
+            },
+          },
+          orderBy: (subs, { desc, asc }) =>
+            opts.input.order === "asc"
+              ? asc(subs.createdAt)
+              : desc(subs.createdAt),
         });
+
+        return subscriptions.map((sub) => ({
+          id: sub.id,
+          channelType: sub.channelType,
+          email: sub.email,
+          webhookUrl: sub.webhookUrl,
+          acceptedAt: sub.acceptedAt,
+          unsubscribedAt: sub.unsubscribedAt,
+          createdAt: sub.createdAt,
+          components: sub.components.map((c) => ({
+            id: c.pageComponent.id,
+            name: c.pageComponent.name,
+          })),
+          isEntirePage: sub.components.length === 0,
+          pageId: sub.pageId,
+        }));
       });
 
       return data;
     }),
 
+  /**
+   * PROTECTED: Delete a subscription (dashboard)
+   */
   delete: protectedProcedure
     .input(z.object({ id: z.number(), pageId: z.number() }))
     .mutation(async (opts) => {
@@ -73,5 +308,7 @@ export const pageSubscriberRouter = createTRPCRouter({
           .delete(pageSubscriber)
           .where(eq(pageSubscriber.id, opts.input.id));
       });
+
+      return { success: true };
     }),
 });

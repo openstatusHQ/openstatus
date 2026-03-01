@@ -1,23 +1,19 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
   page,
   pageComponent,
-  pageSubscriber,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
-import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { EmailClient } from "@openstatus/emails";
+import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
-
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 const postRoute = createRoute({
   method: "post",
@@ -100,120 +96,71 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       });
     }
 
-    const _newStatusReport = await db
-      .insert(statusReport)
-      .values({
-        status: input.status,
-        title: input.title,
-        pageId: input.pageId,
-        workspaceId: workspaceId,
-      })
-      .returning()
-      .get();
+    const { _newStatusReport, _newStatusReportUpdate } = await db.transaction(
+      async (tx) => {
+        const _newStatusReport = await tx
+          .insert(statusReport)
+          .values({
+            status: input.status,
+            title: input.title,
+            pageId: input.pageId,
+            workspaceId: workspaceId,
+          })
+          .returning()
+          .get();
 
-    const _newStatusReportUpdate = await db
-      .insert(statusReportUpdate)
-      .values({
-        status: input.status,
-        message: input.message,
-        date: input.date,
-        statusReportId: _newStatusReport.id,
-      })
-      .returning()
-      .get();
+        const _newStatusReportUpdate = await tx
+          .insert(statusReportUpdate)
+          .values({
+            status: input.status,
+            message: input.message,
+            date: input.date,
+            statusReportId: _newStatusReport.id,
+          })
+          .returning()
+          .get();
 
-    if (!_newStatusReport.pageId) {
-      throw new OpenStatusApiError({
-        code: "BAD_REQUEST",
-        message: "Page ID is required",
-      });
-    }
+        if (!_newStatusReport.pageId) {
+          throw new OpenStatusApiError({
+            code: "BAD_REQUEST",
+            message: "Page ID is required",
+          });
+        }
 
-    if (input.monitorIds?.length) {
-      // Find matching page_components for the monitors on this page
-      const components = await db
-        .select({ id: pageComponent.id })
-        .from(pageComponent)
-        .where(
-          and(
-            inArray(pageComponent.monitorId, input.monitorIds),
-            eq(pageComponent.pageId, _newStatusReport.pageId),
-            eq(pageComponent.type, "monitor"),
-          ),
-        )
-        .all();
+        if (input.monitorIds?.length) {
+          // Find matching page_components for the monitors on this page
+          const components = await tx
+            .select({ id: pageComponent.id })
+            .from(pageComponent)
+            .where(
+              and(
+                inArray(pageComponent.monitorId, input.monitorIds),
+                eq(pageComponent.pageId, _newStatusReport.pageId),
+                eq(pageComponent.type, "monitor"),
+              ),
+            )
+            .all();
 
-      // Insert to statusReportsToPageComponents
-      if (components.length > 0) {
-        await db
-          .insert(statusReportsToPageComponents)
-          .values(
-            components.map((c) => ({
-              statusReportId: _newStatusReport.id,
-              pageComponentId: c.id,
-            })),
-          )
-          .run();
-      }
-    }
+          // Insert to statusReportsToPageComponents
+          if (components.length > 0) {
+            await tx
+              .insert(statusReportsToPageComponents)
+              .values(
+                components.map((c) => ({
+                  statusReportId: _newStatusReport.id,
+                  pageComponentId: c.id,
+                })),
+              )
+              .run();
+          }
+        }
+
+        return { _newStatusReport, _newStatusReportUpdate };
+      },
+    );
 
     if (limits["status-subscribers"] && _newStatusReport.pageId) {
-      const subscribers = await db
-        .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, _newStatusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt),
-            isNull(pageSubscriber.unsubscribedAt),
-          ),
-        )
-        .all();
-
-      const pageInfo = await db.query.page.findFirst({
-        where: eq(page.id, _newStatusReport.pageId),
-      });
-
-      const _statusReport = await db.query.statusReport.findFirst({
-        where: eq(statusReport.id, _newStatusReport.id),
-        with: {
-          statusReportsToPageComponents: {
-            with: { pageComponent: true },
-          },
-        },
-      });
-
-      if (!_statusReport) {
-        throw new OpenStatusApiError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Status report not found",
-        });
-      }
-
-      const validSubscribers = subscribers.filter(
-        (s): s is typeof s & { token: string } =>
-          s.token !== null &&
-          s.acceptedAt !== null &&
-          s.unsubscribedAt === null,
-      );
-      if (pageInfo && validSubscribers.length > 0) {
-        await emailClient.sendStatusReportUpdate({
-          subscribers: validSubscribers.map((subscriber) => ({
-            email: subscriber.email,
-            token: subscriber.token,
-          })),
-          pageTitle: pageInfo.title,
-          pageSlug: pageInfo.slug,
-          customDomain: pageInfo.customDomain,
-          reportTitle: _newStatusReport.title,
-          status: _newStatusReportUpdate.status,
-          message: _newStatusReportUpdate.message,
-          date: _newStatusReportUpdate.date.toISOString(),
-          pageComponents: _statusReport.statusReportsToPageComponents.map(
-            (i) => i.pageComponent.name,
-          ),
-        });
-      }
+      await dispatchStatusReportUpdate(_newStatusReportUpdate.id);
     }
 
     const data = StatusReportSchema.parse({

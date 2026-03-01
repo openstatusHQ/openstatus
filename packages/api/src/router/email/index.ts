@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, isNotNull } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
   invitation,
   maintenance,
@@ -9,6 +9,11 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
+import {
+  dispatchMaintenanceUpdate,
+  dispatchStatusReportUpdate,
+  getChannel,
+} from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { env } from "../../env";
 import {
@@ -20,150 +25,99 @@ import {
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 export const emailRouter = createTRPCRouter({
-  sendStatusReport: protectedProcedure
-    .input(z.object({ id: z.number() }))
+  /**
+   * PUBLIC: Send verification email for a new page subscription
+   * Called after upsert to trigger the verification flow
+   */
+  sendPageSubscriptionVerification: publicProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+      }),
+    )
     .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
-
-      if (limits["status-subscribers"]) {
-        const _statusReportUpdate =
-          await opts.ctx.db.query.statusReportUpdate.findFirst({
-            where: eq(statusReportUpdate.id, opts.input.id),
+      const subscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.id, opts.input.id),
+        with: {
+          page: {
             with: {
-              statusReport: {
-                with: {
-                  statusReportsToPageComponents: {
-                    with: {
-                      pageComponent: true,
-                    },
-                  },
-                  page: {
-                    with: {
-                      pageSubscribers: {
-                        where: isNotNull(pageSubscriber.acceptedAt),
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          });
-
-        if (!_statusReportUpdate) return;
-        if (!_statusReportUpdate.statusReport.page) return;
-        if (
-          _statusReportUpdate.statusReport.page.workspaceId !==
-          opts.ctx.workspace.id
-        )
-          return;
-        const validSubscribers =
-          _statusReportUpdate.statusReport.page.pageSubscribers.filter(
-            (s): s is typeof s & { token: string } =>
-              s.token !== null &&
-              s.acceptedAt !== null &&
-              s.unsubscribedAt === null,
-          );
-        if (!validSubscribers.length) return;
-
-        await emailClient.sendStatusReportUpdate({
-          subscribers: validSubscribers.map((subscriber) => ({
-            email: subscriber.email,
-            token: subscriber.token,
-          })),
-          pageTitle: _statusReportUpdate.statusReport.page.title,
-          pageSlug: _statusReportUpdate.statusReport.page.slug,
-          customDomain: _statusReportUpdate.statusReport.page.customDomain,
-          reportTitle: _statusReportUpdate.statusReport.title,
-          status: _statusReportUpdate.status,
-          message: _statusReportUpdate.message,
-          date: new Date(_statusReportUpdate.date).toISOString(),
-          pageComponents:
-            _statusReportUpdate.statusReport.statusReportsToPageComponents.map(
-              (i) => i.pageComponent.name,
-            ),
-        });
-      }
-    }),
-  sendMaintenance: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
-
-      if (limits["status-subscribers"]) {
-        const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
-          where: and(
-            eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
-          with: {
-            maintenancesToPageComponents: {
-              with: {
-                pageComponent: true,
-              },
-            },
-            page: {
-              with: {
-                pageSubscribers: {
-                  where: isNotNull(pageSubscriber.acceptedAt),
-                },
-              },
+              workspace: true,
             },
           },
-        });
+        },
+      });
 
-        if (!_maintenance) return;
-        if (!_maintenance.page) return;
-        const validSubscribers = _maintenance.page.pageSubscribers.filter(
-          (s): s is typeof s & { token: string } =>
-            s.token !== null &&
-            s.acceptedAt !== null &&
-            s.unsubscribedAt === null,
-        );
-        if (!validSubscribers.length) return;
+      const workspace = selectWorkspaceSchema.safeParse(
+        subscriber?.page?.workspace,
+      );
 
-        await emailClient.sendStatusReportUpdate({
-          subscribers: validSubscribers.map((subscriber) => ({
-            email: subscriber.email,
-            token: subscriber.token,
-          })),
-          pageTitle: _maintenance.page.title,
-          pageSlug: _maintenance.page.slug,
-          customDomain: _maintenance.page.customDomain,
-          reportTitle: _maintenance.title,
-          status: "maintenance",
-          message: _maintenance.message,
-          date: new Date(_maintenance.from).toISOString(),
-          pageComponents: _maintenance.maintenancesToPageComponents.map(
-            (i) => i.pageComponent.name,
-          ),
+      if (!workspace.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Invalid workspace",
         });
       }
-    }),
-  sendTeamInvitation: protectedProcedure
-    .input(z.object({ id: z.number(), baseUrl: z.string().optional() }))
-    .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
 
-      if (limits.members === "Unlimited" || limits.members > 1) {
-        const _invitation = await opts.ctx.db.query.invitation.findFirst({
-          where: and(
-            eq(invitation.id, opts.input.id),
-            eq(invitation.workspaceId, opts.ctx.workspace.id),
-          ),
-        });
+      if (!workspace.data.limits["status-subscribers"]) {
+        return;
+      }
 
-        if (!_invitation) return;
-
-        await emailClient.sendTeamInvitation({
-          to: _invitation.email,
-          token: _invitation.token,
-          invitedBy: `${opts.ctx.user.email}`,
-          workspaceName: opts.ctx.workspace.name || "OpenStatus",
-          baseUrl: opts.input.baseUrl,
+      if (!subscriber) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscriber not found",
         });
       }
+
+      if (!subscriber.email) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No email associated with this subscription",
+        });
+      }
+
+      if (subscriber.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Subscription already verified",
+        });
+      }
+
+      const verifyUrl = subscriber.page.customDomain
+        ? `https://${subscriber.page.customDomain}/verify/${subscriber.token}`
+        : `https://${subscriber.page.slug}.openstatus.dev/verify/${subscriber.token}`;
+
+      const channel = getChannel("email");
+      if (!channel) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Email channel not found",
+        });
+      }
+
+      await channel.sendVerification?.(
+        {
+          id: subscriber.id,
+          pageId: subscriber.pageId,
+          pageName: subscriber.page.title,
+          pageSlug: subscriber.page.slug,
+          customDomain: subscriber.page.customDomain,
+          componentIds: [],
+          channelType: "email",
+          email: subscriber.email,
+          token: subscriber.token ?? "",
+          acceptedAt: subscriber.acceptedAt ?? undefined,
+        },
+        verifyUrl,
+      );
+
+      return { success: true };
     }),
 
+  /**
+   * OLD: Send verification email for the legacy subscription flow
+   * Kept for backward compatibility with existing status-page UI
+   */
   sendPageSubscription: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
@@ -211,5 +165,99 @@ export const emailRouter = createTRPCRouter({
         page: _pageSubscriber.page.title,
         link,
       });
+    }),
+
+  /**
+   * PROTECTED: Send status report update notifications via dispatcher
+   */
+  sendStatusReport: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const limits = opts.ctx.workspace.limits;
+
+      if (!limits["status-subscribers"]) {
+        return;
+      }
+
+      const update = await opts.ctx.db.query.statusReportUpdate.findFirst({
+        where: eq(statusReportUpdate.id, opts.input.id),
+        with: {
+          statusReport: true,
+        },
+      });
+
+      if (!update?.statusReport) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Status report update not found",
+        });
+      }
+
+      if (update.statusReport.workspaceId !== opts.ctx.workspace.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Status report does not belong to your workspace",
+        });
+      }
+
+      await dispatchStatusReportUpdate(opts.input.id);
+
+      return { success: true };
+    }),
+
+  /**
+   * PROTECTED: Send maintenance notifications via dispatcher
+   */
+  sendMaintenance: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const limits = opts.ctx.workspace.limits;
+
+      if (!limits["status-subscribers"]) {
+        return;
+      }
+
+      const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
+        where: and(
+          eq(maintenance.id, opts.input.id),
+          eq(maintenance.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!_maintenance) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Maintenance not found",
+        });
+      }
+
+      await dispatchMaintenanceUpdate(opts.input.id);
+
+      return { success: true };
+    }),
+
+  sendTeamInvitation: protectedProcedure
+    .input(z.object({ id: z.number(), baseUrl: z.string().optional() }))
+    .mutation(async (opts) => {
+      const limits = opts.ctx.workspace.limits;
+
+      if (limits.members === "Unlimited" || limits.members > 1) {
+        const _invitation = await opts.ctx.db.query.invitation.findFirst({
+          where: and(
+            eq(invitation.id, opts.input.id),
+            eq(invitation.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+
+        if (!_invitation) return;
+
+        await emailClient.sendTeamInvitation({
+          to: _invitation.email,
+          token: _invitation.token,
+          invitedBy: `${opts.ctx.user.email}`,
+          workspaceName: opts.ctx.workspace.name || "OpenStatus",
+          baseUrl: opts.input.baseUrl,
+        });
+      }
     }),
 });

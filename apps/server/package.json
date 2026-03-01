@@ -24,6 +24,7 @@
     "@logtape/otel": "2.0.1",
     "@logtape/sentry": "2.0.1",
     "@openstatus/analytics": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-google-chat": "workspace:*",
     "@openstatus/notification-grafana-oncall": "workspace:*",

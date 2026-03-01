@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { beforeEach, expect, test } from "bun:test";
 
 import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
@@ -8,6 +8,18 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import { StatusReportSchema } from "./schema";
+
+// biome-ignore lint/suspicious/noExplicitAny: test utility
+const spies = (globalThis as any).__subscriptionSpies as {
+  dispatchStatusReportUpdate: {
+    mockClear: () => void;
+    mock: { calls: number[][] };
+  };
+};
+
+beforeEach(() => {
+  spies.dispatchStatusReportUpdate.mockClear();
+});
 
 test("create a valid status report", async () => {
   const date = new Date();
@@ -163,6 +175,40 @@ test("no auth key should return 401", async () => {
   });
 
   expect(res.status).toBe(401);
+});
+
+test("create a status report calls dispatchStatusReportUpdate", async () => {
+  const date = new Date();
+  date.setMilliseconds(0);
+
+  const res = await app.request("/v1/status_report", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      title: "Dispatch Test Report",
+      message: "Testing dispatcher integration",
+      monitorIds: [1],
+      date: date.toISOString(),
+      pageId: 1,
+    }),
+  });
+
+  expect(res.status).toBe(200);
+  const result = StatusReportSchema.safeParse(await res.json());
+  expect(result.success).toBe(true);
+  expect(spies.dispatchStatusReportUpdate.mock.calls.length).toBe(1);
+  expect(spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBeNumber();
+
+  if (result.success) {
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, result.data.id))
+      .run();
+  }
 });
 
 test("create a status report links correctly to statusReportsToPageComponents", async () => {

@@ -1,33 +1,21 @@
 import type { ServiceImpl } from "@connectrpc/connect";
-import {
-  and,
-  db,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  sql,
-} from "@openstatus/db";
+import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
   page,
   pageComponent,
-  pageSubscriber,
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
-import { EmailClient } from "@openstatus/emails";
 import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 
-import { env } from "@/env";
+import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
+
 import { getRpcContext } from "../../interceptors";
 import {
   dbMaintenanceToProto,
   dbMaintenanceToProtoSummary,
 } from "./converters";
-
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 import {
   invalidDateFormatError,
   invalidDateRangeError,
@@ -199,84 +187,19 @@ async function validatePageExists(
 
 /**
  * Helper to send maintenance notifications to page subscribers.
+ * Uses the subscription dispatcher for component-aware filtering.
  */
 async function sendMaintenanceNotification(params: {
   maintenanceId: number;
-  pageId: number;
-  maintenanceTitle: string;
-  message: string;
-  from: Date;
-  to: Date;
   limits: Limits;
 }) {
-  const { pageId, maintenanceTitle, message, from, to, limits } = params;
+  const { maintenanceId, limits } = params;
 
-  // Check if workspace has status-subscribers feature enabled
   if (!limits["status-subscribers"]) {
     return;
   }
 
-  // Get page info
-  const pageInfo = await db.query.page.findFirst({
-    where: eq(page.id, pageId),
-  });
-
-  if (!pageInfo) {
-    return;
-  }
-
-  // Get verified subscribers who haven't unsubscribed
-  const subscribers = await db
-    .select()
-    .from(pageSubscriber)
-    .where(
-      and(
-        eq(pageSubscriber.pageId, pageId),
-        isNotNull(pageSubscriber.acceptedAt),
-        isNull(pageSubscriber.unsubscribedAt),
-      ),
-    )
-    .all();
-
-  const validSubscribers = subscribers.filter(
-    (s): s is typeof s & { token: string } =>
-      s.token !== null && s.acceptedAt !== null && s.unsubscribedAt === null,
-  );
-
-  if (validSubscribers.length === 0) {
-    return;
-  }
-
-  // Get page components for this maintenance
-  const maintenanceWithComponents = await db.query.maintenance.findFirst({
-    where: eq(maintenance.id, params.maintenanceId),
-    with: {
-      maintenancesToPageComponents: {
-        with: { pageComponent: true },
-      },
-    },
-  });
-
-  const pageComponents =
-    maintenanceWithComponents?.maintenancesToPageComponents.map(
-      (i) => i.pageComponent.name,
-    ) ?? [];
-
-  // Send notification emails
-  await emailClient.sendMaintenanceNotification({
-    subscribers: validSubscribers.map((subscriber) => ({
-      email: subscriber.email,
-      token: subscriber.token,
-    })),
-    pageTitle: pageInfo.title,
-    pageSlug: pageInfo.slug,
-    customDomain: pageInfo.customDomain,
-    maintenanceTitle,
-    message,
-    from: from.toISOString(),
-    to: to.toISOString(),
-    pageComponents,
-  });
+  await dispatchMaintenanceUpdate(maintenanceId);
 }
 
 /**
@@ -349,11 +272,6 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
     if (req.notify) {
       await sendMaintenanceNotification({
         maintenanceId: newMaintenance.id,
-        pageId: providedPageId,
-        maintenanceTitle: newMaintenance.title,
-        message: newMaintenance.message,
-        from: fromDate,
-        to: toDate,
         limits: rpcCtx.workspace.limits,
       });
     }

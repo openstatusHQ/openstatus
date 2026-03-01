@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@openstatus/analytics": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
