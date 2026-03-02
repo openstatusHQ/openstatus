@@ -10,6 +10,7 @@ import {
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
+import { HowItWorks } from "@/components/marketing/how-it-works";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = defaultMetadata;
@@ -37,6 +38,7 @@ export default function Page() {
       />
       <h1>{homePage.metadata.title}</h1>
       <p className="text-lg">{homePage.metadata.description}</p>
+      <HowItWorks />
       <CustomMDX source={homePage.content} />
     </div>
   );
