@@ -42,12 +42,6 @@ export function HowItWorks() {
       aria-labelledby="how-it-works-heading"
       className="not-prose my-8 border border-border font-mono"
     >
-      {/* Top label bar — mimics the header row pattern from the site */}
-      <div className="grid grid-cols-2 gap-px bg-border [&>*]:bg-muted [&>*]:px-3 [&>*]:py-1.5 [&>*]:text-xs [&>*]:text-muted-foreground">
-        <span>how-it-works.tsx</span>
-        <span className="text-right">3 steps</span>
-      </div>
-
       {/* Section heading row */}
       <div className="grid grid-cols-1 gap-px border-t border-border bg-border sm:grid-cols-[1fr_auto]">
         {/* Heading cell */}
