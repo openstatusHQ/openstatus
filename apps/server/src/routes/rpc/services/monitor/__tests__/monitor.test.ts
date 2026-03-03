@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
+import { monitor, pageComponent } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 
 import { app } from "@/index";
@@ -467,6 +467,61 @@ describe("MonitorService.DeleteMonitor", () => {
     } finally {
       await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
     }
+  });
+
+  test("deleting a monitor removes its page components", async () => {
+    // Create a monitor
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-delete-with-component`,
+        url: "https://delete-component.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    // Create a pageComponent referencing that monitor
+    const component = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: 1,
+        type: "monitor",
+        monitorId: mon.id,
+        name: `${TEST_PREFIX}-component`,
+        order: 0,
+      })
+      .returning()
+      .get();
+
+    // Verify the component exists
+    const beforeDelete = await db
+      .select()
+      .from(pageComponent)
+      .where(eq(pageComponent.id, component.id))
+      .get();
+    expect(beforeDelete).toBeDefined();
+
+    // Delete the monitor
+    const res = await connectRequest(
+      "DeleteMonitor",
+      { id: String(mon.id) },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+
+    // Verify the page component was removed
+    const afterDelete = await db
+      .select()
+      .from(pageComponent)
+      .where(eq(pageComponent.id, component.id))
+      .get();
+    expect(afterDelete).toBeUndefined();
   });
 });
 

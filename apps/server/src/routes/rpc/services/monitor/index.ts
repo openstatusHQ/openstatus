@@ -572,17 +572,15 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       throw monitorNotFoundError(req.id);
     }
 
-    // Soft delete
-    await db
-      .update(monitor)
-      .set({
-        active: false,
-        deletedAt: new Date(),
-      })
-      .where(eq(monitor.id, dbMon.id));
-
-    // Clean up related junction tables and page components
+    // Soft delete and clean up related rows atomically
     await db.transaction(async (tx) => {
+      await tx
+        .update(monitor)
+        .set({
+          active: false,
+          deletedAt: new Date(),
+        })
+        .where(eq(monitor.id, dbMon.id));
       await tx
         .delete(monitorsToPages)
         .where(eq(monitorsToPages.monitorId, dbMon.id));
