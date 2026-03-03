@@ -1,11 +1,11 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
-// REMINDER: avoid Clickjacking attacks by setting the X-Frame-Options header
+// REMINDER: avoid Clickjacking attacks by setting the frame-ancestors directive
 const securityHeaders = [
   {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'self' https://shoogle.dev",
   },
 ];
 
