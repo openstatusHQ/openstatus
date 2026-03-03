@@ -27,6 +27,7 @@ import {
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
+  pageComponent,
   privateLocation,
   privateLocationToMonitors,
   selectIncidentSchema,
@@ -85,6 +86,9 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(eq(maintenancesToMonitors.monitorId, monitorToDelete.id));
+        await tx
+          .delete(pageComponent)
+          .where(eq(pageComponent.monitorId, monitorToDelete.id));
       });
     }),
 
@@ -131,6 +135,9 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(inArray(maintenancesToMonitors.monitorId, opts.input.ids));
+        await tx
+          .delete(pageComponent)
+          .where(inArray(pageComponent.monitorId, opts.input.ids));
       });
     }),
 

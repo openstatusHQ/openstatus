@@ -3,7 +3,16 @@ import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { tb } from "@/libs/clients";
 import type { ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
-import { monitor, monitorRun } from "@openstatus/db/src/schema";
+import {
+  maintenancesToMonitors,
+  monitor,
+  monitorRun,
+  monitorTagsToMonitors,
+  monitorsToPages,
+  monitorsToStatusReport,
+  notificationsToMonitors,
+  pageComponent,
+} from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
@@ -571,6 +580,28 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         deletedAt: new Date(),
       })
       .where(eq(monitor.id, dbMon.id));
+
+    // Clean up related junction tables and page components
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(monitorsToPages)
+        .where(eq(monitorsToPages.monitorId, dbMon.id));
+      await tx
+        .delete(monitorTagsToMonitors)
+        .where(eq(monitorTagsToMonitors.monitorId, dbMon.id));
+      await tx
+        .delete(monitorsToStatusReport)
+        .where(eq(monitorsToStatusReport.monitorId, dbMon.id));
+      await tx
+        .delete(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.monitorId, dbMon.id));
+      await tx
+        .delete(maintenancesToMonitors)
+        .where(eq(maintenancesToMonitors.monitorId, dbMon.id));
+      await tx
+        .delete(pageComponent)
+        .where(eq(pageComponent.monitorId, dbMon.id));
+    });
 
     return { success: true };
   },
