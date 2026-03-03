@@ -157,18 +157,6 @@ export const pageComponentRouter = createTRPCRouter({
 
         const pageComponentLimit = opts.ctx.workspace.limits["page-components"];
 
-        // Validate the incoming component count against the limit
-        const newComponentCount =
-          opts.input.components.length +
-          opts.input.groups.reduce((sum, g) => sum + g.components.length, 0);
-
-        if (newComponentCount > pageComponentLimit) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You reached your page component limits.",
-          });
-        }
-
         // Get existing state
         const existingComponents = await tx
           .select()
@@ -180,6 +168,13 @@ export const pageComponentRouter = createTRPCRouter({
             ),
           )
           .all();
+
+        if (existingComponents.length >= pageComponentLimit) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You reached your page component limits.",
+          });
+        }
 
         const existingGroups = await tx
           .select()
