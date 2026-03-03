@@ -26,9 +26,12 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="not-prose my-8 border border-border bg-muted/50 py-12 md:py-16">
+    <section className="not-prose my-8 border border-green-500/20 bg-green-500/[0.03] py-12 dark:border-green-500/15 dark:bg-green-500/[0.04] md:py-16">
       {/* Heading */}
       <div className="mb-10 text-center px-4">
+        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-green-600 dark:text-green-400">
+          Getting started
+        </p>
         <h2 className="font-cal text-2xl tracking-tight text-foreground md:text-3xl">
           How it works
         </h2>
@@ -43,7 +46,7 @@ export function HowItWorks() {
         {/* Connecting dotted line (desktop only) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute top-12 left-[calc(33.333%+0.5rem)] right-[calc(33.333%+0.5rem)] hidden border-t-2 border-dashed border-border md:block"
+          className="pointer-events-none absolute top-12 left-[calc(33.333%+0.5rem)] right-[calc(33.333%+0.5rem)] hidden border-t-2 border-dashed border-green-500/30 md:block"
         />
 
         {steps.map((step) => (
@@ -52,14 +55,14 @@ export function HowItWorks() {
             className="relative flex flex-col items-center text-center md:px-4"
           >
             {/* Numbered badge */}
-            <span className="mb-3 flex h-6 w-6 items-center justify-center border border-border bg-foreground text-[11px] font-semibold text-background">
+            <span className="mb-3 flex h-6 w-6 items-center justify-center bg-green-600 text-[11px] font-semibold text-white dark:bg-green-500 dark:text-green-950">
               {step.number}
             </span>
 
             {/* Icon container */}
-            <div className="relative z-10 mb-4 flex h-16 w-16 items-center justify-center border border-border bg-background">
+            <div className="relative z-10 mb-4 flex h-16 w-16 items-center justify-center border border-green-500/25 bg-background">
               <step.icon
-                className="h-7 w-7 text-foreground"
+                className="h-7 w-7 text-green-600 dark:text-green-400"
                 strokeWidth={1.5}
               />
             </div>
