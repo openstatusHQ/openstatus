@@ -102,7 +102,7 @@ export function HowItWorks() {
           {steps.map((step) => (
             <div
               key={step.number}
-              className="relative bg-background p-6 transition-colors hover:bg-muted"
+              className="relative bg-muted p-6 transition-colors hover:bg-accent"
             >
               {/* Numbered badge */}
               <span className="mb-4 inline-flex h-6 w-6 items-center justify-center border border-border bg-muted text-xs font-medium text-muted-foreground">
