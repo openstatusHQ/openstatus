@@ -76,9 +76,7 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
-    const finalLimits = detectedPlan
-      ? getLimits(detectedPlan.plan)
-      : ws.limits;
+    const finalLimits = detectedPlan ? getLimits(detectedPlan.plan) : ws.limits;
 
     await opts.ctx.db
       .update(workspace)
