@@ -27,6 +27,7 @@ import {
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
+  pageComponent,
   privateLocation,
   privateLocationToMonitors,
   selectIncidentSchema,
@@ -63,13 +64,11 @@ export const monitorRouter = createTRPCRouter({
         .get();
       if (!monitorToDelete) return;
 
-      await opts.ctx.db
-        .update(monitor)
-        .set({ deletedAt: new Date(), active: false })
-        .where(eq(monitor.id, monitorToDelete.id))
-        .run();
-
       await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .update(monitor)
+          .set({ deletedAt: new Date(), active: false })
+          .where(eq(monitor.id, monitorToDelete.id));
         await tx
           .delete(monitorsToPages)
           .where(eq(monitorsToPages.monitorId, monitorToDelete.id));
@@ -85,6 +84,9 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(eq(maintenancesToMonitors.monitorId, monitorToDelete.id));
+        await tx
+          .delete(pageComponent)
+          .where(eq(pageComponent.monitorId, monitorToDelete.id));
       });
     }),
 
@@ -109,13 +111,11 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      await opts.ctx.db
-        .update(monitor)
-        .set({ deletedAt: new Date(), active: false })
-        .where(inArray(monitor.id, opts.input.ids))
-        .run();
-
       await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .update(monitor)
+          .set({ deletedAt: new Date(), active: false })
+          .where(inArray(monitor.id, opts.input.ids));
         await tx
           .delete(monitorsToPages)
           .where(inArray(monitorsToPages.monitorId, opts.input.ids));
@@ -131,6 +131,9 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(inArray(maintenancesToMonitors.monitorId, opts.input.ids));
+        await tx
+          .delete(pageComponent)
+          .where(inArray(pageComponent.monitorId, opts.input.ids));
       });
     }),
 
