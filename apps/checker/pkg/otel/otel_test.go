@@ -127,13 +127,7 @@ func TestSetupOTelSDK(t *testing.T) {
 	ctx := context.Background()
 
 	shutdown, err := setupOTelSDK(ctx, server.URL, nil)
-	if err != nil {
-		// The resource merge can fail due to semconv schema URL version
-		// mismatch between resource.Default() and the pinned semconv import.
-		assert.Nil(t, shutdown, "shutdown must be nil when setup fails")
-		return
-	}
-
+	require.NoError(t, err)
 	require.NotNil(t, shutdown)
 	assert.NoError(t, shutdown(ctx))
 }
@@ -161,21 +155,20 @@ func TestWithMeter(t *testing.T) {
 		assert.NotNil(t, meter)
 	})
 
-	// withMeter may fail due to schema URL mismatch — only assert if it got called.
-	if !called {
-		t.Log("withMeter callback not called (likely schema URL mismatch), skipping")
-	}
+	assert.True(t, called, "callback should be called")
 }
 
 func TestWithMeter_InvalidEndpoint(t *testing.T) {
 	called := false
 
-	// Must not panic — callback should not be called on setup failure.
+	// Must not panic. The OTLP exporter no longer fails at creation for
+	// invalid URLs (it defers the error to export time), so the callback
+	// will still be invoked.
 	withMeter(context.Background(), "://invalid", nil, func(meter metric.Meter) {
 		called = true
 	})
 
-	assert.False(t, called, "callback should not be called when setup fails")
+	assert.True(t, called, "callback should be called since exporter defers URL validation")
 }
 
 // --- RecordHTTPMetrics tests ---
