@@ -327,10 +327,7 @@ export const webhookRouter = createTRPCRouter({
       for (const n of notifications.filter(
         (n) => n.id !== keepNotification?.id,
       )) {
-        await tx
-          .delete(notification)
-          .where(eq(notification.id, n.id))
-          .run();
+        await tx.delete(notification).where(eq(notification.id, n.id)).run();
       }
 
       // Remove all non-owner members from the workspace
