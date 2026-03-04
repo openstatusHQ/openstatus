@@ -1,45 +1,90 @@
-import { and, gte, lte } from "@openstatus/db";
+import { and, eq, gte, inArray, lte } from "@openstatus/db";
 import { db } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import {
+  integration,
+  user,
+  usersToWorkspaces,
+} from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
 import { env } from "../env";
-// import { db } from "../lib/db";
 
 const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
 
 export async function sendFollowUpEmails() {
-  // Get users created 2-3 days ago
   const date1 = new Date();
-  date1.setDate(date1.getDate() - 3);
+  date1.setDate(date1.getDate() - 2);
   const date2 = new Date();
-  date2.setDate(date2.getDate() - 2);
+  date2.setDate(date2.getDate() - 1);
 
   const users = await db
     .select({
       email: user.email,
+      workspaceId: usersToWorkspaces.workspaceId,
     })
     .from(user)
+    .innerJoin(usersToWorkspaces, eq(user.id, usersToWorkspaces.userId))
     .where(and(gte(user.createdAt, date1), lte(user.createdAt, date2)))
     .all();
 
   console.log(`Found ${users.length} users to send follow ups.`);
 
-  // Filter valid emails
-  const validEmails = users
-    .map((u) => u.email)
-    .filter((email) => email !== null)
-    //  I don't know why but I can't have both filter at the same time
-    .filter((email) => email.trim() !== "");
+  const workspaceIds = [
+    ...new Set(users.map((u) => u.workspaceId).filter(Boolean)),
+  ];
 
-  // Chunk emails into batches of 80
+  const slackWorkspaceIds = new Set<number>();
+  if (workspaceIds.length > 0) {
+    const slackIntegrations = await db
+      .select({ workspaceId: integration.workspaceId })
+      .from(integration)
+      .where(
+        and(
+          eq(integration.name, "slack-agent"),
+          inArray(integration.workspaceId, workspaceIds),
+        ),
+      )
+      .all();
+    for (const row of slackIntegrations) {
+      if (row.workspaceId) {
+        slackWorkspaceIds.add(row.workspaceId);
+      }
+    }
+  }
+
+  const slackEmails: string[] = [];
+  const noSlackEmails: string[] = [];
+
+  for (const u of users) {
+    if (!u.email || u.email.trim() === "") continue;
+    const hasSlack = u.workspaceId
+      ? slackWorkspaceIds.has(u.workspaceId)
+      : false;
+    if (hasSlack) {
+      slackEmails.push(u.email);
+    } else {
+      noSlackEmails.push(u.email);
+    }
+  }
+
   const batchSize = 80;
-  for (let i = 0; i < validEmails.length; i += batchSize) {
-    const batch = validEmails.slice(i, i + batchSize);
-    console.log(`Sending batch with ${batch.length} emails...`);
+
+  for (let i = 0; i < noSlackEmails.length; i += batchSize) {
+    const batch = noSlackEmails.slice(i, i + batchSize);
+    console.log(`Sending follow-up batch with ${batch.length} emails...`);
     try {
       await email.sendFollowUpBatched({ to: batch });
     } catch {
-      //Stop email send when rate limit error is faced in order to avoid wasteful API calls
+      console.error("Rate limit exceeded. Stopping further sends.");
+      break;
+    }
+  }
+
+  for (let i = 0; i < slackEmails.length; i += batchSize) {
+    const batch = slackEmails.slice(i, i + batchSize);
+    console.log(`Sending slack feedback batch with ${batch.length} emails...`);
+    try {
+      await email.sendSlackFeedbackBatched({ to: batch });
+    } catch {
       console.error("Rate limit exceeded. Stopping further sends.");
       break;
     }

@@ -4,6 +4,7 @@ import { render } from "@react-email/render";
 import { Effect, Schedule } from "effect";
 import { Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
+import SlackFeedbackEmail from "../emails/slack-feedback";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
@@ -87,6 +88,62 @@ export class EmailClient {
     }
 
     console.log(`Sent follow up emails to ${req.to}`);
+  }
+
+  public async sendSlackFeedback(req: { to: string }) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Sending slack feedback email to ${req.to}`);
+      return;
+    }
+
+    try {
+      const html = await render(<SlackFeedbackEmail />);
+      const result = await this.client.emails.send({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "How's the Slack app working for you?",
+        to: req.to,
+        html,
+      });
+
+      if (!result.error) {
+        console.log(`Sent slack feedback email to ${req.to}`);
+        return;
+      }
+
+      throw result.error;
+    } catch (err) {
+      console.error(`Error sending slack feedback email to ${req.to}: ${err}`);
+    }
+  }
+
+  public async sendSlackFeedbackBatched(req: { to: string[] }) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Sending slack feedback emails to ${req.to.join(", ")}`);
+      return;
+    }
+
+    const html = await render(<SlackFeedbackEmail />);
+    const result = await this.client.batch.send(
+      req.to.map((subscriber) => ({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "How's the Slack app working for you?",
+        to: subscriber,
+        html,
+      })),
+    );
+
+    if (result.error) {
+      if (result.error?.name === "rate_limit_exceeded") {
+        throw result.error;
+      }
+      console.error(
+        `Error sending slack feedback email to ${req.to}: ${result.error}`,
+      );
+      return;
+    }
+
+    console.log(`Sent slack feedback emails to ${req.to}`);
   }
 
   public async sendStatusReportUpdate(

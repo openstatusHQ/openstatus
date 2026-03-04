@@ -6,50 +6,35 @@ const WelcomeEmail = () => {
   return (
     <Html>
       <Head>
-        <title>Welcome to openstatus</title>
+        <title>Welcome to OpenStatus</title>
       </Head>
-      <Preview>Few tips to get started with your uptime monitoring</Preview>
+      <Preview>Set up your status page in under 5 minutes</Preview>
 
       <Body>
         Hey 👋
         <br />
         <br />
-        Welcome to openstatus <br />
+        Thanks for signing up for OpenStatus.
         <br />
         <br />
-        Openstatus is global uptime monitoring service with status page.
+        The fastest way to get started: create your status page. It takes under 5 minutes and your
+        users will have a single place to check if your services are up.
         <br />
-        Here are a few things you can do with openstatus:
-        <br />- Use our{" "}
-        <a href="https://docs.openstatus.dev/cli/getting-started/?ref=email-onboarding">
-          CLI
-        </a>{" "}
-        to create, update and trigger your monitors.
-        <br />- Learn how to monitor a{" "}
-        <a href="https://docs.openstatus.dev/guides/how-to-monitor-mcp-server?ref=email-onboarding">
-          MCP server
+        <br />👉{" "}
+        <a href="https://app.openstatus.dev/status-pages/create?ref=email-onboarding">
+          Create your status page
         </a>
-        .
-        <br />- Explore our uptime monitoring as code{" "}
-        <a href="https://github.com/openstatusHQ/cli-template/?ref=email-onboarding">
-          template directory
-        </a>
-        .
-        <br />- Build your own status page with our{" "}
-        <a href="https://api.openstatus.dev/v1">API</a> and host it where you
-        want. Here's our{" "}
-        <a href="https://github.com/openstatusHQ/astro-status-page">
-          Astro template
-        </a>{" "}
-        that you can easily host on CloudFlare.
         <br />
         <br />
-        Quick question: How did you learn about us? and why did you sign up?
+        Want full control? Use our{" "}
+        <a href="https://www.openstatus.dev/registry?ref=email-onboarding">open source</a> to build
+        your own status page and host it anywhere.
         <br />
-        Thank you,
+        <br />
+        Hit reply if you get stuck — I read every response.
         <br />
         <br />
-        Thibault Le Ouay Ducasse, co-founder of openstatus
+        Thibault Le Ouay Ducasse, co-founder of OpenStatus
         <br />
       </Body>
     </Html>
