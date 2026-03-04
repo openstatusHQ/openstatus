@@ -48,13 +48,13 @@ export function HowItWorks() {
             className="pointer-events-none absolute top-[2.25rem] right-[calc(33.333%+1.5rem)] left-[calc(33.333%-1.5rem)] hidden h-px md:block"
             aria-hidden="true"
           >
-            <div className="h-full w-full border-t-2 border-dashed border-success/30" />
+            <div className="h-full w-full border-t border-dotted border-border/60" />
           </div>
           <div
             className="pointer-events-none absolute top-[2.25rem] right-[calc(0%+3rem)] left-[calc(66.666%-1.5rem)] hidden h-px md:block"
             aria-hidden="true"
           >
-            <div className="h-full w-full border-t-2 border-dashed border-success/30" />
+            <div className="h-full w-full border-t border-dotted border-border/60" />
           </div>
 
           {steps.map((step) => (
