@@ -48,7 +48,8 @@ if (process.env.NODE_ENV === "production") {
         email: "ping@openstatus.dev",
         url: "https://www.openstatus.dev",
       },
-      description: "This version is deprecated please use v2",
+      description:
+        "This version is deprecated please use v2 API: Read more about the new API in the documentation: https://docs.openstatus.dev/reference/api",
     },
     tags: [
       {

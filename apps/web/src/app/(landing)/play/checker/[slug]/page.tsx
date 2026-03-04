@@ -35,7 +35,10 @@ export async function generateMetadata({
   const { slug } = await params;
   const page = getToolsPage("checker-slug");
 
-  const metadata = getPageMetadata(page);
+  const metadata = {
+    ...getPageMetadata(page, "play"),
+    alternates: { canonical: `${BASE_URL}/play/checker/${slug}` },
+  };
 
   const data =
     process.env.NODE_ENV === "development"

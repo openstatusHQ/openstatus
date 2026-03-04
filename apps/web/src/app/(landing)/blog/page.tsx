@@ -6,13 +6,17 @@ import Link from "next/link";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
-const TITLE = "Blog";
-const DESCRIPTION = "All the latest articles and news from openstatus.";
+const TITLE = "Blog - Engineering, Product & Monitoring Insights";
+const DESCRIPTION =
+  "Read engineering deep dives, product updates, and monitoring best practices from the openstatus team. Learn about uptime monitoring, incident communication, and building reliable systems.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
   title: TITLE,
   description: DESCRIPTION,
+  alternates: {
+    canonical: "/blog",
+  },
   openGraph: {
     ...ogMetadata,
     title: TITLE,
