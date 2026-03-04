@@ -7,6 +7,12 @@ import { Aside } from '@astrojs/starlight/components';
 
 ## What you'll learn
 
+| | |
+|---|---|
+| **Time** | ~5 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | OpenStatus account, Slack workspace admin access |
+
 In this tutorial, you'll learn how to install the OpenStatus Slack agent so you can manage incidents directly from your Slack workspace — no need to switch to the dashboard.
 
 ### Prerequisites
@@ -34,11 +40,21 @@ Grant the requested permissions and click **Allow** to complete the installation
 
 <Aside>Make sure you select the correct Slack workspace if you belong to multiple workspaces.</Aside>
 
-### 3. Start Managing Incidents from Slack
+### 3. Verify the Installation
 
-Once installed, mention **@openstatus** in any channel to interact with the agent. This keeps threads clean — the bot only responds when mentioned.
+After completing the OAuth flow, go to the Slack channel you selected and type:
 
-Here are some examples:
+```
+@openstatus what's the status of my monitors?
+```
+
+The bot should respond with a summary of your monitors. If you see a response, the installation is working.
+
+<Aside type="tip">The bot only responds when mentioned with `@openstatus` — it won't interrupt your conversations.</Aside>
+
+### 4. Start Managing Incidents from Slack
+
+Here are some examples of what you can do:
 
 #### Create an incident
 
@@ -75,9 +91,25 @@ Plan downtime so subscribers are informed in advance.
 ## What you've accomplished
 
 Congratulations! You've successfully:
-- Installed the OpenStatus Slack agent in your workspace
-- Connected your OpenStatus account to Slack
-- Learned how to manage incidents directly from Slack
+- ✅ Installed the OpenStatus Slack agent in your workspace
+- ✅ Connected your OpenStatus account to Slack
+- ✅ Learned how to manage incidents directly from Slack
+
+## Troubleshooting
+
+### The bot doesn't respond when mentioned
+
+1. **Check the channel:** Make sure you're mentioning `@openstatus` in the channel you selected during installation.
+2. **Check permissions:** Go to **Settings** > **Integrations** and verify the Slack integration shows as connected.
+3. **Reinstall:** If the integration appears disconnected, click **Install Slack** again to re-authorize.
+
+### "Not authorized" or permission errors
+
+Your Slack workspace admin may need to approve the app. Ask your workspace admin to go to **Slack Admin** > **Manage Apps** and approve the OpenStatus integration.
+
+### Bot responds but can't find monitors
+
+Make sure you have at least one monitor and one status page created in your OpenStatus workspace before using incident commands.
 
 ## What's next?
 

@@ -4,9 +4,16 @@ description: "Step-by-step tutorial to install and use the openstatus CLI for mo
 ---
 
 import { Image } from 'astro:assets';
+import { Aside } from '@astrojs/starlight/components';
 import CLI from '../../../assets/tutorial/get-started-with-openstatus-cli/CLI.png';
 
 ## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~10 minutes |
+| **Level** | Intermediate |
+| **Prerequisites** | openstatus account, command line experience |
 
 In this tutorial, you'll learn how to use the openstatus CLI to manage your monitors as code. This enables you to version control your monitoring configuration, automate deployments, and implement GitOps workflows.
 
@@ -53,8 +60,22 @@ curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/in
 
 ### Windows
 
-```bash
+```powershell
 iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.ps1 | iex
+```
+
+### Verify installation
+
+Run the following command to confirm the CLI is installed:
+
+```bash
+openstatus --version
+```
+
+You should see output like:
+
+```
+openstatus version x.x.x
 ```
 
 ## Configure API authentication
@@ -62,10 +83,16 @@ iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.p
 Create an API key in your workspace settings (Settings → API), then set it as an environment variable:
 
 ```bash
+# macOS / Linux
 export OPENSTATUS_API_TOKEN=<your-api-token>
 ```
 
-**Tip**: Add this to your shell profile (`~/.bashrc`, `~/.zshrc`) to persist across sessions.
+```powershell
+# Windows PowerShell
+$env:OPENSTATUS_API_TOKEN="<your-api-token>"
+```
+
+<Aside>Add this to your shell profile (`~/.bashrc`, `~/.zshrc`) to persist across sessions.</Aside>
 
 ## Import existing monitors
 
@@ -75,7 +102,15 @@ Start by importing your existing monitors from your workspace to a YAML file:
 openstatus monitors import
 ```
 
+You should see output confirming the import:
+
+```
+Successfully imported X monitors to openstatus.yaml
+```
+
 This creates an `openstatus.yaml` file containing all your current monitors. This file becomes your single source of truth for monitoring configuration.
+
+**Checkpoint:** Open the `openstatus.yaml` file and verify it contains your monitors. You should see entries with your monitor names and URLs.
 
 ## Manage monitors as code
 
@@ -94,6 +129,37 @@ Excellent work! You've successfully:
 - ✅ Configured API authentication
 - ✅ Imported monitors to a YAML file
 - ✅ Learned the monitoring as code workflow
+
+## Troubleshooting
+
+### "command not found: openstatus"
+
+**Cause:** The CLI binary is not in your PATH.
+
+**Fix (macOS/Homebrew):**
+```bash
+brew reinstall openstatusHQ/cli/openstatus --cask
+```
+
+**Fix (install script):** Ensure `~/.local/bin` is in your PATH:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### "unauthorized" or "invalid token" error
+
+**Cause:** Your API token is missing or incorrect.
+
+**Fix:**
+1. Verify the token is set: `echo $OPENSTATUS_API_TOKEN`
+2. Regenerate the token in your workspace settings (Settings → API)
+3. Make sure there are no extra spaces or newlines in the token value
+
+### "no monitors found" on import
+
+**Cause:** Your workspace has no monitors, or the token belongs to a different workspace.
+
+**Fix:** Create at least one monitor in the dashboard first, then retry the import.
 
 ## What's next?
 

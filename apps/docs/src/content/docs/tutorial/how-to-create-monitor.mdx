@@ -5,6 +5,7 @@ description: "Set up your first uptime monitor with OpenStatus — track respons
 
 import { Image } from 'astro:assets';
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
 import monitorOverview from '../../../assets/tutorial/create-monitor/monitor-overview.png';
 import createMonitor from '../../../assets/tutorial/create-monitor/create-monitor-1.png';
 import createMonitor2 from '../../../assets/tutorial/create-monitor/create-monitor-2.png';
@@ -36,7 +37,7 @@ Let's get your first uptime check up and running.
 
   <Image
     src={createMonitor}
-    alt="Charts with status code and response time"
+    alt="Monitors page showing the Create Monitor button in the sidebar"
   />
 
 Navigate to the **Monitors** page from the sidebar and click the **Create Monitor** button. This will open a new configuration screen.
@@ -46,7 +47,7 @@ Navigate to the **Monitors** page from the sidebar and click the **Create Monito
 
   <Image
     src={createMonitor2}
-    alt="Charts with status code and response time"
+    alt="Monitor creation form with name and URL fields"
   />
 
 To get your monitor started, you only need to provide two essential pieces of information:
@@ -62,8 +63,10 @@ As soon as you enter the URL, our monitoring tool will automatically begin track
 
   <Image
     src={monitorOverview}
-    alt="Charts with status code and response time"
+    alt="Monitor overview dashboard showing response time and status code charts"
   />
+
+**Checkpoint:** After saving, you should see your monitor's overview page with response time and status code charts. If data appears within a few seconds, your monitor is running.
 
 
 ### 3. Customizing the HTTP Request
@@ -72,7 +75,7 @@ Your monitor doesn't just have to be a simple `GET` request. You can customize t
 
 #### HTTP Method
 
-Choose the appropriate HTTP method for your check. While `GET` is the default and most common for simple health checks, you can also select `POST`, `HEAD`, `OPTIONS`, `PUT`, `PATCH`, `DELETE`, `TRACE`. `OPTIONS`
+Choose the appropriate HTTP method for your check. While `GET` is the default and most common for simple health checks, you can also select `POST`, `HEAD`, `OPTIONS`, `PUT`, `PATCH`, `DELETE`, or `TRACE`.
 
 - `GET`: Retrieve data from an endpoint. The most common choice for health checks.
 - `POST`: Send data to an endpoint, for example, to test a form submission or API creation endpoint.
@@ -91,15 +94,15 @@ If you select the `POST` method, you can add a Request Body to your monitor's co
 
 You can add any number of custom HTTP headers to your request. This is particularly useful for:
 
-- **Authentication:**: Sending an Authorization token (e.g., a Bearer token) to test a protected endpoint.
-- **Content Type:**: Setting an `content-type` header  to specify a content type (e.g., `application/json`).
+- **Authentication:** Sending an Authorization token (e.g., a Bearer token) to test a protected endpoint.
+- **Content Type:** Setting a `content-type` header to specify a content type (e.g., `application/json`).
 - **Content Negotiation:** Setting an Accept header to request a specific content type from the server (e.g., `application/json`).
 - **Simulating Clients:** Adding a User-Agent header to simulate traffic from a specific browser or device.
 
-    Heads Up: We've got your User-Agent covered!
-    openstatus automatically includes the `"User-Agent": "openstatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
 
-
+<Aside title="We've got your User-Agent covered!">
+openstatus automatically includes the `"User-Agent": "openstatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
+</Aside>
 
 
 ## Important Considerations

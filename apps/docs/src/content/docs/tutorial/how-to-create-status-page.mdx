@@ -4,12 +4,19 @@ description: "A step-by-step tutorial to create and publish your first status pa
 ---
 
 import { Image } from 'astro:assets';
+import { Aside } from '@astrojs/starlight/components';
 
 import CreateStatusPage1 from '../../../assets/tutorial/create-status-page/create-status-page-1.png';
 
 import CreateStatusPage2 from '../../../assets/tutorial/create-status-page/create-status-page-2.png';
 
 ## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~5 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | OpenStatus account, at least one monitor |
 
 In this tutorial, you'll create a public status page to communicate your service's health to users. A status page is a transparent way to show real-time uptime information and keep your users informed during incidents.
 
@@ -25,8 +32,6 @@ By the end of this tutorial, you'll have:
 - Monitors displayed on your status page
 - Understanding of privacy and security options
 
-This tutorial will guide you through the process of creating a status page in openstatus. A status page is a web page that displays the status of your services, building trust with your users through transparency.
-
 ## Get started
 
 ### 1. Create the status page
@@ -35,33 +40,41 @@ Navigate to the **Status Pages** page from the sidebar and click the **Create St
 
 <Image
     src={CreateStatusPage1}
-    alt="Create your status page"
+    alt="Status Pages sidebar with the Create Status Page button highlighted"
 />
 
 
 ### 2. Configure the status page
 
-After creating the status page, you can configure it
+Fill in the basic details for your status page:
 
-
+- **Title:** A name for your status page (e.g., "Acme Status" or "API Health")
+- **Slug:** The URL path for your status page (e.g., `acme` creates `acme.openstatus.dev`)
 
 <Image
     src={CreateStatusPage2}
-    alt="Configure your status page"
+    alt="Status page configuration form showing title, slug, and monitor selection"
 />
 
-#### Monitors
+#### Add monitors
 
-You need to add monitors to your status page. Monitors are used to check the status of your services.
+Select the monitors you want to display on your status page. Each monitor will show as a separate service with its own uptime bar. You can add multiple monitors to give users a complete picture of your infrastructure health.
 
 #### Custom domain
 
-You can add a Custom Domain to your status page. Custom domains allow you to use your own domain name instead of the default domain name provided by openstatus.
+You can use your own domain (e.g., `status.yourdomain.com`) instead of the default `*.openstatus.dev` subdomain. To set this up:
 
+1. Enter your custom domain in the **Custom Domain** field
+2. Add a CNAME record pointing to `status.openstatus.dev` in your DNS provider
+3. Wait for DNS propagation (usually a few minutes, up to 48 hours)
 
-#### Password Protection
+See the [Status Page Reference](/reference/status-page) for detailed DNS configuration instructions.
 
-You can add password protection to your status page. Password protection allows you to restrict access to your status page to only authorized users.
+#### Password protection
+
+Enable password protection to restrict access to your status page. This is useful for internal status pages that should only be visible to your team or specific customers. Enter a password, and visitors will be prompted to authenticate before viewing the page.
+
+**Checkpoint:** After saving, click the link to your status page (shown at the top of the settings). You should see your monitors listed with uptime bars.
 
 ## What you've accomplished
 
