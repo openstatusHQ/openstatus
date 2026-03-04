@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "pnpm --filter @openstatus/react build && pnpm --filter @openstatus/web dev",
+    "dev": "cd apps/web && next dev --turbopack --port 3000",
     "env": "bun env.ts",
     "lint": "biome lint .",
     "format": "pnpm biome format . --write && pnpm biome check . --write ",

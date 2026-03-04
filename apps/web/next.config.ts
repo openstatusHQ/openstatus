@@ -12,7 +12,7 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@openstatus/ui", "@openstatus/api", "next-mdx-remote"],
+  transpilePackages: ["@openstatus/ui", "@openstatus/api", "@openstatus/react", "next-mdx-remote"],
   outputFileTracingIncludes: {
     "/": [
       "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
