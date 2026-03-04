@@ -1,3 +1,4 @@
+import { HowItWorks } from "@/components/marketing/how-it-works";
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
 import { defaultMetadata } from "@/lib/metadata/shared-metadata";
@@ -37,6 +38,7 @@ export default function Page() {
       />
       <h1>{homePage.metadata.title}</h1>
       <p className="text-lg">{homePage.metadata.description}</p>
+      <HowItWorks />
       <CustomMDX source={homePage.content} />
     </div>
   );
