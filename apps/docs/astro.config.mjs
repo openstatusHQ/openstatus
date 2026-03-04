@@ -13,6 +13,9 @@ export default defineConfig({
   site: "https://docs.openstatus.dev",
   vite: {
     plugins: [Icons({ compiler: "astro" }), tailwindcss()],
+    ssr: {
+      noExternal: ["zod"],
+    },
   },
   env: {
     schema: {
@@ -237,15 +240,15 @@ export default defineConfig({
         },
       ],
       plugins: [
+        starlightLinksValidator({
+          errorOnLocalLinks: false,
+        }),
         starlightLlmsTxt({
           projectName: "openstatus docs",
           description:
             "openstatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.",
         }),
         starlightImageZoom(),
-        starlightLinksValidator({
-          errorOnLocalLinks: false,
-        }),
       ],
     }),
   ],
