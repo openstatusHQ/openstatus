@@ -5,6 +5,8 @@ import { db } from "@openstatus/db/src/db";
 import { user } from "@openstatus/db/src/schema";
 import { FollowUpEmail, sendEmail } from "@openstatus/emails";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   console.log(authHeader);
