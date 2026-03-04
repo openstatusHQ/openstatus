@@ -76,16 +76,18 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
-    const finalLimits = detectedPlan ? getLimits(detectedPlan.plan) : ws.limits;
+    if (!detectedPlan) {
+      return;
+    }
 
     await opts.ctx.db
       .update(workspace)
       .set({
-        ...(detectedPlan ? { plan: detectedPlan.plan } : {}),
+        plan: detectedPlan.plan,
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
-        limits: JSON.stringify(finalLimits),
+        limits: JSON.stringify(getLimits(detectedPlan.plan)),
       })
       .where(eq(workspace.id, result.id))
       .run();
@@ -349,6 +351,13 @@ export const webhookRouter = createTRPCRouter({
 
       return _workspace;
     });
+
+    if (!_workspace[0]) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Workspace not found",
+      });
+    }
 
     const workspaceId = _workspace[0].id;
     const customer = await stripe.customers.retrieve(customerId);
