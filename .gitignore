@@ -80,3 +80,7 @@ plan.md
 .zed
 
 *.tsbuildinfo
+
+.claude/skills/**
+.agents/skills/**
+skills-lock.json
