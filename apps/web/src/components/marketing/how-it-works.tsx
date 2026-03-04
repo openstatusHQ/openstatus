@@ -58,22 +58,22 @@ export function HowItWorks() {
           </div>
 
           {steps.map((step) => (
-            <div key={step.number} className="relative flex flex-col items-center text-center">
+            <div key={step.number} className="relative mx-2 flex flex-col items-center border border-border bg-background p-6 text-center">
               {/* Number badge + icon */}
-              <div className="relative mb-5">
-                <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center border border-success/20 bg-success/5">
-                  <step.icon className="h-7 w-7 text-green-700 dark:text-green-400" strokeWidth={1.5} />
+              <div className="relative mb-4">
+                <div className="flex h-12 w-12 items-center justify-center border border-success/20 bg-success/5">
+                  <step.icon className="h-5 w-5 text-green-700 dark:text-green-400" strokeWidth={1.5} />
                 </div>
-                <span className="absolute -top-2.5 -right-2.5 flex h-6 w-6 items-center justify-center bg-success text-xs font-bold text-background">
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center bg-success text-[10px] font-bold text-background">
                   {step.number}
                 </span>
               </div>
 
               {/* Content */}
-              <h3 className="mb-1.5 text-sm font-semibold text-foreground">
+              <h3 className="mb-1 text-sm font-semibold text-foreground">
                 {step.title}
               </h3>
-              <p className="max-w-[240px] text-xs leading-relaxed text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
             </div>
