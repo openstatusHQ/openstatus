@@ -18,7 +18,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
-import { Book, Braces, CalendarClock, HelpCircle, LifeBuoy } from "lucide-react";
+import {
+  Book,
+  Braces,
+  CalendarClock,
+  HelpCircle,
+  LifeBuoy,
+} from "lucide-react";
 import Link from "next/link";
 
 export function NavHelp() {
@@ -30,7 +36,10 @@ export function NavHelp() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="font-commit-mono tracking-tight" tooltip="Get Help">
+                <SidebarMenuButton
+                  className="font-commit-mono tracking-tight"
+                  tooltip="Get Help"
+                >
                   <HelpCircle />
                   <span>Get Help</span>
                 </SidebarMenuButton>
@@ -51,28 +60,48 @@ export function NavHelp() {
                   </DropdownMenuItem>
                 </FormDialogSupportContact>
                 <DropdownMenuItem asChild>
-                  <Link href="https://docs.openstatus.dev" target="_blank" rel="noreferrer">
+                  <Link
+                    href="https://docs.openstatus.dev"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Book /> Docs
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="https://api.openstatus.dev/openapi" target="_blank" rel="noreferrer">
+                  <Link
+                    href="https://api.openstatus.dev/openapi"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Braces /> API Reference
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="https://openstatus.dev/cal" target="_blank" rel="noreferrer">
+                  <Link
+                    href="https://openstatus.dev/cal"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <CalendarClock /> Book a Call
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="https://openstatus.dev/discord" target="_blank" rel="noreferrer">
+                  <Link
+                    href="https://openstatus.dev/discord"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <DiscordIcon />
                     Community
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="https://openstatus.dev/github" target="_blank" rel="noreferrer">
+                  <Link
+                    href="https://openstatus.dev/github"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <GitHubIcon />
                     GitHub
                   </Link>
