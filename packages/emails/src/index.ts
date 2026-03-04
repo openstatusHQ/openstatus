@@ -1,5 +1,8 @@
+export { default as FeedbackEmail } from "../emails/feedback";
 export { default as FollowUpEmail } from "../emails/followup";
+export { default as SlackFeedbackEmail } from "../emails/slack-feedback";
 export { default as SubscribeEmail } from "../emails/subscribe";
+export { default as TeamInviteReminderEmail } from "../emails/team-invite-reminder";
 export { default as WelcomeEmail } from "../emails/welcome";
 export { default as TeamInvitationEmail } from "../emails/team-invitation";
 export { default as MonitorPausedEmail } from "../emails/monitor-paused";

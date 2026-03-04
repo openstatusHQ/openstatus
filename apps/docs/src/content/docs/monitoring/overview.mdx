@@ -40,35 +40,20 @@ You can create a new monitor in one of four ways:
 - Dashboard: Use our intuitive dashboard to quickly set up and manage your monitors.
 - API: Integrate monitor creation into your workflow using our [API](https://api.openstatus.dev/v1#tag/monitor/POST/monitor).
 - CLI: Use our command-line interface to create and manage monitors with [YAML configuration files](https://github.com/openstatusHQ/cli-template).
-- Terraform: Automate the process with our [Terraform provider](/tools/terraform).
+- Terraform: Automate the process with our [Terraform provider](/reference/terraform/).
 
 ### Monitor types
 
-We support different types of monitors for various use cases:
-
-<CardGrid>
-    <LinkCard
-        title="HTTP Monitor"
-        href="/monitoring/type/http"
-        description="Monitor HTTP/HTTPS endpoints including APIs and websites"
-    />
-    <LinkCard
-        title="TCP Monitor"
-        href="/monitoring/type/tcp"
-        description="Monitor TCP port availability for databases and services"
-    />
-</CardGrid>
+- **HTTP**: Check the availability and performance of your web services by sending HTTP requests and analyzing the responses.
+- **TCP**: Verify that your servers are accepting connections on specific ports, ensuring that critical
+- **DNS**: Monitor the health of your DNS records by performing lookups and validating responses.
 
 ## Getting started
 
 Ready to start monitoring? Follow these guides:
 
 1. **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial
-2. **[Configure Notifications](/monitoring/customization/notification)** - Get alerted on issues
-3. **[Set Up Assertions](/monitoring/customization/assertions)** - Validate response content
 
 ## Learn more
 
 - **[Understanding Uptime Monitoring](/concept/uptime-monitoring)** - Core concepts explained
-- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - What metrics we track
-- **[Monitoring as Code](/monitoring/monitoring-as-code)** - Manage monitors with YAML
