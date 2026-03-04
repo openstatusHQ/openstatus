@@ -17,8 +17,9 @@ const WelcomeEmail = () => {
         Thanks for signing up for OpenStatus.
         <br />
         <br />
-        The fastest way to get started: create your status page. It takes under 5 minutes and your
-        users will have a single place to check if your services are up.
+        The fastest way to get started: create your status page. It takes under
+        5 minutes and your users will have a single place to check if your
+        services are up.
         <br />
         <br />👉{" "}
         <a href="https://app.openstatus.dev/status-pages/create?ref=email-onboarding">
@@ -27,8 +28,10 @@ const WelcomeEmail = () => {
         <br />
         <br />
         Want full control? Use our{" "}
-        <a href="https://www.openstatus.dev/registry?ref=email-onboarding">open source</a> to build
-        your own status page and host it anywhere.
+        <a href="https://www.openstatus.dev/registry?ref=email-onboarding">
+          open source
+        </a>{" "}
+        to build your own status page and host it anywhere.
         <br />
         <br />
         Hit reply if you get stuck — I read every response.

@@ -16,8 +16,7 @@ const TeamInviteReminderEmail = () => {
         When something goes down at 2am, you don't want to be the only one who
         can update the status page.
         <br />
-        <br />
-        👉{" "}
+        <br />👉{" "}
         <a href="https://app.openstatus.dev/settings/general?ref=email-team-invite">
           Invite your team
         </a>

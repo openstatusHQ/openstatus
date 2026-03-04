@@ -13,14 +13,18 @@ const FollowUpEmail = () => {
         Hey
         <br />
         <br />
-        Quick tip: connect the OpenStatus Slack app and manage incident updates for your status page
-        directly from Slack — no need to switch tabs during an outage.
+        Quick tip: connect the OpenStatus Slack app and manage incident updates
+        for your status page directly from Slack — no need to switch tabs during
+        an outage.
         <br />
         <br />👉{" "}
-        <a href="https://app.openstatus.dev/agents?ref=email-followup">Install the Slack app</a>
+        <a href="https://app.openstatus.dev/agents?ref=email-followup">
+          Install the Slack app
+        </a>
         <br />
         <br />
-        When something goes wrong, just mention @openstatus to create or update an incident.
+        When something goes wrong, just mention @openstatus to create or update
+        an incident.
         <br />
         <br />
         Hit reply if you have questions — happy to help.

@@ -12,8 +12,8 @@ const SlackFeedbackEmail = () => {
       <Body>
         Hey
         <br />
-        <br />
-        I saw you installed the OpenStatus Slack app — thanks for trying it out!
+        <br />I saw you installed the OpenStatus Slack app — thanks for trying
+        it out!
         <br />
         <br />
         Quick question: how's the incident management from Slack going so far?

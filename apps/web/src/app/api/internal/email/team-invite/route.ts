@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { and, count, eq, gte, inArray, lte } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { invitation, user, usersToWorkspaces } from "@openstatus/db/src/schema";
-import { sendEmail, TeamInviteReminderEmail } from "@openstatus/emails";
+import { TeamInviteReminderEmail, sendEmail } from "@openstatus/emails";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
     .where(and(gte(user.createdAt, date1), lte(user.createdAt, date2)))
     .all();
 
-  const workspaceIds = [...new Set(users.map((u) => u.workspaceId).filter(Boolean))];
+  const workspaceIds = [
+    ...new Set(users.map((u) => u.workspaceId).filter(Boolean)),
+  ];
 
   if (workspaceIds.length === 0) {
     return Response.json({ success: true, sent: 0 });
