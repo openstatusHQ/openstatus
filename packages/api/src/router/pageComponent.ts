@@ -385,9 +385,16 @@ export const pageComponentRouter = createTRPCRouter({
         }
 
         // Handle static components
-        // If they have IDs, update them; otherwise insert new ones
+        // If they have a valid existing ID, update them; otherwise insert new ones
+        const existingComponentIds = new Set(
+          existingComponents.map((c) => c.id),
+        );
+
         for (const componentValue of staticComponents) {
-          if (componentValue.id) {
+          if (
+            componentValue.id &&
+            existingComponentIds.has(componentValue.id)
+          ) {
             // Update existing static component (preserves ID and relationships)
             await tx
               .update(pageComponent)
