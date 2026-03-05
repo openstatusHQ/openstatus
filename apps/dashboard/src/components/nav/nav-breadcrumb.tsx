@@ -8,16 +8,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@openstatus/ui/components/ui/breadcrumb";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@openstatus/ui/components/ui/select";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { Fragment } from "react";
 
 interface NavBreadcrumbProps {
@@ -33,41 +25,16 @@ interface NavBreadcrumbProps {
         label: string;
         icon?: LucideIcon;
       }
-    | {
-        type: "select";
-        items: { value: string; label: string; icon: LucideIcon }[];
-      }
   )[];
 }
 
 export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // Find the select item in the breadcrumb
-  const selectItem = items.find((item) => item.type === "select");
-
-  // Get pathname segments
-  const segments = pathname.split("/").filter(Boolean);
-
-  // Find the first segment that matches a select item value, or fall back to last segment
-  const value = selectItem
-    ? segments.find((segment) =>
-        selectItem.items.some((item) => item.value === segment),
-      ) ?? segments[segments.length - 1]
-    : segments[segments.length - 1];
-
-  // Find the index of the current value in segments to construct base path
-  const valueIndex = segments.indexOf(value);
-  const basePath =
-    valueIndex >= 0 ? `/${segments.slice(0, valueIndex).join("/")}` : pathname;
-
   return (
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbSeparator className="hidden md:block" />
         {items.map((item, i) => (
-          <Fragment key={`${item.type}-${i}`}>
+          <Fragment key={item.type === "link" ? item.href : item.label}>
             <BreadcrumbItem>
               {item.type === "link" ? (
                 <BreadcrumbLink
@@ -103,38 +70,6 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                     {item.label}
                   </span>
                 </BreadcrumbPage>
-              ) : null}
-              {item.type === "select" ? (
-                <Select
-                  value={value}
-                  onValueChange={(newValue) => {
-                    router.push(`${basePath}/${newValue}`);
-                  }}
-                >
-                  <SelectTrigger
-                    id="select-option"
-                    className="font-commit-mono text-foreground tracking-tight [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
-                    aria-label="Select option"
-                  >
-                    <SelectValue placeholder="Select option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {item.items.map((item, i) => (
-                      <SelectItem
-                        key={i}
-                        value={item.value}
-                        className="font-commit-mono tracking-tight"
-                      >
-                        <item.icon
-                          size={16}
-                          aria-hidden="true"
-                          className="shrink-0"
-                        />
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               ) : null}
             </BreadcrumbItem>
             {i < items.length - 1 && (
