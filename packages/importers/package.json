@@ -1,0 +1,22 @@
+{
+  "name": "@openstatus/importers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./statuspage": "./src/providers/statuspage/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}
