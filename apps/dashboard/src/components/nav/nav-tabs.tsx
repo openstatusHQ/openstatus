@@ -1,0 +1,46 @@
+"use client";
+
+import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { cn } from "@/lib/utils";
+
+interface NavTabsProps {
+  items: {
+    value: string;
+    label: string;
+    icon: LucideIcon;
+    href: string;
+  }[];
+}
+
+export function NavTabs({ items }: NavTabsProps) {
+  const pathname = usePathname();
+
+  return (
+    <nav className="sticky top-14 z-10 h-[41px] w-full overflow-x-auto border-b bg-background px-2">
+      <ul className="inline-flex h-full items-center gap-1 px-3 text-sm">
+        {items.map((item) => {
+          const isActive = pathname.endsWith(`/${item.value}`);
+          return (
+            <li key={item.value} className="h-full">
+              <Link
+                href={item.href}
+                className={cn(
+                  "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap border-b px-2 py-1 font-commit-mono tracking-tight",
+                  isActive
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <item.icon size={16} aria-hidden="true" className="shrink-0" />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}

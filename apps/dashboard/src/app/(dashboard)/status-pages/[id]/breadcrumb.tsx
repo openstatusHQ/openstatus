@@ -13,6 +13,14 @@ import {
 } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 
+const pages: Record<string, { label: string; icon: typeof PanelTop }> = {
+  "status-reports": { label: "Status Reports", icon: Megaphone },
+  maintenances: { label: "Maintenances", icon: Hammer },
+  subscribers: { label: "Subscribers", icon: Users },
+  components: { label: "Components", icon: LayoutTemplate },
+  edit: { label: "Settings", icon: Cog },
+};
+
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
   const pathname = usePathname();
@@ -23,6 +31,9 @@ export function Breadcrumb() {
 
   if (!statusPage) return null;
 
+  const segment = pathname.split("/").pop() ?? "";
+  const currentPage = pages[segment];
+
   return (
     <NavBreadcrumb
       items={[
@@ -32,30 +43,20 @@ export function Breadcrumb() {
           href: "/status-pages",
           icon: PanelTop,
         },
-        pathname === `/status-pages/${id}/status-reports`
-          ? {
-              type: "page",
-              label: statusPage.title,
-            }
-          : {
-              type: "link",
-              label: statusPage.title,
-              href: `/status-pages/${id}/status-reports`,
-            },
         {
-          type: "select",
-          items: [
-            {
-              value: "status-reports",
-              label: "Status Reports",
-              icon: Megaphone,
-            },
-            { value: "maintenances", label: "Maintenances", icon: Hammer },
-            { value: "subscribers", label: "Subscribers", icon: Users },
-            { value: "components", label: "Components", icon: LayoutTemplate },
-            { value: "edit", label: "Settings", icon: Cog },
-          ],
+          type: "link",
+          label: statusPage.title,
+          href: `/status-pages/${id}/status-reports`,
         },
+        ...(currentPage
+          ? [
+              {
+                type: "page" as const,
+                label: currentPage.label,
+                icon: currentPage.icon,
+              },
+            ]
+          : []),
       ]}
     />
   );
