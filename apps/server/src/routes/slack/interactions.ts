@@ -1,18 +1,15 @@
-import { db, eq } from "@openstatus/db";
+import { and, db, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
+  maintenancesToPageComponents,
   page,
+  pageComponent,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
-import {
-  sendMaintenanceNotification,
-  updatePageComponentAssociations as updateMaintenanceComponentAssociations,
-  validatePageComponentIds as validateMaintenanceComponentIds,
-  validatePageExists,
-} from "../rpc/services/maintenance";
+import { sendMaintenanceNotification } from "../rpc/services/maintenance";
 import {
   getStatusReportById,
   sendStatusReportNotification,
@@ -400,23 +397,47 @@ async function executeAction(
       }
 
       const newMaintenance = await db.transaction(async (tx) => {
-        await validatePageExists(maintenancePageId, workspaceId, tx);
+        const pageRecord = await tx
+          .select({ id: page.id })
+          .from(page)
+          .where(and(eq(page.id, maintenancePageId), eq(page.workspaceId, workspaceId)))
+          .get();
 
-        const validated = maintenanceComponentIds?.length
-          ? await validateMaintenanceComponentIds(
-              maintenanceComponentIds,
-              workspaceId,
-              tx,
+        if (!pageRecord) {
+          throw new Error(`Page ${maintenancePageId} not found in this workspace`);
+        }
+
+        let componentIds: number[] = [];
+        if (maintenanceComponentIds?.length) {
+          const numericIds = maintenanceComponentIds.map((id) => Number(id));
+          const validComponents = await tx
+            .select({ id: pageComponent.id, pageId: pageComponent.pageId })
+            .from(pageComponent)
+            .where(
+              and(
+                inArray(pageComponent.id, numericIds),
+                eq(pageComponent.workspaceId, workspaceId),
+              ),
             )
-          : { componentIds: [], pageId: null };
+            .all();
 
-        if (
-          validated.pageId !== null &&
-          validated.pageId !== maintenancePageId
-        ) {
-          throw new Error(
-            `pageId ${maintenancePageId} does not match the page (${validated.pageId}) that the selected components belong to`,
-          );
+          if (validComponents.length !== numericIds.length) {
+            throw new Error("One or more page components not found");
+          }
+
+          const componentPageIds = new Set(validComponents.map((c) => c.pageId));
+          if (componentPageIds.size > 1) {
+            throw new Error("All components must belong to the same page");
+          }
+
+          const componentPageId = validComponents[0]?.pageId;
+          if (componentPageId !== null && componentPageId !== maintenancePageId) {
+            throw new Error(
+              `pageId ${maintenancePageId} does not match the page (${componentPageId}) that the selected components belong to`,
+            );
+          }
+
+          componentIds = numericIds;
         }
 
         const record = await tx
@@ -432,11 +453,12 @@ async function executeAction(
           .returning()
           .get();
 
-        if (validated.componentIds.length > 0) {
-          await updateMaintenanceComponentAssociations(
-            record.id,
-            validated.componentIds,
-            tx,
+        if (componentIds.length > 0) {
+          await tx.insert(maintenancesToPageComponents).values(
+            componentIds.map((pageComponentId) => ({
+              maintenanceId: record.id,
+              pageComponentId,
+            })),
           );
         }
 
