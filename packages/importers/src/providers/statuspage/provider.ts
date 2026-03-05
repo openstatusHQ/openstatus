@@ -96,7 +96,10 @@ export class StatuspageImportProvider
         sourceId: c.id,
         name: c.name,
         status: "created" as const,
-        data: mapComponent(c, config.workspaceId, pageId),
+        data: {
+          ...mapComponent(c, config.workspaceId, pageId),
+          sourceGroupId: c.group_id,
+        },
       }));
       phases.push({
         phase: "components",
@@ -136,7 +139,10 @@ export class StatuspageImportProvider
           sourceId: inc.id,
           name: inc.name,
           status: "created" as const,
-          data: mapIncidentToMaintenance(inc, config.workspaceId, pageId),
+          data: {
+            ...mapIncidentToMaintenance(inc, config.workspaceId, pageId),
+            sourceComponentIds: (inc.components ?? []).map((c) => c.id),
+          },
         }),
       );
       phases.push({

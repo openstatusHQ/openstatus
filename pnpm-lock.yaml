@@ -1309,6 +1309,9 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../error
+      '@openstatus/importers':
+        specifier: workspace:*
+        version: link:../importers
       '@openstatus/notification-google-chat':
         specifier: workspace:*
         version: link:../notifications/google-chat
@@ -1542,6 +1545,19 @@ importers:
         version: 19.2.2(@types/react@19.2.2)
       typescript:
         specifier: 5.9.3
+        version: 5.9.3
+
+  packages/importers:
+    dependencies:
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      typescript:
+        specifier: ^5.9.3
         version: 5.9.3
 
   packages/notifications/base:
