@@ -7,6 +7,7 @@ export type ResourceResult = {
   name: string;
   status: "created" | "skipped" | "failed";
   error?: string;
+  data?: unknown;
 };
 
 /**

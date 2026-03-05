@@ -15,3 +15,5 @@ export {
   StatuspagePageSchema,
   StatuspageSubscriberSchema,
 } from "./api-types";
+export { StatuspageImportProvider } from "./provider";
+export type { StatuspageImportConfig } from "./provider";
