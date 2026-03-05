@@ -54,7 +54,7 @@ services:
     # Internal Services - Using GitHub Packages
     workflows:
         container_name: openstatus-workflows
-        image: ghcr.io/openstatusHQ/openstatus-workflows:latest
+        image: ghcr.io/openstatushq/openstatus-workflows:latest
         networks:
             - openstatus
         ports:
@@ -79,7 +79,7 @@ services:
 
     server:
         container_name: openstatus-server
-        image: ghcr.io/openstatusHQ/openstatus-server:latest
+        image: ghcr.io/openstatushq/openstatus-server:latest
         networks:
             - openstatus
         ports:
@@ -104,7 +104,7 @@ services:
 
     private-location:
         container_name: openstatus-private-location
-        image: ghcr.io/openstatusHQ/openstatus-private-location:latest
+        image: ghcr.io/openstatushq/openstatus-private-location:latest
         networks:
             - openstatus
         ports:
@@ -136,7 +136,7 @@ services:
 
     checker:
         container_name: openstatus-checker
-        image: ghcr.io/openstatusHQ/openstatus-checker:latest
+        image: ghcr.io/openstatushq/openstatus-checker:latest
         networks:
             - openstatus
         ports:
@@ -159,7 +159,7 @@ services:
 
     dashboard:
         container_name: openstatus-dashboard
-        image: ghcr.io/openstatusHQ/openstatus-dashboard:latest
+        image: ghcr.io/openstatushq/openstatus-dashboard:latest
         networks:
             - openstatus
         ports:
@@ -188,7 +188,7 @@ services:
 
     status-page:
         container_name: openstatus-status-page
-        image: ghcr.io/openstatusHQ/openstatus-status-page:latest
+        image: ghcr.io/openstatushq/openstatus-status-page:latest
         networks:
             - openstatus
         ports:
