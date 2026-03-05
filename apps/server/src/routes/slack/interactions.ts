@@ -455,7 +455,7 @@ async function executeAction(
       await slack.chat.update({
         channel: channelId,
         ts: messageTs,
-        text: `:white_check_mark: Maintenance *${title}* scheduled${notify ? " and subscribers notified" : ""}.\n${maintenancePageUrl ? `<${maintenancePageUrl}|View status page>` : ""}`,
+        text: `:white_check_mark: Maintenance *${title}* scheduled${notify ? " and subscribers notified" : ""}.${maintenancePageUrl ? `\n<${maintenancePageUrl}|View status page>` : ""}`,
         blocks: [],
       });
       break;

@@ -1,4 +1,4 @@
-import { and, db, desc, eq, gt } from "@openstatus/db";
+import { and, asc, db, desc, eq, gt } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
 import { tool } from "ai";
 import { z } from "zod";
@@ -32,7 +32,7 @@ export function createListMaintenancesTool(workspaceId: number) {
         })
         .from(maintenance)
         .where(and(...conditions))
-        .orderBy(desc(maintenance.from))
+        .orderBy(filter === "upcoming" ? asc(maintenance.from) : desc(maintenance.from))
         .limit(20)
         .all();
 
