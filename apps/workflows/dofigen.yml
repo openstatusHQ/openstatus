@@ -80,12 +80,10 @@ builders:
         target: /app/package.json
     run: bun install
 
-  ca-certs:
-    fromImage: debian:bullseye-slim
-    run: apt update && apt install -y ca-certificates curl && update-ca-certificates
-
 fromImage: debian:bullseye-slim
 workdir: /app/
+root:
+  run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Metadata labels
 labels:
@@ -107,12 +105,6 @@ copy:
   - fromBuilder: libsql
     source: /app/node_modules
     target: /app/node_modules
-  - fromBuilder: ca-certs
-    source: /etc/ssl/certs/ca-certificates.crt
-    target: /etc/ssl/certs/
-  - fromBuilder: ca-certs
-    source: /usr/bin/curl
-    target: /usr/bin/curl
 expose: "3000"
 
 entrypoint: /app/apps/workflows/app
