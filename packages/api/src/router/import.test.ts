@@ -33,8 +33,7 @@ function mockStatuspageFetch() {
     let data: unknown = [];
 
     if (urlStr.endsWith("/pages")) data = MOCK_PAGES;
-    else if (urlStr.includes("/component-groups"))
-      data = MOCK_COMPONENT_GROUPS;
+    else if (urlStr.includes("/component-groups")) data = MOCK_COMPONENT_GROUPS;
     else if (urlStr.includes("/components")) data = MOCK_COMPONENTS;
     else if (urlStr.includes("/incidents/scheduled"))
       data = MOCK_INCIDENTS.filter((i) => i.scheduled_for != null);
@@ -337,9 +336,7 @@ test("re-run skips already-imported resources (idempotency)", async () => {
   expect(allSkipped).toBe(true);
 
   // Groups should be skipped on second run
-  const groupPhase = result2.phases.find(
-    (p) => p.phase === "componentGroups",
-  );
+  const groupPhase = result2.phases.find((p) => p.phase === "componentGroups");
   const allGroupsSkipped = groupPhase?.resources.every(
     (r) => r.status === "skipped",
   );
@@ -381,10 +378,7 @@ test("run with includeIncidents creates status reports", async () => {
     .select()
     .from(statusReportsToPageComponents)
     .where(
-      inArray(
-        statusReportsToPageComponents.statusReportId,
-        createdReportIds,
-      ),
+      inArray(statusReportsToPageComponents.statusReportId, createdReportIds),
     )
     .all();
   expect(links.length).toBeGreaterThan(0);

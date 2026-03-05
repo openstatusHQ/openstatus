@@ -113,10 +113,7 @@ export async function runImport(config: {
           }
           break;
         case "incidents":
-          if (
-            targetPageId &&
-            config.options?.includeIncidents !== false
-          ) {
+          if (targetPageId && config.options?.includeIncidents !== false) {
             await writeIncidentsPhase(
               phase,
               config.workspaceId,
@@ -128,10 +125,7 @@ export async function runImport(config: {
           }
           break;
         case "maintenances":
-          if (
-            targetPageId &&
-            config.options?.includeIncidents !== false
-          ) {
+          if (targetPageId && config.options?.includeIncidents !== false) {
             await writeMaintenancesPhase(
               phase,
               config.workspaceId,
@@ -181,7 +175,9 @@ export async function runImport(config: {
 // Phase writers
 // ---------------------------------------------------------------------------
 
-function computePhaseStatus(resources: ResourceResult[]): PhaseResult["status"] {
+function computePhaseStatus(
+  resources: ResourceResult[],
+): PhaseResult["status"] {
   if (resources.length === 0) return "completed";
   const allFailed = resources.every((r) => r.status === "failed");
   if (allFailed) return "failed";
@@ -215,11 +211,15 @@ async function writePagePhase(
     const existing = await db
       .select()
       .from(page)
-      .where(and(eq(page.id, existingPageId), eq(page.workspaceId, workspaceId)))
+      .where(
+        and(eq(page.id, existingPageId), eq(page.workspaceId, workspaceId)),
+      )
       .get();
 
     if (!existing) {
-      throw new Error("Provided page not found or does not belong to workspace");
+      throw new Error(
+        "Provided page not found or does not belong to workspace",
+      );
     }
 
     await db

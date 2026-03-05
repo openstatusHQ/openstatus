@@ -71,9 +71,7 @@ export class StatuspageClient {
     );
   }
 
-  async getScheduledIncidents(
-    pageId: string,
-  ): Promise<StatuspageIncident[]> {
+  async getScheduledIncidents(pageId: string): Promise<StatuspageIncident[]> {
     return this.request(
       `/pages/${pageId}/incidents/scheduled`,
       z.array(StatuspageIncidentSchema),
