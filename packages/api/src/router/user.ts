@@ -1,4 +1,4 @@
-import { and, eq, ne } from "@openstatus/db";
+import { and, eq, isNull, ne } from "@openstatus/db";
 import {
   account,
   session,
@@ -14,7 +14,7 @@ export const userRouter = createTRPCRouter({
     return await opts.ctx.db
       .select()
       .from(user)
-      .where(eq(user.id, opts.ctx.user.id))
+      .where(and(eq(user.id, opts.ctx.user.id), isNull(user.deletedAt)))
       .get();
   }),
 
@@ -66,11 +66,11 @@ export const userRouter = createTRPCRouter({
         .update(user)
         .set({
           deletedAt: new Date(),
-          email: null,
-          firstName: null,
-          lastName: null,
-          photoUrl: null,
-          name: null,
+          email: "",
+          firstName: "",
+          lastName: "",
+          photoUrl: "",
+          name: "",
         })
         .where(eq(user.id, userId));
     });

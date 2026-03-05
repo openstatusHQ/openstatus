@@ -41,7 +41,7 @@ export default function Page() {
   if (!user || !workspace || !members) return null;
 
   const isOwner = members.find((m) => m.user.id === user.id)?.role === "owner";
-  const hasPaidPlan = workspace.plan !== "free";
+  const hasPaidPlan = !!workspace.plan && workspace.plan !== "free";
   const isDeleteDisabled = isOwner && hasPaidPlan;
 
   return (
@@ -117,7 +117,7 @@ export default function Page() {
               .
             </FormCardFooterInfo>
             <FormAlertDialog
-              confirmationValue={user.email ?? ""}
+              confirmationValue={user.email || user.name || "delete-account"}
               submitAction={async () => {
                 await deleteAccountMutation.mutateAsync();
                 await signOut({ redirectTo: "/" });
