@@ -71,7 +71,7 @@ interface ValidatedPageComponents {
  * Helper to validate page component IDs belong to the workspace and same page.
  * Accepts an optional transaction to ensure atomicity with subsequent operations.
  */
-async function validatePageComponentIds(
+export async function validatePageComponentIds(
   pageComponentIds: string[],
   workspaceId: number,
   tx: DB | Transaction = db,
@@ -119,7 +119,7 @@ async function validatePageComponentIds(
  * Helper to update page component associations for a maintenance.
  * Accepts an optional transaction to ensure atomicity.
  */
-async function updatePageComponentAssociations(
+export async function updatePageComponentAssociations(
   maintenanceId: number,
   pageComponentIds: number[],
   tx: DB | Transaction = db,
@@ -169,7 +169,7 @@ function validateDateRange(
 /**
  * Helper to validate page exists in workspace.
  */
-async function validatePageExists(
+export async function validatePageExists(
   pageId: number,
   workspaceId: number,
   tx: DB | Transaction = db,
@@ -189,7 +189,7 @@ async function validatePageExists(
  * Helper to send maintenance notifications to page subscribers.
  * Uses the subscription dispatcher for component-aware filtering.
  */
-async function sendMaintenanceNotification(params: {
+export async function sendMaintenanceNotification(params: {
   maintenanceId: number;
   limits: Limits;
 }) {

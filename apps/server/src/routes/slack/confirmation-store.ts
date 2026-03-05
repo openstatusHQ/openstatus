@@ -47,11 +47,24 @@ const resolveStatusReportActionSchema = z.object({
   }),
 });
 
+const createMaintenanceActionSchema = z.object({
+  type: z.literal("createMaintenance"),
+  params: z.object({
+    title: z.string(),
+    message: z.string(),
+    from: z.string(),
+    to: z.string(),
+    pageId: z.number(),
+    pageComponentIds: z.array(z.string()).optional(),
+  }),
+});
+
 const actionSchema = z.discriminatedUnion("type", [
   createStatusReportActionSchema,
   addStatusReportUpdateActionSchema,
   updateStatusReportActionSchema,
   resolveStatusReportActionSchema,
+  createMaintenanceActionSchema,
 ]);
 
 const pendingActionSchema = z.object({

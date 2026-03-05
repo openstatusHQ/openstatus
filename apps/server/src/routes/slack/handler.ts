@@ -243,5 +243,7 @@ function getConfirmationText(action: PendingAction["action"]): string {
       return `Update Status Report${action.params.title ? `: ${action.params.title}` : ""}`;
     case "resolveStatusReport":
       return "Resolve Status Report";
+    case "createMaintenance":
+      return `Schedule Maintenance: ${action.params.title}`;
   }
 }

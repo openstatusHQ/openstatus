@@ -1,11 +1,18 @@
 import { db, eq } from "@openstatus/db";
 import {
+  maintenance,
   page,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
+import {
+  sendMaintenanceNotification,
+  updatePageComponentAssociations as updateMaintenanceComponentAssociations,
+  validatePageComponentIds as validateMaintenanceComponentIds,
+  validatePageExists,
+} from "../rpc/services/maintenance";
 import {
   getStatusReportById,
   sendStatusReportNotification,
@@ -120,6 +127,20 @@ export async function handleSlackInteraction(c: Context) {
   }
 
   return c.json({ ok: true });
+}
+
+async function getPageUrl(pageId: number): Promise<string | null> {
+  const statusPage = await db
+    .select({ slug: page.slug, customDomain: page.customDomain })
+    .from(page)
+    .where(eq(page.id, pageId))
+    .get();
+
+  if (!statusPage) return null;
+
+  return statusPage.customDomain
+    ? `https://${statusPage.customDomain}`
+    : `https://${statusPage.slug}.openstatus.dev`;
 }
 
 async function getReportUrl(pageId: number, reportId: number): Promise<string> {
@@ -357,6 +378,84 @@ async function executeAction(
         channel: channelId,
         ts: messageTs,
         text: `:white_check_mark: *${report.title}* resolved${notify ? " and subscribers notified" : ""}.${message ? `\n>${message}` : ""}${resolveReportUrl ? `\n<${resolveReportUrl}|View on status page>` : ""}`,
+        blocks: [],
+      });
+      break;
+    }
+
+    case "createMaintenance": {
+      const {
+        title,
+        message,
+        from,
+        to,
+        pageId: maintenancePageId,
+        pageComponentIds: maintenanceComponentIds,
+      } = action.params;
+
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      if (fromDate >= toDate) {
+        throw new Error("Start time must be before end time");
+      }
+
+      const newMaintenance = await db.transaction(async (tx) => {
+        await validatePageExists(maintenancePageId, workspaceId, tx);
+
+        const validated = maintenanceComponentIds?.length
+          ? await validateMaintenanceComponentIds(
+              maintenanceComponentIds,
+              workspaceId,
+              tx,
+            )
+          : { componentIds: [], pageId: null };
+
+        if (
+          validated.pageId !== null &&
+          validated.pageId !== maintenancePageId
+        ) {
+          throw new Error(
+            `pageId ${maintenancePageId} does not match the page (${validated.pageId}) that the selected components belong to`,
+          );
+        }
+
+        const record = await tx
+          .insert(maintenance)
+          .values({
+            workspaceId,
+            pageId: maintenancePageId,
+            title,
+            message,
+            from: fromDate,
+            to: toDate,
+          })
+          .returning()
+          .get();
+
+        if (validated.componentIds.length > 0) {
+          await updateMaintenanceComponentAssociations(
+            record.id,
+            validated.componentIds,
+            tx,
+          );
+        }
+
+        return record;
+      });
+
+      if (notify) {
+        await sendMaintenanceNotification({
+          maintenanceId: newMaintenance.id,
+          limits,
+        });
+      }
+
+      const maintenancePageUrl = await getPageUrl(maintenancePageId);
+
+      await slack.chat.update({
+        channel: channelId,
+        ts: messageTs,
+        text: `:white_check_mark: Maintenance *${title}* scheduled${notify ? " and subscribers notified" : ""}.\n${maintenancePageUrl ? `<${maintenancePageUrl}|View status page>` : ""}`,
         blocks: [],
       });
       break;

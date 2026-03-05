@@ -186,9 +186,66 @@ export function buildConfirmationBlocks(
       });
       break;
     }
+    case "createMaintenance": {
+      const { title, message, from, to, pageId, pageComponentIds } =
+        action.params;
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Schedule Maintenance*\n\n*Title:* ${title}\n*From:* ${formatDate(from)}\n*To:* ${formatDate(to)}\n*Page ID:* ${pageId}${
+            pageComponentIds?.length
+              ? `\n*Components:* ${pageComponentIds.join(", ")}`
+              : ""
+          }\n*Message:* ${message}`,
+        },
+      });
+      blocks.push({ type: "divider" });
+      blocks.push({
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: { type: "plain_text", text: "Approve", emoji: true },
+            action_id: `approve_${actionId}`,
+            style: "primary",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Approve & Notify",
+              emoji: true,
+            },
+            action_id: `approve_notify_${actionId}`,
+            style: "primary",
+          },
+          {
+            type: "button",
+            text: { type: "plain_text", text: "Cancel", emoji: true },
+            action_id: `cancel_${actionId}`,
+            style: "danger",
+          },
+        ],
+      });
+      break;
+    }
   }
 
   return blocks;
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
 }
 
 function capitalize(s: string): string {
