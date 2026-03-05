@@ -64,7 +64,14 @@ export const userRouter = createTRPCRouter({
       // Soft delete user
       await tx
         .update(user)
-        .set({ deletedAt: new Date(), email: null })
+        .set({
+          deletedAt: new Date(),
+          email: null,
+          firstName: null,
+          lastName: null,
+          photoUrl: null,
+          name: null,
+        })
         .where(eq(user.id, userId));
     });
   }),
