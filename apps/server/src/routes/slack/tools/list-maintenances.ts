@@ -32,7 +32,11 @@ export function createListMaintenancesTool(workspaceId: number) {
         })
         .from(maintenance)
         .where(and(...conditions))
-        .orderBy(filter === "upcoming" ? asc(maintenance.from) : desc(maintenance.from))
+        .orderBy(
+          filter === "upcoming"
+            ? asc(maintenance.from)
+            : desc(maintenance.from),
+        )
         .limit(20)
         .all();
 
