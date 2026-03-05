@@ -397,42 +397,22 @@ async function executeAction(
       }
 
       const newMaintenance = await db.transaction(async (tx) => {
-        let resolvedPageId: number | undefined;
+        const pageRecord = await tx
+          .select({ id: page.id })
+          .from(page)
+          .where(
+            and(
+              eq(page.id, maintenancePageId),
+              eq(page.workspaceId, workspaceId),
+            ),
+          )
+          .get();
 
-        if (maintenancePageId) {
-          const pageRecord = await tx
-            .select({ id: page.id })
-            .from(page)
-            .where(
-              and(
-                eq(page.id, maintenancePageId),
-                eq(page.workspaceId, workspaceId),
-              ),
-            )
-            .get();
-
-          if (pageRecord) {
-            resolvedPageId = pageRecord.id;
-          }
+        if (!pageRecord) {
+          throw new Error("Page not found in this workspace");
         }
 
-        if (!resolvedPageId) {
-          const workspacePages = await tx
-            .select({ id: page.id })
-            .from(page)
-            .where(eq(page.workspaceId, workspaceId))
-            .all();
-
-          if (workspacePages.length === 1) {
-            resolvedPageId = workspacePages[0].id;
-          } else if (workspacePages.length === 0) {
-            throw new Error("No status pages found in this workspace");
-          } else {
-            throw new Error(
-              "Could not determine which status page to use. Please try again.",
-            );
-          }
-        }
+        const resolvedPageId = pageRecord.id;
 
         let componentIds: number[] = [];
         if (maintenanceComponentIds?.length) {
