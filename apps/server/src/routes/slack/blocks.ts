@@ -38,16 +38,13 @@ export function buildConfirmationBlocks(
 
   switch (action.type) {
     case "createStatusReport": {
-      const { title, status, message, pageId, pageComponentIds } =
-        action.params;
+      const { title, status, message, pageId, pageComponentIds } = action.params;
       blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
           text: `*Create Status Report*\n\n*Title:* ${title}\n*Status:* ${capitalize(status)}\n*Page ID:* ${pageId}${
-            pageComponentIds?.length
-              ? `\n*Components:* ${pageComponentIds.join(", ")}`
-              : ""
+            pageComponentIds?.length ? `\n*Components:* ${pageComponentIds.join(", ")}` : ""
           }\n*Message:* ${message}`,
         },
       });
@@ -124,8 +121,7 @@ export function buildConfirmationBlocks(
       const { statusReportId, title, pageComponentIds } = action.params;
       let text = `*Update Status Report*\n\n*Report ID:* ${statusReportId}`;
       if (title) text += `\n*New Title:* ${title}`;
-      if (pageComponentIds?.length)
-        text += `\n*Components:* ${pageComponentIds.join(", ")}`;
+      if (pageComponentIds?.length) text += `\n*Components:* ${pageComponentIds.join(", ")}`;
       blocks.push({ type: "section", text: { type: "mrkdwn", text } });
       blocks.push({ type: "divider" });
       blocks.push({
@@ -187,16 +183,13 @@ export function buildConfirmationBlocks(
       break;
     }
     case "createMaintenance": {
-      const { title, message, from, to, pageId, pageComponentIds } =
-        action.params;
+      const { title, message, from, to, pageComponentIds } = action.params;
       blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Schedule Maintenance*\n\n*Title:* ${title}\n*From:* ${formatDate(from)}\n*To:* ${formatDate(to)}\n*Page ID:* ${pageId}${
-            pageComponentIds?.length
-              ? `\n*Components:* ${pageComponentIds.join(", ")}`
-              : ""
+          text: `*Schedule Maintenance*\n\n*Title:* ${title}\n*From:* ${formatDate(from)}\n*To:* ${formatDate(to)}${
+            pageComponentIds?.length ? `\n*Components:* ${pageComponentIds.join(", ")}` : ""
           }\n*Message:* ${message}`,
         },
       });

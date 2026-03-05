@@ -394,8 +394,51 @@ describe("createMaintenance execution", () => {
     expect(cancelCall).toBeDefined();
   });
 
-  test("shows error for invalid page id", async () => {
+  test("shows error when AI hallucinates page id", async () => {
     seedMaintenanceAction({ pageId: 99999 });
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const errorCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("Something went wrong"),
+    );
+    expect(errorCall).toBeDefined();
+  });
+
+  test("shows error for workspace with no pages", async () => {
+    const data = {
+      id: "maint-001",
+      workspaceId: 2,
+      limits: {},
+      botToken: "xoxb-test",
+      channelId: "C1",
+      threadTs: "2.1",
+      messageTs: "2.2",
+      userId: "U_OWNER",
+      createdAt: Date.now(),
+      action: {
+        type: "createMaintenance" as const,
+        params: {
+          title: "DB Maintenance",
+          message: "Upgrade.",
+          from: new Date(Date.now() + 86400000).toISOString(),
+          to: new Date(Date.now() + 86400000 + 3600000).toISOString(),
+          pageId: 99999,
+        },
+      },
+    };
+    redisStore.set(`slack:action:${data.id}`, JSON.stringify(data));
+    redisStore.set(`slack:thread:${data.threadTs}`, data.id);
 
     const res = await signAndPost(app, {
       type: "block_actions",
@@ -485,7 +528,29 @@ describe("createMaintenance execution", () => {
   });
 
   test("does not leak internal error details to user", async () => {
-    seedMaintenanceAction({ pageId: 99999 });
+    const data = {
+      id: "maint-001",
+      workspaceId: 2,
+      limits: {},
+      botToken: "xoxb-test",
+      channelId: "C1",
+      threadTs: "2.1",
+      messageTs: "2.2",
+      userId: "U_OWNER",
+      createdAt: Date.now(),
+      action: {
+        type: "createMaintenance" as const,
+        params: {
+          title: "DB Maintenance",
+          message: "Upgrade.",
+          from: new Date(Date.now() + 86400000).toISOString(),
+          to: new Date(Date.now() + 86400000 + 3600000).toISOString(),
+          pageId: 99999,
+        },
+      },
+    };
+    redisStore.set(`slack:action:${data.id}`, JSON.stringify(data));
+    redisStore.set(`slack:thread:${data.threadTs}`, data.id);
 
     await signAndPost(app, {
       type: "block_actions",

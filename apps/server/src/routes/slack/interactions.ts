@@ -164,8 +164,7 @@ async function executeAction(
 
   switch (action.type) {
     case "createStatusReport": {
-      const { title, status, message, pageId, pageComponentIds } =
-        action.params;
+      const { title, status, message, pageId, pageComponentIds } = action.params;
 
       const result = await db.transaction(async (tx) => {
         const validated = pageComponentIds?.length
@@ -173,11 +172,7 @@ async function executeAction(
           : { componentIds: [], pageId: null };
 
         // Validate that provided pageId matches the components' page
-        if (
-          validated.pageId !== null &&
-          pageId != null &&
-          pageId !== validated.pageId
-        ) {
+        if (validated.pageId !== null && pageId != null && pageId !== validated.pageId) {
           throw new Error(
             `pageId ${pageId} does not match the page (${validated.pageId}) that the selected components belong to`,
           );
@@ -198,11 +193,7 @@ async function executeAction(
           .get();
 
         if (validated.componentIds.length > 0) {
-          await updatePageComponentAssociations(
-            report.id,
-            validated.componentIds,
-            tx,
-          );
+          await updatePageComponentAssociations(report.id, validated.componentIds, tx);
         }
 
         const newUpdate = await tx
@@ -228,10 +219,7 @@ async function executeAction(
         });
       }
 
-      const reportUrl = await getReportUrl(
-        result.report.pageId,
-        result.report.id,
-      );
+      const reportUrl = await getReportUrl(result.report.pageId, result.report.id);
 
       await slack.chat.update({
         channel: channelId,
@@ -277,9 +265,7 @@ async function executeAction(
         });
       }
 
-      const updateReportUrl = report.pageId
-        ? await getReportUrl(report.pageId, report.id)
-        : null;
+      const updateReportUrl = report.pageId ? await getReportUrl(report.pageId, report.id) : null;
 
       await slack.chat.update({
         channel: channelId,
@@ -300,16 +286,8 @@ async function executeAction(
 
       await db.transaction(async (tx) => {
         if (pageComponentIds) {
-          const validated = await validatePageComponentIds(
-            pageComponentIds,
-            workspaceId,
-            tx,
-          );
-          await updatePageComponentAssociations(
-            report.id,
-            validated.componentIds,
-            tx,
-          );
+          const validated = await validatePageComponentIds(pageComponentIds, workspaceId, tx);
+          await updatePageComponentAssociations(report.id, validated.componentIds, tx);
         }
 
         const updateValues: Record<string, unknown> = {
@@ -317,10 +295,7 @@ async function executeAction(
         };
         if (title) updateValues.title = title;
 
-        await tx
-          .update(statusReport)
-          .set(updateValues)
-          .where(eq(statusReport.id, report.id));
+        await tx.update(statusReport).set(updateValues).where(eq(statusReport.id, report.id));
       });
 
       await slack.chat.update({
@@ -367,9 +342,7 @@ async function executeAction(
         });
       }
 
-      const resolveReportUrl = report.pageId
-        ? await getReportUrl(report.pageId, report.id)
-        : null;
+      const resolveReportUrl = report.pageId ? await getReportUrl(report.pageId, report.id) : null;
 
       await slack.chat.update({
         channel: channelId,
@@ -397,21 +370,34 @@ async function executeAction(
       }
 
       const newMaintenance = await db.transaction(async (tx) => {
-        const pageRecord = await tx
-          .select({ id: page.id })
-          .from(page)
-          .where(
-            and(
-              eq(page.id, maintenancePageId),
-              eq(page.workspaceId, workspaceId),
-            ),
-          )
-          .get();
+        let resolvedPageId: number | undefined;
 
-        if (!pageRecord) {
-          throw new Error(
-            `Page ${maintenancePageId} not found in this workspace`,
-          );
+        if (maintenancePageId) {
+          const pageRecord = await tx
+            .select({ id: page.id })
+            .from(page)
+            .where(and(eq(page.id, maintenancePageId), eq(page.workspaceId, workspaceId)))
+            .get();
+
+          if (pageRecord) {
+            resolvedPageId = pageRecord.id;
+          }
+        }
+
+        if (!resolvedPageId) {
+          const workspacePages = await tx
+            .select({ id: page.id })
+            .from(page)
+            .where(eq(page.workspaceId, workspaceId))
+            .all();
+
+          if (workspacePages.length === 1) {
+            resolvedPageId = workspacePages[0].id;
+          } else if (workspacePages.length === 0) {
+            throw new Error("No status pages found in this workspace");
+          } else {
+            throw new Error("Could not determine which status page to use. Please try again.");
+          }
         }
 
         let componentIds: number[] = [];
@@ -432,21 +418,14 @@ async function executeAction(
             throw new Error("One or more page components not found");
           }
 
-          const componentPageIds = new Set(
-            validComponents.map((c) => c.pageId),
-          );
+          const componentPageIds = new Set(validComponents.map((c) => c.pageId));
           if (componentPageIds.size > 1) {
             throw new Error("All components must belong to the same page");
           }
 
           const componentPageId = validComponents[0]?.pageId;
-          if (
-            componentPageId !== null &&
-            componentPageId !== maintenancePageId
-          ) {
-            throw new Error(
-              `pageId ${maintenancePageId} does not match the page (${componentPageId}) that the selected components belong to`,
-            );
+          if (componentPageId !== null && componentPageId !== resolvedPageId) {
+            throw new Error("Selected components do not belong to the target status page");
           }
 
           componentIds = numericIds;
@@ -456,7 +435,7 @@ async function executeAction(
           .insert(maintenance)
           .values({
             workspaceId,
-            pageId: maintenancePageId,
+            pageId: resolvedPageId,
             title,
             message,
             from: fromDate,
@@ -484,7 +463,9 @@ async function executeAction(
         });
       }
 
-      const maintenancePageUrl = await getPageUrl(maintenancePageId);
+      const maintenancePageUrl = newMaintenance.pageId
+        ? await getPageUrl(newMaintenance.pageId)
+        : null;
 
       await slack.chat.update({
         channel: channelId,
