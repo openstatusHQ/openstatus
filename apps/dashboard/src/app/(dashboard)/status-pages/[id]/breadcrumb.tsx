@@ -3,23 +3,9 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Cog,
-  Hammer,
-  LayoutTemplate,
-  Megaphone,
-  PanelTop,
-  Users,
-} from "lucide-react";
+import { PanelTop } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
-
-const pages: Record<string, { label: string; icon: typeof PanelTop }> = {
-  "status-reports": { label: "Status Reports", icon: Megaphone },
-  maintenances: { label: "Maintenances", icon: Hammer },
-  subscribers: { label: "Subscribers", icon: Users },
-  components: { label: "Components", icon: LayoutTemplate },
-  edit: { label: "Settings", icon: Cog },
-};
+import { STATUS_PAGE_TABS } from "./constants";
 
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +18,7 @@ export function Breadcrumb() {
   if (!statusPage) return null;
 
   const segment = pathname.split("/").pop() ?? "";
-  const currentPage = pages[segment];
+  const currentTab = STATUS_PAGE_TABS.find((tab) => tab.value === segment);
 
   return (
     <NavBreadcrumb
@@ -48,12 +34,12 @@ export function Breadcrumb() {
           label: statusPage.title,
           href: `/status-pages/${id}/status-reports`,
         },
-        ...(currentPage
+        ...(currentTab
           ? [
               {
                 type: "page" as const,
-                label: currentPage.label,
-                icon: currentPage.icon,
+                label: currentTab.label,
+                icon: currentTab.icon,
               },
             ]
           : []),

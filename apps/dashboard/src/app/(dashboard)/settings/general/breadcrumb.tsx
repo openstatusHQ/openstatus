@@ -1,14 +1,19 @@
 "use client";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
-import { Cog } from "lucide-react";
+import { Cog, SlidersHorizontal } from "lucide-react";
 
 export function Breadcrumb() {
   return (
     <NavBreadcrumb
       items={[
-        { type: "page", label: "Settings", icon: Cog },
-        { type: "page", label: "General", icon: Cog },
+        {
+          type: "link",
+          label: "Settings",
+          icon: Cog,
+          href: "/settings/general",
+        },
+        { type: "page", label: "General", icon: SlidersHorizontal },
       ]}
     />
   );

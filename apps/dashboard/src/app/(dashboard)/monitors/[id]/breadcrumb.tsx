@@ -3,15 +3,9 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Cog, LayoutGrid, Logs, Siren } from "lucide-react";
+import { Activity } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
-
-const pages: Record<string, { label: string; icon: typeof Activity }> = {
-  overview: { label: "Overview", icon: LayoutGrid },
-  logs: { label: "Logs", icon: Logs },
-  incidents: { label: "Incidents", icon: Siren },
-  edit: { label: "Settings", icon: Cog },
-};
+import { MONITOR_TABS } from "./constants";
 
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +18,7 @@ export function Breadcrumb() {
   if (!monitor) return null;
 
   const segment = pathname.split("/").pop() ?? "";
-  const currentPage = pages[segment];
+  const currentTab = MONITOR_TABS.find((tab) => tab.value === segment);
 
   return (
     <NavBreadcrumb
@@ -35,12 +29,12 @@ export function Breadcrumb() {
           label: monitor.name,
           href: `/monitors/${id}/overview`,
         },
-        ...(currentPage
+        ...(currentTab
           ? [
               {
                 type: "page" as const,
-                label: currentPage.label,
-                icon: currentPage.icon,
+                label: currentTab.label,
+                icon: currentTab.icon,
               },
             ]
           : []),

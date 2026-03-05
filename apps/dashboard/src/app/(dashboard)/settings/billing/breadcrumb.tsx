@@ -7,7 +7,12 @@ export function Breadcrumb() {
   return (
     <NavBreadcrumb
       items={[
-        { type: "page", label: "Settings", icon: Cog },
+        {
+          type: "link",
+          label: "Settings",
+          icon: Cog,
+          href: "/settings/general",
+        },
         { type: "page", label: "Billing", icon: CreditCard },
       ]}
     />

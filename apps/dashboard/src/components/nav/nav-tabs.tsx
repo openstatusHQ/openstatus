@@ -17,16 +17,21 @@ interface NavTabsProps {
 
 export function NavTabs({ items }: NavTabsProps) {
   const pathname = usePathname();
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
 
   return (
     <nav className="sticky top-14 z-10 h-[41px] w-full overflow-x-auto border-b bg-background px-2">
       <ul className="inline-flex h-full items-center gap-1 px-3 text-sm">
         {items.map((item) => {
-          const isActive = pathname.endsWith(`/${item.value}`);
+          const normalizedHref = item.href.replace(/\/+$/, "") || "/";
+          const isActive =
+            normalizedPath === normalizedHref ||
+            normalizedPath.startsWith(`${normalizedHref}/`);
           return (
             <li key={item.value} className="h-full">
               <Link
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap border-b px-2 py-1 font-commit-mono tracking-tight",
                   isActive
