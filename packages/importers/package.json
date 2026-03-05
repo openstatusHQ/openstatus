@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./statuspage": "./src/providers/statuspage/index.ts"
+    "./statuspage": "./src/providers/statuspage/index.ts",
+    "./statuspage/fixtures": "./src/providers/statuspage/fixtures.ts"
   },
   "scripts": {
     "test": "bun test",
