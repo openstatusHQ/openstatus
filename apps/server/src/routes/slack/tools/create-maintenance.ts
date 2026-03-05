@@ -18,7 +18,11 @@ export function createCreateMaintenanceTool() {
       to: z
         .string()
         .describe("End time in ISO 8601 format (e.g. 2025-03-14T15:00:00Z)"),
-      pageId: z.number().describe("ID of the status page — MUST come from listStatusPages, never guess this value"),
+      pageId: z
+        .number()
+        .describe(
+          "ID of the status page — MUST come from listStatusPages, never guess this value",
+        ),
       pageComponentIds: z
         .array(z.string())
         .optional()

@@ -15,7 +15,11 @@ export function createCreateStatusReportTool() {
         .describe(
           "Professional status update message for the public status page",
         ),
-      pageId: z.number().describe("ID of the status page — MUST come from listStatusPages, never guess this value"),
+      pageId: z
+        .number()
+        .describe(
+          "ID of the status page — MUST come from listStatusPages, never guess this value",
+        ),
       pageComponentIds: z
         .array(z.string())
         .optional()
