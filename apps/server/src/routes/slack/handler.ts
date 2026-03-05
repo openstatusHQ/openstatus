@@ -166,12 +166,11 @@ async function processEvent(body: SlackEvent) {
       });
     }
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Unknown error";
     console.error("[slack] agent error:", err);
     await slack.chat.update({
       channel: event.channel,
       ts: thinkingTs,
-      text: `:x: Something went wrong: ${errMsg}`,
+      text: ":x: Something went wrong. Please try again.",
     });
   }
 }

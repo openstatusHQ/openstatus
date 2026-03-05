@@ -110,11 +110,11 @@ export async function handleSlackInteraction(c: Context) {
   try {
     await executeAction(consumed, notify, slack, channelId, messageTs);
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[slack] action execution error:", err);
     await slack.chat.update({
       channel: channelId,
       ts: messageTs,
-      text: `:x: Failed: ${errMsg}`,
+      text: ":x: Something went wrong. Please try again.",
       blocks: [],
     });
   }
@@ -187,7 +187,7 @@ async function executeAction(
           );
         }
 
-        await tx
+        const newUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: report.id,
@@ -198,24 +198,19 @@ async function executeAction(
           .returning()
           .get();
 
-        return report;
+        return { report, updateId: newUpdate.id };
       });
-      if (!result || !result.pageId) {
+      if (!result || !result.report.pageId) {
         throw new Error("Failed to create status report");
       }
       if (notify) {
         await sendStatusReportNotification({
-          statusReportId: result.id,
-          pageId: result.pageId,
-          reportTitle: title,
-          status,
-          message,
-          date: new Date(),
+          statusReportUpdateId: result.updateId,
           limits,
         });
       }
 
-      const reportUrl = await getReportUrl(result.pageId, result.id);
+      const reportUrl = await getReportUrl(result.report.pageId, result.report.id);
 
       await slack.chat.update({
         channel: channelId,
@@ -234,8 +229,8 @@ async function executeAction(
         throw new Error("Status report not found");
       }
 
-      await db.transaction(async (tx) => {
-        await tx
+      const updateId = await db.transaction(async (tx) => {
+        const newUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: report.id,
@@ -250,16 +245,13 @@ async function executeAction(
           .update(statusReport)
           .set({ status, updatedAt: new Date() })
           .where(eq(statusReport.id, report.id));
+
+        return newUpdate.id;
       });
 
       if (notify && report.pageId) {
         await sendStatusReportNotification({
-          statusReportId: report.id,
-          pageId: report.pageId,
-          reportTitle: report.title,
-          status,
-          message,
-          date: new Date(),
+          statusReportUpdateId: updateId,
           limits,
         });
       }
@@ -327,8 +319,8 @@ async function executeAction(
         throw new Error("Status report not found");
       }
 
-      await db.transaction(async (tx) => {
-        await tx
+      const resolveUpdateId = await db.transaction(async (tx) => {
+        const newUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: report.id,
@@ -343,16 +335,13 @@ async function executeAction(
           .update(statusReport)
           .set({ status: "resolved", updatedAt: new Date() })
           .where(eq(statusReport.id, report.id));
+
+        return newUpdate.id;
       });
 
       if (notify && report.pageId) {
         await sendStatusReportNotification({
-          statusReportId: report.id,
-          pageId: report.pageId,
-          reportTitle: report.title,
-          status: "resolved",
-          message,
-          date: new Date(),
+          statusReportUpdateId: resolveUpdateId,
           limits,
         });
       }
