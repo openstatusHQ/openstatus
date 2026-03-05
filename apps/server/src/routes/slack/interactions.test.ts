@@ -299,9 +299,7 @@ describe("createMaintenance execution", () => {
     redisStore.clear();
   });
 
-  function seedMaintenanceAction(
-    overrides: Record<string, unknown> = {},
-  ) {
+  function seedMaintenanceAction(overrides: Record<string, unknown> = {}) {
     const data = {
       id: "maint-001",
       workspaceId: 1,
@@ -345,10 +343,14 @@ describe("createMaintenance execution", () => {
     const successCall = slackCalls.find(
       (c) =>
         c.method === "update" &&
-        (c.args.text as string).includes("Maintenance *DB Maintenance* scheduled"),
+        (c.args.text as string).includes(
+          "Maintenance *DB Maintenance* scheduled",
+        ),
     );
     expect(successCall).toBeDefined();
-    expect((successCall?.args.text as string)).not.toContain("subscribers notified");
+    expect(successCall?.args.text as string).not.toContain(
+      "subscribers notified",
+    );
   });
 
   test("approve_notify creates maintenance and notifies", async () => {
@@ -454,7 +456,9 @@ describe("createMaintenance execution", () => {
     const successCall = slackCalls.find(
       (c) =>
         c.method === "update" &&
-        (c.args.text as string).includes("Maintenance *DB Maintenance* scheduled"),
+        (c.args.text as string).includes(
+          "Maintenance *DB Maintenance* scheduled",
+        ),
     );
     expect(successCall).toBeDefined();
   });

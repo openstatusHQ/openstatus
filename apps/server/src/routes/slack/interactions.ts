@@ -400,11 +400,18 @@ async function executeAction(
         const pageRecord = await tx
           .select({ id: page.id })
           .from(page)
-          .where(and(eq(page.id, maintenancePageId), eq(page.workspaceId, workspaceId)))
+          .where(
+            and(
+              eq(page.id, maintenancePageId),
+              eq(page.workspaceId, workspaceId),
+            ),
+          )
           .get();
 
         if (!pageRecord) {
-          throw new Error(`Page ${maintenancePageId} not found in this workspace`);
+          throw new Error(
+            `Page ${maintenancePageId} not found in this workspace`,
+          );
         }
 
         let componentIds: number[] = [];
@@ -425,13 +432,18 @@ async function executeAction(
             throw new Error("One or more page components not found");
           }
 
-          const componentPageIds = new Set(validComponents.map((c) => c.pageId));
+          const componentPageIds = new Set(
+            validComponents.map((c) => c.pageId),
+          );
           if (componentPageIds.size > 1) {
             throw new Error("All components must belong to the same page");
           }
 
           const componentPageId = validComponents[0]?.pageId;
-          if (componentPageId !== null && componentPageId !== maintenancePageId) {
+          if (
+            componentPageId !== null &&
+            componentPageId !== maintenancePageId
+          ) {
             throw new Error(
               `pageId ${maintenancePageId} does not match the page (${componentPageId}) that the selected components belong to`,
             );
