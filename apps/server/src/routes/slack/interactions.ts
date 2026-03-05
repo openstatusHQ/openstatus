@@ -210,7 +210,10 @@ async function executeAction(
         });
       }
 
-      const reportUrl = await getReportUrl(result.report.pageId, result.report.id);
+      const reportUrl = await getReportUrl(
+        result.report.pageId,
+        result.report.id,
+      );
 
       await slack.chat.update({
         channel: channelId,
