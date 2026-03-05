@@ -70,7 +70,7 @@ export function NavHelp() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="https://api.openstatus.dev/v1"
+                    href="https://api.openstatus.dev/openapi"
                     target="_blank"
                     rel="noreferrer"
                   >
