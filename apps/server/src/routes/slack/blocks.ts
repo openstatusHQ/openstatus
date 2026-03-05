@@ -187,13 +187,12 @@ export function buildConfirmationBlocks(
       break;
     }
     case "createMaintenance": {
-      const { title, message, from, to, pageId, pageComponentIds } =
-        action.params;
+      const { title, message, from, to, pageComponentIds } = action.params;
       blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Schedule Maintenance*\n\n*Title:* ${title}\n*From:* ${formatDate(from)}\n*To:* ${formatDate(to)}\n*Page ID:* ${pageId}${
+          text: `*Schedule Maintenance*\n\n*Title:* ${title}\n*From:* ${formatDate(from)}\n*To:* ${formatDate(to)}${
             pageComponentIds?.length
               ? `\n*Components:* ${pageComponentIds.join(", ")}`
               : ""

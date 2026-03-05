@@ -409,10 +409,10 @@ async function executeAction(
           .get();
 
         if (!pageRecord) {
-          throw new Error(
-            `Page ${maintenancePageId} not found in this workspace`,
-          );
+          throw new Error("Page not found in this workspace");
         }
+
+        const resolvedPageId = pageRecord.id;
 
         let componentIds: number[] = [];
         if (maintenanceComponentIds?.length) {
@@ -440,12 +440,9 @@ async function executeAction(
           }
 
           const componentPageId = validComponents[0]?.pageId;
-          if (
-            componentPageId !== null &&
-            componentPageId !== maintenancePageId
-          ) {
+          if (componentPageId !== null && componentPageId !== resolvedPageId) {
             throw new Error(
-              `pageId ${maintenancePageId} does not match the page (${componentPageId}) that the selected components belong to`,
+              "Selected components do not belong to the target status page",
             );
           }
 
@@ -456,7 +453,7 @@ async function executeAction(
           .insert(maintenance)
           .values({
             workspaceId,
-            pageId: maintenancePageId,
+            pageId: resolvedPageId,
             title,
             message,
             from: fromDate,
@@ -484,7 +481,9 @@ async function executeAction(
         });
       }
 
-      const maintenancePageUrl = await getPageUrl(maintenancePageId);
+      const maintenancePageUrl = newMaintenance.pageId
+        ? await getPageUrl(newMaintenance.pageId)
+        : null;
 
       await slack.chat.update({
         channel: channelId,
