@@ -5,12 +5,20 @@ import {
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(trpc.member.list.queryOptions());
+
   return (
-    <div>
+    <HydrateClient>
       <AppHeader>
         <AppHeaderContent>
           <AppSidebarTrigger />
@@ -21,6 +29,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </AppHeaderActions>
       </AppHeader>
       <main className="w-full flex-1">{children}</main>
-    </div>
+    </HydrateClient>
   );
 }
