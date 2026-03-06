@@ -306,7 +306,7 @@ export function FormStatusReportUpdate({
             </TabsContent>
           </Tabs>
         </FormCardContent>
-        {!defaultValues && workspace?.limits["status-subscribers"] ? (
+        {!defaultValues.date && workspace?.limits["status-subscribers"] ? (
           <>
             <FormCardSeparator />
             <FormCardContent>
