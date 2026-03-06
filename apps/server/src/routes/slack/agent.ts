@@ -14,8 +14,10 @@ interface AgentResult {
   toolResults: Array<{ toolName: string; result: unknown }>;
 }
 
-function buildSystemPrompt(workspaceName: string): string {
+export function buildSystemPrompt(workspaceName: string): string {
+  const now = new Date().toISOString();
   return `You are the OpenStatus assistant for workspace "${workspaceName}".
+The current date and time is: ${now} (UTC).
 You help teams create and manage status reports and maintenance windows through Slack.
 
 IMPORTANT: You have NO knowledge of this workspace's data. NEVER guess or make up IDs (page IDs, component IDs, report IDs). You MUST call the appropriate tool first to get real data.
