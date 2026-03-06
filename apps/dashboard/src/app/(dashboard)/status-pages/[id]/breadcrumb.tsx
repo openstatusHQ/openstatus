@@ -17,8 +17,10 @@ export function Breadcrumb() {
 
   if (!statusPage) return null;
 
-  const segment = pathname.split("/").pop() ?? "";
-  const currentTab = STATUS_PAGE_TABS.find((tab) => tab.value === segment);
+  const segments = pathname.split("/");
+  const currentTab = STATUS_PAGE_TABS.find((tab) =>
+    segments.includes(tab.value),
+  );
 
   return (
     <NavBreadcrumb
