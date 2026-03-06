@@ -239,6 +239,7 @@ function formatDate(iso: string): string {
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString("en-US", {
     weekday: "short",
+    year: "numeric",
     month: "short",
     day: "numeric",
     hour: "numeric",
