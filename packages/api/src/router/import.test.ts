@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
@@ -248,15 +248,16 @@ test("run creates page, components, and groups in DB", async () => {
     .from(page)
     .where(eq(page.slug, "acmecorp"))
     .get();
-  expect(dbPage).toBeDefined();
-  expect(dbPage!.title).toBe("Acme Corp Status");
-  expect(dbPage!.workspaceId).toBe(1);
+  if (!dbPage)
+    throw new Error("Expected page to be created with slug 'acmecorp'");
+  expect(dbPage.title).toBe("Acme Corp Status");
+  expect(dbPage.workspaceId).toBe(1);
 
   // Components should be created
   const dbComponents = await db
     .select()
     .from(pageComponent)
-    .where(eq(pageComponent.pageId, dbPage!.id))
+    .where(eq(pageComponent.pageId, dbPage.id))
     .all();
   expect(dbComponents.length).toBe(MOCK_COMPONENTS.length);
 
@@ -264,7 +265,7 @@ test("run creates page, components, and groups in DB", async () => {
   const dbGroups = await db
     .select()
     .from(pageComponentGroup)
-    .where(eq(pageComponentGroup.pageId, dbPage!.id))
+    .where(eq(pageComponentGroup.pageId, dbPage.id))
     .all();
   expect(dbGroups.length).toBe(MOCK_COMPONENT_GROUPS.length);
 
@@ -359,8 +360,10 @@ test("run with includeIncidents creates status reports", async () => {
   expect(incPhase).toBeDefined();
   expect(incPhase?.status).toBe("completed");
 
+  if (!incPhase) throw new Error("Expected incidents phase to exist");
+
   // Verify status reports were created in DB
-  const createdReportIds = incPhase!.resources
+  const createdReportIds = incPhase.resources
     .filter((r) => r.status === "created" && r.openstatusId)
     .map((r) => r.openstatusId as number);
   expect(createdReportIds.length).toBeGreaterThan(0);
@@ -385,8 +388,8 @@ test("run with includeIncidents creates status reports", async () => {
 
   // Maintenances phase should also have entries (scheduled incident)
   const maintPhase = result.phases.find((p) => p.phase === "maintenances");
-  expect(maintPhase).toBeDefined();
-  const createdMaintIds = maintPhase!.resources
+  if (!maintPhase) throw new Error("Expected maintenances phase to exist");
+  const createdMaintIds = maintPhase.resources
     .filter((r) => r.status === "created" && r.openstatusId)
     .map((r) => r.openstatusId as number);
   expect(createdMaintIds.length).toBeGreaterThan(0);

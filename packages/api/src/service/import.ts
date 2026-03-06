@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import { and, db, eq } from "@openstatus/db";
 import {
   maintenance,
@@ -16,10 +15,8 @@ import type {
   PhaseResult,
   ResourceResult,
 } from "@openstatus/importers";
-import {
-  StatuspageImportProvider,
-  type StatuspageImportConfig,
-} from "@openstatus/importers/statuspage";
+import { StatuspageImportProvider } from "@openstatus/importers/statuspage";
+import { TRPCError } from "@trpc/server";
 
 type ImportOptions = {
   includeIncidents?: boolean;

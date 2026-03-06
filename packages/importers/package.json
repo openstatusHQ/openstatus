@@ -14,7 +14,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^3.23.0"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

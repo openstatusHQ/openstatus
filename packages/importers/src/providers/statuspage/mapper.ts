@@ -127,8 +127,8 @@ export function mapIncidentToMaintenance(
   return {
     title: incident.name,
     message,
-    from: new Date(incident.scheduled_for!),
-    to: new Date(incident.scheduled_until!),
+    from: new Date(incident.scheduled_for ?? new Date().toISOString()),
+    to: new Date(incident.scheduled_until ?? new Date().toISOString()),
     workspaceId,
     pageId,
   };
@@ -146,7 +146,7 @@ export function mapSubscriber(
   switch (subscriber.mode) {
     case "email":
       return {
-        email: subscriber.email!,
+        email: subscriber.email ?? "",
         pageId,
         channelType: "email",
         webhookUrl: null,
@@ -156,7 +156,7 @@ export function mapSubscriber(
         email: "webhook@imported.openstatus.dev",
         pageId,
         channelType: "webhook",
-        webhookUrl: subscriber.endpoint!,
+        webhookUrl: subscriber.endpoint ?? "",
       };
     default:
       return null;

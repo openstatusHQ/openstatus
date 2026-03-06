@@ -7,8 +7,8 @@ import {
   MOCK_SUBSCRIBERS,
 } from "./fixtures";
 import {
-  StatuspageImportProvider,
   type StatuspageImportConfig,
+  StatuspageImportProvider,
 } from "./provider";
 
 function createMockFetch(options?: { failAuth?: boolean }) {

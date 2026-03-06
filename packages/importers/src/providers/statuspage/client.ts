@@ -1,15 +1,15 @@
 import { z } from "zod";
 import {
-  StatuspageComponentSchema,
-  StatuspageGroupComponentSchema,
-  StatuspageIncidentSchema,
-  StatuspagePageSchema,
-  StatuspageSubscriberSchema,
   type StatuspageComponent,
+  StatuspageComponentSchema,
   type StatuspageGroupComponent,
+  StatuspageGroupComponentSchema,
   type StatuspageIncident,
+  StatuspageIncidentSchema,
   type StatuspagePage,
+  StatuspagePageSchema,
   type StatuspageSubscriber,
+  StatuspageSubscriberSchema,
 } from "./api-types";
 
 export class StatuspageClient {
