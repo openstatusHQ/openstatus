@@ -805,6 +805,70 @@ describe("getUptime", () => {
 
       expect(uptime).toBe("100%");
     });
+
+    it("should clamp report durations to the lookback window and never go negative", () => {
+      const data = Array.from({ length: 45 }, (_, i) =>
+        createStatusData(i, 100, 0, 0),
+      );
+      // Create reports that started well before the 45-day window
+      const events: Event[] = Array.from({ length: 15 }, (_, i) => {
+        const from = new Date();
+        from.setDate(from.getDate() - (60 + i * 30)); // 60 to 480 days ago
+        const to = new Date(from);
+        to.setDate(to.getDate() + 2); // each 2 days long
+        return {
+          id: i + 1,
+          name: `Old Report ${i}`,
+          from,
+          to,
+          type: "report" as const,
+          status: "degraded" as const,
+        };
+      });
+
+      const uptime = getUptime({
+        data,
+        events,
+        barType: "manual",
+        cardType: "manual",
+      });
+
+      // Reports are entirely outside the window, so uptime should be 100%
+      expect(Number.parseFloat(uptime)).toBe(100);
+    });
+
+    it("should clamp partially overlapping reports to the window boundary", () => {
+      const data = Array.from({ length: 45 }, (_, i) =>
+        createStatusData(i, 100, 0, 0),
+      );
+      // Report started 50 days ago (before window) and ended 40 days ago (inside window)
+      const from = new Date();
+      from.setDate(from.getDate() - 50);
+      const to = new Date();
+      to.setDate(to.getDate() - 40);
+      const events: Event[] = [
+        {
+          id: 1,
+          name: "Overlapping Report",
+          from,
+          to,
+          type: "report",
+          status: "degraded",
+        },
+      ];
+
+      const uptime = getUptime({
+        data,
+        events,
+        barType: "manual",
+        cardType: "manual",
+      });
+
+      // Only ~5 days should count (from window start to report end), not 10 days
+      const uptimeNum = Number.parseFloat(uptime);
+      expect(uptimeNum).toBeGreaterThan(85);
+      expect(uptimeNum).toBeLessThan(100);
+    });
   });
 
   describe("duration card type", () => {
