@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
+import { type SQL, and, asc, desc, eq, inArray, ne, sql } from "@openstatus/db";
 import {
   monitor,
   page,
@@ -169,7 +169,26 @@ export const pageComponentRouter = createTRPCRouter({
           )
           .all();
 
-        if (existingComponents.length >= pageComponentLimit) {
+        // Count components on OTHER pages in this workspace
+        const otherPagesComponentCount = await tx
+          .select({ id: pageComponent.id })
+          .from(pageComponent)
+          .where(
+            and(
+              eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+              ne(pageComponent.pageId, opts.input.pageId),
+            ),
+          )
+          .all();
+
+        const inputComponentCount =
+          opts.input.components.length +
+          opts.input.groups.reduce((sum, g) => sum + g.components.length, 0);
+
+        const totalAfterUpdate =
+          otherPagesComponentCount.length + inputComponentCount;
+
+        if (totalAfterUpdate > pageComponentLimit) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "You reached your page component limits.",

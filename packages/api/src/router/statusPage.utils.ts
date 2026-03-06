@@ -850,14 +850,28 @@ export function getUptime({
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "duration" | "dominant" | "manual";
 }): string {
+  // Clamp event durations to the data lookback window to avoid
+  // events outside the window producing negative uptime values.
+  const timestamps = data.map((d) => new Date(d.day).getTime());
+  const windowStart = timestamps.length > 0 ? Math.min(...timestamps) : 0;
+  const windowEndDate = new Date(
+    timestamps.length > 0 ? Math.max(...timestamps) : Date.now(),
+  );
+  windowEndDate.setUTCHours(23, 59, 59, 999);
+  const windowEnd = windowEndDate.getTime();
+
+  function clampedDuration(item: Event): number {
+    if (!item.from) return 0;
+    const from = Math.max(item.from.getTime(), windowStart);
+    const to = Math.min((item.to || new Date()).getTime(), windowEnd);
+    return Math.max(0, to - from);
+  }
+
   if (barType === "manual") {
     const duration = events
       // NOTE: we want only user events
       .filter((e) => e.type === "report")
-      .reduce((acc, item) => {
-        if (!item.from) return acc;
-        return acc + ((item.to || new Date()).getTime() - item.from.getTime());
-      }, 0);
+      .reduce((acc, item) => acc + clampedDuration(item), 0);
 
     const total = data.length * MILLISECONDS_PER_DAY;
 
@@ -867,10 +881,7 @@ export function getUptime({
   if (cardType === "duration") {
     const duration = events
       .filter((e) => e.type === "incident")
-      .reduce((acc, item) => {
-        if (!item.from) return acc;
-        return acc + ((item.to || new Date()).getTime() - item.from.getTime());
-      }, 0);
+      .reduce((acc, item) => acc + clampedDuration(item), 0);
 
     const total = data.length * MILLISECONDS_PER_DAY;
     return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
