@@ -33,6 +33,7 @@ export const importRouter = createTRPCRouter({
           .object({
             includeIncidents: z.boolean().default(true),
             includeSubscribers: z.boolean().default(false),
+            includeComponents: z.boolean().default(true),
           })
           .optional(),
       }),
@@ -65,6 +66,7 @@ export const importRouter = createTRPCRouter({
         workspaceId: opts.ctx.workspace.id,
         pageId: opts.input.pageId,
         options: opts.input.options,
+        limits: opts.ctx.workspace.limits,
       });
     }),
 });

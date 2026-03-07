@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { FormCardGroup } from "../form-card";
 import { FormConfiguration } from "../status-page/form-configuration";
+import { FormImport, type ImportFormValues } from "../status-page/form-import";
 
 export function FormComponentsUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +32,15 @@ export function FormComponentsUpdate() {
   const updatePageConfigurationMutation = useMutation(
     trpc.page.updatePageConfiguration.mutationOptions({
       onSuccess: () => refetch(),
+    }),
+  );
+
+  const importMutation = useMutation(
+    trpc.importRouter.run.mutationOptions({
+      onSuccess: () => {
+        refetch();
+        refetchComponents();
+      },
     }),
   );
 
@@ -114,6 +124,22 @@ export function FormComponentsUpdate() {
           });
         }}
         configLink={configLink}
+      />
+      <FormImport
+        pageId={statusPage.id}
+        onSubmit={async (values: ImportFormValues) => {
+          await importMutation.mutateAsync({
+            provider: values.provider,
+            apiKey: values.apiKey,
+            pageId: statusPage.id,
+            statuspagePageId: values.statuspagePageId,
+            options: {
+              includeIncidents: values.includeIncidents,
+              includeSubscribers: values.includeSubscribers,
+              includeComponents: values.includeComponents,
+            },
+          });
+        }}
       />
     </FormCardGroup>
   );

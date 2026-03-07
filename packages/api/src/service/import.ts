@@ -10,6 +10,7 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type {
   ImportSummary,
   PhaseResult,
@@ -21,6 +22,7 @@ import { TRPCError } from "@trpc/server";
 type ImportOptions = {
   includeIncidents?: boolean;
   includeSubscribers?: boolean;
+  includeComponents?: boolean;
 };
 
 export async function previewImport(config: {
@@ -50,6 +52,7 @@ export async function runImport(config: {
   workspaceId: number;
   pageId?: number;
   options?: ImportOptions;
+  limits: Limits;
 }): Promise<ImportSummary> {
   const provider = createStatuspageProvider();
 
@@ -86,20 +89,55 @@ export async function runImport(config: {
             phase,
             config.workspaceId,
             config.pageId,
+            config.limits,
           );
           break;
         case "componentGroups":
-          if (targetPageId) {
+          if (targetPageId && config.options?.includeComponents !== false) {
             await writeComponentGroupsPhase(
               phase,
               config.workspaceId,
               targetPageId,
               idMaps.groups,
             );
+          } else if (config.options?.includeComponents === false) {
+            phase.status = "skipped";
           }
           break;
         case "components":
-          if (targetPageId) {
+          if (targetPageId && config.options?.includeComponents !== false) {
+            // Check page-components limit
+            const existingCount = await db
+              .select()
+              .from(pageComponent)
+              .where(
+                and(
+                  eq(pageComponent.pageId, targetPageId),
+                  eq(pageComponent.workspaceId, config.workspaceId),
+                ),
+              )
+              .all();
+            const maxComponents = config.limits["page-components"];
+            const remaining = maxComponents - existingCount.length;
+            if (remaining <= 0) {
+              phase.status = "failed";
+              summary.errors.push(
+                `Component limit reached (${maxComponents}). Upgrade your plan to import more components.`,
+              );
+              break;
+            }
+            if (phase.resources.length > remaining) {
+              // Trim resources to fit within limit
+              const skipped = phase.resources.splice(remaining);
+              for (const r of skipped) {
+                r.status = "skipped";
+                r.error = `Skipped: would exceed component limit (${maxComponents})`;
+              }
+              phase.resources.push(...skipped);
+              summary.errors.push(
+                `Only ${remaining} of ${remaining + skipped.length} components imported due to plan limit (${maxComponents}).`,
+              );
+            }
             await writeComponentsPhase(
               phase,
               config.workspaceId,
@@ -107,6 +145,8 @@ export async function runImport(config: {
               idMaps.groups,
               idMaps.components,
             );
+          } else if (config.options?.includeComponents === false) {
+            phase.status = "skipped";
           }
           break;
         case "incidents":
@@ -135,6 +175,13 @@ export async function runImport(config: {
           break;
         case "subscribers":
           if (targetPageId && config.options?.includeSubscribers) {
+            if (!config.limits["status-subscribers"]) {
+              phase.status = "skipped";
+              summary.errors.push(
+                "Subscribers import skipped: upgrade your plan to enable status page subscribers.",
+              );
+              break;
+            }
             await writeSubscribersPhase(phase, targetPageId);
           } else {
             phase.status = "skipped";
@@ -187,6 +234,7 @@ async function writePagePhase(
   phase: PhaseResult,
   workspaceId: number,
   existingPageId?: number,
+  limits?: Limits,
 ): Promise<number> {
   const resource = phase.resources[0];
   if (!resource?.data) {
@@ -202,6 +250,11 @@ async function writePagePhase(
     published: boolean;
     icon: string;
   };
+
+  // Strip custom domain if not allowed by plan
+  if (limits && !limits["custom-domain"]) {
+    data.customDomain = "";
+  }
 
   // If a page ID was provided, verify and update it
   if (existingPageId) {
