@@ -47,12 +47,14 @@ import { useTRPC } from "@/lib/trpc/client";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
+  const t = useExtracted();
   const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const trpc = useTRPC();
   const { id, domain } = useParams<{ id: string; domain: string }>();
@@ -205,8 +207,8 @@ export default function Page() {
   if (!isLoading && !monitor) {
     return (
       <StatusBlankMonitors
-        title="Monitor not found"
-        description="The monitor you are looking for does not exist."
+        title={t("Monitor not found")}
+        description={t("The monitor you are looking for does not exist.")}
       />
     );
   }
@@ -231,7 +233,7 @@ export default function Page() {
           <StatusMonitorTabsList className="grid grid-cols-3">
             <StatusMonitorTabsTrigger value="global">
               <StatusMonitorTabsTriggerLabel>
-                Global Latency
+                {t("Global Latency")}
               </StatusMonitorTabsTriggerLabel>
               {isLoading ? (
                 <StatusMonitorTabsTriggerValueSkeleton />
@@ -246,13 +248,13 @@ export default function Page() {
             </StatusMonitorTabsTrigger>
             <StatusMonitorTabsTrigger value="region">
               <StatusMonitorTabsTriggerLabel>
-                Region Latency
+                {t("Region Latency")}
               </StatusMonitorTabsTriggerLabel>
               {isLoading ? (
                 <StatusMonitorTabsTriggerValueSkeleton />
               ) : (
                 <StatusMonitorTabsTriggerValue>
-                  {tempMonitor?.regions.length} regions{" "}
+                  {tempMonitor?.regions.length} {t("regions")}{" "}
                   <Badge
                     variant="outline"
                     className="py-px font-mono text-[10px]"
@@ -264,7 +266,7 @@ export default function Page() {
             </StatusMonitorTabsTrigger>
             <StatusMonitorTabsTrigger value="uptime">
               <StatusMonitorTabsTriggerLabel>
-                Uptime
+                {t("Uptime")}
               </StatusMonitorTabsTriggerLabel>
               {isLoading ? (
                 <StatusMonitorTabsTriggerValueSkeleton />
@@ -272,7 +274,7 @@ export default function Page() {
                 <StatusMonitorTabsTriggerValue>
                   {uptimePercentage}{" "}
                   <Badge variant="outline" className="py-px text-[10px]">
-                    {totalChecks} checks
+                    {totalChecks} {t("checks")}
                   </Badge>
                 </StatusMonitorTabsTriggerValue>
               )}
@@ -281,10 +283,9 @@ export default function Page() {
           <StatusMonitorTabsContent value="global">
             <StatusChartContent>
               <StatusChartHeader>
-                <StatusChartTitle>Global Latency</StatusChartTitle>
+                <StatusChartTitle>{t("Global Latency")}</StatusChartTitle>
                 <StatusChartDescription>
-                  The aggregated latency from all active regions based on
-                  different <PopoverQuantile>quantiles</PopoverQuantile>.
+                  {t("The aggregated latency from all active regions based on different quantiles.")}
                 </StatusChartDescription>
               </StatusChartHeader>
               {isLoading ? (
@@ -304,15 +305,9 @@ export default function Page() {
           <StatusMonitorTabsContent value="region">
             <StatusChartContent>
               <StatusChartHeader>
-                <StatusChartTitle>Latency by Region</StatusChartTitle>
+                <StatusChartTitle>{t("Latency by Region")}</StatusChartTitle>
                 <StatusChartDescription>
-                  {/* TODO: we could add an information to p95 that it takes the highest selected global latency percentile */}
-                  Region latency per{" "}
-                  <code className="font-medium text-foreground">p75</code>{" "}
-                  <PopoverQuantile>quantile</PopoverQuantile>, sorted by slowest
-                  region. Compare up to{" "}
-                  <code className="font-medium text-foreground">6</code>{" "}
-                  regions.
+                  {t("Region latency per p75 quantile, sorted by slowest region. Compare up to 6 regions.")}
                 </StatusChartDescription>
               </StatusChartHeader>
               {isLoading ? (
@@ -329,9 +324,9 @@ export default function Page() {
           <StatusMonitorTabsContent value="uptime">
             <StatusChartContent>
               <StatusChartHeader>
-                <StatusChartTitle>Total Uptime</StatusChartTitle>
+                <StatusChartTitle>{t("Total Uptime")}</StatusChartTitle>
                 <StatusChartDescription>
-                  Main values of uptime and availability, transparent.
+                  {t("Main values of uptime and availability, transparent.")}
                 </StatusChartDescription>
               </StatusChartHeader>
               {isLoading ? (

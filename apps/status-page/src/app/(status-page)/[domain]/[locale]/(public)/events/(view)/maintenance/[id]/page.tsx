@@ -16,9 +16,11 @@ import {
   StatusEventTimelineMaintenance,
   StatusEventTitle,
 } from "@/components/status-page/status-events";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 
 export default function MaintenancePage() {
+  const t = useExtracted();
   const trpc = useTRPC();
   const { id, domain } = useParams<{ id: string; domain: string }>();
   const { data: maintenance } = useQuery(
@@ -31,8 +33,8 @@ export default function MaintenancePage() {
   if (!maintenance) {
     return (
       <StatusBlankEvents
-        title="Maintenance not found"
-        description="The maintenance you are looking for does not exist."
+        title={t("Maintenance not found")}
+        description={t("The maintenance you are looking for does not exist.")}
       />
     );
   }

@@ -16,9 +16,11 @@ import {
 } from "@/components/status-page/status-events";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 
 export default function ReportPage() {
+  const t = useExtracted();
   const trpc = useTRPC();
   const { id, domain } = useParams<{ id: string; domain: string }>();
   const { data: report } = useQuery(
@@ -28,8 +30,8 @@ export default function ReportPage() {
   if (!report) {
     return (
       <StatusBlankEvents
-        title="Report not found"
-        description="The report you are looking for does not exist."
+        title={t("Report not found")}
+        description={t("The report you are looking for does not exist.")}
       />
     );
   }

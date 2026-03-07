@@ -22,12 +22,14 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
+  const t = useExtracted();
   const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
@@ -48,8 +50,8 @@ export default function Page() {
       className="gap-4"
     >
       <TabsList>
-        <TabsTrigger value="reports">Reports</TabsTrigger>
-        <TabsTrigger value="maintenances">Maintenances</TabsTrigger>
+        <TabsTrigger value="reports">{t("Reports")}</TabsTrigger>
+        <TabsTrigger value="maintenances">{t("Maintenances")}</TabsTrigger>
       </TabsList>
       <TabsContent value="reports">
         <StatusEventGroup>
@@ -147,8 +149,8 @@ export default function Page() {
             })
           ) : (
             <StatusBlankEvents
-              title="No maintenances found"
-              description="No maintenances found for this status page."
+              title={t("No maintenances found")}
+              description={t("No maintenances found for this status page.")}
             />
           )}
         </StatusEventGroup>
