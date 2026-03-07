@@ -166,12 +166,11 @@ async function processEvent(body: SlackEvent) {
       });
     }
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Unknown error";
     console.error("[slack] agent error:", err);
     await slack.chat.update({
       channel: event.channel,
       ts: thinkingTs,
-      text: `:x: Something went wrong: ${errMsg}`,
+      text: ":x: Something went wrong. Please try again.",
     });
   }
 }
@@ -244,5 +243,7 @@ function getConfirmationText(action: PendingAction["action"]): string {
       return `Update Status Report${action.params.title ? `: ${action.params.title}` : ""}`;
     case "resolveStatusReport":
       return "Resolve Status Report";
+    case "createMaintenance":
+      return `Schedule Maintenance: ${action.params.title}`;
   }
 }

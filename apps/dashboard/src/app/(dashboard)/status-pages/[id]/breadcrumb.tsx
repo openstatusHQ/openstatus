@@ -3,15 +3,9 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Cog,
-  Hammer,
-  LayoutTemplate,
-  Megaphone,
-  PanelTop,
-  Users,
-} from "lucide-react";
+import { PanelTop } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
+import { STATUS_PAGE_TABS } from "./constants";
 
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +17,9 @@ export function Breadcrumb() {
 
   if (!statusPage) return null;
 
+  const segment = pathname.split("/").pop() ?? "";
+  const currentTab = STATUS_PAGE_TABS.find((tab) => tab.value === segment);
+
   return (
     <NavBreadcrumb
       items={[
@@ -32,30 +29,20 @@ export function Breadcrumb() {
           href: "/status-pages",
           icon: PanelTop,
         },
-        pathname === `/status-pages/${id}/status-reports`
-          ? {
-              type: "page",
-              label: statusPage.title,
-            }
-          : {
-              type: "link",
-              label: statusPage.title,
-              href: `/status-pages/${id}/status-reports`,
-            },
         {
-          type: "select",
-          items: [
-            {
-              value: "status-reports",
-              label: "Status Reports",
-              icon: Megaphone,
-            },
-            { value: "maintenances", label: "Maintenances", icon: Hammer },
-            { value: "subscribers", label: "Subscribers", icon: Users },
-            { value: "components", label: "Components", icon: LayoutTemplate },
-            { value: "edit", label: "Settings", icon: Cog },
-          ],
+          type: "link",
+          label: statusPage.title,
+          href: `/status-pages/${id}/status-reports`,
         },
+        ...(currentTab
+          ? [
+              {
+                type: "page" as const,
+                label: currentTab.label,
+                icon: currentTab.icon,
+              },
+            ]
+          : []),
       ]}
     />
   );

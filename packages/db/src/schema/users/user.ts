@@ -29,6 +29,7 @@ export const user = sqliteTable("user", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
 export const userRelations = relations(user, ({ many }) => ({

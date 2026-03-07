@@ -1,11 +1,15 @@
-import { db, eq } from "@openstatus/db";
+import { and, db, eq, inArray } from "@openstatus/db";
 import {
+  maintenance,
+  maintenancesToPageComponents,
   page,
+  pageComponent,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
+import { sendMaintenanceNotification } from "../rpc/services/maintenance";
 import {
   getStatusReportById,
   sendStatusReportNotification,
@@ -110,16 +114,30 @@ export async function handleSlackInteraction(c: Context) {
   try {
     await executeAction(consumed, notify, slack, channelId, messageTs);
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[slack] action execution error:", err);
     await slack.chat.update({
       channel: channelId,
       ts: messageTs,
-      text: `:x: Failed: ${errMsg}`,
+      text: ":x: Something went wrong. Please try again.",
       blocks: [],
     });
   }
 
   return c.json({ ok: true });
+}
+
+async function getPageUrl(pageId: number): Promise<string | null> {
+  const statusPage = await db
+    .select({ slug: page.slug, customDomain: page.customDomain })
+    .from(page)
+    .where(eq(page.id, pageId))
+    .get();
+
+  if (!statusPage) return null;
+
+  return statusPage.customDomain
+    ? `https://${statusPage.customDomain}`
+    : `https://${statusPage.slug}.openstatus.dev`;
 }
 
 async function getReportUrl(pageId: number, reportId: number): Promise<string> {
@@ -187,7 +205,7 @@ async function executeAction(
           );
         }
 
-        await tx
+        const newUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: report.id,
@@ -198,24 +216,22 @@ async function executeAction(
           .returning()
           .get();
 
-        return report;
+        return { report, updateId: newUpdate.id };
       });
-      if (!result || !result.pageId) {
+      if (!result || !result.report.pageId) {
         throw new Error("Failed to create status report");
       }
       if (notify) {
         await sendStatusReportNotification({
-          statusReportId: result.id,
-          pageId: result.pageId,
-          reportTitle: title,
-          status,
-          message,
-          date: new Date(),
+          statusReportUpdateId: result.updateId,
           limits,
         });
       }
 
-      const reportUrl = await getReportUrl(result.pageId, result.id);
+      const reportUrl = await getReportUrl(
+        result.report.pageId,
+        result.report.id,
+      );
 
       await slack.chat.update({
         channel: channelId,
@@ -234,8 +250,8 @@ async function executeAction(
         throw new Error("Status report not found");
       }
 
-      await db.transaction(async (tx) => {
-        await tx
+      const updateId = await db.transaction(async (tx) => {
+        const newUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: report.id,
@@ -250,16 +266,13 @@ async function executeAction(
           .update(statusReport)
           .set({ status, updatedAt: new Date() })
           .where(eq(statusReport.id, report.id));
+
+        return newUpdate.id;
       });
 
       if (notify && report.pageId) {
         await sendStatusReportNotification({
-          statusReportId: report.id,
-          pageId: report.pageId,
-          reportTitle: report.title,
-          status,
-          message,
-          date: new Date(),
+          statusReportUpdateId: updateId,
           limits,
         });
       }
@@ -327,8 +340,8 @@ async function executeAction(
         throw new Error("Status report not found");
       }
 
-      await db.transaction(async (tx) => {
-        await tx
+      const resolveUpdateId = await db.transaction(async (tx) => {
+        const newUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: report.id,
@@ -343,16 +356,13 @@ async function executeAction(
           .update(statusReport)
           .set({ status: "resolved", updatedAt: new Date() })
           .where(eq(statusReport.id, report.id));
+
+        return newUpdate.id;
       });
 
       if (notify && report.pageId) {
         await sendStatusReportNotification({
-          statusReportId: report.id,
-          pageId: report.pageId,
-          reportTitle: report.title,
-          status: "resolved",
-          message,
-          date: new Date(),
+          statusReportUpdateId: resolveUpdateId,
           limits,
         });
       }
@@ -365,6 +375,121 @@ async function executeAction(
         channel: channelId,
         ts: messageTs,
         text: `:white_check_mark: *${report.title}* resolved${notify ? " and subscribers notified" : ""}.${message ? `\n>${message}` : ""}${resolveReportUrl ? `\n<${resolveReportUrl}|View on status page>` : ""}`,
+        blocks: [],
+      });
+      break;
+    }
+
+    case "createMaintenance": {
+      const {
+        title,
+        message,
+        from,
+        to,
+        pageId: maintenancePageId,
+        pageComponentIds: maintenanceComponentIds,
+      } = action.params;
+
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      if (fromDate >= toDate) {
+        throw new Error("Start time must be before end time");
+      }
+
+      const newMaintenance = await db.transaction(async (tx) => {
+        const pageRecord = await tx
+          .select({ id: page.id })
+          .from(page)
+          .where(
+            and(
+              eq(page.id, maintenancePageId),
+              eq(page.workspaceId, workspaceId),
+            ),
+          )
+          .get();
+
+        if (!pageRecord) {
+          throw new Error(
+            `Page ${maintenancePageId} not found in this workspace`,
+          );
+        }
+
+        let componentIds: number[] = [];
+        if (maintenanceComponentIds?.length) {
+          const numericIds = maintenanceComponentIds.map((id) => Number(id));
+          const validComponents = await tx
+            .select({ id: pageComponent.id, pageId: pageComponent.pageId })
+            .from(pageComponent)
+            .where(
+              and(
+                inArray(pageComponent.id, numericIds),
+                eq(pageComponent.workspaceId, workspaceId),
+              ),
+            )
+            .all();
+
+          if (validComponents.length !== numericIds.length) {
+            throw new Error("One or more page components not found");
+          }
+
+          const componentPageIds = new Set(
+            validComponents.map((c) => c.pageId),
+          );
+          if (componentPageIds.size > 1) {
+            throw new Error("All components must belong to the same page");
+          }
+
+          const componentPageId = validComponents[0]?.pageId;
+          if (
+            componentPageId !== null &&
+            componentPageId !== maintenancePageId
+          ) {
+            throw new Error(
+              `pageId ${maintenancePageId} does not match the page (${componentPageId}) that the selected components belong to`,
+            );
+          }
+
+          componentIds = numericIds;
+        }
+
+        const record = await tx
+          .insert(maintenance)
+          .values({
+            workspaceId,
+            pageId: maintenancePageId,
+            title,
+            message,
+            from: fromDate,
+            to: toDate,
+          })
+          .returning()
+          .get();
+
+        if (componentIds.length > 0) {
+          await tx.insert(maintenancesToPageComponents).values(
+            componentIds.map((pageComponentId) => ({
+              maintenanceId: record.id,
+              pageComponentId,
+            })),
+          );
+        }
+
+        return record;
+      });
+
+      if (notify) {
+        await sendMaintenanceNotification({
+          maintenanceId: newMaintenance.id,
+          limits,
+        });
+      }
+
+      const maintenancePageUrl = await getPageUrl(maintenancePageId);
+
+      await slack.chat.update({
+        channel: channelId,
+        ts: messageTs,
+        text: `:white_check_mark: Maintenance *${title}* scheduled${notify ? " and subscribers notified" : ""}.${maintenancePageUrl ? `\n<${maintenancePageUrl}|View status page>` : ""}`,
         blocks: [],
       });
       break;

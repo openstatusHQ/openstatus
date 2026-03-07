@@ -290,3 +290,222 @@ describe("handleSlackInteraction", () => {
     expect(redisStore.has(`slack:action:${pendingData.id}`)).toBe(false);
   });
 });
+
+describe("createMaintenance execution", () => {
+  const app = createTestApp();
+
+  beforeEach(() => {
+    slackCalls = [];
+    redisStore.clear();
+  });
+
+  function seedMaintenanceAction(overrides: Record<string, unknown> = {}) {
+    const data = {
+      id: "maint-001",
+      workspaceId: 1,
+      limits: {},
+      botToken: "xoxb-test",
+      channelId: "C1",
+      threadTs: "2.1",
+      messageTs: "2.2",
+      userId: "U_OWNER",
+      createdAt: Date.now(),
+      action: {
+        type: "createMaintenance" as const,
+        params: {
+          title: "DB Maintenance",
+          message: "Scheduled database upgrade.",
+          from: new Date(Date.now() + 86400000).toISOString(),
+          to: new Date(Date.now() + 86400000 + 3600000).toISOString(),
+          pageId: 1,
+          ...overrides,
+        },
+      },
+    };
+    redisStore.set(`slack:action:${data.id}`, JSON.stringify(data));
+    redisStore.set(`slack:thread:${data.threadTs}`, data.id);
+    return data;
+  }
+
+  test("approve creates maintenance and shows success", async () => {
+    seedMaintenanceAction();
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const successCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes(
+          "Maintenance *DB Maintenance* scheduled",
+        ),
+    );
+    expect(successCall).toBeDefined();
+    expect(successCall?.args.text as string).not.toContain(
+      "subscribers notified",
+    );
+  });
+
+  test("approve_notify creates maintenance and notifies", async () => {
+    seedMaintenanceAction();
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_notify_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const successCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("subscribers notified"),
+    );
+    expect(successCall).toBeDefined();
+  });
+
+  test("cancel does not create maintenance", async () => {
+    seedMaintenanceAction();
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "cancel_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const cancelCall = slackCalls.find(
+      (c) =>
+        c.method === "update" && (c.args.text as string).includes("Cancelled"),
+    );
+    expect(cancelCall).toBeDefined();
+  });
+
+  test("shows error for invalid page id", async () => {
+    seedMaintenanceAction({ pageId: 99999 });
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const errorCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("Something went wrong"),
+    );
+    expect(errorCall).toBeDefined();
+  });
+
+  test("shows error when from is after to", async () => {
+    const now = Date.now();
+    seedMaintenanceAction({
+      from: new Date(now + 7200000).toISOString(),
+      to: new Date(now + 3600000).toISOString(),
+    });
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const errorCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("Something went wrong"),
+    );
+    expect(errorCall).toBeDefined();
+  });
+
+  test("creates maintenance with page components", async () => {
+    seedMaintenanceAction({ pageComponentIds: ["1", "2"] });
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const successCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes(
+          "Maintenance *DB Maintenance* scheduled",
+        ),
+    );
+    expect(successCall).toBeDefined();
+  });
+
+  test("shows error for invalid page component ids", async () => {
+    seedMaintenanceAction({ pageComponentIds: ["99999"] });
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    expect(res.status).toBe(200);
+    const errorCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("Something went wrong"),
+    );
+    expect(errorCall).toBeDefined();
+  });
+
+  test("does not leak internal error details to user", async () => {
+    seedMaintenanceAction({ pageId: 99999 });
+
+    await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "2.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_maint-001" }],
+    });
+
+    const errorCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("Something went wrong"),
+    );
+    expect(errorCall).toBeDefined();
+    const text = errorCall?.args.text as string;
+    expect(text).not.toContain("Page 99999");
+    expect(text).not.toContain("ConnectError");
+    expect(text).not.toContain("select");
+    expect(text).not.toContain("query");
+  });
+});

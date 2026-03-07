@@ -18,7 +18,9 @@ describe("createTools", () => {
     const tools = createTools(mockWorkspace);
     expect(Object.keys(tools).sort()).toEqual([
       "addStatusReportUpdate",
+      "createMaintenance",
       "createStatusReport",
+      "listMaintenances",
       "listStatusPages",
       "listStatusReports",
       "resolveStatusReport",

@@ -72,6 +72,30 @@ This guide is divided into three parts: launching the services, setting up the d
     cd ../.. # Return to the project root
     ```
 
+	If you do not have or want to avoid installing the necessary tools on the 	host, you can run this command to create a one-shot container that will remove itself after completion.
+	```
+	# Make sure you are in the root of the openstatus project
+	# For RHEL derivatives, make sure to end /work with :Z for SELinux, "$PWD":/work:Z
+	sudo docker run --rm -it \
+	  --network openstatus \
+	  --env-file .env.docker \
+	  -v "$PWD":/work \
+	  -w /work/packages/db \
+	  node:22-trixie \
+	  bash -lc '
+	    set -euo pipefail
+	    export DEBIAN_FRONTEND=noninteractive
+	    apt-get update -qq
+	    apt-get install -y -qq curl ca-certificates unzip
+	    curl -fsSL https://bun.sh/install -o /tmp/bun-install.sh
+	    bash /tmp/bun-install.sh
+	    export PATH="$HOME/.bun/bin:$PATH"
+	    npm i -g pnpm
+	    pnpm install
+	    bun src/migrate.mts
+	  '
+	```
+
 5.  **Deploy Local Tinybird Analytics**
 
     Tinybird is used for analytics. Deploy the local datasources, pipes, and endpoints.
@@ -119,6 +143,16 @@ Now that the services are running, you can access the dashboard and perform the 
       -d '{"statements":["UPDATE workspace SET limits = '\''{\\"monitors\\":100,\\"periodicity\\":[\\"30s\\",\\"1m\\",\\"5m\\",\\"10m\\",\\"30m\\",\\"1h\\"],\\"multi-region\\":true,\\"data-retention\\":\\"24 months\\",\\"status-pages\\":20,\\"maintenance\\":true,\\"status-subscribers\\":true,\\"custom-domain\\":true,\\"password-protection\\":true,\\"white-label\\":true,\\"notifications\\":true,\\"sms\\":true,\\"pagerduty\\":true,\\"notification-channels\\":50,\\"members\\":\\"Unlimited\\",\\"audit-log\\":true,\\"private-locations\\":true}'\'' WHERE id = 1"]}'
     ```
     You can find your workspace ID by inspecting the database with a command like `curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{"statements":["SELECT id, name FROM workspace"]}'`.
+    
+    If you want to unlock the paid features, you need to upgrade your workspace inside the database. The following command assumes that you want to change the payment plan for the workspace with the ID of 1, and that you want to change it to a "Pro" instance indefinitely.
+    ```
+	curl -sS -X POST "http://localhost:8080/" \
+	  -H "Content-Type: application/json" \
+	  -d "{\"statements\":[
+	    \"UPDATE workspace SET plan='team', paid_until=strftime('%s','now') + 315360000, ends_at=NULL WHERE id=1;\",
+	    \"SELECT id, plan, paid_until, ends_at FROM workspace WHERE id=1;\"
+	  ]}"
+    ```   
 
 8.  **Deploy a Private Location**
 
