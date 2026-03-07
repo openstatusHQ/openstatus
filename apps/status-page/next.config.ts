@@ -1,6 +1,8 @@
 import { withSentryConfig } from "@sentry/nextjs";
-
+import createNextIntlPlugin from "next-intl/plugin";
 import type { NextConfig } from "next";
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
@@ -79,4 +81,4 @@ const sentryConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, sentryConfig);
+export default withSentryConfig(withNextIntl(nextConfig), sentryConfig);
