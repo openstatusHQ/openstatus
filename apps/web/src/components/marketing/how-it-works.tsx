@@ -53,7 +53,7 @@ export function HowItWorks() {
             className="absolute top-1/2 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] hidden -translate-y-1/2 md:block"
             aria-hidden="true"
           >
-            <div className="h-px w-full border-t-2 border-dashed border-border" />
+            <div className="h-px w-full border-t-2 border-dashed border-success/40" />
           </div>
 
           <div className="grid gap-6 md:grid-cols-3 md:gap-8">
@@ -62,7 +62,7 @@ export function HowItWorks() {
                 {/* Arrow between cards - desktop only */}
                 {index < steps.length - 1 && (
                   <div
-                    className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 text-muted-foreground md:block"
+                    className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 md:block"
                     aria-hidden="true"
                   >
                     <svg
@@ -70,7 +70,7 @@ export function HowItWorks() {
                       height="16"
                       viewBox="0 0 16 16"
                       fill="none"
-                      className="text-border"
+                      className="text-success/60"
                     >
                       <path
                         d="M6 3L11 8L6 13"
@@ -87,14 +87,14 @@ export function HowItWorks() {
                   {/* Step badge */}
                   <Badge
                     variant="outline"
-                    className="absolute -top-3 left-4 bg-background font-mono text-xs"
+                    className="absolute -top-3 left-4 border-success/50 bg-success/10 font-mono text-xs text-success"
                   >
                     {step.step}
                   </Badge>
 
                   <CardHeader className="pt-6">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted">
-                      <step.icon className="h-5 w-5 text-foreground" />
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-success/30 bg-success/10">
+                      <step.icon className="h-5 w-5 text-success" />
                     </div>
                     <CardTitle className="text-base font-medium">
                       {step.title}
