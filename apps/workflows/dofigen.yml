@@ -83,7 +83,7 @@ builders:
 fromImage: debian:bullseye-slim
 workdir: /app/
 root:
-  run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+  run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown 1000:1000 /app/data
 
 # Metadata labels
 labels:

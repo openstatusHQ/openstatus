@@ -6,6 +6,8 @@ networks:
 volumes:
     libsql-data:
         name: openstatus-libsql-data
+    workflows-data:
+        name: openstatus-workflows-data
 
 services:
     # External services
@@ -60,7 +62,7 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - ./data:/app/data
+            - workflows-data:/app/data
         env_file:
             - .env.docker
         environment:

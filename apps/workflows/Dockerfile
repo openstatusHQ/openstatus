@@ -107,7 +107,7 @@ COPY \
     --link \
     "/app/node_modules" "/app/node_modules"
 USER 0:0
-RUN apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown 1000:1000 /app/data
 USER 1000:1000
 EXPOSE 3000
 ENTRYPOINT ["/app/apps/workflows/app"]
