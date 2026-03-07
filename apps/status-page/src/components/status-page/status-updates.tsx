@@ -99,7 +99,9 @@ export function StatusUpdates({
               <>
                 <div className="flex flex-col gap-2">
                   <p className="px-2 text-sm">
-                    {t("Get email notifications whenever a report has been created or resolved")}
+                    {t(
+                      "Get email notifications whenever a report has been created or resolved",
+                    )}
                   </p>
                   <FormSubscribeEmail
                     id="email-form"
@@ -161,7 +163,9 @@ export function StatusUpdates({
           <TabsContent value="slack" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">
               <p className="text-sm">
-                {t("For status updates in Slack, paste the text below into any channel.")}
+                {t(
+                  "For status updates in Slack, paste the text below into any channel.",
+                )}
               </p>
               <CopyInputButton
                 className="w-full"

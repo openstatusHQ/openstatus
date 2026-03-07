@@ -58,7 +58,9 @@ export function SectionMagicLink() {
       <SectionHeader>
         <SectionTitle>{t("Authenticate")}</SectionTitle>
         <SectionDescription>
-          {t("Enter your email to receive a magic link for accessing the status page. Note: Only emails from approved domains are accepted.")}
+          {t(
+            "Enter your email to receive a magic link for accessing the status page. Note: Only emails from approved domains are accepted.",
+          )}
         </SectionDescription>
       </SectionHeader>
       {state !== "success" ? (

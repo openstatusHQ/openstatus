@@ -14,8 +14,8 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import Link from "next/link";
 import { useExtracted } from "next-intl";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { chartConfig } from "./utils";
 

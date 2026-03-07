@@ -14,7 +14,6 @@ import {
   ChartLineRegions,
   ChartLineRegionsSkeleton,
 } from "@/components/chart/chart-line-regions";
-import { PopoverQuantile } from "@/components/popover/popover-quantile";
 import {
   Status,
   StatusContent,
@@ -285,7 +284,9 @@ export default function Page() {
               <StatusChartHeader>
                 <StatusChartTitle>{t("Global Latency")}</StatusChartTitle>
                 <StatusChartDescription>
-                  {t("The aggregated latency from all active regions based on different quantiles.")}
+                  {t(
+                    "The aggregated latency from all active regions based on different quantiles.",
+                  )}
                 </StatusChartDescription>
               </StatusChartHeader>
               {isLoading ? (
@@ -307,7 +308,9 @@ export default function Page() {
               <StatusChartHeader>
                 <StatusChartTitle>{t("Latency by Region")}</StatusChartTitle>
                 <StatusChartDescription>
-                  {t("Region latency per p75 quantile, sorted by slowest region. Compare up to 6 regions.")}
+                  {t(
+                    "Region latency per p75 quantile, sorted by slowest region. Compare up to 6 regions.",
+                  )}
                 </StatusChartDescription>
               </StatusChartHeader>
               {isLoading ? (
