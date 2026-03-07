@@ -18,7 +18,7 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
-  const messages = (await import(`@/../../messages/${locale}.po`)).default;
+  const messages = (await import(`../../../../../messages/${locale}.json`)).default;
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>

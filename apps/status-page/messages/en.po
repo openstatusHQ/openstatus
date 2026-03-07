@@ -1,2 +1,0 @@
-# English translations (auto-extracted by next-intl)
-# This file is auto-generated. Do not edit manually.
