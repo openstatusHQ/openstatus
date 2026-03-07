@@ -1,0 +1,68 @@
+---
+title: "Status Pages Are Politics"
+description: "An always-green status page isn't a sign of reliability — it's a sign of opacity. Why the industry rewards dishonesty and what buyers should do about it."
+author: "openstatus"
+publishedAt: "2026-03-07"
+category: "education"
+faq:
+  - question: "Why is an always-green status page a red flag?"
+    answer: "Every system has incidents. A status page that has been green for months likely means the vendor isn't reporting incidents, not that they aren't having them. Without standardized reporting, a clean status page is indistinguishable from an opaque one."
+  - question: "How should buyers evaluate a vendor's status page?"
+    answer: "Instead of comparing which page looks cleaner, ask vendors to show their incident history for the past 6 months. If they claim zero incidents, press harder. Treat transparency as a trust signal, not a liability."
+  - question: "Why do transparent companies lose deals to opaque competitors?"
+    answer: "When there's no standard for what gets reported, buyers rationally pick the vendor with fewer visible incidents. The signal is inverted: transparency looks like unreliability, and opacity looks like stability. This rewards the wrong behavior."
+  - question: "Why do large companies use internal status pages?"
+    answer: "Big organizations know public status pages are political documents. They run private, internal status pages so that teams across silos can coordinate on the actual operational truth — not the sanitized version crafted for public consumption."
+---
+
+**TL;DR**: A founder [posted on r/SaaS](https://www.reddit.com/r/SaaS/comments/1rgbhtt/we_lost_a_deal_because_of_our_status_page_history/) about losing a deal because their honest status page showed three minor incidents while a competitor's page showed zero — not because the competitor was more reliable, but because they never reported anything. Status pages aren't reliability data. They're political documents.
+
+---
+
+A founder posted on [r/SaaS](https://www.reddit.com/r/SaaS/comments/1rgbhtt/we_lost_a_deal_because_of_our_status_page_history/) about losing a deal because their status page was too honest. Three minor incidents over two months. Quick resolutions, full [post-mortems](/guides/public-postmortem-underrated-marketing), [99.9% uptime](/guides/why-uptime-percentage-is-misleading). Didn't matter. The competitor's page showed zero incidents — not because they were more reliable, but because they never reported anything. The deal went to the green page.
+
+This isn't a one-off sales story. It's the entire industry's dirty secret.
+
+## An Always-Green Status Page Is a Red Flag
+
+Let's be blunt: if a vendor's status page has been green for 18 months straight, they're not running a reliable service. They're running a PR campaign. Every system has incidents. The only question is whether a company reports them or buries them.
+
+There's no shared definition of what counts as an "incident." No auditing mechanism. No reporting standard. One vendor calls a 30-minute partial outage an incident, another calls it a blip and never reports it. When "incident" means whatever each company wants it to mean, a clean status page is unfalsifiable — you can't tell the difference between a reliable vendor and an opaque one.
+
+## The Game Is Rigged Against Honesty
+
+Here's what makes this infuriating: the buyer in that Reddit story wasn't stupid. They were being rational. When one page shows incidents and another doesn't, and there's no standard for what gets reported, the only safe bet is to pick the clean page. The signal is completely inverted — transparency looks like unreliability, and opacity looks like stability.
+
+Every choice on a status page is political. What counts as an incident. When to open one. Whether "degraded performance" means 10% of users are affected or the whole system is down. How long "investigating" can run before becoming "identified." These aren't technical decisions. They're PR decisions, made under pressure from legal, sales, and whoever has the most anxiety about appearances.
+
+In big corporations, status page updates don't even come from the engineers handling the incident. They go through a review process — legal checks the wording, comms rewrites it, a manager signs off. By the time something gets published, it's been sanitized through three layers of organizational anxiety. The update you're reading isn't what happened. It's what the company decided was safe to say.
+
+## Big Orgs Already Know This
+
+Large organizations figured this out a long time ago. That's why they don't rely on public status pages internally. When you have dozens of teams across silos — infrastructure, platform, product, SRE — you can't coordinate incident response on a page designed for external PR. You need the actual truth: real-time metrics, auto-detected incidents, granular component status, no political filtering.
+
+That's exactly why [internal status pages](/guides/public-vs-private-status-pages) exist. The public page is for customers — measured, reviewed, political. The private page is for the people who actually need to fix things. The fact that big companies run two separate systems tells you everything about how much trust they place in public status pages: none.
+
+## Stop Rewarding the Liars
+
+The founder's workaround — proactively framing transparency in sales conversations — is smart. But it's a band-aid on a broken system.
+
+What would actually fix this:
+
+- **Buyers should treat an empty status page as suspicious**, not reassuring. Ask vendors: "Show me your incident history for the last 6 months." If the answer is "we had none," press harder.
+- **Standardized [incident severity definitions](/guides/incident-severity-matrix)** so that "incident" means the same thing across vendors. Right now it's completely arbitrary.
+- **Third-party uptime verification** that buyers can actually trust, backed by real [SLIs, not just SLA promises](/guides/sla-vs-slo-vs-sli) — instead of self-reported theater.
+
+Until then, every vendor who publishes honest incident reports is subsidizing competitors who don't. That's the real cost of transparency — and it's paid by the people doing the right thing.
+
+---
+
+The founder who lost that deal made the harder choice. They could have scrubbed their page, played the game, and closed the deal. They didn't. That takes conviction. The least the rest of us can do is stop pretending that a green status page means anything at all.
+
+---
+
+Start free. No credit card required. Set up your first status page in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
