@@ -1,3 +1,4 @@
+import { HowItWorks } from "@/components/marketing/how-it-works";
 import { LatencyChartTable } from "../latency-chart-table";
 import { ButtonLink } from "./button-link";
 import { Code } from "./code";
@@ -32,4 +33,5 @@ export const components = {
   SimpleChart: LatencyChartTable,
   Tweet: MDXTweet,
   StatusPageExample: MDXStatusPageExample,
+  HowItWorks,
 };
