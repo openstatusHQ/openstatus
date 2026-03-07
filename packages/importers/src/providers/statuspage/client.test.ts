@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { StatuspageClient } from "./client";
+import { createStatuspageClient } from "./client";
 import {
   MOCK_COMPONENTS,
   MOCK_COMPONENT_GROUPS,
@@ -23,10 +23,10 @@ function mockFetch(data: unknown, status = 200) {
 }
 
 describe("StatuspageClient", () => {
-  let client: StatuspageClient;
+  let client: ReturnType<typeof createStatuspageClient>;
 
   beforeEach(() => {
-    client = new StatuspageClient("test-api-key");
+    client = createStatuspageClient("test-api-key");
   });
 
   afterEach(() => {

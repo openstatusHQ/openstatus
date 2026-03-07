@@ -42,10 +42,10 @@ export type ImportConfig = {
 };
 
 /**
- * Every import provider must implement this interface.
+ * Every import provider must conform to this type.
  */
-export interface ImportProvider<TConfig extends ImportConfig = ImportConfig> {
-  readonly name: string;
-  validate(config: TConfig): Promise<{ valid: boolean; error?: string }>;
-  run(config: TConfig): Promise<ImportSummary>;
-}
+export type ImportProvider<TConfig extends ImportConfig = ImportConfig> = {
+  name: string;
+  validate: (config: TConfig) => Promise<{ valid: boolean; error?: string }>;
+  run: (config: TConfig) => Promise<ImportSummary>;
+};

@@ -15,7 +15,7 @@ import type {
   PhaseResult,
   ResourceResult,
 } from "@openstatus/importers";
-import { StatuspageImportProvider } from "@openstatus/importers/statuspage";
+import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 import { TRPCError } from "@trpc/server";
 
 type ImportOptions = {
@@ -28,7 +28,7 @@ export async function previewImport(config: {
   statuspagePageId?: string;
   workspaceId: number;
 }): Promise<ImportSummary> {
-  const provider = new StatuspageImportProvider();
+  const provider = createStatuspageProvider();
 
   const validation = await provider.validate({
     ...config,
@@ -51,7 +51,7 @@ export async function runImport(config: {
   pageId?: number;
   options?: ImportOptions;
 }): Promise<ImportSummary> {
-  const provider = new StatuspageImportProvider();
+  const provider = createStatuspageProvider();
 
   const validation = await provider.validate(config);
   if (!validation.valid) {

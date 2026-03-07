@@ -12,20 +12,25 @@ import {
   StatuspageSubscriberSchema,
 } from "./api-types";
 
-export class StatuspageClient {
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
+export type StatuspageClient = {
+  getPages: () => Promise<StatuspagePage[]>;
+  getPage: (pageId: string) => Promise<StatuspagePage>;
+  getComponents: (pageId: string) => Promise<StatuspageComponent[]>;
+  getComponentGroups: (pageId: string) => Promise<StatuspageGroupComponent[]>;
+  getIncidents: (pageId: string) => Promise<StatuspageIncident[]>;
+  getScheduledIncidents: (pageId: string) => Promise<StatuspageIncident[]>;
+  getSubscribers: (pageId: string) => Promise<StatuspageSubscriber[]>;
+};
 
-  constructor(apiKey: string, baseUrl = "https://api.statuspage.io/v1") {
-    this.apiKey = apiKey;
-    this.baseUrl = baseUrl;
-  }
-
-  private async request<T>(path: string, schema: z.ZodType<T>): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
+export function createStatuspageClient(
+  apiKey: string,
+  baseUrl = "https://api.statuspage.io/v1",
+): StatuspageClient {
+  async function request<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+    const url = `${baseUrl}${path}`;
     const response = await fetch(url, {
       headers: {
-        Authorization: `OAuth ${this.apiKey}`,
+        Authorization: `OAuth ${apiKey}`,
         "Content-Type": "application/json",
       },
     });
@@ -40,48 +45,30 @@ export class StatuspageClient {
     return schema.parse(data);
   }
 
-  async getPages(): Promise<StatuspagePage[]> {
-    return this.request("/pages", z.array(StatuspagePageSchema));
-  }
-
-  async getPage(pageId: string): Promise<StatuspagePage> {
-    return this.request(`/pages/${pageId}`, StatuspagePageSchema);
-  }
-
-  async getComponents(pageId: string): Promise<StatuspageComponent[]> {
-    return this.request(
-      `/pages/${pageId}/components`,
-      z.array(StatuspageComponentSchema),
-    );
-  }
-
-  async getComponentGroups(
-    pageId: string,
-  ): Promise<StatuspageGroupComponent[]> {
-    return this.request(
-      `/pages/${pageId}/component-groups`,
-      z.array(StatuspageGroupComponentSchema),
-    );
-  }
-
-  async getIncidents(pageId: string): Promise<StatuspageIncident[]> {
-    return this.request(
-      `/pages/${pageId}/incidents`,
-      z.array(StatuspageIncidentSchema),
-    );
-  }
-
-  async getScheduledIncidents(pageId: string): Promise<StatuspageIncident[]> {
-    return this.request(
-      `/pages/${pageId}/incidents/scheduled`,
-      z.array(StatuspageIncidentSchema),
-    );
-  }
-
-  async getSubscribers(pageId: string): Promise<StatuspageSubscriber[]> {
-    return this.request(
-      `/pages/${pageId}/subscribers`,
-      z.array(StatuspageSubscriberSchema),
-    );
-  }
+  return {
+    getPages: () => request("/pages", z.array(StatuspagePageSchema)),
+    getPage: (pageId) => request(`/pages/${pageId}`, StatuspagePageSchema),
+    getComponents: (pageId) =>
+      request(
+        `/pages/${pageId}/components`,
+        z.array(StatuspageComponentSchema),
+      ),
+    getComponentGroups: (pageId) =>
+      request(
+        `/pages/${pageId}/component-groups`,
+        z.array(StatuspageGroupComponentSchema),
+      ),
+    getIncidents: (pageId) =>
+      request(`/pages/${pageId}/incidents`, z.array(StatuspageIncidentSchema)),
+    getScheduledIncidents: (pageId) =>
+      request(
+        `/pages/${pageId}/incidents/scheduled`,
+        z.array(StatuspageIncidentSchema),
+      ),
+    getSubscribers: (pageId) =>
+      request(
+        `/pages/${pageId}/subscribers`,
+        z.array(StatuspageSubscriberSchema),
+      ),
+  };
 }

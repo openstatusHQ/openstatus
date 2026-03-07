@@ -8,7 +8,7 @@ import {
 } from "./fixtures";
 import {
   type StatuspageImportConfig,
-  StatuspageImportProvider,
+  createStatuspageProvider,
 } from "./provider";
 
 function createMockFetch(options?: { failAuth?: boolean }) {
@@ -58,12 +58,12 @@ describe("StatuspageImportProvider", () => {
   });
 
   it("has name 'statuspage'", () => {
-    const provider = new StatuspageImportProvider();
+    const provider = createStatuspageProvider();
     expect(provider.name).toBe("statuspage");
   });
 
   it("validate returns valid for working key", async () => {
-    const provider = new StatuspageImportProvider();
+    const provider = createStatuspageProvider();
     const result = await provider.validate({
       apiKey: "test-key",
       workspaceId: 1,
@@ -75,7 +75,7 @@ describe("StatuspageImportProvider", () => {
     const prev = globalThis.fetch;
     globalThis.fetch = createMockFetch({ failAuth: true }) as typeof fetch;
 
-    const provider = new StatuspageImportProvider();
+    const provider = createStatuspageProvider();
     const result = await provider.validate({
       apiKey: "bad-key",
       workspaceId: 1,
@@ -87,7 +87,7 @@ describe("StatuspageImportProvider", () => {
   });
 
   it("run with dryRun returns correct phase counts", async () => {
-    const provider = new StatuspageImportProvider();
+    const provider = createStatuspageProvider();
     const config: StatuspageImportConfig = {
       apiKey: "test-key",
       workspaceId: 1,

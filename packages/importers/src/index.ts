@@ -6,7 +6,7 @@ export type {
   ResourceResult,
 } from "./types";
 
-export { StatuspageImportProvider } from "./providers/statuspage";
+export { createStatuspageProvider } from "./providers/statuspage";
 export type { StatuspageImportConfig } from "./providers/statuspage";
 
 /**

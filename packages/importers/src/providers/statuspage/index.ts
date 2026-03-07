@@ -1,4 +1,5 @@
-export { StatuspageClient } from "./client";
+export { createStatuspageClient } from "./client";
+export type { StatuspageClient } from "./client";
 export type {
   StatuspageComponent,
   StatuspageGroupComponent,
@@ -15,5 +16,5 @@ export {
   StatuspagePageSchema,
   StatuspageSubscriberSchema,
 } from "./api-types";
-export { StatuspageImportProvider } from "./provider";
+export { createStatuspageProvider } from "./provider";
 export type { StatuspageImportConfig } from "./provider";
