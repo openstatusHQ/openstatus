@@ -18,7 +18,7 @@ import {
   MOCK_SUBSCRIBERS,
 } from "@openstatus/importers/statuspage/fixtures";
 
-import { lambdaRouter } from "../lambda";
+import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
 
 // ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ function makeCaller() {
     // @ts-expect-error - minimal workspace for test
     workspace: { id: 1 },
   });
-  return lambdaRouter.createCaller(ctx);
+  return edgeRouter.createCaller(ctx);
 }
 
 // Track all created IDs for cleanup
