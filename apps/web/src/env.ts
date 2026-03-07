@@ -1,13 +1,16 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-import "@openstatus/analytics/env";
-import "@openstatus/db/env.mjs";
+// Skip external env validation during build when env vars aren't available
+if (process.env.RESEND_API_KEY) {
+  await import("@openstatus/analytics/env");
+  await import("@openstatus/db/env.mjs");
+}
 
 export const env = createEnv({
   server: {
-    TINY_BIRD_API_KEY: z.string().min(1),
-    RESEND_API_KEY: z.string().min(1),
+    TINY_BIRD_API_KEY: z.string().optional(),
+    RESEND_API_KEY: z.string().optional(),
     QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
     QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
     QSTASH_TOKEN: z.string().min(1),
