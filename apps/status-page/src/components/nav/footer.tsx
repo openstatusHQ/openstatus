@@ -2,6 +2,7 @@
 
 import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { ThemeDropdown } from "@/components/themes/theme-dropdown";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
@@ -60,6 +61,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
               <Skeleton className="h-4 w-28" />
             )}
           </TimestampHoverCard>
+          <LanguageSwitcher />
           <ThemeDropdown />
         </div>
       </div>

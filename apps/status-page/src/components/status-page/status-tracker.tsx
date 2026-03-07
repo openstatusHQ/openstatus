@@ -15,8 +15,8 @@ import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
+import { useExtracted } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { requests } from "./messages";
 import { chartConfig } from "./utils";
 
 type UptimeData = NonNullable<
@@ -32,6 +32,7 @@ type UptimeData = NonNullable<
 // TODO: widget type -> current status only | with status history
 
 export function StatusTracker({ data }: { data: UptimeData }) {
+  const t = useExtracted();
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -342,7 +343,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                   <>
                     <Separator />
                     <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
-                      <span>Click again to unpin</span>
+                      <span>{t("Click again to unpin")}</span>
                       <Kbd>Esc</Kbd>
                     </div>
                   </>
@@ -375,6 +376,14 @@ function StatusTrackerContent({
   status: "success" | "degraded" | "error" | "info" | "empty";
   value: string;
 }) {
+  const t = useExtracted();
+  const requestLabels: Record<string, string> = {
+    success: t("Normal"),
+    degraded: t("Degraded"),
+    error: t("Error"),
+    info: t("Maintenance"),
+    empty: t("No Data"),
+  };
   return (
     <div className="flex items-baseline gap-4">
       <div className="flex items-center gap-2">
@@ -384,7 +393,7 @@ function StatusTrackerContent({
             backgroundColor: chartConfig[status].color,
           }}
         />
-        <div className="text-sm">{requests[status]}</div>
+        <div className="text-sm">{requestLabels[status]}</div>
       </div>
       <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
         {value}
