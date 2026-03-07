@@ -79,16 +79,16 @@ function StepCard({ step }: StepCardProps) {
   const Icon = step.icon;
 
   return (
-    <div className="group relative flex flex-col items-center rounded-lg border border-border bg-background p-6 text-center shadow-sm transition-shadow hover:shadow-md md:p-8">
+    <div className="group relative flex flex-col items-center rounded-lg border border-green-200 bg-background p-6 text-center shadow-sm transition-all hover:border-green-300 hover:shadow-md dark:border-green-900 dark:hover:border-green-800 md:p-8">
       {/* Number badge */}
       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-xs font-medium text-white">
           {step.number}
         </span>
       </div>
 
       {/* Icon */}
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-foreground">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400">
         <Icon className="h-6 w-6" />
       </div>
 
@@ -105,10 +105,10 @@ function ConnectingArrow() {
   return (
     <div className="flex w-full max-w-[120px] items-center">
       {/* Dotted line */}
-      <div className="h-px flex-1 border-t-2 border-dashed border-border" />
+      <div className="h-px flex-1 border-t-2 border-dashed border-green-300 dark:border-green-700" />
       {/* Arrow head */}
       <svg
-        className="h-3 w-3 -ml-1 text-border"
+        className="-ml-1 h-3 w-3 text-green-400 dark:text-green-600"
         fill="none"
         viewBox="0 0 12 12"
         stroke="currentColor"
