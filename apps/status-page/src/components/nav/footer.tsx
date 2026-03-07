@@ -7,10 +7,12 @@ import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function Footer(props: React.ComponentProps<"footer">) {
+  const t = useExtracted();
   const { domain } = useParams<{ domain: string }>();
   const [isMounted, setIsMounted] = useState(false);
   const trpc = useTRPC();
@@ -31,7 +33,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
         <div>
           {!page.whiteLabel ? (
             <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
-              powered by{" "}
+              {t("powered by")}{" "}
               <Link
                 href={`https://openstatus.dev?utm_medium=status-page&utm_source=${page.slug}`}
                 target="_blank"
