@@ -16,6 +16,10 @@ export const defaultMetadata: Metadata = {
   },
   description: DESCRIPTION,
   metadataBase: new URL("https://www.openstatus.dev"),
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const twitterMetadata: Metadata["twitter"] = {
