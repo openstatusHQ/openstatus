@@ -34,7 +34,11 @@ const sentryConfig = {
   transpileClientSDK: false,
 
   // Tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 };
 
 export default withSentryConfig(nextConfig, sentryConfig);
