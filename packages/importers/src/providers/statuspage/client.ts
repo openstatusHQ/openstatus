@@ -45,30 +45,47 @@ export function createStatuspageClient(
     return schema.parse(data);
   }
 
+  async function requestAllPages<T>(
+    path: string,
+    itemSchema: z.ZodType<T>,
+    perPage = 100,
+  ): Promise<T[]> {
+    const all: T[] = [];
+    let page = 1;
+    while (true) {
+      const separator = path.includes("?") ? "&" : "?";
+      const items = await request(
+        `${path}${separator}page=${page}&per_page=${perPage}`,
+        z.array(itemSchema),
+      );
+      all.push(...items);
+      if (items.length < perPage) break;
+      page++;
+    }
+    return all;
+  }
+
   return {
     getPages: () => request("/pages", z.array(StatuspagePageSchema)),
     getPage: (pageId) => request(`/pages/${pageId}`, StatuspagePageSchema),
     getComponents: (pageId) =>
-      request(
-        `/pages/${pageId}/components`,
-        z.array(StatuspageComponentSchema),
-      ),
+      requestAllPages(`/pages/${pageId}/components`, StatuspageComponentSchema),
     getComponentGroups: (pageId) =>
-      request(
+      requestAllPages(
         `/pages/${pageId}/component-groups`,
-        z.array(StatuspageGroupComponentSchema),
+        StatuspageGroupComponentSchema,
       ),
     getIncidents: (pageId) =>
-      request(`/pages/${pageId}/incidents`, z.array(StatuspageIncidentSchema)),
+      requestAllPages(`/pages/${pageId}/incidents`, StatuspageIncidentSchema),
     getScheduledIncidents: (pageId) =>
-      request(
+      requestAllPages(
         `/pages/${pageId}/incidents/scheduled`,
-        z.array(StatuspageIncidentSchema),
+        StatuspageIncidentSchema,
       ),
     getSubscribers: (pageId) =>
-      request(
+      requestAllPages(
         `/pages/${pageId}/subscribers`,
-        z.array(StatuspageSubscriberSchema),
+        StatuspageSubscriberSchema,
       ),
   };
 }

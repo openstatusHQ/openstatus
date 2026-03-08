@@ -6,6 +6,7 @@ import {
   pageComponent,
   pageComponentGroup,
   pageSubscriber,
+  pageSubscriberToPageComponent,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
@@ -250,7 +251,7 @@ export async function runImport(config: {
               phase.status = "skipped";
               break;
             }
-            await writeSubscribersPhase(phase, targetPageId);
+            await writeSubscribersPhase(phase, targetPageId, idMaps.components);
           } else {
             phase.status = "skipped";
           }
@@ -676,94 +677,70 @@ async function writeMaintenancesPhase(
 async function writeSubscribersPhase(
   phase: PhaseResult,
   pageId: number,
+  componentIdMap: Map<string, number>,
 ): Promise<void> {
   for (const resource of phase.resources) {
     try {
       const data = resource.data as {
         email: string;
         pageId: number;
-        channelType: string;
-        webhookUrl: string | null;
+        sourceComponentIds: string[];
       };
 
-      // Idempotency check by email + pageId for email type,
-      // or webhookUrl + pageId for webhook type
-      if (data.channelType === "email") {
-        const existing = await db
-          .select()
-          .from(pageSubscriber)
-          .where(
-            and(
-              eq(pageSubscriber.email, data.email),
-              eq(pageSubscriber.pageId, pageId),
-              eq(pageSubscriber.channelType, "email"),
-            ),
-          )
-          .get();
+      // Idempotency check by email + pageId
+      const existing = await db
+        .select()
+        .from(pageSubscriber)
+        .where(
+          and(
+            eq(pageSubscriber.email, data.email),
+            eq(pageSubscriber.pageId, pageId),
+            eq(pageSubscriber.channelType, "email"),
+          ),
+        )
+        .get();
 
-        if (existing) {
-          resource.openstatusId = existing.id;
-          resource.status = "skipped";
-          continue;
-        }
-
-        const [inserted] = await db
-          .insert(pageSubscriber)
-          .values({
-            email: data.email,
-            pageId,
-            channelType: "email",
-          })
-          .returning({ id: pageSubscriber.id });
-
-        if (!inserted) {
-          resource.status = "failed";
-          resource.error = "Insert returned no result";
-          continue;
-        }
-
-        resource.openstatusId = inserted.id;
-        resource.status = "created";
-      } else if (data.channelType === "webhook" && data.webhookUrl) {
-        const existing = await db
-          .select()
-          .from(pageSubscriber)
-          .where(
-            and(
-              eq(pageSubscriber.webhookUrl, data.webhookUrl),
-              eq(pageSubscriber.pageId, pageId),
-              eq(pageSubscriber.channelType, "webhook"),
-            ),
-          )
-          .get();
-
-        if (existing) {
-          resource.openstatusId = existing.id;
-          resource.status = "skipped";
-          continue;
-        }
-
-        const [inserted] = await db
-          .insert(pageSubscriber)
-          .values({
-            email: data.email,
-            pageId,
-            channelType: "webhook",
-            webhookUrl: data.webhookUrl,
-          })
-          .returning({ id: pageSubscriber.id });
-
-        if (!inserted) {
-          resource.status = "failed";
-          resource.error = "Insert returned no result";
-          continue;
-        }
-
-        resource.openstatusId = inserted.id;
-        resource.status = "created";
-      } else {
+      if (existing) {
+        resource.openstatusId = existing.id;
         resource.status = "skipped";
+        continue;
       }
+
+      const [inserted] = await db
+        .insert(pageSubscriber)
+        .values({
+          email: data.email,
+          pageId,
+          channelType: "email",
+        })
+        .returning({ id: pageSubscriber.id });
+
+      if (!inserted) {
+        resource.status = "failed";
+        resource.error = "Insert returned no result";
+        continue;
+      }
+
+      // Link to page components
+      const componentLinks: Array<{
+        pageSubscriberId: number;
+        pageComponentId: number;
+      }> = [];
+      for (const sourceCompId of data.sourceComponentIds) {
+        const osCompId = componentIdMap.get(sourceCompId);
+        if (osCompId) {
+          componentLinks.push({
+            pageSubscriberId: inserted.id,
+            pageComponentId: osCompId,
+          });
+        }
+      }
+      if (componentLinks.length > 0) {
+        await db.insert(pageSubscriberToPageComponent).values(componentLinks);
+      }
+
+      resource.openstatusId = inserted.id;
+      resource.status = "created";
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);

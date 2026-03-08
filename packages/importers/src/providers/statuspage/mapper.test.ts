@@ -143,19 +143,21 @@ describe("mapSubscriber", () => {
     expect(result).toEqual({
       email: "alice@acmecorp.com",
       pageId: 10,
-      channelType: "email",
-      webhookUrl: null,
+      sourceComponentIds: [],
     });
   });
 
-  it("maps webhook subscriber", () => {
-    const result = mapSubscriber(MOCK_SUBSCRIBERS[2], 10);
+  it("maps email subscriber with component subscriptions", () => {
+    const result = mapSubscriber(MOCK_SUBSCRIBERS[1], 10);
     expect(result).toEqual({
-      email: "webhook@imported.openstatus.dev",
+      email: "bob@acmecorp.com",
       pageId: 10,
-      channelType: "webhook",
-      webhookUrl: "https://hooks.acmecorp.com/statuspage",
+      sourceComponentIds: ["sp_comp_001", "sp_comp_003"],
     });
+  });
+
+  it("returns null for webhook subscriber", () => {
+    expect(mapSubscriber(MOCK_SUBSCRIBERS[2], 10)).toBeNull();
   });
 
   it("returns null for sms subscriber", () => {

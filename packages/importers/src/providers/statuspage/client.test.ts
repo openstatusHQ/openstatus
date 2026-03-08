@@ -22,6 +22,24 @@ function mockFetch(data: unknown, status = 200) {
   ) as typeof globalThis.fetch;
 }
 
+/**
+ * Mock fetch for paginated endpoints: returns `data` on first call, `[]` on subsequent calls.
+ */
+function mockFetchPaginated(data: unknown, status = 200) {
+  let callCount = 0;
+  globalThis.fetch = mock(() => {
+    callCount++;
+    const body = callCount === 1 ? data : [];
+    return Promise.resolve(
+      new Response(JSON.stringify(body), {
+        status,
+        statusText: status === 200 ? "OK" : "Unauthorized",
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  }) as typeof globalThis.fetch;
+}
+
 describe("StatuspageClient", () => {
   let client: ReturnType<typeof createStatuspageClient>;
 
@@ -42,7 +60,7 @@ describe("StatuspageClient", () => {
   });
 
   test("getComponents returns parsed components", async () => {
-    mockFetch(MOCK_COMPONENTS);
+    mockFetchPaginated(MOCK_COMPONENTS);
     const components = await client.getComponents("sp_page_001");
     expect(components).toEqual(MOCK_COMPONENTS);
     expect(components).toHaveLength(4);
@@ -50,7 +68,7 @@ describe("StatuspageClient", () => {
   });
 
   test("getComponentGroups returns parsed groups", async () => {
-    mockFetch(MOCK_COMPONENT_GROUPS);
+    mockFetchPaginated(MOCK_COMPONENT_GROUPS);
     const groups = await client.getComponentGroups("sp_page_001");
     expect(groups).toEqual(MOCK_COMPONENT_GROUPS);
     expect(groups).toHaveLength(1);
@@ -59,7 +77,7 @@ describe("StatuspageClient", () => {
   });
 
   test("getIncidents returns parsed incidents with updates", async () => {
-    mockFetch(MOCK_INCIDENTS);
+    mockFetchPaginated(MOCK_INCIDENTS);
     const incidents = await client.getIncidents("sp_page_001");
     expect(incidents).toEqual(MOCK_INCIDENTS);
     expect(incidents).toHaveLength(3);
@@ -70,7 +88,7 @@ describe("StatuspageClient", () => {
   });
 
   test("getSubscribers returns parsed subscribers", async () => {
-    mockFetch(MOCK_SUBSCRIBERS);
+    mockFetchPaginated(MOCK_SUBSCRIBERS);
     const subscribers = await client.getSubscribers("sp_page_001");
     expect(subscribers).toEqual(MOCK_SUBSCRIBERS);
     expect(subscribers).toHaveLength(5);
@@ -117,7 +135,7 @@ describe("StatuspageClient", () => {
 
   test("getScheduledIncidents returns parsed scheduled incidents", async () => {
     const scheduled = MOCK_INCIDENTS.filter((i) => i.scheduled_for != null);
-    mockFetch(scheduled);
+    mockFetchPaginated(scheduled);
     const incidents = await client.getScheduledIncidents("sp_page_001");
     expect(incidents).toEqual(scheduled);
     expect(incidents).toHaveLength(1);
@@ -125,12 +143,12 @@ describe("StatuspageClient", () => {
   });
 
   test("getScheduledIncidents calls correct URL path", async () => {
-    mockFetch([]);
+    mockFetchPaginated([]);
     await client.getScheduledIncidents("sp_page_001");
     const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(
-      "https://api.statuspage.io/v1/pages/sp_page_001/incidents/scheduled",
+      "https://api.statuspage.io/v1/pages/sp_page_001/incidents/scheduled?page=1&per_page=100",
     );
   });
 

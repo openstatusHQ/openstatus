@@ -27,17 +27,31 @@ function createMockFetch(options?: { failAuth?: boolean }) {
     if (url.endsWith("/pages")) {
       return Promise.resolve(Response.json(MOCK_PAGES));
     }
-    if (url.match(/\/pages\/[^/]+\/components$/)) {
-      return Promise.resolve(Response.json(MOCK_COMPONENTS));
+    if (url.match(/\/pages\/[^/]+\/components(\?|$)/)) {
+      const pageParam = new URL(url).searchParams.get("page");
+      return Promise.resolve(
+        Response.json(pageParam === "1" || !pageParam ? MOCK_COMPONENTS : []),
+      );
     }
-    if (url.match(/\/pages\/[^/]+\/component-groups$/)) {
-      return Promise.resolve(Response.json(MOCK_COMPONENT_GROUPS));
+    if (url.match(/\/pages\/[^/]+\/component-groups(\?|$)/)) {
+      const pageParam = new URL(url).searchParams.get("page");
+      return Promise.resolve(
+        Response.json(
+          pageParam === "1" || !pageParam ? MOCK_COMPONENT_GROUPS : [],
+        ),
+      );
     }
-    if (url.match(/\/pages\/[^/]+\/incidents$/)) {
-      return Promise.resolve(Response.json(MOCK_INCIDENTS));
+    if (url.match(/\/pages\/[^/]+\/incidents(\?|$)/)) {
+      const pageParam = new URL(url).searchParams.get("page");
+      return Promise.resolve(
+        Response.json(pageParam === "1" || !pageParam ? MOCK_INCIDENTS : []),
+      );
     }
-    if (url.match(/\/pages\/[^/]+\/subscribers$/)) {
-      return Promise.resolve(Response.json(MOCK_SUBSCRIBERS));
+    if (url.match(/\/pages\/[^/]+\/subscribers(\?|$)/)) {
+      const pageParam = new URL(url).searchParams.get("page");
+      return Promise.resolve(
+        Response.json(pageParam === "1" || !pageParam ? MOCK_SUBSCRIBERS : []),
+      );
     }
 
     return Promise.resolve(
@@ -117,7 +131,7 @@ describe("StatuspageImportProvider", () => {
     // 1 maintenance (incident_003)
     expect(findPhase("maintenances")?.resources).toHaveLength(1);
 
-    // 3 subscribers: 2 email + 1 webhook (sms + slack skipped)
-    expect(findPhase("subscribers")?.resources).toHaveLength(3);
+    // 2 subscribers: 2 email only (webhook + sms + slack skipped)
+    expect(findPhase("subscribers")?.resources).toHaveLength(2);
   });
 });

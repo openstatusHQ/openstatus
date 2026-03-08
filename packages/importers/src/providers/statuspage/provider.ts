@@ -47,6 +47,8 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
         pages = pages.filter((p) => p.id === config.statuspagePageId);
       }
 
+      let skippedSubscribers = 0;
+
       for (const page of pages) {
         const [components, groups, incidents, subscribers] = await Promise.all([
           client.getComponents(page.id),
@@ -157,6 +159,8 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
               status: "created",
               data: mapped,
             });
+          } else {
+            skippedSubscribers++;
           }
         }
         phases.push({
@@ -166,13 +170,20 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
         });
       }
 
+      const errors: string[] = [];
+      if (skippedSubscribers > 0) {
+        errors.push(
+          `Only email subscribers are supported. ${skippedSubscribers} non-email subscriber${skippedSubscribers === 1 ? " was" : "s were"} skipped.`,
+        );
+      }
+
       return {
         provider: "statuspage",
         status: "completed",
         startedAt,
         completedAt: new Date(),
         phases,
-        errors: [],
+        errors,
       };
     },
   };
