@@ -23,6 +23,10 @@ const calSans = LocalFont({
 
 export const metadata: Metadata = {
   ...defaultMetadata,
+  robots: {
+    index: false,
+    follow: false,
+  },
   twitter: {
     ...twitterMetadata,
   },
