@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { signIn } from "@/lib/auth";
@@ -8,6 +9,19 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import type { SearchParams } from "nuqs/server";
 import MagicLinkForm from "./_components/magic-link-form";
 import { searchParamsCache } from "./search-params";
+
+export const metadata: Metadata = {
+  title: "Sign In",
+  description:
+    "Sign in to openstatus. Monitor your services and keep your users informed.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://app.openstatus.dev/login",
+  },
+};
 
 export default async function Page(props: {
   searchParams: Promise<SearchParams>;
