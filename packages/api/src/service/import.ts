@@ -458,6 +458,8 @@ async function writeComponentsPhase(
   componentIdMap: Map<string, number>,
 ): Promise<void> {
   for (const resource of phase.resources) {
+    if (resource.status === "skipped") continue;
+
     try {
       const data = resource.data as {
         workspaceId: number;
