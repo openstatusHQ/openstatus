@@ -474,11 +474,13 @@ test("run enforces component limit by truncating", async () => {
       title: "Truncation Test Page",
       description: "",
       slug: "truncation-test",
+      customDomain: "",
       icon: "",
     })
     .returning({ id: page.id });
 
   if (!testPage) throw new Error("Failed to create test page");
+  createdIds.pages.push(testPage.id);
 
   const result = await runImport({
     apiKey: "test-key",
@@ -510,8 +512,6 @@ test("run enforces component limit by truncating", async () => {
   expect(created.length).toBeLessThanOrEqual(2);
 
   await cleanup();
-  // Clean up the test page
-  await db.delete(page).where(eq(page.id, testPage.id));
 });
 
 test("run skips subscribers on free plan", async () => {
