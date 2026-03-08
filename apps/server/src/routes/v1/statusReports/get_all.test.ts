@@ -46,7 +46,7 @@ test("return empty status reports", async () => {
   const res = await app.request("/v1/status_report", {
     method: "GET",
     headers: {
-      "x-openstatus-key": "2",
+      "x-openstatus-key": "3",
     },
   });
 

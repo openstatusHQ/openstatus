@@ -22,7 +22,7 @@ test("return empty notifications", async () => {
   const res = await app.request("/v1/notification", {
     method: "GET",
     headers: {
-      "x-openstatus-key": "2",
+      "x-openstatus-key": "3",
     },
   });
 

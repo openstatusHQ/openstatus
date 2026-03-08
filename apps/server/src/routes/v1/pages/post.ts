@@ -65,21 +65,6 @@ export function registerPostPage(api: typeof pagesApi) {
       });
     }
 
-    const count = (
-      await db
-        .select({ count: sql<number>`count(*)` })
-        .from(page)
-        .where(eq(page.workspaceId, workspaceId))
-        .all()
-    )[0].count;
-
-    if (count >= limits["status-pages"]) {
-      throw new OpenStatusApiError({
-        code: "PAYMENT_REQUIRED",
-        message: "Upgrade for more status pages",
-      });
-    }
-
     if (
       !limits["password-protection"] &&
       (input?.passwordProtected || input?.password)
@@ -107,6 +92,21 @@ export function registerPostPage(api: typeof pagesApi) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for email domain protection",
+      });
+    }
+
+    const count = (
+      await db
+        .select({ count: sql<number>`count(*)` })
+        .from(page)
+        .where(eq(page.workspaceId, workspaceId))
+        .all()
+    )[0].count;
+
+    if (count >= limits["status-pages"]) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for more status pages",
       });
     }
 

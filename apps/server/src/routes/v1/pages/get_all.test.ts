@@ -22,7 +22,7 @@ test("return empty pages", async () => {
   const res = await app.request("/v1/page", {
     method: "GET",
     headers: {
-      "x-openstatus-key": "2",
+      "x-openstatus-key": "3",
     },
   });
 

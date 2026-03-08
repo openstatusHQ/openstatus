@@ -22,7 +22,7 @@ test("return empty incidents", async () => {
   const res = await app.request("/v1/incident", {
     method: "GET",
     headers: {
-      "x-openstatus-key": "2",
+      "x-openstatus-key": "3",
     },
   });
 

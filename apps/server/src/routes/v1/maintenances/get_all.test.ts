@@ -41,7 +41,7 @@ test("return empty maintenances", async () => {
   const res = await app.request("/v1/maintenance", {
     method: "GET",
     headers: {
-      "x-openstatus-key": "2",
+      "x-openstatus-key": "3",
     },
   });
 
