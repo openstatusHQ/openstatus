@@ -17,14 +17,11 @@ import {
 import { type SQL, and, count, eq, inArray, isNull } from "@openstatus/db";
 import {
   insertMonitorSchema,
-  maintenancesToMonitors,
   monitor,
   monitorJobTypes,
   monitorMethods,
   monitorTag,
   monitorTagsToMonitors,
-  monitorsToPages,
-  monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   pageComponent,
@@ -70,20 +67,11 @@ export const monitorRouter = createTRPCRouter({
           .set({ deletedAt: new Date(), active: false })
           .where(eq(monitor.id, monitorToDelete.id));
         await tx
-          .delete(monitorsToPages)
-          .where(eq(monitorsToPages.monitorId, monitorToDelete.id));
-        await tx
           .delete(monitorTagsToMonitors)
           .where(eq(monitorTagsToMonitors.monitorId, monitorToDelete.id));
         await tx
-          .delete(monitorsToStatusReport)
-          .where(eq(monitorsToStatusReport.monitorId, monitorToDelete.id));
-        await tx
           .delete(notificationsToMonitors)
           .where(eq(notificationsToMonitors.monitorId, monitorToDelete.id));
-        await tx
-          .delete(maintenancesToMonitors)
-          .where(eq(maintenancesToMonitors.monitorId, monitorToDelete.id));
         await tx
           .delete(pageComponent)
           .where(eq(pageComponent.monitorId, monitorToDelete.id));
@@ -117,20 +105,11 @@ export const monitorRouter = createTRPCRouter({
           .set({ deletedAt: new Date(), active: false })
           .where(inArray(monitor.id, opts.input.ids));
         await tx
-          .delete(monitorsToPages)
-          .where(inArray(monitorsToPages.monitorId, opts.input.ids));
-        await tx
           .delete(monitorTagsToMonitors)
           .where(inArray(monitorTagsToMonitors.monitorId, opts.input.ids));
         await tx
-          .delete(monitorsToStatusReport)
-          .where(inArray(monitorsToStatusReport.monitorId, opts.input.ids));
-        await tx
           .delete(notificationsToMonitors)
           .where(inArray(notificationsToMonitors.monitorId, opts.input.ids));
-        await tx
-          .delete(maintenancesToMonitors)
-          .where(inArray(maintenancesToMonitors.monitorId, opts.input.ids));
         await tx
           .delete(pageComponent)
           .where(inArray(pageComponent.monitorId, opts.input.ids));

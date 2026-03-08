@@ -4,12 +4,9 @@ import { tb } from "@/libs/clients";
 import type { ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
 import {
-  maintenancesToMonitors,
   monitor,
   monitorRun,
   monitorTagsToMonitors,
-  monitorsToPages,
-  monitorsToStatusReport,
   notificationsToMonitors,
   pageComponent,
 } from "@openstatus/db/src/schema";
@@ -582,20 +579,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         })
         .where(eq(monitor.id, dbMon.id));
       await tx
-        .delete(monitorsToPages)
-        .where(eq(monitorsToPages.monitorId, dbMon.id));
-      await tx
         .delete(monitorTagsToMonitors)
         .where(eq(monitorTagsToMonitors.monitorId, dbMon.id));
       await tx
-        .delete(monitorsToStatusReport)
-        .where(eq(monitorsToStatusReport.monitorId, dbMon.id));
-      await tx
         .delete(notificationsToMonitors)
         .where(eq(notificationsToMonitors.monitorId, dbMon.id));
-      await tx
-        .delete(maintenancesToMonitors)
-        .where(eq(maintenancesToMonitors.monitorId, dbMon.id));
       await tx
         .delete(pageComponent)
         .where(eq(pageComponent.monitorId, dbMon.id));

@@ -1,12 +1,6 @@
 import { relations, sql } from "drizzle-orm";
-import {
-  integer,
-  primaryKey,
-  sqliteTable,
-  text,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { monitor } from "../monitors";
 import { statusReportsToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
@@ -56,9 +50,6 @@ export const statusReportUpdate = sqliteTable("status_report_update", {
 export const StatusReportRelations = relations(
   statusReport,
   ({ one, many }) => ({
-    // Legacy relation - code removed, kept for type compatibility only
-    monitorsToStatusReports: many(monitorsToStatusReport),
-    // Primary relation using pageComponents architecture
     statusReportsToPageComponents: many(statusReportsToPageComponents),
     page: one(page, {
       fields: [statusReport.pageId],
@@ -81,73 +72,3 @@ export const statusReportUpdateRelations = relations(
     }),
   }),
 );
-
-/**
- * @deprecated Legacy relation table - code removed, table exists but completely unused
- * All code now uses statusReportsToPageComponents table instead
- * Table will be dropped in future migration after verification period
- */
-export const monitorsToStatusReport = sqliteTable(
-  "status_report_to_monitors",
-  {
-    monitorId: integer("monitor_id")
-      .notNull()
-      .references(() => monitor.id, { onDelete: "cascade" }),
-    statusReportId: integer("status_report_id")
-      .notNull()
-      .references(() => statusReport.id, { onDelete: "cascade" }),
-    createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
-    ),
-  },
-  (t) => ({
-    pk: primaryKey({ columns: [t.monitorId, t.statusReportId] }),
-  }),
-);
-
-export const monitorsToStatusReportRelations = relations(
-  monitorsToStatusReport,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [monitorsToStatusReport.monitorId],
-      references: [monitor.id],
-    }),
-    statusReport: one(statusReport, {
-      fields: [monitorsToStatusReport.statusReportId],
-      references: [statusReport.id],
-    }),
-  }),
-);
-
-// FIXME: We might have to drop foreign key constraints for the following tables
-// export const pagesToStatusReports = sqliteTable(
-//   "status_reports_to_pages",
-//   {
-//     pageId: integer("page_id")
-//       .notNull()
-//       .references(() => page.id, { onDelete: "cascade" }),
-//     statusReportId: integer("status_report_id")
-//       .notNull()
-//       .references(() => statusReport.id, { onDelete: "cascade" }),
-//     createdAt: integer("created_at", { mode: "timestamp" }).default(
-//       sql`(strftime('%s', 'now'))`
-//     ),
-//   },
-//   (t) => ({
-//     pk: primaryKey(t.pageId, t.statusReportId),
-//   })
-// );
-
-// export const pagesToStatusReportsRelations = relations(
-//   pagesToStatusReports,
-//   ({ one }) => ({
-//     page: one(page, {
-//       fields: [pagesToStatusReports.pageId],
-//       references: [page.id],
-//     }),
-//     statusReport: one(statusReport, {
-//       fields: [pagesToStatusReports.statusReportId],
-//       references: [statusReport.id],
-//     }),
-//   })
-// );
