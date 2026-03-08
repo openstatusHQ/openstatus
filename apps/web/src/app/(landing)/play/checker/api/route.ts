@@ -17,7 +17,7 @@ import { z } from "zod";
 export const runtime = "edge";
 
 const RATE_LIMIT_WINDOW = 60; // 60 seconds
-const MAX_REQUESTS_PER_WINDOW = 5;
+const MAX_REQUESTS_PER_WINDOW = 3;
 
 // Request schema validation
 const playCheckerRequestSchema = z.object({
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
   if (!rateLimitResult.success) {
     return createErrorResponse(
       "RATE_LIMIT_EXCEEDED",
-      "You have exceeded the rate limit of 10 requests per 60 seconds",
+      `You have exceeded the rate limit of ${MAX_REQUESTS_PER_WINDOW} requests per ${RATE_LIMIT_WINDOW} seconds`,
       429,
       {
         limit: rateLimitResult.limit,
