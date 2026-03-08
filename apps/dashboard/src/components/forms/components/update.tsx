@@ -4,13 +4,15 @@ import { FormComponents } from "@/components/forms/components/form-components";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { FormCardGroup } from "../form-card";
 import { FormConfiguration } from "../status-page/form-configuration";
-import { FormImport, type ImportFormValues } from "../status-page/form-import";
+import { FormImport, type ImportFormValues } from "./form-import";
 
 export function FormComponentsUpdate() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const [formKey, setFormKey] = useState(0);
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -37,9 +39,9 @@ export function FormComponentsUpdate() {
 
   const importMutation = useMutation(
     trpc.importRouter.run.mutationOptions({
-      onSuccess: () => {
-        refetch();
-        refetchComponents();
+      onSuccess: async () => {
+        await Promise.all([refetch(), refetchComponents()]);
+        setFormKey((k) => k + 1);
       },
     }),
   );
@@ -91,7 +93,9 @@ export function FormComponentsUpdate() {
 
   return (
     <FormCardGroup>
+      {/* key forces remount after import so useForm picks up new defaultValues */}
       <FormComponents
+        key={formKey}
         pageComponents={standaloneComponents}
         monitors={monitors}
         allPageComponents={pageComponents}
@@ -128,7 +132,7 @@ export function FormComponentsUpdate() {
       <FormImport
         pageId={statusPage.id}
         onSubmit={async (values: ImportFormValues) => {
-          await importMutation.mutateAsync({
+          return await importMutation.mutateAsync({
             provider: values.provider,
             apiKey: values.apiKey,
             pageId: statusPage.id,

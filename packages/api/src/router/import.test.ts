@@ -10,6 +10,8 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import {
   MOCK_COMPONENTS,
   MOCK_COMPONENT_GROUPS,
@@ -19,6 +21,7 @@ import {
 } from "@openstatus/importers/statuspage/fixtures";
 
 import { edgeRouter } from "../edge";
+import { previewImport, runImport } from "../service/import";
 import { createInnerTRPCContext } from "../trpc";
 
 // ---------------------------------------------------------------------------
@@ -53,12 +56,13 @@ function restoreFetch() {
   globalThis.fetch = originalFetch;
 }
 
-function makeCaller() {
+function makeCaller(limitsOverride?: Partial<Limits>) {
+  const limits = { ...allPlans.starter.limits, ...limitsOverride };
   const ctx = createInnerTRPCContext({
     req: undefined,
     session: { user: { id: "1" } },
     // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1 },
+    workspace: { id: 1, limits },
   });
   return edgeRouter.createCaller(ctx);
 }
@@ -393,6 +397,104 @@ test("run with includeIncidents creates status reports", async () => {
     .filter((r) => r.status === "created" && r.openstatusId)
     .map((r) => r.openstatusId as number);
   expect(createdMaintIds.length).toBeGreaterThan(0);
+
+  await cleanup();
+});
+
+// ---------------------------------------------------------------------------
+// Limit warnings (call service directly to control limits)
+// ---------------------------------------------------------------------------
+
+const freeLimits = { ...allPlans.free.limits };
+const starterLimits = { ...allPlans.starter.limits };
+
+test("preview shows component limit warning on free plan", async () => {
+  const result = await previewImport({
+    apiKey: "test-key",
+    workspaceId: 1,
+    limits: { ...freeLimits, "page-components": 3 },
+  });
+
+  expect(result.errors.length).toBeGreaterThan(0);
+  expect(result.errors.some((e) => e.includes("3 of 4"))).toBe(true);
+});
+
+test("preview shows custom domain warning on free plan", async () => {
+  const result = await previewImport({
+    apiKey: "test-key",
+    workspaceId: 1,
+    limits: { ...freeLimits, "custom-domain": false },
+  });
+
+  expect(result.errors.some((e) => e.includes("Custom domain"))).toBe(true);
+});
+
+test("preview shows subscriber warning on free plan", async () => {
+  const result = await previewImport({
+    apiKey: "test-key",
+    workspaceId: 1,
+    limits: { ...freeLimits, "status-subscribers": false },
+  });
+
+  expect(result.errors.some((e) => e.includes("Subscribers"))).toBe(true);
+});
+
+test("preview shows no warnings on starter plan", async () => {
+  const result = await previewImport({
+    apiKey: "test-key",
+    workspaceId: 1,
+    limits: starterLimits,
+  });
+
+  expect(result.errors).toEqual([]);
+});
+
+test("run enforces component limit by truncating", async () => {
+  const result = await runImport({
+    apiKey: "test-key",
+    workspaceId: 1,
+    pageId: 1,
+    limits: { ...starterLimits, "page-components": 2 },
+    options: { includeIncidents: false, includeSubscribers: false },
+  });
+
+  trackCreatedIds(result);
+
+  // Should have warning about component limit
+  expect(
+    result.errors.some(
+      (e) =>
+        e.includes("page-components") ||
+        e.includes("Component limit") ||
+        e.includes("components can be imported") ||
+        e.includes("plan limit"),
+    ),
+  ).toBe(true);
+
+  // Components phase should show enforcement (either truncated or fully blocked)
+  const compPhase = result.phases.find((p) => p.phase === "components");
+  expect(compPhase).toBeDefined();
+  // With limit of 2, not all 4 mock components should be created
+  const created =
+    compPhase?.resources.filter((r) => r.status === "created") ?? [];
+  expect(created.length).toBeLessThanOrEqual(2);
+
+  await cleanup();
+});
+
+test("run skips subscribers on free plan", async () => {
+  const result = await runImport({
+    apiKey: "test-key",
+    workspaceId: 1,
+    limits: { ...freeLimits, "status-subscribers": false },
+    options: { includeIncidents: false, includeSubscribers: true },
+  });
+
+  trackCreatedIds(result);
+
+  const subPhase = result.phases.find((p) => p.phase === "subscribers");
+  expect(subPhase?.status).toBe("skipped");
+  expect(result.errors.some((e) => e.includes("Subscribers"))).toBe(true);
 
   await cleanup();
 });

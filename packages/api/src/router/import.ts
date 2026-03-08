@@ -12,6 +12,7 @@ export const importRouter = createTRPCRouter({
         provider: z.enum(["statuspage"]),
         apiKey: z.string().min(1),
         statuspagePageId: z.string().optional(),
+        pageId: z.number().optional(),
       }),
     )
     .query(async (opts) => {
@@ -19,6 +20,8 @@ export const importRouter = createTRPCRouter({
         apiKey: opts.input.apiKey,
         statuspagePageId: opts.input.statuspagePageId,
         workspaceId: opts.ctx.workspace.id,
+        pageId: opts.input.pageId,
+        limits: opts.ctx.workspace.limits,
       });
     }),
 

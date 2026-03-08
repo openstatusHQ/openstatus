@@ -40,7 +40,6 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
     run: async (config) => {
       const startedAt = new Date();
       const client = createStatuspageClient(config.apiKey);
-      const errors: string[] = [];
       const phases: PhaseResult[] = [];
 
       let pages = await client.getPages();
@@ -169,11 +168,11 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
 
       return {
         provider: "statuspage",
-        status: errors.length > 0 ? "partial" : "completed",
+        status: "completed",
         startedAt,
         completedAt: new Date(),
         phases,
-        errors,
+        errors: [],
       };
     },
   };

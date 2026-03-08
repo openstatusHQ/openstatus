@@ -98,6 +98,9 @@ importers:
       '@openstatus/icons':
         specifier: workspace:*
         version: link:../../packages/icons
+      '@openstatus/importers':
+        specifier: workspace:*
+        version: link:../../packages/importers
       '@openstatus/notification-discord':
         specifier: workspace:*
         version: link:../../packages/notifications/discord

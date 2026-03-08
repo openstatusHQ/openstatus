@@ -25,10 +25,82 @@ type ImportOptions = {
   includeComponents?: boolean;
 };
 
+/**
+ * Inspect an ImportSummary and push warnings into `summary.errors`
+ * for any limits that would be hit during import.
+ *
+ * Used by both preview (to show warnings upfront) and run (before writes).
+ */
+export async function addLimitWarnings(
+  summary: ImportSummary,
+  config: {
+    limits: Limits;
+    workspaceId: number;
+    pageId?: number;
+  },
+): Promise<void> {
+  // 1. Component count limit
+  const componentsPhase = summary.phases.find((p) => p.phase === "components");
+  if (componentsPhase && componentsPhase.resources.length > 0) {
+    const maxComponents = config.limits["page-components"];
+    let existingCount = 0;
+    if (config.pageId) {
+      const existing = await db
+        .select()
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, config.pageId),
+            eq(pageComponent.workspaceId, config.workspaceId),
+          ),
+        )
+        .all();
+      existingCount = existing.length;
+    }
+    const remaining = maxComponents - existingCount;
+    if (remaining <= 0) {
+      summary.errors.push(
+        `Component limit reached (${maxComponents}). Upgrade your plan to import components.`,
+      );
+    } else if (componentsPhase.resources.length > remaining) {
+      summary.errors.push(
+        `Only ${remaining} of ${componentsPhase.resources.length} components can be imported due to plan limit (${maxComponents}).`,
+      );
+    }
+  }
+
+  // 2. Custom domain
+  if (!config.limits["custom-domain"]) {
+    const pagePhase = summary.phases.find((p) => p.phase === "page");
+    const pageData = pagePhase?.resources[0]?.data as
+      | { customDomain?: string }
+      | undefined;
+    if (pageData?.customDomain) {
+      summary.errors.push(
+        "Custom domain will be stripped during import. Upgrade your plan to use custom domains.",
+      );
+    }
+  }
+
+  // 3. Subscribers
+  if (!config.limits["status-subscribers"]) {
+    const subscribersPhase = summary.phases.find(
+      (p) => p.phase === "subscribers",
+    );
+    if (subscribersPhase && subscribersPhase.resources.length > 0) {
+      summary.errors.push(
+        "Subscribers cannot be imported on your current plan. Upgrade to enable status page subscribers.",
+      );
+    }
+  }
+}
+
 export async function previewImport(config: {
   apiKey: string;
   statuspagePageId?: string;
   workspaceId: number;
+  pageId?: number;
+  limits: Limits;
 }): Promise<ImportSummary> {
   const provider = createStatuspageProvider();
 
@@ -43,7 +115,9 @@ export async function previewImport(config: {
     });
   }
 
-  return provider.run({ ...config, dryRun: true });
+  const summary = await provider.run({ ...config, dryRun: true });
+  await addLimitWarnings(summary, config);
+  return summary;
 }
 
 export async function runImport(config: {
@@ -66,6 +140,9 @@ export async function runImport(config: {
 
   // Fetch and map all data
   const summary = await provider.run(config);
+
+  // Add limit warnings (same as preview)
+  await addLimitWarnings(summary, config);
 
   // Now write to DB phase by phase
   const idMaps = {
@@ -121,9 +198,6 @@ export async function runImport(config: {
             const remaining = maxComponents - existingCount.length;
             if (remaining <= 0) {
               phase.status = "failed";
-              summary.errors.push(
-                `Component limit reached (${maxComponents}). Upgrade your plan to import more components.`,
-              );
               break;
             }
             if (phase.resources.length > remaining) {
@@ -134,9 +208,6 @@ export async function runImport(config: {
                 r.error = `Skipped: would exceed component limit (${maxComponents})`;
               }
               phase.resources.push(...skipped);
-              summary.errors.push(
-                `Only ${remaining} of ${remaining + skipped.length} components imported due to plan limit (${maxComponents}).`,
-              );
             }
             await writeComponentsPhase(
               phase,
@@ -177,9 +248,6 @@ export async function runImport(config: {
           if (targetPageId && config.options?.includeSubscribers) {
             if (!config.limits["status-subscribers"]) {
               phase.status = "skipped";
-              summary.errors.push(
-                "Subscribers import skipped: upgrade your plan to enable status page subscribers.",
-              );
               break;
             }
             await writeSubscribersPhase(phase, targetPageId);
@@ -283,11 +351,11 @@ async function writePagePhase(
     return existingPageId;
   }
 
-  // Check idempotency by slug
+  // Check idempotency by slug (scoped to workspace)
   const existingBySlug = await db
     .select()
     .from(page)
-    .where(eq(page.slug, data.slug))
+    .where(and(eq(page.slug, data.slug), eq(page.workspaceId, workspaceId)))
     .get();
 
   if (existingBySlug) {
@@ -604,6 +672,7 @@ async function writeMaintenancesPhase(
   phase.status = computePhaseStatus(phase.resources);
 }
 
+// TODO: migrate to new `pageSubscription` + `pageSubscriptionToPageComponent` tables
 async function writeSubscribersPhase(
   phase: PhaseResult,
   pageId: number,

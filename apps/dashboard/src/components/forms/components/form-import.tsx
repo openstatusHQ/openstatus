@@ -1,5 +1,6 @@
 "use client";
 
+import { Note } from "@/components/common/note";
 import {
   FormCard,
   FormCardContent,
@@ -11,6 +12,8 @@ import {
 } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { StatuspageIcon } from "@openstatus/icons";
+import type { ImportSummary } from "@openstatus/importers/types";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -28,10 +31,10 @@ import {
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
 import { Switch } from "@openstatus/ui/components/ui/switch";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Globe, Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { AlertTriangle } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -47,15 +50,7 @@ const schema = z.object({
 
 export type ImportFormValues = z.input<typeof schema>;
 
-type PreviewData = {
-  provider: string;
-  phases: Array<{
-    phase: string;
-    resources: Array<{ sourceId: string; name: string; status: string }>;
-  }>;
-};
-
-function getPhaseCount(preview: PreviewData, phase: string): number {
+function getPhaseCount(preview: ImportSummary, phase: string): number {
   return preview.phases.find((p) => p.phase === phase)?.resources.length ?? 0;
 }
 
@@ -72,7 +67,7 @@ export function FormImport({
   onSubmit,
 }: {
   pageId: number;
-  onSubmit: (values: ImportFormValues) => Promise<void>;
+  onSubmit: (values: ImportFormValues) => Promise<ImportSummary>;
 }) {
   const form = useForm<ImportFormValues>({
     resolver: zodResolver(schema),
@@ -85,15 +80,26 @@ export function FormImport({
       includeComponents: true,
     },
   });
-
   const [isPending, startTransition] = useTransition();
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
   const watchProvider = form.watch("provider");
+  const watchApiKey = form.watch("apiKey");
+  const watchStatuspagePageId = form.watch("statuspagePageId");
+
+  const previewQuery = useQuery(
+    trpc.importRouter.preview.queryOptions(
+      {
+        provider: "statuspage",
+        apiKey: watchApiKey,
+        statuspagePageId: watchStatuspagePageId || undefined,
+        pageId,
+      },
+      {
+        enabled: false,
+        retry: false,
+      },
+    ),
+  );
 
   async function runPreview() {
     const apiKey = form.getValues("apiKey");
@@ -101,39 +107,29 @@ export function FormImport({
       form.setError("apiKey", { message: "API key is required" });
       return;
     }
-
-    setIsPreviewLoading(true);
-    setPreviewData(null);
-
-    try {
-      const result = await queryClient.fetchQuery(
-        trpc.importRouter.preview.queryOptions({
-          provider: "statuspage",
-          apiKey,
-          statuspagePageId: form.getValues("statuspagePageId") || undefined,
-        }),
-      );
-      setPreviewData(result as PreviewData);
-    } catch (err) {
-      if (isTRPCClientError(err)) {
-        toast.error(err.message);
+    const { error } = await previewQuery.refetch();
+    if (error) {
+      if (isTRPCClientError(error)) {
+        toast.error(error.message);
       } else {
         toast.error("Failed to preview import");
       }
-    } finally {
-      setIsPreviewLoading(false);
     }
   }
 
   function submitAction(values: ImportFormValues) {
-    if (isPending || !previewData) return;
+    if (isPending || !previewQuery.data) return;
 
     startTransition(async () => {
       try {
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Importing...",
-          success: "Import completed",
+          success: (result) => {
+            if (result.status === "partial")
+              return "Import completed with warnings";
+            return "Import completed";
+          },
           error: (error) => {
             if (isTRPCClientError(error)) {
               return error.message;
@@ -147,7 +143,6 @@ export function FormImport({
       }
     });
   }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
@@ -180,9 +175,8 @@ export function FormImport({
                             className="sr-only"
                           />
                         </FormControl>
-                        <Globe
-                          className="shrink-0 text-muted-foreground"
-                          size={16}
+                        <StatuspageIcon
+                          className="size-4 shrink-0 text-foreground"
                           aria-hidden="true"
                         />
                         <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
@@ -235,8 +229,8 @@ export function FormImport({
                         <Input placeholder="e.g. abc123def456" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Import a specific page. Leave empty to import the first
-                        page found.
+                        Import a specific page. Leave empty to import accross
+                        pages.
                       </FormDescription>
                     </FormItem>
                   )}
@@ -245,21 +239,16 @@ export function FormImport({
                   type="button"
                   variant="secondary"
                   onClick={runPreview}
-                  disabled={isPreviewLoading}
+                  disabled={previewQuery.isFetching}
                 >
-                  {isPreviewLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading preview...
-                    </>
-                  ) : (
-                    "Preview Import"
-                  )}
+                  {previewQuery.isFetching
+                    ? "Loading preview..."
+                    : "Preview Import"}
                 </Button>
               </FormCardContent>
             </>
           ) : null}
-          {previewData ? (
+          {previewQuery.data ? (
             <>
               <FormCardSeparator />
               <FormCardContent className="grid gap-4">
@@ -267,7 +256,7 @@ export function FormImport({
                   <FormLabel>Preview</FormLabel>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {Object.entries(PHASE_LABELS).map(([key, label]) => {
-                      const count = getPhaseCount(previewData, key);
+                      const count = getPhaseCount(previewQuery.data, key);
                       if (count === 0) return null;
                       return (
                         <Badge key={key} variant="secondary">
@@ -277,6 +266,14 @@ export function FormImport({
                     })}
                   </div>
                 </div>
+                {previewQuery.data.errors.length > 0 ? (
+                  <Note color="error" size="sm">
+                    <AlertTriangle />
+                    <p className="text-sm">
+                      {previewQuery.data.errors.join(" ")}
+                    </p>
+                  </Note>
+                ) : null}
                 <FormField
                   control={form.control}
                   name="includeIncidents"
@@ -342,7 +339,7 @@ export function FormImport({
             </>
           ) : null}
           <FormCardFooter>
-            <Button type="submit" disabled={!previewData || isPending}>
+            <Button type="submit" disabled={!previewQuery.data || isPending}>
               {isPending ? "Importing..." : "Import"}
             </Button>
           </FormCardFooter>
