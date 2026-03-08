@@ -466,10 +466,24 @@ test("preview shows no warnings on starter plan", async () => {
 });
 
 test("run enforces component limit by truncating", async () => {
+  // Create a dedicated page so we control the state entirely
+  const [testPage] = await db
+    .insert(page)
+    .values({
+      workspaceId: 1,
+      title: "Truncation Test Page",
+      description: "",
+      slug: "truncation-test",
+      icon: "",
+    })
+    .returning({ id: page.id });
+
+  if (!testPage) throw new Error("Failed to create test page");
+
   const result = await runImport({
     apiKey: "test-key",
     workspaceId: 1,
-    pageId: 1,
+    pageId: testPage.id,
     limits: { ...starterLimits, "page-components": 2 },
     options: { includeIncidents: false, includeSubscribers: false },
   });
@@ -496,6 +510,8 @@ test("run enforces component limit by truncating", async () => {
   expect(created.length).toBeLessThanOrEqual(2);
 
   await cleanup();
+  // Clean up the test page
+  await db.delete(page).where(eq(page.id, testPage.id));
 });
 
 test("run skips subscribers on free plan", async () => {
