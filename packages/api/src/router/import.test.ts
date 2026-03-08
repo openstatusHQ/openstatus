@@ -35,13 +35,25 @@ function mockStatuspageFetch() {
     const urlStr = typeof url === "string" ? url : url.toString();
     let data: unknown = [];
 
+    // For paginated endpoints, return empty on page > 1
+    const pageParam = urlStr.includes("?")
+      ? new URL(urlStr).searchParams.get("page")
+      : null;
+    const isFirstPage = !pageParam || pageParam === "1";
+
     if (urlStr.endsWith("/pages")) data = MOCK_PAGES;
-    else if (urlStr.includes("/component-groups")) data = MOCK_COMPONENT_GROUPS;
-    else if (urlStr.includes("/components")) data = MOCK_COMPONENTS;
+    else if (urlStr.includes("/component-groups"))
+      data = isFirstPage ? MOCK_COMPONENT_GROUPS : [];
+    else if (urlStr.includes("/components"))
+      data = isFirstPage ? MOCK_COMPONENTS : [];
     else if (urlStr.includes("/incidents/scheduled"))
-      data = MOCK_INCIDENTS.filter((i) => i.scheduled_for != null);
-    else if (urlStr.includes("/incidents")) data = MOCK_INCIDENTS;
-    else if (urlStr.includes("/subscribers")) data = MOCK_SUBSCRIBERS;
+      data = isFirstPage
+        ? MOCK_INCIDENTS.filter((i) => i.scheduled_for != null)
+        : [];
+    else if (urlStr.includes("/incidents"))
+      data = isFirstPage ? MOCK_INCIDENTS : [];
+    else if (urlStr.includes("/subscribers"))
+      data = isFirstPage ? MOCK_SUBSCRIBERS : [];
 
     return Promise.resolve(
       new Response(JSON.stringify(data), {
@@ -446,7 +458,11 @@ test("preview shows no warnings on starter plan", async () => {
     limits: starterLimits,
   });
 
-  expect(result.errors).toEqual([]);
+  // Only informational warnings about non-email subscribers are expected
+  const limitWarnings = result.errors.filter(
+    (e) => !e.includes("non-email subscriber"),
+  );
+  expect(limitWarnings).toEqual([]);
 });
 
 test("run enforces component limit by truncating", async () => {
