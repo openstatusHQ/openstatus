@@ -105,6 +105,8 @@ networks:
 volumes:
   libsql-data:
     name: openstatus-libsql-data
+  workflows-data:
+    name: openstatus-workflows-data
 
 services:
   # External Dependencies
@@ -172,7 +174,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - workflows-data:/app/data
     environment:
       - DATABASE_URL=${DATABASE_URL:-http://libsql:8080}
       - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
