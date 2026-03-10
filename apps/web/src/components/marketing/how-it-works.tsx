@@ -68,7 +68,7 @@ export function HowItWorks() {
 
               <Card
                 className={cn(
-                  "relative h-full border-border/50 bg-card transition-shadow hover:shadow-md"
+                  "relative h-full border-border/50 bg-card transition-shadow hover:shadow-md gap-4"
                 )}
               >
                 {/* Step number badge */}
@@ -78,7 +78,7 @@ export function HowItWorks() {
                   </span>
                 </div>
 
-                <CardHeader className="pt-8">
+                <CardHeader className="pb-0 pt-2">
                   <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
                     <step.icon className="h-6 w-6 text-foreground" />
                   </div>
@@ -87,7 +87,7 @@ export function HowItWorks() {
                   </CardTitle>
                 </CardHeader>
 
-                <CardContent className="pt-0">
+                <CardContent>
                   <CardDescription className="text-sm leading-relaxed">
                     {step.description}
                   </CardDescription>
