@@ -36,7 +36,7 @@ export function HowItWorks() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="-mx-4 w-[calc(100%+2rem)] border-y border-border bg-muted/40"
+      className="-mx-4 w-[calc(100%+2rem)] border-y border-success/20 bg-success/5"
     >
       <div className="mx-auto max-w-5xl px-4 py-12">
         {/* Section heading */}
@@ -47,13 +47,13 @@ export function HowItWorks() {
           >
             How it works
           </h2>
-          <p className="mt-2 font-mono text-sm text-muted-foreground">
+          <p className="mt-2 font-mono text-sm text-success/70">
             Up and running in three simple steps.
           </p>
         </div>
 
         {/* Steps grid */}
-        <div className="relative grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-3">
+        <div className="relative grid grid-cols-1 gap-px border border-success/20 bg-border sm:grid-cols-3">
           {steps.map((step) => (
             <StepCard key={step.number} step={step} />
           ))}
@@ -69,17 +69,17 @@ export function HowItWorks() {
 function StepCard({ step }: { step: Step }) {
   const Icon = step.icon;
   return (
-    <div className="relative flex flex-col gap-4 bg-background p-6 hover:bg-muted/60 transition-colors duration-150">
+    <div className="relative flex flex-col gap-4 bg-background p-6 hover:bg-success/5 transition-colors duration-150">
       {/* Numbered badge */}
       <div className="flex items-center justify-between">
         <span
           aria-hidden="true"
-          className="inline-flex h-6 w-6 items-center justify-center border border-border bg-muted font-mono text-xs font-semibold text-muted-foreground tabular-nums"
+          className="inline-flex h-6 w-6 items-center justify-center border border-success/40 bg-success/10 font-mono text-xs font-semibold text-success tabular-nums"
         >
           {step.number}
         </span>
         <Icon
-          className="h-5 w-5 shrink-0 text-muted-foreground"
+          className="h-5 w-5 shrink-0 text-success"
           aria-hidden="true"
         />
       </div>
@@ -133,7 +133,7 @@ function DottedArrow() {
         viewBox="0 0 32 16"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="text-border"
+        className="text-success/40"
         aria-hidden="true"
       >
         <line
