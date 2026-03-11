@@ -1,8 +1,10 @@
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink } from "@trpc/client";
-
-import type { AppRouter } from "@openstatus/api";
 import superjson from "superjson";
+
+// AppRouter type inlined to avoid importing @openstatus/api which triggers db initialization
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type AppRouter = {};
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";

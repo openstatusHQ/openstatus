@@ -1,6 +1,8 @@
 "use client";
 
-import type { AppRouter } from "@openstatus/api";
+// AppRouter type inlined to avoid importing @openstatus/api which triggers db initialization
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type AppRouter = {};
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

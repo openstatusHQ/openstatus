@@ -1,8 +1,19 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { StatusResponse } from "@openstatus/react";
 import { useQuery } from "@tanstack/react-query";
+
+// Inlined from @openstatus/react to avoid build dependency
+type Status =
+  | "operational"
+  | "degraded_performance"
+  | "partial_outage"
+  | "major_outage"
+  | "under_maintenance"
+  | "unknown"
+  | "incident";
+
+type StatusResponse = { status: Status };
 import Link from "next/link";
 
 export function FooterStatus() {
