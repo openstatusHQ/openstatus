@@ -43,7 +43,7 @@ export function HowItWorks() {
         <div className="mb-10 text-center sm:mb-12">
           <h2
             id="how-it-works-heading"
-            className="font-cal text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+            className="font-cal text-2xl font-semibold tracking-tight tracking-wide text-foreground sm:text-3xl"
           >
             How it works
           </h2>
@@ -52,22 +52,32 @@ export function HowItWorks() {
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="relative grid grid-cols-1 gap-6 sm:gap-4 sm:grid-cols-3">
-          {/* Connecting arrows — desktop only */}
-          <div
-            aria-hidden="true"
-            className="absolute top-8 left-[calc(33.33%)] right-[calc(33.33%)] hidden sm:flex items-center justify-center"
-          >
-            <div className="flex items-center gap-2 w-full">
-              <div className="flex-1 h-0.5 bg-gradient-to-r from-[var(--color-success)] to-[var(--color-success)]/70" />
-              <ArrowRight className="h-5 w-5 text-[var(--color-success)] flex-shrink-0" />
-              <div className="flex-1 h-0.5 bg-gradient-to-r from-[var(--color-success)]/70 to-[var(--color-success)]" />
+        {/* Steps — cards interleaved with arrows on desktop */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-0">
+          {steps.map((step, index) => (
+            <div key={step.number} className="contents">
+              <div className="sm:flex-1">
+                <StepCard step={step} />
+              </div>
+              {index < steps.length - 1 && (
+                <div
+                  aria-hidden="true"
+                  className="hidden sm:flex items-center justify-center self-start mt-8 px-1"
+                >
+                  <div className="flex items-center gap-0">
+                    <div className="w-8 h-0.5 bg-[var(--color-success)]" />
+                    <div
+                      className="w-0 h-0"
+                      style={{
+                        borderTop: "6px solid transparent",
+                        borderBottom: "6px solid transparent",
+                        borderLeft: "10px solid var(--color-success)",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-
-          {steps.map((step) => (
-            <StepCard key={step.number} step={step} />
           ))}
         </div>
       </div>
