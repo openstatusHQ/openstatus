@@ -1,4 +1,4 @@
-import { Bell, Globe, Monitor } from "lucide-react";
+import { ArrowRight, Bell, Globe, Monitor } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface Step {
@@ -53,12 +53,18 @@ export function HowItWorks() {
         </div>
 
         {/* Steps */}
-        <div className="relative grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {/* Connecting dotted line — desktop only */}
+        <div className="relative grid grid-cols-1 gap-6 sm:gap-4 sm:grid-cols-3">
+          {/* Connecting arrows — desktop only */}
           <div
             aria-hidden="true"
-            className="absolute top-8 left-[calc(16.67%+1.5rem)] right-[calc(16.67%+1.5rem)] hidden h-px border-t border-dashed border-border sm:block"
-          />
+            className="absolute top-8 left-[calc(33.33%)] right-[calc(33.33%)] hidden sm:flex items-center justify-center"
+          >
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex-1 h-0.5 bg-gradient-to-r from-[var(--color-success)] to-[var(--color-success)]/70" />
+              <ArrowRight className="h-5 w-5 text-[var(--color-success)] flex-shrink-0" />
+              <div className="flex-1 h-0.5 bg-gradient-to-r from-[var(--color-success)]/70 to-[var(--color-success)]" />
+            </div>
+          </div>
 
           {steps.map((step) => (
             <StepCard key={step.number} step={step} />
@@ -75,12 +81,12 @@ function StepCard({ step }: { step: Step }) {
   return (
     <div className="relative flex flex-col items-center gap-4 border border-border bg-background p-6 text-center">
       {/* Numbered badge */}
-      <span className="absolute -top-3 left-1/2 -translate-x-1/2 border border-border bg-background px-2 py-0.5 font-mono text-xs text-muted-foreground">
+      <span className="absolute -top-3 left-1/2 -translate-x-1/2 border border-[var(--color-success)] bg-background px-2 py-0.5 font-mono text-xs font-medium text-[var(--color-success)]">
         {step.number.toString().padStart(2, "0")}
       </span>
 
       {/* Icon */}
-      <div className="mt-2 flex h-10 w-10 items-center justify-center border border-border bg-muted/50 text-foreground">
+      <div className="mt-2 flex h-10 w-10 items-center justify-center border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 text-[var(--color-success)]">
         <Icon className="h-5 w-5" aria-hidden="true" />
       </div>
 
