@@ -43,7 +43,7 @@ export function HowItWorks() {
           {/* Connecting line for desktop */}
           <div
             aria-hidden="true"
-            className="absolute left-0 right-0 top-12 hidden h-px border-t-2 border-dashed border-success/50 md:block"
+            className="absolute left-0 right-0 top-12 hidden h-px border-t border-dashed border-border md:block"
             style={{
               left: "calc(16.67% + 24px)",
               right: "calc(16.67% + 24px)",
@@ -69,12 +69,12 @@ export function HowItWorks() {
                     viewBox="0 0 16 16"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className="text-success"
+                    className="text-muted-foreground/50"
                   >
                     <path
                       d="M6 4L10 8L6 12"
                       stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
