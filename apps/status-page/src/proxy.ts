@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
 
+import { defaultLocale, locales } from "@/i18n/config";
 import { auth } from "@/lib/auth";
 
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
+
+function isValidLocale(segment: string | undefined): segment is string {
+  return (
+    !!segment &&
+    (locales as readonly string[]).includes(segment.toLowerCase() as never)
+  );
+}
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -51,6 +59,8 @@ export default auth(async (req) => {
     return response;
   }
 
+  console.log("page subdomain", page);
+
   const query = await db
     .select()
     .from(page)
@@ -69,6 +79,37 @@ export default auth(async (req) => {
 
   console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
 
+  // --- Locale detection and redirect ---
+  // For pathname type: URL is /{slug}/{locale}/...  → locale at index 2
+  // For hostname type: URL is /{locale}/...         → locale at index 1
+  const localeIndex = type === "pathname" ? 2 : 1;
+  const localeSegment = pathnames[localeIndex]?.toLowerCase();
+
+  if (!isValidLocale(localeSegment)) {
+    // Redirect to insert default locale into the URL
+    if (type === "pathname") {
+      // /slug/rest... → /slug/{defaultLocale}/rest...
+      const rest = pathnames.slice(2).filter(Boolean).join("/");
+      const redirectUrl = new URL(
+        `/${prefix}/${defaultLocale}${rest ? `/${rest}` : ""}`,
+        req.url,
+      );
+      redirectUrl.search = url.search;
+      return NextResponse.redirect(redirectUrl);
+    }
+    // hostname: /rest... → /{defaultLocale}/rest...
+    const rest = pathnames.slice(1).filter(Boolean).join("/");
+    const redirectUrl = new URL(
+      `/${defaultLocale}${rest ? `/${rest}` : ""}`,
+      req.url,
+    );
+    redirectUrl.search = url.search;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  const currentLocale = localeSegment;
+
+  // --- Password protection ---
   if (_page?.accessType === "password") {
     const protectedCookie = cookies.get(createProtectedCookieKey(_page.slug));
     const cookiePassword = protectedCookie ? protectedCookie.value : undefined;
@@ -81,42 +122,47 @@ export default auth(async (req) => {
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
-        const url = new URL(
-          `https://${_page.customDomain}/login?redirect=${encodeURIComponent(
+        const loginUrl = new URL(
+          `https://${_page.customDomain}/${currentLocale}/login?redirect=${encodeURIComponent(
             redirect,
           )}`,
         );
-        console.log("redirect to /login", url.toString());
-        return NextResponse.redirect(url);
+        console.log("redirect to /login", loginUrl.toString());
+        return NextResponse.redirect(loginUrl);
       }
 
-      const url = new URL(
+      const loginUrl = new URL(
         `${origin}${
           type === "pathname" ? `/${prefix}` : ""
-        }/login?redirect=${encodeURIComponent(pathname)}`,
+        }/${currentLocale}/login?redirect=${encodeURIComponent(pathname)}`,
       );
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(loginUrl);
     }
     if (password === _page.password && url.pathname.endsWith("/login")) {
       const redirect = url.searchParams.get("redirect");
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
-        const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
-        console.log("redirect to /", url.toString());
-        return NextResponse.redirect(url);
+        const redirectUrl = new URL(
+          `https://${_page.customDomain}${redirect ?? `/${currentLocale}`}`,
+        );
+        console.log("redirect to /", redirectUrl.toString());
+        return NextResponse.redirect(redirectUrl);
       }
 
       return NextResponse.redirect(
         new URL(
           `${req.nextUrl.origin}${
-            redirect ?? type === "pathname" ? `/${prefix}` : "/"
+            redirect ?? type === "pathname"
+              ? `/${prefix}/${currentLocale}`
+              : `/${currentLocale}`
           }`,
         ),
       );
     }
   }
 
+  // --- Email-domain protection ---
   if (_page.accessType === "email-domain") {
     const { origin, pathname } = req.nextUrl;
     const email = req.auth?.user?.email;
@@ -125,23 +171,24 @@ export default auth(async (req) => {
       !pathname.endsWith("/login") &&
       (!emailDomain || !_page.authEmailDomains.includes(emailDomain))
     ) {
-      const url = new URL(
-        `${origin}${type === "pathname" ? `/${prefix}` : ""}/login`,
+      const loginUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/${currentLocale}/login`,
       );
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(loginUrl);
     }
     if (
       pathname.endsWith("/login") &&
       emailDomain &&
       _page.authEmailDomains.includes(emailDomain)
     ) {
-      const url = new URL(
-        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/${currentLocale}`,
       );
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
+  // --- Rewrites ---
   const proxy = req.headers.get("x-proxy");
   console.log({ proxy });
 
@@ -158,36 +205,19 @@ export default auth(async (req) => {
     expectedHost: `${_page.slug}.stpg.dev`,
   });
   if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
-    if (pathnames.length > 2 && !subdomain) {
-      const pathname = pathnames.slice(2).join("/");
-      const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
-      rewriteUrl.search = url.search;
-      return NextResponse.rewrite(rewriteUrl);
-    }
-    if (_page.customDomain && subdomain) {
+    // Custom domain: prepend slug to the path
+    // url.pathname already contains /{locale}/... so this becomes /{slug}/{locale}/...
+    if (subdomain) {
       console.log({ url: req.url });
-      // const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
-      // console.log({newUrl: vercelURL})
-      if (pathnames.length > 2) {
-        const pathname = pathnames.slice(1).join("/");
-
-        const rewriteUrl = new URL(
-          `${pathname}`,
-          `https://${_page.slug}.stpg.dev`,
-        );
-        console.log({ rewriteUrl });
-        rewriteUrl.search = url.search;
-        return NextResponse.rewrite(rewriteUrl);
-      }
       const rewriteUrl = new URL(
-        `${url.pathname}`,
+        url.pathname,
         `https://${_page.slug}.stpg.dev`,
       );
       console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
     }
-    const rewriteUrl = new URL(`/${_page.slug}`, req.url);
+    const rewriteUrl = new URL(`/${_page.slug}${url.pathname}`, req.url);
     console.log({ rewriteUrl });
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
