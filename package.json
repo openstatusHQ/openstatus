@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --filter=@openstatus/web",
     "dev": "cd apps/web && pnpm exec next dev -p 3000",
     "env": "bun env.ts",
     "lint": "biome lint .",
