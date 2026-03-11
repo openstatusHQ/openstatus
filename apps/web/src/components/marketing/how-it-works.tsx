@@ -53,7 +53,7 @@ export function HowItWorks() {
           {steps.map((step, index) => (
             <div key={step.step} className="relative flex flex-col items-center">
               {/* Numbered badge */}
-              <div className="relative z-10 mb-6 flex h-12 w-12 items-center justify-center rounded-full border-2 border-success bg-success/10 text-sm font-semibold text-success shadow-sm">
+              <div className="relative z-10 mb-6 flex h-12 w-12 items-center justify-center rounded-full border-2 border-success bg-success/10 text-sm font-semibold text-success">
                 {step.step}
               </div>
 
@@ -83,7 +83,7 @@ export function HowItWorks() {
               )}
 
               {/* Card content */}
-              <div className="flex flex-1 flex-col items-center rounded-lg border border-border bg-card p-6 text-center shadow-sm">
+              <div className="flex flex-1 flex-col items-center rounded-lg border border-border bg-background p-6 text-center">
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-success/10">
                   <step.icon className="h-5 w-5 text-success" />
                 </div>
