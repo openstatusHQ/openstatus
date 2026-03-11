@@ -43,7 +43,7 @@ export function HowItWorks() {
           {/* Connecting line for desktop */}
           <div
             aria-hidden="true"
-            className="absolute left-0 right-0 top-12 hidden h-px border-t border-dashed border-border md:block"
+            className="absolute left-0 right-0 top-12 hidden h-px border-t-2 border-dashed border-success/50 md:block"
             style={{
               left: "calc(16.67% + 24px)",
               right: "calc(16.67% + 24px)",
@@ -53,7 +53,7 @@ export function HowItWorks() {
           {steps.map((step, index) => (
             <div key={step.step} className="relative flex flex-col items-center">
               {/* Numbered badge */}
-              <div className="relative z-10 mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background text-sm font-medium text-foreground shadow-sm">
+              <div className="relative z-10 mb-6 flex h-12 w-12 items-center justify-center rounded-full border-2 border-success bg-success/10 text-sm font-semibold text-success shadow-sm">
                 {step.step}
               </div>
 
@@ -61,7 +61,7 @@ export function HowItWorks() {
               {index < steps.length - 1 && (
                 <div
                   aria-hidden="true"
-                  className="absolute right-0 top-12 hidden -translate-y-1/2 translate-x-1/2 text-muted-foreground md:block"
+                  className="absolute right-0 top-12 hidden -translate-y-1/2 translate-x-1/2 md:block"
                 >
                   <svg
                     width="16"
@@ -69,12 +69,12 @@ export function HowItWorks() {
                     viewBox="0 0 16 16"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className="text-border"
+                    className="text-success"
                   >
                     <path
                       d="M6 4L10 8L6 12"
                       stroke="currentColor"
-                      strokeWidth="1.5"
+                      strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -84,8 +84,8 @@ export function HowItWorks() {
 
               {/* Card content */}
               <div className="flex flex-1 flex-col items-center rounded-lg border border-border bg-card p-6 text-center shadow-sm">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-muted">
-                  <step.icon className="h-5 w-5 text-foreground" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-success/10">
+                  <step.icon className="h-5 w-5 text-success" />
                 </div>
                 <h3 className="mb-2 font-medium text-foreground">{step.title}</h3>
                 <p className="text-sm text-muted-foreground">{step.description}</p>
