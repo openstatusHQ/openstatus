@@ -1,3 +1,4 @@
+import { HowItWorks } from "@/components/marketing/how-it-works";
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
 import { defaultMetadata } from "@/lib/metadata/shared-metadata";
