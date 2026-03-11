@@ -36,7 +36,7 @@ export function HowItWorks() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="bg-green-50 dark:bg-green-950/20 border-y border-green-200 dark:border-green-900/30 -mx-4 px-4 py-12 sm:py-16"
+      className="bg-muted/40 border-y border-border -mx-4 px-4 py-12 sm:py-16"
     >
       <div className="mx-auto max-w-4xl">
         {/* Heading */}
@@ -60,7 +60,7 @@ export function HowItWorks() {
             className="pointer-events-none absolute inset-x-0 top-[2.75rem] hidden sm:block"
           >
             <div
-              className="mx-auto h-px border-t border-dashed border-green-300 dark:border-green-800"
+              className="mx-auto h-px border-t border-dashed border-success/40"
               style={{ width: "calc(66.666% - 2rem)", marginLeft: "16.666%" }}
             />
           </div>
@@ -70,17 +70,17 @@ export function HowItWorks() {
             return (
               <div
                 key={step.number}
-                className="relative flex flex-col gap-3 border border-green-200 dark:border-green-900/30 bg-white dark:bg-green-950/10 p-5"
+                className="relative flex flex-col gap-3 border border-border bg-background p-5"
               >
                 {/* Top row: badge + icon */}
                 <div className="flex items-center justify-between">
                   {/* Numbered badge */}
-                  <span className="inline-flex h-6 w-6 items-center justify-center border border-green-300 dark:border-green-700 bg-green-100 dark:bg-green-900/40 text-[11px] font-medium text-green-700 dark:text-green-300 font-mono">
+                  <span className="inline-flex h-6 w-6 items-center justify-center border border-success/30 bg-success/10 text-[11px] font-medium text-success font-mono">
                     {step.number}
                   </span>
 
                   {/* Icon */}
-                  <span className="text-green-600 dark:text-green-400">
+                  <span className="text-success">
                     <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
                   </span>
                 </div>
