@@ -345,23 +345,23 @@ function ThemeValueSelector(props: {
 }) {
   const { resolvedTheme } = useTheme();
 
+  const handleChange = useDebounceCallback((value: string) => {
+    const mode = resolvedTheme as "light" | "dark";
+    props.setTheme({
+      ...props.theme,
+      [mode]: {
+        ...props.theme[mode],
+        [props.id]: value,
+      },
+    });
+  }, 100);
+
   if (!props.isMounted || !resolvedTheme)
     return <Skeleton className="ml-auto size-4 border border-foreground/70" />;
 
   const value = props.theme[resolvedTheme as "light" | "dark"][props.id];
 
   if (props.config.type === "color") {
-    const handleChange = useDebounceCallback((value: string) => {
-      const mode = resolvedTheme as "light" | "dark";
-      props.setTheme({
-        ...props.theme,
-        [mode]: {
-          ...props.theme[mode],
-          [props.id]: value,
-        },
-      });
-    }, 100);
-
     return (
       <label
         className="ml-auto size-4 rounded-full border border-foreground/70"
