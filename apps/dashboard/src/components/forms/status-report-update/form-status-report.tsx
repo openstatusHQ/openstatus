@@ -84,7 +84,7 @@ export function FormStatusReportUpdateCard({
   index: number;
   update: StatusReportUpdate;
 }) {
-  const { id, reportId } = useParams<{ id: string; reportId: string }>();
+  const { reportId } = useParams<{ id: string; reportId: string }>();
   const trpc = useTRPC();
   const { data: workspace } = useQuery(
     trpc.workspace.getWorkspace.queryOptions(),

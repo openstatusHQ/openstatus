@@ -12,8 +12,7 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import { Check, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { Check } from "lucide-react";
 import { status } from "./messages";
 
 export function StatusEventGroup({
@@ -285,37 +284,6 @@ export function StatusEventTimelineReportUpdate({
               )}
             </StatusEventTimelineMessage>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatusEventTimelineReadMore({
-  href,
-  withDot = true,
-}: {
-  href: string;
-  withDot?: boolean;
-}) {
-  return (
-    <div className="group">
-      <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-4">
-          {withDot ? (
-            <div className="flex flex-col">
-              <div className="flex h-5 flex-col items-center justify-center">
-                <div className="size-2.5 shrink-0 rounded-full bg-muted" />
-              </div>
-            </div>
-          ) : null}
-          <Link
-            href={href}
-            className="flex items-center gap-1 font-medium text-muted-foreground text-sm hover:text-foreground hover:underline"
-          >
-            View full report
-            <ChevronRight className="size-4" />
-          </Link>
         </div>
       </div>
     </div>

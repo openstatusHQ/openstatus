@@ -215,28 +215,6 @@ function CopyInputButton({
   );
 }
 
-function CopyButton({
-  value,
-  onClick,
-  ...props
-}: React.ComponentProps<typeof Button> & {
-  value: string;
-}) {
-  const { copy, isCopied } = useCopyToClipboard();
-  return (
-    <Button
-      size="sm"
-      onClick={(e) => {
-        copy(value, { withToast: true });
-        onClick?.(e);
-      }}
-      {...props}
-    >
-      {isCopied ? "Copied" : "Copy"}
-    </Button>
-  );
-}
-
 function SuccessMessage() {
   return (
     <div className="flex flex-col items-center justify-center gap-1 p-3">

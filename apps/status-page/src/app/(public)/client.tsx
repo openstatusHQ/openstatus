@@ -18,15 +18,6 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusBanner } from "@/components/status-page/status-banner";
-import {
-  StatusEvent,
-  StatusEventAffected,
-  StatusEventAffectedBadge,
-  StatusEventContent,
-  StatusEventDate,
-  StatusEventTimelineReport,
-  StatusEventTitle,
-} from "@/components/status-page/status-events";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
@@ -316,48 +307,6 @@ function ThemePlaygroundStatus({
             isLoading={isLoading}
           />
         </StatusContent>
-      </Status>
-    </div>
-  );
-}
-
-// NOTE: we could add a tabs component here to switch between status and events
-function ThemePlaygroundEvents({
-  className,
-  ...props
-}: React.ComponentProps<"div"> & {}) {
-  const trpc = useTRPC();
-  const { data: report } = useQuery(
-    trpc.statusPage.getNoopReport.queryOptions(),
-  );
-  const firstUpdate = report?.statusReportUpdates[0];
-
-  if (!firstUpdate || !report) return null;
-
-  return (
-    <div className={cn("h-full w-full", className)} {...props}>
-      <Status variant="success">
-        <StatusEvent>
-          <StatusEventDate date={firstUpdate.date} className="lg:flex-row" />
-          <StatusEventContent hoverable={false}>
-            <StatusEventTitle className="inline-flex gap-1">
-              {report.title}
-            </StatusEventTitle>
-            {report.statusReportsToPageComponents.length > 0 ? (
-              <StatusEventAffected>
-                {report.statusReportsToPageComponents.map((affected) => (
-                  <StatusEventAffectedBadge key={affected.pageComponent.id}>
-                    {affected.pageComponent.name}
-                  </StatusEventAffectedBadge>
-                ))}
-              </StatusEventAffected>
-            ) : null}
-            <StatusEventTimelineReport
-              updates={report.statusReportUpdates}
-              reportId={report.id}
-            />
-          </StatusEventContent>
-        </StatusEvent>
       </Status>
     </div>
   );

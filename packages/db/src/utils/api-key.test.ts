@@ -9,7 +9,7 @@ import {
 describe("API Key Utilities", () => {
   describe("generateApiKey", () => {
     it("should generate a token with correct format", async () => {
-      const { token, prefix, hash } = await generateApiKey();
+      const { token } = await generateApiKey();
 
       // Token should start with "os_" and be 35 chars total (os_ + 32 hex)
       expect(token).toMatch(/^os_[a-f0-9]{32}$/);
