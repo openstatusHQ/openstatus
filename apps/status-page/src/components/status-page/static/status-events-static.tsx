@@ -59,10 +59,7 @@ export function StatusEventTimelineReportStatic({
           }
         } else {
           const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
-          const timeFromLast = formatDistanceStrict(
-            updateDate,
-            lastUpdateDate,
-          );
+          const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
           durationText = `(${timeFromLast} earlier)`;
         }
 
@@ -89,10 +86,7 @@ export function StatusEventTimelineReportStatic({
                     <span>{statusLabels[update.status]}</span>{" "}
                     <span className="text-muted-foreground/70">&middot;</span>{" "}
                     <span className="font-mono text-muted-foreground text-xs">
-                      <TimestampHoverCard
-                        date={new Date(update.date)}
-                        asChild
-                      >
+                      <TimestampHoverCard date={new Date(update.date)} asChild>
                         <span>{formatDateTime(update.date)}</span>
                       </TimestampHoverCard>
                     </span>{" "}

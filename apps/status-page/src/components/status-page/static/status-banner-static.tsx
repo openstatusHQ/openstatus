@@ -1,11 +1,8 @@
 "use client";
 
 import { cn } from "@openstatus/ui/lib/utils";
-import {
-  StatusBannerContainer,
-  StatusBannerIcon,
-} from "../status-banner";
 import { StatusTimestamp } from "../status";
+import { StatusBannerContainer, StatusBannerIcon } from "../status-banner";
 
 export function StatusBannerStatic({
   className,

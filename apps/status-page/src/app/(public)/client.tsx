@@ -10,6 +10,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { recomputeStyles } from "@/components/status-page/floating-button";
+import { StatusBannerStatic } from "@/components/status-page/static/status-banner-static";
+import { StatusMonitorStatic } from "@/components/status-page/static/status-monitor-static";
 import {
   Status,
   StatusContent,
@@ -17,7 +19,6 @@ import {
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
-import { StatusBannerStatic } from "@/components/status-page/static/status-banner-static";
 import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { monitors } from "@/data/monitors";

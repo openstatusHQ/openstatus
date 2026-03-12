@@ -116,8 +116,7 @@ export function StatusTrackerStatic({ data }: { data: UptimeData }) {
             if (prevMonitor) {
               const prevTracker = prevMonitor.querySelector('[role="toolbar"]');
               if (prevTracker) {
-                const buttons =
-                  prevTracker.querySelectorAll('[role="button"]');
+                const buttons = prevTracker.querySelectorAll('[role="button"]');
                 const button = buttons?.[focusedIndex] as HTMLElement;
                 if (button) {
                   button.focus();
@@ -135,8 +134,7 @@ export function StatusTrackerStatic({ data }: { data: UptimeData }) {
             if (nextMonitor) {
               const nextTracker = nextMonitor.querySelector('[role="toolbar"]');
               if (nextTracker) {
-                const buttons =
-                  nextTracker.querySelectorAll('[role="button"]');
+                const buttons = nextTracker.querySelectorAll('[role="button"]');
                 const button = buttons?.[focusedIndex] as HTMLElement;
                 if (button) {
                   button.focus();
