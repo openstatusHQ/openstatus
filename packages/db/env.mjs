@@ -11,14 +11,14 @@ export const env = createEnv({
   },
   runtimeEnv: {
     DATABASE_URL:
-      // FIXME: This is a hack to get the tests to run
+      // FIXME: This is a hack to get the tests/build to run
       process.env.NODE_ENV === "test"
         ? "http://127.0.0.1:8080"
-        : process.env.DATABASE_URL,
-    DATABASE_AUTH_TOKEN: process.env.DATABASE_AUTH_TOKEN,
-    CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
-    CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
-    CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
+        : process.env.DATABASE_URL || "http://127.0.0.1:8080",
+    DATABASE_AUTH_TOKEN: process.env.DATABASE_AUTH_TOKEN || "default-token",
+    CLICKHOUSE_URL: process.env.CLICKHOUSE_URL || "",
+    CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME || "",
+    CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD || "",
   },
   skipValidation: true,
 });
