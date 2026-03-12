@@ -1,8 +1,13 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
 import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
+import {
+  StatusEventTimelineDot,
+  StatusEventTimelineMessage,
+  StatusEventTimelineSeparator,
+  StatusEventTimelineTitle,
+} from "@openstatus/ui/components/blocks/status-events";
 import { Badge } from "@openstatus/ui/components/ui/badge";
-import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -355,79 +360,5 @@ export function StatusEventTimelineMaintenance({
         </div>
       </div>
     </div>
-  );
-}
-
-export function StatusEventTimelineTitle({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn("font-medium text-foreground text-sm", className)}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function StatusEventTimelineMessage({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "py-1.5 font-mono text-muted-foreground text-sm",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function StatusEventTimelineDot({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "size-2.5 shrink-0 rounded-full bg-muted",
-        "group-data-[variant=resolved]:bg-success",
-        "group-data-[variant=monitoring]:bg-info",
-        "group-data-[variant=identified]:bg-warning",
-        "group-data-[variant=investigating]:bg-destructive",
-        "group-data-[variant=maintenance]:bg-info",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function StatusEventTimelineSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof Separator>) {
-  return (
-    <Separator
-      orientation="vertical"
-      className={cn(
-        "mx-auto flex-1",
-        "group-data-[variant=resolved]:bg-success",
-        "group-data-[variant=monitoring]:bg-info",
-        "group-data-[variant=identified]:bg-warning",
-        "group-data-[variant=investigating]:bg-destructive",
-        "group-data-[variant=maintenance]:bg-info",
-        className,
-      )}
-      {...props}
-    />
   );
 }
