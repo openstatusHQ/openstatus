@@ -30,6 +30,7 @@
     "@openstatus/error": "workspace:*",
     "@openstatus/header-analysis": "workspace:*",
     "@openstatus/icons": "workspace:*",
+    "@openstatus/importers": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-google-chat": "workspace:*",

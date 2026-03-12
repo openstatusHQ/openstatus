@@ -98,6 +98,9 @@ importers:
       '@openstatus/icons':
         specifier: workspace:*
         version: link:../../packages/icons
+      '@openstatus/importers':
+        specifier: workspace:*
+        version: link:../../packages/importers
       '@openstatus/notification-discord':
         specifier: workspace:*
         version: link:../../packages/notifications/discord
@@ -1216,6 +1219,9 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../error
+      '@openstatus/importers':
+        specifier: workspace:*
+        version: link:../importers
       '@openstatus/notification-google-chat':
         specifier: workspace:*
         version: link:../notifications/google-chat
@@ -1447,6 +1453,19 @@ importers:
       '@types/react-dom':
         specifier: 19.2.2
         version: 19.2.2(@types/react@19.2.2)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  packages/importers:
+    dependencies:
+      zod:
+        specifier: 4.1.13
+        version: 4.1.13
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: 5.9.3
         version: 5.9.3

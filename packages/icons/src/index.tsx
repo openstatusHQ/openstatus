@@ -11,3 +11,4 @@ export * from "./koyeb";
 export * from "./telegram";
 export * from "./whatsapp";
 export * from "./markdown";
+export * from "./statuspage";

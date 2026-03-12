@@ -1,0 +1,24 @@
+{
+  "name": "@openstatus/importers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./statuspage": "./src/providers/statuspage/index.ts",
+    "./statuspage/fixtures": "./src/providers/statuspage/fixtures.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "5.9.3"
+  }
+}
