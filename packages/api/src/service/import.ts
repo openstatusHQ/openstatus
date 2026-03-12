@@ -21,7 +21,7 @@ import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 import { TRPCError } from "@trpc/server";
 
 type ImportOptions = {
-  includeIncidents?: boolean;
+  includeStatusReports?: boolean;
   includeSubscribers?: boolean;
   includeComponents?: boolean;
 };
@@ -222,26 +222,26 @@ export async function runImport(config: {
           }
           break;
         case "incidents":
-          if (targetPageId && config.options?.includeIncidents !== false) {
+          if (targetPageId && config.options?.includeStatusReports !== false) {
             await writeIncidentsPhase(
               phase,
               config.workspaceId,
               targetPageId,
               idMaps.components,
             );
-          } else if (config.options?.includeIncidents === false) {
+          } else if (config.options?.includeStatusReports === false) {
             phase.status = "skipped";
           }
           break;
         case "maintenances":
-          if (targetPageId && config.options?.includeIncidents !== false) {
+          if (targetPageId && config.options?.includeStatusReports !== false) {
             await writeMaintenancesPhase(
               phase,
               config.workspaceId,
               targetPageId,
               idMaps.components,
             );
-          } else if (config.options?.includeIncidents === false) {
+          } else if (config.options?.includeStatusReports === false) {
             phase.status = "skipped";
           }
           break;

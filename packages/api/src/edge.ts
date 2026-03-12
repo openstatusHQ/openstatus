@@ -43,5 +43,5 @@ export const edgeRouter = createTRPCRouter({
   feedback: feedbackRouter,
   statusPage: statusPageRouter,
   privateLocation: privateLocationRouter,
-  importRouter: importRouter,
+  import: importRouter,
 });

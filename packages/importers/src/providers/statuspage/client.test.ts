@@ -133,37 +133,6 @@ describe("StatuspageClient", () => {
     await expect(client.getPage("sp_page_001")).rejects.toThrow();
   });
 
-  test("getScheduledIncidents returns parsed scheduled incidents", async () => {
-    const scheduled = MOCK_INCIDENTS.filter((i) => i.scheduled_for != null);
-    mockFetchPaginated(scheduled);
-    const incidents = await client.getScheduledIncidents("sp_page_001");
-    expect(incidents).toEqual(scheduled);
-    expect(incidents).toHaveLength(1);
-    expect(incidents[0].scheduled_for).toBe("2024-06-20T02:00:00.000Z");
-  });
-
-  test("getScheduledIncidents calls correct URL path", async () => {
-    mockFetchPaginated([]);
-    await client.getScheduledIncidents("sp_page_001");
-    const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
-    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(
-      "https://api.statuspage.io/v1/pages/sp_page_001/incidents/scheduled?page=1&per_page=100",
-    );
-  });
-
-  test("getScheduledIncidents throws on non-200 response", async () => {
-    mockFetch({ error: "Forbidden" }, 403);
-    await expect(client.getScheduledIncidents("sp_page_001")).rejects.toThrow(
-      "Statuspage API error: 403",
-    );
-  });
-
-  test("getScheduledIncidents throws on schema mismatch", async () => {
-    mockFetch([{ bad: "data" }]);
-    await expect(client.getScheduledIncidents("sp_page_001")).rejects.toThrow();
-  });
-
   test("sends correct auth header", async () => {
     mockFetch(MOCK_PAGES);
     await client.getPages();

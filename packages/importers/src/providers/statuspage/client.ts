@@ -18,7 +18,7 @@ export type StatuspageClient = {
   getComponents: (pageId: string) => Promise<StatuspageComponent[]>;
   getComponentGroups: (pageId: string) => Promise<StatuspageGroupComponent[]>;
   getIncidents: (pageId: string) => Promise<StatuspageIncident[]>;
-  getScheduledIncidents: (pageId: string) => Promise<StatuspageIncident[]>;
+  // NOTE: could add getScheduledStatusReports if we need the dedicated /incidents/scheduled endpoint
   getSubscribers: (pageId: string) => Promise<StatuspageSubscriber[]>;
 };
 
@@ -77,11 +77,6 @@ export function createStatuspageClient(
       ),
     getIncidents: (pageId) =>
       requestAllPages(`/pages/${pageId}/incidents`, StatuspageIncidentSchema),
-    getScheduledIncidents: (pageId) =>
-      requestAllPages(
-        `/pages/${pageId}/incidents/scheduled`,
-        StatuspageIncidentSchema,
-      ),
     getSubscribers: (pageId) =>
       requestAllPages(
         `/pages/${pageId}/subscribers`,

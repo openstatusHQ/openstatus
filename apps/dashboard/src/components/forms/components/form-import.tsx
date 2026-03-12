@@ -31,7 +31,7 @@ import {
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
 import { Switch } from "@openstatus/ui/components/ui/switch";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { AlertTriangle } from "lucide-react";
 import { useTransition } from "react";
@@ -43,7 +43,7 @@ const schema = z.object({
   provider: z.enum(["statuspage"]),
   apiKey: z.string().min(1, "API key is required"),
   statuspagePageId: z.string().optional(),
-  includeIncidents: z.boolean(),
+  includeStatusReports: z.boolean(),
   includeSubscribers: z.boolean(),
   includeComponents: z.boolean(),
 });
@@ -75,7 +75,7 @@ export function FormImport({
       provider: undefined,
       apiKey: "",
       statuspagePageId: "",
-      includeIncidents: true,
+      includeStatusReports: true,
       includeSubscribers: false,
       includeComponents: true,
     },
@@ -86,19 +86,16 @@ export function FormImport({
   const watchApiKey = form.watch("apiKey");
   const watchStatuspagePageId = form.watch("statuspagePageId");
 
-  const previewQuery = useQuery(
-    trpc.importRouter.preview.queryOptions(
-      {
-        provider: "statuspage",
-        apiKey: watchApiKey,
-        statuspagePageId: watchStatuspagePageId || undefined,
-        pageId,
+  const previewMutation = useMutation(
+    trpc.import.preview.mutationOptions({
+      onError: (error) => {
+        if (isTRPCClientError(error)) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to preview import");
+        }
       },
-      {
-        enabled: false,
-        retry: false,
-      },
-    ),
+    }),
   );
 
   async function runPreview() {
@@ -107,18 +104,16 @@ export function FormImport({
       form.setError("apiKey", { message: "API key is required" });
       return;
     }
-    const { error } = await previewQuery.refetch();
-    if (error) {
-      if (isTRPCClientError(error)) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to preview import");
-      }
-    }
+    previewMutation.mutate({
+      provider: "statuspage",
+      apiKey: watchApiKey,
+      statuspagePageId: watchStatuspagePageId || undefined,
+      pageId,
+    });
   }
 
   function submitAction(values: ImportFormValues) {
-    if (isPending || !previewQuery.data) return;
+    if (isPending || !previewMutation.data) return;
 
     startTransition(async () => {
       try {
@@ -180,7 +175,7 @@ export function FormImport({
                           aria-hidden="true"
                         />
                         <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
-                          Statuspage.io
+                          Atlassian Statuspage
                         </FormLabel>
                       </FormItem>
                       <div className="col-span-1 self-end text-muted-foreground text-xs sm:place-self-end">
@@ -229,7 +224,7 @@ export function FormImport({
                         <Input placeholder="e.g. abc123def456" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Import a specific page. Leave empty to import accross
+                        Import a specific page. Leave empty to import across
                         pages.
                       </FormDescription>
                     </FormItem>
@@ -239,16 +234,16 @@ export function FormImport({
                   type="button"
                   variant="secondary"
                   onClick={runPreview}
-                  disabled={previewQuery.isFetching}
+                  disabled={previewMutation.isPending}
                 >
-                  {previewQuery.isFetching
+                  {previewMutation.isPending
                     ? "Loading preview..."
                     : "Preview Import"}
                 </Button>
               </FormCardContent>
             </>
           ) : null}
-          {previewQuery.data ? (
+          {previewMutation.data ? (
             <>
               <FormCardSeparator />
               <FormCardContent className="grid gap-4">
@@ -256,7 +251,7 @@ export function FormImport({
                   <FormLabel>Preview</FormLabel>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {Object.entries(PHASE_LABELS).map(([key, label]) => {
-                      const count = getPhaseCount(previewQuery.data, key);
+                      const count = getPhaseCount(previewMutation.data, key);
                       if (count === 0) return null;
                       return (
                         <Badge key={key} variant="secondary">
@@ -266,17 +261,17 @@ export function FormImport({
                     })}
                   </div>
                 </div>
-                {previewQuery.data.errors.length > 0 ? (
+                {previewMutation.data.errors.length > 0 ? (
                   <Note color="error" size="sm">
                     <AlertTriangle />
                     <p className="text-sm">
-                      {previewQuery.data.errors.join(" ")}
+                      {previewMutation.data.errors.join(" ")}
                     </p>
                   </Note>
                 ) : null}
                 <FormField
                   control={form.control}
-                  name="includeIncidents"
+                  name="includeStatusReports"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between">
                       <div className="space-y-0.5">
@@ -339,7 +334,14 @@ export function FormImport({
             </>
           ) : null}
           <FormCardFooter>
-            <Button type="submit" disabled={!previewQuery.data || isPending}>
+            <Button
+              type="submit"
+              disabled={
+                !previewMutation.data ||
+                isPending ||
+                previewMutation.data.errors.length > 0
+              }
+            >
               {isPending ? "Importing..." : "Import"}
             </Button>
           </FormCardFooter>

@@ -38,7 +38,7 @@ export function FormComponentsUpdate() {
   );
 
   const importMutation = useMutation(
-    trpc.importRouter.run.mutationOptions({
+    trpc.import.run.mutationOptions({
       onSuccess: async () => {
         await Promise.all([refetch(), refetchComponents()]);
         setFormKey((k) => k + 1);
@@ -136,9 +136,9 @@ export function FormComponentsUpdate() {
             provider: values.provider,
             apiKey: values.apiKey,
             pageId: statusPage.id,
-            statuspagePageId: values.statuspagePageId,
+            statuspagePageId: values.statuspagePageId ?? undefined,
             options: {
-              includeIncidents: values.includeIncidents,
+              includeStatusReports: values.includeStatusReports,
               includeSubscribers: values.includeSubscribers,
               includeComponents: values.includeComponents,
             },

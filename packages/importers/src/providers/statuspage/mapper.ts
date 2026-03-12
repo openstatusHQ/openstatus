@@ -27,7 +27,7 @@ export function mapPage(page: StatuspagePage, workspaceId: number) {
 export function mapComponent(
   component: StatuspageComponent,
   workspaceId: number,
-  pageId: number,
+  pageId?: number,
 ) {
   return {
     workspaceId,
@@ -43,7 +43,7 @@ export function mapComponent(
 export function mapComponentGroup(
   group: StatuspageGroupComponent,
   workspaceId: number,
-  pageId: number,
+  pageId?: number,
 ) {
   return {
     workspaceId,
@@ -74,7 +74,7 @@ export function isScheduledIncident(incident: StatuspageIncident): boolean {
 export function mapIncidentToStatusReport(
   incident: StatuspageIncident,
   workspaceId: number,
-  pageId: number,
+  pageId?: number,
 ) {
   const updates = [...(incident.incident_updates ?? [])].sort(
     (a, b) =>
@@ -119,18 +119,22 @@ export function mapIncidentToStatusReport(
 export function mapIncidentToMaintenance(
   incident: StatuspageIncident,
   workspaceId: number,
-  pageId: number,
+  pageId?: number,
 ) {
   const updates = incident.incident_updates ?? [];
   const message = updates.map((u) => u.body ?? "").join("\n");
 
+  if (!incident.scheduled_for) {
+    throw new Error(
+      `Incident "${incident.name}" is missing scheduled_for date`,
+    );
+  }
+
   return {
     title: incident.name,
     message,
-    from: new Date(incident.scheduled_for as string),
-    to: new Date(
-      incident.scheduled_until ?? (incident.scheduled_for as string),
-    ),
+    from: new Date(incident.scheduled_for),
+    to: new Date(incident.scheduled_until ?? incident.scheduled_for),
     workspaceId,
     pageId,
   };
@@ -138,10 +142,10 @@ export function mapIncidentToMaintenance(
 
 export function mapSubscriber(
   subscriber: StatuspageSubscriber,
-  pageId: number,
+  pageId?: number,
 ): {
   email: string;
-  pageId: number;
+  pageId?: number;
   sourceComponentIds: string[];
 } | null {
   if (subscriber.mode !== "email") return null;

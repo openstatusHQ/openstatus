@@ -213,7 +213,7 @@ afterAll(async () => {
 const caller = makeCaller();
 
 test("preview returns mapped data without DB writes", async () => {
-  const result = await caller.importRouter.preview({
+  const result = await caller.import.preview({
     provider: "statuspage",
     apiKey: "test-key",
   });
@@ -247,10 +247,10 @@ test("preview returns mapped data without DB writes", async () => {
 });
 
 test("run creates page, components, and groups in DB", async () => {
-  const result = await caller.importRouter.run({
+  const result = await caller.import.run({
     provider: "statuspage",
     apiKey: "test-key",
-    options: { includeIncidents: true, includeSubscribers: false },
+    options: { includeStatusReports: true, includeSubscribers: false },
   });
 
   trackCreatedIds(result);
@@ -294,11 +294,11 @@ test("run creates page, components, and groups in DB", async () => {
 });
 
 test("run with existing pageId imports into that page", async () => {
-  const result = await caller.importRouter.run({
+  const result = await caller.import.run({
     provider: "statuspage",
     apiKey: "test-key",
     pageId: 1,
-    options: { includeIncidents: false, includeSubscribers: false },
+    options: { includeStatusReports: false, includeSubscribers: false },
   });
 
   trackCreatedIds(result);
@@ -328,18 +328,18 @@ test("run with existing pageId imports into that page", async () => {
 
 test("re-run skips already-imported resources (idempotency)", async () => {
   // First run
-  const result1 = await caller.importRouter.run({
+  const result1 = await caller.import.run({
     provider: "statuspage",
     apiKey: "test-key",
-    options: { includeIncidents: false, includeSubscribers: false },
+    options: { includeStatusReports: false, includeSubscribers: false },
   });
   trackCreatedIds(result1);
 
   // Second run (same data)
-  const result2 = await caller.importRouter.run({
+  const result2 = await caller.import.run({
     provider: "statuspage",
     apiKey: "test-key",
-    options: { includeIncidents: false, includeSubscribers: false },
+    options: { includeStatusReports: false, includeSubscribers: false },
   });
   // Don't track again - same resources should be skipped
 
@@ -362,11 +362,11 @@ test("re-run skips already-imported resources (idempotency)", async () => {
   await cleanup();
 });
 
-test("run with includeIncidents creates status reports", async () => {
-  const result = await caller.importRouter.run({
+test("run with includeStatusReports creates status reports", async () => {
+  const result = await caller.import.run({
     provider: "statuspage",
     apiKey: "test-key",
-    options: { includeIncidents: true, includeSubscribers: false },
+    options: { includeStatusReports: true, includeSubscribers: false },
   });
 
   trackCreatedIds(result);
@@ -487,7 +487,7 @@ test("run enforces component limit by truncating", async () => {
     workspaceId: 1,
     pageId: testPage.id,
     limits: { ...starterLimits, "page-components": 2 },
-    options: { includeIncidents: false, includeSubscribers: false },
+    options: { includeStatusReports: false, includeSubscribers: false },
   });
 
   trackCreatedIds(result);
@@ -519,7 +519,7 @@ test("run skips subscribers on free plan", async () => {
     apiKey: "test-key",
     workspaceId: 1,
     limits: { ...freeLimits, "status-subscribers": false },
-    options: { includeIncidents: false, includeSubscribers: true },
+    options: { includeStatusReports: false, includeSubscribers: true },
   });
 
   trackCreatedIds(result);

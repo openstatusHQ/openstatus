@@ -72,8 +72,7 @@ export function createStatuspageProvider(): ImportProvider<StatuspageImportConfi
           ],
         });
 
-        // The pageId we use for mapping; in dry-run we don't have a real one
-        const pageId = config.pageId ?? 0;
+        const pageId = config.pageId;
 
         // Component groups phase
         const groupResources: ResourceResult[] = groups.map((g) => ({

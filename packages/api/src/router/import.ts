@@ -11,14 +11,14 @@ export const importRouter = createTRPCRouter({
       z.object({
         provider: z.enum(["statuspage"]),
         apiKey: z.string().min(1),
-        statuspagePageId: z.string().optional(),
+        statuspagePageId: z.string().nullish(),
         pageId: z.number().optional(),
       }),
     )
-    .query(async (opts) => {
+    .mutation(async (opts) => {
       return previewImport({
         apiKey: opts.input.apiKey,
-        statuspagePageId: opts.input.statuspagePageId,
+        statuspagePageId: opts.input.statuspagePageId ?? undefined,
         workspaceId: opts.ctx.workspace.id,
         pageId: opts.input.pageId,
         limits: opts.ctx.workspace.limits,
@@ -31,10 +31,10 @@ export const importRouter = createTRPCRouter({
         provider: z.enum(["statuspage"]),
         apiKey: z.string().min(1),
         pageId: z.number().optional(),
-        statuspagePageId: z.string().optional(),
+        statuspagePageId: z.string().nullish(),
         options: z
           .object({
-            includeIncidents: z.boolean().default(true),
+            includeStatusReports: z.boolean().default(true),
             includeSubscribers: z.boolean().default(false),
             includeComponents: z.boolean().default(true),
           })
@@ -65,7 +65,7 @@ export const importRouter = createTRPCRouter({
 
       return runImport({
         apiKey: opts.input.apiKey,
-        statuspagePageId: opts.input.statuspagePageId,
+        statuspagePageId: opts.input.statuspagePageId ?? undefined,
         workspaceId: opts.ctx.workspace.id,
         pageId: opts.input.pageId,
         options: opts.input.options,
