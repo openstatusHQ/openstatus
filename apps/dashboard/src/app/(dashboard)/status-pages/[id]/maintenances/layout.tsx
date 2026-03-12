@@ -1,5 +1,5 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { SidebarProvider } from "@openstatus/ui/components/ui/sidebar";
 import { Sidebar } from "../sidebar";
 
 export default async function Layout({

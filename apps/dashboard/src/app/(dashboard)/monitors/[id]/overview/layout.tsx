@@ -1,4 +1,4 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@openstatus/ui/components/ui/sidebar";
 import { Sidebar } from "../sidebar";
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -3,6 +3,7 @@
 import { MoreHorizontal, Plus } from "lucide-react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/status-pages.client";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,8 +13,7 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { getActions } from "@/data/status-pages.client";
+} from "@openstatus/ui/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,

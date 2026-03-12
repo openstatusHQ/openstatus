@@ -26,7 +26,7 @@ import {
   SidebarRail,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@openstatus/ui/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,

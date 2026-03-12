@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -13,8 +14,7 @@ import {
   SidebarProvider,
   SidebarSeparator,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { Button } from "@openstatus/ui/components/ui/button";
+} from "@openstatus/ui/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
