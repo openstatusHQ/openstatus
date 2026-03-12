@@ -1,6 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  StatusBar,
+  StatusBarSkeleton,
+} from "@openstatus/ui/components/blocks/status-bar";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -16,8 +20,6 @@ import {
   StatusMonitorUptime,
   StatusMonitorUptimeSkeleton,
 } from "../status-monitor";
-import { StatusTrackerSkeleton } from "../status-tracker";
-import { StatusTrackerStatic } from "./status-tracker-static";
 
 type VariantType = "success" | "degraded" | "error" | "info";
 
@@ -74,11 +76,7 @@ export function StatusMonitorStatic({
           )}
         </div>
       </div>
-      {isLoading ? (
-        <StatusTrackerSkeleton />
-      ) : (
-        <StatusTrackerStatic data={data} />
-      )}
+      {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data} />}
       <StatusMonitorFooterStatic data={data} isLoading={isLoading} />
     </div>
   );

@@ -10,7 +10,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { recomputeStyles } from "@/components/status-page/floating-button";
-import { StatusBannerStatic } from "@/components/status-page/static/status-banner-static";
 import { StatusMonitorStatic } from "@/components/status-page/static/status-monitor-static";
 import {
   Status,
@@ -24,6 +23,7 @@ import { ThemeSelect } from "@/components/themes/theme-select";
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import { StatusBanner } from "@openstatus/ui/components/blocks/status-banner";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Separator } from "@openstatus/ui/components/ui/separator";
@@ -295,7 +295,7 @@ function ThemePlaygroundStatus({
             Get informed about our services.
           </StatusDescription>
         </StatusHeader>
-        <StatusBannerStatic status="success" />
+        <StatusBanner status="success" />
         <StatusContent>
           {/* TODO: create mock data */}
           <StatusMonitorStatic
