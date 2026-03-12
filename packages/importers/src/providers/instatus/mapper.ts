@@ -110,7 +110,9 @@ export function mapIncidentToStatusReport(
     ? mapIncidentStatus(lastUpdate.status)
     : "investigating";
 
-  const sourceComponentIds: string[] = incident.components ?? [];
+  const sourceComponentIds: string[] = (incident.components ?? []).map(
+    (c) => c.id,
+  );
 
   return {
     report: {

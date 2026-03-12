@@ -126,7 +126,7 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
             status: "created" as const,
             data: {
               ...mapMaintenanceToMaintenance(m, config.workspaceId, pageId),
-              sourceComponentIds: m.components ?? [],
+              sourceComponentIds: (m.components ?? []).map((c) => c.id),
             },
           }),
         );

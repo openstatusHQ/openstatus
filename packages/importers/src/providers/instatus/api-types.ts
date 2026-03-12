@@ -28,9 +28,9 @@ export const InstatusComponentSchema = z.object({
     "MAJOROUTAGE",
   ]),
   order: z.number(),
-  group: z.string().nullable(),
-  showUptime: z.boolean(),
-  grouped: z.boolean(),
+  group: z.string().nullable().optional(),
+  showUptime: z.boolean().optional(),
+  grouped: z.boolean().optional(),
 });
 
 export type InstatusComponent = z.infer<typeof InstatusComponentSchema>;
@@ -49,6 +49,11 @@ export type InstatusIncidentUpdate = z.infer<
   typeof InstatusIncidentUpdateSchema
 >;
 
+const InstatusIncidentComponentRefSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+});
+
 export const InstatusIncidentSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -56,7 +61,7 @@ export const InstatusIncidentSchema = z.object({
   started: z.string(),
   resolved: z.string().nullable(),
   updates: z.array(InstatusIncidentUpdateSchema).optional(),
-  components: z.array(z.string()).optional(),
+  components: z.array(InstatusIncidentComponentRefSchema).optional(),
 });
 
 export type InstatusIncident = z.infer<typeof InstatusIncidentSchema>;
@@ -81,7 +86,7 @@ export const InstatusMaintenanceSchema = z.object({
   start: z.string(),
   duration: z.number().nullable(),
   updates: z.array(InstatusMaintenanceUpdateSchema).optional(),
-  components: z.array(z.string()).optional(),
+  components: z.array(InstatusIncidentComponentRefSchema).optional(),
 });
 
 export type InstatusMaintenance = z.infer<typeof InstatusMaintenanceSchema>;

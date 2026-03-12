@@ -127,7 +127,7 @@ export const MOCK_INCIDENTS: InstatusIncident[] = [
         createdAt: "2024-06-10T16:45:00.000Z",
       },
     ],
-    components: ["in_comp_001"],
+    components: [{ id: "in_comp_001", name: "API Gateway" }],
   },
   {
     id: "in_incident_002",
@@ -159,7 +159,7 @@ export const MOCK_INCIDENTS: InstatusIncident[] = [
         createdAt: "2024-06-11T09:45:00.000Z",
       },
     ],
-    components: ["in_comp_003"],
+    components: [{ id: "in_comp_003", name: "Dashboard" }],
   },
 ];
 
@@ -182,7 +182,10 @@ export const MOCK_MAINTENANCES: InstatusMaintenance[] = [
         started: "2024-06-12T10:00:00.000Z",
       },
     ],
-    components: ["in_comp_001", "in_comp_002"],
+    components: [
+      { id: "in_comp_001", name: "API Gateway" },
+      { id: "in_comp_002", name: "Authentication Service" },
+    ],
   },
   {
     id: "in_maint_002",
@@ -208,7 +211,7 @@ export const MOCK_MAINTENANCES: InstatusMaintenance[] = [
         started: "2024-06-15T03:25:00.000Z",
       },
     ],
-    components: ["in_comp_004"],
+    components: [{ id: "in_comp_004", name: "CDN" }],
   },
 ];
 
