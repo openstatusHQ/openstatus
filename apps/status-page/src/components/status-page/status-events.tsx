@@ -13,7 +13,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
-import { status } from "./messages";
+import { useExtracted } from "next-intl";
 
 export function StatusEventGroup({
   className,
@@ -80,6 +80,7 @@ export function StatusEventTitleCheck({
   children,
   ...props
 }: React.ComponentProps<"div">) {
+  const t = useExtracted();
   return (
     <div className={cn("flex items-center pl-1", className)} {...props}>
       <TooltipProvider>
@@ -90,7 +91,7 @@ export function StatusEventTitleCheck({
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Report resolved</p>
+            <p>{t("Report resolved")}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -249,6 +250,14 @@ export function StatusEventTimelineReportUpdate({
   withDot?: boolean;
   isLast?: boolean;
 }) {
+  const t = useExtracted();
+  const statusLabels = {
+    resolved: t("Resolved"),
+    monitoring: t("Monitoring"),
+    identified: t("Identified"),
+    investigating: t("Investigating"),
+  } as const;
+
   return (
     <div data-variant={report.status} className="group">
       <div className="flex flex-row items-center justify-between gap-2">
@@ -263,7 +272,7 @@ export function StatusEventTimelineReportUpdate({
           ) : null}
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
-              <span>{status[report.status]}</span>{" "}
+              <span>{statusLabels[report.status]}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
@@ -302,6 +311,7 @@ export function StatusEventTimelineMaintenance({
   };
   withDot?: boolean;
 }) {
+  const t = useExtracted();
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
   const range = formatDateRange(maintenance.from, maintenance.to);
   // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
@@ -320,7 +330,7 @@ export function StatusEventTimelineMaintenance({
           {/* NOTE: is always last, no need for className="mb-2" */}
           <div>
             <StatusEventTimelineTitle>
-              <span>Maintenance</span>{" "}
+              <span>{t("Maintenance")}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={maintenance.from} asChild>
