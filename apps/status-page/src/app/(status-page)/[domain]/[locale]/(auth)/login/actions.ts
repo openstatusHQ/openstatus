@@ -4,9 +4,11 @@ import { signIn } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { TRPCClientError } from "@trpc/client";
 import { AuthError } from "next-auth";
+import { getExtracted } from "next-intl/server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function signInWithResendAction(formData: FormData) {
+  const t = await getExtracted();
   try {
     const email = formData.get("email") as string;
     const redirectTo = formData.get("redirectTo") as string;
@@ -15,7 +17,7 @@ export async function signInWithResendAction(formData: FormData) {
     if (!email || !redirectTo) {
       return {
         success: false,
-        error: "Email and redirectTo are required",
+        error: t("Email and redirectTo are required"),
       };
     }
 
@@ -38,7 +40,7 @@ export async function signInWithResendAction(formData: FormData) {
       }
       return {
         success: false,
-        error: "An unexpected error occurred during sign in",
+        error: t("An unexpected error occurred during sign in"),
       };
     }
 

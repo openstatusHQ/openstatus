@@ -12,9 +12,11 @@ import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 export function SectionPassword() {
+  const t = useExtracted();
   const { domain } = useParams<{ domain: string }>();
   const searchParams = useSearchParams();
   const trpc = useTRPC();
@@ -27,9 +29,9 @@ export function SectionPassword() {
   return (
     <Section className="m-auto w-full max-w-lg rounded-lg border bg-card p-4">
       <SectionHeader>
-        <SectionTitle>Protected Page</SectionTitle>
+        <SectionTitle>{t("Protected Page")}</SectionTitle>
         <SectionDescription>
-          Enter the password to access the status page.
+          {t("Enter the password to access the status page.")}
         </SectionDescription>
       </SectionHeader>
       <div className="flex flex-col gap-2">
@@ -48,7 +50,7 @@ export function SectionPassword() {
           }}
         />
         <Button type="submit" form="password-form">
-          Submit
+          {t("Submit")}
         </Button>
       </div>
     </Section>

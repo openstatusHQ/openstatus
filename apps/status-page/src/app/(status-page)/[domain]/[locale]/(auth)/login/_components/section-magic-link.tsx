@@ -15,12 +15,14 @@ import { FormEmail, type FormValues } from "@/components/forms/form-email";
 import { generateServerActionPromise } from "@/lib/server-actions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Inbox } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { flushSync } from "react-dom";
 import { signInWithResendAction } from "../actions";
 
 export function SectionMagicLink() {
+  const t = useExtracted();
   const { domain } = useParams<{ domain: string }>();
   const [state, setState] = useState<"idle" | "pending" | "success">("idle");
 
@@ -54,10 +56,9 @@ export function SectionMagicLink() {
   return (
     <Section className="m-auto w-full max-w-lg rounded-lg border bg-card p-4">
       <SectionHeader>
-        <SectionTitle>Authenticate</SectionTitle>
+        <SectionTitle>{t("Authenticate")}</SectionTitle>
         <SectionDescription>
-          Enter your email to receive a magic link for accessing the status
-          page. Note: Only emails from approved domains are accepted.
+          {t("Enter your email to receive a magic link for accessing the status page. Note: Only emails from approved domains are accepted.")}
         </SectionDescription>
       </SectionHeader>
       {state !== "success" ? (
@@ -68,7 +69,7 @@ export function SectionMagicLink() {
             form="email-form"
             disabled={state === "pending"}
           >
-            {state === "pending" ? "Submitting..." : "Submit"}
+            {state === "pending" ? t("Submitting...") : t("Submit")}
           </Button>
         </div>
       ) : (
@@ -79,12 +80,13 @@ export function SectionMagicLink() {
 }
 
 function SuccessState() {
+  const t = useExtracted();
   return (
     <EmptyStateContainer>
       <Inbox className="size-4 shrink-0" />
-      <EmptyStateTitle>Check your inbox!</EmptyStateTitle>
+      <EmptyStateTitle>{t("Check your inbox!")}</EmptyStateTitle>
       <EmptyStateDescription>
-        Access the status page by clicking the link in the email.
+        {t("Access the status page by clicking the link in the email.")}
       </EmptyStateDescription>
     </EmptyStateContainer>
   );

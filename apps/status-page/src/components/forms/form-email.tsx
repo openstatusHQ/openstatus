@@ -10,6 +10,7 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { isTRPCClientError } from "@trpc/client";
+import { useExtracted } from "next-intl";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ export function FormEmail({
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
+  const t = useExtracted();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -42,8 +44,8 @@ export function FormEmail({
       try {
         const promise = onSubmit(values);
         toast.promise(promise, {
-          loading: "Confirming...",
-          success: "Confirmed",
+          loading: t("Confirming..."),
+          success: t("Confirmed"),
           error: (error) => {
             console.error(error);
             if (isTRPCClientError(error)) {
@@ -54,7 +56,7 @@ export function FormEmail({
               form.setError("email", { message: error.message });
               return error.message;
             }
-            return "Failed to confirm";
+            return t("Failed to confirm");
           },
         });
         await promise;
@@ -72,7 +74,7 @@ export function FormEmail({
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("Email")}</FormLabel>
               <FormControl>
                 <Input type="email" {...field} />
               </FormControl>
