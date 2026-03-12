@@ -1,6 +1,5 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Separator } from "@openstatus/ui/components/ui/separator";
@@ -187,11 +186,9 @@ export function StatusEventTimelineReport({
   withDot?: boolean;
   maxUpdates?: number;
 }) {
-  const _prefix = usePathnamePrefix();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
-  const _hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;

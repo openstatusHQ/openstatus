@@ -17,8 +17,7 @@ import {
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
-import { StatusBanner } from "@/components/status-page/status-banner";
-import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { StatusBannerStatic } from "@/components/status-page/static/status-banner-static";
 import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { monitors } from "@/data/monitors";
@@ -295,10 +294,10 @@ function ThemePlaygroundStatus({
             Get informed about our services.
           </StatusDescription>
         </StatusHeader>
-        <StatusBanner status="success" />
+        <StatusBannerStatic status="success" />
         <StatusContent>
           {/* TODO: create mock data */}
-          <StatusMonitor
+          <StatusMonitorStatic
             status="success"
             data={uptimeData?.data || []}
             monitor={monitors[0]}

@@ -1,0 +1,415 @@
+"use client";
+
+import { Kbd } from "@/components/common/kbd";
+import { formatDateRange } from "@/lib/formatter";
+import type { RouterOutputs } from "@openstatus/api";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui/components/ui/hover-card";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
+import { cn } from "@openstatus/ui/lib/utils";
+import { formatDistanceStrict } from "date-fns";
+import { useEffect, useRef, useState } from "react";
+import { chartConfig } from "../utils";
+
+type UptimeData = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number]["data"];
+
+const staticLabels: Record<string, string> = {
+  success: "Normal",
+  degraded: "Degraded",
+  error: "Error",
+  info: "Maintenance",
+  empty: "No Data",
+};
+
+export function StatusTrackerStatic({ data }: { data: UptimeData }) {
+  const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTouch = useMediaQuery("(hover: none)");
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        pinnedIndex !== null &&
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setPinnedIndex(null);
+      }
+    };
+
+    if (pinnedIndex !== null) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () =>
+        document.removeEventListener("mousedown", handleOutsideClick);
+    }
+  }, [pinnedIndex]);
+
+  useEffect(() => {
+    if (focusedIndex !== null && containerRef.current) {
+      const buttons = containerRef.current.querySelectorAll('[role="button"]');
+      const targetButton = buttons[focusedIndex] as HTMLElement;
+      if (targetButton) {
+        targetButton.focus();
+      }
+    }
+  }, [focusedIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setPinnedIndex(null);
+      setFocusedIndex(null);
+      setHoveredIndex(null);
+
+      if (focusedIndex !== null) {
+        const buttons =
+          containerRef.current?.querySelectorAll('[role="button"]');
+        const button = buttons?.[focusedIndex] as HTMLElement;
+        if (button) {
+          button.blur();
+        }
+      }
+
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (focusedIndex !== null) {
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          setFocusedIndex((prev) =>
+            prev !== null && prev > 0 ? prev - 1 : data.length - 1,
+          );
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          setFocusedIndex((prev) =>
+            prev !== null && prev < data.length - 1 ? prev + 1 : 0,
+          );
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          {
+            const prevMonitor = containerRef.current?.closest(
+              '[data-slot="status-monitor"]',
+            )?.previousElementSibling;
+            if (prevMonitor) {
+              const prevTracker = prevMonitor.querySelector('[role="toolbar"]');
+              if (prevTracker) {
+                const buttons =
+                  prevTracker.querySelectorAll('[role="button"]');
+                const button = buttons?.[focusedIndex] as HTMLElement;
+                if (button) {
+                  button.focus();
+                }
+              }
+            }
+          }
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          {
+            const nextMonitor = containerRef.current?.closest(
+              '[data-slot="status-monitor"]',
+            )?.nextElementSibling;
+            if (nextMonitor) {
+              const nextTracker = nextMonitor.querySelector('[role="toolbar"]');
+              if (nextTracker) {
+                const buttons =
+                  nextTracker.querySelectorAll('[role="button"]');
+                const button = buttons?.[focusedIndex] as HTMLElement;
+                if (button) {
+                  button.focus();
+                }
+              }
+            }
+          }
+          break;
+        case "Enter":
+        case "Escape":
+        case " ":
+          e.preventDefault();
+          handleBarClick(focusedIndex);
+          break;
+      }
+    }
+  };
+
+  const handleBarClick = (index: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    if (pinnedIndex === index) {
+      setPinnedIndex(null);
+    } else {
+      setPinnedIndex(index);
+    }
+  };
+
+  const handleBarFocus = (index: number) => {
+    setFocusedIndex(index);
+  };
+
+  const handleBarBlur = (e: React.FocusEvent, _currentIndex: number) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    const isMovingToAnotherBar =
+      relatedTarget &&
+      relatedTarget.closest('[role="toolbar"]') === containerRef.current &&
+      relatedTarget.getAttribute("role") === "button";
+
+    if (!isMovingToAnotherBar) {
+      setFocusedIndex(null);
+    }
+  };
+
+  const handleBarMouseEnter = (index: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredIndex(index);
+  };
+
+  const handleBarMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredIndex(null);
+    }, 100);
+  };
+
+  const handleHoverCardMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handleHoverCardMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex h-[50px] w-full items-end"
+      onKeyDown={handleKeyDown}
+      role="toolbar"
+      aria-label="Status tracker"
+    >
+      {data.map((item, index) => {
+        const isPinned = pinnedIndex === index;
+        const isFocused = focusedIndex === index;
+        const isHovered = hoveredIndex === index;
+
+        return (
+          <HoverCard
+            key={item.day}
+            openDelay={0}
+            closeDelay={0}
+            open={isPinned || isFocused || isHovered}
+          >
+            <HoverCardTrigger asChild>
+              <div
+                className={cn(
+                  "group relative mx-px flex h-full w-full cursor-pointer flex-col rounded-full outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                  "overflow-hidden rounded-full",
+                )}
+                onClick={() => handleBarClick(index)}
+                onFocus={() => handleBarFocus(index)}
+                onBlur={(e) => handleBarBlur(e, index)}
+                onMouseEnter={() => handleBarMouseEnter(index)}
+                onMouseLeave={handleBarMouseLeave}
+                tabIndex={
+                  index === data.length - 1 && focusedIndex === null
+                    ? 0
+                    : isFocused
+                      ? 0
+                      : -1
+                }
+                role="button"
+                aria-label={`Day ${index + 1} status`}
+                aria-pressed={isPinned}
+              >
+                {item.bar.map((segment, segmentIndex) => (
+                  <div
+                    key={`${item.day}-${segment.status}-${segmentIndex}`}
+                    className={cn("w-full transition-all", {
+                      "rounded-t-full": segmentIndex === 0,
+                      "rounded-b-full": segmentIndex === item.bar.length - 1,
+                    })}
+                    style={{
+                      height: `${segment.height}%`,
+                      backgroundColor: chartConfig[segment.status].color,
+                    }}
+                  />
+                ))}
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent
+              side="top"
+              align="center"
+              className="![animation-duration:0ms] ![transition-duration:0ms] w-auto min-w-40 p-0"
+              onMouseEnter={handleHoverCardMouseEnter}
+              onMouseLeave={handleHoverCardMouseLeave}
+            >
+              <div>
+                <div className="p-2 text-xs">
+                  {new Date(item.day).toLocaleDateString("default", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </div>
+                <Separator />
+                <div className="space-y-1 p-2 text-sm">
+                  {item.card.map((cardItem, cardIndex) => (
+                    <StatusTrackerContentStatic
+                      key={`${item.day}-card-${cardIndex}`}
+                      status={cardItem.status}
+                      value={cardItem.value}
+                    />
+                  ))}
+                </div>
+                {item.events.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="p-2">
+                      {item.events.map((event) => {
+                        const eventStatus =
+                          event.type === "incident"
+                            ? "error"
+                            : event.type === "report"
+                              ? "degraded"
+                              : "info";
+
+                        return (
+                          <StatusTrackerEventStatic
+                            key={`${event.id}-${event.type}`}
+                            status={eventStatus}
+                            name={event.name}
+                            from={event.from}
+                            to={event.to}
+                          />
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                {isPinned && !isTouch && (
+                  <>
+                    <Separator />
+                    <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
+                      <span>Click again to unpin</span>
+                      <Kbd>Esc</Kbd>
+                    </div>
+                  </>
+                )}
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatusTrackerContentStatic({
+  status,
+  value,
+}: {
+  status: "success" | "degraded" | "error" | "info" | "empty";
+  value: string;
+}) {
+  return (
+    <div className="flex items-baseline gap-4">
+      <div className="flex items-center gap-2">
+        <div
+          className="h-2.5 w-2.5 rounded-sm"
+          style={{
+            backgroundColor: chartConfig[status].color,
+          }}
+        />
+        <div className="text-sm">{staticLabels[status]}</div>
+      </div>
+      <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function StatusTrackerEventStatic({
+  name,
+  from,
+  to,
+  status,
+}: {
+  name: string;
+  from?: Date | null;
+  to?: Date | null;
+  status: "success" | "degraded" | "error" | "info" | "empty";
+}) {
+  if (!from) return null;
+
+  return (
+    <div className="group relative text-sm">
+      <div className="h-4 w-full" />
+      <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
+        <div className="flex items-center gap-2">
+          <div
+            className="h-2.5 w-2.5 shrink-0 rounded-sm"
+            style={{
+              backgroundColor: chartConfig[status].color,
+            }}
+          />
+          <div className="truncate">{name}</div>
+        </div>
+      </div>
+      <div className="mt-1 text-muted-foreground text-xs">
+        {formatDateRange(from, to ?? undefined)}{" "}
+        <span className="ml-1.5 font-mono text-muted-foreground/70">
+          {formatDuration({ from, to, name, status })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const formatDuration = ({
+  from,
+  to,
+  name,
+}: {
+  name: string;
+  from?: Date | null;
+  to?: Date | null;
+  status: "success" | "degraded" | "error" | "info" | "empty";
+}) => {
+  if (!from) return null;
+  if (!to) return "ongoing";
+  const duration = formatDistanceStrict(from, to);
+  const isMultipleIncidents = name.includes("Downtime (");
+  if (isMultipleIncidents) return `across ${duration}`;
+  if (duration === "0 seconds") return null;
+  return duration;
+};

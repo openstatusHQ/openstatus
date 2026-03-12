@@ -23,6 +23,35 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // When URL already has a locale prefix (e.g. /fr/events → /subdomain/fr/events)
+        {
+          source: "/:locale(en|es|fr|de|pt|ja|zh|ko)/:path*",
+          has: [
+            {
+              type: "host",
+              value:
+                process.env.NODE_ENV === "production"
+                  ? "(?<subdomain>[^.]+).stpg.dev"
+                  : "(?<subdomain>[^.]+).localhost",
+            },
+          ],
+          missing: [
+            {
+              type: "header",
+              key: "x-proxy",
+              value: "1",
+            },
+            {
+              type: "host",
+              value:
+                process.env.NODE_ENV === "production"
+                  ? "www.stpg.dev"
+                  : "localhost",
+            },
+          ],
+          destination: "/:subdomain/:locale/:path*",
+        },
+        // When URL has no locale prefix (e.g. /events → /subdomain/en/events)
         {
           source:
             "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
@@ -50,7 +79,7 @@ const nextConfig: NextConfig = {
                   : "localhost",
             },
           ],
-          destination: "/:subdomain/:path*",
+          destination: "/:subdomain/en/:path*",
         },
       ],
     };

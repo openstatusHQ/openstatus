@@ -1,0 +1,167 @@
+"use client";
+
+import type { RouterOutputs } from "@openstatus/api";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
+import { formatDistanceToNowStrict } from "date-fns";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  TriangleAlertIcon,
+  WrenchIcon,
+} from "lucide-react";
+import {
+  StatusMonitorDescription,
+  StatusMonitorTitle,
+  StatusMonitorUptime,
+  StatusMonitorUptimeSkeleton,
+} from "../status-monitor";
+import { StatusTrackerSkeleton } from "../status-tracker";
+import { StatusTrackerStatic } from "./status-tracker-static";
+
+type VariantType = "success" | "degraded" | "error" | "info";
+
+type Data = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number]["data"];
+
+export function StatusMonitorStatic({
+  className,
+  status = "success",
+  showUptime = true,
+  data = [],
+  monitor,
+  uptime,
+  isLoading = false,
+  ...props
+}: React.ComponentProps<"div"> & {
+  status?: VariantType;
+  showUptime?: boolean;
+  uptime?: string;
+  monitor: {
+    name: string;
+    description?: string | null;
+  };
+  data?: Data;
+  isLoading?: boolean;
+}) {
+  return (
+    <div
+      data-slot="status-monitor"
+      data-variant={status}
+      className={cn("group/monitor flex flex-col gap-1", className)}
+      {...props}
+    >
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-row items-center gap-2">
+          <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
+          <StatusMonitorDescription>
+            {monitor.description}
+          </StatusMonitorDescription>
+        </div>
+        <div className="flex flex-row items-center gap-2">
+          {showUptime ? (
+            <>
+              {isLoading ? (
+                <StatusMonitorUptimeSkeleton />
+              ) : (
+                <StatusMonitorUptime>{uptime}</StatusMonitorUptime>
+              )}
+              <StatusMonitorIconStatic />
+            </>
+          ) : (
+            <StatusMonitorStatusStatic />
+          )}
+        </div>
+      </div>
+      {isLoading ? (
+        <StatusTrackerSkeleton />
+      ) : (
+        <StatusTrackerStatic data={data} />
+      )}
+      <StatusMonitorFooterStatic data={data} isLoading={isLoading} />
+    </div>
+  );
+}
+
+function StatusMonitorFooterStatic({
+  data,
+  isLoading,
+}: {
+  data: Data;
+  isLoading?: boolean;
+}) {
+  return (
+    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none">
+      <div>
+        {isLoading ? (
+          <Skeleton className="h-3 w-18" />
+        ) : data.length > 0 ? (
+          formatDistanceToNowStrict(new Date(data[0].day), {
+            unit: "day",
+            addSuffix: true,
+          })
+        ) : (
+          "-"
+        )}
+      </div>
+      <div>today</div>
+    </div>
+  );
+}
+
+function StatusMonitorIconStatic({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "flex size-[12.5px] items-center justify-center rounded-full bg-muted text-background [&>svg]:size-[9px]",
+        "group-data-[variant=success]/monitor:bg-success",
+        "group-data-[variant=degraded]/monitor:bg-warning",
+        "group-data-[variant=error]/monitor:bg-destructive",
+        "group-data-[variant=info]/monitor:bg-info",
+        className,
+      )}
+      {...props}
+    >
+      <CheckIcon className="hidden group-data-[variant=success]/monitor:block" />
+      <TriangleAlertIcon className="hidden group-data-[variant=degraded]/monitor:block" />
+      <AlertCircleIcon className="hidden group-data-[variant=error]/monitor:block" />
+      <WrenchIcon className="hidden group-data-[variant=info]/monitor:block" />
+    </div>
+  );
+}
+
+function StatusMonitorStatusStatic({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "font-mono text-sm leading-none",
+        "group-data-[variant=success]/monitor:text-success",
+        "group-data-[variant=degraded]/monitor:text-warning",
+        "group-data-[variant=error]/monitor:text-destructive",
+        "group-data-[variant=info]/monitor:text-info",
+        className,
+      )}
+      {...props}
+    >
+      <span className="hidden group-data-[variant=success]/monitor:block">
+        Operational
+      </span>
+      <span className="hidden group-data-[variant=degraded]/monitor:block">
+        Degraded
+      </span>
+      <span className="hidden group-data-[variant=error]/monitor:block">
+        Downtime
+      </span>
+      <span className="hidden group-data-[variant=info]/monitor:block">
+        Maintenance
+      </span>
+    </div>
+  );
+}

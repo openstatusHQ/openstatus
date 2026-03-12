@@ -38,7 +38,7 @@ export function LanguageSwitcher() {
       const domainIndex = segments.indexOf(domain);
 
       const potentialLocale = segments[domainIndex + 1];
-      const hasLocaleSegment = locales.includes(potentialLocale as any);
+      const hasLocaleSegment = (locales as readonly string[]).includes(potentialLocale);
 
       if (nextLocale === "en") {
         if (hasLocaleSegment) {
