@@ -91,7 +91,6 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  incident,
 }: NotificationContext) => {
   const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
