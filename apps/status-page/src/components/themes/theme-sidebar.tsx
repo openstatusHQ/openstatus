@@ -47,6 +47,7 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
+import { useDebounceCallback } from "@openstatus/ui/hooks/use-debounce-callback";
 import { cn } from "@openstatus/ui/lib/utils";
 import {
   Check,
@@ -350,6 +351,17 @@ function ThemeValueSelector(props: {
   const value = props.theme[resolvedTheme as "light" | "dark"][props.id];
 
   if (props.config.type === "color") {
+    const handleChange = useDebounceCallback((value: string) => {
+      const mode = resolvedTheme as "light" | "dark";
+      props.setTheme({
+        ...props.theme,
+        [mode]: {
+          ...props.theme[mode],
+          [props.id]: value,
+        },
+      });
+    }, 100);
+
     return (
       <label
         className="ml-auto size-4 rounded-full border border-foreground/70"
@@ -362,15 +374,7 @@ function ThemeValueSelector(props: {
           name={props.id}
           value={value}
           className="sr-only"
-          onChange={(e) =>
-            props.setTheme({
-              ...props.theme,
-              [resolvedTheme as "light" | "dark"]: {
-                ...props.theme[resolvedTheme as "light" | "dark"],
-                [props.id]: e.target.value,
-              },
-            })
-          }
+          onChange={(e) => handleChange(e.target.value)}
         />
       </label>
     );
