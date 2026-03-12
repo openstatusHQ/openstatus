@@ -2,7 +2,6 @@ import { relations, sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { maintenance } from "../maintenances";
-import { monitorsToPages } from "../monitors";
 import { pageComponentGroup } from "../page_component_groups";
 import { pageComponent } from "../page_components";
 import { pageSubscriber } from "../page_subscribers";
@@ -63,7 +62,6 @@ export const page = sqliteTable("page", {
 });
 
 export const pageRelations = relations(page, ({ many, one }) => ({
-  monitorsToPages: many(monitorsToPages),
   maintenances: many(maintenance),
   statusReports: many(statusReport),
   workspace: one(workspace, {

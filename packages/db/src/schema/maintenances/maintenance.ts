@@ -1,12 +1,6 @@
 import { relations, sql } from "drizzle-orm";
-import {
-  integer,
-  primaryKey,
-  sqliteTable,
-  text,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { monitor } from "../monitors";
 import { maintenancesToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
@@ -30,48 +24,7 @@ export const maintenance = sqliteTable("maintenance", {
   ),
 });
 
-/**
- * @deprecated Legacy relation table - code removed, table exists but completely unused
- * All code now uses maintenancesToPageComponents table instead
- * Table will be dropped in future migration after verification period
- */
-export const maintenancesToMonitors = sqliteTable(
-  "maintenance_to_monitor",
-  {
-    maintenanceId: integer("maintenance_id")
-      .notNull()
-      .references(() => maintenance.id, { onDelete: "cascade" }),
-    monitorId: integer("monitor_id")
-      .notNull()
-      .references(() => monitor.id, { onDelete: "cascade" }),
-
-    createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
-    ),
-  },
-  (t) => ({
-    pk: primaryKey({ columns: [t.maintenanceId, t.monitorId] }),
-  }),
-);
-
-export const maintenancesToMonitorsRelations = relations(
-  maintenancesToMonitors,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [maintenancesToMonitors.monitorId],
-      references: [monitor.id],
-    }),
-    maintenance: one(maintenance, {
-      fields: [maintenancesToMonitors.maintenanceId],
-      references: [maintenance.id],
-    }),
-  }),
-);
-
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
-  // Legacy relation - code removed, kept for type compatibility only
-  maintenancesToMonitors: many(maintenancesToMonitors),
-  // Primary relation using pageComponents architecture
   maintenancesToPageComponents: many(maintenancesToPageComponents),
   page: one(page, {
     fields: [maintenance.pageId],

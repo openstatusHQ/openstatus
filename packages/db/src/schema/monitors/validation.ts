@@ -5,7 +5,7 @@ import * as assertions from "@openstatus/assertions";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
-import { monitor, monitorsToPages } from "./monitor";
+import { monitor } from "./monitor";
 
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
@@ -83,11 +83,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
 });
 
-export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
-
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;
 export type Monitor = z.infer<typeof selectMonitorSchema>;
-export type MonitorToPage = z.infer<typeof selectMonitorToPageSchema>;
 export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;
