@@ -26,10 +26,21 @@ function chunk<T>(array: T[], size: number): T[][] {
 }
 
 export class EmailClient {
-  public readonly client: Resend;
+  private _client: Resend | null = null;
+  private readonly apiKey: string;
 
   constructor(opts: { apiKey: string }) {
-    this.client = new Resend(opts.apiKey);
+    this.apiKey = opts.apiKey;
+  }
+
+  private get client(): Resend {
+    if (!this._client) {
+      if (!this.apiKey) {
+        throw new Error("RESEND_API_KEY is not configured");
+      }
+      this._client = new Resend(this.apiKey);
+    }
+    return this._client;
   }
 
   public async sendFollowUp(req: { to: string }) {

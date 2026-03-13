@@ -22,7 +22,14 @@ import {
   publicProcedure,
 } from "../../trpc";
 
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+// Lazy initialization to avoid errors during build when API key is not set
+let _emailClient: EmailClient | null = null;
+const getEmailClient = () => {
+  if (!_emailClient) {
+    _emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+  }
+  return _emailClient;
+};
 
 export const emailRouter = createTRPCRouter({
   /**
@@ -209,7 +216,7 @@ export const emailRouter = createTRPCRouter({
 
         if (!_invitation) return;
 
-        await emailClient.sendTeamInvitation({
+        await getEmailClient().sendTeamInvitation({
           to: _invitation.email,
           token: _invitation.token,
           invitedBy: `${opts.ctx.user.email}`,
