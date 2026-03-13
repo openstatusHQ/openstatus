@@ -16,8 +16,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import Link from "next/link";
 export function NavMain({
   items,
