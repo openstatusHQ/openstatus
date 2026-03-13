@@ -1,6 +1,7 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { z } from "zod";
+import pLimit from "p-limit";
 
 import { and, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import {
@@ -264,6 +265,7 @@ async function sendCheckerTasksDirect(
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
+  const limit = pLimit(10);
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
@@ -288,12 +290,14 @@ async function sendCheckerTasksDirect(
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
       allResult.push(
-        dispatchCheckerTaskDirect({
-          row,
-          timestamp,
-          status,
-          region,
-        }),
+        limit(() =>
+          dispatchCheckerTaskDirect({
+            row,
+            timestamp,
+            status,
+            region,
+          }),
+        ),
       );
     }
   }
