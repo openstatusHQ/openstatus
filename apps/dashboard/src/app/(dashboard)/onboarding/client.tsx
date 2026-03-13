@@ -130,20 +130,16 @@ export function Client() {
 
   useEffect(() => {
     if (!callbackUrl) return;
-    // Ignore base URL redirects - only redirect for meaningful paths (e.g., /invite?token=...)
+    // Validate and normalize the callbackUrl to prevent XSS via javascript: or other dangerous schemes
     try {
       const url = new URL(callbackUrl, window.location.origin);
       if (url.pathname === "/" || url.pathname === "") return;
-      // Only allow same-origin redirects with safe protocols
       if (url.origin !== window.location.origin) return;
       if (url.protocol !== "http:" && url.protocol !== "https:") return;
-      router.push(callbackUrl);
+      // Navigate using the parsed URL to avoid raw-input parsing discrepancies
+      router.push(`${url.pathname}${url.search}${url.hash}`);
     } catch {
-      // If callbackUrl is a relative path, check it directly
-      if (callbackUrl === "/" || callbackUrl === "") return;
-      // Only allow paths starting with / to prevent protocol-based attacks
-      if (!callbackUrl.startsWith("/")) return;
-      router.push(callbackUrl);
+      // Malformed URLs are not safe to navigate to
     }
   }, [callbackUrl, router]);
 
