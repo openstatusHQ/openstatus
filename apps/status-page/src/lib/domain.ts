@@ -48,14 +48,15 @@ export const getValidCustomDomain = (req: NextRequest | Request) => {
   const url = "nextUrl" in req ? req.nextUrl.clone() : new URL(req.url);
   const headers = req.headers;
   const host = headers.get("x-forwarded-host");
+  const effectiveHost = host ?? url.host;
 
   let prefix = "";
   let type: "hostname" | "pathname";
 
-  const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
+  const hostnames = effectiveHost.split(/[.:]/);
   const pathnames = url.pathname.split("/");
 
-  const subdomain = getValidSubdomain(url.host);
+  const subdomain = getValidSubdomain(effectiveHost);
   console.log({
     hostnames,
     pathnames,
@@ -67,7 +68,7 @@ export const getValidCustomDomain = (req: NextRequest | Request) => {
   if (
     hostnames.length > 2 &&
     hostnames[0] !== "www" &&
-    !url.host.endsWith(".vercel.app")
+    !effectiveHost.endsWith(".vercel.app")
   ) {
     prefix = hostnames[0].toLowerCase();
     type = "hostname";
