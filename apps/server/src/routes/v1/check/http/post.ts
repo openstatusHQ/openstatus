@@ -17,6 +17,25 @@ import {
   ResponseSchema,
 } from "./schema";
 
+function isSelfHost() {
+  return process.env.SELF_HOST === "true";
+}
+
+function getCheckerBaseUrl() {
+  return (process.env.CHECKER_BASE_URL || "http://checker:8080").replace(
+    /\/$/,
+    "",
+  );
+}
+
+function getCheckerRegion(region: string) {
+  if (!isSelfHost()) {
+    return region;
+  }
+
+  return process.env.CHECKER_REGION || "ams";
+}
+
 const postRoute = createRoute({
   method: "post",
   tags: ["check"],
@@ -69,11 +88,15 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
     for (let count = 0; count < input.runCount; count++) {
       const currentFetch = [];
       for (const region of input.regions) {
-        const r = fetch(`https://openstatus-checker.fly.dev/ping/${region}`, {
+        const targetRegion = getCheckerRegion(region);
+        const targetUrl = isSelfHost()
+          ? `${getCheckerBaseUrl()}/ping/${targetRegion}`
+          : `https://openstatus-checker.fly.dev/ping/${targetRegion}`;
+        const r = fetch(targetUrl, {
           headers: {
             Authorization: `Basic ${env.CRON_SECRET}`,
             "Content-Type": "application/json",
-            "fly-prefer-region": region,
+            ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
           },
           method: "POST",
           body: JSON.stringify({

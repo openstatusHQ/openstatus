@@ -37,6 +37,23 @@ export const isAuthorizedDomain = (url: string) => {
 
 const logger = getLogger("workflow");
 
+function isSelfHost() {
+  return env().SELF_HOST === "true";
+}
+
+function hasCloudTaskConfig() {
+  return Boolean(
+    env().GCP_PROJECT_ID.trim() &&
+      env().GCP_CLIENT_EMAIL.trim() &&
+      env().GCP_PRIVATE_KEY.trim() &&
+      env().GCP_LOCATION.trim(),
+  );
+}
+
+function getCheckerBaseUrl() {
+  return env().CHECKER_BASE_URL.replace(/\/$/, "");
+}
+
 const channelOptions = {
   // Conservative 5-minute keepalive (gRPC best practice)
   "grpc.keepalive_time_ms": 300000,
@@ -50,6 +67,11 @@ export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
   c: Context,
 ) {
+  if (isSelfHost() || !hasCloudTaskConfig()) {
+    await sendCheckerTasksDirect(periodicity, c);
+    return;
+  }
+
   const client = new CloudTasksClient({
     fallback: "rest",
     channelOptions,
@@ -193,6 +215,221 @@ export async function sendCheckerTasks(
       "error",
     );
   }
+}
+
+async function sendCheckerTasksDirect(
+  periodicity: z.infer<typeof monitorPeriodicitySchema>,
+  c: Context,
+) {
+  const timestamp = Date.now();
+  const selfHostRegion = env().CHECKER_REGION as Region;
+
+  const currentMaintenance = db
+    .select({ id: maintenance.id })
+    .from(maintenance)
+    .where(
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+    )
+    .as("currentMaintenance");
+
+  const currentMaintenanceMonitors = db
+    .select({ id: pageComponent.monitorId })
+    .from(maintenancesToPageComponents)
+    .innerJoin(
+      currentMaintenance,
+      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
+    )
+    .innerJoin(
+      pageComponent,
+      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
+    )
+    .where(isNotNull(pageComponent.monitorId));
+
+  const result = await db
+    .select()
+    .from(monitor)
+    .where(
+      and(
+        eq(monitor.periodicity, periodicity),
+        eq(monitor.active, true),
+        notInArray(monitor.id, currentMaintenanceMonitors),
+      ),
+    )
+    .all();
+
+  logger.info("Starting direct self-host checker run", {
+    periodicity,
+    monitor_count: result.length,
+  });
+
+  const monitors = z.array(selectMonitorSchema).safeParse(result);
+  const allResult = [];
+  if (!monitors.success) {
+    logger.error(`Error while fetching the monitors ${monitors.error}`);
+    throw new Error("Error while fetching the monitors");
+  }
+
+  for (const row of monitors.data) {
+    const result = await db
+      .select()
+      .from(monitorStatusTable)
+      .where(eq(monitorStatusTable.monitorId, row.id))
+      .all();
+    const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
+    if (!monitorStatus.success) {
+      logger.error("Failed to parse monitor status", {
+        monitor_id: row.id,
+        error_message: monitorStatus.error.message,
+      });
+      continue;
+    }
+
+    for (const region of [selfHostRegion]) {
+      const status =
+        monitorStatus.data.find((m) => region === m.region)?.status || "active";
+      allResult.push(
+        dispatchCheckerTaskDirect({
+          row,
+          timestamp,
+          status,
+          region,
+        }),
+      );
+    }
+  }
+
+  if (periodicity === "30s") {
+    logger.warn(
+      "Self-host direct checker mode does not schedule the delayed second 30s task. Use 1m+ periodicities for reliable self-host operation.",
+    );
+  }
+
+  const allRequests = await Promise.allSettled(allResult);
+
+  const success = allRequests.filter((r) => r.status === "fulfilled").length;
+  const failed = allRequests.filter((r) => r.status === "rejected").length;
+
+  logger.info("Completed direct self-host checker run", {
+    periodicity,
+    total_tasks: allResult.length,
+    success_count: success,
+    failed_count: failed,
+  });
+  if (failed > 0) {
+    getSentry(c).captureMessage(
+      `direct sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
+      "error",
+    );
+  }
+}
+
+async function dispatchCheckerTaskDirect({
+  row,
+  timestamp,
+  status,
+  region,
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  timestamp: number;
+  status: MonitorStatus;
+  region: Region;
+}) {
+  let payload:
+    | z.infer<typeof httpPayloadSchema>
+    | z.infer<typeof tpcPayloadSchema>
+    | z.infer<typeof DNSPayloadSchema>
+    | null = null;
+
+  if (row.jobType === "http") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      url: row.url,
+      method: row.method || "GET",
+      cronTimestamp: timestamp,
+      body: row.body,
+      headers: row.headers,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+      followRedirects:
+        row.followRedirects === null ? true : row.followRedirects,
+    };
+  }
+  if (row.jobType === "tcp") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      cronTimestamp: timestamp,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      retry: row.retry || 3,
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+    };
+  }
+  if (row.jobType === "dns") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      cronTimestamp: timestamp,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+    };
+  }
+
+  if (!payload) {
+    throw new Error("Invalid jobType");
+  }
+
+  const response = await fetch(
+    `${getCheckerBaseUrl()}/checker/${row.jobType}?monitor_id=${row.id}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env().CRON_SECRET}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `direct checker request failed for monitor ${row.id} (${row.jobType}) with status ${response.status}: ${body}`,
+    );
+  }
+
+  return response;
 }
 // timestamp needs to be in ms
 const createCronTask = async ({

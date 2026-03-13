@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -27,10 +28,42 @@ type UpdateData struct {
 }
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) error {
-
-	url := "https://openstatus-workflows.fly.dev/updateStatus"
+	url := os.Getenv("OPENSTATUS_WORKFLOWS_URL")
+	if url == "" {
+		url = "https://openstatus-workflows.fly.dev"
+	}
+	url = strings.TrimRight(url, "/") + "/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
+
+	if os.Getenv("SELF_HOST") == "true" || os.Getenv("OPENSTATUS_WORKFLOWS_URL") != "" {
+		if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("error while encoding update payload")
+			return err
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("error while creating update request")
+			return err
+		}
+		req.Header.Set("Authorization", basic)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("error while posting update status directly")
+			return err
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode < 200 || res.StatusCode >= 300 {
+			return fmt.Errorf("direct updateStatus failed with status %d", res.StatusCode)
+		}
+
+		return nil
+	}
+
 	c := os.Getenv("GCP_PRIVATE_KEY")
 	c = strings.ReplaceAll(c, "\\n", "\n")
 	opts := &auth.Options2LO{
