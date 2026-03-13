@@ -16,8 +16,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import {
   Book,
   Braces,
