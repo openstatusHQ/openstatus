@@ -25,6 +25,7 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { getDashboardPublicUrl } from "@/lib/public-url";
 import { useTRPC } from "@/lib/trpc/client";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
@@ -36,10 +37,7 @@ import { useEffect, useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { searchParamsParsers } from "./search-params";
 
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+const BASE_URL = getDashboardPublicUrl();
 
 function calculateTotalRequests(limits: Limits) {
   const monitors = limits.monitors;
