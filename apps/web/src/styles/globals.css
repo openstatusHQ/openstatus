@@ -185,24 +185,23 @@
 }
 
 .prose h1 {
-  @apply text-3xl text-foreground font-medium tracking-tight my-4 relative;
+  @apply text-balance text-3xl text-foreground font-medium tracking-tight my-6 relative;
 }
 
-
 .prose h2 {
-  @apply text-2xl text-foreground font-medium tracking-tight my-4 relative;
+  @apply text-2xl text-foreground font-medium tracking-tight my-6 relative;
 }
 
 .prose h3 {
-  @apply text-xl text-foreground font-medium tracking-tight my-4 relative;
+  @apply text-xl text-foreground font-medium tracking-tight my-6 relative;
 }
 
 .prose h4 {
-  @apply text-lg text-foreground font-medium tracking-tight my-4 relative;
+  @apply text-lg text-foreground font-medium tracking-tight my-6 relative;
 }
 
 .prose hr {
-  @apply my-4 border-border;
+  @apply my-6
 }
 
 .prose strong {

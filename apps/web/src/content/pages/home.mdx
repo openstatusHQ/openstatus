@@ -1,24 +1,24 @@
 ---
-title: "The open-source status page with uptime monitoring"
+title: "Ship your status page before your SOC 2 auditor asks for it"
 publishedAt: "2025-11-10"
 author: "openstatus"
-description: "Openstatus helps you communicate openly during incidents. Share what's happening, keep users updated, and let your status page automatically populate real-time data from our uptime monitoring solution."
+description: "The open-source status page trusted by growing teams. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions."
 category: "product"
 faq:
   - question: "What is openstatus?"
-    answer: "Openstatus is an open-source uptime monitoring and status page platform. It monitors websites, APIs, and services from 28 regions globally across multiple cloud providers (Fly.io, Koyeb, Railway), helping teams detect downtime immediately and communicate incidents through branded status pages. Openstatus is bootstrapped, not VC-funded, and available as a managed SaaS or for self-hosting."
+    answer: "Openstatus is an open-source status page and uptime monitoring platform. It helps teams communicate incidents transparently, prove compliance readiness for SOC 2 and other audits, and monitor services from 28 regions globally. Openstatus is bootstrapped, not VC-funded, and available as a managed SaaS or for self-hosting."
+  - question: "Why do SOC 2 audits require a status page?"
+    answer: "SOC 2 Trust Services Criteria require organizations to communicate system availability and incidents to stakeholders. A status page provides documented evidence of your incident communication process — showing auditors that you proactively notify users about outages, maintenance, and degraded performance."
+  - question: "How does openstatus help with SOC 2 compliance?"
+    answer: "Openstatus gives you a branded status page with incident history, subscriber notifications, and maintenance windows — all the evidence an auditor needs to verify your incident communication process. Every status report and update is timestamped and documented automatically."
   - question: "What does the free plan include?"
     answer: "The free plan includes one monitor, one status page with three page components, and a minimum check interval of 10 minutes. No credit card is required, and you can upgrade or cancel at any time."
   - question: "Who is behind openstatus?"
-    answer: "Openstatus is built by Thibault and Max, a bootstrapped two-person team. They share their journey openly — learn more on the about page."
-  - question: "How does uptime monitoring work?"
-    answer: "Openstatus pings your endpoints from multiple regions at your configured interval to calculate uptime and response times. It validates responses using assertions (status codes, headers, body content) and alert thresholds. Results appear on your dashboard and automatically reflect on your status page. You can also export metrics to OpenTelemetry."
+    answer: "Openstatus is built by Thibault and Max, a bootstrapped two-person team. We're profitable and self-funded — we'll be here when your next audit comes around."
   - question: "What regions does openstatus monitor from?"
     answer: "Openstatus monitors from 28 regions worldwide: Europe (Amsterdam, Stockholm, Paris, Frankfurt, London), North America (Dallas, New Jersey, Los Angeles, San Jose, Chicago, Toronto), South America (São Paulo), Asia (Mumbai, Tokyo, Singapore), Africa (Johannesburg), and Oceania (Sydney)."
   - question: "Can I self-host openstatus?"
     answer: "Yes. Openstatus is fully open source and can be self-hosted using its 8.5MB Docker image. You can also deploy private monitoring locations behind your firewall for internal services. The source code is available on GitHub."
-  - question: "How can I contribute to openstatus?"
-    answer: "Star the project on GitHub, report bugs, suggest features, contribute code, or become a paid user. You can also spread the word or join the Discord community."
 ---
 
 <div className="space-x-2">
@@ -30,19 +30,23 @@ faq:
   />
 </div>
 
-<Image src="/assets/landing/dashboard.png" alt="dashboard monitor overview" priority />
+<Image src="/assets/landing/statuspage-meow.png" alt="statuspage" priority />
 
-## Trusted by teams who value transparency
+## Trusted by teams who ship transparency
 
 <Grid cols={4}>
-  <a href="https://cal.com">Cal.com</a>
-  <a href="https://documenso.com">Documenso</a>
-  <a href="https://tigrisdata.com">TigrisData</a>
-  <a href="https://midday.ai">Midday</a>
-  <a href="https://openpanel.dev">OpenPanel</a>
-  <a href="https://getprobo.com">Probo</a>
-  <a href="https://hanko.io">Hanko</a>
-  <a href="https://superwall.com">Superwall</a>
+  <a href="https://status.cal.com">Cal.com</a>
+  <a href="https://status.documenso.com">Documenso</a>
+  <a href="https://status.whitebit.com">WhiteBIT</a>
+  <a href="https://status.midday.ai">Midday</a>
+  <a href="https://status.openpanel.dev">OpenPanel</a>
+  <a href="https://probostatus.com">Probo</a>
+  <a href="https://status.hanko.io">Hanko</a>
+  <a href="https://status.superwall.com">Superwall</a>
+  <a href="https://status.streamelements.com/">StreamElements</a>
+  <a href="https://status.smplrspace.com">Smplrspace</a>
+  <a href="https://passboltuptime.com">Passbolt</a>
+  <a href="https://twenty-status.com">TwentyCRM</a>
 </Grid>
 
 ## Beautiful, open-source status pages
@@ -72,7 +76,7 @@ Get a real picture with **28 regions** across multiple clouds. Validate your API
 - **Integrations**: OpenTelemetry export, notification channels (email, Slack, Discord, etc.)
 - Check all regions in our [global speed checker](/play/checker)
 
-Read more about [uptime monitoring](/uptime-monitoring), [API monitoring](/api-monitoring), [monitoring as code](/monitoring-as-code), and [private locations](/private-locations).
+Read more about [uptime monitoring](/uptime-monitoring).
 
 ---
 
@@ -108,9 +112,31 @@ Check your website's latency
 
 <Details summary="What is openstatus?">
 
-Openstatus is an open-source uptime monitoring and status page platform. It monitors websites, APIs, and services from **28 regions** globally across multiple cloud providers (Fly.io, Koyeb, Railway), helping teams detect downtime immediately and communicate incidents through branded status pages.
+Openstatus is an open-source status page and uptime monitoring platform. It helps teams communicate incidents transparently, prove compliance readiness, and monitor services from **28 regions** globally across multiple cloud providers (Fly.io, Koyeb, Railway).
 
 Openstatus is bootstrapped, not VC-funded, and available as a [managed SaaS](https://app.openstatus.dev) or for [self-hosting](https://github.com/openstatushq/openstatus).
+
+</Details>
+
+<Details summary="Why do SOC 2 audits require a status page?">
+
+SOC 2 Trust Services Criteria require organizations to communicate system availability and incidents to stakeholders. A status page provides documented evidence of your incident communication process — showing auditors that you **proactively notify** users about outages, maintenance, and degraded performance.
+
+With openstatus, every status report and update is **timestamped** and documented automatically — giving you an auditable trail of how you communicate during incidents.
+
+</Details>
+
+<Details summary="How does openstatus help with SOC 2 compliance?">
+
+Openstatus gives you everything an auditor needs to verify your incident communication process:
+
+- **Branded status page** with custom domain
+- **Incident history** with timestamped status reports
+- **Subscriber notifications** so stakeholders are proactively informed
+- **Maintenance windows** for planned changes
+- **Password protection** for internal or client-specific pages
+
+You can be SOC 2-ready in minutes, not weeks.
 
 </Details>
 
@@ -126,6 +152,8 @@ No credit card required — upgrade or cancel at any time.
 
 Openstatus is built by [Thibault](https://bsky.app/profile/thibaultleouay.dev) and [Max](https://x.com/mxkaske) — a bootstrapped two-person team building in public.
 
+We're profitable and self-funded — we'll be here when your next audit comes around.
+
 Read more on [our about page](/about).
 
 <Grid>
@@ -133,17 +161,6 @@ Read more on [our about page](/about).
 <Image src="/assets/posts/2026-roadmap/team-retreat.jpg" alt="@ Kochel am See - November 2025" />
 
 </Grid>
-
-</Details>
-
-
-<Details summary="How does uptime monitoring work?">
-
-Openstatus pings your endpoints from multiple regions at your configured interval. Each check validates the response using **assertions** (status codes, headers, body content) and **alert thresholds**. Response time data — including timing phases like DNS, connect, and TTFB — is collected and displayed on your dashboard.
-
-When a check fails, you get notified immediately via your chosen channel (email, Slack, Discord, PagerDuty, and more). Your status page reflects the current state automatically.
-
-Try the [Speed Checker](/play/checker) to see real-time data from all regions.
 
 </Details>
 
@@ -187,18 +204,5 @@ Yes. Openstatus is fully open source and can be self-hosted using its **8.5MB Do
 - [Self-hosting the status page only](https://docs.openstatus.dev/guides/self-host-status-page-only/)
 
 The source code is available on [GitHub](https://openstatus.dev/github).
-
-</Details>
-
-<Details summary="How can I contribute to openstatus?">
-
-There are many ways to support the project:
-
-- **Star on GitHub**: Show your support and help others discover it.
-- **Spread the word**: Tell your team or write about your experience.
-- **Report bugs**: Found something broken? [Open an issue](https://openstatus.dev/github).
-- **Suggest features**: Have an idea? Let us know on [Discord](https://openstatus.dev/discord) or [GitHub](https://openstatus.dev/github).
-- **Contribute code**: Pull requests are welcome.
-- **Become a paid user**: The best way to sustain an indie project.
 
 </Details>

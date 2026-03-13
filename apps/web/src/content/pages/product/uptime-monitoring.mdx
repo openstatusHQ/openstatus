@@ -15,6 +15,12 @@ faq:
     answer: "Yes, you can configure monitors to automatically update your status page based on monitoring results. When assertions fail or thresholds are exceeded, the status page can reflect degraded or down status without manual intervention."
   - question: "How do thresholds and assertions work together?"
     answer: "Assertions validate response correctness (status code, headers, body content) while thresholds define performance boundaries (degraded latency, timeout). Both can trigger alerts - assertions catch functional failures, thresholds catch performance degradation."
+  - question: "What types of API endpoints can I monitor?"
+    answer: "You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. Openstatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication."
+  - question: "Should I use YAML with CLI or Terraform for monitoring as code?"
+    answer: "Use YAML + CLI for simplicity and if you're not already using Terraform. It's lightweight and easy to get started. Choose Terraform if you're managing infrastructure as code and want to integrate monitoring into your existing Terraform workflows for unified state management."
+  - question: "Can I run private monitoring locations in different networks?"
+    answer: "Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard. The Docker image is only 8.5MB and supports ARM64 and AMD64."
 ---
 
 ```
@@ -57,8 +63,6 @@ faq:
 Uptime monitoring is your first line of defense to ensure your service is available for your customers. By monitoring your service from multiple regions around the world, you can be sure that your customers are able to reach your service.
 
 
-
-
 <Grid>
 <div>
 
@@ -86,11 +90,27 @@ Check all regions in the [global speed checker](/play/checker).
 
 ### Multi Cloud
 
-You should avoid monitoring your services from the same cloud providers you use for those services. That’s why our probes are deployed across three different cloud providers:
+You should avoid monitoring your services from the same cloud providers you use for those services. That's why our probes are deployed across three different cloud providers:
 
 - **Fly.io**
-- **Koyeb** 
-- **Railway** 
+- **Koyeb**
+- **Railway**
+
+### API Monitoring
+
+Monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. Openstatus supports all HTTP methods and custom headers for authentication.
+
+#### Assertions
+
+Validating your response can be important. You can do **status code**, **header** or **body text** assertions. Read more [in the docs](https://docs.openstatus.dev/reference/http-monitor/#assertions).
+
+#### Thresholds
+
+You can set a **degraded at** and **timeout** threshold whenever required. We will send you a notification whenever the responses exceed the thresholds.
+
+#### Open Telemetry
+
+When needed, you can export to your **OTLP endpoint** the metrics for every request we do. Access the data and set yourself an **alert channel** in Grafana, Honeycomb etc. Read more [in our guide](https://docs.openstatus.dev/guides/how-to-export-metrics-to-otlp-endpoint/).
 
 ### Notification channels
 
@@ -107,13 +127,68 @@ We support:
 
 Automatically update your status page based on your uptime monitoring results. Push reports and communicate with your users during incidents. You can choose to **share response details** on your status page. Read more [about status pages](/status-page).
 
-### CLI
+### Monitoring as Code
 
-You can manage or trigger your monitors via CLI. We provide a simple [GitHub Action](https://github.com/marketplace/actions/openstatus-synthetics-ci) to run it in your **CI/CD**.
+The best way to **version** your monitor changes is via the openstatus CLI and its **`YAML` config**. Additionally, we provide a [Terraform Provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest).
 
-### Monitoring as code
+```yaml
+# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+uptime-monitor:
+  name: "Graphql"
+  description: "GitHub GraphQL API"
+  frequency: "10m"
+  active: true
+  regions:
+    - iad
+    - ams
+    - syd
+    - jnb
+    - gru
+  retry: 3
+  kind: http
+  request:
+    url: https://api.github.com/graphql
+    method: POST
+    headers:
+      User-Agent: OpenStatus
+      Authorization: Bearer YOUR_TOKEN_HERE
+    body: |
+      {
+        "query": "query { viewer { login }}"
+      }
+```
 
-The best way to **version** your monitor changes is via the openstatus CLI and its **`YAML` config**. Additionally, we provide you a [Terraform](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest). Read more [about monitoring as code](/monitoring-as-code)
+Once set, apply your changes via [CLI](https://docs.openstatus.dev/tutorial/get-started-with-openstatus-cli/):
+
+```bash
+openstatus monitors apply
+```
+
+Check our [GitHub repository](https://github.com/openstatusHQ/cli-template) to see the `YAML` templates of how to monitor **MCP**, **GraphQL**,... endpoints. We also provide a simple [GitHub Action](https://github.com/marketplace/actions/openstatus-synthetics-ci) to run it in your **CI/CD**.
+
+### Private Locations
+
+Sometimes the services you want to monitor are not accessible from the outside. Simply **deploy our probes** to your favorite **cloud provider**, your own **server** or on your own **virtual private cloud** (VPC).
+
+The docker image is only **8.5MB** small and should easily fit on your infrastructure whether ARM64 or AMD64.
+
+```bash
+docker pull ghcr.io/openstatushq/private-location:latest
+```
+
+```bash
+docker run -d \
+  --name openstatus-private-location \
+  --restart=always \
+  -e OPENSTATUS_KEY=$OPENSTATUS_KEY \
+  ghcr.io/openstatushq/private-location:latest
+```
+
+You can read more here:
+
+- [Cloudflare Containers guide](https://docs.openstatus.dev/guides/how-to-deploy-probes-cloudflare-containers/)
+- [Raspberry Pi deployment](/blog/deploy-private-locations-raspberry-pi)
+- [Private location docs](https://docs.openstatus.dev/tutorial/how-to-create-private-location/)
 
 <Grid>
 <div>

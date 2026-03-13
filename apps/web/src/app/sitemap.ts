@@ -7,6 +7,7 @@ import {
   getProductPages,
   getToolsPages,
   getUnrelatedPages,
+  getUseCasePages,
 } from "@/content/utils";
 import type { MetadataRoute } from "next";
 
@@ -21,6 +22,7 @@ const allPlaygrounds = getToolsPages().filter(
   (tool) => tool.slug !== "checker-slug",
 );
 const allGuides = getGuides();
+const allUseCases = getUseCasePages();
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const blogs = allPosts.map((post) => ({
@@ -81,6 +83,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  const useCases = allUseCases.map((useCase) => ({
+    url: `https://www.openstatus.dev/use-case/${useCase.slug}`,
+    lastModified: useCase.metadata.publishedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
   return [
     ...home,
     ...blogs,
@@ -90,5 +99,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...products,
     ...playgrounds,
     ...guides,
+    ...useCases,
   ];
 }
