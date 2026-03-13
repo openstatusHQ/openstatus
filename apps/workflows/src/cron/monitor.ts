@@ -55,7 +55,11 @@ function getCloudTaskContext(queue: string): CloudTaskContext | null {
 
   return {
     client,
-    parent: client.queuePath(currentEnv.GCP_PROJECT_ID, currentEnv.GCP_LOCATION, queue),
+    parent: client.queuePath(
+      currentEnv.GCP_PROJECT_ID,
+      currentEnv.GCP_LOCATION,
+      queue,
+    ),
   };
 }
 
