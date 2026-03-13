@@ -181,30 +181,27 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
     const targetUrl = isSelfHost()
       ? `${getCheckerBaseUrl()}/ping/${targetRegion}`
       : `https://openstatus-checker.fly.dev/ping/${targetRegion}`;
-    const res = await fetch(
-      targetUrl,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
-        },
-        body: JSON.stringify({
-          url: input.url,
-          method: input.method,
-          headers: input.headers?.reduce(
-            (acc, { key, value }) => {
-              if (!key) return acc;
-              return { ...acc, [key]: value };
-            },
-            {} as Record<string, string>,
-          ),
-          body: input.body,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
       },
-    );
+      body: JSON.stringify({
+        url: input.url,
+        method: input.method,
+        headers: input.headers?.reduce(
+          (acc, { key, value }) => {
+            if (!key) return acc;
+            return { ...acc, [key]: value };
+          },
+          {} as Record<string, string>,
+        ),
+        body: input.body,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = httpOutput.safeParse(json);
@@ -277,19 +274,16 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
     const targetUrl = isSelfHost()
       ? `${getCheckerBaseUrl()}/tcp/${targetRegion}`
       : `https://openstatus-checker.fly.dev/tcp/${targetRegion}`;
-    const res = await fetch(
-      targetUrl,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
-        },
-        body: JSON.stringify({ uri: input.url }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
       },
-    );
+      body: JSON.stringify({ uri: input.url }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = tcpOutput.safeParse(json);
@@ -332,21 +326,18 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
     const targetUrl = isSelfHost()
       ? `${getCheckerBaseUrl()}/dns/${targetRegion}`
       : `https://openstatus-checker.fly.dev/dns/${targetRegion}`;
-    const res = await fetch(
-      targetUrl,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
-        },
-        body: JSON.stringify({
-          uri: input.url,
-        }),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        ...(isSelfHost() ? {} : { "fly-prefer-region": targetRegion }),
       },
-    );
+      body: JSON.stringify({
+        uri: input.url,
+      }),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
 
     const json = await res.json();
     const result = dnsOutput.safeParse(json);
