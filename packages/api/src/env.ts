@@ -3,16 +3,16 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    STRIPE_SECRET_KEY: z.string(),
-    PROJECT_ID_VERCEL: z.string(),
-    TEAM_ID_VERCEL: z.string(),
-    VERCEL_AUTH_BEARER_TOKEN: z.string(),
-    TINY_BIRD_API_KEY: z.string(),
-    RESEND_API_KEY: z.string(),
-    CRON_SECRET: z.string(),
-    UNKEY_TOKEN: z.string(),
-    UNKEY_API_ID: z.string(),
-    SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
+    STRIPE_SECRET_KEY: z.string().default(""),
+    PROJECT_ID_VERCEL: z.string().default(""),
+    TEAM_ID_VERCEL: z.string().default(""),
+    VERCEL_AUTH_BEARER_TOKEN: z.string().default(""),
+    TINY_BIRD_API_KEY: z.string().default(""),
+    RESEND_API_KEY: z.string().default(""),
+    CRON_SECRET: z.string().default(""),
+    UNKEY_TOKEN: z.string().default(""),
+    UNKEY_API_ID: z.string().default(""),
+    SLACK_FEEDBACK_WEBHOOK_URL: z.string().default(""),
   },
 
   runtimeEnv: {
@@ -27,5 +27,5 @@ export const env = createEnv({
     UNKEY_API_ID: process.env.UNKEY_API_ID,
     SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
   },
-  skipValidation: process.env.NODE_ENV === "test",
+  skipValidation: true,
 });

@@ -4,7 +4,27 @@ import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { env } from "./env";
 
-export const resend = new Resend(env.RESEND_API_KEY);
+// Lazy initialization to avoid errors during build when API key is not set
+let _resend: Resend | null = null;
+export const getResend = () => {
+  if (!_resend) {
+    if (!env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    _resend = new Resend(env.RESEND_API_KEY);
+  }
+  return _resend;
+};
+
+// Keep for backwards compatibility but use lazy initialization
+export const resend = {
+  get emails() {
+    return getResend().emails;
+  },
+  get batch() {
+    return getResend().batch;
+  },
+};
 
 export interface Emails {
   react: React.JSX.Element;
