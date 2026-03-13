@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE =
-  "openstatus - The open-source status page trusted by teams from seed to IPO";
+  "openstatus - The open-source status page trusted by growing teams";
 export const DESCRIPTION =
   "Ship your status page before your SOC 2 auditor asks for it. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions. Open source and free to start.";
 

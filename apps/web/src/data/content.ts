@@ -45,10 +45,6 @@ const resourcesFooterSection = {
       label: "OSS Friends",
       href: "/oss-friends",
     },
-    {
-      label: "Marketing V1",
-      href: "https://v1.openstatus.dev",
-    },
   ],
 };
 
@@ -202,7 +198,7 @@ const communitySection = {
       href: "https://openstatus.dev/github",
     },
     {
-      label: "X",
+      label: "Twitter",
       href: "https://openstatus.dev/twitter",
     },
     {
@@ -263,13 +259,13 @@ export const playSection = {
 export const headerLinks = [productsSection, resourcesHeaderSection];
 
 export const footerLinks = [
+  productsSection,
   useCasesSection,
   resourcesFooterSection,
   companySection,
-  productsSection,
+  compareSection,
   blogSection,
   changelogSection,
-  compareSection,
   toolsSection,
   communitySection,
 ];

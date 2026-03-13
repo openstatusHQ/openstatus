@@ -185,7 +185,7 @@
 }
 
 .prose h1 {
-  @apply text-3xl text-foreground font-medium tracking-tight my-4 relative;
+  @apply text-balance text-3xl text-foreground font-medium tracking-tight my-4 relative;
 }
 
 
