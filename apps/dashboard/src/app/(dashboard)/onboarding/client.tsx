@@ -134,10 +134,15 @@ export function Client() {
     try {
       const url = new URL(callbackUrl, window.location.origin);
       if (url.pathname === "/" || url.pathname === "") return;
+      // Only allow same-origin redirects with safe protocols
+      if (url.origin !== window.location.origin) return;
+      if (url.protocol !== "http:" && url.protocol !== "https:") return;
       router.push(callbackUrl);
     } catch {
       // If callbackUrl is a relative path, check it directly
       if (callbackUrl === "/" || callbackUrl === "") return;
+      // Only allow paths starting with / to prevent protocol-based attacks
+      if (!callbackUrl.startsWith("/")) return;
       router.push(callbackUrl);
     }
   }, [callbackUrl, router]);
