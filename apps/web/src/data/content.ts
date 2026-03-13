@@ -153,7 +153,7 @@ const compareSection = {
       label: page.metadata.title,
       href: `/compare/${page.slug}`,
     }))
-    .slice(0, 7),
+    .slice(0, 6),
 };
 
 const toolsSection = {
@@ -178,10 +178,6 @@ const toolsSection = {
     {
       label: "All Status Codes",
       href: "https://openstat.us",
-    },
-    {
-      label: "Vercel Edge Ping",
-      href: "https://light.openstatus.dev",
     },
   ],
 };
