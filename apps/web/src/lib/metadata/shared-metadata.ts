@@ -3,12 +3,12 @@ import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE =
-  "openstatus - Open-Source Status Page & Uptime Monitoring";
+  "openstatus - The open-source status page trusted by teams from seed to IPO";
 export const DESCRIPTION =
-  "Monitor your services globally and showcase uptime with a status page. Get started for free with our open-source status page and uptime monitoring solution.";
+  "Ship your status page before your SOC 2 auditor asks for it. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions. Open source and free to start.";
 
 export const OG_DESCRIPTION =
-  "Open-source status page and uptime monitoring system";
+  "The open-source status page for compliance-ready teams";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"

@@ -1,7 +1,10 @@
 import {
+  getBlogPosts,
+  getChangelogPosts,
   getComparePages,
   getProductPages,
   getToolsPages,
+  getUseCasePages,
 } from "@/content/utils";
 import type { Region } from "@openstatus/regions";
 
@@ -49,9 +52,23 @@ const resourcesFooterSection = {
   ],
 };
 
+const useCases = getUseCasePages();
+
+const useCasesSection = {
+  label: "Use Cases",
+  items: useCases.map((page) => ({
+    label: page.metadata.title,
+    href: `/use-case/${page.slug}`,
+  })),
+};
+
 const resourcesHeaderSection = {
   label: "Resources",
   items: [
+    {
+      label: "Use Cases",
+      href: "/use-case",
+    },
     {
       label: "Docs",
       href: "https://docs.openstatus.dev",
@@ -103,6 +120,34 @@ const companySection = {
       href: "/subprocessors",
     },
   ],
+};
+
+const blogSection = {
+  label: "Blog",
+  items: getBlogPosts()
+    .sort(
+      (a, b) =>
+        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+    )
+    .slice(0, 6)
+    .map((post) => ({
+      label: post.metadata.title,
+      href: `/blog/${post.slug}`,
+    })),
+};
+
+const changelogSection = {
+  label: "Changelog",
+  items: getChangelogPosts()
+    .sort(
+      (a, b) =>
+        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+    )
+    .slice(0, 6)
+    .map((post) => ({
+      label: post.metadata.title,
+      href: `/changelog/${post.slug}`,
+    })),
 };
 
 const compareSection = {
@@ -218,9 +263,12 @@ export const playSection = {
 export const headerLinks = [productsSection, resourcesHeaderSection];
 
 export const footerLinks = [
-  productsSection,
+  useCasesSection,
   resourcesFooterSection,
   companySection,
+  productsSection,
+  blogSection,
+  changelogSection,
   compareSection,
   toolsSection,
   communitySection,

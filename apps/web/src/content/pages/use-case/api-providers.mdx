@@ -1,0 +1,66 @@
+---
+title: "Status Pages for API Infrastructure"
+publishedAt: "2026-03-13"
+author: "openstatus"
+description: "Your API consumers expect transparency. Give them a branded status page with real-time uptime data, incident history, and subscription channels — powered by monitoring from 28 regions."
+category: "API Infrastructure"
+faq:
+  - question: "Why do API providers need a public status page?"
+    answer: "Your API consumers build their products on top of your infrastructure. When your API is down, their products are down. A public status page reduces support tickets, builds trust, and shows enterprise customers you take reliability seriously."
+  - question: "Can I show per-endpoint status?"
+    answer: "Yes. You can create separate page components for each API endpoint or service. Group them by product area, region, or any logical structure. Each component shows its own uptime data independently."
+  - question: "Can I use monitoring as code to manage monitors?"
+    answer: "Yes. Define your monitors as YAML configuration and manage them with the OpenStatus CLI or Terraform provider. Version control your monitoring setup alongside your API code."
+  - question: "How do API consumers subscribe to updates?"
+    answer: "Your consumers can subscribe via email, RSS/Atom feeds, or JSON feeds. Many API providers embed the JSON feed into their own dashboards to show upstream status to their users."
+---
+
+## Why API providers need a status page
+
+Your API consumers build their products on top of your infrastructure. When your API degrades, their products degrade. They need to know — **immediately**.
+
+A status page is the standard way API providers communicate reliability. If you don't have one, enterprise customers will ask why.
+
+## What API infrastructure teams need
+
+### Per-endpoint visibility
+
+Create separate **page components** for each API endpoint or service. Group by product area, region, or environment. Your consumers see exactly which services are affected.
+
+### Real-time monitoring data
+
+Attach your monitors directly to status page components. Uptime data updates automatically — no manual status changes needed for detected incidents.
+
+### Monitoring as Code
+
+Define monitors as **YAML config** and manage them with the CLI or **Terraform provider**. Version control your monitoring alongside your API code. Deploy changes through CI/CD.
+
+```yaml
+uptime-monitor:
+  name: "REST API"
+  frequency: "1m"
+  regions: [iad, ams, sin, syd]
+  request:
+    url: https://api.yourservice.com/health
+    method: GET
+```
+
+### Assertions and thresholds
+
+Validate responses beyond status codes. Check **headers**, **body content**, and **response times**. Set **degraded** and **timeout** thresholds to catch performance issues before they become outages.
+
+### Subscriber channels
+
+Let your API consumers subscribe via **email**, **RSS/Atom**, or **JSON** feeds. The JSON feed is particularly useful for consumers who want to embed your status into their own dashboards.
+
+### Custom domain
+
+Host on `status.yourapi.com`. Your consumers expect it.
+
+---
+
+Give your API consumers the transparency they expect
+
+<ButtonLink href="https://app.openstatus.dev">Create Your Status Page</ButtonLink>
+
+---
