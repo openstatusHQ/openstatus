@@ -9,14 +9,13 @@ import {
   getProductPages,
   getToolsPages,
   getUnrelatedPages,
+  getUseCasePages,
 } from "./utils";
 
 /**
  * Content resolution result - either MDX content or a generated listing
  */
-export type ContentResult =
-  | { type: "mdx"; data: MDXData }
-  | { type: "listing"; data: string };
+export type ContentResult = { type: "mdx"; data: MDXData } | { type: "listing"; data: string };
 
 /**
  * Resolves pathname to content using two-tier fallback:
@@ -75,6 +74,8 @@ function resolveMdxContent(pathname: string): MDXData | null {
         return getGuides().find((p) => p.slug === slug) ?? null;
       case "play":
         return getToolsPages().find((p) => p.slug === slug) ?? null;
+      case "use-case":
+        return getUseCasePages().find((p) => p.slug === slug) ?? null;
       default:
         return null;
     }
