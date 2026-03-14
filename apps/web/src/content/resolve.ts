@@ -15,7 +15,9 @@ import {
 /**
  * Content resolution result - either MDX content or a generated listing
  */
-export type ContentResult = { type: "mdx"; data: MDXData } | { type: "listing"; data: string };
+export type ContentResult =
+  | { type: "mdx"; data: MDXData }
+  | { type: "listing"; data: string };
 
 /**
  * Resolves pathname to content using two-tier fallback:
