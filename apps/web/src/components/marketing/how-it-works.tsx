@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Bell, Globe, Monitor } from "lucide-react";
+import { Bell, CheckCircle2, Globe, Monitor } from "lucide-react";
 
 const steps = [
   {
@@ -102,7 +102,10 @@ export function HowItWorks() {
         </div>
 
         {/* Result */}
-        <div className="mt-10 text-center">
+        <div className="mt-10 flex flex-col items-center text-center">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-green-500/30 bg-green-500/10">
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+          </div>
           <p className="mx-auto max-w-2xl text-muted-foreground">
             The result? Complete visibility into your uptime, faster incident
             response, and happier users who always know what's going on.
