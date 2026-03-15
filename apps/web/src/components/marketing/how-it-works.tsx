@@ -100,6 +100,14 @@ export function HowItWorks() {
             </div>
           ))}
         </div>
+
+        {/* Result */}
+        <div className="mt-10 text-center">
+          <p className="mx-auto max-w-2xl text-muted-foreground">
+            The result? Complete visibility into your uptime, faster incident
+            response, and happier users who always know what's going on.
+          </p>
+        </div>
       </div>
     </section>
   );
