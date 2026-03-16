@@ -84,7 +84,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await db
     .delete(statusReportsToPageComponents)
-    .where(eq(statusReportsToPageComponents.statusReportId, testStatusReportId));
+    .where(
+      eq(statusReportsToPageComponents.statusReportId, testStatusReportId),
+    );
   await db
     .delete(statusReportUpdate)
     .where(eq(statusReportUpdate.statusReportId, testStatusReportId));
