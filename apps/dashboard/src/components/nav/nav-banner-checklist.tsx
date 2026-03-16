@@ -1,14 +1,14 @@
 "use client";
 
 import { Link } from "@/components/common/link";
+import { useTRPC } from "@/lib/trpc/client";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, CircleDashed, X } from "lucide-react";
 

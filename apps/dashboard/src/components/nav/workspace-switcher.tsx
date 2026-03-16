@@ -2,12 +2,6 @@
 
 import { ChevronsUpDown, Plus } from "lucide-react";
 
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import { useTRPC } from "@/lib/trpc/client";
 import {
   DropdownMenu,
@@ -17,6 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "../common/link";
 

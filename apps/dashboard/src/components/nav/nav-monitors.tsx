@@ -7,6 +7,8 @@ import { MoreHorizontal, Plus } from "lucide-react";
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/monitors.client";
+import { useTRPC } from "@/lib/trpc/client";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -16,9 +18,7 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { getActions } from "@/data/monitors.client";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/sidebar";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
