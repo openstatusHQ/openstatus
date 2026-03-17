@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint:links": "fumadocs-mdx ./scripts/validate-links.ts"
+    "lint:links": "fumadocs-mdx ./scripts/validate-links.ts",
+    "generate:api": "fumadocs-mdx ./scripts/generate-api.ts"
   },
   "dependencies": {
     "@openpanel/nextjs": "1.2.0",
@@ -15,6 +16,7 @@
     "@types/mdx": "2.0.13",
     "fumadocs-core": "16.6.17",
     "fumadocs-mdx": "14.2.10",
+    "fumadocs-openapi": "^10.3.18",
     "fumadocs-ui": "16.6.17",
     "next": "16.1.6",
     "react": "19.2.0",

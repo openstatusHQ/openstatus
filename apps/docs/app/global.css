@@ -2,6 +2,7 @@
 @import "@openstatus/ui/globals";
 @import "fumadocs-ui/css/shadcn.css";
 @import "fumadocs-ui/css/preset.css";
+@import "fumadocs-openapi/css/preset.css";
 
 @font-face {
   font-family: "calsans";

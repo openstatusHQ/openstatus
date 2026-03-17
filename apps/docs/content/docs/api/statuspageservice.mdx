@@ -1,0 +1,195 @@
+---
+title: Status Page Service
+description: >
+  Manage public status pages with components, component groups, and email
+  subscribers.
+
+  Includes endpoints for retrieving full page content and aggregated status.
+full: true
+_openapi:
+  toc:
+    - depth: 2
+      title: AddMonitorComponent
+      url: '#addmonitorcomponent'
+    - depth: 2
+      title: AddStaticComponent
+      url: '#addstaticcomponent'
+    - depth: 2
+      title: CreateComponentGroup
+      url: '#createcomponentgroup'
+    - depth: 2
+      title: CreateStatusPage
+      url: '#createstatuspage'
+    - depth: 2
+      title: DeleteComponentGroup
+      url: '#deletecomponentgroup'
+    - depth: 2
+      title: DeleteStatusPage
+      url: '#deletestatuspage'
+    - depth: 2
+      title: GetOverallStatus
+      url: '#getoverallstatus'
+    - depth: 2
+      title: GetOverallStatus
+      url: '#getoverallstatus-1'
+    - depth: 2
+      title: GetStatusPage
+      url: '#getstatuspage'
+    - depth: 2
+      title: GetStatusPage
+      url: '#getstatuspage-1'
+    - depth: 2
+      title: GetStatusPageContent
+      url: '#getstatuspagecontent'
+    - depth: 2
+      title: GetStatusPageContent
+      url: '#getstatuspagecontent-1'
+    - depth: 2
+      title: ListStatusPages
+      url: '#liststatuspages'
+    - depth: 2
+      title: ListStatusPages
+      url: '#liststatuspages-1'
+    - depth: 2
+      title: ListSubscribers
+      url: '#listsubscribers'
+    - depth: 2
+      title: ListSubscribers
+      url: '#listsubscribers-1'
+    - depth: 2
+      title: RemoveComponent
+      url: '#removecomponent'
+    - depth: 2
+      title: SubscribeToPage
+      url: '#subscribetopage'
+    - depth: 2
+      title: UnsubscribeFromPage
+      url: '#unsubscribefrompage'
+    - depth: 2
+      title: UpdateComponent
+      url: '#updatecomponent'
+    - depth: 2
+      title: UpdateComponentGroup
+      url: '#updatecomponentgroup'
+    - depth: 2
+      title: UpdateStatusPage
+      url: '#updatestatuspage'
+  structuredData:
+    headings:
+      - content: AddMonitorComponent
+        id: addmonitorcomponent
+      - content: AddStaticComponent
+        id: addstaticcomponent
+      - content: CreateComponentGroup
+        id: createcomponentgroup
+      - content: CreateStatusPage
+        id: createstatuspage
+      - content: DeleteComponentGroup
+        id: deletecomponentgroup
+      - content: DeleteStatusPage
+        id: deletestatuspage
+      - content: GetOverallStatus
+        id: getoverallstatus
+      - content: GetOverallStatus
+        id: getoverallstatus-1
+      - content: GetStatusPage
+        id: getstatuspage
+      - content: GetStatusPage
+        id: getstatuspage-1
+      - content: GetStatusPageContent
+        id: getstatuspagecontent
+      - content: GetStatusPageContent
+        id: getstatuspagecontent-1
+      - content: ListStatusPages
+        id: liststatuspages
+      - content: ListStatusPages
+        id: liststatuspages-1
+      - content: ListSubscribers
+        id: listsubscribers
+      - content: ListSubscribers
+        id: listsubscribers-1
+      - content: RemoveComponent
+        id: removecomponent
+      - content: SubscribeToPage
+        id: subscribetopage
+      - content: UnsubscribeFromPage
+        id: unsubscribefrompage
+      - content: UpdateComponent
+        id: updatecomponent
+      - content: UpdateComponentGroup
+        id: updatecomponentgroup
+      - content: UpdateStatusPage
+        id: updatestatuspage
+    contents:
+      - content: AddMonitorComponent adds a monitor-based component to a status page.
+        heading: addmonitorcomponent
+      - content: AddStaticComponent adds a static component to a status page.
+        heading: addstaticcomponent
+      - content: CreateComponentGroup creates a new component group.
+        heading: createcomponentgroup
+      - content: CreateStatusPage creates a new status page.
+        heading: createstatuspage
+      - content: DeleteComponentGroup removes a component group.
+        heading: deletecomponentgroup
+      - content: DeleteStatusPage removes a status page.
+        heading: deletestatuspage
+      - content: >-
+          Returns the overall status of a status page along with individual
+          component statuses. The overall status is computed from active status
+          reports and maintenances with the following priority: degraded (from
+          active status reports) > maintenance (from active maintenance windows)
+          > operational.
+        heading: getoverallstatus
+      - content: >-
+          Returns the overall status of a status page along with individual
+          component statuses. The overall status is computed from active status
+          reports and maintenances with the following priority: degraded (from
+          active status reports) > maintenance (from active maintenance windows)
+          > operational.
+        heading: getoverallstatus-1
+      - content: GetStatusPage retrieves a specific status page by ID.
+        heading: getstatuspage
+      - content: GetStatusPage retrieves a specific status page by ID.
+        heading: getstatuspage-1
+      - content: >-
+          Returns the full content of a status page including its components,
+          component groups, active status reports, and scheduled maintenances.
+          Supports two access paths: by ID (requires authentication,
+          workspace-scoped) or by slug (public access, requires the page to be
+          published with access_type=PUBLIC).
+        heading: getstatuspagecontent
+      - content: >-
+          Returns the full content of a status page including its components,
+          component groups, active status reports, and scheduled maintenances.
+          Supports two access paths: by ID (requires authentication,
+          workspace-scoped) or by slug (public access, requires the page to be
+          published with access_type=PUBLIC).
+        heading: getstatuspagecontent-1
+      - content: ListStatusPages returns all status pages for the workspace.
+        heading: liststatuspages
+      - content: ListStatusPages returns all status pages for the workspace.
+        heading: liststatuspages-1
+      - content: ListSubscribers returns all subscribers for a status page.
+        heading: listsubscribers
+      - content: ListSubscribers returns all subscribers for a status page.
+        heading: listsubscribers-1
+      - content: RemoveComponent removes a component from a status page.
+        heading: removecomponent
+      - content: >-
+          Subscribes an email address to receive notifications from a status
+          page. If the email was previously unsubscribed, the subscription is
+          reactivated instead of creating a duplicate.
+        heading: subscribetopage
+      - content: UnsubscribeFromPage removes a subscription from a status page.
+        heading: unsubscribefrompage
+      - content: UpdateComponent updates an existing component.
+        heading: updatecomponent
+      - content: UpdateComponentGroup updates an existing component group.
+        heading: updatecomponentgroup
+      - content: UpdateStatusPage updates an existing status page.
+        heading: updatestatuspage
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+<APIPage document={"../../api.json"} webhooks={[]} operations={[{"path":"/rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/AddStaticComponent","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/CreateComponentGroup","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/CreateStatusPage","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/DeleteComponentGroup","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/DeleteStatusPage","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/GetOverallStatus","method":"get"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/GetOverallStatus","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/GetStatusPage","method":"get"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/GetStatusPage","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageContent","method":"get"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageContent","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages","method":"get"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/ListSubscribers","method":"get"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/ListSubscribers","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/RemoveComponent","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/SubscribeToPage","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/UnsubscribeFromPage","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/UpdateComponent","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/UpdateComponentGroup","method":"post"},{"path":"/rpc/openstatus.status_page.v1.StatusPageService/UpdateStatusPage","method":"post"}]} showTitle={true} />

@@ -1,0 +1,164 @@
+---
+title: Monitor Service
+description: >
+  Create, update, delete, and query monitors. Supports HTTP, TCP, and DNS
+  monitor types
+
+  with configurable check intervals, regions, assertions, and alerting
+  thresholds.
+full: true
+_openapi:
+  toc:
+    - depth: 2
+      title: CreateDNSMonitor
+      url: '#creatednsmonitor'
+    - depth: 2
+      title: CreateHTTPMonitor
+      url: '#createhttpmonitor'
+    - depth: 2
+      title: CreateTCPMonitor
+      url: '#createtcpmonitor'
+    - depth: 2
+      title: DeleteMonitor
+      url: '#deletemonitor'
+    - depth: 2
+      title: GetMonitor
+      url: '#getmonitor'
+    - depth: 2
+      title: GetMonitor
+      url: '#getmonitor-1'
+    - depth: 2
+      title: GetMonitorStatus
+      url: '#getmonitorstatus'
+    - depth: 2
+      title: GetMonitorStatus
+      url: '#getmonitorstatus-1'
+    - depth: 2
+      title: GetMonitorSummary
+      url: '#getmonitorsummary'
+    - depth: 2
+      title: GetMonitorSummary
+      url: '#getmonitorsummary-1'
+    - depth: 2
+      title: ListMonitors
+      url: '#listmonitors'
+    - depth: 2
+      title: ListMonitors
+      url: '#listmonitors-1'
+    - depth: 2
+      title: TriggerMonitor
+      url: '#triggermonitor'
+    - depth: 2
+      title: UpdateDNSMonitor
+      url: '#updatednsmonitor'
+    - depth: 2
+      title: UpdateHTTPMonitor
+      url: '#updatehttpmonitor'
+    - depth: 2
+      title: UpdateTCPMonitor
+      url: '#updatetcpmonitor'
+  structuredData:
+    headings:
+      - content: CreateDNSMonitor
+        id: creatednsmonitor
+      - content: CreateHTTPMonitor
+        id: createhttpmonitor
+      - content: CreateTCPMonitor
+        id: createtcpmonitor
+      - content: DeleteMonitor
+        id: deletemonitor
+      - content: GetMonitor
+        id: getmonitor
+      - content: GetMonitor
+        id: getmonitor-1
+      - content: GetMonitorStatus
+        id: getmonitorstatus
+      - content: GetMonitorStatus
+        id: getmonitorstatus-1
+      - content: GetMonitorSummary
+        id: getmonitorsummary
+      - content: GetMonitorSummary
+        id: getmonitorsummary-1
+      - content: ListMonitors
+        id: listmonitors
+      - content: ListMonitors
+        id: listmonitors-1
+      - content: TriggerMonitor
+        id: triggermonitor
+      - content: UpdateDNSMonitor
+        id: updatednsmonitor
+      - content: UpdateHTTPMonitor
+        id: updatehttpmonitor
+      - content: UpdateTCPMonitor
+        id: updatetcpmonitor
+    contents:
+      - content: CreateDNSMonitor creates a new DNS monitor.
+        heading: creatednsmonitor
+      - content: >-
+          Creates a new HTTP monitor in the authenticated workspace. Configure
+          the target URL, HTTP method, request headers and body, response
+          assertions (status code, body content, headers), check periodicity,
+          geographic regions, and optional OpenTelemetry export. The monitor
+          starts checking immediately if set to active.
+        heading: createhttpmonitor
+      - content: CreateTCPMonitor creates a new TCP monitor.
+        heading: createtcpmonitor
+      - content: DeleteMonitor removes a monitor.
+        heading: deletemonitor
+      - content: >-
+          GetMonitor returns a single monitor by ID within the authenticated
+          workspace.
+           Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+        heading: getmonitor
+      - content: >-
+          GetMonitor returns a single monitor by ID within the authenticated
+          workspace.
+           Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+        heading: getmonitor-1
+      - content: >-
+          GetMonitorStatus returns the current status of all regions for a
+          monitor.
+        heading: getmonitorstatus
+      - content: >-
+          GetMonitorStatus returns the current status of all regions for a
+          monitor.
+        heading: getmonitorstatus-1
+      - content: >-
+          Returns aggregated metrics for a monitor including latency percentiles
+          (p50, p75, p90, p95, p99), request counts by status (successful,
+          degraded, failed), and the timestamp of the last check. Metrics can be
+          scoped to a time range (1 day, 7 days, or 14 days) and filtered by
+          specific regions.
+        heading: getmonitorsummary
+      - content: >-
+          Returns aggregated metrics for a monitor including latency percentiles
+          (p50, p75, p90, p95, p99), request counts by status (successful,
+          degraded, failed), and the timestamp of the last check. Metrics can be
+          scoped to a time range (1 day, 7 days, or 14 days) and filtered by
+          specific regions.
+        heading: getmonitorsummary-1
+      - content: >-
+          ListMonitors returns a paginated list of all monitors in the
+          workspace.
+        heading: listmonitors
+      - content: >-
+          ListMonitors returns a paginated list of all monitors in the
+          workspace.
+        heading: listmonitors-1
+      - content: >-
+          Manually triggers an immediate check for the specified monitor across
+          all configured regions. This operation is rate-limited under the
+          synthetic-checks quota. A monitor run record is created and the check
+          is dispatched to the checker service.
+        heading: triggermonitor
+      - content: UpdateDNSMonitor updates an existing DNS monitor.
+        heading: updatednsmonitor
+      - content: UpdateHTTPMonitor updates an existing HTTP monitor.
+        heading: updatehttpmonitor
+      - content: UpdateTCPMonitor updates an existing TCP monitor.
+        heading: updatetcpmonitor
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+<APIPage document={"../../api.json"} webhooks={[]} operations={[{"path":"/rpc/openstatus.monitor.v1.MonitorService/CreateDNSMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/CreateHTTPMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/CreateTCPMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/DeleteMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/GetMonitor","method":"get"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/GetMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/GetMonitorStatus","method":"get"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/GetMonitorStatus","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/GetMonitorSummary","method":"get"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/GetMonitorSummary","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/ListMonitors","method":"get"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/ListMonitors","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/TriggerMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/UpdateDNSMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor","method":"post"},{"path":"/rpc/openstatus.monitor.v1.MonitorService/UpdateTCPMonitor","method":"post"}]} showTitle={true} />
