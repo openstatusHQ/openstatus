@@ -189,6 +189,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const blacklistUrls = (process.env.BLACKLIST_URL ?? "")
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean);
+
+  if (blacklistUrls.some((blocked) => url.includes(blocked))) {
+    return createErrorResponse(
+      "INVALID_REQUEST",
+      "This URL is not allowed",
+      403,
+    );
+  }
+
   // Rate limiting check
   const clientIP = getClientIP(request.headers);
 
