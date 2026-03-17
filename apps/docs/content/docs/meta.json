@@ -1,0 +1,15 @@
+{
+  "title": "OpenStatus Docs",
+  "pages": [
+    "---Concepts---",
+    "...concept",
+    "---Tutorials---",
+    "...tutorial",
+    "---Guides---",
+    "...guides",
+    "---SDK---",
+    "...sdk",
+    "---Reference---",
+    "...reference"
+  ]
+}

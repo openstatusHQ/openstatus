@@ -1,0 +1,16 @@
+{
+  "title": "Node SDK",
+  "pages": [
+    "index",
+    "authentication",
+    "error-handling",
+    "typescript-tips",
+    "health-service",
+    "monitor-service",
+    "notification-service",
+    "status-page-service",
+    "status-report-service",
+    "maintenance-service",
+    "reference"
+  ]
+}

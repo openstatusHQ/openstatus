@@ -1,0 +1,11 @@
+{
+  "title": "Tutorials",
+  "pages": [
+    "how-to-create-monitor",
+    "how-to-create-status-page",
+    "how-to-configure-status-page",
+    "how-to-create-private-location",
+    "get-started-with-openstatus-cli",
+    "how-to-setup-slack-agent"
+  ]
+}

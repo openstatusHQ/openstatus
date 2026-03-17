@@ -1,0 +1,132 @@
+---
+title: DNS Monitor Reference
+description: Complete technical specification for DNS record monitoring
+sidebar_label: "DNS Monitor"
+---
+
+## Overview
+
+A DNS Monitor is a component designed to verify the availability and correctness of DNS records. It performs periodic lookups for specified DNS record types against a target domain or subdomain from various geographical locations.
+
+**Use cases:**
+- Validating domain name resolution
+- Monitoring changes to critical DNS records (e.g., A, CNAME, MX)
+- Ensuring proper load balancing via DNS (when combined with multi-region checks)
+- Detecting unauthorized DNS alterations
+
+## Configuration
+
+### URI
+
+**Type:** String (required)
+**Format:** Domain name or subdomain
+
+The fully qualified domain name or subdomain to be monitored.
+
+**Examples:**
+- `openstat.us`
+- `api.example.com`
+- `mail.example.org`
+
+### Record Types
+
+The monitor supports fetching and validating the following DNS record types:
+
+-   `A` (Address Record): Maps a domain name to an IPv4 address.
+-   `AAAA` (IPv6 Address Record): Maps a domain name to an IPv6 address.
+-   `CNAME` (Canonical Name Record): Maps an alias domain name to another canonical domain name.
+-   `MX` (Mail Exchange Record): Specifies the mail servers responsible for accepting email messages on behalf of a domain name.
+-   `NS` (Name Server Record): Delegates a domain or subdomain to a set of authoritative name servers.
+-   `TXT` (Text Record): Carries arbitrary human-readable text and is also used for various purposes like SPF, DKIM, DMARC, and site verification.
+
+### Regions
+
+The geographical locations from which the DNS monitoring checks are performed. This allows for verification of DNS propagation and performance across different networks.
+
+__Africa__
+
+- Johannesburg, South Africa 🇿🇦 (free)
+
+__Asia__
+
+- Hong Kong, Hong Kong 🇭🇰 (free)
+- Mumbai, India 🇮🇳
+- Singapore, Singapore 🇸🇬
+- Tokyo, Japan 🇯🇵
+
+__Europe__
+
+- Amsterdam, Netherlands 🇳🇱 (free)
+- Bucharest, Romania 🇷🇴
+- Frankfurt, Germany 🇩🇪
+- London, United Kingdom 🇬🇧
+- Madrid, Spain 🇪🇸
+- Paris, France 🇫🇷
+- Stockholm, Sweden 🇸🇪
+- Warsaw, Poland 🇵🇱
+
+__North America__
+
+- Ashburn, Virginia, USA 🇺🇸 (free)
+- Atlanta, Georgia, USA 🇺🇸
+- Boston, Massachusetts, USA 🇺🇸
+- Chicago, Illinois, USA 🇺🇸
+- Dallas, Texas, USA 🇺🇸
+- Denver, Colorado, USA 🇺🇸
+- Guadalajara, Mexico 🇲🇽
+- Los Angeles, California, USA 🇺🇸
+- Miami, Florida, USA 🇺🇸
+- Montreal, Canada 🇨🇦
+- Phoenix, Arizona, USA 🇺🇸
+- Queretaro, Mexico 🇲🇽
+- Seattle, Washington, USA 🇺🇸
+- San Jose, California, USA 🇺🇸
+- Toronto, Canada 🇨🇦
+
+__South America__
+
+- Bogota, Colombia 🇨🇴
+- Buenos Aires, Argentina 🇦🇷
+- Rio de Janeiro, Brazil 🇧🇷
+- Sao Paulo, Brazil 🇧🇷 (free)
+- Santiago, Chile 🇨🇱
+
+__Oceania__
+
+- Sydney, Australia 🇦🇺 (free)
+
+### Frequency
+
+The interval at which the DNS checks are performed. Supported frequencies:
+- 30 seconds
+- 1 minute
+- 5 minutes
+- 10 minutes
+- 30 minutes
+- 1 hour
+
+### Response Time Thresholds
+
+#### Timeout
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The maximum duration to wait for a DNS response. If the lookup exceeds this time, the check is considered failed.
+
+#### Degraded
+
+**Type:** Duration (optional)
+
+The duration after which a DNS response is considered degraded. This indicates a performance issue without being a complete failure.
+
+### Retry
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor will retry a failed DNS lookup before reporting a definitive failure. For example: `3`
+
+## Related resources
+
+- **[CLI Reference](/reference/cli-reference)** - Manage monitors as code using the OpenStatus CLI.

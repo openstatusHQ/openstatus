@@ -1,0 +1,13 @@
+{
+  "title": "Guides",
+  "pages": [
+    "how-to-monitor-mcp-server",
+    "how-to-run-synthetic-test-github-action",
+    "how-to-export-metrics-to-otlp-endpoint",
+    "how-to-add-svg-status-badge",
+    "how-to-use-react-widget",
+    "how-to-deploy-probes-cloudflare-containers",
+    "self-hosting-openstatus",
+    "self-host-status-page-only"
+  ]
+}

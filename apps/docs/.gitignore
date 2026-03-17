@@ -1,20 +1,14 @@
-# build output
-dist/
-# generated types
-.astro/
-
 # dependencies
-node_modules/
+node_modules
 
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# next.js
+.next/
+out/
 
-# environment variables
-.env
-.env.production
+# fumadocs
+.source/
 
-# macOS-specific files
+# misc
 .DS_Store
+*.pem
+.env*.local

@@ -1,0 +1,116 @@
+---
+title: Set Up the OpenStatus Slack Agent
+description: "A step-by-step tutorial to install the OpenStatus Slack agent and manage incidents directly from Slack"
+sidebar_label: "How to set up the Slack Agent"
+---
+
+## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~5 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | OpenStatus account, Slack workspace admin access |
+
+In this tutorial, you'll learn how to install the OpenStatus Slack agent so you can manage incidents directly from your Slack workspace — no need to switch to the dashboard.
+
+### Prerequisites
+
+- An OpenStatus account ([openstatus.dev](https://www.openstatus.dev))
+- A Slack workspace where you have permission to install apps
+
+### What you'll get
+
+By the end of this tutorial, you'll have:
+- The OpenStatus Slack agent installed in your workspace
+- The ability to create, update, and resolve incidents from Slack
+
+## Install the Slack Agent
+
+### 1. Go to Settings
+
+Navigate to **Settings** > **Integrations** in your OpenStatus dashboard.
+
+### 2. Install the Slack Integration
+
+Click the **Install Slack** button. You'll be redirected to Slack's authorization page where you can select the workspace and channel you want to connect.
+
+Grant the requested permissions and click **Allow** to complete the installation.
+
+<Callout>Make sure you select the correct Slack workspace if you belong to multiple workspaces.</Callout>
+
+### 3. Verify the Installation
+
+After completing the OAuth flow, go to the Slack channel you selected and type:
+
+```
+@openstatus what's the status of my monitors?
+```
+
+The bot should respond with a summary of your monitors. If you see a response, the installation is working.
+
+<Callout type="info">The bot only responds when mentioned with `@openstatus` — it won't interrupt your conversations.</Callout>
+
+### 4. Start Managing Incidents from Slack
+
+Here are some examples of what you can do:
+
+#### Create an incident
+
+Notify your subscribers about a new issue.
+
+```
+@openstatus create an incident for the payment API – high latency detected.
+```
+
+#### Update an incident
+
+Keep your status page updated while you investigate.
+
+```
+@openstatus keep the status page updated that we are still monitoring the issue.
+```
+
+#### Resolve an incident
+
+Close an active incident and let your subscribers know.
+
+```
+@openstatus resolve the ongoing incident on my API status page.
+```
+
+#### Schedule maintenance
+
+Plan downtime so subscribers are informed in advance.
+
+```
+@openstatus schedule a maintenance window for my database next Friday from 2–3 PM.
+```
+
+## What you've accomplished
+
+Congratulations! You've successfully:
+- ✅ Installed the OpenStatus Slack agent in your workspace
+- ✅ Connected your OpenStatus account to Slack
+- ✅ Learned how to manage incidents directly from Slack
+
+## Troubleshooting
+
+### The bot doesn't respond when mentioned
+
+1. **Check the channel:** Make sure you're mentioning `@openstatus` in the channel you selected during installation.
+2. **Check permissions:** Go to **Settings** > **Integrations** and verify the Slack integration shows as connected.
+3. **Reinstall:** If the integration appears disconnected, click **Install Slack** again to re-authorize.
+
+### "Not authorized" or permission errors
+
+Your Slack workspace admin may need to approve the app. Ask your workspace admin to go to **Slack Admin** > **Manage Apps** and approve the OpenStatus integration.
+
+### Bot responds but can't find monitors
+
+Make sure you have at least one monitor and one status page created in your OpenStatus workspace before using incident commands.
+
+## What's next?
+
+- **[Create a Status Page](/tutorial/how-to-create-status-page)** — share your service status publicly with users
+- **[Create a Monitor](/tutorial/how-to-create-monitor)** — set up uptime monitoring for your endpoints

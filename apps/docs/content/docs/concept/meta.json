@@ -1,0 +1,10 @@
+{
+  "title": "Concepts",
+  "pages": [
+    "uptime-monitoring",
+    "best-practices-status-page",
+    "uptime-calculation-and-values",
+    "uptime-monitoring-as-code",
+    "latency-vs-response-time"
+  ]
+}

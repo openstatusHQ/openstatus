@@ -1,0 +1,124 @@
+---
+title: Configure Your Status Page
+description: "A step-by-step tutorial to customize and configure your status page"
+sidebar_label: "How to configure a status page"
+---
+
+## What you'll learn
+
+In this tutorial, you'll learn how to customize your status page's appearance and behavior. You'll explore different display options, themes, and configuration settings to create a status page that matches your brand and communication style.
+
+### Prerequisites
+
+- An openstatus account
+- A status page already created (see [Create a Status Page](/tutorial/how-to-create-status-page))
+- At least one monitor added to your status page
+
+### What you'll build
+
+By the end of this tutorial, you'll have:
+- A customized status page with your preferred theme
+- Configured status trackers displaying data your way
+- Links to important resources
+- Preview and live configuration experience
+
+## Status Page Customization
+
+OpenStatus offers enhanced status page customization with multiple themes and display options.
+
+Explore available themes: [https://themes.openstatus.dev](https://themes.openstatus.dev)
+
+## Get started
+
+Go to the **Status Page Redesign** section in your status page settings and toggle `Enable New Version`. Once enabled, you'll see three subsections:
+
+1. **Tracker Configuration**
+2. **Theme Explorer**
+3. **Links**
+
+![Create your status page](/images/tutorial/configure-status-page/configure-status-page-1.png)
+
+### View and configure status page
+
+Before choosing to enable the new page, we provide you with a way to check the configuration first. Click on the **View and configure status page** and you'll get forwarded to your status page and a bottom right floating button will appear. Once you're done, click on the **Dashboard** and you'll be forwarded to your page where you get asked to save the config before continuing.
+
+![Status page floating configuration popover](/images/tutorial/configure-status-page/status-page-floating.png)
+
+
+---
+
+<Callout>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. **If you decide to deactivate the new version, it might take up to 10 minutes for the user to see the old page.**</Callout>
+
+### 1. Tracker Configuration
+
+We have three new status tracker configurations to provide you with a maximum choice of displaying the collected data.
+
+**Bar Type**: How every 'day' is displayed in for a status tracker. Either **absolute** or **manual**.
+
+**Card Type**: The card type is only configurable if the bar type is **absolute**. You'll then be able to choose between **duration**, which will show the duration of "success", "error", "degraded" or "maintenance" reports or **requests** where we will share the number of request status itself. If **manual** bar type is chosen, we will only show the most significant status of the day.
+
+**Show Uptime**: The uptime is calculated by either the **duration** of the different reports _or_ the **request** values depending on what you've chosen for the **absolute** value (incl. incidents). If you've chosen **manual**, it only gets calculated by the duration of your status reports.
+
+A few examples to understand it:
+
+Example of **absolute bar** with **duration card** and **showing uptime**
+
+![absolute bar type with duration card and showing uptime](/images/tutorial/configure-status-page/status-page-beta-3.png)
+
+Example of **absolute bar** with **request card** and **hiding uptime**
+
+![absolute bar type with request card and hiding uptime](/images/tutorial/configure-status-page/status-page-beta-4.png)
+
+Example of **manual bar** with **simple card** and **hiding uptime**
+
+![manual bar type and hiding uptime](/images/tutorial/configure-status-page/status-page-beta-2.png)
+
+### 2. Theme Explorer
+
+You can choose between different themes. We start with the following three:
+
+- `default` (openstatus)
+- `supabase`
+- `github-high-contrast`
+
+Visit [themes.openstatus.dev](https://themes.openstatus.dev) to see the list of supported themes. If you want, you can contribute your own to the list.
+
+### 3. Links
+
+Let's have a closer look at your status page header navigation:
+
+![Header navigation of your status page](/images/tutorial/configure-status-page/status-page-beta-1.png)
+
+**Homepage URL**: Your logo will support linking to your own website.
+
+**Contact URL**: If filled out, you will see a `Message` icon that users can click to forward them to a contact page. This can also be an email client by starting the input with `mailto:` (e.g. `mailto:support@openstatus.dev`).
+
+---
+
+We are continuously adding new features. Feel free to let us know what's missing!
+
+## What you've accomplished
+
+Excellent work! You've successfully:
+- ✅ Enabled and configured the new status page design
+- ✅ Customized status tracker display options
+- ✅ Explored and applied theme settings
+- ✅ Added navigation links to your status page
+- ✅ Previewed changes before making them live
+
+## What's next?
+
+Now that your status page is configured, you can:
+
+- **[Building Trust with Status Pages](/concept/best-practices-status-page)** - Learn effective incident communication
+- **[Add Status Subscribers](/reference/subscriber)** - Let users subscribe to updates
+
+### Learn more
+
+- **[Status Page Reference](/reference/status-page)** - Complete configuration options
+- **[Uptime Calculation Values](/concept/uptime-calculation-and-values)** - How uptime percentages work
+
+
+## Video Tutorial
+
+<iframe src="https://www.youtube.com/watch?v=igMbSrej6RQ" title="View, configure and enable the new status page" width="100%" height="400" allowFullScreen />

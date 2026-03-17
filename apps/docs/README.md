@@ -1,55 +1,63 @@
-# Starlight Starter Kit: Basics
+# OpenStatus Docs
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+The documentation website for [OpenStatus](https://www.openstatus.dev), built with [Fumadocs](https://fumadocs.dev) and [Next.js](https://nextjs.org).
+
+## Getting Started
+
+1. Copy the environment file:
+   ```sh
+   cp .env.example .env.local
+   ```
+
+2. Update `.env.local` with your values:
+   - `NEXT_PUBLIC_OPENPANEL_CLIENT_ID` — Your [OpenPanel](https://openpanel.dev) client ID (optional, for analytics)
+
+3. Install dependencies and run the dev server:
+   ```sh
+   pnpm install
+   pnpm dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
 
 ```
-npm create astro@latest -- --template starlight
+apps/docs/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx          # Root layout (providers, analytics)
+│   ├── [[...slug]]/        # Dynamic docs page route
+│   └── api/search/         # Search API endpoint
+├── content/docs/           # MDX documentation content
+│   ├── concept/            # Conceptual explanations
+│   ├── tutorial/           # Step-by-step tutorials
+│   ├── guides/             # How-to guides
+│   ├── reference/          # Technical reference
+│   └── sdk/                # SDK documentation
+├── components/             # MDX component registry
+├── lib/                    # Source loader & layout config
+├── public/                 # Static assets (fonts, images)
+└── source.config.ts        # Fumadocs MDX collection config
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/starlight/tree/main/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/starlight/tree/main/examples/basics)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/withastro/starlight&create_from_path=examples/basics)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwithastro%2Fstarlight%2Ftree%2Fmain%2Fexamples%2Fbasics&project-name=my-starlight-docs&repository-name=my-starlight-docs)
+## Adding Content
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Create MDX files in `content/docs/`. Each file needs frontmatter:
 
-## 🚀 Project Structure
+```mdx
+---
+title: "Page Title"
+description: "Page description"
+sidebar_label: "Short Sidebar Label"  # optional, defaults to title
+---
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
-
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   ├── docs/
-│   │   └── config.ts
-│   └── env.d.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+Your content here.
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Control sidebar ordering with `meta.json` files in each directory.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+## Building
 
-Static assets, like favicons, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+```sh
+pnpm build
+```

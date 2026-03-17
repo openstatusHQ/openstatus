@@ -1,0 +1,21 @@
+{
+  "title": "Reference",
+  "pages": [
+    "index",
+    "cli-reference",
+    "[API Reference V1 - Deprecated](https://api.openstatus.dev/v1)",
+    "[API Reference V2](https://api.openstatus.dev/openapi)",
+    "dns-monitor",
+    "http-monitor",
+    "incident",
+    "tcp-monitor",
+    "notification",
+    "location",
+    "private-location",
+    "status-page",
+    "page-components",
+    "status-report",
+    "subscriber",
+    "terraform"
+  ]
+}
