@@ -2,6 +2,7 @@
   "title": "Node SDK",
   "pages": [
     "index",
+    "getting-started",
     "authentication",
     "error-handling",
     "typescript-tips",
