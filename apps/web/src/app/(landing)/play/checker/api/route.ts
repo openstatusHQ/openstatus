@@ -189,12 +189,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const blacklistUrls = (process.env.BLACKLIST_URL ?? "")
+  const blacklistPatterns = (process.env.BLACKLIST_URL ?? "")
     .split(",")
-    .map((u) => u.trim())
+    .map((p) => p.trim())
     .filter(Boolean);
 
-  if (blacklistUrls.some((blocked) => url.includes(blocked))) {
+  if (blacklistPatterns.some((pattern) => new RegExp(pattern).test(url))) {
     return createErrorResponse(
       "INVALID_REQUEST",
       "This URL is not allowed",
