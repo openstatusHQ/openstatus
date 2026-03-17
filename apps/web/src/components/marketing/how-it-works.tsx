@@ -54,8 +54,8 @@ export function HowItWorks() {
             aria-hidden="true"
           >
             <div className="mx-auto flex w-full max-w-[calc(100%-200px)] items-center justify-between px-16">
-              <div className="h-px flex-1 border-t-2 border-dashed border-border" />
-              <div className="mx-4 text-muted-foreground">
+              <div className="h-px flex-1 border-t-2 border-dashed border-success/40" />
+              <div className="mx-4 text-success">
                 <svg
                   className="h-4 w-4"
                   fill="none"
@@ -70,8 +70,8 @@ export function HowItWorks() {
                   />
                 </svg>
               </div>
-              <div className="h-px flex-1 border-t-2 border-dashed border-border" />
-              <div className="mx-4 text-muted-foreground">
+              <div className="h-px flex-1 border-t-2 border-dashed border-success/40" />
+              <div className="mx-4 text-success">
                 <svg
                   className="h-4 w-4"
                   fill="none"
@@ -86,7 +86,7 @@ export function HowItWorks() {
                   />
                 </svg>
               </div>
-              <div className="h-px flex-1 border-t-2 border-dashed border-border" />
+              <div className="h-px flex-1 border-t-2 border-dashed border-success/40" />
             </div>
           </div>
 
@@ -97,14 +97,14 @@ export function HowItWorks() {
             >
               {/* Step badge */}
               <div className="absolute -top-3 left-6">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-xs font-medium text-background">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success text-xs font-medium text-white">
                   {step.step}
                 </span>
               </div>
 
               <CardHeader className="pt-8">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                  <step.icon className="h-6 w-6 text-foreground" />
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-success/10">
+                  <step.icon className="h-6 w-6 text-success" />
                 </div>
                 <CardTitle className="text-lg">{step.title}</CardTitle>
               </CardHeader>
