@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@openpanel/nextjs": "1.2.0",
+    "@openstatus/ui": "workspace:*",
     "@tailwindcss/postcss": "4.1.11",
     "@types/mdx": "2.0.13",
     "fumadocs-core": "16.6.17",

@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
+@import "@openstatus/ui/globals";
+@import "fumadocs-ui/css/shadcn.css";
 @import "fumadocs-ui/css/preset.css";
 
 @font-face {
