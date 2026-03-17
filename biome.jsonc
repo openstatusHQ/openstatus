@@ -6,7 +6,8 @@
       "packages/ui/src/components/*.ts",
       "apps/dashboard/src/scripts/*.ts",
       "packages/proto/gen",
-      ".devbox"
+      ".devbox",
+      "apps/docs/.source"
     ]
   },
   "linter": {
@@ -44,7 +45,8 @@
       ".content-collections",
       "meta",
       "*.astro",
-      ".astro"
+      ".astro",
+      ".source"
     ]
   },
   "formatter": {
@@ -62,7 +64,8 @@
       ".content-collections",
       "meta",
       "*.astro",
-      ".astro"
+      ".astro",
+      ".source"
     ]
   },
   "organizeImports": {
@@ -76,7 +79,8 @@
       ".react-email",
       ".content-collections",
       "*.astro",
-      ".astro"
+      ".astro",
+      ".source"
     ]
   }
 }

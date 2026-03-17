@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next";
 import { source } from "@/lib/source";
+import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://docs.openstatus.dev";
 

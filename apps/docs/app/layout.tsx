@@ -1,11 +1,11 @@
-import { RootProvider } from "fumadocs-ui/provider/next";
-import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { OpenPanelComponent } from "@openpanel/nextjs";
-import { source } from "@/lib/source";
 import { baseOptions } from "@/lib/layout.shared";
-import type { ReactNode } from "react";
+import { source } from "@/lib/source";
+import { OpenPanelComponent } from "@openpanel/nextjs";
+import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
 import Script from "next/script";
+import type { ReactNode } from "react";
 import "./global.css";
 
 export const metadata: Metadata = {

@@ -1,14 +1,14 @@
+import { getMDXComponents } from "@/components/mdx";
 import { source } from "@/lib/source";
+import { createRelativeLink } from "fumadocs-ui/mdx";
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
 } from "fumadocs-ui/page";
-import { notFound } from "next/navigation";
-import { getMDXComponents } from "@/components/mdx";
-import { createRelativeLink } from "fumadocs-ui/mdx";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>;

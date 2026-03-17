@@ -10,7 +10,9 @@ export async function GET() {
 
   for (const page of pages) {
     const content = await page.data.getText("raw");
-    sections.push(`---\n\n## ${page.data.title}\n\nURL: ${page.url}\n\n${content}\n`);
+    sections.push(
+      `---\n\n## ${page.data.title}\n\nURL: ${page.url}\n\n${content}\n`,
+    );
   }
 
   return new NextResponse(sections.join("\n"), {

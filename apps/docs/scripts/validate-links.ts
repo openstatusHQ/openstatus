@@ -1,11 +1,11 @@
+import { source } from "@/lib/source";
+import type { InferPageType } from "fumadocs-core/source";
 import {
   type FileObject,
   printErrors,
   scanURLs,
   validateFiles,
 } from "next-validate-link";
-import type { InferPageType } from "fumadocs-core/source";
-import { source } from "@/lib/source";
 
 async function checkLinks() {
   const scanned = await scanURLs({
