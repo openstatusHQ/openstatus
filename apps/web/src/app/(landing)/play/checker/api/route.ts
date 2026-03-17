@@ -189,17 +189,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const blacklistPatterns = (process.env.BLACKLIST_URL ?? "")
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
+  try {
+    const blacklistPatterns = (process.env.BLACKLIST_URL ?? "")
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
 
-  if (blacklistPatterns.some((pattern) => new RegExp(pattern).test(url))) {
-    return createErrorResponse(
-      "INVALID_REQUEST",
-      "This URL is not allowed",
-      403,
-    );
+    if (blacklistPatterns.some((pattern) => new RegExp(pattern).test(url))) {
+      return createErrorResponse(
+        "INVALID_REQUEST",
+        "This URL is not allowed",
+        403,
+      );
+    }
+  } catch (error) {
+    console.error("Error checking blacklist", error);
   }
 
   // Rate limiting check
