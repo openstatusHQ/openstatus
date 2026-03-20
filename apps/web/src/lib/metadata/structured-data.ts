@@ -94,7 +94,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     },
     offers: Object.entries(allPlans).map(([_, value]) => ({
       "@type": "Offer",
-      price: value.price.USD,
+      price: value.price.monthly.USD,
       name: value.title,
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
@@ -116,7 +116,7 @@ export const getJsonLDSoftwareApplication =
       operatingSystem: "Web, Self-hosted",
       offers: Object.entries(allPlans).map(([_, value]) => ({
         "@type": "Offer",
-        price: value.price.USD,
+        price: value.price.monthly.USD,
         name: value.title,
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",

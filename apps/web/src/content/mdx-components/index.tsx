@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LatencyChartTable } from "../latency-chart-table";
 import { ButtonLink } from "./button-link";
 import { Code } from "./code";
@@ -34,4 +35,5 @@ export const components = {
   Tweet: MDXTweet,
   StatusPageExample: MDXStatusPageExample,
   PricingTabs,
+  Suspense: Suspense,
 };
