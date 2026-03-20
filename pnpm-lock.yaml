@@ -417,8 +417,8 @@ importers:
   apps/server:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: ^1.2.0
-        version: 1.2.12(zod@4.1.13)
+        specifier: 1.2.0
+        version: 1.2.0(zod@4.1.13)
       '@bufbuild/protobuf':
         specifier: 2.10.2
         version: 2.10.2
@@ -528,8 +528,8 @@ importers:
         specifier: 0.8.5
         version: 0.8.5(hono@4.11.3)
       '@slack/web-api':
-        specifier: ^7.8.0
-        version: 7.14.1
+        specifier: 7.15.0
+        version: 7.15.0
       '@t3-oss/env-core':
         specifier: 0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
@@ -2241,8 +2241,8 @@ importers:
 
 packages:
 
-  '@ai-sdk/anthropic@1.2.12':
-    resolution: {integrity: sha512-YSzjlko7JvuiyQFmI9RN1tNZdEiZxc+6xld/0tq/VkJaHpEzGAb1yiNxxvmYVcjvfu/PcvCxAAYXmTYQQ63IHQ==}
+  '@ai-sdk/anthropic@1.2.0':
+    resolution: {integrity: sha512-VMm+wAx7FhSMSjqJv7Zeu3GVxzUdohmWoFpzDCWiODpxPGFHw0d0spDR3sVpk5KcyGRJfebGd86ZtpFLCnagOQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -2253,8 +2253,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@2.2.8':
-    resolution: {integrity: sha512-fqhG+4sCVv8x7nFzYnFo19ryhAa3w096Kmc3hWxMQfW/TubPOmt3A6tYZhl4mUfQWWQMsuSkLrtjlWuXBVSGQA==}
+  '@ai-sdk/provider-utils@2.2.0':
+    resolution: {integrity: sha512-RX5BnDSqudjvZjwwpROcxVQElyX7rUn/xImBgaZLXekSGqq8f7/tefqDcQiRbDZjuCd4CVIfhrK8y/Pta8cPfQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.23.8
@@ -2265,8 +2265,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider@1.1.3':
-    resolution: {integrity: sha512-qZMxYJ0qqX/RfnuIaab+zp8UAeJn/ygXXAffR5I4N0n1IrvA6qBsjc8hXLmBiMV2zoXlifkacF7sEFnYnjBcqg==}
+  '@ai-sdk/provider@1.1.0':
+    resolution: {integrity: sha512-0M+qjp+clUD0R1E5eWQFhxEvWLNaOtGQRUaBn8CUABnSKredagq92hUS9VjOzGsTm37xLfpaxl97AVtbeOsHew==}
     engines: {node: '>=18'}
 
   '@ai-sdk/provider@3.0.8':
@@ -6440,16 +6440,16 @@ packages:
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
 
-  '@slack/logger@4.0.0':
-    resolution: {integrity: sha512-Wz7QYfPAlG/DR+DfABddUZeNgoeY7d1J39OCR2jR+v7VBsB8ezulDK5szTnDDPDwLH5IWhLvXIHlCFZV7MSKgA==}
+  '@slack/logger@4.0.1':
+    resolution: {integrity: sha512-6cmdPrV/RYfd2U0mDGiMK8S7OJqpCTm7enMLRR3edccsPX8j7zXTLnaEF4fhxxJJTAIOil6+qZrnUPTuaLvwrQ==}
     engines: {node: '>= 18', npm: '>= 8.6.0'}
 
-  '@slack/types@2.20.0':
-    resolution: {integrity: sha512-PVF6P6nxzDMrzPC8fSCsnwaI+kF8YfEpxf3MqXmdyjyWTYsZQURpkK7WWUWvP5QpH55pB7zyYL9Qem/xSgc5VA==}
+  '@slack/types@2.20.1':
+    resolution: {integrity: sha512-eWX2mdt1ktpn8+40iiMc404uGrih+2fxiky3zBcPjtXKj6HLRdYlmhrPkJi7JTJm8dpXR6BWVWEDBXtaWMKD6A==}
     engines: {node: '>= 12.13.0', npm: '>= 6.12.0'}
 
-  '@slack/web-api@7.14.1':
-    resolution: {integrity: sha512-RoygyteJeFswxDPJjUMESn9dldWVMD2xUcHHd9DenVavSfVC6FeVnSdDerOO7m8LLvw4Q132nQM4hX8JiF7dng==}
+  '@slack/web-api@7.15.0':
+    resolution: {integrity: sha512-va7zYIt3QHG1x9M/jqXXRPFMoOVlVSSRHC5YH+DzKYsrz5xUKOA3lR4THsu/Zxha9N1jOndbKFKLtr0WOPW1Vw==}
     engines: {node: '>= 18', npm: '>= 8.6.0'}
 
   '@smithy/abort-controller@2.2.0':
@@ -12240,10 +12240,10 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@1.2.12(zod@4.1.13)':
+  '@ai-sdk/anthropic@1.2.0(zod@4.1.13)':
     dependencies:
-      '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@4.1.13)
+      '@ai-sdk/provider': 1.1.0
+      '@ai-sdk/provider-utils': 2.2.0(zod@4.1.13)
       zod: 4.1.13
 
   '@ai-sdk/gateway@3.0.52(zod@4.1.13)':
@@ -12253,9 +12253,10 @@ snapshots:
       '@vercel/oidc': 3.1.0
       zod: 4.1.13
 
-  '@ai-sdk/provider-utils@2.2.8(zod@4.1.13)':
+  '@ai-sdk/provider-utils@2.2.0(zod@4.1.13)':
     dependencies:
-      '@ai-sdk/provider': 1.1.3
+      '@ai-sdk/provider': 1.1.0
+      eventsource-parser: 3.0.6
       nanoid: 3.3.11
       secure-json-parse: 2.7.0
       zod: 4.1.13
@@ -12267,7 +12268,7 @@ snapshots:
       eventsource-parser: 3.0.6
       zod: 4.1.13
 
-  '@ai-sdk/provider@1.1.3':
+  '@ai-sdk/provider@1.1.0':
     dependencies:
       json-schema: 0.4.0
 
@@ -16876,16 +16877,16 @@ snapshots:
 
   '@sindresorhus/merge-streams@4.0.0': {}
 
-  '@slack/logger@4.0.0':
+  '@slack/logger@4.0.1':
     dependencies:
       '@types/node': 24.0.8
 
-  '@slack/types@2.20.0': {}
+  '@slack/types@2.20.1': {}
 
-  '@slack/web-api@7.14.1':
+  '@slack/web-api@7.15.0':
     dependencies:
-      '@slack/logger': 4.0.0
-      '@slack/types': 2.20.0
+      '@slack/logger': 4.0.1
+      '@slack/types': 2.20.1
       '@types/node': 24.0.8
       '@types/retry': 0.12.0
       axios: 1.13.5

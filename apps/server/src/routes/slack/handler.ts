@@ -1,12 +1,16 @@
+import { getLogger } from "@logtape/logtape";
 import { and, db, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
+import { z } from "zod";
 import { runAgent } from "./agent";
 import { buildConfirmationBlocks } from "./blocks";
 import { findByThread, replace, store } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import { resolveWorkspace } from "./workspace-resolver";
+
+const logger = getLogger("api-server");
 
 const processedEvents = new Map<string, number>();
 
@@ -20,28 +24,47 @@ function dedup(eventId: string): boolean {
   return false;
 }
 
-interface SlackEvent {
-  type: string;
-  event?: {
-    type: string;
-    text?: string;
-    user?: string;
-    channel?: string;
-    channel_type?: string;
-    ts?: string;
-    thread_ts?: string;
-    bot_id?: string;
-  };
-  event_id?: string;
-  team_id?: string;
-  challenge?: string;
-}
+const slackEventSchema = z.object({
+  type: z.string(),
+  event: z
+    .object({
+      type: z.string(),
+      subtype: z.string().optional(),
+      text: z.string().optional(),
+      user: z.string().optional(),
+      channel: z.string().optional(),
+      channel_type: z.string().optional(),
+      ts: z.string().optional(),
+      thread_ts: z.string().optional(),
+      bot_id: z.string().optional(),
+    })
+    .optional(),
+  event_id: z.string().optional(),
+  team_id: z.string().optional(),
+  challenge: z.string().optional(),
+});
 
-interface ThreadMessage {
-  user?: string;
-  bot_id?: string;
-  text?: string;
-  ts?: string;
+type SlackEvent = z.infer<typeof slackEventSchema>;
+
+const threadMessageSchema = z.object({
+  user: z.string().optional(),
+  bot_id: z.string().optional(),
+  text: z.string().optional(),
+  ts: z.string().optional(),
+});
+
+type ThreadMessage = z.infer<typeof threadMessageSchema>;
+
+const slackPlatformErrorSchema = z.object({
+  code: z.literal("slack_webapi_platform_error"),
+  data: z.object({
+    error: z.string(),
+  }),
+});
+
+function isSlackPlatformError(err: unknown, errorCode: string): boolean {
+  const parsed = slackPlatformErrorSchema.safeParse(err);
+  return parsed.success && parsed.data.data.error === errorCode;
 }
 
 export async function handleSlackEvent(c: Context) {
@@ -60,7 +83,13 @@ export async function handleSlackEvent(c: Context) {
   }
 
   const promise = processEvent(body);
-  promise.catch((err) => console.error("[slack] event processing error:", err));
+  promise.catch((err) =>
+    logger.error("slack event processing error", {
+      error: err,
+      teamId: body.team_id,
+      eventId: body.event_id,
+    }),
+  );
 
   return c.json({ ok: true });
 }
@@ -80,7 +109,7 @@ async function processEvent(body: SlackEvent) {
             eq(integration.externalId, teamId),
           ),
         );
-      console.log(`[slack] cleaned up integration for team ${teamId}`);
+      logger.info("slack integration cleaned up", { teamId });
     }
     return;
   }
@@ -88,12 +117,21 @@ async function processEvent(body: SlackEvent) {
   if (event.type !== "app_mention" && event.type !== "message") return;
   if (event.type === "message" && event.bot_id) return;
 
+  const ignoredSubtypes = [
+    "channel_join",
+    "channel_leave",
+    "channel_topic",
+    "channel_purpose",
+    "channel_name",
+  ];
+  if (event.subtype && ignoredSubtypes.includes(event.subtype)) return;
+
   const teamId = body.team_id;
   if (!teamId || !event.channel || !event.ts) return;
 
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) {
-    console.warn(`[slack] no integration found for team ${teamId}`);
+    logger.warn("slack integration not found", { teamId });
     return;
   }
 
@@ -105,15 +143,59 @@ async function processEvent(body: SlackEvent) {
     if (!event.text?.includes(`<@${botUserId}>`)) return;
   }
 
-  const thinkingMsg = await slack.chat.postMessage({
+  logger.info("slack event received", {
+    teamId,
     channel: event.channel,
-    thread_ts: threadTs,
-    text: ":hourglass_flowing_sand: Thinking...",
+    eventType: event.type,
+    threadTs,
+    user: event.user,
   });
-  const thinkingTs = thinkingMsg.ts;
+
+  let thinkingTs: string | undefined;
+  try {
+    const thinkingMsg = await slack.chat.postMessage({
+      channel: event.channel,
+      thread_ts: threadTs,
+      text: ":hourglass_flowing_sand: Thinking...",
+    });
+    thinkingTs = thinkingMsg.ts;
+  } catch (err) {
+    if (isSlackPlatformError(err, "cannot_reply_to_message")) {
+      logger.warn("slack cannot reply to message, falling back to top-level", {
+        channel: event.channel,
+        teamId,
+        threadTs,
+      });
+      try {
+        const fallbackMsg = await slack.chat.postMessage({
+          channel: event.channel,
+          text: ":hourglass_flowing_sand: Thinking...",
+        });
+        thinkingTs = fallbackMsg.ts;
+      } catch (fallbackErr) {
+        logger.error("slack failed to post fallback thinking message", {
+          error: fallbackErr,
+          channel: event.channel,
+          teamId,
+        });
+        return;
+      }
+    } else {
+      logger.error("slack failed to post thinking message", {
+        error: err,
+        channel: event.channel,
+        teamId,
+        threadTs,
+      });
+      return;
+    }
+  }
 
   if (!thinkingTs) {
-    console.error("[slack] failed to post thinking message — no ts returned");
+    logger.error("slack thinking message returned no ts", {
+      channel: event.channel,
+      teamId,
+    });
     return;
   }
 
@@ -132,12 +214,26 @@ async function processEvent(body: SlackEvent) {
       thread = [{ user: event.user, text: event.text, ts: event.ts }];
     }
 
+    logger.info("slack agent invoked", {
+      teamId,
+      channel: event.channel,
+      threadTs,
+      messageCount: thread.length,
+    });
+
     const result = await runAgent(
       resolved.workspace,
       thread,
       botUserId,
       event.text,
     );
+
+    logger.info("slack agent completed", {
+      teamId,
+      channel: event.channel,
+      threadTs,
+      toolCalls: result.toolResults.map((tr) => tr.toolName),
+    });
 
     const confirmationResult = result.toolResults.find(
       (tr) =>
@@ -148,6 +244,12 @@ async function processEvent(body: SlackEvent) {
     );
 
     if (confirmationResult) {
+      logger.info("slack confirmation requested", {
+        teamId,
+        channel: event.channel,
+        threadTs,
+        toolName: confirmationResult.toolName,
+      });
       await handleConfirmation(
         slack,
         event.channel,
@@ -164,14 +266,34 @@ async function processEvent(body: SlackEvent) {
         ts: thinkingTs,
         text: result.text || "Done!",
       });
+      logger.info("slack response sent", {
+        teamId,
+        channel: event.channel,
+        threadTs,
+      });
     }
   } catch (err) {
-    console.error("[slack] agent error:", err);
-    await slack.chat.update({
+    logger.error("slack agent error", {
+      error: err,
       channel: event.channel,
-      ts: thinkingTs,
-      text: ":x: Something went wrong. Please try again.",
+      teamId,
+      threadTs,
     });
+    if (thinkingTs) {
+      await slack.chat
+        .update({
+          channel: event.channel,
+          ts: thinkingTs,
+          text: ":x: Something went wrong. Please try again.",
+        })
+        .catch((updateErr: unknown) => {
+          logger.error("slack failed to update error message", {
+            error: updateErr,
+            channel: event.channel,
+            thinkingTs,
+          });
+        });
+    }
   }
 }
 
