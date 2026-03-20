@@ -26,6 +26,7 @@ import {
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -35,6 +36,7 @@ const BASE_URL =
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
@@ -45,6 +47,15 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
 
         const stripe = await getStripe();
         stripe?.redirectToCheckout({ sessionId: data.id });
+      },
+    }),
+  );
+
+  const customerPortalMutation = useMutation(
+    trpc.stripeRouter.getUserCustomerPortal.mutationOptions({
+      onSuccess: (url) => {
+        if (!url) return;
+        router.push(url);
       },
     }),
   );
@@ -100,6 +111,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                     variant={id === "starter" ? "default" : "outline"}
                     onClick={() => {
                       startTransition(async () => {
+                        if (id === "free") {
+                          await customerPortalMutation.mutateAsync({
+                            workspaceSlug: workspace.slug,
+                            returnUrl: `${BASE_URL}/settings/billing`,
+                          });
+                          return;
+                        }
                         await checkoutSessionMutation.mutateAsync({
                           plan: id,
                           // TODO: move to the server as we have the current workspace
