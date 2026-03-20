@@ -79,7 +79,7 @@ export function LocaleSwitcher({
           {locale}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" alignOffset={-4}>
         <DropdownMenuGroup>
           {Object.entries(localeTranslations).map(([key, { name }]) => (
             <DropdownMenuItem key={key} onClick={() => onSelectLocale(key)}>

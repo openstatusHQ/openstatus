@@ -45,12 +45,12 @@ export function Footer(props: React.ComponentProps<"footer">) {
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <TimestampHoverCard
             date={new Date(dataUpdatedAt)}
             side="top"
             align="end"
-            className="flex items-center gap-1.5 text-muted-foreground/70"
+            className="mr-2 flex items-center gap-1.5 text-muted-foreground/70"
           >
             {isMounted ? (
               <>
