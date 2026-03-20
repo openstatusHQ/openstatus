@@ -93,6 +93,8 @@ describe("handleSlackInstall", () => {
       "channels:history",
       "chat:write",
       "groups:history",
+      "groups:read",
+      "groups:write",
       "im:history",
       "im:read",
       "im:write",
