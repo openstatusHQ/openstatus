@@ -68,7 +68,7 @@ await configure({
   loggers: [
     {
       category: "api-server",
-      lowestLevel: "error",
+      lowestLevel: "info",
       sinks: ["console"],
     },
     {
