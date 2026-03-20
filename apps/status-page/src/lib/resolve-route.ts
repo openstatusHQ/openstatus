@@ -30,7 +30,9 @@ export function resolveRoute({
   const hostnames = host?.split(/[.:]/) ?? urlHost.split(/[.:]/);
   const pathnames = pathname.split("/");
 
-  const subdomain = getValidSubdomain(urlHost);
+  // Prefer x-forwarded-host for custom-domain detection (behind reverse proxy/CDN,
+  // req.nextUrl.host may be an internal host, not the real custom domain)
+  const subdomain = getValidSubdomain(host ?? urlHost);
 
   let prefix: string;
   let type: RouteType;

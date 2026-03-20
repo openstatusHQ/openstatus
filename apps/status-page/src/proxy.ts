@@ -172,8 +172,9 @@ export default auth(async (req) => {
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  // Subdomain routing: rewrite using resolved path
-  if (type === "hostname") {
+  // Rewrite to the resolved path when it differs from the incoming pathname
+  // (e.g. hostname routing or pathname routing without a locale segment)
+  if (route.rewritePath !== url.pathname) {
     const rewriteUrl = new URL(route.rewritePath, req.url);
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);

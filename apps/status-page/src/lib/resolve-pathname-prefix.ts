@@ -35,7 +35,7 @@ export function resolvePathnamePrefix({
     return locale !== defaultLocale ? locale : "";
   }
 
-  // Pathname routing — slug always, locale only if non-default
+  // Pathname routing — always {slug}/{locale}
   const slug = pathname.split("/")[1] || "";
   return `${slug}/${locale}`;
 }
