@@ -6,7 +6,6 @@ import {
   StatusUpdates,
 } from "@/components/status-page/status-updates";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { defaultLocale } from "@/i18n/config";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -27,7 +26,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Menu, MessageCircleMore } from "lucide-react";
-import { useExtracted, useLocale } from "next-intl";
+import { useExtracted } from "next-intl";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
@@ -80,11 +79,11 @@ function getStatusUpdateTypes(page: Page): StatusUpdateType[] {
 export function Header(props: React.ComponentProps<"header">) {
   const t = useExtracted();
   const trpc = useTRPC();
-  const locale = useLocale();
   const { domain } = useParams<{ domain: string }>();
   const { data: page } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
+  const prefix = usePathnamePrefix();
 
   const sendPageSubscriptionMutation = useMutation(
     trpc.emailRouter.sendPageSubscriptionVerification.mutationOptions({}),
@@ -123,11 +122,7 @@ export function Header(props: React.ComponentProps<"header">) {
               asChild
             >
               <Link
-                href={
-                  page?.homepageUrl || defaultLocale === locale
-                    ? "/"
-                    : `/${locale}`
-                }
+                href={page?.homepageUrl || `/${prefix}`}
                 target={page?.homepageUrl ? "_blank" : undefined}
                 rel={page?.homepageUrl ? "noreferrer" : undefined}
               >

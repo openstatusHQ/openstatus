@@ -81,7 +81,7 @@ describe("resolvePathnamePrefix", () => {
   });
 
   describe("pathname routing", () => {
-    test("localhost + /acme + en → 'acme' (default locale omitted)", () => {
+    test("localhost + /acme + en → 'acme/en'", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "localhost",
@@ -90,7 +90,7 @@ describe("resolvePathnamePrefix", () => {
           locale: "en",
           defaultLocale,
         }),
-      ).toBe("acme");
+      ).toBe("acme/en");
     });
 
     test("localhost + /acme + fr → 'acme/fr'", () => {
@@ -105,7 +105,7 @@ describe("resolvePathnamePrefix", () => {
       ).toBe("acme/fr");
     });
 
-    test("localhost + /acme/en/events + en → 'acme' (default locale omitted)", () => {
+    test("localhost + /acme/en/events + en → 'acme/en'", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "localhost",
@@ -114,7 +114,7 @@ describe("resolvePathnamePrefix", () => {
           locale: "en",
           defaultLocale,
         }),
-      ).toBe("acme");
+      ).toBe("acme/en");
     });
 
     test("localhost + /acme/fr/monitors/123 + fr → 'acme/fr'", () => {
@@ -129,7 +129,7 @@ describe("resolvePathnamePrefix", () => {
       ).toBe("acme/fr");
     });
 
-    test("localhost + /status + en → 'status' (default locale omitted)", () => {
+    test("localhost + /status + en → 'status/en'", () => {
       expect(
         resolvePathnamePrefix({
           hostname: "localhost",
@@ -138,7 +138,7 @@ describe("resolvePathnamePrefix", () => {
           locale: "en",
           defaultLocale,
         }),
-      ).toBe("status");
+      ).toBe("status/en");
     });
 
     test("localhost + /status/fr/events + fr → 'status/fr'", () => {
@@ -164,7 +164,7 @@ describe("resolvePathnamePrefix", () => {
           locale: "en",
           defaultLocale,
         }),
-      ).toBe("acme");
+      ).toBe("acme/en");
     });
 
     test("vercel.app preview is treated as pathname routing", () => {
