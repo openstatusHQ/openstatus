@@ -26,16 +26,24 @@ mock.module("./workspace-resolver", () => ({
   },
 }));
 
-let slackMessages: Array<{ method: string; args: unknown }> = [];
+let slackMessages: Array<{ method: string; args: Record<string, unknown> }> = [];
+let postMessageOverride:
+  | ((args: Record<string, unknown>) => Promise<{ ts: string }>)
+  | null = null;
+let updateOverride:
+  | ((args: Record<string, unknown>) => Promise<{ ts: string }>)
+  | null = null;
 
 mock.module("@slack/web-api", () => ({
   WebClient: class {
     chat = {
-      postMessage: (args: unknown) => {
+      postMessage: (args: Record<string, unknown>) => {
+        if (postMessageOverride) return postMessageOverride(args);
         slackMessages.push({ method: "postMessage", args });
         return Promise.resolve({ ts: "msg.ts" });
       },
-      update: (args: unknown) => {
+      update: (args: Record<string, unknown>) => {
+        if (updateOverride) return updateOverride(args);
         slackMessages.push({ method: "update", args });
         return Promise.resolve({ ts: "msg.ts" });
       },
@@ -49,12 +57,25 @@ mock.module("@slack/web-api", () => ({
   },
 }));
 
+let runAgentOverride: (() => Promise<{ text: string; toolResults: never[] }>) | null =
+  null;
+
 mock.module("./agent", () => ({
-  runAgent: () =>
-    Promise.resolve({
+  runAgent: () => {
+    if (runAgentOverride) return runAgentOverride();
+    return Promise.resolve({
       text: "Here is my response",
       toolResults: [],
-    }),
+    });
+  },
+}));
+
+mock.module("./confirmation-store", () => ({
+  store: () => Promise.resolve("test-action-id"),
+  get: () => Promise.resolve(undefined),
+  consume: () => Promise.resolve(undefined),
+  findByThread: () => Promise.resolve(undefined),
+  replace: () => Promise.resolve(),
 }));
 
 const { handleSlackEvent } = await import("./handler");
@@ -94,6 +115,9 @@ describe("handleSlackEvent", () => {
 
   beforeEach(() => {
     slackMessages = [];
+    postMessageOverride = null;
+    updateOverride = null;
+    runAgentOverride = null;
   });
 
   test("responds to url_verification challenge", async () => {
@@ -335,6 +359,46 @@ describe("handleSlackEvent", () => {
     expect(slackMessages.length).toBe(0);
   });
 
+  test("ignores channel_join system messages", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_join_${Date.now()}`,
+      event: {
+        type: "message",
+        subtype: "channel_join",
+        text: "<@U1> has joined the channel",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.10`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("ignores channel_leave system messages", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_leave_${Date.now()}`,
+      event: {
+        type: "message",
+        subtype: "channel_leave",
+        text: "<@U1> has left the channel",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.11`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
   test("ignores events with no event payload", async () => {
     const res = await signAndPost(app, {
       type: "event_callback",
@@ -345,5 +409,130 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
     expect(slackMessages.length).toBe(0);
+  });
+
+  test("falls back to top-level message on cannot_reply_to_message", async () => {
+    let callCount = 0;
+    postMessageOverride = (args: Record<string, unknown>) => {
+      callCount++;
+      if (callCount === 1) {
+        const err = new Error("An API error occurred: cannot_reply_to_message");
+        Object.assign(err, {
+          code: "slack_webapi_platform_error",
+          data: { ok: false, error: "cannot_reply_to_message" },
+        });
+        return Promise.reject(err);
+      }
+      slackMessages.push({ method: "postMessage", args });
+      return Promise.resolve({ ts: "fallback.ts" });
+    };
+
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_cantreply_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.20`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const fallbackPost = slackMessages.find(
+      (m) => m.method === "postMessage" && !m.args.thread_ts,
+    );
+    expect(fallbackPost).toBeDefined();
+  });
+
+  test("returns early on non-recoverable postMessage error", async () => {
+    postMessageOverride = () => {
+      const err = new Error("An API error occurred: channel_not_found");
+      Object.assign(err, {
+        code: "slack_webapi_platform_error",
+        data: { ok: false, error: "channel_not_found" },
+      });
+      return Promise.reject(err);
+    };
+
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_channotfound_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.21`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const updateMessages = slackMessages.filter((m) => m.method === "update");
+    expect(updateMessages.length).toBe(0);
+  });
+
+  test("shows error message when runAgent throws", async () => {
+    runAgentOverride = () => Promise.reject(new Error("agent exploded"));
+
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_agenterr_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.30`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+
+    const errorUpdate = slackMessages.find(
+      (m) =>
+        m.method === "update" &&
+        typeof m.args.text === "string" &&
+        m.args.text.includes("Something went wrong"),
+    );
+    expect(errorUpdate).toBeDefined();
+  });
+
+  test("does not throw when both runAgent and error update fail", async () => {
+    runAgentOverride = () => Promise.reject(new Error("agent exploded"));
+    updateOverride = () => {
+      const err = new Error("An API error occurred: channel_not_found");
+      Object.assign(err, {
+        code: "slack_webapi_platform_error",
+        data: { ok: false, error: "channel_not_found" },
+      });
+      return Promise.reject(err);
+    };
+
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_doublefail_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.31`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 100));
+    // No unhandled rejection — the .catch() in the error handler swallows it
   });
 });
