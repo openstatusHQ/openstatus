@@ -72,14 +72,6 @@ mock.module("./agent", () => ({
   },
 }));
 
-mock.module("./confirmation-store", () => ({
-  store: () => Promise.resolve("test-action-id"),
-  get: () => Promise.resolve(undefined),
-  consume: () => Promise.resolve(undefined),
-  findByThread: () => Promise.resolve(undefined),
-  replace: () => Promise.resolve(),
-}));
-
 const { handleSlackEvent } = await import("./handler");
 const { verifySlackSignature } = await import("./verify");
 

@@ -76,6 +76,11 @@ await configure({
       lowestLevel: "info",
       sinks: ["otel"],
     },
+    {
+      category: ["logtape", "meta"],
+      lowestLevel: "warning",
+      sinks: ["console"],
+    },
   ],
   contextLocalStorage: new AsyncLocalStorage(),
 });
