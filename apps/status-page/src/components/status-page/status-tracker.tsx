@@ -14,7 +14,7 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { chartConfig } from "./utils";
@@ -413,6 +413,7 @@ function StatusTrackerEvent({
   to?: Date | null;
   status: "success" | "degraded" | "error" | "info" | "empty";
 }) {
+  const locale = useLocale();
   if (!from) return null;
 
   return (
@@ -432,7 +433,7 @@ function StatusTrackerEvent({
         </div>
       </div>
       <div className="mt-1 text-muted-foreground text-xs">
-        {formatDateRange(from, to ?? undefined)}{" "}
+        {formatDateRange(from, to ?? undefined, locale)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
           {formatDuration({ from, to, name, status })}
         </span>

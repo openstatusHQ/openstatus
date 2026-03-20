@@ -1,3 +1,4 @@
+import { DateFnsProvider } from "@/components/date-fns-provider";
 import { routing } from "@/i18n/routing";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
@@ -23,7 +24,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+      <DateFnsProvider locale={locale}>{children}</DateFnsProvider>
     </NextIntlClientProvider>
   );
 }

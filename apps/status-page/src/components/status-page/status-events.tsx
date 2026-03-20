@@ -17,7 +17,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
-import { useExtracted } from "next-intl";
+import { useExtracted, useLocale } from "next-intl";
 
 export function StatusEventGroup({
   className,
@@ -139,12 +139,13 @@ export function StatusEventDate({
 }: React.ComponentProps<"div"> & {
   date: Date;
 }) {
+  const locale = useLocale();
   const isFuture = date > new Date();
   const distance = formatDistanceStrict(date, new Date(), { addSuffix: true });
   return (
     <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
       <div className="font-medium text-foreground">
-        {formatDate(date, { month: "short" })}
+        {formatDate(date, { month: "short", locale })}
       </div>{" "}
       <Badge
         variant="secondary"
@@ -252,6 +253,7 @@ export function StatusEventTimelineReportUpdate({
   withDot?: boolean;
   isLast?: boolean;
 }) {
+  const locale = useLocale();
   const t = useExtracted();
   const statusLabels = {
     resolved: t("Resolved"),
@@ -278,7 +280,7 @@ export function StatusEventTimelineReportUpdate({
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
-                  <span>{formatDateTime(report.date)}</span>
+                  <span>{formatDateTime(report.date, locale)}</span>
                 </TimestampHoverCard>
               </span>{" "}
               {duration ? (
@@ -313,9 +315,10 @@ export function StatusEventTimelineMaintenance({
   };
   withDot?: boolean;
 }) {
+  const locale = useLocale();
   const t = useExtracted();
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
-  const range = formatDateRange(maintenance.from, maintenance.to);
+  const range = formatDateRange(maintenance.from, maintenance.to, locale);
   // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
   const [from, to] = range.split(" - ");
   return (
