@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@openstatus/ui/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

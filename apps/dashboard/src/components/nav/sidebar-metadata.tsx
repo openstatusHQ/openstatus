@@ -6,15 +6,15 @@ import {
   EmptyStateDescription,
 } from "@/components/content/empty-state";
 import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-} from "@/components/ui/sidebar";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+} from "@openstatus/ui/components/ui/sidebar";
 import {
   Table,
   TableBody,

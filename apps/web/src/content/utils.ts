@@ -111,6 +111,13 @@ export function getGuides(): MDXData[] {
   );
 }
 
+export function getUseCasePages(): MDXData[] {
+  return getMDXDataFromDir(
+    path.join(process.cwd(), "src", "content", "pages", "use-case"),
+    "/use-case",
+  );
+}
+
 export function getUnrelatedPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "unrelated"),
@@ -172,6 +179,7 @@ export const PAGE_TYPES = [
   "compare",
   "tools",
   "guides",
+  "use-case",
   "all",
 ] as const;
 
@@ -193,6 +201,8 @@ export function getPages(type: PageType) {
       return getToolsPages();
     case "guides":
       return getGuides();
+    case "use-case":
+      return getUseCasePages();
     case "all":
       return [
         ...getBlogPosts(),
@@ -202,6 +212,7 @@ export function getPages(type: PageType) {
         ...getComparePages(),
         ...getToolsPages(),
         ...getGuides(),
+        ...getUseCasePages(),
       ];
     default:
       throw new Error(`Unknown page type: ${type}`);

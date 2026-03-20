@@ -45,7 +45,12 @@ export function SectionPassword() {
             if (result) {
               setPassword(values.password);
               const redirect = searchParams.get("redirect");
-              router.push(redirect ?? "/");
+              // Only allow safe relative paths to prevent XSS via javascript: URLs
+              if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
+                router.push(redirect);
+              } else {
+                router.push("/");
+              }
             }
           }}
         />

@@ -72,6 +72,21 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/api-monitoring",
+        destination: "/uptime-monitoring",
+        permanent: true,
+      },
+      {
+        source: "/monitoring-as-code",
+        destination: "/uptime-monitoring",
+        permanent: true,
+      },
+      {
+        source: "/private-locations",
+        destination: "/uptime-monitoring",
+        permanent: true,
+      },
+      {
         source: "/app/:path*",
         destination: "https://app.openstatus.dev/",
         permanent: true,
