@@ -83,7 +83,13 @@ export async function handleSlackEvent(c: Context) {
   }
 
   const promise = processEvent(body);
-  promise.catch((err) => logger.error("slack event processing error", { error: err, teamId: body.team_id, eventId: body.event_id }));
+  promise.catch((err) =>
+    logger.error("slack event processing error", {
+      error: err,
+      teamId: body.team_id,
+      eventId: body.event_id,
+    }),
+  );
 
   return c.json({ ok: true });
 }
@@ -97,7 +103,12 @@ async function processEvent(body: SlackEvent) {
     if (teamId) {
       await db
         .delete(integration)
-        .where(and(eq(integration.name, "slack-agent"), eq(integration.externalId, teamId)));
+        .where(
+          and(
+            eq(integration.name, "slack-agent"),
+            eq(integration.externalId, teamId),
+          ),
+        );
       logger.info("slack integration cleaned up", { teamId });
     }
     return;
@@ -150,7 +161,11 @@ async function processEvent(body: SlackEvent) {
     thinkingTs = thinkingMsg.ts;
   } catch (err) {
     if (isSlackPlatformError(err, "cannot_reply_to_message")) {
-      logger.warn("slack cannot reply to message, falling back to top-level", { channel: event.channel, teamId, threadTs });
+      logger.warn("slack cannot reply to message, falling back to top-level", {
+        channel: event.channel,
+        teamId,
+        threadTs,
+      });
       try {
         const fallbackMsg = await slack.chat.postMessage({
           channel: event.channel,
@@ -158,17 +173,29 @@ async function processEvent(body: SlackEvent) {
         });
         thinkingTs = fallbackMsg.ts;
       } catch (fallbackErr) {
-        logger.error("slack failed to post fallback thinking message", { error: fallbackErr, channel: event.channel, teamId });
+        logger.error("slack failed to post fallback thinking message", {
+          error: fallbackErr,
+          channel: event.channel,
+          teamId,
+        });
         return;
       }
     } else {
-      logger.error("slack failed to post thinking message", { error: err, channel: event.channel, teamId, threadTs });
+      logger.error("slack failed to post thinking message", {
+        error: err,
+        channel: event.channel,
+        teamId,
+        threadTs,
+      });
       return;
     }
   }
 
   if (!thinkingTs) {
-    logger.error("slack thinking message returned no ts", { channel: event.channel, teamId });
+    logger.error("slack thinking message returned no ts", {
+      channel: event.channel,
+      teamId,
+    });
     return;
   }
 
@@ -180,14 +207,26 @@ async function processEvent(body: SlackEvent) {
         ts: event.thread_ts,
         limit: 100,
       });
-      thread = ((replies.messages ?? []) as ThreadMessage[]).filter((msg) => msg.ts !== thinkingTs);
+      thread = ((replies.messages ?? []) as ThreadMessage[]).filter(
+        (msg) => msg.ts !== thinkingTs,
+      );
     } else {
       thread = [{ user: event.user, text: event.text, ts: event.ts }];
     }
 
-    logger.info("slack agent invoked", { teamId, channel: event.channel, threadTs, messageCount: thread.length });
+    logger.info("slack agent invoked", {
+      teamId,
+      channel: event.channel,
+      threadTs,
+      messageCount: thread.length,
+    });
 
-    const result = await runAgent(resolved.workspace, thread, botUserId, event.text);
+    const result = await runAgent(
+      resolved.workspace,
+      thread,
+      botUserId,
+      event.text,
+    );
 
     logger.info("slack agent completed", {
       teamId,
@@ -205,7 +244,12 @@ async function processEvent(body: SlackEvent) {
     );
 
     if (confirmationResult) {
-      logger.info("slack confirmation requested", { teamId, channel: event.channel, threadTs, toolName: confirmationResult.toolName });
+      logger.info("slack confirmation requested", {
+        teamId,
+        channel: event.channel,
+        threadTs,
+        toolName: confirmationResult.toolName,
+      });
       await handleConfirmation(
         slack,
         event.channel,
@@ -222,10 +266,19 @@ async function processEvent(body: SlackEvent) {
         ts: thinkingTs,
         text: result.text || "Done!",
       });
-      logger.info("slack response sent", { teamId, channel: event.channel, threadTs });
+      logger.info("slack response sent", {
+        teamId,
+        channel: event.channel,
+        threadTs,
+      });
     }
   } catch (err) {
-    logger.error("slack agent error", { error: err, channel: event.channel, teamId, threadTs });
+    logger.error("slack agent error", {
+      error: err,
+      channel: event.channel,
+      teamId,
+      threadTs,
+    });
     if (thinkingTs) {
       await slack.chat
         .update({
@@ -234,7 +287,11 @@ async function processEvent(body: SlackEvent) {
           text: ":x: Something went wrong. Please try again.",
         })
         .catch((updateErr: unknown) => {
-          logger.error("slack failed to update error message", { error: updateErr, channel: event.channel, thinkingTs });
+          logger.error("slack failed to update error message", {
+            error: updateErr,
+            channel: event.channel,
+            thinkingTs,
+          });
         });
     }
   }
@@ -255,7 +312,8 @@ async function handleConfirmation(
     params: Record<string, unknown>;
   };
 
-  const actionType = confirmationResult.toolName as PendingAction["action"]["type"];
+  const actionType =
+    confirmationResult.toolName as PendingAction["action"]["type"];
   const action = { type: actionType, params } as PendingAction["action"];
 
   const existing = await findByThread(threadTs);

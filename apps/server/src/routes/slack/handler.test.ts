@@ -26,7 +26,8 @@ mock.module("./workspace-resolver", () => ({
   },
 }));
 
-let slackMessages: Array<{ method: string; args: Record<string, unknown> }> = [];
+let slackMessages: Array<{ method: string; args: Record<string, unknown> }> =
+  [];
 let postMessageOverride:
   | ((args: Record<string, unknown>) => Promise<{ ts: string }>)
   | null = null;
@@ -57,8 +58,9 @@ mock.module("@slack/web-api", () => ({
   },
 }));
 
-let runAgentOverride: (() => Promise<{ text: string; toolResults: never[] }>) | null =
-  null;
+let runAgentOverride:
+  | (() => Promise<{ text: string; toolResults: never[] }>)
+  | null = null;
 
 mock.module("./agent", () => ({
   runAgent: () => {
