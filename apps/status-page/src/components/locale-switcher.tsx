@@ -83,7 +83,15 @@ export function LocaleSwitcher({
         <DropdownMenuGroup>
           {Object.entries(localeTranslations).map(([key, { name }]) => (
             <DropdownMenuItem key={key} onClick={() => onSelectLocale(key)}>
-              {name}
+              {name}{" "}
+              <span
+                className={cn(
+                  "ml-auto font-mono uppercase",
+                  key === locale ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {key}
+              </span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
