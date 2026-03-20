@@ -72,7 +72,6 @@ mock.module("./agent", () => ({
   },
 }));
 
-
 const { handleSlackEvent } = await import("./handler");
 const { verifySlackSignature } = await import("./verify");
 
