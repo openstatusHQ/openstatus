@@ -65,7 +65,7 @@ export async function signInWithResendAction(formData: FormData) {
 
     return {
       success: false,
-      error: "An unexpected error occurred during sign in",
+      error: t("An unexpected error occurred during sign in"),
     };
   }
 }

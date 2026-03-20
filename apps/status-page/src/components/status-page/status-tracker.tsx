@@ -33,6 +33,7 @@ type UptimeData = NonNullable<
 
 export function StatusTracker({ data }: { data: UptimeData }) {
   const t = useExtracted();
+  const locale = useLocale();
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -215,7 +216,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
       className="flex h-[50px] w-full items-end"
       onKeyDown={handleKeyDown}
       role="toolbar"
-      aria-label="Status tracker"
+      aria-label={t("Status tracker")}
     >
       {data.map((item, index) => {
         const isPinned = pinnedIndex === index;
@@ -248,7 +249,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                       : -1
                 }
                 role="button"
-                aria-label={`Day ${index + 1} status`}
+                aria-label={t("Day {n} status", { n: String(index + 1) })}
                 aria-pressed={isPinned}
               >
                 {/* Render processed bar segments from backend */}
@@ -277,7 +278,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             >
               <div>
                 <div className="p-2 text-xs">
-                  {new Date(item.day).toLocaleDateString("default", {
+                  {new Date(item.day).toLocaleDateString(locale, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -435,23 +436,24 @@ function StatusTrackerEvent({
       <div className="mt-1 text-muted-foreground text-xs">
         {formatDateRange(from, to ?? undefined, locale)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {formatDuration({ from, to, name, status })}
+          <FormatDuration from={from} to={to} name={name} status={status} />
         </span>
       </div>
     </div>
   );
 }
 
-const formatDuration = ({
+function FormatDuration({
   from,
   to,
   name,
-}: React.ComponentProps<typeof StatusTrackerEvent>) => {
+}: React.ComponentProps<typeof StatusTrackerEvent>) {
+  const t = useExtracted();
   if (!from) return null;
-  if (!to) return "ongoing";
+  if (!to) return t("ongoing");
   const duration = formatDistanceStrict(from, to);
   const isMultipleIncidents = name.includes("Downtime (");
-  if (isMultipleIncidents) return `across ${duration}`;
+  if (isMultipleIncidents) return t("across {duration}", { duration });
   if (duration === "0 seconds") return null;
   return duration;
-};
+}

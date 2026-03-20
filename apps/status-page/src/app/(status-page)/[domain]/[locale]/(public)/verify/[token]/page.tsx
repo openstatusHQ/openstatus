@@ -9,10 +9,12 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function VerifyPage() {
+  const t = useExtracted();
   const trpc = useTRPC();
   const { token, domain } = useParams<{ token: string; domain: string }>();
   const verifyEmailMutation = useMutation(
@@ -25,10 +27,12 @@ export default function VerifyPage() {
   }, [domain, token]);
 
   const title = verifyEmailMutation.isSuccess
-    ? `All set to receive updates to ${verifyEmailMutation.data?.email}!`
+    ? t("All set to receive updates to {email}!", {
+        email: verifyEmailMutation.data?.email ?? "",
+      })
     : verifyEmailMutation.isError
-      ? verifyEmailMutation.error?.message || "Something went wrong"
-      : "Hang tight - we're confirming your subscription";
+      ? verifyEmailMutation.error?.message || t("Something went wrong")
+      : t("Hang tight - we're confirming your subscription");
 
   return (
     <StatusBlankContainer>
@@ -48,7 +52,7 @@ export default function VerifyPage() {
               verifyEmailMutation.isPending || !verifyEmailMutation.data
             }
           >
-            Go back
+            {t("Go back")}
           </StatusBlankLink>
           {verifyEmailMutation.isSuccess && (
             <StatusBlankLink
@@ -57,7 +61,7 @@ export default function VerifyPage() {
                 verifyEmailMutation.isPending || !verifyEmailMutation.data
               }
             >
-              Manage
+              {t("Manage")}
             </StatusBlankLink>
           )}
         </div>

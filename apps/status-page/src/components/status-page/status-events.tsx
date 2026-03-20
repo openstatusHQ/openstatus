@@ -192,6 +192,7 @@ export function StatusEventTimelineReport({
   withDot?: boolean;
   maxUpdates?: number;
 }) {
+  const t = useExtracted();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
@@ -213,12 +214,12 @@ export function StatusEventTimelineReport({
           const duration = formatDistanceStrict(startedAt, updateDate);
 
           if (duration !== "0 seconds" && update.status === "resolved") {
-            durationText = `(in ${duration})`;
+            durationText = t("(in {duration})", { duration });
           }
         } else {
           const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
           const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
-          durationText = `(${timeFromLast} earlier)`;
+          durationText = t("({timeFromLast} earlier)", { timeFromLast });
         }
 
         return (
@@ -348,7 +349,7 @@ export function StatusEventTimelineMaintenance({
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
-                  (for {duration})
+                  {t("(for {duration})", { duration })}
                 </span>
               ) : null}
             </StatusEventTimelineTitle>

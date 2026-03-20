@@ -33,10 +33,13 @@ import {
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import { useExtracted, useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
 export default function VerifyPage() {
+  const t = useExtracted();
+  const locale = useLocale();
   const trpc = useTRPC();
   const { token, domain } = useParams<{ token: string; domain: string }>();
   const { data: page } = useQuery(
@@ -55,13 +58,13 @@ export default function VerifyPage() {
     trpc.statusPage.unsubscribe.mutationOptions({
       onSuccess: () => {
         refetch();
-        toast.success("Unsubscribed successfully");
+        toast.success(t("Unsubscribed successfully"));
       },
       onError: (error) => {
         if (isTRPCClientError(error)) {
           toast.error(error.message);
         } else {
-          toast.error("Failed to unsubscribe");
+          toast.error(t("Failed to unsubscribe"));
         }
       },
     }),
@@ -71,12 +74,13 @@ export default function VerifyPage() {
     return (
       <StatusBlankContainer>
         <StatusBlankContent>
-          <StatusBlankTitle>Invalid subscription token</StatusBlankTitle>
+          <StatusBlankTitle>{t("Invalid subscription token")}</StatusBlankTitle>
           <StatusBlankDescription>
-            This subscription token is no longer valid. You may have already
-            unsubscribed or the link has expired.
+            {t(
+              "This subscription token is no longer valid. You may have already unsubscribed or the link has expired.",
+            )}
           </StatusBlankDescription>
-          <StatusBlankLink href="../">Go back</StatusBlankLink>
+          <StatusBlankLink href="../">{t("Go back")}</StatusBlankLink>
         </StatusBlankContent>
       </StatusBlankContainer>
     );
@@ -90,7 +94,9 @@ export default function VerifyPage() {
         <FormCardHeader>
           <FormCardTitle>{subscription.email}</FormCardTitle>
           <FormCardDescription>
-            Manage your subscription to receive updates on the status page.
+            {t(
+              "Manage your subscription to receive updates on the status page.",
+            )}
           </FormCardDescription>
         </FormCardHeader>
         <FormCardContent className="px-0">
@@ -115,12 +121,13 @@ export default function VerifyPage() {
           <FormCardFooterInfo>
             {subscription.unsubscribedAt ? (
               <span className="text-destructive">
-                Unsubscribed on{" "}
-                {Intl.DateTimeFormat("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }).format(subscription.unsubscribedAt)}
+                {t("Unsubscribed on {date}", {
+                  date: Intl.DateTimeFormat(locale, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }).format(subscription.unsubscribedAt),
+                })}
               </span>
             ) : null}
           </FormCardFooterInfo>
@@ -137,26 +144,27 @@ export default function VerifyPage() {
                   }
                 >
                   {unsubscribeMutation.isPending
-                    ? "Unsubscribing..."
-                    : "Unsubscribe"}
+                    ? t("Unsubscribing...")
+                    : t("Unsubscribe")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Unsubscribe</AlertDialogTitle>
+                  <AlertDialogTitle>{t("Unsubscribe")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to unsubscribe from this status page?
-                    You will no longer receive updates.
+                    {t(
+                      "Are you sure you want to unsubscribe from this status page? You will no longer receive updates.",
+                    )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() =>
                       unsubscribeMutation.mutate({ token, domain })
                     }
                   >
-                    Unsubscribe
+                    {t("Unsubscribe")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -172,8 +180,8 @@ export default function VerifyPage() {
               }
             >
               {manageSubscriptionMutation.isPending
-                ? "Submitting..."
-                : "Submit"}
+                ? t("Submitting...")
+                : t("Submit")}
             </Button>
           </div>
         </FormCardFooter>
