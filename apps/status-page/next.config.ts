@@ -1,3 +1,4 @@
+import { defaultLocale, locales } from "@/i18n/config";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -7,12 +8,12 @@ const withNextIntl = createNextIntlPlugin({
   experimental: {
     srcPath: "./src",
     extract: {
-      sourceLocale: "en",
+      sourceLocale: defaultLocale,
     },
     messages: {
       path: "./messages",
       format: "json",
-      locales: "infer",
+      locales,
     },
   },
 });
@@ -32,70 +33,6 @@ const nextConfig: NextConfig = {
     fetches: {
       fullUrl: true,
     },
-  },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // When URL already has a locale prefix (e.g. /fr/events → /subdomain/fr/events)
-        {
-          source: "/:locale(en|es|fr|de|pt|ja|zh|ko)/:path*",
-          has: [
-            {
-              type: "host",
-              value:
-                process.env.NODE_ENV === "production"
-                  ? "(?<subdomain>[^.]+).stpg.dev"
-                  : "(?<subdomain>[^.]+).localhost",
-            },
-          ],
-          missing: [
-            {
-              type: "header",
-              key: "x-proxy",
-              value: "1",
-            },
-            {
-              type: "host",
-              value:
-                process.env.NODE_ENV === "production"
-                  ? "www.stpg.dev"
-                  : "localhost",
-            },
-          ],
-          destination: "/:subdomain/:locale/:path*",
-        },
-        // When URL has no locale prefix (e.g. /events → /subdomain/en/events)
-        {
-          source:
-            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-          has: [
-            {
-              type: "host",
-              value:
-                process.env.NODE_ENV === "production"
-                  ? "(?<subdomain>[^.]+).stpg.dev"
-                  : "(?<subdomain>[^.]+).localhost",
-            },
-          ],
-          missing: [
-            // Skip this rewrite when the request came via proxy from web app
-            {
-              type: "header",
-              key: "x-proxy",
-              value: "1",
-            },
-            {
-              type: "host",
-              value:
-                process.env.NODE_ENV === "production"
-                  ? "www.stpg.dev"
-                  : "localhost",
-            },
-          ],
-          destination: "/:subdomain/en/:path*",
-        },
-      ],
-    };
   },
 };
 

@@ -1,8 +1,8 @@
 {
   "Y9HHck": "Authenticate",
   "1QcGkA": "Enter your email to receive a magic link for accessing the status page. Note: Only emails from approved domains are accepted.",
-  "txkW56": "Submitting...",
   "wSZR47": "Submit",
+  "txkW56": "Submitting...",
   "OrFVks": "Check your inbox!",
   "n36zhX": "Access the status page by clicking the link in the email.",
   "qIAQSi": "Protected Page",
@@ -84,7 +84,5 @@
   "rptmhC": "For status updates in Slack, paste the text below into any channel.",
   "2yCGR2": "Link copied to clipboard",
   "u5aHb4": "Copy Link",
-  "p556q3": "Copied",
-  "4l6vz1": "Copy",
   "45YlLU": "Validate your email to receive updates and you are all set."
 }

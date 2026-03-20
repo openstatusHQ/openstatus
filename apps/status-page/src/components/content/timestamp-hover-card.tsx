@@ -1,3 +1,5 @@
+"use client";
+
 import { UTCDate } from "@date-fns/utc";
 import {
   HoverCard,

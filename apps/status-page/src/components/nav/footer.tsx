@@ -2,7 +2,7 @@
 
 import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeDropdown } from "@/components/themes/theme-dropdown";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
@@ -45,7 +45,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <TimestampHoverCard
             date={new Date(dataUpdatedAt)}
             side="top"
@@ -61,7 +61,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
               <Skeleton className="h-4 w-28" />
             )}
           </TimestampHoverCard>
-          <LanguageSwitcher />
+          <LocaleSwitcher />
           <ThemeDropdown />
         </div>
       </div>
