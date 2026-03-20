@@ -68,7 +68,7 @@ await configure({
   loggers: [
     {
       category: "api-server",
-      lowestLevel: "error",
+      lowestLevel: "info",
       sinks: ["console"],
     },
     {
@@ -189,10 +189,7 @@ app.route("/public", publicRoute);
  * Ping Pong
  */
 app.get("/ping", (c) => {
-  return c.json(
-    { ping: "pong", region: env.FLY_REGION, requestId: c.get("requestId") },
-    200,
-  );
+  return c.json({ ping: "pong", region: env.FLY_REGION, requestId: c.get("requestId") }, 200);
 });
 
 app.get("/openapi.yaml", (c) => {
@@ -223,8 +220,7 @@ app.get(
       description: "Start building with OpenStatus API",
       ogDescription: "API Reference",
       ogTitle: "OpenStatus API",
-      ogImage:
-        "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
+      ogImage: "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
       twitterCard: "summary_large_image",
     },
   }),
