@@ -72,6 +72,16 @@ const priceSchema = z.object({
 
 export type Price = z.infer<typeof priceSchema>;
 
+export const billingIntervals = ["monthly", "yearly"] as const;
+export type BillingInterval = (typeof billingIntervals)[number];
+
+const intervalPriceSchema = z.object({
+  monthly: priceSchema,
+  yearly: priceSchema,
+});
+
+export type IntervalPrice = z.infer<typeof intervalPriceSchema>;
+
 export const addons = [
   "email-domain-protection",
   "white-label",

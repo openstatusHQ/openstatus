@@ -7,6 +7,7 @@ import { Details } from "./details";
 import { Grid } from "./grid";
 import { createHeading } from "./heading";
 import { Pre } from "./pre";
+import { PricingTabs } from "./pricing-tabs";
 import { MDXStatusPageExample } from "./status-page-example";
 import { Table } from "./table";
 import { MDXTweet } from "./tweet";
@@ -32,4 +33,5 @@ export const components = {
   SimpleChart: LatencyChartTable,
   Tweet: MDXTweet,
   StatusPageExample: MDXStatusPageExample,
+  PricingTabs,
 };
