@@ -319,68 +319,68 @@ importers:
   apps/docs:
     dependencies:
       '@astrojs/check':
-        specifier: ^0.9.8
+        specifier: 0.9.8
         version: 0.9.8(prettier@3.6.2)(typescript@5.9.3)
       '@astrojs/react':
-        specifier: ^5.0.1
+        specifier: 5.0.1
         version: 5.0.1(@types/node@24.10.1)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(jiti@2.6.1)(lightningcss@1.32.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(terser@5.44.1)(yaml@2.8.3)
       '@astrojs/sitemap':
-        specifier: ^3.7.1
+        specifier: 3.7.1
         version: 3.7.1
       '@astrojs/starlight':
-        specifier: ^0.38.2
+        specifier: 0.38.2
         version: 0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))
       '@astrojs/starlight-tailwind':
-        specifier: ^5.0.0
+        specifier: 5.0.0
         version: 5.0.0(@astrojs/starlight@0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(tailwindcss@4.2.2)
       '@fontsource-variable/inter':
         specifier: 5.2.8
         version: 5.2.8
       '@openpanel/astro':
-        specifier: ^1.3.0
+        specifier: 1.3.0
         version: 1.3.0(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))
       '@tailwindcss/vite':
-        specifier: ^4.2.2
+        specifier: 4.2.2
         version: 4.2.2(vite@7.3.1(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(yaml@2.8.3))
       astro:
-        specifier: ^6.0.8
+        specifier: 6.0.8
         version: 6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)
       astro-font:
-        specifier: ^1.1.0
+        specifier: 1.1.0
         version: 1.1.0
       marked:
-        specifier: ^17.0.1
-        version: 17.0.5
+        specifier: 17.0.1
+        version: 17.0.1
       sharp:
-        specifier: ^0.34.5
+        specifier: 0.34.5
         version: 0.34.5
       shiki:
-        specifier: ^4.0.2
+        specifier: 4.0.2
         version: 4.0.2
       starlight-image-zoom:
-        specifier: ^0.14.1
+        specifier: 0.14.1
         version: 0.14.1(@astrojs/starlight@0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))
       starlight-links-validator:
-        specifier: ^0.20.1
+        specifier: 0.20.1
         version: 0.20.1(@astrojs/starlight@0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))
       starlight-llms-txt:
-        specifier: ^0.8.0
+        specifier: 0.8.0
         version: 0.8.0(@astrojs/starlight@0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))
       starlight-showcases:
-        specifier: ^0.3.2
+        specifier: 0.3.2
         version: 0.3.2(@astrojs/starlight@0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))
       starlight-sidebar-topics:
-        specifier: ^0.7.1
+        specifier: 0.7.1
         version: 0.7.1(@astrojs/starlight@0.38.2(astro@6.0.8(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))
       tailwindcss:
-        specifier: ^4.2.2
+        specifier: 4.2.2
         version: 4.2.2
       unplugin-icons:
-        specifier: ^23.0.1
+        specifier: 23.0.1
         version: 23.0.1
     devDependencies:
       '@iconify-json/lucide':
-        specifier: ^1.2.98
+        specifier: 1.2.98
         version: 1.2.98
       typescript:
         specifier: 5.9.3
@@ -10068,8 +10068,8 @@ packages:
     engines: {node: '>= 18'}
     hasBin: true
 
-  marked@17.0.5:
-    resolution: {integrity: sha512-6hLvc0/JEbRjRgzI6wnT2P1XuM1/RrrDEX0kPt0N7jGm1133g6X7DlxFasUIx+72aKAr904GTxhSLDrd5DIlZg==}
+  marked@17.0.1:
+    resolution: {integrity: sha512-boeBdiS0ghpWcSwoNm/jJBwdpFaMnZWRzjA6SkUMYb40SVaN1x7mmfGKp0jvexGcx+7y2La5zRZsYFZI6Qpypg==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -12095,9 +12095,6 @@ packages:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
-
-  ufo@1.6.1:
-    resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
   ufo@1.6.3:
     resolution: {integrity: sha512-yDJTmhydvl5lJzBmy/hyOAA0d+aqCBuwl818haVdYCRrWV84o7YyeVm4QlVHStqNrrJSTb6jKuFAVqAFsr+K3Q==}
@@ -18784,9 +18781,9 @@ snapshots:
     dependencies:
       acorn: 8.15.0
 
-  acorn-import-phases@1.0.4(acorn@8.15.0):
+  acorn-import-phases@1.0.4(acorn@8.16.0):
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.16.0
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
@@ -19790,7 +19787,7 @@ snapshots:
   esast-util-from-js@2.0.1:
     dependencies:
       '@types/estree-jsx': 1.0.5
-      acorn: 8.15.0
+      acorn: 8.16.0
       esast-util-from-estree: 2.0.0
       vfile-message: 4.0.3
 
@@ -21302,7 +21299,7 @@ snapshots:
 
   marked@15.0.12: {}
 
-  marked@17.0.5: {}
+  marked@17.0.1: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -21826,10 +21823,10 @@ snapshots:
 
   mlly@1.8.0:
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.16.0
       pathe: 2.0.3
       pkg-types: 1.3.1
-      ufo: 1.6.1
+      ufo: 1.6.3
 
   module-details-from-path@1.0.4: {}
 
@@ -22111,7 +22108,7 @@ snapshots:
     dependencies:
       destr: 2.0.5
       node-fetch-native: 1.6.7
-      ufo: 1.6.1
+      ufo: 1.6.3
 
   ohash@2.0.11: {}
 
@@ -23406,7 +23403,7 @@ snapshots:
     dependencies:
       '@img/colour': 1.0.0
       detect-libc: 2.1.2
-      semver: 7.7.3
+      semver: 7.7.4
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.34.5
       '@img/sharp-darwin-x64': 0.34.5
@@ -23874,7 +23871,7 @@ snapshots:
   terser@5.44.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.15.0
+      acorn: 8.16.0
       commander: 2.20.3
       source-map-support: 0.5.21
 
@@ -24143,13 +24140,11 @@ snapshots:
 
   typescript-auto-import-cache@0.3.6:
     dependencies:
-      semver: 7.7.3
+      semver: 7.7.4
 
   typescript@5.4.5: {}
 
   typescript@5.9.3: {}
-
-  ufo@1.6.1: {}
 
   ufo@1.6.3: {}
 
@@ -24305,7 +24300,7 @@ snapshots:
   unplugin@2.3.11:
     dependencies:
       '@jridgewell/remapping': 2.3.5
-      acorn: 8.15.0
+      acorn: 8.16.0
       picomatch: 4.0.3
       webpack-virtual-modules: 0.6.2
 
@@ -24505,7 +24500,7 @@ snapshots:
   volar-service-typescript@0.0.70(@volar/language-service@2.4.28):
     dependencies:
       path-browserify: 1.0.1
-      semver: 7.7.3
+      semver: 7.7.4
       typescript-auto-import-cache: 0.3.6
       vscode-languageserver-textdocument: 1.0.12
       vscode-nls: 5.2.0
@@ -24600,11 +24595,11 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      acorn: 8.16.0
+      acorn-import-phases: 1.0.4(acorn@8.16.0)
       browserslist: 4.28.1
       chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.18.4
+      enhanced-resolve: 5.20.1
       es-module-lexer: 1.7.0
       eslint-scope: 5.1.1
       events: 3.3.0
