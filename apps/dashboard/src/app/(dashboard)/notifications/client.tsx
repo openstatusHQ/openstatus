@@ -23,16 +23,13 @@ import { columns } from "@/components/data-table/notifications/columns";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { config } from "@/data/notifications.client";
+import { getDashboardPublicUrl } from "@/lib/public-url";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "./search-params";
 
-// FIXME: WARNING we are using the `web` api url here
-const BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://www.openstatus.dev";
+const BASE_URL = getDashboardPublicUrl();
 
 export function Client() {
   const trpc = useTRPC();

@@ -11,6 +11,7 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
+import { getDashboardPublicUrl } from "@/lib/public-url";
 import { useTRPC } from "@/lib/trpc/client";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -18,10 +19,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const SERVER_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://api.openstatus.dev"
-    : "http://localhost:3000";
+const SERVER_URL = getDashboardPublicUrl();
 
 interface SlackIntegrationCardProps {
   locked?: boolean;

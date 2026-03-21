@@ -161,9 +161,13 @@ function getRedirectUri(c: Context): string {
 }
 
 function getDashboardUrl(): string {
-  return env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+  return (
+    process.env.DASHBOARD_PUBLIC_URL ||
+    process.env.NEXT_PUBLIC_URL ||
+    (env.NODE_ENV === "production"
+      ? "https://app.openstatus.dev"
+      : "http://localhost:3000")
+  ).replace(/\/$/, "");
 }
 
 function encodeState(state: OAuthState): string {

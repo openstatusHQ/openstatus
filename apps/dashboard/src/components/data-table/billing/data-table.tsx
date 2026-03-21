@@ -15,6 +15,7 @@ import {
 } from "@openstatus/ui/components/ui/table";
 
 import { config as featureGroups, plans } from "@/data/plans";
+import { getDashboardPublicUrl } from "@/lib/public-url";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -28,10 +29,7 @@ import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+const BASE_URL = getDashboardPublicUrl();
 
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const [currency] = useCookieState("x-currency", "USD");

@@ -24,24 +24,54 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const client = new CloudTasksClient({
-  projectId: env().GCP_PROJECT_ID,
-  fallback: "rest",
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
-
-const parent = client.queuePath(
-  env().GCP_PROJECT_ID,
-  env().GCP_LOCATION,
-  "workflow",
-);
-
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 
+type CloudTaskContext = {
+  client: CloudTasksClient;
+  parent: string;
+};
+
+function getCloudTaskContext(queue: string): CloudTaskContext | null {
+  const currentEnv = env();
+  const hasCloudTaskConfig = Boolean(
+    currentEnv.GCP_PROJECT_ID.trim() &&
+      currentEnv.GCP_CLIENT_EMAIL.trim() &&
+      currentEnv.GCP_PRIVATE_KEY.trim() &&
+      currentEnv.GCP_LOCATION.trim(),
+  );
+
+  if (currentEnv.SELF_HOST === "true" || !hasCloudTaskConfig) {
+    return null;
+  }
+
+  const client = new CloudTasksClient({
+    projectId: currentEnv.GCP_PROJECT_ID,
+    fallback: "rest",
+    credentials: {
+      client_email: currentEnv.GCP_CLIENT_EMAIL,
+      private_key: currentEnv.GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+
+  return {
+    client,
+    parent: client.queuePath(
+      currentEnv.GCP_PROJECT_ID,
+      currentEnv.GCP_LOCATION,
+      queue,
+    ),
+  };
+}
+
 export async function LaunchMonitorWorkflow() {
+  const cloudTaskContext = getCloudTaskContext("workflow");
+  if (!cloudTaskContext) {
+    console.log(
+      "Skipping monitor lifecycle workflow: Cloud Tasks are unavailable in self-host mode.",
+    );
+    return;
+  }
+
   // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
   const twoMonthAgo = new Date().setMonth(new Date().getMonth() - 2);
 
@@ -130,7 +160,7 @@ export async function LaunchMonitorWorkflow() {
 
   for (const user of users) {
     await limiter.removeTokens(1);
-    const workflow = workflowInit({ user });
+    const workflow = workflowInit({ user, cloudTaskContext });
     allResult.push(workflow);
   }
 
@@ -146,12 +176,14 @@ export async function LaunchMonitorWorkflow() {
 
 async function workflowInit({
   user,
+  cloudTaskContext,
 }: {
   user: {
     userId: number;
     email: string | null;
     workspaceId: number;
   };
+  cloudTaskContext: CloudTaskContext;
 }) {
   console.log(`Starting workflow for ${user.userId}`);
   // Let's check if the user is in the workflow
@@ -174,8 +206,7 @@ async function workflowInit({
     return;
   }
   await CreateTask({
-    parent,
-    client: client,
+    cloudTaskContext,
     step: "14days",
     userId: user.userId,
     initialRun: new Date().getTime(),
@@ -187,6 +218,7 @@ async function workflowInit({
 }
 
 export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
+  const cloudTaskContext = getCloudTaskContext("workflow");
   const user = await getUser(userId);
 
   // Send email saying we are going to pause the monitors
@@ -209,17 +241,19 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
       },
     ]);
 
-    await CreateTask({
-      parent,
-      client: client,
-      step: "3days",
-      userId: user.id,
-      initialRun: workFlowRunTimestamp,
-    });
+    if (cloudTaskContext) {
+      await CreateTask({
+        cloudTaskContext,
+        step: "3days",
+        userId: user.id,
+        initialRun: workFlowRunTimestamp,
+      });
+    }
   }
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
+  const cloudTaskContext = getCloudTaskContext("workflow");
   // check if user has connected
   const hasConnected = await hasUserLoggedIn({
     userId,
@@ -253,13 +287,14 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   // Send second email
   //TODO: Send email
   // Let's schedule the next task
-  await CreateTask({
-    client,
-    parent,
-    step: "paused",
-    userId,
-    initialRun: workFlowRunTimestamp,
-  });
+  if (cloudTaskContext) {
+    await CreateTask({
+      cloudTaskContext,
+      step: "paused",
+      userId,
+      initialRun: workFlowRunTimestamp,
+    });
+  }
 }
 
 export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
@@ -347,19 +382,18 @@ async function hasUserLoggedIn({
 }
 
 function CreateTask({
-  parent,
-  client,
+  cloudTaskContext,
   step,
   userId,
   initialRun,
 }: {
-  parent: string;
-  client: CloudTasksClient;
+  cloudTaskContext: CloudTaskContext;
   step: z.infer<typeof workflowStepSchema>;
   userId: number;
   initialRun: number;
 }) {
-  const url = `https://openstatus-workflows.fly.dev/cron/monitors/${step}?userId=${userId}&initialRun=${initialRun}`;
+  const workflowsBaseUrl = env().WORKFLOWS_BASE_URL.replace(/\/$/, "");
+  const url = `${workflowsBaseUrl}/cron/monitors/${step}?userId=${userId}&initialRun=${initialRun}`;
   const timestamp = getScheduledTime(step);
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
@@ -375,8 +409,8 @@ function CreateTask({
     },
   };
 
-  const request = { parent: parent, task: newTask };
-  return client.createTask(request);
+  const request = { parent: cloudTaskContext.parent, task: newTask };
+  return cloudTaskContext.client.createTask(request);
 }
 
 function getScheduledTime(step: z.infer<typeof workflowStepSchema>) {

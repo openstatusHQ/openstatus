@@ -7,6 +7,17 @@ import {
   transformHeaders,
 } from "@openstatus/utils";
 
+function isSelfHost() {
+  return process.env.SELF_HOST === "true";
+}
+
+function getCheckerBaseUrl() {
+  return (process.env.CHECKER_BASE_URL || "http://checker:8080").replace(
+    /\/$/,
+    "",
+  );
+}
+
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,
   status: z.infer<typeof selectMonitorSchema>["status"],
@@ -72,6 +83,10 @@ export function getCheckerUrl(
     data: false,
   },
 ): string {
+  if (isSelfHost()) {
+    return `${getCheckerBaseUrl()}/checker/${monitor.jobType}?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
+  }
+
   switch (monitor.jobType) {
     case "http":
       return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
