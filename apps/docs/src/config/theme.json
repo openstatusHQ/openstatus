@@ -25,7 +25,7 @@
   },
   "fonts": {
     "font_family": {
-      "primary": "Inter:wght@400;500;600",
+      "primary": "CommitMono",
       "primary_type": "sans-serif"
     },
     "font_size": {

@@ -1,6 +1,4 @@
 ---
-import { AstroFont } from "astro-font";
-import theme from "@/config/theme.json";
 import { NEXT_PUBLIC_OPENPANEL_CLIENT_ID } from "astro:env/client";
 import { OpenPanelComponent } from "@openpanel/astro";
 
@@ -8,37 +6,12 @@ const { head } = Astro.locals.starlightRoute;
 const title = Astro.locals.starlightRoute.entry.data.title;
 const { siteTitle } = Astro.locals.starlightRoute;
 const ogUrl = `https://openstatus.dev/api/og?title=${encodeURIComponent(siteTitle)}&description=${encodeURIComponent(title)}`;
-
-// font families
-const pf = theme.fonts.font_family.primary;
-
-let fontPrimary;
-if (theme.fonts.font_family.primary) {
-  fontPrimary = theme.fonts.font_family.primary
-    .replace(/\+/g, " ")
-    .replace(/:[ital,]*[ital@]*[wght@]*[0-9,;.]+/gi, "");
-}
 ---
 
 {head.map(({ tag: Tag, attrs, content }) => <Tag {...attrs} set:html={content} />)}
 
 <meta property="og:image" content={ogUrl} />
 <meta name="twitter:image" content={ogUrl} />
-
-<!-- google font css -->
-<AstroFont
-  config={[
-    {
-      src: [],
-      preload: false,
-      display: "swap",
-      name: fontPrimary!,
-      fallback: "sans-serif",
-      cssVariable: "font-primary",
-      googleFontsURL: `https://fonts.googleapis.com/css2?family=${pf}&display=swap`,
-    },
-  ]}
-/>
 
 <!-- OpenStatus analytics and fonts -->
 <script is:inline defer data-domain="docs.openstatus.dev" src="https://plausible.io/js/script.js" />
