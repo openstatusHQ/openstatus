@@ -23,6 +23,7 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Check, Copy, Inbox } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
@@ -55,6 +56,7 @@ export function StatusUpdates({
   onSubscribe,
   ...props
 }: StatusUpdatesProps) {
+  const t = useExtracted();
   const [success, setSuccess] = useState(false);
 
   if (types.length === 0) return null;
@@ -68,26 +70,26 @@ export function StatusUpdates({
           className={cn(className)}
           {...props}
         >
-          Get updates
+          {t("Get updates")}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 overflow-hidden p-0">
         <Tabs defaultValue={types[0]}>
           <TabsList className="w-full rounded-none border-b">
             {types.includes("email") ? (
-              <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="email">{t("Email")}</TabsTrigger>
             ) : null}
             {types.includes("slack") ? (
-              <TabsTrigger value="slack">Slack</TabsTrigger>
+              <TabsTrigger value="slack">{t("Slack")}</TabsTrigger>
             ) : null}
             {types.includes("rss") ? (
-              <TabsTrigger value="rss">RSS</TabsTrigger>
+              <TabsTrigger value="rss">{t("RSS")}</TabsTrigger>
             ) : null}
             {types.includes("json") ? (
-              <TabsTrigger value="json">JSON</TabsTrigger>
+              <TabsTrigger value="json">{t("JSON")}</TabsTrigger>
             ) : null}
             {types.includes("ssh") ? (
-              <TabsTrigger value="ssh">SSH</TabsTrigger>
+              <TabsTrigger value="ssh">{t("SSH")}</TabsTrigger>
             ) : null}
           </TabsList>
           <TabsContent value="email" className="flex flex-col gap-2">
@@ -97,8 +99,9 @@ export function StatusUpdates({
               <>
                 <div className="flex flex-col gap-2">
                   <p className="px-2 text-sm">
-                    Get email notifications whenever a report has been created
-                    or resolved
+                    {t(
+                      "Get email notifications whenever a report has been created or resolved",
+                    )}
                   </p>
                   <FormSubscribeEmail
                     id="email-form"
@@ -112,7 +115,7 @@ export function StatusUpdates({
                 <Separator />
                 <div className="px-2 pb-2">
                   <Button className="w-full" type="submit" form="email-form">
-                    Subscribe
+                    {t("Subscribe")}
                   </Button>
                 </div>{" "}
               </>
@@ -120,7 +123,7 @@ export function StatusUpdates({
           </TabsContent>
           <TabsContent value="rss" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2">
-              <p className="text-sm">Get the RSS feed</p>
+              <p className="text-sm">{t("Get the RSS feed")}</p>
               <CopyInputButton
                 className="w-full"
                 id="rss"
@@ -129,7 +132,7 @@ export function StatusUpdates({
             </div>
             <Separator />
             <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">Get the Atom feed</p>
+              <p className="text-sm">{t("Get the Atom feed")}</p>
               <CopyInputButton
                 className="w-full"
                 id="atom"
@@ -139,7 +142,7 @@ export function StatusUpdates({
           </TabsContent>
           <TabsContent value="json" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">Get the JSON updates</p>
+              <p className="text-sm">{t("Get the JSON updates")}</p>
               <CopyInputButton
                 className="w-full"
                 id="json"
@@ -149,7 +152,7 @@ export function StatusUpdates({
           </TabsContent>
           <TabsContent value="ssh" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">Get status via SSH</p>
+              <p className="text-sm">{t("Get status via SSH")}</p>
               <CopyInputButton
                 className="w-full"
                 id="ssh"
@@ -160,8 +163,9 @@ export function StatusUpdates({
           <TabsContent value="slack" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">
               <p className="text-sm">
-                For status updates in Slack, paste the text below into any
-                channel.
+                {t(
+                  "For status updates in Slack, paste the text below into any channel.",
+                )}
               </p>
               <CopyInputButton
                 className="w-full"
@@ -183,6 +187,7 @@ function CopyInputButton({
 }: React.ComponentProps<typeof Input> & {
   value: string;
 }) {
+  const t = useExtracted();
   const { copy, isCopied } = useCopyToClipboard();
   return (
     <div className="relative w-full">
@@ -191,7 +196,7 @@ function CopyInputButton({
         readOnly
         onClick={(e) => {
           copy(value, {
-            successMessage: "Link copied to clipboard",
+            successMessage: t("Link copied to clipboard"),
             withToast: true,
           });
           onClick?.(e);
@@ -203,25 +208,26 @@ function CopyInputButton({
         size="icon"
         onClick={() =>
           copy(value, {
-            successMessage: "Link copied to clipboard",
+            successMessage: t("Link copied to clipboard"),
           })
         }
         className="-translate-y-1/2 absolute top-1/2 right-2 size-6"
       >
         {isCopied ? <Check /> : <Copy />}
-        <span className="sr-only">Copy Link</span>
+        <span className="sr-only">{t("Copy Link")}</span>
       </Button>
     </div>
   );
 }
 
 function SuccessMessage() {
+  const t = useExtracted();
   return (
     <div className="flex flex-col items-center justify-center gap-1 p-3">
       <Inbox className="size-4 shrink-0" />
-      <p className="text-center font-medium">Check your inbox!</p>
+      <p className="text-center font-medium">{t("Check your inbox!")}</p>
       <p className="text-center text-muted-foreground text-sm">
-        Validate your email to receive updates and you are all set.
+        {t("Validate your email to receive updates and you are all set.")}
       </p>
     </div>
   );

@@ -146,6 +146,21 @@ async function main() {
     .run();
 
   await db
+    .insert(page)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      title: "Acme Inc.",
+      description: "Get informed about our services.",
+      icon: "https://www.openstatus.dev/favicon.ico",
+      slug: "acme",
+      customDomain: "status.acme.com",
+      published: true,
+    })
+    .onConflictDoNothing()
+    .run();
+
+  await db
     .insert(user)
     .values({
       id: 1,

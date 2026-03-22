@@ -1,3 +1,5 @@
+"use client";
+
 import { UTCDate } from "@date-fns/utc";
 import {
   HoverCard,
@@ -13,6 +15,7 @@ import {
 import { format } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Check, Copy } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useEffect, useState } from "react";
 
 export function TimestampHoverCard({
@@ -31,6 +34,7 @@ export function TimestampHoverCard({
   alignOffset?: HoverCardContentProps["alignOffset"];
   sideOffset?: HoverCardContentProps["sideOffset"];
 }) {
+  const t = useExtracted();
   const [open, setOpen] = useState(false);
   const isTouch = useMediaQuery("(hover: none)");
   const [_, setRerender] = useState(0);
@@ -74,7 +78,7 @@ export function TimestampHoverCard({
             <Row value={utc} label="UTC" />
             {/* <Row value={date.toISOString()} label="ISO" /> */}
             {/* <Row value={String(date.getTime())} label="Timestamp" /> */}
-            <Row value={relative} label="Relative" />
+            <Row value={relative} label={t("Relative")} />
           </dl>
         </HoverCardContent>
       </HoverCardPortal>

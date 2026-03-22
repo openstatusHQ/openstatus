@@ -6,6 +6,7 @@ import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
+import { resolveRoute } from "./lib/resolve-route";
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -14,42 +15,17 @@ export default auth(async (req) => {
   const headers = req.headers;
   const host = headers.get("x-forwarded-host");
 
-  let prefix = "";
-  let type: "hostname" | "pathname";
-
-  const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
-  const pathnames = url.pathname.split("/");
-
-  const subdomain = getValidSubdomain(url.host);
-  console.log({
-    hostnames,
-    pathnames,
+  const route = resolveRoute({
     host,
     urlHost: url.host,
-    subdomain,
+    pathname: url.pathname,
   });
 
-  if (
-    hostnames.length > 2 &&
-    hostnames[0] !== "www" &&
-    !url.host.endsWith(".vercel.app")
-  ) {
-    prefix = hostnames[0].toLowerCase();
-    type = "hostname";
-  } else {
-    prefix = pathnames[1].toLowerCase();
-    type = "pathname";
-  }
-
-  if (subdomain !== null) {
-    prefix = subdomain.toLowerCase();
-  }
-
-  console.log({ pathname: url.pathname, type, prefix, subdomain });
-
-  if (url.pathname === "/" && type !== "hostname" && subdomain === null) {
+  if (!route) {
     return response;
   }
+
+  const { type, prefix } = route;
 
   const query = await db
     .select()
@@ -157,7 +133,10 @@ export default auth(async (req) => {
     host,
     expectedHost: `${_page.slug}.stpg.dev`,
   });
+
   if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+    const pathnames = url.pathname.split("/");
+    const subdomain = getValidSubdomain(url.host);
     if (pathnames.length > 2 && !subdomain) {
       const pathname = pathnames.slice(2).join("/");
       const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
@@ -166,16 +145,12 @@ export default auth(async (req) => {
     }
     if (_page.customDomain && subdomain) {
       console.log({ url: req.url });
-      // const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
-      // console.log({newUrl: vercelURL})
       if (pathnames.length > 2) {
         const pathname = pathnames.slice(1).join("/");
-
         const rewriteUrl = new URL(
           `${pathname}`,
           `https://${_page.slug}.stpg.dev`,
         );
-        console.log({ rewriteUrl });
         rewriteUrl.search = url.search;
         return NextResponse.rewrite(rewriteUrl);
       }
@@ -183,12 +158,10 @@ export default auth(async (req) => {
         `${url.pathname}`,
         `https://${_page.slug}.stpg.dev`,
       );
-      console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
     }
     const rewriteUrl = new URL(`/${_page.slug}`, req.url);
-    console.log({ rewriteUrl });
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
   }
@@ -198,6 +171,15 @@ export default auth(async (req) => {
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
   }
+
+  // Rewrite to the resolved path when it differs from the incoming pathname
+  // (e.g. hostname routing or pathname routing without a locale segment)
+  if (route.rewritePath !== url.pathname) {
+    const rewriteUrl = new URL(route.rewritePath, req.url);
+    rewriteUrl.search = url.search;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   return response;
 });
 

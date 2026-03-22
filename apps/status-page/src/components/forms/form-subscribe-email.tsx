@@ -19,6 +19,7 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import { useExtracted } from "next-intl";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ export function FormSubscribeEmail({
   onSubmitCallback?: () => void;
   page?: Page | null;
 }) {
+  const t = useExtracted();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -61,13 +63,13 @@ export function FormSubscribeEmail({
       try {
         const promise = onSubmit(values);
         toast.promise(promise, {
-          loading: "Subscribing...",
-          success: "Subscribed",
+          loading: t("Subscribing..."),
+          success: t("Subscribed"),
           error: (error) => {
             if (isTRPCClientError(error)) {
               return error.message;
             }
-            return "Failed to subscribe";
+            return t("Failed to subscribe");
           },
         });
         await promise;
@@ -89,7 +91,7 @@ export function FormSubscribeEmail({
           name="email"
           render={({ field }) => (
             <FormItem className="px-2">
-              <FormLabel className="sr-only">Email</FormLabel>
+              <FormLabel className="sr-only">{t("Email")}</FormLabel>
               <FormControl>
                 <Input placeholder="subscribe@me.com" {...field} />
               </FormControl>
@@ -108,7 +110,7 @@ export function FormSubscribeEmail({
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel>Subscribe to specific components</FormLabel>
+              <FormLabel>{t("Subscribe to specific components")}</FormLabel>
             </FormItem>
           )}
         />
@@ -242,10 +244,10 @@ export function FormSubscribeEmail({
               ) : (
                 <StatusBlankContainer>
                   <StatusBlankTitle>
-                    No components to subscribe to
+                    {t("No components to subscribe to")}
                   </StatusBlankTitle>
                   <StatusBlankDescription>
-                    This page has no components to subscribe to.
+                    {t("This page has no components to subscribe to.")}
                   </StatusBlankDescription>
                 </StatusBlankContainer>
               )}

@@ -53,6 +53,7 @@
     "lucide-react": "0.525.0",
     "next": "16.1.6",
     "next-auth": "5.0.0-beta.29",
+    "next-intl": "^4.8.3",
     "next-plausible": "3.12.5",
     "next-themes": "0.4.6",
     "nuqs": "2.8.5",

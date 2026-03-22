@@ -17,7 +17,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-export const schema = z.object({
+const schema = z.object({
   value: z.enum(["duration", "requests", "manual"]).prefault("duration"),
   type: z.enum(["absolute", "manual"]).prefault("absolute"),
   uptime: z.coerce.boolean().prefault(true),

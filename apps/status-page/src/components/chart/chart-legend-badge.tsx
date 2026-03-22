@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useExtracted } from "next-intl";
 import * as React from "react";
 import type * as RechartsPrimitive from "recharts";
 import type { Payload } from "recharts/types/component/DefaultLegendContent";
@@ -34,6 +35,7 @@ export function ChartLegendBadge({
     annotation?: Record<string, string | number | undefined>;
     tooltip?: Record<string, string | undefined>;
   }) {
+  const t = useExtracted();
   const { config } = useChart();
   const [focusedIndex, setFocusedIndex] = React.useState(0);
   const buttonRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
@@ -72,7 +74,7 @@ export function ChartLegendBadge({
       )}
       onKeyDown={handleKeyDown}
       role="group"
-      aria-label="Chart legend"
+      aria-label={t("Chart legend")}
     >
       {filteredPayload.map((item, index) => {
         const key = `${nameKey || item.dataKey || "value"}`;

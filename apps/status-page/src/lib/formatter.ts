@@ -41,17 +41,21 @@ export function formatNumber(
 
 // TODO: think of supporting custom formats
 
-export function formatDate(date: Date, options?: Intl.DateTimeFormatOptions) {
-  return date.toLocaleDateString("en-US", {
+export function formatDate(
+  date: Date,
+  options?: Intl.DateTimeFormatOptions & { locale?: string },
+) {
+  const { locale, ...rest } = options ?? {};
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-    ...options,
+    ...rest,
   });
 }
 
-export function formatDateTime(date: Date) {
-  return date.toLocaleDateString("en-US", {
+export function formatDateTime(date: Date, locale?: string) {
+  return date.toLocaleDateString(locale, {
     month: "long",
     day: "numeric",
     hour: "numeric",
@@ -59,40 +63,40 @@ export function formatDateTime(date: Date) {
   });
 }
 
-export function formatTime(date: Date) {
-  return date.toLocaleTimeString("en-US", {
+export function formatTime(date: Date, locale?: string) {
+  return date.toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "numeric",
   });
 }
 
-export function formatDateRange(from?: Date, to?: Date) {
+export function formatDateRange(from?: Date, to?: Date, locale?: string) {
   const sameDay = from && to && isSameDay(from, to);
   const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
   const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
 
   if (sameDay) {
     if (from.getTime() === to.getTime()) {
-      return formatDateTime(from);
+      return formatDateTime(from, locale);
     }
     if (from && to) {
-      return `${formatDateTime(from)} - ${formatTime(to)}`;
+      return `${formatDateTime(from, locale)} - ${formatTime(to, locale)}`;
     }
   }
 
   if (from && to) {
     if (isFromStartDay && isToEndDay) {
-      return `${formatDate(from)} - ${formatDate(to)}`;
+      return `${formatDate(from, { locale })} - ${formatDate(to, { locale })}`;
     }
-    return `${formatDateTime(from)} - ${formatDateTime(to)}`;
+    return `${formatDateTime(from, locale)} - ${formatDateTime(to, locale)}`;
   }
 
   if (to) {
-    return `Until ${formatDateTime(to)}`;
+    return `Until ${formatDateTime(to, locale)}`;
   }
 
   if (from) {
-    return `Since ${formatDateTime(from)}`;
+    return `Since ${formatDateTime(from, locale)}`;
   }
 
   return "All time";

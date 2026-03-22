@@ -18,6 +18,7 @@ import {
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
+import { useExtracted } from "next-intl";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ export function FormManageSubscription({
   page?: Page | null;
   defaultValues?: FormValues;
 }) {
+  const t = useExtracted();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -60,13 +62,13 @@ export function FormManageSubscription({
       try {
         const promise = onSubmit(values);
         toast.promise(promise, {
-          loading: "Updating subscription...",
-          success: "Subscription updated",
+          loading: t("Updating subscription..."),
+          success: t("Subscription updated"),
           error: (error) => {
             if (isTRPCClientError(error)) {
               return error.message;
             }
-            return "Failed to update subscription";
+            return t("Failed to update subscription");
           },
         });
         await promise;
@@ -96,7 +98,7 @@ export function FormManageSubscription({
                   }}
                 />
               </FormControl>
-              <FormLabel>Subscribe to specific components</FormLabel>
+              <FormLabel>{t("Subscribe to specific components")}</FormLabel>
             </FormItem>
           )}
         />
@@ -224,10 +226,10 @@ export function FormManageSubscription({
             ) : (
               <StatusBlankContainer className="px-4">
                 <StatusBlankTitle>
-                  No components to subscribe to
+                  {t("No components to subscribe to")}
                 </StatusBlankTitle>
                 <StatusBlankDescription>
-                  This status page has no components to subscribe to.
+                  {t("This status page has no components to subscribe to.")}
                 </StatusBlankDescription>
               </StatusBlankContainer>
             )}
