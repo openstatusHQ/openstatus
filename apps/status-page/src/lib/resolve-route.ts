@@ -1,4 +1,4 @@
-import { defaultLocale, locales } from "@/i18n/config";
+import { type Locale, defaultLocale, locales } from "@/i18n/config";
 import { getValidSubdomain } from "./domain";
 
 export type RouteType = "hostname" | "pathname";
@@ -6,7 +6,7 @@ export type RouteType = "hostname" | "pathname";
 export interface ResolvedRoute {
   type: RouteType;
   prefix: string;
-  locale: string;
+  locale: Locale;
   /** Whether the locale was explicitly present in the URL (vs. falling back to default) */
   localeExplicit: boolean;
   /** The internal path to rewrite to: /{prefix}/{locale}/{rest} */
@@ -60,13 +60,20 @@ export function resolveRoute({
     return null;
   }
 
+  function isLocale(value: string | undefined): value is Locale {
+    return (
+      typeof value === "string" &&
+      (locales as readonly string[]).includes(value)
+    );
+  }
+
   // Resolve locale based on routing type
   if (type === "hostname") {
     const firstSegment = pathnames[1]?.toLowerCase();
-    const hasLocale = (locales as readonly string[]).includes(
-      firstSegment as (typeof locales)[number],
-    );
-    const locale = hasLocale ? firstSegment : defaultLocale;
+    const locale: Locale = isLocale(firstSegment)
+      ? firstSegment
+      : defaultLocale;
+    const hasLocale = isLocale(firstSegment);
     const rest = (hasLocale ? pathnames.slice(2) : pathnames.slice(1))
       .filter(Boolean)
       .join("/");
@@ -82,10 +89,8 @@ export function resolveRoute({
 
   // pathname type: locale is at index 2 (/{slug}/{locale}/...)
   const localeSegment = pathnames[2]?.toLowerCase();
-  const hasLocale = (locales as readonly string[]).includes(
-    localeSegment as (typeof locales)[number],
-  );
-  const locale = hasLocale ? localeSegment : defaultLocale;
+  const hasLocale = isLocale(localeSegment);
+  const locale: Locale = hasLocale ? localeSegment : defaultLocale;
 
   if (hasLocale) {
     // Already has locale in path — rewrite path is the pathname as-is

@@ -16,6 +16,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
+import { locales } from "@openstatus/locales";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -574,8 +575,8 @@ export const pageRouter = createTRPCRouter({
       z
         .object({
           id: z.number(),
-          defaultLocale: z.string(),
-          locales: z.array(z.string()).nullable(),
+          defaultLocale: z.enum(locales),
+          locales: z.array(z.enum(locales)).nullable(),
         })
         .refine(
           (data) => {

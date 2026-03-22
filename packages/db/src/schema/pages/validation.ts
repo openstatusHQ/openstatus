@@ -1,3 +1,4 @@
+import { locales } from "@openstatus/locales";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { THEME_KEYS } from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
@@ -49,8 +50,8 @@ export const insertPageSchema = createInsertSchema(page, {
       .optional()
       .prefault([]),
     authEmailDomains: z.array(z.string()).nullish(),
-    defaultLocale: z.string().optional().prefault("en"),
-    locales: z.array(z.string()).nullable().optional(),
+    defaultLocale: z.enum(locales).optional().prefault("en"),
+    locales: z.array(z.enum(locales)).nullable().optional(),
   })
   .refine(
     (data) => {
@@ -83,8 +84,8 @@ export const selectPageSchema = createSelectSchema(page).extend({
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   authEmailDomains: stringToArray.prefault([]),
-  defaultLocale: z.string().prefault("en"),
-  locales: z.array(z.string()).nullable().prefault(null),
+  defaultLocale: z.enum(locales).prefault("en"),
+  locales: z.array(z.enum(locales)).nullable().prefault(null),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

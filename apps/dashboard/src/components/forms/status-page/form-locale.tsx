@@ -34,18 +34,17 @@ import { isTRPCClientError } from "@trpc/client";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-// Available locales with their display names — must match the translation files
-// in apps/status-page/messages/
-const AVAILABLE_LOCALES = [
-  { value: "en", label: "English" },
-  { value: "fr", label: "Français" },
-  { value: "de", label: "Deutsch" },
-] as const;
+import { type Locale, localeDetails, locales } from "@openstatus/locales";
+
+const AVAILABLE_LOCALES = locales.map((code) => ({
+  value: code,
+  label: localeDetails[code].name,
+}));
 
 const schema = z
   .object({
-    defaultLocale: z.string(),
-    locales: z.array(z.string()).nullable(),
+    defaultLocale: z.enum(locales),
+    locales: z.array(z.enum(locales)).nullable(),
   })
   .refine(
     (data) => {
@@ -113,7 +112,7 @@ export function FormLocale({
     }
   }
 
-  function toggleLocale(locale: string, checked: boolean) {
+  function toggleLocale(locale: Locale, checked: boolean) {
     const current = form.getValues("locales") ?? [];
     const updated = checked
       ? [...current, locale]
