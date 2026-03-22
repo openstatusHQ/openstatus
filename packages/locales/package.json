@@ -1,0 +1,14 @@
+{
+  "name": "@openstatus/locales",
+  "version": "1.0.0",
+  "description": "Shared locale registry for OpenStatus",
+  "main": "index.ts",
+  "scripts": {},
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "5.9.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

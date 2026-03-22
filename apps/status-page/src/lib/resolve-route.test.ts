@@ -13,6 +13,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/acme/en",
       });
     });
@@ -27,6 +28,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: true,
         rewritePath: "/acme/en",
       });
     });
@@ -41,6 +43,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/acme/fr",
       });
     });
@@ -55,6 +58,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/acme/fr/events",
       });
     });
@@ -69,6 +73,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/acme/en/events",
       });
     });
@@ -83,6 +88,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: true,
         rewritePath: "/acme/en/monitors/123",
       });
     });
@@ -99,6 +105,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: true,
         rewritePath: "/acme/en",
       });
     });
@@ -113,6 +120,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "acme",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/acme/fr",
       });
     });
@@ -127,6 +135,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/acme/en",
       });
     });
@@ -141,6 +150,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: true,
         rewritePath: "/acme/en/events",
       });
     });
@@ -155,6 +165,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "acme",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/acme/fr/monitors/123",
       });
     });
@@ -169,6 +180,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "acme",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/acme/en/events",
       });
     });
@@ -186,6 +198,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "status",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/status/en",
       });
     });
@@ -200,6 +213,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "status",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/status/fr",
       });
     });
@@ -214,6 +228,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "status",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/status/en/events",
       });
     });
@@ -228,6 +243,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "status",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/status/fr/monitors/1",
       });
     });
@@ -244,6 +260,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "status",
         locale: "en",
+        localeExplicit: false,
         rewritePath: "/status/en",
       });
     });
@@ -258,6 +275,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "status",
         locale: "en",
+        localeExplicit: true,
         rewritePath: "/status/en",
       });
     });
@@ -272,6 +290,7 @@ describe("resolveRoute", () => {
         type: "pathname",
         prefix: "status",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/status/fr/events",
       });
     });
@@ -286,11 +305,14 @@ describe("resolveRoute", () => {
         pathname: "/",
       });
       // Custom domain detected via x-forwarded-host, hostname type
+      // Note: prefix is the full custom domain since getValidSubdomain doesn't
+      // recognise "status.acme.com" as having a valid subdomain
       expect(result).toEqual({
         type: "hostname",
-        prefix: "status",
+        prefix: "status.acme.com",
         locale: "en",
-        rewritePath: "/status/en",
+        localeExplicit: false,
+        rewritePath: "/status.acme.com/en",
       });
     });
 
@@ -302,9 +324,10 @@ describe("resolveRoute", () => {
       });
       expect(result).toEqual({
         type: "hostname",
-        prefix: "status",
+        prefix: "status.acme.com",
         locale: "fr",
-        rewritePath: "/status/fr",
+        localeExplicit: true,
+        rewritePath: "/status.acme.com/fr",
       });
     });
 
@@ -316,9 +339,10 @@ describe("resolveRoute", () => {
       });
       expect(result).toEqual({
         type: "hostname",
-        prefix: "status",
+        prefix: "status.acme.com",
         locale: "en",
-        rewritePath: "/status/en/events",
+        localeExplicit: true,
+        rewritePath: "/status.acme.com/en/events",
       });
     });
 
@@ -330,9 +354,10 @@ describe("resolveRoute", () => {
       });
       expect(result).toEqual({
         type: "hostname",
-        prefix: "status",
+        prefix: "status.acme.com",
         locale: "en",
-        rewritePath: "/status/en/monitors/1",
+        localeExplicit: false,
+        rewritePath: "/status.acme.com/en/monitors/1",
       });
     });
   });
@@ -357,6 +382,7 @@ describe("resolveRoute", () => {
         type: "hostname",
         prefix: "acme",
         locale: "fr",
+        localeExplicit: true,
         rewritePath: "/acme/fr/events",
       });
     });

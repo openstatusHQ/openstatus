@@ -1,6 +1,10 @@
 "use client";
 
-import { defaultLocale, localeTranslations, locales } from "@/i18n/config";
+import {
+  defaultLocale as globalDefaultLocale,
+  localeTranslations,
+  locales,
+} from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -15,12 +19,16 @@ import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-const DISABLE = true;
-
 export function LocaleSwitcher({
   className,
+  pageLocales,
+  pageDefaultLocale,
   ...props
-}: React.ComponentProps<typeof DropdownMenuTrigger>) {
+}: React.ComponentProps<typeof DropdownMenuTrigger> & {
+  pageLocales?: string[] | null;
+  pageDefaultLocale?: string;
+}) {
+  const defaultLocale = pageDefaultLocale || globalDefaultLocale;
   const locale = useLocale();
   const router = useRouter();
   const params = useParams();
@@ -65,7 +73,10 @@ export function LocaleSwitcher({
     });
   }
 
-  if (DISABLE) return null;
+  // Don't render if the page has no multi-locale config or only one locale
+  if (!pageLocales || pageLocales.length <= 1) {
+    return null;
+  }
 
   if (!mounted) {
     return <Skeleton className={cn("size-9", className)} />;
@@ -85,19 +96,23 @@ export function LocaleSwitcher({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" alignOffset={-4}>
         <DropdownMenuGroup>
-          {Object.entries(localeTranslations).map(([key, { name }]) => (
-            <DropdownMenuItem key={key} onClick={() => onSelectLocale(key)}>
-              {name}{" "}
-              <span
-                className={cn(
-                  "ml-auto font-mono uppercase",
-                  key === locale ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {key}
-              </span>
-            </DropdownMenuItem>
-          ))}
+          {Object.entries(localeTranslations)
+            .filter(([key]) => pageLocales?.includes(key))
+            .map(([key, { name }]) => (
+              <DropdownMenuItem key={key} onClick={() => onSelectLocale(key)}>
+                {name}{" "}
+                <span
+                  className={cn(
+                    "ml-auto font-mono uppercase",
+                    key === locale
+                      ? "text-foreground"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {key}
+                </span>
+              </DropdownMenuItem>
+            ))}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

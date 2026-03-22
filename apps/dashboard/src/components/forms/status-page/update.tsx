@@ -10,6 +10,7 @@ import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
+import { FormLocale } from "./form-locale";
 import { FormPageAccess } from "./form-page-access";
 
 export function FormStatusPageUpdate() {
@@ -70,6 +71,12 @@ export function FormStatusPageUpdate() {
 
   const updateLinksMutation = useMutation(
     trpc.page.updateLinks.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
+  const updateLocalesMutation = useMutation(
+    trpc.page.updateLocales.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -145,6 +152,19 @@ export function FormStatusPageUpdate() {
             id: Number.parseInt(id),
             forceTheme: values.forceTheme,
             configuration: values.configuration,
+          });
+        }}
+      />
+      <FormLocale
+        defaultValues={{
+          defaultLocale: statusPage.defaultLocale ?? "en",
+          locales: statusPage.locales,
+        }}
+        onSubmit={async (values) => {
+          await updateLocalesMutation.mutateAsync({
+            id: Number.parseInt(id),
+            defaultLocale: values.defaultLocale,
+            locales: values.locales,
           });
         }}
       />

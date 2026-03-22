@@ -43,6 +43,40 @@ export default auth(async (req) => {
 
   const _page = validation.data;
 
+  // Override locale with the page's default when no explicit locale was in the URL
+  if (
+    !route.localeExplicit &&
+    _page.defaultLocale &&
+    _page.defaultLocale !== route.locale
+  ) {
+    const oldLocale = route.locale;
+    route.locale = _page.defaultLocale;
+    route.rewritePath = route.rewritePath.replace(
+      `/${route.prefix}/${oldLocale}`,
+      `/${route.prefix}/${_page.defaultLocale}`,
+    );
+  }
+
+  // Reject locales not in the page's allowed list — redirect to the page's default locale
+  if (
+    _page.locales &&
+    _page.locales.length > 0 &&
+    !_page.locales.includes(route.locale)
+  ) {
+    const pageDefault = _page.defaultLocale || "en";
+    const redirectPath = route.rewritePath.replace(
+      `/${route.prefix}/${route.locale}`,
+      `/${route.prefix}/${pageDefault}`,
+    );
+    // For pathname routing, redirect to the rewrite path directly;
+    // for hostname routing, strip the prefix from the redirect URL
+    const externalPath =
+      route.type === "hostname"
+        ? redirectPath.replace(`/${route.prefix}`, "")
+        : redirectPath;
+    return NextResponse.redirect(new URL(externalPath || "/", req.url));
+  }
+
   console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
 
   if (_page?.accessType === "password") {
