@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { Fragment, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -13,12 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 
 import { config as featureGroups, plans } from "@/data/plans";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import type { BillingInterval } from "@openstatus/db/src/schema/plan/schema";
 import {
   getAddonPriceConfig,
   getPriceConfig,
@@ -34,6 +36,7 @@ const BASE_URL =
     : "http://localhost:3000";
 
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
+  const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const router = useRouter();
@@ -67,191 +70,214 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   );
 
   return (
-    <Table className="relative table-fixed">
-      <TableCaption>
-        A list to compare the different features by plan.
-      </TableCaption>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="p-2 align-bottom">
-            Features comparison
-          </TableHead>
-          {filteredPlans.map(({ id, ...plan }) => {
-            const isCurrentPlan = workspace.plan === id;
-            const price = getPriceConfig(id, currency);
-            return (
-              <TableHead
-                key={id}
-                className={cn(
-                  "h-auto p-2 align-bottom text-foreground",
-                  id === "starter" ? "bg-muted/30" : "",
-                )}
-              >
-                <div className="flex h-full flex-col justify-between gap-1">
-                  <div className="flex flex-1 flex-col gap-1">
-                    <p className="font-cal text-lg">{plan.title}</p>
-                    <p className="text-wrap font-normal text-muted-foreground text-xs">
-                      {plan.description}
-                    </p>
-                  </div>
-                  <p className="text-right">
-                    <span className="font-mono text-lg">
-                      {new Intl.NumberFormat(price.locale, {
-                        style: "currency",
-                        currency: price.currency,
-                      }).format(price.value)}
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      /month
-                    </span>
-                  </p>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant={id === "starter" ? "default" : "outline"}
-                    onClick={() => {
-                      startTransition(async () => {
-                        if (id === "free") {
-                          await customerPortalMutation.mutateAsync({
-                            workspaceSlug: workspace.slug,
-                            returnUrl: `${BASE_URL}/settings/billing`,
-                          });
-                          return;
-                        }
-                        await checkoutSessionMutation.mutateAsync({
-                          plan: id,
-                          // TODO: move to the server as we have the current workspace
-                          workspaceSlug: workspace.slug,
-                          successUrl: `${BASE_URL}/settings/billing?success=true`,
-                          cancelUrl: `${BASE_URL}/settings/billing`,
-                        });
-                      });
-                    }}
-                    disabled={isPending || isCurrentPlan}
-                  >
-                    {isCurrentPlan
-                      ? "Current Plan"
-                      : isPending
-                        ? "Choosing..."
-                        : "Choose"}
-                  </Button>
-                </div>
-              </TableHead>
-            );
-          })}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {Object.entries(featureGroups).map(
-          ([groupKey, { label, features }]) => (
-            <Fragment key={groupKey}>
-              <TableRow className="bg-muted/50">
-                <TableCell
-                  colSpan={filteredPlans.length + 1}
-                  className="font-medium"
+    <div className="space-y-4">
+      <Tabs
+        value={interval}
+        onValueChange={(v) => setInterval(v as BillingInterval)}
+      >
+        <TabsList>
+          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+          <TabsTrigger value="yearly">
+            Yearly <Badge className="ml-1.5 text-[10px]">2 months free</Badge>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <Table className="relative table-fixed">
+        <TableCaption>
+          A list to compare the different features by plan.
+        </TableCaption>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="p-2 align-bottom">
+              Features comparison
+            </TableHead>
+            {filteredPlans.map(({ id, ...plan }) => {
+              const isCurrentPlan = workspace.plan === id;
+              const price = getPriceConfig(id, currency, interval);
+              const isFreePlan = id === "free";
+              return (
+                <TableHead
+                  key={id}
+                  className={cn(
+                    "h-auto p-2 align-bottom text-foreground",
+                    id === "starter" ? "bg-muted/30" : "",
+                  )}
                 >
-                  {label}
-                </TableCell>
-              </TableRow>
-              {features.map(
-                ({ value, label: featureLabel, monthly, badge }) => (
-                  <TableRow key={groupKey + value}>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-wrap">
-                        {featureLabel}{" "}
-                        {badge ? (
-                          <Badge variant="outline">{badge}</Badge>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    {filteredPlans.map((plan) => {
-                      const limitValue =
-                        plan.limits[value as keyof typeof plan.limits];
-                      const isAddon = value in plan.addons;
+                  <div className="flex h-full flex-col justify-between gap-1">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <p className="font-cal text-lg">{plan.title}</p>
+                      <p className="text-wrap font-normal text-muted-foreground text-xs">
+                        {plan.description}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {isFreePlan ? (
+                        <p className="font-mono text-lg">Free</p>
+                      ) : (
+                        <p>
+                          <span className="font-mono text-lg">
+                            {new Intl.NumberFormat(price.locale, {
+                              style: "currency",
+                              currency: price.currency,
+                            }).format(price.value)}
+                          </span>
+                          <span className="text-muted-foreground text-sm">
+                            {interval === "yearly" ? "/year" : "/month"}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant={id === "starter" ? "default" : "outline"}
+                      onClick={() => {
+                        startTransition(async () => {
+                          if (id === "free") {
+                            await customerPortalMutation.mutateAsync({
+                              workspaceSlug: workspace.slug,
+                              returnUrl: `${BASE_URL}/settings/billing`,
+                            });
+                            return;
+                          }
+                          await checkoutSessionMutation.mutateAsync({
+                            plan: id,
+                            interval,
+                            workspaceSlug: workspace.slug,
+                            successUrl: `${BASE_URL}/settings/billing?success=true`,
+                            cancelUrl: `${BASE_URL}/settings/billing`,
+                          });
+                        });
+                      }}
+                      disabled={isPending || isCurrentPlan}
+                    >
+                      {isCurrentPlan
+                        ? "Current Plan"
+                        : isPending
+                          ? "Choosing..."
+                          : "Choose"}
+                    </Button>
+                  </div>
+                </TableHead>
+              );
+            })}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(featureGroups).map(
+            ([groupKey, { label, features }]) => (
+              <Fragment key={groupKey}>
+                <TableRow className="bg-muted/50">
+                  <TableCell
+                    colSpan={filteredPlans.length + 1}
+                    className="font-medium"
+                  >
+                    {label}
+                  </TableCell>
+                </TableRow>
+                {features.map(
+                  ({ value, label: featureLabel, monthly, badge }) => (
+                    <TableRow key={groupKey + value}>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-wrap">
+                          {featureLabel}{" "}
+                          {badge ? (
+                            <Badge variant="outline">{badge}</Badge>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      {filteredPlans.map((plan) => {
+                        const limitValue =
+                          plan.limits[value as keyof typeof plan.limits];
+                        const isAddon = value in plan.addons;
 
-                      function renderContent() {
-                        if (isAddon) {
-                          const price = getAddonPriceConfig(
-                            plan.id,
-                            value as keyof typeof plan.addons,
-                            currency,
-                          );
-                          if (!price) return null;
+                        function renderContent() {
+                          if (isAddon) {
+                            const price = getAddonPriceConfig(
+                              plan.id,
+                              value as keyof typeof plan.addons,
+                              currency,
+                            );
+                            if (!price) return null;
 
-                          const isNumber = typeof limitValue === "number";
-                          return (
-                            <div>
-                              <span>
-                                {isNumber
-                                  ? new Intl.NumberFormat("us")
-                                      .format(limitValue)
-                                      .toString()
-                                  : null}
-                              </span>
-                              <span>
-                                <span className="text-muted-foreground">
-                                  {isNumber ? " + " : ""}
+                            const isNumber = typeof limitValue === "number";
+                            return (
+                              <div>
+                                <span>
+                                  {isNumber
+                                    ? new Intl.NumberFormat("us")
+                                        .format(limitValue)
+                                        .toString()
+                                    : null}
                                 </span>
                                 <span>
-                                  {new Intl.NumberFormat(price.locale, {
-                                    style: "currency",
-                                    currency: price.currency,
-                                  }).format(price.value)}
-                                  {isNumber ? "/mo./each" : "/mo."}
+                                  <span className="text-muted-foreground">
+                                    {isNumber ? " + " : ""}
+                                  </span>
+                                  <span>
+                                    {new Intl.NumberFormat(price.locale, {
+                                      style: "currency",
+                                      currency: price.currency,
+                                    }).format(price.value)}
+                                    {isNumber ? "/mo./each" : "/mo."}
+                                  </span>
                                 </span>
+                              </div>
+                            );
+                          }
+                          if (typeof limitValue === "boolean") {
+                            return limitValue ? (
+                              <Check className="h-4 w-4 text-foreground" />
+                            ) : (
+                              <span className="text-muted-foreground/50">
+                                &#8208;
                               </span>
-                            </div>
-                          );
-                        }
-                        if (typeof limitValue === "boolean") {
-                          return limitValue ? (
-                            <Check className="h-4 w-4 text-foreground" />
-                          ) : (
-                            <span className="text-muted-foreground/50">
-                              &#8208;
-                            </span>
-                          );
-                        }
-                        if (typeof limitValue === "number") {
-                          return new Intl.NumberFormat("us")
-                            .format(limitValue)
-                            .toString();
+                            );
+                          }
+                          if (typeof limitValue === "number") {
+                            return new Intl.NumberFormat("us")
+                              .format(limitValue)
+                              .toString();
+                          }
+
+                          // TODO: create a format function for this in @data/plans
+                          if (
+                            value === "regions" &&
+                            Array.isArray(limitValue)
+                          ) {
+                            return limitValue?.length ?? 0;
+                          }
+
+                          if (
+                            Array.isArray(limitValue) &&
+                            limitValue.length > 0
+                          ) {
+                            return limitValue[0];
+                          }
+                          return limitValue;
                         }
 
-                        // TODO: create a format function for this in @data/plans
-                        if (value === "regions" && Array.isArray(limitValue)) {
-                          return limitValue?.length ?? 0;
-                        }
-
-                        if (
-                          Array.isArray(limitValue) &&
-                          limitValue.length > 0
-                        ) {
-                          return limitValue[0];
-                        }
-                        return limitValue;
-                      }
-
-                      return (
-                        <TableCell
-                          key={plan.id + value}
-                          className={cn(
-                            "font-mono",
-                            plan.id === "starter" && "bg-muted/30",
-                          )}
-                        >
-                          {renderContent()}
-                          {monthly ? "/mo." : ""}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ),
-              )}
-            </Fragment>
-          ),
-        )}
-      </TableBody>
-    </Table>
+                        return (
+                          <TableCell
+                            key={plan.id + value}
+                            className={cn(
+                              "font-mono",
+                              plan.id === "starter" && "bg-muted/30",
+                            )}
+                          >
+                            {renderContent()}
+                            {monthly ? "/mo." : ""}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ),
+                )}
+              </Fragment>
+            ),
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

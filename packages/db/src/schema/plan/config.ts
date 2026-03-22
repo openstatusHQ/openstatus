@@ -1,12 +1,12 @@
 import { AVAILABLE_REGIONS, FREE_FLY_REGIONS } from "@openstatus/regions";
 import type { WorkspacePlan } from "../workspaces/validation";
-import type { Addons, PlanLimits, Price } from "./schema";
+import type { Addons, IntervalPrice, PlanLimits, Price } from "./schema";
 
 type PlanConfig = {
   title: "Hobby" | "Starter" | "Pro";
   id: WorkspacePlan;
   description: string;
-  price: Price;
+  price: IntervalPrice;
   addons: Partial<{
     [K in keyof Addons]: {
       title: string;
@@ -24,9 +24,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     id: "free",
     description: "Perfect for personal projects",
     price: {
-      USD: 0,
-      EUR: 0,
-      INR: 0,
+      monthly: { USD: 0, EUR: 0, INR: 0 },
+      yearly: { USD: 0, EUR: 0, INR: 0 },
     },
     addons: {},
     limits: {
@@ -69,9 +68,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     id: "starter",
     description: "Perfect for uptime monitoring",
     price: {
-      USD: 30,
-      EUR: 30,
-      INR: 3000,
+      monthly: { USD: 30, EUR: 30, INR: 3_000 },
+      yearly: { USD: 300, EUR: 300, INR: 30_000 },
     },
     addons: {
       "email-domain-protection": {
@@ -144,9 +142,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     id: "team",
     description: "Perfect for global synthetic monitoring",
     price: {
-      USD: 100,
-      EUR: 100,
-      INR: 10_000,
+      monthly: { USD: 100, EUR: 100, INR: 10_000 },
+      yearly: { USD: 1_000, EUR: 1_000, INR: 100_000 },
     },
     addons: {
       "email-domain-protection": {
