@@ -84,6 +84,22 @@ ssh [slug]@ssh.openstatus.dev
 
 **Example:** `ssh my-service@ssh.openstatus.dev`
 
+### Translations (i18n)
+
+**Type:** Per-page configuration
+
+Enables multi-language support for your status page. You can set a default locale and optionally enable a locale switcher so visitors can choose their preferred language.
+
+**Supported locales:** `en` (English), `fr` (Français), `de` (Deutsch)
+
+**Configuration:**
+- **Default Locale** — the fallback language for your status page (defaults to `en`).
+- **Locale Switcher** — when enabled, visitors see a language dropdown. You select which locales to offer.
+
+**Routing:** The default locale is omitted from the URL (`as-needed` prefix). Non-default locales appear in the path (e.g., `/fr/events`).
+
+See [How to translate your status page](/guides/how-to-translate-status-page) for setup instructions and contributing new translations.
+
 ### White Label
 
 **Type:** Boolean (add-on feature)
