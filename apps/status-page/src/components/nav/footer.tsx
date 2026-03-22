@@ -61,7 +61,10 @@ export function Footer(props: React.ComponentProps<"footer">) {
               <Skeleton className="h-4 w-28" />
             )}
           </TimestampHoverCard>
-          <LocaleSwitcher pageLocales={page.locales} />
+          <LocaleSwitcher
+            pageLocales={page.locales}
+            pageDefaultLocale={page.defaultLocale}
+          />
           <ThemeDropdown />
         </div>
       </div>

@@ -1,6 +1,10 @@
 "use client";
 
-import { defaultLocale, localeTranslations, locales } from "@/i18n/config";
+import {
+  defaultLocale as globalDefaultLocale,
+  localeTranslations,
+  locales,
+} from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -18,10 +22,13 @@ import { useEffect, useState, useTransition } from "react";
 export function LocaleSwitcher({
   className,
   pageLocales,
+  pageDefaultLocale,
   ...props
 }: React.ComponentProps<typeof DropdownMenuTrigger> & {
   pageLocales?: string[] | null;
+  pageDefaultLocale?: string;
 }) {
+  const defaultLocale = pageDefaultLocale || globalDefaultLocale;
   const locale = useLocale();
   const router = useRouter();
   const params = useParams();

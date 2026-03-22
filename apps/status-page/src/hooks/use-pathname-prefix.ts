@@ -1,6 +1,6 @@
 "use client";
 
-import { defaultLocale } from "@/i18n/config";
+import { defaultLocale as globalDefaultLocale } from "@/i18n/config";
 import { resolvePathnamePrefix } from "@/lib/resolve-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ export function usePathnamePrefix() {
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
   const locale = useLocale();
+  const defaultLocale = page?.defaultLocale || globalDefaultLocale;
   const [prefix, setPrefix] = useState("");
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function usePathnamePrefix() {
         }),
       );
     }
-  }, [page?.customDomain, locale]);
+  }, [page?.customDomain, locale, defaultLocale]);
 
   return prefix;
 }

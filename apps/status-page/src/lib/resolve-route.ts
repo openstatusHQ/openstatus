@@ -7,6 +7,8 @@ export interface ResolvedRoute {
   type: RouteType;
   prefix: string;
   locale: string;
+  /** Whether the locale was explicitly present in the URL (vs. falling back to default) */
+  localeExplicit: boolean;
   /** The internal path to rewrite to: /{prefix}/{locale}/{rest} */
   rewritePath: string;
 }
@@ -73,6 +75,7 @@ export function resolveRoute({
       type,
       prefix,
       locale,
+      localeExplicit: hasLocale,
       rewritePath: `/${prefix}/${locale}${rest ? `/${rest}` : ""}`,
     };
   }
@@ -90,6 +93,7 @@ export function resolveRoute({
       type,
       prefix,
       locale,
+      localeExplicit: true,
       rewritePath: pathname,
     };
   }
@@ -100,6 +104,7 @@ export function resolveRoute({
     type,
     prefix,
     locale,
+    localeExplicit: false,
     rewritePath: `/${prefix}/${locale}${rest ? `/${rest}` : ""}`,
   };
 }
