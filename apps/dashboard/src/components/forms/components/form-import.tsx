@@ -12,7 +12,7 @@ import {
 } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { StatuspageIcon } from "@openstatus/icons";
+import { BetterstackIcon, StatuspageIcon } from "@openstatus/icons";
 import type { ImportSummary } from "@openstatus/importers/types";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -40,9 +40,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const schema = z.object({
-  provider: z.enum(["statuspage"]),
+  provider: z.enum(["statuspage", "betterstack"]),
   apiKey: z.string().min(1, "API key is required"),
   statuspagePageId: z.string().optional(),
+  betterstackStatusPageId: z.string().optional(),
+  includeMonitors: z.boolean(),
   includeStatusReports: z.boolean(),
   includeSubscribers: z.boolean(),
   includeComponents: z.boolean(),
@@ -55,7 +57,10 @@ function getPhaseCount(preview: ImportSummary, phase: string): number {
 }
 
 const PHASE_LABELS: Record<string, string> = {
+  monitors: "Monitors",
   componentGroups: "Component Groups",
+  monitorGroups: "Monitor Groups",
+  sections: "Sections",
   components: "Components",
   incidents: "Status Reports",
   maintenances: "Maintenances",
@@ -75,6 +80,8 @@ export function FormImport({
       provider: undefined,
       apiKey: "",
       statuspagePageId: "",
+      betterstackStatusPageId: "",
+      includeMonitors: true,
       includeStatusReports: true,
       includeSubscribers: false,
       includeComponents: true,
@@ -85,6 +92,7 @@ export function FormImport({
   const watchProvider = form.watch("provider");
   const watchApiKey = form.watch("apiKey");
   const watchStatuspagePageId = form.watch("statuspagePageId");
+  const watchBetterstackStatusPageId = form.watch("betterstackStatusPageId");
 
   const previewMutation = useMutation(
     trpc.import.preview.mutationOptions({
@@ -105,9 +113,10 @@ export function FormImport({
       return;
     }
     previewMutation.mutate({
-      provider: "statuspage",
+      provider: watchProvider,
       apiKey: watchApiKey,
       statuspagePageId: watchStatuspagePageId || undefined,
+      betterstackStatusPageId: watchBetterstackStatusPageId || undefined,
       pageId,
     });
   }
@@ -178,6 +187,21 @@ export function FormImport({
                           Atlassian Statuspage
                         </FormLabel>
                       </FormItem>
+                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                        <FormControl>
+                          <RadioGroupItem
+                            value="betterstack"
+                            className="sr-only"
+                          />
+                        </FormControl>
+                        <BetterstackIcon
+                          className="size-4 shrink-0 text-foreground"
+                          aria-hidden="true"
+                        />
+                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                          Better Stack
+                        </FormLabel>
+                      </FormItem>
                       <div className="col-span-1 self-end text-muted-foreground text-xs sm:place-self-end">
                         Missing a provider?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
@@ -202,34 +226,59 @@ export function FormImport({
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder="OAuth API key"
+                          placeholder={
+                            watchProvider === "betterstack"
+                              ? "Bearer token"
+                              : "OAuth API key"
+                          }
                           {...field}
                         />
                       </FormControl>
                       <FormMessage />
                       <FormDescription>
-                        Your Statuspage API key. Found in your Statuspage
-                        account under Manage Account &gt; API.
+                        {watchProvider === "betterstack"
+                          ? "Your Better Stack API token. Found in Better Stack \u2192 API tokens."
+                          : "Your Statuspage API key. Found in your Statuspage account under Manage Account \u003E API."}
                       </FormDescription>
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="statuspagePageId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Page ID (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. abc123def456" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Import a specific page. Leave empty to import across
-                        pages.
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
+                {watchProvider === "statuspage" ? (
+                  <FormField
+                    control={form.control}
+                    name="statuspagePageId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Page ID (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. abc123def456" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Import a specific page. Leave empty to import across
+                          pages.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
+                {watchProvider === "betterstack" ? (
+                  <FormField
+                    control={form.control}
+                    name="betterstackStatusPageId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status Page ID (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. 123456789" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Import a specific status page. Leave empty to use the
+                          first available.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
                 <Button
                   type="button"
                   variant="secondary"
@@ -268,6 +317,29 @@ export function FormImport({
                       {previewMutation.data.errors.join(" ")}
                     </p>
                   </Note>
+                ) : null}
+                {watchProvider === "betterstack" ? (
+                  <FormField
+                    control={form.control}
+                    name="includeMonitors"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                          <FormLabel>Monitors</FormLabel>
+                          <FormDescription>
+                            Import monitors with their URL, frequency, and
+                            regions.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 ) : null}
                 <FormField
                   control={form.control}

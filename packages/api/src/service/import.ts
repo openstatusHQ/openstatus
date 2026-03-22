@@ -2,6 +2,7 @@ import { and, db, eq } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
+  monitor,
   page,
   pageComponent,
   pageComponentGroup,
@@ -13,10 +14,12 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type {
+  ImportProvider,
   ImportSummary,
   PhaseResult,
   ResourceResult,
 } from "@openstatus/importers";
+import { createBetterstackProvider } from "@openstatus/importers/betterstack";
 import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 import { TRPCError } from "@trpc/server";
 
@@ -24,7 +27,21 @@ type ImportOptions = {
   includeStatusReports?: boolean;
   includeSubscribers?: boolean;
   includeComponents?: boolean;
+  includeMonitors?: boolean;
 };
+
+function createProvider(
+  providerName: string,
+  config: Record<string, unknown>,
+): ImportProvider {
+  switch (providerName) {
+    case "betterstack":
+      return createBetterstackProvider();
+    case "statuspage":
+    default:
+      return createStatuspageProvider();
+  }
+}
 
 /**
  * Inspect an ImportSummary and push warnings into `summary.errors`
@@ -83,7 +100,28 @@ export async function addLimitWarnings(
     }
   }
 
-  // 3. Subscribers
+  // 3. Monitor count limit
+  const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
+  if (monitorsPhase && monitorsPhase.resources.length > 0) {
+    const maxMonitors = config.limits.monitors;
+    const existingMonitors = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.workspaceId, config.workspaceId))
+      .all();
+    const remaining = maxMonitors - existingMonitors.length;
+    if (remaining <= 0) {
+      summary.errors.push(
+        `Monitor limit reached (${maxMonitors}). Upgrade your plan to import monitors.`,
+      );
+    } else if (monitorsPhase.resources.length > remaining) {
+      summary.errors.push(
+        `Only ${remaining} of ${monitorsPhase.resources.length} monitors can be imported due to plan limit (${maxMonitors}).`,
+      );
+    }
+  }
+
+  // 4. Subscribers
   if (!config.limits["status-subscribers"]) {
     const subscribersPhase = summary.phases.find(
       (p) => p.phase === "subscribers",
@@ -97,13 +135,15 @@ export async function addLimitWarnings(
 }
 
 export async function previewImport(config: {
+  provider: string;
   apiKey: string;
   statuspagePageId?: string;
+  betterstackStatusPageId?: string;
   workspaceId: number;
   pageId?: number;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider = createStatuspageProvider();
+  const provider = createProvider(config.provider, config);
 
   const validation = await provider.validate({
     ...config,
@@ -122,14 +162,16 @@ export async function previewImport(config: {
 }
 
 export async function runImport(config: {
+  provider: string;
   apiKey: string;
   statuspagePageId?: string;
+  betterstackStatusPageId?: string;
   workspaceId: number;
   pageId?: number;
   options?: ImportOptions;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider = createStatuspageProvider();
+  const provider = createProvider(config.provider, config);
 
   const validation = await provider.validate(config);
   if (!validation.valid) {
@@ -149,6 +191,7 @@ export async function runImport(config: {
   const idMaps = {
     groups: new Map<string, number>(), // sourceId -> openstatusId
     components: new Map<string, number>(), // sourceId -> openstatusId
+    monitors: new Map<string, number>(), // sourceId -> openstatusId
   };
 
   let targetPageId = config.pageId;
@@ -162,6 +205,18 @@ export async function runImport(config: {
 
     try {
       switch (phase.phase) {
+        case "monitors":
+          if (config.options?.includeMonitors !== false) {
+            await writeMonitorsPhase(
+              phase,
+              config.workspaceId,
+              idMaps.monitors,
+              config.limits,
+            );
+          } else {
+            phase.status = "skipped";
+          }
+          break;
         case "page":
           targetPageId = await writePagePhase(
             phase,
@@ -170,7 +225,20 @@ export async function runImport(config: {
             config.limits,
           );
           break;
+        case "monitorGroups":
         case "componentGroups":
+          if (targetPageId && config.options?.includeComponents !== false) {
+            await writeComponentGroupsPhase(
+              phase,
+              config.workspaceId,
+              targetPageId,
+              idMaps.groups,
+            );
+          } else if (config.options?.includeComponents === false) {
+            phase.status = "skipped";
+          }
+          break;
+        case "sections":
           if (targetPageId && config.options?.includeComponents !== false) {
             await writeComponentGroupsPhase(
               phase,
@@ -666,6 +734,105 @@ async function writeMaintenancesPhase(
 
       resource.openstatusId = inserted.id;
       resource.status = "created";
+    } catch (err) {
+      resource.status = "failed";
+      resource.error = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  phase.status = computePhaseStatus(phase.resources);
+}
+
+async function writeMonitorsPhase(
+  phase: PhaseResult,
+  workspaceId: number,
+  monitorIdMap: Map<string, number>,
+  limits: Limits,
+): Promise<void> {
+  const existingMonitors = await db
+    .select()
+    .from(monitor)
+    .where(eq(monitor.workspaceId, workspaceId))
+    .all();
+  const maxMonitors = limits.monitors;
+  const remaining = maxMonitors - existingMonitors.length;
+
+  if (remaining <= 0) {
+    phase.status = "failed";
+    return;
+  }
+
+  let importedCount = 0;
+  for (const resource of phase.resources) {
+    if (importedCount >= remaining) {
+      resource.status = "skipped";
+      resource.error = `Skipped: would exceed monitor limit (${maxMonitors})`;
+      continue;
+    }
+
+    try {
+      const data = resource.data as {
+        workspaceId: number;
+        jobType: string;
+        periodicity: string;
+        status: string;
+        active: boolean;
+        regions: string;
+        url: string;
+        name: string;
+        description: string;
+        headers: string;
+        body: string;
+        method: string;
+        timeout: number;
+        sourceMonitorGroupId: string | null;
+      };
+
+      // Idempotency check by url + workspaceId
+      const existing = await db
+        .select()
+        .from(monitor)
+        .where(
+          and(eq(monitor.url, data.url), eq(monitor.workspaceId, workspaceId)),
+        )
+        .get();
+
+      if (existing) {
+        monitorIdMap.set(resource.sourceId, existing.id);
+        resource.openstatusId = existing.id;
+        resource.status = "skipped";
+        continue;
+      }
+
+      const [inserted] = await db
+        .insert(monitor)
+        .values({
+          workspaceId,
+          jobType: data.jobType as "http" | "tcp" | "imcp" | "udp" | "dns" | "ssl",
+          periodicity: data.periodicity as "30s" | "1m" | "5m" | "10m" | "30m" | "1h" | "other",
+          status: "active",
+          active: data.active,
+          regions: data.regions,
+          url: data.url,
+          name: data.name,
+          description: data.description,
+          headers: data.headers,
+          body: data.body,
+          method: data.method as "GET" | "POST" | "HEAD" | "PUT" | "PATCH" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS",
+          timeout: data.timeout,
+        })
+        .returning({ id: monitor.id });
+
+      if (!inserted) {
+        resource.status = "failed";
+        resource.error = "Insert returned no result";
+        continue;
+      }
+
+      monitorIdMap.set(resource.sourceId, inserted.id);
+      resource.openstatusId = inserted.id;
+      resource.status = "created";
+      importedCount++;
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
