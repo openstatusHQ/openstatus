@@ -267,6 +267,9 @@ afterAll(async () => {
   await db
     .delete(page)
     .where(eq(page.slug, `${TEST_PREFIX}-locale-create-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-locale-default-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
@@ -552,7 +555,7 @@ describe("StatusPageService.UpdateStatusPage", () => {
       {
         id: String(testPageToUpdateId),
         defaultLocale: "LOCALE_FR",
-        locales: ["LOCALE_EN", "LOCALE_FR", "LOCALE_DE"],
+        locales: { locales: ["LOCALE_EN", "LOCALE_FR", "LOCALE_DE"] },
       },
       { "x-openstatus-key": "1" },
     );
@@ -571,6 +574,70 @@ describe("StatusPageService.UpdateStatusPage", () => {
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("clears locale settings when empty LocaleList is sent", async () => {
+    // First set some locales
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    // Send empty LocaleList to clear
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        locales: { locales: [] },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // Locales should be cleared (empty array or omitted)
+    expect(data.statusPage.locales ?? []).toEqual([]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("does not change locales when field is omitted", async () => {
+    // Set some locales
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    // Update only the title, omit locales entirely
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        title: `${TEST_PREFIX}-no-locale-change`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // Locales should remain unchanged
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({
+        title: `${TEST_PREFIX}-page-to-update`,
+        defaultLocale: "en",
+        locales: null,
+      })
       .where(eq(page.id, testPageToUpdateId));
   });
 });
@@ -607,7 +674,7 @@ describe("StatusPageService locale fields", () => {
       "CreateStatusPage",
       {
         title: `${TEST_PREFIX}-locale-default`,
-        slug: `${TEST_PREFIX}-locale-create-slug`,
+        slug: `${TEST_PREFIX}-locale-default-slug`,
       },
       { "x-openstatus-key": "1" },
     );

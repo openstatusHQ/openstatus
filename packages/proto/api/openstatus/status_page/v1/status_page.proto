@@ -30,6 +30,12 @@ enum Locale {
   LOCALE_DE = 3;
 }
 
+// LocaleList is a wrapper message for a list of locales.
+// Used with `optional` to distinguish "not set" from "set to empty".
+message LocaleList {
+  repeated Locale locales = 1;
+}
+
 // OverallStatus represents the aggregated status of all components on a page.
 enum OverallStatus {
   OVERALL_STATUS_UNSPECIFIED = 0;

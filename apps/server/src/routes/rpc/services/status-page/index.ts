@@ -1,4 +1,4 @@
-import type { ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import {
   and,
   count,
@@ -158,6 +158,23 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw slugAlreadyExistsError(req.slug);
     }
 
+    // Resolve locale values
+    const defaultLocale =
+      req.defaultLocale !== undefined && req.defaultLocale !== 0
+        ? protoLocaleToDb(req.defaultLocale)
+        : "en";
+    const validLocales = req.locales.filter((l) => l !== 0);
+    const locales =
+      validLocales.length > 0 ? validLocales.map(protoLocaleToDb) : null;
+
+    // Validate defaultLocale is included in locales when locales are provided
+    if (locales && !locales.includes(defaultLocale)) {
+      throw new ConnectError(
+        "Default locale must be included in the locales list",
+        Code.InvalidArgument,
+      );
+    }
+
     // Create the status page
     const newPage = await db
       .insert(page)
@@ -170,11 +187,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         published: false,
         homepageUrl: req.homepageUrl ?? null,
         contactUrl: req.contactUrl ?? null,
-        defaultLocale: req.defaultLocale
-          ? protoLocaleToDb(req.defaultLocale)
-          : "en",
-        locales:
-          req.locales.length > 0 ? req.locales.map(protoLocaleToDb) : null,
+        defaultLocale,
+        locales,
       })
       .returning()
       .get();
@@ -284,8 +298,24 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     if (req.defaultLocale !== undefined) {
       updateValues.defaultLocale = protoLocaleToDb(req.defaultLocale);
     }
-    if (req.locales.length > 0) {
-      updateValues.locales = req.locales.map(protoLocaleToDb);
+    if (req.locales !== undefined) {
+      const validLocales = req.locales.locales.filter((l) => l !== 0);
+      updateValues.locales =
+        validLocales.length > 0 ? validLocales.map(protoLocaleToDb) : null;
+    }
+
+    // Validate defaultLocale is included in locales
+    const finalDefaultLocale =
+      (updateValues.defaultLocale as string) ?? pageData.defaultLocale;
+    const finalLocales =
+      "locales" in updateValues
+        ? (updateValues.locales as string[] | null)
+        : (pageData.locales as string[] | null);
+    if (finalLocales && !finalLocales.includes(finalDefaultLocale)) {
+      throw new ConnectError(
+        "Default locale must be included in the locales list",
+        Code.InvalidArgument,
+      );
     }
 
     const updatedPage = await db
