@@ -22,6 +22,14 @@ enum PageTheme {
   PAGE_THEME_DARK = 3;
 }
 
+// Locale defines the supported languages for a status page.
+enum Locale {
+  LOCALE_UNSPECIFIED = 0;
+  LOCALE_EN = 1;
+  LOCALE_FR = 2;
+  LOCALE_DE = 3;
+}
+
 // OverallStatus represents the aggregated status of all components on a page.
 enum OverallStatus {
   OVERALL_STATUS_UNSPECIFIED = 0;
@@ -81,6 +89,12 @@ message StatusPage {
   string updated_at = 13 [
     (gnostic.openapi.v3.property) = {example: {yaml: "2024-06-20T14:30:00Z"}}
   ];
+
+  // Default locale for the status page.
+  Locale default_locale = 14;
+
+  // Enabled locales for the status page.
+  repeated Locale locales = 15;
 }
 
 // StatusPageSummary represents metadata for a status page (used in list responses).

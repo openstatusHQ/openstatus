@@ -33,6 +33,7 @@ import {
   dbPageToProto,
   dbPageToProtoSummary,
   dbSubscriberToProto,
+  protoLocaleToDb,
 } from "./converters";
 import {
   componentGroupCreateFailedError,
@@ -169,6 +170,11 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         published: false,
         homepageUrl: req.homepageUrl ?? null,
         contactUrl: req.contactUrl ?? null,
+        defaultLocale: req.defaultLocale
+          ? protoLocaleToDb(req.defaultLocale)
+          : "en",
+        locales:
+          req.locales.length > 0 ? req.locales.map(protoLocaleToDb) : null,
       })
       .returning()
       .get();
@@ -274,6 +280,12 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     }
     if (req.contactUrl !== undefined) {
       updateValues.contactUrl = req.contactUrl || null;
+    }
+    if (req.defaultLocale !== undefined) {
+      updateValues.defaultLocale = protoLocaleToDb(req.defaultLocale);
+    }
+    if (req.locales.length > 0) {
+      updateValues.locales = req.locales.map(protoLocaleToDb);
     }
 
     const updatedPage = await db

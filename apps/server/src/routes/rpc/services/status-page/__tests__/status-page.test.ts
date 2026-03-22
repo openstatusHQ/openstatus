@@ -264,6 +264,9 @@ afterAll(async () => {
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-slug-to-delete`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-slug-to-update`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-created-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-locale-create-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
@@ -541,6 +544,134 @@ describe("StatusPageService.UpdateStatusPage", () => {
     );
 
     expect(res.status).toBe(409);
+  });
+
+  test("updates locale settings", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_FR",
+        locales: ["LOCALE_EN", "LOCALE_FR", "LOCALE_DE"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_FR");
+    expect(data.statusPage.locales).toEqual([
+      "LOCALE_EN",
+      "LOCALE_FR",
+      "LOCALE_DE",
+    ]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+});
+
+// ==========================================================================
+// Locale Support
+// ==========================================================================
+
+describe("StatusPageService locale fields", () => {
+  test("creates a page with locale settings", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-locale-create`,
+        slug: `${TEST_PREFIX}-locale-create-slug`,
+        defaultLocale: "LOCALE_DE",
+        locales: ["LOCALE_EN", "LOCALE_DE"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_DE");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_DE"]);
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("creates a page with default locale when none specified", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-locale-default`,
+        slug: `${TEST_PREFIX}-locale-create-slug`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_EN");
+    // ConnectRPC omits empty repeated fields in JSON
+    expect(data.statusPage.locales ?? []).toEqual([]);
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("returns locale fields in GetStatusPage", async () => {
+    // Set locale on test page
+    await db
+      .update(page)
+      .set({ defaultLocale: "fr", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageId));
+
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_FR");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageId));
+  });
+
+  test("returns locale fields in GetStatusPageContent", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "de", locales: ["en", "de"] })
+      .where(eq(page.id, testPageId));
+
+    const res = await connectRequest(
+      "GetStatusPageContent",
+      { slug: testPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_DE");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_DE"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageId));
   });
 });
 
