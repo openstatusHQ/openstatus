@@ -40,6 +40,9 @@ export const page = sqliteTable("page", {
   homepageUrl: text("homepage_url", { length: 256 }),
   contactUrl: text("contact_url", { length: 256 }),
 
+  defaultLocale: text("default_locale").notNull().default("en"),
+  locales: text("locales", { mode: "json" }).$type<string[]>(),
+
   legacyPage: integer("legacy_page", { mode: "boolean" })
     .notNull()
     .default(true),

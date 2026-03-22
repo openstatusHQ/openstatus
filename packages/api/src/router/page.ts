@@ -568,6 +568,45 @@ export const pageRouter = createTRPCRouter({
         .run();
     }),
 
+  updateLocales: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z
+        .object({
+          id: z.number(),
+          defaultLocale: z.string(),
+          locales: z.array(z.string()).nullable(),
+        })
+        .refine(
+          (data) => {
+            if (data.locales) {
+              return data.locales.includes(data.defaultLocale);
+            }
+            return true;
+          },
+          {
+            message: "Default locale must be included in the locales list",
+            path: ["defaultLocale"],
+          },
+        ),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          defaultLocale: opts.input.defaultLocale,
+          locales: opts.input.locales,
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
   updatePageConfiguration: protectedProcedure
     .meta({ track: Events.UpdatePage })
     .input(
