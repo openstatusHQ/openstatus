@@ -15,6 +15,8 @@ import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
+const DISABLE = true;
+
 export function LocaleSwitcher({
   className,
   ...props
@@ -62,6 +64,8 @@ export function LocaleSwitcher({
       router.replace(segments.join("/") || "/");
     });
   }
+
+  if (DISABLE) return null;
 
   if (!mounted) {
     return <Skeleton className={cn("size-9", className)} />;
