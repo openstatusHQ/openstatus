@@ -1,29 +1,44 @@
 // Shamelessly stolen from dub.co
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { Addons, BillingInterval } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  Addons,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 
 export const getPlanFromPriceId = (priceId: string) => {
-  const env = process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  const env =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
   return PLANS.find(
     (plan) =>
-      plan.price.monthly.priceIds[env] === priceId || plan.price.yearly.priceIds[env] === priceId,
+      plan.price.monthly.priceIds[env] === priceId ||
+      plan.price.yearly.priceIds[env] === priceId,
   );
 };
 
 export const getFeatureFromPriceId = (priceId: string) => {
-  const env = process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find((feature) => feature.price.monthly.priceIds[env] === priceId);
+  const env =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  return FEATURES.find(
+    (feature) => feature.price.monthly.priceIds[env] === priceId,
+  );
 };
 
-export const getPriceIdForPlan = (plan: WorkspacePlan, interval: BillingInterval = "monthly") => {
-  const env = process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+export const getPriceIdForPlan = (
+  plan: WorkspacePlan,
+  interval: BillingInterval = "monthly",
+) => {
+  const env =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
   return PLANS.find((p) => p.plan === plan)?.price[interval].priceIds[env];
 };
 
 export const getPriceIdForFeature = (feature: keyof Addons) => {
-  const env = process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[env];
+  const env =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
+    env
+  ];
 };
 
 export const PLANS = [
