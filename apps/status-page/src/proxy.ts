@@ -200,7 +200,7 @@ export default auth(async (req) => {
     return NextResponse.rewrite(rewriteUrl);
   }
   if (host?.includes("openstatus.dev")) {
-    const rewriteUrl = new URL(`/${prefix}${url.pathname}`, req.url);
+    const rewriteUrl = new URL(route.rewritePath, req.url);
     // Preserve search params from original request
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
