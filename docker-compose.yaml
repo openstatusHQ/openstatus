@@ -59,7 +59,7 @@ services:
         build:
             context: .
             dockerfile: apps/workflows/Dockerfile
-        image: openstatus/workflows:latest
+        image: ghcr.io/openstatushq/openstatus-workflows:latest
         networks:
             - openstatus
         ports:
@@ -87,7 +87,7 @@ services:
         build:
             context: .
             dockerfile: apps/server/Dockerfile
-        image: openstatus/server:latest
+        image: ghcr.io/openstatushq/openstatus-server:latest
         networks:
             - openstatus
         ports:
@@ -115,7 +115,7 @@ services:
         build:
             context: apps/private-location
             dockerfile: Dockerfile
-        image: openstatus/private-location:latest
+        image: ghcr.io/openstatushq/openstatus-private-location:latest
         networks:
             - openstatus
         ports:
@@ -150,7 +150,7 @@ services:
         build:
             context: .
             dockerfile: apps/dashboard/Dockerfile
-        image: openstatus/dashboard:latest
+        image: ghcr.io/openstatushq/openstatus-dashboard:latest
         networks:
             - openstatus
         ports:
@@ -182,7 +182,7 @@ services:
         build:
             context: .
             dockerfile: apps/status-page/Dockerfile
-        image: openstatus/status-page:latest
+        image: ghcr.io/openstatushq/openstatus-status-page:latest
         networks:
             - openstatus
         ports:

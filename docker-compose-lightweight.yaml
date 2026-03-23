@@ -51,13 +51,12 @@ services:
                 condition: service_healthy
         restart: "no"
 
-
     dashboard:
         container_name: openstatus-dashboard
         build:
             context: .
             dockerfile: apps/dashboard/Dockerfile
-        image: openstatus/dashboard:latest
+        image: ghcr.io/openstatushq/openstatus-dashboard:latest
         networks:
             - openstatus
         ports:
@@ -87,7 +86,7 @@ services:
         build:
             context: .
             dockerfile: apps/status-page/Dockerfile
-        image: openstatus/status-page:latest
+        image: ghcr.io/openstatushq/openstatus-status-page:latest
         networks:
             - openstatus
         ports:
