@@ -29,6 +29,8 @@ type DBPage = {
   homepageUrl: string | null;
   contactUrl: string | null;
   icon: string | null;
+  password: string | null;
+  authEmailDomains: string | null;
   defaultLocale: Locale;
   locales: Locale[] | null;
   createdAt: Date | null;
@@ -220,6 +222,9 @@ export function dbPageToProto(page: DBPage): StatusPage {
     updatedAt: page.updatedAt?.toISOString() ?? "",
     defaultLocale: dbLocaleToProto(page.defaultLocale),
     locales: page.locales?.map(dbLocaleToProto) ?? [],
+    password: page.password ?? "",
+    authEmailDomains:
+      page.authEmailDomains?.split(",").filter(Boolean) ?? [],
   };
 }
 

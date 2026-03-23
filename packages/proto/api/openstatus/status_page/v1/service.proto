@@ -124,6 +124,27 @@ message CreateStatusPageRequest {
 
   // Enabled locales for the status page (optional).
   repeated Locale locales = 7;
+
+  // Icon URL for the status page (optional).
+  optional string icon = 8 [(buf.validate.field).string.max_len = 1024];
+
+  // Custom domain for the status page (optional).
+  optional string custom_domain = 9 [(buf.validate.field).string.max_len = 256];
+
+  // Visual theme for the status page (optional, defaults to SYSTEM).
+  optional PageTheme theme = 10;
+
+  // Access type for the status page (optional, defaults to PUBLIC).
+  optional PageAccessType access_type = 11;
+
+  // Password for the status page (required when access_type is PASSWORD_PROTECTED).
+  optional string password = 12 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // Email domains allowed to access the page (used when access_type is AUTHENTICATED).
+  repeated string auth_email_domains = 13;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -197,6 +218,27 @@ message UpdateStatusPageRequest {
 
   // New enabled locales for the status page (optional).
   repeated Locale locales = 8;
+
+  // New icon URL for the status page (optional).
+  optional string icon = 9 [(buf.validate.field).string.max_len = 1024];
+
+  // New custom domain (optional).
+  optional string custom_domain = 10 [(buf.validate.field).string.max_len = 256];
+
+  // New visual theme (optional).
+  optional PageTheme theme = 11;
+
+  // New access type (optional).
+  optional PageAccessType access_type = 12;
+
+  // New password (optional, required when access_type is PASSWORD_PROTECTED).
+  optional string password = 13 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // New email domains (optional, required when access_type is AUTHENTICATED).
+  repeated string auth_email_domains = 14;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.
