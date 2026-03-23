@@ -616,6 +616,35 @@ describe("StatusPageService.UpdateStatusPage", () => {
       })
       .where(eq(page.id, testPageToUpdateId));
   });
+
+  test("resets locales to null when empty list is sent", async () => {
+    // First set some locales
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    // Send empty locales to clear them
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        locales: [],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.locales ?? []).toEqual([]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
 });
 
 // ==========================================================================
