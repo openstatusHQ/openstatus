@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_page/v1/status_page.proto.
  */
 export const file_openstatus_status_page_v1_status_page: GenFile = /*@__PURE__*/
-  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIrEDCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWiKpAQoRU3RhdHVzUGFnZVN1bW1hcnkSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEc2x1ZxgDIAEoCRIRCglwdWJsaXNoZWQYBCABKAgSEgoKY3JlYXRlZF9hdBgFIAEoCRISCgp1cGRhdGVkX2F0GAYgASgJEjAKDWN1c3RvbV9kb21haW4YByABKAlCGbpHFjoUEhJzdGF0dXMuZXhhbXBsZS5jb20qnAEKDlBhZ2VBY2Nlc3NUeXBlEiAKHFBBR0VfQUNDRVNTX1RZUEVfVU5TUEVDSUZJRUQQABIbChdQQUdFX0FDQ0VTU19UWVBFX1BVQkxJQxABEicKI1BBR0VfQUNDRVNTX1RZUEVfUEFTU1dPUkRfUFJPVEVDVEVEEAISIgoeUEFHRV9BQ0NFU1NfVFlQRV9BVVRIRU5USUNBVEVEEAMqaQoJUGFnZVRoZW1lEhoKFlBBR0VfVEhFTUVfVU5TUEVDSUZJRUQQABIVChFQQUdFX1RIRU1FX1NZU1RFTRABEhQKEFBBR0VfVEhFTUVfTElHSFQQAhITCg9QQUdFX1RIRU1FX0RBUksQAyrsAQoNT3ZlcmFsbFN0YXR1cxIeChpPVkVSQUxMX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGk9WRVJBTExfU1RBVFVTX09QRVJBVElPTkFMEAESGwoXT1ZFUkFMTF9TVEFUVVNfREVHUkFERUQQAhIhCh1PVkVSQUxMX1NUQVRVU19QQVJUSUFMX09VVEFHRRADEh8KG09WRVJBTExfU1RBVFVTX01BSk9SX09VVEFHRRAEEh4KGk9WRVJBTExfU1RBVFVTX01BSU5URU5BTkNFEAUSGgoWT1ZFUkFMTF9TVEFUVVNfVU5LTk9XThAGQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw", [file_gnostic_openapi_v3_annotations]);
+  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIqAECgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWhI5Cg5kZWZhdWx0X2xvY2FsZRgOIAEoDjIhLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTG9jYWxlEjIKB2xvY2FsZXMYDyADKA4yIS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkxvY2FsZSKpAQoRU3RhdHVzUGFnZVN1bW1hcnkSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEc2x1ZxgDIAEoCRIRCglwdWJsaXNoZWQYBCABKAgSEgoKY3JlYXRlZF9hdBgFIAEoCRISCgp1cGRhdGVkX2F0GAYgASgJEjAKDWN1c3RvbV9kb21haW4YByABKAlCGbpHFjoUEhJzdGF0dXMuZXhhbXBsZS5jb20qnAEKDlBhZ2VBY2Nlc3NUeXBlEiAKHFBBR0VfQUNDRVNTX1RZUEVfVU5TUEVDSUZJRUQQABIbChdQQUdFX0FDQ0VTU19UWVBFX1BVQkxJQxABEicKI1BBR0VfQUNDRVNTX1RZUEVfUEFTU1dPUkRfUFJPVEVDVEVEEAISIgoeUEFHRV9BQ0NFU1NfVFlQRV9BVVRIRU5USUNBVEVEEAMqaQoJUGFnZVRoZW1lEhoKFlBBR0VfVEhFTUVfVU5TUEVDSUZJRUQQABIVChFQQUdFX1RIRU1FX1NZU1RFTRABEhQKEFBBR0VfVEhFTUVfTElHSFQQAhITCg9QQUdFX1RIRU1FX0RBUksQAypNCgZMb2NhbGUSFgoSTE9DQUxFX1VOU1BFQ0lGSUVEEAASDQoJTE9DQUxFX0VOEAESDQoJTE9DQUxFX0ZSEAISDQoJTE9DQUxFX0RFEAMq7AEKDU92ZXJhbGxTdGF0dXMSHgoaT1ZFUkFMTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIeChpPVkVSQUxMX1NUQVRVU19PUEVSQVRJT05BTBABEhsKF09WRVJBTExfU1RBVFVTX0RFR1JBREVEEAISIQodT1ZFUkFMTF9TVEFUVVNfUEFSVElBTF9PVVRBR0UQAxIfChtPVkVSQUxMX1NUQVRVU19NQUpPUl9PVVRBR0UQBBIeChpPVkVSQUxMX1NUQVRVU19NQUlOVEVOQU5DRRAFEhoKFk9WRVJBTExfU1RBVFVTX1VOS05PV04QBkJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM", [file_gnostic_openapi_v3_annotations]);
 
 /**
  * StatusPage represents a full status page with all details.
@@ -109,6 +109,20 @@ export type StatusPage = Message<"openstatus.status_page.v1.StatusPage"> & {
    * @generated from field: string updated_at = 13;
    */
   updatedAt: string;
+
+  /**
+   * Default locale for the status page.
+   *
+   * @generated from field: openstatus.status_page.v1.Locale default_locale = 14;
+   */
+  defaultLocale: Locale;
+
+  /**
+   * Enabled locales for the status page.
+   *
+   * @generated from field: repeated openstatus.status_page.v1.Locale locales = 15;
+   */
+  locales: Locale[];
 };
 
 /**
@@ -248,6 +262,39 @@ export const PageThemeSchema: GenEnum<PageTheme> = /*@__PURE__*/
   enumDesc(file_openstatus_status_page_v1_status_page, 1);
 
 /**
+ * Locale defines the supported languages for a status page.
+ *
+ * @generated from enum openstatus.status_page.v1.Locale
+ */
+export enum Locale {
+  /**
+   * @generated from enum value: LOCALE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: LOCALE_EN = 1;
+   */
+  EN = 1,
+
+  /**
+   * @generated from enum value: LOCALE_FR = 2;
+   */
+  FR = 2,
+
+  /**
+   * @generated from enum value: LOCALE_DE = 3;
+   */
+  DE = 3,
+}
+
+/**
+ * Describes the enum openstatus.status_page.v1.Locale.
+ */
+export const LocaleSchema: GenEnum<Locale> = /*@__PURE__*/
+  enumDesc(file_openstatus_status_page_v1_status_page, 2);
+
+/**
  * OverallStatus represents the aggregated status of all components on a page.
  *
  * @generated from enum openstatus.status_page.v1.OverallStatus
@@ -293,5 +340,5 @@ export enum OverallStatus {
  * Describes the enum openstatus.status_page.v1.OverallStatus.
  */
 export const OverallStatusSchema: GenEnum<OverallStatus> = /*@__PURE__*/
-  enumDesc(file_openstatus_status_page_v1_status_page, 2);
+  enumDesc(file_openstatus_status_page_v1_status_page, 3);
 

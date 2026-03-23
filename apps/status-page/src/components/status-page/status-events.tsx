@@ -1,9 +1,13 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
+import {
+  StatusEventTimelineDot,
+  StatusEventTimelineMessage,
+  StatusEventTimelineSeparator,
+  StatusEventTimelineTitle,
+} from "@openstatus/ui/components/blocks/status-events";
 import { Badge } from "@openstatus/ui/components/ui/badge";
-import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -13,7 +17,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
-import { status } from "./messages";
+import { useExtracted, useLocale } from "next-intl";
 
 export function StatusEventGroup({
   className,
@@ -80,6 +84,7 @@ export function StatusEventTitleCheck({
   children,
   ...props
 }: React.ComponentProps<"div">) {
+  const t = useExtracted();
   return (
     <div className={cn("flex items-center pl-1", className)} {...props}>
       <TooltipProvider>
@@ -90,7 +95,7 @@ export function StatusEventTitleCheck({
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Report resolved</p>
+            <p>{t("Report resolved")}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -134,12 +139,13 @@ export function StatusEventDate({
 }: React.ComponentProps<"div"> & {
   date: Date;
 }) {
+  const locale = useLocale();
   const isFuture = date > new Date();
   const distance = formatDistanceStrict(date, new Date(), { addSuffix: true });
   return (
     <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
       <div className="font-medium text-foreground">
-        {formatDate(date, { month: "short" })}
+        {formatDate(date, { month: "short", locale })}
       </div>{" "}
       <Badge
         variant="secondary"
@@ -186,11 +192,10 @@ export function StatusEventTimelineReport({
   withDot?: boolean;
   maxUpdates?: number;
 }) {
-  const _prefix = usePathnamePrefix();
+  const t = useExtracted();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
-  const _hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;
@@ -209,12 +214,12 @@ export function StatusEventTimelineReport({
           const duration = formatDistanceStrict(startedAt, updateDate);
 
           if (duration !== "0 seconds" && update.status === "resolved") {
-            durationText = `(in ${duration})`;
+            durationText = t("(in {duration})", { duration });
           }
         } else {
           const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
           const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
-          durationText = `(${timeFromLast} earlier)`;
+          durationText = t("({timeFromLast} earlier)", { timeFromLast });
         }
 
         return (
@@ -249,6 +254,15 @@ export function StatusEventTimelineReportUpdate({
   withDot?: boolean;
   isLast?: boolean;
 }) {
+  const locale = useLocale();
+  const t = useExtracted();
+  const statusLabels = {
+    resolved: t("Resolved"),
+    monitoring: t("Monitoring"),
+    identified: t("Identified"),
+    investigating: t("Investigating"),
+  } as const;
+
   return (
     <div data-variant={report.status} className="group">
       <div className="flex flex-row items-center justify-between gap-2">
@@ -263,11 +277,11 @@ export function StatusEventTimelineReportUpdate({
           ) : null}
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
-              <span>{status[report.status]}</span>{" "}
+              <span>{statusLabels[report.status]}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
-                  <span>{formatDateTime(report.date)}</span>
+                  <span>{formatDateTime(report.date, locale)}</span>
                 </TimestampHoverCard>
               </span>{" "}
               {duration ? (
@@ -302,8 +316,10 @@ export function StatusEventTimelineMaintenance({
   };
   withDot?: boolean;
 }) {
+  const locale = useLocale();
+  const t = useExtracted();
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
-  const range = formatDateRange(maintenance.from, maintenance.to);
+  const range = formatDateRange(maintenance.from, maintenance.to, locale);
   // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
   const [from, to] = range.split(" - ");
   return (
@@ -320,7 +336,7 @@ export function StatusEventTimelineMaintenance({
           {/* NOTE: is always last, no need for className="mb-2" */}
           <div>
             <StatusEventTimelineTitle>
-              <span>Maintenance</span>{" "}
+              <span>{t("Maintenance")}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={maintenance.from} asChild>
@@ -333,7 +349,7 @@ export function StatusEventTimelineMaintenance({
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
-                  (for {duration})
+                  {t("(for {duration})", { duration })}
                 </span>
               ) : null}
             </StatusEventTimelineTitle>
@@ -348,79 +364,5 @@ export function StatusEventTimelineMaintenance({
         </div>
       </div>
     </div>
-  );
-}
-
-export function StatusEventTimelineTitle({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn("font-medium text-foreground text-sm", className)}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function StatusEventTimelineMessage({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "py-1.5 font-mono text-muted-foreground text-sm",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function StatusEventTimelineDot({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "size-2.5 shrink-0 rounded-full bg-muted",
-        "group-data-[variant=resolved]:bg-success",
-        "group-data-[variant=monitoring]:bg-info",
-        "group-data-[variant=identified]:bg-warning",
-        "group-data-[variant=investigating]:bg-destructive",
-        "group-data-[variant=maintenance]:bg-info",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-export function StatusEventTimelineSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof Separator>) {
-  return (
-    <Separator
-      orientation="vertical"
-      className={cn(
-        "mx-auto flex-1",
-        "group-data-[variant=resolved]:bg-success",
-        "group-data-[variant=monitoring]:bg-info",
-        "group-data-[variant=identified]:bg-warning",
-        "group-data-[variant=investigating]:bg-destructive",
-        "group-data-[variant=maintenance]:bg-info",
-        className,
-      )}
-      {...props}
-    />
   );
 }

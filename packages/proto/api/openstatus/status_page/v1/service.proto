@@ -118,6 +118,12 @@ message CreateStatusPageRequest {
 
   // URL to the contact page (optional).
   optional string contact_url = 5;
+
+  // Default locale for the status page (optional, defaults to EN).
+  optional Locale default_locale = 6;
+
+  // Enabled locales for the status page (optional).
+  repeated Locale locales = 7;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -185,6 +191,12 @@ message UpdateStatusPageRequest {
 
   // New contact URL (optional).
   optional string contact_url = 6;
+
+  // New default locale for the status page (optional).
+  optional Locale default_locale = 7;
+
+  // New enabled locales for the status page (optional).
+  repeated Locale locales = 8;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.

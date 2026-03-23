@@ -1,5 +1,6 @@
 "use client";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { useExtracted } from "next-intl";
 import Link from "next/link";
 import {
   StatusBlankContainer,
@@ -25,6 +26,7 @@ import {
 type StatusReport = {
   id: number;
   title: string;
+  createdAt?: Date | null;
   affected: string[];
   updates: {
     date: Date;
@@ -60,13 +62,17 @@ export function StatusFeed({
   showLinks?: boolean;
 }) {
   const prefix = usePathnamePrefix();
+  const t = useExtracted();
   const unifiedEvents: UnifiedEvent[] = [
     ...statusReports.map((report) => ({
       id: report.id,
       title: report.title,
       type: "report" as const,
       // FIXME: we have a flicker here when the report is updated
-      startDate: report.updates[report.updates.length - 1]?.date || new Date(),
+      startDate:
+        report.updates[report.updates.length - 1]?.date ??
+        report.createdAt ??
+        new Date(),
       data: report,
     })),
     ...maintenances.map((maintenance) => ({
@@ -87,12 +93,12 @@ export function StatusFeed({
           <StatusBlankReport />
         </div>
         <StatusBlankContent>
-          <StatusBlankTitle>No recent notifications</StatusBlankTitle>
+          <StatusBlankTitle>{t("No recent notifications")}</StatusBlankTitle>
           <StatusBlankDescription>
-            There have been no reports within the last 7 days.
+            {t("There have been no reports within the last 7 days.")}
           </StatusBlankDescription>
           <StatusBlankLink href={`${prefix ? `/${prefix}` : ""}/events`}>
-            View events history
+            {t("View events history")}
           </StatusBlankLink>
         </StatusBlankContent>
       </StatusBlankContainer>
@@ -179,7 +185,7 @@ export function StatusFeed({
         className="mx-auto"
         href={`${prefix ? `/${prefix}` : ""}/events`}
       >
-        View events history
+        {t("View events history")}
       </StatusBlankLink>
     </StatusEventGroup>
   );

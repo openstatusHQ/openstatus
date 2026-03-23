@@ -153,6 +153,10 @@ export default defineConfig({
               label: "Self host Status Page only",
               slug: "guides/self-host-status-page-only",
             },
+            {
+              label: "How to translate your status page",
+              slug: "guides/how-to-translate-status-page",
+            },
           ],
         },
         {

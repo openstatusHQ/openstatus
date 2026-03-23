@@ -1,3 +1,4 @@
+import type { Locale } from "@openstatus/locales";
 import type {
   PageComponent,
   PageComponentGroup,
@@ -10,6 +11,7 @@ import {
   PageAccessType,
   PageComponentType,
   PageTheme,
+  Locale as ProtoLocale,
 } from "@openstatus/proto/status_page/v1";
 
 /**
@@ -27,6 +29,8 @@ type DBPage = {
   homepageUrl: string | null;
   contactUrl: string | null;
   icon: string | null;
+  defaultLocale: Locale;
+  locales: Locale[] | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -164,6 +168,38 @@ export function protoComponentTypeToDb(
 }
 
 /**
+ * Convert DB locale string to proto enum.
+ */
+export function dbLocaleToProto(locale: Locale): ProtoLocale {
+  switch (locale) {
+    case "en":
+      return ProtoLocale.EN;
+    case "fr":
+      return ProtoLocale.FR;
+    case "de":
+      return ProtoLocale.DE;
+    default:
+      return ProtoLocale.EN;
+  }
+}
+
+/**
+ * Convert proto locale enum to DB string.
+ */
+export function protoLocaleToDb(locale: ProtoLocale): Locale {
+  switch (locale) {
+    case ProtoLocale.EN:
+      return "en";
+    case ProtoLocale.FR:
+      return "fr";
+    case ProtoLocale.DE:
+      return "de";
+    default:
+      return "en";
+  }
+}
+
+/**
  * Convert a DB status page to full proto format.
  */
 export function dbPageToProto(page: DBPage): StatusPage {
@@ -182,6 +218,8 @@ export function dbPageToProto(page: DBPage): StatusPage {
     icon: page.icon ?? "",
     createdAt: page.createdAt?.toISOString() ?? "",
     updatedAt: page.updatedAt?.toISOString() ?? "",
+    defaultLocale: dbLocaleToProto(page.defaultLocale),
+    locales: page.locales?.map(dbLocaleToProto) ?? [],
   };
 }
 

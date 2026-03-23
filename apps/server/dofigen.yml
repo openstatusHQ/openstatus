@@ -48,6 +48,7 @@ builders:
       - packages/subscriptions/package.json
       - packages/assertions/package.json
       - packages/theme-store/package.json
+      - packages/locales/package.json
     run: bun install --production --frozen-lockfile --verbose
     cache:
       - /root/.bun/install/cache

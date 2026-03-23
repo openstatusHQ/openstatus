@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import type { Locale } from "@openstatus/locales";
 import { maintenance } from "../maintenances";
 import { pageComponentGroup } from "../page_component_groups";
 import { pageComponent } from "../page_components";
@@ -39,6 +40,9 @@ export const page = sqliteTable("page", {
   // links and urls
   homepageUrl: text("homepage_url", { length: 256 }),
   contactUrl: text("contact_url", { length: 256 }),
+
+  defaultLocale: text("default_locale").notNull().default("en").$type<Locale>(),
+  locales: text("locales", { mode: "json" }).$type<Locale[]>(),
 
   legacyPage: integer("legacy_page", { mode: "boolean" })
     .notNull()

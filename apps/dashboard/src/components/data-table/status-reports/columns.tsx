@@ -127,7 +127,8 @@ export const columns: ColumnDef<StatusReport>[] = [
   {
     id: "startedAt",
     accessorFn: (row) =>
-      row.updates.sort((a, b) => a.date.getTime() - b.date.getTime())[0]?.date,
+      row.updates.sort((a, b) => a.date.getTime() - b.date.getTime())[0]
+        ?.date ?? row.createdAt,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Started At" />
     ),

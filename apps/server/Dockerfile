@@ -40,6 +40,7 @@ RUN \
     --mount=type=bind,target=packages/subscriptions/package.json,source=packages/subscriptions/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
     --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
+    --mount=type=bind,target=packages/locales/package.json,source=packages/locales/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --production --frozen-lockfile --verbose
 

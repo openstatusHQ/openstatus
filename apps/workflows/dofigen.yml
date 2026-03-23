@@ -42,6 +42,7 @@ builders:
       - packages/tinybird/package.json
       - packages/upstash/package.json
       - packages/theme-store/package.json
+      - packages/locales/package.json
     # Install dependencies
     run: bun install --production  --frozen-lockfile --verbose
     cache:

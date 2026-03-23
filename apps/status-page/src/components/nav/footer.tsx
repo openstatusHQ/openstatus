@@ -2,15 +2,18 @@
 
 import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeDropdown } from "@/components/themes/theme-dropdown";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function Footer(props: React.ComponentProps<"footer">) {
+  const t = useExtracted();
   const { domain } = useParams<{ domain: string }>();
   const [isMounted, setIsMounted] = useState(false);
   const trpc = useTRPC();
@@ -31,7 +34,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
         <div>
           {!page.whiteLabel ? (
             <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
-              powered by{" "}
+              {t("powered by")}{" "}
               <Link
                 href={`https://openstatus.dev?utm_medium=status-page&utm_source=${page.slug}`}
                 target="_blank"
@@ -42,12 +45,12 @@ export function Footer(props: React.ComponentProps<"footer">) {
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <TimestampHoverCard
             date={new Date(dataUpdatedAt)}
             side="top"
             align="end"
-            className="flex items-center gap-1.5 text-muted-foreground/70"
+            className="mr-2 flex items-center gap-1.5 text-muted-foreground/70"
           >
             {isMounted ? (
               <>
@@ -58,6 +61,10 @@ export function Footer(props: React.ComponentProps<"footer">) {
               <Skeleton className="h-4 w-28" />
             )}
           </TimestampHoverCard>
+          <LocaleSwitcher
+            pageLocales={page.locales}
+            pageDefaultLocale={page.defaultLocale}
+          />
           <ThemeDropdown />
         </div>
       </div>

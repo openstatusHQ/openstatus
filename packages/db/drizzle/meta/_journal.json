@@ -414,6 +414,13 @@
       "when": 1772982206642,
       "tag": "0058_absent_chameleon",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1774199864739,
+      "tag": "0059_heavy_gargoyle",
+      "breakpoints": true
     }
   ]
 }

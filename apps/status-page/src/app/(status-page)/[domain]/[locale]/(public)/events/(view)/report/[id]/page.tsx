@@ -1,0 +1,83 @@
+"use client";
+
+import { ButtonBack } from "@/components/button/button-back";
+import { ButtonCopyLink } from "@/components/button/button-copy-link";
+import { StatusBlankEvents } from "@/components/status-page/status-blank";
+import {
+  StatusEvent,
+  StatusEventAffected,
+  StatusEventAffectedBadge,
+  StatusEventAside,
+  StatusEventContent,
+  StatusEventDate,
+  StatusEventTimelineReport,
+  StatusEventTitle,
+  StatusEventTitleCheck,
+} from "@/components/status-page/status-events";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
+
+export default function ReportPage() {
+  const t = useExtracted();
+  const trpc = useTRPC();
+  const { id, domain } = useParams<{ id: string; domain: string }>();
+  const { data: report } = useQuery(
+    trpc.statusPage.getReport.queryOptions({ id: Number(id), slug: domain }),
+  );
+
+  if (!report) {
+    return (
+      <StatusBlankEvents
+        title={t("Report not found")}
+        description={t("The report you are looking for does not exist.")}
+      />
+    );
+  }
+
+  const updates = report.statusReportUpdates.sort(
+    (a, b) => b.date.getTime() - a.date.getTime(),
+  );
+  const firstUpdate = updates[updates.length - 1];
+  const lastUpdate = updates[0];
+
+  // HACKY: LEGACY: only resolved via report and not via report update
+  const isReportResolvedOnly =
+    report.status === "resolved" && lastUpdate?.status !== "resolved";
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex w-full flex-row items-center justify-between gap-2 py-0.5">
+        <ButtonBack href="../" />
+        <ButtonCopyLink />
+      </div>
+      <StatusEvent>
+        <StatusEventAside>
+          <StatusEventDate
+            date={firstUpdate?.date ?? report.createdAt ?? new Date()}
+          />
+        </StatusEventAside>
+        <StatusEventContent hoverable={false}>
+          <StatusEventTitle className="inline-flex gap-1">
+            {report.title}
+            {isReportResolvedOnly ? <StatusEventTitleCheck /> : null}
+          </StatusEventTitle>
+          {report.statusReportsToPageComponents.length > 0 ? (
+            <StatusEventAffected>
+              {report.statusReportsToPageComponents.map((affected) => (
+                <StatusEventAffectedBadge key={affected.pageComponent.id}>
+                  {affected.pageComponent.name}
+                </StatusEventAffectedBadge>
+              ))}
+            </StatusEventAffected>
+          ) : null}
+          <StatusEventTimelineReport
+            updates={report.statusReportUpdates}
+            reportId={report.id}
+          />
+        </StatusEventContent>
+      </StatusEvent>
+    </div>
+  );
+}

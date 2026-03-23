@@ -18,6 +18,7 @@ import {
   TriangleAlertIcon,
   WrenchIcon,
 } from "lucide-react";
+import { useExtracted } from "next-intl";
 import { useState } from "react";
 import type { VariantType } from "./floating-button";
 import { StatusTracker, StatusTrackerSkeleton } from "./status-tracker";
@@ -164,6 +165,7 @@ export function StatusMonitorFooter({
   data: Data;
   isLoading?: boolean;
 }) {
+  const t = useExtracted();
   return (
     <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none">
       <div>
@@ -178,7 +180,7 @@ export function StatusMonitorFooter({
           "-"
         )}
       </div>
-      <div>today</div>
+      <div>{t("today")}</div>
     </div>
   );
 }
@@ -212,6 +214,7 @@ export function StatusMonitorStatus({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const t = useExtracted();
   return (
     <div
       className={cn(
@@ -225,16 +228,16 @@ export function StatusMonitorStatus({
       {...props}
     >
       <span className="hidden group-data-[variant=success]/monitor:block">
-        Operational
+        {t("Operational")}
       </span>
       <span className="hidden group-data-[variant=degraded]/monitor:block">
-        Degraded
+        {t("Degraded")}
       </span>
       <span className="hidden group-data-[variant=error]/monitor:block">
-        Downtime
+        {t("Downtime")}
       </span>
       <span className="hidden group-data-[variant=info]/monitor:block">
-        Maintenance
+        {t("Maintenance")}
       </span>
     </div>
   );

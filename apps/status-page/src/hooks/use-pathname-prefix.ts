@@ -1,7 +1,10 @@
 "use client";
 
+import { defaultLocale as globalDefaultLocale } from "@/i18n/config";
+import { resolvePathnamePrefix } from "@/lib/resolve-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -11,26 +14,23 @@ export function usePathnamePrefix() {
   const { data: page } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
+  const locale = useLocale();
+  const defaultLocale = page?.defaultLocale || globalDefaultLocale;
   const [prefix, setPrefix] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const hostnames = window.location.hostname.split(".");
-      const pathnames = window.location.pathname.split("/");
-      const isCustomDomain = window.location.hostname === page?.customDomain;
-
-      if (
-        isCustomDomain ||
-        (hostnames.length > 2 &&
-          hostnames[0] !== "www" &&
-          !window.location.hostname.endsWith(".vercel.app"))
-      ) {
-        setPrefix("");
-      } else {
-        setPrefix(pathnames[1] || "");
-      }
+      setPrefix(
+        resolvePathnamePrefix({
+          hostname: window.location.hostname,
+          pathname: window.location.pathname,
+          customDomain: page?.customDomain,
+          locale,
+          defaultLocale,
+        }),
+      );
     }
-  }, [page?.customDomain]);
+  }, [page?.customDomain, locale, defaultLocale]);
 
   return prefix;
 }

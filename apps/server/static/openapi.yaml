@@ -2181,6 +2181,18 @@ components:
             - "null"
           title: contact_url
           description: URL to the contact page (optional).
+        defaultLocale:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
+            - type: "null"
+          title: default_locale
+          description: Default locale for the status page (optional, defaults to EN).
+        locales:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
+          title: locales
+          description: Enabled locales for the status page (optional).
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
@@ -2442,6 +2454,15 @@ components:
       title: ListSubscribersResponse
       additionalProperties: false
       description: ListSubscribersResponse is the response containing status page subscribers.
+    openstatus.status_page.v1.Locale:
+      type: string
+      title: Locale
+      enum:
+        - LOCALE_UNSPECIFIED
+        - LOCALE_EN
+        - LOCALE_FR
+        - LOCALE_DE
+      description: Locale defines the supported languages for a status page.
     openstatus.status_page.v1.OverallStatus:
       type: string
       title: OverallStatus
@@ -2676,6 +2697,16 @@ components:
             - "2024-06-20T14:30:00Z"
           title: updated_at
           description: Timestamp when the page was last updated (RFC 3339 format).
+        defaultLocale:
+          title: default_locale
+          description: Default locale for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
+        locales:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
+          title: locales
+          description: Enabled locales for the status page.
       title: StatusPage
       additionalProperties: false
       description: StatusPage represents a full status page with all details.
@@ -2910,6 +2941,18 @@ components:
             - "null"
           title: contact_url
           description: New contact URL (optional).
+        defaultLocale:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
+            - type: "null"
+          title: default_locale
+          description: New default locale for the status page (optional).
+        locales:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
+          title: locales
+          description: New enabled locales for the status page (optional).
       title: UpdateStatusPageRequest
       additionalProperties: false
       description: UpdateStatusPageRequest is the request to update a status page.
