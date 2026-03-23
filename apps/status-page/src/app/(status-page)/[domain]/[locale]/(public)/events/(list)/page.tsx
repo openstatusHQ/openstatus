@@ -63,11 +63,12 @@ export default function Page() {
               const firstUpdate = updates[updates.length - 1];
               const lastUpdate = updates[0];
               // NOTE: updates are sorted descending by date
-              const startedAt = firstUpdate.date;
+              const startedAt =
+                firstUpdate?.date ?? report.createdAt ?? new Date();
               // HACKY: LEGACY: only resolved via report and not via report update
               const isReportResolvedOnly =
                 report.status === "resolved" &&
-                lastUpdate.status !== "resolved";
+                lastUpdate?.status !== "resolved";
               return (
                 <StatusEvent key={report.id}>
                   <StatusEventAside>

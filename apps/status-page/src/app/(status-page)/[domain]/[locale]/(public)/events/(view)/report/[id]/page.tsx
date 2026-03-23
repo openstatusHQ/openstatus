@@ -44,7 +44,7 @@ export default function ReportPage() {
 
   // HACKY: LEGACY: only resolved via report and not via report update
   const isReportResolvedOnly =
-    report.status === "resolved" && lastUpdate.status !== "resolved";
+    report.status === "resolved" && lastUpdate?.status !== "resolved";
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,7 +54,9 @@ export default function ReportPage() {
       </div>
       <StatusEvent>
         <StatusEventAside>
-          <StatusEventDate date={firstUpdate.date} />
+          <StatusEventDate
+            date={firstUpdate?.date ?? report.createdAt ?? new Date()}
+          />
         </StatusEventAside>
         <StatusEventContent hoverable={false}>
           <StatusEventTitle className="inline-flex gap-1">

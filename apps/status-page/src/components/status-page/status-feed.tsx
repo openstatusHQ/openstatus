@@ -26,6 +26,7 @@ import {
 type StatusReport = {
   id: number;
   title: string;
+  createdAt?: Date | null;
   affected: string[];
   updates: {
     date: Date;
@@ -68,7 +69,10 @@ export function StatusFeed({
       title: report.title,
       type: "report" as const,
       // FIXME: we have a flicker here when the report is updated
-      startDate: report.updates[report.updates.length - 1]?.date || new Date(),
+      startDate:
+        report.updates[report.updates.length - 1]?.date ??
+        report.createdAt ??
+        new Date(),
       data: report,
     })),
     ...maintenances.map((maintenance) => ({
