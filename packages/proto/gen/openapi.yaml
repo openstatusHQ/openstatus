@@ -2706,6 +2706,12 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the page was last updated (RFC 3339 format).
+        customDomain:
+          type: string
+          examples:
+            - status.example.com
+          title: custom_domain
+          description: Custom domain for the status page (optional).
       title: StatusPageSummary
       additionalProperties: false
       description: StatusPageSummary represents metadata for a status page (used in list responses).

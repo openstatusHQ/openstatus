@@ -102,4 +102,9 @@ message StatusPageSummary {
 
   // Timestamp when the page was last updated (RFC 3339 format).
   string updated_at = 6;
+
+  // Custom domain for the status page (optional).
+  string custom_domain = 7 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "status.example.com"}}
+  ];
 }
