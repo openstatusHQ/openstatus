@@ -583,14 +583,14 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("does not change locales when field is omitted or empty", async () => {
+  test("clears locales when field is omitted", async () => {
     // Set some locales
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: ["en", "fr"] })
       .where(eq(page.id, testPageToUpdateId));
 
-    // Update only the title, omit locales entirely
+    // Omitting locales clears them (same as sending [])
     const res = await connectRequest(
       "UpdateStatusPage",
       {
@@ -603,8 +603,7 @@ describe("StatusPageService.UpdateStatusPage", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    // Locales should remain unchanged
-    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+    expect(data.statusPage.locales ?? []).toEqual([]);
 
     // Restore defaults
     await db
