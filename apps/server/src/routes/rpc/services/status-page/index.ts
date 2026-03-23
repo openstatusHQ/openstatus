@@ -300,8 +300,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     if (req.defaultLocale !== undefined) {
       updateValues.defaultLocale = protoLocaleToDb(req.defaultLocale);
     }
-    if (req.locales !== undefined) {
-      const validLocales = req.locales.locales.filter((l) => l !== 0);
+    if (req.locales.length > 0) {
+      const validLocales = req.locales.filter((l) => l !== 0);
       updateValues.locales =
         validLocales.length > 0
           ? [...new Set(validLocales.map(protoLocaleToDb))]

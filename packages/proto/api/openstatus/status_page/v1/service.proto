@@ -196,8 +196,7 @@ message UpdateStatusPageRequest {
   optional Locale default_locale = 7;
 
   // New enabled locales for the status page (optional).
-  // When absent: don't change. When present but empty: clear locales. When present with values: set locales.
-  optional LocaleList locales = 8;
+  repeated Locale locales = 8;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.

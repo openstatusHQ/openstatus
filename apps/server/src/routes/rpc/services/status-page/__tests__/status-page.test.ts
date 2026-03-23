@@ -561,7 +561,7 @@ describe("StatusPageService.UpdateStatusPage", () => {
       {
         id: String(testPageToUpdateId),
         defaultLocale: "LOCALE_FR",
-        locales: { locales: ["LOCALE_EN", "LOCALE_FR", "LOCALE_DE"] },
+        locales: ["LOCALE_EN", "LOCALE_FR", "LOCALE_DE"],
       },
       { "x-openstatus-key": "1" },
     );
@@ -583,37 +583,7 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("clears locale settings when empty LocaleList is sent", async () => {
-    // First set some locales
-    await db
-      .update(page)
-      .set({ defaultLocale: "en", locales: ["en", "fr"] })
-      .where(eq(page.id, testPageToUpdateId));
-
-    // Send empty LocaleList to clear
-    const res = await connectRequest(
-      "UpdateStatusPage",
-      {
-        id: String(testPageToUpdateId),
-        locales: { locales: [] },
-      },
-      { "x-openstatus-key": "1" },
-    );
-
-    expect(res.status).toBe(200);
-
-    const data = await res.json();
-    // Locales should be cleared (empty array or omitted)
-    expect(data.statusPage.locales ?? []).toEqual([]);
-
-    // Restore defaults
-    await db
-      .update(page)
-      .set({ defaultLocale: "en", locales: null })
-      .where(eq(page.id, testPageToUpdateId));
-  });
-
-  test("does not change locales when field is omitted", async () => {
+  test("does not change locales when field is omitted or empty", async () => {
     // Set some locales
     await db
       .update(page)
@@ -773,7 +743,7 @@ describe("StatusPageService locale fields", () => {
       {
         id: String(testPageToUpdateId),
         defaultLocale: "LOCALE_FR",
-        locales: { locales: ["LOCALE_EN", "LOCALE_DE"] },
+        locales: ["LOCALE_EN", "LOCALE_DE"],
       },
       { "x-openstatus-key": "1" },
     );
@@ -813,9 +783,7 @@ describe("StatusPageService locale fields", () => {
       {
         id: String(testPageToUpdateId),
         defaultLocale: "LOCALE_EN",
-        locales: {
-          locales: ["LOCALE_EN", "LOCALE_EN", "LOCALE_DE", "LOCALE_DE"],
-        },
+        locales: ["LOCALE_EN", "LOCALE_EN", "LOCALE_DE", "LOCALE_DE"],
       },
       { "x-openstatus-key": "1" },
     );
