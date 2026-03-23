@@ -165,7 +165,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         : "en";
     const validLocales = req.locales.filter((l) => l !== 0);
     const locales =
-      validLocales.length > 0 ? validLocales.map(protoLocaleToDb) : null;
+      validLocales.length > 0
+        ? [...new Set(validLocales.map(protoLocaleToDb))]
+        : null;
 
     // Validate defaultLocale is included in locales when locales are provided
     if (locales && !locales.includes(defaultLocale)) {
@@ -301,7 +303,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     if (req.locales !== undefined) {
       const validLocales = req.locales.locales.filter((l) => l !== 0);
       updateValues.locales =
-        validLocales.length > 0 ? validLocales.map(protoLocaleToDb) : null;
+        validLocales.length > 0
+          ? [...new Set(validLocales.map(protoLocaleToDb))]
+          : null;
     }
 
     // Validate defaultLocale is included in locales

@@ -270,6 +270,12 @@ afterAll(async () => {
   await db
     .delete(page)
     .where(eq(page.slug, `${TEST_PREFIX}-locale-default-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-locale-invalid-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-locale-dedup-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
@@ -739,6 +745,91 @@ describe("StatusPageService locale fields", () => {
       .update(page)
       .set({ defaultLocale: "en", locales: null })
       .where(eq(page.id, testPageId));
+  });
+
+  test("create returns 400 when defaultLocale is not in locales", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-locale-invalid`,
+        slug: `${TEST_PREFIX}-locale-invalid-slug`,
+        defaultLocale: "LOCALE_FR",
+        locales: ["LOCALE_EN", "LOCALE_DE"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.message).toContain(
+      "Default locale must be included in the locales list",
+    );
+  });
+
+  test("update returns 400 when defaultLocale is not in locales", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_FR",
+        locales: { locales: ["LOCALE_EN", "LOCALE_DE"] },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+
+    const data = await res.json();
+    expect(data.message).toContain(
+      "Default locale must be included in the locales list",
+    );
+  });
+
+  test("create deduplicates locales", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-locale-dedup`,
+        slug: `${TEST_PREFIX}-locale-dedup-slug`,
+        defaultLocale: "LOCALE_EN",
+        locales: ["LOCALE_EN", "LOCALE_EN", "LOCALE_DE"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_DE"]);
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("update deduplicates locales", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_EN",
+        locales: {
+          locales: ["LOCALE_EN", "LOCALE_EN", "LOCALE_DE", "LOCALE_DE"],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_DE"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
   });
 });
 
