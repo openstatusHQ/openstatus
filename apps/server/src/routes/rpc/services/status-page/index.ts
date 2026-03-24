@@ -158,6 +158,22 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw slugAlreadyExistsError(req.slug);
     }
 
+    // Check i18n limits
+    if (!limits.i18n) {
+      if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
+      if (req.locales.length > 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
+    }
+
     // Resolve locale values
     const defaultLocale =
       req.defaultLocale !== undefined && req.defaultLocale !== 0
@@ -258,10 +274,27 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async updateStatusPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     const id = req.id?.trim();
     if (!id) {
       throw statusPageIdRequiredError();
+    }
+
+    // Check i18n limits
+    if (!limits.i18n) {
+      if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
+      if (req.locales.length > 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
     }
 
     const pageData = await getPageById(Number(id), workspaceId);

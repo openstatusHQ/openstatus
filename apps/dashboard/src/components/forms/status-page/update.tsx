@@ -156,6 +156,7 @@ export function FormStatusPageUpdate() {
         }}
       />
       <FormLocale
+        locked={workspace.limits.i18n === false}
         defaultValues={{
           defaultLocale: statusPage.defaultLocale ?? "en",
           locales: statusPage.locales,

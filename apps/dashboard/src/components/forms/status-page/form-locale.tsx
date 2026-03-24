@@ -1,6 +1,7 @@
 import { useTransition } from "react";
 import { z } from "zod";
 
+import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -10,6 +11,7 @@ import {
   FormCardHeader,
   FormCardSeparator,
   FormCardTitle,
+  FormCardUpgrade,
 } from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -31,6 +33,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
+import { Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -64,9 +67,11 @@ type FormValues = z.infer<typeof schema>;
 export function FormLocale({
   defaultValues,
   onSubmit,
+  locked,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
+  locked?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
@@ -134,6 +139,7 @@ export function FormLocale({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
         <FormCard>
+          {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Locales</FormCardTitle>
             <FormCardDescription>
@@ -219,9 +225,18 @@ export function FormLocale({
               When the locale switcher is enabled, visitors can choose their
               preferred language.
             </FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Submitting..." : "Submit"}
-            </Button>
+            {locked ? (
+              <Button type="button" asChild>
+                <Link href="/settings/billing">
+                  <Lock className="size-4" />
+                  Upgrade
+                </Link>
+              </Button>
+            ) : (
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Submitting..." : "Submit"}
+              </Button>
+            )}
           </FormCardFooter>
         </FormCard>
       </form>

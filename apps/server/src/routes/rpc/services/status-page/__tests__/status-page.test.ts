@@ -276,6 +276,12 @@ afterAll(async () => {
   await db
     .delete(page)
     .where(eq(page.slug, `${TEST_PREFIX}-locale-dedup-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-i18n-limit-create-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-i18n-limit-update-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
@@ -820,6 +826,158 @@ describe("StatusPageService locale fields", () => {
 
     const data = await res.json();
     expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_DE"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+});
+
+// ==========================================================================
+// i18n Plan Limits
+// ==========================================================================
+
+describe("StatusPageService i18n plan limits", () => {
+  test("create rejects defaultLocale on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-i18n-limit-create`,
+        slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
+        defaultLocale: "LOCALE_DE",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+
+    const data = await res.json();
+    expect(data.message).toContain("Upgrade to configure locales");
+  });
+
+  test("create rejects locales on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-i18n-limit-create`,
+        slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
+        locales: ["LOCALE_EN", "LOCALE_FR"],
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+
+    const data = await res.json();
+    expect(data.message).toContain("Upgrade to configure locales");
+  });
+
+  test("update rejects defaultLocale on free plan", async () => {
+    // Create a page for workspace 2
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-i18n-limit-update`,
+        slug: `${TEST_PREFIX}-i18n-limit-update-slug`,
+        description: "",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPage.id),
+          defaultLocale: "LOCALE_FR",
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403);
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade to configure locales");
+    } finally {
+      await db.delete(page).where(eq(page.id, testPage.id));
+    }
+  });
+
+  test("update rejects locales on free plan", async () => {
+    // Create a page for workspace 2
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-i18n-limit-update`,
+        slug: `${TEST_PREFIX}-i18n-limit-update-slug`,
+        description: "",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPage.id),
+          locales: ["LOCALE_EN", "LOCALE_FR"],
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403);
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade to configure locales");
+    } finally {
+      await db.delete(page).where(eq(page.id, testPage.id));
+    }
+  });
+
+  test("create allows locale settings on paid plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-i18n-limit-create`,
+        slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
+        defaultLocale: "LOCALE_DE",
+        locales: ["LOCALE_EN", "LOCALE_DE"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_DE");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_DE"]);
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("update allows locale settings on paid plan", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_FR",
+        locales: ["LOCALE_EN", "LOCALE_FR"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_FR");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
 
     // Restore defaults
     await db
