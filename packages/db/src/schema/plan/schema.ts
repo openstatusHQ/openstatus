@@ -32,6 +32,7 @@ export const limitsSchema = z.object({
   "monitor-values-visibility": z.boolean().prefault(true),
   "status-subscribers": z.boolean().prefault(false),
   "custom-domain": z.boolean().prefault(false),
+  i18n: z.boolean().prefault(false),
   "password-protection": z.boolean().prefault(false),
   "email-domain-protection": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),

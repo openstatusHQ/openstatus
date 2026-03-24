@@ -592,6 +592,13 @@ export const pageRouter = createTRPCRouter({
         ),
     )
     .mutation(async (opts) => {
+      if (!opts.ctx.workspace.limits.i18n) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to configure locales.",
+        });
+      }
+
       const whereConditions: SQL[] = [
         eq(page.workspaceId, opts.ctx.workspace.id),
         eq(page.id, opts.input.id),
