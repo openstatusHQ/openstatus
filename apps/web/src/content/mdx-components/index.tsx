@@ -6,6 +6,7 @@ import { CustomImage } from "./custom-image";
 import { CustomLink } from "./custom-link";
 import { Details } from "./details";
 import { Grid } from "./grid";
+import { HowItWorks } from "./how-it-works";
 import { createHeading } from "./heading";
 import { Pre } from "./pre";
 import { PricingTabs } from "./pricing-tabs";
@@ -35,5 +36,6 @@ export const components = {
   Tweet: MDXTweet,
   StatusPageExample: MDXStatusPageExample,
   PricingTabs,
+  HowItWorks,
   Suspense: Suspense,
 };
