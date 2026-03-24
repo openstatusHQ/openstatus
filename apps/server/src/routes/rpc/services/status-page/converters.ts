@@ -235,6 +235,7 @@ export function dbPageToProtoSummary(page: DBPage): StatusPageSummary {
     published: page.published ?? false,
     createdAt: page.createdAt?.toISOString() ?? "",
     updatedAt: page.updatedAt?.toISOString() ?? "",
+    customDomain: page.customDomain ?? "",
   };
 }
 
