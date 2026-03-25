@@ -23,7 +23,10 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { StatusPageService } from "@openstatus/proto/status_page/v1";
-import { OverallStatus } from "@openstatus/proto/status_page/v1";
+import {
+  OverallStatus,
+  PageAccessType,
+} from "@openstatus/proto/status_page/v1";
 import { nanoid } from "nanoid";
 
 import { getRpcContext } from "../../interceptors";
@@ -33,17 +36,23 @@ import {
   dbPageToProto,
   dbPageToProtoSummary,
   dbSubscriberToProto,
+  protoAccessTypeToDb,
   protoLocaleToDb,
+  protoThemeToDb,
 } from "./converters";
 import {
+  authEmailDomainsRequiredError,
   componentGroupCreateFailedError,
   componentGroupNotFoundError,
   componentGroupUpdateFailedError,
   identifierRequiredError,
+  invalidCustomDomainError,
+  invalidIconUrlError,
   monitorNotFoundError,
   pageComponentCreateFailedError,
   pageComponentNotFoundError,
   pageComponentUpdateFailedError,
+  passwordRequiredError,
   slugAlreadyExistsError,
   statusPageAccessDeniedError,
   statusPageCreateFailedError,
@@ -54,7 +63,13 @@ import {
   subscriberCreateFailedError,
   subscriberNotFoundError,
 } from "./errors";
-import { checkPageComponentLimits, checkStatusPageLimits } from "./limits";
+import {
+  checkCustomDomainLimit,
+  checkEmailDomainProtectionLimit,
+  checkPageComponentLimits,
+  checkPasswordProtectionLimit,
+  checkStatusPageLimits,
+} from "./limits";
 
 /**
  * Helper to get a status page by ID with workspace scope.
@@ -94,6 +109,46 @@ function validatePublicAccess(
   if (pageData.accessType && pageData.accessType !== "public") {
     throw statusPageAccessDeniedError(slug, pageData.accessType);
   }
+}
+
+function validateIconUrl(icon: string): void {
+  let url: URL;
+  try {
+    url = new URL(icon);
+  } catch {
+    throw invalidIconUrlError();
+  }
+  if (url.protocol !== "https:") {
+    throw invalidIconUrlError();
+  }
+}
+
+function validateCustomDomain(domain: string): void {
+  const lower = domain.toLowerCase();
+  if (
+    lower.includes("openstatus") ||
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("www.")
+  ) {
+    throw invalidCustomDomainError(domain);
+  }
+}
+
+function validateAuthEmailDomains(domains: string[]): string[] {
+  const trimmed = domains.map((d) => d.trim()).filter(Boolean);
+  if (trimmed.length === 0) {
+    throw authEmailDomainsRequiredError();
+  }
+  for (const domain of trimmed) {
+    if (!domain.includes(".")) {
+      throw new ConnectError(
+        `Invalid email domain: "${domain}"`,
+        Code.InvalidArgument,
+      );
+    }
+  }
+  return trimmed;
 }
 
 /**
@@ -193,6 +248,50 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       );
     }
 
+    // Validate icon URL
+    const icon = req.icon ?? "";
+    if (icon) {
+      validateIconUrl(icon);
+    }
+
+    // Validate custom domain
+    const customDomain = req.customDomain ?? "";
+    if (customDomain) {
+      checkCustomDomainLimit(limits);
+      validateCustomDomain(customDomain);
+    }
+
+    // Resolve theme
+    const forceTheme =
+      req.theme !== undefined && req.theme !== 0
+        ? protoThemeToDb(req.theme)
+        : "system";
+
+    // Resolve access type and associated fields
+    const reqAccessType = req.accessType;
+    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
+    const accessType = hasAccessType
+      ? protoAccessTypeToDb(reqAccessType)
+      : "public";
+
+    let password: string | null = null;
+    let authEmailDomains: string | null = null;
+
+    if (hasAccessType) {
+      if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
+        checkPasswordProtectionLimit(limits);
+        const trimmedPassword = req.password?.trim() ?? "";
+        if (!trimmedPassword) {
+          throw passwordRequiredError();
+        }
+        password = trimmedPassword;
+      } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
+        checkEmailDomainProtectionLimit(limits);
+        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
+        authEmailDomains = validatedDomains.join(",");
+      }
+    }
+
     // Create the status page
     const newPage = await db
       .insert(page)
@@ -201,8 +300,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         title: req.title,
         description: req.description ?? "",
         slug: req.slug,
-        customDomain: "",
+        customDomain,
         published: false,
+        icon,
+        forceTheme,
+        accessType,
+        password,
+        authEmailDomains,
         homepageUrl: req.homepageUrl ?? null,
         contactUrl: req.contactUrl ?? null,
         defaultLocale,
@@ -351,6 +455,53 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         "Default locale must be included in the locales list",
         Code.InvalidArgument,
       );
+    }
+
+    // Handle icon
+    if (req.icon !== undefined) {
+      if (req.icon) {
+        validateIconUrl(req.icon);
+      }
+      updateValues.icon = req.icon;
+    }
+
+    // Handle custom domain
+    if (req.customDomain !== undefined) {
+      if (req.customDomain) {
+        checkCustomDomainLimit(limits);
+        validateCustomDomain(req.customDomain);
+      }
+      updateValues.customDomain = req.customDomain;
+    }
+
+    // Handle theme
+    if (req.theme !== undefined && req.theme !== 0) {
+      updateValues.forceTheme = protoThemeToDb(req.theme);
+    }
+
+    // Handle access type (password and authEmailDomains only written when accessType is present)
+    const reqAccessType = req.accessType;
+    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
+    if (hasAccessType) {
+      if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
+        checkPasswordProtectionLimit(limits);
+        const trimmedPassword = req.password?.trim() ?? "";
+        if (!trimmedPassword) {
+          throw passwordRequiredError();
+        }
+        updateValues.password = trimmedPassword;
+        updateValues.authEmailDomains = null;
+      } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
+        checkEmailDomainProtectionLimit(limits);
+        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
+        updateValues.authEmailDomains = validatedDomains.join(",");
+        updateValues.password = null;
+      } else {
+        // Switching to PUBLIC or other — clear stale data
+        updateValues.password = null;
+        updateValues.authEmailDomains = null;
+      }
+      updateValues.accessType = protoAccessTypeToDb(reqAccessType);
     }
 
     const updatedPage = await db
@@ -1023,8 +1174,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       };
     });
 
+    const statusPage = dbPageToProto(pageData);
+    if (isPublicAccess) {
+      statusPage.password = "";
+      statusPage.authEmailDomains = [];
+    }
+
     return {
-      statusPage: dbPageToProto(pageData),
+      statusPage,
       components: components.map(dbComponentToProto),
       groups: groups.map(dbGroupToProto),
       statusReports,

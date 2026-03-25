@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { db, eq } from "@openstatus/db";
+import { db, eq, sql } from "@openstatus/db";
 import {
   monitor,
   page,
@@ -47,8 +47,15 @@ let testGroupToDeleteId: number;
 let testGroupToUpdateId: number;
 let testMonitorId: number;
 let testSubscriberId: number;
+let testPasswordPageId: number;
+let testPasswordPageSlug: string;
 
 beforeAll(async () => {
+  // Ensure workspace 1 has email-domain-protection enabled for AUTHENTICATED tests
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
+  );
+
   // Clean up any existing test data
   await db
     .delete(pageSubscriber)
@@ -74,6 +81,7 @@ beforeAll(async () => {
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-slug`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-slug-to-delete`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-slug-to-update`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-password-slug`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 
   // Create a test monitor for component tests
@@ -229,6 +237,26 @@ beforeAll(async () => {
     .returning()
     .get();
   testSubscriberId = testSubscriber.id;
+
+  // Create a test page with password protection for read tests
+  const passwordPage = await db
+    .insert(page)
+    .values({
+      workspaceId: 1,
+      title: `${TEST_PREFIX}-password-page`,
+      slug: `${TEST_PREFIX}-password-slug`,
+      description: "Password protected test page",
+      customDomain: "",
+      published: true,
+      accessType: "password",
+      password: "test-secret-123",
+      authEmailDomains: null,
+      icon: "https://example.com/icon.png",
+    })
+    .returning()
+    .get();
+  testPasswordPageId = passwordPage.id;
+  testPasswordPageSlug = passwordPage.slug;
 });
 
 afterAll(async () => {
@@ -282,6 +310,16 @@ afterAll(async () => {
   await db
     .delete(page)
     .where(eq(page.slug, `${TEST_PREFIX}-i18n-limit-update-slug`));
+
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-password-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-icon-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-domain-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-theme-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-pw-create-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-auth-create-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-public-pw-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-limit-ws2-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-trim-domain-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
@@ -2098,5 +2136,777 @@ describe("StatusPageService.GetOverallStatus", () => {
         .where(eq(statusReportsToPageComponents.statusReportId, report.id));
       await db.delete(statusReport).where(eq(statusReport.id, report.id));
     }
+  });
+});
+
+// ==========================================================================
+// New Fields: icon, custom_domain, theme, access_type, password, auth_email_domains
+// ==========================================================================
+
+describe("StatusPageService.CreateStatusPage — new fields", () => {
+  test("creates a page with icon", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-icon`,
+        slug: `${TEST_PREFIX}-icon-slug`,
+        icon: "https://example.com/my-icon.png",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.icon).toBe("https://example.com/my-icon.png");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("creates a page with custom_domain", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-domain`,
+        slug: `${TEST_PREFIX}-domain-slug`,
+        customDomain: "status.example.com",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.customDomain).toBe("status.example.com");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("creates a page with theme", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-theme`,
+        slug: `${TEST_PREFIX}-theme-slug`,
+        theme: "PAGE_THEME_DARK",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.theme).toBe("PAGE_THEME_DARK");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("creates a page with access_type PASSWORD_PROTECTED + password", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-pw-create`,
+        slug: `${TEST_PREFIX}-pw-create-slug`,
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+        password: "my-secret",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe(
+      "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+    );
+    expect(data.statusPage.password).toBe("my-secret");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("creates a page with access_type AUTHENTICATED + auth_email_domains", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-auth-create`,
+        slug: `${TEST_PREFIX}-auth-create-slug`,
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: ["example.com", "test.com"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_AUTHENTICATED");
+    expect(data.statusPage.authEmailDomains).toEqual([
+      "example.com",
+      "test.com",
+    ]);
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("returns 400 when PASSWORD_PROTECTED without password", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-no-pw`,
+        slug: `${TEST_PREFIX}-no-pw-slug`,
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Password is required");
+  });
+
+  test("returns 400 when AUTHENTICATED without auth_email_domains", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-no-domains`,
+        slug: `${TEST_PREFIX}-no-domains-slug`,
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("At least one email domain is required");
+  });
+
+  test("returns 400 when custom_domain contains openstatus", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-bad-domain`,
+        slug: `${TEST_PREFIX}-bad-domain-slug`,
+        customDomain: "my-openstatus-page.com",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 when custom_domain starts with http://", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-http-domain`,
+        slug: `${TEST_PREFIX}-http-domain-slug`,
+        customDomain: "http://status.example.com",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 when icon is not a valid URL", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-bad-icon`,
+        slug: `${TEST_PREFIX}-bad-icon-slug`,
+        icon: "not-a-url",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("silently ignores password when access_type is PUBLIC", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-public-pw`,
+        slug: `${TEST_PREFIX}-public-pw-slug`,
+        accessType: "PAGE_ACCESS_TYPE_PUBLIC",
+        password: "should-be-ignored",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.password ?? "").toBe("");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+});
+
+describe("StatusPageService.UpdateStatusPage — new fields", () => {
+  test("updates icon", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        icon: "https://example.com/new-icon.png",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.icon).toBe("https://example.com/new-icon.png");
+
+    await db
+      .update(page)
+      .set({ icon: "https://example.com/icon.png" })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("updates custom_domain", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        customDomain: "status.mysite.com",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.customDomain).toBe("status.mysite.com");
+
+    await db
+      .update(page)
+      .set({ customDomain: "" })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("updates theme", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        theme: "PAGE_THEME_LIGHT",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.theme).toBe("PAGE_THEME_LIGHT");
+
+    await db
+      .update(page)
+      .set({ forceTheme: "system" })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("updates access_type to PASSWORD_PROTECTED with password", async () => {
+    await db
+      .update(page)
+      .set({ accessType: "public", password: null })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+        password: "new-secret",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe(
+      "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+    );
+    expect(data.statusPage.password).toBe("new-secret");
+
+    await db
+      .update(page)
+      .set({ accessType: "password", password: "test-secret-123" })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("updates access_type to AUTHENTICATED with auth_email_domains", async () => {
+    await db
+      .update(page)
+      .set({ accessType: "public", password: null, authEmailDomains: null })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: ["mycompany.com"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_AUTHENTICATED");
+    expect(data.statusPage.authEmailDomains).toEqual(["mycompany.com"]);
+
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        authEmailDomains: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("returns 400 when PASSWORD_PROTECTED without password", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 when AUTHENTICATED without auth_email_domains", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("changing only title on password page succeeds without re-validation", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        title: `${TEST_PREFIX}-title-only-change`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.title).toBe(`${TEST_PREFIX}-title-only-change`);
+    expect(data.statusPage.password).toBe("test-secret-123");
+
+    await db
+      .update(page)
+      .set({ title: `${TEST_PREFIX}-password-page` })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("returns 400 when custom_domain contains openstatus", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        customDomain: "openstatus-status.com",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("switching from PASSWORD_PROTECTED to PUBLIC clears password", async () => {
+    await db
+      .update(page)
+      .set({ accessType: "password", password: "will-be-cleared" })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_PUBLIC",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_PUBLIC");
+    expect(data.statusPage.password ?? "").toBe("");
+
+    await db
+      .update(page)
+      .set({ accessType: "password", password: "test-secret-123" })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("switching from AUTHENTICATED to PUBLIC clears auth_email_domains", async () => {
+    await db
+      .update(page)
+      .set({
+        accessType: "email-domain",
+        authEmailDomains: "example.com,test.com",
+        password: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_PUBLIC",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_PUBLIC");
+    expect(data.statusPage.authEmailDomains ?? []).toEqual([]);
+
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        authEmailDomains: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("clearing custom_domain with empty string succeeds", async () => {
+    await db
+      .update(page)
+      .set({ customDomain: "status.example.com" })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        customDomain: "",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.customDomain ?? "").toBe("");
+  });
+
+  test("returns 400 when icon is not a valid URL", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        icon: "not-a-url",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("StatusPageService — new fields limit enforcement (workspace 2 / free plan)", () => {
+  let ws2PageId: number;
+
+  test("returns 403 when creating with custom_domain on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-limit-ws2`,
+        slug: `${TEST_PREFIX}-limit-ws2-slug`,
+        customDomain: "status.freeplan.com",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns 403 when creating with PASSWORD_PROTECTED on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-limit-ws2-pw`,
+        slug: `${TEST_PREFIX}-limit-ws2-pw-slug`,
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+        password: "secret",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns 403 when creating with AUTHENTICATED on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-limit-ws2-auth`,
+        slug: `${TEST_PREFIX}-limit-ws2-auth-slug`,
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: ["example.com"],
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns 403 when updating with custom_domain on free plan", async () => {
+    const ws2Page = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-limit-update-ws2`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-slug`,
+        description: "Free plan page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+    ws2PageId = ws2Page.id;
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(ws2PageId),
+        customDomain: "status.freeplan.com",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns 403 when updating with PASSWORD_PROTECTED on free plan", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(ws2PageId),
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+        password: "secret",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns 403 when updating with AUTHENTICATED on free plan", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(ws2PageId),
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: ["example.com"],
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+
+    await db.delete(page).where(eq(page.id, ws2PageId));
+  });
+});
+
+describe("StatusPageService — new fields in read responses", () => {
+  test("GetStatusPage returns password and auth_email_domains", async () => {
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: String(testPasswordPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.password).toBe("test-secret-123");
+    expect(data.statusPage.icon).toBe("https://example.com/icon.png");
+  });
+
+  test("GetStatusPageContent by slug does NOT return password", async () => {
+    // Temporarily set to public so slug access works (validatePublicAccess requires public)
+    await db
+      .update(page)
+      .set({ accessType: "public" })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "GetStatusPageContent",
+      { slug: testPasswordPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.password ?? "").toBe("");
+    expect(data.statusPage.icon).toBe("https://example.com/icon.png");
+
+    // Restore
+    await db
+      .update(page)
+      .set({ accessType: "password" })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("GetStatusPageContent by ID returns password", async () => {
+    const res = await connectRequest(
+      "GetStatusPageContent",
+      { id: String(testPasswordPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.password).toBe("test-secret-123");
+  });
+
+  test("GetStatusPageContent by slug redacts authEmailDomains", async () => {
+    // Set page to public with stale authEmailDomains
+    await db
+      .update(page)
+      .set({
+        accessType: "public",
+        authEmailDomains: "stale.com,leftover.com",
+        password: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "GetStatusPageContent",
+      { slug: testPasswordPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.authEmailDomains ?? []).toEqual([]);
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        authEmailDomains: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+});
+
+// ==========================================================================
+// Code review fixes: validation edge cases
+// ==========================================================================
+
+describe("StatusPageService — password trimming", () => {
+  test("create with whitespace-only password returns 400", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ws-pw`,
+        slug: `${TEST_PREFIX}-ws-pw-slug`,
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+        password: "   ",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Password is required");
+  });
+
+  test("update with whitespace-only password returns 400", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
+        password: "   ",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Password is required");
+  });
+});
+
+describe("StatusPageService — email domain validation", () => {
+  test("create with whitespace-only domain returns 400", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ws-domain`,
+        slug: `${TEST_PREFIX}-ws-domain-slug`,
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: ["   "],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("email domain");
+  });
+
+  test("create with domain missing dot returns 400", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-nodot-domain`,
+        slug: `${TEST_PREFIX}-nodot-domain-slug`,
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: ["nodot"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid email domain");
+  });
+
+  test("create trims domain whitespace", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-trim-domain`,
+        slug: `${TEST_PREFIX}-trim-domain-slug`,
+        accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
+        authEmailDomains: [" example.com "],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.authEmailDomains).toEqual(["example.com"]);
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+});
+
+describe("StatusPageService — password-only update without accessType", () => {
+  test("sending password without accessType does not update password", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        password: "new-password-attempt",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.password).toBe("test-secret-123");
   });
 });

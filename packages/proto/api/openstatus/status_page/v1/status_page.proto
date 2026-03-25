@@ -96,6 +96,12 @@ message StatusPage {
 
   // Enabled locales for the status page.
   repeated Locale locales = 15;
+
+  // Password for the status page (only set when access_type is PASSWORD_PROTECTED).
+  string password = 16;
+
+  // Email domains allowed to access the page (only set when access_type is AUTHENTICATED).
+  repeated string auth_email_domains = 17;
 }
 
 // StatusPageSummary represents metadata for a status page (used in list responses).

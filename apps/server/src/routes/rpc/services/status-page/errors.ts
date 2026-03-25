@@ -21,6 +21,10 @@ export const ErrorReason = {
   SUBSCRIBER_NOT_FOUND: "SUBSCRIBER_NOT_FOUND",
   SUBSCRIBER_CREATE_FAILED: "SUBSCRIBER_CREATE_FAILED",
   IDENTIFIER_REQUIRED: "IDENTIFIER_REQUIRED",
+  INVALID_CUSTOM_DOMAIN: "INVALID_CUSTOM_DOMAIN",
+  INVALID_ICON_URL: "INVALID_ICON_URL",
+  PASSWORD_REQUIRED: "PASSWORD_REQUIRED",
+  AUTH_EMAIL_DOMAINS_REQUIRED: "AUTH_EMAIL_DOMAINS_REQUIRED",
 } as const;
 
 export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason];
@@ -252,5 +256,38 @@ export function identifierRequiredError(): ConnectError {
     "Either email or token is required to identify the subscriber",
     Code.InvalidArgument,
     ErrorReason.IDENTIFIER_REQUIRED,
+  );
+}
+
+export function invalidCustomDomainError(domain: string): ConnectError {
+  return createError(
+    "Custom domain must not contain 'openstatus' or start with http://, https://, or www.",
+    Code.InvalidArgument,
+    ErrorReason.INVALID_CUSTOM_DOMAIN,
+    { "custom-domain": domain },
+  );
+}
+
+export function invalidIconUrlError(): ConnectError {
+  return createError(
+    "Icon must be a valid URL",
+    Code.InvalidArgument,
+    ErrorReason.INVALID_ICON_URL,
+  );
+}
+
+export function passwordRequiredError(): ConnectError {
+  return createError(
+    "Password is required when access_type is PASSWORD_PROTECTED",
+    Code.InvalidArgument,
+    ErrorReason.PASSWORD_REQUIRED,
+  );
+}
+
+export function authEmailDomainsRequiredError(): ConnectError {
+  return createError(
+    "At least one email domain is required when access_type is AUTHENTICATED",
+    Code.InvalidArgument,
+    ErrorReason.AUTH_EMAIL_DOMAINS_REQUIRED,
   );
 }
