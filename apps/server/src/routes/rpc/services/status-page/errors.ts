@@ -264,7 +264,7 @@ export function invalidCustomDomainError(domain: string): ConnectError {
     "Custom domain must not contain 'openstatus' or start with http://, https://, or www.",
     Code.InvalidArgument,
     ErrorReason.INVALID_CUSTOM_DOMAIN,
-    { domain },
+    { "custom-domain": domain },
   );
 }
 

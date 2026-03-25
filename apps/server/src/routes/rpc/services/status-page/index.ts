@@ -112,9 +112,13 @@ function validatePublicAccess(
 }
 
 function validateIconUrl(icon: string): void {
+  let url: URL;
   try {
-    new URL(icon);
+    url = new URL(icon);
   } catch {
+    throw invalidIconUrlError();
+  }
+  if (url.protocol !== "https:") {
     throw invalidIconUrlError();
   }
 }
