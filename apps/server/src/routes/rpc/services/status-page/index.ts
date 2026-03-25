@@ -41,14 +41,18 @@ import {
   protoThemeToDb,
 } from "./converters";
 import {
+  authEmailDomainsRequiredError,
   componentGroupCreateFailedError,
   componentGroupNotFoundError,
   componentGroupUpdateFailedError,
   identifierRequiredError,
+  invalidCustomDomainError,
+  invalidIconUrlError,
   monitorNotFoundError,
   pageComponentCreateFailedError,
   pageComponentNotFoundError,
   pageComponentUpdateFailedError,
+  passwordRequiredError,
   slugAlreadyExistsError,
   statusPageAccessDeniedError,
   statusPageCreateFailedError,
@@ -58,10 +62,6 @@ import {
   statusPageUpdateFailedError,
   subscriberCreateFailedError,
   subscriberNotFoundError,
-  invalidCustomDomainError,
-  invalidIconUrlError,
-  passwordRequiredError,
-  authEmailDomainsRequiredError,
 } from "./errors";
 import {
   checkCustomDomainLimit,
@@ -265,8 +265,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Resolve access type and associated fields
     const reqAccessType = req.accessType;
-    const hasAccessType =
-      reqAccessType !== undefined && reqAccessType !== 0;
+    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
     const accessType = hasAccessType
       ? protoAccessTypeToDb(reqAccessType)
       : "public";
@@ -284,9 +283,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         password = trimmedPassword;
       } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
         checkEmailDomainProtectionLimit(limits);
-        const validatedDomains = validateAuthEmailDomains(
-          req.authEmailDomains,
-        );
+        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
         authEmailDomains = validatedDomains.join(",");
       }
     }
@@ -480,8 +477,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Handle access type (password and authEmailDomains only written when accessType is present)
     const reqAccessType = req.accessType;
-    const hasAccessType =
-      reqAccessType !== undefined && reqAccessType !== 0;
+    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
     if (hasAccessType) {
       if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
         checkPasswordProtectionLimit(limits);
@@ -493,9 +489,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         updateValues.authEmailDomains = null;
       } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
         checkEmailDomainProtectionLimit(limits);
-        const validatedDomains = validateAuthEmailDomains(
-          req.authEmailDomains,
-        );
+        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
         updateValues.authEmailDomains = validatedDomains.join(",");
         updateValues.password = null;
       } else {

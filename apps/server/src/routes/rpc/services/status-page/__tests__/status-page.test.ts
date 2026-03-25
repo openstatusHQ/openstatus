@@ -311,16 +311,10 @@ afterAll(async () => {
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-domain-slug`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-theme-slug`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-pw-create-slug`));
-  await db
-    .delete(page)
-    .where(eq(page.slug, `${TEST_PREFIX}-auth-create-slug`));
-  await db
-    .delete(page)
-    .where(eq(page.slug, `${TEST_PREFIX}-public-pw-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-auth-create-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-public-pw-slug`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-limit-ws2-slug`));
-  await db
-    .delete(page)
-    .where(eq(page.slug, `${TEST_PREFIX}-trim-domain-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-trim-domain-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });

@@ -223,8 +223,7 @@ export function dbPageToProto(page: DBPage): StatusPage {
     defaultLocale: dbLocaleToProto(page.defaultLocale),
     locales: page.locales?.map(dbLocaleToProto) ?? [],
     password: page.password ?? "",
-    authEmailDomains:
-      page.authEmailDomains?.split(",").filter(Boolean) ?? [],
+    authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
   };
 }
 
