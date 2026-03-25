@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { db, eq } from "@openstatus/db";
+import { db, eq, sql } from "@openstatus/db";
 import {
   monitor,
   page,
@@ -51,6 +51,11 @@ let testPasswordPageId: number;
 let testPasswordPageSlug: string;
 
 beforeAll(async () => {
+  // Ensure workspace 1 has email-domain-protection enabled for AUTHENTICATED tests
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
+  );
+
   // Clean up any existing test data
   await db
     .delete(pageSubscriber)
@@ -2326,7 +2331,7 @@ describe("StatusPageService.CreateStatusPage — new fields", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.statusPage.password).toBe("");
+    expect(data.statusPage.password ?? "").toBe("");
 
     await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
   });
@@ -2531,7 +2536,7 @@ describe("StatusPageService.UpdateStatusPage — new fields", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_PUBLIC");
-    expect(data.statusPage.password).toBe("");
+    expect(data.statusPage.password ?? "").toBe("");
 
     await db
       .update(page)
@@ -2590,7 +2595,7 @@ describe("StatusPageService.UpdateStatusPage — new fields", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.statusPage.customDomain).toBe("");
+    expect(data.statusPage.customDomain ?? "").toBe("");
   });
 
   test("returns 400 when icon is not a valid URL", async () => {
@@ -2726,6 +2731,12 @@ describe("StatusPageService — new fields in read responses", () => {
   });
 
   test("GetStatusPageContent by slug does NOT return password", async () => {
+    // Temporarily set to public so slug access works (validatePublicAccess requires public)
+    await db
+      .update(page)
+      .set({ accessType: "public" })
+      .where(eq(page.id, testPasswordPageId));
+
     const res = await connectRequest(
       "GetStatusPageContent",
       { slug: testPasswordPageSlug },
@@ -2734,8 +2745,14 @@ describe("StatusPageService — new fields in read responses", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.statusPage.password).toBe("");
+    expect(data.statusPage.password ?? "").toBe("");
     expect(data.statusPage.icon).toBe("https://example.com/icon.png");
+
+    // Restore
+    await db
+      .update(page)
+      .set({ accessType: "password" })
+      .where(eq(page.id, testPasswordPageId));
   });
 
   test("GetStatusPageContent by ID returns password", async () => {
