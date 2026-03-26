@@ -2,8 +2,10 @@
 import SiteTitle from "./SiteTitle.astro";
 
 import config from "@/config/config.json";
+import social from "@/config/social.json";
 import ThemeSwitch from "./ThemeSwitch.astro";
 import Search from "./Search.astro";
+import { Icon } from "@astrojs/starlight/components";
 
 const { settings } = config;
 
@@ -27,9 +29,30 @@ const hasSidebar = Astro.locals.starlightRoute.hasSidebar;
       )
     }
 
+     <div class="social-icons hidden md:flex items-center gap-3">
+      {social.main.map((item) => (
+        <a href={item.href} target="_blank" rel="noopener noreferrer" aria-label={item.label}>
+          <Icon name={item.icon as any} size="1.25rem" />
+        </a>
+      ))}
+    </div>
+
     {settings.theme_switcher && <ThemeSwitch className="lg:mx-6 mr-10" />}
+
+   
   </div>
 </nav>
+
+<style>
+  .social-icons a {
+    color: var(--sl-color-gray-3);
+    transition: color 0.2s ease;
+    margin-top: 10px;
+  }
+  .social-icons a:hover {
+    color: var(--sl-color-white);
+  }
+</style>
 
 <script>
   // add header bg after scroll
