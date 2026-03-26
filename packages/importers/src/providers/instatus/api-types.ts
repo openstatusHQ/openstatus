@@ -91,6 +91,12 @@ export const InstatusMaintenanceSchema = z.object({
 
 export type InstatusMaintenance = z.infer<typeof InstatusMaintenanceSchema>;
 
+// Subscriber component refs can have localized `name` (object) unlike
+// incident/maintenance refs which use plain strings. We only need the ID.
+const InstatusSubscriberComponentRefSchema = z
+  .object({ id: z.string() })
+  .loose();
+
 export const InstatusSubscriberSchema = z.object({
   id: z.string(),
   email: z.string().nullable(),
@@ -98,7 +104,7 @@ export const InstatusSubscriberSchema = z.object({
   webhook: z.string().nullable(),
   confirmed: z.boolean(),
   all: z.boolean(),
-  components: z.array(z.string()).optional(),
+  components: z.array(InstatusSubscriberComponentRefSchema).optional(),
 });
 
 export type InstatusSubscriber = z.infer<typeof InstatusSubscriberSchema>;

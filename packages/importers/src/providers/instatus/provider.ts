@@ -29,10 +29,15 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
         await client.getPages();
         return { valid: true };
       } catch (err) {
-        return {
-          valid: false,
-          error: err instanceof Error ? err.message : String(err),
-        };
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("401")) {
+          return {
+            valid: false,
+            error:
+              "Invalid Instatus API key. You can find your key at instatus.com/app/developer.",
+          };
+        }
+        return { valid: false, error: message };
       }
     },
 
@@ -47,6 +52,7 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
       }
 
       let skippedSubscribers = 0;
+      const allWarnings: string[] = [];
 
       for (const pg of pages) {
         const [allComponents, incidents, maintenances, subscribers] =
@@ -57,7 +63,12 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
             client.getSubscribers(pg.id),
           ]);
 
-        const { groups, components } = partitionComponents(allComponents);
+        const {
+          groups,
+          components,
+          warnings: partitionWarnings,
+        } = partitionComponents(allComponents);
+        allWarnings.push(...partitionWarnings);
 
         // Page phase
         const mappedPage = mapPage(pg, config.workspaceId);
@@ -158,7 +169,7 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
         });
       }
 
-      const errors: string[] = [];
+      const errors: string[] = [...allWarnings];
       if (skippedSubscribers > 0) {
         errors.push(
           `Only email subscribers are supported. ${skippedSubscribers} non-email subscriber${skippedSubscribers === 1 ? " was" : "s were"} skipped.`,

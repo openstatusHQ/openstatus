@@ -80,7 +80,7 @@ describe("InstatusImportProvider", () => {
     expect(result).toEqual({ valid: true });
   });
 
-  it("validate returns error for 401", async () => {
+  it("validate returns user-friendly error for 401", async () => {
     const prev = globalThis.fetch;
     globalThis.fetch = createMockFetch({ failAuth: true }) as typeof fetch;
 
@@ -90,7 +90,8 @@ describe("InstatusImportProvider", () => {
       workspaceId: 1,
     });
     expect(result.valid).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(result.error).toContain("Invalid Instatus API key");
+    expect(result.error).toContain("instatus.com/app/developer");
 
     globalThis.fetch = prev;
   });
@@ -128,6 +129,30 @@ describe("InstatusImportProvider", () => {
 
     // 2 email subscribers (phone, webhook, and empty all skipped)
     expect(findPhase("subscribers")?.resources).toHaveLength(2);
+  });
+
+  it("filters by instatusPageId when provided", async () => {
+    const provider = createInstatusProvider();
+
+    // Filter by matching page ID — should return data
+    const matching = await provider.run({
+      apiKey: "test-key",
+      workspaceId: 1,
+      dryRun: true,
+      instatusPageId: "in_page_001",
+    });
+    const findPhase = (name: string) =>
+      matching.phases.find((p) => p.phase === name);
+    expect(findPhase("page")?.resources).toHaveLength(1);
+
+    // Filter by non-existent page ID — should return empty phases
+    const nonMatching = await provider.run({
+      apiKey: "test-key",
+      workspaceId: 1,
+      dryRun: true,
+      instatusPageId: "nonexistent",
+    });
+    expect(nonMatching.phases).toHaveLength(0);
   });
 
   it("reports skipped non-email subscribers", async () => {

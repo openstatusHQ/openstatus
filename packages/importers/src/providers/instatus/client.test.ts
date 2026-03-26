@@ -19,7 +19,7 @@ function mockFetch(data: unknown, status = 200) {
         headers: { "Content-Type": "application/json" },
       }),
     ),
-  ) as typeof globalThis.fetch;
+  ) as unknown as typeof globalThis.fetch;
 }
 
 function mockFetchPaginated(data: unknown, status = 200) {
@@ -34,7 +34,7 @@ function mockFetchPaginated(data: unknown, status = 200) {
         headers: { "Content-Type": "application/json" },
       }),
     );
-  }) as typeof globalThis.fetch;
+  }) as unknown as typeof globalThis.fetch;
 }
 
 describe("InstatusClient", () => {
@@ -106,7 +106,7 @@ describe("InstatusClient", () => {
   test("sends correct Bearer auth header", async () => {
     mockFetch(MOCK_PAGES);
     await client.getPages();
-    const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof mock>;
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.instatus.com/v2/pages");
@@ -115,10 +115,37 @@ describe("InstatusClient", () => {
     );
   });
 
+  test("pagination handles response length exactly equal to per_page", async () => {
+    // Create exactly per_page items so the loop makes one extra fetch
+    const items = Array.from({ length: 100 }, (_, i) => ({
+      ...MOCK_COMPONENTS[0],
+      id: `comp_${i}`,
+      name: `Component ${i}`,
+    }));
+
+    let callCount = 0;
+    globalThis.fetch = mock(() => {
+      callCount++;
+      // First call: 100 items (= per_page), second call: empty array
+      const body = callCount === 1 ? items : [];
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }) as unknown as typeof globalThis.fetch;
+
+    const result = await client.getComponents("in_page_001");
+    expect(result).toHaveLength(100);
+    // Should have made 2 calls: first returns 100, second returns [] to terminate
+    expect(callCount).toBe(2);
+  });
+
   test("uses v1 for incidents and v2 for other endpoints", async () => {
     mockFetchPaginated(MOCK_INCIDENTS);
     await client.getIncidents("in_page_001");
-    const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof mock>;
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("/v1/in_page_001/incidents");
   });

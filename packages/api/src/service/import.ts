@@ -27,6 +27,28 @@ type ImportOptions = {
   includeComponents?: boolean;
 };
 
+type ProviderName = "statuspage" | "instatus";
+
+function createProvider(name: ProviderName) {
+  return name === "instatus"
+    ? createInstatusProvider()
+    : createStatuspageProvider();
+}
+
+function buildProviderConfig(config: {
+  provider: ProviderName;
+  apiKey: string;
+  workspaceId: number;
+  pageId?: number;
+  statuspagePageId?: string;
+  instatusPageId?: string;
+}) {
+  const { provider, ...rest } = config;
+  return provider === "instatus"
+    ? { ...rest, instatusPageId: config.instatusPageId }
+    : { ...rest, statuspagePageId: config.statuspagePageId };
+}
+
 /**
  * Inspect an ImportSummary and push warnings into `summary.errors`
  * for any limits that would be hit during import.
@@ -98,7 +120,7 @@ export async function addLimitWarnings(
 }
 
 export async function previewImport(config: {
-  provider: "statuspage" | "instatus";
+  provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
   instatusPageId?: string;
@@ -106,15 +128,8 @@ export async function previewImport(config: {
   pageId?: number;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider =
-    config.provider === "instatus"
-      ? createInstatusProvider()
-      : createStatuspageProvider();
-
-  const providerConfig =
-    config.provider === "instatus"
-      ? { ...config, instatusPageId: config.instatusPageId }
-      : { ...config, statuspagePageId: config.statuspagePageId };
+  const provider = createProvider(config.provider);
+  const providerConfig = buildProviderConfig(config);
 
   const validation = await provider.validate({
     ...providerConfig,
@@ -133,7 +148,7 @@ export async function previewImport(config: {
 }
 
 export async function runImport(config: {
-  provider: "statuspage" | "instatus";
+  provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
   instatusPageId?: string;
@@ -142,15 +157,8 @@ export async function runImport(config: {
   options?: ImportOptions;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider =
-    config.provider === "instatus"
-      ? createInstatusProvider()
-      : createStatuspageProvider();
-
-  const providerConfig =
-    config.provider === "instatus"
-      ? { ...config, instatusPageId: config.instatusPageId }
-      : { ...config, statuspagePageId: config.statuspagePageId };
+  const provider = createProvider(config.provider);
+  const providerConfig = buildProviderConfig(config);
 
   const validation = await provider.validate(providerConfig);
   if (!validation.valid) {
@@ -707,6 +715,7 @@ async function writeSubscribersPhase(
       const data = resource.data as {
         email: string;
         pageId: number;
+        confirmed: boolean;
         sourceComponentIds: string[];
       };
 
@@ -735,6 +744,7 @@ async function writeSubscribersPhase(
           email: data.email,
           pageId,
           channelType: "email",
+          acceptedAt: data.confirmed ? new Date() : undefined,
         })
         .returning({ id: pageSubscriber.id });
 

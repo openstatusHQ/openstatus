@@ -69,6 +69,7 @@ export function createInstatusClient(
     getPage: (pageId) => request(`/v2/${pageId}`, InstatusPageSchema),
     getComponents: (pageId) =>
       requestAllPages(`/v2/${pageId}/components`, InstatusComponentSchema),
+    // Instatus only exposes incidents via v1 — there is no v2 equivalent.
     getIncidents: (pageId) =>
       requestAllPages(`/v1/${pageId}/incidents`, InstatusIncidentSchema),
     getMaintenances: (pageId) =>

@@ -27,6 +27,7 @@ export function mapPage(page: InstatusPage, workspaceId: number) {
 export function partitionComponents(components: InstatusComponent[]): {
   groups: InstatusComponent[];
   components: InstatusComponent[];
+  warnings: string[];
 } {
   const groupIds = new Set<string>();
   for (const c of components) {
@@ -35,18 +36,42 @@ export function partitionComponents(components: InstatusComponent[]): {
     }
   }
 
+  const componentById = new Map(components.map((c) => [c.id, c]));
   const groups: InstatusComponent[] = [];
   const regular: InstatusComponent[] = [];
+  const warnings: string[] = [];
 
-  for (const c of components) {
-    if (groupIds.has(c.id)) {
-      groups.push(c);
+  // Collect groups: real components that are referenced as groups
+  for (const groupId of Array.from(groupIds)) {
+    const groupComponent = componentById.get(groupId);
+    if (groupComponent) {
+      groups.push(groupComponent);
     } else {
+      // Group ID referenced but not found in component list — create synthetic group
+      groups.push({
+        id: groupId,
+        name: groupId,
+        description: null,
+        status: "OPERATIONAL",
+        order: 0,
+        group: null,
+        showUptime: false,
+        grouped: false,
+      });
+      warnings.push(
+        `Component group "${groupId}" referenced but not found in component list. Using ID as name.`,
+      );
+    }
+  }
+
+  // Collect regular components (not used as groups)
+  for (const c of components) {
+    if (!groupIds.has(c.id)) {
       regular.push(c);
     }
   }
 
-  return { groups, components: regular };
+  return { groups, components: regular, warnings };
 }
 
 export function mapComponentGroup(
@@ -157,6 +182,7 @@ export function mapSubscriber(
 ): {
   email: string;
   pageId?: number;
+  confirmed: boolean;
   sourceComponentIds: string[];
 } | null {
   if (!subscriber.email) return null;
@@ -164,6 +190,9 @@ export function mapSubscriber(
   return {
     email: subscriber.email,
     pageId,
-    sourceComponentIds: subscriber.all ? [] : subscriber.components ?? [],
+    confirmed: subscriber.confirmed ?? false,
+    sourceComponentIds: subscriber.all
+      ? []
+      : (subscriber.components ?? []).map((c) => c.id),
   };
 }

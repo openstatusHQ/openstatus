@@ -44,6 +44,7 @@ describe("partitionComponents", () => {
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0].id).toBe("in_comp_group_001");
     expect(result.components).toHaveLength(4);
+    expect(result.warnings).toHaveLength(0);
   });
 
   it("returns empty groups when no components reference a group", () => {
@@ -51,6 +52,29 @@ describe("partitionComponents", () => {
     const result = partitionComponents(noGroupComponents);
     expect(result.groups).toHaveLength(0);
     expect(result.components).toHaveLength(noGroupComponents.length);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("creates synthetic group with warning when group ID not found", () => {
+    const components = [
+      {
+        id: "comp_1",
+        name: "Orphaned Component",
+        description: null,
+        status: "OPERATIONAL" as const,
+        order: 0,
+        group: "missing_group_id",
+        showUptime: true,
+        grouped: true,
+      },
+    ];
+    const result = partitionComponents(components);
+    expect(result.groups).toHaveLength(1);
+    expect(result.groups[0].id).toBe("missing_group_id");
+    expect(result.groups[0].name).toBe("missing_group_id");
+    expect(result.components).toHaveLength(1);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toContain("missing_group_id");
   });
 });
 
@@ -154,6 +178,7 @@ describe("mapSubscriber", () => {
     expect(result).toEqual({
       email: "alice@acmecorp.com",
       pageId: 10,
+      confirmed: true,
       sourceComponentIds: [],
     });
   });
@@ -163,7 +188,19 @@ describe("mapSubscriber", () => {
     expect(result).toEqual({
       email: "bob@acmecorp.com",
       pageId: 10,
+      confirmed: true,
       sourceComponentIds: ["in_comp_001", "in_comp_003"],
+    });
+  });
+
+  it("maps unconfirmed subscriber with confirmed: false", () => {
+    const unconfirmed = { ...MOCK_SUBSCRIBERS[0], confirmed: false };
+    const result = mapSubscriber(unconfirmed, 10);
+    expect(result).toEqual({
+      email: "alice@acmecorp.com",
+      pageId: 10,
+      confirmed: false,
+      sourceComponentIds: [],
     });
   });
 

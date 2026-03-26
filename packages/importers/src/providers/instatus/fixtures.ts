@@ -232,7 +232,10 @@ export const MOCK_SUBSCRIBERS: InstatusSubscriber[] = [
     webhook: null,
     confirmed: true,
     all: false,
-    components: ["in_comp_001", "in_comp_003"],
+    components: [
+      { id: "in_comp_001", name: "API Gateway" },
+      { id: "in_comp_003", name: "Dashboard" },
+    ],
   },
   {
     id: "in_sub_003",
