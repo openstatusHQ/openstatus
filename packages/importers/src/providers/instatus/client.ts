@@ -65,7 +65,7 @@ export function createInstatusClient(
   }
 
   return {
-    getPages: () => request("/v2/pages", z.array(InstatusPageSchema)),
+    getPages: () => requestAllPages("/v2/pages", InstatusPageSchema),
     getPage: (pageId) => request(`/v2/${pageId}`, InstatusPageSchema),
     getComponents: (pageId) =>
       requestAllPages(`/v2/${pageId}/components`, InstatusComponentSchema),

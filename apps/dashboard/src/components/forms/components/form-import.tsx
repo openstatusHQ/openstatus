@@ -273,8 +273,8 @@ export function FormImport({
                           <Input placeholder="e.g. clx1abc2def3" {...field} />
                         </FormControl>
                         <FormDescription>
-                          Import a specific page. Leave empty to import the
-                          first page.
+                          Import a specific page. Leave empty to import all
+                          pages.
                         </FormDescription>
                       </FormItem>
                     )}

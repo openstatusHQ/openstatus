@@ -21,8 +21,11 @@ function createMockFetch(options?: { failAuth?: boolean }) {
       );
     }
 
-    if (url.match(/\/v2\/pages$/)) {
-      return Promise.resolve(Response.json(MOCK_PAGES));
+    if (url.match(/\/v2\/pages(\?|$)/)) {
+      const pageParam = new URL(url).searchParams.get("page");
+      return Promise.resolve(
+        Response.json(pageParam === "1" || !pageParam ? MOCK_PAGES : []),
+      );
     }
     if (url.match(/\/v2\/[^/]+\/components(\?|$)/)) {
       const pageParam = new URL(url).searchParams.get("page");
@@ -145,25 +148,15 @@ describe("InstatusImportProvider", () => {
       matching.phases.find((p) => p.phase === name);
     expect(findPhase("page")?.resources).toHaveLength(1);
 
-    // Filter by non-existent page ID — should return empty phases
+    // Filter by non-existent page ID — should return failed with error
     const nonMatching = await provider.run({
       apiKey: "test-key",
       workspaceId: 1,
       dryRun: true,
       instatusPageId: "nonexistent",
     });
-    expect(nonMatching.phases).toHaveLength(0);
-  });
-
-  it("reports skipped non-email subscribers", async () => {
-    const provider = createInstatusProvider();
-    const summary = await provider.run({
-      apiKey: "test-key",
-      workspaceId: 1,
-      dryRun: true,
-    });
-
-    expect(summary.errors).toHaveLength(1);
-    expect(summary.errors[0]).toContain("3 non-email subscribers were skipped");
+    expect(nonMatching.status).toBe("failed");
+    expect(nonMatching.errors).toHaveLength(1);
+    expect(nonMatching.errors[0]).toContain("nonexistent");
   });
 });

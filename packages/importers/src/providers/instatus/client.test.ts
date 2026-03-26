@@ -104,12 +104,11 @@ describe("InstatusClient", () => {
   });
 
   test("sends correct Bearer auth header", async () => {
-    mockFetch(MOCK_PAGES);
+    mockFetchPaginated(MOCK_PAGES);
     await client.getPages();
     const fetchMock = globalThis.fetch as unknown as ReturnType<typeof mock>;
-    expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://api.instatus.com/v2/pages");
+    expect(url).toBe("https://api.instatus.com/v2/pages?page=1&per_page=100");
     expect((options.headers as Record<string, string>).Authorization).toBe(
       "Bearer test-api-key",
     );

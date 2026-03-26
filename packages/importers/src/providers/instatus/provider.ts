@@ -49,10 +49,21 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
       let pages = await client.getPages();
       if (config.instatusPageId) {
         pages = pages.filter((p) => p.id === config.instatusPageId);
+        if (pages.length === 0) {
+          return {
+            provider: "instatus",
+            status: "failed",
+            startedAt: new Date(),
+            completedAt: new Date(),
+            phases: [],
+            errors: [
+              `No page found with ID "${config.instatusPageId}". Check the page ID and try again.`,
+            ],
+          };
+        }
       }
 
       let skippedSubscribers = 0;
-      const allWarnings: string[] = [];
 
       for (const pg of pages) {
         const [allComponents, incidents, maintenances, subscribers] =
@@ -63,12 +74,7 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
             client.getSubscribers(pg.id),
           ]);
 
-        const {
-          groups,
-          components,
-          warnings: partitionWarnings,
-        } = partitionComponents(allComponents);
-        allWarnings.push(...partitionWarnings);
+        const { groups, components } = partitionComponents(allComponents);
 
         // Page phase
         const mappedPage = mapPage(pg, config.workspaceId);
@@ -169,7 +175,7 @@ export function createInstatusProvider(): ImportProvider<InstatusImportConfig> {
         });
       }
 
-      const errors: string[] = [...allWarnings];
+      const errors: string[] = [];
       if (skippedSubscribers > 0) {
         errors.push(
           `Only email subscribers are supported. ${skippedSubscribers} non-email subscriber${skippedSubscribers === 1 ? " was" : "s were"} skipped.`,

@@ -164,7 +164,10 @@ export function mapMaintenanceToMaintenance(
 
   const from = new Date(m.start);
   const duration = m.duration ?? 0;
-  const to = duration > 0 ? new Date(from.getTime() + duration * 60_000) : from;
+  const to =
+    duration > 0
+      ? new Date(from.getTime() + duration * 60_000)
+      : new Date(from);
 
   return {
     title: m.name,
