@@ -82,21 +82,7 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           ],
         });
 
-        // Phase 3: Monitor Groups → Component Groups
-        const monitorGroups = await client.getMonitorGroups();
-        const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
-          sourceId: g.id,
-          name: g.attributes.name,
-          status: "created" as const,
-          data: mapMonitorGroup(g, config.workspaceId, pageId),
-        }));
-        phases.push({
-          phase: "monitorGroups",
-          status: "completed",
-          resources: groupResources,
-        });
-
-        // Phase 4: Status Page Sections → Components
+        // Status Page Sections → Components
         const sections = await client.getStatusPageSections(sp.id);
         const sectionResources: ResourceResult[] = sections.map((s) => ({
           sourceId: s.id,
@@ -109,21 +95,21 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           status: "completed",
           resources: sectionResources,
         });
-      } else {
-        // No status pages — still push monitor groups
-        const monitorGroups = await client.getMonitorGroups();
-        const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
-          sourceId: g.id,
-          name: g.attributes.name,
-          status: "created" as const,
-          data: mapMonitorGroup(g, config.workspaceId, pageId),
-        }));
-        phases.push({
-          phase: "monitorGroups",
-          status: "completed",
-          resources: groupResources,
-        });
       }
+
+      // Monitor Groups → Component Groups (always fetched regardless of status pages)
+      const monitorGroups = await client.getMonitorGroups();
+      const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
+        sourceId: g.id,
+        name: g.attributes.name,
+        status: "created" as const,
+        data: mapMonitorGroup(g, config.workspaceId, pageId),
+      }));
+      phases.push({
+        phase: "monitorGroups",
+        status: "completed",
+        resources: groupResources,
+      });
 
       // Phase 5: Incidents → Status Reports
       const incidents = await client.getIncidents();
