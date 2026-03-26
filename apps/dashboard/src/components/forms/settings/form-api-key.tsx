@@ -178,7 +178,12 @@ export function FormApiKey() {
           <DialogTrigger asChild>
             <Button size="sm">Create</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              document.body.style.pointerEvents = "";
+            }}
+          >
             <Form {...form}>
               <form onSubmit={form.handleSubmit(createAction)}>
                 <DialogHeader>
@@ -224,7 +229,7 @@ export function FormApiKey() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Expiration Date</FormLabel>
-                        <Popover modal>
+                        <Popover>
                           <FormControl>
                             <PopoverTrigger asChild>
                               <Button
@@ -299,7 +304,12 @@ export function FormApiKey() {
         </Dialog>
       </FormCardFooter>
       <AlertDialog open={!!result} onOpenChange={() => setResult(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            document.body.style.pointerEvents = "";
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>API Key Created</AlertDialogTitle>
             <AlertDialogDescription>
