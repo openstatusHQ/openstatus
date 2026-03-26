@@ -8,6 +8,9 @@ import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
+// Check if running in self-hosted mode
+const isSelfHosted = process.env.SELF_HOST === "true";
+
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
   const response = NextResponse.next();
@@ -88,8 +91,8 @@ export default auth(async (req) => {
     if (password !== _page.password && !url.pathname.endsWith("/login")) {
       const { pathname, origin } = req.nextUrl;
 
-      // custom domain redirect
-      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+      // custom domain redirect - skip stpg.dev check in self-hosted mode
+      if (_page.customDomain && (isSelfHosted || host !== `${_page.slug}.stpg.dev`)) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
         const url = new URL(
           `https://${_page.customDomain}/login?redirect=${encodeURIComponent(
@@ -110,8 +113,8 @@ export default auth(async (req) => {
     if (password === _page.password && url.pathname.endsWith("/login")) {
       const redirect = url.searchParams.get("redirect");
 
-      // custom domain redirect
-      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+      // custom domain redirect - skip stpg.dev check in self-hosted mode
+      if (_page.customDomain && (isSelfHosted || host !== `${_page.slug}.stpg.dev`)) {
         const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
         console.log("redirect to /", url.toString());
         return NextResponse.redirect(url);
@@ -165,10 +168,12 @@ export default auth(async (req) => {
   console.log({
     customDomain: _page.customDomain,
     host,
-    expectedHost: `${_page.slug}.stpg.dev`,
+    expectedHost: isSelfHosted ? "(self-hosted mode)" : `${_page.slug}.stpg.dev`,
   });
 
-  if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+  // In self-hosted mode, custom domains should work directly without stpg.dev rewrite
+  // Skip the stpg.dev-based rewrite logic when SELF_HOST=true
+  if (!isSelfHosted && _page.customDomain && host !== `${_page.slug}.stpg.dev`) {
     const pathnames = url.pathname.split("/");
     const subdomain = getValidSubdomain(url.host);
     if (pathnames.length > 2 && !subdomain) {
