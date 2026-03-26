@@ -32,12 +32,11 @@ type ImportOptions = {
 
 function createProvider(
   providerName: string,
-  config: Record<string, unknown>,
+  _config: Record<string, unknown>,
 ): ImportProvider {
   switch (providerName) {
     case "betterstack":
       return createBetterstackProvider();
-    case "statuspage":
     default:
       return createStatuspageProvider();
   }
@@ -808,8 +807,21 @@ async function writeMonitorsPhase(
         .insert(monitor)
         .values({
           workspaceId,
-          jobType: data.jobType as "http" | "tcp" | "imcp" | "udp" | "dns" | "ssl",
-          periodicity: data.periodicity as "30s" | "1m" | "5m" | "10m" | "30m" | "1h" | "other",
+          jobType: data.jobType as
+            | "http"
+            | "tcp"
+            | "imcp"
+            | "udp"
+            | "dns"
+            | "ssl",
+          periodicity: data.periodicity as
+            | "30s"
+            | "1m"
+            | "5m"
+            | "10m"
+            | "30m"
+            | "1h"
+            | "other",
           status: "active",
           active: data.active,
           regions: data.regions,
@@ -818,7 +830,16 @@ async function writeMonitorsPhase(
           description: data.description,
           headers: data.headers,
           body: data.body,
-          method: data.method as "GET" | "POST" | "HEAD" | "PUT" | "PATCH" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS",
+          method: data.method as
+            | "GET"
+            | "POST"
+            | "HEAD"
+            | "PUT"
+            | "PATCH"
+            | "DELETE"
+            | "TRACE"
+            | "CONNECT"
+            | "OPTIONS",
           timeout: data.timeout,
         })
         .returning({ id: monitor.id });

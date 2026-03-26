@@ -66,9 +66,7 @@ export const BetterstackStatusPageSchema = z.object({
   }),
 });
 
-export type BetterstackStatusPage = z.infer<
-  typeof BetterstackStatusPageSchema
->;
+export type BetterstackStatusPage = z.infer<typeof BetterstackStatusPageSchema>;
 
 export const BetterstackStatusPageSectionSchema = z.object({
   id: z.string(),

@@ -1,11 +1,11 @@
-import { z } from "zod";
+import type { z } from "zod";
 import {
   type BetterstackIncident,
   BetterstackIncidentSchema,
   type BetterstackMonitor,
-  BetterstackMonitorSchema,
   type BetterstackMonitorGroup,
   BetterstackMonitorGroupSchema,
+  BetterstackMonitorSchema,
   type BetterstackStatusPage,
   BetterstackStatusPageSchema,
   type BetterstackStatusPageSection,

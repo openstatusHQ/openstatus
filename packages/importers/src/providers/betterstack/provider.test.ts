@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { createBetterstackProvider } from "./provider";
 import {
   MOCK_INCIDENTS,
   MOCK_MONITORS,
@@ -7,6 +6,7 @@ import {
   MOCK_STATUS_PAGES,
   MOCK_STATUS_PAGE_SECTIONS,
 } from "./fixtures";
+import { createBetterstackProvider } from "./provider";
 
 const originalFetch = globalThis.fetch;
 
@@ -112,8 +112,8 @@ describe("BetterstackProvider", () => {
 
     const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
     expect(monitorsPhase).toBeDefined();
-    expect(monitorsPhase!.resources).toHaveLength(3);
-    expect(monitorsPhase!.resources[0].name).toBe("API Health Check");
+    expect(monitorsPhase?.resources).toHaveLength(3);
+    expect(monitorsPhase?.resources[0].name).toBe("API Health Check");
   });
 
   test("page phase maps status page correctly", async () => {
@@ -125,8 +125,8 @@ describe("BetterstackProvider", () => {
 
     const pagePhase = summary.phases.find((p) => p.phase === "page");
     expect(pagePhase).toBeDefined();
-    expect(pagePhase!.resources).toHaveLength(1);
-    expect(pagePhase!.resources[0].name).toBe("Acme Corp");
+    expect(pagePhase?.resources).toHaveLength(1);
+    expect(pagePhase?.resources[0].name).toBe("Acme Corp");
   });
 
   test("incidents phase maps all incidents", async () => {
@@ -138,7 +138,7 @@ describe("BetterstackProvider", () => {
 
     const incidentsPhase = summary.phases.find((p) => p.phase === "incidents");
     expect(incidentsPhase).toBeDefined();
-    expect(incidentsPhase!.resources).toHaveLength(3);
+    expect(incidentsPhase?.resources).toHaveLength(3);
   });
 
   test("filters by betterstackStatusPageId", async () => {
@@ -155,7 +155,7 @@ describe("BetterstackProvider", () => {
 
     const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
     expect(monitorsPhase).toBeDefined();
-    expect(monitorsPhase!.resources).toHaveLength(3);
+    expect(monitorsPhase?.resources).toHaveLength(3);
   });
 
   test("monitor resources include sourceMonitorGroupId", async () => {
@@ -166,13 +166,13 @@ describe("BetterstackProvider", () => {
     });
 
     const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
-    const firstMonitor = monitorsPhase!.resources[0].data as Record<
+    const firstMonitor = monitorsPhase?.resources[0].data as Record<
       string,
       unknown
     >;
     expect(firstMonitor.sourceMonitorGroupId).toBe("bs_group_001");
 
-    const thirdMonitor = monitorsPhase!.resources[2].data as Record<
+    const thirdMonitor = monitorsPhase?.resources[2].data as Record<
       string,
       unknown
     >;
