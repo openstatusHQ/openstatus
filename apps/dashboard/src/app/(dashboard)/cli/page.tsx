@@ -7,13 +7,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { FileDown, FileJson, Key, Terminal } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
+import { FileDown, FileJson, Key, LogIn, Megaphone, PanelTop, Terminal } from "lucide-react";
 import React from "react";
 
 const OS = ["macOs", "Windows", "Linux"] as const;
@@ -22,8 +17,7 @@ const installs = [
   {
     title: "Install CLI",
     icon: Terminal,
-    description:
-      "Install the OpenStatus CLI to set up your monitors straight in your code.",
+    description: "Install the OpenStatus CLI to set up your monitors straight in your code.",
     command: {
       macOs: [
         "brew install openstatusHQ/cli/openstatus --cask",
@@ -38,11 +32,17 @@ const installs = [
     },
   },
   {
+    title: "Login",
+    icon: LogIn,
+    description: "Save your API token for use in subsequent commands.",
+    command: "openstatus login",
+  },
+  {
     title: "Add API Key",
     icon: Key,
     description: (
       <>
-        Create an API key in your workspace{" "}
+        Or set it as an environment variable. Create an API key in your workspace{" "}
         <Link href="/settings/general">settings.</Link>
       </>
     ),
@@ -53,6 +53,18 @@ const installs = [
     },
   },
   {
+    title: "List Status Pages",
+    icon: PanelTop,
+    description: "List all status pages in your workspace.",
+    command: "openstatus status-page list",
+  },
+  {
+    title: "List Status Reports",
+    icon: Megaphone,
+    description: "List all status reports in your workspace.",
+    command: "openstatus status-report list",
+  },
+  {
     title: "Import Monitors",
     icon: FileDown,
     description: "Import monitors from your workspace to a YAML file.",
@@ -61,8 +73,7 @@ const installs = [
   {
     title: "Manage Monitors",
     icon: FileJson,
-    description:
-      "Add, remove, or update monitors from a YAML file and apply your changes.",
+    description: "Add, remove, or update monitors from a YAML file and apply your changes.",
     command: "openstatus monitors apply",
   },
 ] satisfies {
@@ -86,8 +97,25 @@ const commands = [
     description: "Trigger a monitor.",
   },
   {
-    command: "openstatus run [options]",
-    description: "Run a list of monitors.",
+    command: "openstatus status-page list [options]",
+    description: "List all status pages.",
+  },
+  {
+    command: "openstatus status-page info [page-id]",
+    description: "Get status page details.",
+  },
+  {
+    command:
+      'openstatus status-report create --title "..." --status investigating --message "..." --page-id 123',
+    description: "Create a status report.",
+  },
+  {
+    command: 'openstatus status-report add-update [report-id] --status resolved --message "..."',
+    description: "Add an update to a status report.",
+  },
+  {
+    command: "openstatus status-report list [options]",
+    description: "List all status reports.",
   },
 ];
 
@@ -135,8 +163,7 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>CLI</SectionTitle>
           <SectionDescription>
-            Get started with the CLI to export and manage your monitors in your
-            code.{" "}
+            Get started with the CLI to export and manage your monitors in your code.{" "}
             <Link
               href="https://docs.openstatus.dev/reference/cli-reference/"
               target="_blank"
@@ -158,10 +185,7 @@ export default function Page() {
           {OS.map((os) => (
             <TabsContent key={os} value={os} className="flex flex-col gap-6">
               {installs.map((step, i) => {
-                const commands =
-                  typeof step.command === "string"
-                    ? step.command
-                    : step.command[os];
+                const commands = typeof step.command === "string" ? step.command : step.command[os];
                 return (
                   <div key={i} className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
@@ -169,9 +193,7 @@ export default function Page() {
                         <step.icon className="size-4" />
                         {step.title}
                       </p>
-                      <p className="text-muted-foreground text-sm">
-                        {step.description}
-                      </p>
+                      <p className="text-muted-foreground text-sm">{step.description}</p>
                     </div>
                     {typeof commands === "string" ? (
                       <Code>{commands}</Code>
@@ -212,9 +234,7 @@ export default function Page() {
         <ul className="flex flex-col gap-2">
           {commands.map((command, i) => (
             <li key={i} className="flex flex-col gap-0.5">
-              <p className="text-muted-foreground text-xs">
-                {command.description}
-              </p>
+              <p className="text-muted-foreground text-xs">{command.description}</p>
               <Code>{command.command}</Code>
             </li>
           ))}
@@ -222,10 +242,20 @@ export default function Page() {
       </Section>
       <Section>
         <SectionHeader>
+          <SectionTitle>Skills</SectionTitle>
+          <SectionDescription>
+            Add the openstatus skill to let AI agents manage your monitors, status pages, and status
+            reports on your behalf.
+          </SectionDescription>
+        </SectionHeader>
+        <Code>npx skills add openstatushq/cli</Code>
+      </Section>
+      <Section>
+        <SectionHeader>
           <SectionTitle>GitHub Action</SectionTitle>
           <SectionDescription>
-            We provide you with a github action in case you'd like to use the
-            CLI within your CI/CD workflows. Check the{" "}
+            We provide you with a github action in case you'd like to use the CLI within your CI/CD
+            workflows. Check the{" "}
             <Link
               href="https://github.com/openstatusHQ/openstatus-github-action"
               target="_blank"
@@ -264,9 +294,7 @@ export default function Page() {
         <div className="flex flex-col gap-6">
           {templates.map((template, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <p className="text-muted-foreground text-xs">
-                {template.description}
-              </p>
+              <p className="text-muted-foreground text-xs">{template.description}</p>
               <Code>{template.template}</Code>
             </div>
           ))}
