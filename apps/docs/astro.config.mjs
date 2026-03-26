@@ -117,7 +117,7 @@ export default defineConfig({
             },
             {
               label: "Manage Your Stack with Terraform and CLI",
-              slug: "tutorial/how-to-manage-monitors-with-cli",
+              slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
             },
           ],
         },
