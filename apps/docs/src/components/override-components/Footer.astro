@@ -6,53 +6,24 @@ import { Icon } from "@astrojs/starlight/components";
 import { markdownify } from "@/lib/utils/textConverter";
 
 const footer = menu.footer;
+const footerSections = [footer.community, footer.help_links, footer.company].filter(Boolean);
 ---
 
 <footer>
   <div class="container">
     <div class="top-footer">
-      {
-        footer.community && (
-          <div>
-            <h4>{footer.community.title}</h4>
-            <ul>
-              {footer.community?.links.map((link: any) => (
-                <li>
-                  <a href={link.url}>{link.name}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
-      {
-        footer.help_links && (
-          <div>
-            <h4>{footer.help_links.title}</h4>
-            <ul>
-              {footer.help_links?.links.map((link: any) => (
-                <li>
-                  <a href={link.url}>{link.name}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
-      {
-        footer.company && (
-          <div>
-            <h4>{footer.company.title}</h4>
-            <ul>
-              {footer.company?.links.map((link: any) => (
-                <li>
-                  <a href={link.url}>{link.name}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
+      {footerSections.map((section) => (
+        <div>
+          <h4>{section.title}</h4>
+          <ul>
+            {section.links.map((link: any) => (
+              <li>
+                <a href={link.url}>{link.name}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
 
       {
         config?.params?.footer_contact?.enable && (
