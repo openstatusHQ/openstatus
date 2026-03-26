@@ -32,6 +32,8 @@ describe("mapFrequency", () => {
   test("snaps to nearest supported value", () => {
     expect(mapFrequency(45)).toBe("30s");
     expect(mapFrequency(90)).toBe("1m");
+    expect(mapFrequency(120)).toBe("1m");
+    expect(mapFrequency(180)).toBe("1m");
     expect(mapFrequency(400)).toBe("5m");
     expect(mapFrequency(900)).toBe("10m");
     expect(mapFrequency(2400)).toBe("30m");
@@ -88,7 +90,7 @@ describe("mapMonitor", () => {
     expect(result.name).toBe("API Health Check");
     expect(result.jobType).toBe("http");
     expect(result.method).toBe("GET");
-    expect(result.periodicity).toBe("5m");
+    expect(result.periodicity).toBe("1m");
     expect(result.timeout).toBe(15000);
     expect(result.active).toBe(true);
     expect(result.regions).toBe("iad,fra");
@@ -159,6 +161,7 @@ describe("mapIncidentToStatusReport", () => {
     expect(result.updates[0].status).toBe("investigating");
     expect(result.updates[1].status).toBe("identified");
     expect(result.updates[2].status).toBe("resolved");
+    expect(result.sourceComponentIds).toEqual([]);
   });
 
   test("maps an acknowledged (unresolved) incident", () => {

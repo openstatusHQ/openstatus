@@ -98,14 +98,14 @@ External API (Statuspage / BetterStack / ...)
 | Phase | Source | Target |
 |-------|--------|--------|
 | `monitors` | Monitors | `monitor` table |
-| `page` | Status Page | `page` table |
+| `page` | Status Page (first or filtered by ID) | `page` table |
+| `sections` | Status Page Sections (only if status page exists) | `pageComponentGroup` table |
 | `monitorGroups` | Monitor Groups | `pageComponentGroup` table |
-| `sections` | Status Page Sections | `pageComponentGroup` table |
-| `incidents` | Incidents | `statusReport` + `statusReportUpdate` tables |
+| `incidents` | Incidents (with synthetic updates from timestamps) | `statusReport` + `statusReportUpdate` tables |
 
 ## Adding a New Provider
 
-Each provider follows the same 4-file pattern. Here is how to add one:
+Each provider follows the same 6-file pattern. Here is how to add one:
 
 ### 1. Create the provider directory
 
@@ -168,6 +168,8 @@ Implement `ImportProvider<TConfig>`:
 - `run()` -- fetch all resources, map them, return `ImportSummary` with phases
 
 Each phase produces `ResourceResult[]` with the mapped data in `data`. The service layer reads `data` to write to the database.
+
+The `data` shape must match what the corresponding phase writer in `packages/api/src/service/import.ts` casts it to. For incidents, this means the mapper must return `{ report, updates, sourceComponentIds }` -- even if `sourceComponentIds` is empty.
 
 ### 6. Register the provider
 

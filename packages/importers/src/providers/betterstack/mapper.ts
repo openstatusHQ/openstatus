@@ -15,8 +15,6 @@ export type StatusReportStatus =
 const FREQUENCY_MAP: Record<number, string> = {
   30: "30s",
   60: "1m",
-  120: "1m",
-  180: "5m",
   300: "5m",
   600: "10m",
   1800: "30m",
@@ -197,5 +195,6 @@ export function mapIncidentToStatusReport(
       pageId,
     },
     updates,
+    sourceComponentIds: [] as string[],
   };
 }
