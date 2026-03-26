@@ -48,15 +48,16 @@ export class StarlightTOC extends HTMLElement {
     ): HTMLHeadingElement | null => {
       if (!el) return null;
       const origin = el;
-      while (el) {
-        if (isHeading(el)) return el;
-        // Assign the previous sibling’s last, most deeply nested child to el.
-        el = el.previousElementSibling;
-        while (el?.lastElementChild) {
-          el = el.lastElementChild;
+      let current: Element | null = el;
+      while (current) {
+        if (isHeading(current)) return current;
+        // Assign the previous sibling’s last, most deeply nested child to current.
+        current = current.previousElementSibling;
+        while (current?.lastElementChild) {
+          current = current.lastElementChild;
         }
         // Look for headings amongst siblings.
-        const h = getElementHeading(el);
+        const h = getElementHeading(current);
         if (h) return h;
       }
       // Walk back up the parent.
