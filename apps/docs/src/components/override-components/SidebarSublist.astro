@@ -179,8 +179,7 @@ const { sublist, nested } = Astro.props;
       border-radius: 8px;
       text-decoration: none;
       color: var(--sl-color-gray-2);
-      /* padding: 0.3em var(--sl-sidebar-item-padding-inline); */
-      padding: 8px 10px;
+      padding: 1px 4px;
       line-height: 1.4;
     }
 
@@ -204,9 +203,8 @@ const { sublist, nested } = Astro.props;
     }
 
     li:has([aria-current="page"]) {
-      padding-top: 4px;
       margin-top: 0px !important;
-      margin-bottom: 8px !important;
+      margin-bottom: 0px !important;
     }
     a > *:not(:last-child),
     .group-label > *:not(:last-child) {
