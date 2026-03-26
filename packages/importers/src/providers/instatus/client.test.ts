@@ -48,8 +48,8 @@ describe("InstatusClient", () => {
     globalThis.fetch = originalFetch;
   });
 
-  test("getPages returns parsed pages", async () => {
-    mockFetch(MOCK_PAGES);
+  test("getPages returns parsed pages with pagination", async () => {
+    mockFetchPaginated(MOCK_PAGES);
     const pages = await client.getPages();
     expect(pages).toEqual(MOCK_PAGES);
     expect(pages).toHaveLength(1);

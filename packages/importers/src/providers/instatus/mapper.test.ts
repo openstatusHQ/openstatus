@@ -159,10 +159,11 @@ describe("mapMaintenanceToMaintenance", () => {
     expect(result.message).toContain("scheduled database maintenance");
   });
 
-  it("uses same from and to when duration is null", () => {
+  it("uses same from and to when duration is null, without aliasing", () => {
     const m = { ...MOCK_MAINTENANCES[0], duration: null };
     const result = mapMaintenanceToMaintenance(m, 1, 10);
     expect(result.from).toEqual(result.to);
+    expect(result.from).not.toBe(result.to);
   });
 
   it("maps maintenance with multiple updates", () => {
@@ -202,6 +203,11 @@ describe("mapSubscriber", () => {
       confirmed: false,
       sourceComponentIds: [],
     });
+  });
+
+  it("extracts component IDs from object references", () => {
+    const result = mapSubscriber(MOCK_SUBSCRIBERS[1], 10);
+    expect(result?.sourceComponentIds).toEqual(["in_comp_001", "in_comp_003"]);
   });
 
   it("returns null for phone subscriber", () => {
