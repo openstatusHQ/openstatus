@@ -155,12 +155,13 @@ describe("mapSection", () => {
 });
 
 describe("mapResource", () => {
-  test("maps a resource with section", () => {
+  test("maps a monitor resource with section", () => {
     const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42, 1);
     expect(result.workspaceId).toBe(42);
     expect(result.pageId).toBe(1);
-    expect(result.type).toBe("static");
+    expect(result.type).toBe("monitor");
     expect(result.monitorId).toBeNull();
+    expect(result.sourceMonitorId).toBe("1001");
     expect(result.name).toBe("API Gateway");
     expect(result.description).toBe("Main API endpoint health");
     expect(result.order).toBe(0);

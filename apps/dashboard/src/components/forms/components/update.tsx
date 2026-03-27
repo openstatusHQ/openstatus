@@ -19,7 +19,9 @@ export function FormComponentsUpdate() {
   const { data: pageComponents, refetch: refetchComponents } = useQuery(
     trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: monitors, refetch: refetchMonitors } = useQuery(
+    trpc.monitor.list.queryOptions(),
+  );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
   const updateComponentsMutation = useMutation(
@@ -40,7 +42,7 @@ export function FormComponentsUpdate() {
   const importMutation = useMutation(
     trpc.import.run.mutationOptions({
       onSuccess: async () => {
-        await Promise.all([refetch(), refetchComponents()]);
+        await Promise.all([refetch(), refetchComponents(), refetchMonitors()]);
         setFormKey((k) => k + 1);
       },
     }),
@@ -137,10 +139,14 @@ export function FormComponentsUpdate() {
             apiKey: values.apiKey,
             pageId: statusPage.id,
             statuspagePageId: values.statuspagePageId ?? undefined,
+            betterstackStatusPageId:
+              values.betterstackStatusPageId ?? undefined,
+            instatusPageId: values.instatusPageId ?? undefined,
             options: {
               includeStatusReports: values.includeStatusReports,
               includeSubscribers: values.includeSubscribers,
               includeComponents: values.includeComponents,
+              includeMonitors: values.includeMonitors,
             },
           });
         }}

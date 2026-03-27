@@ -1,4 +1,4 @@
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, isNull } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -131,7 +131,12 @@ export async function addLimitWarnings(
     const existingMonitors = await db
       .select()
       .from(monitor)
-      .where(eq(monitor.workspaceId, config.workspaceId))
+      .where(
+        and(
+          eq(monitor.workspaceId, config.workspaceId),
+          isNull(monitor.deletedAt),
+        ),
+      )
       .all();
     const remaining = maxMonitors - existingMonitors.length;
     if (remaining <= 0) {
@@ -312,6 +317,7 @@ export async function runImport(config: {
               targetPageId,
               idMaps.groups,
               idMaps.components,
+              idMaps.monitors,
             );
           } else if (config.options?.includeComponents === false) {
             phase.status = "skipped";
@@ -552,6 +558,7 @@ async function writeComponentsPhase(
   pageId: number,
   groupIdMap: Map<string, number>,
   componentIdMap: Map<string, number>,
+  monitorIdMap?: Map<string, number>,
 ): Promise<void> {
   for (const resource of phase.resources) {
     if (resource.status === "skipped") continue;
@@ -560,13 +567,23 @@ async function writeComponentsPhase(
       const data = resource.data as {
         workspaceId: number;
         pageId: number;
-        type: "static";
-        monitorId: null;
+        type: "static" | "monitor";
+        monitorId: number | null;
+        sourceMonitorId?: string | null;
         name: string;
         description: string | null;
         order: number;
         sourceGroupId: string | null;
       };
+
+      // Resolve monitor ID from source monitor ID
+      if (data.type === "monitor" && data.sourceMonitorId && monitorIdMap) {
+        data.monitorId = monitorIdMap.get(data.sourceMonitorId) ?? null;
+        if (!data.monitorId) {
+          // Monitor wasn't imported — fall back to static
+          data.type = "static";
+        }
+      }
 
       // Check idempotency by name + pageId
       const existing = await db
@@ -780,7 +797,7 @@ async function writeMonitorsPhase(
   const existingMonitors = await db
     .select()
     .from(monitor)
-    .where(eq(monitor.workspaceId, workspaceId))
+    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
     .all();
   const maxMonitors = limits.monitors;
   const remaining = maxMonitors - existingMonitors.length;
@@ -816,12 +833,16 @@ async function writeMonitorsPhase(
         sourceMonitorGroupId: string | null;
       };
 
-      // Idempotency check by url + workspaceId
+      // Idempotency check by url + workspaceId (exclude soft-deleted)
       const existing = await db
         .select()
         .from(monitor)
         .where(
-          and(eq(monitor.url, data.url), eq(monitor.workspaceId, workspaceId)),
+          and(
+            eq(monitor.url, data.url),
+            eq(monitor.workspaceId, workspaceId),
+            isNull(monitor.deletedAt),
+          ),
         )
         .get();
 

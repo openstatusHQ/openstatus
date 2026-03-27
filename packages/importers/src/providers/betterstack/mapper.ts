@@ -155,11 +155,16 @@ export function mapResource(
   workspaceId: number,
   pageId?: number,
 ) {
+  const isMonitor = resource.attributes.resource_type === "Monitor";
   return {
     workspaceId,
     pageId,
-    type: "static" as const,
-    monitorId: null,
+    type: isMonitor ? ("monitor" as const) : ("static" as const),
+    monitorId: null as number | null,
+    sourceMonitorId:
+      isMonitor && resource.attributes.resource_id
+        ? String(resource.attributes.resource_id)
+        : null,
     name: resource.attributes.public_name,
     description: resource.attributes.explanation ?? null,
     order: resource.attributes.position,
