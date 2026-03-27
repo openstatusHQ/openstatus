@@ -20,15 +20,6 @@ import {
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
-import { sendTestDiscordMessage as sendTestDiscord } from "@openstatus/notification-discord";
-import { sendTest as sendTestGrafanaOncall } from "@openstatus/notification-grafana-oncall";
-import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
-import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
-import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
-import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
-import { sendTest as sendTestTelegram } from "@openstatus/notification-telegram";
-import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
-import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
   Cog,
@@ -71,75 +62,61 @@ export const config = {
     icon: SlackIcon,
     label: "Slack",
     form: FormSlack,
-    sendTest: sendTestSlack,
   },
   discord: {
     icon: DiscordIcon,
     label: "Discord",
     form: FormDiscord,
-    sendTest: sendTestDiscord,
   },
   email: {
     icon: Mail,
     label: "Email",
     form: FormEmail,
-    // TODO: add sendTest
-    sendTest: undefined,
   },
   sms: {
     icon: MessageCircle,
     label: "SMS",
     form: FormSms,
-    // TODO: add sendTest
-    sendTest: undefined,
   },
   webhook: {
     icon: Webhook,
     label: "Webhook",
     form: FormWebhook,
-    sendTest: sendTestWebhook,
   },
   opsgenie: {
     icon: OpsGenieIcon,
     label: "OpsGenie",
     form: FormOpsGenie,
-    sendTest: sendTestOpsGenie,
   },
   "google-chat": {
     icon: GoogleIcon,
     label: "Google Chat",
     form: FormGoogleChat,
-    sendTest: sendTestWebhook,
   },
   "grafana-oncall": {
     icon: GrafanaIcon,
     label: "Grafana OnCall",
     form: FormGrafanaOncall,
-    sendTest: sendTestGrafanaOncall,
   },
   pagerduty: {
     icon: PagerDutyIcon,
     label: "PagerDuty",
     form: FormPagerDuty,
-    sendTest: sendTestPagerDuty,
   },
   ntfy: {
     icon: BellIcon, // TODO: add svg icon
     label: "Ntfy",
     form: FormNtfy,
-    sendTest: sendTestNtfy,
   },
   telegram: {
     icon: TelegramIcon,
     label: "Telegram",
     form: FormTelegram,
-    sendTest: sendTestTelegram,
   },
   whatsapp: {
     icon: WhatsappIcon,
     label: "WhatsApp",
     form: FormWhatsApp,
-    sendTest: sendWhatsAppTest,
   },
 };
 
