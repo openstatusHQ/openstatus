@@ -4,7 +4,11 @@ import { auth } from "@/lib/auth";
 
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
-import { getValidSubdomain, isSaasSubdomain } from "./lib/domain";
+import {
+  getValidSubdomain,
+  isSaasSubdomain,
+  isSelfHosted,
+} from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
@@ -179,20 +183,37 @@ export default auth(async (req) => {
     }
     if (_page.customDomain && subdomain) {
       console.log({ url: req.url });
-      // In self-hosted mode rewrite internally instead of to stpg.dev
-      const rewriteBase =
-        process.env.SELF_HOST === "true"
-          ? req.url
-          : `https://${_page.slug}.stpg.dev`;
+      if (isSelfHosted()) {
+        // Self-hosted: rewrite internally with slug prefix
+        if (pathnames.length > 2) {
+          const pathname = pathnames.slice(1).join("/");
+          const rewriteUrl = new URL(
+            `/${_page.slug}/${pathname}`,
+            req.nextUrl.origin,
+          );
+          rewriteUrl.search = url.search;
+          return NextResponse.rewrite(rewriteUrl);
+        }
+        const rewriteUrl = new URL(
+          `/${_page.slug}${url.pathname}`,
+          req.nextUrl.origin,
+        );
+        rewriteUrl.search = url.search;
+        return NextResponse.rewrite(rewriteUrl);
+      }
+      // SaaS: rewrite to stpg.dev (hostname routing resolves the slug)
       if (pathnames.length > 2) {
         const pathname = pathnames.slice(1).join("/");
-        const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, rewriteBase);
+        const rewriteUrl = new URL(
+          `${pathname}`,
+          `https://${_page.slug}.stpg.dev`,
+        );
         rewriteUrl.search = url.search;
         return NextResponse.rewrite(rewriteUrl);
       }
       const rewriteUrl = new URL(
-        `/${_page.slug}${url.pathname}`,
-        rewriteBase,
+        `${url.pathname}`,
+        `https://${_page.slug}.stpg.dev`,
       );
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
