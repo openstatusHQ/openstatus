@@ -33,7 +33,6 @@ if (themeConfig.colors.lightmode?.text_color) {
   });
 }
 
-
 const getVars = (groups) => {
   const vars = {};
   groups.forEach(({ colors, prefix }) => {
@@ -47,7 +46,6 @@ const getVars = (groups) => {
 
 const defaultVars = getVars(defaultColorGroups);
 const darkVars = getVars(darkColorGroups);
-
 
 const baseSize = Number(themeConfig.fonts.font_size.base);
 const scale = Number(themeConfig.fonts.font_size.scale);
@@ -75,7 +73,6 @@ Object.entries(fontFamilies).forEach(([key, font]) => {
 
 const baseVars = { ...fontVars, ...defaultVars, ...darkVars };
 
-
 // Build a colorsMap including both sets
 const colorsMap = {};
 [...defaultColorGroups, ...darkColorGroups].forEach(({ colors, prefix }) => {
@@ -85,9 +82,8 @@ const colorsMap = {};
   });
 });
 
-
 module.exports = plugin.withOptions(() => {
-  return function ({ addBase, addUtilities, matchUtilities }) {
+  return ({ addBase, addUtilities, matchUtilities }) => {
     // Default vars on :root; dark vars on .dark
     addBase({
       ":root": baseVars,

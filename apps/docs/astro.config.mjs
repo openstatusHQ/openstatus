@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 // @ts-check
 import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
@@ -7,11 +8,10 @@ import starlightImageZoom from "starlight-image-zoom";
 import starlightLinksValidator from "starlight-links-validator";
 import starlightLlmsTxt from "starlight-llms-txt";
 import Icons from "unplugin-icons/vite";
-import { fileURLToPath } from "url";
 
 import config from "./src/config/config.json";
-import social from "./src/config/social.json";
 import sidebar from "./src/config/sidebar.json";
+import social from "./src/config/social.json";
 
 const { site } = config;
 const { title, logo, logo_darkmode } = site;
@@ -19,7 +19,7 @@ const { title, logo, logo_darkmode } = site;
 // https://astro.build/config
 export default defineConfig({
   site: "https://docs.openstatus.dev",
-   vite: {
+  vite: {
     plugins: /** @type {any} */ ([Icons({ compiler: "astro" }), tailwindcss()]),
     ssr: {
       noExternal: ["zod"],
@@ -64,8 +64,7 @@ export default defineConfig({
         PageSidebar: "./src/components/override-components/PageSidebar.astro",
         TwoColumnContent:
           "./src/components/override-components/TwoColumnContent.astro",
-        ContentPanel:
-          "./src/components/override-components/ContentPanel.astro",
+        ContentPanel: "./src/components/override-components/ContentPanel.astro",
         Pagination: "./src/components/override-components/Pagination.astro",
         Sidebar: "./src/components/override-components/Sidebar.astro",
         Footer: "./src/components/Footer.astro",
@@ -86,5 +85,4 @@ export default defineConfig({
       ],
     }),
   ],
- 
 });
