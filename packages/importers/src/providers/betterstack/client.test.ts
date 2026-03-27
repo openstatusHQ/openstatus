@@ -186,8 +186,8 @@ describe("BetterstackClient", () => {
 
     const monitors = await client.getMonitors();
     expect(monitors).toHaveLength(2);
-    expect(monitors[0].id).toBe("bs_mon_001");
-    expect(monitors[1].id).toBe("bs_mon_002");
+    expect(monitors[0].id).toBe("1001");
+    expect(monitors[1].id).toBe("1002");
     expect(callCount).toBe(2);
   });
 });

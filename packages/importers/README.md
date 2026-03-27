@@ -7,7 +7,8 @@ Migrate monitors, status pages, components, incidents, and subscribers from thir
 | Provider | What it imports | Auth |
 |----------|----------------|------|
 | **Atlassian Statuspage** | Status pages, components, component groups, incidents (as status reports), scheduled maintenances, email subscribers | OAuth API key |
-| **Better Stack Uptime** | Monitors (HTTP checks), status pages, monitor groups, status page sections, incidents (as status reports) | Bearer API token |
+| **Better Stack Uptime** | Monitors (HTTP checks), status pages, component groups (from sections + monitor groups), incidents (as status reports), maintenances | Bearer API token |
+| **Instatus** | Status pages, component groups, components, incidents (as status reports), maintenances, email subscribers | API key |
 
 ## Architecture
 
@@ -99,8 +100,7 @@ External API (Statuspage / BetterStack / ...)
 |-------|--------|--------|
 | `monitors` | Monitors | `monitor` table |
 | `page` | Status Page (first or filtered by ID) | `page` table |
-| `sections` | Status Page Sections (only if status page exists) | `pageComponentGroup` table |
-| `monitorGroups` | Monitor Groups | `pageComponentGroup` table |
+| `componentGroups` | Status Page Sections + Monitor Groups | `pageComponentGroup` table |
 | `incidents` | Incidents (with synthetic updates from timestamps) | `statusReport` + `statusReportUpdate` tables |
 
 ## Adding a New Provider

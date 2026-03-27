@@ -19,7 +19,7 @@ const FREQUENCY_MAP: Record<number, string> = {
   30: "30s",
   60: "1m",
   120: "1m",
-  180: "5m",
+  180: "1m",
   300: "5m",
   600: "10m",
   1800: "30m",
@@ -154,17 +154,24 @@ export function mapResource(
   resource: BetterstackStatusPageResource,
   workspaceId: number,
   pageId?: number,
+  resourceIdToMonitorSourceId?: Map<string, string>,
 ) {
   const isMonitor = resource.attributes.resource_type === "Monitor";
+  const resourceId = resource.attributes.resource_id;
+
+  // Resolve sourceMonitorId via the lookup map (resource_id → monitor sourceId)
+  let sourceMonitorId: string | null = null;
+  if (isMonitor && resourceId != null) {
+    sourceMonitorId =
+      resourceIdToMonitorSourceId?.get(String(resourceId)) ?? null;
+  }
+
   return {
     workspaceId,
     pageId,
     type: isMonitor ? ("monitor" as const) : ("static" as const),
     monitorId: null as number | null,
-    sourceMonitorId:
-      isMonitor && resource.attributes.resource_id
-        ? String(resource.attributes.resource_id)
-        : null,
+    sourceMonitorId,
     name: resource.attributes.public_name,
     description: resource.attributes.explanation ?? null,
     order: resource.attributes.position,

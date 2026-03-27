@@ -11,7 +11,7 @@ import type {
 
 export const MOCK_MONITORS: BetterstackMonitor[] = [
   {
-    id: "bs_mon_001",
+    id: "1001",
     type: "monitor",
     attributes: {
       url: "https://api.acmecorp.com/health",
@@ -36,7 +36,7 @@ export const MOCK_MONITORS: BetterstackMonitor[] = [
     },
   },
   {
-    id: "bs_mon_002",
+    id: "1002",
     type: "monitor",
     attributes: {
       url: "https://app.acmecorp.com",
@@ -59,7 +59,7 @@ export const MOCK_MONITORS: BetterstackMonitor[] = [
     },
   },
   {
-    id: "bs_mon_003",
+    id: "1003",
     type: "monitor",
     attributes: {
       url: "https://cdn.acmecorp.com",

@@ -50,6 +50,16 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
 
       // Phase 1: Monitors
       const monitors = await client.getMonitors();
+
+      // Build a lookup from resource_id (numeric, used in status page resources)
+      // to monitor sourceId (JSON:API id string). This bridges the two ID formats.
+      const resourceIdToMonitorSourceId = new Map<string, string>();
+      for (const m of monitors) {
+        // The monitor's JSON:API id is the string form of its internal ID,
+        // which is what resource_id references on status page resources.
+        resourceIdToMonitorSourceId.set(m.id, m.id);
+      }
+
       const monitorResources: ResourceResult[] = monitors.map((m) => ({
         sourceId: m.id,
         name: m.attributes.pronounceable_name,
@@ -91,18 +101,29 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           ],
         });
 
-        // Phase 3: Status Page Sections → Component Groups
-        const sections = await client.getStatusPageSections(sp.id);
-        const sectionResources: ResourceResult[] = sections.map((s) => ({
-          sourceId: s.id,
-          name: s.attributes.name,
-          status: "created" as const,
-          data: mapSection(s, config.workspaceId, pageId),
-        }));
+        // Phase 3: Sections + Monitor Groups → Component Groups
+        const [sections, monitorGroups] = await Promise.all([
+          client.getStatusPageSections(sp.id),
+          client.getMonitorGroups(),
+        ]);
+        const componentGroupResources: ResourceResult[] = [
+          ...sections.map((s) => ({
+            sourceId: s.id,
+            name: s.attributes.name,
+            status: "created" as const,
+            data: mapSection(s, config.workspaceId, pageId),
+          })),
+          ...monitorGroups.map((g) => ({
+            sourceId: g.id,
+            name: g.attributes.name,
+            status: "created" as const,
+            data: mapMonitorGroup(g, config.workspaceId, pageId),
+          })),
+        ];
         phases.push({
-          phase: "sections",
+          phase: "componentGroups",
           status: "completed",
-          resources: sectionResources,
+          resources: componentGroupResources,
         });
 
         // Phase 5: Status Page Resources → Components
@@ -111,7 +132,12 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           sourceId: r.id,
           name: r.attributes.public_name,
           status: "created" as const,
-          data: mapResource(r, config.workspaceId, pageId),
+          data: mapResource(
+            r,
+            config.workspaceId,
+            pageId,
+            resourceIdToMonitorSourceId,
+          ),
         }));
         phases.push({
           phase: "components",
@@ -124,9 +150,14 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
         const incidentResources: ResourceResult[] = [];
         const maintenanceResources: ResourceResult[] = [];
 
-        for (const report of reports) {
-          const updates = await client.getStatusReportUpdates(sp.id, report.id);
+        const reportsWithUpdates = await Promise.all(
+          reports.map(async (report) => ({
+            report,
+            updates: await client.getStatusReportUpdates(sp.id, report.id),
+          })),
+        );
 
+        for (const { report, updates } of reportsWithUpdates) {
           if (report.attributes.report_type === "maintenance") {
             maintenanceResources.push({
               sourceId: report.id,
@@ -166,7 +197,7 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           resources: maintenanceResources,
         });
       } else {
-        // No status pages — still push monitor groups
+        // Monitor groups as component groups
         const monitorGroups = await client.getMonitorGroups();
         const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
           sourceId: g.id,
@@ -175,7 +206,7 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           data: mapMonitorGroup(g, config.workspaceId, pageId),
         }));
         phases.push({
-          phase: "monitorGroups",
+          phase: "componentGroups",
           status: "completed",
           resources: groupResources,
         });

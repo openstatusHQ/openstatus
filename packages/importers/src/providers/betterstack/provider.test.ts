@@ -118,8 +118,7 @@ describe("BetterstackProvider", () => {
     const phaseNames = summary.phases.map((p) => p.phase);
     expect(phaseNames).toContain("monitors");
     expect(phaseNames).toContain("page");
-    expect(phaseNames).not.toContain("monitorGroups");
-    expect(phaseNames).toContain("sections");
+    expect(phaseNames).toContain("componentGroups");
     expect(phaseNames).toContain("components");
     expect(phaseNames).toContain("incidents");
     expect(phaseNames).toContain("maintenances");

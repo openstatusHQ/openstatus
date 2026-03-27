@@ -97,7 +97,7 @@ describe("mapMonitor", () => {
     expect(result.name).toBe("API Health Check");
     expect(result.jobType).toBe("http");
     expect(result.method).toBe("GET");
-    expect(result.periodicity).toBe("5m");
+    expect(result.periodicity).toBe("1m");
     expect(result.timeout).toBe(15000);
     expect(result.active).toBe(true);
     expect(result.regions).toBe("iad,fra");
@@ -155,8 +155,19 @@ describe("mapSection", () => {
 });
 
 describe("mapResource", () => {
+  const monitorMap = new Map([
+    ["1001", "1001"],
+    ["1002", "1002"],
+    ["1003", "1003"],
+  ]);
+
   test("maps a monitor resource with section", () => {
-    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42, 1);
+    const result = mapResource(
+      MOCK_STATUS_PAGE_RESOURCES[0],
+      42,
+      1,
+      monitorMap,
+    );
     expect(result.workspaceId).toBe(42);
     expect(result.pageId).toBe(1);
     expect(result.type).toBe("monitor");
@@ -169,15 +180,38 @@ describe("mapResource", () => {
   });
 
   test("maps a resource without section", () => {
-    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[2], 42, 1);
+    const result = mapResource(
+      MOCK_STATUS_PAGE_RESOURCES[2],
+      42,
+      1,
+      monitorMap,
+    );
     expect(result.name).toBe("CDN");
     expect(result.description).toBeNull();
     expect(result.sourceGroupId).toBeNull();
   });
 
   test("maps a resource without pageId", () => {
-    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42);
+    const result = mapResource(
+      MOCK_STATUS_PAGE_RESOURCES[0],
+      42,
+      undefined,
+      monitorMap,
+    );
     expect(result.pageId).toBeUndefined();
+  });
+
+  test("sourceMonitorId is null without lookup map", () => {
+    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42, 1);
+    expect(result.type).toBe("monitor");
+    expect(result.sourceMonitorId).toBeNull();
+  });
+
+  test("sourceMonitorId is null when resource_id not in lookup map", () => {
+    const emptyMap = new Map<string, string>();
+    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42, 1, emptyMap);
+    expect(result.type).toBe("monitor");
+    expect(result.sourceMonitorId).toBeNull();
   });
 });
 

@@ -1,4 +1,4 @@
-import { and, db, eq, isNull } from "@openstatus/db";
+import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -87,17 +87,16 @@ export async function addLimitWarnings(
     const maxComponents = config.limits["page-components"];
     let existingCount = 0;
     if (config.pageId) {
-      const existing = await db
-        .select()
+      const [result] = await db
+        .select({ count: count() })
         .from(pageComponent)
         .where(
           and(
             eq(pageComponent.pageId, config.pageId),
             eq(pageComponent.workspaceId, config.workspaceId),
           ),
-        )
-        .all();
-      existingCount = existing.length;
+        );
+      existingCount = result?.count ?? 0;
     }
     const remaining = maxComponents - existingCount;
     if (remaining <= 0) {
@@ -128,17 +127,16 @@ export async function addLimitWarnings(
   const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
   if (monitorsPhase && monitorsPhase.resources.length > 0) {
     const maxMonitors = config.limits.monitors;
-    const existingMonitors = await db
-      .select()
+    const [monitorCount] = await db
+      .select({ count: count() })
       .from(monitor)
       .where(
         and(
           eq(monitor.workspaceId, config.workspaceId),
           isNull(monitor.deletedAt),
         ),
-      )
-      .all();
-    const remaining = maxMonitors - existingMonitors.length;
+      );
+    const remaining = maxMonitors - (monitorCount?.count ?? 0);
     if (remaining <= 0) {
       summary.errors.push(
         `Monitor limit reached (${maxMonitors}). Upgrade your plan to import monitors.`,
@@ -258,20 +256,7 @@ export async function runImport(config: {
             config.limits,
           );
           break;
-        case "monitorGroups":
         case "componentGroups":
-          if (targetPageId && config.options?.includeComponents !== false) {
-            await writeComponentGroupsPhase(
-              phase,
-              config.workspaceId,
-              targetPageId,
-              idMaps.groups,
-            );
-          } else if (config.options?.includeComponents === false) {
-            phase.status = "skipped";
-          }
-          break;
-        case "sections":
           if (targetPageId && config.options?.includeComponents !== false) {
             await writeComponentGroupsPhase(
               phase,
@@ -286,18 +271,17 @@ export async function runImport(config: {
         case "components":
           if (targetPageId && config.options?.includeComponents !== false) {
             // Check page-components limit
-            const existingCount = await db
-              .select()
+            const [compCount] = await db
+              .select({ count: count() })
               .from(pageComponent)
               .where(
                 and(
                   eq(pageComponent.pageId, targetPageId),
                   eq(pageComponent.workspaceId, config.workspaceId),
                 ),
-              )
-              .all();
+              );
             const maxComponents = config.limits["page-components"];
-            const remaining = maxComponents - existingCount.length;
+            const remaining = maxComponents - (compCount?.count ?? 0);
             if (remaining <= 0) {
               phase.status = "failed";
               break;
@@ -577,10 +561,12 @@ async function writeComponentsPhase(
       };
 
       // Resolve monitor ID from source monitor ID
-      if (data.type === "monitor" && data.sourceMonitorId && monitorIdMap) {
-        data.monitorId = monitorIdMap.get(data.sourceMonitorId) ?? null;
+      if (data.type === "monitor") {
+        if (data.sourceMonitorId && monitorIdMap) {
+          data.monitorId = monitorIdMap.get(data.sourceMonitorId) ?? null;
+        }
         if (!data.monitorId) {
-          // Monitor wasn't imported — fall back to static
+          // Monitor wasn't imported or no source — fall back to static
           data.type = "static";
         }
       }
@@ -794,16 +780,21 @@ async function writeMonitorsPhase(
   monitorIdMap: Map<string, number>,
   limits: Limits,
 ): Promise<void> {
-  const existingMonitors = await db
-    .select()
+  const [monitorCount] = await db
+    .select({ count: count() })
     .from(monitor)
-    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
-    .all();
+    .where(
+      and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
+    );
   const maxMonitors = limits.monitors;
-  const remaining = maxMonitors - existingMonitors.length;
+  const remaining = maxMonitors - (monitorCount?.count ?? 0);
 
   if (remaining <= 0) {
-    phase.status = "failed";
+    for (const resource of phase.resources) {
+      resource.status = "skipped";
+      resource.error = `Skipped: monitor limit reached (${maxMonitors})`;
+    }
+    phase.status = computePhaseStatus(phase.resources);
     return;
   }
 
