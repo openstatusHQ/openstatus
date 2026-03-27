@@ -17,6 +17,7 @@ import type {
   PhaseResult,
   ResourceResult,
 } from "@openstatus/importers";
+import { createInstatusProvider } from "@openstatus/importers/instatus";
 import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 import { TRPCError } from "@trpc/server";
 
@@ -25,6 +26,28 @@ type ImportOptions = {
   includeSubscribers?: boolean;
   includeComponents?: boolean;
 };
+
+type ProviderName = "statuspage" | "instatus";
+
+function createProvider(name: ProviderName) {
+  return name === "instatus"
+    ? createInstatusProvider()
+    : createStatuspageProvider();
+}
+
+function buildProviderConfig(config: {
+  provider: ProviderName;
+  apiKey: string;
+  workspaceId: number;
+  pageId?: number;
+  statuspagePageId?: string;
+  instatusPageId?: string;
+}) {
+  const { provider, ...rest } = config;
+  return provider === "instatus"
+    ? { ...rest, instatusPageId: config.instatusPageId }
+    : { ...rest, statuspagePageId: config.statuspagePageId };
+}
 
 /**
  * Inspect an ImportSummary and push warnings into `summary.errors`
@@ -97,16 +120,19 @@ export async function addLimitWarnings(
 }
 
 export async function previewImport(config: {
+  provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
+  instatusPageId?: string;
   workspaceId: number;
   pageId?: number;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider = createStatuspageProvider();
+  const provider = createProvider(config.provider);
+  const providerConfig = buildProviderConfig(config);
 
   const validation = await provider.validate({
-    ...config,
+    ...providerConfig,
     dryRun: true,
   });
   if (!validation.valid) {
@@ -116,22 +142,25 @@ export async function previewImport(config: {
     });
   }
 
-  const summary = await provider.run({ ...config, dryRun: true });
+  const summary = await provider.run({ ...providerConfig, dryRun: true });
   await addLimitWarnings(summary, config);
   return summary;
 }
 
 export async function runImport(config: {
+  provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
+  instatusPageId?: string;
   workspaceId: number;
   pageId?: number;
   options?: ImportOptions;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider = createStatuspageProvider();
+  const provider = createProvider(config.provider);
+  const providerConfig = buildProviderConfig(config);
 
-  const validation = await provider.validate(config);
+  const validation = await provider.validate(providerConfig);
   if (!validation.valid) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -140,7 +169,7 @@ export async function runImport(config: {
   }
 
   // Fetch and map all data
-  const summary = await provider.run(config);
+  const summary = await provider.run(providerConfig);
 
   // Add limit warnings (same as preview)
   await addLimitWarnings(summary, config);
@@ -686,6 +715,7 @@ async function writeSubscribersPhase(
       const data = resource.data as {
         email: string;
         pageId: number;
+        confirmed: boolean;
         sourceComponentIds: string[];
       };
 
@@ -714,6 +744,7 @@ async function writeSubscribersPhase(
           email: data.email,
           pageId,
           channelType: "email",
+          acceptedAt: data.confirmed ? new Date() : undefined,
         })
         .returning({ id: pageSubscriber.id });
 
