@@ -218,14 +218,16 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
-      const limitedProviders: readonly string[] = [
+      const limitedProviders = [
         "sms",
         "pagerduty",
         "opsgenie",
         "grafana-oncall",
         "whatsapp",
-      ];
-      if (limitedProviders.includes(opts.input.provider)) {
+      ] as const;
+      if (
+        (limitedProviders as readonly string[]).includes(opts.input.provider)
+      ) {
         const isAllowed =
           opts.ctx.workspace.limits[
             opts.input.provider as
