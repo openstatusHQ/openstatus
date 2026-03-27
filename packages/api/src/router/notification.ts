@@ -411,13 +411,28 @@ export const notificationRouter = createTRPCRouter({
           });
         }
 
-        const parsed = PagerDutySchema.safeParse(
-          JSON.parse(_data.data.pagerduty),
-        );
+        let rawPagerduty: unknown;
+        try {
+          rawPagerduty = JSON.parse(_data.data.pagerduty);
+        } catch {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid PagerDuty configuration: malformed JSON",
+          });
+        }
+
+        const parsed = PagerDutySchema.safeParse(rawPagerduty);
         if (!parsed.success) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Invalid PagerDuty configuration",
+          });
+        }
+
+        if (parsed.data.integration_keys.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No PagerDuty integration key provided",
           });
         }
 
