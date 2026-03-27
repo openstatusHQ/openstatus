@@ -1,5 +1,20 @@
 import type { NextRequest } from "next/server";
 
+/**
+ * Returns true when the request host is the SaaS-managed subdomain for the
+ * given page slug (i.e. `{slug}.stpg.dev`).
+ *
+ * In self-hosted mode (`SELF_HOST=true`) this always returns false because
+ * the SaaS subdomain infrastructure is not available.
+ */
+export function isSaasSubdomain(
+  host: string | null,
+  slug: string,
+): boolean {
+  if (process.env.SELF_HOST === "true") return false;
+  return host === `${slug}.stpg.dev`;
+}
+
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
   if (!host && typeof window !== "undefined") {
