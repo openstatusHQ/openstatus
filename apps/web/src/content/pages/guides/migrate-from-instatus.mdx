@@ -1,0 +1,97 @@
+---
+title: "How to Migrate from Instatus to openstatus"
+description: "Step-by-step guide to import your Instatus status page, components, incidents, maintenances, and subscribers into openstatus."
+author: "openstatus"
+publishedAt: "2026-03-27"
+category: "alternative"
+faq:
+  - question: "How does the Instatus import handle component groups?"
+    answer: "openstatus automatically detects which Instatus components are groups vs regular components based on the group references in your data, and creates the correct hierarchy."
+  - question: "Are Instatus webhook and Slack subscribers imported?"
+    answer: "No. Only email subscribers are imported. Webhook, Slack, Discord, Microsoft Teams, Google Chat, and phone subscribers are skipped — you'll see a warning showing how many were skipped."
+  - question: "How are Instatus maintenance windows imported?"
+    answer: "Instatus maintenances have a start time and duration. Openstatus calculates the end time as start + duration and imports them with the correct time range."
+  - question: "Do incident statuses map correctly?"
+    answer: "Yes. Instatus uses the same status names as openstatus (investigating, identified, monitoring, resolved), so the mapping is 1:1."
+  - question: "Can I import from multiple Instatus pages?"
+    answer: "You can specify a Page ID to import a specific page. Run the import once per page if you have multiple."
+  - question: "Can I run the import multiple times?"
+    answer: "Components, component groups, and subscribers are deduplicated — existing resources are skipped. However, incidents and maintenances are always inserted as new entries, so re-running will create duplicates for those."
+howto:
+  totalTime: "PT2M"
+  steps:
+    - name: "Get your Instatus API key"
+      text: "Go to your Instatus dashboard → Settings → API. Copy your API key."
+    - name: "Preview the import"
+      text: "In your openstatus dashboard, go to Status Pages, select a status page, open the Components tab, and scroll down to the Import section. Select Instatus, paste your API key, and click Preview."
+    - name: "Run the import"
+      text: "Review the preview summary. Toggle which resources to import (components, incidents, maintenances, subscribers). Click Import."
+---
+
+## Why migrate from Instatus to openstatus
+
+Instatus is a solid status page product. But if you need open-source transparency, built-in synthetic monitoring, or monitoring-as-code workflows, openstatus offers a more complete platform without stitching together separate tools.
+
+Openstatus now supports a one-click import from Instatus, so switching does not mean starting from scratch. Your components, incidents, maintenances, and email subscribers carry over in minutes.
+
+For background on the import feature, see [Importing from Statuspage, Betterstack, and Instatus](/blog/import-from-statuspage-betterstack-instatus).
+
+## What gets imported
+
+The table below shows how Instatus resources map to openstatus.
+
+| Instatus resource | openstatus resource | Notes |
+| --- | --- | --- |
+| **Page** (name, subdomain, custom domain) | Status Page (title, slug, custom domain) | One status page created per Instatus page. |
+| **Component with group references** | Component Group | Components referenced as a `group` by other components are automatically detected and created as groups. If a referenced group ID does not exist in the component list, a synthetic group is created using the ID as its name and a warning is shown. |
+| **Component** | Component (type: static) | All regular components are imported with their name, description, and order. Imported as `static` type (not linked to a monitor). |
+| **Incident** | Status Report + Status Report Updates | All incident updates are imported with their timestamps and messages. |
+| **Incident status** | Status Report status | 1:1 mapping: `INVESTIGATING` to `investigating`, `IDENTIFIED` to `identified`, `MONITORING` to `monitoring`, `RESOLVED` to `resolved`. |
+| **Incident affected components** | Status Report component links | Component associations are preserved using source ID matching. |
+| **Maintenance** (start, duration) | Maintenance (from, to) | End time is calculated as `start + duration` (in minutes). If duration is zero or null, `from` and `to` are the same. Maintenance update messages are concatenated into a single message field. |
+| **Maintenance affected components** | Maintenance component links | Component associations are preserved. |
+| **Email subscriber** | Page Subscription | Confirmed status is preserved. Selective component preferences are mapped to the imported components. |
+| **Webhook, Slack, Discord, Microsoft Teams, Google Chat, phone subscriber** | Not imported | A warning is shown with the count of skipped subscribers. |
+| **Monitors** | Not imported | Instatus monitors are not part of the import. Set up monitors directly in openstatus after import. |
+
+### Multi-page accounts
+
+If your Instatus account has multiple pages, the importer fetches all of them by default. To import a specific page, provide the **Page ID** in the import form. You can find your Page ID in the Instatus API or in the URL when editing a page (`instatus.com/app/pages/<page-id>`).
+
+## Step-by-step walkthrough
+
+### 1. Get your Instatus API key
+
+Go to your Instatus dashboard, then navigate to **Settings** and select **API**. Copy your API key.
+
+<Image src="/assets/posts/import-from-statuspage-betterstack-instatus/instatus-api-key.png" alt="Instatus developer settings page showing where to find the API key" />
+
+### 2. Open the import tool and preview
+
+In your openstatus dashboard, go to **Status Pages** and select a page (or create one first). Open the **Components** tab and scroll down to the **Import** section.
+
+Choose **Instatus** as the provider. Paste your API key. Optionally, enter a **Page ID** if you only want to import a specific page.
+
+Click **Preview**. Openstatus fetches your Instatus data and shows a summary of what will be imported: pages, component groups, components, incidents, maintenances, and subscribers. Review the summary and any warnings (such as skipped non-email subscribers or missing group references).
+
+Toggle which resource types to include. Click **Import**. The import runs in seconds for most accounts.
+
+<Image src="/assets/posts/import-from-statuspage-betterstack-instatus/instatus.png" alt="openstatus import form for Instatus with preview summary and import toggles" />
+
+## What to do after import
+
+**Connect monitors.** Imported components are static by default. To get automated status updates, create monitors in openstatus and link them to the imported components. Openstatus supports HTTP, TCP, UDP, and DNS checks from multiple global locations.
+
+**Verify component groups.** Check that the auto-detected group hierarchy matches your original Instatus layout. If a group reference was missing from the component list, a synthetic group was created with the ID as its name -- rename it as needed.
+
+**Update DNS.** If you use a custom domain for your status page, update your DNS records to point to openstatus. The import carries over your custom domain value, but DNS propagation is on your side.
+
+**Notify subscribers.** Your email subscribers are imported with their confirmed status preserved. Consider sending an update through openstatus to confirm the new status page URL if it has changed.
+
+**Remove the old page.** Once you have verified everything works, you can deactivate or delete your Instatus page.
+
+## Further reading
+
+- [Blog: Importing from Statuspage, Betterstack, and Instatus](/blog/import-from-statuspage-betterstack-instatus)
+- [Docs: How to import a status page](https://docs.openstatus.dev/tutorial/how-to-import-status-page)
+- [Top five Atlassian Statuspage alternatives](/guides/top-five-atlassian-statuspage-alternatives)
