@@ -39,7 +39,6 @@ function createProvider(name: ProviderName): ImportProvider {
       return createBetterstackProvider();
     case "instatus":
       return createInstatusProvider();
-    case "statuspage":
     default:
       return createStatuspageProvider();
   }
@@ -57,7 +56,10 @@ function buildProviderConfig(config: {
   const { provider, ...rest } = config;
   switch (provider) {
     case "betterstack":
-      return { ...rest, betterstackStatusPageId: config.betterstackStatusPageId };
+      return {
+        ...rest,
+        betterstackStatusPageId: config.betterstackStatusPageId,
+      };
     case "instatus":
       return { ...rest, instatusPageId: config.instatusPageId };
     default:
