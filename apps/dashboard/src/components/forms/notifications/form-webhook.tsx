@@ -201,32 +201,30 @@ export function FormWebhook({
                   control={form.control}
                   name={`data.headers.${index}.key`}
                   render={({ field }) => (
-                    <FormControl>
-                      <Input
-                        placeholder="Key"
-                        className="col-span-2"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormItem className="col-span-2">
+                      <FormControl>
+                        <Input placeholder="Key" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
                   name={`data.headers.${index}.value`}
                   render={({ field }) => (
-                    <FormControl>
-                      <Input
-                        placeholder="Value"
-                        className="col-span-2"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormItem className="col-span-2">
+                      <FormControl>
+                        <Input placeholder="Value" {...field} />
+                      </FormControl>
+                    </FormItem>
                   )}
                 />
                 <Button
                   size="icon"
                   variant="ghost"
                   type="button"
+                  aria-label="Remove header"
                   onClick={() => remove(index)}
                 >
                   <X />
