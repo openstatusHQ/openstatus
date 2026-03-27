@@ -119,6 +119,10 @@ export default defineConfig({
               label: "Manage Your Stack with Terraform and CLI",
               slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
             },
+            {
+              label: "Import a Status Page from Another Provider",
+              slug: "tutorial/how-to-import-status-page",
+            },
           ],
         },
 
