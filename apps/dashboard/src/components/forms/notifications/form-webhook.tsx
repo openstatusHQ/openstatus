@@ -25,6 +25,7 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import { Plus, X } from "lucide-react";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -33,11 +34,14 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("webhook"),
-  data: z.record(z.string(), z.string()),
+  data: z.object({
+    endpoint: z.string().url(),
+    headers: z.array(z.object({ key: z.string(), value: z.string() })),
+  }),
   monitors: z.array(z.number()),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormWebhook({
   defaultValues,
@@ -57,7 +61,7 @@ export function FormWebhook({
       provider: "webhook",
       data: {
         endpoint: "",
-        // headers: []
+        headers: [],
       },
       monitors: [],
     },
@@ -105,10 +109,11 @@ export function FormWebhook({
       try {
         const provider = form.getValues("provider");
         const endpoint = form.getValues("data.endpoint");
+        const headers = form.getValues("data.headers");
         const promise = sendTestMutation.mutateAsync({
           provider,
           data: {
-            webhook: { endpoint },
+            webhook: { endpoint, headers },
           },
         });
         toast.promise(promise, {
@@ -173,6 +178,75 @@ export function FormWebhook({
                   </Link>
                   .
                 </FormDescription>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="data.headers"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Request Headers</FormLabel>
+                {field.value?.map((header, index) => (
+                  <div key={index} className="grid gap-2 sm:grid-cols-5">
+                    <Input
+                      placeholder="Key"
+                      className="col-span-2"
+                      value={header.key}
+                      onChange={(e) => {
+                        const newHeaders = [...field.value];
+                        newHeaders[index] = {
+                          ...newHeaders[index],
+                          key: e.target.value,
+                        };
+                        field.onChange(newHeaders);
+                      }}
+                    />
+                    <Input
+                      placeholder="Value"
+                      className="col-span-2"
+                      value={header.value}
+                      onChange={(e) => {
+                        const newHeaders = [...field.value];
+                        newHeaders[index] = {
+                          ...newHeaders[index],
+                          value: e.target.value,
+                        };
+                        field.onChange(newHeaders);
+                      }}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      type="button"
+                      onClick={() => {
+                        const newHeaders = field.value.filter(
+                          (_, i) => i !== index,
+                        );
+                        field.onChange(newHeaders);
+                      }}
+                    >
+                      <X />
+                    </Button>
+                  </div>
+                ))}
+                <div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    onClick={() => {
+                      field.onChange([
+                        ...(field.value ?? []),
+                        { key: "", value: "" },
+                      ]);
+                    }}
+                  >
+                    <Plus />
+                    Add Header
+                  </Button>
+                </div>
+                <FormMessage />
               </FormItem>
             )}
           />
