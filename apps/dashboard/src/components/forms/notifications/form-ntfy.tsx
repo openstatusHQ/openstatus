@@ -15,13 +15,14 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { config } from "@/data/notifications.client";
+import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -63,6 +64,11 @@ export function FormNtfy({
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
+  const trpc = useTRPC();
+
+  const sendTestMutation = useMutation(
+    trpc.notification.sendTest.mutationOptions(),
+  );
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
@@ -99,13 +105,12 @@ export function FormNtfy({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(
-          data as unknown as {
-            topic: string;
-            serverUrl?: string;
-            token?: string;
+        const promise = sendTestMutation.mutateAsync({
+          provider,
+          data: {
+            ntfy: data,
           },
-        );
+        });
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
