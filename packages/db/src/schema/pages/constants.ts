@@ -12,6 +12,9 @@ export const subdomainSafeList = [
   "template",
   "ssh",
   "themes",
+  "shop",
+  "skills",
+  "cli",
 ];
 
 export const pageAccessTypes = ["public", "password", "email-domain"] as const;
