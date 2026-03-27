@@ -27,7 +27,7 @@ import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Plus, X } from "lucide-react";
 import React, { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -36,7 +36,12 @@ const schema = z.object({
   provider: z.literal("webhook"),
   data: z.object({
     endpoint: z.string().url(),
-    headers: z.array(z.object({ key: z.string(), value: z.string() })),
+    headers: z.array(
+      z.object({
+        key: z.string().min(1, "Key is required"),
+        value: z.string(),
+      }),
+    ),
   }),
   monitors: z.array(z.number()),
 });
@@ -65,6 +70,10 @@ export function FormWebhook({
       },
       monitors: [],
     },
+  });
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "data.headers",
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
@@ -181,75 +190,62 @@ export function FormWebhook({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="data.headers"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Request Headers</FormLabel>
-                {field.value?.map((header, index) => (
-                  <div key={index} className="grid gap-2 sm:grid-cols-5">
-                    <Input
-                      placeholder="Key"
-                      className="col-span-2"
-                      value={header.key}
-                      onChange={(e) => {
-                        const newHeaders = [...field.value];
-                        newHeaders[index] = {
-                          ...newHeaders[index],
-                          key: e.target.value,
-                        };
-                        field.onChange(newHeaders);
-                      }}
-                    />
-                    <Input
-                      placeholder="Value"
-                      className="col-span-2"
-                      value={header.value}
-                      onChange={(e) => {
-                        const newHeaders = [...field.value];
-                        newHeaders[index] = {
-                          ...newHeaders[index],
-                          value: e.target.value,
-                        };
-                        field.onChange(newHeaders);
-                      }}
-                    />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      type="button"
-                      onClick={() => {
-                        const newHeaders = field.value.filter(
-                          (_, i) => i !== index,
-                        );
-                        field.onChange(newHeaders);
-                      }}
-                    >
-                      <X />
-                    </Button>
-                  </div>
-                ))}
-                <div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    type="button"
-                    onClick={() => {
-                      field.onChange([
-                        ...(field.value ?? []),
-                        { key: "", value: "" },
-                      ]);
-                    }}
-                  >
-                    <Plus />
-                    Add Header
-                  </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+            <FormLabel>Request Headers</FormLabel>
+            <FormDescription>
+              Custom headers to include in every webhook request.
+            </FormDescription>
+            {fields.map((field, index) => (
+              <div key={field.id} className="grid gap-2 sm:grid-cols-5">
+                <FormField
+                  control={form.control}
+                  name={`data.headers.${index}.key`}
+                  render={({ field }) => (
+                    <FormControl>
+                      <Input
+                        placeholder="Key"
+                        className="col-span-2"
+                        {...field}
+                      />
+                    </FormControl>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`data.headers.${index}.value`}
+                  render={({ field }) => (
+                    <FormControl>
+                      <Input
+                        placeholder="Value"
+                        className="col-span-2"
+                        {...field}
+                      />
+                    </FormControl>
+                  )}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  type="button"
+                  onClick={() => remove(index)}
+                >
+                  <X />
+                </Button>
+              </div>
+            ))}
+            <div>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => append({ key: "", value: "" })}
+              >
+                <Plus />
+                Add Header
+              </Button>
+            </div>
+            <FormMessage />
+          </FormItem>
           <div>
             <Button
               variant="outline"
