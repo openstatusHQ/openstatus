@@ -8,6 +8,8 @@
     "./types": "./src/types.ts",
     "./statuspage": "./src/providers/statuspage/index.ts",
     "./statuspage/fixtures": "./src/providers/statuspage/fixtures.ts",
+    "./betterstack": "./src/providers/betterstack/index.ts",
+    "./betterstack/fixtures": "./src/providers/betterstack/fixtures.ts",
     "./instatus": "./src/providers/instatus/index.ts",
     "./instatus/fixtures": "./src/providers/instatus/fixtures.ts"
   },

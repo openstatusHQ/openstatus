@@ -1,7 +1,8 @@
-import { and, db, eq } from "@openstatus/db";
+import { and, count, db, eq, isNull } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
+  monitor,
   page,
   pageComponent,
   pageComponentGroup,
@@ -13,10 +14,12 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type {
+  ImportProvider,
   ImportSummary,
   PhaseResult,
   ResourceResult,
 } from "@openstatus/importers";
+import { createBetterstackProvider } from "@openstatus/importers/betterstack";
 import { createInstatusProvider } from "@openstatus/importers/instatus";
 import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 import { TRPCError } from "@trpc/server";
@@ -25,14 +28,20 @@ type ImportOptions = {
   includeStatusReports?: boolean;
   includeSubscribers?: boolean;
   includeComponents?: boolean;
+  includeMonitors?: boolean;
 };
 
-type ProviderName = "statuspage" | "instatus";
+type ProviderName = "statuspage" | "betterstack" | "instatus";
 
-function createProvider(name: ProviderName) {
-  return name === "instatus"
-    ? createInstatusProvider()
-    : createStatuspageProvider();
+function createProvider(name: ProviderName): ImportProvider {
+  switch (name) {
+    case "betterstack":
+      return createBetterstackProvider();
+    case "instatus":
+      return createInstatusProvider();
+    default:
+      return createStatuspageProvider();
+  }
 }
 
 function buildProviderConfig(config: {
@@ -41,12 +50,21 @@ function buildProviderConfig(config: {
   workspaceId: number;
   pageId?: number;
   statuspagePageId?: string;
+  betterstackStatusPageId?: string;
   instatusPageId?: string;
 }) {
   const { provider, ...rest } = config;
-  return provider === "instatus"
-    ? { ...rest, instatusPageId: config.instatusPageId }
-    : { ...rest, statuspagePageId: config.statuspagePageId };
+  switch (provider) {
+    case "betterstack":
+      return {
+        ...rest,
+        betterstackStatusPageId: config.betterstackStatusPageId,
+      };
+    case "instatus":
+      return { ...rest, instatusPageId: config.instatusPageId };
+    default:
+      return { ...rest, statuspagePageId: config.statuspagePageId };
+  }
 }
 
 /**
@@ -69,17 +87,16 @@ export async function addLimitWarnings(
     const maxComponents = config.limits["page-components"];
     let existingCount = 0;
     if (config.pageId) {
-      const existing = await db
-        .select()
+      const [result] = await db
+        .select({ count: count() })
         .from(pageComponent)
         .where(
           and(
             eq(pageComponent.pageId, config.pageId),
             eq(pageComponent.workspaceId, config.workspaceId),
           ),
-        )
-        .all();
-      existingCount = existing.length;
+        );
+      existingCount = result?.count ?? 0;
     }
     const remaining = maxComponents - existingCount;
     if (remaining <= 0) {
@@ -106,7 +123,48 @@ export async function addLimitWarnings(
     }
   }
 
-  // 3. Subscribers
+  // 3. Monitor count limit
+  const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
+  if (monitorsPhase && monitorsPhase.resources.length > 0) {
+    const maxMonitors = config.limits.monitors;
+    const [monitorCount] = await db
+      .select({ count: count() })
+      .from(monitor)
+      .where(
+        and(
+          eq(monitor.workspaceId, config.workspaceId),
+          isNull(monitor.deletedAt),
+        ),
+      );
+    const remaining = maxMonitors - (monitorCount?.count ?? 0);
+    if (remaining <= 0) {
+      summary.errors.push(
+        `Monitor limit reached (${maxMonitors}). Upgrade your plan to import monitors.`,
+      );
+    } else if (monitorsPhase.resources.length > remaining) {
+      summary.errors.push(
+        `Only ${remaining} of ${monitorsPhase.resources.length} monitors can be imported due to plan limit (${maxMonitors}).`,
+      );
+    }
+  }
+
+  // 4. Monitor periodicity clamping
+  if (monitorsPhase && monitorsPhase.resources.length > 0) {
+    const allowedPeriodicity: string[] = config.limits.periodicity;
+    const clamped = monitorsPhase.resources.filter((r) => {
+      const data = r.data as { periodicity?: string } | undefined;
+      return (
+        data?.periodicity && !allowedPeriodicity.includes(data.periodicity)
+      );
+    });
+    if (clamped.length > 0) {
+      summary.errors.push(
+        `${clamped.length} monitor${clamped.length === 1 ? "'s" : "s'"} check frequency will be adjusted to fit your plan's allowed intervals.`,
+      );
+    }
+  }
+
+  // 5. Subscribers
   if (!config.limits["status-subscribers"]) {
     const subscribersPhase = summary.phases.find(
       (p) => p.phase === "subscribers",
@@ -123,6 +181,7 @@ export async function previewImport(config: {
   provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
+  betterstackStatusPageId?: string;
   instatusPageId?: string;
   workspaceId: number;
   pageId?: number;
@@ -151,6 +210,7 @@ export async function runImport(config: {
   provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
+  betterstackStatusPageId?: string;
   instatusPageId?: string;
   workspaceId: number;
   pageId?: number;
@@ -178,6 +238,7 @@ export async function runImport(config: {
   const idMaps = {
     groups: new Map<string, number>(), // sourceId -> openstatusId
     components: new Map<string, number>(), // sourceId -> openstatusId
+    monitors: new Map<string, number>(), // sourceId -> openstatusId
   };
 
   let targetPageId = config.pageId;
@@ -191,6 +252,18 @@ export async function runImport(config: {
 
     try {
       switch (phase.phase) {
+        case "monitors":
+          if (config.options?.includeMonitors !== false) {
+            await writeMonitorsPhase(
+              phase,
+              config.workspaceId,
+              idMaps.monitors,
+              config.limits,
+            );
+          } else {
+            phase.status = "skipped";
+          }
+          break;
         case "page":
           targetPageId = await writePagePhase(
             phase,
@@ -214,18 +287,17 @@ export async function runImport(config: {
         case "components":
           if (targetPageId && config.options?.includeComponents !== false) {
             // Check page-components limit
-            const existingCount = await db
-              .select()
+            const [compCount] = await db
+              .select({ count: count() })
               .from(pageComponent)
               .where(
                 and(
                   eq(pageComponent.pageId, targetPageId),
                   eq(pageComponent.workspaceId, config.workspaceId),
                 ),
-              )
-              .all();
+              );
             const maxComponents = config.limits["page-components"];
-            const remaining = maxComponents - existingCount.length;
+            const remaining = maxComponents - (compCount?.count ?? 0);
             if (remaining <= 0) {
               phase.status = "failed";
               break;
@@ -245,6 +317,7 @@ export async function runImport(config: {
               targetPageId,
               idMaps.groups,
               idMaps.components,
+              idMaps.monitors,
             );
           } else if (config.options?.includeComponents === false) {
             phase.status = "skipped";
@@ -311,6 +384,32 @@ export async function runImport(config: {
   summary.completedAt = new Date();
 
   return summary;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const PERIODICITY_ORDER = ["30s", "1m", "5m", "10m", "30m", "1h"] as const;
+
+/**
+ * Clamp a periodicity to the nearest allowed value for the plan.
+ * Picks the closest allowed periodicity that is >= the requested one
+ * (i.e. never faster than what the plan permits).
+ */
+export function clampPeriodicity(requested: string, allowed: string[]): string {
+  if (allowed.includes(requested)) return requested;
+  const reqIdx = PERIODICITY_ORDER.indexOf(
+    requested as (typeof PERIODICITY_ORDER)[number],
+  );
+  // Find the smallest allowed periodicity that is >= requested
+  for (let i = Math.max(reqIdx, 0); i < PERIODICITY_ORDER.length; i++) {
+    if (allowed.includes(PERIODICITY_ORDER[i])) {
+      return PERIODICITY_ORDER[i];
+    }
+  }
+  // Fallback to the slowest allowed
+  return allowed[allowed.length - 1] ?? "10m";
 }
 
 // ---------------------------------------------------------------------------
@@ -485,6 +584,7 @@ async function writeComponentsPhase(
   pageId: number,
   groupIdMap: Map<string, number>,
   componentIdMap: Map<string, number>,
+  monitorIdMap?: Map<string, number>,
 ): Promise<void> {
   for (const resource of phase.resources) {
     if (resource.status === "skipped") continue;
@@ -493,13 +593,25 @@ async function writeComponentsPhase(
       const data = resource.data as {
         workspaceId: number;
         pageId: number;
-        type: "static";
-        monitorId: null;
+        type: "static" | "monitor";
+        monitorId: number | null;
+        sourceMonitorId?: string | null;
         name: string;
         description: string | null;
         order: number;
         sourceGroupId: string | null;
       };
+
+      // Resolve monitor ID from source monitor ID
+      if (data.type === "monitor") {
+        if (data.sourceMonitorId && monitorIdMap) {
+          data.monitorId = monitorIdMap.get(data.sourceMonitorId) ?? null;
+        }
+        if (!data.monitorId) {
+          // Monitor wasn't imported or no source — fall back to static
+          data.type = "static";
+        }
+      }
 
       // Check idempotency by name + pageId
       const existing = await db
@@ -695,6 +807,142 @@ async function writeMaintenancesPhase(
 
       resource.openstatusId = inserted.id;
       resource.status = "created";
+    } catch (err) {
+      resource.status = "failed";
+      resource.error = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  phase.status = computePhaseStatus(phase.resources);
+}
+
+async function writeMonitorsPhase(
+  phase: PhaseResult,
+  workspaceId: number,
+  monitorIdMap: Map<string, number>,
+  limits: Limits,
+): Promise<void> {
+  const [monitorCount] = await db
+    .select({ count: count() })
+    .from(monitor)
+    .where(
+      and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
+    );
+  const maxMonitors = limits.monitors;
+  const remaining = maxMonitors - (monitorCount?.count ?? 0);
+
+  if (remaining <= 0) {
+    for (const resource of phase.resources) {
+      resource.status = "skipped";
+      resource.error = `Skipped: monitor limit reached (${maxMonitors})`;
+    }
+    phase.status = computePhaseStatus(phase.resources);
+    return;
+  }
+
+  let importedCount = 0;
+  for (const resource of phase.resources) {
+    if (importedCount >= remaining) {
+      resource.status = "skipped";
+      resource.error = `Skipped: would exceed monitor limit (${maxMonitors})`;
+      continue;
+    }
+
+    try {
+      const data = resource.data as {
+        workspaceId: number;
+        jobType: string;
+        periodicity: string;
+        status: string;
+        active: boolean;
+        regions: string;
+        url: string;
+        name: string;
+        description: string;
+        headers: string;
+        body: string;
+        method: string;
+        timeout: number;
+        sourceMonitorGroupId: string | null;
+      };
+
+      // Idempotency check by url + workspaceId (exclude soft-deleted)
+      const existing = await db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.url, data.url),
+            eq(monitor.workspaceId, workspaceId),
+            isNull(monitor.deletedAt),
+          ),
+        )
+        .get();
+
+      if (existing) {
+        monitorIdMap.set(resource.sourceId, existing.id);
+        resource.openstatusId = existing.id;
+        resource.status = "skipped";
+        continue;
+      }
+
+      // Clamp periodicity to what the plan allows
+      const periodicity = clampPeriodicity(
+        data.periodicity,
+        limits.periodicity,
+      );
+
+      const [inserted] = await db
+        .insert(monitor)
+        .values({
+          workspaceId,
+          jobType: data.jobType as
+            | "http"
+            | "tcp"
+            | "imcp"
+            | "udp"
+            | "dns"
+            | "ssl",
+          periodicity: periodicity as
+            | "30s"
+            | "1m"
+            | "5m"
+            | "10m"
+            | "30m"
+            | "1h"
+            | "other",
+          status: "active",
+          active: data.active,
+          regions: data.regions,
+          url: data.url,
+          name: data.name,
+          description: data.description,
+          headers: data.headers,
+          body: data.body,
+          method: data.method as
+            | "GET"
+            | "POST"
+            | "HEAD"
+            | "PUT"
+            | "PATCH"
+            | "DELETE"
+            | "TRACE"
+            | "CONNECT"
+            | "OPTIONS",
+          timeout: data.timeout,
+        })
+        .returning({ id: monitor.id });
+
+      if (!inserted) {
+        resource.status = "failed";
+        resource.error = "Insert returned no result";
+        continue;
+      }
+
+      monitorIdMap.set(resource.sourceId, inserted.id);
+      resource.openstatusId = inserted.id;
+      resource.status = "created";
+      importedCount++;
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
