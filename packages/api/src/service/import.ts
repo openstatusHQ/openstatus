@@ -148,7 +148,23 @@ export async function addLimitWarnings(
     }
   }
 
-  // 4. Subscribers
+  // 4. Monitor periodicity clamping
+  if (monitorsPhase && monitorsPhase.resources.length > 0) {
+    const allowedPeriodicity: string[] = config.limits.periodicity;
+    const clamped = monitorsPhase.resources.filter((r) => {
+      const data = r.data as { periodicity?: string } | undefined;
+      return (
+        data?.periodicity && !allowedPeriodicity.includes(data.periodicity)
+      );
+    });
+    if (clamped.length > 0) {
+      summary.errors.push(
+        `${clamped.length} monitor${clamped.length === 1 ? "'s" : "s'"} check frequency will be adjusted to fit your plan's allowed intervals.`,
+      );
+    }
+  }
+
+  // 5. Subscribers
   if (!config.limits["status-subscribers"]) {
     const subscribersPhase = summary.phases.find(
       (p) => p.phase === "subscribers",
@@ -368,6 +384,32 @@ export async function runImport(config: {
   summary.completedAt = new Date();
 
   return summary;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const PERIODICITY_ORDER = ["30s", "1m", "5m", "10m", "30m", "1h"] as const;
+
+/**
+ * Clamp a periodicity to the nearest allowed value for the plan.
+ * Picks the closest allowed periodicity that is >= the requested one
+ * (i.e. never faster than what the plan permits).
+ */
+export function clampPeriodicity(requested: string, allowed: string[]): string {
+  if (allowed.includes(requested)) return requested;
+  const reqIdx = PERIODICITY_ORDER.indexOf(
+    requested as (typeof PERIODICITY_ORDER)[number],
+  );
+  // Find the smallest allowed periodicity that is >= requested
+  for (let i = Math.max(reqIdx, 0); i < PERIODICITY_ORDER.length; i++) {
+    if (allowed.includes(PERIODICITY_ORDER[i])) {
+      return PERIODICITY_ORDER[i];
+    }
+  }
+  // Fallback to the slowest allowed
+  return allowed[allowed.length - 1] ?? "10m";
 }
 
 // ---------------------------------------------------------------------------
@@ -844,6 +886,12 @@ async function writeMonitorsPhase(
         continue;
       }
 
+      // Clamp periodicity to what the plan allows
+      const periodicity = clampPeriodicity(
+        data.periodicity,
+        limits.periodicity,
+      );
+
       const [inserted] = await db
         .insert(monitor)
         .values({
@@ -855,7 +903,7 @@ async function writeMonitorsPhase(
             | "udp"
             | "dns"
             | "ssl",
-          periodicity: data.periodicity as
+          periodicity: periodicity as
             | "30s"
             | "1m"
             | "5m"
