@@ -5,7 +5,10 @@ import {
   MOCK_MONITORS,
   MOCK_MONITOR_GROUPS,
   MOCK_STATUS_PAGES,
+  MOCK_STATUS_PAGE_RESOURCES,
   MOCK_STATUS_PAGE_SECTIONS,
+  MOCK_STATUS_REPORTS,
+  MOCK_STATUS_UPDATES_REPORT_001,
 } from "./fixtures";
 
 const originalFetch = globalThis.fetch;
@@ -87,6 +90,36 @@ describe("BetterstackClient", () => {
     expect(sections).toEqual(MOCK_STATUS_PAGE_SECTIONS);
     expect(sections).toHaveLength(2);
     expect(sections[0].attributes.name).toBe("API Services");
+  });
+
+  test("getStatusPageResources returns parsed resources", async () => {
+    mockFetchPaginated(MOCK_STATUS_PAGE_RESOURCES);
+    const resources = await client.getStatusPageResources("bs_sp_001");
+    expect(resources).toEqual(MOCK_STATUS_PAGE_RESOURCES);
+    expect(resources).toHaveLength(3);
+    expect(resources[0].attributes.public_name).toBe("API Gateway");
+  });
+
+  test("getStatusPageReports returns parsed reports", async () => {
+    mockFetchPaginated(MOCK_STATUS_REPORTS);
+    const reports = await client.getStatusPageReports("bs_sp_001");
+    expect(reports).toEqual(MOCK_STATUS_REPORTS);
+    expect(reports).toHaveLength(3);
+    expect(reports[0].attributes.title).toBe(
+      "API Gateway Elevated Error Rates",
+    );
+    expect(reports[2].attributes.report_type).toBe("maintenance");
+  });
+
+  test("getStatusReportUpdates returns parsed updates", async () => {
+    mockFetchPaginated(MOCK_STATUS_UPDATES_REPORT_001);
+    const updates = await client.getStatusReportUpdates(
+      "bs_sp_001",
+      "bs_report_001",
+    );
+    expect(updates).toEqual(MOCK_STATUS_UPDATES_REPORT_001);
+    expect(updates).toHaveLength(3);
+    expect(updates[0].attributes.message).toContain("investigating");
   });
 
   test("getIncidents returns parsed incidents", async () => {

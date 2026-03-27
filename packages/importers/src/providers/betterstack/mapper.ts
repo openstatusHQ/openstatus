@@ -3,7 +3,10 @@ import type {
   BetterstackMonitor,
   BetterstackMonitorGroup,
   BetterstackStatusPage,
+  BetterstackStatusPageResource,
   BetterstackStatusPageSection,
+  BetterstackStatusReport,
+  BetterstackStatusUpdate,
 } from "./api-types";
 
 export type StatusReportStatus =
@@ -15,6 +18,8 @@ export type StatusReportStatus =
 const FREQUENCY_MAP: Record<number, string> = {
   30: "30s",
   60: "1m",
+  120: "1m",
+  180: "5m",
   300: "5m",
   600: "10m",
   1800: "30m",
@@ -142,6 +147,131 @@ export function mapSection(
     workspaceId,
     pageId,
     name: section.attributes.name,
+  };
+}
+
+export function mapResource(
+  resource: BetterstackStatusPageResource,
+  workspaceId: number,
+  pageId?: number,
+) {
+  return {
+    workspaceId,
+    pageId,
+    type: "static" as const,
+    monitorId: null,
+    name: resource.attributes.public_name,
+    description: resource.attributes.explanation ?? null,
+    order: resource.attributes.position,
+    sourceGroupId: resource.attributes.status_page_section_id
+      ? String(resource.attributes.status_page_section_id)
+      : null,
+  };
+}
+
+const REPORT_STATUS_MAP: Record<string, StatusReportStatus> = {
+  operational: "resolved",
+  resolved: "resolved",
+  downtime: "investigating",
+  degraded: "identified",
+  maintenance: "monitoring",
+};
+
+export function mapReportAggregateState(
+  state: string | null,
+): StatusReportStatus {
+  if (!state) return "investigating";
+  return REPORT_STATUS_MAP[state.toLowerCase()] ?? "investigating";
+}
+
+export function mapReportToStatusReport(
+  report: BetterstackStatusReport,
+  updates: BetterstackStatusUpdate[],
+  workspaceId: number,
+  pageId?: number,
+) {
+  const sortedUpdates = [...updates].sort(
+    (a, b) =>
+      new Date(a.attributes.published_at).getTime() -
+      new Date(b.attributes.published_at).getTime(),
+  );
+
+  const mappedUpdates = sortedUpdates.map((u) => {
+    const aggregateStatus =
+      u.attributes.affected_resources.length > 0
+        ? mapReportAggregateState(u.attributes.affected_resources[0].status)
+        : "investigating";
+    return {
+      status: aggregateStatus,
+      message: u.attributes.message ?? "",
+      date: new Date(u.attributes.published_at),
+    };
+  });
+
+  // If no updates, create a synthetic one from the report itself
+  if (mappedUpdates.length === 0 && report.attributes.starts_at) {
+    mappedUpdates.push({
+      status: mapReportAggregateState(report.attributes.aggregate_state),
+      message: report.attributes.title,
+      date: new Date(report.attributes.starts_at),
+    });
+  }
+
+  const lastUpdate = mappedUpdates[mappedUpdates.length - 1];
+  const reportStatus = lastUpdate?.status ?? "investigating";
+
+  const sourceComponentIds = report.attributes.affected_resources.map(
+    (r) => r.status_page_resource_id,
+  );
+
+  return {
+    report: {
+      title: report.attributes.title,
+      status: reportStatus,
+      workspaceId,
+      pageId,
+    },
+    updates: mappedUpdates,
+    sourceComponentIds,
+  };
+}
+
+export function mapReportToMaintenance(
+  report: BetterstackStatusReport,
+  updates: BetterstackStatusUpdate[],
+  workspaceId: number,
+  pageId?: number,
+) {
+  const from = report.attributes.starts_at
+    ? new Date(report.attributes.starts_at)
+    : new Date();
+  const to = report.attributes.ends_at
+    ? new Date(report.attributes.ends_at)
+    : from;
+
+  const sortedUpdates = [...updates].sort(
+    (a, b) =>
+      new Date(a.attributes.published_at).getTime() -
+      new Date(b.attributes.published_at).getTime(),
+  );
+
+  const message = sortedUpdates
+    .map((u) => u.attributes.message ?? "")
+    .filter(Boolean)
+    .join("\n");
+
+  const sourceComponentIds = report.attributes.affected_resources.map(
+    (r) => r.status_page_resource_id,
+  );
+
+  return {
+    title: report.attributes.title,
+    message: message || report.attributes.title,
+    from,
+    to,
+    workspaceId,
+    pageId,
+    sourceComponentIds,
   };
 }
 

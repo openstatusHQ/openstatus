@@ -7,9 +7,15 @@ import {
   BetterstackMonitorGroupSchema,
   BetterstackMonitorSchema,
   type BetterstackStatusPage,
+  type BetterstackStatusPageResource,
+  BetterstackStatusPageResourceSchema,
   BetterstackStatusPageSchema,
   type BetterstackStatusPageSection,
   BetterstackStatusPageSectionSchema,
+  type BetterstackStatusReport,
+  BetterstackStatusReportSchema,
+  type BetterstackStatusUpdate,
+  BetterstackStatusUpdateSchema,
   paginatedResponse,
 } from "./api-types";
 
@@ -20,6 +26,16 @@ export type BetterstackClient = {
   getStatusPageSections: (
     statusPageId: string,
   ) => Promise<BetterstackStatusPageSection[]>;
+  getStatusPageResources: (
+    statusPageId: string,
+  ) => Promise<BetterstackStatusPageResource[]>;
+  getStatusPageReports: (
+    statusPageId: string,
+  ) => Promise<BetterstackStatusReport[]>;
+  getStatusReportUpdates: (
+    statusPageId: string,
+    reportId: string,
+  ) => Promise<BetterstackStatusUpdate[]>;
   getIncidents: () => Promise<BetterstackIncident[]>;
 };
 
@@ -74,6 +90,21 @@ export function createBetterstackClient(
       requestAllPages(
         `/api/v2/status-pages/${statusPageId}/sections`,
         BetterstackStatusPageSectionSchema,
+      ),
+    getStatusPageResources: (statusPageId) =>
+      requestAllPages(
+        `/api/v2/status-pages/${statusPageId}/resources`,
+        BetterstackStatusPageResourceSchema,
+      ),
+    getStatusPageReports: (statusPageId) =>
+      requestAllPages(
+        `/api/v2/status-pages/${statusPageId}/status-reports`,
+        BetterstackStatusReportSchema,
+      ),
+    getStatusReportUpdates: (statusPageId, reportId) =>
+      requestAllPages(
+        `/api/v2/status-pages/${statusPageId}/status-reports/${reportId}/status-updates`,
+        BetterstackStatusUpdateSchema,
       ),
     getIncidents: () =>
       requestAllPages("/api/v3/incidents", BetterstackIncidentSchema),

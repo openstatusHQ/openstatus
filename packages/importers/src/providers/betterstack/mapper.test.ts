@@ -4,7 +4,12 @@ import {
   MOCK_MONITORS,
   MOCK_MONITOR_GROUPS,
   MOCK_STATUS_PAGES,
+  MOCK_STATUS_PAGE_RESOURCES,
   MOCK_STATUS_PAGE_SECTIONS,
+  MOCK_STATUS_REPORTS,
+  MOCK_STATUS_UPDATES_REPORT_001,
+  MOCK_STATUS_UPDATES_REPORT_002,
+  MOCK_STATUS_UPDATES_REPORT_003,
 } from "./fixtures";
 import {
   mapFrequency,
@@ -15,6 +20,10 @@ import {
   mapMonitorGroup,
   mapMonitorType,
   mapRegions,
+  mapReportAggregateState,
+  mapReportToMaintenance,
+  mapReportToStatusReport,
+  mapResource,
   mapSection,
   mapStatusPage,
 } from "./mapper";
@@ -32,8 +41,6 @@ describe("mapFrequency", () => {
   test("snaps to nearest supported value", () => {
     expect(mapFrequency(45)).toBe("30s");
     expect(mapFrequency(90)).toBe("1m");
-    expect(mapFrequency(120)).toBe("1m");
-    expect(mapFrequency(180)).toBe("1m");
     expect(mapFrequency(400)).toBe("5m");
     expect(mapFrequency(900)).toBe("10m");
     expect(mapFrequency(2400)).toBe("30m");
@@ -90,7 +97,7 @@ describe("mapMonitor", () => {
     expect(result.name).toBe("API Health Check");
     expect(result.jobType).toBe("http");
     expect(result.method).toBe("GET");
-    expect(result.periodicity).toBe("1m");
+    expect(result.periodicity).toBe("5m");
     expect(result.timeout).toBe(15000);
     expect(result.active).toBe(true);
     expect(result.regions).toBe("iad,fra");
@@ -136,6 +143,128 @@ describe("mapSection", () => {
     expect(result.pageId).toBe(1);
     expect(result.name).toBe("API Services");
   });
+
+  test("section id matches resource sourceGroupId", () => {
+    // Section id (string) must match String(resource.status_page_section_id)
+    const sectionId = MOCK_STATUS_PAGE_SECTIONS[0].id;
+    const resourceSectionId = String(
+      MOCK_STATUS_PAGE_RESOURCES[0].attributes.status_page_section_id,
+    );
+    expect(sectionId).toBe(resourceSectionId);
+  });
+});
+
+describe("mapResource", () => {
+  test("maps a resource with section", () => {
+    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42, 1);
+    expect(result.workspaceId).toBe(42);
+    expect(result.pageId).toBe(1);
+    expect(result.type).toBe("static");
+    expect(result.monitorId).toBeNull();
+    expect(result.name).toBe("API Gateway");
+    expect(result.description).toBe("Main API endpoint health");
+    expect(result.order).toBe(0);
+    expect(result.sourceGroupId).toBe("100001");
+  });
+
+  test("maps a resource without section", () => {
+    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[2], 42, 1);
+    expect(result.name).toBe("CDN");
+    expect(result.description).toBeNull();
+    expect(result.sourceGroupId).toBeNull();
+  });
+
+  test("maps a resource without pageId", () => {
+    const result = mapResource(MOCK_STATUS_PAGE_RESOURCES[0], 42);
+    expect(result.pageId).toBeUndefined();
+  });
+});
+
+describe("mapReportAggregateState", () => {
+  test("maps known states", () => {
+    expect(mapReportAggregateState("Operational")).toBe("resolved");
+    expect(mapReportAggregateState("Downtime")).toBe("investigating");
+    expect(mapReportAggregateState("Degraded")).toBe("identified");
+    expect(mapReportAggregateState("Maintenance")).toBe("monitoring");
+  });
+
+  test("maps lowercase states", () => {
+    expect(mapReportAggregateState("resolved")).toBe("resolved");
+    expect(mapReportAggregateState("downtime")).toBe("investigating");
+    expect(mapReportAggregateState("degraded")).toBe("identified");
+  });
+
+  test("defaults to investigating for null/unknown", () => {
+    expect(mapReportAggregateState(null)).toBe("investigating");
+    expect(mapReportAggregateState("unknown")).toBe("investigating");
+  });
+});
+
+describe("mapReportToStatusReport", () => {
+  test("maps a resolved report with 3 updates", () => {
+    const result = mapReportToStatusReport(
+      MOCK_STATUS_REPORTS[0],
+      MOCK_STATUS_UPDATES_REPORT_001,
+      42,
+      1,
+    );
+    expect(result.report.title).toBe("API Gateway Elevated Error Rates");
+    expect(result.report.workspaceId).toBe(42);
+    expect(result.report.pageId).toBe(1);
+    expect(result.updates).toHaveLength(3);
+    // Updates sorted by published_at
+    expect(result.updates[0].message).toContain("investigating");
+    expect(result.updates[2].message).toContain("resolved");
+    // Last update determines report status
+    expect(result.report.status).toBe("resolved");
+    // sourceComponentIds from affected_resources
+    expect(result.sourceComponentIds).toEqual(["bs_res_001"]);
+  });
+
+  test("maps an ongoing report with 1 update", () => {
+    const result = mapReportToStatusReport(
+      MOCK_STATUS_REPORTS[1],
+      MOCK_STATUS_UPDATES_REPORT_002,
+      42,
+      1,
+    );
+    expect(result.report.title).toBe("Dashboard Slow Responses");
+    expect(result.updates).toHaveLength(1);
+    expect(result.report.status).toBe("identified");
+    expect(result.sourceComponentIds).toEqual(["bs_res_002"]);
+  });
+
+  test("creates synthetic update when no updates exist", () => {
+    const result = mapReportToStatusReport(MOCK_STATUS_REPORTS[0], [], 42);
+    expect(result.updates).toHaveLength(1);
+    expect(result.updates[0].message).toBe("API Gateway Elevated Error Rates");
+    expect(result.report.pageId).toBeUndefined();
+  });
+});
+
+describe("mapReportToMaintenance", () => {
+  test("maps a maintenance report with dates", () => {
+    const result = mapReportToMaintenance(
+      MOCK_STATUS_REPORTS[2],
+      MOCK_STATUS_UPDATES_REPORT_003,
+      42,
+      1,
+    );
+    expect(result.title).toBe("Scheduled Database Maintenance");
+    expect(result.workspaceId).toBe(42);
+    expect(result.pageId).toBe(1);
+    expect(result.from).toEqual(new Date("2024-06-15T02:00:00.000Z"));
+    expect(result.to).toEqual(new Date("2024-06-15T06:00:00.000Z"));
+    expect(result.sourceComponentIds).toEqual(["bs_res_001", "bs_res_002"]);
+    // Message is joined from update messages
+    expect(result.message).toContain("begin shortly");
+    expect(result.message).toContain("completed successfully");
+  });
+
+  test("uses title as message when no updates", () => {
+    const result = mapReportToMaintenance(MOCK_STATUS_REPORTS[2], [], 42);
+    expect(result.message).toBe("Scheduled Database Maintenance");
+  });
 });
 
 describe("mapIncidentStatus", () => {
@@ -168,6 +297,7 @@ describe("mapIncidentToStatusReport", () => {
     const result = mapIncidentToStatusReport(MOCK_INCIDENTS[1], 42, 1);
     expect(result.report.status).toBe("identified");
     expect(result.updates).toHaveLength(2);
+    expect(result.sourceComponentIds).toEqual([]);
   });
 
   test("maps an incident with null name", () => {

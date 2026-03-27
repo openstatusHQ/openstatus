@@ -3,7 +3,10 @@ import type {
   BetterstackMonitor,
   BetterstackMonitorGroup,
   BetterstackStatusPage,
+  BetterstackStatusPageResource,
   BetterstackStatusPageSection,
+  BetterstackStatusReport,
+  BetterstackStatusUpdate,
 } from "./api-types";
 
 export const MOCK_MONITORS: BetterstackMonitor[] = [
@@ -114,7 +117,7 @@ export const MOCK_STATUS_PAGES: BetterstackStatusPage[] = [
 
 export const MOCK_STATUS_PAGE_SECTIONS: BetterstackStatusPageSection[] = [
   {
-    id: "bs_sec_001",
+    id: "100001",
     type: "status_page_section",
     attributes: {
       name: "API Services",
@@ -123,12 +126,190 @@ export const MOCK_STATUS_PAGE_SECTIONS: BetterstackStatusPageSection[] = [
     },
   },
   {
-    id: "bs_sec_002",
+    id: "100002",
     type: "status_page_section",
     attributes: {
       name: "Web Applications",
       position: 1,
       status_page_id: 123456789,
+    },
+  },
+];
+
+export const MOCK_STATUS_PAGE_RESOURCES: BetterstackStatusPageResource[] = [
+  {
+    id: "bs_res_001",
+    type: "status_page_resource",
+    attributes: {
+      status_page_section_id: 100001,
+      resource_id: 1001,
+      resource_type: "Monitor",
+      public_name: "API Gateway",
+      explanation: "Main API endpoint health",
+      position: 0,
+      widget_type: "history",
+      status: "operational",
+    },
+  },
+  {
+    id: "bs_res_002",
+    type: "status_page_resource",
+    attributes: {
+      status_page_section_id: 100001,
+      resource_id: 1002,
+      resource_type: "Monitor",
+      public_name: "Authentication Service",
+      explanation: null,
+      position: 1,
+      widget_type: "history",
+      status: "operational",
+    },
+  },
+  {
+    id: "bs_res_003",
+    type: "status_page_resource",
+    attributes: {
+      status_page_section_id: null,
+      resource_id: 1003,
+      resource_type: "Monitor",
+      public_name: "CDN",
+      explanation: null,
+      position: 2,
+      widget_type: "plain",
+      status: "degraded",
+    },
+  },
+];
+
+export const MOCK_STATUS_REPORTS: BetterstackStatusReport[] = [
+  {
+    id: "bs_report_001",
+    type: "status_report",
+    attributes: {
+      title: "API Gateway Elevated Error Rates",
+      report_type: "manual",
+      starts_at: "2024-06-10T14:00:00.000Z",
+      ends_at: "2024-06-10T16:30:00.000Z",
+      status_page_id: 123456789,
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "downtime" },
+      ],
+      aggregate_state: "Downtime",
+    },
+  },
+  {
+    id: "bs_report_002",
+    type: "status_report",
+    attributes: {
+      title: "Dashboard Slow Responses",
+      report_type: "manual",
+      starts_at: "2024-06-11T09:00:00.000Z",
+      ends_at: null,
+      status_page_id: 123456789,
+      affected_resources: [
+        { status_page_resource_id: "bs_res_002", status: "degraded" },
+      ],
+      aggregate_state: "Degraded",
+    },
+  },
+  {
+    id: "bs_report_003",
+    type: "status_report",
+    attributes: {
+      title: "Scheduled Database Maintenance",
+      report_type: "maintenance",
+      starts_at: "2024-06-15T02:00:00.000Z",
+      ends_at: "2024-06-15T06:00:00.000Z",
+      status_page_id: 123456789,
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "maintenance" },
+        { status_page_resource_id: "bs_res_002", status: "maintenance" },
+      ],
+      aggregate_state: "Maintenance",
+    },
+  },
+];
+
+export const MOCK_STATUS_UPDATES_REPORT_001: BetterstackStatusUpdate[] = [
+  {
+    id: "bs_update_001",
+    type: "status_update",
+    attributes: {
+      message: "We are investigating elevated error rates on the API Gateway.",
+      published_at: "2024-06-10T14:05:00.000Z",
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "downtime" },
+      ],
+      status_report_id: 1,
+    },
+  },
+  {
+    id: "bs_update_002",
+    type: "status_update",
+    attributes: {
+      message:
+        "The root cause has been identified as an upstream provider issue.",
+      published_at: "2024-06-10T14:30:00.000Z",
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "downtime" },
+      ],
+      status_report_id: 1,
+    },
+  },
+  {
+    id: "bs_update_003",
+    type: "status_update",
+    attributes: {
+      message: "The issue has been resolved. All systems are operational.",
+      published_at: "2024-06-10T16:30:00.000Z",
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "resolved" },
+      ],
+      status_report_id: 1,
+    },
+  },
+];
+
+export const MOCK_STATUS_UPDATES_REPORT_002: BetterstackStatusUpdate[] = [
+  {
+    id: "bs_update_004",
+    type: "status_update",
+    attributes: {
+      message: "We are aware of slow response times on the dashboard.",
+      published_at: "2024-06-11T09:10:00.000Z",
+      affected_resources: [
+        { status_page_resource_id: "bs_res_002", status: "degraded" },
+      ],
+      status_report_id: 2,
+    },
+  },
+];
+
+export const MOCK_STATUS_UPDATES_REPORT_003: BetterstackStatusUpdate[] = [
+  {
+    id: "bs_update_005",
+    type: "status_update",
+    attributes: {
+      message: "Scheduled database maintenance will begin shortly.",
+      published_at: "2024-06-15T01:55:00.000Z",
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "maintenance" },
+        { status_page_resource_id: "bs_res_002", status: "maintenance" },
+      ],
+      status_report_id: 3,
+    },
+  },
+  {
+    id: "bs_update_006",
+    type: "status_update",
+    attributes: {
+      message: "Maintenance completed successfully.",
+      published_at: "2024-06-15T05:30:00.000Z",
+      affected_resources: [
+        { status_page_resource_id: "bs_res_001", status: "resolved" },
+        { status_page_resource_id: "bs_res_002", status: "resolved" },
+      ],
+      status_report_id: 3,
     },
   },
 ];

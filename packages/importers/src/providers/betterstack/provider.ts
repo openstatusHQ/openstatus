@@ -9,6 +9,9 @@ import {
   mapIncidentToStatusReport,
   mapMonitor,
   mapMonitorGroup,
+  mapReportToMaintenance,
+  mapReportToStatusReport,
+  mapResource,
   mapSection,
   mapStatusPage,
 } from "./mapper";
@@ -27,10 +30,15 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
         await client.getMonitors();
         return { valid: true };
       } catch (err) {
-        return {
-          valid: false,
-          error: err instanceof Error ? err.message : String(err),
-        };
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("401")) {
+          return {
+            valid: false,
+            error:
+              "Invalid BetterStack API token. You can find your token in Better Stack → Settings → API tokens.",
+          };
+        }
+        return { valid: false, error: message };
       }
     },
 
@@ -38,6 +46,7 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
       const startedAt = new Date();
       const client = createBetterstackClient(config.apiKey);
       const phases: PhaseResult[] = [];
+      const errors: string[] = [];
 
       // Phase 1: Monitors
       const monitors = await client.getMonitors();
@@ -82,7 +91,21 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           ],
         });
 
-        // Status Page Sections → Components
+        // Phase 3: Monitor Groups → Component Groups
+        const monitorGroups = await client.getMonitorGroups();
+        const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
+          sourceId: g.id,
+          name: g.attributes.name,
+          status: "created" as const,
+          data: mapMonitorGroup(g, config.workspaceId, pageId),
+        }));
+        phases.push({
+          phase: "monitorGroups",
+          status: "completed",
+          resources: groupResources,
+        });
+
+        // Phase 4: Status Page Sections → Component Groups
         const sections = await client.getStatusPageSections(sp.id);
         const sectionResources: ResourceResult[] = sections.map((s) => ({
           sourceId: s.id,
@@ -95,35 +118,96 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
           status: "completed",
           resources: sectionResources,
         });
+
+        // Phase 5: Status Page Resources → Components
+        const resources = await client.getStatusPageResources(sp.id);
+        const componentResources: ResourceResult[] = resources.map((r) => ({
+          sourceId: r.id,
+          name: r.attributes.public_name,
+          status: "created" as const,
+          data: mapResource(r, config.workspaceId, pageId),
+        }));
+        phases.push({
+          phase: "components",
+          status: "completed",
+          resources: componentResources,
+        });
+
+        // Phase 6 & 7: Status Page Reports → Incidents + Maintenances
+        const reports = await client.getStatusPageReports(sp.id);
+        const incidentResources: ResourceResult[] = [];
+        const maintenanceResources: ResourceResult[] = [];
+
+        for (const report of reports) {
+          const updates = await client.getStatusReportUpdates(sp.id, report.id);
+
+          if (report.attributes.report_type === "maintenance") {
+            maintenanceResources.push({
+              sourceId: report.id,
+              name: report.attributes.title,
+              status: "created",
+              data: mapReportToMaintenance(
+                report,
+                updates,
+                config.workspaceId,
+                pageId,
+              ),
+            });
+          } else {
+            incidentResources.push({
+              sourceId: report.id,
+              name: report.attributes.title,
+              status: "created",
+              data: mapReportToStatusReport(
+                report,
+                updates,
+                config.workspaceId,
+                pageId,
+              ),
+            });
+          }
+        }
+
+        phases.push({
+          phase: "incidents",
+          status: "completed",
+          resources: incidentResources,
+        });
+
+        phases.push({
+          phase: "maintenances",
+          status: "completed",
+          resources: maintenanceResources,
+        });
+      } else {
+        // No status pages — still push monitor groups
+        const monitorGroups = await client.getMonitorGroups();
+        const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
+          sourceId: g.id,
+          name: g.attributes.name,
+          status: "created" as const,
+          data: mapMonitorGroup(g, config.workspaceId, pageId),
+        }));
+        phases.push({
+          phase: "monitorGroups",
+          status: "completed",
+          resources: groupResources,
+        });
+
+        // Fallback: use /v3/incidents for monitor-level incidents when no status page
+        const incidents = await client.getIncidents();
+        const incidentResources: ResourceResult[] = incidents.map((inc) => ({
+          sourceId: inc.id,
+          name: inc.attributes.name ?? `Incident ${inc.id}`,
+          status: "created" as const,
+          data: mapIncidentToStatusReport(inc, config.workspaceId, pageId),
+        }));
+        phases.push({
+          phase: "incidents",
+          status: "completed",
+          resources: incidentResources,
+        });
       }
-
-      // Monitor Groups → Component Groups (always fetched regardless of status pages)
-      const monitorGroups = await client.getMonitorGroups();
-      const groupResources: ResourceResult[] = monitorGroups.map((g) => ({
-        sourceId: g.id,
-        name: g.attributes.name,
-        status: "created" as const,
-        data: mapMonitorGroup(g, config.workspaceId, pageId),
-      }));
-      phases.push({
-        phase: "monitorGroups",
-        status: "completed",
-        resources: groupResources,
-      });
-
-      // Phase 5: Incidents → Status Reports
-      const incidents = await client.getIncidents();
-      const incidentResources: ResourceResult[] = incidents.map((inc) => ({
-        sourceId: inc.id,
-        name: inc.attributes.name ?? `Incident ${inc.id}`,
-        status: "created" as const,
-        data: mapIncidentToStatusReport(inc, config.workspaceId, pageId),
-      }));
-      phases.push({
-        phase: "incidents",
-        status: "completed",
-        resources: incidentResources,
-      });
 
       return {
         provider: "betterstack",
@@ -131,7 +215,7 @@ export function createBetterstackProvider(): ImportProvider<BetterstackImportCon
         startedAt,
         completedAt: new Date(),
         phases,
-        errors: [],
+        errors,
       };
     },
   };

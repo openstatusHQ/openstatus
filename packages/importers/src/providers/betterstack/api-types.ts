@@ -7,7 +7,10 @@ export const BetterstackMonitorSchema = z.object({
     url: z.string(),
     pronounceable_name: z.string(),
     monitor_type: z.string(),
-    monitor_group_id: z.string().nullable(),
+    monitor_group_id: z
+      .union([z.string(), z.number()])
+      .nullable()
+      .transform((v) => (v != null ? String(v) : null)),
     http_method: z.string().default("get"),
     check_frequency: z.number(),
     request_timeout: z.number(),
@@ -98,6 +101,63 @@ export const BetterstackIncidentSchema = z.object({
 });
 
 export type BetterstackIncident = z.infer<typeof BetterstackIncidentSchema>;
+
+export const BetterstackStatusPageResourceSchema = z.object({
+  id: z.string(),
+  type: z.literal("status_page_resource"),
+  attributes: z.object({
+    status_page_section_id: z.number().nullable(),
+    resource_id: z.number().nullable(),
+    resource_type: z.string().nullable(),
+    public_name: z.string(),
+    explanation: z.string().nullable().default(null),
+    position: z.number().default(0),
+    widget_type: z.string().nullable().default(null),
+    status: z.string().nullable().default(null),
+  }),
+});
+
+export type BetterstackStatusPageResource = z.infer<
+  typeof BetterstackStatusPageResourceSchema
+>;
+
+const BetterstackAffectedResourceSchema = z.object({
+  status_page_resource_id: z.string(),
+  status: z.string(),
+});
+
+export const BetterstackStatusReportSchema = z.object({
+  id: z.string(),
+  type: z.literal("status_report"),
+  attributes: z.object({
+    title: z.string(),
+    report_type: z.string(),
+    starts_at: z.string().nullable(),
+    ends_at: z.string().nullable(),
+    status_page_id: z.number(),
+    affected_resources: z.array(BetterstackAffectedResourceSchema).default([]),
+    aggregate_state: z.string().nullable(),
+  }),
+});
+
+export type BetterstackStatusReport = z.infer<
+  typeof BetterstackStatusReportSchema
+>;
+
+export const BetterstackStatusUpdateSchema = z.object({
+  id: z.string(),
+  type: z.literal("status_update"),
+  attributes: z.object({
+    message: z.string().nullable(),
+    published_at: z.string(),
+    affected_resources: z.array(BetterstackAffectedResourceSchema).default([]),
+    status_report_id: z.number().nullable(),
+  }),
+});
+
+export type BetterstackStatusUpdate = z.infer<
+  typeof BetterstackStatusUpdateSchema
+>;
 
 export const PaginationSchema = z.object({
   first: z.string().nullable(),

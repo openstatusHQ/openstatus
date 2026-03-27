@@ -5,14 +5,20 @@ export type {
   BetterstackMonitor,
   BetterstackMonitorGroup,
   BetterstackStatusPage,
+  BetterstackStatusPageResource,
   BetterstackStatusPageSection,
+  BetterstackStatusReport,
+  BetterstackStatusUpdate,
 } from "./api-types";
 export {
   BetterstackIncidentSchema,
   BetterstackMonitorGroupSchema,
   BetterstackMonitorSchema,
+  BetterstackStatusPageResourceSchema,
   BetterstackStatusPageSchema,
   BetterstackStatusPageSectionSchema,
+  BetterstackStatusReportSchema,
+  BetterstackStatusUpdateSchema,
 } from "./api-types";
 export { createBetterstackProvider } from "./provider";
 export type { BetterstackImportConfig } from "./provider";
