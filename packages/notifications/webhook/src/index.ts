@@ -24,11 +24,10 @@ export const sendAlert = async ({
   const res = await fetch(notificationData.webhook.endpoint, {
     method: "post",
     body: JSON.stringify(body),
-    headers: notificationData.webhook.headers
-      ? transformHeaders(notificationData.webhook.headers)
-      : {
-          "Content-Type": "application/json",
-        },
+    headers: {
+      "Content-Type": "application/json",
+      ...transformHeaders(notificationData.webhook.headers ?? []),
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -57,11 +56,10 @@ export const sendRecovery = async ({
   const res = await fetch(url, {
     method: "post",
     body: JSON.stringify(body),
-    headers: notificationData.webhook.headers
-      ? transformHeaders(notificationData.webhook.headers)
-      : {
-          "Content-Type": "application/json",
-        },
+    headers: {
+      "Content-Type": "application/json",
+      ...transformHeaders(notificationData.webhook.headers ?? []),
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -90,11 +88,10 @@ export const sendDegraded = async ({
   const res = await fetch(notificationData.webhook.endpoint, {
     method: "post",
     body: JSON.stringify(body),
-    headers: notificationData.webhook.headers
-      ? transformHeaders(notificationData.webhook.headers)
-      : {
-          "Content-Type": "application/json",
-        },
+    headers: {
+      "Content-Type": "application/json",
+      ...transformHeaders(notificationData.webhook.headers ?? []),
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -123,11 +120,10 @@ export const sendTest = async ({
     const response = await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: headers
-        ? transformHeaders(headers)
-        : {
-            "Content-Type": "application/json",
-          },
+      headers: {
+        "Content-Type": "application/json",
+        ...transformHeaders(headers ?? []),
+      },
     });
     if (!response.ok) {
       throw new Error("Failed to send test");

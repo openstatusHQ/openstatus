@@ -81,7 +81,18 @@ export const notificationRouter = createTRPCRouter({
         name: z.string(),
         data: z.partialRecord(
           z.enum(notificationProvider),
-          z.string().or(z.record(z.string(), z.string())),
+          z
+            .string()
+            .or(
+              z.record(
+                z.string(),
+                z
+                  .string()
+                  .or(
+                    z.array(z.object({ key: z.string(), value: z.string() })),
+                  ),
+              ),
+            ),
         ),
         monitors: z.array(z.number()),
       }),
@@ -163,7 +174,14 @@ export const notificationRouter = createTRPCRouter({
         provider: z.enum(notificationProvider),
         data: z.partialRecord(
           z.enum(notificationProvider),
-          z.record(z.string(), z.string()).or(z.string()),
+          z
+            .record(
+              z.string(),
+              z
+                .string()
+                .or(z.array(z.object({ key: z.string(), value: z.string() }))),
+            )
+            .or(z.string()),
         ),
         name: z.string(),
         monitors: z.array(z.number()).prefault([]),
@@ -284,7 +302,14 @@ export const notificationRouter = createTRPCRouter({
         provider: z.enum(notificationProvider),
         data: z.partialRecord(
           z.enum(notificationProvider),
-          z.record(z.string(), z.string()).or(z.string()),
+          z
+            .record(
+              z.string(),
+              z
+                .string()
+                .or(z.array(z.object({ key: z.string(), value: z.string() }))),
+            )
+            .or(z.string()),
         ),
       }),
     )
