@@ -115,6 +115,10 @@ export default defineConfig({
               label: "How to set up the Slack Agent",
               slug: "tutorial/how-to-setup-slack-agent",
             },
+            {
+              label: "Manage Your Stack with Terraform and CLI",
+              slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
+            },
           ],
         },
 

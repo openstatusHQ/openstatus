@@ -5,122 +5,840 @@ description: Technical specification for the OpenStatus Terraform Provider.
 
 ## Overview
 
-The OpenStatus Terraform provider enables you to manage your OpenStatus monitors and status pages programmatically using HashiCorp Terraform. This allows for Infrastructure as Code (IaC) practices, version control, and automated deployment of your monitoring configurations.
+The OpenStatus Terraform provider enables you to manage your monitoring infrastructure programmatically using HashiCorp Terraform. Define monitors, notification channels, and status pages as code — with full support for version control, automated deployments, and IaC workflows.
 
 **Key capabilities:**
--   Define and manage OpenStatus monitors as Terraform resources.
--   Automate the deployment and updates of monitoring configurations.
--   Integrate OpenStatus into your existing IaC workflows.
+- Manage HTTP, TCP, and DNS monitors with assertions
+- Configure notification channels (Slack, PagerDuty, email, webhooks, and more)
+- Create and manage status pages with component groups
+- Import existing resources into Terraform state
 
 ## Installation
 
-To use the OpenStatus Terraform provider, declare it in your Terraform configuration file (`.tf`). Terraform will automatically download and install the provider when you run `terraform init`.
+Declare the provider in your Terraform configuration. Terraform will automatically download it when you run `terraform init`.
 
 ```terraform
 terraform {
   required_providers {
     openstatus = {
-      source = "openstatusHQ/openstatus"
-      version = "~> 0.1" # Use the latest version
+      source  = "openstatusHQ/openstatus"
+      version = "~> 0.1"
     }
   }
 }
 ```
 
-For the latest provider version, refer to the [official Terraform Registry](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest).
+For the latest version, refer to the [Terraform Registry](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest).
 
 ## Provider Configuration
 
-The OpenStatus Terraform provider requires authentication via an API token.
+```terraform
+provider "openstatus" {
+  api_token = "YOUR_OPENSTATUS_API_TOKEN" # or set OPENSTATUS_API_TOKEN env var
+}
+```
 
-### `openstatus_api_token`
+| Argument    | Type     | Required | Description                                                                 |
+| :---------- | :------- | :------- | :-------------------------------------------------------------------------- |
+| `api_token` | `string` | Yes      | Your OpenStatus API token. Can also be set via the `OPENSTATUS_API_TOKEN` environment variable. |
+| `base_url`  | `string` | No       | Base URL for the OpenStatus API. Defaults to `https://api.openstatus.dev/rpc`. |
 
-**Type:** String (required)
-**Description:** Your OpenStatus API Access Token. This token is used to authenticate your Terraform requests with the OpenStatus API.
+## Resources
+
+### `openstatus_http_monitor`
+
+Manages an HTTP monitor with support for custom headers, request bodies, and response assertions.
+
+**Arguments:**
+
+| Argument           | Type            | Required | Default  | Description                                                                 |
+| :----------------- | :-------------- | :------- | :------- | :-------------------------------------------------------------------------- |
+| `name`             | `string`        | Yes      |          | Monitor name (max 256 chars).                                               |
+| `url`              | `string`        | Yes      |          | URL to monitor (max 2048 chars).                                            |
+| `periodicity`      | `string`        | Yes      |          | Check frequency: `30s`, `1m`, `5m`, `10m`, `30m`, `1h`.                    |
+| `method`           | `string`        | No       | `"GET"`  | HTTP method: `GET`, `POST`, `HEAD`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`.   |
+| `body`             | `string`        | No       | `""`     | Request body for `POST`, `PUT`, `PATCH` methods.                            |
+| `timeout`          | `number`        | No       | `45000`  | Timeout in milliseconds (0–120000).                                         |
+| `degraded_at`      | `number`        | No       | computed | Response time threshold (ms) after which the monitor is considered degraded. |
+| `retry`            | `number`        | No       | `3`      | Number of retries on failure (0–10).                                        |
+| `follow_redirects` | `bool`          | No       | `true`   | Whether to follow HTTP redirects.                                           |
+| `active`           | `bool`          | No       | `false`  | Whether the monitor is active.                                              |
+| `public`           | `bool`          | No       | `false`  | Whether the monitor is visible on your public status page.                  |
+| `description`      | `string`        | No       |          | Monitor description (max 1024 chars).                                       |
+| `regions`          | `set(string)`   | No       |          | Regions to monitor from. See [Available Regions](#available-regions).       |
+
+**Blocks:**
+
+- **`headers`** (max 20) — Custom HTTP headers to include with each request.
+  - `key` (string, required) — Header name.
+  - `value` (string, required) — Header value.
+
+- **`status_code_assertions`** (max 10) — Assert on response status codes.
+  - `target` (number, required) — Expected status code (100–599).
+  - `comparator` (string, required) — One of: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`.
+
+- **`body_assertions`** (max 10) — Assert on response body content.
+  - `target` (string, required) — Expected value.
+  - `comparator` (string, required) — One of: `contains`, `not_contains`, `eq`, `neq`, `empty`, `not_empty`, `gt`, `gte`, `lt`, `lte`.
+
+- **`header_assertions`** (max 10) — Assert on response headers.
+  - `key` (string, required) — Header name to assert on.
+  - `target` (string, required) — Expected value.
+  - `comparator` (string, required) — Same comparators as `body_assertions`.
+
+**Read-only attributes:** `id` (string), `status` (string: `active`, `degraded`, `error`, `unknown`).
+
+**Example — Basic health check:**
+
+```terraform
+resource "openstatus_http_monitor" "website" {
+  name        = "Website Availability"
+  url         = "https://www.example.com"
+  periodicity = "1m"
+  active      = true
+  public      = true
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
+}
+```
+
+**Example — API monitor with assertions and headers:**
+
+```terraform
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  description = "Monitors the /health endpoint with full assertions."
+  url         = "https://api.example.com/health"
+  periodicity = "5m"
+  method      = "GET"
+  timeout     = 30000
+  active      = true
+  regions     = ["fly-iad", "fly-ams", "fly-nrt"]
+
+  headers {
+    key   = "Authorization"
+    value = "Bearer ${var.api_token}"
+  }
+
+  headers {
+    key   = "Accept"
+    value = "application/json"
+  }
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+
+  body_assertions {
+    target     = "ok"
+    comparator = "contains"
+  }
+
+  header_assertions {
+    key        = "Content-Type"
+    target     = "application/json"
+    comparator = "contains"
+  }
+}
+```
+
+**Example — POST monitor with request body:**
+
+```terraform
+resource "openstatus_http_monitor" "webhook" {
+  name        = "Webhook Endpoint"
+  url         = "https://api.example.com/webhooks/health"
+  periodicity = "10m"
+  method      = "POST"
+  active      = true
+  regions     = ["fly-iad"]
+
+  headers {
+    key   = "Content-Type"
+    value = "application/json"
+  }
+
+  body = jsonencode({
+    type = "health_check"
+  })
+
+  status_code_assertions {
+    target     = 202
+    comparator = "eq"
+  }
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_http_monitor.website <monitor_id>
+```
+
+---
+
+### `openstatus_tcp_monitor`
+
+Manages a TCP connection monitor to verify that a port is open and reachable.
+
+**Arguments:**
+
+| Argument      | Type          | Required | Default  | Description                                                        |
+| :------------ | :------------ | :------- | :------- | :----------------------------------------------------------------- |
+| `name`        | `string`      | Yes      |          | Monitor name (max 256 chars).                                      |
+| `uri`         | `string`      | Yes      |          | Target in `host:port` format (max 2048 chars).                     |
+| `periodicity` | `string`      | Yes      |          | Check frequency: `30s`, `1m`, `5m`, `10m`, `30m`, `1h`.           |
+| `timeout`     | `number`      | No       | `45000`  | Timeout in milliseconds (0–120000).                                |
+| `degraded_at` | `number`      | No       | computed | Degradation threshold in milliseconds.                             |
+| `retry`       | `number`      | No       | `3`      | Number of retries on failure (0–10).                               |
+| `active`      | `bool`        | No       | `false`  | Whether the monitor is active.                                     |
+| `public`      | `bool`        | No       | `false`  | Whether the monitor is publicly visible.                           |
+| `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
+| `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
+
+**Read-only attributes:** `id` (string), `status` (string).
+
+**Example — Database port check:**
+
+```terraform
+resource "openstatus_tcp_monitor" "database" {
+  name        = "PostgreSQL Port Check"
+  description = "Ensures the database port is open and reachable."
+  uri         = "db.example.com:5432"
+  periodicity = "1m"
+  timeout     = 10000
+  active      = true
+  regions     = ["fly-iad", "fly-fra"]
+}
+```
+
+**Example — Redis monitor:**
+
+```terraform
+resource "openstatus_tcp_monitor" "redis" {
+  name        = "Redis Connection"
+  uri         = "redis.example.com:6379"
+  periodicity = "30s"
+  active      = true
+  regions     = ["fly-iad", "fly-ams", "fly-nrt"]
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_tcp_monitor.database <monitor_id>
+```
+
+---
+
+### `openstatus_dns_monitor`
+
+Manages a DNS monitor with support for record type assertions.
+
+**Arguments:**
+
+| Argument      | Type          | Required | Default  | Description                                                        |
+| :------------ | :------------ | :------- | :------- | :----------------------------------------------------------------- |
+| `name`        | `string`      | Yes      |          | Monitor name (max 256 chars).                                      |
+| `uri`         | `string`      | Yes      |          | Domain name to monitor (max 2048 chars).                           |
+| `periodicity` | `string`      | Yes      |          | Check frequency: `30s`, `1m`, `5m`, `10m`, `30m`, `1h`.           |
+| `timeout`     | `number`      | No       | `45000`  | Timeout in milliseconds (0–120000).                                |
+| `degraded_at` | `number`      | No       | computed | Degradation threshold in milliseconds.                             |
+| `retry`       | `number`      | No       | `3`      | Number of retries on failure (0–10).                               |
+| `active`      | `bool`        | No       | `false`  | Whether the monitor is active.                                     |
+| `public`      | `bool`        | No       | `false`  | Whether the monitor is publicly visible.                           |
+| `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
+| `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
+
+**Blocks:**
+
+- **`record_assertions`** (max 10) — Assert on DNS record values.
+  - `record` (string, required) — DNS record type: `A`, `AAAA`, `CNAME`, `MX`, `TXT`.
+  - `target` (string, required) — Expected value.
+  - `comparator` (string, required) — One of: `eq`, `neq`, `contains`, `not_contains`.
+
+**Read-only attributes:** `id` (string), `status` (string).
+
+**Example — A record validation:**
+
+```terraform
+resource "openstatus_dns_monitor" "main_domain" {
+  name        = "DNS A Record Check"
+  description = "Verifies that example.com resolves to the correct IP."
+  uri         = "example.com"
+  periodicity = "10m"
+  active      = true
+  regions     = ["fly-iad", "fly-ams"]
+
+  record_assertions {
+    record     = "A"
+    comparator = "eq"
+    target     = "93.184.216.34"
+  }
+}
+```
+
+**Example — MX record validation:**
+
+```terraform
+resource "openstatus_dns_monitor" "email" {
+  name        = "Email MX Record Check"
+  uri         = "example.com"
+  periodicity = "30m"
+  active      = true
+  regions     = ["fly-iad"]
+
+  record_assertions {
+    record     = "MX"
+    comparator = "contains"
+    target     = "mail.example.com"
+  }
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_dns_monitor.main_domain <monitor_id>
+```
+
+---
+
+### `openstatus_notification`
+
+Manages a notification channel. Supports 12 provider types: Discord, Email, Slack, PagerDuty, OpsGenie, Webhook, Telegram, SMS, WhatsApp, Google Chat, Grafana OnCall, and ntfy.
+
+**Arguments:**
+
+| Argument        | Type          | Required | Description                                             |
+| :-------------- | :------------ | :------- | :------------------------------------------------------ |
+| `name`          | `string`      | No       | Notification channel name.                              |
+| `provider_type` | `string`      | Yes      | Provider type (see supported values below).             |
+| `monitor_ids`   | `set(string)` | No       | Set of monitor IDs to associate with this notification. |
+
+**Supported `provider_type` values:** `discord`, `email`, `slack`, `pagerduty`, `opsgenie`, `webhook`, `telegram`, `sms`, `whatsapp`, `google_chat`, `grafana_oncall`, `ntfy`.
+
+**Provider-specific blocks** — use exactly one block matching your `provider_type`:
+
+| Block           | Arguments                                                                                              |
+| :-------------- | :----------------------------------------------------------------------------------------------------- |
+| `discord`       | `webhook_url` (string, required, sensitive)                                                            |
+| `email`         | `email` (string, required)                                                                             |
+| `slack`         | `webhook_url` (string, required, sensitive)                                                            |
+| `pagerduty`     | `integration_key` (string, required, sensitive)                                                        |
+| `opsgenie`      | `api_key` (string, required, sensitive), `region` (string, required: `us` or `eu`)                     |
+| `webhook`       | `endpoint` (string, required), `headers` (optional list of `key`/`value` objects)                      |
+| `telegram`      | `chat_id` (string, required)                                                                           |
+| `sms`           | `phone_number` (string, required)                                                                      |
+| `whatsapp`      | `phone_number` (string, required)                                                                      |
+| `google_chat`   | `webhook_url` (string, required, sensitive)                                                            |
+| `grafana_oncall` | `webhook_url` (string, required, sensitive)                                                           |
+| `ntfy`          | `topic` (string, required), `server_url` (string, optional), `token` (string, optional, sensitive)     |
+
+**Read-only attributes:** `id` (string), `created_at` (string), `updated_at` (string).
+
+**Example — Slack notification:**
+
+```terraform
+resource "openstatus_notification" "slack_alerts" {
+  name          = "Slack Alerts"
+  provider_type = "slack"
+  monitor_ids   = [openstatus_http_monitor.api.id]
+
+  slack {
+    webhook_url = var.slack_webhook_url
+  }
+}
+```
+
+**Example — PagerDuty notification:**
+
+```terraform
+resource "openstatus_notification" "pagerduty" {
+  name          = "PagerDuty Escalation"
+  provider_type = "pagerduty"
+  monitor_ids   = [
+    openstatus_http_monitor.api.id,
+    openstatus_tcp_monitor.database.id,
+  ]
+
+  pagerduty {
+    integration_key = var.pagerduty_key
+  }
+}
+```
+
+**Example — Email notification:**
+
+```terraform
+resource "openstatus_notification" "email" {
+  name          = "On-Call Email"
+  provider_type = "email"
+  monitor_ids   = [openstatus_http_monitor.api.id]
+
+  email {
+    email = "oncall@example.com"
+  }
+}
+```
+
+**Example — Custom webhook:**
+
+```terraform
+resource "openstatus_notification" "custom_webhook" {
+  name          = "Custom Webhook"
+  provider_type = "webhook"
+
+  webhook {
+    endpoint = "https://api.example.com/alerts"
+
+    headers {
+      key   = "Authorization"
+      value = "Bearer ${var.webhook_token}"
+    }
+
+    headers {
+      key   = "Content-Type"
+      value = "application/json"
+    }
+  }
+}
+```
+
+**Example — Discord notification:**
+
+```terraform
+resource "openstatus_notification" "discord" {
+  name          = "Discord Alerts"
+  provider_type = "discord"
+
+  discord {
+    webhook_url = var.discord_webhook_url
+  }
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_notification.slack_alerts <notification_id>
+```
+
+---
+
+### `openstatus_status_page`
+
+Manages a status page with access control and branding.
+
+**Arguments:**
+
+| Argument             | Type           | Required | Description                                                                    |
+| :------------------- | :------------- | :------- | :----------------------------------------------------------------------------- |
+| `title`              | `string`       | Yes      | Page title (1–256 chars).                                                      |
+| `slug`               | `string`       | Yes      | URL slug (1–256 chars). Used in the status page URL.                           |
+| `description`        | `string`       | No       | Page description (max 1024 chars).                                             |
+| `homepage_url`       | `string`       | No       | Link to your homepage.                                                         |
+| `contact_url`        | `string`       | No       | Link to your contact page.                                                     |
+| `icon`               | `string`       | No       | URL of the icon to display.                                                    |
+| `custom_domain`      | `string`       | No       | Custom domain (DNS must point to OpenStatus first).                            |
+| `access_type`        | `string`       | No       | Access control: `public`, `password`, or `email-domain`.                       |
+| `password`           | `string`       | No       | Required when `access_type` is `password`. Sensitive.                          |
+| `auth_email_domains` | `list(string)` | No       | Required when `access_type` is `email-domain`.                                 |
+
+**Read-only attributes:** `id` (string), `published` (bool), `theme` (string: `system`, `light`, `dark`), `created_at` (string), `updated_at` (string).
+
+**Example — Public status page:**
+
+```terraform
+resource "openstatus_status_page" "main" {
+  title        = "Example Inc. Status"
+  slug         = "example-status"
+  description  = "Real-time status for all Example Inc. services."
+  homepage_url = "https://example.com"
+  contact_url  = "https://example.com/support"
+}
+```
+
+**Example — Password-protected status page:**
+
+```terraform
+resource "openstatus_status_page" "internal" {
+  title       = "Internal Status"
+  slug        = "internal-status"
+  description = "Status page for internal services."
+  access_type = "password"
+  password    = var.status_page_password
+}
+```
+
+**Example — Email-domain restricted status page:**
+
+```terraform
+resource "openstatus_status_page" "company" {
+  title              = "Company Status"
+  slug               = "company-status"
+  access_type        = "email-domain"
+  auth_email_domains = ["example.com", "subsidiary.com"]
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_status_page.main <page_id>
+```
+
+---
+
+### `openstatus_status_page_component`
+
+Manages a component on a status page. Components can be linked to a monitor or be static.
+
+**Arguments:**
+
+| Argument      | Type     | Required | Description                                                                  |
+| :------------ | :------- | :------- | :--------------------------------------------------------------------------- |
+| `page_id`     | `string` | Yes      | Status page ID this component belongs to. Forces replacement if changed.     |
+| `type`        | `string` | Yes      | Component type: `monitor` or `static`. Forces replacement if changed.        |
+| `monitor_id`  | `string` | No       | Required when `type` is `monitor`. The monitor ID to display.                |
+| `name`        | `string` | No       | Component display name (max 256 chars).                                      |
+| `description` | `string` | No       | Component description (max 1024 chars).                                      |
+| `order`       | `number` | No       | Display order on the status page.                                            |
+| `group_id`    | `string` | No       | Component group ID this belongs to.                                          |
+| `group_order` | `number` | No       | Display order within its group.                                              |
+
+**Read-only attributes:** `id` (string), `created_at` (string), `updated_at` (string).
+
+**Example — Monitor component:**
+
+```terraform
+resource "openstatus_status_page_component" "api" {
+  page_id    = openstatus_status_page.main.id
+  type       = "monitor"
+  monitor_id = openstatus_http_monitor.api.id
+  name       = "API"
+  order      = 1
+}
+```
+
+**Example — Static component:**
+
+```terraform
+resource "openstatus_status_page_component" "third_party" {
+  page_id     = openstatus_status_page.main.id
+  type        = "static"
+  name        = "Third-party Services"
+  description = "Status of external dependencies."
+  order       = 2
+}
+```
+
+**Import:**
+
+```bash
+terraform import openstatus_status_page_component.api <page_id>/<component_id>
+```
+
+---
+
+### `openstatus_status_page_component_group`
+
+Manages a component group on a status page, allowing you to organize components visually.
+
+**Arguments:**
+
+| Argument  | Type     | Required | Description                                                              |
+| :-------- | :------- | :------- | :----------------------------------------------------------------------- |
+| `page_id` | `string` | Yes      | Status page ID this group belongs to. Forces replacement if changed.     |
+| `name`    | `string` | Yes      | Group name (1–256 chars).                                                |
+
+**Read-only attributes:** `id` (string), `created_at` (string), `updated_at` (string).
 
 **Example:**
 
 ```terraform
-provider "openstatus" {
-  openstatus_api_token = "YOUR_OPENSTATUS_API_TOKEN"
+resource "openstatus_status_page_component_group" "infrastructure" {
+  page_id = openstatus_status_page.main.id
+  name    = "Infrastructure"
+}
+
+resource "openstatus_status_page_component_group" "applications" {
+  page_id = openstatus_status_page.main.id
+  name    = "Applications"
 }
 ```
 
-## Resources
+**Import:**
 
-The provider currently supports managing `openstatus_monitor` resources.
+```bash
+terraform import openstatus_status_page_component_group.infrastructure <page_id>/<group_id>
+```
+
+---
+
+## Data Sources
 
 ### `openstatus_monitor`
 
-Manages an OpenStatus monitor. This resource allows you to define and control the parameters of a synthetic monitor.
-
-**Arguments:**
-
-| Argument      | Type                  | Required | Default | Description                                                                                                                                     |
-| :------------ | :-------------------- | :------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `url`         | `string`              | Yes      |         | The URL or URI of the endpoint to be monitored. Format depends on the monitor type (e.g., full URL for HTTP, host:port for TCP).          |
-| `regions`     | `list(string)`        | Yes      |         | A list of region identifiers (e.g., `"iad"`, `"jnb"`) from where the monitor checks will be performed.                                        |
-| `periodicity` | `string`              | Yes      |         | The frequency at which the monitor will perform checks. Supported values: `"30s"`, `"1m"`, `"5m"`, `"10m"`, `"30m"`, `"1h"`. |
-| `name`        | `string`              | Yes      |         | A human-readable name for the monitor.                                                                                                          |
-| `active`      | `bool`                | Yes      |         | Specifies whether the monitor is active (`true`) or paused (`false`).                                                                           |
-| `description` | `string` (optional)   | No       | `""`    | A detailed description of the monitor's purpose or configuration.                                                                               |
-| `monitor_type` | `string`             | Yes      |         | The type of monitor to create. Supported values: `"HTTP"`, `"TCP"`, `"DNS"`                                                               |
-| `method`      | `string` (optional)   | No       | `"GET"` | (HTTP monitors only) The HTTP method to use for the request (e.g., `"GET"`, `"POST"`).                                                     |
-| `body`        | `string` (optional)   | No       | `""`    | (HTTP monitors only) The request body to send for `POST`, `PUT`, `PATCH` methods.                                                              |
-| `headers`     | `map(string)` (optional)| No       | `{}`    | (HTTP monitors only) A map of custom HTTP headers to include with the request.                                                                  |
-| `timeout`     | `string` (optional)   | No       | `"45s"` | The maximum duration to wait for a response. Format: duration string (e.g., `"30s"`, `"1m"`).                                              |
-| `degraded_after`| `string` (optional) | No       | `""`    | The duration after which a response is considered degraded. Format: duration string.                                                            |
-| `retries`     | `number` (optional)   | No       | `3`     | The number of times the monitor will retry a failed check.                                                                                      |
-| `public`      | `bool` (optional)     | No       | `false` | Controls whether monitor data is accessible on your public status page.                                                                         |
-| `otlp_endpoint`| `string` (optional)  | No       | `""`    | The OTLP (OpenTelemetry Protocol) endpoint URL for exporting metrics.                                                                           |
-| `otlp_headers`| `map(string)` (optional)| No       | `{}`    | Custom headers to include when exporting metrics to your OTLP endpoint.                                                                       |
-
-**Example Usage:**
+Look up a single monitor by ID. Works for HTTP, TCP, and DNS monitors.
 
 ```terraform
-resource "openstatus_monitor" "my_website_monitor" {
-  name        = "My Website Availability"
-  description = "Checks the main website for uptime and response time."
-  url         = "https://www.example.com"
-  monitor_type = "HTTP"
-  method      = "GET"
-  regions     = ["us-east-1", "eu-west-1"]
-  periodicity = "1m"
-  active      = true
-  public      = true
-  timeout     = "60s"
+data "openstatus_monitor" "existing" {
+  id = "123"
 }
 
-resource "openstatus_monitor" "internal_api_monitor" {
-  name        = "Internal API Health Check"
-  description = "Monitors the health of a critical internal API."
-  url         = "https://api.internal.corp:8443/health"
-  monitor_type = "HTTP"
-  method      = "GET"
-  regions     = ["private-location-id"]
-  periodicity = "5m"
-  active      = true
-  public      = false
-  headers = {
-    "Authorization" = "Bearer ${var.internal_api_token}"
-    "Accept"        = "application/json"
-  }
+output "monitor_name" {
+  value = data.openstatus_monitor.existing.name
 }
 
-resource "openstatus_monitor" "database_port_monitor" {
-  name        = "Database TCP Port Check"
-  description = "Ensures the PostgreSQL port is open and reachable."
-  url         = "db.example.com:5432"
-  monitor_type = "TCP"
-  regions     = ["us-west-2"]
-  periodicity = "30s"
-  active      = true
+output "monitor_type" {
+  value = data.openstatus_monitor.existing.type
 }
 ```
 
-## Related resources
+**Computed attributes:** `type` (`http`, `tcp`, `dns`), `name`, `url` (HTTP only), `uri` (TCP/DNS only), `periodicity`, `method` (HTTP only), `active`, `public`, `description`, `timeout`, `status`.
 
-- **[HTTP Monitor Reference](/reference/http-monitor)** - Detailed specification for HTTP monitor configuration.
-- **[TCP Monitor Reference](/reference/tcp-monitor)** - Detailed specification for TCP monitor configuration.
-- **[DNS Monitor Reference](/reference/dns-monitor)** - Detailed specification for DNS monitor configuration.
-- **[CLI Reference](/reference/cli-reference)** - Manage monitors using the OpenStatus command-line interface.
+---
+
+### `openstatus_monitors`
+
+List all monitors with pagination.
+
+```terraform
+data "openstatus_monitors" "all" {
+  limit  = 100
+  offset = 0
+}
+
+output "total_monitors" {
+  value = length(data.openstatus_monitors.all.monitors)
+}
+```
+
+| Argument | Type     | Required | Default | Description              |
+| :------- | :------- | :------- | :------ | :----------------------- |
+| `limit`  | `number` | No       | `50`    | Max results (1–100).     |
+| `offset` | `number` | No       | `0`     | Pagination offset.       |
+
+**Computed:** `monitors` — list of objects with `id`, `name`, `type`.
+
+---
+
+### `openstatus_notification`
+
+Look up a notification channel by ID.
+
+```terraform
+data "openstatus_notification" "existing" {
+  id = "456"
+}
+
+output "notification_provider" {
+  value = data.openstatus_notification.existing.provider_type
+}
+```
+
+**Computed attributes:** `name`, `provider_type`, `monitor_ids`, `created_at`, `updated_at`.
+
+---
+
+### `openstatus_status_page`
+
+Look up a status page by ID.
+
+```terraform
+data "openstatus_status_page" "existing" {
+  id = "789"
+}
+
+output "status_page_url" {
+  value = data.openstatus_status_page.existing.slug
+}
+```
+
+**Computed attributes:** `title`, `slug`, `description`, `homepage_url`, `contact_url`, `icon`, `custom_domain`, `published`, `access_type`, `password` (sensitive), `auth_email_domains`, `theme`, `created_at`, `updated_at`.
+
+---
+
+## Available Regions
+
+Monitors can run from any of the following 28 regions:
+
+**Fly.io:**
+`fly-ams`, `fly-arn`, `fly-bom`, `fly-cdg`, `fly-dfw`, `fly-ewr`, `fly-fra`, `fly-gru`, `fly-iad`, `fly-jnb`, `fly-lax`, `fly-lhr`, `fly-nrt`, `fly-ord`, `fly-sjc`, `fly-sin`, `fly-syd`, `fly-yyz`
+
+**Koyeb:**
+`koyeb-fra`, `koyeb-par`, `koyeb-sfo`, `koyeb-sin`, `koyeb-tyo`, `koyeb-was`
+
+**Railway:**
+`railway-us-west2`, `railway-us-east4`, `railway-europe-west4`, `railway-asia-southeast1`
+
+---
+
+## Full End-to-End Example
+
+This example sets up a complete monitoring stack: HTTP and TCP monitors, Slack notifications, and a public status page with grouped components.
+
+```terraform
+terraform {
+  required_providers {
+    openstatus = {
+      source  = "openstatusHQ/openstatus"
+      version = "~> 0.1"
+    }
+  }
+}
+
+provider "openstatus" {
+  api_token = var.openstatus_api_token
+}
+
+# --- Variables ---
+
+variable "openstatus_api_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "slack_webhook_url" {
+  type      = string
+  sensitive = true
+}
+
+# --- Monitors ---
+
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health"
+  description = "Monitors the main API health endpoint."
+  url         = "https://api.example.com/health"
+  periodicity = "5m"
+  method      = "GET"
+  timeout     = 30000
+  active      = true
+  public      = true
+  regions     = ["fly-iad", "fly-ams", "fly-nrt"]
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+
+  body_assertions {
+    target     = "ok"
+    comparator = "contains"
+  }
+}
+
+resource "openstatus_http_monitor" "website" {
+  name        = "Website"
+  url         = "https://www.example.com"
+  periodicity = "1m"
+  active      = true
+  public      = true
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+}
+
+resource "openstatus_tcp_monitor" "database" {
+  name        = "PostgreSQL"
+  uri         = "db.example.com:5432"
+  periodicity = "1m"
+  timeout     = 10000
+  active      = true
+  regions     = ["fly-iad"]
+}
+
+resource "openstatus_dns_monitor" "domain" {
+  name        = "DNS Resolution"
+  uri         = "example.com"
+  periodicity = "10m"
+  active      = true
+  regions     = ["fly-iad", "fly-ams"]
+
+  record_assertions {
+    record     = "A"
+    comparator = "eq"
+    target     = "93.184.216.34"
+  }
+}
+
+# --- Notifications ---
+
+resource "openstatus_notification" "slack" {
+  name          = "Slack Alerts"
+  provider_type = "slack"
+  monitor_ids   = [
+    openstatus_http_monitor.api.id,
+    openstatus_http_monitor.website.id,
+    openstatus_tcp_monitor.database.id,
+  ]
+
+  slack {
+    webhook_url = var.slack_webhook_url
+  }
+}
+
+# --- Status Page ---
+
+resource "openstatus_status_page" "main" {
+  title        = "Example Inc. Status"
+  slug         = "example-status"
+  description  = "Real-time status for all Example Inc. services."
+  homepage_url = "https://example.com"
+  contact_url  = "https://example.com/support"
+}
+
+resource "openstatus_status_page_component_group" "web" {
+  page_id = openstatus_status_page.main.id
+  name    = "Web Services"
+}
+
+resource "openstatus_status_page_component_group" "infra" {
+  page_id = openstatus_status_page.main.id
+  name    = "Infrastructure"
+}
+
+resource "openstatus_status_page_component" "api_component" {
+  page_id     = openstatus_status_page.main.id
+  type        = "monitor"
+  monitor_id  = openstatus_http_monitor.api.id
+  name        = "API"
+  group_id    = openstatus_status_page_component_group.web.id
+  order       = 1
+  group_order = 1
+}
+
+resource "openstatus_status_page_component" "website_component" {
+  page_id     = openstatus_status_page.main.id
+  type        = "monitor"
+  monitor_id  = openstatus_http_monitor.website.id
+  name        = "Website"
+  group_id    = openstatus_status_page_component_group.web.id
+  order       = 1
+  group_order = 2
+}
+
+resource "openstatus_status_page_component" "db_component" {
+  page_id     = openstatus_status_page.main.id
+  type        = "monitor"
+  monitor_id  = openstatus_tcp_monitor.database.id
+  name        = "Database"
+  group_id    = openstatus_status_page_component_group.infra.id
+  order       = 2
+  group_order = 1
+}
+```
+
+## Related Resources
+
+- **[HTTP Monitor Reference](/reference/http-monitor)** — Detailed specification for HTTP monitor configuration.
+- **[TCP Monitor Reference](/reference/tcp-monitor)** — Detailed specification for TCP monitor configuration.
+- **[DNS Monitor Reference](/reference/dns-monitor)** — Detailed specification for DNS monitor configuration.
+- **[CLI Reference](/reference/cli-reference)** — Manage monitors using the OpenStatus command-line interface.
+- **[Terraform Registry](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest)** — Official provider page with version history.
+- **[Provider Source Code](https://github.com/openstatusHQ/terraform-provider-openstatus)** — GitHub repository for the Terraform provider.

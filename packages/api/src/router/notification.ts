@@ -4,24 +4,39 @@ import { z } from "zod";
 import { and, count, eq, inArray } from "@openstatus/db";
 import {
   NotificationDataSchema,
+  discordDataSchema,
   googleChatDataSchema,
   grafanaOncallDataSchema,
   monitor,
   notification,
   notificationProvider,
   notificationsToMonitors,
+  ntfyDataSchema,
+  opsgenieDataSchema,
+  pagerdutyDataSchema,
   selectMonitorSchema,
   selectNotificationSchema,
+  slackDataSchema,
   telegramDataSchema,
+  webhookDataSchema,
   whatsappDataSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
+import { sendTestDiscordMessage as sendDiscordTest } from "@openstatus/notification-discord";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
+import { sendTest as sendNtfyTest } from "@openstatus/notification-ntfy";
+import { sendTest as sendOpsGenieTest } from "@openstatus/notification-opsgenie";
+import {
+  PagerDutySchema,
+  sendTest as sendPagerDutyTest,
+} from "@openstatus/notification-pagerduty";
+import { sendTestSlackMessage as sendSlackTest } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
+import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
 import { redis } from "@openstatus/upstash";
 import { nanoid } from "nanoid";
 
@@ -322,6 +337,108 @@ export const notificationRouter = createTRPCRouter({
         }
 
         await sendGrafanaTest(_data.data["grafana-oncall"]);
+        return;
+      }
+      if (opts.input.provider === "discord") {
+        const _data = discordDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendDiscordTest(_data.data.discord);
+        return;
+      }
+      if (opts.input.provider === "slack") {
+        const _data = slackDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendSlackTest(_data.data.slack);
+        return;
+      }
+      if (opts.input.provider === "webhook") {
+        const _data = webhookDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendWebhookTest({
+          url: _data.data.webhook.endpoint,
+          headers: _data.data.webhook.headers,
+        });
+        return;
+      }
+      if (opts.input.provider === "opsgenie") {
+        const _data = opsgenieDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendOpsGenieTest(_data.data.opsgenie);
+        return;
+      }
+      if (opts.input.provider === "ntfy") {
+        const _data = ntfyDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendNtfyTest(_data.data.ntfy);
+        return;
+      }
+      if (opts.input.provider === "pagerduty") {
+        const _data = pagerdutyDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        let rawPagerduty: unknown;
+        try {
+          rawPagerduty = JSON.parse(_data.data.pagerduty);
+        } catch {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid PagerDuty configuration: malformed JSON",
+          });
+        }
+
+        const parsed = PagerDutySchema.safeParse(rawPagerduty);
+        if (!parsed.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid PagerDuty configuration",
+          });
+        }
+
+        if (parsed.data.integration_keys.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No PagerDuty integration key provided",
+          });
+        }
+
+        await sendPagerDutyTest({
+          integrationKey: parsed.data.integration_keys[0].integration_key,
+        });
         return;
       }
 

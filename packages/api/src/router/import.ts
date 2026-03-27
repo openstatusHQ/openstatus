@@ -9,10 +9,11 @@ export const importRouter = createTRPCRouter({
   preview: protectedProcedure
     .input(
       z.object({
-        provider: z.enum(["statuspage", "betterstack"]),
+        provider: z.enum(["statuspage", "betterstack", "instatus"]),
         apiKey: z.string().min(1),
         statuspagePageId: z.string().nullish(),
         betterstackStatusPageId: z.string().nullish(),
+        instatusPageId: z.string().nullish(),
         pageId: z.number().optional(),
       }),
     )
@@ -23,6 +24,7 @@ export const importRouter = createTRPCRouter({
         statuspagePageId: opts.input.statuspagePageId ?? undefined,
         betterstackStatusPageId:
           opts.input.betterstackStatusPageId ?? undefined,
+        instatusPageId: opts.input.instatusPageId ?? undefined,
         workspaceId: opts.ctx.workspace.id,
         pageId: opts.input.pageId,
         limits: opts.ctx.workspace.limits,
@@ -32,11 +34,12 @@ export const importRouter = createTRPCRouter({
   run: protectedProcedure
     .input(
       z.object({
-        provider: z.enum(["statuspage", "betterstack"]),
+        provider: z.enum(["statuspage", "betterstack", "instatus"]),
         apiKey: z.string().min(1),
         pageId: z.number().optional(),
         statuspagePageId: z.string().nullish(),
         betterstackStatusPageId: z.string().nullish(),
+        instatusPageId: z.string().nullish(),
         options: z
           .object({
             includeStatusReports: z.boolean().default(true),
@@ -75,6 +78,7 @@ export const importRouter = createTRPCRouter({
         statuspagePageId: opts.input.statuspagePageId ?? undefined,
         betterstackStatusPageId:
           opts.input.betterstackStatusPageId ?? undefined,
+        instatusPageId: opts.input.instatusPageId ?? undefined,
         workspaceId: opts.ctx.workspace.id,
         pageId: opts.input.pageId,
         options: opts.input.options,

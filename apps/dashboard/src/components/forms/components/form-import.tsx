@@ -12,7 +12,11 @@ import {
 } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BetterstackIcon, StatuspageIcon } from "@openstatus/icons";
+import {
+  BetterstackIcon,
+  InstatusIcon,
+  StatuspageIcon,
+} from "@openstatus/icons";
 import type { ImportSummary } from "@openstatus/importers/types";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -40,10 +44,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const schema = z.object({
-  provider: z.enum(["statuspage", "betterstack"]),
+  provider: z.enum(["statuspage", "betterstack", "instatus"]),
   apiKey: z.string().min(1, "API key is required"),
   statuspagePageId: z.string().optional(),
   betterstackStatusPageId: z.string().optional(),
+  instatusPageId: z.string().optional(),
   includeMonitors: z.boolean(),
   includeStatusReports: z.boolean(),
   includeSubscribers: z.boolean(),
@@ -81,6 +86,7 @@ export function FormImport({
       apiKey: "",
       statuspagePageId: "",
       betterstackStatusPageId: "",
+      instatusPageId: "",
       includeMonitors: true,
       includeStatusReports: true,
       includeSubscribers: false,
@@ -93,6 +99,7 @@ export function FormImport({
   const watchApiKey = form.watch("apiKey");
   const watchStatuspagePageId = form.watch("statuspagePageId");
   const watchBetterstackStatusPageId = form.watch("betterstackStatusPageId");
+  const watchInstatusPageId = form.watch("instatusPageId");
 
   const previewMutation = useMutation(
     trpc.import.preview.mutationOptions({
@@ -115,8 +122,18 @@ export function FormImport({
     previewMutation.mutate({
       provider: watchProvider,
       apiKey: watchApiKey,
-      statuspagePageId: watchStatuspagePageId || undefined,
-      betterstackStatusPageId: watchBetterstackStatusPageId || undefined,
+      statuspagePageId:
+        watchProvider === "statuspage"
+          ? watchStatuspagePageId || undefined
+          : undefined,
+      betterstackStatusPageId:
+        watchProvider === "betterstack"
+          ? watchBetterstackStatusPageId || undefined
+          : undefined,
+      instatusPageId:
+        watchProvider === "instatus"
+          ? watchInstatusPageId || undefined
+          : undefined,
       pageId,
     });
   }
@@ -202,6 +219,21 @@ export function FormImport({
                           Better Stack
                         </FormLabel>
                       </FormItem>
+                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                        <FormControl>
+                          <RadioGroupItem
+                            value="instatus"
+                            className="sr-only"
+                          />
+                        </FormControl>
+                        <InstatusIcon
+                          className="size-4 shrink-0 text-foreground"
+                          aria-hidden="true"
+                        />
+                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                          Instatus
+                        </FormLabel>
+                      </FormItem>
                       <div className="col-span-1 self-end text-muted-foreground text-xs sm:place-self-end">
                         Missing a provider?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
@@ -229,7 +261,9 @@ export function FormImport({
                           placeholder={
                             watchProvider === "betterstack"
                               ? "Bearer token"
-                              : "OAuth API key"
+                              : watchProvider === "instatus"
+                                ? "Bearer API key"
+                                : "OAuth API key"
                           }
                           {...field}
                         />
@@ -238,7 +272,9 @@ export function FormImport({
                       <FormDescription>
                         {watchProvider === "betterstack"
                           ? "Your Better Stack API token. Found in Better Stack \u2192 API tokens."
-                          : "Your Statuspage API key. Found in your Statuspage account under Manage Account \u003E API."}
+                          : watchProvider === "instatus"
+                            ? "Your Instatus API key. Found in your Instatus account under Settings > API."
+                            : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}
                       </FormDescription>
                     </FormItem>
                   )}
@@ -274,6 +310,24 @@ export function FormImport({
                         <FormDescription>
                           Import a specific status page. Leave empty to use the
                           first available.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
+                {watchProvider === "instatus" ? (
+                  <FormField
+                    control={form.control}
+                    name="instatusPageId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Page ID (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. clx1abc2def3" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Import a specific page. Leave empty to import all
+                          pages.
                         </FormDescription>
                       </FormItem>
                     )}
@@ -382,26 +436,28 @@ export function FormImport({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="includeSubscribers"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between">
-                      <div className="space-y-0.5">
-                        <FormLabel>Subscribers</FormLabel>
-                        <FormDescription>
-                          Import email subscribers.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                {watchProvider !== "betterstack" ? (
+                  <FormField
+                    control={form.control}
+                    name="includeSubscribers"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between">
+                        <div className="space-y-0.5">
+                          <FormLabel>Subscribers</FormLabel>
+                          <FormDescription>
+                            Import email subscribers.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                ) : null}
               </FormCardContent>
             </>
           ) : null}

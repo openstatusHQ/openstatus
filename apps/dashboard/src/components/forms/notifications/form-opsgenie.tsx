@@ -14,7 +14,7 @@ import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
-import { config } from "@/data/notifications.client";
+import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -67,6 +68,11 @@ export function FormOpsGenie({
     },
   });
   const [isPending, startTransition] = useTransition();
+  const trpc = useTRPC();
+
+  const sendTestMutation = useMutation(
+    trpc.notification.sendTest.mutationOptions(),
+  );
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -98,12 +104,12 @@ export function FormOpsGenie({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(
-          data as unknown as {
-            apiKey: string;
-            region: "eu" | "us";
+        const promise = sendTestMutation.mutateAsync({
+          provider,
+          data: {
+            opsgenie: data,
           },
-        );
+        });
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",

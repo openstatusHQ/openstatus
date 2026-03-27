@@ -20,6 +20,7 @@ import type {
   ResourceResult,
 } from "@openstatus/importers";
 import { createBetterstackProvider } from "@openstatus/importers/betterstack";
+import { createInstatusProvider } from "@openstatus/importers/instatus";
 import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 import { TRPCError } from "@trpc/server";
 
@@ -30,15 +31,37 @@ type ImportOptions = {
   includeMonitors?: boolean;
 };
 
-function createProvider(
-  providerName: string,
-  _config: Record<string, unknown>,
-): ImportProvider {
-  switch (providerName) {
+type ProviderName = "statuspage" | "betterstack" | "instatus";
+
+function createProvider(name: ProviderName): ImportProvider {
+  switch (name) {
     case "betterstack":
       return createBetterstackProvider();
+    case "instatus":
+      return createInstatusProvider();
+    case "statuspage":
     default:
       return createStatuspageProvider();
+  }
+}
+
+function buildProviderConfig(config: {
+  provider: ProviderName;
+  apiKey: string;
+  workspaceId: number;
+  pageId?: number;
+  statuspagePageId?: string;
+  betterstackStatusPageId?: string;
+  instatusPageId?: string;
+}) {
+  const { provider, ...rest } = config;
+  switch (provider) {
+    case "betterstack":
+      return { ...rest, betterstackStatusPageId: config.betterstackStatusPageId };
+    case "instatus":
+      return { ...rest, instatusPageId: config.instatusPageId };
+    default:
+      return { ...rest, statuspagePageId: config.statuspagePageId };
   }
 }
 
@@ -134,18 +157,20 @@ export async function addLimitWarnings(
 }
 
 export async function previewImport(config: {
-  provider: string;
+  provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
   betterstackStatusPageId?: string;
+  instatusPageId?: string;
   workspaceId: number;
   pageId?: number;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider = createProvider(config.provider, config);
+  const provider = createProvider(config.provider);
+  const providerConfig = buildProviderConfig(config);
 
   const validation = await provider.validate({
-    ...config,
+    ...providerConfig,
     dryRun: true,
   });
   if (!validation.valid) {
@@ -155,24 +180,26 @@ export async function previewImport(config: {
     });
   }
 
-  const summary = await provider.run({ ...config, dryRun: true });
+  const summary = await provider.run({ ...providerConfig, dryRun: true });
   await addLimitWarnings(summary, config);
   return summary;
 }
 
 export async function runImport(config: {
-  provider: string;
+  provider: ProviderName;
   apiKey: string;
   statuspagePageId?: string;
   betterstackStatusPageId?: string;
+  instatusPageId?: string;
   workspaceId: number;
   pageId?: number;
   options?: ImportOptions;
   limits: Limits;
 }): Promise<ImportSummary> {
-  const provider = createProvider(config.provider, config);
+  const provider = createProvider(config.provider);
+  const providerConfig = buildProviderConfig(config);
 
-  const validation = await provider.validate(config);
+  const validation = await provider.validate(providerConfig);
   if (!validation.valid) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -181,7 +208,7 @@ export async function runImport(config: {
   }
 
   // Fetch and map all data
-  const summary = await provider.run(config);
+  const summary = await provider.run(providerConfig);
 
   // Add limit warnings (same as preview)
   await addLimitWarnings(summary, config);
@@ -874,6 +901,7 @@ async function writeSubscribersPhase(
       const data = resource.data as {
         email: string;
         pageId: number;
+        confirmed: boolean;
         sourceComponentIds: string[];
       };
 
@@ -902,6 +930,7 @@ async function writeSubscribersPhase(
           email: data.email,
           pageId,
           channelType: "email",
+          acceptedAt: data.confirmed ? new Date() : undefined,
         })
         .returning({ id: pageSubscriber.id });
 
