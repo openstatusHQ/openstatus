@@ -41,12 +41,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${
-          inter.className
-          // biome-ignore lint/nursery/useSortedClasses: <explanation>
-        } ${calSans.variable}`}
-      >
+      <body className={`${inter.className} ${calSans.variable}`}>
         <PlausibleProvider domain="openstatus.dev">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <NuqsAdapter>

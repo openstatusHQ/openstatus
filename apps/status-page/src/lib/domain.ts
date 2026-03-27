@@ -2,28 +2,30 @@ import type { NextRequest } from "next/server";
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
-  if (!host && typeof window !== "undefined") {
+  let resolvedHost = host;
+  if (!resolvedHost && typeof window !== "undefined") {
     // On client side, get the host from window
-    // biome-ignore lint: to fix later
-    host = window.location.host;
+    resolvedHost = window.location.host;
   }
 
   // Exclude localhost and IP addresses from being treated as subdomains
   if (
-    host?.match(/^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/)
+    resolvedHost?.match(
+      /^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/,
+    )
   ) {
     return null;
   }
 
   // Handle subdomains of localhost (e.g., hello.localhost:3000)
-  if (host?.match(/^([^.]+)\.localhost(:\d+)?$/)) {
-    const match = host.match(/^([^.]+)\.localhost(:\d+)?$/);
+  if (resolvedHost?.match(/^([^.]+)\.localhost(:\d+)?$/)) {
+    const match = resolvedHost.match(/^([^.]+)\.localhost(:\d+)?$/);
     return match?.[1] || null;
   }
 
   // we should improve here for custom vercel deploy page
-  if (host?.includes(".") && !host.includes(".vercel.app")) {
-    const candidate = host.split(".")[0];
+  if (resolvedHost?.includes(".") && !resolvedHost.includes(".vercel.app")) {
+    const candidate = resolvedHost.split(".")[0];
     if (candidate && !candidate.includes("www")) {
       // Valid candidate
       subdomain = candidate;
@@ -32,14 +34,14 @@ export const getValidSubdomain = (host?: string | null) => {
 
   // In case the host is a custom domain
   if (
-    host &&
+    resolvedHost &&
     !(
-      host?.includes("stpg.dev") ||
-      host?.includes("openstatus.dev") ||
-      host?.endsWith(".vercel.app")
+      resolvedHost?.includes("stpg.dev") ||
+      resolvedHost?.includes("openstatus.dev") ||
+      resolvedHost?.endsWith(".vercel.app")
     )
   ) {
-    subdomain = host;
+    subdomain = resolvedHost;
   }
   return subdomain;
 };

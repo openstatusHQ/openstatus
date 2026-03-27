@@ -1,5 +1,4 @@
-// biome-ignore lint/style/useNodejsImportProtocol: some error with build
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { z } from "zod";
 
 import { and, eq, sql } from "@openstatus/db";

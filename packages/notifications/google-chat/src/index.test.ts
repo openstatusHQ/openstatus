@@ -3,8 +3,7 @@ import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Google Chat Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  let fetchMock: any = undefined;
+  let fetchMock: ReturnType<typeof spyOn> | undefined;
 
   beforeEach(() => {
     // @ts-expect-error

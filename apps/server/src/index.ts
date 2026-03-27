@@ -85,14 +85,13 @@ await configure({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
-function shouldSample(event: Record<string, any>): boolean {
+function shouldSample(event: Record<string, unknown>): boolean {
   // Always keep errors
-  if (event.status_code >= 500) return true;
+  if (Number(event.status_code) >= 500) return true;
   if (event.error) return true;
 
   // Always keep slow requests (above p99)
-  if (event.duration_ms > 2000) return true;
+  if (Number(event.duration_ms) > 2000) return true;
 
   // Random sample the rest at 20%
   return Math.random() < 0.2;

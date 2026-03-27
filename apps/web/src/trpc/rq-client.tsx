@@ -17,8 +17,10 @@ function getQueryClient() {
     return makeQueryClient();
   }
   // Browser: use singleton pattern to keep the same query client
-  // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-  return (clientQueryClientSingleton ??= makeQueryClient());
+  if (!clientQueryClientSingleton) {
+    clientQueryClientSingleton = makeQueryClient();
+  }
+  return clientQueryClientSingleton;
 }
 
 export function TRPCReactQueryProvider(

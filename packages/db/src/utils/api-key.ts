@@ -1,5 +1,4 @@
-// biome-ignore lint/style/useNodejsImportProtocol: <explanation>
-import crypto from "crypto";
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 
 /**
