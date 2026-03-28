@@ -7,7 +7,7 @@ describe("isSaasSubdomain", () => {
   afterEach(() => {
     // Restore the original value after each test
     if (originalEnv === undefined) {
-      delete process.env.SELF_HOST;
+      Reflect.deleteProperty(process.env, "SELF_HOST");
     } else {
       process.env.SELF_HOST = originalEnv;
     }
@@ -15,22 +15,22 @@ describe("isSaasSubdomain", () => {
 
   describe("SaaS mode (SELF_HOST not set)", () => {
     test("returns true when host matches {slug}.stpg.dev", () => {
-      delete process.env.SELF_HOST;
+      Reflect.deleteProperty(process.env, "SELF_HOST");
       expect(isSaasSubdomain("acme.stpg.dev", "acme")).toBe(true);
     });
 
     test("returns false when host does not match slug", () => {
-      delete process.env.SELF_HOST;
+      Reflect.deleteProperty(process.env, "SELF_HOST");
       expect(isSaasSubdomain("other.stpg.dev", "acme")).toBe(false);
     });
 
     test("returns false when host is a custom domain", () => {
-      delete process.env.SELF_HOST;
+      Reflect.deleteProperty(process.env, "SELF_HOST");
       expect(isSaasSubdomain("status.mycompany.com", "acme")).toBe(false);
     });
 
     test("returns false when host is null", () => {
-      delete process.env.SELF_HOST;
+      Reflect.deleteProperty(process.env, "SELF_HOST");
       expect(isSaasSubdomain(null, "acme")).toBe(false);
     });
   });
