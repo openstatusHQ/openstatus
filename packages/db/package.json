@@ -11,7 +11,7 @@
     "env": "bun env.ts",
     "seed": "bun src/seed.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db",
-    "sync-replica": "bun src/sync-replica.mts"
+    "sync-replica": "bun script/sync-replica.mts"
   },
   "dependencies": {
     "@libsql/client": "0.15.15",
