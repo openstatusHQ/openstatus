@@ -37,15 +37,17 @@ async function main() {
   });
 
   await client.sync();
+  client.close();
   console.log("Sync complete");
 
-  // Scrub sensitive tables
+  // Reopen as a purely local DB (no syncUrl) to scrub sensitive data.
+  // This ensures DELETEs are local-only and never forwarded to prod.
   console.log("Scrubbing sensitive data...");
-  await client.execute("DELETE FROM api_key");
-  await client.execute("DELETE FROM session");
+  const localClient = createClient({ url: `file:${REPLICA_PATH}` });
+  await localClient.execute("DELETE FROM api_key");
+  await localClient.execute("DELETE FROM session");
+  localClient.close();
   console.log("Scrubbed api_key and session tables");
-
-  client.close();
 
   console.log("Done! Register MCP with:");
   console.log(`  claude mcp add turso -- tursodb ${REPLICA_PATH} --mcp`);
