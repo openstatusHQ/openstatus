@@ -14,10 +14,7 @@ export function isSelfHosted(): boolean {
  * In self-hosted mode (`SELF_HOST=true`) this always returns false because
  * the SaaS subdomain infrastructure is not available.
  */
-export function isSaasSubdomain(
-  host: string | null,
-  slug: string,
-): boolean {
+export function isSaasSubdomain(host: string | null, slug: string): boolean {
   if (isSelfHosted()) return false;
   return host === `${slug}.stpg.dev`;
 }

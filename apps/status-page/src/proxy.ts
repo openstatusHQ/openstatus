@@ -4,11 +4,7 @@ import { auth } from "@/lib/auth";
 
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
-import {
-  getValidSubdomain,
-  isSaasSubdomain,
-  isSelfHosted,
-} from "./lib/domain";
+import { getValidSubdomain, isSaasSubdomain, isSelfHosted } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
