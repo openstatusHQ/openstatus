@@ -219,7 +219,7 @@ export function Client() {
                   key={item.id}
                   type="button"
                   className={
-                    item.id === "both" ? "sm:col-span-2 text-left" : "text-left"
+                    item.id === "both" ? "text-left sm:col-span-2" : "text-left"
                   }
                   onClick={async () => {
                     setSearchParams({ step: "2", intent: item.id });
@@ -423,7 +423,6 @@ export function Client() {
                     href={action.href}
                     target={isExternal ? "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
-                    className={className}
                   >
                     <ActionCard className={cn("h-full w-full", className)}>
                       <ActionCardHeader>
