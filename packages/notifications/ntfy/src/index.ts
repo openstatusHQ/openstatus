@@ -1,5 +1,6 @@
 import { ntfyDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+import { assertSafeUrl } from "@openstatus/utils";
 
 export const sendAlert = async ({
   monitor,
@@ -22,6 +23,7 @@ export const sendAlert = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
+  await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
     body,
@@ -50,6 +52,7 @@ export const sendRecovery = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
+  await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
     body,
@@ -79,6 +82,7 @@ export const sendDegraded = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
+  await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
     body,
@@ -105,6 +109,7 @@ export const sendTest = async ({
     : undefined;
   const url = serverUrl ? `${serverUrl}/${topic}` : `https://ntfy.sh/${topic}`;
   try {
+    await assertSafeUrl(url);
     await fetch(url, {
       method: "post",
       body: "This is a test message from OpenStatus",

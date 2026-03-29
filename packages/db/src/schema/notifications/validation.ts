@@ -1,3 +1,4 @@
+import { safeUrlSchema } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import * as z from "zod";
 
@@ -34,18 +35,18 @@ const phoneRegex = new RegExp(
 
 export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
 export const emailSchema = z.email();
-export const urlSchema = z.url();
+export const urlSchema = safeUrlSchema;
 
 export const ntfyDataSchema = z.object({
   ntfy: z.object({
     topic: z.string().prefault(""),
-    serverUrl: z.string().prefault("https://ntfy.sh"),
+    serverUrl: safeUrlSchema.prefault("https://ntfy.sh"),
     token: z.string().optional(),
   }),
 });
 export const webhookDataSchema = z.object({
   webhook: z.object({
-    endpoint: z.url(),
+    endpoint: safeUrlSchema,
     headers: z
       .array(z.object({ key: z.string(), value: z.string() }))
       .optional(),
@@ -69,7 +70,7 @@ export const telegramDataSchema = z.object({
 
 export const grafanaOncallDataSchema = z.object({
   "grafana-oncall": z.object({
-    webhookUrl: z.url(),
+    webhookUrl: safeUrlSchema,
   }),
 });
 

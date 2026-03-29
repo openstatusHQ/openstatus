@@ -1539,6 +1539,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1619,6 +1622,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1644,6 +1650,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1669,6 +1678,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1774,6 +1786,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1999,6 +2014,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../emails
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
