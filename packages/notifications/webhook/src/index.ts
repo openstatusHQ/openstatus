@@ -1,5 +1,5 @@
 import type { NotificationContext } from "@openstatus/notification-base";
-import { transformHeaders } from "@openstatus/utils";
+import { safeFetch, transformHeaders } from "@openstatus/utils";
 import { PayloadSchema, WebhookSchema } from "./schema";
 
 export const sendAlert = async ({
@@ -21,7 +21,7 @@ export const sendAlert = async ({
     errorMessage: message,
   });
 
-  const res = await fetch(notificationData.webhook.endpoint, {
+  const res = await safeFetch(notificationData.webhook.endpoint, {
     method: "post",
     body: JSON.stringify(body),
     headers: {
@@ -53,7 +53,7 @@ export const sendRecovery = async ({
     errorMessage: message,
   });
   const url = notificationData.webhook.endpoint;
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body: JSON.stringify(body),
     headers: {
@@ -85,7 +85,7 @@ export const sendDegraded = async ({
     errorMessage: message,
   });
 
-  const res = await fetch(notificationData.webhook.endpoint, {
+  const res = await safeFetch(notificationData.webhook.endpoint, {
     method: "post",
     body: JSON.stringify(body),
     headers: {
@@ -117,7 +117,7 @@ export const sendTest = async ({
     latency: 1337,
   });
   try {
-    const response = await fetch(url, {
+    const response = await safeFetch(url, {
       method: "post",
       body: JSON.stringify(body),
       headers: {

@@ -1,3 +1,4 @@
+import { safeFetch } from "@openstatus/utils";
 import { z } from "zod";
 import type { PageUpdate, Subscription } from "../types";
 
@@ -31,7 +32,7 @@ export async function sendWebhookVerification(
     throw new Error("Webhook URL is required for webhook channel");
   }
 
-  const response = await fetch(subscription.webhookUrl, {
+  const response = await safeFetch(subscription.webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -97,7 +98,7 @@ export async function sendWebhookNotifications(
       }
 
       try {
-        const response = await fetch(subscription.webhookUrl, {
+        const response = await safeFetch(subscription.webhookUrl, {
           method: "POST",
           headers,
           body: JSON.stringify(payload),

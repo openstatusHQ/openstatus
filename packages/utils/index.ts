@@ -1,4 +1,5 @@
 import { base } from "@openstatus/assertions";
+export { safeFetch, validateUrl } from "./safe-fetch";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
 
 import { z } from "zod";

@@ -1,8 +1,9 @@
 import { googleChatDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+import { safeFetch } from "@openstatus/utils";
 
 const postToWebhook = async (content: string, webhookUrl: string) => {
-  const res = await fetch(webhookUrl, {
+  const res = await safeFetch(webhookUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

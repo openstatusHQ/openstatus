@@ -1,4 +1,5 @@
 import { discordDataSchema } from "@openstatus/db/src/schema";
+import { safeFetch } from "@openstatus/utils";
 import {
   COLOR_DECIMALS,
   type NotificationContext,
@@ -16,7 +17,7 @@ const postToWebhook = async (embeds: DiscordEmbed[], webhookUrl: string) => {
     throw new Error("Discord webhook URL is required");
   }
 
-  const res = await fetch(webhookUrl, {
+  const res = await safeFetch(webhookUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
