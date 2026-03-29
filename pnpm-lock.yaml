@@ -1365,6 +1365,9 @@ importers:
       '@openstatus/theme-store':
         specifier: workspace:*
         version: link:../theme-store
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-core':
         specifier: 0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
