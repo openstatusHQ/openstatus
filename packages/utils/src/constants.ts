@@ -15,7 +15,7 @@ export const MONITOR_STATUSES = ["active", "error", "degraded"] as const;
 export const MONITOR_JOB_TYPES = [
   "http",
   "tcp",
-  "imcp",
+  "icmp",
   "udp",
   "dns",
   "ssl",
