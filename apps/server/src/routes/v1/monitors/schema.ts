@@ -11,6 +11,7 @@ import {
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import { assertSafeUrlSync } from "@openstatus/utils";
 import { ZodError } from "zod";
 
 const statusAssertion = z
@@ -411,7 +412,18 @@ const baseRequest = z.object({
   openTelemetry: z
     .object({
       endpoint: z
-        .url()
+        .url({ protocol: /^https?$/ })
+        .refine(
+          (val) => {
+            try {
+              assertSafeUrlSync(val);
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          { message: "URL must not target private or internal addresses" },
+        )
         .optional()
         .openapi({
           description: "OTEL endpoint to send metrics to",
@@ -430,10 +442,23 @@ const baseRequest = z.object({
 
 const httpRequestSchema = z.object({
   method: z.enum(monitorMethods),
-  url: z.url().openapi({
-    description: "URL to request",
-    examples: ["https://openstat.us", "https://www.openstatus.dev"],
-  }),
+  url: z
+    .url({ protocol: /^https?$/ })
+    .refine(
+      (val) => {
+        try {
+          assertSafeUrlSync(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "URL must not target private or internal addresses" },
+    )
+    .openapi({
+      description: "URL to request",
+      examples: ["https://openstat.us", "https://www.openstatus.dev"],
+    }),
   headers: z
     .record(z.string(), z.string())
     .optional()
