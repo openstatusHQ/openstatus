@@ -139,18 +139,7 @@ export function assertSafeUrlSync(urlString: string): void {
  * Validates format and blocks private/internal addresses.
  */
 export const safeUrlSchema = z
-  .string()
-  .refine(
-    (val) => {
-      try {
-        new URL(val);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    { message: "Invalid URL" },
-  )
+  .url({ protocol: /^https?$/ })
   .refine(
     (val) => {
       try {
