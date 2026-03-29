@@ -1,4 +1,4 @@
-import { safeUrlSchema } from "@openstatus/utils";
+import { safeUrlSchema } from "@openstatus/utils/ssrf";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import * as z from "zod";
 
