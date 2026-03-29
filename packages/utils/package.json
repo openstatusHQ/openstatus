@@ -2,11 +2,7 @@
   "name": "@openstatus/utils",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
-  "exports": {
-    ".": "./index.ts",
-    "./ssrf": "./ssrf.ts"
-  },
+  "main": "src/index.ts",
   "scripts": {},
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
