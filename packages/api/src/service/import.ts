@@ -899,7 +899,7 @@ async function writeMonitorsPhase(
           jobType: data.jobType as
             | "http"
             | "tcp"
-            | "imcp"
+            | "icmp"
             | "udp"
             | "dns"
             | "ssl",
