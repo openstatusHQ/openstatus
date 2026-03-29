@@ -119,8 +119,8 @@ export const sendTest = async ({
     statusCode: 200,
     latency: 1337,
   });
+  await assertSafeUrl(url);
   try {
-    await assertSafeUrl(url);
     const response = await fetch(url, {
       method: "post",
       body: JSON.stringify(body),

@@ -74,7 +74,7 @@ export const sendDegraded = async ({
 
   const body = `Your monitor ${name} / ${monitor.url} is degraded `;
 
-  const authorization = notificationData.ntfy
+  const authorization = notificationData.ntfy.token
     ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
     : undefined;
 
@@ -108,8 +108,8 @@ export const sendTest = async ({
     ? { Authorization: `Bearer ${token}` }
     : undefined;
   const url = serverUrl ? `${serverUrl}/${topic}` : `https://ntfy.sh/${topic}`;
+  await assertSafeUrl(url);
   try {
-    await assertSafeUrl(url);
     await fetch(url, {
       method: "post",
       body: "This is a test message from OpenStatus",

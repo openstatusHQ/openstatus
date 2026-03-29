@@ -119,8 +119,8 @@ export const sendTest = async (props: { webhookUrl: string }) => {
     link_to_upstream_details: "https://www.openstatus.dev",
   });
 
+  await assertSafeUrl(webhookUrl);
   try {
-    await assertSafeUrl(webhookUrl);
     const res = await fetch(webhookUrl, {
       method: "POST",
       body: JSON.stringify(event),
