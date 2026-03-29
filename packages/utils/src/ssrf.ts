@@ -138,16 +138,14 @@ export function assertSafeUrlSync(urlString: string): void {
  * Zod schema for URLs that are safe from SSRF.
  * Validates format and blocks private/internal addresses.
  */
-export const safeUrlSchema = z
-  .url({ protocol: /^https?$/ })
-  .refine(
-    (val) => {
-      try {
-        assertSafeUrlSync(val);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    { message: "URL must not target private or internal addresses" },
-  );
+export const safeUrlSchema = z.url({ protocol: /^https?$/ }).refine(
+  (val) => {
+    try {
+      assertSafeUrlSync(val);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { message: "URL must not target private or internal addresses" },
+);

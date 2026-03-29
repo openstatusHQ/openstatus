@@ -6,7 +6,6 @@
   "scripts": {},
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
-    "@openstatus/db": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "zod": "4.1.13"
   },

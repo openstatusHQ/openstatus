@@ -2282,9 +2282,6 @@ importers:
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../assertions
-      '@openstatus/db':
-        specifier: workspace:*
-        version: link:../db
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions

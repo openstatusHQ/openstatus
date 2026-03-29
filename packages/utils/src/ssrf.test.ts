@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { assertSafeUrl, assertSafeUrlSync, safeUrlSchema } from "./index";
+import { assertSafeUrl, assertSafeUrlSync, safeUrlSchema } from "./ssrf";
 
 // --- assertSafeUrlSync (no DNS, used in Zod schemas) ---
 
