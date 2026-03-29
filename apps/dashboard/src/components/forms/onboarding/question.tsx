@@ -23,26 +23,26 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const roles = [
+const sources = [
   {
-    id: "developer",
-    title: "Developer / Engineer",
+    id: "social-media",
+    title: "Twitter / LinkedIn / Bsky",
   },
   {
-    id: "devops",
-    title: "DevOps / SRE / Platform",
+    id: "github",
+    title: "GitHub",
   },
   {
-    id: "founder",
-    title: "Founder / CEO",
+    id: "google",
+    title: "Google Search",
   },
   {
-    id: "product-manager",
-    title: "Product Manager",
+    id: "recommendation",
+    title: "Friend / Colleague",
   },
   {
-    id: "engineering-manager",
-    title: "Engineering Manager",
+    id: "blog",
+    title: "Blog / Article",
   },
   {
     id: "other",
@@ -51,7 +51,7 @@ const roles = [
 ] as const;
 
 const schema = z.object({
-  role: z.string(),
+  source: z.string(),
   other: z.string().optional(),
 });
 
@@ -70,11 +70,11 @@ export function QuestionForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      role: "",
+      source: "",
       other: "",
     },
   });
-  const watchRole = form.watch("role");
+  const watchSource = form.watch("source");
 
   function handleSubmit(values: FormValues) {
     if (isPending) return;
@@ -112,7 +112,7 @@ export function QuestionForm({
       >
         <FormField
           control={form.control}
-          name="role"
+          name="source"
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -121,7 +121,7 @@ export function QuestionForm({
                   defaultValue={field.value}
                   className="grid grid-cols-1 gap-4 sm:grid-cols-2"
                 >
-                  {roles.map((item) => (
+                  {sources.map((item) => (
                     <FormItem key={item.id} className="flex items-center gap-3">
                       <FormControl>
                         <RadioGroupItem value={item.id} id={item.id} />
@@ -140,7 +140,7 @@ export function QuestionForm({
             </FormItem>
           )}
         />
-        {watchRole === "other" && (
+        {watchSource === "other" && (
           <FormField
             control={form.control}
             name="other"

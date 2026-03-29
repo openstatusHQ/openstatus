@@ -392,13 +392,13 @@ export function Client() {
           <Section>
             <SectionHeader className="h-8 flex-row items-center justify-between">
               <SectionDescription>
-                What&apos;s your role? This helps us improve openstatus for you.
+                How did you hear about openstatus?
               </SectionDescription>
             </SectionHeader>
             <QuestionForm
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
-                  message: `My role is *${values.role}${
+                  message: `Heard about us via *${values.source}${
                     values.other ? `: ${values.other}` : ""
                   }*`,
                   path: pathname,
