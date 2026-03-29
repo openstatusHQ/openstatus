@@ -107,29 +107,6 @@ export async function assertSafeUrl(urlString: string): Promise<void> {
       "URL targets a private or internal address, which is not allowed.",
     );
   }
-
-  // DNS resolution check — catch hostnames that resolve to private IPs
-  // Dynamic import to avoid breaking edge runtime where node:dns is unavailable
-  try {
-    const { lookup } = await import("node:dns/promises");
-    const { address, family } = await lookup(parsed.hostname);
-    if (family === 4 && isBlockedIPv4(address)) {
-      throw new Error(
-        "URL resolves to a private IP address, which is not allowed.",
-      );
-    }
-    if (family === 6 && isBlockedIPv6(address)) {
-      throw new Error(
-        "URL resolves to a private IP address, which is not allowed.",
-      );
-    }
-  } catch (err) {
-    // Re-throw our own errors
-    if (err instanceof Error && err.message.includes("not allowed")) {
-      throw err;
-    }
-    // DNS lookup failures — let them through (the fetch will fail anyway)
-  }
 }
 
 /**
