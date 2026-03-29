@@ -51,7 +51,7 @@ const sources = [
 ] as const;
 
 const schema = z.object({
-  source: z.string(),
+  source: z.string().min(1, "Please select an option"),
   other: z.string().optional(),
 });
 
