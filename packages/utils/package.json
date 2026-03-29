@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./ssrf": "./ssrf.ts"
+  },
   "scripts": {},
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
