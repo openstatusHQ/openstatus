@@ -533,6 +533,7 @@ describe("NotificationService.UpdateNotification", () => {
       {
         id: String(testNotificationToUpdateId),
         monitorIds: ["1"],
+        updateMonitorIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -549,6 +550,7 @@ describe("NotificationService.UpdateNotification", () => {
       {
         id: String(testNotificationToUpdateId),
         monitorIds: [],
+        updateMonitorIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -621,11 +623,92 @@ describe("NotificationService.UpdateNotification", () => {
       {
         id: String(testNotificationToUpdateId),
         monitorIds: ["99999"],
+        updateMonitorIds: true,
       },
       { "x-openstatus-key": "1" },
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("name-only update preserves monitor associations", async () => {
+    const beforeAssociations = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(
+        eq(
+          notificationsToMonitors.notificationId,
+          testNotificationToUpdateId,
+        ),
+      )
+      .all();
+
+    const res = await connectRequest(
+      "UpdateNotification",
+      {
+        id: String(testNotificationToUpdateId),
+        name: `${TEST_PREFIX}-name-only`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterAssociations = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(
+        eq(
+          notificationsToMonitors.notificationId,
+          testNotificationToUpdateId,
+        ),
+      )
+      .all();
+
+    expect(afterAssociations).toEqual(beforeAssociations);
+
+    // Restore name
+    await db
+      .update(notification)
+      .set({ name: `${TEST_PREFIX}-to-update` })
+      .where(eq(notification.id, testNotificationToUpdateId));
+  });
+
+  test("monitorIds ignored when updateMonitorIds is not set", async () => {
+    const beforeAssociations = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(
+        eq(
+          notificationsToMonitors.notificationId,
+          testNotificationToUpdateId,
+        ),
+      )
+      .all();
+
+    const res = await connectRequest(
+      "UpdateNotification",
+      {
+        id: String(testNotificationToUpdateId),
+        monitorIds: ["99999"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterAssociations = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(
+        eq(
+          notificationsToMonitors.notificationId,
+          testNotificationToUpdateId,
+        ),
+      )
+      .all();
+
+    expect(afterAssociations).toEqual(beforeAssociations);
   });
 });
 

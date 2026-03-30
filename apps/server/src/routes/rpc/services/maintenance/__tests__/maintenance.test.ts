@@ -887,6 +887,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
       {
         id: String(testMaintenanceToUpdateId),
         pageComponentIds: ["1"],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -969,6 +970,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
       {
         id: String(testMaintenanceToUpdateId),
         pageComponentIds: ["99999"],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -985,6 +987,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
           String(testPageComponentId),
           String(testPage2ComponentId),
         ],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -1018,6 +1021,124 @@ describe("MaintenanceService.UpdateMaintenance", () => {
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.message).toContain("Start time (from) must be before end time");
+  });
+
+  test("title-only update preserves component associations and pageId", async () => {
+    const beforeAssociations = await db
+      .select()
+      .from(maintenancesToPageComponents)
+      .where(
+        eq(
+          maintenancesToPageComponents.maintenanceId,
+          testMaintenanceToUpdateId,
+        ),
+      )
+      .all();
+    const beforeRecord = await db
+      .select()
+      .from(maintenance)
+      .where(eq(maintenance.id, testMaintenanceToUpdateId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateMaintenance",
+      {
+        id: String(testMaintenanceToUpdateId),
+        title: `${TEST_PREFIX}-title-only`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterAssociations = await db
+      .select()
+      .from(maintenancesToPageComponents)
+      .where(
+        eq(
+          maintenancesToPageComponents.maintenanceId,
+          testMaintenanceToUpdateId,
+        ),
+      )
+      .all();
+    const afterRecord = await db
+      .select()
+      .from(maintenance)
+      .where(eq(maintenance.id, testMaintenanceToUpdateId))
+      .get();
+
+    expect(afterAssociations).toEqual(beforeAssociations);
+    expect(afterRecord?.pageId).toBe(beforeRecord?.pageId);
+
+    // Restore title
+    await db
+      .update(maintenance)
+      .set({ title: `${TEST_PREFIX}-to-update` })
+      .where(eq(maintenance.id, testMaintenanceToUpdateId));
+  });
+
+  test("pageComponentIds ignored when updatePageComponentIds is not set", async () => {
+    const beforeAssociations = await db
+      .select()
+      .from(maintenancesToPageComponents)
+      .where(
+        eq(
+          maintenancesToPageComponents.maintenanceId,
+          testMaintenanceToUpdateId,
+        ),
+      )
+      .all();
+
+    const res = await connectRequest(
+      "UpdateMaintenance",
+      {
+        id: String(testMaintenanceToUpdateId),
+        pageComponentIds: ["99999"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterAssociations = await db
+      .select()
+      .from(maintenancesToPageComponents)
+      .where(
+        eq(
+          maintenancesToPageComponents.maintenanceId,
+          testMaintenanceToUpdateId,
+        ),
+      )
+      .all();
+
+    expect(afterAssociations).toEqual(beforeAssociations);
+  });
+
+  test("deprecated pageId field is ignored on update", async () => {
+    const beforeRecord = await db
+      .select()
+      .from(maintenance)
+      .where(eq(maintenance.id, testMaintenanceToUpdateId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateMaintenance",
+      {
+        id: String(testMaintenanceToUpdateId),
+        pageId: "999",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterRecord = await db
+      .select()
+      .from(maintenance)
+      .where(eq(maintenance.id, testMaintenanceToUpdateId))
+      .get();
+
+    expect(afterRecord?.pageId).toBe(beforeRecord?.pageId);
   });
 });
 

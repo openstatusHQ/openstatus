@@ -377,33 +377,6 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
 
     // Update maintenance and associations in a transaction
     const updatedMaintenance = await db.transaction(async (tx) => {
-      // Validate page component IDs
-      const validatedComponents = await validatePageComponentIds(
-        req.pageComponentIds,
-        workspaceId,
-        tx,
-      );
-
-      // Determine effective pageId
-      let effectivePageId = record.pageId;
-      if (req.pageId && req.pageId.trim() !== "") {
-        effectivePageId = Number(req.pageId);
-        await validatePageExists(effectivePageId, workspaceId, tx);
-      }
-
-      // Validate that components belong to the same page
-      if (
-        validatedComponents.pageId !== null &&
-        effectivePageId !== null &&
-        validatedComponents.pageId !== effectivePageId
-      ) {
-        throw pageIdComponentMismatchError(
-          String(effectivePageId),
-          String(validatedComponents.pageId),
-        );
-      }
-
-      // Build update values
       const updateValues: Record<string, unknown> = {
         updatedAt: new Date(),
       };
@@ -424,16 +397,21 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         updateValues.to = toDate;
       }
 
-      if (req.pageId && req.pageId.trim() !== "") {
-        updateValues.pageId = effectivePageId;
-      }
+      if (req.updatePageComponentIds) {
+        const validatedComponents = await validatePageComponentIds(
+          req.pageComponentIds,
+          workspaceId,
+          tx,
+        );
 
-      // Update page component associations
-      await updatePageComponentAssociations(
-        record.id,
-        validatedComponents.componentIds,
-        tx,
-      );
+        updateValues.pageId = validatedComponents.pageId;
+
+        await updatePageComponentAssociations(
+          record.id,
+          validatedComponents.componentIds,
+          tx,
+        );
+      }
 
       // Update the maintenance
       const updated = await tx
