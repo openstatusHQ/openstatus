@@ -92,6 +92,12 @@ describe("sanitizeSvg", () => {
     expect(result).not.toContain("javascript");
   });
 
+  it("returns empty string for fully malicious SVG", async () => {
+    const svg = '<script>alert("xss")</script>';
+    const result = await sanitizeSvg(svg);
+    expect(result.trim()).toBe("");
+  });
+
   it("preserves common SVG elements", async () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg">
       <defs>
