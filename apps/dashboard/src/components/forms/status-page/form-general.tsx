@@ -226,7 +226,7 @@ export function FormGeneral({
                       ) : (
                         <Input
                           type="file"
-                          accept="image/png,image/x-icon"
+                          accept="image/png,image/x-icon,image/svg+xml"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
@@ -250,8 +250,8 @@ export function FormGeneral({
                   </FormControl>
                   <FormMessage />
                   <FormDescription>
-                    Select an icon for your status page. Ideally sized
-                    512x512px. Will be used as favicon.
+                    Select an icon for your status page. PNG/ICO: 512x512px
+                    recommended. SVG also supported. Will be used as favicon.
                   </FormDescription>
                 </FormItem>
               )}
