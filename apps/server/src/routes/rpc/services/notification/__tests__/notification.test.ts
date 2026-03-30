@@ -636,10 +636,7 @@ describe("NotificationService.UpdateNotification", () => {
       .select()
       .from(notificationsToMonitors)
       .where(
-        eq(
-          notificationsToMonitors.notificationId,
-          testNotificationToUpdateId,
-        ),
+        eq(notificationsToMonitors.notificationId, testNotificationToUpdateId),
       )
       .all();
 
@@ -658,10 +655,7 @@ describe("NotificationService.UpdateNotification", () => {
       .select()
       .from(notificationsToMonitors)
       .where(
-        eq(
-          notificationsToMonitors.notificationId,
-          testNotificationToUpdateId,
-        ),
+        eq(notificationsToMonitors.notificationId, testNotificationToUpdateId),
       )
       .all();
 
@@ -679,10 +673,7 @@ describe("NotificationService.UpdateNotification", () => {
       .select()
       .from(notificationsToMonitors)
       .where(
-        eq(
-          notificationsToMonitors.notificationId,
-          testNotificationToUpdateId,
-        ),
+        eq(notificationsToMonitors.notificationId, testNotificationToUpdateId),
       )
       .all();
 
@@ -701,10 +692,7 @@ describe("NotificationService.UpdateNotification", () => {
       .select()
       .from(notificationsToMonitors)
       .where(
-        eq(
-          notificationsToMonitors.notificationId,
-          testNotificationToUpdateId,
-        ),
+        eq(notificationsToMonitors.notificationId, testNotificationToUpdateId),
       )
       .all();
 
