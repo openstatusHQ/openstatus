@@ -293,14 +293,6 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
 
       // Update notification in a transaction
       const updatedNotification = await db.transaction(async (tx) => {
-        // Validate monitor IDs
-        const validMonitorIds = await validateMonitorIds(
-          req.monitorIds,
-          workspaceId,
-          tx,
-        );
-
-        // Build update values
         const updateValues: Record<string, unknown> = {
           updatedAt: new Date(),
         };
@@ -340,8 +332,14 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
           );
         }
 
-        // Update monitor associations
-        await updateMonitorAssociations(record.id, validMonitorIds, tx);
+        if (req.updateMonitorIds) {
+          const validMonitorIds = await validateMonitorIds(
+            req.monitorIds,
+            workspaceId,
+            tx,
+          );
+          await updateMonitorAssociations(record.id, validMonitorIds, tx);
+        }
 
         // Update the notification
         const updated = await tx

@@ -108,6 +108,11 @@ message UpdateNotificationRequest {
   optional NotificationData data = 3;
   // Updated monitor IDs to associate.
   repeated string monitor_ids = 4;
+
+  // Set to true to update monitor associations.
+  // When true, monitor_ids replaces the existing list (empty clears all).
+  // When false or unset, monitor_ids is ignored and existing associations are preserved.
+  optional bool update_monitor_ids = 5;
 }
 
 // UpdateNotificationResponse is the response after updating a notification channel.

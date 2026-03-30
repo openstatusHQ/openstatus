@@ -126,6 +126,11 @@ message UpdateStatusReportRequest {
 
   // New list of page component IDs (optional, replaces existing list).
   repeated string page_component_ids = 3;
+
+  // Set to true to update page component associations.
+  // When true, page_component_ids replaces the existing list (empty clears all).
+  // When false or unset, page_component_ids is ignored and existing associations are preserved.
+  optional bool update_page_component_ids = 4;
 }
 
 // UpdateStatusReportResponse is the response after updating a status report.
