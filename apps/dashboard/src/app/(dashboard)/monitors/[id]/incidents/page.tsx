@@ -1,5 +1,7 @@
 "use client";
 
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -17,6 +19,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Info } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -35,6 +38,14 @@ export default function Page() {
 
   return (
     <SectionGroup>
+      <Note color="info">
+        <Info />
+        <p>
+          Incidents are automatically created when a monitor detects downtime.
+          To communicate updates to your users, use Status Reports on a{" "}
+          <Link href="/status-pages">Status Page</Link>.
+        </p>
+      </Note>
       <Section>
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
