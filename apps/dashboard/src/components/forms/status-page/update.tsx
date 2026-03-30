@@ -1,5 +1,5 @@
 import { Link } from "@/components/common/link";
-import { Note, NoteButton } from "@/components/common/note";
+import { Note } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -85,18 +85,12 @@ export function FormStatusPageUpdate() {
 
   return (
     <FormCardGroup>
-      <Note color="warning">
+      <Note color="info">
         <Info />
-        <p className="text-sm">
-          Looking to connect monitors to your status page? The setup now has a
-          separate page{" "}
-          <Link href={`/status-pages/${id}/components`}>components</Link>.
+        <p>
+          Looking to connect monitors to your status page? Configure them on the{" "}
+          <Link href={`/status-pages/${id}/components`}>Components</Link> page.
         </p>
-        <NoteButton variant="default" asChild>
-          <Link href="https://openstatus.dev/blog/status-page-components">
-            Learn more
-          </Link>
-        </NoteButton>
       </Note>
       <FormGeneral
         defaultValues={{
