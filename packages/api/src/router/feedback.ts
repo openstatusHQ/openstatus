@@ -26,6 +26,11 @@ export const feedbackRouter = createTRPCRouter({
         });
       }
 
+      if (process.env.NODE_ENV === "development") {
+        console.log("feedback.submit", opts.input);
+        return { success: true } as const;
+      }
+
       const textLines: string[] = [];
       if (opts.input.name) textLines.push(`*Name:* ${opts.input.name}`);
       if (opts.input.email) textLines.push(`*Email:* ${opts.input.email}`);

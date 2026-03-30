@@ -23,18 +23,26 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const wantFrom = [
+const sources = [
   {
-    id: "statuspage",
-    title: "Status Page",
+    id: "social-media",
+    title: "Twitter / LinkedIn / Bsky",
   },
   {
-    id: "uptime-monitoring",
-    title: "Uptime Monitoring",
+    id: "github",
+    title: "GitHub",
   },
   {
-    id: "both",
-    title: "Both",
+    id: "google",
+    title: "Google Search",
+  },
+  {
+    id: "recommendation",
+    title: "Friend / Colleague",
+  },
+  {
+    id: "blog",
+    title: "Blog / Article",
   },
   {
     id: "other",
@@ -43,13 +51,13 @@ const wantFrom = [
 ] as const;
 
 const schema = z.object({
-  from: z.string(),
+  source: z.string().min(1, "Please select an option"),
   other: z.string().optional(),
 });
 
 export type FormValues = z.infer<typeof schema>;
 
-export function LearnFromForm({
+export function QuestionForm({
   onSubmit,
   defaultValues,
   className,
@@ -62,11 +70,11 @@ export function LearnFromForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      from: "",
+      source: "",
       other: "",
     },
   });
-  const watchFrom = form.watch("from");
+  const watchSource = form.watch("source");
 
   function handleSubmit(values: FormValues) {
     if (isPending) return;
@@ -104,7 +112,7 @@ export function LearnFromForm({
       >
         <FormField
           control={form.control}
-          name="from"
+          name="source"
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -113,7 +121,7 @@ export function LearnFromForm({
                   defaultValue={field.value}
                   className="grid grid-cols-1 gap-4 sm:grid-cols-2"
                 >
-                  {wantFrom.map((item) => (
+                  {sources.map((item) => (
                     <FormItem key={item.id} className="flex items-center gap-3">
                       <FormControl>
                         <RadioGroupItem value={item.id} id={item.id} />
@@ -132,7 +140,7 @@ export function LearnFromForm({
             </FormItem>
           )}
         />
-        {watchFrom === "other" && (
+        {watchSource === "other" && (
           <FormField
             control={form.control}
             name="other"
