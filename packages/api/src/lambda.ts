@@ -1,4 +1,5 @@
 import { apiKeyRouter } from "./router/apiKey";
+import { blobRouter } from "./router/blob";
 import { emailRouter } from "./router/email";
 import { integrationRouter } from "./router/integration";
 import { stripeRouter } from "./router/stripe";
@@ -9,6 +10,7 @@ export const lambdaRouter = createTRPCRouter({
   emailRouter: emailRouter,
   apiKeyRouter: apiKeyRouter,
   integrationRouter: integrationRouter,
+  blob: blobRouter,
 });
 
 export { stripe } from "./router/stripe/shared";

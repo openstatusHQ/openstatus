@@ -106,7 +106,9 @@ export async function generateMetadata({
       default: page?.title,
     },
     description: page?.description,
-    icons: page?.icon,
+    icons: page?.icon?.endsWith(".svg")
+      ? { icon: { url: page.icon, type: "image/svg+xml" } }
+      : page?.icon,
     alternates: {
       canonical: page?.customDomain
         ? `https://${page.customDomain}`

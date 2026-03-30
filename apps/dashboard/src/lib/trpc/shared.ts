@@ -16,6 +16,7 @@ const lambdas = [
   "emailRouter",
   "apiKeyRouter",
   "integrationRouter",
+  "blob",
 ];
 
 export const endingLink = (opts?: {

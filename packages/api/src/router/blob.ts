@@ -4,6 +4,41 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
+const SVG_MAX_SIZE_BYTES = 100 * 1024; // 100KB
+
+export function isSvgFile(filename: string): boolean {
+  return filename.toLowerCase().endsWith(".svg");
+}
+
+// Cached DOMPurify instance to avoid recreating JSDOM on every call
+let cachedDOMPurify: Awaited<ReturnType<typeof initDOMPurify>> | null = null;
+
+async function initDOMPurify() {
+  const { JSDOM } = await import("jsdom");
+  const createDOMPurify = (await import("dompurify")).default;
+  return createDOMPurify(new JSDOM("").window);
+}
+
+async function getDOMPurify() {
+  if (!cachedDOMPurify) {
+    cachedDOMPurify = await initDOMPurify();
+  }
+  return cachedDOMPurify;
+}
+
+export async function sanitizeSvg(svgContent: string): Promise<string> {
+  // Lazy imports because root.ts merges edge + lambda routers,
+  // so this module is evaluated in both runtimes — jsdom can't load on edge
+  const DOMPurify = await getDOMPurify();
+  return DOMPurify.sanitize(svgContent, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    // DOMPurify's SVG profile strips all on* event handlers by default.
+    // We explicitly forbid foreignObject (can embed arbitrary HTML),
+    // and script (direct code execution)
+    FORBID_TAGS: ["foreignObject", "script"],
+  });
+}
+
 export const blobRouter = createTRPCRouter({
   upload: protectedProcedure
     .input(
@@ -28,7 +63,19 @@ export const blobRouter = createTRPCRouter({
         });
       }
 
-      const buffer = Buffer.from(base64, "base64");
+      let buffer = Buffer.from(base64, "base64");
+
+      if (isSvgFile(filename)) {
+        if (buffer.byteLength > SVG_MAX_SIZE_BYTES) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "SVG file must be under 100KB",
+          });
+        }
+
+        const sanitized = await sanitizeSvg(buffer.toString("utf-8"));
+        buffer = Buffer.from(sanitized, "utf-8");
+      }
 
       const blob = await put(`${opts.ctx.workspace.slug}/${filename}`, buffer, {
         access: "public",
