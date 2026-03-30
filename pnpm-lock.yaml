@@ -1365,6 +1365,9 @@ importers:
       '@openstatus/theme-store':
         specifier: workspace:*
         version: link:../theme-store
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-core':
         specifier: 0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
@@ -1539,6 +1542,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1619,6 +1625,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1644,6 +1653,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1669,6 +1681,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1774,6 +1789,9 @@ importers:
       '@openstatus/notification-base':
         specifier: workspace:*
         version: link:../base
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1999,6 +2017,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../emails
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../utils
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -2264,9 +2285,6 @@ importers:
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../assertions
-      '@openstatus/db':
-        specifier: workspace:*
-        version: link:../db
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions
