@@ -1140,6 +1140,59 @@ describe("MaintenanceService.UpdateMaintenance", () => {
 
     expect(afterRecord?.pageId).toBe(beforeRecord?.pageId);
   });
+
+  test("clears pageId when removing all components", async () => {
+    const tempRecord = await db
+      .insert(maintenance)
+      .values({
+        workspaceId: 1,
+        pageId: 1,
+        title: `${TEST_PREFIX}-clear-pageid`,
+        message: "Temp maintenance for clear test",
+        from: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        to: new Date(Date.now() + 25 * 60 * 60 * 1000),
+      })
+      .returning()
+      .get();
+
+    await db.insert(maintenancesToPageComponents).values({
+      maintenanceId: tempRecord.id,
+      pageComponentId: testPageComponentId,
+    });
+
+    try {
+      const res = await connectRequest(
+        "UpdateMaintenance",
+        {
+          id: String(tempRecord.id),
+          pageComponentIds: [],
+          updatePageComponentIds: true,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const afterRecord = await db
+        .select()
+        .from(maintenance)
+        .where(eq(maintenance.id, tempRecord.id))
+        .get();
+      expect(afterRecord?.pageId).toBeNull();
+
+      const afterAssociations = await db
+        .select()
+        .from(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, tempRecord.id))
+        .all();
+      expect(afterAssociations).toHaveLength(0);
+    } finally {
+      await db
+        .delete(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, tempRecord.id));
+      await db.delete(maintenance).where(eq(maintenance.id, tempRecord.id));
+    }
+  });
 });
 
 describe("MaintenanceService.DeleteMaintenance", () => {
