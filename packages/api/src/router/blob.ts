@@ -10,26 +10,10 @@ export function isSvgFile(filename: string): boolean {
   return filename.toLowerCase().endsWith(".svg");
 }
 
-// Cached DOMPurify instance to avoid recreating JSDOM on every call
-let cachedDOMPurify: Awaited<ReturnType<typeof initDOMPurify>> | null = null;
-
-async function initDOMPurify() {
-  const { JSDOM } = await import("jsdom");
-  const createDOMPurify = (await import("dompurify")).default;
-  return createDOMPurify(new JSDOM("").window);
-}
-
-async function getDOMPurify() {
-  if (!cachedDOMPurify) {
-    cachedDOMPurify = await initDOMPurify();
-  }
-  return cachedDOMPurify;
-}
-
 export async function sanitizeSvg(svgContent: string): Promise<string> {
-  // Lazy imports because root.ts merges edge + lambda routers,
+  // Lazy import because root.ts merges edge + lambda routers,
   // so this module is evaluated in both runtimes — jsdom can't load on edge
-  const DOMPurify = await getDOMPurify();
+  const { default: DOMPurify } = await import("isomorphic-dompurify");
   return DOMPurify.sanitize(svgContent, {
     USE_PROFILES: { svg: true, svgFilters: true },
     // DOMPurify's SVG profile strips all on* event handlers by default.
