@@ -36,8 +36,7 @@
     "@unkey/api": "2.2.0",
     "@vercel/blob": "0.23.3",
     "date-fns": "3.6.0",
-    "dompurify": "3.3.3",
-    "jsdom": "29.0.1",
+    "isomorphic-dompurify": "3.7.1",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
     "next": "16.1.6",
@@ -48,7 +47,6 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/jsdom": "28.0.1",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "bun-types": "1.0.8",
