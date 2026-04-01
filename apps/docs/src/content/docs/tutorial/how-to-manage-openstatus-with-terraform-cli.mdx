@@ -244,7 +244,15 @@ Terraform only modifies what changed — the monitor gets updated in place, no d
 
 ### Step 7 — Import existing resources
 
-If you already have monitors or status pages created in the dashboard, import them into Terraform state:
+If you already have monitors, status pages, or notifications created in the dashboard, you can generate the corresponding Terraform configuration automatically using the CLI:
+
+```bash
+openstatus terraform generate
+```
+
+This exports all your workspace resources — monitors, status pages, notifications, and maintenance windows — into `.tf` files ready to use. It's the fastest way to adopt infrastructure as code for an existing setup.
+
+Once the files are generated, import the resources into Terraform state so it knows they already exist:
 
 ```bash
 terraform import openstatus_http_monitor.api <monitor-id>
@@ -382,6 +390,7 @@ Here's how the two tools fit into your workflow:
 | `openstatus monitors trigger <id>` | Trigger an immediate check |
 | `openstatus status-page list` | List all status pages |
 | `openstatus status-page info <id>` | View status page details and component IDs |
+| `openstatus terraform generate` | Export workspace resources to Terraform `.tf` files |
 
 ## What you've accomplished
 
