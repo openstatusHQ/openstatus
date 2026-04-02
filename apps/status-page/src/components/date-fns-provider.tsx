@@ -1,10 +1,8 @@
 "use client";
 
 import type { Locale } from "@/i18n/config";
+import { dateFnsLocales } from "@openstatus/locales";
 import { setDefaultOptions } from "date-fns";
-import { de, enUS, fr } from "date-fns/locale";
-
-const dateFnsLocales = { en: enUS, fr, de } as const;
 
 export function DateFnsProvider({
   locale,

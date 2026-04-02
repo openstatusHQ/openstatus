@@ -4,6 +4,9 @@
   "description": "Shared locale registry for OpenStatus",
   "main": "index.ts",
   "scripts": {},
+  "dependencies": {
+    "date-fns": "3.6.0"
+  },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.9.3"
