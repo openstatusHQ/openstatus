@@ -59,19 +59,17 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
     null;
 
   // Determine step states
-  const dnsState = (() => {
-    if (status === "Valid Configuration") return "completed" as const;
-    if (status === "Pending Verification") return "completed" as const;
-    if (status === "Unknown Error") return "active" as const;
-    return "active" as const;
-  })();
+  const dnsState =
+    status === "Valid Configuration" || status === "Pending Verification"
+      ? ("completed" as const)
+      : ("active" as const);
 
-  const verificationState = (() => {
-    if (status === "Valid Configuration") return "completed" as const;
-    if (status === "Pending Verification") return "active" as const;
-    if (dnsState === "active") return "upcoming" as const;
-    return "completed" as const;
-  })();
+  const verificationState =
+    status === "Valid Configuration"
+      ? ("completed" as const)
+      : status === "Pending Verification"
+        ? ("active" as const)
+        : ("upcoming" as const);
 
   const readyState =
     status === "Valid Configuration"
@@ -202,10 +200,8 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                 </div>
                 <div>
                   <p className="font-bold text-sm">Value</p>
-                  <p className="mt-2 font-mono text-sm">
-                    <span className="text-ellipsis">
-                      {txtVerification.value}
-                    </span>
+                  <p className="mt-2 break-all font-mono text-sm">
+                    {txtVerification.value}
                   </p>
                 </div>
               </div>

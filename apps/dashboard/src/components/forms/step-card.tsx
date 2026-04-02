@@ -67,6 +67,8 @@ export function StepCardIndicator({
   return (
     <div
       data-slot="step-card-indicator"
+      role="img"
+      aria-label={`Step ${step}`}
       className={cn(
         "flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-medium text-xs",
         "group-data-[variant=completed]:bg-success group-data-[variant=completed]:text-white",
@@ -76,8 +78,16 @@ export function StepCardIndicator({
       )}
       {...props}
     >
-      <span className="group-data-[variant=completed]:hidden">{step}</span>
-      <Check className="hidden h-3 w-3 group-data-[variant=completed]:block" />
+      <span
+        aria-hidden="true"
+        className="group-data-[variant=completed]:hidden"
+      >
+        {step}
+      </span>
+      <Check
+        aria-hidden="true"
+        className="hidden h-3 w-3 group-data-[variant=completed]:block"
+      />
     </div>
   );
 }
