@@ -144,6 +144,7 @@ export function StepCardContent({
       data-slot="step-card-content"
       className={cn(
         "px-4 pb-4",
+        "group-data-[variant=completed]:hidden",
         "group-data-[variant=upcoming]:select-none group-data-[variant=upcoming]:opacity-50",
         className,
       )}
