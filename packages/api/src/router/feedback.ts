@@ -1,3 +1,8 @@
+import {
+  feedback,
+  feedbackSource,
+  feedbackType,
+} from "@openstatus/db/src/schema";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { env } from "../env";
@@ -7,18 +12,34 @@ export const feedbackRouter = createTRPCRouter({
   submit: protectedProcedure
     .input(
       z.object({
-        // NOTE: coming from NavFeedback
         message: z.string().min(1, "Message required"),
-        path: z.string().optional(),
+        source: z.enum(feedbackSource),
+        path: z.string(),
         isMobile: z.boolean().optional(),
         // NOTE: coming from ContactForm
         name: z.string().optional(),
         email: z.email().optional(),
         blocker: z.boolean().optional(),
-        type: z.string().optional(),
+        type: z.enum(feedbackType).optional(),
       }),
     )
     .mutation(async (opts) => {
+      // Persist to database
+      await opts.ctx.db.insert(feedback).values({
+        workspaceId: opts.ctx.workspace.id,
+        userId: opts.ctx.user.id,
+        source: opts.input.source,
+        message: opts.input.message,
+        type: opts.input.type,
+        blocker: opts.input.blocker,
+        path: opts.input.path,
+        metadata: JSON.stringify({
+          isMobile: opts.input.isMobile,
+          userAgent: opts.ctx.metadata?.userAgent,
+        }),
+      });
+
+      // Send to Slack
       if (!env.SLACK_FEEDBACK_WEBHOOK_URL) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -32,6 +53,7 @@ export const feedbackRouter = createTRPCRouter({
       }
 
       const textLines: string[] = [];
+      textLines.push(`*Source:* ${opts.input.source}`);
       if (opts.input.name) textLines.push(`*Name:* ${opts.input.name}`);
       if (opts.input.email) textLines.push(`*Email:* ${opts.input.email}`);
       if (opts.input.blocker)
@@ -43,8 +65,6 @@ export const feedbackRouter = createTRPCRouter({
         textLines.push(`*Mobile:* ${opts.input.isMobile}`);
       if (opts.ctx.metadata?.userAgent)
         textLines.push(`*User Agent:* ${opts.ctx.metadata.userAgent}`);
-      if (opts.ctx.metadata?.location)
-        textLines.push(`*Location:* ${opts.ctx.metadata.location}`);
 
       textLines.push("--------------------------------");
 
