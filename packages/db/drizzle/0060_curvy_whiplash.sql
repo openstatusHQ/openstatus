@@ -8,7 +8,7 @@ CREATE TABLE `feedback` (
 	`blocker` integer,
 	`path` text NOT NULL,
 	`metadata` text,
-	`created_at` integer DEFAULT (strftime('%s', 'now')),
-	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+	`created_at` integer DEFAULT (strftime('%s', 'now')) NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );

@@ -9,10 +9,10 @@ export const feedback = sqliteTable("feedback", {
   id: integer("id").primaryKey(),
 
   workspaceId: integer("workspace_id")
-    .references(() => workspace.id)
+    .references(() => workspace.id, { onDelete: "cascade" })
     .notNull(),
   userId: integer("user_id")
-    .references(() => user.id)
+    .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
 
   source: text("source", { enum: feedbackSource }).notNull(),
@@ -22,9 +22,9 @@ export const feedback = sqliteTable("feedback", {
   path: text("path").notNull(),
   metadata: text("metadata"),
 
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`(strftime('%s', 'now'))`)
+    .notNull(),
 });
 
 export const feedbackRelations = relations(feedback, ({ one }) => ({

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "551fa247-19a5-448d-847a-5a2effcafc24",
+  "id": "7ed5244d-0bb4-40fb-8dee-462b40505185",
   "prevId": "24b79163-72e1-4b8e-81e8-9fda7de364d4",
   "tables": {
     "workspace": {
@@ -3413,7 +3413,7 @@
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false,
           "default": "(strftime('%s', 'now'))"
         }
@@ -3430,7 +3430,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "feedback_user_id_user_id_fk": {
@@ -3443,7 +3443,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
