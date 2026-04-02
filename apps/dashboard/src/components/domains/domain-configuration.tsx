@@ -69,7 +69,11 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       ? ("completed" as const)
       : status === "Pending Verification"
         ? ("active" as const)
-        : ("upcoming" as const);
+        : // NOTE: "Invalid Configuration" means the domain is verified (ownership proven)
+          // but DNS records are misconfigured — so verification is complete, only DNS needs fixing
+          status === "Invalid Configuration"
+          ? ("completed" as const)
+          : ("upcoming" as const);
 
   const readyState =
     status === "Valid Configuration"

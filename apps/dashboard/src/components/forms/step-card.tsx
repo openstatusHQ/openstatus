@@ -34,7 +34,7 @@ export function StepCard({
 }: React.ComponentProps<"div"> & VariantProps<typeof stepCardVariants>) {
   return (
     <Card
-      data-variant={variant}
+      data-variant={variant ?? "active"}
       className={cn(stepCardVariants({ variant }), className)}
       {...props}
     >
@@ -117,7 +117,7 @@ export function StepCardBadge({
   children,
   className,
   ...props
-}: React.ComponentProps<typeof Badge>) {
+}: Omit<React.ComponentProps<typeof Badge>, "variant">) {
   return (
     <Badge
       data-slot="step-card-badge"
