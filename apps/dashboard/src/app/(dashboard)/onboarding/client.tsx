@@ -224,7 +224,8 @@ export function Client() {
                   onClick={async () => {
                     setSearchParams({ step: "2", intent: item.id });
                     await createFeedbackMutation.mutateAsync({
-                      message: `I'm looking for *${item.title}*`,
+                      source: "onboarding-intent",
+                      message: `I'm looking for ${item.title}`,
                       path: pathname,
                     });
                   }}
@@ -398,9 +399,10 @@ export function Client() {
             <QuestionForm
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
-                  message: `Heard about us via *${values.source}${
+                  source: "onboarding-source",
+                  message: `Heard about us via ${values.source}${
                     values.other ? `: ${values.other}` : ""
-                  }*`,
+                  }`,
                   path: pathname,
                 });
               }}

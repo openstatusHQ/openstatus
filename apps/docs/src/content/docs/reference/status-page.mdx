@@ -32,6 +32,17 @@ A unique identifier that forms part of your status page's default URL. For examp
 
 Allows you to host your status page on a custom domain. Once configured, your status page will be accessible at `https://your-custom-domain.com`.
 
+**DNS Configuration:**
+
+| Domain type | Record | Name | Value | TTL |
+|---|---|---|---|---|
+| Subdomain (e.g., `status.example.com`) | CNAME | `status` | `cname.vercel-dns.com` | 86400 |
+| Apex domain (e.g., `example.com`) | A | `@` | `76.76.21.21` | 86400 |
+
+**Domain verification (conditional):** If your domain is already registered on another Vercel project, a TXT record will be required to prove ownership. The dashboard will display the exact TXT record name and value when this step is needed.
+
+After saving your custom domain in the dashboard, the exact DNS records will be displayed with any additional verification steps needed.
+
 ### Password (Basic Auth)
 
 **Type:** String (optional)
