@@ -67,15 +67,19 @@ export const feedbackRouter = createTRPCRouter({
 
       textLines.push(`*Message:* ${opts.input.message}`);
 
-      await fetch(env.SLACK_FEEDBACK_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: textLines.join("\n"),
-        }),
-      });
+      try {
+        await fetch(env.SLACK_FEEDBACK_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: textLines.join("\n"),
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to send feedback to Slack", err);
+      }
 
       return { success: true } as const;
     }),
