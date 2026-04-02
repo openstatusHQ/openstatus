@@ -1507,6 +1507,10 @@ importers:
         version: 5.9.3
 
   packages/locales:
+    dependencies:
+      date-fns:
+        specifier: 3.6.0
+        version: 3.6.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
