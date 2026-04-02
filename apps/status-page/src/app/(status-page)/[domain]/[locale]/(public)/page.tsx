@@ -30,7 +30,7 @@ import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
@@ -71,16 +71,21 @@ export default function Page() {
   });
 
   // NOTE: we can prefetch that to avoid loading state
-  const { data: uptimeData, isLoading } = useQuery({
-    ...trpc.statusPage.getUptime.queryOptions({
-      slug: domain,
-      pageComponentIds:
-        pageInitial?.pageComponents?.map((c) => c.id.toString()) || [],
-      cardType,
-      barType,
-    }),
-    enabled: !!pageInitial && pageInitial.pageComponents.length > 0,
-  });
+  // NOTE: using skipToken instead of enabled:false to prevent tRPC from including this in a batch request with undefined input
+  const { data: uptimeData, isLoading } = useQuery(
+    trpc.statusPage.getUptime.queryOptions(
+      pageInitial && pageInitial.pageComponents.length > 0
+        ? {
+            slug: domain,
+            pageComponentIds: pageInitial.pageComponents.map((c) =>
+              c.id.toString(),
+            ),
+            cardType,
+            barType,
+          }
+        : skipToken,
+    ),
+  );
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
