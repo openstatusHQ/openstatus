@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === "test") {
 
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
-  const data = await fetch(
+  const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
     {
       body: JSON.stringify({ name: domain }),
@@ -37,11 +37,22 @@ async function addDomainToVercel(domain: string) {
       method: "POST",
     },
   );
-  return data.json();
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("Failed to add domain to Vercel:", { domain, error });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Failed to add custom domain. Please try again. If it continues, contact support.",
+    });
+  }
+
+  return response.json();
 }
 
 async function removeDomainFromVercel(domain: string) {
-  const data = await fetch(
+  const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${env.TEAM_ID_VERCEL}`,
     {
       headers: {
@@ -50,7 +61,18 @@ async function removeDomainFromVercel(domain: string) {
       method: "DELETE",
     },
   );
-  return data.json();
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("Failed to remove domain from Vercel:", { domain, error });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Failed to remove custom domain. Please try again. If it continues, contact support.",
+    });
+  }
+
+  return response.json();
 }
 
 export const pageRouter = createTRPCRouter({
@@ -385,59 +407,44 @@ export const pageRouter = createTRPCRouter({
       const oldDomain = currentPage.customDomain;
       const newDomain = opts.input.customDomain;
 
-      try {
-        // Handle domain changes
-        if (newDomain && !oldDomain) {
-          // Adding a new domain
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: newDomain, updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
+      // Vercel operations first — if they fail, DB is not touched
+      if (newDomain && !oldDomain) {
+        // Adding a new domain
+        await addDomainToVercel(newDomain);
 
-          // Add domain to Vercel using the domain router logic
-          await addDomainToVercel(newDomain);
-        } else if (oldDomain && newDomain !== oldDomain) {
-          // Changing domain - remove old and add new
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: newDomain, updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: newDomain, updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
+      } else if (oldDomain && newDomain && newDomain !== oldDomain) {
+        // Changing domain - add new first, then remove old
+        await addDomainToVercel(newDomain);
+        await removeDomainFromVercel(oldDomain);
 
-          // Remove old domain from Vercel
-          await removeDomainFromVercel(oldDomain);
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: newDomain, updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
+      } else if (oldDomain && newDomain === "") {
+        // Removing domain
+        await removeDomainFromVercel(oldDomain);
 
-          // Add new domain to Vercel
-          if (newDomain) {
-            await addDomainToVercel(newDomain);
-          }
-        } else if (oldDomain && newDomain === "") {
-          // Removing domain
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: "", updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: "", updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
+      } else if (newDomain) {
+        // Same domain re-submitted — ensure it's synced to Vercel
+        await addDomainToVercel(newDomain);
 
-          // Remove domain from Vercel
-          await removeDomainFromVercel(oldDomain);
-        } else {
-          // No change needed, just update the database
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: newDomain, updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
-        }
-      } catch (error) {
-        // If Vercel operations fail, we should rollback the database change
-        // For now, we'll just throw the error
-        console.error("Error updating custom domain:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update custom domain",
-        });
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: newDomain, updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
       }
     }),
 

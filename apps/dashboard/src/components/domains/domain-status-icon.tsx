@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
 
-export default function DomainStatusIcon({
+export function DomainStatusIcon({
   status,
   loading,
 }: {
@@ -13,22 +13,26 @@ export default function DomainStatusIcon({
 }) {
   return loading ? (
     <LoaderCircle
-      className="animate-spin text-muted-foreground"
+      className="size-6 animate-spin text-muted-foreground"
       stroke="currentColor"
     />
   ) : status === "Valid Configuration" ? (
     <CheckCircle2
-      fill="#22c55e"
+      fill="var(--color-success)"
       stroke="currentColor"
-      className="text-background"
+      className="size-6 text-background"
     />
   ) : status === "Pending Verification" ? (
     <AlertCircle
-      fill="#eab308"
+      fill="var(--color-warning)"
       stroke="currentColor"
-      className="text-background"
+      className="size-6 text-background"
     />
   ) : (
-    <XCircle fill="#ef4444" stroke="currentColor" className="text-background" />
+    <XCircle
+      fill="var(--color-destructive)"
+      stroke="currentColor"
+      className="size-6 text-background"
+    />
   );
 }

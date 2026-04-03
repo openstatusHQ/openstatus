@@ -10,9 +10,17 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 
 import { Note } from "@/components/common/note";
+import {
+  StepCard,
+  StepCardBadge,
+  StepCardContent,
+  StepCardHeader,
+  StepCardIndicator,
+  StepCardTitle,
+} from "@/components/forms/step-card";
 import { getSubdomain } from "@/lib/domains";
 import { CircleCheck } from "lucide-react";
-import DomainStatusIcon from "./domain-status-icon";
+import { DomainStatusIcon } from "./domain-status-icon";
 import { useDomainStatus } from "./use-domain-status";
 
 export const InlineSnippet = ({
@@ -34,19 +42,16 @@ export const InlineSnippet = ({
   );
 };
 
+const CNAME_VALUE =
+  process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_CNAME || "cname.vercel-dns.com";
+const A_RECORD_VALUE =
+  process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_A || "76.76.21.21";
+
 // FIXME: add loading state!
 export default function DomainConfiguration({ domain }: { domain: string }) {
-  const { status, domainJson, isLoading } = useDomainStatus(domain);
+  const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
 
   if (!status || !domainJson) return null;
-
-  if (status === "Valid Configuration")
-    return (
-      <Note color="success">
-        <CircleCheck />
-        Your domain is configured and you can use it to access your status page.
-      </Note>
-    );
 
   const subdomain =
     domainJson?.name && domainJson?.apexName
@@ -59,114 +64,171 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
     null;
 
   return (
-    <div>
-      <div className="mb-4 flex items-center space-x-2">
+    <div className="space-y-3">
+      <div className="flex items-center space-x-2">
         <DomainStatusIcon status={status} loading={isLoading} />
-        <p className="font-semibold">{status}</p>
+        <p className="font-semibold text-sm">{status}</p>
         <Badge variant="secondary">{domain}</Badge>
       </div>
-      {txtVerification ? (
-        <>
-          <p className="text-sm">
-            Please set the following TXT record on{" "}
-            <InlineSnippet>{domainJson.apexName}</InlineSnippet> to prove
-            ownership of <InlineSnippet>{domainJson.name}</InlineSnippet>:
-          </p>
-          <div className="my-5 flex items-start justify-start space-x-10 rounded-md bg-muted p-2">
-            <div>
-              <p className="font-bold text-sm">Type</p>
-              <p className="mt-2 font-mono text-sm">{txtVerification.type}</p>
-            </div>
-            <div>
-              <p className="font-bold text-sm">Name</p>
-              <p className="mt-2 font-mono text-sm">
-                {txtVerification.domain.slice(
-                  0,
-                  txtVerification.domain.length -
-                    (domainJson?.apexName?.length || 0) -
-                    1,
-                )}
+
+      {/* Step 1: DNS Configuration */}
+      <StepCard variant={steps.dns}>
+        <StepCardHeader>
+          <StepCardIndicator step={1} />
+          <StepCardTitle>Configure DNS records</StepCardTitle>
+          <StepCardBadge>Done</StepCardBadge>
+        </StepCardHeader>
+        <StepCardContent>
+          {status === "Unknown Error" ? (
+            <p className="text-sm">{domainJson?.error?.message}</p>
+          ) : (
+            <>
+              <Tabs defaultValue={subdomain ? "CNAME" : "A"}>
+                <TabsList>
+                  <TabsTrigger value="A">
+                    A Record{!subdomain && " (recommended)"}
+                  </TabsTrigger>
+                  <TabsTrigger value="CNAME">
+                    CNAME Record{subdomain && " (recommended)"}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="A" className="space-y-2">
+                  <p className="text-sm">
+                    To configure your apex domain (
+                    <InlineSnippet>{domainJson.apexName}</InlineSnippet>
+                    ), set the following A record on your DNS provider:
+                  </p>
+                  <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+                    <div>
+                      <p className="font-bold text-sm">Type</p>
+                      <p className="mt-2 font-mono text-sm">A</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Name</p>
+                      <p className="mt-2 font-mono text-sm">@</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Value</p>
+                      <p className="mt-2 font-mono text-sm">{A_RECORD_VALUE}</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">TTL</p>
+                      <p className="mt-2 font-mono text-sm">86400</p>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="CNAME">
+                  <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+                    <div>
+                      <p className="font-bold text-sm">Type</p>
+                      <p className="mt-2 font-mono text-sm">CNAME</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Name</p>
+                      <p className="mt-2 font-mono text-sm">
+                        {subdomain ?? "www"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Value</p>
+                      <p className="mt-2 font-mono text-sm">{CNAME_VALUE}</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">TTL</p>
+                      <p className="mt-2 font-mono text-sm">86400</p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+              <p className="mt-3 text-muted-foreground text-sm">
+                Note: for TTL, if <InlineSnippet>86400</InlineSnippet> is not
+                available, set the highest value possible. Domain propagation
+                can take up to an hour.
               </p>
-            </div>
-            <div>
-              <p className="font-bold text-sm">Value</p>
-              <p className="mt-2 font-mono text-sm">
-                <span className="text-ellipsis">{txtVerification.value}</span>
-              </p>
-            </div>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            Warning: if you are using this domain for another site, setting this
-            TXT record will transfer domain ownership away from that site and
-            break it. Please exercise caution when setting this record.
-          </p>
-        </>
-      ) : status === "Unknown Error" ? (
-        <p className="mb-5 text-sm">{domainJson?.error?.message}</p>
-      ) : (
-        <>
-          <Tabs defaultValue={subdomain ? "CNAME" : "A"}>
-            <TabsList>
-              <TabsTrigger value="A">
-                A Record{!subdomain && " (recommended)"}
-              </TabsTrigger>
-              <TabsTrigger value="CNAME">
-                CNAME Record{subdomain && " (recommended)"}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="A" className="space-y-2">
+            </>
+          )}
+        </StepCardContent>
+      </StepCard>
+
+      {/* Step 2: Domain Verification */}
+      <StepCard variant={steps.verification}>
+        <StepCardHeader>
+          <StepCardIndicator step={2} />
+          <StepCardTitle>Verify domain ownership</StepCardTitle>
+          <StepCardBadge>Done</StepCardBadge>
+        </StepCardHeader>
+        <StepCardContent>
+          {txtVerification ? (
+            <>
               <p className="text-sm">
-                To configure your apex domain (
-                <InlineSnippet>{domainJson.apexName}</InlineSnippet>
-                ), set the following A record on your DNS provider to continue:
+                Set the following TXT record on{" "}
+                <InlineSnippet>{domainJson.apexName}</InlineSnippet> to prove
+                ownership of <InlineSnippet>{domainJson.name}</InlineSnippet>:
               </p>
-              <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+              <div className="my-3 flex items-start justify-start space-x-10 rounded-md bg-muted p-2">
                 <div>
                   <p className="font-bold text-sm">Type</p>
-                  <p className="mt-2 font-mono text-sm">A</p>
+                  <p className="mt-2 font-mono text-sm">
+                    {txtVerification.type}
+                  </p>
                 </div>
                 <div>
                   <p className="font-bold text-sm">Name</p>
-                  <p className="mt-2 font-mono text-sm">@</p>
+                  <p className="mt-2 font-mono text-sm">
+                    {txtVerification.domain.slice(
+                      0,
+                      txtVerification.domain.length -
+                        (domainJson?.apexName?.length || 0) -
+                        1,
+                    )}
+                  </p>
                 </div>
                 <div>
                   <p className="font-bold text-sm">Value</p>
-                  <p className="mt-2 font-mono text-sm">76.76.21.21</p>
-                </div>
-                <div>
-                  <p className="font-bold text-sm">TTL</p>
-                  <p className="mt-2 font-mono text-sm">86400</p>
+                  <p className="mt-2 break-all font-mono text-sm">
+                    {txtVerification.value}
+                  </p>
                 </div>
               </div>
-            </TabsContent>
-            <TabsContent value="CNAME">
-              <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
-                <div>
-                  <p className="font-bold text-sm">Type</p>
-                  <p className="mt-2 font-mono text-sm">CNAME</p>
-                </div>
-                <div>
-                  <p className="font-bold text-sm">Name</p>
-                  <p className="mt-2 font-mono text-sm">{subdomain ?? "www"}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-sm">Value</p>
-                  <p className="mt-2 font-mono text-sm">cname.vercel-dns.com</p>
-                </div>
-                <div>
-                  <p className="font-bold text-sm">TTL</p>
-                  <p className="mt-2 font-mono text-sm">86400</p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-          <p className="muted-foreground mt-5 text-sm">
-            Note: for TTL, if <InlineSnippet>86400</InlineSnippet> is not
-            available, set the highest value possible. Also, domain propagation
-            can take up to an hour.
-          </p>
-        </>
-      )}
+              <p className="text-muted-foreground text-sm">
+                Warning: if you are using this domain for another site, setting
+                this TXT record will transfer domain ownership away from that
+                site and break it. Please exercise caution when setting this
+                record.
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              A TXT record may be required to verify domain ownership. The exact
+              record values will appear here once DNS is configured.
+            </p>
+          )}
+        </StepCardContent>
+      </StepCard>
+
+      {/* Step 3: Ready */}
+      <StepCard variant={steps.ready}>
+        <StepCardHeader>
+          <StepCardIndicator step={3} />
+          <StepCardTitle>Ready</StepCardTitle>
+          <StepCardBadge>Done</StepCardBadge>
+        </StepCardHeader>
+        <StepCardContent>
+          {steps.ready === "completed" ? (
+            <Note color="success">
+              <CircleCheck />
+              Your domain is configured and you can use it to access your status
+              page.
+            </Note>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Your status page will be live at{" "}
+              <InlineSnippet>{domain}</InlineSnippet> once the steps above are
+              complete.
+            </p>
+          )}
+        </StepCardContent>
+      </StepCard>
     </div>
   );
 }
