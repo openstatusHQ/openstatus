@@ -9,7 +9,7 @@ const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' 'unsafe-inline';
-    img-src 'self' blob: data: https://*.public.blob.vercel-storage.com;
+    img-src *;
     font-src 'self';
     object-src 'none';
     base-uri 'self';
