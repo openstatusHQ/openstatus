@@ -164,7 +164,7 @@ describe("trackingInterceptor", () => {
     );
     const next = mockNextReject(new Error("not found"));
 
-    expect(interceptor(next)(req as never)).rejects.toThrow("not found");
+    await expect(interceptor(next)(req as never)).rejects.toThrow("not found");
     expect(mockSetupAnalytics).not.toHaveBeenCalled();
   });
 
