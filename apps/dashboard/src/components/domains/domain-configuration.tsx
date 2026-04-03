@@ -44,7 +44,7 @@ export const InlineSnippet = ({
 
 // FIXME: add loading state!
 export default function DomainConfiguration({ domain }: { domain: string }) {
-  const { status, domainJson, isLoading } = useDomainStatus(domain);
+  const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
 
   if (!status || !domainJson) return null;
 
@@ -58,28 +58,6 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       domainJson?.verification?.find((x) => x.type === "TXT")) ||
     null;
 
-  // Determine step states
-  const dnsState =
-    status === "Valid Configuration" || status === "Pending Verification"
-      ? ("completed" as const)
-      : ("active" as const);
-
-  const verificationState =
-    status === "Valid Configuration"
-      ? ("completed" as const)
-      : status === "Pending Verification"
-        ? ("active" as const)
-        : // NOTE: "Invalid Configuration" means the domain is verified (ownership proven)
-          // but DNS records are misconfigured — so verification is complete, only DNS needs fixing
-          status === "Invalid Configuration"
-          ? ("completed" as const)
-          : ("upcoming" as const);
-
-  const readyState =
-    status === "Valid Configuration"
-      ? ("completed" as const)
-      : ("upcoming" as const);
-
   return (
     <div className="space-y-3">
       <div className="flex items-center space-x-2">
@@ -89,7 +67,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       </div>
 
       {/* Step 1: DNS Configuration */}
-      <StepCard variant={dnsState}>
+      <StepCard variant={steps.dns}>
         <StepCardHeader>
           <StepCardIndicator step={1} />
           <StepCardTitle>Configure DNS records</StepCardTitle>
@@ -170,7 +148,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       </StepCard>
 
       {/* Step 2: Domain Verification */}
-      <StepCard variant={verificationState}>
+      <StepCard variant={steps.verification}>
         <StepCardHeader>
           <StepCardIndicator step={2} />
           <StepCardTitle>Verify domain ownership</StepCardTitle>
@@ -226,14 +204,14 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       </StepCard>
 
       {/* Step 3: Ready */}
-      <StepCard variant={readyState}>
+      <StepCard variant={steps.ready}>
         <StepCardHeader>
           <StepCardIndicator step={3} />
           <StepCardTitle>Ready</StepCardTitle>
           <StepCardBadge>Done</StepCardBadge>
         </StepCardHeader>
         <StepCardContent>
-          {readyState === "completed" ? (
+          {steps.ready === "completed" ? (
             <Note color="success">
               <CircleCheck />
               Your domain is configured and you can use it to access your status

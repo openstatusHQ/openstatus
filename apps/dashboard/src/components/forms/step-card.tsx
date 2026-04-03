@@ -10,6 +10,10 @@ import { Badge } from "@openstatus/ui/components/ui/badge";
 import { type VariantProps, cva } from "class-variance-authority";
 import { Check } from "lucide-react";
 
+export type StepCardVariant = NonNullable<
+  VariantProps<typeof stepCardVariants>["variant"]
+>;
+
 const stepCardVariants = cva(
   "group relative w-full overflow-hidden py-0 gap-0 shadow-none",
   {
