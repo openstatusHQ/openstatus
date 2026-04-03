@@ -62,7 +62,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-3 border border-transparent px-4">
         <DomainStatusIcon status={status} loading={isLoading} />
         <p className="font-semibold text-sm">{status}</p>
         <Badge variant="secondary">{domain}</Badge>
