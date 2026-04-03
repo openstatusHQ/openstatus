@@ -9,12 +9,14 @@ const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
     style-src 'self' 'unsafe-inline';
-    img-src 'self' blob: data:;
+    img-src 'self' blob: data: https://*.public.blob.vercel-storage.com;
     font-src 'self';
     object-src 'none';
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
+    connect-src 'self' https://*.ingest.us.sentry.io;
+    worker-src 'self' blob:;
     upgrade-insecure-requests;
     `;
 
