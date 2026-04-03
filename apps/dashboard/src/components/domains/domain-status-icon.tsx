@@ -18,19 +18,19 @@ export function DomainStatusIcon({
     />
   ) : status === "Valid Configuration" ? (
     <CheckCircle2
-      fill="#22c55e"
+      fill="var(--color-success)"
       stroke="currentColor"
       className="size-6 text-background"
     />
   ) : status === "Pending Verification" ? (
     <AlertCircle
-      fill="#eab308"
+      fill="var(--color-warning)"
       stroke="currentColor"
       className="size-6 text-background"
     />
   ) : (
     <XCircle
-      fill="#ef4444"
+      fill="var(--color-destructive)"
       stroke="currentColor"
       className="size-6 text-background"
     />
