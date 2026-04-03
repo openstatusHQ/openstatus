@@ -18,84 +18,85 @@ type RpcEventMapping = {
 
 /**
  * Mapping from "ServiceTypeName/MethodName" to OpenPanel event + optional props.
+ * Keys use PascalCase method names matching DescMethod.name (the proto source name).
  * Matches the same Events used by v1 REST trackMiddleware for parity.
  */
 export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   // MonitorService
-  "openstatus.monitor.v1.MonitorService/createHTTPMonitor": {
+  "openstatus.monitor.v1.MonitorService/CreateHTTPMonitor": {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
   },
-  "openstatus.monitor.v1.MonitorService/createTCPMonitor": {
+  "openstatus.monitor.v1.MonitorService/CreateTCPMonitor": {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
   },
-  "openstatus.monitor.v1.MonitorService/createDNSMonitor": {
+  "openstatus.monitor.v1.MonitorService/CreateDNSMonitor": {
     event: Events.CreateMonitor,
     eventProps: ["url", "jobType"],
   },
-  "openstatus.monitor.v1.MonitorService/updateHTTPMonitor": {
+  "openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor": {
     event: Events.UpdateMonitor,
   },
-  "openstatus.monitor.v1.MonitorService/updateTCPMonitor": {
+  "openstatus.monitor.v1.MonitorService/UpdateTCPMonitor": {
     event: Events.UpdateMonitor,
   },
-  "openstatus.monitor.v1.MonitorService/updateDNSMonitor": {
+  "openstatus.monitor.v1.MonitorService/UpdateDNSMonitor": {
     event: Events.UpdateMonitor,
   },
-  "openstatus.monitor.v1.MonitorService/deleteMonitor": {
+  "openstatus.monitor.v1.MonitorService/DeleteMonitor": {
     event: Events.DeleteMonitor,
   },
 
   // StatusReportService
-  "openstatus.status_report.v1.StatusReportService/createStatusReport": {
+  "openstatus.status_report.v1.StatusReportService/CreateStatusReport": {
     event: Events.CreateReport,
   },
-  "openstatus.status_report.v1.StatusReportService/updateStatusReport": {
+  "openstatus.status_report.v1.StatusReportService/UpdateStatusReport": {
     event: Events.UpdateReport,
   },
-  "openstatus.status_report.v1.StatusReportService/deleteStatusReport": {
+  "openstatus.status_report.v1.StatusReportService/DeleteStatusReport": {
     event: Events.DeleteReport,
   },
-  "openstatus.status_report.v1.StatusReportService/addStatusReportUpdate": {
+  "openstatus.status_report.v1.StatusReportService/AddStatusReportUpdate": {
     event: Events.CreateReportUpdate,
   },
 
   // StatusPageService
-  "openstatus.status_page.v1.StatusPageService/createStatusPage": {
+  "openstatus.status_page.v1.StatusPageService/CreateStatusPage": {
     event: Events.CreatePage,
     eventProps: ["slug"],
   },
-  "openstatus.status_page.v1.StatusPageService/updateStatusPage": {
+  "openstatus.status_page.v1.StatusPageService/UpdateStatusPage": {
     event: Events.UpdatePage,
   },
-  "openstatus.status_page.v1.StatusPageService/deleteStatusPage": {
+  "openstatus.status_page.v1.StatusPageService/DeleteStatusPage": {
     event: Events.DeletePage,
   },
-  "openstatus.status_page.v1.StatusPageService/subscribeToPage": {
+  "openstatus.status_page.v1.StatusPageService/SubscribeToPage": {
     event: Events.SubscribePage,
   },
 
   // MaintenanceService
-  "openstatus.maintenance.v1.MaintenanceService/createMaintenance": {
+  "openstatus.maintenance.v1.MaintenanceService/CreateMaintenance": {
     event: Events.CreateMaintenance,
   },
-  "openstatus.maintenance.v1.MaintenanceService/updateMaintenance": {
+  "openstatus.maintenance.v1.MaintenanceService/UpdateMaintenance": {
     event: Events.UpdateMaintenance,
   },
-  "openstatus.maintenance.v1.MaintenanceService/deleteMaintenance": {
+  "openstatus.maintenance.v1.MaintenanceService/DeleteMaintenance": {
     event: Events.DeleteMaintenance,
   },
 
   // NotificationService
-  "openstatus.notification.v1.NotificationService/createNotification": {
+  "openstatus.notification.v1.NotificationService/CreateNotification": {
     event: Events.CreateNotification,
     eventProps: ["provider"],
   },
-  "openstatus.notification.v1.NotificationService/updateNotification": {
+  "openstatus.notification.v1.NotificationService/UpdateNotification": {
     event: Events.UpdateNotification,
   },
-  "openstatus.notification.v1.NotificationService/deleteNotification": {
+  "openstatus.notification.v1.NotificationService/DeleteNotification": {
     event: Events.DeleteNotification,
   },
 };
