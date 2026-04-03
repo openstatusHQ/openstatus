@@ -418,9 +418,9 @@ export const pageRouter = createTRPCRouter({
           .where(and(...whereConditions))
           .run();
       } else if (oldDomain && newDomain && newDomain !== oldDomain) {
-        // Changing domain - remove old and add new
-        await removeDomainFromVercel(oldDomain);
+        // Changing domain - add new first, then remove old
         await addDomainToVercel(newDomain);
+        await removeDomainFromVercel(oldDomain);
 
         await opts.ctx.db
           .update(page)

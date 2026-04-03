@@ -53,17 +53,10 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
 
   if (!status || !domainJson) return null;
 
-  const subdomainFromJson =
+  const subdomain =
     domainJson?.name && domainJson?.apexName
       ? getSubdomain(domainJson.name, domainJson.apexName)
       : null;
-
-  // Fallback: derive subdomain from the domain prop when Vercel doesn't provide apexName
-  const parts = domain.split(".");
-  const subdomainFromDomain =
-    parts.length > 2 ? parts.slice(0, -2).join(".") : null;
-
-  const subdomain = subdomainFromJson ?? subdomainFromDomain;
 
   const txtVerification =
     (status === "Pending Verification" &&
