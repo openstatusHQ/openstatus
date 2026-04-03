@@ -9,8 +9,38 @@ import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
 export default auth(async (req) => {
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
+    style-src 'self' 'nonce-${nonce}' 'unsafe-inline';
+    img-src *;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    connect-src 'self' https://*.ingest.us.sentry.io;
+    worker-src 'self' blob:;
+    upgrade-insecure-requests;
+  `
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  // Pass nonce to server components via request headers
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  function withCsp(res: NextResponse): NextResponse {
+    res.headers.set("Content-Security-Policy", cspHeader);
+    return res;
+  }
+
   const url = req.nextUrl.clone();
-  const response = NextResponse.next();
+  const response = withCsp(
+    NextResponse.next({ request: { headers: requestHeaders } }),
+  );
   const cookies = req.cookies;
   const headers = req.headers;
   const host = headers.get("x-forwarded-host");
@@ -74,7 +104,9 @@ export default auth(async (req) => {
       route.type === "hostname"
         ? redirectPath.replace(`/${route.prefix}`, "")
         : redirectPath;
-    return NextResponse.redirect(new URL(externalPath || "/", req.url));
+    return withCsp(
+      NextResponse.redirect(new URL(externalPath || "/", req.url)),
+    );
   }
 
   console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
@@ -97,7 +129,7 @@ export default auth(async (req) => {
           )}`,
         );
         console.log("redirect to /login", url.toString());
-        return NextResponse.redirect(url);
+        return withCsp(NextResponse.redirect(url));
       }
 
       const url = new URL(
@@ -105,7 +137,7 @@ export default auth(async (req) => {
           type === "pathname" ? `/${prefix}` : ""
         }/login?redirect=${encodeURIComponent(pathname)}`,
       );
-      return NextResponse.redirect(url);
+      return withCsp(NextResponse.redirect(url));
     }
     if (password === _page.password && url.pathname.endsWith("/login")) {
       const redirect = url.searchParams.get("redirect");
@@ -114,14 +146,16 @@ export default auth(async (req) => {
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
         const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
         console.log("redirect to /", url.toString());
-        return NextResponse.redirect(url);
+        return withCsp(NextResponse.redirect(url));
       }
 
-      return NextResponse.redirect(
-        new URL(
-          `${req.nextUrl.origin}${
-            redirect ?? type === "pathname" ? `/${prefix}` : "/"
-          }`,
+      return withCsp(
+        NextResponse.redirect(
+          new URL(
+            `${req.nextUrl.origin}${
+              redirect ?? type === "pathname" ? `/${prefix}` : "/"
+            }`,
+          ),
         ),
       );
     }
@@ -138,7 +172,7 @@ export default auth(async (req) => {
       const url = new URL(
         `${origin}${type === "pathname" ? `/${prefix}` : ""}/login`,
       );
-      return NextResponse.redirect(url);
+      return withCsp(NextResponse.redirect(url));
     }
     if (
       pathname.endsWith("/login") &&
@@ -148,7 +182,7 @@ export default auth(async (req) => {
       const url = new URL(
         `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
       );
-      return NextResponse.redirect(url);
+      return withCsp(NextResponse.redirect(url));
     }
   }
 
@@ -159,7 +193,7 @@ export default auth(async (req) => {
     const rewriteUrl = new URL(`/${prefix}${url.pathname}`, req.url);
     // Preserve search params from original request
     rewriteUrl.search = url.search;
-    return NextResponse.rewrite(rewriteUrl);
+    return withCsp(NextResponse.rewrite(rewriteUrl));
   }
 
   console.log({
@@ -175,7 +209,7 @@ export default auth(async (req) => {
       const pathname = pathnames.slice(2).join("/");
       const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
       rewriteUrl.search = url.search;
-      return NextResponse.rewrite(rewriteUrl);
+      return withCsp(NextResponse.rewrite(rewriteUrl));
     }
     if (_page.customDomain && subdomain) {
       console.log({ url: req.url });
@@ -186,24 +220,24 @@ export default auth(async (req) => {
           `https://${_page.slug}.stpg.dev`,
         );
         rewriteUrl.search = url.search;
-        return NextResponse.rewrite(rewriteUrl);
+        return withCsp(NextResponse.rewrite(rewriteUrl));
       }
       const rewriteUrl = new URL(
         `${url.pathname}`,
         `https://${_page.slug}.stpg.dev`,
       );
       rewriteUrl.search = url.search;
-      return NextResponse.rewrite(rewriteUrl);
+      return withCsp(NextResponse.rewrite(rewriteUrl));
     }
     const rewriteUrl = new URL(`/${_page.slug}`, req.url);
     rewriteUrl.search = url.search;
-    return NextResponse.rewrite(rewriteUrl);
+    return withCsp(NextResponse.rewrite(rewriteUrl));
   }
   if (host?.includes("openstatus.dev")) {
     const rewriteUrl = new URL(route.rewritePath, req.url);
     // Preserve search params from original request
     rewriteUrl.search = url.search;
-    return NextResponse.rewrite(rewriteUrl);
+    return withCsp(NextResponse.rewrite(rewriteUrl));
   }
 
   // Rewrite to the resolved path when it differs from the incoming pathname
@@ -211,7 +245,7 @@ export default auth(async (req) => {
   if (route.rewritePath !== url.pathname) {
     const rewriteUrl = new URL(route.rewritePath, req.url);
     rewriteUrl.search = url.search;
-    return NextResponse.rewrite(rewriteUrl);
+    return withCsp(NextResponse.rewrite(rewriteUrl));
   }
 
   return response;
