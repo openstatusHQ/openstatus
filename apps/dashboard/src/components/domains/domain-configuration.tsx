@@ -42,16 +42,28 @@ export const InlineSnippet = ({
   );
 };
 
+const CNAME_VALUE =
+  process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_CNAME || "cname.vercel-dns.com";
+const A_RECORD_VALUE =
+  process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_A || "76.76.21.21";
+
 // FIXME: add loading state!
 export default function DomainConfiguration({ domain }: { domain: string }) {
   const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
 
   if (!status || !domainJson) return null;
 
-  const subdomain =
+  const subdomainFromJson =
     domainJson?.name && domainJson?.apexName
       ? getSubdomain(domainJson.name, domainJson.apexName)
       : null;
+
+  // Fallback: derive subdomain from the domain prop when Vercel doesn't provide apexName
+  const parts = domain.split(".");
+  const subdomainFromDomain =
+    parts.length > 2 ? parts.slice(0, -2).join(".") : null;
+
+  const subdomain = subdomainFromJson ?? subdomainFromDomain;
 
   const txtVerification =
     (status === "Pending Verification" &&
@@ -104,7 +116,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                     </div>
                     <div>
                       <p className="font-bold text-sm">Value</p>
-                      <p className="mt-2 font-mono text-sm">76.76.21.21</p>
+                      <p className="mt-2 font-mono text-sm">{A_RECORD_VALUE}</p>
                     </div>
                     <div>
                       <p className="font-bold text-sm">TTL</p>
@@ -126,9 +138,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                     </div>
                     <div>
                       <p className="font-bold text-sm">Value</p>
-                      <p className="mt-2 font-mono text-sm">
-                        cname.vercel-dns.com
-                      </p>
+                      <p className="mt-2 font-mono text-sm">{CNAME_VALUE}</p>
                     </div>
                     <div>
                       <p className="font-bold text-sm">TTL</p>
