@@ -1,15 +1,5 @@
 "use client";
 
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { cn } from "@openstatus/ui/lib/utils";
-
-import { Note } from "@/components/common/note";
 import {
   StepCard,
   StepCardBadge,
@@ -19,7 +9,14 @@ import {
   StepCardTitle,
 } from "@/components/forms/step-card";
 import { getSubdomain } from "@/lib/domains";
-import { CircleCheck } from "lucide-react";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
 import { DomainStatusIcon } from "./domain-status-icon";
 import { useDomainStatus } from "./use-domain-status";
 
@@ -201,30 +198,6 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
             <p className="text-muted-foreground text-sm">
               A TXT record may be required to verify domain ownership. The exact
               record values will appear here once DNS is configured.
-            </p>
-          )}
-        </StepCardContent>
-      </StepCard>
-
-      {/* Step 3: Ready */}
-      <StepCard variant={steps.ready}>
-        <StepCardHeader>
-          <StepCardIndicator step={3} />
-          <StepCardTitle>Ready</StepCardTitle>
-          <StepCardBadge>Done</StepCardBadge>
-        </StepCardHeader>
-        <StepCardContent>
-          {steps.ready === "completed" ? (
-            <Note color="success">
-              <CircleCheck />
-              Your domain is configured and you can use it to access your status
-              page.
-            </Note>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              Your status page will be live at{" "}
-              <InlineSnippet>{domain}</InlineSnippet> once the steps above are
-              complete.
             </p>
           )}
         </StepCardContent>
