@@ -69,7 +69,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       </div>
 
       {/* Step 1: DNS Configuration */}
-      <StepCard variant={"completed"}>
+      <StepCard variant={steps.dns}>
         <StepCardHeader>
           <StepCardIndicator step={1} />
           <StepCardTitle>Configure DNS records</StepCardTitle>
