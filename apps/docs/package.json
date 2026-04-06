@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview",
+    "preview": "wrangler dev",
+    "deploy": "wrangler deploy",
     "astro": "astro"
   },
   "dependencies": {
@@ -22,14 +23,14 @@
     "astro-font": "1.1.0",
     "marked": "17.0.1",
     "shiki": "4.0.2",
-    "sharp": "0.34.5",
     "starlight-image-zoom": "0.14.1",
     "starlight-links-validator": "0.20.1",
     "starlight-llms-txt": "0.8.0",
     "starlight-showcases": "0.3.2",
     "starlight-sidebar-topics": "0.7.1",
     "tailwindcss": "4.2.2",
-    "unplugin-icons": "23.0.1"
+    "unplugin-icons": "23.0.1",
+    "wrangler": "^4.78.0"
   },
   "devDependencies": {
     "@iconify-json/lucide": "1.2.98",
