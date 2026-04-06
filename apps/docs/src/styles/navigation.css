@@ -11,7 +11,7 @@
   @apply justify-stretch
 }
 .has-sidebar .search-bar{
-  @apply xl:w-[350px] mr-4 lg:mr-12 
+  @apply xl:w-[280px] mr-4 lg:mr-6
 }
 .has-sidebar .navbar-actions{
   @apply ml-auto;

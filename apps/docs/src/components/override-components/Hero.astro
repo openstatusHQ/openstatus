@@ -19,7 +19,7 @@ const is404 = Astro.locals.starlightRoute?.id === "404";
 ---
 
 <div
-  class="hero flex flex-col items-center mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-35"
+  class="hero flex flex-col items-center mx-auto px-4 sm:px-6 lg:px-16 xl:px-24 pt-20 pb-35"
 >
   {title && <h1 set:html={title} class="mb-8 text-center rounded-2xl" />}
   {tagline && <p set:html={tagline} class="text-xl text-center" />}
@@ -55,10 +55,11 @@ const is404 = Astro.locals.starlightRoute?.id === "404";
 <style>
   @layer starlight.core {
     h1 {
-      font-size: 7rem !important;
-      line-height: 6.5rem !important;
-      letter-spacing: -4px;
+      font-size: 5rem !important;
+      line-height: 5rem !important;
+      letter-spacing: -3px;
       color: var(--sl-color-white);
+      max-width: 18ch;
     }
 
     .badges {

@@ -179,8 +179,12 @@ const { sublist, nested } = Astro.props;
       border-radius: 8px;
       text-decoration: none;
       color: var(--sl-color-gray-2);
-      padding: 1px 4px;
-      line-height: 1.4;
+      padding: 0.4rem 0.5rem;
+      line-height: 1.5;
+    }
+
+    ul ul li + li {
+      margin-top: 0.15rem;
     }
 
     a:hover,

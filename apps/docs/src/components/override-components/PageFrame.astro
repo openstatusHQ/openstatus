@@ -64,14 +64,18 @@ const { hasSidebar } = Astro.locals.starlightRoute;
     }
     @media (max-width: 800px) {
       .header {
-        background-color: var(--sl-color-black);
+        background-color: var(--sl-color-bg, var(--sl-color-black));
         padding: 6px var(--sl-nav-pad-x);
+        border-top: 1px solid
+          color-mix(in srgb, var(--sl-color-white) 10%, transparent);
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--sl-color-white) 10%, transparent);
       }
     }
 
-    :global([data-has-sidebar]) .main-frame {
-      padding-top: 2rem;
-    }
+    /* :global([data-has-sidebar]) .main-frame {
+      padding-top: 2rem; 
+    } */
     @media (max-width: 1156px) {
       :global([data-has-sidebar]) .main-frame {
         padding-top: 4rem;
@@ -81,7 +85,7 @@ const { hasSidebar } = Astro.locals.starlightRoute;
     .sidebar-pane {
       visibility: var(--sl-sidebar-visibility, hidden);
       position: sticky;
-      height: 80vh;
+      height: calc(100vh - var(--sl-nav-height) - 2rem);
       z-index: var(--sl-z-index-menu);
       scrollbar-width: none;
       background-color: var(--sl-color-black);

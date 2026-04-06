@@ -37,7 +37,16 @@ import Breadcrumb from "../Breadcrumb.astro";
     .main-pane {
       /* isolation: isolate; */
       width: 100%;
+      padding-top: 2rem;
     }
+
+    /* @media (max-width: 1156px) {
+      .main-pane {
+        padding-top: 4rem;
+      }
+    } */
+
+
     :global([data-has-sidebar][data-has-toc]) .main-pane {
       overflow: hidden;
     }
