@@ -1,0 +1,231 @@
+---
+import config from "@/config/config.json";
+import social from "@/config/social.json";
+import menu from "@/config/menu.json";
+import { Icon } from "@astrojs/starlight/components";
+import { markdownify } from "@/lib/utils/textConverter";
+
+const footer = menu.footer;
+---
+
+<footer>
+  <div class="container">
+    <div class="top-footer">
+      {
+        footer.community && (
+          <div>
+            <h4>{footer.community.title}</h4>
+            <ul>
+              {footer.community?.links.map((link: any) => (
+                <li>
+                  <a href={link.url}>{link.name}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+      {
+        footer.help_links && (
+          <div>
+            <h4>{footer.help_links.title}</h4>
+            <ul>
+              {footer.help_links?.links.map((link: any) => (
+                <li>
+                  <a href={link.url}>{link.name}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+      {
+        footer.company && (
+          <div>
+            <h4>{footer.company.title}</h4>
+            <ul>
+              {footer.company?.links.map((link: any) => (
+                <li>
+                  <a href={link.url}>{link.name}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+
+      {
+        config?.params?.footer_contact?.enable && (
+          <div>
+            <h4>Connect With Us</h4>
+            <form
+              action={config?.params?.footer_contact?.action}
+              class="mail-form"
+            >
+              <input type="email" placeholder="Enter your email" required />
+              <button type="submit" aria-label="Submit email">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21.0477 3.05293C18.8697 0.707361 2.48648 6.4532 2.50001 8.551C2.51535 10.9299 8.89809 11.6617 10.6672 12.1581C11.7311 12.4565 12.016 12.7625 12.2613 13.8781C13.3723 18.9305 13.9301 21.4435 15.2014 21.4996C17.2278 21.5892 23.1733 5.342 21.0477 3.05293Z"
+                    class="stroke-black dark:stroke-white"
+                    stroke-width="1.5"
+                  />
+                  <path
+                    d="M11.5 12.5L15 9"
+                    class="stroke-black dark:stroke-white"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </form>
+
+            <ul class="social-icons">
+              {social.main.map((item) => (
+                <li>
+                  <a href={item.href} aria-label={item.label}>
+                    <Icon
+                      name={item?.icon as any}
+                      color="var(--sl-color-white)"
+                      size="20px"
+                    />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </div>
+    <div class="bottom-footer">
+      <p set:html={markdownify(config?.params?.copyright)} />
+    </div>
+
+    <!-- OpenStatus branding -->
+    <div class="openstatus-footer">
+      <div class="github">
+        <span>Show your support! Star us on GitHub</span>
+        <a class="github-button" href="https://github.com/openstatusHQ/openstatus" data-color-scheme="no-preference: light; light: light; dark: light;" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star openstatusHQ/openstatus on GitHub">Star</a>
+      </div>
+      <a href="https://status.openstatus.dev" target="_blank">
+        <img src='https://status.openstatus.dev/badge/v2?variant=outline' alt="OpenStatus Badge">
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  @layer starlight.core {
+    .top-footer {
+      border-bottom: 1px solid var(--sl-color-gray-6);
+      padding: 60px 0;
+      display: grid;
+      gap: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    .top-footer h4 {
+      font-size: 1rem !important;
+      margin-bottom: 4rem;
+    }
+    .top-footer ul {
+      list-style: none;
+      padding: 0;
+    }
+    .top-footer ul li {
+      margin-bottom: 1.2rem;
+    }
+    .top-footer ul li a {
+      color: var(--sl-color-text);
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+    .top-footer ul li a:hover {
+      color: var(--color-primary);
+    }
+    .mail-form {
+      border: 1px solid var(--sl-color-gray-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 12px;
+      padding: 0.5rem 0.8rem;
+      background-color: var(--sl-color-black);
+    }
+    .mail-form input {
+      background-color: transparent;
+      width: 90%;
+    }
+    .mail-form input:focus {
+      outline: none;
+    }
+    .mail-form button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: transparent;
+      cursor: pointer;
+    }
+    .social-icons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+    .social-icons li a {
+      background: color-mix(in srgb, var(--sl-color-gray-4) 20%, transparent);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.6s ease;
+    }
+    .social-icons li a:hover {
+      background: var(--color-primary-gradient);
+      color: white !important;
+    }
+
+    .bottom-footer {
+      padding: 32px 0;
+      border-top: 1px solid var(--sl-color-hairline);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .bottom-footer a {
+      color: var(--sl-color-text);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .bottom-footer a:hover {
+      color: var(--color-primary);
+    }
+
+    .openstatus-footer {
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+    .github {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5em;
+      margin-bottom: 1rem;
+      font-size: var(--sl-text-sm);
+    }
+    .github span {
+      cursor: default;
+    }
+  }
+</style>

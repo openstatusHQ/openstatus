@@ -1,0 +1,266 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+import { Badge } from "@astrojs/starlight/components";
+import SidebarRestorePoint from "./SidebarRestorePoint.astro";
+import { plainLabel, getIconFromLabel } from "@/lib/utils/textConverter";
+
+// Inline flattenSidebar since it's not exported from @astrojs/starlight
+function flattenSidebar(entries: any[]): any[] {
+  return entries.flatMap((entry: any) =>
+    entry.type === "group" ? flattenSidebar(entry.entries) : [entry]
+  );
+}
+
+const { sublist, nested } = Astro.props;
+---
+
+<ul class:list={{ "top-level": !nested }}>
+  {
+    sublist.map((entry: any) => (
+      <li>
+        {entry.type === "link" ? (
+          <a
+            href={entry.href}
+            aria-current={entry.isCurrent && "page"}
+            class:list={[{ large: !nested }, entry.attrs.class]}
+            {...entry.attrs}
+          >
+            {getIconFromLabel(entry.label) && (
+              <Icon
+                name={getIconFromLabel(entry.label) as any}
+                size="1.3rem"
+                class="mr-2.5"
+              />
+            )}
+            <span>{plainLabel(entry.label)}</span>
+            {entry.badge && (
+              <Badge
+                variant={entry.badge.variant}
+                class={entry.badge.class}
+                text={entry.badge.text}
+              />
+            )}
+          </a>
+        ) : (
+          <details
+            open={
+              flattenSidebar(entry.entries).some((i) => i.isCurrent) ||
+              !entry.collapsed
+            }
+          >
+            <SidebarRestorePoint />
+            <summary>
+              <span class="group-label">
+                {getIconFromLabel(entry.label) && (
+                  <Icon
+                    name={getIconFromLabel(entry.label) as any}
+                    size="1.3rem"
+                    class="mr-2.5"
+                    color={
+                      flattenSidebar(entry.entries).some((i) => i.isCurrent)
+                        ? "var(--color-primary)"
+                        : ""
+                    }
+                  />
+                )}
+
+                <span class="large">{plainLabel(entry.label)}</span>
+                {entry.badge && (
+                  <Badge
+                    variant={entry.badge.variant}
+                    class={entry.badge.class}
+                    text={entry.badge.text}
+                  />
+                )}
+              </span>
+              <Icon name="right-caret" class="caret" size="1.25rem" />
+            </summary>
+            <Astro.self sublist={entry.entries} nested />
+          </details>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  @layer starlight.core {
+    ul {
+      --sl-sidebar-item-padding-inline: 0.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      overflow-wrap: anywhere;
+    }
+
+    ul ul li {
+      margin-inline-start: calc(var(--sl-sidebar-item-padding-inline) + 8px);
+      border-inline-start: 1px solid var(--sl-color-hairline-light);
+      padding-inline-start: var(--sl-sidebar-item-padding-inline);
+    }
+
+    .large {
+      /* font-size: var(--sl-text-lg); */
+      font-weight: 500;
+      color: var(--sl-color-white);
+    }
+
+    .top-level > li + li {
+      margin-top: 0.75rem;
+    }
+    .top-level > li > details > ul > li {
+      margin-inline-start: 0px;
+      border-inline-start: 0px;
+      padding-inline-start: 0px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .group-label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.2em var(--sl-sidebar-item-padding-inline);
+      line-height: 1.4;
+      cursor: pointer;
+      user-select: none;
+    }
+    .top-level > li > details > summary {
+      padding-left: 0px !important;
+    }
+    .top-level > li {
+      border-bottom: 1px solid var(--sl-color-hairline);
+      padding-bottom: 1.6rem;
+      padding-top: 1rem;
+    }
+    .top-level > li:last-child {
+      border-bottom: none;
+      padding-bottom: 0px;
+    }
+    .top-level > li:first-child {
+      padding-top: 0px;
+    }
+    .top-level > li {
+      padding-top: 10px;
+      padding-bottom: 10px;
+      /* padding-left: 10px; */
+    }
+
+    summary::marker,
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .caret {
+      transition: transform 0.2s ease-in-out;
+      flex-shrink: 0;
+    }
+    .top-level > li > details > summary .caret {
+      display: none;
+    }
+    :global([dir="rtl"]) .caret {
+      transform: rotateZ(180deg);
+    }
+    [open] > summary .caret {
+      transform: rotateZ(90deg);
+    }
+
+    a {
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--sl-color-gray-2);
+      /* padding: 0.3em var(--sl-sidebar-item-padding-inline); */
+      padding: 8px 10px;
+      line-height: 1.4;
+    }
+
+    a:hover,
+    a:focus {
+      color: var(--sl-color-white);
+    }
+
+    [aria-current="page"],
+    [aria-current="page"]:hover,
+    [aria-current="page"]:focus {
+      color: var(--color-primary) !important;
+      background-color: color-mix(
+        in srgb,
+        var(--sl-color-white) 6%,
+        transparent
+      );
+    }
+    [aria-current="page"] span {
+      color: var(--sl-color-white);
+    }
+
+    li:has([aria-current="page"]) {
+      padding-top: 4px;
+      margin-top: 0px !important;
+      margin-bottom: 8px !important;
+    }
+    a > *:not(:last-child),
+    .group-label > *:not(:last-child) {
+      margin-inline-end: 0.25em;
+    }
+
+    @media (min-width: 50rem) {
+      .top-level > li + li {
+        margin-top: 0.5rem;
+      }
+      .large {
+        font-size: var(--sl-text-base);
+      }
+    }
+  }
+</style>
+
+<script>
+  function initializeSidebar(): void {
+    const topLevelItems = document.querySelectorAll(
+      ".sidebar-content .top-level > li"
+    ) as NodeListOf<HTMLLIElement>;
+
+    topLevelItems.forEach((item: HTMLLIElement) => {
+      const detailsElement = item.querySelector(
+        "details"
+      ) as HTMLDetailsElement;
+
+      if (detailsElement) {
+        // Keep details always open
+        detailsElement.open = true;
+
+        // Prevent closing on click
+        const summaryElement = detailsElement.querySelector("summary");
+        if (summaryElement) {
+          summaryElement.addEventListener("click", (e: Event) => {
+            e.preventDefault();
+          });
+        }
+
+        // Prevent closing via toggle event
+        detailsElement.addEventListener("toggle", () => {
+          if (!detailsElement.open) {
+            detailsElement.open = true;
+          }
+        });
+      }
+    });
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeSidebar);
+  } else {
+    initializeSidebar();
+  }
+</script>

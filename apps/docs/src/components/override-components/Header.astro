@@ -1,0 +1,51 @@
+---
+import SiteTitle from "./SiteTitle.astro";
+
+import config from "@/config/config.json";
+import ThemeSwitch from "./ThemeSwitch.astro";
+import Search from "./Search.astro";
+
+const { settings } = config;
+
+const hasSidebar = Astro.locals.starlightRoute.hasSidebar;
+---
+
+<nav class="navbar container">
+  <!-- logo -->
+  <div class="order-0">
+    <SiteTitle />
+  </div>
+
+  <div
+    class="order-1 ml-auto flex items-center md:order-2 lg:ml-0 navbar-actions"
+  >
+    {
+      hasSidebar && settings.search && (
+        <div class="search-bar">
+          <Search />
+        </div>
+      )
+    }
+
+    {settings.theme_switcher && <ThemeSwitch className="lg:mx-6 mr-10" />}
+  </div>
+</nav>
+
+<script>
+  // add header bg after scroll
+  const nav = document.querySelector(".navbar");
+  const sidebar = document.querySelector(".sidebar-nav");
+
+  window.onscroll = function () {
+    if (
+      document.body.scrollTop > 10 ||
+      document.documentElement.scrollTop > 10
+    ) {
+      nav?.parentElement?.classList.add("navbar-scrolled");
+      sidebar?.classList.add("navbar-scrolled");
+    } else {
+      nav?.parentElement?.classList.remove("navbar-scrolled");
+      sidebar?.classList.remove("navbar-scrolled");
+    }
+  };
+</script>

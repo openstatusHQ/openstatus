@@ -1,0 +1,87 @@
+---
+import Breadcrumb from "../Breadcrumb.astro";
+---
+
+<div class="content-container">
+  <div class="main-pane">
+    {
+      Astro.locals.starlightRoute.hasSidebar && (
+        <div class="breadcrumb-container">
+          <Breadcrumb />
+        </div>
+      )
+    }
+
+    <slot />
+  </div>
+  {
+    Astro.locals.starlightRoute.toc && (
+      <aside class="right-sidebar-container print:hidden">
+        <div class="right-sidebar">
+          <slot name="right-sidebar" />
+        </div>
+      </aside>
+    )
+  }
+</div>
+
+<style>
+  @layer starlight.core {
+    .content-container {
+      width: 100%;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .main-pane {
+      /* isolation: isolate; */
+      width: 100%;
+    }
+    :global([data-has-sidebar][data-has-toc]) .main-pane {
+      overflow: hidden;
+    }
+
+    @media (min-width: 72rem) {
+      :global([data-has-sidebar][data-has-toc]) .content-container {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        overflow: visible;
+      }
+      .right-sidebar-container {
+        order: 2;
+        position: relative;
+      }
+
+      .right-sidebar {
+        position: sticky;
+        inset-block: calc(var(--sl-nav-height) + 110px) 0;
+        /* border-inline-start: 1px solid var(--sl-color-hairline); */
+        /* padding-top: var(--sl-nav-height); */
+        width: 100%;
+        height: 80vh;
+        overflow-y: auto;
+        scrollbar-width: none;
+      }
+
+      :global([data-has-sidebar][data-has-toc]) .main-pane {
+        --sl-content-margin-inline: auto 0;
+
+        order: 1;
+        overflow: hidden;
+        border-left: 1px solid var(--sl-color-hairline);
+        border-right: 1px solid var(--sl-color-hairline);
+      }
+    }
+  }
+</style>
+
+<script>
+  const contentContainer = document.querySelector(
+    ".content-container"
+  ) as HTMLElement;
+
+  if (contentContainer) {
+    contentContainer.style.opacity = "1";
+  }
+</script>

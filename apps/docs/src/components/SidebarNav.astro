@@ -1,0 +1,105 @@
+---
+import { plainLabel } from "../lib/utils/textConverter.ts";
+
+const { sidebar } = Astro.locals.starlightRoute;
+
+// url path
+const currentPath = Astro.url.pathname;
+
+// Helper function to recursively find the first href in nested entries
+function getFirstHref(item: any): string | null {
+  if (typeof item?.href === "string" && item.href) {
+    return item.href;
+  }
+  if (item?.entries && Array.isArray(item.entries) && item.entries.length > 0) {
+    return getFirstHref(item.entries[0]);
+  }
+  return null; // No valid href found
+}
+
+// Helper function to recursively check if any nested entry matches the current path
+function hasActiveEntry(item: any, currentPath: string): boolean {
+  if (typeof item?.href === "string" && item.href === currentPath) {
+    return true;
+  }
+  if (item?.entries && Array.isArray(item.entries)) {
+    return item.entries.some((entry: any) =>
+      hasActiveEntry(entry, currentPath)
+    );
+  }
+  return false;
+}
+---
+
+<div class="sidebar-nav">
+  <div class="container h-full">
+    <div class="sidebar-content-top">
+      <ul>
+        {
+          sidebar.map((item: any) => {
+            // Use helper functions to handle nested entries properly
+            const href = getFirstHref(item);
+            const isActive = hasActiveEntry(item, currentPath);
+
+            return (
+              <li>
+                <a
+                  aria-label={plainLabel(item.label)}
+                  href={href}
+                  class={isActive ? "active" : ""}
+                >
+                  {plainLabel(item.label)} 
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+  @layer starlight.core {
+    .sidebar-nav {
+      z-index: var(--sl-z-index-navbar);
+      position: sticky;
+      inset-inline-start: 0;
+      inset-block-start: 0;
+      width: 100%;
+      top: 68px;
+      border-bottom: 1px solid
+        color-mix(in srgb, var(--sl-color-white) 10%, transparent);
+      padding-top: 20px;
+      padding-bottom: 0px;
+    }
+    @media (max-width: 1151px) {
+      .sidebar-nav {
+        display: none;
+      }
+    }
+    .sidebar-content-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-content-top ul {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+      padding-left: 0px !important;
+    }
+    .sidebar-content-top ul li a {
+      padding: 10px 0px;
+      text-decoration: none;
+      color: color-mix(in srgb, var(--sl-color-white) 80%, transparent);
+      display: inline-block;
+    }
+    .sidebar-content-top ul li a.active {
+      border-bottom: 1px solid var(--sl-color-white);
+      color: var(--sl-color-white);
+      font-weight: 600;
+    }
+  }
+</style>

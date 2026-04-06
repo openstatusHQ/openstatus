@@ -1,0 +1,130 @@
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@plugin "../tailwind-plugin/tw-theme";
+@plugin "../tailwind-plugin/tw-bs-grid";
+
+@theme {
+  --font-cal: "calsans", "sans-serif";
+  --font-mono: 'CommitMono', 'sans-serif';
+  --font-sans: 'Inter', 'sans-serif';
+}
+
+@layer base {
+  @font-face {
+    font-family: 'calsans';
+    src: url('/fonts/CalSans-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'CommitMono';
+    src: url('/fonts/CommitMono-400-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'CommitMono';
+    src: url('/fonts/CommitMono-700-Regular.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter Variable';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(@fontsource-variable/inter/files/inter-latin-wght-normal.woff2) format('woff2-variations');
+    unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  }
+}
+
+/* Dockit Starlight color system using color-mix */
+:root {
+  --sl-color-accent-low: color-mix(in srgb, var(--color-primary), #000 90%);
+  --sl-color-accent: var(--color-primary);
+  --sl-color-accent-high: color-mix(in srgb, var(--color-primary), #fff 70%);
+
+  --sl-color-white: var(--color-light);
+  --sl-color-gray-1: color-mix(in srgb, var(--color-dark) 6%, var(--color-light) 94%);
+  --sl-color-gray-2: color-mix(in srgb, var(--color-dark) 24%, var(--color-light) 76%);
+  --sl-color-gray-3: color-mix(in srgb, var(--color-dark) 45%, var(--color-light) 55%);
+  --sl-color-gray-4: color-mix(in srgb, var(--color-dark) 65%, var(--color-light) 35%);
+  --sl-color-gray-5: color-mix(in srgb, var(--color-dark) 78%, var(--color-light) 22%);
+  --sl-color-gray-6: color-mix(in srgb, var(--color-dark) 85%, var(--color-light) 15%);
+
+  --sl-color-black: var(--color-dark);
+  --sl-sidebar-width: 320px;
+  --sl-color-hairline: color-mix(in srgb, var(--sl-color-white) 10%, transparent);
+  --sl-color-hairline-light: #252525;
+}
+
+/* Light mode colors */
+:root[data-theme='light'] {
+  --sl-color-accent-low: color-mix(in srgb, var(--color-lightmode-primary), #fff 70%);
+  --sl-color-accent: var(--color-lightmode-primary);
+  --sl-color-accent-high: color-mix(in srgb, var(--color-lightmode-primary), #000 90%);
+
+  --sl-color-white: var(--color-lightmode-light);
+  --sl-color-gray-1: color-mix(in srgb, var(--color-lightmode-dark) 15%, var(--color-lightmode-light) 85%);
+  --sl-color-gray-2: color-mix(in srgb, var(--color-lightmode-dark) 22%, var(--color-lightmode-light) 78%);
+  --sl-color-gray-3: color-mix(in srgb, var(--color-lightmode-dark) 35%, var(--color-lightmode-light) 65%);
+  --sl-color-gray-4: color-mix(in srgb, var(--color-lightmode-dark) 55%, var(--color-lightmode-light) 45%);
+  --sl-color-gray-5: color-mix(in srgb, var(--color-lightmode-dark) 76%, var(--color-lightmode-light) 24%);
+  --sl-color-gray-6: color-mix(in srgb, var(--color-lightmode-dark) 94%, var(--color-lightmode-light) 6%);
+  --sl-color-gray-7: color-mix(in srgb, var(--color-lightmode-dark) 96%, var(--color-lightmode-light) 4%);
+
+  --sl-color-black: var(--color-lightmode-dark);
+}
+
+@theme {
+  --color-primary-gradient: linear-gradient(
+    35.65deg,
+    #3a1c71 -10.94%,
+    var(--color-primary) 61.04%,
+    #ffca7b 133.01%
+  );
+}
+
+/* === OPENSTATUS ORIGINAL CSS VARIABLES (preserved) === */
+@layer base {
+  h1 {
+    letter-spacing: var(--tracking-tight);
+  }
+  h2 {
+    letter-spacing: var(--tracking-tighter);
+  }
+
+  :root[data-theme='light'] {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --status-degraded: 50 100% 52%;
+    --status-operational: 131 39% 51%;
+    --status-down: 11 82% 59%;
+    --status-monitoring: 210 100% 62%;
+  }
+
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --status-degraded: 50 100% 52%;
+    --status-operational: 131 39% 51%;
+    --status-down: 11 82% 59%;
+    --status-monitoring: 210 100% 62%;
+  }
+}
+/* === END OPENSTATUS ORIGINAL CSS VARIABLES === */
+
+@import "./base.css";
+@import "./navigation.css";
+@import "./components.css";
