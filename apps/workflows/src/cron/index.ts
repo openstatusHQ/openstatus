@@ -43,7 +43,11 @@ app.get("/checker/:period", async (c) => {
     .catch((e) => {
       console.error(e);
       sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
-      sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "error" });
+      sentry.captureCheckIn({
+        checkInId,
+        monitorSlug: period,
+        status: "error",
+      });
     });
   return c.json({ success: schema.data }, 200);
 });
@@ -74,11 +78,17 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    getSentry(c).captureMessage("userId is missing in /monitors/:step cron", "error");
+    getSentry(c).captureMessage(
+      "userId is missing in /monitors/:step cron",
+      "error",
+    );
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {
-    getSentry(c).captureMessage("initalRun is missing in /monitors/:step cron", "error");
+    getSentry(c).captureMessage(
+      "initalRun is missing in /monitors/:step cron",
+      "error",
+    );
     return c.json({ error: "initialRun is required" }, 400);
   }
 
