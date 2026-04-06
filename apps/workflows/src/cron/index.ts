@@ -43,11 +43,7 @@ app.get("/checker/:period", async (c) => {
     .catch((e) => {
       console.error(e);
       sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
-      sentry.captureCheckIn({
-        checkInId,
-        monitorSlug: period,
-        status: "error",
-      });
+      sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "error" });
     });
   return c.json({ success: schema.data }, 200);
 });
