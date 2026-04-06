@@ -35,24 +35,17 @@ app.get("/checker/:period", async (c) => {
     monitorSlug: period,
     status: "in_progress",
   });
-  try {
-    await sendCheckerTasks(schema.data, c);
-    sentry.captureCheckIn({
-      checkInId,
-      monitorSlug: period,
-      status: "ok",
+
+  sendCheckerTasks(schema.data, c)
+    .then(() => {
+      sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "ok" });
+    })
+    .catch((e) => {
+      console.error(e);
+      sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
+      sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "error" });
     });
-    return c.json({ success: schema.data }, 200);
-  } catch (e) {
-    console.error(e);
-    sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
-    sentry.captureCheckIn({
-      checkInId,
-      monitorSlug: period,
-      status: "error",
-    });
-    return c.text("Internal Server Error", 500);
-  }
+  return c.json({ success: schema.data }, 200);
 });
 
 app.get("/emails/follow-up", async (c) => {
@@ -81,17 +74,11 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    getSentry(c).captureMessage(
-      "userId is missing in /monitors/:step cron",
-      "error",
-    );
+    getSentry(c).captureMessage("userId is missing in /monitors/:step cron", "error");
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {
-    getSentry(c).captureMessage(
-      "initalRun is missing in /monitors/:step cron",
-      "error",
-    );
+    getSentry(c).captureMessage("initalRun is missing in /monitors/:step cron", "error");
     return c.json({ error: "initialRun is required" }, 400);
   }
 
