@@ -1,5 +1,6 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
+import { Effect, Either, Schedule } from "effect";
 import { z } from "zod";
 
 import { and, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
@@ -30,6 +31,15 @@ import {
 } from "@openstatus/utils";
 import type { Context } from "hono";
 import { env } from "../env";
+
+type TaskInput = {
+  row: z.infer<typeof selectMonitorSchema>;
+  timestamp: number;
+  client: CloudTasksClient;
+  parent: string;
+  status: MonitorStatus;
+  region: Region;
+};
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
@@ -107,7 +117,7 @@ export async function sendCheckerTasks(
   });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
-  const allResult = [];
+  const taskInputs: TaskInput[] = [];
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
@@ -146,19 +156,10 @@ export async function sendCheckerTasks(
         logger.error(`Deprecated region ${region}`);
         continue;
       }
-      const response = createCronTask({
-        row,
-        timestamp,
-        client,
-        parent,
-        status,
-        region,
-      });
-      allResult.push(response);
+      taskInputs.push({ row, timestamp, client, parent, status, region });
       if (periodicity === "30s") {
-        // we schedule another task in 30s
         const scheduledAt = timestamp + 30 * 1000;
-        const response = createCronTask({
+        taskInputs.push({
           row,
           timestamp: scheduledAt,
           client,
@@ -166,19 +167,53 @@ export async function sendCheckerTasks(
           status,
           region,
         });
-        allResult.push(response);
       }
     }
   }
 
-  const allRequests = await Promise.allSettled(allResult);
+  const results = await Effect.runPromise(
+    Effect.forEach(
+      taskInputs,
+      (input) =>
+        Effect.tryPromise({
+          try: () => createCronTask(input),
+          catch: (err) => {
+            if (err instanceof Error && "code" in err && err.code === 6) {
+              return "ALREADY_EXISTS" as const;
+            }
+            return new Error(
+              `Failed creating task for monitor ${input.row.id} in region ${input.region}`,
+            );
+          },
+        }).pipe(
+          Effect.catchIf(
+            (err): err is "ALREADY_EXISTS" => err === "ALREADY_EXISTS",
+            () => Effect.void,
+          ),
+          Effect.retry({
+            times: 3,
+            schedule: Schedule.exponential("1000 millis"),
+          }),
+          Effect.either,
+        ),
+      { concurrency: "unbounded" },
+    ),
+  );
 
-  const success = allRequests.filter((r) => r.status === "fulfilled").length;
-  const failed = allRequests.filter((r) => r.status === "rejected").length;
+  for (const result of results) {
+    if (Either.isLeft(result)) {
+      logger.error("Task creation failed after retries", {
+        error_message: result.left.message,
+      });
+    }
+  }
+
+  const success = results.filter(Either.isRight).length;
+  const failed = results.filter(Either.isLeft).length;
 
   logger.info("Completed cron job", {
     periodicity,
-    total_tasks: allResult.length,
+    total_tasks: taskInputs.length,
     success_count: success,
     failed_count: failed,
   });
@@ -297,7 +332,9 @@ const createCronTask = async ({
   if (regionInfo.provider === "railway") {
     regionHeader = { "railway-region": region.replace("railway_", "") };
   }
+  const taskName = `${parent}/tasks/monitor-${row.id}-${region}-${timestamp}`;
   const newTask: google.cloud.tasks.v2beta3.ITask = {
+    name: taskName,
     httpRequest: {
       headers: {
         "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
