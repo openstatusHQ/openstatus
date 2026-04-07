@@ -436,9 +436,7 @@ async function sendWorkflowEmail({
   const key = `workflow:email:${userId}:${step}:${initialRun}`;
   const alreadySent = await redis.exists(key);
   if (alreadySent) {
-    console.log(
-      `Email already sent for user ${userId} step ${step}, skipping`,
-    );
+    console.log(`Email already sent for user ${userId} step ${step}, skipping`);
     return;
   }
   await sendBatchEmailHtml([email]);
