@@ -70,14 +70,20 @@ export async function sendCheckerTasks(
     },
   });
 
-  const parent = client.queuePath(env().GCP_PROJECT_ID, env().GCP_LOCATION, periodicity);
+  const parent = client.queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    periodicity,
+  );
 
   const timestamp = Date.now();
 
   const currentMaintenance = db
     .select({ id: maintenance.id })
     .from(maintenance)
-    .where(and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())))
+    .where(
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+    )
     .as("currentMaintenance");
 
   const currentMaintenanceMonitors = db
@@ -87,7 +93,10 @@ export async function sendCheckerTasks(
       currentMaintenance,
       eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
     )
-    .innerJoin(pageComponent, eq(maintenancesToPageComponents.pageComponentId, pageComponent.id))
+    .innerJoin(
+      pageComponent,
+      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
+    )
     .where(isNotNull(pageComponent.monitorId));
 
   const result = await db
@@ -132,7 +141,8 @@ export async function sendCheckerTasks(
     }
 
     for (const region of row.regions) {
-      const status = monitorStatus.data.find((m) => region === m.region)?.status || "active";
+      const status =
+        monitorStatus.data.find((m) => region === m.region)?.status || "active";
 
       const r = regionDict[region as keyof typeof regionDict];
 
@@ -149,7 +159,14 @@ export async function sendCheckerTasks(
       taskInputs.push({ row, timestamp, client, parent, status, region });
       if (periodicity === "30s") {
         const scheduledAt = timestamp + 30 * 1000;
-        taskInputs.push({ row, timestamp: scheduledAt, client, parent, status, region });
+        taskInputs.push({
+          row,
+          timestamp: scheduledAt,
+          client,
+          parent,
+          status,
+          region,
+        });
       }
     }
   }
@@ -161,7 +178,9 @@ export async function sendCheckerTasks(
         Effect.tryPromise({
           try: () => createCronTask(input),
           catch: () =>
-            new Error(`Failed creating task for monitor ${input.row.id} in region ${input.region}`),
+            new Error(
+              `Failed creating task for monitor ${input.row.id} in region ${input.region}`,
+            ),
         }).pipe(
           Effect.retry({
             times: 3,
@@ -246,7 +265,8 @@ const createCronTask = async ({
           }
         : undefined,
       retry: row.retry || 3,
-      followRedirects: row.followRedirects === null ? true : row.followRedirects,
+      followRedirects:
+        row.followRedirects === null ? true : row.followRedirects,
     };
   }
   if (row.jobType === "tcp") {

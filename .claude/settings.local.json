@@ -1,7 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "WebFetch(domain:effect.website)"
-    ]
+    "allow": ["WebFetch(domain:effect.website)"]
   }
 }
