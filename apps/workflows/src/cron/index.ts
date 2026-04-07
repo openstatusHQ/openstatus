@@ -1,5 +1,6 @@
 import { getSentry } from "@hono/sentry";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import { Effect, Schedule } from "effect";
 import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
@@ -36,15 +37,27 @@ app.get("/checker/:period", async (c) => {
     status: "in_progress",
   });
 
-  sendCheckerTasks(schema.data, c)
-    .then(() => {
-      sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "ok" });
-    })
-    .catch((e) => {
-      console.error(e);
-      sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
-      sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "error" });
-    });
+  void Effect.runPromise(
+    Effect.tryPromise({
+      try: () => sendCheckerTasks(schema.data, c),
+      catch: (e) => new Error(`Error in /checker/${period} cron: ${e}`),
+    }).pipe(
+      Effect.retry({
+        times: 3,
+        schedule: Schedule.exponential("1000 millis"),
+      }),
+      Effect.tap(() =>
+        Effect.sync(() => sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "ok" })),
+      ),
+      Effect.catchAll((e) =>
+        Effect.sync(() => {
+          console.error(e);
+          sentry.captureMessage(e.message, "error");
+          sentry.captureCheckIn({ checkInId, monitorSlug: period, status: "error" });
+        }),
+      ),
+    ),
+  );
   return c.json({ success: schema.data }, 200);
 });
 
@@ -74,17 +87,11 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    getSentry(c).captureMessage(
-      "userId is missing in /monitors/:step cron",
-      "error",
-    );
+    getSentry(c).captureMessage("userId is missing in /monitors/:step cron", "error");
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {
-    getSentry(c).captureMessage(
-      "initalRun is missing in /monitors/:step cron",
-      "error",
-    );
+    getSentry(c).captureMessage("initalRun is missing in /monitors/:step cron", "error");
     return c.json({ error: "initialRun is required" }, 400);
   }
 
