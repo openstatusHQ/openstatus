@@ -3,7 +3,7 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { Effect, Either, Schedule } from "effect";
 import { z } from "zod";
 
-import { and, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
+import { and, eq, gte, inArray, isNotNull, lte, notInArray } from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
@@ -35,8 +35,6 @@ import { env } from "../env";
 type TaskInput = {
   row: z.infer<typeof selectMonitorSchema>;
   timestamp: number;
-  client: CloudTasksClient;
-  parent: string;
   status: MonitorStatus;
   region: Region;
 };
@@ -47,43 +45,27 @@ export const isAuthorizedDomain = (url: string) => {
 
 const logger = getLogger("workflow");
 
-const channelOptions = {
-  // Conservative 5-minute keepalive (gRPC best practice)
-  "grpc.keepalive_time_ms": 300000,
-  // 5-second timeout sufficient for ping response
-  "grpc.keepalive_timeout_ms": 5000,
-  // Disable pings without active calls to avoid server conflicts
-  "grpc.keepalive_permit_without_calls": 1,
-};
+const client = new CloudTasksClient({
+  fallback: "rest",
+  projectId: env().GCP_PROJECT_ID,
+  credentials: {
+    client_email: env().GCP_CLIENT_EMAIL,
+    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+  },
+});
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
   c: Context,
 ) {
-  const client = new CloudTasksClient({
-    fallback: "rest",
-    channelOptions,
-    projectId: env().GCP_PROJECT_ID,
-    credentials: {
-      client_email: env().GCP_CLIENT_EMAIL,
-      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-    },
-  });
-
-  const parent = client.queuePath(
-    env().GCP_PROJECT_ID,
-    env().GCP_LOCATION,
-    periodicity,
-  );
+  const parent = client.queuePath(env().GCP_PROJECT_ID, env().GCP_LOCATION, periodicity);
 
   const timestamp = Date.now();
 
   const currentMaintenance = db
     .select({ id: maintenance.id })
     .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
+    .where(and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())))
     .as("currentMaintenance");
 
   const currentMaintenanceMonitors = db
@@ -93,10 +75,7 @@ export async function sendCheckerTasks(
       currentMaintenance,
       eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
     )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
+    .innerJoin(pageComponent, eq(maintenancesToPageComponents.pageComponentId, pageComponent.id))
     .where(isNotNull(pageComponent.monitorId));
 
   const result = await db
@@ -123,26 +102,39 @@ export async function sendCheckerTasks(
     throw new Error("Error while fetching the monitors");
   }
 
-  for (const row of monitors.data) {
-    // const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
+  if (monitors.data.length === 0) {
+    logger.info("No monitors to check", { periodicity });
+    return;
+  }
 
-    const result = await db
-      .select()
-      .from(monitorStatusTable)
-      .where(eq(monitorStatusTable.monitorId, row.id))
-      .all();
-    const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
-    if (!monitorStatus.success) {
-      logger.error("Failed to parse monitor status", {
-        monitor_id: row.id,
-        error_message: monitorStatus.error.message,
+  // Batch fetch all monitor statuses in a single query (N+1 fix)
+  const monitorIds = monitors.data.map((m) => m.id);
+  const rawStatuses = await db
+    .select()
+    .from(monitorStatusTable)
+    .where(inArray(monitorStatusTable.monitorId, monitorIds))
+    .all();
+
+  const statusMap = new Map<number, z.infer<typeof selectMonitorStatusSchema>[]>();
+  for (const raw of rawStatuses) {
+    const parsed = selectMonitorStatusSchema.safeParse(raw);
+    if (!parsed.success) {
+      logger.error("Failed to parse monitor status row", {
+        monitor_id: raw.monitorId,
+        error_message: parsed.error.message,
       });
       continue;
     }
+    const list = statusMap.get(raw.monitorId) ?? [];
+    list.push(parsed.data);
+    statusMap.set(raw.monitorId, list);
+  }
+
+  for (const row of monitors.data) {
+    const monitorStatuses = statusMap.get(row.id) ?? [];
 
     for (const region of row.regions) {
-      const status =
-        monitorStatus.data.find((m) => region === m.region)?.status || "active";
+      const status = monitorStatuses.find((m) => region === m.region)?.status || "active";
 
       const r = regionDict[region as keyof typeof regionDict];
 
@@ -156,14 +148,12 @@ export async function sendCheckerTasks(
         logger.error(`Deprecated region ${region}`);
         continue;
       }
-      taskInputs.push({ row, timestamp, client, parent, status, region });
+      taskInputs.push({ row, timestamp, status, region });
       if (periodicity === "30s") {
         const scheduledAt = timestamp + 30 * 1000;
         taskInputs.push({
           row,
           timestamp: scheduledAt,
-          client,
-          parent,
           status,
           region,
         });
@@ -176,7 +166,7 @@ export async function sendCheckerTasks(
       taskInputs,
       (input) =>
         Effect.tryPromise({
-          try: () => createCronTask(input),
+          try: () => createCronTask(input, parent),
           catch: (err) => {
             if (err instanceof Error && "code" in err && err.code === 6) {
               return "ALREADY_EXISTS" as const;
@@ -196,7 +186,7 @@ export async function sendCheckerTasks(
           }),
           Effect.either,
         ),
-      { concurrency: "unbounded" },
+      { concurrency: 100 },
     ),
   );
 
@@ -216,6 +206,7 @@ export async function sendCheckerTasks(
     total_tasks: taskInputs.length,
     success_count: success,
     failed_count: failed,
+    duration_ms: Date.now() - timestamp,
   });
   if (failed > 0) {
     logger.error("Cron job had failures", {
@@ -230,21 +221,7 @@ export async function sendCheckerTasks(
   }
 }
 // timestamp needs to be in ms
-const createCronTask = async ({
-  row,
-  timestamp,
-  client,
-  parent,
-  status,
-  region,
-}: {
-  row: z.infer<typeof selectMonitorSchema>;
-  timestamp: number;
-  client: CloudTasksClient;
-  parent: string;
-  status: MonitorStatus;
-  region: Region;
-}) => {
+const createCronTask = async ({ row, timestamp, status, region }: TaskInput, parent: string) => {
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
@@ -273,8 +250,7 @@ const createCronTask = async ({
           }
         : undefined,
       retry: row.retry || 3,
-      followRedirects:
-        row.followRedirects === null ? true : row.followRedirects,
+      followRedirects: row.followRedirects === null ? true : row.followRedirects,
     };
   }
   if (row.jobType === "tcp") {
