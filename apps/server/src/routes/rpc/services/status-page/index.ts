@@ -748,6 +748,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         workspaceId,
         pageId: pageData.id,
         name: req.name,
+        defaultOpen: req.defaultOpen ?? false,
       })
       .returning()
       .get();
@@ -804,6 +805,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     if (req.name !== undefined && req.name !== "") {
       updateValues.name = req.name;
+    }
+
+    if (req.defaultOpen !== undefined) {
+      updateValues.defaultOpen = req.defaultOpen;
     }
 
     const updatedGroup = await db

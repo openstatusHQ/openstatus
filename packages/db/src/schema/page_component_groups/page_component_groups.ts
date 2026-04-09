@@ -15,6 +15,8 @@ export const pageComponentGroup = sqliteTable("page_component_groups", {
     .notNull(),
   name: text("name").notNull(),
 
+  defaultOpen: integer("default_open", { mode: "boolean" }).default(false),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

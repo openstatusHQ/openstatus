@@ -65,6 +65,7 @@ export function FormComponentsUpdate() {
       id: group.id,
       order: firstComponent?.order ?? 0,
       name: group.name,
+      defaultOpen: group.defaultOpen ?? false,
       components: componentsInGroup.map((c) => ({
         id: c.id,
         monitorId: c.monitorId,

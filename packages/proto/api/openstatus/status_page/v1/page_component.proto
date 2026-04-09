@@ -63,4 +63,7 @@ message PageComponentGroup {
 
   // Timestamp when the group was last updated (RFC 3339 format).
   string updated_at = 5;
+
+  // Whether the group should be expanded by default on the status page.
+  bool default_open = 6;
 }

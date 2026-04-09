@@ -55,6 +55,7 @@ type DBPageComponentGroup = {
   id: number;
   pageId: number;
   name: string;
+  defaultOpen: boolean | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -274,6 +275,7 @@ export function dbGroupToProto(
     id: String(group.id),
     pageId: String(group.pageId),
     name: group.name,
+    defaultOpen: group.defaultOpen ?? false,
     createdAt: group.createdAt?.toISOString() ?? "",
     updatedAt: group.updatedAt?.toISOString() ?? "",
   };
