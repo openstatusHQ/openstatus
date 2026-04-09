@@ -1479,6 +1479,38 @@ describe("StatusPageService.CreateComponentGroup", () => {
       .where(eq(pageComponentGroup.id, Number(data.group.id)));
   });
 
+  test("creates a component group with defaultOpen true", async () => {
+    const res = await connectRequest(
+      "CreateComponentGroup",
+      {
+        pageId: String(testPageId),
+        name: `${TEST_PREFIX}-open-group`,
+        defaultOpen: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("group");
+    expect(data.group.name).toBe(`${TEST_PREFIX}-open-group`);
+    expect(data.group.defaultOpen).toBe(true);
+
+    // Verify persisted in DB
+    const dbGroup = await db
+      .select()
+      .from(pageComponentGroup)
+      .where(eq(pageComponentGroup.id, Number(data.group.id)))
+      .get();
+    expect(dbGroup?.defaultOpen).toBe(true);
+
+    // Clean up
+    await db
+      .delete(pageComponentGroup)
+      .where(eq(pageComponentGroup.id, Number(data.group.id)));
+  });
+
   test("returns 401 when no auth key provided", async () => {
     const res = await connectRequest("CreateComponentGroup", {
       pageId: String(testPageId),
@@ -1562,6 +1594,37 @@ describe("StatusPageService.UpdateComponentGroup", () => {
     await db
       .update(pageComponentGroup)
       .set({ name: `${TEST_PREFIX}-group-to-update` })
+      .where(eq(pageComponentGroup.id, testGroupToUpdateId));
+  });
+
+  test("updates component group defaultOpen to true", async () => {
+    const res = await connectRequest(
+      "UpdateComponentGroup",
+      {
+        id: String(testGroupToUpdateId),
+        defaultOpen: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("group");
+    expect(data.group.defaultOpen).toBe(true);
+
+    // Verify persisted in DB
+    const dbGroup = await db
+      .select()
+      .from(pageComponentGroup)
+      .where(eq(pageComponentGroup.id, testGroupToUpdateId))
+      .get();
+    expect(dbGroup?.defaultOpen).toBe(true);
+
+    // Restore original value
+    await db
+      .update(pageComponentGroup)
+      .set({ defaultOpen: false })
       .where(eq(pageComponentGroup.id, testGroupToUpdateId));
   });
 
@@ -1904,6 +1967,41 @@ describe("StatusPageService.GetStatusPageContent", () => {
     const data = await res.json();
     expect(data).toHaveProperty("statusPage");
     expect(data.statusPage.slug).toBe(testPageSlug);
+  });
+
+  test("returns defaultOpen for component groups", async () => {
+    // Create a group with defaultOpen true
+    const group = await db
+      .insert(pageComponentGroup)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        name: `${TEST_PREFIX}-default-open-group`,
+        defaultOpen: true,
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageContent",
+        { id: String(testPageId) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      const openGroup = data.groups.find(
+        (g: { id: string }) => g.id === String(group.id),
+      );
+      expect(openGroup).toBeDefined();
+      expect(openGroup.defaultOpen).toBe(true);
+    } finally {
+      await db
+        .delete(pageComponentGroup)
+        .where(eq(pageComponentGroup.id, group.id));
+    }
   });
 
   test("returns 401 when no auth key provided", async () => {

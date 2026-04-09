@@ -370,6 +370,9 @@ message CreateComponentGroupRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 256
   ];
+
+  // Whether the group should be expanded by default on the status page (optional, defaults to false).
+  optional bool default_open = 3;
 }
 
 // CreateComponentGroupResponse is the response after creating a component group.
@@ -400,6 +403,9 @@ message UpdateComponentGroupRequest {
     min_len: 1
     max_len: 256
   }];
+
+  // Whether the group should be expanded by default on the status page (optional).
+  optional bool default_open = 3;
 }
 
 // UpdateComponentGroupResponse is the response after updating a component group.
