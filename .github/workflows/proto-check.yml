@@ -30,6 +30,11 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: 🐹 Setup Go
         uses: actions/setup-go@v5
         with:
