@@ -1,1 +1,0 @@
-ALTER TABLE `page_component_groups` ADD `default_open` integer DEFAULT false;

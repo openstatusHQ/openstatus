@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "915c6daa-b6e2-4967-8054-3f8f25ac7504",
+  "id": "65ea6009-18ea-45ee-a307-71b6458bf153",
   "prevId": "7ed5244d-0bb4-40fb-8dee-462b40505185",
   "tables": {
     "workspace": {
@@ -3297,7 +3297,7 @@
           "name": "default_open",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false,
           "default": false
         },
