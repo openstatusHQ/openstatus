@@ -379,13 +379,23 @@ components:
             - string
             - "null"
           title: page_id
-          description: New page ID (optional).
+          description: 'Deprecated: page_id is now derived from page_component_ids.'
+          deprecated: true
         pageComponentIds:
           type: array
           items:
             type: string
           title: page_component_ids
           description: New list of page component IDs (optional, replaces existing list).
+        updatePageComponentIds:
+          type:
+            - boolean
+            - "null"
+          title: update_page_component_ids
+          description: |-
+            Set to true to update page component associations.
+             When true, page_component_ids replaces the existing list (empty clears all).
+             When false or unset, page_component_ids is ignored and existing associations are preserved.
       title: UpdateMaintenanceRequest
       additionalProperties: false
       description: UpdateMaintenanceRequest is the request to update a maintenance window.
@@ -997,7 +1007,8 @@ components:
     openstatus.monitor.v1.MonitorConfig:
       type: object
       oneOf:
-        - properties:
+        - type: object
+          properties:
             dns:
               title: dns
               description: DNS monitor configuration.
@@ -1005,7 +1016,8 @@ components:
           title: dns
           required:
             - dns
-        - properties:
+        - type: object
+          properties:
             http:
               title: http
               description: HTTP monitor configuration.
@@ -1013,7 +1025,8 @@ components:
           title: http
           required:
             - http
-        - properties:
+        - type: object
+          properties:
             tcp:
               title: tcp
               description: TCP monitor configuration.
@@ -1634,7 +1647,8 @@ components:
     openstatus.notification.v1.NotificationData:
       type: object
       oneOf:
-        - properties:
+        - type: object
+          properties:
             discord:
               title: discord
               description: Discord configuration.
@@ -1642,7 +1656,8 @@ components:
           title: discord
           required:
             - discord
-        - properties:
+        - type: object
+          properties:
             email:
               title: email
               description: Email configuration.
@@ -1650,7 +1665,8 @@ components:
           title: email
           required:
             - email
-        - properties:
+        - type: object
+          properties:
             googleChat:
               title: google_chat
               description: Google Chat configuration.
@@ -1658,7 +1674,8 @@ components:
           title: google_chat
           required:
             - googleChat
-        - properties:
+        - type: object
+          properties:
             grafanaOncall:
               title: grafana_oncall
               description: Grafana OnCall configuration.
@@ -1666,7 +1683,8 @@ components:
           title: grafana_oncall
           required:
             - grafanaOncall
-        - properties:
+        - type: object
+          properties:
             ntfy:
               title: ntfy
               description: Ntfy configuration.
@@ -1674,7 +1692,8 @@ components:
           title: ntfy
           required:
             - ntfy
-        - properties:
+        - type: object
+          properties:
             opsgenie:
               title: opsgenie
               description: Opsgenie configuration.
@@ -1682,7 +1701,8 @@ components:
           title: opsgenie
           required:
             - opsgenie
-        - properties:
+        - type: object
+          properties:
             pagerduty:
               title: pagerduty
               description: PagerDuty configuration.
@@ -1690,7 +1710,8 @@ components:
           title: pagerduty
           required:
             - pagerduty
-        - properties:
+        - type: object
+          properties:
             slack:
               title: slack
               description: Slack configuration.
@@ -1698,7 +1719,8 @@ components:
           title: slack
           required:
             - slack
-        - properties:
+        - type: object
+          properties:
             sms:
               title: sms
               description: SMS configuration.
@@ -1706,7 +1728,8 @@ components:
           title: sms
           required:
             - sms
-        - properties:
+        - type: object
+          properties:
             telegram:
               title: telegram
               description: Telegram configuration.
@@ -1714,7 +1737,8 @@ components:
           title: telegram
           required:
             - telegram
-        - properties:
+        - type: object
+          properties:
             webhook:
               title: webhook
               description: Webhook configuration.
@@ -1722,7 +1746,8 @@ components:
           title: webhook
           required:
             - webhook
-        - properties:
+        - type: object
+          properties:
             whatsapp:
               title: whatsapp
               description: WhatsApp configuration.
@@ -1941,6 +1966,15 @@ components:
             type: string
           title: monitor_ids
           description: Updated monitor IDs to associate.
+        updateMonitorIds:
+          type:
+            - boolean
+            - "null"
+          title: update_monitor_ids
+          description: |-
+            Set to true to update monitor associations.
+             When true, monitor_ids replaces the existing list (empty clears all).
+             When false or unset, monitor_ids is ignored and existing associations are preserved.
       title: UpdateNotificationRequest
       additionalProperties: false
       description: UpdateNotificationRequest is the request to update a notification channel.
@@ -2127,6 +2161,12 @@ components:
           maxLength: 256
           minLength: 1
           description: Display name for the group (required).
+        defaultOpen:
+          type:
+            - boolean
+            - "null"
+          title: default_open
+          description: Whether the group should be expanded by default on the status page (optional, defaults to false).
       title: CreateComponentGroupRequest
       additionalProperties: false
       description: CreateComponentGroupRequest is the request to create a new component group.
@@ -2193,6 +2233,46 @@ components:
             $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
           title: locales
           description: Enabled locales for the status page (optional).
+        icon:
+          type:
+            - string
+            - "null"
+          title: icon
+          maxLength: 1024
+          description: Icon URL for the status page (optional).
+        customDomain:
+          type:
+            - string
+            - "null"
+          title: custom_domain
+          maxLength: 256
+          description: Custom domain for the status page (optional).
+        theme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.PageTheme'
+            - type: "null"
+          title: theme
+          description: Visual theme for the status page (optional, defaults to SYSTEM).
+        accessType:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.PageAccessType'
+            - type: "null"
+          title: access_type
+          description: Access type for the status page (optional, defaults to PUBLIC).
+        password:
+          type:
+            - string
+            - "null"
+          title: password
+          maxLength: 256
+          minLength: 1
+          description: Password for the status page (required when access_type is PASSWORD_PROTECTED).
+        authEmailDomains:
+          type: array
+          items:
+            type: string
+          title: auth_email_domains
+          description: Email domains allowed to access the page (used when access_type is AUTHENTICATED).
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
@@ -2251,7 +2331,8 @@ components:
     openstatus.status_page.v1.GetOverallStatusRequest:
       type: object
       oneOf:
-        - properties:
+        - type: object
+          properties:
             id:
               type: string
               title: id
@@ -2259,7 +2340,8 @@ components:
           title: id
           required:
             - id
-        - properties:
+        - type: object
+          properties:
             slug:
               type: string
               title: slug
@@ -2289,7 +2371,8 @@ components:
     openstatus.status_page.v1.GetStatusPageContentRequest:
       type: object
       oneOf:
-        - properties:
+        - type: object
+          properties:
             id:
               type: string
               title: id
@@ -2297,7 +2380,8 @@ components:
           title: id
           required:
             - id
-        - properties:
+        - type: object
+          properties:
             slug:
               type: string
               title: slug
@@ -2559,6 +2643,10 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the group was last updated (RFC 3339 format).
+        defaultOpen:
+          type: boolean
+          title: default_open
+          description: Whether the group should be expanded by default on the status page.
       title: PageComponentGroup
       additionalProperties: false
       description: PageComponentGroup represents a group of components on a status page.
@@ -2707,6 +2795,16 @@ components:
             $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
           title: locales
           description: Enabled locales for the status page.
+        password:
+          type: string
+          title: password
+          description: Password for the status page (only set when access_type is PASSWORD_PROTECTED).
+        authEmailDomains:
+          type: array
+          items:
+            type: string
+          title: auth_email_domains
+          description: Email domains allowed to access the page (only set when access_type is AUTHENTICATED).
       title: StatusPage
       additionalProperties: false
       description: StatusPage represents a full status page with all details.
@@ -2784,7 +2882,8 @@ components:
               minLength: 1
               description: ID of the status page to unsubscribe from (required).
         - oneOf:
-            - properties:
+            - type: object
+              properties:
                 email:
                   type: string
                   title: email
@@ -2792,7 +2891,8 @@ components:
               title: email
               required:
                 - email
-            - properties:
+            - type: object
+              properties:
                 id:
                   type: string
                   title: id
@@ -2829,6 +2929,12 @@ components:
           maxLength: 256
           minLength: 1
           description: New display name for the group (optional).
+        defaultOpen:
+          type:
+            - boolean
+            - "null"
+          title: default_open
+          description: Whether the group should be expanded by default on the status page (optional).
       title: UpdateComponentGroupRequest
       additionalProperties: false
       description: UpdateComponentGroupRequest is the request to update a component group.
@@ -2953,6 +3059,46 @@ components:
             $ref: '#/components/schemas/openstatus.status_page.v1.Locale'
           title: locales
           description: New enabled locales for the status page (optional).
+        icon:
+          type:
+            - string
+            - "null"
+          title: icon
+          maxLength: 1024
+          description: New icon URL for the status page (optional).
+        customDomain:
+          type:
+            - string
+            - "null"
+          title: custom_domain
+          maxLength: 256
+          description: New custom domain (optional).
+        theme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.PageTheme'
+            - type: "null"
+          title: theme
+          description: New visual theme (optional).
+        accessType:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.PageAccessType'
+            - type: "null"
+          title: access_type
+          description: New access type (optional).
+        password:
+          type:
+            - string
+            - "null"
+          title: password
+          maxLength: 256
+          minLength: 1
+          description: New password (optional, required when access_type is PASSWORD_PROTECTED).
+        authEmailDomains:
+          type: array
+          items:
+            type: string
+          title: auth_email_domains
+          description: New email domains (optional, required when access_type is AUTHENTICATED).
       title: UpdateStatusPageRequest
       additionalProperties: false
       description: UpdateStatusPageRequest is the request to update a status page.
@@ -3281,6 +3427,15 @@ components:
             type: string
           title: page_component_ids
           description: New list of page component IDs (optional, replaces existing list).
+        updatePageComponentIds:
+          type:
+            - boolean
+            - "null"
+          title: update_page_component_ids
+          description: |-
+            Set to true to update page component associations.
+             When true, page_component_ids replaces the existing list (empty clears all).
+             When false or unset, page_component_ids is ignored and existing associations are preserved.
       title: UpdateStatusReportRequest
       additionalProperties: false
       description: UpdateStatusReportRequest is the request to update a status report's metadata.
