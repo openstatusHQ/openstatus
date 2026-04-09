@@ -97,5 +97,14 @@ const cleaned = final.join("\n");
 writeFileSync(OPENAPI_PATH, cleaned);
 
 // Copy cleaned spec to server static directory
-const serverOpenAPIPath = join(dirname(import.meta.dirname!), "..", "..", "apps", "server", "static", "openapi.yaml");
+const serverOpenAPIPath = join(
+  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  dirname(import.meta.dirname!),
+  "..",
+  "..",
+  "apps",
+  "server",
+  "static",
+  "openapi.yaml",
+);
 writeFileSync(serverOpenAPIPath, cleaned);
