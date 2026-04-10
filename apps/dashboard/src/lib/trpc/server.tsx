@@ -4,12 +4,14 @@ import type { AppRouter } from "@openstatus/api";
 
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { createTRPCClient, loggerLink } from "@trpc/client";
+import { TRPCClientError, createTRPCClient, loggerLink } from "@trpc/client";
 import {
+  type ResolverDef,
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
 } from "@trpc/tanstack-react-query";
 import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 import { cache } from "react";
 import { makeQueryClient } from "./query-client";
 import { endingLink } from "./shared";
@@ -84,5 +86,25 @@ export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
     } else {
       void queryClient.prefetchQuery(queryOptions);
     }
+  }
+}
+
+/**
+ * Fetches a query and calls `notFound()` if the server returns NOT_FOUND.
+ * Use this for gating queries in layouts where the resource must exist.
+ */
+export async function fetchQueryOrNotFound<
+  T extends ReturnType<TRPCQueryOptions<ResolverDef>>,
+>(queryOptions: T) {
+  const queryClient = getQueryClient();
+  try {
+    return (await queryClient.fetchQuery(queryOptions)) as Awaited<
+      ReturnType<Extract<T["queryFn"], (...args: never[]) => unknown>>
+    >;
+  } catch (error) {
+    if (error instanceof TRPCClientError && error.data?.code === "NOT_FOUND") {
+      notFound();
+    }
+    throw error;
   }
 }
