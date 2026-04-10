@@ -43,5 +43,7 @@ export function ProcessMessage({ value }: { value: string }) {
     })
     .processSync(value).result;
 
-  return result;
+  return (
+    <div className="prose dark:prose-invert prose-sm max-w-none">{result}</div>
+  );
 }
