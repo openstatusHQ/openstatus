@@ -1147,7 +1147,7 @@ function ComponentGroupRow({
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel className="!mt-0 text-muted-foreground text-sm font-normal">
+              <FormLabel className="!mt-0 font-normal text-muted-foreground text-sm">
                 Open by default
               </FormLabel>
             </FormItem>

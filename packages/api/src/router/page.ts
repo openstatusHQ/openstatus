@@ -247,6 +247,13 @@ export const pageRouter = createTRPCRouter({
         },
       });
 
+      if (!data) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
       return selectPageSchema
         .extend({
           pageComponentGroups: z
@@ -257,9 +264,9 @@ export const pageRouter = createTRPCRouter({
         })
         .parse({
           ...data,
-          pageComponentGroups: data?.pageComponentGroups ?? [],
-          maintenances: data?.maintenances,
-          pageComponents: data?.pageComponents,
+          pageComponentGroups: data.pageComponentGroups ?? [],
+          maintenances: data.maintenances,
+          pageComponents: data.pageComponents,
         });
     }),
 

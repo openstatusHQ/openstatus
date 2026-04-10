@@ -4,7 +4,12 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import {
+  HydrateClient,
+  fetchQueryOrNotFound,
+  getQueryClient,
+  trpc,
+} from "@/lib/trpc/server";
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 import { Tabs } from "./tabs";
@@ -19,7 +24,7 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery(
+  await fetchQueryOrNotFound(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   await queryClient.prefetchQuery(trpc.notification.list.queryOptions());
