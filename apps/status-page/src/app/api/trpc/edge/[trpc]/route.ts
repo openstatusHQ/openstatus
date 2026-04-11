@@ -13,8 +13,22 @@ const handler = (req: NextRequest) =>
     router: edgeRouter,
     req: req,
     createContext: () => createTRPCContext({ req, auth }),
-    onError: ({ error }) => {
+    onError: ({ error, path, input, type }) => {
       console.log("Error in tRPC handler (edge)");
+      // TEMP: extra diagnostic context to trace malformed tRPC batch calls
+      console.error({
+        path,
+        type,
+        input,
+        url: req.url,
+        method: req.method,
+        userAgent: req.headers.get("user-agent"),
+        referer: req.headers.get("referer"),
+        trpcSource: req.headers.get("x-trpc-source"),
+        secFetchSite: req.headers.get("sec-fetch-site"),
+        secFetchMode: req.headers.get("sec-fetch-mode"),
+        secFetchDest: req.headers.get("sec-fetch-dest"),
+      });
       console.error(error);
     },
   });
