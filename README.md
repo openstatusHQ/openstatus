@@ -2,7 +2,7 @@
 
   <h3 align="center">openstatus</h3>
 
-  <p align="center">The open-source status page trusted by growing teams.
+  <p align="center">The open-source status page and uptime monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
