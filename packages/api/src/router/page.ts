@@ -328,7 +328,7 @@ export const pageRouter = createTRPCRouter({
           legacyPage: false,
           configuration: defaultConfiguration,
           customDomain: "", // TODO: make nullable
-          allowIndex: false,
+          allowIndex: true,
         })
         .returning()
         .get();
