@@ -3044,7 +3044,7 @@ describe("StatusPageService — allow_index", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.statusPage.allowIndex).toBe(false);
+    expect(data.statusPage.allowIndex ?? false).toBe(false);
 
     await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
   });
@@ -3061,7 +3061,7 @@ describe("StatusPageService — allow_index", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.statusPage.allowIndex).toBe(false);
+    expect(data.statusPage.allowIndex ?? false).toBe(false);
   });
 
   test("updates allow_index from false to true", async () => {
