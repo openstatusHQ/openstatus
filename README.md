@@ -37,7 +37,7 @@ openstatus is an open-source platform that combines **status pages** and **uptim
 - **Status pages + monitoring in one tool** — no need to wire up a separate monitoring service
 - **28 global regions** checking in parallel across 3 cloud providers
 - **Flat pricing, unlimited members** — no per-seat or per-subscriber charges
-- **Open source & self-hostable** — AGPL-3.0, runs in a single 8.5MB Docker image
+- **Open source & self-hostable** — AGPL-3.0, private-locations run in a single 8.5MB Docker image
 - **Monitoring as code** — YAML config, CLI, GitHub Actions, Terraform
 - **Incident communication** — subscriber notifications via email, RSS, and webhooks
 
