@@ -1,8 +1,27 @@
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink } from "@trpc/client";
+import type { TRPCError } from "@trpc/server";
 
 import type { AppRouter } from "@openstatus/api";
 import superjson from "superjson";
+
+/**
+ * Shared onError handler for tRPC route handlers.
+ * Ignores input validation errors from external traffic (bots/crawlers)
+ * hitting the tRPC endpoint with malformed batch URLs.
+ * Our tRPC clients always set `x-trpc-source`; its absence means the
+ * request didn't come from our app. Only suppresses BAD_REQUEST so that
+ * other error types (UNAUTHORIZED, INTERNAL_SERVER_ERROR, etc.) are
+ * still logged regardless of source.
+ */
+export function createOnError(req: Request, label: string) {
+  return ({ error }: { error: TRPCError }) => {
+    if (error.code === "BAD_REQUEST" && !req.headers.get("x-trpc-source"))
+      return;
+    console.log(`Error in tRPC handler (${label})`);
+    console.error(error);
+  };
+}
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
