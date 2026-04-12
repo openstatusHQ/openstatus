@@ -328,6 +328,7 @@ export const pageRouter = createTRPCRouter({
           legacyPage: false,
           configuration: defaultConfiguration,
           customDomain: "", // TODO: make nullable
+          allowIndex: false,
         })
         .returning()
         .get();
@@ -497,11 +498,11 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
-      if (opts.input.allowIndex === true && limit["allow-index"] === false) {
+      if (opts.input.allowIndex === false && limit["allow-index"] === false) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message:
-            "Search engine indexing is not available for your current plan.",
+            "Disabling search engine indexing is not available for your current plan.",
         });
       }
 
@@ -511,9 +512,7 @@ export const pageRouter = createTRPCRouter({
           accessType: opts.input.accessType,
           authEmailDomains: opts.input.authEmailDomains?.join(","),
           password: opts.input.password,
-          ...(opts.input.allowIndex !== undefined && {
-            allowIndex: opts.input.allowIndex,
-          }),
+          allowIndex: opts.input.allowIndex ?? false,
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))

@@ -88,7 +88,6 @@ export function FormPageAccess({
 
     startTransition(async () => {
       try {
-        console.log(values);
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
