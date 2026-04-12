@@ -28,6 +28,7 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
+import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { Key, Lock, LockOpen, ShieldUser } from "lucide-react";
@@ -53,17 +54,20 @@ const schema = z.object({
       z.array(z.string()).optional(),
     )
     .optional(),
+  allowIndex: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export function FormPageAccess({
   lockedMap,
+  allowIndexLocked,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   lockedMap?: Map<z.infer<typeof accessTypeSchema>, boolean>;
+  allowIndexLocked?: boolean;
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -217,6 +221,34 @@ export function FormPageAccess({
               />
             </FormCardContent>
           ) : null}
+          <FormCardSeparator />
+          <FormCardContent className="grid gap-4">
+            {allowIndexLocked ? <FormCardContentUpgrade /> : null}
+            <FormField
+              control={form.control}
+              name="allowIndex"
+              disabled={allowIndexLocked}
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <FormLabel>Allow search engine indexing</FormLabel>
+                    <FormDescription>
+                      {watchAccessType !== "public"
+                        ? "Protected pages cannot be indexed by search engines."
+                        : "Allow search engines to index your status page."}
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={field.disabled}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
               Learn more about{" "}

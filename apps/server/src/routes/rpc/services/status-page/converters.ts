@@ -33,6 +33,7 @@ type DBPage = {
   authEmailDomains: string | null;
   defaultLocale: Locale;
   locales: Locale[] | null;
+  allowIndex: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -225,6 +226,7 @@ export function dbPageToProto(page: DBPage): StatusPage {
     locales: page.locales?.map(dbLocaleToProto) ?? [],
     password: page.password ?? "",
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
+    allowIndex: page.allowIndex ?? false,
   };
 }
 

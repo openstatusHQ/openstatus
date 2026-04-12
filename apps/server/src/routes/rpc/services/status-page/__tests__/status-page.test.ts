@@ -51,9 +51,12 @@ let testPasswordPageId: number;
 let testPasswordPageSlug: string;
 
 beforeAll(async () => {
-  // Ensure workspace 1 has email-domain-protection enabled for AUTHENTICATED tests
+  // Enable plan features needed for tests
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
+  );
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."allow-index"', json('true')) WHERE id = 1`,
   );
 
   // Clean up any existing test data
@@ -3006,5 +3009,117 @@ describe("StatusPageService — password-only update without accessType", () => 
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.statusPage.password).toBe("test-secret-123");
+  });
+});
+
+describe("StatusPageService — allow_index", () => {
+  let allowIndexPageId: number;
+
+  test("creates a page with allow_index=true", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-allow-index`,
+        slug: `${TEST_PREFIX}-allow-index`,
+        allowIndex: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowIndex).toBe(true);
+    allowIndexPageId = Number(data.statusPage.id);
+  });
+
+  test("creates a page with allow_index defaulting to false", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-no-index`,
+        slug: `${TEST_PREFIX}-no-index`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowIndex).toBe(false);
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("updates allow_index from true to false", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(allowIndexPageId),
+        allowIndex: false,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowIndex).toBe(false);
+  });
+
+  test("updates allow_index from false to true", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(allowIndexPageId),
+        allowIndex: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowIndex).toBe(true);
+  });
+
+  test("get returns allow_index in response", async () => {
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: String(allowIndexPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowIndex).toBe(true);
+  });
+
+  test("rejects allow_index=true when plan does not support it", async () => {
+    // Temporarily disable allow-index on workspace
+    await db.run(
+      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."allow-index"', json('false')) WHERE id = 1`,
+    );
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(allowIndexPageId),
+        allowIndex: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).not.toBe(200);
+    const data = await res.json();
+    expect(data.message).toContain("Upgrade");
+
+    // Re-enable allow-index
+    await db.run(
+      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."allow-index"', json('true')) WHERE id = 1`,
+    );
+  });
+
+  // Cleanup
+  afterAll(async () => {
+    if (allowIndexPageId) {
+      await db.delete(page).where(eq(page.id, allowIndexPageId));
+    }
   });
 });

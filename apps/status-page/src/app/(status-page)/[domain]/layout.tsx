@@ -106,6 +106,9 @@ export async function generateMetadata({
       default: page?.title,
     },
     description: page?.description,
+    robots: page?.allowIndex
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
     icons: page?.icon?.toLowerCase().endsWith(".svg")
       ? { icon: { url: page.icon, type: "image/svg+xml" } }
       : page?.icon,

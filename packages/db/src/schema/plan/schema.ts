@@ -36,6 +36,7 @@ export const limitsSchema = z.object({
   "password-protection": z.boolean().prefault(false),
   "email-domain-protection": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),
+  "allow-index": z.boolean().prefault(false),
   /**
    * Notification limits
    */

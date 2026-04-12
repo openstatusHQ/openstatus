@@ -463,6 +463,7 @@ export const pageRouter = createTRPCRouter({
         accessType: z.enum(pageAccessTypes),
         authEmailDomains: z.array(z.string()).nullish(),
         password: z.string().nullish(),
+        allowIndex: z.boolean().optional(),
       }),
     )
     .mutation(async (opts) => {
@@ -496,12 +497,23 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (opts.input.allowIndex === true && limit["allow-index"] === false) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Search engine indexing is not available for your current plan.",
+        });
+      }
+
       await opts.ctx.db
         .update(page)
         .set({
           accessType: opts.input.accessType,
           authEmailDomains: opts.input.authEmailDomains?.join(","),
           password: opts.input.password,
+          ...(opts.input.allowIndex !== undefined && {
+            allowIndex: opts.input.allowIndex,
+          }),
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))
