@@ -73,18 +73,6 @@ export const createTRPCContext = async (opts: {
 }) => {
   // Use provided auth function or return null session
   const session = opts.auth ? await opts.auth() : null;
-
-  console.log("[createTRPCContext debug]", {
-    hasAuthFn: !!opts.auth,
-    sessionResult: session ? "exists" : "null",
-    hasReq: !!opts.req,
-    hasCookie: !!opts.req?.headers.get("cookie"),
-    hasSessionToken:
-      !!opts.req?.cookies.get("authjs.session-token")?.value ||
-      !!opts.req?.cookies.get("__Secure-authjs.session-token")?.value,
-    userAgent: opts.req?.headers.get("user-agent"),
-  });
-
   const workspace = null;
   const user = null;
 
