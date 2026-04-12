@@ -74,12 +74,19 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
     }
 
     // Fetch result from tb pipe
-    const data = await tb.getResultForOnDemandCheckHttp({
-      monitorId: _monitor.id,
-      timestamp: _monitorRun.runnedAt?.getTime(),
-      url: _monitor.url,
-    });
+    try {
+      const data = await tb.getResultForOnDemandCheckHttp({
+        monitorId: _monitor.id,
+        timestamp: _monitorRun.runnedAt?.getTime(),
+        url: _monitor.url,
+      });
 
-    return c.json(data.data, 200);
+      return c.json(data.data, 200);
+    } catch {
+      throw new OpenStatusApiError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Failed to fetch result data for monitor run ${resultId}`,
+      });
+    }
   });
 }
