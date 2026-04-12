@@ -4,6 +4,30 @@ import { httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "@openstatus/api";
 import superjson from "superjson";
 
+/**
+ * Shared onError handler for tRPC route handlers.
+ */
+export function createOnError(label: string) {
+  return ({ error }: { error: { code: string; message: string } }) => {
+    console.log(`Error in tRPC handler (${label})`);
+    console.error(error);
+  };
+}
+
+/**
+ * Filter out requests that don't come from our tRPC clients.
+ * Our server and client links always set `x-trpc-source`.
+ * This is a convention filter for bots/crawlers, not a security boundary —
+ * the header is trivially spoofable. Auth is enforced by protectedProcedure.
+ */
+export function guardTRPCSource(req: Request): Response | null {
+  const source = req.headers.get("x-trpc-source");
+  if (source !== "server" && source !== "client") {
+    return new Response(null, { status: 401 });
+  }
+  return null;
+}
+
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
   // Note: dashboard has its own tRPC API routes
