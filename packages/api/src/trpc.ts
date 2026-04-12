@@ -79,7 +79,9 @@ export const createTRPCContext = async (opts: {
     sessionResult: session ? "exists" : "null",
     hasReq: !!opts.req,
     hasCookie: !!opts.req?.headers.get("cookie"),
-    hasSessionToken: !!opts.req?.cookies.get("authjs.session-token")?.value,
+    hasSessionToken:
+      !!opts.req?.cookies.get("authjs.session-token")?.value ||
+      !!opts.req?.cookies.get("__Secure-authjs.session-token")?.value,
     userAgent: opts.req?.headers.get("user-agent"),
   });
 
