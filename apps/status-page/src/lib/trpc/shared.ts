@@ -23,6 +23,19 @@ export function createOnError(req: Request, label: string) {
   };
 }
 
+/**
+ * Reject requests that don't come from our tRPC clients.
+ * Our server and client links always set `x-trpc-source`.
+ * Returns a 401 Response if the header is missing, or null if valid.
+ */
+export function guardTRPCSource(req: Request): Response | null {
+  const source = req.headers.get("x-trpc-source");
+  if (source !== "server" && source !== "client") {
+    return new Response(null, { status: 401 });
+  }
+  return null;
+}
+
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
   // Note: status-page has its own tRPC API routes
