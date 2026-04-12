@@ -76,7 +76,7 @@ export const createTRPCContext = async (opts: {
 
   console.log("[createTRPCContext debug]", {
     hasAuthFn: !!opts.auth,
-    sessionResult: session ? JSON.stringify(session) : "null",
+    sessionResult: session ? "exists" : "null",
     hasReq: !!opts.req,
     hasCookie: !!opts.req?.headers.get("cookie"),
     hasSessionToken: !!opts.req?.cookies.get("authjs.session-token")?.value,
