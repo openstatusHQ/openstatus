@@ -1,7 +1,7 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
-import { guardTRPCSource } from "@/trpc/shared";
+import { createOnError, guardTRPCSource } from "@/trpc/shared";
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
 
@@ -16,10 +16,7 @@ const handler = (req: NextRequest) => {
     router: edgeRouter,
     req: req,
     createContext: () => createTRPCContext({ req }),
-    onError: ({ error }) => {
-      console.log("Error in tRPC handler (edge)");
-      console.error(error);
-    },
+    onError: createOnError("edge"),
   });
 };
 

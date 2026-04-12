@@ -18,7 +18,7 @@ const handler = (req: NextRequest) => {
     router: lambdaRouter,
     req: req,
     createContext: () => createTRPCContext({ req, auth }),
-    onError: createOnError(req, "lambda"),
+    onError: createOnError("lambda"),
   });
 };
 

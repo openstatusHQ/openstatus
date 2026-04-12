@@ -2,7 +2,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { guardTRPCSource } from "@/lib/trpc/shared";
+import { createOnError, guardTRPCSource } from "@/lib/trpc/shared";
 import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter } from "@openstatus/api/src/lambda";
 
@@ -18,10 +18,7 @@ const handler = (req: NextRequest) => {
     router: lambdaRouter,
     req: req,
     createContext: () => createTRPCContext({ req, auth }),
-    onError: ({ error }) => {
-      console.log("Error in tRPC handler (lambda)");
-      console.error(error);
-    },
+    onError: createOnError("lambda"),
   });
 };
 

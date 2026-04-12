@@ -7,26 +7,19 @@ import superjson from "superjson";
 
 /**
  * Shared onError handler for tRPC route handlers.
- * Ignores input validation errors from external traffic (bots/crawlers)
- * hitting the tRPC endpoint with malformed batch URLs.
- * Our tRPC clients always set `x-trpc-source`; its absence means the
- * request didn't come from our app. Only suppresses BAD_REQUEST so that
- * other error types (UNAUTHORIZED, INTERNAL_SERVER_ERROR, etc.) are
- * still logged regardless of source.
  */
-export function createOnError(req: Request, label: string) {
+export function createOnError(label: string) {
   return ({ error }: { error: TRPCError }) => {
-    if (error.code === "BAD_REQUEST" && !req.headers.get("x-trpc-source"))
-      return;
     console.log(`Error in tRPC handler (${label})`);
     console.error(error);
   };
 }
 
 /**
- * Reject requests that don't come from our tRPC clients.
+ * Filter out requests that don't come from our tRPC clients.
  * Our server and client links always set `x-trpc-source`.
- * Returns a 401 Response if the header is missing, or null if valid.
+ * This is a convention filter for bots/crawlers, not a security boundary —
+ * the header is trivially spoofable. Auth is enforced by protectedProcedure.
  */
 export function guardTRPCSource(req: Request): Response | null {
   const source = req.headers.get("x-trpc-source");

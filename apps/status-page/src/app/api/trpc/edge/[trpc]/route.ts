@@ -17,7 +17,7 @@ const handler = (req: NextRequest) => {
     router: edgeRouter,
     req: req,
     createContext: () => createTRPCContext({ req, auth }),
-    onError: createOnError(req, "edge"),
+    onError: createOnError("edge"),
   });
 };
 
