@@ -174,7 +174,7 @@ export function FormStatusPageUpdate() {
             ],
           ])
         }
-        allowIndexLocked={workspace.limits["allow-index"] === false}
+        allowIndexLocked={workspace.limits["no-index"] === false}
         defaultValues={{
           accessType: statusPage.accessType,
           password: statusPage.password ?? undefined,

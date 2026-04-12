@@ -64,9 +64,9 @@ import {
   subscriberNotFoundError,
 } from "./errors";
 import {
-  checkAllowIndexLimit,
   checkCustomDomainLimit,
   checkEmailDomainProtectionLimit,
+  checkNoIndexLimit,
   checkPageComponentLimits,
   checkPasswordProtectionLimit,
   checkStatusPageLimits,
@@ -296,7 +296,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     // Resolve allow_index
     const allowIndex = req.allowIndex ?? false;
     if (allowIndex) {
-      checkAllowIndexLimit(limits);
+      checkNoIndexLimit(limits);
     }
 
     // Create the status page
@@ -515,7 +515,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     // Handle allow_index
     if (req.allowIndex !== undefined) {
       if (req.allowIndex) {
-        checkAllowIndexLimit(limits);
+        checkNoIndexLimit(limits);
       }
       updateValues.allowIndex = req.allowIndex;
     }

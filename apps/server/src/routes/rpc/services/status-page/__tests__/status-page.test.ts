@@ -56,7 +56,7 @@ beforeAll(async () => {
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
   );
   await db.run(
-    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."allow-index"', json('true')) WHERE id = 1`,
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
   );
 
   // Clean up any existing test data
@@ -3094,7 +3094,7 @@ describe("StatusPageService — allow_index", () => {
   test("rejects allow_index=true when plan does not support it", async () => {
     // Temporarily disable allow-index on workspace
     await db.run(
-      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."allow-index"', json('false')) WHERE id = 1`,
+      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('false')) WHERE id = 1`,
     );
 
     const res = await connectRequest(
@@ -3112,7 +3112,7 @@ describe("StatusPageService — allow_index", () => {
 
     // Re-enable allow-index
     await db.run(
-      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."allow-index"', json('true')) WHERE id = 1`,
+      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
     );
   });
 

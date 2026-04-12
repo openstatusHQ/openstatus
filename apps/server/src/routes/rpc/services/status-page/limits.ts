@@ -64,11 +64,11 @@ export function checkEmailDomainProtectionLimit(limits: Limits): void {
 }
 
 /**
- * Check if allow-index feature is available on the workspace plan.
+ * Check if no-index feature is available on the workspace plan.
  * Throws ConnectError with PermissionDenied if not available.
  */
-export function checkAllowIndexLimit(limits: Limits): void {
-  if (!limits["allow-index"]) {
+export function checkNoIndexLimit(limits: Limits): void {
+  if (!limits["no-index"]) {
     throw new ConnectError(
       "Upgrade for search engine indexing toggle",
       Code.PermissionDenied,

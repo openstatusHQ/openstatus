@@ -498,7 +498,7 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
-      if (opts.input.allowIndex === false && limit["allow-index"] === false) {
+      if (opts.input.allowIndex === false && limit["no-index"] === false) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message:
