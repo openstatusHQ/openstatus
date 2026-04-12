@@ -28,11 +28,24 @@
 
 openstatus is an open-source platform that combines **status pages** and **uptime monitoring** in a single tool. Keep your users informed and your services reliable. Available as a managed service or self-hosted.
 
+<p align="center">
+  <img src="https://www.openstatus.dev/assets/landing/statuspage-meow.png" alt="openstatus status page" width="720" />
+</p>
+
+## Why openstatus?
+
+- **Status pages + monitoring in one tool** — no need to wire up a separate monitoring service
+- **28 global regions** checking in parallel across 3 cloud providers
+- **Flat pricing, unlimited members** — no per-seat or per-subscriber charges
+- **Open source & self-hostable** — AGPL-3.0, private-locations run in a single 8.5MB Docker image
+- **Monitoring as code** — YAML config, CLI, GitHub Actions, Terraform
+- **Incident communication** — subscriber notifications via email, RSS, and webhooks
+
 ### Status pages
 
 Beautiful, customizable status pages with custom domains, password protection, maintenance windows, and subscriber notifications via email and RSS. Build trust and keep your users informed during incidents.
 
-### Synthetic monitoring
+### Uptime Monitoring
 
 Monitor your servers, websites and APIs from 28 regions across multiple cloud providers globally. Get notified via Slack, Discord, PagerDuty, email, and more when your services are down or slow.
 

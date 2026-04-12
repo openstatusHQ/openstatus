@@ -16,11 +16,12 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 text-center md:text-left">
           <div className="mx-auto grid gap-3">
             <h1 className="font-cal text-3xl text-foreground">
-              Open Source Monitoring Service
+              Your Status Page in Minutes
             </h1>
             <p className="text-muted-foreground text-sm">
-              Monitor your website or API and create your own status page within
-              a couple of minutes. Want to know how it works? <br />
+              Communicate incidents, prove compliance readiness, and monitor
+              uptime from 28 global regions. Open source and free to start.{" "}
+              <br />
               <br />
               Check out{" "}
               <a

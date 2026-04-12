@@ -84,7 +84,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     "@type": "Product",
     name: "openstatus",
     description:
-      "Open-source uptime and synthetic monitoring with status pages.",
+      "The open-source status page and uptime monitoring platform trusted by growing teams.",
     image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
@@ -110,9 +110,9 @@ export const getJsonLDSoftwareApplication =
       name: "openstatus",
       url: BASE_URL,
       description:
-        "Open-source uptime and synthetic monitoring with status pages.",
+        "The open-source status page and uptime monitoring platform trusted by growing teams.",
       applicationCategory: "BusinessApplication",
-      applicationSubCategory: "Monitoring & Observability",
+      applicationSubCategory: "Status Pages & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",
       offers: Object.entries(allPlans).map(([_, value]) => ({
         "@type": "Offer",
@@ -122,10 +122,11 @@ export const getJsonLDSoftwareApplication =
         availability: "https://schema.org/InStock",
       })),
       featureList: [
-        "Multi-region uptime monitoring",
+        "Branded status pages with custom domains",
+        "Multi-region uptime monitoring from 28 locations",
+        "Incident communication and subscriber notifications",
         "API monitoring (REST, GraphQL)",
-        "Branded status pages",
-        "Incident notifications (Slack, PagerDuty, email)",
+        "SOC 2 compliance-ready",
         "Monitoring as code",
         "Self-hosting option",
         "Open-source",
