@@ -776,7 +776,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw componentGroupNotFoundError(id);
     }
 
-    // Delete the group (components will have groupId set to null due to FK constraint)
+    // Explicitly clear groupId from components before deleting the group.
+    // We cannot rely on the FK ON DELETE SET NULL because SQLite foreign key
+    // enforcement is off by default and may not be enabled on every connection.
+    await db
+      .update(pageComponent)
+      .set({ groupId: null })
+      .where(eq(pageComponent.groupId, group.id));
+
     await db
       .delete(pageComponentGroup)
       .where(eq(pageComponentGroup.id, group.id));

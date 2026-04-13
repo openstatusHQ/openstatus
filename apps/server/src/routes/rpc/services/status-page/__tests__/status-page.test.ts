@@ -1556,6 +1556,55 @@ describe("StatusPageService.DeleteComponentGroup", () => {
     expect(deleted).toBeUndefined();
   });
 
+  test("clears groupId on components when group is deleted", async () => {
+    // Create a temporary group with a component assigned to it
+    const tempGroup = await db
+      .insert(pageComponentGroup)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        name: `${TEST_PREFIX}-group-with-component`,
+      })
+      .returning()
+      .get();
+
+    const tempComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        type: "static",
+        name: `${TEST_PREFIX}-grouped-component`,
+        groupId: tempGroup.id,
+        order: 200,
+      })
+      .returning()
+      .get();
+
+    // Delete the group
+    const res = await connectRequest(
+      "DeleteComponentGroup",
+      { id: String(tempGroup.id) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    // Verify the component's groupId was set to null
+    const updatedComponent = await db
+      .select()
+      .from(pageComponent)
+      .where(eq(pageComponent.id, tempComponent.id))
+      .get();
+    expect(updatedComponent).toBeDefined();
+    expect(updatedComponent!.groupId).toBeNull();
+
+    // Clean up
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, tempComponent.id));
+  });
+
   test("returns 401 when no auth key provided", async () => {
     const res = await connectRequest("DeleteComponentGroup", { id: "1" });
 
