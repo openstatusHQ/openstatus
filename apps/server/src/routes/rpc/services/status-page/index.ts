@@ -295,7 +295,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Resolve allow_index
     const allowIndex = req.allowIndex ?? false;
-    if (allowIndex) {
+    if (req.allowIndex !== undefined && !allowIndex) {
       checkNoIndexLimit(limits);
     }
 
@@ -514,7 +514,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Handle allow_index
     if (req.allowIndex !== undefined) {
-      if (req.allowIndex) {
+      if (!req.allowIndex) {
         checkNoIndexLimit(limits);
       }
       updateValues.allowIndex = req.allowIndex;
