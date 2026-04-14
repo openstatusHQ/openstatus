@@ -1,12 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 
 import { Link } from "@/components/common/link";
 import { ThemeProvider } from "@/components/themes/theme-provider";
 import { Button } from "@openstatus/ui/components/ui/button";
 
 export default function NotFound() {
+  return (
+    <Suspense>
+      <NotFoundContent />
+    </Suspense>
+  );
+}
+
+function NotFoundContent() {
   const router = useRouter();
 
   return (

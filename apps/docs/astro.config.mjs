@@ -165,6 +165,10 @@ export default defineConfig({
               label: "How to translate your status page",
               slug: "guides/how-to-translate-status-page",
             },
+            {
+              label: "How to embed a status page in an iframe",
+              slug: "guides/how-to-embed-status-page-iframe",
+            },
           ],
         },
         {

@@ -310,7 +310,7 @@ export function Client() {
             })}
           </StatusContent>
         ) : null}
-        <Separator className="group-data-[hide-feed=true]/iframe:hidden group-data-[hide-components=true]/iframe:hidden" />
+        <Separator className="group-data-[hide-components=true]/iframe:hidden group-data-[hide-feed=true]/iframe:hidden" />
         <StatusContent className="group-data-[hide-feed=true]/iframe:hidden">
           <StatusFeed
             statusReports={page.statusReports
