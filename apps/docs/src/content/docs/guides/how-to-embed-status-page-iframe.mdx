@@ -80,4 +80,4 @@ Show components in forced dark theme:
 - **Height:** iframes do not auto-size to their content. Set a `height` attribute appropriate for the sections you enabled.
 - **Internal links** (e.g. clicking an incident banner) open in a new tab when embedded, so your site's iframe stays put.
 - **Password-protected status pages** may not authenticate correctly inside iframes due to browser third-party cookie restrictions (Safari ITP, Chrome). Visitors may need to authenticate on the full status page first.
-- **Sandboxed iframes** must include `allow-popups` for the "open in new tab" behavior to work.
+- **Sandboxed iframes** must include at least `allow-scripts allow-same-origin` for the status page to run, plus `allow-popups` for the "open in new tab" behavior on internal links.

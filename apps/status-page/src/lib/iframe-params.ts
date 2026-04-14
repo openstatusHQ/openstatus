@@ -41,7 +41,7 @@ export const iframeParser = createParser<IframeState>({
   eq: (a, b) =>
     a.mode === b.mode &&
     a.sections.length === b.sections.length &&
-    a.sections.every((s, i) => s === b.sections[i]),
+    a.sections.every((s) => b.sections.includes(s)),
 }).withDefault({ mode: false, sections: [...ALL_IFRAME_SECTIONS] });
 
 export const iframeThemeParser = parseAsStringLiteral([
