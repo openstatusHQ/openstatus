@@ -6,12 +6,12 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeDropdown } from "@/components/themes/theme-dropdown";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { cn } from "@openstatus/ui/lib/utils";
 
 export function Footer({
   className,
