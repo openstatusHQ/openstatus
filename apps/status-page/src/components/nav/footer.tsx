@@ -11,8 +11,12 @@ import { Clock } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { cn } from "@openstatus/ui/lib/utils";
 
-export function Footer(props: React.ComponentProps<"footer">) {
+export function Footer({
+  className,
+  ...props
+}: React.ComponentProps<"footer">) {
   const t = useExtracted();
   const { domain } = useParams<{ domain: string }>();
   const [isMounted, setIsMounted] = useState(false);
@@ -29,7 +33,10 @@ export function Footer(props: React.ComponentProps<"footer">) {
   if (!page) return null;
 
   return (
-    <footer {...props}>
+    <footer
+      className={cn("group-data-[iframe=true]/iframe:hidden", className)}
+      {...props}
+    >
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2">
         <div>
           {!page.whiteLabel ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { Kbd } from "@/components/common/kbd";
+import { Link } from "@/components/common/link";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDateRange } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
@@ -15,7 +16,6 @@ import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useExtracted, useLocale } from "next-intl";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { chartConfig } from "./utils";
 
@@ -324,6 +324,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                         ) {
                           return (
                             <Link
+                              variant="unstyled"
                               key={`${event.id}-${event.type}`}
                               href={`${prefix ? `/${prefix}` : ""}/events/${
                                 event.type
