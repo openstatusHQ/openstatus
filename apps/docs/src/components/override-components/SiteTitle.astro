@@ -1,0 +1,15 @@
+---
+import config from "@/config/config.json";
+import ImageMod from "../ImageMod.astro";
+const { logo } = config.site;
+---
+  <a href="/" class="flex items-center gap-2 font-bold no-underline text-black dark:text-white text-lg font-cal">
+    <ImageMod
+      src={logo}
+      alt="OpenStatus"
+      height={30}
+      width={30}
+      class="rounded-full border border-border bg-transparent "
+    />
+    openstatus
+</a>

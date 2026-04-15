@@ -1,0 +1,31 @@
+{
+  "footer": {
+    "community": {
+      "title": "Community",
+      "links": [
+        {
+          "name": "GitHub",
+          "url": "https://github.com/openstatusHQ/openstatus"
+        },
+        { "name": "Discord", "url": "https://www.openstatus.dev/discord" },
+        { "name": "BlueSky", "url": "https://bsky.app/profile/openstatus.dev" }
+      ]
+    },
+    "help_links": {
+      "title": "Resources",
+      "links": [
+        { "name": "Getting Started", "url": "/concept/getting-started/" },
+        { "name": "API Docs", "url": "https://api.openstatus.dev/openapi" },
+        { "name": "Status Page", "url": "https://status.openstatus.dev" }
+      ]
+    },
+    "company": {
+      "title": "Company",
+      "links": [
+        { "name": "Website", "url": "https://openstatus.dev" },
+        { "name": "Blog", "url": "https://openstatus.dev/blog" },
+        { "name": "Changelog", "url": "https://openstatus.dev/changelog" }
+      ]
+    }
+  }
+}

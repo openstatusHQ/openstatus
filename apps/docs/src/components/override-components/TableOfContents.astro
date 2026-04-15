@@ -1,0 +1,48 @@
+---
+import TableOfContentsList from "./TableOfContents/TableOfContentsList.astro";
+
+const { toc } = Astro.locals.starlightRoute;
+---
+
+{
+  toc && (
+    <starlight-toc
+      data-min-h={toc.minHeadingLevel}
+      data-max-h={toc.maxHeadingLevel}
+    >
+      <nav aria-labelledby="starlight__on-this-page">
+        <h2 id="starlight__on-this-page" class="uppercase flex gap-2 pl-6 mb-6">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1.375 6H10.625M1.375 2.875H10.625M1.375 9.125H5.75"
+              stroke="#A3A3A3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          {Astro.locals.t("tableOfContents.onThisPage")}
+        </h2>
+        <TableOfContentsList toc={toc.items} />
+      </nav>
+    </starlight-toc>
+  )
+}
+
+<script src="./TableOfContents/starlight-toc"></script>
+
+<style>
+  @layer starlight.core {
+    #starlight__on-this-page {
+      font-size: 12px !important;
+      display: flex;
+      align-items: center;
+    }
+  }
+</style>

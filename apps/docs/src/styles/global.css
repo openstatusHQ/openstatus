@@ -1,0 +1,219 @@
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@plugin "../tailwind-plugin/tw-theme";
+@plugin "../tailwind-plugin/tw-bs-grid";
+
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+
+@theme {
+  --font-cal: "calsans", "sans-serif";
+  --font-mono: 'CommitMono', 'sans-serif';
+  --font-sans: 'Inter', 'sans-serif';
+
+  /* UI package color mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  @font-face {
+    font-family: 'calsans';
+    src: url('/fonts/CalSans-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'CommitMono';
+    src: url('/fonts/CommitMono-400-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'CommitMono';
+    src: url('/fonts/CommitMono-700-Regular.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter Variable';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(@fontsource-variable/inter/files/inter-latin-wght-normal.woff2) format('woff2-variations');
+    unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  }
+}
+
+/* Dockit Starlight color system using color-mix */
+:root {
+  --sl-color-accent-low: color-mix(in srgb, var(--color-primary), #000 90%);
+  --sl-color-accent: var(--color-primary);
+  --sl-color-accent-high: color-mix(in srgb, var(--color-primary), #fff 70%);
+
+  --sl-color-white: var(--color-light);
+  --sl-color-gray-1: color-mix(in srgb, var(--color-dark) 6%, var(--color-light) 94%);
+  --sl-color-gray-2: color-mix(in srgb, var(--color-dark) 24%, var(--color-light) 76%);
+  --sl-color-gray-3: color-mix(in srgb, var(--color-dark) 45%, var(--color-light) 55%);
+  --sl-color-gray-4: color-mix(in srgb, var(--color-dark) 65%, var(--color-light) 35%);
+  --sl-color-gray-5: color-mix(in srgb, var(--color-dark) 78%, var(--color-light) 22%);
+  --sl-color-gray-6: color-mix(in srgb, var(--color-dark) 85%, var(--color-light) 15%);
+
+  --sl-color-black: var(--color-dark);
+  --sl-sidebar-width: 320px;
+  --sl-color-hairline: color-mix(in srgb, var(--sl-color-white) 10%, transparent);
+  --sl-color-hairline-light: #252525;
+}
+
+/* Light mode colors */
+:root[data-theme='light'] {
+  --sl-color-accent-low: color-mix(in srgb, var(--color-lightmode-primary), #fff 70%);
+  --sl-color-accent: var(--color-lightmode-primary);
+  --sl-color-accent-high: color-mix(in srgb, var(--color-lightmode-primary), #000 90%);
+
+  --sl-color-white: var(--color-lightmode-light);
+  --sl-color-gray-1: color-mix(in srgb, var(--color-lightmode-dark) 15%, var(--color-lightmode-light) 85%);
+  --sl-color-gray-2: color-mix(in srgb, var(--color-lightmode-dark) 22%, var(--color-lightmode-light) 78%);
+  --sl-color-gray-3: color-mix(in srgb, var(--color-lightmode-dark) 35%, var(--color-lightmode-light) 65%);
+  --sl-color-gray-4: color-mix(in srgb, var(--color-lightmode-dark) 55%, var(--color-lightmode-light) 45%);
+  --sl-color-gray-5: color-mix(in srgb, var(--color-lightmode-dark) 76%, var(--color-lightmode-light) 24%);
+  --sl-color-gray-6: color-mix(in srgb, var(--color-lightmode-dark) 94%, var(--color-lightmode-light) 6%);
+  --sl-color-gray-7: color-mix(in srgb, var(--color-lightmode-dark) 96%, var(--color-lightmode-light) 4%);
+
+  --sl-color-black: var(--color-lightmode-dark);
+}
+
+@theme {
+  --color-primary-gradient: linear-gradient(
+    35.65deg,
+    #3a1c71 -10.94%,
+    var(--color-primary) 61.04%,
+    #ffca7b 133.01%
+  );
+}
+
+/* OpenStatus design tokens — aligned with packages/ui oklch colors */
+@layer base {
+  h1 {
+    letter-spacing: var(--tracking-tight);
+  }
+  h2 {
+    letter-spacing: var(--tracking-tighter);
+  }
+
+  /* Light mode (default for Starlight) */
+  :root[data-theme='light'] {
+    --radius: 0.625rem;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --success: oklch(0.72 0.19 150);
+    --warning: oklch(0.77 0.16 70);
+    --info: oklch(0.62 0.19 260);
+
+    /* Status Tracker Colors */
+    --status-degraded: 50 100% 52%;
+    --status-operational: 131 39% 51%;
+    --status-down: 11 82% 59%;
+    --status-monitoring: 210 100% 62%;
+  }
+
+  /* Dark mode (default for Starlight dark-first) */
+  :root {
+    --radius: 0.625rem;
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --success: oklch(0.72 0.19 150);
+    --warning: oklch(0.77 0.16 70);
+    --info: oklch(0.62 0.19 260);
+
+    /* Status Tracker Colors */
+    --status-degraded: 50 100% 52%;
+    --status-operational: 131 39% 51%;
+    --status-down: 11 82% 59%;
+    --status-monitoring: 210 100% 62%;
+  }
+}
+
+@import "./base.css";
+@import "./navigation.css";
+@import "./components.css";

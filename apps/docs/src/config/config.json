@@ -1,0 +1,26 @@
+{
+  "site": {
+    "title": "openstatus docs",
+    "logo": "/src/assets/icon.png",
+    "logo_darkmode": "/src/assets/icon.png",
+    "logo_width": "30",
+    "logo_height": "30",
+    "logo_text": "OpenStatus"
+  },
+  "settings": {
+    "search": true,
+    "theme_switcher": true
+  },
+  "params": {
+    "footer_contact": {
+      "enable": false,
+      "action": "#"
+    },
+    "copyright": "Made with ❤️ by <a class=\"text-primary hover:underline no-underline\" href=\"https://openstatus.dev\" target=\"_blank\" rel=\"noopener\" aria-label=\"OpenStatus\">OpenStatus</a>"
+  },
+  "navigation_button": {
+    "enable": true,
+    "label": "Get Started",
+    "link": "/concept/getting-started/"
+  }
+}

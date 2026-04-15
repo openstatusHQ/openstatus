@@ -1,0 +1,7 @@
+/* container */
+.container {
+  @apply mx-auto max-w-full! xl:max-w-[1740px]! px-4;
+}
+.content-panel .sl-container {
+  @apply mx-auto xl:max-w-[1740px]! ;
+}

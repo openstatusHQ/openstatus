@@ -1,0 +1,36 @@
+{
+  "colors": {
+    "default": {
+      "theme_color": {
+        "primary": "#f8fafc",
+        "body": "#020817",
+        "light": "#f8fafc",
+        "dark": "#0f172a"
+      },
+      "text_color": {
+        "text": "#94a3b8"
+      }
+    },
+    "lightmode": {
+      "theme_color": {
+        "primary": "#020817",
+        "body": "#ffffff",
+        "light": "#020817",
+        "dark": "#f1f5f9"
+      },
+      "text_color": {
+        "text": "#020817"
+      }
+    }
+  },
+  "fonts": {
+    "font_family": {
+      "primary": "CommitMono",
+      "primary_type": "sans-serif"
+    },
+    "font_size": {
+      "base": "16",
+      "scale": "1.15"
+    }
+  }
+}

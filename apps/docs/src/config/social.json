@@ -1,0 +1,19 @@
+{
+  "main": [
+    {
+      "icon": "github",
+      "label": "GitHub",
+      "href": "https://github.com/openstatusHQ/openstatus"
+    },
+    {
+      "icon": "discord",
+      "label": "Discord",
+      "href": "https://www.openstatus.dev/discord"
+    },
+    {
+      "icon": "blueSky",
+      "label": "BlueSky",
+      "href": "https://bsky.app/profile/openstatus.dev"
+    }
+  ]
+}

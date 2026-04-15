@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "openstatus-docs",
+  "compatibility_date": "2025-03-17",
+  "assets": {
+    "directory": "./dist"
+  }
+}

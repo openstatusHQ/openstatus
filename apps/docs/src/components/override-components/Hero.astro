@@ -1,0 +1,103 @@
+---
+import { plainLabel } from "@/lib/utils/textConverter";
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline } = data.hero || {};
+const { sidebar } = Astro.locals.starlightRoute;
+
+function getFirstHref(item: any): string | null {
+  if (typeof item?.href === "string" && item.href) {
+    return item.href;
+  }
+  if (item?.entries && Array.isArray(item.entries) && item.entries.length > 0) {
+    return getFirstHref(item.entries[0]);
+  }
+  return null;
+}
+
+// check if 404 page
+const is404 = Astro.locals.starlightRoute?.id === "404";
+---
+
+<div
+  class="hero flex flex-col items-center mx-auto px-4 sm:px-6 lg:px-16 xl:px-24 pt-20 pb-35"
+>
+  {title && <h1 set:html={title} class="mb-8 text-center rounded-2xl" />}
+  {tagline && <p set:html={tagline} class="text-xl text-center" />}
+
+  {
+    !is404 && (
+      <div class="mt-12 max-w-4xl">
+        <div class="flex justify-center items-center flex-wrap gap-4">
+          <p class="text-base font-normal">
+            {Astro.locals.t("hero.popular", "Popular")}:
+          </p>
+          <div class="flex gap-4 badges px-3 py-2.5 rounded-xl flex-wrap justify-center">
+            {sidebar.map((item: any) => {
+              const href = getFirstHref(item);
+              return (
+                <div class="badge rounded-lg px-2 py-1.5 group transition">
+                  <a
+                    class="cursor-pointer text-text no-underline group-hover:text-black dark:group-hover:text-white transition-colors"
+                    href={href}
+                  >
+                    {plainLabel(item.label)}
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  @layer starlight.core {
+    h1 {
+      font-size: 5rem !important;
+      line-height: 5rem !important;
+      letter-spacing: -3px;
+      color: var(--sl-color-white);
+      max-width: 18ch;
+    }
+
+    .badges {
+      background-color: color-mix(
+        in srgb,
+        var(--sl-color-white) 3%,
+        transparent
+      );
+    }
+    .badge {
+      background: color-mix(in srgb, var(--sl-color-white) 7%, transparent);
+      font-size: 14px;
+    }
+    .badge:hover {
+      background: color-mix(in srgb, var(--sl-color-white) 15%, transparent);
+    }
+
+    @media (max-width: 940px) {
+      h1 {
+        font-size: 3.5rem !important;
+        line-height: 3.5rem !important;
+        letter-spacing: -2px;
+      }
+    }
+  }
+</style>
+<script>
+  const iconElements = document.querySelector("[data-icon-path]");
+
+  // make image element and add the path to src
+  if (iconElements) {
+    const iconPath = iconElements.getAttribute("data-icon-path");
+
+    const img = document.createElement("img");
+    img.src = `/${iconPath}` || "";
+    img.alt = "icon";
+    img.className =
+      "hidden lg:inline-block size-20 -mb-2 rounded-2xl animate-[bounce_2s_ease-in-out_infinite]";
+    iconElements.replaceWith(img);
+  }
+</script>
