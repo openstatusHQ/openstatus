@@ -16,12 +16,16 @@ export const iframeParser = createParser<IframeState>({
     if (raw === "") {
       return { mode: true, sections: [...ALL_IFRAME_SECTIONS] };
     }
-    const sections = raw
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter((s): s is IframeSection =>
-        (ALL_IFRAME_SECTIONS as readonly string[]).includes(s),
-      );
+    const sections = Array.from(
+      new Set(
+        raw
+          .split(",")
+          .map((s) => s.trim().toLowerCase())
+          .filter((s): s is IframeSection =>
+            (ALL_IFRAME_SECTIONS as readonly string[]).includes(s),
+          ),
+      ),
+    );
     // If nothing valid was parsed (e.g. `?iframe=,` or `?iframe=unknown`),
     // fall back to showing everything rather than a blank embed.
     if (sections.length === 0) {
