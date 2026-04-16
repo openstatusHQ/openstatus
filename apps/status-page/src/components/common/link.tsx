@@ -1,6 +1,6 @@
 "use client";
 
-import { useIframe } from "@/hooks/use-iframe";
+import { useEmbed } from "@/hooks/use-embed";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import NextLink from "next/link";
@@ -29,10 +29,10 @@ export function Link({
   rel,
   ...props
 }: React.ComponentProps<typeof NextLink> & VariantProps<typeof linkVariants>) {
-  const { mode } = useIframe();
+  const { mode } = useEmbed();
   // NOTE: treat any non-internal href as external so we don't hijack protocol
   // links (mailto/tel/sms), absolute URLs, or protocol-relative URLs with
-  // iframe-mode target="_blank" overrides.
+  // embed-mode target="_blank" overrides.
   const href = typeof props.href === "string" ? props.href : null;
   const isExternal =
     href !== null &&

@@ -1,6 +1,6 @@
 ---
 title: How to Embed a Status Page in an Iframe
-description: Embed a trimmed, chromeless version of your openstatus status page on any website using the `?iframe` query parameter.
+description: Embed a trimmed, chromeless version of your openstatus status page on any website using the `?embed` query parameter.
 ---
 
 ## Problem
@@ -9,17 +9,17 @@ You want to embed your openstatus status page in your marketing site, dashboard,
 
 ## Solution
 
-Append `?iframe` to your status page URL to render a chromeless version suitable for embedding. Use the value to choose exactly which sections to show.
+Append `?embed` to your status page URL to render a chromeless version suitable for embedding. Use the value to choose exactly which sections to show.
 
 ## URL contract
 
 ```
-https://<your-slug>.openstatus.dev/?iframe=<sections>
+https://<your-slug>.openstatus.dev/?embed=<sections>
 ```
 
-- The **presence** of `?iframe` turns on embed mode. The header, navigation, and subscribe form are hidden. Non-whitelabel pages keep a compact "powered by openstatus.dev" attribution; whitelabel pages hide the footer entirely.
+- The **presence** of `?embed` turns on embed mode. The header, navigation, and subscribe form are hidden. Non-whitelabel pages keep a compact "powered by openstatus.dev" attribution; whitelabel pages hide the footer entirely.
 - The **value** is a comma-separated list of sections to show.
-- An **empty value** (`?iframe` or `?iframe=`) shows all sections.
+- An **empty value** (`?embed` or `?embed=`) shows all sections.
 
 ### Sections
 
@@ -30,15 +30,15 @@ https://<your-slug>.openstatus.dev/?iframe=<sections>
 | `components` | Component health trackers |
 | `feed` | Past status reports and maintenances |
 
-Unknown keys are silently ignored. Section names are case-insensitive. If nothing valid is provided (e.g. `?iframe=,` or `?iframe=unknown`), all sections are shown.
+Unknown keys are silently ignored. Section names are case-insensitive. If nothing valid is provided (e.g. `?embed=,` or `?embed=unknown`), all sections are shown.
 
-Section keys apply to the **root status page URL only**. Other routes (`/monitors`, `/events`, `/events/report/:id`) accept `?iframe` to hide header/footer chrome, but their content is unchanged — they render normally inside the frame.
+Section keys apply to the **root status page URL only**. Other routes (`/monitors`, `/events`, `/events/report/:id`) accept `?embed` to hide header/footer chrome, but their content is unchanged — they render normally inside the frame.
 
 ### Additional parameters
 
 | Param | Values | Behavior |
 |---|---|---|
-| `theme` | `light`, `dark` | Forces the theme. Honored only when `?iframe` is present. Falls back to system preference, then the page's configured default. |
+| `theme` | `light`, `dark` | Forces the theme. Honored only when `?embed` is present. Falls back to system preference, then the page's configured default. |
 
 ## Examples
 
@@ -46,7 +46,7 @@ Show the full chromeless page:
 
 ```html
 <iframe
-  src="https://status.example.com/?iframe"
+  src="https://status.example.com/?embed"
   width="100%"
   height="600"
   style="border: 0;"
@@ -57,7 +57,7 @@ Show only the title and current banner:
 
 ```html
 <iframe
-  src="https://status.example.com/?iframe=title,banner"
+  src="https://status.example.com/?embed=title,banner"
   width="100%"
   height="300"
   style="border: 0;"
@@ -68,7 +68,7 @@ Show components in forced dark theme:
 
 ```html
 <iframe
-  src="https://status.example.com/?iframe=components&theme=dark"
+  src="https://status.example.com/?embed=components&theme=dark"
   width="100%"
   height="400"
   style="border: 0;"

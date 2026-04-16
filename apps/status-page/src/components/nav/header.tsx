@@ -114,7 +114,7 @@ export function Header({
 
   return (
     <header
-      className={cn("group-data-[iframe=true]/iframe:hidden", className)}
+      className={cn("group-data-[embed=true]/embed:hidden", className)}
       {...props}
     >
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">

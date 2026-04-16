@@ -1,6 +1,6 @@
-import { iframeParser } from "@/lib/iframe-params";
+import { embedParser } from "@/lib/embed-params";
 import { createSearchParamsCache } from "nuqs/server";
 
-export const iframeSearchParamsCache = createSearchParamsCache({
-  iframe: iframeParser,
+export const embedSearchParamsCache = createSearchParamsCache({
+  embed: embedParser,
 });

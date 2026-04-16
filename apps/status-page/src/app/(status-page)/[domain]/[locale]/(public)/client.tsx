@@ -27,7 +27,7 @@ import {
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
-import { useIframe } from "@/hooks/use-iframe";
+import { useEmbed } from "@/hooks/use-embed";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { Separator } from "@openstatus/ui/components/ui/separator";
@@ -40,7 +40,7 @@ export function Client() {
   const prefix = usePathnamePrefix();
   const { domain } = useParams<{ domain: string }>();
   const { cardType, barType, showUptime } = useStatusPage();
-  const iframe = useIframe();
+  const embed = useEmbed();
   const trpc = useTRPC();
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
@@ -62,7 +62,7 @@ export function Client() {
   }
 
   const componentsVisible =
-    !iframe.mode || iframe.sections.includes("components");
+    !embed.mode || embed.sections.includes("components");
 
   const hasCustomConfig = pageInitial?.configuration
     ? pageInitial.configuration.type !== barType ||
@@ -70,7 +70,7 @@ export function Client() {
     : false;
 
   // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs.
-  // Also skip when `components` section is hidden in iframe mode — this query only matters there.
+  // Also skip when `components` section is hidden in embed mode — this query only matters there.
   const { data: pageWithCustomConfiguration } = useQuery({
     ...trpc.statusPage.get.queryOptions({
       slug: domain,
@@ -119,12 +119,12 @@ export function Client() {
   return (
     <div className="flex flex-col gap-6">
       <Status variant={page.status}>
-        <StatusHeader className="group-data-[hide-title=true]/iframe:hidden">
+        <StatusHeader className="group-data-[hide-title=true]/embed:hidden">
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
         {events.length > 0 ? (
-          <StatusContent className="group-data-[hide-banner=true]/iframe:hidden">
+          <StatusContent className="group-data-[hide-banner=true]/embed:hidden">
             <StatusBannerTabs
               defaultValue={`${events[0].type}-${events[0].id}`}
             >
@@ -250,12 +250,12 @@ export function Client() {
         ) : (
           <StatusBanner
             status={page.status}
-            className="group-data-[hide-banner=true]/iframe:hidden"
+            className="group-data-[hide-banner=true]/embed:hidden"
           />
         )}
         {/* NOTE: check what gap feels right */}
         {page.trackers.length > 0 ? (
-          <StatusContent className="gap-5 group-data-[hide-components=true]/iframe:hidden">
+          <StatusContent className="gap-5 group-data-[hide-components=true]/embed:hidden">
             {page.trackers.map((tracker) => {
               if (tracker.type === "component") {
                 const component = tracker.component;
@@ -314,8 +314,8 @@ export function Client() {
             })}
           </StatusContent>
         ) : null}
-        <Separator className="group-data-[hide-components=true]/iframe:hidden group-data-[hide-feed=true]/iframe:hidden" />
-        <StatusContent className="group-data-[hide-feed=true]/iframe:hidden">
+        <Separator className="group-data-[hide-components=true]/embed:hidden group-data-[hide-feed=true]/embed:hidden" />
+        <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
           <StatusFeed
             statusReports={page.statusReports
               .filter((report) =>

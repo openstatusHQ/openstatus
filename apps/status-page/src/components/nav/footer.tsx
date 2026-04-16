@@ -4,7 +4,7 @@ import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeDropdown } from "@/components/themes/theme-dropdown";
-import { useIframe } from "@/hooks/use-iframe";
+import { useEmbed } from "@/hooks/use-embed";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
@@ -25,7 +25,7 @@ export function Footer({
   const { data: page, dataUpdatedAt } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
-  const iframe = useIframe();
+  const embed = useEmbed();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
@@ -34,16 +34,16 @@ export function Footer({
 
   if (!page) return null;
 
-  // Whitelabel pages: hide the footer entirely in iframe mode.
+  // Whitelabel pages: hide the footer entirely in embed mode.
   // Non-whitelabel pages: keep the "powered by" attribution visible; right-side controls hidden via CSS.
-  if (iframe.mode && page.whiteLabel) return null;
+  if (embed.mode && page.whiteLabel) return null;
 
   return (
     <footer
-      className={cn("group-data-[iframe=true]/iframe:border-t-0", className)}
+      className={cn("group-data-[embed=true]/embed:border-t-0", className)}
       {...props}
     >
-      <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2 group-data-[iframe=true]/iframe:justify-center">
+      <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2 group-data-[embed=true]/embed:justify-center">
         <div>
           {!page.whiteLabel ? (
             <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
@@ -58,7 +58,7 @@ export function Footer({
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 group-data-[iframe=true]/iframe:hidden">
+        <div className="flex items-center gap-2 group-data-[embed=true]/embed:hidden">
           <TimestampHoverCard
             date={new Date(dataUpdatedAt)}
             side="top"
