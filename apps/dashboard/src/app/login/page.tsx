@@ -4,9 +4,9 @@ import Link from "next/link";
 import { signIn } from "@/lib/auth";
 import { GitHubIcon } from "@openstatus/icons";
 import { GoogleIcon } from "@openstatus/icons";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import type { SearchParams } from "nuqs/server";
+import { LoginButton } from "./_components/login-button";
 import MagicLinkForm from "./_components/magic-link-form";
 import { searchParamsCache } from "./search-params";
 
@@ -37,10 +37,10 @@ export default async function Page(props: {
           Get started now. No credit card required.
         </p>
       </div>
-      <div className="grid gap-3 p-4">
+      <div className="grid gap-4 p-4">
         {process.env.NODE_ENV === "development" ||
         process.env.SELF_HOST === "true" ? (
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             <MagicLinkForm />
             <Separator />
           </div>
@@ -52,9 +52,9 @@ export default async function Page(props: {
           }}
           className="w-full"
         >
-          <Button type="submit" className="w-full">
+          <LoginButton type="submit" provider="github">
             Sign in with GitHub <GitHubIcon className="ml-2 h-4 w-4" />
-          </Button>
+          </LoginButton>
         </form>
         <form
           action={async () => {
@@ -63,9 +63,9 @@ export default async function Page(props: {
           }}
           className="w-full"
         >
-          <Button type="submit" className="w-full" variant="outline">
+          <LoginButton type="submit" provider="google">
             Sign in with Google <GoogleIcon className="ml-2 h-4 w-4" />
-          </Button>
+          </LoginButton>
         </form>
       </div>
       <p className="px-8 text-center text-muted-foreground text-sm">

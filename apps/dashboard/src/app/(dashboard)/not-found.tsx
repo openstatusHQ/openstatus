@@ -28,12 +28,12 @@ export default function NotFound() {
             className="rounded-md border border-border bg-background"
             side="bottom"
           />
-          <div className="grid sm:grid-cols-2 gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             {quickLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground font-commit-mono"
+                className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-commit-mono text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 <link.icon className="h-4 w-4" />
                 {link.name}
