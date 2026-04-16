@@ -101,8 +101,8 @@ export const FEATURES = [
     price: {
       monthly: {
         priceIds: {
-          test: "price_TODO_test_ip_restriction",
-          production: "price_TODO_prod_ip_restriction",
+          test: "price_1TMpxlBXJcTfzsyJ1woQtafW",
+          production: "price_1TMq0GBXJcTfzsyJrIVx9KPL",
         },
       },
     },
