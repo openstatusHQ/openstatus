@@ -138,6 +138,7 @@ export function NavFeedback() {
       if (isTyping) return;
 
       if (!open) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
         if (e.key === "f") {
           e.preventDefault();
           setOpen(true);

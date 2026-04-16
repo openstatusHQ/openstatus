@@ -1,7 +1,7 @@
 "use client";
+import { Link } from "@/components/common/link";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useExtracted } from "next-intl";
-import Link from "next/link";
 import {
   StatusBlankContainer,
   StatusBlankContent,
@@ -116,6 +116,7 @@ export function StatusFeed({
                 <StatusEventDate date={event.startDate} />
               </StatusEventAside>
               <Link
+                variant="unstyled"
                 href={`${prefix ? `/${prefix}` : ""}/events/report/${
                   report.id
                 }`}
@@ -150,6 +151,7 @@ export function StatusFeed({
                 <StatusEventDate date={event.startDate} />
               </StatusEventAside>
               <Link
+                variant="unstyled"
                 href={`${prefix ? `/${prefix}` : ""}/events/maintenance/${
                   maintenance.id
                 }`}

@@ -14,7 +14,7 @@ const cspHeader = `
     object-src 'none';
     base-uri 'self';
     form-action 'self';
-    frame-ancestors 'none';
+    frame-ancestors *;
     connect-src 'self' https://*.ingest.us.sentry.io;
     worker-src 'self' blob:;
     upgrade-insecure-requests;
