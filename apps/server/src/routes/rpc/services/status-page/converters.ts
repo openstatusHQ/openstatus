@@ -226,7 +226,7 @@ export function dbPageToProto(page: DBPage): StatusPage {
     locales: page.locales?.map(dbLocaleToProto) ?? [],
     password: page.password ?? "",
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
-    allowIndex: page.allowIndex ?? false,
+    allowIndex: page.allowIndex ?? true,
   };
 }
 

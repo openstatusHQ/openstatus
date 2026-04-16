@@ -512,7 +512,7 @@ export const pageRouter = createTRPCRouter({
           accessType: opts.input.accessType,
           authEmailDomains: opts.input.authEmailDomains?.join(","),
           password: opts.input.password,
-          allowIndex: opts.input.allowIndex ?? false,
+          allowIndex: opts.input.allowIndex ?? true,
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))

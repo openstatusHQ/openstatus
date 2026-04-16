@@ -3032,7 +3032,7 @@ describe("StatusPageService — allow_index", () => {
     allowIndexPageId = Number(data.statusPage.id);
   });
 
-  test("creates a page with allow_index defaulting to false", async () => {
+  test("creates a page with allow_index defaulting to true", async () => {
     const res = await connectRequest(
       "CreateStatusPage",
       {
@@ -3044,7 +3044,7 @@ describe("StatusPageService — allow_index", () => {
 
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.statusPage.allowIndex ?? false).toBe(false);
+    expect(data.statusPage.allowIndex).toBe(true);
 
     await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
   });
@@ -3091,8 +3091,8 @@ describe("StatusPageService — allow_index", () => {
     expect(data.statusPage.allowIndex).toBe(true);
   });
 
-  test("rejects allow_index=true when plan does not support it", async () => {
-    // Temporarily disable allow-index on workspace
+  test("rejects allow_index=false when plan does not support it", async () => {
+    // Temporarily disable no-index feature on workspace
     await db.run(
       sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('false')) WHERE id = 1`,
     );
@@ -3101,7 +3101,7 @@ describe("StatusPageService — allow_index", () => {
       "UpdateStatusPage",
       {
         id: String(allowIndexPageId),
-        allowIndex: true,
+        allowIndex: false,
       },
       { "x-openstatus-key": "1" },
     );
@@ -3110,7 +3110,7 @@ describe("StatusPageService — allow_index", () => {
     const data = await res.json();
     expect(data.message).toContain("Upgrade");
 
-    // Re-enable allow-index
+    // Re-enable no-index feature
     await db.run(
       sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
     );
