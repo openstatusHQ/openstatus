@@ -137,7 +137,8 @@ export function FormPageAccess({
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
               Enable protection for your status page. Choose between simple
-              password or email domain authentication via magic link.
+              password, email domain authentication via magic link, or IP
+              restriction.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>
