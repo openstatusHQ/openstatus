@@ -24,7 +24,7 @@ export default function RestrictedPage() {
       <h1 className="font-semibold text-2xl">{t("Access Restricted")}</h1>
       <p className="text-muted-foreground">
         {t(
-          "This status page is restricted and cannot be accessed from your network. Reach out to your network administrator to get access.",
+          "This status page is only accessible from specific IPv4 networks. Reach out to your network administrator to get access.",
         )}
       </p>
     </div>
