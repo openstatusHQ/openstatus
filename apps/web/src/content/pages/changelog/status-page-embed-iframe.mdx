@@ -1,0 +1,20 @@
+---
+title: "Embed your status page anywhere"
+description: "Add a single iframe to show real-time status on your site"
+image: "/assets/changelog/status-page-embed-iframe.png"
+publishedAt: "2026-04-15"
+category: "statuspage"
+author: "openstatus"
+---
+
+You can now embed your status page on any website with a single `<iframe>` tag. Append `?embed=all` to your status page URL for a chromeless view, or pick specific sections to show.
+
+```html
+<iframe
+  src="https://slug.openstatus.dev/?embed=title,banner,components&theme=light"
+  width="100%"
+  height="600"
+  style="border: 0;"
+></iframe>
+```
+Read the full [embed guide](/docs/guides/how-to-embed-status-page-iframe) for all options and caveats.

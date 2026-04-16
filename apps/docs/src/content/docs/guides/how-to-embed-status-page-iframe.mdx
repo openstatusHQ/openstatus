@@ -17,9 +17,8 @@ Append `?embed` to your status page URL to render a chromeless version suitable 
 https://<your-slug>.openstatus.dev/?embed=<sections>
 ```
 
-- The **presence** of `?embed` turns on embed mode. The header, navigation, and subscribe form are hidden. Non-whitelabel pages keep a compact "powered by openstatus.dev" attribution; whitelabel pages hide the footer entirely.
-- The **value** is a comma-separated list of sections to show.
-- An **empty value** (`?embed` or `?embed=`) shows all sections.
+- The **value** `?embed=all` turns on embed mode and shows all sections. The header, navigation, and subscribe form are hidden. Non-whitelabel pages keep a compact "powered by openstatus.dev" attribution; whitelabel pages hide the footer entirely.
+- The **value** can also be a comma-separated list of specific sections to show (e.g. `?embed=title,banner`).
 
 ### Sections
 
@@ -46,7 +45,7 @@ Show the full chromeless page:
 
 ```html
 <iframe
-  src="https://status.example.com/?embed"
+  src="https://status.example.com/?embed=all"
   width="100%"
   height="600"
   style="border: 0;"
