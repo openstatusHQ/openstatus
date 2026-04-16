@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
-import { getValidSubdomain } from "./lib/domain";
+import { getValidSubdomain, isSaasSubdomain, isSelfHosted } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
@@ -89,7 +89,7 @@ export default auth(async (req) => {
       const { pathname, origin } = req.nextUrl;
 
       // custom domain redirect
-      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+      if (_page.customDomain && !isSaasSubdomain(host, _page.slug)) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
         const url = new URL(
           `https://${_page.customDomain}/login?redirect=${encodeURIComponent(
@@ -111,7 +111,7 @@ export default auth(async (req) => {
       const redirect = url.searchParams.get("redirect");
 
       // custom domain redirect
-      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+      if (_page.customDomain && !isSaasSubdomain(host, _page.slug)) {
         const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
         console.log("redirect to /", url.toString());
         return NextResponse.redirect(url);
@@ -165,10 +165,10 @@ export default auth(async (req) => {
   console.log({
     customDomain: _page.customDomain,
     host,
-    expectedHost: `${_page.slug}.stpg.dev`,
+    isSaas: isSaasSubdomain(host, _page.slug),
   });
 
-  if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+  if (_page.customDomain && !isSaasSubdomain(host, _page.slug)) {
     const pathnames = url.pathname.split("/");
     const subdomain = getValidSubdomain(url.host);
     if (pathnames.length > 2 && !subdomain) {
@@ -179,6 +179,25 @@ export default auth(async (req) => {
     }
     if (_page.customDomain && subdomain) {
       console.log({ url: req.url });
+      if (isSelfHosted()) {
+        // Self-hosted: rewrite internally with slug prefix
+        if (pathnames.length > 2) {
+          const pathname = pathnames.slice(1).join("/");
+          const rewriteUrl = new URL(
+            `/${_page.slug}/${pathname}`,
+            req.nextUrl.origin,
+          );
+          rewriteUrl.search = url.search;
+          return NextResponse.rewrite(rewriteUrl);
+        }
+        const rewriteUrl = new URL(
+          `/${_page.slug}${url.pathname}`,
+          req.nextUrl.origin,
+        );
+        rewriteUrl.search = url.search;
+        return NextResponse.rewrite(rewriteUrl);
+      }
+      // SaaS: rewrite to stpg.dev (hostname routing resolves the slug)
       if (pathnames.length > 2) {
         const pathname = pathnames.slice(1).join("/");
         const rewriteUrl = new URL(
