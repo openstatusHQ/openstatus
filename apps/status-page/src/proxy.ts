@@ -168,6 +168,8 @@ export default auth(async (req) => {
   }
 
   if (_page.accessType === "ip-restriction") {
+    // Vercel overwrites x-forwarded-for with the verified client IP — not spoofable.
+    // https://vercel.com/docs/headers/request-headers#x-forwarded-for
     const xff = req.headers.get("x-forwarded-for");
     const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
 
