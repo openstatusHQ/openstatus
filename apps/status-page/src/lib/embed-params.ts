@@ -13,7 +13,7 @@ export type EmbedState = { mode: boolean; sections: EmbedSection[] };
 
 export const embedParser = createParser<EmbedState>({
   parse(raw) {
-    if (raw === "") {
+    if (raw === "" || raw.toLowerCase() === "all") {
       return { mode: true, sections: [...ALL_EMBED_SECTIONS] };
     }
     const sections = Array.from(
