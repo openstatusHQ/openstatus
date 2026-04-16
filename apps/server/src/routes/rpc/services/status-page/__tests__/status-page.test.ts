@@ -3097,23 +3097,25 @@ describe("StatusPageService — allow_index", () => {
       sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('false')) WHERE id = 1`,
     );
 
-    const res = await connectRequest(
-      "UpdateStatusPage",
-      {
-        id: String(allowIndexPageId),
-        allowIndex: false,
-      },
-      { "x-openstatus-key": "1" },
-    );
+    try {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(allowIndexPageId),
+          allowIndex: false,
+        },
+        { "x-openstatus-key": "1" },
+      );
 
-    expect(res.status).not.toBe(200);
-    const data = await res.json();
-    expect(data.message).toContain("Upgrade");
-
-    // Re-enable no-index feature
-    await db.run(
-      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
-    );
+      expect(res.status).not.toBe(200);
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade");
+    } finally {
+      // Re-enable no-index feature
+      await db.run(
+        sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
+      );
+    }
   });
 
   // Cleanup
