@@ -179,7 +179,7 @@ export function FormStatusPageUpdate() {
           accessType: statusPage.accessType,
           password: statusPage.password ?? undefined,
           authEmailDomains: statusPage.authEmailDomains ?? [],
-          allowIndex: statusPage.allowIndex ?? false,
+          allowIndex: statusPage.allowIndex ?? true,
         }}
         onSubmit={async (values) => {
           await updatePasswordProtectionMutation.mutateAsync({

@@ -146,7 +146,7 @@ message CreateStatusPageRequest {
   // Email domains allowed to access the page (used when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 13;
 
-  // Whether search engines are allowed to index this status page (optional, defaults to false).
+  // Whether search engines are allowed to index this status page (optional, defaults to true).
   optional bool allow_index = 14;
 }
 
