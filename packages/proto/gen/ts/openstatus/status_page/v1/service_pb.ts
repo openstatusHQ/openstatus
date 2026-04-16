@@ -122,7 +122,7 @@ export type CreateStatusPageRequest = Message<"openstatus.status_page.v1.CreateS
   authEmailDomains: string[];
 
   /**
-   * Whether search engines are allowed to index this status page (optional, defaults to false).
+   * Whether search engines are allowed to index this status page (optional, defaults to true).
    *
    * @generated from field: optional bool allow_index = 14;
    */
