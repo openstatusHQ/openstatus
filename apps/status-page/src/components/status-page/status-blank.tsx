@@ -1,9 +1,9 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useExtracted } from "next-intl";
-import Link from "next/link";
 
 export function StatusBlankContainer({
   children,
@@ -64,7 +64,9 @@ export function StatusBlankLink({
       asChild
       {...props}
     >
-      <Link href={href}>{children}</Link>
+      <Link variant="unstyled" href={href}>
+        {children}
+      </Link>
     </Button>
   );
 }

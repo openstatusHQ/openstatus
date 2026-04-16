@@ -76,7 +76,10 @@ function getStatusUpdateTypes(page: Page): StatusUpdateType[] {
   return ["email", "slack", "rss", "json"] as const;
 }
 
-export function Header(props: React.ComponentProps<"header">) {
+export function Header({
+  className,
+  ...props
+}: React.ComponentProps<"header">) {
   const t = useExtracted();
   const trpc = useTRPC();
   const { domain } = useParams<{ domain: string }>();
@@ -110,7 +113,10 @@ export function Header(props: React.ComponentProps<"header">) {
   );
 
   return (
-    <header {...props}>
+    <header
+      className={cn("group-data-[embed=true]/embed:hidden", className)}
+      {...props}
+    >
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
         {/* NOTE: same width as the `StatusUpdates` button */}
         <div className="flex w-[150px] shrink-0">
