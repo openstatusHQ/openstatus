@@ -45,7 +45,11 @@ export function Client() {
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
-  const { data: pageInitial, error } = useQuery({
+  const {
+    data: pageInitial,
+    error,
+    isLoading: isPageLoading,
+  } = useQuery({
     ...trpc.statusPage.get.queryOptions({
       slug: domain,
     }),
@@ -53,7 +57,7 @@ export function Client() {
   });
 
   // Handle case where page doesn't exist or query fails
-  if (error || (!pageInitial && domain)) {
+  if (!isPageLoading && (error || !pageInitial)) {
     notFound();
   }
 

@@ -17,7 +17,7 @@ Append `?iframe` to your status page URL to render a chromeless version suitable
 https://<your-slug>.openstatus.dev/?iframe=<sections>
 ```
 
-- The **presence** of `?iframe` turns on embed mode. The header, footer, and subscribe form are hidden.
+- The **presence** of `?iframe` turns on embed mode. The header, navigation, and subscribe form are hidden. Non-whitelabel pages keep a compact "powered by openstatus.dev" attribution; whitelabel pages hide the footer entirely.
 - The **value** is a comma-separated list of sections to show.
 - An **empty value** (`?iframe` or `?iframe=`) shows all sections.
 
@@ -80,5 +80,5 @@ Show components in forced dark theme:
 - **Height:** iframes do not auto-size to their content. Set a `height` attribute appropriate for the sections you enabled.
 - **Internal links** (e.g. clicking an incident banner) open in a new tab when embedded, so your site's iframe stays put.
 - **Password-protected status pages** may not authenticate correctly inside iframes due to browser third-party cookie restrictions (Safari ITP, Chrome). Visitors may need to authenticate on the full status page first.
-- **Whitelabel pages** hide the footer entirely when embedded. Non-whitelabel pages show a compact "powered by openstatus.dev" attribution in the embed.
+- **Attribution:** non-whitelabel pages show a centered "powered by openstatus.dev" link in the embed footer. Whitelabel pages hide the footer entirely.
 - **Sandboxed iframes** must include at least `allow-scripts allow-same-origin` for the status page to run, plus `allow-popups` for the "open in new tab" behavior on internal links.

@@ -42,10 +42,12 @@ export const iframeParser = createParser<IframeState>({
     if (state.sections.length === ALL_IFRAME_SECTIONS.length) return "";
     return state.sections.join(",");
   },
-  eq: (a, b) =>
-    a.mode === b.mode &&
-    a.sections.length === b.sections.length &&
-    a.sections.every((s) => b.sections.includes(s)),
+  eq: (a, b) => {
+    if (a.mode !== b.mode || a.sections.length !== b.sections.length)
+      return false;
+    const bSet = new Set(b.sections);
+    return a.sections.every((s) => bSet.has(s));
+  },
 }).withDefault({ mode: false, sections: [...ALL_IFRAME_SECTIONS] });
 
 export const iframeThemeParser = parseAsStringLiteral([

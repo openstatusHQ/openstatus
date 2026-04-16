@@ -33,11 +33,14 @@ export function Link({
   // NOTE: treat any non-internal href as external so we don't hijack protocol
   // links (mailto/tel/sms), absolute URLs, or protocol-relative URLs with
   // iframe-mode target="_blank" overrides.
+  const href = typeof props.href === "string" ? props.href : null;
   const isExternal =
-    typeof props.href === "string" &&
-    (/^[a-z][a-z0-9+.-]*:/i.test(props.href) || props.href.startsWith("//"));
-  const embedTarget = mode && !isExternal ? "_blank" : target;
-  const embedRel = mode && !isExternal ? rel ?? "noopener noreferrer" : rel;
+    href !== null &&
+    (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("//"));
+  const isAnchor = href?.startsWith("#");
+  const shouldOpenNewTab = mode && !isExternal && !isAnchor;
+  const embedTarget = shouldOpenNewTab ? "_blank" : target;
+  const embedRel = shouldOpenNewTab ? rel ?? "noopener noreferrer" : rel;
 
   return (
     <NextLink
