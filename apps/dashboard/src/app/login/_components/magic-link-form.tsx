@@ -2,11 +2,11 @@
 
 import { useFormStatus } from "react-dom";
 
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { toast } from "sonner";
 import { signInWithResendAction } from "./actions";
+import { LoginButton } from "./login-button";
 
 /**
  * @deprecated - only to be used in development mode
@@ -31,9 +31,9 @@ export default function MagicLinkForm() {
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" required />
       </div>
-      <Button variant="secondary" className="w-full">
+      <LoginButton provider="email">
         {pending ? "Logging..." : "Log Magic Link"}
-      </Button>
+      </LoginButton>
     </form>
   );
 }
