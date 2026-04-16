@@ -113,6 +113,16 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        limit["ip-restriction"] === false &&
+        opts.input.accessType === "ip-restriction"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "IP restriction is not available for your current plan.",
+        });
+      }
+
       const newPage = await opts.ctx.db
         .insert(page)
         .values({

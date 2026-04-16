@@ -10,10 +10,16 @@ import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
 function isIpAllowed(ip: string, allowedRanges: string[]): boolean {
+  // No ranges configured — deny all (defensive: form validation prevents this)
   if (allowedRanges.length === 0) return false;
   return allowedRanges.some((range) => {
-    const cidr = new IPCIDR(range);
-    return cidr.contains(ip);
+    try {
+      const cidr = new IPCIDR(range);
+      return cidr.contains(ip);
+    } catch {
+      // Skip malformed ranges rather than crashing the middleware
+      return false;
+    }
   });
 }
 

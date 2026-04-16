@@ -266,8 +266,9 @@ export function FormPageAccess({
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Comma-separated list of IPv4 CIDR ranges. Single IPs are
-                      also accepted (e.g. 203.0.113.5).
+                      Comma-separated list of IPv4 CIDR ranges (we automatically
+                      append /32 to single IPs). Single IPs are also accepted
+                      (e.g. 203.0.113.5).
                     </FormDescription>
                   </FormItem>
                 )}

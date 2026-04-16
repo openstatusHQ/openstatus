@@ -67,7 +67,8 @@ Visitors from outside the allowed ranges are redirected to a static "Access Rest
 
 **Configuration:**
 - Set `access_type` to `ip-restriction` in the dashboard or API.
-- Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges.
+- Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically
+                      append /32 to single IPs).
 - IPv6 is not supported
 
 **Note:** This feature is available as a paid add-on for Starter and Pro plans.
