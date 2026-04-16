@@ -173,13 +173,21 @@ export default auth(async (req) => {
     const xff = req.headers.get("x-forwarded-for");
     const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
 
-    if (
-      !url.pathname.endsWith("/restricted") &&
-      (!clientIp || !isIpAllowed(clientIp, _page.allowedIpRanges))
-    ) {
+    const allowed = clientIp && isIpAllowed(clientIp, _page.allowedIpRanges);
+
+    if (!url.pathname.endsWith("/restricted") && !allowed) {
       const { origin } = req.nextUrl;
       const redirectUrl = new URL(
         `${origin}${type === "pathname" ? `/${prefix}` : ""}/restricted`,
+      );
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Redirect allowed IPs away from /restricted
+    if (url.pathname.endsWith("/restricted") && allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
       );
       return NextResponse.redirect(redirectUrl);
     }

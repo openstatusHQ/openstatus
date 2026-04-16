@@ -123,6 +123,16 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        opts.input.accessType === "ip-restriction" &&
+        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At least one IP range is required for IP restriction.",
+        });
+      }
+
       const newPage = await opts.ctx.db
         .insert(page)
         .values({
@@ -527,6 +537,16 @@ export const pageRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "IP restriction is not available for your current plan.",
+        });
+      }
+
+      if (
+        opts.input.accessType === "ip-restriction" &&
+        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At least one IP range is required for IP restriction.",
         });
       }
 
