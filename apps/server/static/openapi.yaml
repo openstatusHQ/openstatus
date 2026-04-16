@@ -2278,7 +2278,7 @@ components:
             - boolean
             - "null"
           title: allow_index
-          description: Whether search engines are allowed to index this status page (optional, defaults to false).
+          description: Whether search engines are allowed to index this status page (optional, defaults to true).
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
