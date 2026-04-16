@@ -1,13 +1,15 @@
-"use client";
-
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
-import { Button } from "@openstatus/ui/components/ui/button";
+import { Activity, Cog, LayoutGrid, PanelTop } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+const quickLinks = [
+  { name: "Overview", href: "/overview", icon: LayoutGrid },
+  { name: "Monitors", href: "/monitors", icon: Activity },
+  { name: "Status Pages", href: "/status-pages", icon: PanelTop },
+  { name: "Settings", href: "/settings/general", icon: Cog },
+];
 
 export default function NotFound() {
-  const router = useRouter();
-
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 md:p-8">
       <div className="mx-auto w-full max-w-md rounded-lg border border-border bg-sidebar">
@@ -26,17 +28,17 @@ export default function NotFound() {
             className="rounded-md border border-border bg-background"
             side="bottom"
           />
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              onClick={router.back}
-              className="cursor-pointer"
-            >
-              Go Back
-            </Button>
-            <Button asChild>
-              <Link href="/overview">Home</Link>
-            </Button>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {quickLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground font-commit-mono"
+              >
+                <link.icon className="h-4 w-4" />
+                {link.name}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
