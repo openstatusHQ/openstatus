@@ -13,6 +13,7 @@ export function LoginButton({
   provider,
   children,
   onClick,
+  className,
   ...props
 }: {
   provider: Provider;
@@ -30,7 +31,7 @@ export function LoginButton({
       className={cn(
         "relative w-full",
         isLastUsed && "border border-primary",
-        props.className,
+        className,
       )}
       onClick={(e) => {
         localStorage.setItem(STORAGE_KEY, provider);
