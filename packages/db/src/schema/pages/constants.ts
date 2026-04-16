@@ -17,4 +17,9 @@ export const subdomainSafeList = [
   "cli",
 ];
 
-export const pageAccessTypes = ["public", "password", "email-domain"] as const;
+export const pageAccessTypes = [
+  "public",
+  "password",
+  "email-domain",
+  "ip-restriction",
+] as const;

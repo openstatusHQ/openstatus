@@ -148,6 +148,9 @@ message CreateStatusPageRequest {
 
   // Whether search engines are allowed to index this status page (optional, defaults to true).
   optional bool allow_index = 14;
+
+  // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+  optional string allowed_ip_ranges = 15;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -245,6 +248,9 @@ message UpdateStatusPageRequest {
 
   // Whether search engines are allowed to index this status page (optional).
   optional bool allow_index = 15;
+
+  // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+  optional string allowed_ip_ranges = 16;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.

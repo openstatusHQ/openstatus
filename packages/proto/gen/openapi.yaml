@@ -2279,6 +2279,12 @@ components:
             - "null"
           title: allow_index
           description: Whether search engines are allowed to index this status page (optional, defaults to true).
+        allowedIpRanges:
+          type:
+            - string
+            - "null"
+          title: allowed_ip_ranges
+          description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
@@ -2573,6 +2579,7 @@ components:
         - PAGE_ACCESS_TYPE_PUBLIC
         - PAGE_ACCESS_TYPE_PASSWORD_PROTECTED
         - PAGE_ACCESS_TYPE_AUTHENTICATED
+        - PAGE_ACCESS_TYPE_IP_RESTRICTED
       description: PageAccessType defines who can access the status page.
     openstatus.status_page.v1.PageComponent:
       type: object
@@ -2815,6 +2822,10 @@ components:
           type: boolean
           title: allow_index
           description: Whether search engines are allowed to index this status page.
+        allowedIpRanges:
+          type: string
+          title: allowed_ip_ranges
+          description: Comma-separated IPv4 CIDR ranges (only set when access_type is IP_RESTRICTED).
       title: StatusPage
       additionalProperties: false
       description: StatusPage represents a full status page with all details.
@@ -3115,6 +3126,12 @@ components:
             - "null"
           title: allow_index
           description: Whether search engines are allowed to index this status page (optional).
+        allowedIpRanges:
+          type:
+            - string
+            - "null"
+          title: allowed_ip_ranges
+          description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
       title: UpdateStatusPageRequest
       additionalProperties: false
       description: UpdateStatusPageRequest is the request to update a status page.

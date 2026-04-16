@@ -194,6 +194,14 @@ export function Client() {
                     workspace={workspace}
                   />
                 ) : null}
+                {planAddons["ip-restriction"] ? (
+                  <BillingAddons
+                    label={planAddons["ip-restriction"].title}
+                    description={planAddons["ip-restriction"].description}
+                    addon="ip-restriction"
+                    workspace={workspace}
+                  />
+                ) : null}
                 {planAddons["white-label"] ? (
                   <BillingAddons
                     label={planAddons["white-label"].title}

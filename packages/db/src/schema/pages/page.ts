@@ -36,6 +36,7 @@ export const page = sqliteTable("page", {
   ),
   accessType: text("access_type", { enum: pageAccessTypes }).default("public"),
   authEmailDomains: text("auth_email_domains", { mode: "text" }), // TODO: change to json
+  allowedIpRanges: text("allowed_ip_ranges", { mode: "text" }),
 
   // links and urls
   homepageUrl: text("homepage_url", { length: 256 }),

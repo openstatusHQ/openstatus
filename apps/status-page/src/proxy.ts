@@ -1,3 +1,4 @@
+import IPCIDR from "ip-cidr";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -7,6 +8,14 @@ import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
+
+function isIpAllowed(ip: string, allowedRanges: string[]): boolean {
+  if (allowedRanges.length === 0) return false;
+  return allowedRanges.some((range) => {
+    const cidr = new IPCIDR(range);
+    return cidr.contains(ip);
+  });
+}
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -149,6 +158,22 @@ export default auth(async (req) => {
         `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
       );
       return NextResponse.redirect(url);
+    }
+  }
+
+  if (_page.accessType === "ip-restriction") {
+    const xff = req.headers.get("x-forwarded-for");
+    const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
+
+    if (
+      !url.pathname.endsWith("/restricted") &&
+      (!clientIp || !isIpAllowed(clientIp, _page.allowedIpRanges))
+    ) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/restricted`,
+      );
+      return NextResponse.redirect(redirectUrl);
     }
   }
 

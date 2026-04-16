@@ -25,12 +25,13 @@ type DBPage = {
   customDomain: string;
   published: boolean | null;
   forceTheme: "system" | "light" | "dark";
-  accessType: "public" | "password" | "email-domain" | null;
+  accessType: "public" | "password" | "email-domain" | "ip-restriction" | null;
   homepageUrl: string | null;
   contactUrl: string | null;
   icon: string | null;
   password: string | null;
   authEmailDomains: string | null;
+  allowedIpRanges: string | null;
   defaultLocale: Locale;
   locales: Locale[] | null;
   allowIndex: boolean;
@@ -75,7 +76,7 @@ type DBPageSubscriber = {
  * Convert DB access type string to proto enum.
  */
 export function dbAccessTypeToProto(
-  accessType: "public" | "password" | "email-domain" | null,
+  accessType: "public" | "password" | "email-domain" | "ip-restriction" | null,
 ): PageAccessType {
   switch (accessType) {
     case "public":
@@ -84,6 +85,8 @@ export function dbAccessTypeToProto(
       return PageAccessType.PASSWORD_PROTECTED;
     case "email-domain":
       return PageAccessType.AUTHENTICATED;
+    case "ip-restriction":
+      return PageAccessType.IP_RESTRICTED;
     default:
       return PageAccessType.PUBLIC;
   }
@@ -94,7 +97,7 @@ export function dbAccessTypeToProto(
  */
 export function protoAccessTypeToDb(
   accessType: PageAccessType,
-): "public" | "password" | "email-domain" {
+): "public" | "password" | "email-domain" | "ip-restriction" {
   switch (accessType) {
     case PageAccessType.PUBLIC:
       return "public";
@@ -102,6 +105,8 @@ export function protoAccessTypeToDb(
       return "password";
     case PageAccessType.AUTHENTICATED:
       return "email-domain";
+    case PageAccessType.IP_RESTRICTED:
+      return "ip-restriction";
     default:
       return "public";
   }
@@ -227,6 +232,7 @@ export function dbPageToProto(page: DBPage): StatusPage {
     password: page.password ?? "",
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
     allowIndex: page.allowIndex ?? true,
+    allowedIpRanges: page.allowedIpRanges ?? "",
   };
 }
 

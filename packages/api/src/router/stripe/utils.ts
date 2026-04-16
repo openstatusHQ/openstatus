@@ -97,6 +97,17 @@ export const FEATURES = [
     },
   },
   {
+    feature: "ip-restriction",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_TODO_test_ip_restriction",
+          production: "price_TODO_prod_ip_restriction",
+        },
+      },
+    },
+  },
+  {
     feature: "white-label",
     price: {
       monthly: {

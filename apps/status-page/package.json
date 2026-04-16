@@ -51,6 +51,7 @@
     "cmdk": "1.1.1",
     "date-fns": "3.6.0",
     "feed": "4.2.2",
+    "ip-cidr": "^4.0.2",
     "lucide-react": "0.525.0",
     "next": "16.1.6",
     "next-auth": "5.0.0-beta.29",
