@@ -145,6 +145,9 @@ message CreateStatusPageRequest {
 
   // Email domains allowed to access the page (used when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 13;
+
+  // Whether search engines are allowed to index this status page (optional, defaults to true).
+  optional bool allow_index = 14;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -239,6 +242,9 @@ message UpdateStatusPageRequest {
 
   // New email domains (optional, required when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 14;
+
+  // Whether search engines are allowed to index this status page (optional).
+  optional bool allow_index = 15;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.

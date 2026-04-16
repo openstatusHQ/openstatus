@@ -49,6 +49,10 @@ export const page = sqliteTable("page", {
     .default(true),
   configuration: text("configuration", { mode: "json" }),
 
+  allowIndex: integer("allow_index", { mode: "boolean" })
+    .notNull()
+    .default(true),
+
   /**
    * Displays the total and failed request numbers for each monitor
    * TODO: remove this column - we moved into configuration

@@ -102,6 +102,9 @@ message StatusPage {
 
   // Email domains allowed to access the page (only set when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 17;
+
+  // Whether search engines are allowed to index this status page.
+  bool allow_index = 18;
 }
 
 // StatusPageSummary represents metadata for a status page (used in list responses).

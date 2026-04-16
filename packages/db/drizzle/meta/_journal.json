@@ -435,6 +435,13 @@
       "when": 1775720071892,
       "tag": "0061_useful_hardball",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "6",
+      "when": 1776022204283,
+      "tag": "0062_clever_quasar",
+      "breakpoints": true
     }
   ]
 }

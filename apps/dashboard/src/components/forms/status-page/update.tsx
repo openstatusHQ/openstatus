@@ -174,10 +174,12 @@ export function FormStatusPageUpdate() {
             ],
           ])
         }
+        allowIndexLocked={workspace.limits["no-index"] === false}
         defaultValues={{
           accessType: statusPage.accessType,
           password: statusPage.password ?? undefined,
           authEmailDomains: statusPage.authEmailDomains ?? [],
+          allowIndex: statusPage.allowIndex ?? true,
         }}
         onSubmit={async (values) => {
           await updatePasswordProtectionMutation.mutateAsync({
@@ -185,6 +187,7 @@ export function FormStatusPageUpdate() {
             accessType: values.accessType,
             password: values.password,
             authEmailDomains: values.authEmailDomains,
+            allowIndex: values.allowIndex,
           });
         }}
       />

@@ -66,6 +66,7 @@ import {
 import {
   checkCustomDomainLimit,
   checkEmailDomainProtectionLimit,
+  checkNoIndexLimit,
   checkPageComponentLimits,
   checkPasswordProtectionLimit,
   checkStatusPageLimits,
@@ -292,6 +293,12 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       }
     }
 
+    // Resolve allow_index
+    const allowIndex = req.allowIndex ?? true;
+    if (req.allowIndex !== undefined && !allowIndex) {
+      checkNoIndexLimit(limits);
+    }
+
     // Create the status page
     const newPage = await db
       .insert(page)
@@ -311,6 +318,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         contactUrl: req.contactUrl ?? null,
         defaultLocale,
         locales,
+        allowIndex,
       })
       .returning()
       .get();
@@ -502,6 +510,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         updateValues.authEmailDomains = null;
       }
       updateValues.accessType = protoAccessTypeToDb(reqAccessType);
+    }
+
+    // Handle allow_index
+    if (req.allowIndex !== undefined) {
+      if (!req.allowIndex) {
+        checkNoIndexLimit(limits);
+      }
+      updateValues.allowIndex = req.allowIndex;
     }
 
     const updatedPage = await db
