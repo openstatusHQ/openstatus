@@ -65,6 +65,10 @@ export const config: Record<
         value: "email-domain-protection",
         label: "Magic Link (Auth)",
       },
+      {
+        value: "ip-restriction",
+        label: "IP Restriction",
+      },
     ],
   },
   monitors: {

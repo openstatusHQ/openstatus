@@ -57,6 +57,22 @@ Enables basic password protection for your status page. If a password is set, us
 
 Restricts access to your status page to users with approved email domains. Users receive a magic link via email, which, upon clicking, authenticates them via a session token. This feature is typically available as a paid add-on for specific plans.
 
+### IP Restriction (Network Auth)
+
+**Type:** String (add-on feature)
+
+Restricts access to your status page based on client IPv4 addresses. You provide a comma-separated list of CIDR ranges (e.g., `192.168.1.0/24, 10.0.0.0/8`), and only requests from those networks can view the page. Single IPs without a subnet mask are treated as `/32`.
+
+Visitors from outside the allowed ranges are redirected to a static "Access Restricted" page — there is no login flow since IP-based access cannot be changed by the user.
+
+**Configuration:**
+- Set `access_type` to `ip-restriction` in the dashboard or API.
+- Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically
+                      append /32 to single IPs).
+- IPv6 is not supported
+
+**Note:** This feature is available as a paid add-on for Starter and Pro plans.
+
 ### Favicon
 
 **Type:** Image file (`.ico`, `.png`, `.svg`)

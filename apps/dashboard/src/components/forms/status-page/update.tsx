@@ -172,6 +172,7 @@ export function FormStatusPageUpdate() {
               "email-domain",
               workspace.limits["email-domain-protection"] === false,
             ],
+            ["ip-restriction", workspace.limits["ip-restriction"] === false],
           ])
         }
         allowIndexLocked={workspace.limits["no-index"] === false}
@@ -179,6 +180,7 @@ export function FormStatusPageUpdate() {
           accessType: statusPage.accessType,
           password: statusPage.password ?? undefined,
           authEmailDomains: statusPage.authEmailDomains ?? [],
+          allowedIpRanges: statusPage.allowedIpRanges ?? [],
           allowIndex: statusPage.allowIndex ?? true,
         }}
         onSubmit={async (values) => {
@@ -187,6 +189,10 @@ export function FormStatusPageUpdate() {
             accessType: values.accessType,
             password: values.password,
             authEmailDomains: values.authEmailDomains,
+            allowedIpRanges:
+              values.accessType === "ip-restriction"
+                ? values.allowedIpRanges ?? null
+                : null,
             allowIndex: values.allowIndex,
           });
         }}

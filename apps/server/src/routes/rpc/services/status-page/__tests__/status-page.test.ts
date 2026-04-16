@@ -56,6 +56,9 @@ beforeAll(async () => {
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
   );
   await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."ip-restriction"', json('true')) WHERE id = 1`,
+  );
+  await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
   );
 
@@ -323,6 +326,11 @@ afterAll(async () => {
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-public-pw-slug`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-limit-ws2-slug`));
   await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-trim-domain-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-ip-create-slug`));
+  await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-ip-bare-slug`));
+  await db
+    .delete(page)
+    .where(eq(page.slug, `${TEST_PREFIX}-ip-limit-ws2-slug`));
 
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-monitor`));
 });
@@ -3123,5 +3131,377 @@ describe("StatusPageService — allow_index", () => {
     if (allowIndexPageId) {
       await db.delete(page).where(eq(page.id, allowIndexPageId));
     }
+  });
+});
+
+// ==========================================================================
+// IP Restriction
+// ==========================================================================
+
+describe("StatusPageService — IP restriction create", () => {
+  test("creates a page with access_type IP_RESTRICTED + allowed_ip_ranges", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ip-create`,
+        slug: `${TEST_PREFIX}-ip-create-slug`,
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "192.168.1.0/24,10.0.0.0/8",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_IP_RESTRICTED");
+    expect(data.statusPage.allowedIpRanges).toBe("192.168.1.0/24,10.0.0.0/8");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("returns 400 when IP_RESTRICTED without allowed_ip_ranges", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ip-no-ranges`,
+        slug: `${TEST_PREFIX}-ip-no-ranges-slug`,
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("IP range");
+  });
+
+  test("returns 400 when IP_RESTRICTED with empty allowed_ip_ranges", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ip-empty`,
+        slug: `${TEST_PREFIX}-ip-empty-slug`,
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 when IP_RESTRICTED with invalid CIDR", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ip-bad-cidr`,
+        slug: `${TEST_PREFIX}-ip-bad-cidr-slug`,
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "not-a-cidr",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid IPv4 CIDR");
+  });
+
+  test("auto-appends /32 to bare IPs", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ip-bare`,
+        slug: `${TEST_PREFIX}-ip-bare-slug`,
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "10.0.0.1",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowedIpRanges).toBe("10.0.0.1/32");
+
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+});
+
+describe("StatusPageService — IP restriction update", () => {
+  test("updates access_type to IP_RESTRICTED with allowed_ip_ranges", async () => {
+    await db
+      .update(page)
+      .set({ accessType: "public", password: null, allowedIpRanges: null })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "10.0.0.0/8",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_IP_RESTRICTED");
+    expect(data.statusPage.allowedIpRanges).toBe("10.0.0.0/8");
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("returns 400 when updating to IP_RESTRICTED without allowed_ip_ranges", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 when updating to IP_RESTRICTED with invalid CIDR", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "192.168.1.0/24,garbage",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid IPv4 CIDR");
+  });
+
+  test("switching from IP_RESTRICTED to PUBLIC clears allowed_ip_ranges", async () => {
+    await db
+      .update(page)
+      .set({
+        accessType: "ip-restriction",
+        allowedIpRanges: "192.168.0.0/16",
+        password: null,
+        authEmailDomains: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_PUBLIC",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_PUBLIC");
+    expect(data.statusPage.allowedIpRanges ?? "").toBe("");
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("switching to IP_RESTRICTED clears password and auth_email_domains", async () => {
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "old-password",
+        authEmailDomains: "old.com",
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPasswordPageId),
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "172.16.0.0/12",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.accessType).toBe("PAGE_ACCESS_TYPE_IP_RESTRICTED");
+    expect(data.statusPage.password ?? "").toBe("");
+    expect(data.statusPage.authEmailDomains ?? []).toEqual([]);
+    expect(data.statusPage.allowedIpRanges).toBe("172.16.0.0/12");
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        authEmailDomains: null,
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+});
+
+describe("StatusPageService — IP restriction limit enforcement (workspace 2 / free plan)", () => {
+  test("returns 403 when creating with IP_RESTRICTED on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-ip-limit-ws2`,
+        slug: `${TEST_PREFIX}-ip-limit-ws2-slug`,
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "10.0.0.0/8",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns 403 when updating to IP_RESTRICTED on free plan", async () => {
+    const ws2Page = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-ip-limit-update-ws2`,
+        slug: `${TEST_PREFIX}-ip-limit-ws2-slug`,
+        description: "Free plan page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(ws2Page.id),
+        accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
+        allowedIpRanges: "10.0.0.0/8",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+
+    await db.delete(page).where(eq(page.id, ws2Page.id));
+  });
+});
+
+describe("StatusPageService — IP restriction in read responses", () => {
+  test("GetStatusPage returns allowed_ip_ranges", async () => {
+    await db
+      .update(page)
+      .set({
+        accessType: "ip-restriction",
+        allowedIpRanges: "10.0.0.0/8,172.16.0.0/12",
+        password: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: String(testPasswordPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowedIpRanges).toBe("10.0.0.0/8,172.16.0.0/12");
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("GetStatusPageContent by slug does NOT return allowed_ip_ranges", async () => {
+    await db
+      .update(page)
+      .set({
+        accessType: "public",
+        allowedIpRanges: "10.0.0.0/8",
+        password: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "GetStatusPageContent",
+      { slug: testPasswordPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowedIpRanges ?? "").toBe("");
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+  });
+
+  test("GetStatusPageContent by ID returns allowed_ip_ranges", async () => {
+    await db
+      .update(page)
+      .set({
+        accessType: "ip-restriction",
+        allowedIpRanges: "192.168.0.0/16",
+        password: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
+
+    const res = await connectRequest(
+      "GetStatusPageContent",
+      { id: String(testPasswordPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.statusPage.allowedIpRanges).toBe("192.168.0.0/16");
+
+    // Restore
+    await db
+      .update(page)
+      .set({
+        accessType: "password",
+        password: "test-secret-123",
+        allowedIpRanges: null,
+      })
+      .where(eq(page.id, testPasswordPageId));
   });
 });

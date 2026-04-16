@@ -1,3 +1,4 @@
+import IPCIDR from "ip-cidr";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -7,6 +8,20 @@ import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
+
+function isIpAllowed(ip: string, allowedRanges: string[]): boolean {
+  // No ranges configured — deny all (defensive: form validation prevents this)
+  if (allowedRanges.length === 0) return false;
+  return allowedRanges.some((range) => {
+    try {
+      const cidr = new IPCIDR(range);
+      return cidr.contains(ip);
+    } catch {
+      // Skip malformed ranges rather than crashing the middleware
+      return false;
+    }
+  });
+}
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -149,6 +164,32 @@ export default auth(async (req) => {
         `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
       );
       return NextResponse.redirect(url);
+    }
+  }
+
+  if (_page.accessType === "ip-restriction") {
+    // Vercel overwrites x-forwarded-for with the verified client IP — not spoofable.
+    // https://vercel.com/docs/headers/request-headers#x-forwarded-for
+    const xff = req.headers.get("x-forwarded-for");
+    const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
+
+    const allowed = clientIp && isIpAllowed(clientIp, _page.allowedIpRanges);
+
+    if (!url.pathname.endsWith("/restricted") && !allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/restricted`,
+      );
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Redirect allowed IPs away from /restricted
+    if (url.pathname.endsWith("/restricted") && allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
+      );
+      return NextResponse.redirect(redirectUrl);
     }
   }
 

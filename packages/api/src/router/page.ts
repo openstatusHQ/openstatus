@@ -113,6 +113,26 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        limit["ip-restriction"] === false &&
+        opts.input.accessType === "ip-restriction"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "IP restriction is not available for your current plan.",
+        });
+      }
+
+      if (
+        opts.input.accessType === "ip-restriction" &&
+        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At least one IP range is required for IP restriction.",
+        });
+      }
+
       const newPage = await opts.ctx.db
         .insert(page)
         .values({
@@ -120,6 +140,7 @@ export const pageRouter = createTRPCRouter({
           configuration: JSON.stringify(configuration),
           ...pageProps,
           authEmailDomains: pageProps.authEmailDomains?.join(","),
+          allowedIpRanges: pageProps.allowedIpRanges?.join(","),
         })
         .returning()
         .get();
@@ -464,6 +485,17 @@ export const pageRouter = createTRPCRouter({
         accessType: z.enum(pageAccessTypes),
         authEmailDomains: z.array(z.string()).nullish(),
         password: z.string().nullish(),
+        allowedIpRanges: z
+          .array(
+            z
+              .string()
+              .transform((s) => {
+                const trimmed = s.trim();
+                return trimmed.includes("/") ? trimmed : `${trimmed}/32`;
+              })
+              .pipe(z.cidrv4()),
+          )
+          .nullish(),
         allowIndex: z.boolean().optional(),
       }),
     )
@@ -498,6 +530,26 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        limit["ip-restriction"] === false &&
+        opts.input.accessType === "ip-restriction"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "IP restriction is not available for your current plan.",
+        });
+      }
+
+      if (
+        opts.input.accessType === "ip-restriction" &&
+        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At least one IP range is required for IP restriction.",
+        });
+      }
+
       if (opts.input.allowIndex === false && limit["no-index"] === false) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -512,6 +564,7 @@ export const pageRouter = createTRPCRouter({
           accessType: opts.input.accessType,
           authEmailDomains: opts.input.authEmailDomains?.join(","),
           password: opts.input.password,
+          allowedIpRanges: opts.input.allowedIpRanges?.join(",") ?? null,
           ...(opts.input.allowIndex !== undefined && {
             allowIndex: opts.input.allowIndex,
           }),

@@ -66,6 +66,7 @@ import {
 import {
   checkCustomDomainLimit,
   checkEmailDomainProtectionLimit,
+  checkIpRestrictionLimit,
   checkNoIndexLimit,
   checkPageComponentLimits,
   checkPasswordProtectionLimit,
@@ -150,6 +151,37 @@ function validateAuthEmailDomains(domains: string[]): string[] {
     }
   }
   return trimmed;
+}
+
+/**
+ * Validate and normalize allowed IP ranges (comma-separated CIDR notation).
+ * Appends /32 to bare IPs. Validates each entry is a valid IPv4 CIDR.
+ */
+function validateAllowedIpRanges(ranges: string): string[] {
+  const entries = ranges
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (entries.length === 0) {
+    throw new ConnectError(
+      "At least one IP range is required for IP restriction",
+      Code.InvalidArgument,
+    );
+  }
+  const cidrRegex =
+    /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)\/(3[0-2]|[12]?\d)$/;
+  const normalized: string[] = [];
+  for (const entry of entries) {
+    const value = entry.includes("/") ? entry : `${entry}/32`;
+    if (!cidrRegex.test(value)) {
+      throw new ConnectError(
+        `Invalid IPv4 CIDR range: "${entry}"`,
+        Code.InvalidArgument,
+      );
+    }
+    normalized.push(value);
+  }
+  return normalized;
 }
 
 /**
@@ -277,6 +309,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     let password: string | null = null;
     let authEmailDomains: string | null = null;
+    let allowedIpRanges: string | null = null;
 
     if (hasAccessType) {
       if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
@@ -290,6 +323,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         checkEmailDomainProtectionLimit(limits);
         const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
         authEmailDomains = validatedDomains.join(",");
+      } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
+        checkIpRestrictionLimit(limits);
+        const validated = validateAllowedIpRanges(req.allowedIpRanges ?? "");
+        allowedIpRanges = validated.join(",");
       }
     }
 
@@ -314,6 +351,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         accessType,
         password,
         authEmailDomains,
+        allowedIpRanges,
         homepageUrl: req.homepageUrl ?? null,
         contactUrl: req.contactUrl ?? null,
         defaultLocale,
@@ -499,15 +537,24 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         }
         updateValues.password = trimmedPassword;
         updateValues.authEmailDomains = null;
+        updateValues.allowedIpRanges = null;
       } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
         checkEmailDomainProtectionLimit(limits);
         const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
         updateValues.authEmailDomains = validatedDomains.join(",");
         updateValues.password = null;
+        updateValues.allowedIpRanges = null;
+      } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
+        checkIpRestrictionLimit(limits);
+        const validated = validateAllowedIpRanges(req.allowedIpRanges ?? "");
+        updateValues.allowedIpRanges = validated.join(",");
+        updateValues.password = null;
+        updateValues.authEmailDomains = null;
       } else {
         // Switching to PUBLIC or other — clear stale data
         updateValues.password = null;
         updateValues.authEmailDomains = null;
+        updateValues.allowedIpRanges = null;
       }
       updateValues.accessType = protoAccessTypeToDb(reqAccessType);
     }
@@ -1199,6 +1246,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     if (isPublicAccess) {
       statusPage.password = "";
       statusPage.authEmailDomains = [];
+      statusPage.allowedIpRanges = "";
     }
 
     return {
