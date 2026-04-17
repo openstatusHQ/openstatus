@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Suspense } from "react";
 
 import { Link } from "@/components/common/link";
@@ -9,9 +10,11 @@ import { Button } from "@openstatus/ui/components/ui/button";
 
 export default function NotFound() {
   return (
-    <Suspense>
-      <NotFoundContent />
-    </Suspense>
+    <NuqsAdapter>
+      <Suspense>
+        <NotFoundContent />
+      </Suspense>
+    </NuqsAdapter>
   );
 }
 
