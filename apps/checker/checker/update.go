@@ -43,7 +43,7 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 	url = strings.TrimRight(url, "/") + "/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 
-	if !hasGCPConfig() {
+	if os.Getenv("SELF_HOST") == "true" || !hasGCPConfig() {
 		return updateStatusDirect(ctx, url, basic, updateData)
 	}
 
