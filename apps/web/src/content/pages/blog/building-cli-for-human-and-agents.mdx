@@ -1,0 +1,121 @@
+---
+title: "Building a CLI That Works for Humans and Machines"
+description: "Design patterns for building CLIs that work for both developers and AI agents: TTY detection, wizard fallback, structured errors, and JSON output."
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2026-04-02"
+image: "/assets/posts/building-cli-for-human-and-agents/cli.png"
+category: "engineering"
+---
+
+It's 2 AM. Your API is down. You open a terminal and type `openstatus status-report create`. Are you a sleep-deprived engineer, or an AI agent? The CLI doesn't know yet, and that's the point. It needs to work perfectly for both.
+
+A lot has changed since we [first released the CLI](/blog/introducing-openstatus-cli). Back then it was monitors-only, REST-based, and built for one audience: developers who already knew the flags. When we rebuilt it, the core challenge shifted: serve the human who wants a guided wizard *and* the machine that wants parseable JSON and deterministic flags. Here's what we built and what we learned, guided by [clig.dev](https://clig.dev).
+
+## Detect Your Audience
+
+A human at a terminal wants spinners, colors, and interactive prompts. An agent wants clean JSON and zero decoration. The same command needs to do both.
+
+We solve this with a small `output` package that every command imports:
+
+```go
+func IsTerminal() bool {
+    return isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
+}
+
+func IsStdinTerminal() bool {
+    return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+}
+```
+
+Six lines, but they drive every output decision downstream. Spinners only show when stderr is a TTY. Colors respect `NO_COLOR`. JSON mode strips all formatting. If you can't answer "is a human reading this?", you can't build a good CLI.
+
+## Wizards for Humans, Flags for Agents
+
+Reporting an incident at 2 AM shouldn't require remembering five flag names. But an AI agent or CI script needs those exact flags to be deterministic and scriptable.
+
+We solved this with a pattern we call **wizard fallback**: if required flags are missing and stdin is a TTY, we launch an interactive wizard. Otherwise, we error with the exact flags that are missing.
+
+```go
+needsWizard := inputs.Title == "" || inputs.Status == "" ||
+    inputs.Message == "" || inputs.PageID == ""
+
+if needsWizard {
+    if output.IsJSONOutput() || !output.IsStdinTerminal() {
+        var missing []string
+        if inputs.Title == "" {
+            missing = append(missing, "--title")
+        }
+        // ...
+        return cli.Exit(
+            fmt.Sprintf("missing required flags: %s", strings.Join(missing, ", ")),
+            1,
+        )
+    }
+    inputs, err = runCreateWizard(ctx, apiKey, inputs)
+}
+```
+
+An AI agent running `openstatus status-report create` without `--title` gets a clear, parseable error that tells it exactly what to provide. A human running the same command gets a step-by-step form that fetches their status pages, shows components, and lets them confirm before submitting.
+
+The wizards are built with [charmbracelet/huh](https://github.com/charmbracelet/huh). They fetch live data, present multi-step forms with validation, and show a summary before confirmation.
+
+Flags also compose with the wizard. If you pass `--page-id 123` but omit `--title`, the wizard starts with the page pre-selected and only asks for the remaining fields. Partial automation is fully supported.
+
+Try it yourself:
+
+```bash
+brew install openstatusHQ/cli/openstatus --cask
+openstatus status-report create
+```
+
+## Errors Are Documentation
+
+Every error should tell you what went wrong and what to do next. We catch ConnectRPC error codes and rewrite them into actionable guidance:
+
+```bash
+$ openstatus monitors info 999
+Error: monitor 999 not found. Run 'openstatus monitors list' to see available monitors
+
+$ openstatus monitors list
+Error: authentication failed. Check your API token via OPENSTATUS_API_TOKEN env var
+or --access-token flag. Verify with 'openstatus whoami'
+
+$ openstatus --json status-report create
+Error: missing required flags: --title, --status, --message, --page-id
+```
+
+A 404 tells you to run `list`. An auth failure tells you to check `whoami`. A missing flag error lists exactly what to provide. No Go stack traces, no cryptic RPC codes.
+
+This matters even more for agents. An AI reading `"missing required flags: --title, --status"` knows exactly what to retry with. An AI reading a panic does not.
+
+## Structured Output as a First-Class Citizen
+
+Every command supports `--json`. Not as an afterthought, as a parallel code path that returns complete, nested data structures:
+
+```bash
+# Human output: formatted table with colors
+openstatus monitors info 123
+
+# Agent output: complete JSON with all fields
+openstatus --json monitors info 123
+```
+
+The JSON output includes fields that the human table omits for brevity (full region lists, raw timestamps, assertion details). The human table includes formatting the JSON doesn't need (color-coded status, grouped providers, relative timestamps). They're different views of the same data, optimized for their audience.
+
+We also support `--quiet` for scripts that only care about exit codes, and `--debug` that logs HTTP method + duration to stderr, so it never corrupts piped output.
+
+## What We Learned
+
+**Design for the agent from day one.** `--json`, structured errors, and deterministic flag-based inputs aren't afterthoughts. They're the foundation that makes AI integration possible. When we built the [openstatus Slack agent](/blog/openstatus-slack-agent), it called the same CLI commands that humans use.
+
+**Wizards and flags aren't opposites.** They're the same interface at different levels of interactivity. The wizard is the flags with training wheels. Partial flag input pre-fills the wizard. Full flag input skips it entirely. One code path, two experiences.
+
+**clig.dev is a cheat code.** We didn't invent these patterns. Exit codes, `NO_COLOR`, TTY detection, signal handling, `--json`. These conventions exist because thousands of CLIs converged on them. Following them means your tool works in every pipeline, every editor integration, and every agent framework without special-casing.
+
+**ConnectRPC unlocks velocity.** We [migrated from zod-openapi to ConnectRPC](/blog/migrating-from-zod-openapi-to-connectrpc) and it changed everything. A type-safe RPC layer with generated clients means adding a new command is pattern-matching, not greenfield work. Every command we added after the migration followed the exact same structure. It also gave us `terraform generate`, which fetches your entire workspace and produces valid HCL with cross-references and import blocks.
+
+**Sweat the boring stuff.** We shipped 15 bug fixes alongside the features. Two that bit us hardest: confirmation prompts that don't check for a TTY will hang forever in CI, and lock files without `fsync` will corrupt on crash. Not glamorous, but they're the difference between a CLI people trust and one they abandon.
+
+---
+
+The openstatus CLI is open source at [github.com/openstatusHQ/cli](https://github.com/openstatusHQ/cli). And if you're too tired at 2 AM to even open a terminal, just type `@openstatus` in Slack and [let the agent handle it](/blog/openstatus-slack-agent).

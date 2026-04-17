@@ -11,7 +11,10 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import { addons } from "@openstatus/db/src/schema/plan/schema";
+import {
+  addons,
+  billingIntervals,
+} from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
 import type { Stripe } from "stripe";
@@ -90,9 +93,9 @@ export const stripeRouter = createTRPCRouter({
       z.object({
         workspaceSlug: z.string(),
         plan: z.enum(workspacePlans),
+        interval: z.enum(billingIntervals).default("monthly"),
         successUrl: z.string().optional(),
         cancelUrl: z.string().optional(),
-        // TODO: plan: workspacePlanSchema
       }),
     )
     .mutation(async (opts) => {
@@ -145,7 +148,7 @@ export const stripeRouter = createTRPCRouter({
           .run();
       }
 
-      const priceId = getPriceIdForPlan(opts.input.plan);
+      const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer: stripeId,

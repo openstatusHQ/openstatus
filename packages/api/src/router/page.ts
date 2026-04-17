@@ -16,6 +16,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
+import { locales } from "@openstatus/locales";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -25,7 +26,7 @@ if (process.env.NODE_ENV === "test") {
 
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
-  const data = await fetch(
+  const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
     {
       body: JSON.stringify({ name: domain }),
@@ -36,11 +37,22 @@ async function addDomainToVercel(domain: string) {
       method: "POST",
     },
   );
-  return data.json();
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("Failed to add domain to Vercel:", { domain, error });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Failed to add custom domain. Please try again. If it continues, contact support.",
+    });
+  }
+
+  return response.json();
 }
 
 async function removeDomainFromVercel(domain: string) {
-  const data = await fetch(
+  const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${env.TEAM_ID_VERCEL}`,
     {
       headers: {
@@ -49,7 +61,18 @@ async function removeDomainFromVercel(domain: string) {
       method: "DELETE",
     },
   );
-  return data.json();
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("Failed to remove domain from Vercel:", { domain, error });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Failed to remove custom domain. Please try again. If it continues, contact support.",
+    });
+  }
+
+  return response.json();
 }
 
 export const pageRouter = createTRPCRouter({
@@ -90,6 +113,26 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        limit["ip-restriction"] === false &&
+        opts.input.accessType === "ip-restriction"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "IP restriction is not available for your current plan.",
+        });
+      }
+
+      if (
+        opts.input.accessType === "ip-restriction" &&
+        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At least one IP range is required for IP restriction.",
+        });
+      }
+
       const newPage = await opts.ctx.db
         .insert(page)
         .values({
@@ -97,6 +140,7 @@ export const pageRouter = createTRPCRouter({
           configuration: JSON.stringify(configuration),
           ...pageProps,
           authEmailDomains: pageProps.authEmailDomains?.join(","),
+          allowedIpRanges: pageProps.allowedIpRanges?.join(","),
         })
         .returning()
         .get();
@@ -224,6 +268,13 @@ export const pageRouter = createTRPCRouter({
         },
       });
 
+      if (!data) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
       return selectPageSchema
         .extend({
           pageComponentGroups: z
@@ -234,9 +285,9 @@ export const pageRouter = createTRPCRouter({
         })
         .parse({
           ...data,
-          pageComponentGroups: data?.pageComponentGroups ?? [],
-          maintenances: data?.maintenances,
-          pageComponents: data?.pageComponents,
+          pageComponentGroups: data.pageComponentGroups ?? [],
+          maintenances: data.maintenances,
+          pageComponents: data.pageComponents,
         });
     }),
 
@@ -298,6 +349,7 @@ export const pageRouter = createTRPCRouter({
           legacyPage: false,
           configuration: defaultConfiguration,
           customDomain: "", // TODO: make nullable
+          allowIndex: true,
         })
         .returning()
         .get();
@@ -384,59 +436,44 @@ export const pageRouter = createTRPCRouter({
       const oldDomain = currentPage.customDomain;
       const newDomain = opts.input.customDomain;
 
-      try {
-        // Handle domain changes
-        if (newDomain && !oldDomain) {
-          // Adding a new domain
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: newDomain, updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
+      // Vercel operations first — if they fail, DB is not touched
+      if (newDomain && !oldDomain) {
+        // Adding a new domain
+        await addDomainToVercel(newDomain);
 
-          // Add domain to Vercel using the domain router logic
-          await addDomainToVercel(newDomain);
-        } else if (oldDomain && newDomain !== oldDomain) {
-          // Changing domain - remove old and add new
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: newDomain, updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: newDomain, updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
+      } else if (oldDomain && newDomain && newDomain !== oldDomain) {
+        // Changing domain - add new first, then remove old
+        await addDomainToVercel(newDomain);
+        await removeDomainFromVercel(oldDomain);
 
-          // Remove old domain from Vercel
-          await removeDomainFromVercel(oldDomain);
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: newDomain, updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
+      } else if (oldDomain && newDomain === "") {
+        // Removing domain
+        await removeDomainFromVercel(oldDomain);
 
-          // Add new domain to Vercel
-          if (newDomain) {
-            await addDomainToVercel(newDomain);
-          }
-        } else if (oldDomain && newDomain === "") {
-          // Removing domain
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: "", updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: "", updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
+      } else if (newDomain) {
+        // Same domain re-submitted — ensure it's synced to Vercel
+        await addDomainToVercel(newDomain);
 
-          // Remove domain from Vercel
-          await removeDomainFromVercel(oldDomain);
-        } else {
-          // No change needed, just update the database
-          await opts.ctx.db
-            .update(page)
-            .set({ customDomain: newDomain, updatedAt: new Date() })
-            .where(and(...whereConditions))
-            .run();
-        }
-      } catch (error) {
-        // If Vercel operations fail, we should rollback the database change
-        // For now, we'll just throw the error
-        console.error("Error updating custom domain:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update custom domain",
-        });
+        await opts.ctx.db
+          .update(page)
+          .set({ customDomain: newDomain, updatedAt: new Date() })
+          .where(and(...whereConditions))
+          .run();
       }
     }),
 
@@ -448,6 +485,18 @@ export const pageRouter = createTRPCRouter({
         accessType: z.enum(pageAccessTypes),
         authEmailDomains: z.array(z.string()).nullish(),
         password: z.string().nullish(),
+        allowedIpRanges: z
+          .array(
+            z
+              .string()
+              .transform((s) => {
+                const trimmed = s.trim();
+                return trimmed.includes("/") ? trimmed : `${trimmed}/32`;
+              })
+              .pipe(z.cidrv4()),
+          )
+          .nullish(),
+        allowIndex: z.boolean().optional(),
       }),
     )
     .mutation(async (opts) => {
@@ -481,12 +530,44 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        limit["ip-restriction"] === false &&
+        opts.input.accessType === "ip-restriction"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "IP restriction is not available for your current plan.",
+        });
+      }
+
+      if (
+        opts.input.accessType === "ip-restriction" &&
+        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "At least one IP range is required for IP restriction.",
+        });
+      }
+
+      if (opts.input.allowIndex === false && limit["no-index"] === false) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Disabling search engine indexing is not available for your current plan.",
+        });
+      }
+
       await opts.ctx.db
         .update(page)
         .set({
           accessType: opts.input.accessType,
           authEmailDomains: opts.input.authEmailDomains?.join(","),
           password: opts.input.password,
+          allowedIpRanges: opts.input.allowedIpRanges?.join(",") ?? null,
+          ...(opts.input.allowIndex !== undefined && {
+            allowIndex: opts.input.allowIndex,
+          }),
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))
@@ -562,6 +643,52 @@ export const pageRouter = createTRPCRouter({
         .set({
           homepageUrl: opts.input.homepageUrl,
           contactUrl: opts.input.contactUrl,
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateLocales: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z
+        .object({
+          id: z.number(),
+          defaultLocale: z.enum(locales),
+          locales: z.array(z.enum(locales)).nullable(),
+        })
+        .refine(
+          (data) => {
+            if (data.locales) {
+              return data.locales.includes(data.defaultLocale);
+            }
+            return true;
+          },
+          {
+            message: "Default locale must be included in the locales list",
+            path: ["defaultLocale"],
+          },
+        ),
+    )
+    .mutation(async (opts) => {
+      if (!opts.ctx.workspace.limits.i18n) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to configure locales.",
+        });
+      }
+
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          defaultLocale: opts.input.defaultLocale,
+          locales: opts.input.locales,
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))

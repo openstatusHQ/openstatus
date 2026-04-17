@@ -10,6 +10,7 @@ import {
   SidebarProvider,
 } from "@openstatus/ui/components/ui/sidebar";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
+import { NextIntlClientProvider } from "next-intl";
 import PlausibleProvider from "next-plausible";
 import { Suspense } from "react";
 
@@ -21,6 +22,9 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
+  const locale = "en";
+  const messages = (await import(`../../../messages/${locale}.json`)).default;
+
   return (
     <PlausibleProvider domain="themes.openstatus.dev">
       <style
@@ -28,31 +32,34 @@ export default async function Layout({
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{ __html: generateThemeStyles() }}
       />
-      <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
-        <SidebarProvider
-          defaultOpen={true}
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH,
-              "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-        >
-          <SidebarInset className="relative">
-            <SidebarTrigger className="absolute top-2 right-2" />
-            <main className="mx-auto">{children}</main>
-            <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
-              <p>
-                powered by <Link href="https://openstatus.dev">openstatus</Link>
-              </p>
-            </footer>
-          </SidebarInset>
-          <Suspense>
-            <ThemeSidebar />
-          </Suspense>
-        </SidebarProvider>
-        <Toaster richColors expand />
-      </ThemeProvider>
+      <NextIntlClientProvider locale={locale} messages={messages}>
+        <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
+          <SidebarProvider
+            defaultOpen={true}
+            style={
+              {
+                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
+              } as React.CSSProperties
+            }
+          >
+            <SidebarInset className="relative">
+              <SidebarTrigger className="absolute top-2 right-2" />
+              <main className="mx-auto">{children}</main>
+              <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
+                <p>
+                  powered by{" "}
+                  <Link href="https://openstatus.dev">openstatus</Link>
+                </p>
+              </footer>
+            </SidebarInset>
+            <Suspense>
+              <ThemeSidebar />
+            </Suspense>
+          </SidebarProvider>
+          <Toaster richColors expand />
+        </ThemeProvider>
+      </NextIntlClientProvider>
     </PlausibleProvider>
   );
 }

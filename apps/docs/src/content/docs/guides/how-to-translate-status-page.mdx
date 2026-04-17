@@ -1,0 +1,83 @@
+---
+title: How to translate your status page
+description: Enable multiple languages on your status page and contribute new translations.
+---
+
+OpenStatus status pages support multiple languages. You can configure which locales are available per page and set a default language. Visitors can switch between languages using a built-in locale switcher.
+
+:::note
+Translations are available on paid plans only.
+:::
+
+## Supported locales
+
+Currently supported languages:
+
+| Code | Language |
+|------|----------|
+| `en` | English |
+| `fr` | Français |
+| `de` | Deutsch |
+| `tr` | Türkçe |
+
+## Enable translations on your status page
+
+1. Go to your **Dashboard** and open the status page settings.
+2. Under **Locales**, select a **Default Locale** for your page.
+3. Check **Enable locale switcher** to allow visitors to switch languages.
+4. Select which languages you want to offer.
+5. Click **Submit**.
+
+When the locale switcher is enabled, visitors will see a language dropdown on your status page. The default locale is omitted from the URL for cleaner paths (e.g., `/status` instead of `/status/en`), while non-default locales are included (e.g., `/status/fr`).
+
+## How routing works
+
+OpenStatus supports two routing modes for locales:
+
+- **Pathname routing** (subdomains like `status.openstatus.dev`): the locale appears after the slug, e.g., `/status/fr/events`.
+- **Hostname routing** (custom domains like `status.example.com`): the locale is the first path segment, e.g., `/fr/events`.
+
+In both cases, the default locale is omitted from the URL (`as-needed` prefix strategy).
+
+## Contributing a new locale
+
+Translations are open source. To add a new language:
+
+### 1. Extend the locale registry
+
+Add your locale to `packages/locales/index.ts`:
+
+```ts
+import type { Locale as DateFnsLocale } from "date-fns/locale";
+import { de, enUS, es, fr } from "date-fns/locale";
+
+export const locales = ["en", "fr", "de", "es"] as const;
+// ...
+export const localeDetails: Record<Locale, { name: string; flag: string }> = {
+  en: { name: "English", flag: "🇺🇸" },
+  fr: { name: "Français", flag: "🇫🇷" },
+  de: { name: "Deutsch", flag: "🇩🇪" },
+  es: { name: "Español", flag: "🇪🇸" },
+};
+
+export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
+  en: enUS,
+  fr,
+  de,
+  es,
+};
+```
+
+### 2. Generate the translation file
+
+Run the status page dev server:
+
+```bash
+pnpm dev:status-page
+```
+
+The `next-intl` extraction plugin will automatically create a new `apps/status-page/messages/<locale>.json` file with all translation keys pre-populated from the source locale. You can then fill in the translations.
+
+### 3. Submit a pull request
+
+Once your translations are complete, submit a PR to the [OpenStatus repository](https://github.com/openstatusHQ/openstatus). The locale will become available to all status pages after the next deployment.

@@ -1,0 +1,153 @@
+---
+title: Import a Status Page from Another Provider
+description: "Import your existing status page setup from Atlassian Statuspage, Better Stack, or Instatus into openstatus"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~2 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | openstatus account |
+
+Migrating away from your current status page provider does not have to mean starting from scratch. Openstatus can import your existing status page configuration -- including components, incidents, maintenances, and subscribers -- directly from another provider. This tutorial walks through the provider-agnostic import flow step by step.
+
+## Supported providers
+
+Openstatus currently supports importing from three providers:
+
+- **[Atlassian Statuspage](https://openstatus.dev/guides/migrate-from-atlassian-statuspage)** -- The most widely used hosted status page solution.
+- **[Better Stack](https://openstatus.dev/guides/migrate-from-betterstack)** -- Monitoring and status page platform (formerly Better Uptime).
+- **[Instatus](https://openstatus.dev/guides/migrate-from-instatus)** -- A modern status page service with component-level tracking.
+
+Each link above points to a provider-specific migration guide with detailed instructions on API key generation and data mapping.
+
+## Step-by-step import
+
+### 1. Get your API key
+
+You need a read-access API key from your current provider. The key is used only during the import and is not stored after the process completes.
+
+<Aside>
+Where to find your API key varies by provider. See the provider-specific guides linked above for exact instructions:
+- **Statuspage:** Organization-level API key in your Atlassian account settings.
+- **Better Stack:** API token from the Better Stack dashboard under Integrations.
+- **Instatus:** API key from your Instatus workspace settings.
+</Aside>
+
+### 2. Open the import page
+
+In the openstatus dashboard, navigate to **Status Pages** and select the status page you want to import into. If you have not yet created a status page, create one first -- see [Create a Status Page](/tutorial/how-to-create-status-page) for instructions.
+
+Open the **Components** tab and scroll down to the **Import** section at the bottom of the page.
+
+### 3. Select your provider and enter credentials
+
+Choose your source provider from the dropdown and paste your API key. Depending on the provider, you may also need to supply additional identifiers (for example, a Page ID for Atlassian Statuspage).
+
+
+### 4. Preview the import
+
+After submitting your credentials, the importer fetches your existing data and displays a preview summary. No data is written at this stage -- the preview is read-only.
+
+The preview includes:
+
+- **Resource counts** -- Number of components, component groups, incidents, maintenances, and subscribers that will be imported.
+- **Warnings** -- Any resources that cannot be imported or require manual attention (for example, unsupported subscriber types or resources that exceed your plan limits).
+- **Mapping details** -- How source resources map to openstatus equivalents.
+
+Review the summary carefully before proceeding. If the counts do not match what you expect, verify that your API key has sufficient permissions to read all resources.
+
+
+### 5. Configure import options
+
+Use the toggles to enable or disable import of each resource type. For example, you may want to import only components and skip historical incidents. Available toggles depend on what the selected provider supports.
+
+<Aside type="caution">
+Importing incidents and maintenances creates historical records in openstatus. These are imported as-is and cannot be bulk-deleted after import.
+</Aside>
+
+### 6. Run the import
+
+Click **Import** to start the process. The import runs in phases:
+
+1. **Components and groups** -- Structural elements are created first so that incidents and maintenances can reference them.
+2. **Incidents** -- Historical and active incidents, including updates and component impact.
+3. **Maintenances** -- Scheduled and completed maintenance windows.
+4. **Subscribers** -- Email subscribers (where supported by the source provider).
+5. **Monitors** -- Existing monitoring checks (Better Stack only).
+
+A progress indicator shows the current phase and any errors encountered. When the import finishes, you are redirected to your status page configuration with all imported data in place.
+
+
+## What gets imported
+
+Not every provider exposes the same data. The table below summarizes what openstatus imports from each source:
+
+| Resource | Statuspage | Better Stack | Instatus |
+|---|---|---|---|
+| Status page | Yes | Yes | Yes |
+| Components and groups | Yes | Yes | Yes |
+| Incidents | Yes | Yes | Yes |
+| Maintenances | Yes | Yes | Yes |
+| Subscribers | Yes (email only) | No | Yes (email only) |
+| Monitors | No | Yes | No |
+
+<Aside type="tip">
+For a detailed breakdown of how each resource type is mapped, see the provider-specific migration guides:
+[Atlassian Statuspage](https://openstatus.dev/guides/migrate-from-atlassian-statuspage),
+[Better Stack](https://openstatus.dev/guides/migrate-from-betterstack),
+[Instatus](https://openstatus.dev/guides/migrate-from-instatus).
+</Aside>
+
+## After import
+
+The import creates resources in openstatus but does not automatically make your status page live or redirect traffic. Complete the following steps to finalize your migration:
+
+1. **Verify imported data.** Open your status page and confirm that components, incidents, and maintenances appear correctly. Check that component groups are structured as expected.
+
+2. **Connect monitors to static components.** Imported components may not have monitors attached. Navigate to each component and link an existing openstatus monitor, or [create a new monitor](/tutorial/how-to-create-monitor) for it.
+
+3. **Update DNS for your custom domain.** If you are migrating a custom domain (e.g., `status.yourdomain.com`), update your CNAME record to point to `status.openstatus.dev`. See the [Status Page Reference](/reference/status-page) for DNS configuration details.
+
+4. **Invite subscribers.** If your provider does not support subscriber export (Better Stack) or you need to re-verify email subscribers, use the openstatus subscription system to notify your users of the new page.
+
+## Troubleshooting
+
+### Invalid API key
+
+The import fails immediately with an authentication error. Double-check that you copied the full key and that it has read permissions. Some providers require organization-level keys rather than personal tokens. Regenerate the key if necessary.
+
+### Plan limits exceeded
+
+Openstatus plans have caps on the number of components and monitors. If your import would exceed these limits, the preview step displays a warning before any data is written. You can either upgrade your plan or disable import of certain resource types to stay within limits.
+
+### Partial import
+
+If the import succeeds for some phases but fails for others (for example, components import successfully but incidents fail due to a rate limit or timeout), the successfully imported resources remain in place. Fix the underlying issue and re-run the import. Only the failed phases will be retried; already-imported resources are not duplicated.
+
+<Aside type="caution">
+If a partial import leaves your status page in an inconsistent state, you can delete the imported resources manually and start the import again from scratch.
+</Aside>
+
+### Duplicate incidents on re-import
+
+Running the import a second time does not deduplicate incidents or maintenances. If you need to re-import, delete the previously imported records first to avoid duplicate entries appearing on your status page.
+
+## What's next?
+
+Now that your data is in openstatus, explore these resources to get the most out of your new setup:
+
+- **[Configure Your Status Page](/tutorial/how-to-configure-status-page)** -- Customize the appearance, add a logo, and configure notification preferences.
+- **[Create Your First Monitor](/tutorial/how-to-create-monitor)** -- Set up synthetic monitoring for your imported components.
+- **[Status Page Reference](/reference/status-page)** -- Full reference for all status page configuration options.
+- **[Building Trust with Status Pages](/concept/best-practices-status-page)** -- Best practices for transparent incident communication.
+
+### Provider-specific guides
+
+- [Migrate from Atlassian Statuspage](https://openstatus.dev/guides/migrate-from-atlassian-statuspage)
+- [Migrate from Better Stack](https://openstatus.dev/guides/migrate-from-betterstack)
+- [Migrate from Instatus](https://openstatus.dev/guides/migrate-from-instatus)

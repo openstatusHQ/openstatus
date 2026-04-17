@@ -12,6 +12,7 @@ A status page is a dedicated web interface provided by OpenStatus that publicly 
 -   Incident communication and history.
 -   Customizable branding and domain.
 -   Multiple access control options.
+-   Multi-language support with a locale switcher.
 
 ## Configuration
 
@@ -31,6 +32,17 @@ A unique identifier that forms part of your status page's default URL. For examp
 
 Allows you to host your status page on a custom domain. Once configured, your status page will be accessible at `https://your-custom-domain.com`.
 
+**DNS Configuration:**
+
+| Domain type | Record | Name | Value | TTL |
+|---|---|---|---|---|
+| Subdomain (e.g., `status.example.com`) | CNAME | `status` | `cname.vercel-dns.com` | 86400 |
+| Apex domain (e.g., `example.com`) | A | `@` | `76.76.21.21` | 86400 |
+
+**Domain verification (conditional):** If your domain is already registered on another Vercel project, a TXT record will be required to prove ownership. The dashboard will display the exact TXT record name and value when this step is needed.
+
+After saving your custom domain in the dashboard, the exact DNS records will be displayed with any additional verification steps needed.
+
 ### Password (Basic Auth)
 
 **Type:** String (optional)
@@ -45,11 +57,27 @@ Enables basic password protection for your status page. If a password is set, us
 
 Restricts access to your status page to users with approved email domains. Users receive a magic link via email, which, upon clicking, authenticates them via a session token. This feature is typically available as a paid add-on for specific plans.
 
+### IP Restriction (Network Auth)
+
+**Type:** String (add-on feature)
+
+Restricts access to your status page based on client IPv4 addresses. You provide a comma-separated list of CIDR ranges (e.g., `192.168.1.0/24, 10.0.0.0/8`), and only requests from those networks can view the page. Single IPs without a subnet mask are treated as `/32`.
+
+Visitors from outside the allowed ranges are redirected to a static "Access Restricted" page — there is no login flow since IP-based access cannot be changed by the user.
+
+**Configuration:**
+- Set `access_type` to `ip-restriction` in the dashboard or API.
+- Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically
+                      append /32 to single IPs).
+- IPv6 is not supported
+
+**Note:** This feature is available as a paid add-on for Starter and Pro plans.
+
 ### Favicon
 
-**Type:** Image file (e.g., `.ico`, `.png`)
+**Type:** Image file (`.ico`, `.png`, `.svg`)
 
-Allows you to upload a custom favicon that will appear in browser tabs and bookmarks for your status page.
+Allows you to upload a custom favicon that will appear in browser tabs and bookmarks for your status page. SVG files are sanitized server-side and must be under 100KB.
 
 ### JSON Feed
 
@@ -84,6 +112,22 @@ ssh [slug]@ssh.openstatus.dev
 
 **Example:** `ssh my-service@ssh.openstatus.dev`
 
+### Translations (i18n)
+
+**Type:** Per-page configuration (paid plans only)
+
+Enables multi-language support for your status page. You can set a default locale and optionally enable a locale switcher so visitors can choose their preferred language.
+
+**Supported locales:** `en` (English), `fr` (Français), `de` (Deutsch)
+
+**Configuration:**
+- **Default Locale** — the fallback language for your status page (defaults to `en`).
+- **Locale Switcher** — when enabled, visitors see a language dropdown. You select which locales to offer.
+
+**Routing:** The default locale is omitted from the URL (`as-needed` prefix). Non-default locales appear in the path (e.g., `/fr/events`).
+
+See [How to translate your status page](/guides/how-to-translate-status-page) for setup instructions and contributing new translations.
+
 ### White Label
 
 **Type:** Boolean (add-on feature)
@@ -95,3 +139,4 @@ Removes the "powered by openstatus.dev" footer from your status page, providing 
 - **[Create Status Page](/tutorial/how-to-create-status-page)** - Step-by-step tutorial on creating a status page.
 - **[How to Configure Status Page](/tutorial/how-to-configure-status-page)** - Guide on advanced status page configuration.
 - **[Status Report Reference](/reference/status-report)** - Details on how incident statuses are managed and reported.
+- **[How to Translate Your Status Page](/guides/how-to-translate-status-page)** - Enable multiple languages and contribute translations.

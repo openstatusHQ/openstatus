@@ -68,13 +68,18 @@ await configure({
   loggers: [
     {
       category: "api-server",
-      lowestLevel: "error",
+      lowestLevel: "info",
       sinks: ["console"],
     },
     {
       category: "api-server-otel",
       lowestLevel: "info",
       sinks: ["otel"],
+    },
+    {
+      category: ["logtape", "meta"],
+      lowestLevel: "warning",
+      sinks: ["console"],
     },
   ],
   contextLocalStorage: new AsyncLocalStorage(),

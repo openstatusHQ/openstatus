@@ -972,6 +972,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
       {
         id: String(testStatusReportToUpdateId),
         pageComponentIds: ["1"],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -1052,6 +1053,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
       {
         id: String(testStatusReportToUpdateId),
         pageComponentIds: ["99999"],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -1068,6 +1070,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
           String(testPageComponentId),
           String(testPage2ComponentId),
         ],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -1094,6 +1097,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
       {
         id: String(testStatusReportToUpdateId),
         pageComponentIds: [String(testPage2ComponentId)],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -1114,6 +1118,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
       {
         id: String(testStatusReportToUpdateId),
         pageComponentIds: [String(testPageComponentId)],
+        updatePageComponentIds: true,
       },
       { "x-openstatus-key": "1" },
     );
@@ -1144,6 +1149,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
         {
           id: String(tempReport.id),
           pageComponentIds: [],
+          updatePageComponentIds: true,
         },
         { "x-openstatus-key": "1" },
       );
@@ -1164,6 +1170,97 @@ describe("StatusReportService.UpdateStatusReport", () => {
         .where(eq(statusReportsToPageComponents.statusReportId, tempReport.id));
       await db.delete(statusReport).where(eq(statusReport.id, tempReport.id));
     }
+  });
+
+  test("title-only update preserves component associations and pageId", async () => {
+    const beforeAssociations = await db
+      .select()
+      .from(statusReportsToPageComponents)
+      .where(
+        eq(
+          statusReportsToPageComponents.statusReportId,
+          testStatusReportToUpdateId,
+        ),
+      )
+      .all();
+    const beforeReport = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, testStatusReportToUpdateId))
+      .get();
+
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        title: `${TEST_PREFIX}-title-only`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterAssociations = await db
+      .select()
+      .from(statusReportsToPageComponents)
+      .where(
+        eq(
+          statusReportsToPageComponents.statusReportId,
+          testStatusReportToUpdateId,
+        ),
+      )
+      .all();
+    const afterReport = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, testStatusReportToUpdateId))
+      .get();
+
+    expect(afterAssociations).toEqual(beforeAssociations);
+    expect(afterReport?.pageId).toBe(beforeReport?.pageId);
+
+    // Restore title
+    await db
+      .update(statusReport)
+      .set({ title: `${TEST_PREFIX}-to-update` })
+      .where(eq(statusReport.id, testStatusReportToUpdateId));
+  });
+
+  test("pageComponentIds ignored when updatePageComponentIds is not set", async () => {
+    const beforeAssociations = await db
+      .select()
+      .from(statusReportsToPageComponents)
+      .where(
+        eq(
+          statusReportsToPageComponents.statusReportId,
+          testStatusReportToUpdateId,
+        ),
+      )
+      .all();
+
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        pageComponentIds: ["99999"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const afterAssociations = await db
+      .select()
+      .from(statusReportsToPageComponents)
+      .where(
+        eq(
+          statusReportsToPageComponents.statusReportId,
+          testStatusReportToUpdateId,
+        ),
+      )
+      .all();
+
+    expect(afterAssociations).toEqual(beforeAssociations);
   });
 });
 

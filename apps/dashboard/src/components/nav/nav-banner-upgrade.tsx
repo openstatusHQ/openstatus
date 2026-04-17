@@ -1,5 +1,6 @@
 "use client";
 
+import { useTRPC } from "@/lib/trpc/client";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -7,8 +8,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { Rocket, X } from "lucide-react";
 import { useState } from "react";

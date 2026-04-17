@@ -118,6 +118,39 @@ message CreateStatusPageRequest {
 
   // URL to the contact page (optional).
   optional string contact_url = 5;
+
+  // Default locale for the status page (optional, defaults to EN).
+  optional Locale default_locale = 6;
+
+  // Enabled locales for the status page (optional).
+  repeated Locale locales = 7;
+
+  // Icon URL for the status page (optional).
+  optional string icon = 8 [(buf.validate.field).string.max_len = 1024];
+
+  // Custom domain for the status page (optional).
+  optional string custom_domain = 9 [(buf.validate.field).string.max_len = 256];
+
+  // Visual theme for the status page (optional, defaults to SYSTEM).
+  optional PageTheme theme = 10;
+
+  // Access type for the status page (optional, defaults to PUBLIC).
+  optional PageAccessType access_type = 11;
+
+  // Password for the status page (required when access_type is PASSWORD_PROTECTED).
+  optional string password = 12 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // Email domains allowed to access the page (used when access_type is AUTHENTICATED).
+  repeated string auth_email_domains = 13;
+
+  // Whether search engines are allowed to index this status page (optional, defaults to true).
+  optional bool allow_index = 14;
+
+  // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+  optional string allowed_ip_ranges = 15;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -185,6 +218,39 @@ message UpdateStatusPageRequest {
 
   // New contact URL (optional).
   optional string contact_url = 6;
+
+  // New default locale for the status page (optional).
+  optional Locale default_locale = 7;
+
+  // New enabled locales for the status page (optional).
+  repeated Locale locales = 8;
+
+  // New icon URL for the status page (optional).
+  optional string icon = 9 [(buf.validate.field).string.max_len = 1024];
+
+  // New custom domain (optional).
+  optional string custom_domain = 10 [(buf.validate.field).string.max_len = 256];
+
+  // New visual theme (optional).
+  optional PageTheme theme = 11;
+
+  // New access type (optional).
+  optional PageAccessType access_type = 12;
+
+  // New password (optional, required when access_type is PASSWORD_PROTECTED).
+  optional string password = 13 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // New email domains (optional, required when access_type is AUTHENTICATED).
+  repeated string auth_email_domains = 14;
+
+  // Whether search engines are allowed to index this status page (optional).
+  optional bool allow_index = 15;
+
+  // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+  optional string allowed_ip_ranges = 16;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.
@@ -316,6 +382,9 @@ message CreateComponentGroupRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 256
   ];
+
+  // Whether the group should be expanded by default on the status page (optional, defaults to false).
+  optional bool default_open = 3;
 }
 
 // CreateComponentGroupResponse is the response after creating a component group.
@@ -346,6 +415,9 @@ message UpdateComponentGroupRequest {
     min_len: 1
     max_len: 256
   }];
+
+  // Whether the group should be expanded by default on the status page (optional).
+  optional bool default_open = 3;
 }
 
 // UpdateComponentGroupResponse is the response after updating a component group.

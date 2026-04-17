@@ -13,7 +13,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
-import { FileDown, FileJson, Key, Terminal } from "lucide-react";
+import {
+  FileDown,
+  FileJson,
+  Key,
+  LogIn,
+  Megaphone,
+  PanelTop,
+  Terminal,
+} from "lucide-react";
 import React from "react";
 
 const OS = ["macOs", "Windows", "Linux"] as const;
@@ -38,12 +46,18 @@ const installs = [
     },
   },
   {
+    title: "Login",
+    icon: LogIn,
+    description: "Save your API token for use in subsequent commands.",
+    command: "openstatus login",
+  },
+  {
     title: "Add API Key",
     icon: Key,
     description: (
       <>
-        Create an API key in your workspace{" "}
-        <Link href="/settings/general">settings.</Link>
+        Or set it as an environment variable. Create an API key in your
+        workspace <Link href="/settings/general">settings.</Link>
       </>
     ),
     command: {
@@ -51,6 +65,18 @@ const installs = [
       Windows: ["set OPENSTATUS_API_TOKEN=<your-api-token>"],
       Linux: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
     },
+  },
+  {
+    title: "List Status Pages",
+    icon: PanelTop,
+    description: "List all status pages in your workspace.",
+    command: "openstatus status-page list",
+  },
+  {
+    title: "List Status Reports",
+    icon: Megaphone,
+    description: "List all status reports in your workspace.",
+    command: "openstatus status-report list",
   },
   {
     title: "Import Monitors",
@@ -86,8 +112,26 @@ const commands = [
     description: "Trigger a monitor.",
   },
   {
-    command: "openstatus run [options]",
-    description: "Run a list of monitors.",
+    command: "openstatus status-page list [options]",
+    description: "List all status pages.",
+  },
+  {
+    command: "openstatus status-page info [page-id]",
+    description: "Get status page details.",
+  },
+  {
+    command:
+      'openstatus status-report create --title "..." --status investigating --message "..." --page-id 123',
+    description: "Create a status report.",
+  },
+  {
+    command:
+      'openstatus status-report add-update [report-id] --status resolved --message "..."',
+    description: "Add an update to a status report.",
+  },
+  {
+    command: "openstatus status-report list [options]",
+    description: "List all status reports.",
   },
 ];
 
@@ -219,6 +263,16 @@ export default function Page() {
             </li>
           ))}
         </ul>
+      </Section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Skills</SectionTitle>
+          <SectionDescription>
+            Add the openstatus skill to let AI agents manage your monitors,
+            status pages, and status reports on your behalf.
+          </SectionDescription>
+        </SectionHeader>
+        <Code>npx skills add openstatushq/cli</Code>
       </Section>
       <Section>
         <SectionHeader>

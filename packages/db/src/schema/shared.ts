@@ -126,6 +126,7 @@ const trackersSchema = z
         type: z.literal("group"),
         groupId: z.number(),
         groupName: z.string(),
+        defaultOpen: z.boolean().default(false),
         components: z.array(selectPublicPageComponentWithStatusSchema),
         status: z
           .enum(["success", "degraded", "error", "info"])

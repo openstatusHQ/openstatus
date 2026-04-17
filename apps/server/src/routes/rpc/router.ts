@@ -10,6 +10,7 @@ import {
   authInterceptor,
   errorInterceptor,
   loggingInterceptor,
+  trackingInterceptor,
   validationInterceptor,
 } from "./interceptors";
 import { healthServiceImpl } from "./services/health";
@@ -26,6 +27,7 @@ import { statusReportServiceImpl } from "./services/status-report";
  * 2. loggingInterceptor - Logs requests/responses with duration
  * 3. authInterceptor - Validates API key and sets workspace context
  * 4. validationInterceptor - Validates request messages using protovalidate
+ * 5. trackingInterceptor - Fires OpenPanel events on success
  */
 export const routes = createConnectRouter({
   interceptors: [
@@ -33,6 +35,7 @@ export const routes = createConnectRouter({
     loggingInterceptor(),
     authInterceptor(),
     validationInterceptor(),
+    trackingInterceptor(),
   ],
 })
   .service(MonitorService, monitorServiceImpl)

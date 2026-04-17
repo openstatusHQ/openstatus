@@ -1,5 +1,5 @@
 import { Link } from "@/components/common/link";
-import { Note, NoteButton } from "@/components/common/note";
+import { Note } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
+import { FormLocale } from "./form-locale";
 import { FormPageAccess } from "./form-page-access";
 
 export function FormStatusPageUpdate() {
@@ -74,22 +75,22 @@ export function FormStatusPageUpdate() {
     }),
   );
 
+  const updateLocalesMutation = useMutation(
+    trpc.page.updateLocales.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
   if (!statusPage || !monitors || !workspace) return null;
 
   return (
     <FormCardGroup>
-      <Note color="warning">
+      <Note color="info">
         <Info />
-        <p className="text-sm">
-          Looking to connect monitors to your status page? The setup now has a
-          separate page{" "}
-          <Link href={`/status-pages/${id}/components`}>components</Link>.
+        <p>
+          Looking to connect monitors to your status page? Configure them on the{" "}
+          <Link href={`/status-pages/${id}/components`}>Components</Link> page.
         </p>
-        <NoteButton variant="default" asChild>
-          <Link href="https://openstatus.dev/blog/status-page-components">
-            Learn more
-          </Link>
-        </NoteButton>
       </Note>
       <FormGeneral
         defaultValues={{
@@ -148,6 +149,20 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
+      <FormLocale
+        locked={workspace.limits.i18n === false}
+        defaultValues={{
+          defaultLocale: statusPage.defaultLocale ?? "en",
+          locales: statusPage.locales,
+        }}
+        onSubmit={async (values) => {
+          await updateLocalesMutation.mutateAsync({
+            id: Number.parseInt(id),
+            defaultLocale: values.defaultLocale,
+            locales: values.locales,
+          });
+        }}
+      />
       <FormPageAccess
         lockedMap={
           new Map([
@@ -157,12 +172,16 @@ export function FormStatusPageUpdate() {
               "email-domain",
               workspace.limits["email-domain-protection"] === false,
             ],
+            ["ip-restriction", workspace.limits["ip-restriction"] === false],
           ])
         }
+        allowIndexLocked={workspace.limits["no-index"] === false}
         defaultValues={{
           accessType: statusPage.accessType,
           password: statusPage.password ?? undefined,
           authEmailDomains: statusPage.authEmailDomains ?? [],
+          allowedIpRanges: statusPage.allowedIpRanges ?? [],
+          allowIndex: statusPage.allowIndex ?? true,
         }}
         onSubmit={async (values) => {
           await updatePasswordProtectionMutation.mutateAsync({
@@ -170,6 +189,11 @@ export function FormStatusPageUpdate() {
             accessType: values.accessType,
             password: values.password,
             authEmailDomains: values.authEmailDomains,
+            allowedIpRanges:
+              values.accessType === "ip-restriction"
+                ? values.allowedIpRanges ?? null
+                : null,
+            allowIndex: values.allowIndex,
           });
         }}
       />

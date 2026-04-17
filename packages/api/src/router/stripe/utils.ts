@@ -1,12 +1,19 @@
 // Shamelessly stolen from dub.co
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { Addons } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  Addons,
+  BillingInterval,
+} from "@openstatus/db/src/schema/plan/schema";
 
 export const getPlanFromPriceId = (priceId: string) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return PLANS.find((plan) => plan.price.monthly.priceIds[env] === priceId);
+  return PLANS.find(
+    (plan) =>
+      plan.price.monthly.priceIds[env] === priceId ||
+      plan.price.yearly.priceIds[env] === priceId,
+  );
 };
 
 export const getFeatureFromPriceId = (priceId: string) => {
@@ -17,10 +24,13 @@ export const getFeatureFromPriceId = (priceId: string) => {
   );
 };
 
-export const getPriceIdForPlan = (plan: WorkspacePlan) => {
+export const getPriceIdForPlan = (
+  plan: WorkspacePlan,
+  interval: BillingInterval = "monthly",
+) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return PLANS.find((p) => p.plan === plan)?.price.monthly.priceIds[env];
+  return PLANS.find((p) => p.plan === plan)?.price[interval].priceIds[env];
 };
 
 export const getPriceIdForFeature = (feature: keyof Addons) => {
@@ -41,6 +51,12 @@ export const PLANS = [
           production: "price_1RxsLNBXJcTfzsyJ7La5Jn5y",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "XXX",
+          production: "price_1TDlHxBXJcTfzsyJygJw92nU",
+        },
+      },
     },
   },
   {
@@ -52,12 +68,19 @@ export const PLANS = [
           production: "price_1RxsJzBXJcTfzsyJBOztaKlR",
         },
       },
+      yearly: {
+        priceIds: {
+          test: "XXX",
+          production: "price_1TDlGSBXJcTfzsyJMsDV4DRQ",
+        },
+      },
     },
   },
 ] satisfies Array<{
   plan: WorkspacePlan;
   price: {
     monthly: { priceIds: { test: string; production: string } };
+    yearly: { priceIds: { test: string; production: string } };
   };
 }>;
 
@@ -69,6 +92,17 @@ export const FEATURES = [
         priceIds: {
           test: "price_1Sl4xqBXJcTfzsyJlzpD1DDm",
           production: "price_1Sl6oqBXJcTfzsyJCxtzDIx5",
+        },
+      },
+    },
+  },
+  {
+    feature: "ip-restriction",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1TMpxlBXJcTfzsyJ1woQtafW",
+          production: "price_1TMq0GBXJcTfzsyJrIVx9KPL",
         },
       },
     },

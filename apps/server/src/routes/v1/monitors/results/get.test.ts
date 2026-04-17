@@ -78,7 +78,7 @@ test.todo(
 );
 
 test("get monitor result with non-matching result id should return 404", async () => {
-  const res = await app.request("/v1/monitor/1/result/2", {
+  const res = await app.request("/v1/monitor/1/result/999998", {
     method: "GET",
     headers: {
       "x-openstatus-key": "1",

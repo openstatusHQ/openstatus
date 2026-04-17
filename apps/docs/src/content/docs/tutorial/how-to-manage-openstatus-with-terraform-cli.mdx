@@ -1,0 +1,417 @@
+---
+title: Manage Your openstatus Stack with Terraform and the CLI
+description: "Use Terraform to manage monitors, status pages, and notifications as code — and the openstatus CLI to handle incident status reports."
+---
+
+import { Aside, Code } from '@astrojs/starlight/components';
+
+## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~20 minutes |
+| **Level** | Intermediate |
+| **Prerequisites** | openstatus account, Terraform installed, CLI installed |
+
+In this tutorial, you'll set up a complete monitoring stack using two tools:
+
+- **Terraform** to manage your infrastructure — monitors, status pages, notifications. These are long-lived resources that change infrequently and benefit from code review, version control, and `terraform plan`.
+- **The openstatus CLI** to handle operational tasks — creating and updating status reports during incidents. These are time-sensitive actions that need to happen fast, often from a terminal or a CI script.
+
+### Prerequisites
+
+- An openstatus account ([sign up free](https://www.openstatus.dev))
+- [Terraform](https://developer.hashicorp.com/terraform/install) installed
+- The openstatus CLI installed ([installation guide](/tutorial/get-started-with-openstatus-cli))
+- Your API token from workspace settings (Settings > API)
+
+### What you'll build
+
+By the end of this tutorial, you'll have:
+- HTTP, TCP, and DNS monitors deployed via Terraform
+- A public status page with grouped components
+- Slack notifications wired to your monitors
+- A status report workflow using the CLI for incident communication
+
+---
+
+## Part 1 — Infrastructure with Terraform
+
+### Step 1 — Set up the provider
+
+Create a new directory for your Terraform configuration and add a `main.tf` file:
+
+```terraform
+terraform {
+  required_providers {
+    openstatus = {
+      source  = "openstatusHQ/openstatus"
+      version = "~> 0.1"
+    }
+  }
+}
+
+provider "openstatus" {
+  api_token = var.openstatus_api_token
+}
+
+variable "openstatus_api_token" {
+  type      = string
+  sensitive = true
+}
+```
+
+Initialize the provider:
+
+```bash
+terraform init
+```
+
+<Aside>Set the token via an environment variable to avoid passing it on every run: `export TF_VAR_openstatus_api_token="your-token"`</Aside>
+
+### Step 2 — Define your monitors
+
+Add monitors to your `main.tf`. We'll create three types — HTTP, TCP, and DNS.
+
+**HTTP monitor with assertions:**
+
+```terraform
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  description = "Monitors the main API health endpoint."
+  url         = "https://api.example.com/health"
+  periodicity = "5m"
+  method      = "GET"
+  timeout     = 30000
+  active      = true
+  public      = true
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
+
+  headers {
+    key   = "Accept"
+    value = "application/json"
+  }
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+
+  body_assertions {
+    target     = "ok"
+    comparator = "contains"
+  }
+}
+```
+
+**TCP monitor for database connectivity:**
+
+```terraform
+resource "openstatus_tcp_monitor" "database" {
+  name        = "PostgreSQL"
+  description = "Checks that the database port is reachable."
+  uri         = "db.example.com:5432"
+  periodicity = "1m"
+  timeout     = 10000
+  active      = true
+  regions     = ["fly-iad", "fly-fra"]
+}
+```
+
+**DNS monitor with record assertion:**
+
+```terraform
+resource "openstatus_dns_monitor" "domain" {
+  name        = "DNS Resolution"
+  description = "Validates the A record for example.com."
+  uri         = "example.com"
+  periodicity = "10m"
+  active      = true
+  regions     = ["fly-iad", "fly-ams"]
+
+  record_assertions {
+    record     = "A"
+    comparator = "eq"
+    target     = "93.184.216.34"
+  }
+}
+```
+
+### Step 3 — Add notifications
+
+Wire up a Slack notification so you get alerted when monitors fail:
+
+```terraform
+variable "slack_webhook_url" {
+  type      = string
+  sensitive = true
+}
+
+resource "openstatus_notification" "slack" {
+  name          = "Slack Alerts"
+  provider_type = "slack"
+  monitor_ids   = [
+    openstatus_http_monitor.api.id,
+    openstatus_tcp_monitor.database.id,
+  ]
+
+  slack {
+    webhook_url = var.slack_webhook_url
+  }
+}
+```
+
+<Aside>The provider supports 12 notification types including PagerDuty, Discord, Email, OpsGenie, and webhooks. See the [Terraform provider reference](/reference/terraform#openstatus_notification) for all options.</Aside>
+
+### Step 4 — Create a status page with components
+
+Define a public status page and organize monitors into component groups:
+
+```terraform
+resource "openstatus_status_page" "main" {
+  title        = "Example Inc. Status"
+  slug         = "example-status"
+  description  = "Real-time status for all Example Inc. services."
+  homepage_url = "https://example.com"
+  contact_url  = "https://example.com/support"
+}
+
+resource "openstatus_status_page_component_group" "services" {
+  page_id = openstatus_status_page.main.id
+  name    = "Services"
+}
+
+resource "openstatus_status_page_component_group" "infrastructure" {
+  page_id = openstatus_status_page.main.id
+  name    = "Infrastructure"
+}
+
+resource "openstatus_status_page_component" "api_component" {
+  page_id     = openstatus_status_page.main.id
+  type        = "monitor"
+  monitor_id  = openstatus_http_monitor.api.id
+  name        = "API"
+  group_id    = openstatus_status_page_component_group.services.id
+  order       = 1
+  group_order = 1
+}
+
+resource "openstatus_status_page_component" "db_component" {
+  page_id     = openstatus_status_page.main.id
+  type        = "monitor"
+  monitor_id  = openstatus_tcp_monitor.database.id
+  name        = "Database"
+  group_id    = openstatus_status_page_component_group.infrastructure.id
+  order       = 2
+  group_order = 1
+}
+```
+
+### Step 5 — Plan and apply
+
+Preview the changes Terraform will make:
+
+```bash
+terraform plan
+```
+
+You should see all resources listed as "will be created". Apply them:
+
+```bash
+terraform apply
+```
+
+**Checkpoint:** After applying, verify everything is live:
+- Open your openstatus dashboard — your monitors should appear in the Monitors tab
+- Visit your status page at `https://<your-slug>.openstatus.dev` — you should see your component groups and monitors
+
+### Step 6 — Update your infrastructure
+
+To make changes, edit your `.tf` files and re-apply. For example, add a new region to the API monitor:
+
+```terraform
+  regions = ["fly-iad", "fly-ams", "fly-syd", "fly-nrt", "fly-gru"]
+```
+
+Then:
+
+```bash
+terraform plan   # Review the diff
+terraform apply  # Apply the update
+```
+
+Terraform only modifies what changed — the monitor gets updated in place, no downtime.
+
+### Step 7 — Import existing resources
+
+If you already have monitors, status pages, or notifications created in the dashboard, you can generate the corresponding Terraform configuration automatically using the CLI:
+
+```bash
+openstatus terraform generate
+```
+
+This exports all your workspace resources — monitors, status pages, notifications, and maintenance windows — into `.tf` files ready to use. It's the fastest way to adopt infrastructure as code for an existing setup.
+
+Once the files are generated, import the resources into Terraform state so it knows they already exist:
+
+```bash
+terraform import openstatus_http_monitor.api <monitor-id>
+terraform import openstatus_status_page.main <page-id>
+terraform import openstatus_notification.slack <notification-id>
+```
+
+After importing, run `terraform plan` to ensure your `.tf` files match the imported state. Adjust any drift until the plan shows no changes.
+
+---
+
+## Part 2 — Status reports with the CLI
+
+Terraform is great for infrastructure, but status reports are operational — you create them when an incident is happening and update them as you investigate and resolve. The CLI is the right tool here.
+
+### Step 8 — Configure the CLI
+
+Make sure your API token is set:
+
+```bash
+export OPENSTATUS_API_TOKEN="your-api-token"
+```
+
+Verify your setup:
+
+```bash
+openstatus whoami
+```
+
+### Step 9 — Create a status report
+
+When an incident starts, create a status report and link it to your status page and affected components:
+
+```bash
+openstatus status-report create \
+  --title "API Elevated Latency" \
+  --status investigating \
+  --message "We are investigating increased response times on the API." \
+  --page-id <page-id> \
+  --component-ids <api-component-id> \
+  --notify
+```
+
+Key flags:
+- **`--status`**: The initial incident state — `investigating`, `identified`, `monitoring`, or `resolved`.
+- **`--page-id`**: Links the report to your status page so visitors can see it.
+- **`--component-ids`**: Marks specific components as affected (comma-separated for multiple).
+- **`--notify`**: Sends a notification to all status page subscribers.
+
+<Aside>Find your page and component IDs with `openstatus status-page list` and `openstatus status-page info <page-id>`.</Aside>
+
+### Step 10 — Post updates as you investigate
+
+As the incident progresses, add updates to the report. Each update changes the status and adds a timestamped message:
+
+```bash
+# Root cause identified
+openstatus status-report add-update <report-id> \
+  --status identified \
+  --message "Root cause identified: a misconfigured cache TTL is causing stale responses." \
+  --notify
+
+# Fix deployed, monitoring
+openstatus status-report add-update <report-id> \
+  --status monitoring \
+  --message "Fix deployed to production. Monitoring response times for recovery."
+
+# Incident resolved
+openstatus status-report add-update <report-id> \
+  --status resolved \
+  --message "Response times have returned to normal. Incident resolved." \
+  --notify
+```
+
+Each update appears on your public status page as a timeline entry, giving your users clear visibility into what happened and when.
+
+### Step 11 — Review and manage reports
+
+List recent incidents:
+
+```bash
+# All reports
+openstatus status-report list
+
+# Only active incidents
+openstatus status-report list --status investigating
+
+# Detailed view of a specific report
+openstatus status-report info <report-id>
+```
+
+Update report metadata (title, affected components):
+
+```bash
+openstatus status-report update <report-id> \
+  --title "API Elevated Latency — Cache Misconfiguration" \
+  --component-ids <api-component-id>,<db-component-id>
+```
+
+Delete a report (e.g., created by mistake):
+
+```bash
+openstatus status-report delete <report-id>
+```
+
+---
+
+## Putting it all together
+
+Here's how the two tools fit into your workflow:
+
+| Task | Tool | Why |
+| :--- | :--- | :--- |
+| Create/update monitors | Terraform | Version controlled, peer reviewed, reproducible |
+| Create/update status pages | Terraform | Long-lived infrastructure, managed as code |
+| Configure notifications | Terraform | Declarative, easy to audit |
+| Report an incident | CLI | Fast, imperative, time-sensitive |
+| Post incident updates | CLI | Happens in real-time during an outage |
+| Trigger a monitor check | CLI | On-demand operational task |
+
+## CLI commands cheat sheet
+
+| Command | Description |
+| :--- | :--- |
+| `openstatus whoami` | Verify your API token and workspace |
+| `openstatus status-report create` | Create a new incident report |
+| `openstatus status-report add-update <id>` | Add a status update to an incident |
+| `openstatus status-report update <id>` | Update report metadata (title, components) |
+| `openstatus status-report list` | List all status reports |
+| `openstatus status-report list --status investigating` | Filter by incident status |
+| `openstatus status-report info <id>` | View a report's full timeline |
+| `openstatus status-report delete <id>` | Delete a status report |
+| `openstatus monitors list` | List all monitors |
+| `openstatus monitors info <id>` | View monitor details and metrics |
+| `openstatus monitors trigger <id>` | Trigger an immediate check |
+| `openstatus status-page list` | List all status pages |
+| `openstatus status-page info <id>` | View status page details and component IDs |
+| `openstatus terraform generate` | Export workspace resources to Terraform `.tf` files |
+
+## What you've accomplished
+
+You've successfully:
+- ✅ Deployed HTTP, TCP, and DNS monitors with Terraform
+- ✅ Created a status page with component groups and monitor-linked components
+- ✅ Configured Slack notifications for monitor failures
+- ✅ Used the CLI to manage the full lifecycle of an incident status report
+- ✅ Learned when to use Terraform vs. the CLI for different tasks
+
+## What's next?
+
+- **[Terraform Provider Reference](/reference/terraform)** — Full specification for all resources and data sources
+- **[Run Synthetic Tests in GitHub Actions](/guides/how-to-run-synthetic-test-github-action/)** — Automate monitoring in your CI/CD pipeline
+- **[Export Metrics to an OTLP Endpoint](/guides/how-to-export-metrics-to-otlp-endpoint/)** — Send monitor data to your observability stack
+
+## Learn more
+
+- **[Understanding Monitoring as Code](/concept/uptime-monitoring-as-code)** — Why manage monitors as code
+- **[CLI Reference](/reference/cli-reference)** — Complete command documentation
+- **[Status Report Reference](/reference/status-report)** — Status report properties and lifecycle
+- **[HTTP Monitor Reference](/reference/http-monitor)** — Full HTTP monitor specification
+- **[TCP Monitor Reference](/reference/tcp-monitor)** — Full TCP monitor specification
+- **[DNS Monitor Reference](/reference/dns-monitor)** — Full DNS monitor specification

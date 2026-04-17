@@ -115,6 +115,14 @@ export default defineConfig({
               label: "How to set up the Slack Agent",
               slug: "tutorial/how-to-setup-slack-agent",
             },
+            {
+              label: "Manage Your Stack with Terraform and CLI",
+              slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
+            },
+            {
+              label: "Import a Status Page from Another Provider",
+              slug: "tutorial/how-to-import-status-page",
+            },
           ],
         },
 
@@ -152,6 +160,14 @@ export default defineConfig({
             {
               label: "Self host Status Page only",
               slug: "guides/self-host-status-page-only",
+            },
+            {
+              label: "How to translate your status page",
+              slug: "guides/how-to-translate-status-page",
+            },
+            {
+              label: "How to embed a status page in an iframe",
+              slug: "guides/how-to-embed-status-page-iframe",
             },
           ],
         },

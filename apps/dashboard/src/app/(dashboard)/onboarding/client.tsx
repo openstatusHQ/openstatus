@@ -24,73 +24,72 @@ import {
 } from "@/components/forms/form-card";
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
 import { CreatePageForm } from "@/components/forms/onboarding/create-page";
-import { LearnFromForm } from "@/components/forms/onboarding/learn-from";
+import { QuestionForm } from "@/components/forms/onboarding/question";
 import { extractDomain } from "@/lib/domains";
 import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight } from "lucide-react";
+import { Activity, ArrowUpRight, Layers, PanelTop } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import type { Intent } from "./search-params";
 import { searchParamsParsers } from "./search-params";
 
-const moreActions = [
+const intents: {
+  id: Intent;
+  title: string;
+  description: string;
+  icon: typeof Activity;
+}[] = [
   {
-    id: "notifier",
-    title: "Create a notifier",
-    description: "Get notified when your website or API is down.",
-    href: "/notifications",
+    id: "status-page",
+    title: "Status Page",
+    description:
+      "Keep your users informed with a public status page showing your system health.",
+    icon: PanelTop,
   },
   {
-    id: "workspace",
-    title: "Setup workspace",
-    description: "Add a name to your workspace and share it with your team.",
-    href: "/settings/general",
+    id: "monitoring",
+    title: "Monitoring",
+    description:
+      "Track uptime and performance of your websites and APIs from multiple locations.",
+    icon: Activity,
   },
   {
-    id: "monitor",
-    title: "Update monitor",
-    description: "Change region, schedule, timeout and more.",
-    href: "/monitors",
-  },
-  {
-    id: "cal",
-    title: "Schedule a call",
-    description: "Book a meeting with us to get you started with OpenStatus.",
-    href: "https://openstatus.dev/cal",
-  },
-  {
-    id: "docs",
-    title: "Documentation",
-    description: "Read our documentation to get started with OpenStatus.",
-    href: "https://docs.openstatus.dev",
-  },
-  {
-    id: "changelog",
-    title: "Changelog",
-    description: "See what's new in OpenStatus.",
-    href: "https://openstatus.dev/changelog",
-  },
-  {
-    id: "discord",
-    title: "Discord",
-    description: "Join our Discord server if you get stuck.",
-    href: "https://discord.gg/openstatus",
-  },
-  {
-    id: "github",
-    title: "GitHub",
-    description: "Leave a star on GitHub, request features or report issues.",
-    href: "https://github.com/openstatus-dev/openstatus",
+    id: "both",
+    title: "Status Page & Monitoring",
+    description:
+      "Monitor your services and share real-time status with your users.",
+    icon: Layers,
   },
 ];
 
+function getTotalSteps(intent: Intent | null): number {
+  if (intent === "both") return 4;
+  return 3;
+}
+
+function getCurrentStepNumber(
+  step: string,
+  intent: Intent | null,
+): number | null {
+  if (step === "1") return 1;
+  if (step === "2") return 2;
+  if (step === "3" && intent === "both") return 3;
+  if (step === "next") return null; // no counter on final page
+  return null;
+}
+
 export function Client() {
-  const [{ step, callbackUrl }, setSearchParams] =
-    useQueryStates(searchParamsParsers);
+  const [{ step, intent, callbackUrl }, setSearchParams] = useQueryStates(
+    searchParamsParsers,
+    { history: "push" },
+  );
   const router = useRouter();
+  const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: workspace, refetch } = useQuery(
@@ -102,7 +101,11 @@ export function Client() {
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: async (data) => {
-        await setSearchParams({ step: "2" });
+        if (intent === "both") {
+          await setSearchParams({ step: "3" });
+        } else {
+          await setSearchParams({ step: "next" });
+        }
         if (data.active) {
           triggerCheckMutation.mutate({ id: data.id });
         }
@@ -113,34 +116,85 @@ export function Client() {
       },
     }),
   );
-  const createPageMutation = useMutation(
-    trpc.page.create.mutationOptions({
-      onSuccess: async () => {
-        await setSearchParams({ step: "next" });
-        refetch();
-        queryClient.invalidateQueries({
-          queryKey: trpc.page.list.queryKey(),
-        });
-      },
-    }),
+  const createPageMutation = useMutation(trpc.page.create.mutationOptions({}));
+  const updateComponentsMutation = useMutation(
+    trpc.pageComponent.updateOrder.mutationOptions({}),
   );
   const createFeedbackMutation = useMutation(
     trpc.feedback.submit.mutationOptions({}),
   );
 
+  const totalSteps = getTotalSteps(intent);
+  const currentStepNumber = getCurrentStepNumber(step, intent);
+
+  const nudgeCards = useMemo(() => {
+    const cards = [
+      {
+        id: "upgrade",
+        title: "Upgrade your plan",
+        description:
+          "Unlock more monitors, status pages, and advanced features.",
+        href: "/settings/billing",
+      },
+      {
+        id: "invite",
+        title: "Invite your team",
+        description:
+          "Collaborate with your team by inviting them to your workspace.",
+        href: "/settings/general",
+      },
+    ];
+
+    if (intent === "monitoring") {
+      cards.push({
+        id: "status-page",
+        title: "Create a status page",
+        description:
+          "Keep your users informed with a public page showing your system health.",
+        href: "/status-pages",
+      });
+    }
+
+    if (intent === "status-page") {
+      cards.push({
+        id: "monitor",
+        title: "Create a monitor",
+        description:
+          "Start tracking uptime and performance of your websites and APIs.",
+        href: "/monitors",
+      });
+    }
+
+    cards.push({
+      id: "notifier",
+      title: "Create a notifier",
+      description: "Get notified when your website or API is down.",
+      href: "/notifications",
+    });
+
+    return cards;
+  }, [intent]);
+
   useEffect(() => {
     if (!callbackUrl) return;
-    // Ignore base URL redirects - only redirect for meaningful paths (e.g., /invite?token=...)
     try {
       const url = new URL(callbackUrl, window.location.origin);
       if (url.pathname === "/" || url.pathname === "") return;
-      router.push(callbackUrl);
+      if (url.origin !== window.location.origin) return;
+      if (url.protocol !== "http:" && url.protocol !== "https:") return;
+      router.push(`${url.pathname}${url.search}${url.hash}`);
     } catch {
-      // If callbackUrl is a relative path, check it directly
-      if (callbackUrl === "/" || callbackUrl === "") return;
-      router.push(callbackUrl);
+      // Malformed URLs are not safe to navigate to
     }
   }, [callbackUrl, router]);
+
+  const showMonitorForm =
+    (step === "2" && intent === "monitoring") ||
+    (step === "2" && intent === "both");
+
+  const showStatusPageForm =
+    (step === "2" && intent === "status-page") ||
+    (step === "3" && intent === "both");
 
   return (
     <SectionGroup>
@@ -148,22 +202,71 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Getting Started</SectionTitle>
           <SectionDescription>
-            Welcome to OpenStatus. Let&apos;s get you set up.
+            Welcome to openstatus. Let&apos;s get you set up.
           </SectionDescription>
         </SectionHeader>
       </Section>
       {step === "1" && (
         <Section>
+          <SectionHeader>
+            <SectionDescription>What are you looking for?</SectionDescription>
+          </SectionHeader>
+          <ActionCardGroup className="grid-cols-1 sm:grid-cols-2">
+            {intents.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={
+                    item.id === "both" ? "text-left sm:col-span-2" : "text-left"
+                  }
+                  onClick={async () => {
+                    setSearchParams({ step: "2", intent: item.id });
+                    await createFeedbackMutation.mutateAsync({
+                      source: "onboarding-intent",
+                      message: `I'm looking for ${item.title}`,
+                      path: pathname,
+                    });
+                  }}
+                >
+                  <ActionCard className="h-full w-full cursor-pointer transition-colors hover:border-foreground/20">
+                    <ActionCardHeader>
+                      <ActionCardTitle className="flex items-center gap-2">
+                        <Icon className="size-4 shrink-0 text-muted-foreground" />
+                        {item.title}
+                      </ActionCardTitle>
+                      <ActionCardDescription>
+                        {item.description}
+                      </ActionCardDescription>
+                    </ActionCardHeader>
+                  </ActionCard>
+                </button>
+              );
+            })}
+          </ActionCardGroup>
+        </Section>
+      )}
+      {showMonitorForm && (
+        <Section>
           <SectionHeader className="h-8 flex-row items-center justify-between">
             <SectionDescription className="tabular-nums">
-              Step <span className="font-medium text-foreground">1</span> of{" "}
-              <span className="font-medium text-foreground">2</span>
+              Step{" "}
+              <span className="font-medium text-foreground">
+                {currentStepNumber}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-foreground">{totalSteps}</span>
             </SectionDescription>
             <Button
               variant="ghost"
               size="sm"
               className="text-muted-foreground"
-              onClick={() => setSearchParams({ step: "2" })}
+              onClick={() =>
+                setSearchParams({
+                  step: intent === "both" ? "3" : "next",
+                })
+              }
             >
               Skip
             </Button>
@@ -197,12 +300,16 @@ export function Client() {
           </FormCard>
         </Section>
       )}
-      {step === "2" && (
+      {showStatusPageForm && (
         <Section>
           <SectionHeader className="h-8 flex-row items-center justify-between">
             <SectionDescription className="tabular-nums">
-              Step <span className="font-medium text-foreground">2</span> of{" "}
-              <span className="font-medium text-foreground">2</span>
+              Step{" "}
+              <span className="font-medium text-foreground">
+                {currentStepNumber}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-foreground">{totalSteps}</span>
             </SectionDescription>
             <Button
               variant="ghost"
@@ -215,29 +322,62 @@ export function Client() {
           </SectionHeader>
           <FormCard>
             <FormCardHeader>
-              <FormCardTitle>Create a page</FormCardTitle>
+              <FormCardTitle>Create a status page</FormCardTitle>
               <FormCardDescription>
-                Inform your users about the status of your website or API.
+                Inform your users about the status of your services.
               </FormCardDescription>
             </FormCardHeader>
             <FormCardContent>
               <CreatePageForm
                 id="create-page-form"
+                showComponents={intent === "status-page"}
                 defaultValues={{
                   slug: extractDomain(createMonitorMutation.data?.url ?? ""),
                 }}
                 onSubmit={async (values) => {
                   if (!workspace?.id) return;
 
-                  await createPageMutation.mutateAsync({
+                  const newPage = await createPageMutation.mutateAsync({
                     slug: values.slug,
                     title: values.slug.replace(/-/g, " "),
                     description: "",
                     monitors: createMonitorMutation.data?.id
-                      ? [{ monitorId: createMonitorMutation.data.id, order: 0 }]
+                      ? [
+                          {
+                            monitorId: createMonitorMutation.data.id,
+                            order: 0,
+                          },
+                        ]
                       : [],
                     workspaceId: workspace.id,
                     legacyPage: false,
+                  });
+
+                  // Create static components if any were added
+                  const staticComponents = values.components?.filter(
+                    (c) => c.name.trim() !== "",
+                  );
+                  if (staticComponents?.length && newPage?.id) {
+                    const monitorComponentOffset = createMonitorMutation.data
+                      ?.id
+                      ? 1
+                      : 0;
+                    await updateComponentsMutation.mutateAsync({
+                      pageId: newPage.id,
+                      components: staticComponents.map((c, index) => ({
+                        name: c.name,
+                        type: "static" as const,
+                        monitorId: null,
+                        order: index + monitorComponentOffset,
+                      })),
+                      groups: [],
+                    });
+                  }
+
+                  await setSearchParams({ step: "next" });
+                  refetch();
+                  queryClient.invalidateQueries({
+                    queryKey: trpc.page.list.queryKey(),
                   });
                 }}
               />
@@ -253,16 +393,17 @@ export function Client() {
           <Section>
             <SectionHeader className="h-8 flex-row items-center justify-between">
               <SectionDescription>
-                We&apos;d love to know what you are looking for with openstatus.
-                This will help us improve our product and services.
+                How did you hear about openstatus?
               </SectionDescription>
             </SectionHeader>
-            <LearnFromForm
+            <QuestionForm
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
-                  message: `I want to use OpenStatus for *${values.from}${
-                    values.other ? `: ${values.other || "others"}` : ""
-                  }*`,
+                  source: "onboarding-source",
+                  message: `Heard about us via ${values.source}${
+                    values.other ? `: ${values.other}` : ""
+                  }`,
+                  path: pathname,
                 });
               }}
             />
@@ -274,21 +415,18 @@ export function Client() {
               </SectionDescription>
             </SectionHeader>
             <ActionCardGroup className="sm:grid-cols-2">
-              {moreActions.map((action) => {
+              {nudgeCards.map((action) => {
                 const isExternal = action.href.startsWith("http");
-                const isMonitor = action.id === "monitor";
-                const href =
-                  isMonitor && createMonitorMutation.data?.id
-                    ? `${action.href}/${createMonitorMutation.data.id}`
-                    : action.href;
+                const className =
+                  action.id === "upgrade" ? "bg-muted" : undefined;
                 return (
                   <Link
                     key={action.id}
-                    href={href}
+                    href={action.href}
                     target={isExternal ? "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
                   >
-                    <ActionCard className="h-full w-full">
+                    <ActionCard className={cn("h-full w-full", className)}>
                       <ActionCardHeader>
                         <ActionCardTitle className="flex items-center justify-between gap-2">
                           {action.title}

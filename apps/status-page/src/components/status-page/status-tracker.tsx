@@ -1,6 +1,7 @@
 "use client";
 
 import { Kbd } from "@/components/common/kbd";
+import { Link } from "@/components/common/link";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDateRange } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
@@ -14,9 +15,8 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import Link from "next/link";
+import { useExtracted, useLocale } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { requests } from "./messages";
 import { chartConfig } from "./utils";
 
 type UptimeData = NonNullable<
@@ -32,6 +32,8 @@ type UptimeData = NonNullable<
 // TODO: widget type -> current status only | with status history
 
 export function StatusTracker({ data }: { data: UptimeData }) {
+  const t = useExtracted();
+  const locale = useLocale();
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -214,7 +216,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
       className="flex h-[50px] w-full items-end"
       onKeyDown={handleKeyDown}
       role="toolbar"
-      aria-label="Status tracker"
+      aria-label={t("Status tracker")}
     >
       {data.map((item, index) => {
         const isPinned = pinnedIndex === index;
@@ -247,7 +249,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                       : -1
                 }
                 role="button"
-                aria-label={`Day ${index + 1} status`}
+                aria-label={t("Day {n} status", { n: String(index + 1) })}
                 aria-pressed={isPinned}
               >
                 {/* Render processed bar segments from backend */}
@@ -276,7 +278,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             >
               <div>
                 <div className="p-2 text-xs">
-                  {new Date(item.day).toLocaleDateString("default", {
+                  {new Date(item.day).toLocaleDateString(locale, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -322,6 +324,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                         ) {
                           return (
                             <Link
+                              variant="unstyled"
                               key={`${event.id}-${event.type}`}
                               href={`${prefix ? `/${prefix}` : ""}/events/${
                                 event.type
@@ -342,7 +345,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                   <>
                     <Separator />
                     <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
-                      <span>Click again to unpin</span>
+                      <span>{t("Click again to unpin")}</span>
                       <Kbd>Esc</Kbd>
                     </div>
                   </>
@@ -375,6 +378,14 @@ function StatusTrackerContent({
   status: "success" | "degraded" | "error" | "info" | "empty";
   value: string;
 }) {
+  const t = useExtracted();
+  const requestLabels: Record<string, string> = {
+    success: t("Normal"),
+    degraded: t("Degraded"),
+    error: t("Error"),
+    info: t("Maintenance"),
+    empty: t("No Data"),
+  };
   return (
     <div className="flex items-baseline gap-4">
       <div className="flex items-center gap-2">
@@ -384,7 +395,7 @@ function StatusTrackerContent({
             backgroundColor: chartConfig[status].color,
           }}
         />
-        <div className="text-sm">{requests[status]}</div>
+        <div className="text-sm">{requestLabels[status]}</div>
       </div>
       <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
         {value}
@@ -404,6 +415,7 @@ function StatusTrackerEvent({
   to?: Date | null;
   status: "success" | "degraded" | "error" | "info" | "empty";
 }) {
+  const locale = useLocale();
   if (!from) return null;
 
   return (
@@ -423,25 +435,26 @@ function StatusTrackerEvent({
         </div>
       </div>
       <div className="mt-1 text-muted-foreground text-xs">
-        {formatDateRange(from, to ?? undefined)}{" "}
+        {formatDateRange(from, to ?? undefined, locale)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {formatDuration({ from, to, name, status })}
+          <FormatDuration from={from} to={to} name={name} status={status} />
         </span>
       </div>
     </div>
   );
 }
 
-const formatDuration = ({
+function FormatDuration({
   from,
   to,
   name,
-}: React.ComponentProps<typeof StatusTrackerEvent>) => {
+}: React.ComponentProps<typeof StatusTrackerEvent>) {
+  const t = useExtracted();
   if (!from) return null;
-  if (!to) return "ongoing";
+  if (!to) return t("ongoing");
   const duration = formatDistanceStrict(from, to);
   const isMultipleIncidents = name.includes("Downtime (");
-  if (isMultipleIncidents) return `across ${duration}`;
+  if (isMultipleIncidents) return t("across {duration}", { duration });
   if (duration === "0 seconds") return null;
   return duration;
-};
+}

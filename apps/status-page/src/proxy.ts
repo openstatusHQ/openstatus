@@ -1,3 +1,4 @@
+import IPCIDR from "ip-cidr";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -6,6 +7,21 @@ import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
+import { resolveRoute } from "./lib/resolve-route";
+
+function isIpAllowed(ip: string, allowedRanges: string[]): boolean {
+  // No ranges configured — deny all (defensive: form validation prevents this)
+  if (allowedRanges.length === 0) return false;
+  return allowedRanges.some((range) => {
+    try {
+      const cidr = new IPCIDR(range);
+      return cidr.contains(ip);
+    } catch {
+      // Skip malformed ranges rather than crashing the middleware
+      return false;
+    }
+  });
+}
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -14,42 +30,17 @@ export default auth(async (req) => {
   const headers = req.headers;
   const host = headers.get("x-forwarded-host");
 
-  let prefix = "";
-  let type: "hostname" | "pathname";
-
-  const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
-  const pathnames = url.pathname.split("/");
-
-  const subdomain = getValidSubdomain(url.host);
-  console.log({
-    hostnames,
-    pathnames,
+  const route = resolveRoute({
     host,
     urlHost: url.host,
-    subdomain,
+    pathname: url.pathname,
   });
 
-  if (
-    hostnames.length > 2 &&
-    hostnames[0] !== "www" &&
-    !url.host.endsWith(".vercel.app")
-  ) {
-    prefix = hostnames[0].toLowerCase();
-    type = "hostname";
-  } else {
-    prefix = pathnames[1].toLowerCase();
-    type = "pathname";
-  }
-
-  if (subdomain !== null) {
-    prefix = subdomain.toLowerCase();
-  }
-
-  console.log({ pathname: url.pathname, type, prefix, subdomain });
-
-  if (url.pathname === "/" && type !== "hostname" && subdomain === null) {
+  if (!route) {
     return response;
   }
+
+  const { type, prefix } = route;
 
   const query = await db
     .select()
@@ -66,6 +57,40 @@ export default auth(async (req) => {
   }
 
   const _page = validation.data;
+
+  // Override locale with the page's default when no explicit locale was in the URL
+  if (
+    !route.localeExplicit &&
+    _page.defaultLocale &&
+    _page.defaultLocale !== route.locale
+  ) {
+    const oldLocale = route.locale;
+    route.locale = _page.defaultLocale;
+    route.rewritePath = route.rewritePath.replace(
+      `/${route.prefix}/${oldLocale}`,
+      `/${route.prefix}/${_page.defaultLocale}`,
+    );
+  }
+
+  // Reject locales not in the page's allowed list — redirect to the page's default locale
+  if (
+    _page.locales &&
+    _page.locales.length > 0 &&
+    !_page.locales.includes(route.locale)
+  ) {
+    const pageDefault = _page.defaultLocale || "en";
+    const redirectPath = route.rewritePath.replace(
+      `/${route.prefix}/${route.locale}`,
+      `/${route.prefix}/${pageDefault}`,
+    );
+    // For pathname routing, redirect to the rewrite path directly;
+    // for hostname routing, strip the prefix from the redirect URL
+    const externalPath =
+      route.type === "hostname"
+        ? redirectPath.replace(`/${route.prefix}`, "")
+        : redirectPath;
+    return NextResponse.redirect(new URL(externalPath || "/", req.url));
+  }
 
   console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
 
@@ -142,6 +167,32 @@ export default auth(async (req) => {
     }
   }
 
+  if (_page.accessType === "ip-restriction") {
+    // Vercel overwrites x-forwarded-for with the verified client IP — not spoofable.
+    // https://vercel.com/docs/headers/request-headers#x-forwarded-for
+    const xff = req.headers.get("x-forwarded-for");
+    const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
+
+    const allowed = clientIp && isIpAllowed(clientIp, _page.allowedIpRanges);
+
+    if (!url.pathname.endsWith("/restricted") && !allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/restricted`,
+      );
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Redirect allowed IPs away from /restricted
+    if (url.pathname.endsWith("/restricted") && allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
+      );
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
   const proxy = req.headers.get("x-proxy");
   console.log({ proxy });
 
@@ -157,7 +208,10 @@ export default auth(async (req) => {
     host,
     expectedHost: `${_page.slug}.stpg.dev`,
   });
+
   if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+    const pathnames = url.pathname.split("/");
+    const subdomain = getValidSubdomain(url.host);
     if (pathnames.length > 2 && !subdomain) {
       const pathname = pathnames.slice(2).join("/");
       const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
@@ -166,16 +220,12 @@ export default auth(async (req) => {
     }
     if (_page.customDomain && subdomain) {
       console.log({ url: req.url });
-      // const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
-      // console.log({newUrl: vercelURL})
       if (pathnames.length > 2) {
         const pathname = pathnames.slice(1).join("/");
-
         const rewriteUrl = new URL(
           `${pathname}`,
           `https://${_page.slug}.stpg.dev`,
         );
-        console.log({ rewriteUrl });
         rewriteUrl.search = url.search;
         return NextResponse.rewrite(rewriteUrl);
       }
@@ -183,21 +233,28 @@ export default auth(async (req) => {
         `${url.pathname}`,
         `https://${_page.slug}.stpg.dev`,
       );
-      console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
     }
     const rewriteUrl = new URL(`/${_page.slug}`, req.url);
-    console.log({ rewriteUrl });
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
   }
   if (host?.includes("openstatus.dev")) {
-    const rewriteUrl = new URL(`/${prefix}${url.pathname}`, req.url);
+    const rewriteUrl = new URL(route.rewritePath, req.url);
     // Preserve search params from original request
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
   }
+
+  // Rewrite to the resolved path when it differs from the incoming pathname
+  // (e.g. hostname routing or pathname routing without a locale segment)
+  if (route.rewritePath !== url.pathname) {
+    const rewriteUrl = new URL(route.rewritePath, req.url);
+    rewriteUrl.search = url.search;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   return response;
 });
 

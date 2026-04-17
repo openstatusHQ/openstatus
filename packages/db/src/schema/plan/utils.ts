@@ -1,6 +1,11 @@
 import type { WorkspacePlan } from "../workspaces/validation";
 import { allPlans } from "./config";
-import { type Addons, type Limits, limitsSchema } from "./schema";
+import {
+  type Addons,
+  type BillingInterval,
+  type Limits,
+  limitsSchema,
+} from "./schema";
 
 export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {
   return limits[limit] || allPlans.free.limits[limit];
@@ -57,9 +62,13 @@ function resolvePriceConfig(
   return { value, locale, currency: effectiveCurrency };
 }
 
-export function getPriceConfig(plan: WorkspacePlan, currency?: string) {
+export function getPriceConfig(
+  plan: WorkspacePlan,
+  currency?: string,
+  interval: BillingInterval = "monthly",
+) {
   const planConfig = allPlans[plan];
-  return resolvePriceConfig(planConfig.price, currency);
+  return resolvePriceConfig(planConfig.price[interval], currency);
 }
 
 export function getAddonPriceConfig(

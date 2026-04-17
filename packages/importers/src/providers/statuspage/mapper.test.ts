@@ -143,6 +143,7 @@ describe("mapSubscriber", () => {
     expect(result).toEqual({
       email: "alice@acmecorp.com",
       pageId: 10,
+      confirmed: true,
       sourceComponentIds: [],
     });
   });
@@ -152,6 +153,7 @@ describe("mapSubscriber", () => {
     expect(result).toEqual({
       email: "bob@acmecorp.com",
       pageId: 10,
+      confirmed: true,
       sourceComponentIds: ["sp_comp_001", "sp_comp_003"],
     });
   });

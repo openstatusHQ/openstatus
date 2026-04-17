@@ -128,11 +128,16 @@ message UpdateMaintenanceRequest {
   // New end time (RFC 3339 format, optional).
   optional string to = 5 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
-  // New page ID (optional).
-  optional string page_id = 6;
+  // Deprecated: page_id is now derived from page_component_ids.
+  optional string page_id = 6 [deprecated = true];
 
   // New list of page component IDs (optional, replaces existing list).
   repeated string page_component_ids = 7;
+
+  // Set to true to update page component associations.
+  // When true, page_component_ids replaces the existing list (empty clears all).
+  // When false or unset, page_component_ids is ignored and existing associations are preserved.
+  optional bool update_page_component_ids = 8;
 }
 
 // UpdateMaintenanceResponse is the response after updating a maintenance window.

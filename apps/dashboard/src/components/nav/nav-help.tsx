@@ -1,14 +1,6 @@
 "use client";
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useSidebar } from "@/components/ui/sidebar";
 import { DiscordIcon } from "@openstatus/icons";
 import { GitHubIcon } from "@openstatus/icons";
 import {
@@ -18,6 +10,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@openstatus/ui/components/ui/sidebar";
 import {
   Book,
   Braces,

@@ -17,7 +17,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
-export const schema = z.object({
+const schema = z.object({
   value: z.enum(["duration", "requests", "manual"]).prefault("duration"),
   type: z.enum(["absolute", "manual"]).prefault("absolute"),
   uptime: z.coerce.boolean().prefault(true),
@@ -106,7 +106,12 @@ export async function generateMetadata({
       default: page?.title,
     },
     description: page?.description,
-    icons: page?.icon,
+    robots: page?.allowIndex
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
+    icons: page?.icon?.toLowerCase().endsWith(".svg")
+      ? { icon: { url: page.icon, type: "image/svg+xml" } }
+      : page?.icon,
     alternates: {
       canonical: page?.customDomain
         ? `https://${page.customDomain}`

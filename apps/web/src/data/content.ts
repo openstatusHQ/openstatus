@@ -1,7 +1,10 @@
 import {
+  getBlogPosts,
+  getChangelogPosts,
   getComparePages,
   getProductPages,
   getToolsPages,
+  getUseCasePages,
 } from "@/content/utils";
 import type { Region } from "@openstatus/regions";
 
@@ -42,16 +45,26 @@ const resourcesFooterSection = {
       label: "OSS Friends",
       href: "/oss-friends",
     },
-    {
-      label: "Marketing V1",
-      href: "https://v1.openstatus.dev",
-    },
   ],
+};
+
+const useCases = getUseCasePages();
+
+const useCasesSection = {
+  label: "Use Cases",
+  items: useCases.map((page) => ({
+    label: page.metadata.title,
+    href: `/use-case/${page.slug}`,
+  })),
 };
 
 const resourcesHeaderSection = {
   label: "Resources",
   items: [
+    {
+      label: "Use Cases",
+      href: "/use-case",
+    },
     {
       label: "Docs",
       href: "https://docs.openstatus.dev",
@@ -105,6 +118,34 @@ const companySection = {
   ],
 };
 
+const blogSection = {
+  label: "Blog",
+  items: getBlogPosts()
+    .sort(
+      (a, b) =>
+        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+    )
+    .slice(0, 6)
+    .map((post) => ({
+      label: post.metadata.title,
+      href: `/blog/${post.slug}`,
+    })),
+};
+
+const changelogSection = {
+  label: "Changelog",
+  items: getChangelogPosts()
+    .sort(
+      (a, b) =>
+        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+    )
+    .slice(0, 6)
+    .map((post) => ({
+      label: post.metadata.title,
+      href: `/changelog/${post.slug}`,
+    })),
+};
+
 const compareSection = {
   label: "Compare",
   items: getComparePages()
@@ -112,7 +153,7 @@ const compareSection = {
       label: page.metadata.title,
       href: `/compare/${page.slug}`,
     }))
-    .slice(0, 7),
+    .slice(0, 6),
 };
 
 const toolsSection = {
@@ -138,10 +179,6 @@ const toolsSection = {
       label: "All Status Codes",
       href: "https://openstat.us",
     },
-    {
-      label: "Vercel Edge Ping",
-      href: "https://light.openstatus.dev",
-    },
   ],
 };
 
@@ -157,7 +194,7 @@ const communitySection = {
       href: "https://openstatus.dev/github",
     },
     {
-      label: "X",
+      label: "Twitter",
       href: "https://openstatus.dev/twitter",
     },
     {
@@ -219,9 +256,12 @@ export const headerLinks = [productsSection, resourcesHeaderSection];
 
 export const footerLinks = [
   productsSection,
+  useCasesSection,
   resourcesFooterSection,
   companySection,
   compareSection,
+  blogSection,
+  changelogSection,
   toolsSection,
   communitySection,
 ];

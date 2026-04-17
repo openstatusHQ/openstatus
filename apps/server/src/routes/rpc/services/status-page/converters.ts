@@ -1,3 +1,4 @@
+import type { Locale } from "@openstatus/locales";
 import type {
   PageComponent,
   PageComponentGroup,
@@ -10,6 +11,7 @@ import {
   PageAccessType,
   PageComponentType,
   PageTheme,
+  Locale as ProtoLocale,
 } from "@openstatus/proto/status_page/v1";
 
 /**
@@ -23,10 +25,16 @@ type DBPage = {
   customDomain: string;
   published: boolean | null;
   forceTheme: "system" | "light" | "dark";
-  accessType: "public" | "password" | "email-domain" | null;
+  accessType: "public" | "password" | "email-domain" | "ip-restriction" | null;
   homepageUrl: string | null;
   contactUrl: string | null;
   icon: string | null;
+  password: string | null;
+  authEmailDomains: string | null;
+  allowedIpRanges: string | null;
+  defaultLocale: Locale;
+  locales: Locale[] | null;
+  allowIndex: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -49,6 +57,7 @@ type DBPageComponentGroup = {
   id: number;
   pageId: number;
   name: string;
+  defaultOpen: boolean | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -67,7 +76,7 @@ type DBPageSubscriber = {
  * Convert DB access type string to proto enum.
  */
 export function dbAccessTypeToProto(
-  accessType: "public" | "password" | "email-domain" | null,
+  accessType: "public" | "password" | "email-domain" | "ip-restriction" | null,
 ): PageAccessType {
   switch (accessType) {
     case "public":
@@ -76,6 +85,8 @@ export function dbAccessTypeToProto(
       return PageAccessType.PASSWORD_PROTECTED;
     case "email-domain":
       return PageAccessType.AUTHENTICATED;
+    case "ip-restriction":
+      return PageAccessType.IP_RESTRICTED;
     default:
       return PageAccessType.PUBLIC;
   }
@@ -86,7 +97,7 @@ export function dbAccessTypeToProto(
  */
 export function protoAccessTypeToDb(
   accessType: PageAccessType,
-): "public" | "password" | "email-domain" {
+): "public" | "password" | "email-domain" | "ip-restriction" {
   switch (accessType) {
     case PageAccessType.PUBLIC:
       return "public";
@@ -94,6 +105,8 @@ export function protoAccessTypeToDb(
       return "password";
     case PageAccessType.AUTHENTICATED:
       return "email-domain";
+    case PageAccessType.IP_RESTRICTED:
+      return "ip-restriction";
     default:
       return "public";
   }
@@ -164,6 +177,38 @@ export function protoComponentTypeToDb(
 }
 
 /**
+ * Convert DB locale string to proto enum.
+ */
+export function dbLocaleToProto(locale: Locale): ProtoLocale {
+  switch (locale) {
+    case "en":
+      return ProtoLocale.EN;
+    case "fr":
+      return ProtoLocale.FR;
+    case "de":
+      return ProtoLocale.DE;
+    default:
+      return ProtoLocale.EN;
+  }
+}
+
+/**
+ * Convert proto locale enum to DB string.
+ */
+export function protoLocaleToDb(locale: ProtoLocale): Locale {
+  switch (locale) {
+    case ProtoLocale.EN:
+      return "en";
+    case ProtoLocale.FR:
+      return "fr";
+    case ProtoLocale.DE:
+      return "de";
+    default:
+      return "en";
+  }
+}
+
+/**
  * Convert a DB status page to full proto format.
  */
 export function dbPageToProto(page: DBPage): StatusPage {
@@ -182,6 +227,12 @@ export function dbPageToProto(page: DBPage): StatusPage {
     icon: page.icon ?? "",
     createdAt: page.createdAt?.toISOString() ?? "",
     updatedAt: page.updatedAt?.toISOString() ?? "",
+    defaultLocale: dbLocaleToProto(page.defaultLocale),
+    locales: page.locales?.map(dbLocaleToProto) ?? [],
+    password: page.password ?? "",
+    authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
+    allowIndex: page.allowIndex ?? true,
+    allowedIpRanges: page.allowedIpRanges ?? "",
   };
 }
 
@@ -197,6 +248,7 @@ export function dbPageToProtoSummary(page: DBPage): StatusPageSummary {
     published: page.published ?? false,
     createdAt: page.createdAt?.toISOString() ?? "",
     updatedAt: page.updatedAt?.toISOString() ?? "",
+    customDomain: page.customDomain ?? "",
   };
 }
 
@@ -231,6 +283,7 @@ export function dbGroupToProto(
     id: String(group.id),
     pageId: String(group.pageId),
     name: group.name,
+    defaultOpen: group.defaultOpen ?? false,
     createdAt: group.createdAt?.toISOString() ?? "",
     updatedAt: group.updatedAt?.toISOString() ?? "",
   };

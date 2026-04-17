@@ -26,6 +26,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Menu, MessageCircleMore } from "lucide-react";
+import { useExtracted } from "next-intl";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
@@ -34,22 +35,26 @@ import { toast } from "sonner";
 type Page = RouterOutputs["statusPage"]["get"];
 
 function useNav() {
+  const t = useExtracted();
   const pathname = usePathname();
   const prefix = usePathnamePrefix();
 
   return [
     {
-      label: "Status",
+      key: "status",
+      label: t("Status"),
       href: `/${prefix}`,
       isActive: pathname === `/${prefix}`,
     },
     {
-      label: "Events",
+      key: "events",
+      label: t("Events"),
       href: `${prefix ? `/${prefix}` : ""}/events`,
       isActive: pathname.startsWith(`${prefix ? `/${prefix}` : ""}/events`),
     },
     {
-      label: "Monitors",
+      key: "monitors",
+      label: t("Monitors"),
       href: `${prefix ? `/${prefix}` : ""}/monitors`,
       isActive: pathname.startsWith(`${prefix ? `/${prefix}` : ""}/monitors`),
     },
@@ -71,12 +76,17 @@ function getStatusUpdateTypes(page: Page): StatusUpdateType[] {
   return ["email", "slack", "rss", "json"] as const;
 }
 
-export function Header(props: React.ComponentProps<"header">) {
+export function Header({
+  className,
+  ...props
+}: React.ComponentProps<"header">) {
+  const t = useExtracted();
   const trpc = useTRPC();
   const { domain } = useParams<{ domain: string }>();
   const { data: page } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
+  const prefix = usePathnamePrefix();
 
   const sendPageSubscriptionMutation = useMutation(
     trpc.emailRouter.sendPageSubscriptionVerification.mutationOptions({}),
@@ -93,7 +103,7 @@ export function Header(props: React.ComponentProps<"header">) {
               if (isTRPCClientError(error)) {
                 toast.error(error.message);
               } else {
-                toast.error("Failed to subscribe");
+                toast.error(t("Failed to subscribe"));
               }
             },
           },
@@ -103,7 +113,10 @@ export function Header(props: React.ComponentProps<"header">) {
   );
 
   return (
-    <header {...props}>
+    <header
+      className={cn("group-data-[embed=true]/embed:hidden", className)}
+      {...props}
+    >
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
         {/* NOTE: same width as the `StatusUpdates` button */}
         <div className="flex w-[150px] shrink-0">
@@ -115,7 +128,7 @@ export function Header(props: React.ComponentProps<"header">) {
               asChild
             >
               <Link
-                href={page?.homepageUrl || "/"}
+                href={page?.homepageUrl || `/${prefix}`}
                 target={page?.homepageUrl ? "_blank" : undefined}
                 rel={page?.homepageUrl ? "noreferrer" : undefined}
               >
@@ -165,7 +178,7 @@ function NavDesktop({ className, ...props }: React.ComponentProps<"ul">) {
     <ul className={cn("flex flex-row gap-0.5", className)} {...props}>
       {nav.map((item) => {
         return (
-          <li key={item.label}>
+          <li key={item.key}>
             <Button
               variant={item.isActive ? "secondary" : "ghost"}
               className={cn(
@@ -188,6 +201,7 @@ function NavMobile({
   className,
   ...props
 }: React.ComponentProps<typeof Button>) {
+  const t = useExtracted();
   const [open, setOpen] = useState(false);
   const nav = useNav();
   return (
@@ -204,13 +218,13 @@ function NavMobile({
       </SheetTrigger>
       <SheetContent side="top">
         <SheetHeader className="border-b">
-          <SheetTitle>Menu</SheetTitle>
+          <SheetTitle>{t("Menu")}</SheetTitle>
         </SheetHeader>
         <div className="px-1 pb-4">
           <ul className="flex flex-col gap-1">
             {nav.map((item) => {
               return (
-                <li key={item.label} className="w-full">
+                <li key={item.key} className="w-full">
                   <Button
                     variant={item.isActive ? "secondary" : "ghost"}
                     onClick={() => setOpen(false)}
@@ -239,6 +253,7 @@ function GetInTouch({
   buttonType: "icon" | "text";
   link: string;
 }) {
+  const t = useExtracted();
   if (buttonType === "text") {
     return (
       <Button
@@ -250,7 +265,7 @@ function GetInTouch({
         {...props}
       >
         <a href={link} target="_blank" rel="noreferrer">
-          Get in touch
+          {t("Get in touch")}
         </a>
       </Button>
     );
@@ -273,7 +288,7 @@ function GetInTouch({
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Get in touch</p>
+          <p>{t("Get in touch")}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

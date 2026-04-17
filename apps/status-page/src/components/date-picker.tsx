@@ -11,6 +11,7 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { endOfDay } from "date-fns";
+import { useExtracted } from "next-intl";
 
 type DatePickerProps = {
   range: DateRange;
@@ -19,6 +20,7 @@ type DatePickerProps = {
 };
 
 export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
+  const t = useExtracted();
   const [today] = useState(new Date());
   const disableBefore = presets[presets.length - 1]?.values?.from;
 
@@ -29,7 +31,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
           <div className="h-full">
             <div className="flex flex-col px-1">
               <div className="px-3 py-1 font-medium text-muted-foreground text-xs">
-                Presets
+                {t("Presets")}
               </div>
               {presets.map((preset) => {
                 const isSelected =
@@ -78,12 +80,12 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
       <Separator />
       <div className="flex flex-col gap-2 px-3 py-4">
         <p className="px-1 font-medium text-muted-foreground text-xs">
-          Custom Range
+          {t("Custom Range")}
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="grid w-full gap-1.5">
             <Label htmlFor="from" className="px-1">
-              Start
+              {t("Start")}
             </Label>
             <Input
               type="datetime-local"
@@ -103,7 +105,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
           </div>
           <div className="grid w-full gap-1.5">
             <Label htmlFor="to" className="px-1">
-              End
+              {t("End")}
             </Label>
             <Input
               type="datetime-local"

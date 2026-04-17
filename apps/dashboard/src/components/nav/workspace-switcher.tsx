@@ -2,12 +2,7 @@
 
 import { ChevronsUpDown, Plus } from "lucide-react";
 
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { Link } from "@/components/common/link";
 import { useTRPC } from "@/lib/trpc/client";
 import {
   DropdownMenu,
@@ -17,10 +12,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@openstatus/ui/components/ui/sidebar";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "../common/link";
 
-export function WorkspaceSwitcher() {
+interface WorkspaceSwitcherProps {
+  className?: string;
+  side?: React.ComponentProps<typeof DropdownMenuContent>["side"];
+}
+
+export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -40,7 +46,10 @@ export function WorkspaceSwitcher() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2! group-data-[collapsible=icon]:rounded-lg! group-data-[collapsible=icon]:px-0!"
+              className={cn(
+                "h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2! group-data-[collapsible=icon]:rounded-lg! group-data-[collapsible=icon]:px-0!",
+                className,
+              )}
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
                 <div className="size-8 overflow-hidden rounded-lg">
@@ -69,7 +78,7 @@ export function WorkspaceSwitcher() {
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? "bottom" : "right"}
+            side={side ?? (isMobile ? "bottom" : "right")}
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">

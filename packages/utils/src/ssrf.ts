@@ -1,0 +1,151 @@
+import { z } from "zod";
+
+// --- SSRF Protection ---
+
+const BLOCKED_IPV4_RANGES = [
+  // Loopback
+  { prefix: "127.", mask: null },
+  // Link-local
+  { prefix: "169.254.", mask: null },
+  // Private 10.x.x.x
+  { prefix: "10.", mask: null },
+  // Private 172.16.0.0 - 172.31.255.255
+  {
+    prefix: "172.",
+    mask: (ip: string) => {
+      const second = Number.parseInt(ip.split(".")[1] ?? "", 10);
+      return second >= 16 && second <= 31;
+    },
+  },
+  // Private 192.168.x.x
+  { prefix: "192.168.", mask: null },
+  // Current network
+  { prefix: "0.", mask: null },
+];
+
+const BLOCKED_HOSTNAMES = new Set([
+  "localhost",
+  "metadata.google.internal",
+  "metadata.internal",
+]);
+
+function isBlockedIPv4(ip: string): boolean {
+  for (const range of BLOCKED_IPV4_RANGES) {
+    if (ip.startsWith(range.prefix)) {
+      if (range.mask === null || range.mask(ip)) return true;
+    }
+  }
+  return false;
+}
+
+function isBlockedIPv6(ip: string): boolean {
+  const normalized = ip.toLowerCase();
+  if (normalized === "::1" || normalized === "::") return true;
+  // Unique local addresses (fc00::/7)
+  if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true;
+  // Link-local (fe80::/10)
+  if (normalized.startsWith("fe80")) return true;
+  // IPv4-mapped IPv6 addresses
+  // Node's URL parser converts ::ffff:127.0.0.1 to ::ffff:7f00:1 (hex form)
+  // Handle both dotted-quad (::ffff:127.0.0.1) and hex (::ffff:7f00:1) forms
+  if (normalized.startsWith("::ffff:")) {
+    const mappedPart = normalized.slice(7);
+    // Dotted-quad form
+    if (isBlockedIPv4(mappedPart)) return true;
+    // Hex form — parse back to IPv4 dotted-quad
+    const hexParts = mappedPart.split(":");
+    if (hexParts.length === 2) {
+      const high = Number.parseInt(hexParts[0] ?? "0", 16);
+      const low = Number.parseInt(hexParts[1] ?? "0", 16);
+      if (!Number.isNaN(high) && !Number.isNaN(low)) {
+        const ipv4 = `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
+        if (isBlockedIPv4(ipv4)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function isBlockedHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  if (BLOCKED_HOSTNAMES.has(lower)) return true;
+
+  // Check if hostname is a raw IP address
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(lower)) {
+    return isBlockedIPv4(lower);
+  }
+  if (lower.startsWith("[") && lower.endsWith("]")) {
+    return isBlockedIPv6(lower.slice(1, -1));
+  }
+
+  return false;
+}
+
+/**
+ * Validates that a URL is safe to fetch (not targeting internal/private infrastructure).
+ * Checks protocol, hostname, and resolved IP address.
+ * Throws an error if the URL is not safe.
+ */
+export async function assertSafeUrl(urlString: string): Promise<void> {
+  let parsed: URL;
+  try {
+    parsed = new URL(urlString);
+  } catch {
+    throw new Error("Invalid URL");
+  }
+
+  // Only allow HTTP(S)
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(
+      `URL protocol "${parsed.protocol}" is not allowed. Only http: and https: are permitted.`,
+    );
+  }
+
+  // Block known dangerous hostnames and raw private IPs
+  if (isBlockedHost(parsed.hostname)) {
+    throw new Error(
+      "URL targets a private or internal address, which is not allowed.",
+    );
+  }
+}
+
+/**
+ * Synchronous URL safety check for use in Zod schemas.
+ * Checks protocol and hostname/IP without DNS resolution.
+ */
+export function assertSafeUrlSync(urlString: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(urlString);
+  } catch {
+    throw new Error("Invalid URL");
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(
+      `URL protocol "${parsed.protocol}" is not allowed. Only http: and https: are permitted.`,
+    );
+  }
+
+  if (isBlockedHost(parsed.hostname)) {
+    throw new Error(
+      "URL targets a private or internal address, which is not allowed.",
+    );
+  }
+}
+
+/**
+ * Zod schema for URLs that are safe from SSRF.
+ * Validates format and blocks private/internal addresses.
+ */
+export const safeUrlSchema = z.url({ protocol: /^https?$/ }).refine(
+  (val) => {
+    try {
+      assertSafeUrlSync(val);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { message: "URL must not target private or internal addresses" },
+);

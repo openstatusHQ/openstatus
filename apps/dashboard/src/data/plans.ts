@@ -17,33 +17,6 @@ export const config: Record<
     }[];
   }
 > = {
-  monitors: {
-    label: "Monitors",
-    features: [
-      {
-        value: "periodicity",
-        label: "Frequency",
-      },
-      {
-        value: "monitors",
-        label: "Number of monitors",
-      },
-      {
-        value: "multi-region",
-        label: "Multi-region monitoring",
-      },
-      { value: "regions", label: "Total regions" },
-      { value: "max-regions", label: "Regions per monitor" },
-      { value: "data-retention", label: "Data retention" },
-      { value: "response-logs", label: "Response Logs" },
-      { value: "otel", label: "OTel Exporter" },
-      {
-        value: "synthetic-checks",
-        label: "Synthetic API Checks",
-        monthly: true,
-      },
-    ],
-  },
   "status-pages": {
     label: "Status Pages",
     features: [
@@ -91,6 +64,37 @@ export const config: Record<
       {
         value: "email-domain-protection",
         label: "Magic Link (Auth)",
+      },
+      {
+        value: "ip-restriction",
+        label: "IP Restriction",
+      },
+    ],
+  },
+  monitors: {
+    label: "Monitors",
+    features: [
+      {
+        value: "periodicity",
+        label: "Frequency",
+      },
+      {
+        value: "monitors",
+        label: "Number of monitors",
+      },
+      {
+        value: "multi-region",
+        label: "Multi-region monitoring",
+      },
+      { value: "regions", label: "Total regions" },
+      { value: "max-regions", label: "Regions per monitor" },
+      { value: "data-retention", label: "Data retention" },
+      { value: "response-logs", label: "Response Logs" },
+      { value: "otel", label: "OTel Exporter" },
+      {
+        value: "synthetic-checks",
+        label: "Synthetic API Checks",
+        monthly: true,
       },
     ],
   },

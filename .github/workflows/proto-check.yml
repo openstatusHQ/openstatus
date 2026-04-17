@@ -1,0 +1,66 @@
+name: Proto Generated Files Check
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "packages/proto/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/proto/**"
+
+permissions:
+  contents: read
+
+jobs:
+  proto-check:
+    name: 🔍 Proto generated files up to date
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.0
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: 📥 Install protoc-gen-connect-openapi
+        run: go install github.com/sudorandom/protoc-gen-connect-openapi@latest
+
+      - name: 📥 Download deps
+        run: pnpm install
+
+      - name: 🔄 Regenerate proto files
+        working-directory: ./packages/proto
+        run: |
+          pnpm buf:ts
+          pnpm buf:openapi
+
+      - name: 🔍 Check for uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain packages/proto/gen/)" ]; then
+            echo "::error::Proto generated files are out of date. Run 'pnpm buf:ts && pnpm buf:openapi' in packages/proto and commit the changes."
+            git diff --stat packages/proto/gen/
+            git diff packages/proto/gen/
+            exit 1
+          fi
+          echo "Proto generated files are up to date."

@@ -18,6 +18,7 @@ import {
   getCheckerRegion,
   type httpPayloadSchema,
   isSelfHost,
+  safeUrlSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
@@ -29,7 +30,7 @@ const ABORT_TIMEOUT = 10000;
 
 // Input schemas
 const httpTestInput = z.object({
-  url: z.url(),
+  url: safeUrlSchema,
   method: z
     .enum([
       "GET",

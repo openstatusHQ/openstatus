@@ -83,7 +83,9 @@ export function DataTable({
               <Tooltip>
                 <FormSheetStatusReportUpdate
                   defaultValues={{
-                    status: getNextStatus(updates[updates.length - 1].status),
+                    status: getNextStatus(
+                      updates[updates.length - 1]?.status ?? "investigating",
+                    ),
                   }}
                   onSubmit={async (values) => {
                     await createStatusReportUpdateMutation.mutateAsync({

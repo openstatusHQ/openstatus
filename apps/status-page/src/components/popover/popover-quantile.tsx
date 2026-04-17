@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Popover,
   PopoverContent,
@@ -5,12 +7,14 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useExtracted } from "next-intl";
 
 export function PopoverQuantile({
   children,
   className,
   ...props
 }: React.ComponentProps<typeof PopoverTrigger>) {
+  const t = useExtracted();
   return (
     <Popover>
       <PopoverTrigger
@@ -24,13 +28,13 @@ export function PopoverQuantile({
       </PopoverTrigger>
       <PopoverContent side="top" className="p-0 text-sm">
         <p className="px-3 py-2 font-medium">
-          A quantile represents a specific percentile in your dataset.
+          {t("A quantile represents a specific percentile in your dataset.")}
         </p>
         <Separator />
         <p className="px-3 py-2 text-muted-foreground">
-          For example, p50 is the 50th percentile - the point below which 50% of
-          data falls. Higher percentiles include more data and highlight the
-          upper range.
+          {t(
+            "For example, p50 is the 50th percentile - the point below which 50% of data falls. Higher percentiles include more data and highlight the upper range.",
+          )}
         </p>
       </PopoverContent>
     </Popover>

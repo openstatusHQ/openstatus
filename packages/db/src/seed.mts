@@ -39,7 +39,7 @@ async function main() {
         endsAt: null,
         paidUntil: null,
         limits:
-          '{"monitors":50,"synthetic-checks":150000,"periodicity":["30s","1m","5m","10m","30m","1h"],"multi-region":true,"max-regions":35,"data-retention":"24 months","status-pages":20,"maintenance":true,"status-subscribers":true,"custom-domain":true,"password-protection":true,"white-label":true,"notifications":true,"sms":true,"pagerduty":true,"notification-channels":50,"members":"Unlimited","audit-log":true,"regions":["ams","arn","atl","bog","bom","bos","cdg","den","dfw","ewr","eze","fra","gdl","gig","gru","hkg","iad","jnb","lax","lhr","mad","mia","nrt","ord","otp","phx","qro","scl","sea","sin","sjc","syd","waw","yul","yyz"]}',
+          '{"monitors":50,"synthetic-checks":150000,"periodicity":["30s","1m","5m","10m","30m","1h"],"multi-region":true,"max-regions":35,"data-retention":"24 months","status-pages":20,"maintenance":true,"status-subscribers":true,"custom-domain":true,"password-protection":true,"email-domain-protection":true,"white-label":true,"notifications":true,"sms":true,"pagerduty":true,"notification-channels":50,"members":"Unlimited","audit-log":true,"regions":["ams","arn","atl","bog","bom","bos","cdg","den","dfw","ewr","eze","fra","gdl","gig","gru","hkg","iad","jnb","lax","lhr","mad","mia","nrt","ord","otp","phx","qro","scl","sea","sin","sjc","syd","waw","yul","yyz"]}',
       },
       {
         id: 2,
@@ -140,6 +140,21 @@ async function main() {
       icon: "https://www.openstatus.dev/favicon.ico",
       slug: "status",
       customDomain: "",
+      published: true,
+    })
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(page)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      title: "Acme Inc.",
+      description: "Get informed about our services.",
+      icon: "https://www.openstatus.dev/favicon.ico",
+      slug: "acme",
+      customDomain: "status.acme.com",
       published: true,
     })
     .onConflictDoNothing()

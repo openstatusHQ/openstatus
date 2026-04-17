@@ -1,3 +1,4 @@
+import { locales } from "@openstatus/locales";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { THEME_KEYS } from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
@@ -35,20 +36,46 @@ export const insertPageSchema = createInsertSchema(page, {
   accessType: z.enum(pageAccessTypes).prefault("public"),
   icon: z.string().optional(),
   slug: slugSchema,
-}).extend({
-  password: z.string().nullable().optional().prefault(""),
-  monitors: z
-    .array(
-      z.object({
-        // REMINDER: has to be different from `id` in as the prop is already used by react-hook-form
-        monitorId: z.number(),
-        order: z.number().prefault(0).optional(),
-      }),
-    )
-    .optional()
-    .prefault([]),
-  authEmailDomains: z.array(z.string()).nullish(),
-});
+})
+  .extend({
+    password: z.string().nullable().optional().prefault(""),
+    monitors: z
+      .array(
+        z.object({
+          // REMINDER: has to be different from `id` in as the prop is already used by react-hook-form
+          monitorId: z.number(),
+          order: z.number().prefault(0).optional(),
+        }),
+      )
+      .optional()
+      .prefault([]),
+    authEmailDomains: z.array(z.string()).nullish(),
+    allowedIpRanges: z
+      .array(
+        z
+          .string()
+          .transform((s) => {
+            const trimmed = s.trim();
+            return trimmed.includes("/") ? trimmed : `${trimmed}/32`;
+          })
+          .pipe(z.cidrv4()),
+      )
+      .nullish(),
+    defaultLocale: z.enum(locales).optional().prefault("en"),
+    locales: z.array(z.enum(locales)).nullable().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.locales && data.defaultLocale) {
+        return data.locales.includes(data.defaultLocale);
+      }
+      return true;
+    },
+    {
+      message: "Default locale must be included in the locales list",
+      path: ["defaultLocale"],
+    },
+  );
 
 export const pageConfigurationSchema = z.object({
   value: z
@@ -68,6 +95,9 @@ export const selectPageSchema = createSelectSchema(page).extend({
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   authEmailDomains: stringToArray.prefault([]),
+  allowedIpRanges: stringToArray.prefault([]),
+  defaultLocale: z.enum(locales).prefault("en"),
+  locales: z.array(z.enum(locales)).nullable().prefault(null),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

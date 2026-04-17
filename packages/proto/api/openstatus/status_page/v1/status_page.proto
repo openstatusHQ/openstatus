@@ -12,6 +12,7 @@ enum PageAccessType {
   PAGE_ACCESS_TYPE_PUBLIC = 1;
   PAGE_ACCESS_TYPE_PASSWORD_PROTECTED = 2;
   PAGE_ACCESS_TYPE_AUTHENTICATED = 3;
+  PAGE_ACCESS_TYPE_IP_RESTRICTED = 4;
 }
 
 // PageTheme defines the visual theme of the status page.
@@ -21,6 +22,15 @@ enum PageTheme {
   PAGE_THEME_LIGHT = 2;
   PAGE_THEME_DARK = 3;
 }
+
+// Locale defines the supported languages for a status page.
+enum Locale {
+  LOCALE_UNSPECIFIED = 0;
+  LOCALE_EN = 1;
+  LOCALE_FR = 2;
+  LOCALE_DE = 3;
+}
+
 
 // OverallStatus represents the aggregated status of all components on a page.
 enum OverallStatus {
@@ -81,6 +91,24 @@ message StatusPage {
   string updated_at = 13 [
     (gnostic.openapi.v3.property) = {example: {yaml: "2024-06-20T14:30:00Z"}}
   ];
+
+  // Default locale for the status page.
+  Locale default_locale = 14;
+
+  // Enabled locales for the status page.
+  repeated Locale locales = 15;
+
+  // Password for the status page (only set when access_type is PASSWORD_PROTECTED).
+  string password = 16;
+
+  // Email domains allowed to access the page (only set when access_type is AUTHENTICATED).
+  repeated string auth_email_domains = 17;
+
+  // Whether search engines are allowed to index this status page.
+  bool allow_index = 18;
+
+  // Comma-separated IPv4 CIDR ranges (only set when access_type is IP_RESTRICTED).
+  string allowed_ip_ranges = 19;
 }
 
 // StatusPageSummary represents metadata for a status page (used in list responses).
@@ -102,4 +130,9 @@ message StatusPageSummary {
 
   // Timestamp when the page was last updated (RFC 3339 format).
   string updated_at = 6;
+
+  // Custom domain for the status page (optional).
+  string custom_domain = 7 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "status.example.com"}}
+  ];
 }

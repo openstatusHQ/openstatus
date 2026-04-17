@@ -1,0 +1,68 @@
+---
+title: "Terraform Provider: status pages, notifications, and more"
+description: "The OpenStatus Terraform provider now supports status pages, notifications, DNS monitors, TCP monitors, and component groups."
+image: "/assets/changelog/terraform-v0.1.png"
+publishedAt: "2026-03-26"
+author: "openstatus"
+category: "monitoring"
+---
+
+The OpenStatus Terraform provider has been completely revamped. What started as monitor-only support now covers your entire openstatus stack.
+
+## What's new
+
+### Dedicated monitor resources
+
+Monitors are now split into dedicated resource types with full configuration support:
+
+- **`openstatus_http_monitor`** — custom headers, request bodies, and assertions on status codes, response body, and headers.
+- **`openstatus_tcp_monitor`** — verify that a port is open and reachable.
+- **`openstatus_dns_monitor`** — validate DNS records with record type assertions (A, AAAA, CNAME, MX, TXT).
+
+### Status pages
+
+Manage your entire status page as code:
+
+- **`openstatus_status_page`** — create pages with custom domains, access control (public, password-protected, or email-domain restricted), and branding.
+- **`openstatus_status_page_component`** — link monitors to your status page or add static components.
+- **`openstatus_status_page_component_group`** — organize components into groups.
+
+### Notifications
+
+Configure alerting channels with **`openstatus_notification`** — supports 12 providers including Slack, PagerDuty, Discord, OpsGenie, Email, Webhook, Telegram, SMS, WhatsApp, Google Chat, Grafana OnCall, and ntfy.
+
+### Data sources
+
+Look up existing resources without managing them:
+
+- **`openstatus_monitor`** — fetch a single monitor by ID.
+- **`openstatus_monitors`** — list all monitors with pagination.
+- **`openstatus_notification`** — fetch a notification channel by ID.
+- **`openstatus_status_page`** — fetch a status page by ID.
+
+### Import support
+
+Every resource supports `terraform import`, so you can bring your existing dashboard configuration under Terraform management.
+
+## Get started
+
+```hcl
+terraform {
+  required_providers {
+    openstatus = {
+      source  = "openstatusHQ/openstatus"
+      version = "~> 0.1"
+    }
+  }
+}
+
+provider "openstatus" {
+  api_token = var.openstatus_api_token
+}
+```
+
+Check out the [Terraform provider reference](https://docs.openstatus.dev/reference/terraform/) for full documentation and examples, or follow the [tutorial](https://docs.openstatus.dev/tutorial/how-to-manage-openstatus-with-terraform-cli) to set up your monitoring stack from scratch.
+
+## Thank you
+
+A huge thank you to [Rémi Buisson](https://github.com/darkweaver87) from Traefik for all his contributions and help improving our terraform provider.

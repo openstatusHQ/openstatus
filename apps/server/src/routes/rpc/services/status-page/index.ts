@@ -1,4 +1,4 @@
-import type { ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import {
   and,
   count,
@@ -23,7 +23,10 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { StatusPageService } from "@openstatus/proto/status_page/v1";
-import { OverallStatus } from "@openstatus/proto/status_page/v1";
+import {
+  OverallStatus,
+  PageAccessType,
+} from "@openstatus/proto/status_page/v1";
 import { nanoid } from "nanoid";
 
 import { getRpcContext } from "../../interceptors";
@@ -33,16 +36,23 @@ import {
   dbPageToProto,
   dbPageToProtoSummary,
   dbSubscriberToProto,
+  protoAccessTypeToDb,
+  protoLocaleToDb,
+  protoThemeToDb,
 } from "./converters";
 import {
+  authEmailDomainsRequiredError,
   componentGroupCreateFailedError,
   componentGroupNotFoundError,
   componentGroupUpdateFailedError,
   identifierRequiredError,
+  invalidCustomDomainError,
+  invalidIconUrlError,
   monitorNotFoundError,
   pageComponentCreateFailedError,
   pageComponentNotFoundError,
   pageComponentUpdateFailedError,
+  passwordRequiredError,
   slugAlreadyExistsError,
   statusPageAccessDeniedError,
   statusPageCreateFailedError,
@@ -53,7 +63,15 @@ import {
   subscriberCreateFailedError,
   subscriberNotFoundError,
 } from "./errors";
-import { checkPageComponentLimits, checkStatusPageLimits } from "./limits";
+import {
+  checkCustomDomainLimit,
+  checkEmailDomainProtectionLimit,
+  checkIpRestrictionLimit,
+  checkNoIndexLimit,
+  checkPageComponentLimits,
+  checkPasswordProtectionLimit,
+  checkStatusPageLimits,
+} from "./limits";
 
 /**
  * Helper to get a status page by ID with workspace scope.
@@ -93,6 +111,77 @@ function validatePublicAccess(
   if (pageData.accessType && pageData.accessType !== "public") {
     throw statusPageAccessDeniedError(slug, pageData.accessType);
   }
+}
+
+function validateIconUrl(icon: string): void {
+  let url: URL;
+  try {
+    url = new URL(icon);
+  } catch {
+    throw invalidIconUrlError();
+  }
+  if (url.protocol !== "https:") {
+    throw invalidIconUrlError();
+  }
+}
+
+function validateCustomDomain(domain: string): void {
+  const lower = domain.toLowerCase();
+  if (
+    lower.includes("openstatus") ||
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("www.")
+  ) {
+    throw invalidCustomDomainError(domain);
+  }
+}
+
+function validateAuthEmailDomains(domains: string[]): string[] {
+  const trimmed = domains.map((d) => d.trim()).filter(Boolean);
+  if (trimmed.length === 0) {
+    throw authEmailDomainsRequiredError();
+  }
+  for (const domain of trimmed) {
+    if (!domain.includes(".")) {
+      throw new ConnectError(
+        `Invalid email domain: "${domain}"`,
+        Code.InvalidArgument,
+      );
+    }
+  }
+  return trimmed;
+}
+
+/**
+ * Validate and normalize allowed IP ranges (comma-separated CIDR notation).
+ * Appends /32 to bare IPs. Validates each entry is a valid IPv4 CIDR.
+ */
+function validateAllowedIpRanges(ranges: string): string[] {
+  const entries = ranges
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (entries.length === 0) {
+    throw new ConnectError(
+      "At least one IP range is required for IP restriction",
+      Code.InvalidArgument,
+    );
+  }
+  const cidrRegex =
+    /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)\/(3[0-2]|[12]?\d)$/;
+  const normalized: string[] = [];
+  for (const entry of entries) {
+    const value = entry.includes("/") ? entry : `${entry}/32`;
+    if (!cidrRegex.test(value)) {
+      throw new ConnectError(
+        `Invalid IPv4 CIDR range: "${entry}"`,
+        Code.InvalidArgument,
+      );
+    }
+    normalized.push(value);
+  }
+  return normalized;
 }
 
 /**
@@ -157,6 +246,96 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw slugAlreadyExistsError(req.slug);
     }
 
+    // Check i18n limits
+    if (!limits.i18n) {
+      if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
+      if (req.locales.length > 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
+    }
+
+    // Resolve locale values
+    const defaultLocale =
+      req.defaultLocale !== undefined && req.defaultLocale !== 0
+        ? protoLocaleToDb(req.defaultLocale)
+        : "en";
+    const validLocales = req.locales.filter((l) => l !== 0);
+    const locales =
+      validLocales.length > 0
+        ? [...new Set(validLocales.map(protoLocaleToDb))]
+        : null;
+
+    // Validate defaultLocale is included in locales when locales are provided
+    if (locales && !locales.includes(defaultLocale)) {
+      throw new ConnectError(
+        "Default locale must be included in the locales list",
+        Code.InvalidArgument,
+      );
+    }
+
+    // Validate icon URL
+    const icon = req.icon ?? "";
+    if (icon) {
+      validateIconUrl(icon);
+    }
+
+    // Validate custom domain
+    const customDomain = req.customDomain ?? "";
+    if (customDomain) {
+      checkCustomDomainLimit(limits);
+      validateCustomDomain(customDomain);
+    }
+
+    // Resolve theme
+    const forceTheme =
+      req.theme !== undefined && req.theme !== 0
+        ? protoThemeToDb(req.theme)
+        : "system";
+
+    // Resolve access type and associated fields
+    const reqAccessType = req.accessType;
+    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
+    const accessType = hasAccessType
+      ? protoAccessTypeToDb(reqAccessType)
+      : "public";
+
+    let password: string | null = null;
+    let authEmailDomains: string | null = null;
+    let allowedIpRanges: string | null = null;
+
+    if (hasAccessType) {
+      if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
+        checkPasswordProtectionLimit(limits);
+        const trimmedPassword = req.password?.trim() ?? "";
+        if (!trimmedPassword) {
+          throw passwordRequiredError();
+        }
+        password = trimmedPassword;
+      } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
+        checkEmailDomainProtectionLimit(limits);
+        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
+        authEmailDomains = validatedDomains.join(",");
+      } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
+        checkIpRestrictionLimit(limits);
+        const validated = validateAllowedIpRanges(req.allowedIpRanges ?? "");
+        allowedIpRanges = validated.join(",");
+      }
+    }
+
+    // Resolve allow_index
+    const allowIndex = req.allowIndex ?? true;
+    if (req.allowIndex !== undefined && !allowIndex) {
+      checkNoIndexLimit(limits);
+    }
+
     // Create the status page
     const newPage = await db
       .insert(page)
@@ -165,10 +344,19 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         title: req.title,
         description: req.description ?? "",
         slug: req.slug,
-        customDomain: "",
+        customDomain,
         published: false,
+        icon,
+        forceTheme,
+        accessType,
+        password,
+        authEmailDomains,
+        allowedIpRanges,
         homepageUrl: req.homepageUrl ?? null,
         contactUrl: req.contactUrl ?? null,
+        defaultLocale,
+        locales,
+        allowIndex,
       })
       .returning()
       .get();
@@ -236,10 +424,27 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async updateStatusPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     const id = req.id?.trim();
     if (!id) {
       throw statusPageIdRequiredError();
+    }
+
+    // Check i18n limits
+    if (!limits.i18n) {
+      if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
+      if (req.locales.length > 0) {
+        throw new ConnectError(
+          "Upgrade to configure locales.",
+          Code.PermissionDenied,
+        );
+      }
     }
 
     const pageData = await getPageById(Number(id), workspaceId);
@@ -274,6 +479,92 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     }
     if (req.contactUrl !== undefined) {
       updateValues.contactUrl = req.contactUrl || null;
+    }
+    if (req.defaultLocale !== undefined) {
+      updateValues.defaultLocale = protoLocaleToDb(req.defaultLocale);
+    }
+    const validLocales = req.locales.filter((l) => l !== 0);
+    updateValues.locales =
+      validLocales.length > 0
+        ? [...new Set(validLocales.map(protoLocaleToDb))]
+        : null;
+
+    // Validate defaultLocale is included in locales
+    const finalDefaultLocale =
+      (updateValues.defaultLocale as string) ?? pageData.defaultLocale;
+    const finalLocales =
+      "locales" in updateValues
+        ? (updateValues.locales as string[] | null)
+        : (pageData.locales as string[] | null);
+    if (finalLocales && !finalLocales.includes(finalDefaultLocale)) {
+      throw new ConnectError(
+        "Default locale must be included in the locales list",
+        Code.InvalidArgument,
+      );
+    }
+
+    // Handle icon
+    if (req.icon !== undefined) {
+      if (req.icon) {
+        validateIconUrl(req.icon);
+      }
+      updateValues.icon = req.icon;
+    }
+
+    // Handle custom domain
+    if (req.customDomain !== undefined) {
+      if (req.customDomain) {
+        checkCustomDomainLimit(limits);
+        validateCustomDomain(req.customDomain);
+      }
+      updateValues.customDomain = req.customDomain;
+    }
+
+    // Handle theme
+    if (req.theme !== undefined && req.theme !== 0) {
+      updateValues.forceTheme = protoThemeToDb(req.theme);
+    }
+
+    // Handle access type (password and authEmailDomains only written when accessType is present)
+    const reqAccessType = req.accessType;
+    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
+    if (hasAccessType) {
+      if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
+        checkPasswordProtectionLimit(limits);
+        const trimmedPassword = req.password?.trim() ?? "";
+        if (!trimmedPassword) {
+          throw passwordRequiredError();
+        }
+        updateValues.password = trimmedPassword;
+        updateValues.authEmailDomains = null;
+        updateValues.allowedIpRanges = null;
+      } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
+        checkEmailDomainProtectionLimit(limits);
+        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
+        updateValues.authEmailDomains = validatedDomains.join(",");
+        updateValues.password = null;
+        updateValues.allowedIpRanges = null;
+      } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
+        checkIpRestrictionLimit(limits);
+        const validated = validateAllowedIpRanges(req.allowedIpRanges ?? "");
+        updateValues.allowedIpRanges = validated.join(",");
+        updateValues.password = null;
+        updateValues.authEmailDomains = null;
+      } else {
+        // Switching to PUBLIC or other — clear stale data
+        updateValues.password = null;
+        updateValues.authEmailDomains = null;
+        updateValues.allowedIpRanges = null;
+      }
+      updateValues.accessType = protoAccessTypeToDb(reqAccessType);
+    }
+
+    // Handle allow_index
+    if (req.allowIndex !== undefined) {
+      if (!req.allowIndex) {
+        checkNoIndexLimit(limits);
+      }
+      updateValues.allowIndex = req.allowIndex;
     }
 
     const updatedPage = await db
@@ -520,6 +811,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         workspaceId,
         pageId: pageData.id,
         name: req.name,
+        defaultOpen: req.defaultOpen ?? false,
       })
       .returning()
       .get();
@@ -576,6 +868,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     if (req.name !== undefined && req.name !== "") {
       updateValues.name = req.name;
+    }
+
+    if (req.defaultOpen !== undefined) {
+      updateValues.defaultOpen = req.defaultOpen;
     }
 
     const updatedGroup = await db
@@ -946,8 +1242,15 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       };
     });
 
+    const statusPage = dbPageToProto(pageData);
+    if (isPublicAccess) {
+      statusPage.password = "";
+      statusPage.authEmailDomains = [];
+      statusPage.allowedIpRanges = "";
+    }
+
     return {
-      statusPage: dbPageToProto(pageData),
+      statusPage,
       components: components.map(dbComponentToProto),
       groups: groups.map(dbGroupToProto),
       statusReports,

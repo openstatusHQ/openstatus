@@ -64,6 +64,29 @@ export function checkEmailDomainProtectionLimit(limits: Limits): void {
 }
 
 /**
+ * Check if IP restriction feature is available on the workspace plan.
+ * Throws ConnectError with PermissionDenied if not available.
+ */
+export function checkIpRestrictionLimit(limits: Limits): void {
+  if (!limits["ip-restriction"]) {
+    throw new ConnectError("Upgrade for IP restriction", Code.PermissionDenied);
+  }
+}
+
+/**
+ * Check if no-index feature is available on the workspace plan.
+ * Throws ConnectError with PermissionDenied if not available.
+ */
+export function checkNoIndexLimit(limits: Limits): void {
+  if (!limits["no-index"]) {
+    throw new ConnectError(
+      "Upgrade for search engine indexing toggle",
+      Code.PermissionDenied,
+    );
+  }
+}
+
+/**
  * Check workspace limits for creating a new page component.
  * Throws ConnectError with PermissionDenied if limit is exceeded.
  */

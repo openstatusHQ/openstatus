@@ -1,6 +1,39 @@
 import { withSentryConfig } from "@sentry/nextjs";
-
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+import { defaultLocale, locales } from "./src/i18n/config";
+
+const isDev = process.env.NODE_ENV === "development";
+
+const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
+    style-src 'self' 'unsafe-inline';
+    img-src *;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors *;
+    connect-src 'self' https://*.ingest.us.sentry.io;
+    worker-src 'self' blob:;
+    upgrade-insecure-requests;
+    `;
+
+const withNextIntl = createNextIntlPlugin({
+  requestConfig: "./src/i18n/request.ts",
+  experimental: {
+    srcPath: "./src",
+    extract: {
+      sourceLocale: defaultLocale,
+    },
+    messages: {
+      path: "./messages",
+      format: "json",
+      locales,
+    },
+  },
+});
 
 const nextConfig: NextConfig = {
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
@@ -18,40 +51,18 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source:
-            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-          has: [
-            {
-              type: "host",
-              value:
-                process.env.NODE_ENV === "production"
-                  ? "(?<subdomain>[^.]+).stpg.dev"
-                  : "(?<subdomain>[^.]+).localhost",
-            },
-          ],
-          missing: [
-            // Skip this rewrite when the request came via proxy from web app
-            {
-              type: "header",
-              key: "x-proxy",
-              value: "1",
-            },
-            {
-              type: "host",
-              value:
-                process.env.NODE_ENV === "production"
-                  ? "www.stpg.dev"
-                  : "localhost",
-            },
-          ],
-          destination: "/:subdomain/:path*",
-        },
-      ],
-    };
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader.replace(/\n/g, ""),
+          },
+        ],
+      },
+    ];
   },
 };
 
@@ -79,4 +90,4 @@ const sentryConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, sentryConfig);
+export default withSentryConfig(withNextIntl(nextConfig), sentryConfig);

@@ -2,11 +2,10 @@
   "name": "@openstatus/utils",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {},
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
-    "@openstatus/db": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "zod": "4.1.13"
   },

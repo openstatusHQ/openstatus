@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Tabs,
   TabsContent,
@@ -11,7 +13,7 @@ import {
   TriangleAlertIcon,
   WrenchIcon,
 } from "lucide-react";
-import { messages } from "./messages";
+import { useExtracted } from "next-intl";
 import { StatusTimestamp } from "./status";
 
 export function StatusBanner({
@@ -70,19 +72,20 @@ export function StatusBannerMessage({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const t = useExtracted();
   return (
     <div className={cn(className)} {...props}>
       <span className="hidden group-data-[status=success]/status-banner:block">
-        {messages.long.success}
+        {t("All Systems Operational")}
       </span>
       <span className="hidden group-data-[status=degraded]/status-banner:block">
-        {messages.long.degraded}
+        {t("Degraded Performance")}
       </span>
       <span className="hidden group-data-[status=error]/status-banner:block">
-        {messages.long.error}
+        {t("Downtime Performance")}
       </span>
       <span className="hidden group-data-[status=info]/status-banner:block">
-        {messages.long.info}
+        {t("Maintenance")}
       </span>
     </div>
   );

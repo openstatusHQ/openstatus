@@ -15,8 +15,10 @@
   "dependencies": {
     "@libsql/client": "0.15.15",
     "@openstatus/assertions": "workspace:*",
+    "@openstatus/locales": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
+    "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "0.13.10",
     "bcryptjs": "3.0.3",
     "drizzle-orm": "0.44.4",

@@ -16,10 +16,11 @@ import { Laptop, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";
 
-function getThemeIcon(theme?: string | null) {
-  if (theme === "light") return <Sun className="h-4 w-4" />;
-  if (theme === "dark") return <Moon className="h-4 w-4" />;
-  if (theme === "system") return <Laptop className="h-4 w-4" />;
+function getThemeIcon(theme?: string | null, className?: string) {
+  if (theme === "light") return <Sun className={cn("h-4 w-4", className)} />;
+  if (theme === "dark") return <Moon className={cn("h-4 w-4", className)} />;
+  if (theme === "system")
+    return <Laptop className={cn("h-4 w-4", className)} />;
   return null;
 }
 
@@ -41,18 +42,26 @@ export function ThemeDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={cn(className)} asChild {...props}>
-        <Button variant="outline" size="icon">
+        <Button variant="ghost" size="icon">
           {getThemeIcon(theme ?? "system")}
           <span className="sr-only">{theme ?? "system"}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {["light", "dark", "system"].map((theme) => (
-          <DropdownMenuItem key={theme} onClick={() => setTheme(theme)}>
-            {getThemeIcon(theme)}
-            <span className="capitalize">{theme}</span>
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="end" alignOffset={-4}>
+        {["light", "dark", "system"].map((t) => {
+          const isActive = t === theme;
+          return (
+            <DropdownMenuItem key={t} onClick={() => setTheme(t)}>
+              <span className="capitalize">{t}</span>
+              <span className={cn("ml-auto")}>
+                {getThemeIcon(
+                  t,
+                  isActive ? "text-foreground" : "text-muted-foreground",
+                )}
+              </span>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

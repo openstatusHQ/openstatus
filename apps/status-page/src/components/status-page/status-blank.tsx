@@ -1,6 +1,9 @@
+"use client";
+
+import { Link } from "@/components/common/link";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
-import Link from "next/link";
+import { useExtracted } from "next-intl";
 
 export function StatusBlankContainer({
   children,
@@ -61,7 +64,9 @@ export function StatusBlankLink({
       asChild
       {...props}
     >
-      <Link href={href}>{children}</Link>
+      <Link variant="unstyled" href={href}>
+        {children}
+      </Link>
     </Button>
   );
 }
@@ -215,13 +220,17 @@ export function StatusBlankOverlay({
 }
 
 export function StatusBlankEvents({
-  title = "No reports found",
-  description = "No reports found for this status page.",
+  title,
+  description,
   ...props
 }: React.ComponentProps<typeof StatusBlankContainer> & {
   title?: string;
   description?: string;
 }) {
+  const t = useExtracted();
+  const resolvedTitle = title ?? t("No reports found");
+  const resolvedDescription =
+    description ?? t("No reports found for this status page.");
   return (
     <StatusBlankContainer {...props}>
       <div className="relative mt-8 flex w-full flex-col items-center justify-center">
@@ -230,21 +239,25 @@ export function StatusBlankEvents({
         <StatusBlankReport />
       </div>
       <StatusBlankContent>
-        <StatusBlankTitle>{title}</StatusBlankTitle>
-        <StatusBlankDescription>{description}</StatusBlankDescription>
+        <StatusBlankTitle>{resolvedTitle}</StatusBlankTitle>
+        <StatusBlankDescription>{resolvedDescription}</StatusBlankDescription>
       </StatusBlankContent>
     </StatusBlankContainer>
   );
 }
 
 export function StatusBlankMonitors({
-  title = "No public monitors",
-  description = "No public monitors have been added to this page.",
+  title,
+  description,
   ...props
 }: React.ComponentProps<typeof StatusBlankContainer> & {
   title?: string;
   description?: string;
 }) {
+  const t = useExtracted();
+  const resolvedTitle = title ?? t("No public monitors");
+  const resolvedDescription =
+    description ?? t("No public monitors have been added to this page.");
   return (
     <StatusBlankContainer {...props}>
       <div className="relative mt-8 flex w-full flex-col items-center justify-center">
@@ -253,8 +266,8 @@ export function StatusBlankMonitors({
         <StatusBlankMonitor />
       </div>
       <StatusBlankContent>
-        <StatusBlankTitle>{title}</StatusBlankTitle>
-        <StatusBlankDescription>{description}</StatusBlankDescription>
+        <StatusBlankTitle>{resolvedTitle}</StatusBlankTitle>
+        <StatusBlankDescription>{resolvedDescription}</StatusBlankDescription>
       </StatusBlankContent>
     </StatusBlankContainer>
   );

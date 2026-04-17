@@ -15,7 +15,7 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { config } from "@/data/notifications.client";
+import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -23,6 +23,7 @@ import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { parseAsString, useQueryState } from "nuqs";
 import React, { useEffect, useTransition } from "react";
@@ -63,6 +64,11 @@ export function FormPagerDuty({
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
+  const trpc = useTRPC();
+
+  const sendTestMutation = useMutation(
+    trpc.notification.sendTest.mutationOptions(),
+  );
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
@@ -114,13 +120,11 @@ export function FormPagerDuty({
           toast.error("No PagerDuty configuration found");
           return;
         }
-        const validation = PagerDutySchema.safeParse(JSON.parse(data));
-        if (!validation.success) {
-          toast.error("Invalid PagerDuty configuration");
-          return;
-        }
-        const promise = config[provider].sendTest({
-          integrationKey: validation.data.integration_keys[0].integration_key,
+        const promise = sendTestMutation.mutateAsync({
+          provider,
+          data: {
+            pagerduty: data,
+          },
         });
         toast.promise(promise, {
           loading: "Sending test...",
