@@ -11,5 +11,8 @@ export function stripPrefixForExternal(
   internalPath: string,
 ): string {
   if (route.type !== "hostname") return internalPath;
-  return internalPath.replace(`/${route.prefix}`, "");
+  const leading = `/${route.prefix}`;
+  return internalPath.startsWith(leading)
+    ? internalPath.slice(leading.length)
+    : internalPath;
 }

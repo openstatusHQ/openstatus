@@ -34,4 +34,22 @@ describe("stripPrefixForExternal", () => {
       ),
     ).toBe("/en");
   });
+
+  test("hostname routing: prefix recurs in deeper path — only the leading occurrence is stripped", () => {
+    expect(
+      stripPrefixForExternal(
+        { type: "hostname", prefix: "acme" },
+        "/acme/en/acme/more",
+      ),
+    ).toBe("/en/acme/more");
+  });
+
+  test("hostname routing: path does not start with /prefix → returned unchanged", () => {
+    expect(
+      stripPrefixForExternal(
+        { type: "hostname", prefix: "acme" },
+        "/other/en/acme",
+      ),
+    ).toBe("/other/en/acme");
+  });
 });

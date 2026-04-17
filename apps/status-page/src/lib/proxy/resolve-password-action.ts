@@ -53,7 +53,10 @@ export function resolvePasswordAction({
   // Gate-in: wrong password and not already on /login → send to login
   if (password !== page.password && !isOnLogin) {
     if (needsCustomDomainRedirect) {
-      const redirect = pathname.replace(`/${page.customDomain}`, "");
+      const leading = `/${page.customDomain}`;
+      const redirect = pathname.startsWith(leading)
+        ? pathname.slice(leading.length)
+        : pathname;
       return {
         type: "redirect",
         url: new URL(
@@ -80,19 +83,14 @@ export function resolvePasswordAction({
         reason: "password-gate-out-custom-domain",
       };
     }
-    // BUG (preserved): operator precedence parses this as
-    //   `(redirectParam ?? (route.type === "pathname")) ? "/${prefix}" : "/"`
-    // With a non-null `redirectParam` the ?? returns the string (truthy) →
-    // path is always `/${prefix}` regardless of routing type, and the
-    // redirectParam is effectively ignored. With a null `redirectParam`,
-    // pathname routing → `/${prefix}` and hostname routing → `/`. Intended:
-    //   `redirectParam ?? (route.type === "pathname" ? "/${prefix}" : "/")`
-    // Kept as-is to preserve behaviour; fix in a separate PR.
+    // Parentheses matter: without them, `redirectParam ?? route.type === "pathname"`
+    // binds first, making the ternary condition always truthy when `redirectParam`
+    // is a non-null string — so the redirect param would be ignored.
     return {
       type: "redirect",
       url: new URL(
         `${origin}${
-          redirectParam ?? route.type === "pathname" ? `/${route.prefix}` : "/"
+          redirectParam ?? (route.type === "pathname" ? `/${route.prefix}` : "/")
         }`,
       ),
       reason: "password-gate-out",

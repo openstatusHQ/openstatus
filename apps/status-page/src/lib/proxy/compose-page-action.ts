@@ -31,6 +31,11 @@ export function composePageAction(input: ComposeInput): Action {
     resolveProxyHeaderAction(input) ??
     resolveCustomDomainRewrite(input) ??
     resolveDefaultRewrite(input) ??
+    // Rarely reached: resolveDefaultRewrite fires whenever the host includes
+    // openstatus.dev OR the rewrite path differs from the incoming pathname,
+    // which covers almost every real request. The fallback exists so the
+    // return type is total (never undefined) and so the dispatcher has a
+    // defined passthrough branch if upstream changes narrow the default.
     passthrough("no-match")
   );
 }

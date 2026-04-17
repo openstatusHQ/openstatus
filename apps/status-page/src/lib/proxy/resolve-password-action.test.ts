@@ -100,6 +100,23 @@ describe("resolvePasswordAction", () => {
     );
   });
 
+  test("gate-in custom-domain: only leading customDomain segment is stripped", () => {
+    const action = resolvePasswordAction({
+      route: hostnameRoute,
+      page: customDomainPage,
+      pathname: "/status.acme.com/en/status.acme.com/nested",
+      host: "status.acme.com",
+      isSelfHosted: false,
+      cookiePassword: undefined,
+      queryPassword: null,
+      redirectParam: null,
+      origin: "http://localhost:3000",
+    });
+    expect(action?.url?.searchParams.get("redirect")).toBe(
+      "/en/status.acme.com/nested",
+    );
+  });
+
   test("gate-in custom-domain skipped in self-hosted", () => {
     const action = resolvePasswordAction({
       route: pathnameRoute,
@@ -194,8 +211,7 @@ describe("resolvePasswordAction", () => {
     expect(action?.url?.toString()).toBe("https://status.acme.com/events");
   });
 
-  // Bug preservation: non-null redirectParam is IGNORED on same-host gate-out.
-  test("gate-out pathname: redirectParam is ignored (preserved bug) → /acme", () => {
+  test("gate-out pathname with redirectParam: honours the redirect target", () => {
     const action = resolvePasswordAction({
       route: pathnameRoute,
       page: passwordPage,
@@ -207,12 +223,10 @@ describe("resolvePasswordAction", () => {
       redirectParam: "/acme/en/events",
       origin: "http://localhost:3000",
     });
-    expect(action?.url?.pathname).toBe("/acme");
+    expect(action?.url?.pathname).toBe("/acme/en/events");
   });
 
-  test("gate-out hostname with non-null redirectParam: bug → /acme (prefix, not /)", () => {
-    // With non-null redirectParam, the buggy ternary condition is truthy,
-    // so the result is always `/${prefix}` regardless of routing type.
+  test("gate-out hostname with redirectParam: honours the redirect target", () => {
     const action = resolvePasswordAction({
       route: hostnameRoute,
       page: passwordPage,
@@ -224,7 +238,7 @@ describe("resolvePasswordAction", () => {
       redirectParam: "/en/events",
       origin: "http://acme.localhost:3000",
     });
-    expect(action?.url?.pathname).toBe("/acme");
+    expect(action?.url?.pathname).toBe("/en/events");
   });
 
   test("gate-out pathname, no redirectParam: → /acme", () => {
