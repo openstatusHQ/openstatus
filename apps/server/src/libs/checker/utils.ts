@@ -2,21 +2,12 @@ import { OpenStatusApiError } from "@/libs/errors";
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
+  getCheckerBaseUrl,
   type httpPayloadSchema,
+  isSelfHost,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-
-function isSelfHost() {
-  return process.env.SELF_HOST === "true";
-}
-
-function getCheckerBaseUrl() {
-  return (process.env.CHECKER_BASE_URL || "http://checker:8080").replace(
-    /\/$/,
-    "",
-  );
-}
 
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,

@@ -1,9 +1,17 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
-import { z } from "zod";
 import pLimit from "p-limit";
+import { z } from "zod";
 
-import { and, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lte,
+  notInArray,
+} from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
@@ -25,7 +33,9 @@ import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type DNSPayloadSchema,
+  getCheckerBaseUrl,
   type httpPayloadSchema,
+  isSelfHost,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
@@ -38,10 +48,6 @@ export const isAuthorizedDomain = (url: string) => {
 
 const logger = getLogger("workflow");
 
-function isSelfHost() {
-  return env().SELF_HOST === "true";
-}
-
 function hasCloudTaskConfig() {
   return Boolean(
     env().GCP_PROJECT_ID.trim() &&
@@ -49,10 +55,6 @@ function hasCloudTaskConfig() {
       env().GCP_PRIVATE_KEY.trim() &&
       env().GCP_LOCATION.trim(),
   );
-}
-
-function getCheckerBaseUrl() {
-  return env().CHECKER_BASE_URL.replace(/\/$/, "");
 }
 
 const channelOptions = {
@@ -223,7 +225,7 @@ async function sendCheckerTasksDirect(
   c: Context,
 ) {
   const timestamp = Date.now();
-  const selfHostRegion = env().CHECKER_REGION as Region;
+  const selfHostRegion = env().CHECKER_REGION;
 
   const currentMaintenance = db
     .select({ id: maintenance.id })
@@ -271,35 +273,58 @@ async function sendCheckerTasksDirect(
     throw new Error("Error while fetching the monitors");
   }
 
-  for (const row of monitors.data) {
-    const result = await db
-      .select()
-      .from(monitorStatusTable)
-      .where(eq(monitorStatusTable.monitorId, row.id))
-      .all();
-    const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
-    if (!monitorStatus.success) {
-      logger.error("Failed to parse monitor status", {
-        monitor_id: row.id,
-        error_message: monitorStatus.error.message,
+  // Batch-fetch all monitor statuses in one query instead of N+1
+  const monitorIds = monitors.data.map((m) => m.id);
+  const allStatuses =
+    monitorIds.length > 0
+      ? await db
+          .select()
+          .from(monitorStatusTable)
+          .where(inArray(monitorStatusTable.monitorId, monitorIds))
+          .all()
+      : [];
+
+  // Parse each row individually so one bad row doesn't poison the batch
+  const statusByMonitor = new Map<
+    number,
+    z.infer<typeof selectMonitorStatusSchema>[]
+  >();
+  for (const raw of allStatuses) {
+    const parsed = selectMonitorStatusSchema.safeParse(raw);
+    if (!parsed.success) {
+      logger.error("Failed to parse monitor status row", {
+        monitor_id: raw.monitorId,
+        error_message: parsed.error.message,
       });
       continue;
     }
+    const list = statusByMonitor.get(parsed.data.monitorId) ?? [];
+    list.push(parsed.data);
+    statusByMonitor.set(parsed.data.monitorId, list);
+  }
 
-    for (const region of [selfHostRegion]) {
-      const status =
-        monitorStatus.data.find((m) => region === m.region)?.status || "active";
+  for (const row of monitors.data) {
+    const statuses = statusByMonitor.get(row.id);
+    if (!statuses) {
+      // No status found — treat as active (same as original fallback)
       allResult.push(
         limit(() =>
-          dispatchCheckerTaskDirect({
-            row,
-            timestamp,
-            status,
-            region,
-          }),
+          dispatchCheckerTaskDirect({ row, timestamp, status: "active" }),
         ),
       );
+      continue;
     }
+    const status =
+      statuses.find((m) => selfHostRegion === m.region)?.status || "active";
+    allResult.push(
+      limit(() =>
+        dispatchCheckerTaskDirect({
+          row,
+          timestamp,
+          status,
+        }),
+      ),
+    );
   }
 
   if (periodicity === "30s") {
@@ -327,25 +352,20 @@ async function sendCheckerTasksDirect(
   }
 }
 
-async function dispatchCheckerTaskDirect({
+function buildCheckerPayload({
   row,
   timestamp,
   status,
-  region,
 }: {
   row: z.infer<typeof selectMonitorSchema>;
   timestamp: number;
   status: MonitorStatus;
-  region: Region;
-}) {
-  let payload:
-    | z.infer<typeof httpPayloadSchema>
-    | z.infer<typeof tpcPayloadSchema>
-    | z.infer<typeof DNSPayloadSchema>
-    | null = null;
-
+}):
+  | z.infer<typeof httpPayloadSchema>
+  | z.infer<typeof tpcPayloadSchema>
+  | z.infer<typeof DNSPayloadSchema> {
   if (row.jobType === "http") {
-    payload = {
+    return {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
       url: row.url,
@@ -370,7 +390,7 @@ async function dispatchCheckerTaskDirect({
     };
   }
   if (row.jobType === "tcp") {
-    payload = {
+    return {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
       uri: row.url,
@@ -390,7 +410,7 @@ async function dispatchCheckerTaskDirect({
     };
   }
   if (row.jobType === "dns") {
-    payload = {
+    return {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
       uri: row.url,
@@ -409,10 +429,19 @@ async function dispatchCheckerTaskDirect({
       retry: row.retry || 3,
     };
   }
+  throw new Error(`Unsupported jobType: ${row.jobType}`);
+}
 
-  if (!payload) {
-    throw new Error("Invalid jobType");
-  }
+async function dispatchCheckerTaskDirect({
+  row,
+  timestamp,
+  status,
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  timestamp: number;
+  status: MonitorStatus;
+}) {
+  const payload = buildCheckerPayload({ row, timestamp, status });
 
   const response = await fetch(
     `${getCheckerBaseUrl()}/checker/${row.jobType}?monitor_id=${row.id}`,
@@ -423,6 +452,7 @@ async function dispatchCheckerTaskDirect({
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30_000),
     },
   );
 
@@ -451,82 +481,7 @@ const createCronTask = async ({
   status: MonitorStatus;
   region: Region;
 }) => {
-  let payload:
-    | z.infer<typeof httpPayloadSchema>
-    | z.infer<typeof tpcPayloadSchema>
-    | z.infer<typeof DNSPayloadSchema>
-    | null = null;
-
-  //
-  if (row.jobType === "http") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      url: row.url,
-      method: row.method || "GET",
-      cronTimestamp: timestamp,
-      body: row.body,
-      headers: row.headers,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-      followRedirects:
-        row.followRedirects === null ? true : row.followRedirects,
-    };
-  }
-  if (row.jobType === "tcp") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      cronTimestamp: timestamp,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      retry: row.retry || 3,
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-    };
-  }
-  if (row.jobType === "dns") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      cronTimestamp: timestamp,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-    };
-  }
-
-  if (!payload) {
-    throw new Error("Invalid jobType");
-  }
+  const payload = buildCheckerPayload({ row, timestamp, status });
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {

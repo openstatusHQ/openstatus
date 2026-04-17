@@ -14,7 +14,10 @@ import { and, db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import {
+  getCheckerBaseUrl,
+  getCheckerRegion,
   type httpPayloadSchema,
+  isSelfHost,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
@@ -23,25 +26,6 @@ import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
-
-function isSelfHost() {
-  return process.env.SELF_HOST === "true";
-}
-
-function getCheckerBaseUrl() {
-  return (process.env.CHECKER_BASE_URL || "http://checker:8080").replace(
-    /\/$/,
-    "",
-  );
-}
-
-function getCheckerRegion(region: string) {
-  if (!isSelfHost()) {
-    return region;
-  }
-
-  return process.env.CHECKER_REGION || "ams";
-}
 
 // Input schemas
 const httpTestInput = z.object({

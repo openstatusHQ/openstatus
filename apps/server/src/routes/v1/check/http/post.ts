@@ -10,31 +10,17 @@ import type { checkApi } from "../index";
 
 const logger = getLogger("api-server");
 import {
+  getCheckerBaseUrl,
+  getCheckerRegion,
+  isSelfHost,
+} from "@openstatus/utils";
+import {
   AggregatedResponseSchema,
   AggregatedResult,
   CheckPostResponseSchema,
   CheckSchema,
   ResponseSchema,
 } from "./schema";
-
-function isSelfHost() {
-  return process.env.SELF_HOST === "true";
-}
-
-function getCheckerBaseUrl() {
-  return (process.env.CHECKER_BASE_URL || "http://checker:8080").replace(
-    /\/$/,
-    "",
-  );
-}
-
-function getCheckerRegion(region: string) {
-  if (!isSelfHost()) {
-    return region;
-  }
-
-  return process.env.CHECKER_REGION || "ams";
-}
 
 const postRoute = createRoute({
   method: "post",

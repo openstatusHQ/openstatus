@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
@@ -27,6 +28,13 @@ type UpdateData struct {
 	Latency       int64  `json:"latency,omitempty"`
 }
 
+func hasGCPConfig() bool {
+	return os.Getenv("GCP_PROJECT_ID") != "" &&
+		os.Getenv("GCP_CLIENT_EMAIL") != "" &&
+		os.Getenv("GCP_PRIVATE_KEY") != "" &&
+		os.Getenv("GCP_LOCATION") != ""
+}
+
 func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 	url := os.Getenv("OPENSTATUS_WORKFLOWS_URL")
 	if url == "" {
@@ -34,36 +42,45 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 	}
 	url = strings.TrimRight(url, "/") + "/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
-	payloadBuf := new(bytes.Buffer)
 
-	if os.Getenv("SELF_HOST") == "true" || os.Getenv("OPENSTATUS_WORKFLOWS_URL") != "" {
-		if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("error while encoding update payload")
-			return err
-		}
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("error while creating update request")
-			return err
-		}
-		req.Header.Set("Authorization", basic)
-		req.Header.Set("Content-Type", "application/json")
-
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("error while posting update status directly")
-			return err
-		}
-		defer res.Body.Close()
-
-		if res.StatusCode < 200 || res.StatusCode >= 300 {
-			return fmt.Errorf("direct updateStatus failed with status %d", res.StatusCode)
-		}
-
-		return nil
+	if !hasGCPConfig() {
+		return updateStatusDirect(ctx, url, basic, updateData)
 	}
 
+	return updateStatusCloudTasks(ctx, url, basic, updateData)
+}
+
+func updateStatusDirect(ctx context.Context, url, basic string, updateData UpdateData) error {
+	payloadBuf := new(bytes.Buffer)
+	if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while encoding update payload")
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while creating update request")
+		return err
+	}
+	req.Header.Set("Authorization", basic)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while posting update status directly")
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return fmt.Errorf("direct updateStatus failed with status %d", res.StatusCode)
+	}
+
+	return nil
+}
+
+func updateStatusCloudTasks(ctx context.Context, url, basic string, updateData UpdateData) error {
 	c := os.Getenv("GCP_PRIVATE_KEY")
 	c = strings.ReplaceAll(c, "\\n", "\n")
 	opts := &auth.Options2LO{
@@ -89,14 +106,16 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 	client, err := cloudtasks.NewClient(ctx, option.WithAuthCredentials(creds))
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while creating cloud tasks client")
-
+		return err
 	}
 	defer client.Close()
 
+	payloadBuf := new(bytes.Buffer)
 	if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 		return err
 	}
+
 	projectID := os.Getenv("GCP_PROJECT_ID")
 	queuePath := fmt.Sprintf("projects/%s/locations/europe-west1/queues/alerting", projectID)
 	req := &taskspb.CreateTaskRequest{
