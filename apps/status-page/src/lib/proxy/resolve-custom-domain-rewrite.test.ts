@@ -64,6 +64,20 @@ describe("resolveCustomDomainRewrite", () => {
     expect(action?.url?.pathname).toBe("/acme/en/events");
   });
 
+  test("branch 1: trailing-slash-only path → /{slug} without trailing slash", () => {
+    const action = resolveCustomDomainRewrite({
+      page,
+      host: "status.acme.com",
+      urlHost: "localhost:3000",
+      pathname: "/status.acme.com/",
+      search: "",
+      isSelfHosted: false,
+      requestUrl: "http://localhost:3000/status.acme.com/",
+    });
+    expect(action?.reason).toBe("custom-domain-rewrite-path-strip");
+    expect(action?.url?.pathname).toBe("/acme");
+  });
+
   test("branch 1 preserves search", () => {
     const action = resolveCustomDomainRewrite({
       page,

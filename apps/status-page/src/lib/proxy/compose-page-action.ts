@@ -31,11 +31,13 @@ export function composePageAction(input: ComposeInput): Action {
     resolveProxyHeaderAction(input) ??
     resolveCustomDomainRewrite(input) ??
     resolveDefaultRewrite(input) ??
-    // Rarely reached: resolveDefaultRewrite fires whenever the host includes
-    // openstatus.dev OR the rewrite path differs from the incoming pathname,
-    // which covers almost every real request. The fallback exists so the
-    // return type is total (never undefined) and so the dispatcher has a
-    // defined passthrough branch if upstream changes narrow the default.
+    // Reached whenever resolveDefaultRewrite declines: host is not an
+    // openstatus.dev host AND route.rewritePath === pathname. In hosted
+    // deployments this is rare because one of those conditions almost always
+    // triggers. In self-hosted mode (no openstatus.dev host) it fires for any
+    // request whose resolved route already matches the URL — expect to see
+    // `reason: "no-match"` in those logs. The dispatcher turns it into
+    // NextResponse.next() (passthrough).
     passthrough("no-match")
   );
 }

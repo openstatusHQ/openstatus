@@ -47,7 +47,11 @@ export function resolveCustomDomainRewrite({
   // Branch 1: no subdomain, pathname has >1 segment → strip leading segment.
   if (pathnames.length > 2 && !subdomain) {
     const rest = pathnames.slice(2).join("/");
-    const url = new URL(`/${page.slug}/${rest}`, requestUrl);
+    // Trailing-slash only (e.g. "/status.acme.com/") yields empty `rest` —
+    // emit `/{slug}` without a trailing slash to match Branch 4's semantics
+    // and avoid a redundant 308 from Next.js trailing-slash handling.
+    const path = rest ? `/${page.slug}/${rest}` : `/${page.slug}`;
+    const url = new URL(path, requestUrl);
     url.search = search;
     return {
       type: "rewrite",
