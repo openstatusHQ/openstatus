@@ -90,7 +90,8 @@ export function resolvePasswordAction({
       type: "redirect",
       url: new URL(
         `${origin}${
-          redirectParam ?? (route.type === "pathname" ? `/${route.prefix}` : "/")
+          redirectParam ??
+          (route.type === "pathname" ? `/${route.prefix}` : "/")
         }`,
       ),
       reason: "password-gate-out",
