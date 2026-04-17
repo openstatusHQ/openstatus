@@ -21,6 +21,7 @@ import {
   sendBatchEmailHtml,
 } from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
+import { isSelfHost } from "@openstatus/utils";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
 import { env } from "../env";
@@ -63,7 +64,7 @@ function getParent() {
 }
 
 export async function LaunchMonitorWorkflow() {
-  if (env().SELF_HOST === "true" || !hasCloudTaskConfig()) {
+  if (isSelfHost() || !hasCloudTaskConfig()) {
     console.log(
       "Skipping monitor lifecycle workflow: Cloud Tasks are unavailable in self-host mode.",
     );

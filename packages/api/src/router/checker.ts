@@ -411,7 +411,7 @@ export async function triggerChecker(
           }
         : undefined,
       retry: input.retry || 3,
-      followRedirects: input.followRedirects || true,
+      followRedirects: input.followRedirects ?? true,
     };
   }
   if (input.jobType === "tcp") {
@@ -432,7 +432,7 @@ export async function triggerChecker(
             headers: transformHeaders(input.otelHeaders),
           }
         : undefined,
-      followRedirects: input.followRedirects || true,
+      followRedirects: input.followRedirects ?? true,
     };
   }
   if (input.jobType === "dns") {
@@ -453,7 +453,7 @@ export async function triggerChecker(
             headers: transformHeaders(input.otelHeaders),
           }
         : undefined,
-      followRedirects: input.followRedirects || true,
+      followRedirects: input.followRedirects ?? true,
     };
   }
   const allResult = [];
@@ -464,7 +464,7 @@ export async function triggerChecker(
       headers: {
         Authorization: `Basic ${env.CRON_SECRET}`,
         "Content-Type": "application/json",
-        "fly-prefer-region": region,
+        ...(isSelfHost() ? {} : { "fly-prefer-region": region }),
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(ABORT_TIMEOUT),
