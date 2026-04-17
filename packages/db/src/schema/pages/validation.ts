@@ -50,6 +50,17 @@ export const insertPageSchema = createInsertSchema(page, {
       .optional()
       .prefault([]),
     authEmailDomains: z.array(z.string()).nullish(),
+    allowedIpRanges: z
+      .array(
+        z
+          .string()
+          .transform((s) => {
+            const trimmed = s.trim();
+            return trimmed.includes("/") ? trimmed : `${trimmed}/32`;
+          })
+          .pipe(z.cidrv4()),
+      )
+      .nullish(),
     defaultLocale: z.enum(locales).optional().prefault("en"),
     locales: z.array(z.enum(locales)).nullable().optional(),
   })
@@ -84,6 +95,7 @@ export const selectPageSchema = createSelectSchema(page).extend({
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   authEmailDomains: stringToArray.prefault([]),
+  allowedIpRanges: stringToArray.prefault([]),
   defaultLocale: z.enum(locales).prefault("en"),
   locales: z.array(z.enum(locales)).nullable().prefault(null),
 });

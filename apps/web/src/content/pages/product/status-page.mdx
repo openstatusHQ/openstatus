@@ -5,6 +5,8 @@ author: "Maximilian Kaske"
 description: "Turn transparency into trust with a dedicated status page. Keep users informed during downtime, so you can focus on the fix."
 category: "Product"
 faq:
+  - question: "What is a status page?"
+    answer: "A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages, and provides timestamped incident updates. Status pages reduce support tickets during incidents, build user trust through transparency, and satisfy compliance requirements like SOC 2."
   - question: "When should I use a public vs private status page?"
     answer: "Use public status pages for customer-facing services where transparency builds trust. Use private status pages (password-protected or magic link) for internal tools, client-specific deployments, or when you need to control who receives status updates."
   - question: "What's the difference between monitors and external services in page components?"
@@ -24,6 +26,19 @@ faq:
   - question: "Which plan includes the Slack agent?"
     answer: "The Slack agent is available on paid plans. Install it from your dashboard under Settings > Integrations."
 ---
+
+## What is a status page?
+
+A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages and provides timestamped incident updates so users don't flood your support queue. Status pages build trust through transparency and satisfy compliance requirements like SOC 2 CC2.3.
+
+Status pages can be **public** (customer-facing) or **private** (internal teams or specific clients).
+
+A typical status page includes:
+
+- **Real-time operational status** for each service or component
+- **Timestamped incident updates** from investigating through resolution
+- **Subscriber notifications** via email, RSS, or webhook
+- **Uptime history** showing reliability over time
 
 ## Why do you need a status page?
 
@@ -104,3 +119,9 @@ Manage incidents without leaving Slack. Install the **@openstatus** Slack agent 
 The agent reads the conversation, looks up your status pages and components, and drafts a status report. Before anything goes public it posts a confirmation card so you can review the title, status, and message. Choose to **Approve**, **Approve & Notify** (sends notifications to all subscribers), or **Cancel**.
 
 The agent is **thread-aware**: when you follow up in the same thread (_"we found the root cause"_ or _"it's fixed"_), it picks up the context and drafts the next update automatically. The entire incident lifecycle - from creation to resolution - can happen in a single Slack thread.
+
+### Import from Another Provider
+
+Already using Atlassian Statuspage, Better Stack, or Instatus? Import your entire setup -- components, component groups, incidents, maintenances, subscribers, and monitors -- in minutes. Open a status page, go to the **Components** tab, scroll down to the **Import** section, paste your API key, preview what will be imported, and confirm.
+
+Read the [migration guides](/blog/import-from-statuspage-betterstack-instatus) for details on each provider.

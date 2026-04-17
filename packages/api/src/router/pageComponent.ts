@@ -120,6 +120,7 @@ export const pageComponentRouter = createTRPCRouter({
           z.object({
             order: z.number(),
             name: z.string(),
+            defaultOpen: z.boolean().optional().default(false),
             components: z.array(
               z.object({
                 id: z.number().optional(), // Optional for new components
@@ -336,6 +337,7 @@ export const pageComponentRouter = createTRPCRouter({
                 pageId: opts.input.pageId,
                 workspaceId: opts.ctx.workspace.id,
                 name: g.name,
+                defaultOpen: g.defaultOpen,
               })),
             )
             .returning();

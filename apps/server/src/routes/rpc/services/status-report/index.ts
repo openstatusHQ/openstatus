@@ -372,33 +372,30 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
 
       // Update report, associations in a transaction
       const updatedReport = await db.transaction(async (tx) => {
-        // Validate page component IDs inside transaction to prevent TOCTOU race condition
-        // Allows empty array to clear associations; ensures all components belong to same page
-        const validatedComponents = await validatePageComponentIds(
-          req.pageComponentIds,
-          workspaceId,
-          tx,
-        );
-
-        // Build update values
         const updateValues: Record<string, unknown> = {
           updatedAt: new Date(),
-          // Set pageId from validated components (null if no components)
-          pageId: validatedComponents.pageId,
         };
 
         if (req.title !== undefined && req.title !== "") {
           updateValues.title = req.title;
         }
 
-        // Always update page component associations (empty array clears all)
-        await updatePageComponentAssociations(
-          report.id,
-          validatedComponents.componentIds,
-          tx,
-        );
+        if (req.updatePageComponentIds) {
+          const validatedComponents = await validatePageComponentIds(
+            req.pageComponentIds,
+            workspaceId,
+            tx,
+          );
 
-        // Update the report
+          updateValues.pageId = validatedComponents.pageId;
+
+          await updatePageComponentAssociations(
+            report.id,
+            validatedComponents.componentIds,
+            tx,
+          );
+        }
+
         const updated = await tx
           .update(statusReport)
           .set(updateValues)

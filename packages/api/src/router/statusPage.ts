@@ -273,6 +273,7 @@ export const statusPageRouter = createTRPCRouter({
         {
           groupId: number | null;
           groupName: string | null;
+          defaultOpen: boolean;
           components: typeof components;
           minOrder: number;
         }
@@ -284,11 +285,13 @@ export const statusPageRouter = createTRPCRouter({
           ? monitorGroups.find((g) => g?.id === groupId)
           : null;
         const groupName = group?.name ?? null;
+        const defaultOpen = group?.defaultOpen ?? false;
 
         if (!groupedMap.has(groupId)) {
           groupedMap.set(groupId, {
             groupId,
             groupName,
+            defaultOpen,
             components: [],
             minOrder: component.order ?? 0,
           });
@@ -314,6 +317,7 @@ export const statusPageRouter = createTRPCRouter({
         type: "group";
         groupId: number;
         groupName: string;
+        defaultOpen: boolean;
         components: typeof components;
         status: "success" | "degraded" | "error" | "info" | "empty";
         order: number;
@@ -342,6 +346,7 @@ export const statusPageRouter = createTRPCRouter({
               type: "group",
               groupId: group.groupId,
               groupName: group.groupName ?? "",
+              defaultOpen: group.defaultOpen,
               components: sortedComponents,
               status: getWorstVariant(
                 group.components.map(
@@ -517,10 +522,11 @@ export const statusPageRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      if (!opts.input.slug) return null;
+      const input = opts.input;
+      if (!input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${input.slug} OR  lower(${page.customDomain}) = ${input.slug}`,
         with: {
           maintenances: {
             with: {
@@ -536,7 +542,7 @@ export const statusPageRouter = createTRPCRouter({
           pageComponents: {
             where: inArray(
               pageComponent.id,
-              opts.input.pageComponentIds.map(Number),
+              input.pageComponentIds.map(Number),
             ),
             with: {
               monitor: {
@@ -579,9 +585,7 @@ export const statusPageRouter = createTRPCRouter({
           ].map((c) => c.monitor.id.toString());
           if (monitorIds.length === 0) return null;
           // NOTE: if manual mode, don't fetch data from tinybird
-          return opts.input.barType === "manual"
-            ? null
-            : procedure({ monitorIds });
+          return input.barType === "manual" ? null : procedure({ monitorIds });
         }),
       );
 
@@ -623,7 +627,7 @@ export const statusPageRouter = createTRPCRouter({
         const shouldUseRealData =
           c.type === "monitor" &&
           c.monitor &&
-          opts.input.barType !== "manual" &&
+          input.barType !== "manual" &&
           process.env.NOOP_UPTIME !== "true";
 
         let filledData: StatusData[];
@@ -646,10 +650,9 @@ export const statusPageRouter = createTRPCRouter({
         }
 
         // Static components always use manual mode since they don't have real monitoring data
-        const effectiveBarType =
-          c.type === "static" ? "manual" : opts.input.barType;
+        const effectiveBarType = c.type === "static" ? "manual" : input.barType;
         const effectiveCardType =
-          c.type === "static" ? "manual" : opts.input.cardType;
+          c.type === "static" ? "manual" : input.cardType;
 
         const processedData = setDataByType({
           events,

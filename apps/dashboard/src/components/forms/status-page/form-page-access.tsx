@@ -28,15 +28,21 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
+import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Key, Lock, LockOpen, ShieldUser } from "lucide-react";
+import { Key, Lock, LockOpen, ShieldAlert, ShieldUser } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const accessTypeSchema = z.enum(["public", "password", "email-domain"]);
+const accessTypeSchema = z.enum([
+  "public",
+  "password",
+  "email-domain",
+  "ip-restriction",
+]);
 
 const schema = z.object({
   accessType: accessTypeSchema,
@@ -53,17 +59,37 @@ const schema = z.object({
       z.array(z.string()).optional(),
     )
     .optional(),
+  allowedIpRanges: z
+    .preprocess(
+      (val: string[] | undefined) =>
+        val
+          ? String(val)
+              .split(",")
+              .map((range) => {
+                const trimmed = range.trim();
+                return trimmed && !trimmed.includes("/")
+                  ? `${trimmed}/32`
+                  : trimmed;
+              })
+              .filter((range) => range.length > 0)
+          : [],
+      z.array(z.cidrv4()).optional(),
+    )
+    .optional(),
+  allowIndex: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 export function FormPageAccess({
   lockedMap,
+  allowIndexLocked,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   lockedMap?: Map<z.infer<typeof accessTypeSchema>, boolean>;
+  allowIndexLocked?: boolean;
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -74,6 +100,7 @@ export function FormPageAccess({
       accessType: "public",
       password: "",
       authEmailDomains: [],
+      allowedIpRanges: [],
     },
   });
   const watchAccessType = form.watch("accessType");
@@ -84,7 +111,6 @@ export function FormPageAccess({
 
     startTransition(async () => {
       try {
-        console.log(values);
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
@@ -111,7 +137,8 @@ export function FormPageAccess({
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
               Enable protection for your status page. Choose between simple
-              password or email domain authentication via magic link.
+              password, email domain authentication via magic link, or IP
+              restriction.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>
@@ -134,6 +161,11 @@ export function FormPageAccess({
                           value: "email-domain",
                           icon: ShieldUser,
                           label: "Magic Link (Auth)",
+                        },
+                        {
+                          value: "ip-restriction",
+                          icon: ShieldAlert,
+                          label: "IP Restriction",
                         },
                       ].map((type) => {
                         return (
@@ -217,6 +249,61 @@ export function FormPageAccess({
               />
             </FormCardContent>
           ) : null}
+          {watchAccessType === "ip-restriction" ? (
+            <FormCardContent className="grid gap-4">
+              {locked ? <FormCardContentUpgrade /> : null}
+              <FormField
+                control={form.control}
+                name="allowedIpRanges"
+                disabled={locked}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Allowed IP Ranges</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="192.168.1.0/24, 10.0.0.1"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Comma-separated list of IPv4 CIDR ranges (we automatically
+                      append /32 to single IPs). Single IPs are also accepted
+                      (e.g. 203.0.113.5).
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+            </FormCardContent>
+          ) : null}
+          <FormCardSeparator />
+          <FormCardContent className="grid gap-4">
+            {allowIndexLocked ? <FormCardContentUpgrade /> : null}
+            <FormField
+              control={form.control}
+              name="allowIndex"
+              disabled={allowIndexLocked}
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <FormLabel>Allow search engine indexing</FormLabel>
+                    <FormDescription>
+                      {watchAccessType !== "public"
+                        ? "Protected pages cannot be indexed by search engines."
+                        : "Allow search engines to index your status page."}
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={field.disabled}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
               Learn more about{" "}

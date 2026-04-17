@@ -140,7 +140,7 @@ export function FormMembers({
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Pro plan
+                    Starter plan
                   </Link>
                   .
                 </FormCardFooterInfo>

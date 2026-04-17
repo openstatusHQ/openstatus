@@ -11,12 +11,15 @@ import {
   or,
   schema,
 } from "@openstatus/db";
-import { session, user } from "@openstatus/db/src/schema";
+import { user } from "@openstatus/db/src/schema";
 import {
   monitorDeactivationEmail,
   monitorPausedEmail,
 } from "@openstatus/emails";
-import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
+import {
+  type EmailHtml,
+  sendBatchEmailHtml,
+} from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
@@ -122,9 +125,15 @@ export async function LaunchMonitorWorkflow() {
         or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
       ),
     );
-  // Let's merge both results
-  const users = [...u, ...u1];
-  // iterate over users
+  const usersMap = new Map<number, (typeof u)[number]>();
+  for (const entry of [...u, ...u1]) {
+    usersMap.set(entry.userId, entry);
+  }
+  const users = Array.from(usersMap.values());
+  const duplicatesRemoved = u.length + u1.length - users.length;
+  if (duplicatesRemoved > 0) {
+    console.log(`Removed ${duplicatesRemoved} duplicate users`);
+  }
 
   const allResult = [];
 
@@ -154,8 +163,7 @@ async function workflowInit({
   };
 }) {
   console.log(`Starting workflow for ${user.userId}`);
-  // Let's check if the user is in the workflow
-  const isMember = await redis.sismember("workflow:users", user.userId);
+  const isMember = await redis.exists(`workflow:user:${user.userId}`);
   if (isMember) {
     console.log(`user workflow already started for ${user.userId}`);
     return;
@@ -173,30 +181,39 @@ async function workflowInit({
     console.log(`user has no running monitors for ${user.userId}`);
     return;
   }
+  const initialRun = new Date().getTime();
   await CreateTask({
     parent,
     client: client,
     step: "14days",
     userId: user.userId,
-    initialRun: new Date().getTime(),
+    initialRun,
   });
-  // // Add our user to the list of users that have started the workflow
-
-  await redis.sadd("workflow:users", user.userId);
+  await redis.set(`workflow:user:${user.userId}`, initialRun, {
+    ex: 30 * 86400,
+  });
   console.log(`user workflow started for ${user.userId}`);
 }
 
 export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
+  const hasConnected = await hasUserLoggedIn({
+    userId,
+    date: new Date(workFlowRunTimestamp),
+  });
+
+  if (hasConnected) {
+    await redis.del(`workflow:user:${userId}`);
+    return;
+  }
+
   const user = await getUser(userId);
 
-  // Send email saying we are going to pause the monitors
-  // The task has just been created we don't double check if the user has logged in :scary:
-  // send First email
-  // TODO: Send email
-
   if (user.email) {
-    await sendBatchEmailHtml([
-      {
+    await sendWorkflowEmail({
+      userId,
+      step: "14days",
+      initialRun: workFlowRunTimestamp,
+      email: {
         to: user.email,
         subject: "Your OpenStatus monitors will be paused in 14 days",
         from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
@@ -207,36 +224,37 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
           ).toDateString(),
         }),
       },
-    ]);
-
-    await CreateTask({
-      parent,
-      client: client,
-      step: "3days",
-      userId: user.id,
-      initialRun: workFlowRunTimestamp,
     });
   }
+
+  await CreateTask({
+    parent,
+    client: client,
+    step: "3days",
+    userId: user.id,
+    initialRun: workFlowRunTimestamp,
+  });
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
-  // check if user has connected
   const hasConnected = await hasUserLoggedIn({
     userId,
     date: new Date(workFlowRunTimestamp),
   });
 
   if (hasConnected) {
-    //
-    await redis.srem("workflow:users", userId);
+    await redis.del(`workflow:user:${userId}`);
     return;
   }
 
   const user = await getUser(userId);
 
   if (user.email) {
-    await sendBatchEmailHtml([
-      {
+    await sendWorkflowEmail({
+      userId,
+      step: "3days",
+      initialRun: workFlowRunTimestamp,
+      email: {
         to: user.email,
         subject: "Your OpenStatus monitors will be paused in 3 days",
         from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
@@ -247,12 +265,9 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
           ).toDateString(),
         }),
       },
-    ]);
+    });
   }
 
-  // Send second email
-  //TODO: Send email
-  // Let's schedule the next task
   await CreateTask({
     client,
     parent,
@@ -263,64 +278,48 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
 }
 
 export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
-  const hasConnected = await hasUserLoggedIn({
-    userId,
-    date: new Date(workFlowRunTimestamp),
-  });
-  if (!hasConnected) {
-    // sendSecond pause email
-    const users = await db
-      .select({
-        userId: schema.user.id,
-        email: schema.user.email,
-        workspaceId: schema.workspace.id,
-      })
-      .from(user)
-      .innerJoin(session, eq(schema.user.id, schema.session.userId))
-      .innerJoin(
-        schema.usersToWorkspaces,
-        eq(schema.user.id, schema.usersToWorkspaces.userId),
-      )
-      .innerJoin(
-        schema.workspace,
-        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-      )
-      .where(
-        and(
-          or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-          eq(schema.user.id, userId),
-        ),
-      )
-      .get();
-    // We should only have one user :)
-    if (!users) {
-      console.error(`No user found for ${userId}`);
+  try {
+    const hasConnected = await hasUserLoggedIn({
+      userId,
+      date: new Date(workFlowRunTimestamp),
+    });
+
+    if (hasConnected) {
       return;
     }
 
-    await db
-      .update(schema.monitor)
-      .set({ active: false })
-      .where(eq(schema.monitor.workspaceId, users.workspaceId));
-    // Send last email with pause monitor
-  }
+    const userWorkspace = await getUserWorkspace(userId);
+    if (userWorkspace) {
+      await db
+        .update(schema.monitor)
+        .set({ active: false })
+        .where(
+          and(
+            eq(schema.monitor.workspaceId, userWorkspace.workspaceId),
+            eq(schema.monitor.active, true),
+            isNull(schema.monitor.deletedAt),
+          ),
+        );
+    }
 
-  const currentUser = await getUser(userId);
-  // TODO: Send email
-  // Remove user for workflow
-
-  if (currentUser.email) {
-    await sendBatchEmailHtml([
-      {
-        to: currentUser.email,
-        subject: "Your monitors have been paused",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorPausedEmail(),
-      },
-    ]);
+    const currentUser = await getUser(userId);
+    if (currentUser.email) {
+      await sendWorkflowEmail({
+        userId,
+        step: "paused",
+        initialRun: workFlowRunTimestamp,
+        email: {
+          to: currentUser.email,
+          subject: "Your monitors have been paused",
+          from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+          reply_to: "thibault@openstatus.dev",
+          html: monitorPausedEmail(),
+        },
+      });
+    }
+  } finally {
+    await redis.del(`workflow:user:${userId}`);
   }
-  await redis.srem("workflow:users", userId);
 }
 
 async function hasUserLoggedIn({
@@ -346,7 +345,7 @@ async function hasUserLoggedIn({
   return user.lastSession > date;
 }
 
-function CreateTask({
+async function CreateTask({
   parent,
   client,
   step,
@@ -361,10 +360,12 @@ function CreateTask({
 }) {
   const url = `https://openstatus-workflows.fly.dev/cron/monitors/${step}?userId=${userId}&initialRun=${initialRun}`;
   const timestamp = getScheduledTime(step);
+  const taskName = `${parent}/tasks/workflow-${userId}-${step}-${initialRun}`;
   const newTask: google.cloud.tasks.v2beta3.ITask = {
+    name: taskName,
     httpRequest: {
       headers: {
-        "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+        "Content-Type": "application/json",
         Authorization: `${env().CRON_SECRET}`,
       },
       httpMethod: "GET",
@@ -376,7 +377,17 @@ function CreateTask({
   };
 
   const request = { parent: parent, task: newTask };
-  return client.createTask(request);
+  try {
+    return await client.createTask(request);
+  } catch (e) {
+    if (e instanceof Error && "code" in e && e.code === 6) {
+      console.log(
+        `Task already exists for user ${userId} step ${step}, skipping`,
+      );
+      return;
+    }
+    throw e;
+  }
 }
 
 function getScheduledTime(step: z.infer<typeof workflowStepSchema>) {
@@ -408,8 +419,47 @@ async function getUser(userId: number) {
   if (!currentUser) {
     throw new Error("User not found");
   }
-  if (!currentUser.email) {
-    throw new Error("User email not found");
-  }
   return currentUser;
+}
+
+async function sendWorkflowEmail({
+  userId,
+  step,
+  initialRun,
+  email,
+}: {
+  userId: number;
+  step: string;
+  initialRun: number;
+  email: EmailHtml;
+}) {
+  const key = `workflow:email:${userId}:${step}:${initialRun}`;
+  const alreadySent = await redis.exists(key);
+  if (alreadySent) {
+    console.log(`Email already sent for user ${userId} step ${step}, skipping`);
+    return;
+  }
+  await sendBatchEmailHtml([email]);
+  await redis.set(key, 1, { ex: 30 * 86400 });
+}
+
+async function getUserWorkspace(userId: number) {
+  return db
+    .select({ workspaceId: schema.workspace.id })
+    .from(schema.user)
+    .innerJoin(
+      schema.usersToWorkspaces,
+      eq(schema.user.id, schema.usersToWorkspaces.userId),
+    )
+    .innerJoin(
+      schema.workspace,
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+    )
+    .where(
+      and(
+        eq(schema.user.id, userId),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
+      ),
+    )
+    .get();
 }

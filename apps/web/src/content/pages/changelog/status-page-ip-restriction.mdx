@@ -1,0 +1,16 @@
+---
+title: "Status Page IP Restriction"
+description: "Restrict status page access to specific IPv4 CIDR ranges."
+image: "/assets/changelog/status-page-ip-restriction.png"
+publishedAt: "2026-04-17"
+category: "statuspage"
+author: "openstatus"
+---
+
+You can now restrict access to your status pages by client IP address. Configure a list of allowed IPv4 CIDR ranges, and visitors outside those ranges will be blocked from viewing the page.
+
+This is ideal for internal status pages served only to your office network, VPN, or a known set of partner IPs — no password or email verification required for visitors on approved networks.
+
+Enable it from the status page _Visibility_ settings by selecting the new **IP Restriction** access type and entering one or more comma-separated CIDR ranges (bare IPs are automatically treated as `/32`).
+
+> This feature is available as a paid add-on on the Starter plan and above.

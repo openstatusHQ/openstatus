@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
-import { addLimitWarnings } from "./import";
+import { addLimitWarnings, clampPeriodicity } from "./import";
 
 function makeSummary(overrides?: Partial<ImportSummary>): ImportSummary {
   return {
@@ -359,5 +359,50 @@ describe("addLimitWarnings", () => {
     });
 
     expect(summary.errors).toEqual([]);
+  });
+});
+
+describe("clampPeriodicity", () => {
+  const freePlan = allPlans.free.limits.periodicity as string[];
+  const starterPlan = allPlans.starter.limits.periodicity as string[];
+
+  describe("free plan", () => {
+    test("allows 10m (already in plan)", () => {
+      expect(clampPeriodicity("10m", freePlan)).toBe("10m");
+    });
+
+    test("allows 30m (already in plan)", () => {
+      expect(clampPeriodicity("30m", freePlan)).toBe("30m");
+    });
+
+    test("allows 1h (already in plan)", () => {
+      expect(clampPeriodicity("1h", freePlan)).toBe("1h");
+    });
+
+    test("clamps 1m to 10m", () => {
+      expect(clampPeriodicity("1m", freePlan)).toBe("10m");
+    });
+
+    test("clamps 30s to 10m", () => {
+      expect(clampPeriodicity("30s", freePlan)).toBe("10m");
+    });
+
+    test("clamps 5m to 10m", () => {
+      expect(clampPeriodicity("5m", freePlan)).toBe("10m");
+    });
+  });
+
+  describe("starter plan", () => {
+    test("allows 1m (in plan)", () => {
+      expect(clampPeriodicity("1m", starterPlan)).toBe("1m");
+    });
+
+    test("allows 5m (in plan)", () => {
+      expect(clampPeriodicity("5m", starterPlan)).toBe("5m");
+    });
+
+    test("clamps 30s to 1m", () => {
+      expect(clampPeriodicity("30s", starterPlan)).toBe("1m");
+    });
   });
 });

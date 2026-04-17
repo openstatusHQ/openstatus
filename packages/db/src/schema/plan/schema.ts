@@ -35,7 +35,9 @@ export const limitsSchema = z.object({
   i18n: z.boolean().prefault(false),
   "password-protection": z.boolean().prefault(false),
   "email-domain-protection": z.boolean().prefault(false), // add-on but required in limits
+  "ip-restriction": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),
+  "no-index": z.boolean().prefault(false),
   /**
    * Notification limits
    */
@@ -85,6 +87,7 @@ export type IntervalPrice = z.infer<typeof intervalPriceSchema>;
 
 export const addons = [
   "email-domain-protection",
+  "ip-restriction",
   "white-label",
   "status-pages",
 ] as const satisfies Partial<keyof Limits>[];

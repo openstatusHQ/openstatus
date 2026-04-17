@@ -1,5 +1,5 @@
 import type { NotificationContext } from "@openstatus/notification-base";
-import { transformHeaders } from "@openstatus/utils";
+import { assertSafeUrl, transformHeaders } from "@openstatus/utils";
 import { PayloadSchema, WebhookSchema } from "./schema";
 
 export const sendAlert = async ({
@@ -21,14 +21,14 @@ export const sendAlert = async ({
     errorMessage: message,
   });
 
+  await assertSafeUrl(notificationData.webhook.endpoint);
   const res = await fetch(notificationData.webhook.endpoint, {
     method: "post",
     body: JSON.stringify(body),
-    headers: notificationData.webhook.headers
-      ? transformHeaders(notificationData.webhook.headers)
-      : {
-          "Content-Type": "application/json",
-        },
+    headers: {
+      "Content-Type": "application/json",
+      ...transformHeaders(notificationData.webhook.headers ?? []),
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -54,14 +54,14 @@ export const sendRecovery = async ({
     errorMessage: message,
   });
   const url = notificationData.webhook.endpoint;
+  await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
     body: JSON.stringify(body),
-    headers: notificationData.webhook.headers
-      ? transformHeaders(notificationData.webhook.headers)
-      : {
-          "Content-Type": "application/json",
-        },
+    headers: {
+      "Content-Type": "application/json",
+      ...transformHeaders(notificationData.webhook.headers ?? []),
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -87,14 +87,14 @@ export const sendDegraded = async ({
     errorMessage: message,
   });
 
+  await assertSafeUrl(notificationData.webhook.endpoint);
   const res = await fetch(notificationData.webhook.endpoint, {
     method: "post",
     body: JSON.stringify(body),
-    headers: notificationData.webhook.headers
-      ? transformHeaders(notificationData.webhook.headers)
-      : {
-          "Content-Type": "application/json",
-        },
+    headers: {
+      "Content-Type": "application/json",
+      ...transformHeaders(notificationData.webhook.headers ?? []),
+    },
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
@@ -119,15 +119,15 @@ export const sendTest = async ({
     statusCode: 200,
     latency: 1337,
   });
+  await assertSafeUrl(url);
   try {
     const response = await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: headers
-        ? transformHeaders(headers)
-        : {
-            "Content-Type": "application/json",
-          },
+      headers: {
+        "Content-Type": "application/json",
+        ...transformHeaders(headers ?? []),
+      },
     });
     if (!response.ok) {
       throw new Error("Failed to send test");

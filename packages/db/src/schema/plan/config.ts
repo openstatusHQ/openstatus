@@ -48,7 +48,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       i18n: false,
       "password-protection": false,
       "email-domain-protection": false,
+      "ip-restriction": false,
       "white-label": false,
+      "no-index": false,
       notifications: true,
       sms: false,
       "sms-limit": 0,
@@ -77,6 +79,16 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         title: "Magic Link (Auth)",
         description:
           "Only allow user with a given email domain to access the status page.",
+        price: {
+          USD: 100,
+          EUR: 100,
+          INR: 10_000,
+        },
+      },
+      "ip-restriction": {
+        title: "IP Restriction",
+        description:
+          "Restrict status page access to specific IPv4 CIDR ranges.",
         price: {
           USD: 100,
           EUR: 100,
@@ -123,7 +135,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       i18n: true,
       "password-protection": true,
       "email-domain-protection": false,
+      "ip-restriction": false,
       "white-label": false,
+      "no-index": true,
       notifications: true,
       pagerduty: true,
       opsgenie: true,
@@ -152,6 +166,16 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         title: "Magic Link (Auth)",
         description:
           "Only allow user with a given email domain to access the status page.",
+        price: {
+          USD: 100,
+          EUR: 100,
+          INR: 10_000,
+        },
+      },
+      "ip-restriction": {
+        title: "IP Restriction",
+        description:
+          "Restrict status page access to specific IPv4 CIDR ranges.",
         price: {
           USD: 100,
           EUR: 100,
@@ -198,7 +222,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       i18n: true,
       "password-protection": true,
       "email-domain-protection": false,
+      "ip-restriction": false,
       "white-label": false,
+      "no-index": true,
       notifications: true,
       sms: true,
       "sms-limit": 100,

@@ -102,6 +102,7 @@ export function NavFeedback() {
     async (values: z.infer<typeof schema>) => {
       const promise = feedbackMutation.mutateAsync({
         ...values,
+        source: "widget",
         path: window.location.pathname,
         isMobile,
       });
@@ -137,6 +138,7 @@ export function NavFeedback() {
       if (isTyping) return;
 
       if (!open) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
         if (e.key === "f") {
           e.preventDefault();
           setOpen(true);

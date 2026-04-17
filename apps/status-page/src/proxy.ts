@@ -1,3 +1,4 @@
+import IPCIDR from "ip-cidr";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -8,8 +9,21 @@ import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 import { resolveRoute } from "./lib/resolve-route";
 
-// Check if running in self-hosted mode
 const isSelfHosted = process.env.SELF_HOST === "true";
+
+function isIpAllowed(ip: string, allowedRanges: string[]): boolean {
+  // No ranges configured — deny all (defensive: form validation prevents this)
+  if (allowedRanges.length === 0) return false;
+  return allowedRanges.some((range) => {
+    try {
+      const cidr = new IPCIDR(range);
+      return cidr.contains(ip);
+    } catch {
+      // Skip malformed ranges rather than crashing the middleware
+      return false;
+    }
+  });
+}
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -91,8 +105,8 @@ export default auth(async (req) => {
     if (password !== _page.password && !url.pathname.endsWith("/login")) {
       const { pathname, origin } = req.nextUrl;
 
-      // custom domain redirect - skip stpg.dev check in self-hosted mode
-      if (_page.customDomain && (isSelfHosted || host !== `${_page.slug}.stpg.dev`)) {
+      // custom domain redirect
+      if (_page.customDomain && host === _page.customDomain) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
         const url = new URL(
           `https://${_page.customDomain}/login?redirect=${encodeURIComponent(
@@ -113,8 +127,8 @@ export default auth(async (req) => {
     if (password === _page.password && url.pathname.endsWith("/login")) {
       const redirect = url.searchParams.get("redirect");
 
-      // custom domain redirect - skip stpg.dev check in self-hosted mode
-      if (_page.customDomain && (isSelfHosted || host !== `${_page.slug}.stpg.dev`)) {
+      // custom domain redirect
+      if (_page.customDomain && host === _page.customDomain) {
         const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
         console.log("redirect to /", url.toString());
         return NextResponse.redirect(url);
@@ -155,6 +169,32 @@ export default auth(async (req) => {
     }
   }
 
+  if (_page.accessType === "ip-restriction") {
+    // Vercel overwrites x-forwarded-for with the verified client IP — not spoofable.
+    // https://vercel.com/docs/headers/request-headers#x-forwarded-for
+    const xff = req.headers.get("x-forwarded-for");
+    const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
+
+    const allowed = clientIp && isIpAllowed(clientIp, _page.allowedIpRanges);
+
+    if (!url.pathname.endsWith("/restricted") && !allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/restricted`,
+      );
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Redirect allowed IPs away from /restricted
+    if (url.pathname.endsWith("/restricted") && allowed) {
+      const { origin } = req.nextUrl;
+      const redirectUrl = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
+      );
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
   const proxy = req.headers.get("x-proxy");
   console.log({ proxy });
 
@@ -168,12 +208,17 @@ export default auth(async (req) => {
   console.log({
     customDomain: _page.customDomain,
     host,
-    expectedHost: isSelfHosted ? "(self-hosted mode)" : `${_page.slug}.stpg.dev`,
+    expectedHost: isSelfHosted
+      ? "(self-hosted mode)"
+      : `${_page.slug}.stpg.dev`,
   });
 
-  // In self-hosted mode, custom domains should work directly without stpg.dev rewrite
-  // Skip the stpg.dev-based rewrite logic when SELF_HOST=true
-  if (!isSelfHosted && _page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+  // stpg.dev-specific rewrite — skipped in self-hosted deployments
+  if (
+    !isSelfHosted &&
+    _page.customDomain &&
+    host !== `${_page.slug}.stpg.dev`
+  ) {
     const pathnames = url.pathname.split("/");
     const subdomain = getValidSubdomain(url.host);
     if (pathnames.length > 2 && !subdomain) {

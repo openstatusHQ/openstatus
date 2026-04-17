@@ -52,14 +52,14 @@ const data = {
       icon: LayoutGrid,
     },
     {
-      name: "Monitors",
-      url: "/monitors",
-      icon: Activity,
-    },
-    {
       name: "Status Pages",
       url: "/status-pages",
       icon: PanelTop,
+    },
+    {
+      name: "Monitors",
+      url: "/monitors",
+      icon: Activity,
     },
     {
       name: "Notifications",

@@ -324,6 +324,124 @@ The following flags are supported:
 | `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       |               |         *none*         |
 | `--notify`                  | Notify subscribers about this update                         |    `false`    |         *none*         |
 
+### `maintenance` command (aliases: `mt`)
+
+Manage maintenance windows.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance [ARGUMENTS...]
+```
+
+### `maintenance list` subcommand
+
+List all maintenance windows.
+
+> openstatus maintenance list
+>   openstatus maintenance list --page-id abc --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                      | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                      |               | `OPENSTATUS_API_TOKEN` |
+| `--page-id="…"`             | Filter by status page ID                         |               |         *none*         |
+| `--limit="…"`               | Maximum number of maintenances to return (1-100) |      `0`      |         *none*         |
+
+### `maintenance info` subcommand
+
+Get maintenance window details.
+
+> openstatus maintenance info MaintenanceID
+>   openstatus maintenance info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
+### `maintenance create` subcommand
+
+Create a maintenance window.
+
+> openstatus maintenance create --title "DB Migration" --message "Upgrading database" --from 2026-04-01T10:00:00Z --to 2026-04-01T12:00:00Z --page-id 123
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance create [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                            | Default value |  Environment variables |
+|-----------------------------|--------------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                            |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | Title of the maintenance                               |               |         *none*         |
+| `--message="…"`             | Message describing the maintenance                     |               |         *none*         |
+| `--from="…"`                | Start time of the maintenance window (RFC 3339 format) |               |         *none*         |
+| `--to="…"`                  | End time of the maintenance window (RFC 3339 format)   |               |         *none*         |
+| `--page-id="…"`             | Status page ID to associate with this maintenance      |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs                     |               |         *none*         |
+| `--notify`                  | Notify subscribers about this maintenance              |    `false`    |         *none*         |
+
+### `maintenance update` subcommand
+
+Update a maintenance window.
+
+> openstatus maintenance update MaintenanceID [--title "New title"] [--message "New message"] [--from ...] [--to ...]
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance update [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                                 | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                                 |               | `OPENSTATUS_API_TOKEN` |
+| `--title="…"`               | New title for the maintenance                               |               |         *none*         |
+| `--message="…"`             | New message for the maintenance                             |               |         *none*         |
+| `--from="…"`                | New start time (RFC 3339 format)                            |               |         *none*         |
+| `--to="…"`                  | New end time (RFC 3339 format)                              |               |         *none*         |
+| `--component-ids="…"`       | Comma-separated page component IDs (replaces existing list) |               |         *none*         |
+
+### `maintenance delete` subcommand
+
+Delete a maintenance window.
+
+> openstatus maintenance delete MaintenanceID
+>   openstatus maintenance delete 12345 -y
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] maintenance delete [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                     | Default value |  Environment variables |
+|-----------------------------|---------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token     |               | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt |    `false`    |         *none*         |
+
 ### `status-page` command (aliases: `sp`)
 
 Manage status pages.
@@ -365,6 +483,55 @@ Usage:
 
 ```bash
 $ openstatus [GLOBAL FLAGS] status-page info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
+### `notification` command (aliases: `n`)
+
+Manage notifications.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification [ARGUMENTS...]
+```
+
+### `notification list` subcommand
+
+List all notifications.
+
+> openstatus notification list
+>   openstatus notification list --limit 10
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                                       | Default value |  Environment variables |
+|-----------------------------|---------------------------------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                       |               | `OPENSTATUS_API_TOKEN` |
+| `--limit="…"`               | Maximum number of notifications to return (1-100) |      `0`      |         *none*         |
+
+### `notification info` subcommand
+
+Get notification details.
+
+> openstatus notification info NotificationID
+>   openstatus notification info 12345
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] notification info [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
 The following flags are supported:
@@ -440,3 +607,32 @@ Usage:
 ```bash
 $ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
 ```
+
+### `terraform` command (aliases: `tf`)
+
+Generate Terraform configuration.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] terraform [ARGUMENTS...]
+```
+
+### `terraform generate` subcommand (aliases: `gen`)
+
+Generate Terraform configuration from workspace resources.
+
+> openstatus terraform generate [--output-dir ./openstatus-terraform/]
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] terraform generate [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                             |       Default value       |  Environment variables |
+|-----------------------------|-----------------------------------------|:-------------------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token             |                           | `OPENSTATUS_API_TOKEN` |
+| `--output-dir="…"` (`-o`)   | Directory to write Terraform files into | `./openstatus-terraform/` |         *none*         |

@@ -12,6 +12,7 @@ enum PageAccessType {
   PAGE_ACCESS_TYPE_PUBLIC = 1;
   PAGE_ACCESS_TYPE_PASSWORD_PROTECTED = 2;
   PAGE_ACCESS_TYPE_AUTHENTICATED = 3;
+  PAGE_ACCESS_TYPE_IP_RESTRICTED = 4;
 }
 
 // PageTheme defines the visual theme of the status page.
@@ -102,6 +103,12 @@ message StatusPage {
 
   // Email domains allowed to access the page (only set when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 17;
+
+  // Whether search engines are allowed to index this status page.
+  bool allow_index = 18;
+
+  // Comma-separated IPv4 CIDR ranges (only set when access_type is IP_RESTRICTED).
+  string allowed_ip_ranges = 19;
 }
 
 // StatusPageSummary represents metadata for a status page (used in list responses).

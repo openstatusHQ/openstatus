@@ -146,6 +146,7 @@ export function mapSubscriber(
 ): {
   email: string;
   pageId?: number;
+  confirmed: boolean;
   sourceComponentIds: string[];
 } | null {
   if (subscriber.mode !== "email") return null;
@@ -153,6 +154,7 @@ export function mapSubscriber(
   return {
     email: subscriber.email ?? "",
     pageId,
+    confirmed: true,
     sourceComponentIds: subscriber.components ?? [],
   };
 }

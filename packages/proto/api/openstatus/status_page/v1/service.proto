@@ -145,6 +145,12 @@ message CreateStatusPageRequest {
 
   // Email domains allowed to access the page (used when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 13;
+
+  // Whether search engines are allowed to index this status page (optional, defaults to true).
+  optional bool allow_index = 14;
+
+  // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+  optional string allowed_ip_ranges = 15;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -239,6 +245,12 @@ message UpdateStatusPageRequest {
 
   // New email domains (optional, required when access_type is AUTHENTICATED).
   repeated string auth_email_domains = 14;
+
+  // Whether search engines are allowed to index this status page (optional).
+  optional bool allow_index = 15;
+
+  // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+  optional string allowed_ip_ranges = 16;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.
@@ -370,6 +382,9 @@ message CreateComponentGroupRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 256
   ];
+
+  // Whether the group should be expanded by default on the status page (optional, defaults to false).
+  optional bool default_open = 3;
 }
 
 // CreateComponentGroupResponse is the response after creating a component group.
@@ -400,6 +415,9 @@ message UpdateComponentGroupRequest {
     min_len: 1
     max_len: 256
   }];
+
+  // Whether the group should be expanded by default on the status page (optional).
+  optional bool default_open = 3;
 }
 
 // UpdateComponentGroupResponse is the response after updating a component group.

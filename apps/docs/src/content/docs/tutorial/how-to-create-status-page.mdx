@@ -65,8 +65,13 @@ Select the monitors you want to display on your status page. Each monitor will s
 You can use your own domain (e.g., `status.yourdomain.com`) instead of the default `*.openstatus.dev` subdomain. To set this up:
 
 1. Enter your custom domain in the **Custom Domain** field
-2. Add a CNAME record pointing to `status.openstatus.dev` in your DNS provider
+2. Configure DNS records based on your domain type:
+   - **Subdomain** (e.g., `status.yourdomain.com`): Add a CNAME record pointing to `cname.vercel-dns.com`
+   - **Apex domain** (e.g., `yourdomain.com`): Add an A record pointing to `76.76.21.21`
 3. Wait for DNS propagation (usually a few minutes, up to 48 hours)
+4. If your domain is already registered on another Vercel project, you may need to add a **TXT record** to verify ownership. The dashboard will show the exact TXT values if this step is required.
+
+The dashboard will show you the exact DNS records to configure after you save your custom domain.
 
 See the [Status Page Reference](/reference/status-page) for detailed DNS configuration instructions.
 

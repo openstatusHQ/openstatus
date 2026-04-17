@@ -27,6 +27,7 @@ openstatus provides a Docker Compose setup that makes self-hosting straightforwa
 Self-hosting openstatus currently has these constraints:
 
 - It only works with private locations. You have to deploy our probes to the cloud provider of your choice.
+- **IP Restriction is not secure outside Vercel.** The IP restriction feature for status pages relies on the `X-Forwarded-For` header, which [Vercel overwrites with the verified client IP](https://vercel.com/docs/headers/request-headers#x-forwarded-for). When self-hosting behind a different reverse proxy, clients can spoof this header to bypass IP restrictions. If you self-host and use IP restriction, ensure your reverse proxy strips and rewrites `X-Forwarded-For` with the real client IP before forwarding to openstatus.
 
 ## Step-by-step guide
 

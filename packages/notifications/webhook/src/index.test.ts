@@ -100,8 +100,8 @@ describe("Webhook sendTest", () => {
     expect(result).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
-    // Empty headers array should result in empty object after transformHeaders
-    expect(callArgs[1].headers).toEqual({});
+    // Empty headers array should still include Content-Type
+    expect(callArgs[1].headers).toEqual({ "Content-Type": "application/json" });
   });
 
   test("should send test webhook with 500 status code", async () => {

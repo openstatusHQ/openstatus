@@ -1,5 +1,6 @@
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
 
+import type { StepCardVariant } from "@/components/forms/step-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -60,16 +61,36 @@ export function useDomainStatus(domain?: string) {
     status = "Valid Configuration";
   }
 
+  const isLoading =
+    isLoadingDomain ||
+    isLoadingConfig ||
+    isLoadingVerification ||
+    isRefetchingDomain ||
+    isRefetchingConfig ||
+    isRefetchingVerification;
+
+  const steps = {
+    dns:
+      status === "Valid Configuration" || status === "Pending Verification"
+        ? "completed"
+        : "active",
+    verification:
+      status === "Valid Configuration"
+        ? "completed"
+        : status === "Pending Verification"
+          ? "active"
+          : // "Invalid Configuration" means DNS is misconfigured but ownership is verified
+            status === "Invalid Configuration"
+            ? "completed"
+            : "upcoming",
+    ready: status === "Valid Configuration" ? "completed" : "upcoming",
+  } satisfies Record<string, StepCardVariant>;
+
   return {
     status,
     domainJson,
+    steps,
     refresh: refreshAll,
-    isLoading:
-      isLoadingDomain ||
-      isLoadingConfig ||
-      isLoadingVerification ||
-      isRefetchingDomain ||
-      isRefetchingConfig ||
-      isRefetchingVerification,
+    isLoading,
   };
 }

@@ -21,3 +21,4 @@ export * from "./viewers";
 export * from "./api-keys";
 export * from "./page_components";
 export * from "./page_component_groups";
+export * from "./feedbacks";

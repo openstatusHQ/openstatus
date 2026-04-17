@@ -16,8 +16,9 @@ Currently supported languages:
 | Code | Language |
 |------|----------|
 | `en` | English |
-| `fr` | Fran\u00e7ais |
+| `fr` | Français |
 | `de` | Deutsch |
+| `tr` | Türkçe |
 
 ## Enable translations on your status page
 
@@ -47,13 +48,23 @@ Translations are open source. To add a new language:
 Add your locale to `packages/locales/index.ts`:
 
 ```ts
+import type { Locale as DateFnsLocale } from "date-fns/locale";
+import { de, enUS, es, fr } from "date-fns/locale";
+
 export const locales = ["en", "fr", "de", "es"] as const;
 // ...
 export const localeDetails: Record<Locale, { name: string; flag: string }> = {
-  en: { name: "English", flag: "\ud83c\uddfa\ud83c\uddf8" },
-  fr: { name: "Fran\u00e7ais", flag: "\ud83c\uddeb\ud83c\uddf7" },
-  de: { name: "Deutsch", flag: "\ud83c\udde9\ud83c\uddea" },
-  es: { name: "Espa\u00f1ol", flag: "\ud83c\uddea\ud83c\uddf8" },
+  en: { name: "English", flag: "🇺🇸" },
+  fr: { name: "Français", flag: "🇫🇷" },
+  de: { name: "Deutsch", flag: "🇩🇪" },
+  es: { name: "Español", flag: "🇪🇸" },
+};
+
+export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
+  en: enUS,
+  fr,
+  de,
+  es,
 };
 ```
 

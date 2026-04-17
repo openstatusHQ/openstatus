@@ -4,6 +4,7 @@ import {
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
+import { assertSafeUrl } from "@openstatus/utils";
 import {
   type DiscordEmbed,
   buildAlertEmbed,
@@ -16,6 +17,7 @@ const postToWebhook = async (embeds: DiscordEmbed[], webhookUrl: string) => {
     throw new Error("Discord webhook URL is required");
   }
 
+  await assertSafeUrl(webhookUrl);
   const res = await fetch(webhookUrl, {
     method: "POST",
     headers: {

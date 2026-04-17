@@ -367,7 +367,7 @@
           },
           "jobType": {
             "type": "string",
-            "enum": ["http", "tcp", "imcp", "udp", "dns", "ssl"],
+            "enum": ["http", "tcp", "icmp", "udp", "dns", "ssl"],
             "default": "http",
             "description": "The type of the monitor"
           },
@@ -1616,7 +1616,7 @@
                   },
                   "jobType": {
                     "type": "string",
-                    "enum": ["http", "tcp", "imcp", "udp", "dns", "ssl"],
+                    "enum": ["http", "tcp", "icmp", "udp", "dns", "ssl"],
                     "default": "http",
                     "description": "The type of the monitor"
                   },
@@ -2157,7 +2157,7 @@
                   },
                   "jobType": {
                     "type": "string",
-                    "enum": ["http", "tcp", "imcp", "udp", "dns", "ssl"],
+                    "enum": ["http", "tcp", "icmp", "udp", "dns", "ssl"],
                     "default": "http",
                     "description": "The type of the monitor"
                   },

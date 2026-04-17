@@ -206,7 +206,12 @@ export const monitorRouter = createTRPCRouter({
         },
       });
 
-      if (!data) return null;
+      if (!data) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
 
       return selectMonitorSchema
         .extend({

@@ -421,6 +421,34 @@
       "when": 1774199864739,
       "tag": "0059_heavy_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "6",
+      "when": 1775133077780,
+      "tag": "0060_curvy_whiplash",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1775720071892,
+      "tag": "0061_useful_hardball",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "6",
+      "when": 1776022204283,
+      "tag": "0062_clever_quasar",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "6",
+      "when": 1776337124190,
+      "tag": "0063_whole_gressill",
+      "breakpoints": true
     }
   ]
 }

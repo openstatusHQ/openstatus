@@ -16,27 +16,37 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { config } from "@/data/notifications.client";
+import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
+import { Plus, X } from "lucide-react";
 import React, { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),
   provider: z.literal("webhook"),
-  data: z.record(z.string(), z.string()),
+  data: z.object({
+    endpoint: z.string().url(),
+    headers: z.array(
+      z.object({
+        key: z.string().min(1, "Key is required"),
+        value: z.string(),
+      }),
+    ),
+  }),
   monitors: z.array(z.number()),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormWebhook({
   defaultValues,
@@ -56,13 +66,22 @@ export function FormWebhook({
       provider: "webhook",
       data: {
         endpoint: "",
-        // headers: []
+        headers: [],
       },
       monitors: [],
     },
   });
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "data.headers",
+  });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
+  const trpc = useTRPC();
+
+  const sendTestMutation = useMutation(
+    trpc.notification.sendTest.mutationOptions(),
+  );
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
@@ -98,12 +117,25 @@ export function FormWebhook({
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data.endpoint");
-        toast.promise(config[provider].sendTest({ url: data }), {
+        const endpoint = form.getValues("data.endpoint");
+        const headers = form.getValues("data.headers");
+        const promise = sendTestMutation.mutateAsync({
+          provider,
+          data: {
+            webhook: { endpoint, headers },
+          },
+        });
+        toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
-          error: "Failed to send test",
+          error: (error) => {
+            if (error instanceof Error) {
+              return error.message;
+            }
+            return "Failed to send test";
+          },
         });
+        await promise;
       } catch (error) {
         console.error(error);
       }
@@ -158,6 +190,60 @@ export function FormWebhook({
               </FormItem>
             )}
           />
+          <FormItem>
+            <FormLabel>Request Headers</FormLabel>
+            <FormDescription>
+              Custom headers to include in every webhook request.
+            </FormDescription>
+            {fields.map((field, index) => (
+              <div key={field.id} className="grid gap-2 sm:grid-cols-5">
+                <FormField
+                  control={form.control}
+                  name={`data.headers.${index}.key`}
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormControl>
+                        <Input placeholder="Key" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`data.headers.${index}.value`}
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormControl>
+                        <Input placeholder="Value" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  type="button"
+                  aria-label="Remove header"
+                  onClick={() => remove(index)}
+                >
+                  <X />
+                </Button>
+              </div>
+            ))}
+            <div>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => append({ key: "", value: "" })}
+              >
+                <Plus />
+                Add Header
+              </Button>
+            </div>
+            <FormMessage />
+          </FormItem>
           <div>
             <Button
               variant="outline"

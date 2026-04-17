@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 import {
   AppHeader,
   AppHeaderActions,
@@ -7,7 +5,12 @@ import {
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import {
+  HydrateClient,
+  fetchQueryOrNotFound,
+  getQueryClient,
+  trpc,
+} from "@/lib/trpc/server";
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 import { Tabs } from "./tabs";
@@ -22,14 +25,9 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  const pageData = await queryClient.fetchQuery(
+  await fetchQueryOrNotFound(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
-
-  if (!pageData?.id) {
-    redirect("/status-pages");
-  }
-
   await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
 
   return (

@@ -40,6 +40,7 @@ import {
   AlertDialogTrigger,
 } from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -116,6 +117,7 @@ const schema = z.object({
       id: z.number(),
       order: z.number(),
       name: z.string(),
+      defaultOpen: z.boolean(),
       components: z.array(componentSchema).min(1, {
         message: "At least one component is required",
       }),
@@ -184,6 +186,7 @@ const getSortedItems = (
     id: number;
     order: number;
     name: string;
+    defaultOpen: boolean;
     components: Array<{
       id: number;
       order: number;
@@ -371,6 +374,7 @@ export function FormComponents({
                 id: item.id,
                 order: index,
                 name: item.name,
+                defaultOpen: false,
                 components: [],
               };
         });
@@ -393,7 +397,7 @@ export function FormComponents({
     const order = existingGroups.length + existingComponents.length;
     const newGroups = [
       ...existingGroups,
-      { id: newGroupId, order, name: "", components: [] },
+      { id: newGroupId, order, name: "", defaultOpen: false, components: [] },
     ];
     form.setValue("groups", newGroups);
     setData((prev) => [...prev, { id: newGroupId, name: "", components: [] }]);
@@ -1130,7 +1134,25 @@ function ComponentGroupRow({
             </FormItem>
           )}
         />
-        <div />
+        <FormField
+          key={`${group.id}-defaultOpen-${groupIndex}`}
+          control={form.control}
+          name={`groups.${groupIndex}.defaultOpen` as const}
+          render={({ field }) => (
+            <FormItem className="flex items-center gap-2 self-center">
+              <FormControl>
+                <Checkbox
+                  className="bg-background"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <FormLabel className="!mt-0 font-normal text-muted-foreground text-sm">
+                Open by default
+              </FormLabel>
+            </FormItem>
+          )}
+        />
         <div className="flex justify-end">
           <AlertDialog>
             <AlertDialogTrigger asChild>

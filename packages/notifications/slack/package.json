@@ -9,6 +9,7 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/notification-base": "workspace:*",
+    "@openstatus/utils": "workspace:*",
     "zod": "4.1.13"
   },
   "devDependencies": {

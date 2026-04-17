@@ -1,21 +1,9 @@
-export const monitorMethods = [
-  "GET",
-  "POST",
-  "HEAD",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "TRACE",
-  "CONNECT",
-  "OPTIONS",
-] as const;
-export const monitorStatus = ["active", "error", "degraded"] as const;
+import {
+  MONITOR_JOB_TYPES,
+  MONITOR_METHODS,
+  MONITOR_STATUSES,
+} from "@openstatus/utils";
 
-export const monitorJobTypes = [
-  "http",
-  "tcp",
-  "imcp",
-  "udp",
-  "dns",
-  "ssl",
-] as const;
+export const monitorMethods = MONITOR_METHODS;
+export const monitorStatus = MONITOR_STATUSES;
+export const monitorJobTypes = MONITOR_JOB_TYPES;
