@@ -105,8 +105,11 @@ export default auth(async (req) => {
     if (password !== _page.password && !url.pathname.endsWith("/login")) {
       const { pathname, origin } = req.nextUrl;
 
-      // custom domain redirect
-      if (_page.customDomain && host === _page.customDomain) {
+      // custom domain redirect - self-hosted or not stpg.dev
+      if (
+        _page.customDomain &&
+        (isSelfHosted || host !== `${_page.slug}.stpg.dev`)
+      ) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
         const url = new URL(
           `https://${_page.customDomain}/login?redirect=${encodeURIComponent(
@@ -127,8 +130,12 @@ export default auth(async (req) => {
     if (password === _page.password && url.pathname.endsWith("/login")) {
       const redirect = url.searchParams.get("redirect");
 
-      // custom domain redirect
-      if (_page.customDomain && host === _page.customDomain) {
+      // custom domain redirect - stpg.dev
+      if (
+        _page.customDomain &&
+        !isSelfHosted &&
+        host === `${_page.slug}.stpg.dev`
+      ) {
         const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
         console.log("redirect to /", url.toString());
         return NextResponse.redirect(url);
