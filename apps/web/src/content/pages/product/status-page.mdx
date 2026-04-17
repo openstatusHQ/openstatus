@@ -8,7 +8,7 @@ faq:
   - question: "What is a status page?"
     answer: "A status page is a dedicated webpage where companies communicate the real-time health of their services to users. It shows which systems are operational, degraded, or experiencing outages, and provides timestamped incident updates. Status pages reduce support tickets during incidents, build user trust through transparency, and satisfy compliance requirements like SOC 2."
   - question: "When should I use a public vs private status page?"
-    answer: "Use public status pages for customer-facing services where transparency builds trust. Use private status pages (password-protected or magic link) for internal tools, client-specific deployments, or when you need to control who receives status updates."
+    answer: "Use public status pages for customer-facing services where transparency builds trust. Use private status pages (password-protected, magic link, or IP-restricted) for internal tools, client-specific deployments, or when you need to control who receives status updates."
   - question: "What's the difference between monitors and external services in page components?"
     answer: "Monitors are automatically synced with your OpenStatus uptime monitoring data and update in real-time. External services are manually managed components for third-party dependencies or systems you don't directly monitor but want to report status for."
   - question: "Can I translate my status page into other languages?"
@@ -107,7 +107,7 @@ Offer your status page in **multiple languages**. Set a default locale and enabl
 
 ### Audience
 
-By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection** or **magic link** authentication to control who can view your updates.
+By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection**, **magic link** authentication, or **IP restriction** (CIDR-based network allowlist) to control who can view your updates.
 
 
 ### Slack Agent
