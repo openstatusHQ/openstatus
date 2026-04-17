@@ -31,6 +31,7 @@ describe("resolveEmailDomainAction", () => {
         page: { ...page, accessType: "public" as const },
         pathname: "/acme/en",
         authEmail: null,
+        redirectParam: null,
         origin: "http://localhost:3000",
       }),
     ).toBeNull();
@@ -42,6 +43,7 @@ describe("resolveEmailDomainAction", () => {
       page,
       pathname: "/acme/en",
       authEmail: null,
+      redirectParam: null,
       origin: "http://localhost:3000",
     });
     expect(action?.reason).toBe("email-domain-gate-in");
@@ -54,6 +56,7 @@ describe("resolveEmailDomainAction", () => {
       page,
       pathname: "/acme/en",
       authEmail: "user@other.com",
+      redirectParam: null,
       origin: "http://localhost:3000",
     });
     expect(action?.reason).toBe("email-domain-gate-in");
@@ -65,6 +68,7 @@ describe("resolveEmailDomainAction", () => {
       page,
       pathname: "/en",
       authEmail: null,
+      redirectParam: null,
       origin: "http://acme.localhost:3000",
     });
     expect(action?.url?.pathname).toBe("/login");
@@ -76,6 +80,7 @@ describe("resolveEmailDomainAction", () => {
       page,
       pathname: "/acme/login",
       authEmail: "user@acme.com",
+      redirectParam: null,
       origin: "http://localhost:3000",
     });
     expect(action?.reason).toBe("email-domain-gate-out");
@@ -88,9 +93,34 @@ describe("resolveEmailDomainAction", () => {
       page,
       pathname: "/login",
       authEmail: "user@acme.com",
+      redirectParam: null,
       origin: "http://acme.localhost:3000",
     });
     expect(action?.url?.pathname).toBe("/");
+  });
+
+  test("gate-out pathname with redirectParam: honours the redirect target", () => {
+    const action = resolveEmailDomainAction({
+      route: pathnameRoute,
+      page,
+      pathname: "/acme/login",
+      authEmail: "user@acme.com",
+      redirectParam: "/acme/en/events",
+      origin: "http://localhost:3000",
+    });
+    expect(action?.url?.pathname).toBe("/acme/en/events");
+  });
+
+  test("gate-out hostname with redirectParam: honours the redirect target", () => {
+    const action = resolveEmailDomainAction({
+      route: hostnameRoute,
+      page,
+      pathname: "/login",
+      authEmail: "user@acme.com",
+      redirectParam: "/en/events",
+      origin: "http://acme.localhost:3000",
+    });
+    expect(action?.url?.pathname).toBe("/en/events");
   });
 
   test("authorised email off /login: passes (null)", () => {
@@ -100,6 +130,7 @@ describe("resolveEmailDomainAction", () => {
         page,
         pathname: "/acme/en",
         authEmail: "user@acme.com",
+        redirectParam: null,
         origin: "http://localhost:3000",
       }),
     ).toBeNull();
@@ -112,6 +143,7 @@ describe("resolveEmailDomainAction", () => {
         page,
         pathname: "/acme/login",
         authEmail: "user@other.com",
+        redirectParam: null,
         origin: "http://localhost:3000",
       }),
     ).toBeNull();
@@ -123,6 +155,7 @@ describe("resolveEmailDomainAction", () => {
       page,
       pathname: "/acme/en",
       authEmail: "malformed",
+      redirectParam: null,
       origin: "http://localhost:3000",
     });
     expect(action?.reason).toBe("email-domain-gate-in");

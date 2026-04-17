@@ -1,15 +1,9 @@
-import type { ResolvedRoute } from "../resolve-route";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
-  route: ResolvedRoute;
-  host: string | null;
-  pathname: string;
-  /** Incoming search string, preserved on the rewrite. */
-  search: string;
-  /** Base URL for constructing the rewrite target (typically req.url). */
-  requestUrl: string;
-}
+type Input = Pick<
+  ComposeInput,
+  "route" | "host" | "pathname" | "search" | "requestUrl"
+>;
 
 /**
  * Fallback rewrite: target is the route's internal `rewritePath`. Fires when

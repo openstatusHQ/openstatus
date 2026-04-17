@@ -1,19 +1,13 @@
 import type { Page } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "../domain";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
+type Input = Pick<
+  ComposeInput,
+  "host" | "urlHost" | "pathname" | "search" | "isSelfHosted" | "requestUrl"
+> & {
   page: Pick<Page, "slug" | "customDomain">;
-  host: string | null;
-  /** req.nextUrl.host — passed to subdomain detection. */
-  urlHost: string;
-  pathname: string;
-  /** Incoming search string, preserved on the rewrite. */
-  search: string;
-  isSelfHosted: boolean;
-  /** Base URL for constructing rewrite targets on the same origin. */
-  requestUrl: string;
-}
+};
 
 /**
  * stpg.dev ↔ custom-domain rewrite. Runs only when the request reaches us on a

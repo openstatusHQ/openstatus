@@ -1,16 +1,9 @@
-import type { ResolvedRoute } from "../resolve-route";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
-  route: ResolvedRoute;
-  pathname: string;
-  /** Search string from the incoming URL, including leading "?" (or empty). Preserved on the rewrite. */
-  search: string;
-  /** Value of the `x-proxy` header. Null/empty means this stage declines. */
-  proxyHeader: string | null | undefined;
-  /** Base URL for constructing the rewrite target (typically req.url). */
-  requestUrl: string;
-}
+type Input = Pick<
+  ComposeInput,
+  "route" | "pathname" | "search" | "proxyHeader" | "requestUrl"
+>;
 
 /**
  * When the request carries an `x-proxy` header, rewrite to the page-prefixed

@@ -1,23 +1,20 @@
 import type { Page } from "@openstatus/db/src/schema";
-import type { ResolvedRoute } from "../resolve-route";
 import { buildExternalPath } from "./build-external-path";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
-  route: ResolvedRoute;
+type Input = Pick<
+  ComposeInput,
+  | "route"
+  | "pathname"
+  | "host"
+  | "isSelfHosted"
+  | "cookiePassword"
+  | "queryPassword"
+  | "redirectParam"
+  | "origin"
+> & {
   page: Pick<Page, "slug" | "customDomain" | "password" | "accessType">;
-  /** req.nextUrl.pathname — used to detect the /login gate and to build return URLs. */
-  pathname: string;
-  /** x-forwarded-host header — compared against `{slug}.stpg.dev` to decide custom-domain vs apex hosting. */
-  host: string | null;
-  isSelfHosted: boolean;
-  cookiePassword: string | undefined;
-  queryPassword: string | null;
-  /** Value of `?redirect=` on the current URL. Read by the gate-out branch. */
-  redirectParam: string | null;
-  /** req.nextUrl.origin — base for redirect URLs built on the same host. */
-  origin: string;
-}
+};
 
 /**
  * Password-protected page access control. Handles both gate-in (wrong password
@@ -45,7 +42,9 @@ export function resolvePasswordAction({
 }: Input): Action | null {
   if (page.accessType !== "password") return null;
 
-  const password = queryPassword || cookiePassword;
+  // ?? rather than ||: an empty-string `?pw=` shouldn't silently fall through
+  // to the cookie (the query param is "present, empty" — not absent).
+  const password = queryPassword ?? cookiePassword;
   const isOnLogin = pathname.endsWith("/login");
   const needsCustomDomainRedirect =
     !isSelfHosted && !!page.customDomain && host !== `${page.slug}.stpg.dev`;

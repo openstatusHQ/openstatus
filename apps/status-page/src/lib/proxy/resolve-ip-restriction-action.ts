@@ -1,18 +1,14 @@
 import type { Page } from "@openstatus/db/src/schema";
-import type { ResolvedRoute } from "../resolve-route";
 import { buildExternalPath } from "./build-external-path";
 import { isIpAllowed } from "./is-ip-allowed";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
-  route: ResolvedRoute;
+type Input = Pick<
+  ComposeInput,
+  "route" | "pathname" | "clientIp" | "origin"
+> & {
   page: Pick<Page, "accessType" | "allowedIpRanges">;
-  pathname: string;
-  /** Already-extracted client IP (from x-forwarded-for or x-real-ip). Null when unavailable. */
-  clientIp: string | null | undefined;
-  /** req.nextUrl.origin — base for redirects built on the same host. */
-  origin: string;
-}
+};
 
 /**
  * IP-restriction access control. Handles both gate-in (disallowed IP →

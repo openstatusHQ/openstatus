@@ -1,14 +1,10 @@
 import type { Page } from "@openstatus/db/src/schema";
-import type { ResolvedRoute } from "../resolve-route";
 import { stripPrefixForExternal } from "./strip-prefix-for-external";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
-  route: ResolvedRoute;
+type Input = Pick<ComposeInput, "route" | "requestUrl"> & {
   page: Pick<Page, "locales" | "defaultLocale">;
-  /** Base URL used to construct the absolute redirect URL (typically req.url). */
-  requestUrl: string;
-}
+};
 
 /**
  * If the page restricts locales and the current route's locale isn't in that

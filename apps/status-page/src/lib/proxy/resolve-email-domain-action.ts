@@ -1,17 +1,13 @@
 import type { Page } from "@openstatus/db/src/schema";
-import type { ResolvedRoute } from "../resolve-route";
 import { buildExternalPath } from "./build-external-path";
-import type { Action } from "./types";
+import type { Action, ComposeInput } from "./types";
 
-interface Input {
-  route: ResolvedRoute;
+type Input = Pick<
+  ComposeInput,
+  "route" | "pathname" | "authEmail" | "redirectParam" | "origin"
+> & {
   page: Pick<Page, "accessType" | "authEmailDomains">;
-  pathname: string;
-  /** `req.auth?.user?.email` — null/undefined when not signed in. */
-  authEmail: string | null | undefined;
-  /** req.nextUrl.origin — base for redirects built on the same host. */
-  origin: string;
-}
+};
 
 /**
  * Email-domain-gated page access control. Handles both gate-in
@@ -26,6 +22,7 @@ export function resolveEmailDomainAction({
   page,
   pathname,
   authEmail,
+  redirectParam,
   origin,
 }: Input): Action | null {
   if (page.accessType !== "email-domain") return null;
@@ -45,11 +42,13 @@ export function resolveEmailDomainAction({
     };
   }
 
-  // Gate-out: authorised and on /login → send to page root
+  // Gate-out: authorised and on /login → send to the originally-requested path
+  // (if provided) or page root. Mirrors password-gate-out's redirect-honouring.
   if (isOnLogin && isAuthorised) {
+    const target = redirectParam ?? buildExternalPath(route, "");
     return {
       type: "redirect",
-      url: new URL(`${origin}${buildExternalPath(route, "")}`),
+      url: new URL(`${origin}${target}`),
       reason: "email-domain-gate-out",
     };
   }
