@@ -1,14 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/internal/email",
-      "schedule": "13 17 * * *"
-    },
-    {
-      "path": "/api/internal/email/team-invite",
-      "schedule": "12 14 * * *"
-    },
-    {
       "path": "/api/internal/email/feedback",
       "schedule": "30 15 * * *"
     }
