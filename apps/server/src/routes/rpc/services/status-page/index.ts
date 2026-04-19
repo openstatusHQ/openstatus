@@ -27,10 +27,12 @@ import {
   OverallStatus,
   PageAccessType,
 } from "@openstatus/proto/status_page/v1";
+import { createSubscription as createSubscriptionService } from "@openstatus/subscriptions";
 import { nanoid } from "nanoid";
 
 import { getRpcContext } from "../../interceptors";
 import {
+  type DBPageSubscriber,
   dbComponentToProto,
   dbGroupToProto,
   dbPageToProto,
@@ -966,6 +968,81 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     return {
       subscriber: dbSubscriberToProto(newSubscriber),
+    };
+  },
+
+  async createPageSubscription(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    if (!rpcCtx.workspace.limits["status-subscribers"]) {
+      throw new ConnectError(
+        "Upgrade to use status subscribers",
+        Code.PermissionDenied,
+      );
+    }
+
+    const pageData = await getPageById(Number(req.pageId), workspaceId);
+    if (!pageData) {
+      throw statusPageNotFoundError(req.pageId);
+    }
+
+    const componentIds = (req.componentIds ?? []).map((id) => Number(id));
+    const name = req.name ?? null;
+
+    let subscriberRow: DBPageSubscriber | undefined;
+    try {
+      if (req.channel.case === "emailChannel") {
+        const created = await createSubscriptionService({
+          pageId: pageData.id,
+          channelType: "email",
+          email: req.channel.value.email,
+          name,
+          componentIds,
+        });
+        subscriberRow = await db
+          .select()
+          .from(pageSubscriber)
+          .where(eq(pageSubscriber.id, created.id))
+          .get();
+      } else if (req.channel.case === "webhookChannel") {
+        const headers = req.channel.value.headers ?? [];
+        const created = await createSubscriptionService({
+          pageId: pageData.id,
+          channelType: "webhook",
+          webhookUrl: req.channel.value.webhookUrl,
+          name,
+          channelConfig: headers.length > 0 ? { headers } : undefined,
+          componentIds,
+        });
+        subscriberRow = await db
+          .select()
+          .from(pageSubscriber)
+          .where(eq(pageSubscriber.id, created.id))
+          .get();
+      } else {
+        throw new ConnectError(
+          "channel oneof must be set to email_channel or webhook_channel",
+          Code.InvalidArgument,
+        );
+      }
+    } catch (error) {
+      if (error instanceof ConnectError) throw error;
+      if (error instanceof Error) {
+        throw new ConnectError(error.message, Code.InvalidArgument);
+      }
+      throw subscriberCreateFailedError();
+    }
+
+    if (!subscriberRow) {
+      throw subscriberCreateFailedError();
+    }
+
+    return {
+      subscriber: dbSubscriberToProto({
+        ...subscriberRow,
+        componentIds,
+      }),
     };
   },
 

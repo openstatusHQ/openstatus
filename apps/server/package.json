@@ -61,6 +61,7 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
+    "@openstatus/locales": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/validator": "13.12.0",
     "bun-types": "1.3.1",

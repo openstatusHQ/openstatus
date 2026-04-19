@@ -16,6 +16,7 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/notification-base": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "zod": "4.1.13"
   },

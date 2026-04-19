@@ -12,6 +12,7 @@ import {
 import { DataTable as UpdatesDataTable } from "@/components/data-table/status-report-updates/data-table";
 import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -81,7 +82,10 @@ export default function Page() {
                   </>
                 ) : undefined
               }
-              pageComponents={page.pageComponents}
+              items={toCheckboxTreeItems(
+                page.pageComponents,
+                page.pageComponentGroups,
+              )}
               onSubmit={async (values) => {
                 // NOTE: for type safety, we need to check if the values have a date property
                 // because of the union type

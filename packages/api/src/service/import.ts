@@ -967,13 +967,15 @@ async function writeSubscribersPhase(
         sourceComponentIds: string[];
       };
 
+      const email = data.email.toLowerCase();
+
       // Idempotency check by email + pageId
       const existing = await db
         .select()
         .from(pageSubscriber)
         .where(
           and(
-            eq(pageSubscriber.email, data.email),
+            eq(pageSubscriber.email, email),
             eq(pageSubscriber.pageId, pageId),
             eq(pageSubscriber.channelType, "email"),
           ),
@@ -989,9 +991,11 @@ async function writeSubscribersPhase(
       const [inserted] = await db
         .insert(pageSubscriber)
         .values({
-          email: data.email,
+          email,
           pageId,
           channelType: "email",
+          source: "import",
+          token: crypto.randomUUID(),
           acceptedAt: data.confirmed ? new Date() : undefined,
         })
         .returning({ id: pageSubscriber.id });

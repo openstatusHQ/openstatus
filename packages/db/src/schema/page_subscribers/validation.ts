@@ -22,6 +22,10 @@ export const webhookChannelConfigSchema = z.object({
   secret: z.string().optional(),
 });
 
+export const subscriberSourceSchema = z
+  .enum(["self_signup", "vendor", "import"])
+  .default("self_signup");
+
 // Discriminated union for type-safe subscribers
 export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
   // Email channel
@@ -32,6 +36,8 @@ export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
     email: z.email(),
     webhookUrl: z.null(),
     channelConfig: z.null(),
+    source: subscriberSourceSchema,
+    name: z.string().nullable(),
     token: z.string().nullable(),
     acceptedAt: z.date().nullable(),
     expiresAt: z.date().nullable(),
@@ -58,6 +64,8 @@ export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
         }
       })
       .pipe(webhookChannelConfigSchema.nullable()),
+    source: subscriberSourceSchema,
+    name: z.string().nullable(),
     token: z.string().nullable(),
     acceptedAt: z.date().nullable(),
     expiresAt: z.date().nullable(),
@@ -70,6 +78,7 @@ export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
 export type InsertPageSubscriber = z.infer<typeof insertPageSubscriberSchema>;
 export type PageSubscriber = z.infer<typeof selectPageSubscriberSchema>;
 export type ChannelType = "email" | "webhook";
+export type SubscriberSource = z.infer<typeof subscriberSourceSchema>;
 export type EmailSubscriber = Extract<
   z.infer<typeof pageSubscriberSchema>,
   { channelType: "email" }

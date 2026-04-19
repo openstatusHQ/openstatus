@@ -2180,6 +2180,58 @@ components:
       title: CreateComponentGroupResponse
       additionalProperties: false
       description: CreateComponentGroupResponse is the response after creating a component group.
+    openstatus.status_page.v1.CreatePageSubscriptionRequest:
+      type: object
+      allOf:
+        - properties:
+            pageId:
+              type: string
+              title: page_id
+              minLength: 1
+              description: ID of the status page (required).
+            name:
+              type:
+                - string
+                - "null"
+              title: name
+              maxLength: 255
+              description: Optional human-readable label.
+            componentIds:
+              type: array
+              items:
+                type: string
+              title: component_ids
+              description: Component scope. Empty = entire page.
+        - oneOf:
+            - type: object
+              properties:
+                emailChannel:
+                  title: email_channel
+                  $ref: '#/components/schemas/openstatus.status_page.v1.EmailChannel'
+              title: email_channel
+              required:
+                - emailChannel
+            - type: object
+              properties:
+                webhookChannel:
+                  title: webhook_channel
+                  $ref: '#/components/schemas/openstatus.status_page.v1.WebhookChannel'
+              title: webhook_channel
+              required:
+                - webhookChannel
+      title: CreatePageSubscriptionRequest
+      additionalProperties: false
+      description: CreatePageSubscriptionRequest is the request to add a vendor-managed subscriber to a status page.
+    openstatus.status_page.v1.CreatePageSubscriptionResponse:
+      type: object
+      properties:
+        subscriber:
+          title: subscriber
+          description: The created subscriber.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+      title: CreatePageSubscriptionResponse
+      additionalProperties: false
+      description: CreatePageSubscriptionResponse is the response after creating a vendor-managed subscription.
     openstatus.status_page.v1.CreateStatusPageRequest:
       type: object
       properties:
@@ -2340,6 +2392,17 @@ components:
       title: DeleteStatusPageResponse
       additionalProperties: false
       description: DeleteStatusPageResponse is the response after deleting a status page.
+    openstatus.status_page.v1.EmailChannel:
+      type: object
+      properties:
+        email:
+          type: string
+          title: email
+          format: email
+          description: Email address of the subscriber (required).
+      title: EmailChannel
+      additionalProperties: false
+      description: EmailChannel carries the email-channel fields for CreatePageSubscription.
     openstatus.status_page.v1.GetOverallStatusRequest:
       type: object
       oneOf:
@@ -2685,7 +2748,7 @@ components:
         email:
           type: string
           title: email
-          description: Email address of the subscriber.
+          description: Email address of the subscriber (empty for webhook channels).
         acceptedAt:
           type: string
           title: accepted_at
@@ -2702,6 +2765,38 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the subscription was last updated (RFC 3339 format).
+        source:
+          title: source
+          description: How the subscription was created. Vendor-added rows skip verification.
+          $ref: '#/components/schemas/openstatus.status_page.v1.SubscriberSource'
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          description: 'Optional human-readable label (e.g. "Supabase #incidents").'
+        channelType:
+          type: string
+          title: channel_type
+          description: 'Channel type: "email" or "webhook".'
+        webhookUrl:
+          type:
+            - string
+            - "null"
+          title: webhook_url
+          description: Webhook URL (populated only for channel_type = "webhook").
+        channelConfig:
+          type:
+            - string
+            - "null"
+          title: channel_config
+          description: JSON-encoded channel config (e.g. custom headers). Populated for webhook channels.
+        componentIds:
+          type: array
+          items:
+            type: string
+          title: component_ids
+          description: IDs of components this subscription is scoped to. Empty = entire page.
       title: PageSubscriber
       additionalProperties: false
       description: PageSubscriber represents a subscriber to a status page.
@@ -2893,6 +2988,15 @@ components:
       title: SubscribeToPageResponse
       additionalProperties: false
       description: SubscribeToPageResponse is the response after subscribing to a status page.
+    openstatus.status_page.v1.SubscriberSource:
+      type: string
+      title: SubscriberSource
+      enum:
+        - SUBSCRIBER_SOURCE_UNSPECIFIED
+        - SUBSCRIBER_SOURCE_SELF_SIGNUP
+        - SUBSCRIBER_SOURCE_VENDOR
+        - SUBSCRIBER_SOURCE_IMPORT
+      description: SubscriberSource indicates how the subscription was created.
     openstatus.status_page.v1.UnsubscribeFromPageRequest:
       type: object
       allOf:
@@ -3145,6 +3249,36 @@ components:
       title: UpdateStatusPageResponse
       additionalProperties: false
       description: UpdateStatusPageResponse is the response after updating a status page.
+    openstatus.status_page.v1.WebhookChannel:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          minLength: 1
+          description: Webhook URL (required). Payload flavor (Slack / Discord / generic) is auto-detected from the URL prefix.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.WebhookChannelHeader'
+          title: headers
+          description: Optional custom HTTP headers attached to every dispatch.
+      title: WebhookChannel
+      additionalProperties: false
+      description: WebhookChannel carries the webhook-channel fields for CreatePageSubscription.
+    openstatus.status_page.v1.WebhookChannelHeader:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+        value:
+          type: string
+          title: value
+      title: WebhookChannelHeader
+      additionalProperties: false
+      description: WebhookChannelHeader is a single custom HTTP header.
     openstatus.status_report.v1.AddStatusReportUpdateRequest:
       type: object
       properties:
@@ -4500,6 +4634,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/CreatePageSubscription:
+    post:
+      tags:
+        - StatusPageService
+      summary: CreatePageSubscription
+      description: Creates a vendor-added subscriber (email or webhook) on a status page. Skips the verification flow — the partner starts receiving notifications immediately. A management token is still generated for self-service management and unsubscribe.
+      operationId: StatusPageService_CreatePageSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.CreatePageSubscriptionRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.CreatePageSubscriptionResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/CreateStatusPage:
     post:
       tags:

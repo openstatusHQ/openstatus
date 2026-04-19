@@ -10,6 +10,10 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import {
+  CheckboxTree,
+  type CheckboxTreeItem,
+} from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -66,11 +70,11 @@ export function FormMaintenance({
   defaultValues,
   onSubmit,
   className,
-  pageComponents,
+  items,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  pageComponents: { id: number; name: string }[];
+  items: CheckboxTreeItem[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
@@ -424,42 +428,14 @@ export function FormMaintenance({
                   Connected page components will be affected for the period of
                   time.
                 </FormDescription>
-                {pageComponents.length ? (
-                  <div className="grid gap-3">
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="all"
-                          checked={
-                            field.value?.length === pageComponents.length
-                          }
-                          onCheckedChange={(checked) => {
-                            field.onChange(
-                              checked ? pageComponents.map((c) => c.id) : [],
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <Label htmlFor="all">Select all</Label>
-                    </div>
-                    {pageComponents.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        <FormControl>
-                          <Checkbox
-                            id={String(item.id)}
-                            checked={field.value?.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              const newValue = checked
-                                ? [...(field.value || []), item.id]
-                                : field.value?.filter((id) => id !== item.id);
-                              field.onChange(newValue);
-                            }}
-                          />
-                        </FormControl>
-                        <Label htmlFor={String(item.id)}>{item.name}</Label>
-                      </div>
-                    ))}
-                  </div>
+                {items.length ? (
+                  <FormControl>
+                    <CheckboxTree
+                      items={items}
+                      value={field.value ?? []}
+                      onValueChange={field.onChange}
+                    />
+                  </FormControl>
                 ) : (
                   <EmptyStateContainer>
                     <EmptyStateTitle>No page components found</EmptyStateTitle>
@@ -488,14 +464,13 @@ export function FormMaintenance({
                           onCheckedChange={field.onChange}
                         />
                         <Label htmlFor="notifySubscribers">
-                          Send email notification to subscribers
+                          Send notification to subscribers
                         </Label>
                       </div>
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Subscribers will receive an email when creating a
-                      maintenance.
+                      Subscribers will be notified when creating a maintenance.
                     </FormDescription>
                   </FormItem>
                 )}

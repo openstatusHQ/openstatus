@@ -113,7 +113,11 @@ export function DataTableFacetedFilter<TData, TValue>({
                           : "opacity-50 [&_svg]:invisible",
                       )}
                     >
-                      <Check />
+                      <Check
+                        className={cn(
+                          isSelected ? "text-primary-foreground" : undefined,
+                        )}
+                      />
                     </div>
                     {option.icon && (
                       <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />

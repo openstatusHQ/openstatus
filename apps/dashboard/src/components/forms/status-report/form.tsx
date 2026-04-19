@@ -10,13 +10,14 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import {
+  CheckboxTree,
+  type CheckboxTreeItem,
+} from "@/components/ui/checkbox-tree";
 import { colors } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  type PageComponent,
-  statusReportStatus,
-} from "@openstatus/db/src/schema";
+import { statusReportStatus } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -79,12 +80,12 @@ export function FormStatusReport({
   defaultValues,
   onSubmit,
   className,
-  pageComponents,
+  items,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  pageComponents: Pick<PageComponent, "id" | "name" | "type">[];
+  items: CheckboxTreeItem[];
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(
@@ -359,42 +360,14 @@ export function FormStatusReport({
                 <FormDescription>
                   Select the page components you want to notify.
                 </FormDescription>
-                {pageComponents.length ? (
-                  <div className="grid gap-3">
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="all"
-                          checked={
-                            field.value?.length === pageComponents.length
-                          }
-                          onCheckedChange={(checked) => {
-                            field.onChange(
-                              checked ? pageComponents.map((c) => c.id) : [],
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <Label htmlFor="all">Select all</Label>
-                    </div>
-                    {pageComponents.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        <FormControl>
-                          <Checkbox
-                            id={String(item.id)}
-                            checked={field.value?.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              const newValue = checked
-                                ? [...(field.value || []), item.id]
-                                : field.value?.filter((id) => id !== item.id);
-                              field.onChange(newValue);
-                            }}
-                          />
-                        </FormControl>
-                        <Label htmlFor={String(item.id)}>{item.name}</Label>
-                      </div>
-                    ))}
-                  </div>
+                {items.length ? (
+                  <FormControl>
+                    <CheckboxTree
+                      items={items}
+                      value={field.value ?? []}
+                      onValueChange={field.onChange}
+                    />
+                  </FormControl>
                 ) : (
                   <EmptyStateContainer>
                     <EmptyStateTitle>No page components found</EmptyStateTitle>
@@ -423,13 +396,13 @@ export function FormStatusReport({
                           onCheckedChange={field.onChange}
                         />
                         <Label htmlFor="notifySubscribers">
-                          Send email notification to subscribers
+                          Send notification to subscribers
                         </Label>
                       </div>
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Subscribers will receive an email when creating a status
+                      Subscribers will be notified when creating a status
                       report.
                     </FormDescription>
                   </FormItem>

@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { PageUpdate, Subscription } from "../types";
 import {
+  buildTestPayload,
+  detectWebhookFlavor,
+  sendTestWebhookRequest,
   sendWebhookNotifications,
   sendWebhookVerification,
   validateWebhookConfig,
@@ -198,5 +201,176 @@ describe("sendWebhookNotifications", () => {
     ).resolves.toBeUndefined();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+// ─── detectWebhookFlavor ──────────────────────────────────────────────────────
+
+describe("detectWebhookFlavor", () => {
+  test("detects Slack incoming webhook URLs", () => {
+    expect(
+      detectWebhookFlavor("https://hooks.slack.com/services/T00/B00/XXX"),
+    ).toBe("slack");
+  });
+
+  test("detects Discord webhook URLs", () => {
+    expect(
+      detectWebhookFlavor("https://discord.com/api/webhooks/123/abc"),
+    ).toBe("discord");
+  });
+
+  test("falls back to generic for unknown hosts", () => {
+    expect(detectWebhookFlavor("https://example.com/webhook")).toBe("generic");
+  });
+});
+
+// ─── flavor-specific notification payloads ────────────────────────────────────
+
+describe("sendWebhookNotifications (flavor detection)", () => {
+  test("emits Slack blocks payload for hooks.slack.com URLs", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: "https://hooks.slack.com/services/T1/B1/XXX",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate());
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].blocks).toBeInstanceOf(Array);
+  });
+
+  test("emits Discord embed payload for discord.com URLs", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: "https://discord.com/api/webhooks/1/xxx",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate());
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.embeds).toBeInstanceOf(Array);
+    expect(body.embeds[0].title).toBe("Test Incident");
+  });
+
+  test("includes manageUrl and unsubscribeUrl in generic payloads", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      token: "tok-123",
+      webhookUrl: "https://example.com/webhook",
+      pageSlug: "demo",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate());
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.manageUrl).toBe("https://demo.openstatus.dev/manage/tok-123");
+    expect(body.unsubscribeUrl).toBe(
+      "https://demo.openstatus.dev/unsubscribe/tok-123",
+    );
+  });
+
+  test("uses custom domain when present", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      token: "tok-123",
+      customDomain: "status.partner.com",
+      webhookUrl: "https://example.com/webhook",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate());
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.manageUrl).toBe("https://status.partner.com/manage/tok-123");
+  });
+
+  test("Slack payload embeds manage/unsubscribe as context block links", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      token: "tok-999",
+      pageSlug: "demo",
+      webhookUrl: "https://hooks.slack.com/services/T1/B1/XXX",
+    });
+
+    await sendWebhookNotifications([sub], makeUpdate());
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    const stringified = JSON.stringify(body);
+    expect(stringified).toContain("https://demo.openstatus.dev/manage/tok-999");
+    expect(stringified).toContain(
+      "https://demo.openstatus.dev/unsubscribe/tok-999",
+    );
+  });
+});
+
+// ─── buildTestPayload ─────────────────────────────────────────────────────────
+
+describe("buildTestPayload", () => {
+  test("Slack flavor returns attachments with blocks", () => {
+    const payload = buildTestPayload("slack") as { attachments: unknown[] };
+    expect(payload.attachments).toBeInstanceOf(Array);
+  });
+
+  test("Discord flavor returns embeds", () => {
+    const payload = buildTestPayload("discord") as { embeds: unknown[] };
+    expect(payload.embeds).toBeInstanceOf(Array);
+  });
+
+  test("generic flavor returns type='test' JSON", () => {
+    const payload = buildTestPayload("generic") as {
+      type: string;
+      message: string;
+    };
+    expect(payload.type).toBe("test");
+    expect(typeof payload.message).toBe("string");
+  });
+});
+
+// ─── sendTestWebhookRequest ───────────────────────────────────────────────────
+
+describe("sendTestWebhookRequest", () => {
+  test("POSTs flavor-appropriate payload", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    await sendTestWebhookRequest({
+      url: "https://example.com/hook",
+      flavor: "generic",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://example.com/hook");
+    expect(init?.method).toBe("POST");
+    const body = JSON.parse(init?.body as string);
+    expect(body.type).toBe("test");
+  });
+
+  test("throws on non-2xx response", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 404, statusText: "Not Found" }),
+    );
+    await expect(
+      sendTestWebhookRequest({
+        url: "https://example.com/hook",
+        flavor: "generic",
+      }),
+    ).rejects.toThrow(/Test webhook failed: 404/);
+  });
+
+  test("passes custom headers", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    await sendTestWebhookRequest({
+      url: "https://example.com/hook",
+      flavor: "generic",
+      headers: { "X-Custom": "abc" },
+    });
+
+    const [, init] = fetchMock.mock.calls[0];
+    const headers = init?.headers as Record<string, string>;
+    expect(headers["X-Custom"]).toBe("abc");
   });
 });

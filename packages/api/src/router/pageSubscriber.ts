@@ -1,9 +1,16 @@
-import { and, eq } from "@openstatus/db";
-import { page, pageSubscriber } from "@openstatus/db/src/schema";
+import { and, db, eq } from "@openstatus/db";
 import {
+  page,
+  pageSubscriber,
+  selectWorkspaceSchema,
+} from "@openstatus/db/src/schema";
+import {
+  createSubscription,
   getSubscriptionByToken,
   hasPendingUnexpiredSubscription,
+  sendTestWebhook,
   unsubscribe,
+  updateChannel,
   updateSubscriptionScope,
   upsertEmailSubscription,
   verifySubscription,
@@ -12,6 +19,34 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+const webhookHeadersSchema = z
+  .array(
+    z.object({
+      key: z.string().min(1),
+      value: z.string(),
+    }),
+  )
+  .optional();
+
+async function assertPageInWorkspace(pageId: number, workspaceId: number) {
+  const _page = await db.query.page.findFirst({
+    where: and(eq(page.workspaceId, workspaceId), eq(page.id, pageId)),
+    with: { workspace: true },
+  });
+  if (!_page) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
+  }
+  return _page;
+}
+
+function throwFromException(error: unknown, fallback: string): never {
+  if (error instanceof TRPCError) throw error;
+  if (error instanceof Error) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+  }
+  throw new TRPCError({ code: "BAD_REQUEST", message: fallback });
+}
 
 export const pageSubscriberRouter = createTRPCRouter({
   /**
@@ -268,6 +303,9 @@ export const pageSubscriberRouter = createTRPCRouter({
           channelType: sub.channelType,
           email: sub.email,
           webhookUrl: sub.webhookUrl,
+          channelConfig: sub.channelConfig,
+          source: sub.source,
+          name: sub.name,
           acceptedAt: sub.acceptedAt,
           unsubscribedAt: sub.unsubscribedAt,
           createdAt: sub.createdAt,
@@ -281,6 +319,138 @@ export const pageSubscriberRouter = createTRPCRouter({
       });
 
       return data;
+    }),
+
+  /**
+   * PROTECTED: Create a vendor-added subscription (email or webhook).
+   *
+   * Skips the verification flow — partner starts receiving notifications
+   * immediately. `token` is still generated so the partner can self-manage
+   * via the existing `/manage/{token}` and `/unsubscribe/{token}` routes.
+   */
+  createSubscription: protectedProcedure
+    .input(
+      z.discriminatedUnion("channelType", [
+        z.object({
+          pageId: z.number().int().positive(),
+          channelType: z.literal("email"),
+          email: z.email(),
+          name: z.string().max(255).nullish(),
+          componentIds: z.array(z.number().int().positive()).optional(),
+        }),
+        z.object({
+          pageId: z.number().int().positive(),
+          channelType: z.literal("webhook"),
+          webhookUrl: z.url(),
+          name: z.string().max(255).nullish(),
+          headers: webhookHeadersSchema,
+          componentIds: z.array(z.number().int().positive()).optional(),
+        }),
+      ]),
+    )
+    .mutation(async (opts) => {
+      const _page = await assertPageInWorkspace(
+        opts.input.pageId,
+        opts.ctx.workspace.id,
+      );
+
+      const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
+      if (!workspace.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace data is invalid",
+        });
+      }
+      if (!workspace.data.limits["status-subscribers"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to use status subscribers",
+        });
+      }
+
+      try {
+        if (opts.input.channelType === "email") {
+          const sub = await createSubscription({
+            pageId: opts.input.pageId,
+            channelType: "email",
+            email: opts.input.email,
+            name: opts.input.name ?? null,
+            componentIds: opts.input.componentIds,
+          });
+          return { success: true, id: sub.id };
+        }
+
+        const sub = await createSubscription({
+          pageId: opts.input.pageId,
+          channelType: "webhook",
+          webhookUrl: opts.input.webhookUrl,
+          name: opts.input.name ?? null,
+          channelConfig: opts.input.headers
+            ? { headers: opts.input.headers }
+            : undefined,
+          componentIds: opts.input.componentIds,
+        });
+        return { success: true, id: sub.id };
+      } catch (error) {
+        throwFromException(error, "Failed to create subscription");
+      }
+    }),
+
+  /**
+   * PROTECTED: Update a vendor-added subscription's channel config / scope.
+   * Self-signup rows are rejected — they self-manage via token.
+   */
+  updateChannel: protectedProcedure
+    .input(
+      z.object({
+        subscriberId: z.number().int().positive(),
+        pageId: z.number().int().positive(),
+        name: z.string().max(255).nullish(),
+        webhookUrl: z.url().optional(),
+        headers: webhookHeadersSchema,
+        componentIds: z.array(z.number().int().positive()).optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      await assertPageInWorkspace(opts.input.pageId, opts.ctx.workspace.id);
+
+      try {
+        await updateChannel({
+          subscriberId: opts.input.subscriberId,
+          pageId: opts.input.pageId,
+          name: opts.input.name === undefined ? undefined : opts.input.name,
+          webhookUrl: opts.input.webhookUrl,
+          channelConfig:
+            opts.input.headers !== undefined
+              ? { headers: opts.input.headers }
+              : undefined,
+          componentIds: opts.input.componentIds,
+        });
+        return { success: true };
+      } catch (error) {
+        throwFromException(error, "Failed to update subscription");
+      }
+    }),
+
+  /**
+   * PROTECTED: Send a test payload to a vendor-added webhook subscriber.
+   */
+  sendTestWebhook: protectedProcedure
+    .input(
+      z.object({
+        subscriberId: z.number().int().positive(),
+        pageId: z.number().int().positive(),
+      }),
+    )
+    .mutation(async (opts) => {
+      await assertPageInWorkspace(opts.input.pageId, opts.ctx.workspace.id);
+
+      try {
+        await sendTestWebhook(opts.input.subscriberId, opts.input.pageId);
+        return { success: true };
+      } catch (error) {
+        throwFromException(error, "Failed to send test webhook");
+      }
     }),
 
   /**

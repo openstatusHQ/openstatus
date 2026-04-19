@@ -2,6 +2,7 @@
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
@@ -74,7 +75,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
       <FormSheetMaintenance
-        pageComponents={statusPage?.pageComponents ?? []}
+        items={toCheckboxTreeItems(
+          statusPage?.pageComponents ?? [],
+          statusPage?.pageComponentGroups ?? [],
+        )}
         defaultValues={{
           title: row.original.title,
           message: row.original.message,

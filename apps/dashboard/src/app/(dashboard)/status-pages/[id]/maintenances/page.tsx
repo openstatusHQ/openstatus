@@ -11,6 +11,7 @@ import {
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/maintenances/columns";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -63,7 +64,10 @@ export default function Page() {
           </SectionHeader>
           <div>
             <FormSheetMaintenance
-              pageComponents={statusPage.pageComponents}
+              items={toCheckboxTreeItems(
+                statusPage.pageComponents,
+                statusPage.pageComponentGroups,
+              )}
               onSubmit={async (values) => {
                 await createMaintenanceMutation.mutateAsync({
                   pageId: Number.parseInt(id),

@@ -56,9 +56,17 @@ service StatusPageService {
   rpc UpdateComponentGroup(UpdateComponentGroupRequest) returns (UpdateComponentGroupResponse);
 
   // SubscribeToPage subscribes an email to a status page. If the email was previously unsubscribed, the subscription is reactivated.
+  // Legacy — prefer CreateSubscription for new integrations.
   rpc SubscribeToPage(SubscribeToPageRequest) returns (SubscribeToPageResponse) {
     option (gnostic.openapi.v3.operation) = {
       description: "Subscribes an email address to receive notifications from a status page. If the email was previously unsubscribed, the subscription is reactivated instead of creating a duplicate."
+    };
+  }
+
+  // CreatePageSubscription adds a vendor-managed subscriber (email or webhook) to a status page, skipping verification.
+  rpc CreatePageSubscription(CreatePageSubscriptionRequest) returns (CreatePageSubscriptionResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Creates a vendor-added subscriber (email or webhook) on a status page. Skips the verification flow — the partner starts receiving notifications immediately. A management token is still generated for self-service management and unsubscribe."
     };
   }
 
@@ -444,6 +452,51 @@ message SubscribeToPageRequest {
 
 // SubscribeToPageResponse is the response after subscribing to a status page.
 message SubscribeToPageResponse {
+  // The created subscriber.
+  PageSubscriber subscriber = 1;
+}
+
+// EmailChannel carries the email-channel fields for CreatePageSubscription.
+message EmailChannel {
+  // Email address of the subscriber (required).
+  string email = 1 [(buf.validate.field).string.email = true];
+}
+
+// WebhookChannelHeader is a single custom HTTP header.
+message WebhookChannelHeader {
+  string key = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2;
+}
+
+// WebhookChannel carries the webhook-channel fields for CreatePageSubscription.
+message WebhookChannel {
+  // Webhook URL (required). Payload flavor (Slack / Discord / generic) is auto-detected from the URL prefix.
+  string webhook_url = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Optional custom HTTP headers attached to every dispatch.
+  repeated WebhookChannelHeader headers = 2;
+}
+
+// CreatePageSubscriptionRequest is the request to add a vendor-managed subscriber to a status page.
+message CreatePageSubscriptionRequest {
+  // ID of the status page (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Optional human-readable label.
+  optional string name = 2 [(buf.validate.field).string.max_len = 255];
+
+  // Component scope. Empty = entire page.
+  repeated string component_ids = 3;
+
+  // Channel-specific fields (exactly one must be set).
+  oneof channel {
+    EmailChannel email_channel = 10;
+    WebhookChannel webhook_channel = 11;
+  }
+}
+
+// CreatePageSubscriptionResponse is the response after creating a vendor-managed subscription.
+message CreatePageSubscriptionResponse {
   // The created subscriber.
   PageSubscriber subscriber = 1;
 }
