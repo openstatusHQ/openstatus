@@ -39,6 +39,7 @@ import {
   dbPageToProtoSummary,
   dbSubscriberToProto,
   protoAccessTypeToDb,
+  protoHeadersToPlain,
   protoLocaleToDb,
   protoThemeToDb,
 } from "./converters";
@@ -1006,7 +1007,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           .where(eq(pageSubscriber.id, created.id))
           .get();
       } else if (req.channel.case === "webhookChannel") {
-        const headers = req.channel.value.headers ?? [];
+        const headers = protoHeadersToPlain(req.channel.value.headers);
         const created = await createSubscriptionService({
           pageId: pageData.id,
           channelType: "webhook",

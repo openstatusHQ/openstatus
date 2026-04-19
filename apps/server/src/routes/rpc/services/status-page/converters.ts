@@ -5,6 +5,7 @@ import type {
   PageSubscriber,
   StatusPage,
   StatusPageSummary,
+  WebhookChannelHeader,
 } from "@openstatus/proto/status_page/v1";
 import {
   OverallStatus,
@@ -294,6 +295,19 @@ export function dbGroupToProto(
     createdAt: group.createdAt?.toISOString() ?? "",
     updatedAt: group.updatedAt?.toISOString() ?? "",
   };
+}
+
+/**
+ * Normalize proto WebhookChannelHeader[] into plain {key,value}[].
+ *
+ * Drops runtime-only fields like `$typeName` so nothing proto-specific
+ * reaches the DB. Mirrors the pattern used by `headersToDbJson` in the
+ * monitor converters (`monitor/converters/headers.ts`).
+ */
+export function protoHeadersToPlain(
+  headers: WebhookChannelHeader[] | undefined,
+): { key: string; value: string }[] {
+  return (headers ?? []).map((h) => ({ key: h.key, value: h.value }));
 }
 
 /**

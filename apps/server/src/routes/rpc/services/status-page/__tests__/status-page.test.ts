@@ -1837,6 +1837,201 @@ describe("StatusPageService.UnsubscribeFromPage", () => {
   });
 });
 
+describe("StatusPageService.CreatePageSubscription", () => {
+  test("creates a vendor-added email subscriber", async () => {
+    const email = `${TEST_PREFIX}-create-email@example.com`;
+    const res = await connectRequest(
+      "CreatePageSubscription",
+      {
+        pageId: String(testPageId),
+        name: "Partner contact",
+        componentIds: [String(testComponentId)],
+        emailChannel: { email },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("subscriber");
+    expect(data.subscriber.email).toBe(email);
+    expect(data.subscriber.pageId).toBe(String(testPageId));
+    expect(data.subscriber.channelType).toBe("email");
+    expect(data.subscriber.name).toBe("Partner contact");
+    expect(data.subscriber.source).toBe("SUBSCRIBER_SOURCE_VENDOR");
+    // Vendor-added rows skip verification — acceptedAt should be stamped.
+    expect(data.subscriber.acceptedAt).not.toBe("");
+    expect(data.subscriber.componentIds).toEqual([String(testComponentId)]);
+
+    // Row exists in DB with expected columns.
+    const row = await db
+      .select()
+      .from(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)))
+      .get();
+    expect(row?.source).toBe("vendor");
+    expect(row?.channelType).toBe("email");
+    expect(row?.email).toBe(email);
+    expect(row?.token).toBeTruthy();
+
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
+  });
+
+  test("creates a vendor-added webhook subscriber with headers", async () => {
+    const webhookUrl = `https://hooks.slack.com/services/T00000000/B00000000/${TEST_PREFIX}-create`;
+    const res = await connectRequest(
+      "CreatePageSubscription",
+      {
+        pageId: String(testPageId),
+        name: "Partner Slack",
+        webhookChannel: {
+          webhookUrl,
+          headers: [{ key: "X-Partner", value: "acme" }],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.subscriber.channelType).toBe("webhook");
+    expect(data.subscriber.webhookUrl).toBe(webhookUrl);
+    expect(data.subscriber.source).toBe("SUBSCRIBER_SOURCE_VENDOR");
+
+    const row = await db
+      .select()
+      .from(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)))
+      .get();
+    expect(row?.channelType).toBe("webhook");
+    expect(row?.webhookUrl).toBe(webhookUrl);
+    expect(row?.email).toBeNull();
+    const config = row?.channelConfig ? JSON.parse(row.channelConfig) : null;
+    expect(config?.headers?.[0]).toEqual({ key: "X-Partner", value: "acme" });
+
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
+  });
+
+  test("omits channelConfig when no headers supplied", async () => {
+    const webhookUrl = `https://example.com/${TEST_PREFIX}-no-headers`;
+    const res = await connectRequest(
+      "CreatePageSubscription",
+      {
+        pageId: String(testPageId),
+        webhookChannel: { webhookUrl },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const row = await db
+      .select()
+      .from(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)))
+      .get();
+    expect(row?.channelConfig).toBeNull();
+
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
+  });
+
+  test("rejects when email already has an active subscription", async () => {
+    const email = `${TEST_PREFIX}-dup@example.com`;
+
+    // Seed an existing active email subscriber.
+    const [existing] = await db
+      .insert(pageSubscriber)
+      .values({
+        pageId: testPageId,
+        email,
+        channelType: "email",
+        source: "self_signup",
+        token: "dup-token",
+        acceptedAt: new Date(),
+      })
+      .returning({ id: pageSubscriber.id });
+
+    const res = await connectRequest(
+      "CreatePageSubscription",
+      {
+        pageId: String(testPageId),
+        emailChannel: { email },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    // Generic internal error — service's friendly message isn't echoed to the wire.
+    expect(res.status).toBeGreaterThanOrEqual(400);
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.id, existing.id));
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("CreatePageSubscription", {
+      pageId: String(testPageId),
+      emailChannel: { email: "noauth@example.com" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("returns 404 for non-existent page", async () => {
+    const res = await connectRequest(
+      "CreatePageSubscription",
+      {
+        pageId: "99999",
+        emailChannel: { email: `${TEST_PREFIX}-404@example.com` },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when channel oneof is unset", async () => {
+    const res = await connectRequest(
+      "CreatePageSubscription",
+      { pageId: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+  });
+
+  test("rejects when workspace has status-subscribers disabled", async () => {
+    // Temporarily disable the plan flag, hit the endpoint, then restore.
+    await db.run(
+      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('false')) WHERE id = 1`,
+    );
+    try {
+      const res = await connectRequest(
+        "CreatePageSubscription",
+        {
+          pageId: String(testPageId),
+          emailChannel: {
+            email: `${TEST_PREFIX}-plan-gate@example.com`,
+          },
+        },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(403);
+    } finally {
+      await db.run(
+        sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = 1`,
+      );
+    }
+  });
+});
+
 describe("StatusPageService.ListSubscribers", () => {
   test("returns subscribers for page", async () => {
     const res = await connectRequest(
