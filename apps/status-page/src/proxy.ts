@@ -7,6 +7,7 @@ import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { composePageAction } from "./lib/proxy/compose-page-action";
+import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
 const isSelfHosted = process.env.SELF_HOST === "true";
@@ -73,7 +74,7 @@ export default auth(async (req) => {
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
       ?.value,
     queryPassword: url.searchParams.get("pw"),
-    redirectParam: url.searchParams.get("redirect"),
+    redirectParam: sanitizeRedirectParam(url.searchParams.get("redirect")),
     authEmail: req.auth?.user?.email,
     clientIp,
     proxyHeader: req.headers.get("x-proxy"),
