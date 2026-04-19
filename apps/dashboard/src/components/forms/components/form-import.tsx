@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import { Note } from "@/components/common/note";
 import {
   FormCard,
@@ -271,10 +272,21 @@ export function FormImport({
                       <FormMessage />
                       <FormDescription>
                         {watchProvider === "betterstack"
-                          ? "Your Better Stack API token. Found in Better Stack \u2192 API tokens."
+                          ? "Your Better Stack API token. Found in Better Stack > API tokens."
                           : watchProvider === "instatus"
                             ? "Your Instatus API key. Found in your Instatus account under Settings > API."
-                            : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}
+                            : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}{" "}
+                        <Link
+                          href={
+                            watchProvider === "betterstack"
+                              ? "https://openstatus.dev/guides/migrate-from-betterstack"
+                              : watchProvider === "instatus"
+                                ? "https://openstatus.dev/guides/migrate-from-instatus"
+                                : "https://openstatus.dev/guides/migrate-from-atlassian-statuspage"
+                          }
+                        >
+                          Full migration guide.
+                        </Link>
                       </FormDescription>
                     </FormItem>
                   )}
