@@ -471,7 +471,11 @@ message WebhookChannelHeader {
 // WebhookChannel carries the webhook-channel fields for CreatePageSubscription.
 message WebhookChannel {
   // Webhook URL (required). Payload flavor (Slack / Discord / generic) is auto-detected from the URL prefix.
-  string webhook_url = 1 [(buf.validate.field).string.min_len = 1];
+  string webhook_url = 1 [(buf.validate.field).string = {
+    min_len: 1,
+    max_len: 2048,
+    uri: true
+  }];
 
   // Optional custom HTTP headers attached to every dispatch.
   repeated WebhookChannelHeader headers = 2;
@@ -490,6 +494,8 @@ message CreatePageSubscriptionRequest {
 
   // Channel-specific fields (exactly one must be set).
   oneof channel {
+    option (buf.validate.oneof).required = true;
+
     EmailChannel email_channel = 10;
     WebhookChannel webhook_channel = 11;
   }

@@ -48,6 +48,23 @@ function throwFromException(error: unknown, fallback: string): never {
   throw new TRPCError({ code: "BAD_REQUEST", message: fallback });
 }
 
+/**
+ * Reduce a webhook URL to its origin so the secret path isn't exposed.
+ * Used when the row isn't owned by the vendor (self-signup / import).
+ */
+function webhookUrlForList(
+  source: string,
+  webhookUrl: string | null,
+): string | null {
+  if (!webhookUrl) return null;
+  if (source === "vendor") return webhookUrl;
+  try {
+    return new URL(webhookUrl).origin;
+  } catch {
+    return null;
+  }
+}
+
 export const pageSubscriberRouter = createTRPCRouter({
   /**
    * PUBLIC: Subscribe to a status page (or update existing subscription)
@@ -298,24 +315,29 @@ export const pageSubscriberRouter = createTRPCRouter({
               : desc(subs.createdAt),
         });
 
-        return subscriptions.map((sub) => ({
-          id: sub.id,
-          channelType: sub.channelType,
-          email: sub.email,
-          webhookUrl: sub.webhookUrl,
-          channelConfig: sub.channelConfig,
-          source: sub.source,
-          name: sub.name,
-          acceptedAt: sub.acceptedAt,
-          unsubscribedAt: sub.unsubscribedAt,
-          createdAt: sub.createdAt,
-          components: sub.components.map((c) => ({
-            id: c.pageComponent.id,
-            name: c.pageComponent.name,
-          })),
-          isEntirePage: sub.components.length === 0,
-          pageId: sub.pageId,
-        }));
+        return subscriptions.map((sub) => {
+          const isVendor = sub.source === "vendor";
+          return {
+            id: sub.id,
+            channelType: sub.channelType,
+            email: sub.email,
+            // Vendor rows own the URL + config; other sources only expose the
+            // origin (no credential-bearing path) and no channelConfig.
+            webhookUrl: webhookUrlForList(sub.source, sub.webhookUrl),
+            channelConfig: isVendor ? sub.channelConfig : null,
+            source: sub.source,
+            name: sub.name,
+            acceptedAt: sub.acceptedAt,
+            unsubscribedAt: sub.unsubscribedAt,
+            createdAt: sub.createdAt,
+            components: sub.components.map((c) => ({
+              id: c.pageComponent.id,
+              name: c.pageComponent.name,
+            })),
+            isEntirePage: sub.components.length === 0,
+            pageId: sub.pageId,
+          };
+        });
       });
 
       return data;

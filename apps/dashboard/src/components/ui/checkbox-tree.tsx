@@ -63,7 +63,11 @@ export function CheckboxTree({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {items.map((item) => {
-        if (item.children && item.children.length > 0) {
+        // A defined `children` array (even empty) marks this as a parent row,
+        // so callers with synthetic "Select all"-style parents can't accidentally
+        // fall through to the leaf branch and submit the parent's id.
+        if (item.children !== undefined) {
+          if (item.children.length === 0) return null;
           const childIds = item.children.map((c) => c.id);
           const allChecked = childIds.every((id) => value.includes(id));
           const someChecked = childIds.some((id) => value.includes(id));

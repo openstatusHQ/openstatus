@@ -20,6 +20,15 @@ function detectFlavorBadge(url: string | null) {
   return "Webhook";
 }
 
+function webhookOrigin(url: string | null) {
+  if (!url) return null;
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
 export const columns: ColumnDef<Subscriber>[] = [
   {
     id: "destination",
@@ -37,12 +46,7 @@ export const columns: ColumnDef<Subscriber>[] = [
 
       return (
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="max-w-[280px] truncate">{display}</span>
-            </TooltipTrigger>
-            {raw ? <TooltipContent>{raw}</TooltipContent> : null}
-          </Tooltip>
+          <span className="max-w-[280px] truncate">{display}</span>
           {flavor ? (
             <Badge variant="outline" className="text-xs">
               {flavor}

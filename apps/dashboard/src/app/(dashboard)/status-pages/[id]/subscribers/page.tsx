@@ -32,7 +32,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Lock, Plus } from "lucide-react";
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { useState } from "react";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
@@ -72,7 +72,8 @@ const EXAMPLES = [
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const pageId = Number.parseInt(id);
+  const pageId = Number.parseInt(id, 10);
+  if (!Number.isInteger(pageId) || pageId <= 0) notFound();
   const [openDialog, setOpenDialog] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const trpc = useTRPC();

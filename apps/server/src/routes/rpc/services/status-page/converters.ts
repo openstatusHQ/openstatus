@@ -309,6 +309,8 @@ export function dbSubscriberSourceToProto(
       return SubscriberSource.VENDOR;
     case "import":
       return SubscriberSource.IMPORT;
+    default:
+      return SubscriberSource.UNSPECIFIED;
   }
 }
 

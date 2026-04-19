@@ -1028,9 +1028,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       }
     } catch (error) {
       if (error instanceof ConnectError) throw error;
-      if (error instanceof Error) {
-        throw new ConnectError(error.message, Code.InvalidArgument);
-      }
+      // Don't echo raw service-layer error messages to RPC clients; they may
+      // contain details that shouldn't be exposed. Log server-side for debugging.
+      console.error("createPageSubscription failed:", error);
       throw subscriberCreateFailedError();
     }
 

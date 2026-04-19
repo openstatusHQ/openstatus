@@ -66,7 +66,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         name: sub.name ?? "",
         email: sub.email ?? "",
         webhookUrl: sub.webhookUrl ?? "",
-        headers: parseHeaders(sub),
+        headers: parseHeaders(sub.channelConfig),
         componentIds: sub.components.map((c) => c.id),
       }
     : undefined;
@@ -163,10 +163,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   );
 }
 
-function parseHeaders(sub: Subscriber): { key: string; value: string }[] {
-  if (!sub.channelConfig) return [];
+function parseHeaders(
+  channelConfig: string | null,
+): { key: string; value: string }[] {
+  if (!channelConfig) return [];
   try {
-    const parsed = JSON.parse(sub.channelConfig) as {
+    const parsed = JSON.parse(channelConfig) as {
       headers?: { key: string; value: string }[];
     };
     return parsed.headers ?? [];
