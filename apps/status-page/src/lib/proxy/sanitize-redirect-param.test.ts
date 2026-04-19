@@ -10,9 +10,7 @@ describe("sanitizeRedirectParam", () => {
   test("absolute path → returned unchanged", () => {
     expect(sanitizeRedirectParam("/acme/en/events")).toBe("/acme/en/events");
     expect(sanitizeRedirectParam("/")).toBe("/");
-    expect(sanitizeRedirectParam("/events?tab=open")).toBe(
-      "/events?tab=open",
-    );
+    expect(sanitizeRedirectParam("/events?tab=open")).toBe("/events?tab=open");
   });
 
   test("non-path values → null (would throw in new URL)", () => {
