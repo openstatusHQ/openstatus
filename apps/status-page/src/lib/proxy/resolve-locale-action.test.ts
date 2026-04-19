@@ -114,4 +114,15 @@ describe("resolveLocaleAction", () => {
     });
     expect(action?.reason).toBe("locale-mismatch-redirect");
   });
+
+  test("rewritePath without expected /{prefix}/{locale} segment: passes (null)", () => {
+    // Guards the invariant that `rewritePath` embeds the route's locale. If
+    // it doesn't, `.replace()` would no-op and we'd redirect to the same URL.
+    const action = resolveLocaleAction({
+      route: { ...baseRoute, rewritePath: "/some/other/shape" },
+      page: { locales: ["en"], defaultLocale: "en" },
+      requestUrl: "http://localhost:3000/some/other/shape",
+    });
+    expect(action).toBeNull();
+  });
 });

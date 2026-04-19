@@ -55,7 +55,6 @@ function buildInput(overrides: Partial<ComposeInput> = {}): ComposeInput {
     redirectParam: null,
     authEmail: null,
     clientIp: null,
-    proxyHeader: null,
     ...overrides,
   };
 }
@@ -71,7 +70,7 @@ describe("composePageAction — priority ordering", () => {
   test("locale rejection fires before password gate", () => {
     const action = composePageAction(
       buildInput({
-        route: { ...route, locale: "fr" },
+        route: { ...route, locale: "fr", rewritePath: "/acme/fr" },
         page: {
           ...basePage,
           locales: ["en"],
@@ -110,20 +109,6 @@ describe("composePageAction — priority ordering", () => {
       }),
     );
     expect(action.reason).toBe("ip-restriction-gate-in");
-  });
-
-  test("x-proxy header fires before custom-domain rewrite", () => {
-    const action = composePageAction(
-      buildInput({
-        page: {
-          ...basePage,
-          customDomain: "status.acme.com",
-        } as Page,
-        host: "status.acme.com",
-        proxyHeader: "1",
-      }),
-    );
-    expect(action.reason).toBe("proxy-header-rewrite");
   });
 
   test("custom-domain rewrite fires before default rewrite", () => {

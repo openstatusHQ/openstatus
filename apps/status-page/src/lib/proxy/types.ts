@@ -52,8 +52,13 @@ export interface ComposeInput {
   origin: string;
   cookiePassword: string | undefined;
   queryPassword: string | null;
+  /**
+   * Pre-sanitized by `sanitizeRedirectParam` at the proxy boundary: either
+   * `null`, or an absolute path starting with `/` (never `//` or `/\`) with
+   * no whitespace/control chars. Downstream stages can concatenate it with
+   * an origin without validating again.
+   */
   redirectParam: string | null;
   authEmail: string | null | undefined;
   clientIp: string | null | undefined;
-  proxyHeader: string | null | undefined;
 }

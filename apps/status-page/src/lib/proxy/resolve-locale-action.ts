@@ -20,8 +20,15 @@ export function resolveLocaleAction({
   if (page.locales.includes(route.locale)) return null;
 
   const pageDefault = page.defaultLocale || "en";
+  const expectedSegment = `/${route.prefix}/${route.locale}`;
+  // Invariant: `rewritePath` is constructed by `resolveRoute` with the
+  // `/${prefix}/${locale}` segment. If that ever changes (e.g. a new route
+  // shape that doesn't embed the locale), `.replace()` would no-op and we'd
+  // redirect to the same URL — so bail out here rather than emit a redirect
+  // that could loop.
+  if (!route.rewritePath.includes(expectedSegment)) return null;
   const redirectPath = route.rewritePath.replace(
-    `/${route.prefix}/${route.locale}`,
+    expectedSegment,
     `/${route.prefix}/${pageDefault}`,
   );
   // For pathname routing, use the rewrite path directly;

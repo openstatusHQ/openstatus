@@ -77,7 +77,6 @@ export default auth(async (req) => {
     redirectParam: sanitizeRedirectParam(url.searchParams.get("redirect")),
     authEmail: req.auth?.user?.email,
     clientIp,
-    proxyHeader: req.headers.get("x-proxy"),
   });
 
   console.log("[proxy] action", {
