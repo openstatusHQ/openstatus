@@ -3255,7 +3255,9 @@ components:
         webhookUrl:
           type: string
           title: webhook_url
+          maxLength: 2048
           minLength: 1
+          format: uri
           description: Webhook URL (required). Payload flavor (Slack / Discord / generic) is auto-detected from the URL prefix.
         headers:
           type: array

@@ -162,13 +162,13 @@ describe("upsertEmailSubscription", () => {
   test("throws for component IDs that do not belong to this page", async () => {
     await expect(
       upsertEmailSubscription({ email, pageId: PAGE_ID, componentIds: [9999] }),
-    ).rejects.toThrow("Invalid components: 9999");
+    ).rejects.toThrow("Some components do not belong to this page");
   });
 
   test("throws for a page ID that does not exist", async () => {
     await expect(
       upsertEmailSubscription({ email, pageId: 99999 }),
-    ).rejects.toThrow("Page 99999 not found");
+    ).rejects.toThrow("Page not found");
   });
 });
 

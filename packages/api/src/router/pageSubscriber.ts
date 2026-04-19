@@ -23,10 +23,11 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 const webhookHeadersSchema = z
   .array(
     z.object({
-      key: z.string().min(1),
-      value: z.string(),
+      key: z.string().min(1).max(256),
+      value: z.string().max(4096),
     }),
   )
+  .max(20)
   .optional();
 
 async function assertPageInWorkspace(pageId: number, workspaceId: number) {

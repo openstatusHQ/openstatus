@@ -31,6 +31,11 @@ function maskEmail(email: string): string {
   return `${masked}@${domain}`;
 }
 
+function maskWebhookUrl(webhookUrl: string): string {
+  const url = new URL(webhookUrl);
+  return `${url.origin}***`;
+}
+
 interface UpsertEmailSubscriptionInput {
   email: string;
   pageId: number;
@@ -60,7 +65,7 @@ export async function upsertEmailSubscription(
   });
 
   if (!pageData) {
-    throw new Error(`Page ${pageId} not found`);
+    throw new Error("Page not found");
   }
 
   // Validate component IDs belong to this page
@@ -77,9 +82,7 @@ export async function upsertEmailSubscription(
       .all();
 
     if (validComponents.length !== componentIds.length) {
-      const validIds = validComponents.map((c) => c.id);
-      const invalidIds = componentIds.filter((id) => !validIds.includes(id));
-      throw new Error(`Invalid components: ${invalidIds.join(", ")}`);
+      throw new Error("Some components do not belong to this page");
     }
   }
 
@@ -300,6 +303,9 @@ export async function getSubscriptionByToken(token: string, domain?: string) {
     }
   }
 
+  // Intentionally omitting webhookUrl/channelConfig — this is a public,
+  // token-addressed endpoint and webhook URLs embed credential-bearing
+  // paths that shouldn't leave the server.
   return {
     id: subscription.id,
     pageId: subscription.pageId,
@@ -308,7 +314,9 @@ export async function getSubscriptionByToken(token: string, domain?: string) {
     customDomain: subscription.page.customDomain,
     channelType: subscription.channelType as "email" | "webhook",
     email: subscription.email ? maskEmail(subscription.email) : undefined,
-    webhookUrl: subscription.webhookUrl ?? undefined,
+    webhookUrl: subscription.webhookUrl
+      ? maskWebhookUrl(subscription.webhookUrl)
+      : undefined,
     acceptedAt: subscription.acceptedAt ?? undefined,
     unsubscribedAt: subscription.unsubscribedAt ?? undefined,
     componentIds: subscription.components.map((c) => c.pageComponentId),
@@ -464,7 +472,7 @@ export async function createSubscription(input: CreateSubscriptionInput) {
   });
 
   if (!pageData) {
-    throw new Error(`Page ${pageId} not found`);
+    throw new Error("Page not found");
   }
 
   if (componentIds.length > 0) {
@@ -480,9 +488,7 @@ export async function createSubscription(input: CreateSubscriptionInput) {
       .all();
 
     if (validComponents.length !== componentIds.length) {
-      const validIds = validComponents.map((c) => c.id);
-      const invalidIds = componentIds.filter((id) => !validIds.includes(id));
-      throw new Error(`Invalid components: ${invalidIds.join(", ")}`);
+      throw new Error("Some components do not belong to this page");
     }
   }
 
