@@ -11,7 +11,10 @@ import {
   buildRecoveryBlocks,
 } from "./blocks";
 
-const postToWebhook = async (body: Record<string, unknown>, webhookUrl: string) => {
+const postToWebhook = async (
+  body: Record<string, unknown>,
+  webhookUrl: string,
+) => {
   if (!webhookUrl || webhookUrl.trim() === "") {
     throw new Error("Slack webhook URL is required");
   }
