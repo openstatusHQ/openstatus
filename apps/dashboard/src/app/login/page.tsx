@@ -68,7 +68,7 @@ export default async function Page(props: {
           </LoginButton>
         </form>
       </div>
-      <p className="px-8 text-center text-muted-foreground text-sm">
+      <p className="mx-auto max-w-md px-8 text-center text-muted-foreground text-sm">
         By clicking continue, you agree to our{" "}
         <Link
           href="https://openstatus.dev/legal/terms"

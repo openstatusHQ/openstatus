@@ -1,8 +1,21 @@
+import { Button } from "@openstatus/ui/components/ui/button";
+import { BookOpen } from "lucide-react";
 import Image from "next/image";
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-screen grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <div className="relative grid min-h-screen grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <Button
+        asChild
+        size="sm"
+        variant="outline"
+        className="absolute top-4 right-4 z-10"
+      >
+        <a href="https://docs.openstatus.dev" target="_blank" rel="noreferrer">
+          <BookOpen className="mr-2 h-4 w-4" />
+          Documentation
+        </a>
+      </Button>
       <aside className="col-span-1 flex w-full flex-col gap-4 border border-border bg-sidebar p-4 backdrop-blur-[2px] md:p-8 xl:col-span-2">
         <a href="https://openstatus.dev" className="relative h-8 w-8">
           <Image
@@ -21,18 +34,36 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             <p className="text-muted-foreground text-sm">
               Communicate incidents, prove compliance readiness, and monitor
               uptime from 28 global regions. Open source and free to start.{" "}
-              <br />
-              <br />
-              Check out{" "}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Coming from{" "}
               <a
-                href="https://github.com/openstatushq/openstatus"
+                href="https://openstatus.dev/guides/migrate-from-atlassian-statuspage"
                 target="_blank"
                 rel="noreferrer"
                 className="text-foreground underline underline-offset-4 hover:no-underline"
               >
-                GitHub
-              </a>{" "}
-              and let us know your use case!
+                Atlassian Statuspage
+              </a>
+              ,{" "}
+              <a
+                href="https://openstatus.dev/guides/migrate-from-betterstack"
+                target="_blank"
+                rel="noreferrer"
+                className="text-foreground underline underline-offset-4 hover:no-underline"
+              >
+                Betterstack
+              </a>
+              , or{" "}
+              <a
+                href="https://openstatus.dev/guides/migrate-from-instatus"
+                target="_blank"
+                rel="noreferrer"
+                className="text-foreground underline underline-offset-4 hover:no-underline"
+              >
+                Instatus
+              </a>
+              ? We have importers for all three.
             </p>
           </div>
         </div>
