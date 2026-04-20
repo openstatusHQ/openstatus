@@ -1,3 +1,4 @@
+import { Events } from "@openstatus/analytics";
 import { and, db, eq } from "@openstatus/db";
 import {
   page,
@@ -358,6 +359,7 @@ export const pageSubscriberRouter = createTRPCRouter({
    * via the existing `/manage/{token}` and `/unsubscribe/{token}` routes.
    */
   createSubscription: protectedProcedure
+    .meta({ track: Events.SubscribePage })
     .input(
       z.discriminatedUnion("channelType", [
         z.object({
