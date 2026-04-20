@@ -43,10 +43,16 @@ async function assertPageInWorkspace(pageId: number, workspaceId: number) {
 
 function throwFromException(error: unknown, fallback: string): never {
   if (error instanceof TRPCError) throw error;
+  // Log server-side so unexpected failures (DB constraint violations,
+  // connection errors, etc.) show up in ops without us having to make
+  // them part of the client contract.
+  console.error("pageSubscriber router error:", error);
   if (error instanceof Error) {
+    // Service-layer messages are intentionally safe to forward (no IDs,
+    // no raw SQL). See packages/subscriptions/src/service.ts.
     throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
   }
-  throw new TRPCError({ code: "BAD_REQUEST", message: fallback });
+  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: fallback });
 }
 
 /**

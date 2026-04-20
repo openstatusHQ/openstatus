@@ -72,7 +72,7 @@ const EXAMPLES = [
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const pageId = Number.parseInt(id);
+  const pageId = Number(id);
   if (!Number.isInteger(pageId) || pageId <= 0) notFound();
   const [openDialog, setOpenDialog] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);

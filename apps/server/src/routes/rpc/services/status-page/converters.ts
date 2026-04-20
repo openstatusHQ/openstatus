@@ -330,10 +330,28 @@ export function dbSubscriberSourceToProto(
 
 /**
  * Convert a DB subscriber to proto format.
+ *
+ * Mirrors the tRPC `list` behavior: non-vendor rows get the webhook URL
+ * reduced to origin-only and no `channelConfig`. Vendor-owned rows get
+ * the full URL + config because the vendor is the one who configured them.
  */
+function webhookUrlForProto(
+  source: DBPageSubscriber["source"],
+  webhookUrl: string | null,
+): string | undefined {
+  if (!webhookUrl) return undefined;
+  if (source === "vendor") return webhookUrl;
+  try {
+    return new URL(webhookUrl).origin;
+  } catch {
+    return undefined;
+  }
+}
+
 export function dbSubscriberToProto(
   subscriber: DBPageSubscriber,
 ): PageSubscriber {
+  const isVendor = subscriber.source === "vendor";
   return {
     $typeName: "openstatus.status_page.v1.PageSubscriber" as const,
     id: String(subscriber.id),
@@ -346,8 +364,8 @@ export function dbSubscriberToProto(
     source: dbSubscriberSourceToProto(subscriber.source),
     name: subscriber.name ?? undefined,
     channelType: subscriber.channelType,
-    webhookUrl: subscriber.webhookUrl ?? undefined,
-    channelConfig: subscriber.channelConfig ?? undefined,
+    webhookUrl: webhookUrlForProto(subscriber.source, subscriber.webhookUrl),
+    channelConfig: isVendor ? subscriber.channelConfig ?? undefined : undefined,
     componentIds: (subscriber.componentIds ?? []).map(String),
   };
 }
