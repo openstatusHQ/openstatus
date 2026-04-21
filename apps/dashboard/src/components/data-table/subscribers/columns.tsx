@@ -2,6 +2,7 @@
 
 import { formatDate } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
+import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Tooltip,
@@ -13,11 +14,15 @@ import { DataTableRowActions } from "./data-table-row-actions";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 
+const FLAVOR_LABELS = {
+  slack: "Slack",
+  discord: "Discord",
+  generic: "Webhook",
+} as const;
+
 function detectFlavorBadge(url: string | null) {
   if (!url) return null;
-  if (url.startsWith("https://hooks.slack.com/services/")) return "Slack";
-  if (url.startsWith("https://discord.com/api/webhooks/")) return "Discord";
-  return "Webhook";
+  return FLAVOR_LABELS[detectWebhookFlavor(url)];
 }
 
 function webhookOrigin(url: string | null) {

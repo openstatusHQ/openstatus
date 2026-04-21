@@ -42,15 +42,31 @@ async function assertPageInWorkspace(pageId: number, workspaceId: number) {
   return _page;
 }
 
+// Explicit allow-list of service-layer messages that are safe to surface to
+// clients. Anything else — including new paths added to the service later —
+// is logged server-side and replaced with the procedure's fallback, so we
+// can't accidentally leak IDs, emails, or raw SQL through an unvetted code
+// path.
+const SAFE_SERVICE_MESSAGES = new Set<string>([
+  "Page not found",
+  "Some components do not belong to this page",
+  "A subscriber with this email already exists for this page.",
+  "A subscriber with this webhook URL already exists for this page.",
+  "Subscriber not found",
+  "Subscriber is not a webhook channel",
+  "Self-signup subscribers manage their own subscription; use the unsubscribe action instead.",
+  "Email subscribers do not have webhook fields to edit.",
+  "Only vendor-added webhook subscribers support test dispatch.",
+  "Subscription not found",
+  "Subscription not yet verified",
+  "Subscription is unsubscribed",
+  "Verification token expired",
+]);
+
 function throwFromException(error: unknown, fallback: string): never {
   if (error instanceof TRPCError) throw error;
-  // Log server-side so unexpected failures (DB constraint violations,
-  // connection errors, etc.) show up in ops without us having to make
-  // them part of the client contract.
   console.error("pageSubscriber router error:", error);
-  if (error instanceof Error) {
-    // Service-layer messages are intentionally safe to forward (no IDs,
-    // no raw SQL). See packages/subscriptions/src/service.ts.
+  if (error instanceof Error && SAFE_SERVICE_MESSAGES.has(error.message)) {
     throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
   }
   throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: fallback });
@@ -115,16 +131,7 @@ export const pageSubscriberRouter = createTRPCRouter({
           },
         };
       } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Failed to create subscription",
-        });
+        throwFromException(error, "Failed to create subscription");
       }
     }),
 
@@ -163,17 +170,7 @@ export const pageSubscriberRouter = createTRPCRouter({
           },
         };
       } catch (error) {
-        if (error instanceof TRPCError) throw error;
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Failed to verify subscription",
-        });
+        throwFromException(error, "Failed to verify subscription");
       }
     }),
 
@@ -240,16 +237,7 @@ export const pageSubscriberRouter = createTRPCRouter({
           },
         };
       } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Failed to update subscription scope",
-        });
+        throwFromException(error, "Failed to update subscription scope");
       }
     }),
 
@@ -269,16 +257,7 @@ export const pageSubscriberRouter = createTRPCRouter({
 
         return { success: true };
       } catch (error) {
-        if (error instanceof Error) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: error.message,
-          });
-        }
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Failed to unsubscribe",
-        });
+        throwFromException(error, "Failed to unsubscribe");
       }
     }),
 

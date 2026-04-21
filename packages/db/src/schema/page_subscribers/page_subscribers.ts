@@ -62,9 +62,9 @@ export const pageSubscriber = sqliteTable(
         sql`${table.unsubscribedAt} IS NULL AND ${table.channelType} = 'email'`,
       ),
 
-    // Partial unique index: one active webhook subscription per page
+    // Partial unique index: one active webhook subscription per page.
     webhookPageActiveIdx: uniqueIndex("idx_page_subscriber_webhook_page_active")
-      .on(table.webhookUrl, table.pageId)
+      .on(sql`LOWER(${table.webhookUrl})`, table.pageId)
       .where(
         sql`${table.unsubscribedAt} IS NULL AND ${table.channelType} = 'webhook'`,
       ),

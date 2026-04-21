@@ -143,6 +143,9 @@ importers:
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../../packages/regions
+      '@openstatus/subscriptions':
+        specifier: workspace:*
+        version: link:../../packages/subscriptions
       '@openstatus/theme-store':
         specifier: workspace:*
         version: link:../../packages/theme-store

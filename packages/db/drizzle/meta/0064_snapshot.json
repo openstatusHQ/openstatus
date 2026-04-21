@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "684ae89f-1046-4cd8-b87b-e95e2910ff3a",
+  "id": "d778c674-ca9a-4b20-8d38-a262f28d922c",
   "prevId": "8b1e0af0-9240-49e0-b8ea-a2e687bfa6a3",
   "tables": {
     "workspace": {
@@ -1283,7 +1283,7 @@
         "idx_page_subscriber_webhook_page_active": {
           "name": "idx_page_subscriber_webhook_page_active",
           "columns": [
-            "webhook_url",
+            "LOWER(\"webhook_url\")",
             "page_id"
           ],
           "isUnique": true,
@@ -3502,6 +3502,13 @@
       "idx_page_subscriber_email_page_active": {
         "columns": {
           "LOWER(\"email\")": {
+            "isExpression": true
+          }
+        }
+      },
+      "idx_page_subscriber_webhook_page_active": {
+        "columns": {
+          "LOWER(\"webhook_url\")": {
             "isExpression": true
           }
         }

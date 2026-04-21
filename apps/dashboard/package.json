@@ -45,6 +45,7 @@
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/regions": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
