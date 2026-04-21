@@ -346,7 +346,10 @@ export const pageSubscriberRouter = createTRPCRouter({
           channelType: z.literal("email"),
           email: z.email(),
           name: z.string().max(255).nullish(),
-          componentIds: z.array(z.number().int().positive()).max(500).optional(),
+          componentIds: z
+            .array(z.number().int().positive())
+            .max(500)
+            .optional(),
         }),
         z.object({
           pageId: z.number().int().positive(),
@@ -354,7 +357,10 @@ export const pageSubscriberRouter = createTRPCRouter({
           webhookUrl: z.url(),
           name: z.string().max(255).nullish(),
           headers: webhookHeadersSchema,
-          componentIds: z.array(z.number().int().positive()).max(500).optional(),
+          componentIds: z
+            .array(z.number().int().positive())
+            .max(500)
+            .optional(),
         }),
       ]),
     )
