@@ -98,7 +98,7 @@ export const pageSubscriberRouter = createTRPCRouter({
       z.object({
         email: z.email(),
         pageId: z.number().int().positive(),
-        componentIds: z.array(z.number().int().positive()).optional(),
+        componentIds: z.array(z.number().int().positive()).max(500).optional(),
       }),
     )
     .mutation(async (opts) => {
@@ -217,7 +217,7 @@ export const pageSubscriberRouter = createTRPCRouter({
     .input(
       z.object({
         token: z.string(),
-        componentIds: z.array(z.number().int().positive()),
+        componentIds: z.array(z.number().int().positive()).max(500),
         domain: z.string().toLowerCase().optional(),
       }),
     )
@@ -346,7 +346,7 @@ export const pageSubscriberRouter = createTRPCRouter({
           channelType: z.literal("email"),
           email: z.email(),
           name: z.string().max(255).nullish(),
-          componentIds: z.array(z.number().int().positive()).optional(),
+          componentIds: z.array(z.number().int().positive()).max(500).optional(),
         }),
         z.object({
           pageId: z.number().int().positive(),
@@ -354,7 +354,7 @@ export const pageSubscriberRouter = createTRPCRouter({
           webhookUrl: z.url(),
           name: z.string().max(255).nullish(),
           headers: webhookHeadersSchema,
-          componentIds: z.array(z.number().int().positive()).optional(),
+          componentIds: z.array(z.number().int().positive()).max(500).optional(),
         }),
       ]),
     )
@@ -418,7 +418,7 @@ export const pageSubscriberRouter = createTRPCRouter({
         name: z.string().max(255).nullish(),
         webhookUrl: z.url().optional(),
         headers: webhookHeadersSchema,
-        componentIds: z.array(z.number().int().positive()).optional(),
+        componentIds: z.array(z.number().int().positive()).max(500).optional(),
       }),
     )
     .mutation(async (opts) => {
