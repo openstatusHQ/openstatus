@@ -2005,7 +2005,7 @@ describe("StatusPageService.CreatePageSubscription", () => {
   });
 
   test("omits channelConfig when no headers supplied", async () => {
-    const webhookUrl = `https://example.com/${TEST_PREFIX}-no-headers`;
+    const webhookUrl = `https://hooks.slack.com/services/T00000000/B00000000/${TEST_PREFIX}-no-headers`;
     const res = await connectRequest(
       "CreatePageSubscription",
       {
