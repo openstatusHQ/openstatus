@@ -86,6 +86,15 @@ export function checkNoIndexLimit(limits: Limits): void {
   }
 }
 
+export function checkStatusSubscribersLimit(limits: Limits): void {
+  if (!limits["status-subscribers"]) {
+    throw new ConnectError(
+      "Upgrade to use status subscribers",
+      Code.PermissionDenied,
+    );
+  }
+}
+
 /**
  * Check workspace limits for creating a new page component.
  * Throws ConnectError with PermissionDenied if limit is exceeded.

@@ -61,6 +61,9 @@ beforeAll(async () => {
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
   );
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = 1`,
+  );
 
   // Clean up any existing test data
   await db
@@ -1663,8 +1666,15 @@ describe("StatusPageService.UpdateComponentGroup", () => {
 // Subscribers
 // ==========================================================================
 
+const subscriptionSpies = (globalThis as Record<string, unknown>)
+  .__subscriptionSpies as {
+  sendVerification: ReturnType<typeof import("bun:test").mock>;
+};
+
 describe("StatusPageService.SubscribeToPage", () => {
   test("subscribes new user to page", async () => {
+    subscriptionSpies.sendVerification.mockClear();
+
     const res = await connectRequest(
       "SubscribeToPage",
       {
@@ -1680,6 +1690,7 @@ describe("StatusPageService.SubscribeToPage", () => {
     expect(data).toHaveProperty("subscriber");
     expect(data.subscriber.email).toBe(`${TEST_PREFIX}-subscribe@example.com`);
     expect(data.subscriber.pageId).toBe(String(testPageId));
+    expect(subscriptionSpies.sendVerification).toHaveBeenCalledTimes(1);
 
     // Clean up
     await db
@@ -1688,11 +1699,13 @@ describe("StatusPageService.SubscribeToPage", () => {
   });
 
   test("returns existing subscriber when already subscribed", async () => {
+    subscriptionSpies.sendVerification.mockClear();
+
     const res = await connectRequest(
       "SubscribeToPage",
       {
         pageId: String(testPageId),
-        email: `${TEST_PREFIX}@example.com`, // Already exists
+        email: `${TEST_PREFIX}@example.com`, // Already exists and verified
       },
       { "x-openstatus-key": "1" },
     );
@@ -1702,6 +1715,7 @@ describe("StatusPageService.SubscribeToPage", () => {
     const data = await res.json();
     expect(data).toHaveProperty("subscriber");
     expect(data.subscriber.id).toBe(String(testSubscriberId));
+    expect(subscriptionSpies.sendVerification).not.toHaveBeenCalled();
   });
 
   test("returns 401 when no auth key provided", async () => {
@@ -1724,6 +1738,78 @@ describe("StatusPageService.SubscribeToPage", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("returns 403 when status-subscribers limit is disabled", async () => {
+    const res = await connectRequest(
+      "SubscribeToPage",
+      {
+        pageId: "1",
+        email: "test@example.com",
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test("returns subscriber even if email sending fails", async () => {
+    subscriptionSpies.sendVerification.mockImplementationOnce(() => {
+      throw new Error("Resend API failure");
+    });
+
+    const res = await connectRequest(
+      "SubscribeToPage",
+      {
+        pageId: String(testPageId),
+        email: `${TEST_PREFIX}-emailfail@example.com`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("subscriber");
+    expect(data.subscriber.email).toBe(`${TEST_PREFIX}-emailfail@example.com`);
+
+    // Clean up
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
+  });
+
+  test("re-subscribing a pending subscriber re-sends verification email", async () => {
+    // First subscribe
+    const res1 = await connectRequest(
+      "SubscribeToPage",
+      {
+        pageId: String(testPageId),
+        email: `${TEST_PREFIX}-resend@example.com`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res1.status).toBe(200);
+
+    subscriptionSpies.sendVerification.mockClear();
+
+    // Subscribe again with the same email
+    const res2 = await connectRequest(
+      "SubscribeToPage",
+      {
+        pageId: String(testPageId),
+        email: `${TEST_PREFIX}-resend@example.com`,
+      },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res2.status).toBe(200);
+    expect(subscriptionSpies.sendVerification).toHaveBeenCalledTimes(1);
+
+    // Clean up
+    const data = await res2.json();
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, Number(data.subscriber.id)));
   });
 });
 

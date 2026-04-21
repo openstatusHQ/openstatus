@@ -27,7 +27,7 @@ import {
   OverallStatus,
   PageAccessType,
 } from "@openstatus/proto/status_page/v1";
-import { nanoid } from "nanoid";
+import { getChannel, upsertEmailSubscription } from "@openstatus/subscriptions";
 
 import { getRpcContext } from "../../interceptors";
 import {
@@ -71,6 +71,7 @@ import {
   checkPageComponentLimits,
   checkPasswordProtectionLimit,
   checkStatusPageLimits,
+  checkStatusSubscribersLimit,
 } from "./limits";
 
 /**
@@ -897,75 +898,60 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async subscribeToPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
-    // Verify page exists and belongs to workspace
+    checkStatusSubscribersLimit(limits);
+
     const pageData = await getPageById(Number(req.pageId), workspaceId);
     if (!pageData) {
       throw statusPageNotFoundError(req.pageId);
     }
 
-    // Check if already subscribed
-    const existingSubscriber = await db
+    const result = await upsertEmailSubscription({
+      email: req.email,
+      pageId: pageData.id,
+    });
+
+    const row = await db
       .select()
       .from(pageSubscriber)
-      .where(
-        and(
-          eq(pageSubscriber.pageId, pageData.id),
-          eq(pageSubscriber.email, req.email),
-        ),
-      )
+      .where(eq(pageSubscriber.id, result.id))
       .get();
 
-    if (existingSubscriber) {
-      // If unsubscribed, resubscribe within a transaction to ensure atomicity
-      if (existingSubscriber.unsubscribedAt) {
-        const updatedSubscriber = await db.transaction(async (tx) => {
-          const result = await tx
-            .update(pageSubscriber)
-            .set({
-              unsubscribedAt: null,
-              updatedAt: new Date(),
-              token: nanoid(),
-            })
-            .where(eq(pageSubscriber.id, existingSubscriber.id))
-            .returning()
-            .get();
-
-          if (!result) {
-            throw subscriberCreateFailedError();
-          }
-
-          return result;
-        });
-
-        return {
-          subscriber: dbSubscriberToProto(updatedSubscriber),
-        };
-      }
-
-      // Already subscribed, return existing
-      return {
-        subscriber: dbSubscriberToProto(existingSubscriber),
-      };
-    }
-
-    // Create new subscriber
-    const newSubscriber = await db
-      .insert(pageSubscriber)
-      .values({
-        pageId: pageData.id,
-        email: req.email,
-        token: nanoid(),
-      })
-      .returning()
-      .get();
-
-    if (!newSubscriber) {
+    if (!row) {
       throw subscriberCreateFailedError();
     }
 
+    if (!result.acceptedAt) {
+      const verifyUrl = pageData.customDomain
+        ? `https://${pageData.customDomain}/verify/${result.token}`
+        : `https://${pageData.slug}.openstatus.dev/verify/${result.token}`;
+
+      const channel = getChannel("email");
+      if (channel?.sendVerification) {
+        try {
+          await channel.sendVerification(
+            {
+              id: result.id,
+              pageId: pageData.id,
+              pageName: pageData.title,
+              pageSlug: pageData.slug,
+              customDomain: pageData.customDomain,
+              componentIds: [],
+              channelType: "email",
+              email: result.email,
+              token: result.token ?? undefined,
+            },
+            verifyUrl,
+          );
+        } catch (err) {
+          console.error("Failed to send verification email:", err);
+        }
+      }
+    }
+
     return {
-      subscriber: dbSubscriberToProto(newSubscriber),
+      subscriber: dbSubscriberToProto(row),
     };
   },
 
