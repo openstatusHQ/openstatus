@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema";
 import {
   createSubscription,
+  detectWebhookFlavor,
   getSubscriptionByToken,
   hasPendingUnexpiredSubscription,
   sendTestWebhook,
@@ -31,6 +32,12 @@ const webhookHeadersSchema = z
   .max(20)
   .optional();
 
+const supportedWebhookUrlSchema = z
+  .url()
+  .refine((url) => detectWebhookFlavor(url) !== "generic", {
+    message: "Only Slack and Discord webhook URLs are supported.",
+  });
+
 async function assertPageInWorkspace(pageId: number, workspaceId: number) {
   const _page = await db.query.page.findFirst({
     where: and(eq(page.workspaceId, workspaceId), eq(page.id, pageId)),
@@ -52,6 +59,7 @@ const SAFE_SERVICE_MESSAGES = new Set<string>([
   "Some components do not belong to this page",
   "A subscriber with this email already exists for this page.",
   "A subscriber with this webhook URL already exists for this page.",
+  "Only Slack and Discord webhook URLs are supported.",
   "Subscriber not found",
   "Subscriber is not a webhook channel",
   "Self-signup subscribers manage their own subscription; use the unsubscribe action instead.",
@@ -354,7 +362,7 @@ export const pageSubscriberRouter = createTRPCRouter({
         z.object({
           pageId: z.number().int().positive(),
           channelType: z.literal("webhook"),
-          webhookUrl: z.url(),
+          webhookUrl: supportedWebhookUrlSchema,
           name: z.string().max(255).nullish(),
           headers: webhookHeadersSchema,
           componentIds: z
@@ -422,7 +430,7 @@ export const pageSubscriberRouter = createTRPCRouter({
         subscriberId: z.number().int().positive(),
         pageId: z.number().int().positive(),
         name: z.string().max(255).nullish(),
-        webhookUrl: z.url().optional(),
+        webhookUrl: supportedWebhookUrlSchema.optional(),
         headers: webhookHeadersSchema,
         componentIds: z.array(z.number().int().positive()).max(500).optional(),
       }),

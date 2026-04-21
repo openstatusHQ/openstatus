@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { PageUpdate, Subscription } from "../types";
 import {
+  buildGenericPayload,
   buildTestPayload,
   detectWebhookFlavor,
   sendTestWebhookRequest,
@@ -8,6 +9,9 @@ import {
   sendWebhookVerification,
   validateWebhookConfig,
 } from "./webhook";
+
+const SLACK_URL = "https://hooks.slack.com/services/T1/B1/XXX";
+const DISCORD_URL = "https://discord.com/api/webhooks/1/xxx";
 
 // biome-ignore lint/suspicious/noExplicitAny: test spy
 let fetchMock: any;
@@ -19,7 +23,7 @@ function makeSub(overrides: Partial<Subscription> = {}): Subscription {
     pageName: "Test Page",
     pageSlug: "test",
     channelType: "webhook",
-    webhookUrl: "https://example.com/webhook",
+    webhookUrl: SLACK_URL,
     token: "token-123",
     componentIds: [],
     ...overrides,
@@ -141,36 +145,34 @@ describe("sendWebhookNotifications", () => {
 
   test("sends a POST request to each webhook URL", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
-    const sub1 = makeSub({ webhookUrl: "https://hook1.example.com" });
-    const sub2 = makeSub({ webhookUrl: "https://hook2.example.com" });
+    const sub1 = makeSub({
+      webhookUrl: "https://hooks.slack.com/services/T1/B1/aaa",
+    });
+    const sub2 = makeSub({
+      webhookUrl: "https://hooks.slack.com/services/T2/B2/bbb",
+    });
 
     await sendWebhookNotifications([sub1, sub2], makeUpdate());
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const urls = fetchMock.mock.calls.map(([url]: [string]) => url);
-    expect(urls).toContain("https://hook1.example.com");
-    expect(urls).toContain("https://hook2.example.com");
+    expect(urls).toContain("https://hooks.slack.com/services/T1/B1/aaa");
+    expect(urls).toContain("https://hooks.slack.com/services/T2/B2/bbb");
   });
 
-  test("sends the correct payload shape", async () => {
+  test("drops subscriptions with non-Slack/Discord URLs", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
-    const sub = makeSub({ pageId: 42, pageName: "My Page" });
-    const update = makeUpdate({
-      title: "Outage",
-      status: "resolved",
-      pageComponents: ["API"],
+    const generic = makeSub({
+      id: 101,
+      webhookUrl: "https://example.com/webhook",
     });
+    const slack = makeSub({ id: 102, webhookUrl: SLACK_URL });
 
-    await sendWebhookNotifications([sub], update);
+    await sendWebhookNotifications([generic, slack], makeUpdate());
 
-    const [, init] = fetchMock.mock.calls[0];
-    const body = JSON.parse(init?.body as string);
-    expect(body.type).toBe("page_update");
-    expect(body.page.id).toBe(42);
-    expect(body.page.name).toBe("My Page");
-    expect(body.update.status).toBe("resolved");
-    expect(body.update.title).toBe("Outage");
-    expect(body.update.pageComponents).toEqual(["API"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe(SLACK_URL);
   });
 
   test("applies custom headers from channelConfig", async () => {
@@ -229,9 +231,7 @@ describe("detectWebhookFlavor", () => {
 describe("sendWebhookNotifications (flavor detection)", () => {
   test("emits Slack blocks payload for hooks.slack.com URLs", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
-    const sub = makeSub({
-      webhookUrl: "https://hooks.slack.com/services/T1/B1/XXX",
-    });
+    const sub = makeSub({ webhookUrl: SLACK_URL });
 
     await sendWebhookNotifications([sub], makeUpdate());
 
@@ -243,9 +243,7 @@ describe("sendWebhookNotifications (flavor detection)", () => {
 
   test("emits Discord embed payload for discord.com URLs", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
-    const sub = makeSub({
-      webhookUrl: "https://discord.com/api/webhooks/1/xxx",
-    });
+    const sub = makeSub({ webhookUrl: DISCORD_URL });
 
     await sendWebhookNotifications([sub], makeUpdate());
 
@@ -255,56 +253,111 @@ describe("sendWebhookNotifications (flavor detection)", () => {
     expect(body.embeds[0].title).toBe("Test Incident");
   });
 
-  test("includes manageUrl and unsubscribeUrl in generic payloads", async () => {
+  test("Slack payload includes manage/unsubscribe links", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
     const sub = makeSub({
       token: "tok-123",
-      webhookUrl: "https://example.com/webhook",
       pageSlug: "demo",
     });
 
     await sendWebhookNotifications([sub], makeUpdate());
 
     const [, init] = fetchMock.mock.calls[0];
-    const body = JSON.parse(init?.body as string);
-    expect(body.manageUrl).toBe("https://demo.openstatus.dev/manage/tok-123");
-    expect(body.unsubscribeUrl).toBe(
+    const stringified = init?.body as string;
+    expect(stringified).toContain("https://demo.openstatus.dev/manage/tok-123");
+    expect(stringified).toContain(
       "https://demo.openstatus.dev/unsubscribe/tok-123",
     );
   });
 
-  test("uses custom domain when present", async () => {
+  test("Slack payload uses custom domain when present", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
     const sub = makeSub({
       token: "tok-123",
       customDomain: "status.partner.com",
-      webhookUrl: "https://example.com/webhook",
     });
 
     await sendWebhookNotifications([sub], makeUpdate());
 
     const [, init] = fetchMock.mock.calls[0];
-    const body = JSON.parse(init?.body as string);
-    expect(body.manageUrl).toBe("https://status.partner.com/manage/tok-123");
+    const stringified = init?.body as string;
+    expect(stringified).toContain("https://status.partner.com/manage/tok-123");
+  });
+});
+
+// ─── buildGenericPayload (staged, not yet reachable in production) ────────────
+
+describe("buildGenericPayload", () => {
+  const links = {
+    manageUrl: "https://demo.openstatus.dev/manage/tok-1",
+    unsubscribeUrl: "https://demo.openstatus.dev/unsubscribe/tok-1",
+  };
+
+  test("status_report shape", () => {
+    const sub = makeSub({ pageId: 42, pageName: "Acme", pageSlug: "acme" });
+    const update = makeUpdate({
+      id: 12,
+      title: "API degraded",
+      status: "investigating",
+      message: "Looking into it.",
+      date: "2026-04-21T09:59:58Z",
+      updateId: 42,
+      pageComponentsWithId: [{ id: 7, name: "API" }],
+    });
+
+    const payload = buildGenericPayload(update, sub, links) as {
+      type: string;
+      data: { status_report: Record<string, unknown> };
+      subscription: { manage_url: string; unsubscribe_url: string };
+    };
+
+    expect(payload.type).toBe("status_report");
+    expect(payload.data.status_report).toMatchObject({
+      id: 12,
+      title: "API degraded",
+      update: {
+        id: 42,
+        status: "investigating",
+        message: "Looking into it.",
+        created_at: "2026-04-21T09:59:58Z",
+      },
+      page: { id: 42, name: "Acme", slug: "acme" },
+      components: [{ id: 7, name: "API" }],
+    });
+    expect(payload.subscription).toEqual({
+      manage_url: links.manageUrl,
+      unsubscribe_url: links.unsubscribeUrl,
+    });
   });
 
-  test("Slack payload embeds manage/unsubscribe as context block links", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
-    const sub = makeSub({
-      token: "tok-999",
-      pageSlug: "demo",
-      webhookUrl: "https://hooks.slack.com/services/T1/B1/XXX",
+  test("maintenance shape (no status field, includes starts_at/ends_at)", () => {
+    const sub = makeSub({ pageId: 42, pageName: "Acme", pageSlug: "acme" });
+    const update = makeUpdate({
+      id: 17,
+      title: "DB upgrade",
+      status: "maintenance",
+      message: "Rolling primary.",
+      startsAt: "2026-04-22T02:00:00Z",
+      endsAt: "2026-04-22T03:00:00Z",
+      pageComponentsWithId: [{ id: 7, name: "API" }],
     });
 
-    await sendWebhookNotifications([sub], makeUpdate());
+    const payload = buildGenericPayload(update, sub, links) as {
+      type: string;
+      data: { maintenance: Record<string, unknown> };
+    };
 
-    const [, init] = fetchMock.mock.calls[0];
-    const body = JSON.parse(init?.body as string);
-    const stringified = JSON.stringify(body);
-    expect(stringified).toContain("https://demo.openstatus.dev/manage/tok-999");
-    expect(stringified).toContain(
-      "https://demo.openstatus.dev/unsubscribe/tok-999",
-    );
+    expect(payload.type).toBe("maintenance");
+    expect(payload.data.maintenance).toMatchObject({
+      id: 17,
+      title: "DB upgrade",
+      message: "Rolling primary.",
+      starts_at: "2026-04-22T02:00:00Z",
+      ends_at: "2026-04-22T03:00:00Z",
+      page: { id: 42, name: "Acme", slug: "acme" },
+      components: [{ id: 7, name: "API" }],
+    });
+    expect(payload.data.maintenance).not.toHaveProperty("status");
   });
 });
 

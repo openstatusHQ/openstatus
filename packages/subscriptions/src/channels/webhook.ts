@@ -231,24 +231,65 @@ function buildDiscordPayload(
   };
 }
 
-function buildGenericPayload(
+/**
+ * Prepared (staged) generic webhook payload. Currently unreachable in
+ * production — the input gate rejects non-Slack/Discord URLs, and the
+ * dispatcher filters the same at send-time. Exported for unit-test coverage
+ * so the contract stays green while generic webhooks are held back.
+ */
+export function buildGenericPayload(
   pageUpdate: PageUpdate,
   subscription: Subscription,
   links: ManagementLinks,
 ) {
+  const page = {
+    id: subscription.pageId,
+    name: subscription.pageName,
+    slug: subscription.pageSlug,
+  };
+  const components =
+    pageUpdate.pageComponentsWithId ??
+    pageUpdate.pageComponents.map((name, i) => ({ id: i, name }));
+  const subscriptionBlock = {
+    manage_url: links.manageUrl,
+    unsubscribe_url: links.unsubscribeUrl,
+  };
+
+  if (pageUpdate.status === "maintenance") {
+    return {
+      type: "maintenance" as const,
+      data: {
+        maintenance: {
+          id: pageUpdate.id,
+          title: pageUpdate.title,
+          message: pageUpdate.message,
+          starts_at: pageUpdate.startsAt,
+          ends_at: pageUpdate.endsAt,
+          page,
+          components,
+        },
+      },
+      subscription: subscriptionBlock,
+    };
+  }
+
   return {
-    type: "page_update",
-    page: { id: subscription.pageId, name: subscription.pageName },
-    update: {
-      id: pageUpdate.id,
-      title: pageUpdate.title,
-      status: pageUpdate.status,
-      message: pageUpdate.message,
-      pageComponents: pageUpdate.pageComponents,
-      date: pageUpdate.date,
+    type: "status_report" as const,
+    data: {
+      status_report: {
+        id: pageUpdate.id,
+        title: pageUpdate.title,
+        update: {
+          id: pageUpdate.updateId,
+          status: pageUpdate.status,
+          message: pageUpdate.message,
+          created_at: pageUpdate.date,
+        },
+        page,
+        components,
+      },
     },
-    manageUrl: links.manageUrl,
-    unsubscribeUrl: links.unsubscribeUrl,
+    subscription: subscriptionBlock,
   };
 }
 
@@ -276,7 +317,18 @@ export async function sendWebhookNotifications(
   subscriptions: Subscription[],
   pageUpdate: PageUpdate,
 ) {
-  const validSubscriptions = subscriptions.filter(hasWebhookUrl);
+  // Defense-in-depth: the input gate (tRPC + service layer) already rejects
+  // non-Slack/Discord URLs at save time. Drop any that slip through so the
+  // unreachable generic payload never ships to an unapproved destination.
+  const validSubscriptions = subscriptions
+    .filter(hasWebhookUrl)
+    .filter((sub) => {
+      if (detectWebhookFlavor(sub.webhookUrl) !== "generic") return true;
+      console.warn(
+        `Dropping webhook subscription ${sub.id}: generic URLs are not currently supported`,
+      );
+      return false;
+    });
   if (validSubscriptions.length === 0) return;
 
   await Promise.allSettled(

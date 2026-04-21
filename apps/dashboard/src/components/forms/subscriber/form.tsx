@@ -288,8 +288,8 @@ export function FormSubscriber({
                       />
                     </FormControl>
                     <FormDescription>
-                      Slack, Discord, or generic HTTP endpoints are
-                      auto-detected from the URL prefix.
+                      Only Slack and Discord webhook URLs are supported for now
+                      — more channels coming soon.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -517,6 +517,10 @@ export async function createSubscription(input: CreateSubscriptionInput) {
     webhookUrl = input.webhookUrl;
     await assertSafeUrl(webhookUrl);
 
+    if (detectWebhookFlavor(webhookUrl) === "generic") {
+      throw new Error("Only Slack and Discord webhook URLs are supported.");
+    }
+
     const duplicate = await db.query.pageSubscriber.findFirst({
       where: and(
         eq(pageSubscriber.pageId, pageId),
@@ -644,6 +648,9 @@ export async function updateChannel(input: UpdateChannelInput) {
   if (existing.channelType === "webhook") {
     if (webhookUrl !== undefined) {
       await assertSafeUrl(webhookUrl);
+      if (detectWebhookFlavor(webhookUrl) === "generic") {
+        throw new Error("Only Slack and Discord webhook URLs are supported.");
+      }
       updateFields.webhookUrl = webhookUrl;
     }
     if (channelConfig !== undefined) {

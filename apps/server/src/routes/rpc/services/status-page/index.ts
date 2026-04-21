@@ -29,6 +29,7 @@ import {
 } from "@openstatus/proto/status_page/v1";
 import {
   createSubscription as createSubscriptionService,
+  detectWebhookFlavor,
   getChannel,
   upsertEmailSubscription,
 } from "@openstatus/subscriptions";
@@ -996,11 +997,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           .where(eq(pageSubscriber.id, created.id))
           .get();
       } else if (req.channel.case === "webhookChannel") {
+        const webhookUrl = req.channel.value.webhookUrl;
+        if (detectWebhookFlavor(webhookUrl) === "generic") {
+          throw new ConnectError(
+            "Only Slack and Discord webhook URLs are supported.",
+            Code.InvalidArgument,
+          );
+        }
         const headers = protoHeadersToPlain(req.channel.value.headers);
         const created = await createSubscriptionService({
           pageId: pageData.id,
           channelType: "webhook",
-          webhookUrl: req.channel.value.webhookUrl,
+          webhookUrl,
           name,
           channelConfig: headers.length > 0 ? { headers } : undefined,
           componentIds,
