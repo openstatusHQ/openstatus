@@ -1,4 +1,3 @@
-DROP INDEX `idx_page_subscriber_webhook_page_active`;--> statement-breakpoint
 DROP INDEX "workspace_slug_unique";--> statement-breakpoint
 DROP INDEX "workspace_stripe_id_unique";--> statement-breakpoint
 DROP INDEX "workspace_id_dsn_unique";--> statement-breakpoint
@@ -33,5 +32,4 @@ CREATE UNIQUE INDEX `api_key_hashed_token_unique` ON `api_key` (`hashed_token`);
 CREATE INDEX `api_key_prefix_idx` ON `api_key` (`prefix`);--> statement-breakpoint
 CREATE UNIQUE INDEX `page_component_page_id_monitor_id_unique` ON `page_component` (`page_id`,`monitor_id`);--> statement-breakpoint
 ALTER TABLE `page_subscriber` ADD `source` text DEFAULT 'self_signup' NOT NULL;--> statement-breakpoint
-ALTER TABLE `page_subscriber` ADD `name` text;--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_page_subscriber_webhook_page_active` ON `page_subscriber` (LOWER("webhook_url"),`page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'webhook';
+ALTER TABLE `page_subscriber` ADD `name` text;
