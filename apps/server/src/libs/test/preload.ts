@@ -1,17 +1,34 @@
 import { mock } from "bun:test";
+import * as realSubscriptions from "@openstatus/subscriptions";
 
 // Subscription dispatch spies — accessible in tests via globalThis.__subscriptionSpies
 const dispatchStatusReportUpdateSpy = mock((_id: number) => Promise.resolve());
 const dispatchMaintenanceUpdateSpy = mock((_id: number) => Promise.resolve());
 
+const sendVerificationSpy = mock(
+  (_subscription: realSubscriptions.Subscription, _verifyUrl: string) =>
+    Promise.resolve(),
+);
+
+const getChannelMock = {
+  id: "email",
+  sendVerification: sendVerificationSpy,
+  sendNotifications: mock(() => Promise.resolve()),
+  validateConfig: mock(() => Promise.resolve({ valid: true })),
+};
+
 (globalThis as Record<string, unknown>).__subscriptionSpies = {
   dispatchStatusReportUpdate: dispatchStatusReportUpdateSpy,
   dispatchMaintenanceUpdate: dispatchMaintenanceUpdateSpy,
+  sendVerification: sendVerificationSpy,
+  getChannel: getChannelMock,
 };
 
 mock.module("@openstatus/subscriptions", () => ({
+  ...realSubscriptions,
   dispatchStatusReportUpdate: dispatchStatusReportUpdateSpy,
   dispatchMaintenanceUpdate: dispatchMaintenanceUpdateSpy,
+  getChannel: () => getChannelMock,
 }));
 
 const testRedisStore = new Map<string, string>();
