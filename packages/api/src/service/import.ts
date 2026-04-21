@@ -416,15 +416,20 @@ export function clampPeriodicity(requested: string, allowed: string[]): string {
 // Phase writers
 // ---------------------------------------------------------------------------
 
-function computePhaseStatus(
+export function computePhaseStatus(
   resources: ResourceResult[],
 ): PhaseResult["status"] {
   if (resources.length === 0) return "completed";
+
   const allFailed = resources.every((r) => r.status === "failed");
   if (allFailed) return "failed";
+
   const hasFailed = resources.some((r) => r.status === "failed");
   const hasSkipped = resources.some((r) => r.status === "skipped");
-  if (hasFailed || hasSkipped) return "partial";
+  const allSkipped = resources.every((r) => r.status === "skipped");
+
+  if (hasFailed || (hasSkipped && !allSkipped)) return "partial";
+
   return "completed";
 }
 
@@ -477,7 +482,7 @@ async function writePagePhase(
 
     resource.openstatusId = existingPageId;
     resource.status = "skipped";
-    phase.status = "completed";
+    phase.status = computePhaseStatus(phase.resources);
     return existingPageId;
   }
 
@@ -491,7 +496,7 @@ async function writePagePhase(
   if (existingBySlug) {
     resource.openstatusId = existingBySlug.id;
     resource.status = "skipped";
-    phase.status = "completed";
+    phase.status = computePhaseStatus(phase.resources);
     return existingBySlug.id;
   }
 
@@ -515,7 +520,7 @@ async function writePagePhase(
 
   resource.openstatusId = inserted.id;
   resource.status = "created";
-  phase.status = "completed";
+  phase.status = computePhaseStatus(phase.resources);
   return inserted.id;
 }
 

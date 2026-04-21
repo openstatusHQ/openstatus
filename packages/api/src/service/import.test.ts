@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
-import { addLimitWarnings, clampPeriodicity } from "./import";
+import {
+  addLimitWarnings,
+  clampPeriodicity,
+  computePhaseStatus,
+} from "./import";
 
 function makeSummary(overrides?: Partial<ImportSummary>): ImportSummary {
   return {
@@ -362,21 +366,54 @@ describe("addLimitWarnings", () => {
   });
 });
 
-describe("summary status semantics", () => {
-  test("marks a phase partial when some resources are skipped", () => {
-    const resources = [
-      { sourceId: "1", name: "A", status: "created" as const },
-      { sourceId: "2", name: "B", status: "skipped" as const },
-    ];
+describe("computePhaseStatus", () => {
+  test("returns completed for empty resources", () => {
+    expect(computePhaseStatus([])).toBe("completed");
+  });
 
-    const status = resources.every((r) => r.status === "failed")
-      ? "failed"
-      : resources.some((r) => r.status === "failed") ||
-          resources.some((r) => r.status === "skipped")
-        ? "partial"
-        : "completed";
+  test("returns completed when all resources are created", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "created" },
+        { sourceId: "2", name: "B", status: "created" },
+      ]),
+    ).toBe("completed");
+  });
 
-    expect(status).toBe("partial");
+  test("returns completed when all resources are skipped", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "skipped" },
+        { sourceId: "2", name: "B", status: "skipped" },
+      ]),
+    ).toBe("completed");
+  });
+
+  test("returns partial when some resources are skipped", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "created" },
+        { sourceId: "2", name: "B", status: "skipped" },
+      ]),
+    ).toBe("partial");
+  });
+
+  test("returns partial when some resources fail", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "created" },
+        { sourceId: "2", name: "B", status: "failed" },
+      ]),
+    ).toBe("partial");
+  });
+
+  test("returns failed when all resources fail", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "failed" },
+        { sourceId: "2", name: "B", status: "failed" },
+      ]),
+    ).toBe("failed");
   });
 });
 
