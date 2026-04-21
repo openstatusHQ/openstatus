@@ -195,8 +195,12 @@ describe("sendWebhookNotifications", () => {
       .mockRejectedValueOnce(new Error("Network error"))
       .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
-    const sub1 = makeSub({ webhookUrl: "https://fail.example.com" });
-    const sub2 = makeSub({ webhookUrl: "https://succeed.example.com" });
+    const sub1 = makeSub({
+      webhookUrl: "https://hooks.slack.com/services/T1/B1/fail",
+    });
+    const sub2 = makeSub({
+      webhookUrl: "https://hooks.slack.com/services/T2/B2/succeed",
+    });
 
     await expect(
       sendWebhookNotifications([sub1, sub2], makeUpdate()),
