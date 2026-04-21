@@ -423,7 +423,8 @@ function computePhaseStatus(
   const allFailed = resources.every((r) => r.status === "failed");
   if (allFailed) return "failed";
   const hasFailed = resources.some((r) => r.status === "failed");
-  if (hasFailed) return "partial";
+  const hasSkipped = resources.some((r) => r.status === "skipped");
+  if (hasFailed || hasSkipped) return "partial";
   return "completed";
 }
 

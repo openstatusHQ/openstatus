@@ -362,6 +362,24 @@ describe("addLimitWarnings", () => {
   });
 });
 
+describe("summary status semantics", () => {
+  test("marks a phase partial when some resources are skipped", () => {
+    const resources = [
+      { sourceId: "1", name: "A", status: "created" as const },
+      { sourceId: "2", name: "B", status: "skipped" as const },
+    ];
+
+    const status = resources.every((r) => r.status === "failed")
+      ? "failed"
+      : resources.some((r) => r.status === "failed") ||
+          resources.some((r) => r.status === "skipped")
+        ? "partial"
+        : "completed";
+
+    expect(status).toBe("partial");
+  });
+});
+
 describe("clampPeriodicity", () => {
   const freePlan = allPlans.free.limits.periodicity as string[];
   const starterPlan = allPlans.starter.limits.periodicity as string[];
