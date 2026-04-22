@@ -144,15 +144,17 @@ const THEME_STYLE_BUILDER = {
 } satisfies Record<string, ThemeBuilderColor | ThemeBuilderCheckbox>;
 
 // Helper function to get nested property value from an object
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-function getNestedValue(obj: any, path: string): string | undefined {
+function getNestedValue(
+  obj: Record<string, unknown>,
+  path: string,
+): string | undefined {
   const keys = path.split(".");
-  let value = obj;
+  let value: unknown = obj;
   for (const key of keys) {
     if (value === undefined || value === null) return undefined;
-    value = value[key];
+    value = (value as Record<string, unknown>)[key];
   }
-  return value;
+  return value as string | undefined;
 }
 
 export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {

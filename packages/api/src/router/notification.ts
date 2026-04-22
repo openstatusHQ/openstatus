@@ -225,8 +225,9 @@ export const notificationRouter = createTRPCRouter({
         "grafana-oncall",
         "whatsapp",
       ] as const;
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      if (limitedProviders.includes(opts.input.provider as any)) {
+      if (
+        (limitedProviders as readonly string[]).includes(opts.input.provider)
+      ) {
         const isAllowed =
           opts.ctx.workspace.limits[
             opts.input.provider as

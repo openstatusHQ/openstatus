@@ -6,8 +6,7 @@ const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
 
 const auditLog = new AuditLog({ tb });
 
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
-async function seed() {
+async function _seed() {
   await auditLog.publishAuditLog({
     id: "monitor:2",
     action: "monitor.failed",
@@ -32,8 +31,7 @@ async function seed() {
   });
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
-async function history() {
+async function _history() {
   return await auditLog.getAuditLog({ event_id: "user:1" });
 }
 

@@ -9,8 +9,7 @@ import {
 } from "./index";
 
 describe("Slack Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  let fetchMock: any = undefined;
+  let fetchMock: ReturnType<typeof spyOn> | undefined;
 
   beforeEach(() => {
     // @ts-expect-error

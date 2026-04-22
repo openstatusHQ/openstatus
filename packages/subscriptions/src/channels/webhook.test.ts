@@ -6,8 +6,7 @@ import {
   validateWebhookConfig,
 } from "./webhook";
 
-// biome-ignore lint/suspicious/noExplicitAny: test spy
-let fetchMock: any;
+let fetchMock: ReturnType<typeof spyOn> | undefined;
 
 function makeSub(overrides: Partial<Subscription> = {}): Subscription {
   return {

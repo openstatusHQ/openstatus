@@ -52,16 +52,12 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       });
     }
     const otelHeader = _monitor.otelHeaders
-      ? z
-          .array(
-            z.object({
-              key: z.string(),
-              value: z.string(),
-            }),
-          )
-          .parse(JSON.parse(_monitor.otelHeaders))
-          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-          .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+      ? Object.fromEntries(
+          z
+            .array(z.object({ key: z.string(), value: z.string() }))
+            .parse(JSON.parse(_monitor.otelHeaders))
+            .map((v) => [v.key, v.value]),
+        )
       : undefined;
 
     const data = MonitorSchema.parse({

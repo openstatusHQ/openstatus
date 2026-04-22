@@ -603,8 +603,9 @@ export function setDataByType({
     if (status === "success") {
       // Calculate success duration as remaining time
       let totalEventMinutes = 0;
-      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-      durationMap.forEach((minutes) => (totalEventMinutes += minutes));
+      for (const minutes of durationMap.values()) {
+        totalEventMinutes += minutes;
+      }
 
       // Use adjusted total minutes accounting for maintenance
       const totalMinutesInDay = getAdjustedTotalMinutesInDay(

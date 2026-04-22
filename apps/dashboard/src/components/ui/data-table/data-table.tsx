@@ -75,8 +75,7 @@ export function DataTable<TData, TValue>({
   pagination,
   setPagination,
 }: DataTableProps<TData, TValue>) {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const [globalFilter, setGlobalFilter] = React.useState<any>();
+  const [globalFilter, setGlobalFilter] = React.useState<unknown>();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);

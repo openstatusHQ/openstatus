@@ -120,16 +120,12 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       .get();
 
     const otelHeader = _newMonitor.otelHeaders
-      ? z
-          .array(
-            z.object({
-              key: z.string(),
-              value: z.string(),
-            }),
-          )
-          .parse(JSON.parse(_newMonitor.otelHeaders))
-          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-          .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+      ? Object.fromEntries(
+          z
+            .array(z.object({ key: z.string(), value: z.string() }))
+            .parse(JSON.parse(_newMonitor.otelHeaders))
+            .map((v) => [v.key, v.value]),
+        )
       : undefined;
 
     const data = MonitorSchema.parse({
