@@ -9,6 +9,7 @@ import {
   inArray,
   isNull,
   lte,
+  sql,
 } from "@openstatus/db";
 import {
   maintenance,
@@ -973,7 +974,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         .where(
           and(
             eq(pageSubscriber.pageId, pageData.id),
-            eq(pageSubscriber.email, req.identifier.value),
+            sql`LOWER(${pageSubscriber.email}) = ${req.identifier.value.toLowerCase()}`,
+            eq(pageSubscriber.channelType, "email"),
+            isNull(pageSubscriber.unsubscribedAt),
           ),
         )
         .get();

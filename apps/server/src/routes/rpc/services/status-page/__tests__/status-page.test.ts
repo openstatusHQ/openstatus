@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { db, eq, sql } from "@openstatus/db";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   monitor,
   page,
@@ -1920,6 +1920,74 @@ describe("StatusPageService.UnsubscribeFromPage", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+
+  test("unsubscribes the ACTIVE subscriber when a prior unsubscribed row exists", async () => {
+    const email = `${TEST_PREFIX}-unsub-active@example.com`;
+
+    // Seed an old unsubscribed row (simulates a user who subscribed, verified,
+    // and unsubscribed in the past).
+    const oldRow = await db
+      .insert(pageSubscriber)
+      .values({
+        pageId: testPageId,
+        email,
+        channelType: "email",
+        token: crypto.randomUUID(),
+        acceptedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+        unsubscribedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+      })
+      .returning()
+      .get();
+
+    // Create a new ACTIVE subscription for the same email.
+    const activeRow = await db
+      .insert(pageSubscriber)
+      .values({
+        pageId: testPageId,
+        email,
+        channelType: "email",
+        token: crypto.randomUUID(),
+        acceptedAt: new Date(),
+      })
+      .returning()
+      .get();
+
+    // Unsubscribe by email — must target the ACTIVE row.
+    const res = await connectRequest(
+      "UnsubscribeFromPage",
+      {
+        pageId: String(testPageId),
+        email,
+      },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+
+    const refreshedActive = await db
+      .select()
+      .from(pageSubscriber)
+      .where(eq(pageSubscriber.id, activeRow.id))
+      .get();
+    expect(refreshedActive?.unsubscribedAt).not.toBeNull();
+
+    // No remaining active rows for this email on this page.
+    const stillActive = await db
+      .select()
+      .from(pageSubscriber)
+      .where(
+        and(
+          eq(pageSubscriber.pageId, testPageId),
+          eq(pageSubscriber.email, email),
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
+      )
+      .all();
+    expect(stillActive.length).toBe(0);
+
+    // Cleanup
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.id, oldRow.id));
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.id, activeRow.id));
   });
 });
 
