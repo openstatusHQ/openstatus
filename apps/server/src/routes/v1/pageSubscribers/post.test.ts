@@ -58,9 +58,7 @@ test("re-subscribing after unsubscribe succeeds and does not leave duplicate act
   // Clean any pre-existing rows from a previous run
   await db
     .delete(pageSubscriber)
-    .where(
-      and(eq(pageSubscriber.email, email), eq(pageSubscriber.pageId, 1)),
-    );
+    .where(and(eq(pageSubscriber.email, email), eq(pageSubscriber.pageId, 1)));
 
   // 1. Subscribe
   const firstRes = await app.request("/v1/page_subscriber/1/update", {
@@ -109,9 +107,7 @@ test("re-subscribing after unsubscribe succeeds and does not leave duplicate act
   // Cleanup
   await db
     .delete(pageSubscriber)
-    .where(
-      and(eq(pageSubscriber.email, email), eq(pageSubscriber.pageId, 1)),
-    );
+    .where(and(eq(pageSubscriber.email, email), eq(pageSubscriber.pageId, 1)));
 });
 
 test("subscribing when an active subscription already exists returns 409", async () => {
@@ -119,9 +115,7 @@ test("subscribing when an active subscription already exists returns 409", async
 
   await db
     .delete(pageSubscriber)
-    .where(
-      and(eq(pageSubscriber.email, email), eq(pageSubscriber.pageId, 1)),
-    );
+    .where(and(eq(pageSubscriber.email, email), eq(pageSubscriber.pageId, 1)));
 
   const firstRes = await app.request("/v1/page_subscriber/1/update", {
     method: "POST",

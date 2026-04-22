@@ -1986,12 +1986,8 @@ describe("StatusPageService.UnsubscribeFromPage", () => {
     expect(stillActive.length).toBe(0);
 
     // Cleanup
-    await db
-      .delete(pageSubscriber)
-      .where(eq(pageSubscriber.id, oldRow.id));
-    await db
-      .delete(pageSubscriber)
-      .where(eq(pageSubscriber.id, activeRow.id));
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.id, oldRow.id));
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.id, activeRow.id));
   });
 });
 
