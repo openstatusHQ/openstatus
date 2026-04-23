@@ -49,11 +49,15 @@ export type ListIncidentsResult = {
 /**
  * Load each incident's monitor in a single IN query against distinct
  * `monitorId`s — avoids the per-row fetch that would balloon with the
- * 10_000 sentinel tRPC passes.
+ * 10_000 sentinel tRPC passes. Scoped to `workspaceId` for defence-in-depth:
+ * the `incident.monitorId` column has no FK constraint against workspace
+ * ownership, so a cross-workspace pointer (however unlikely) should not
+ * leak the other workspace's monitor row.
  */
 async function enrichIncidentsBatch(
   db: DB,
   rows: Incident[],
+  workspaceId: number,
 ): Promise<IncidentWithRelations[]> {
   if (rows.length === 0) return [];
 
@@ -66,7 +70,12 @@ async function enrichIncidentsBatch(
     const monitorRows = await db
       .select()
       .from(monitor)
-      .where(inArray(monitor.id, monitorIds))
+      .where(
+        and(
+          inArray(monitor.id, monitorIds),
+          eq(monitor.workspaceId, workspaceId),
+        ),
+      )
       .all();
     for (const m of monitorRows) {
       monitorById.set(m.id, selectMonitorSchema.parse(m));
@@ -117,7 +126,7 @@ export async function listIncidents(args: {
   ]);
 
   const totalSize = countRow?.count ?? 0;
-  const items = await enrichIncidentsBatch(db, rows);
+  const items = await enrichIncidentsBatch(db, rows, ctx.workspace.id);
   return { items, totalSize };
 }
 
@@ -133,7 +142,7 @@ export async function getIncident(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  const [enriched] = await enrichIncidentsBatch(db, [record]);
+  const [enriched] = await enrichIncidentsBatch(db, [record], ctx.workspace.id);
   // biome-ignore lint/style/noNonNullAssertion: always defined for len === 1
   return enriched!;
 }
