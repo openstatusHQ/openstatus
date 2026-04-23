@@ -88,7 +88,20 @@ export const UpdatePagePasswordProtectionInput = z.object({
   accessType: z.enum(pageAccessTypes),
   authEmailDomains: z.array(z.string()).nullish(),
   password: z.string().nullish(),
-  allowedIpRanges: z.array(z.string()).nullish(),
+  // Mirror the CIDR validation applied on insert (`insertPageSchema`): bare
+  // IPs get `/32` appended, everything must be a valid IPv4 CIDR. Without
+  // this the update path would happily persist malformed ranges.
+  allowedIpRanges: z
+    .array(
+      z
+        .string()
+        .transform((s) => {
+          const trimmed = s.trim();
+          return trimmed.includes("/") ? trimmed : `${trimmed}/32`;
+        })
+        .pipe(z.cidrv4()),
+    )
+    .nullish(),
   allowIndex: z.boolean().optional(),
 });
 export type UpdatePagePasswordProtectionInput = z.infer<

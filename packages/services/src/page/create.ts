@@ -22,10 +22,12 @@ export async function createPage(args: {
 
   return withTransaction(ctx, async (tx) => {
     await assertStatusPageQuota(tx, ctx.workspace);
+    await assertSlugAvailable({ tx, slug: input.slug });
     assertAccessTypeAllowed(ctx.workspace, {
       accessType: input.accessType ?? "public",
       passwordProtected: input.passwordProtected ?? null,
       allowedIpRanges: input.allowedIpRanges ?? null,
+      allowIndex: input.allowIndex,
     });
 
     const {

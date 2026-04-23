@@ -127,7 +127,11 @@ export async function updatePagePasswordProtection(args: {
       .update(page)
       .set({
         accessType: input.accessType,
-        authEmailDomains: input.authEmailDomains?.join(","),
+        // `?? null` on both array columns so a null/undefined input clears
+        // the DB value (e.g. when switching access type) — without it,
+        // drizzle sees `undefined` and skips the column, leaving stale
+        // authEmailDomains / allowedIpRanges behind.
+        authEmailDomains: input.authEmailDomains?.join(",") ?? null,
         password: input.password,
         allowedIpRanges: input.allowedIpRanges?.join(",") ?? null,
         ...(input.allowIndex !== undefined && { allowIndex: input.allowIndex }),
