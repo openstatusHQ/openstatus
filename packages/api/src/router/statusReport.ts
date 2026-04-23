@@ -172,10 +172,11 @@ export const statusReportRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       try {
-        return await getStatusReport({
+        const result = await getStatusReport({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
         });
+        return narrowPage(result);
       } catch (err) {
         toTRPCError(err);
       }
@@ -197,16 +198,34 @@ export const statusReportRouter = createTRPCRouter({
             pageId: input.pageId,
             period: input.period,
             order: input.order ?? "desc",
-            // No limit/offset wired through tRPC today — preserve the
-            // "return everything" behaviour by selecting the package cap.
-            limit: 100,
+            // tRPC consumers (dashboard) want the full set — no paging UI
+            // today. Pass a sentinel ceiling rather than silently truncating;
+            // Connect's separate handler imposes its own max=100.
+            limit: 10_000,
             offset: 0,
             statuses: [],
           },
         });
-        return items;
+        return items.map(narrowPage);
       } catch (err) {
         toTRPCError(err);
       }
     }),
 });
+
+/**
+ * Narrow the service's nullable `page` field to a required one for the tRPC
+ * return type. Every status report is expected to have a `pageId` (and
+ * therefore a `page`) by the dashboard's schema; a null page here is a
+ * data-integrity signal we surface rather than silently return.
+ */
+function narrowPage<T extends { id: number; page: unknown }>(
+  report: T,
+): T & { page: NonNullable<T["page"]> } {
+  if (report.page == null) {
+    throw new Error(
+      `status report ${report.id} has no associated page (data inconsistency)`,
+    );
+  }
+  return report as T & { page: NonNullable<T["page"]> };
+}

@@ -72,8 +72,12 @@ export const GetStatusReportInput = z.object({
 });
 export type GetStatusReportInput = z.infer<typeof GetStatusReportInput>;
 
+// `limit` is intentionally unbounded at the schema level: API-style callers
+// (Connect) should cap in their adapter (external API boundary); dashboard
+// callers need the full set today and don't paginate. A huge sentinel lets
+// tRPC pass "effectively unlimited" without changing the surface.
 export const ListStatusReportsInput = z.object({
-  limit: z.number().int().min(1).max(100).default(50),
+  limit: z.number().int().min(1).default(50),
   offset: z.number().int().min(0).default(0),
   statuses: z.array(statusReportStatusSchema).default([]),
   pageId: z.number().int().optional(),
