@@ -55,7 +55,14 @@ export function toTRPCError(err: unknown): never {
           cause: err.cause,
         });
       case "LIMIT_EXCEEDED":
-        throw new TRPCError({ code: "FORBIDDEN", message: err.message });
+        // Quota exhaustion semantically maps to TOO_MANY_REQUESTS (429),
+        // not FORBIDDEN (403). Mirrors the Connect adapter's
+        // Code.ResourceExhausted mapping — both surfaces should say
+        // "you've hit a plan quota" rather than "you can't do this."
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: err.message,
+        });
       case "INTERNAL":
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

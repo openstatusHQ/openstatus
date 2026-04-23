@@ -94,8 +94,15 @@ async function enrichReportsBatch(
   }
 
   // One query: all component associations joined to their components.
+  // Explicit column selection with aliases avoids depending on drizzle's
+  // auto-derived `row.<object_name>` keys — those are named after the
+  // exported JS variable, so a rename in the schema silently breaks the
+  // row shape at runtime.
   const assocRows = await db
-    .select()
+    .select({
+      reportId: statusReportsToPageComponents.statusReportId,
+      component: pageComponent,
+    })
     .from(pageComponent)
     .innerJoin(
       statusReportsToPageComponents,
@@ -105,13 +112,10 @@ async function enrichReportsBatch(
     .all();
   const componentsByReport = new Map<number, PageComponent[]>();
   for (const row of assocRows) {
-    const reportId = (
-      row.status_report_to_page_component as { statusReportId: number }
-    ).statusReportId;
-    const component = row.page_component as unknown as PageComponent;
-    const arr = componentsByReport.get(reportId);
+    const component = row.component as unknown as PageComponent;
+    const arr = componentsByReport.get(row.reportId);
     if (arr) arr.push(component);
-    else componentsByReport.set(reportId, [component]);
+    else componentsByReport.set(row.reportId, [component]);
   }
 
   // Two queries: distinct pages + their component rosters. Keyed by pageId so

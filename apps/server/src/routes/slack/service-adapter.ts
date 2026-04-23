@@ -45,6 +45,13 @@ export async function toServiceCtx(args: {
  * Convert a service (or unknown) error into a Slack-friendly message.
  * Slack's UI is single-line plain text, so we surface actionable text only
  * and leave full error details to logtape/Sentry observability sinks.
+ *
+ * `NOT_FOUND` messages are sanitised before reaching Slack because
+ * `NotFoundError` formats as `"<entity> <id> not found"` (e.g.
+ * `"page_component 17 not found"`) — internal row IDs have no meaning
+ * to Slack users and shouldn't leak out of the service boundary. Other
+ * `ServiceError` subclasses take a hand-written message at their call
+ * site, so they're safe to forward verbatim.
  */
 export function toSlackMessage(err: unknown): string {
   if (err instanceof ZodError) {
@@ -53,6 +60,7 @@ export function toSlackMessage(err: unknown): string {
   if (err instanceof ServiceError) {
     switch (err.code) {
       case "NOT_FOUND":
+        return ":x: Couldn't find what you were looking for.";
       case "FORBIDDEN":
       case "UNAUTHORIZED":
       case "CONFLICT":

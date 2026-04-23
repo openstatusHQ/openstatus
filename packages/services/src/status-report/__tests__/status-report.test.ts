@@ -7,7 +7,7 @@ import {
   expect,
   test,
 } from "bun:test";
-import { db, eq } from "@openstatus/db";
+import { db, eq, inArray } from "@openstatus/db";
 import {
   page,
   pageComponent,
@@ -65,6 +65,16 @@ let testPageComponentId: number;
 let auditBuffer: AuditLogRecord[];
 let auditReset: () => void;
 
+/**
+ * Tests push created statusReport ids here instead of issuing an inline
+ * `db.delete()` at the end of their body. `afterEach` drains the array,
+ * so cleanup runs even when an assertion throws midway through a test —
+ * otherwise a failing assertion leaves orphans that flake subsequent
+ * runs. Individual tests can still push additional ids mid-test if they
+ * create multiple reports.
+ */
+const createdReportIds: number[] = [];
+
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
   const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
@@ -119,8 +129,15 @@ beforeEach(() => {
   subscriptionSpies?.dispatchStatusReportUpdate.mockClear();
 });
 
-afterEach(() => {
+afterEach(async () => {
   auditReset();
+  if (createdReportIds.length > 0) {
+    await db
+      .delete(statusReport)
+      .where(inArray(statusReport.id, createdReportIds))
+      .catch(() => undefined);
+    createdReportIds.length = 0;
+  }
 });
 
 describe("createStatusReport", () => {
@@ -156,7 +173,7 @@ describe("createStatusReport", () => {
       entityId: report.id,
     });
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 
   test("throws NotFoundError when the page is not in the workspace", async () => {
@@ -210,7 +227,7 @@ describe("addStatusReportUpdate", () => {
       entityId: newUpdate.id,
     });
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 
   test("throws NotFoundError for a status report in another workspace", async () => {
@@ -237,7 +254,7 @@ describe("addStatusReportUpdate", () => {
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -260,7 +277,7 @@ describe("resolveStatusReport", () => {
       input: { statusReportId: report.id, message: "all clear" },
     });
     expect(resolved.status).toBe("resolved");
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -295,7 +312,7 @@ describe("updateStatusReport", () => {
       .all();
     expect(assoc).toHaveLength(0);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -352,7 +369,7 @@ describe("deleteStatusReport", () => {
       deleteStatusReport({ ctx: freeCtx, input: { id: report.id } }),
     ).rejects.toBeInstanceOf(NotFoundError);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -390,7 +407,7 @@ describe("deleteStatusReportUpdate", () => {
       .all();
     expect(remaining).toHaveLength(0);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -414,7 +431,7 @@ describe("updateStatusReportUpdate", () => {
     });
     expect(edited.message).toBe("after");
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 
   test("throws ForbiddenError for cross-workspace edit", async () => {
@@ -437,7 +454,7 @@ describe("updateStatusReportUpdate", () => {
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -471,7 +488,7 @@ describe("listStatusReports / getStatusReport", () => {
     });
     expect(freeItems.find((r) => r.id === report.id)).toBeUndefined();
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 
   test("returns totalSize and enriched relations", async () => {
@@ -495,7 +512,7 @@ describe("listStatusReports / getStatusReport", () => {
     expect(full.pageComponents.map((c) => c.id)).toEqual([testPageComponentId]);
     expect(full.page?.id).toBe(testPageId);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -520,7 +537,7 @@ describe("notifyStatusReport", () => {
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
 
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });
 
@@ -547,6 +564,6 @@ describe("slack actor path", () => {
       entityId: report.id,
       actorType: "slack",
     });
-    await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    createdReportIds.push(report.id);
   });
 });

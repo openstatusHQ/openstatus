@@ -166,6 +166,18 @@ async function executeAction(
 ) {
   const { action, workspaceId, limits } = pending;
 
+  // Hoisted out of the switch: every service-backed branch below uses
+  // the same ctx, and `toServiceCtx` loads the workspace row from the
+  // db. Computing it once halves the per-action db traffic. Lazy enough
+  // — the `createMaintenance` branch still goes direct to db (migrates
+  // in PR 2) and doesn't need ctx, but the extra lookup there is
+  // negligible against the maintenance write volume.
+  const ctx = await toServiceCtx({
+    pending,
+    slackUserId: origin.slackUserId,
+    teamId: origin.teamId,
+  });
+
   switch (action.type) {
     case "createStatusReport": {
       const { title, status, message, pageId, pageComponentIds } =
@@ -174,11 +186,6 @@ async function executeAction(
         throw new Error("pageId is required to create a status report");
       }
 
-      const ctx = await toServiceCtx({
-        pending,
-        slackUserId: origin.slackUserId,
-        teamId: origin.teamId,
-      });
       const { statusReport: report, initialUpdate } = await createStatusReport({
         ctx,
         input: {
@@ -213,11 +220,6 @@ async function executeAction(
 
     case "addStatusReportUpdate": {
       const { statusReportId, status, message } = action.params;
-      const ctx = await toServiceCtx({
-        pending,
-        slackUserId: origin.slackUserId,
-        teamId: origin.teamId,
-      });
       const { statusReport: report, statusReportUpdate: update } =
         await addStatusReportUpdate({
           ctx,
@@ -246,11 +248,6 @@ async function executeAction(
 
     case "updateStatusReport": {
       const { statusReportId, title, pageComponentIds } = action.params;
-      const ctx = await toServiceCtx({
-        pending,
-        slackUserId: origin.slackUserId,
-        teamId: origin.teamId,
-      });
       const report = await updateStatusReport({
         ctx,
         input: {
@@ -273,11 +270,6 @@ async function executeAction(
 
     case "resolveStatusReport": {
       const { statusReportId, message } = action.params;
-      const ctx = await toServiceCtx({
-        pending,
-        slackUserId: origin.slackUserId,
-        teamId: origin.teamId,
-      });
       const { statusReport: report, statusReportUpdate: update } =
         await resolveStatusReport({
           ctx,
