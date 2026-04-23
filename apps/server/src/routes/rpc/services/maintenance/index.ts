@@ -1,4 +1,4 @@
-import type { ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import {
   createMaintenance,
@@ -29,7 +29,10 @@ function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
     const n = Number(id);
     if (!Number.isFinite(n)) {
-      throw invalidDateFormatError(id);
+      throw new ConnectError(
+        `Invalid page component id: "${id}"`,
+        Code.InvalidArgument,
+      );
     }
     return n;
   });

@@ -1,4 +1,5 @@
 import { Events } from "@openstatus/analytics";
+import { NotFoundError } from "@openstatus/services";
 import {
   createMaintenance,
   deleteMaintenance,
@@ -26,6 +27,10 @@ export const maintenanceRouter = createTRPCRouter({
         // only `.mutate` success/failure is observed.
         return [] as Array<never>;
       } catch (err) {
+        // Preserve the pre-migration idempotent behaviour — the old tRPC
+        // delete silently succeeded when the row was already gone. Connect
+        // still returns 404 on missing; external API semantics preserved.
+        if (err instanceof NotFoundError) return [] as Array<never>;
         toTRPCError(err);
       }
     }),

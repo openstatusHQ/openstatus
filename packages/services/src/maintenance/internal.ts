@@ -32,7 +32,9 @@ export async function validatePageComponentIds(args: {
     return { componentIds: [], pageId: null };
   }
 
-  const ids = Array.from(pageComponentIds);
+  // Dedupe up-front — duplicate ids in the input would violate the composite
+  // PK on `maintenances_to_page_components` during insert.
+  const ids = Array.from(new Set(pageComponentIds));
   const valid = await tx
     .select({ id: pageComponent.id, pageId: pageComponent.pageId })
     .from(pageComponent)
