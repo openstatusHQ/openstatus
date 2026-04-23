@@ -8,6 +8,10 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./status-report": {
+      "import": "./src/status-report/index.ts",
+      "types": "./src/status-report/index.ts"
     }
   },
   "scripts": {
@@ -16,6 +20,7 @@
   "dependencies": {
     "@logtape/logtape": "2.0.1",
     "@openstatus/db": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
     "zod": "4.1.13"
   },
   "devDependencies": {

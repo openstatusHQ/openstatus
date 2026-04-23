@@ -1,178 +1,25 @@
-import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
-
-// Type that works with both db instance and transaction
-type DB = typeof db;
-type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
-import {
-  pageComponent,
-  statusReport,
-  statusReportUpdate,
-  statusReportsToPageComponents,
-} from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import type { StatusReportService } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
+import {
+  addStatusReportUpdate,
+  createStatusReport,
+  deleteStatusReport,
+  getStatusReport,
+  listStatusReports,
+  notifyStatusReport,
+  updateStatusReport,
+} from "@openstatus/services/status-report";
 
-import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
-
+import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,
   dbReportToProtoSummary,
   protoStatusToDb,
 } from "./converters";
-import {
-  invalidDateFormatError,
-  pageComponentNotFoundError,
-  pageComponentsMixedPagesError,
-  pageIdComponentMismatchError,
-  statusReportCreateFailedError,
-  statusReportIdRequiredError,
-  statusReportNotFoundError,
-  statusReportUpdateFailedError,
-} from "./errors";
+import { invalidDateFormatError, statusReportIdRequiredError } from "./errors";
 
-/**
- * Helper to send status report notifications to page subscribers.
- * Uses the subscription dispatcher for component-aware filtering.
- */
-export async function sendStatusReportNotification(params: {
-  statusReportUpdateId: number;
-  limits: Limits;
-}) {
-  const { statusReportUpdateId, limits } = params;
-
-  if (!limits["status-subscribers"]) {
-    return;
-  }
-
-  await dispatchStatusReportUpdate(statusReportUpdateId);
-}
-
-/**
- * Helper to get a status report by ID with workspace scope.
- */
-export async function getStatusReportById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(statusReport)
-    .where(
-      and(eq(statusReport.id, id), eq(statusReport.workspaceId, workspaceId)),
-    )
-    .get();
-}
-
-/**
- * Helper to get page component IDs for a status report.
- */
-export async function getPageComponentIdsForReport(statusReportId: number) {
-  const components = await db
-    .select({ pageComponentId: statusReportsToPageComponents.pageComponentId })
-    .from(statusReportsToPageComponents)
-    .where(eq(statusReportsToPageComponents.statusReportId, statusReportId))
-    .all();
-
-  return components.map((c) => String(c.pageComponentId));
-}
-
-/**
- * Helper to get updates for a status report, ordered by date descending.
- */
-async function getUpdatesForReport(statusReportId: number) {
-  return db
-    .select()
-    .from(statusReportUpdate)
-    .where(eq(statusReportUpdate.statusReportId, statusReportId))
-    .orderBy(desc(statusReportUpdate.date))
-    .all();
-}
-
-/**
- * Result of validating page component IDs.
- */
-interface ValidatedPageComponents {
-  componentIds: number[];
-  pageId: number | null;
-}
-
-/**
- * Helper to validate page component IDs belong to the workspace and same page.
- * Accepts an optional transaction to ensure atomicity with subsequent operations.
- */
-export async function validatePageComponentIds(
-  pageComponentIds: string[],
-  workspaceId: number,
-  tx: DB | Transaction = db,
-): Promise<ValidatedPageComponents> {
-  if (pageComponentIds.length === 0) {
-    return { componentIds: [], pageId: null };
-  }
-
-  const numericIds = pageComponentIds.map((id) => Number(id));
-
-  const validComponents = await tx
-    .select({ id: pageComponent.id, pageId: pageComponent.pageId })
-    .from(pageComponent)
-    .where(
-      and(
-        inArray(pageComponent.id, numericIds),
-        eq(pageComponent.workspaceId, workspaceId),
-      ),
-    )
-    .all();
-
-  const validComponentsMap = new Map(
-    validComponents.map((c) => [c.id, c.pageId]),
-  );
-
-  // Check all requested IDs exist
-  for (const id of numericIds) {
-    if (!validComponentsMap.has(id)) {
-      throw pageComponentNotFoundError(String(id));
-    }
-  }
-
-  // Validate all components belong to the same page
-  const pageIds = new Set(validComponents.map((c) => c.pageId));
-  if (pageIds.size > 1) {
-    throw pageComponentsMixedPagesError();
-  }
-
-  const pageId = validComponents[0]?.pageId ?? null;
-
-  return { componentIds: numericIds, pageId };
-}
-
-/**
- * Helper to update page component associations for a status report.
- * Accepts an optional transaction to ensure atomicity.
- */
-export async function updatePageComponentAssociations(
-  statusReportId: number,
-  pageComponentIds: number[],
-  tx: DB | Transaction = db,
-) {
-  // Delete existing associations
-  await tx
-    .delete(statusReportsToPageComponents)
-    .where(eq(statusReportsToPageComponents.statusReportId, statusReportId));
-
-  // Insert new associations
-  if (pageComponentIds.length > 0) {
-    await tx.insert(statusReportsToPageComponents).values(
-      pageComponentIds.map((pageComponentId) => ({
-        statusReportId,
-        pageComponentId,
-      })),
-    );
-  }
-}
-
-/**
- * Parses and validates a date string.
- * Throws invalidDateFormatError if the date is invalid.
- */
 function parseDate(dateString: string): Date {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
@@ -181,336 +28,213 @@ function parseDate(dateString: string): Date {
   return date;
 }
 
-/**
- * Status report service implementation for ConnectRPC.
- */
+function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
+  return ids.map((id) => {
+    const n = Number(id);
+    if (!Number.isFinite(n)) {
+      throw new ConnectError(
+        `Invalid page component id: "${id}"`,
+        Code.InvalidArgument,
+      );
+    }
+    return n;
+  });
+}
+
 export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
   {
     async createStatusReport(req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        const sCtx = toServiceCtx(rpcCtx);
 
-      // Parse and validate the date before the transaction
-      const date = parseDate(req.date);
+        const pageId = req.pageId?.trim() ? Number(req.pageId.trim()) : null;
+        if (pageId === null) {
+          throw statusReportIdRequiredError();
+        }
 
-      // Create status report, associations, and initial update in a transaction
-      const { report: newReport, newUpdate } = await db.transaction(
-        async (tx) => {
-          // Validate page component IDs inside transaction to prevent TOCTOU race condition
-          const validatedComponents = await validatePageComponentIds(
-            req.pageComponentIds,
-            workspaceId,
-            tx,
-          );
-
-          // Validate that provided pageId matches the components' page
-          const derivedPageId = validatedComponents.pageId;
-          const providedPageId = req.pageId?.trim();
-          if (
-            derivedPageId !== null &&
-            providedPageId &&
-            providedPageId !== "" &&
-            Number(providedPageId) !== derivedPageId
-          ) {
-            throw pageIdComponentMismatchError(
-              providedPageId,
-              String(derivedPageId),
-            );
-          }
-
-          // Use the derived pageId from components, or parse the provided one
-          const pageId =
-            derivedPageId ?? (providedPageId ? Number(providedPageId) : null);
-
-          // Create the status report
-          const report = await tx
-            .insert(statusReport)
-            .values({
-              workspaceId,
-              pageId,
-              title: req.title,
-              status: protoStatusToDb(req.status),
-            })
-            .returning()
-            .get();
-
-          if (!report) {
-            throw statusReportCreateFailedError();
-          }
-
-          // Create page component associations
-          await updatePageComponentAssociations(
-            report.id,
-            validatedComponents.componentIds,
-            tx,
-          );
-
-          // Create the initial update
-          const newUpdate = await tx
-            .insert(statusReportUpdate)
-            .values({
-              statusReportId: report.id,
-              status: protoStatusToDb(req.status),
-              date,
-              message: req.message,
-            })
-            .returning()
-            .get();
-
-          if (!newUpdate) {
-            throw statusReportCreateFailedError();
-          }
-
-          return { report, newUpdate, pageId };
-        },
-      );
-
-      // Send notifications if requested (outside transaction)
-      if (req.notify) {
-        await sendStatusReportNotification({
-          statusReportUpdateId: newUpdate.id,
-          limits: rpcCtx.workspace.limits,
+        const { statusReport, initialUpdate } = await createStatusReport({
+          ctx: sCtx,
+          input: {
+            title: req.title,
+            status: protoStatusToDb(req.status),
+            message: req.message,
+            date: parseDate(req.date),
+            pageId,
+            pageComponentIds: parsePageComponentIds(req.pageComponentIds),
+          },
         });
+
+        if (req.notify) {
+          await notifyStatusReport({
+            ctx: sCtx,
+            input: { statusReportUpdateId: initialUpdate.id },
+          });
+        }
+
+        const full = await getStatusReport({
+          ctx: sCtx,
+          input: { id: statusReport.id },
+        });
+        return {
+          statusReport: dbReportToProto(
+            full,
+            full.pageComponentIds.map(String),
+            full.updates,
+          ),
+        };
+      } catch (err) {
+        toConnectError(err);
       }
-
-      // Fetch the updates for the response
-      const updates = await getUpdatesForReport(newReport.id);
-
-      return {
-        statusReport: dbReportToProto(newReport, req.pageComponentIds, updates),
-      };
     },
 
     async getStatusReport(req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        if (!req.id || req.id.trim() === "") {
+          throw statusReportIdRequiredError();
+        }
 
-      if (!req.id || req.id.trim() === "") {
-        throw statusReportIdRequiredError();
+        const full = await getStatusReport({
+          ctx: toServiceCtx(rpcCtx),
+          input: { id: Number(req.id) },
+        });
+        return {
+          statusReport: dbReportToProto(
+            full,
+            full.pageComponentIds.map(String),
+            full.updates,
+          ),
+        };
+      } catch (err) {
+        toConnectError(err);
       }
-
-      const report = await getStatusReportById(Number(req.id), workspaceId);
-      if (!report) {
-        throw statusReportNotFoundError(req.id);
-      }
-
-      const pageComponentIds = await getPageComponentIdsForReport(report.id);
-      const updates = await getUpdatesForReport(report.id);
-
-      return {
-        statusReport: dbReportToProto(report, pageComponentIds, updates),
-      };
     },
 
     async listStatusReports(req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
+      try {
+        const rpcCtx = getRpcContext(ctx);
 
-      const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
-      const offset = req.offset ?? 0;
+        const statuses =
+          req.statuses.length > 0
+            ? req.statuses
+                .filter((s) => s !== StatusReportStatus.UNSPECIFIED)
+                .map(protoStatusToDb)
+            : [];
 
-      // Build conditions
-      const conditions = [eq(statusReport.workspaceId, workspaceId)];
+        const { items, totalSize } = await listStatusReports({
+          ctx: toServiceCtx(rpcCtx),
+          input: {
+            limit: Math.min(Math.max(req.limit ?? 50, 1), 100),
+            offset: req.offset ?? 0,
+            statuses,
+            order: "desc",
+          },
+        });
 
-      // Add status filter if provided
-      if (req.statuses.length > 0) {
-        const dbStatuses = req.statuses
-          .filter((s) => s !== StatusReportStatus.UNSPECIFIED)
-          .map(protoStatusToDb);
-        if (dbStatuses.length > 0) {
-          conditions.push(inArray(statusReport.status, dbStatuses));
-        }
+        return {
+          statusReports: items.map((r) =>
+            dbReportToProtoSummary(r, r.pageComponentIds.map(String)),
+          ),
+          totalSize,
+        };
+      } catch (err) {
+        toConnectError(err);
       }
-
-      // Get total count
-      const countResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(statusReport)
-        .where(and(...conditions))
-        .get();
-
-      const totalCount = countResult?.count ?? 0;
-
-      // Get status reports
-      const reports = await db
-        .select()
-        .from(statusReport)
-        .where(and(...conditions))
-        .orderBy(desc(statusReport.createdAt))
-        .limit(limit)
-        .offset(offset)
-        .all();
-
-      // Get page component IDs for each report
-      const statusReports = await Promise.all(
-        reports.map(async (report) => {
-          const pageComponentIds = await getPageComponentIdsForReport(
-            report.id,
-          );
-          return dbReportToProtoSummary(report, pageComponentIds);
-        }),
-      );
-
-      return {
-        statusReports,
-        totalSize: totalCount,
-      };
     },
 
     async updateStatusReport(req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        const sCtx = toServiceCtx(rpcCtx);
+        if (!req.id || req.id.trim() === "") {
+          throw statusReportIdRequiredError();
+        }
 
-      if (!req.id || req.id.trim() === "") {
-        throw statusReportIdRequiredError();
-      }
+        const id = Number(req.id);
+        await updateStatusReport({
+          ctx: sCtx,
+          input: {
+            id,
+            title:
+              req.title !== undefined && req.title !== ""
+                ? req.title
+                : undefined,
+            pageComponentIds: req.updatePageComponentIds
+              ? parsePageComponentIds(req.pageComponentIds)
+              : undefined,
+          },
+        });
 
-      const report = await getStatusReportById(Number(req.id), workspaceId);
-      if (!report) {
-        throw statusReportNotFoundError(req.id);
-      }
-
-      // Update report, associations in a transaction
-      const updatedReport = await db.transaction(async (tx) => {
-        const updateValues: Record<string, unknown> = {
-          updatedAt: new Date(),
+        const full = await getStatusReport({ ctx: sCtx, input: { id } });
+        return {
+          statusReport: dbReportToProto(
+            full,
+            full.pageComponentIds.map(String),
+            full.updates,
+          ),
         };
-
-        if (req.title !== undefined && req.title !== "") {
-          updateValues.title = req.title;
-        }
-
-        if (req.updatePageComponentIds) {
-          const validatedComponents = await validatePageComponentIds(
-            req.pageComponentIds,
-            workspaceId,
-            tx,
-          );
-
-          updateValues.pageId = validatedComponents.pageId;
-
-          await updatePageComponentAssociations(
-            report.id,
-            validatedComponents.componentIds,
-            tx,
-          );
-        }
-
-        const updated = await tx
-          .update(statusReport)
-          .set(updateValues)
-          .where(eq(statusReport.id, report.id))
-          .returning()
-          .get();
-
-        if (!updated) {
-          throw statusReportUpdateFailedError(req.id);
-        }
-
-        return updated;
-      });
-
-      // Fetch updated data
-      const pageComponentIds = await getPageComponentIdsForReport(
-        updatedReport.id,
-      );
-      const updates = await getUpdatesForReport(updatedReport.id);
-
-      return {
-        statusReport: dbReportToProto(updatedReport, pageComponentIds, updates),
-      };
+      } catch (err) {
+        toConnectError(err);
+      }
     },
 
     async deleteStatusReport(req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
-
-      if (!req.id || req.id.trim() === "") {
-        throw statusReportIdRequiredError();
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        if (!req.id || req.id.trim() === "") {
+          throw statusReportIdRequiredError();
+        }
+        await deleteStatusReport({
+          ctx: toServiceCtx(rpcCtx),
+          input: { id: Number(req.id) },
+        });
+        return { success: true };
+      } catch (err) {
+        toConnectError(err);
       }
-
-      const report = await getStatusReportById(Number(req.id), workspaceId);
-      if (!report) {
-        throw statusReportNotFoundError(req.id);
-      }
-
-      // Delete the status report (cascade will delete updates and associations)
-      await db.delete(statusReport).where(eq(statusReport.id, report.id));
-
-      return { success: true };
     },
 
     async addStatusReportUpdate(req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
-
-      if (!req.statusReportId || req.statusReportId.trim() === "") {
-        throw statusReportIdRequiredError();
-      }
-
-      const report = await getStatusReportById(
-        Number(req.statusReportId),
-        workspaceId,
-      );
-      if (!report) {
-        throw statusReportNotFoundError(req.statusReportId);
-      }
-
-      // Parse and validate the date or use current time
-      const date = req.date ? parseDate(req.date) : new Date();
-
-      // Create update and update status report in a transaction
-      const { updatedReport, newUpdate } = await db.transaction(async (tx) => {
-        // Create the update
-        const newUpdate = await tx
-          .insert(statusReportUpdate)
-          .values({
-            statusReportId: report.id,
-            status: protoStatusToDb(req.status),
-            date,
-            message: req.message,
-          })
-          .returning()
-          .get();
-
-        if (!newUpdate) {
-          throw statusReportUpdateFailedError(req.statusReportId);
+      try {
+        const rpcCtx = getRpcContext(ctx);
+        const sCtx = toServiceCtx(rpcCtx);
+        if (!req.statusReportId || req.statusReportId.trim() === "") {
+          throw statusReportIdRequiredError();
         }
 
-        // Update the status report's status and updatedAt
-        const updated = await tx
-          .update(statusReport)
-          .set({
-            status: protoStatusToDb(req.status),
-            updatedAt: new Date(),
-          })
-          .where(eq(statusReport.id, report.id))
-          .returning()
-          .get();
+        const statusReportId = Number(req.statusReportId);
+        const { statusReport: updatedReport, statusReportUpdate: newUpdate } =
+          await addStatusReportUpdate({
+            ctx: sCtx,
+            input: {
+              statusReportId,
+              status: protoStatusToDb(req.status),
+              message: req.message,
+              date: req.date ? parseDate(req.date) : undefined,
+            },
+          });
 
-        if (!updated) {
-          throw statusReportUpdateFailedError(req.statusReportId);
+        if (req.notify && updatedReport.pageId) {
+          await notifyStatusReport({
+            ctx: sCtx,
+            input: { statusReportUpdateId: newUpdate.id },
+          });
         }
 
-        return { updatedReport: updated, newUpdate };
-      });
-
-      // Send notifications if requested (outside transaction)
-      if (req.notify && updatedReport.pageId) {
-        await sendStatusReportNotification({
-          statusReportUpdateId: newUpdate.id,
-          limits: rpcCtx.workspace.limits,
+        const full = await getStatusReport({
+          ctx: sCtx,
+          input: { id: statusReportId },
         });
+        return {
+          statusReport: dbReportToProto(
+            full,
+            full.pageComponentIds.map(String),
+            full.updates,
+          ),
+        };
+      } catch (err) {
+        toConnectError(err);
       }
-
-      // Fetch all updates
-      const pageComponentIds = await getPageComponentIdsForReport(
-        updatedReport.id,
-      );
-      const updates = await getUpdatesForReport(updatedReport.id);
-
-      return {
-        statusReport: dbReportToProto(updatedReport, pageComponentIds, updates),
-      };
     },
   };

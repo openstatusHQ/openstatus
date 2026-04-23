@@ -78,5 +78,42 @@
       "*.astro",
       ".astro"
     ]
-  }
+  },
+  // Overrides: scope the `@openstatus/db` / drizzle import ban to files that
+  // have been migrated onto `@openstatus/services`. The include list grows
+  // one domain per migration PR; when every domain has migrated, the final
+  // PR broadens this to cover all routers/handlers and drops the db dep
+  // from `packages/api` and `apps/server` outright.
+  "overrides": [
+    {
+      "include": [
+        "packages/api/src/router/statusReport.ts",
+        "apps/server/src/routes/rpc/services/status-report/**"
+      ],
+      "ignore": [
+        // Tests legitimately manage db state for fixtures and cleanup.
+        "**/__tests__/**",
+        "**/*.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@openstatus/db": "Use @openstatus/services instead (domain has migrated to the service layer).",
+                  "@openstatus/db/src/schema": "Use @openstatus/services instead.",
+                  "@openstatus/db/src/schema/plan/utils": "Use @openstatus/services instead.",
+                  "@openstatus/db/src/schema/plan/schema": "Use @openstatus/services instead.",
+                  "@openstatus/db/src/schema/plan/config": "Use @openstatus/services instead.",
+                  "drizzle-orm": "Use @openstatus/services instead."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

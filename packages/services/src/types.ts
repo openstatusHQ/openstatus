@@ -13,3 +13,11 @@ export type {
   WorkspacePlan,
   WorkspaceRole,
 } from "@openstatus/db/src/schema";
+
+export type {
+  StatusReport,
+  StatusReportStatus,
+  StatusReportUpdate,
+} from "@openstatus/db/src/schema";
+
+export type { Page, PageComponent } from "@openstatus/db/src/schema";
