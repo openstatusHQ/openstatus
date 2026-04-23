@@ -22,6 +22,7 @@
       <a href="https://github.com/openstatushq/openstatus/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License"></a>
       <a href="https://github.com/openstatushq/openstatus/stargazers"><img src="https://img.shields.io/github/stars/openstatushq/openstatus?style=social" alt="GitHub stars"></a>
       <a href="https://www.openstatus.dev/discord"><img src="https://img.shields.io/discord/1129008226264940625?color=7289da&logo=discord&logoColor=white" alt="Discord"></a>
+      <a href="https://codesea.app/repo/openstatushq/openstatus"><img src="https://codesea.app/badge/openstatushq/openstatus.svg" alt="Architecture Analysis"></a>
 </p>
 
 ## About openstatus
