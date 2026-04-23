@@ -1,149 +1,22 @@
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
-import {
-  maintenance,
-  maintenancesToPageComponents,
-  page,
-  pageComponent,
-} from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
+import {
+  createMaintenance,
+  deleteMaintenance,
+  getMaintenance,
+  listMaintenances,
+  notifyMaintenance,
+  updateMaintenance,
+} from "@openstatus/services/maintenance";
 
-import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
-
+import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
   dbMaintenanceToProto,
   dbMaintenanceToProtoSummary,
 } from "./converters";
-import {
-  invalidDateFormatError,
-  invalidDateRangeError,
-  maintenanceCreateFailedError,
-  maintenanceIdRequiredError,
-  maintenanceNotFoundError,
-  maintenanceUpdateFailedError,
-  pageComponentNotFoundError,
-  pageComponentsMixedPagesError,
-  pageIdComponentMismatchError,
-  pageNotFoundError,
-} from "./errors";
+import { invalidDateFormatError, maintenanceIdRequiredError } from "./errors";
 
-// Type that works with both db instance and transaction
-type DB = typeof db;
-type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
-
-/**
- * Helper to get a maintenance by ID with workspace scope.
- */
-async function getMaintenanceById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(maintenance)
-    .where(
-      and(eq(maintenance.id, id), eq(maintenance.workspaceId, workspaceId)),
-    )
-    .get();
-}
-
-/**
- * Helper to get page component IDs for a maintenance.
- */
-async function getPageComponentIdsForMaintenance(maintenanceId: number) {
-  const components = await db
-    .select({ pageComponentId: maintenancesToPageComponents.pageComponentId })
-    .from(maintenancesToPageComponents)
-    .where(eq(maintenancesToPageComponents.maintenanceId, maintenanceId))
-    .all();
-
-  return components.map((c) => String(c.pageComponentId));
-}
-
-/**
- * Result of validating page component IDs.
- */
-interface ValidatedPageComponents {
-  componentIds: number[];
-  pageId: number | null;
-}
-
-/**
- * Helper to validate page component IDs belong to the workspace and same page.
- * Accepts an optional transaction to ensure atomicity with subsequent operations.
- */
-export async function validatePageComponentIds(
-  pageComponentIds: string[],
-  workspaceId: number,
-  tx: DB | Transaction = db,
-): Promise<ValidatedPageComponents> {
-  if (pageComponentIds.length === 0) {
-    return { componentIds: [], pageId: null };
-  }
-
-  const numericIds = pageComponentIds.map((id) => Number(id));
-
-  const validComponents = await tx
-    .select({ id: pageComponent.id, pageId: pageComponent.pageId })
-    .from(pageComponent)
-    .where(
-      and(
-        inArray(pageComponent.id, numericIds),
-        eq(pageComponent.workspaceId, workspaceId),
-      ),
-    )
-    .all();
-
-  const validComponentsMap = new Map(
-    validComponents.map((c) => [c.id, c.pageId]),
-  );
-
-  // Check all requested IDs exist
-  for (const id of numericIds) {
-    if (!validComponentsMap.has(id)) {
-      throw pageComponentNotFoundError(String(id));
-    }
-  }
-
-  // Validate all components belong to the same page
-  const pageIds = new Set(validComponents.map((c) => c.pageId));
-  if (pageIds.size > 1) {
-    throw pageComponentsMixedPagesError();
-  }
-
-  const pageId = validComponents[0]?.pageId ?? null;
-
-  return { componentIds: numericIds, pageId };
-}
-
-/**
- * Helper to update page component associations for a maintenance.
- * Accepts an optional transaction to ensure atomicity.
- */
-export async function updatePageComponentAssociations(
-  maintenanceId: number,
-  pageComponentIds: number[],
-  tx: DB | Transaction = db,
-) {
-  // Delete existing associations
-  await tx
-    .delete(maintenancesToPageComponents)
-    .where(eq(maintenancesToPageComponents.maintenanceId, maintenanceId));
-
-  // Insert new associations
-  if (pageComponentIds.length > 0) {
-    await tx.insert(maintenancesToPageComponents).values(
-      pageComponentIds.map((pageComponentId) => ({
-        maintenanceId,
-        pageComponentId,
-      })),
-    );
-  }
-}
-
-/**
- * Parses and validates a date string.
- * Throws invalidDateFormatError if the date is invalid.
- */
 function parseDate(dateString: string): Date {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
@@ -152,308 +25,150 @@ function parseDate(dateString: string): Date {
   return date;
 }
 
-/**
- * Validates that from date is before to date.
- */
-function validateDateRange(
-  from: Date,
-  to: Date,
-  fromStr: string,
-  toStr: string,
-): void {
-  if (from >= to) {
-    throw invalidDateRangeError(fromStr, toStr);
-  }
+function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
+  return ids.map((id) => {
+    const n = Number(id);
+    if (!Number.isFinite(n)) {
+      throw invalidDateFormatError(id);
+    }
+    return n;
+  });
 }
 
-/**
- * Helper to validate page exists in workspace.
- */
-export async function validatePageExists(
-  pageId: number,
-  workspaceId: number,
-  tx: DB | Transaction = db,
-): Promise<void> {
-  const pageRecord = await tx
-    .select({ id: page.id })
-    .from(page)
-    .where(and(eq(page.id, pageId), eq(page.workspaceId, workspaceId)))
-    .get();
-
-  if (!pageRecord) {
-    throw pageNotFoundError(String(pageId));
-  }
-}
-
-/**
- * Helper to send maintenance notifications to page subscribers.
- * Uses the subscription dispatcher for component-aware filtering.
- */
-export async function sendMaintenanceNotification(params: {
-  maintenanceId: number;
-  limits: Limits;
-}) {
-  const { maintenanceId, limits } = params;
-
-  if (!limits["status-subscribers"]) {
-    return;
-  }
-
-  await dispatchMaintenanceUpdate(maintenanceId);
-}
-
-/**
- * Maintenance service implementation for ConnectRPC.
- */
 export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
   async createMaintenance(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const sCtx = toServiceCtx(rpcCtx);
 
-    // Parse and validate dates
-    const fromDate = parseDate(req.from);
-    const toDate = parseDate(req.to);
-    validateDateRange(fromDate, toDate, req.from, req.to);
-
-    const providedPageId = Number(req.pageId);
-
-    // Create maintenance and associations in a transaction
-    const newMaintenance = await db.transaction(async (tx) => {
-      // Validate page exists in workspace
-      await validatePageExists(providedPageId, workspaceId, tx);
-
-      // Validate page component IDs
-      const validatedComponents = await validatePageComponentIds(
-        req.pageComponentIds,
-        workspaceId,
-        tx,
-      );
-
-      // Validate that components belong to the same page as provided pageId
-      if (
-        validatedComponents.pageId !== null &&
-        validatedComponents.pageId !== providedPageId
-      ) {
-        throw pageIdComponentMismatchError(
-          req.pageId,
-          String(validatedComponents.pageId),
-        );
-      }
-
-      // Create the maintenance
-      const record = await tx
-        .insert(maintenance)
-        .values({
-          workspaceId,
-          pageId: providedPageId,
+      const record = await createMaintenance({
+        ctx: sCtx,
+        input: {
           title: req.title,
           message: req.message,
-          from: fromDate,
-          to: toDate,
-        })
-        .returning()
-        .get();
+          from: parseDate(req.from),
+          to: parseDate(req.to),
+          pageId: Number(req.pageId),
+          pageComponentIds: parsePageComponentIds(req.pageComponentIds),
+        },
+      });
 
-      if (!record) {
-        throw maintenanceCreateFailedError();
+      if (req.notify) {
+        await notifyMaintenance({
+          ctx: sCtx,
+          input: { maintenanceId: record.id },
+        });
       }
 
-      // Create page component associations
-      await updatePageComponentAssociations(
-        record.id,
-        validatedComponents.componentIds,
-        tx,
-      );
-
-      return record;
-    });
-
-    // Send notifications if requested (outside transaction)
-    if (req.notify) {
-      await sendMaintenanceNotification({
-        maintenanceId: newMaintenance.id,
-        limits: rpcCtx.workspace.limits,
-      });
+      return {
+        maintenance: dbMaintenanceToProto(record, req.pageComponentIds),
+      };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    return {
-      maintenance: dbMaintenanceToProto(newMaintenance, req.pageComponentIds),
-    };
   },
 
   async getMaintenance(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    if (!req.id || req.id.trim() === "") {
-      throw maintenanceIdRequiredError();
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      if (!req.id || req.id.trim() === "") {
+        throw maintenanceIdRequiredError();
+      }
+      const full = await getMaintenance({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: Number(req.id) },
+      });
+      return {
+        maintenance: dbMaintenanceToProto(
+          full,
+          full.pageComponentIds.map(String),
+        ),
+      };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    const record = await getMaintenanceById(Number(req.id), workspaceId);
-    if (!record) {
-      throw maintenanceNotFoundError(req.id);
-    }
-
-    const pageComponentIds = await getPageComponentIdsForMaintenance(record.id);
-
-    return {
-      maintenance: dbMaintenanceToProto(record, pageComponentIds),
-    };
   },
 
   async listMaintenances(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    try {
+      const rpcCtx = getRpcContext(ctx);
 
-    const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
-    const offset = req.offset ?? 0;
+      const pageId =
+        req.pageId && req.pageId.trim() !== "" ? Number(req.pageId) : undefined;
 
-    // Build conditions
-    const conditions = [eq(maintenance.workspaceId, workspaceId)];
+      const { items, totalSize } = await listMaintenances({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          limit: Math.min(Math.max(req.limit ?? 50, 1), 100),
+          offset: req.offset ?? 0,
+          pageId,
+          order: "desc",
+        },
+      });
 
-    // Add page_id filter if provided
-    if (req.pageId && req.pageId.trim() !== "") {
-      conditions.push(eq(maintenance.pageId, Number(req.pageId)));
+      return {
+        maintenances: items.map((r) =>
+          dbMaintenanceToProtoSummary(r, r.pageComponentIds.map(String)),
+        ),
+        totalSize,
+      };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Get total count
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(maintenance)
-      .where(and(...conditions))
-      .get();
-
-    const totalCount = countResult?.count ?? 0;
-
-    // Get maintenances
-    const records = await db
-      .select()
-      .from(maintenance)
-      .where(and(...conditions))
-      .orderBy(desc(maintenance.from))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    // Get page component IDs for each maintenance
-    const maintenances = await Promise.all(
-      records.map(async (record) => {
-        const pageComponentIds = await getPageComponentIdsForMaintenance(
-          record.id,
-        );
-        return dbMaintenanceToProtoSummary(record, pageComponentIds);
-      }),
-    );
-
-    return {
-      maintenances,
-      totalSize: totalCount,
-    };
   },
 
   async updateMaintenance(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const sCtx = toServiceCtx(rpcCtx);
+      if (!req.id || req.id.trim() === "") {
+        throw maintenanceIdRequiredError();
+      }
 
-    if (!req.id || req.id.trim() === "") {
-      throw maintenanceIdRequiredError();
-    }
+      const id = Number(req.id);
+      await updateMaintenance({
+        ctx: sCtx,
+        input: {
+          id,
+          title:
+            req.title !== undefined && req.title !== "" ? req.title : undefined,
+          message:
+            req.message !== undefined && req.message !== ""
+              ? req.message
+              : undefined,
+          from: req.from ? parseDate(req.from) : undefined,
+          to: req.to ? parseDate(req.to) : undefined,
+          pageComponentIds: req.updatePageComponentIds
+            ? parsePageComponentIds(req.pageComponentIds)
+            : undefined,
+        },
+      });
 
-    const record = await getMaintenanceById(Number(req.id), workspaceId);
-    if (!record) {
-      throw maintenanceNotFoundError(req.id);
-    }
-
-    // Parse dates if provided
-    const fromDate = req.from ? parseDate(req.from) : null;
-    const toDate = req.to ? parseDate(req.to) : null;
-
-    // Validate date range with updated values
-    const effectiveFrom = fromDate ?? record.from;
-    const effectiveTo = toDate ?? record.to;
-    const fromStr = fromDate && req.from ? req.from : record.from.toISOString();
-    const toStr = toDate && req.to ? req.to : record.to.toISOString();
-    validateDateRange(effectiveFrom, effectiveTo, fromStr, toStr);
-
-    // Update maintenance and associations in a transaction
-    const updatedMaintenance = await db.transaction(async (tx) => {
-      const updateValues: Record<string, unknown> = {
-        updatedAt: new Date(),
+      const full = await getMaintenance({ ctx: sCtx, input: { id } });
+      return {
+        maintenance: dbMaintenanceToProto(
+          full,
+          full.pageComponentIds.map(String),
+        ),
       };
-
-      if (req.title !== undefined && req.title !== "") {
-        updateValues.title = req.title;
-      }
-
-      if (req.message !== undefined && req.message !== "") {
-        updateValues.message = req.message;
-      }
-
-      if (fromDate) {
-        updateValues.from = fromDate;
-      }
-
-      if (toDate) {
-        updateValues.to = toDate;
-      }
-
-      if (req.updatePageComponentIds) {
-        const validatedComponents = await validatePageComponentIds(
-          req.pageComponentIds,
-          workspaceId,
-          tx,
-        );
-
-        updateValues.pageId = validatedComponents.pageId;
-
-        await updatePageComponentAssociations(
-          record.id,
-          validatedComponents.componentIds,
-          tx,
-        );
-      }
-
-      // Update the maintenance
-      const updated = await tx
-        .update(maintenance)
-        .set(updateValues)
-        .where(eq(maintenance.id, record.id))
-        .returning()
-        .get();
-
-      if (!updated) {
-        throw maintenanceUpdateFailedError(req.id);
-      }
-
-      return updated;
-    });
-
-    // Fetch updated page component IDs
-    const pageComponentIds = await getPageComponentIdsForMaintenance(
-      updatedMaintenance.id,
-    );
-
-    return {
-      maintenance: dbMaintenanceToProto(updatedMaintenance, pageComponentIds),
-    };
+    } catch (err) {
+      toConnectError(err);
+    }
   },
 
   async deleteMaintenance(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    if (!req.id || req.id.trim() === "") {
-      throw maintenanceIdRequiredError();
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      if (!req.id || req.id.trim() === "") {
+        throw maintenanceIdRequiredError();
+      }
+      await deleteMaintenance({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: Number(req.id) },
+      });
+      return { success: true };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    const record = await getMaintenanceById(Number(req.id), workspaceId);
-    if (!record) {
-      throw maintenanceNotFoundError(req.id);
-    }
-
-    // Delete the maintenance (cascade will delete associations)
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
-
-    return { success: true };
   },
 };

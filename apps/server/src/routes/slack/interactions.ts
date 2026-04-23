@@ -1,10 +1,7 @@
-import { and, db, eq, inArray } from "@openstatus/db";
 import {
-  maintenance,
-  maintenancesToPageComponents,
-  page,
-  pageComponent,
-} from "@openstatus/db/src/schema";
+  createMaintenance,
+  notifyMaintenance,
+} from "@openstatus/services/maintenance";
 import {
   addStatusReportUpdate,
   createStatusReport,
@@ -14,9 +11,9 @@ import {
 } from "@openstatus/services/status-report";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
-import { sendMaintenanceNotification } from "../rpc/services/maintenance";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
+import { getPageUrl, getReportUrl } from "./page-urls";
 import { toServiceCtx, toSlackMessage } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -129,33 +126,6 @@ export async function handleSlackInteraction(c: Context) {
   return c.json({ ok: true });
 }
 
-async function getPageUrl(pageId: number): Promise<string | null> {
-  const statusPage = await db
-    .select({ slug: page.slug, customDomain: page.customDomain })
-    .from(page)
-    .where(eq(page.id, pageId))
-    .get();
-
-  if (!statusPage) return null;
-
-  return statusPage.customDomain
-    ? `https://${statusPage.customDomain}`
-    : `https://${statusPage.slug}.openstatus.dev`;
-}
-
-async function getReportUrl(pageId: number, reportId: number): Promise<string> {
-  const statusPage = await db
-    .select({ slug: page.slug, customDomain: page.customDomain })
-    .from(page)
-    .where(eq(page.id, pageId))
-    .get();
-
-  const baseUrl = statusPage?.customDomain
-    ? `https://${statusPage.customDomain}`
-    : `https://${statusPage?.slug}.openstatus.dev`;
-  return `${baseUrl}/events/report/${reportId}`;
-}
-
 async function executeAction(
   pending: PendingAction,
   notify: boolean,
@@ -164,7 +134,7 @@ async function executeAction(
   messageTs: string,
   origin: { slackUserId: string; teamId: string | undefined },
 ) {
-  const { action, workspaceId, limits } = pending;
+  const { action } = pending;
 
   switch (action.type) {
     case "createStatusReport": {
@@ -305,7 +275,6 @@ async function executeAction(
     }
 
     case "createMaintenance": {
-      // Maintenance migrates in PR 2; still writes to db directly here.
       const {
         title,
         message,
@@ -315,94 +284,28 @@ async function executeAction(
         pageComponentIds: maintenanceComponentIds,
       } = action.params;
 
-      const fromDate = new Date(from);
-      const toDate = new Date(to);
-      if (fromDate >= toDate) {
-        throw new Error("Start time must be before end time");
-      }
-
-      const newMaintenance = await db.transaction(async (tx) => {
-        const pageRecord = await tx
-          .select({ id: page.id })
-          .from(page)
-          .where(
-            and(
-              eq(page.id, maintenancePageId),
-              eq(page.workspaceId, workspaceId),
-            ),
-          )
-          .get();
-
-        if (!pageRecord) {
-          throw new Error("Page not found in this workspace");
-        }
-
-        const resolvedPageId = pageRecord.id;
-
-        let componentIds: number[] = [];
-        if (maintenanceComponentIds?.length) {
-          const numericIds = maintenanceComponentIds.map((id) => Number(id));
-          const validComponents = await tx
-            .select({ id: pageComponent.id, pageId: pageComponent.pageId })
-            .from(pageComponent)
-            .where(
-              and(
-                inArray(pageComponent.id, numericIds),
-                eq(pageComponent.workspaceId, workspaceId),
-              ),
-            )
-            .all();
-
-          if (validComponents.length !== numericIds.length) {
-            throw new Error("One or more page components not found");
-          }
-
-          const componentPageIds = new Set(
-            validComponents.map((c) => c.pageId),
-          );
-          if (componentPageIds.size > 1) {
-            throw new Error("All components must belong to the same page");
-          }
-
-          const componentPageId = validComponents[0]?.pageId;
-          if (componentPageId !== null && componentPageId !== resolvedPageId) {
-            throw new Error(
-              "Selected components do not belong to the target status page",
-            );
-          }
-
-          componentIds = numericIds;
-        }
-
-        const record = await tx
-          .insert(maintenance)
-          .values({
-            workspaceId,
-            pageId: resolvedPageId,
-            title,
-            message,
-            from: fromDate,
-            to: toDate,
-          })
-          .returning()
-          .get();
-
-        if (componentIds.length > 0) {
-          await tx.insert(maintenancesToPageComponents).values(
-            componentIds.map((pageComponentId) => ({
-              maintenanceId: record.id,
-              pageComponentId,
-            })),
-          );
-        }
-
-        return record;
+      const ctx = await toServiceCtx({
+        pending,
+        slackUserId: origin.slackUserId,
+        teamId: origin.teamId,
+      });
+      const newMaintenance = await createMaintenance({
+        ctx,
+        input: {
+          title,
+          message,
+          from: new Date(from),
+          to: new Date(to),
+          pageId: maintenancePageId,
+          pageComponentIds:
+            maintenanceComponentIds?.map((id) => Number(id)) ?? [],
+        },
       });
 
       if (notify) {
-        await sendMaintenanceNotification({
-          maintenanceId: newMaintenance.id,
-          limits,
+        await notifyMaintenance({
+          ctx,
+          input: { maintenanceId: newMaintenance.id },
         });
       }
 

@@ -88,7 +88,10 @@
     {
       "include": [
         "packages/api/src/router/statusReport.ts",
-        "apps/server/src/routes/rpc/services/status-report/**"
+        "packages/api/src/router/maintenance.ts",
+        "apps/server/src/routes/rpc/services/status-report/**",
+        "apps/server/src/routes/rpc/services/maintenance/**",
+        "apps/server/src/routes/slack/interactions.ts"
       ],
       "ignore": [
         // Tests legitimately manage db state for fixtures and cleanup.
