@@ -94,6 +94,7 @@
         "packages/api/src/router/pageComponent.ts",
         "apps/server/src/routes/rpc/services/status-report/**",
         "apps/server/src/routes/rpc/services/maintenance/**",
+        "apps/server/src/routes/rpc/services/notification/index.ts",
         "apps/server/src/routes/slack/interactions.ts"
       ],
       "ignore": [
