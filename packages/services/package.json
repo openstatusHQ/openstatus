@@ -20,6 +20,10 @@
     "./incident": {
       "import": "./src/incident/index.ts",
       "types": "./src/incident/index.ts"
+    },
+    "./monitor": {
+      "import": "./src/monitor/index.ts",
+      "types": "./src/monitor/index.ts"
     }
   },
   "scripts": {
