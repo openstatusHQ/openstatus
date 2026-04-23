@@ -52,6 +52,10 @@
     "./api-key": {
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
+    },
+    "./import": {
+      "import": "./src/import/index.ts",
+      "types": "./src/import/index.ts"
     }
   },
   "scripts": {
@@ -61,6 +65,7 @@
     "@logtape/logtape": "2.0.1",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
+    "@openstatus/importers": "workspace:*",
     "@openstatus/locales": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
