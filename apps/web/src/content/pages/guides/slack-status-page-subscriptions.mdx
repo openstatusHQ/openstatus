@@ -1,0 +1,126 @@
+---
+title: "Deliver Status Updates to Customer Slack Channels"
+author: "openstatus"
+description: "Already share a Slack Connect channel with your enterprise customers? Route incident and maintenance updates into it, scoped to the components each customer depends on - no new channel, no integration code."
+publishedAt: "2026-04-23"
+category: "education"
+faq:
+  - question: "Do customers need an openstatus account to receive updates?"
+    answer: "No. Updates arrive in the Slack Connect channel you already share with the customer. They never sign into openstatus and do not manage their own subscription."
+  - question: "What is Slack Connect?"
+    answer: "Slack Connect is Slack's native feature for sharing a channel between two separate workspaces. Both sides see the channel in their own Slack, with no guest accounts, no third-party apps, and no shared admin seats."
+  - question: "Do we need to create a new channel for each customer?"
+    answer: "No. If you already run a Slack Connect channel with a customer for support or account management, point the subscription at that channel. A new dedicated channel only makes sense if you want to separate status updates from other conversations."
+  - question: "Can customers change the components they are subscribed to?"
+    answer: "No. The page owner controls component scope. This keeps customers from seeing components they are not entitled to, and keeps entitlement decisions auditable on your side."
+  - question: "What if a customer's entitlement changes?"
+    answer: "Update their subscription from the dashboard. Add or remove components and the change takes effect on the next event - no code change or redeploy required."
+  - question: "Does Slack Connect cost customers anything?"
+    answer: "No. Slack Connect is free for both sides as long as at least one of the two workspaces is on a paid Slack plan."
+  - question: "What about email or webhook subscriptions?"
+    answer: "Openstatus supports both in addition to Slack. Pick the channel that matches how each customer prefers to receive incident updates."
+---
+
+**TL;DR** - Already share a Slack Connect channel with your enterprise customers? Add your status updates to it. Openstatus posts incidents and maintenance into the channels you already have, scoped to the components each customer depends on. No new channel, no invite to send, no integration code to maintain.
+
+---
+
+Sooner or later, every vendor hears the same request from enterprise customers: *"Can we get your status updates in our Slack?"*
+
+Teams usually answer with a webhook, a Zapier flow, an internal Slack bot, or an on-call engineer who remembers to paste updates into a handful of customer channels. Each of those solutions handles the immediate request and creates a long-term maintenance problem - new customers need new glue, entitlement changes require redeploys, and departing employees leave access sprawl behind them.
+
+There is a simpler path: most vendors already run Slack Connect channels with their enterprise customers for support, onboarding, or account management. Openstatus lets you route status updates into those same channels, scoped to the components each customer depends on.
+
+## Slack Connect in One Paragraph
+
+Slack Connect is Slack's native feature for sharing a channel between two separate workspaces. Both sides see the channel in their own Slack - owned jointly, with no guest accounts, no third-party apps, and no shared admin seats. It is free for both sides as long as at least one of the two workspaces is on a paid Slack plan. Most established vendor-customer relationships already have at least one of these channels.
+
+## Custom Integrations vs. Slack Connect Subscriptions
+
+|  | Custom integration | Slack Connect subscription |
+| --- | --- | --- |
+| **Onboarding a new customer** | Code change or workflow edit | Point subscription at an existing shared channel |
+| **Component scoping** | Per-customer filtering logic | Selected in the dashboard |
+| **Channel ownership** | Your workspace or a shared channel | Jointly owned, already in place |
+| **Entitlement changes** | Deploy or config update | Edit subscription, takes effect next event |
+| **Access cleanup when staff leaves** | Your ops problem | Handled by each side's workspace admin |
+| **Broadcast cost per customer** | Grows with customer count | Flat |
+
+The shift is that customer notifications stop being engineering work and become configuration work.
+
+## What Customers Experience
+
+Customers do not subscribe themselves. From their side, the flow is:
+
+1. You already share a Slack Connect channel with them - typically the same one used for support or account communication.
+2. You configure openstatus to post status updates into that channel for the components they depend on.
+3. Incident and maintenance updates start appearing in the channel alongside your other conversations.
+
+No invite to accept, no new channel to join, no openstatus account needed. The channel is already theirs; the scope is yours.
+
+## Setting Up a Subscription
+
+On your side, routing a customer's updates into a Slack Connect channel takes three steps.
+
+### 1. Create the Subscription
+
+Open the subscribers section of your status page and create a new Slack subscription. Name it after the customer - the company name is usually enough, and a qualifier (for example, "Acme - EU region") helps if you split by geography or product tier.
+
+### 2. Select the Shared Channel
+
+Pick the Slack Connect channel to post into. In most cases this is the existing channel you already use with the customer. If you would rather separate status updates from day-to-day support conversations, you can set up a dedicated shared channel - but reusing an existing one is usually simpler and keeps the customer's ops context in one place.
+
+### 3. Select the Components
+
+Subscriptions are component-scoped. You decide which parts of your platform this customer receives alerts for, and only events affecting those components reach the channel.
+
+Sensible defaults when choosing scope:
+
+- **Public API components** - typically yes for customers who build against your API.
+- **Customer-facing dashboards and applications** - yes when the customer's end users log into those surfaces.
+- **Internal tooling, beta components, and shared infrastructure** - typically no. These can leak information about your architecture or roadmap, and they generate noise that is not actionable for the customer.
+
+If the right scope is not obvious, err toward fewer components. You can always extend the subscription later. Over-scoping is harder to walk back because customers start to rely on what they see.
+
+## What a Slack Notification Looks Like
+
+Customers receive structured messages for four event types:
+
+- **Incident opened** - summary, affected components, and current status.
+- **Incident update** - new status and the update text you published.
+- **Incident resolved** - final status and resolution message.
+- **Scheduled maintenance** - planned window and scope.
+
+Messages post in real time as you update the incident on openstatus. The same update you write once is delivered to every subscribed customer's channel in parallel, filtered by each customer's component scope. Broadcasting to more customers does not require more work on your side, and each customer only sees what is in their scope.
+
+## When This Pattern Fits
+
+Slack Connect subscriptions are a good fit when:
+
+- **You have enterprise customers with uptime clauses.** Contractual uptime language usually implies proactive notification, and a scoped channel satisfies that without asking the customer to sign into another portal.
+- **You already share a Slack Connect channel with the customer.** Adding status updates to a channel that already exists is almost always easier than spinning up a new notification surface.
+- **You run a multi-tenant platform.** Per-customer routing, scoped to the components each customer depends on, avoids the noisy-neighbor problem where every customer sees every alert.
+
+For audiences that prefer other channels, openstatus also supports email and webhook subscriptions. Slack Connect is the right choice when the customer already operates in Slack and wants updates delivered where their team is.
+
+## Managing Subscriptions Over Time
+
+Subscriptions are intended to be long-lived and edited as entitlements change.
+
+- **Upgrading or downgrading a customer**: edit their subscription and adjust component scope. Changes take effect on the next event.
+- **Churn**: delete the subscription. The shared channel stays in place for both sides but stops receiving status events from your side.
+- **New component launched**: decide whether it should be added to existing subscriptions before announcing it. Subscriptions do not auto-include new components, which prevents accidental disclosure.
+
+Because entitlement is managed in the dashboard, these changes do not require code or a deploy.
+
+## Summary
+
+Routing status updates into the Slack Connect channels you already share with enterprise customers turns customer notifications from an ongoing engineering task into a configuration workflow. No per-customer integration code, no new channels to create, no cleanup when people leave - just the same updates you already publish to your status page, delivered where your customers are already working with you.
+
+---
+
+Start free. No credit card required. Configure your first Slack subscription in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
