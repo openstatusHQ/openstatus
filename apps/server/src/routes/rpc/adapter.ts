@@ -47,7 +47,7 @@ export function toConnectError(err: unknown): never {
       case "VALIDATION":
         throw new ConnectError(err.message, Code.InvalidArgument);
       case "LIMIT_EXCEEDED":
-        throw new ConnectError(err.message, Code.PermissionDenied);
+        throw new ConnectError(err.message, Code.ResourceExhausted);
       case "INTERNAL":
         throw new ConnectError(err.message, Code.Internal);
     }
