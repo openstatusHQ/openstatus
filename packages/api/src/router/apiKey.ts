@@ -11,20 +11,15 @@ import {
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-// Router-level input shape: the dashboard form doesn't send `createdById`
-// (the service needs it; we pull it off ctx). Omit it here so zod doesn't
-// insist the client provide a user id.
-const CreateApiKeyRouterInput = CreateApiKeyInput.omit({ createdById: true });
-
 export const apiKeyRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreateAPI })
-    .input(CreateApiKeyRouterInput)
+    .input(CreateApiKeyInput)
     .mutation(async ({ ctx, input }) => {
       try {
         const { token, key } = await createApiKey({
           ctx: toServiceCtx(ctx),
-          input: { ...input, createdById: ctx.user.id },
+          input,
         });
         // One-time plaintext display; caller's UI shows it once then drops it.
         return { token, key };

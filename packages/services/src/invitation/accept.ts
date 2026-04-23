@@ -8,7 +8,7 @@ import {
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError, NotFoundError, UnauthorizedError } from "../errors";
+import { ConflictError, NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import { AcceptInvitationInput } from "./schemas";
 
@@ -17,9 +17,12 @@ import { AcceptInvitationInput } from "./schemas";
  * target workspace with the invitation's role, and return the workspace
  * row.
  *
- * Invitation lookup is scoped by id + email + unexpired + not-yet-accepted
- * to prevent token-sharing and double-acceptance races. All writes run in a
- * single transaction.
+ * The lookup is scoped by id + email + unexpired + not-yet-accepted to
+ * prevent token-sharing. To stay race-safe, the acceptance write is a
+ * conditional UPDATE that re-asserts `acceptedAt IS NULL` — two concurrent
+ * callers that both pass the initial read will see exactly one row
+ * returned from the update; the loser throws `ConflictError` and the
+ * transaction aborts before the membership insert runs.
  */
 export async function acceptInvitation(args: {
   ctx: ServiceContext;
@@ -27,12 +30,6 @@ export async function acceptInvitation(args: {
 }): Promise<Workspace> {
   const { ctx } = args;
   const input = AcceptInvitationInput.parse(args.input);
-
-  if (!input.email) {
-    throw new UnauthorizedError(
-      "You are not authorized to access this resource.",
-    );
-  }
 
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.invitation.findFirst({
@@ -46,17 +43,20 @@ export async function acceptInvitation(args: {
     });
 
     if (!existing) throw new NotFoundError("invitation", input.id);
-    if (existing.acceptedAt) {
-      // Defense in depth — the `isNull(acceptedAt)` predicate above should
-      // already filter accepted rows. Kept to preserve the legacy explicit
-      // guard in case the where-clause is ever weakened.
-      throw new ConflictError("Invitation already accepted.");
-    }
 
-    await tx
+    // Conditional UPDATE — the `isNull(acceptedAt)` predicate makes the
+    // write a no-op for any row another caller has already claimed, even
+    // if both callers passed the read check above. Returning rowcount ==
+    // 0 means we lost the race.
+    const claimed = await tx
       .update(invitation)
       .set({ acceptedAt: new Date() })
-      .where(eq(invitation.id, input.id));
+      .where(and(eq(invitation.id, input.id), isNull(invitation.acceptedAt)))
+      .returning({ id: invitation.id });
+
+    if (claimed.length === 0) {
+      throw new ConflictError("Invitation already accepted.");
+    }
 
     await tx.insert(usersToWorkspaces).values({
       userId: input.userId,

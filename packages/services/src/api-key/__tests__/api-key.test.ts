@@ -59,7 +59,6 @@ describe("createApiKey", () => {
       ctx: teamCtx,
       input: {
         name: `${TEST_PREFIX}-create`,
-        createdById: 1,
       },
     });
     createdKeyIds.push(key.id);
@@ -80,7 +79,7 @@ describe("listApiKeys", () => {
   test("enriches each key with creator info", async () => {
     const { key } = await createApiKey({
       ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-list`, createdById: 1 },
+      input: { name: `${TEST_PREFIX}-list` },
     });
     createdKeyIds.push(key.id);
 
@@ -95,7 +94,7 @@ describe("revokeApiKey", () => {
   test("deletes the key and throws NotFoundError for unknown ids", async () => {
     const { key } = await createApiKey({
       ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-revoke`, createdById: 1 },
+      input: { name: `${TEST_PREFIX}-revoke` },
     });
 
     await revokeApiKey({ ctx: teamCtx, input: { id: key.id } });
@@ -117,7 +116,7 @@ describe("verifyApiKey", () => {
   test("resolves the stored row for a valid token", async () => {
     const { token, key } = await createApiKey({
       ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-verify`, createdById: 1 },
+      input: { name: `${TEST_PREFIX}-verify` },
     });
     createdKeyIds.push(key.id);
 
@@ -133,7 +132,7 @@ describe("verifyApiKey", () => {
   test("returns null for a prefix-match with wrong body", async () => {
     const { token, key } = await createApiKey({
       ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-verify-wrong`, createdById: 1 },
+      input: { name: `${TEST_PREFIX}-verify-wrong` },
     });
     createdKeyIds.push(key.id);
 
@@ -149,7 +148,7 @@ describe("updateApiKeyLastUsed", () => {
   test("skips the write when lastUsedAt is recent", async () => {
     const { key } = await createApiKey({
       ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-lastused`, createdById: 1 },
+      input: { name: `${TEST_PREFIX}-lastused` },
     });
     createdKeyIds.push(key.id);
 
@@ -164,7 +163,7 @@ describe("updateApiKeyLastUsed", () => {
   test("writes when lastUsedAt is null or past the debounce window", async () => {
     const { key } = await createApiKey({
       ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-lastused-null`, createdById: 1 },
+      input: { name: `${TEST_PREFIX}-lastused-null` },
     });
     createdKeyIds.push(key.id);
 

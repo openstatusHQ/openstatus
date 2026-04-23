@@ -4,7 +4,6 @@ export const CreateApiKeyInput = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   expiresAt: z.date().optional(),
-  createdById: z.number().int(),
 });
 export type CreateApiKeyInput = z.infer<typeof CreateApiKeyInput>;
 
