@@ -1,0 +1,83 @@
+import { and, eq, ne } from "@openstatus/db";
+import {
+  account,
+  session,
+  user,
+  usersToWorkspaces,
+} from "@openstatus/db/src/schema";
+
+import { emitAudit } from "../audit";
+import { type ServiceContext, withTransaction } from "../context";
+import { ForbiddenError } from "../errors";
+import { DeleteAccountInput } from "./schemas";
+
+/**
+ * Soft-delete a user account:
+ * 1. Refuses to proceed if the user owns a workspace on a paid plan — they
+ *    must cancel the subscription first. (Legacy behavior; preserves the
+ *    revenue guardrail.)
+ * 2. Removes their membership from every workspace they don't own.
+ * 3. Deletes their sessions and OAuth accounts.
+ * 4. Blanks out PII on the user row and stamps `deletedAt`.
+ *
+ * All four writes run in a single transaction so a partial failure never
+ * leaves the account half-deleted.
+ */
+export async function deleteAccount(args: {
+  ctx: ServiceContext;
+  input: DeleteAccountInput;
+}): Promise<void> {
+  const { ctx } = args;
+  const input = DeleteAccountInput.parse(args.input);
+  const { userId } = input;
+
+  await withTransaction(ctx, async (tx) => {
+    const ownedRows = await tx.query.usersToWorkspaces.findMany({
+      where: and(
+        eq(usersToWorkspaces.userId, userId),
+        eq(usersToWorkspaces.role, "owner"),
+      ),
+      with: { workspace: true },
+    });
+
+    const hasPaidWorkspace = ownedRows.some(
+      ({ workspace }) => workspace.plan && workspace.plan !== "free",
+    );
+
+    if (hasPaidWorkspace) {
+      throw new ForbiddenError(
+        "You must cancel your subscription before deleting your account.",
+      );
+    }
+
+    await tx
+      .delete(usersToWorkspaces)
+      .where(
+        and(
+          eq(usersToWorkspaces.userId, userId),
+          ne(usersToWorkspaces.role, "owner"),
+        ),
+      );
+
+    await tx.delete(session).where(eq(session.userId, userId));
+    await tx.delete(account).where(eq(account.userId, userId));
+
+    await tx
+      .update(user)
+      .set({
+        deletedAt: new Date(),
+        email: "",
+        firstName: "",
+        lastName: "",
+        photoUrl: "",
+        name: "",
+      })
+      .where(eq(user.id, userId));
+
+    await emitAudit(tx, ctx, {
+      action: "user.delete_account",
+      entityType: "user",
+      entityId: userId,
+    });
+  });
+}

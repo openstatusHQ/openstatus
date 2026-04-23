@@ -36,6 +36,22 @@
     "./page": {
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
+    },
+    "./workspace": {
+      "import": "./src/workspace/index.ts",
+      "types": "./src/workspace/index.ts"
+    },
+    "./user": {
+      "import": "./src/user/index.ts",
+      "types": "./src/user/index.ts"
+    },
+    "./invitation": {
+      "import": "./src/invitation/index.ts",
+      "types": "./src/invitation/index.ts"
+    },
+    "./api-key": {
+      "import": "./src/api-key/index.ts",
+      "types": "./src/api-key/index.ts"
     }
   },
   "scripts": {

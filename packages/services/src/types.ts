@@ -31,3 +31,5 @@ export type {
   Notification,
   PrivateLocation,
 } from "@openstatus/db/src/schema";
+
+export type { ApiKey, Invitation, User } from "@openstatus/db/src/schema";
