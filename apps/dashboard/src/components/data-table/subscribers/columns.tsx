@@ -25,15 +25,6 @@ function detectFlavorBadge(url: string | null) {
   return FLAVOR_LABELS[detectWebhookFlavor(url)];
 }
 
-function webhookOrigin(url: string | null) {
-  if (!url) return null;
-  try {
-    return new URL(url).origin;
-  } catch {
-    return null;
-  }
-}
-
 export const columns: ColumnDef<Subscriber>[] = [
   {
     id: "destination",

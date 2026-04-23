@@ -1,4 +1,4 @@
-import { and, db, eq, inArray, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, ne, sql } from "@openstatus/db";
 import {
   page,
   pageComponent,
@@ -524,7 +524,7 @@ export async function createSubscription(input: CreateSubscriptionInput) {
     const duplicate = await db.query.pageSubscriber.findFirst({
       where: and(
         eq(pageSubscriber.pageId, pageId),
-        eq(pageSubscriber.webhookUrl, webhookUrl),
+        sql`LOWER(${pageSubscriber.webhookUrl}) = ${webhookUrl.toLowerCase()}`,
         eq(pageSubscriber.channelType, "webhook"),
         isNull(pageSubscriber.unsubscribedAt),
       ),
@@ -646,11 +646,28 @@ export async function updateChannel(input: UpdateChannelInput) {
   if (name !== undefined) updateFields.name = name;
 
   if (existing.channelType === "webhook") {
-    if (webhookUrl !== undefined) {
+    if (webhookUrl !== undefined && webhookUrl !== existing.webhookUrl) {
       await assertSafeUrl(webhookUrl);
       if (detectWebhookFlavor(webhookUrl) === "generic") {
         throw new Error("Only Slack and Discord webhook URLs are supported.");
       }
+
+      const duplicate = await db.query.pageSubscriber.findFirst({
+        where: and(
+          eq(pageSubscriber.pageId, pageId),
+          sql`LOWER(${pageSubscriber.webhookUrl}) = ${webhookUrl.toLowerCase()}`,
+          eq(pageSubscriber.channelType, "webhook"),
+          isNull(pageSubscriber.unsubscribedAt),
+          ne(pageSubscriber.id, subscriberId),
+        ),
+      });
+
+      if (duplicate) {
+        throw new Error(
+          "A subscriber with this webhook URL already exists for this page.",
+        );
+      }
+
       updateFields.webhookUrl = webhookUrl;
     }
     if (channelConfig !== undefined) {
