@@ -1,0 +1,126 @@
+---
+title: "Deliver Status Updates to Customer Slack Channels"
+description: "Use Slack Connect to deliver scoped incident and maintenance updates to customer and partner Slack channels - without building a bot or maintaining custom integration code."
+author: "openstatus"
+publishedAt: "2026-04-23"
+category: "education"
+faq:
+  - question: "Do partners need an openstatus account to subscribe?"
+    answer: "No. Partners only need a Slack workspace and the invite link you send them. The channel lives in their workspace via Slack Connect and they never sign into openstatus."
+  - question: "What is Slack Connect?"
+    answer: "Slack Connect is Slack's native feature for sharing channels between separate workspaces. The channel exists in the partner's workspace but receives messages from yours - no guest accounts, no third-party apps, no shared admin seats."
+  - question: "Can partners change the components they are subscribed to?"
+    answer: "No. The page owner controls component scope. This is deliberate - it keeps partners from subscribing to components they aren't entitled to see, and keeps entitlement decisions auditable on your side."
+  - question: "What if a partner's entitlement changes?"
+    answer: "Update their subscription from the dashboard. Add or remove components and the change takes effect on the next event - no code change or redeploy required."
+  - question: "Does Slack Connect cost partners anything?"
+    answer: "No. Slack Connect is free for both sides as long as at least one of the two workspaces is on a paid Slack plan."
+  - question: "What about email or webhook subscriptions?"
+    answer: "Openstatus supports both in addition to Slack. Pick the channel that matches how each partner prefers to receive incident updates."
+---
+
+**TL;DR** - Slack Connect lets you deliver status page updates directly into a customer's Slack workspace, scoped to the components they are entitled to see. It replaces the ad-hoc Zapier flows, custom bots, and copy-paste rituals that most teams use to answer the recurring *"can we get your status in our Slack?"* request.
+
+---
+
+Sooner or later, every vendor hears the same request from customers and integration partners: *"Can we get your status updates in our Slack?"*
+
+Teams usually answer with a webhook, a Zapier flow, a shared channel, or an internal bot that fans out incident messages to a list of customer channels. Each of those solutions solves the immediate request and creates a long-term maintenance problem - new partners need new glue, entitlement changes require redeploys, and departing employees leave access sprawl behind them.
+
+A better model is to treat customer Slack notifications as an **access-control problem**, not an integration problem. Openstatus does this through Slack Connect subscriptions: each customer gets their own shared channel, scoped to the specific components you want them to receive alerts for.
+
+## Slack Connect in One Paragraph
+
+Slack Connect is Slack's native feature for sharing a channel between two separate workspaces. The channel lives in the partner's workspace, owned by them, but receives messages from yours. There is no guest account, no third-party app install, and no shared admin seat. It is free as long as at least one of the two workspaces is on a paid Slack plan.
+
+For status page subscriptions, this means the partner controls who in their company can read the channel, and you control what the channel receives.
+
+## Custom Integrations vs. Slack Connect Subscriptions
+
+|  | Custom integration | Slack Connect subscription |
+| --- | --- | --- |
+| **Onboarding a new partner** | Code change or workflow edit | Create subscription, send invite |
+| **Component scoping** | Per-partner filtering logic | Selected in the dashboard |
+| **Channel ownership** | Your workspace or a shared channel | Partner's workspace |
+| **Entitlement changes** | Deploy or config update | Edit subscription, takes effect next event |
+| **Access cleanup when staff leaves** | Your ops problem | Partner's workspace admin |
+| **Broadcast cost per partner** | Grows with partner count | Flat |
+
+The shift is that partner notifications stop being engineering work and become configuration work.
+
+## What Partners Experience
+
+From the partner side, subscribing is three steps:
+
+1. They receive a Slack Connect invite from you.
+2. They accept the invite in their Slack workspace.
+3. Incidents and maintenance events for the components you selected start posting in the shared channel.
+
+Partners do not need an openstatus account, they do not pick components themselves, and they do not manage a subscription dashboard. The channel is theirs; the scope is yours.
+
+## Setting Up a Subscription
+
+On your side, onboarding a partner takes three steps in the status page settings.
+
+### 1. Create the Subscription
+
+Open the subscribers section of your status page and create a new Slack Connect subscription. Name it after the partner - the company name is usually enough, and a qualifier (for example, "Acme - EU region") helps if you split by geography or product tier.
+
+### 2. Select the Components
+
+Subscriptions are component-scoped. You decide which parts of your platform this partner receives alerts for, and only events affecting those components reach the channel.
+
+Sensible defaults when choosing scope:
+
+- **Public API components** - typically yes for integration partners who build against your API.
+- **Customer-facing dashboards and applications** - yes when the partner's end users log into those surfaces.
+- **Internal tooling, beta components, and shared infrastructure** - typically no. These can leak information about your architecture or roadmap, and they generate noise that is not actionable for the partner.
+
+If the right scope is not obvious, err toward fewer components. You can always extend the subscription later. Over-scoping is harder to walk back because partners start to rely on what they see.
+
+### 3. Send the Invite
+
+Openstatus generates a Slack Connect invite link. Share it with your partner contact through the same channel you use for other account communications. Once they accept, the channel is live and the next event affecting one of their components will post automatically.
+
+## What a Slack Notification Looks Like
+
+Partners receive structured messages for four event types:
+
+- **Incident opened** - summary, affected components, and current status.
+- **Incident update** - new status and the update text you published.
+- **Incident resolved** - final status and resolution message.
+- **Scheduled maintenance** - planned window and scope.
+
+Messages post in real time as you update the incident on openstatus. The same update you write once is delivered to every subscribed partner's channel in parallel, filtered by each partner's component scope. Broadcasting to more partners does not require more work on your side, and each partner only sees what is in their scope.
+
+## When This Pattern Fits
+
+Slack Connect subscriptions are a good fit when:
+
+- **You have enterprise customers with uptime clauses.** Contractual uptime language usually implies proactive notification. A scoped Slack Connect channel satisfies that without requiring customers to sign into another portal.
+- **You have integration partners who depend on your API.** Partners coordinating their own incident response in Slack benefit from receiving your status updates in the same place.
+- **You run a multi-tenant platform.** Per-tenant channels scoped to the components each tenant depends on avoid the noisy-neighbor problem where every customer sees every alert.
+
+For audiences that prefer other channels, openstatus also supports email and webhook subscriptions. Slack Connect is the right choice when the partner already operates in Slack and wants updates delivered where their team is.
+
+## Managing Subscriptions Over Time
+
+Subscriptions are intended to be long-lived and edited as entitlements change.
+
+- **Upgrading or downgrading a customer**: edit their subscription and adjust component scope. Changes take effect on the next event.
+- **Churn**: delete the subscription. The shared channel remains in the partner's workspace but stops receiving new events from your side.
+- **New component launched**: decide whether it should be added to existing subscriptions before announcing it. Subscriptions do not auto-include new components, which prevents accidental disclosure.
+
+Because entitlement is managed in the dashboard, these changes do not require code or a deploy.
+
+## Summary
+
+Slack Connect subscriptions move customer status notifications from an ongoing engineering task to a configuration workflow. Each partner gets a dedicated channel in their own workspace, scoped to the components you choose, with the same updates you already publish to your status page. No bot to maintain, no per-partner integration code, and no cleanup when people leave.
+
+---
+
+Start free. No credit card required. Set up your first Slack Connect subscription in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
