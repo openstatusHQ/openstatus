@@ -6,17 +6,18 @@ import {
   desc,
   eq,
   gte,
+  inArray,
   sql,
 } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema";
+import {
+  maintenance,
+  maintenancesToPageComponents,
+  pageComponent,
+} from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
 import type { Maintenance, PageComponent } from "../types";
-import {
-  getMaintenanceInWorkspace,
-  getPageComponentIdsForMaintenance,
-  getPageComponentsForMaintenance,
-} from "./internal";
+import { getMaintenanceInWorkspace } from "./internal";
 import {
   GetMaintenanceInput,
   ListMaintenancesInput,
@@ -46,15 +47,46 @@ export type ListMaintenancesResult = {
   totalSize: number;
 };
 
-async function enrichMaintenance(
+/**
+ * Load component associations for a set of maintenances in a single IN
+ * query, regardless of list size. Avoids the 2-queries-per-row pattern
+ * that pairs badly with the dashboard's effectively-unlimited list.
+ */
+async function enrichMaintenancesBatch(
   db: DB,
-  record: Maintenance,
-): Promise<MaintenanceWithRelations> {
-  const [components, pageComponentIds] = await Promise.all([
-    getPageComponentsForMaintenance(db, record.id),
-    getPageComponentIdsForMaintenance(db, record.id),
-  ]);
-  return { ...record, pageComponents: components, pageComponentIds };
+  rows: Maintenance[],
+): Promise<MaintenanceWithRelations[]> {
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+
+  const assocRows = await db
+    .select()
+    .from(pageComponent)
+    .innerJoin(
+      maintenancesToPageComponents,
+      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
+    )
+    .where(inArray(maintenancesToPageComponents.maintenanceId, ids))
+    .all();
+
+  const componentsByMaintenance = new Map<number, PageComponent[]>();
+  for (const row of assocRows) {
+    const mId = (row.maintenance_to_page_component as { maintenanceId: number })
+      .maintenanceId;
+    const component = row.page_component as unknown as PageComponent;
+    const arr = componentsByMaintenance.get(mId);
+    if (arr) arr.push(component);
+    else componentsByMaintenance.set(mId, [component]);
+  }
+
+  return rows.map((r) => {
+    const components = componentsByMaintenance.get(r.id) ?? [];
+    return {
+      ...r,
+      pageComponents: components,
+      pageComponentIds: components.map((c) => c.id),
+    };
+  });
 }
 
 export async function listMaintenances(args: {
@@ -95,7 +127,7 @@ export async function listMaintenances(args: {
   ]);
 
   const totalSize = countRow?.count ?? 0;
-  const items = await Promise.all(rows.map((r) => enrichMaintenance(db, r)));
+  const items = await enrichMaintenancesBatch(db, rows);
   return { items, totalSize };
 }
 
@@ -111,5 +143,7 @@ export async function getMaintenance(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  return enrichMaintenance(db, record);
+  const [enriched] = await enrichMaintenancesBatch(db, [record]);
+  // biome-ignore lint/style/noNonNullAssertion: always defined for len === 1
+  return enriched!;
 }
