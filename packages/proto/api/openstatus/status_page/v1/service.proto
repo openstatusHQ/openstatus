@@ -55,18 +55,35 @@ service StatusPageService {
   // UpdateComponentGroup updates an existing component group.
   rpc UpdateComponentGroup(UpdateComponentGroupRequest) returns (UpdateComponentGroupResponse);
 
-  // SubscribeToPage subscribes an email to a status page. If the email was previously unsubscribed, the subscription is reactivated.
-  // Legacy — prefer CreateSubscription for new integrations.
+  // SubscribeToPage: end-user email self-signup with double opt-in verification.
+  //
+  // Use this when an end-user enters their email on the public status page to
+  // subscribe themselves. A verification email is sent and the subscription is
+  // only activated once the recipient confirms. If the email was previously
+  // unsubscribed, the subscription is reactivated rather than duplicated.
+  //
+  // Pair with CreatePageSubscription (vendor-added, no verification) depending
+  // on who is initiating the subscription — the subscriber themselves, or an
+  // operator acting on their behalf.
   rpc SubscribeToPage(SubscribeToPageRequest) returns (SubscribeToPageResponse) {
     option (gnostic.openapi.v3.operation) = {
-      description: "Subscribes an email address to receive notifications from a status page. If the email was previously unsubscribed, the subscription is reactivated instead of creating a duplicate."
+      description: "End-user email self-signup with double opt-in verification. A verification email is sent and the subscription activates only after the recipient confirms. If the email was previously unsubscribed, the existing row is reactivated instead of a duplicate being created. Use this for subscriber-initiated signups on the public status page; use CreatePageSubscription for operator-initiated (vendor) subscriptions that should skip verification."
     };
   }
 
-  // CreatePageSubscription adds a vendor-managed subscriber (email or webhook) to a status page, skipping verification.
+  // CreatePageSubscription: operator-added subscriber (email or webhook), no verification.
+  //
+  // Use this when an operator adds a subscriber on behalf of a partner — the
+  // caller has already established consent out-of-band, so no double opt-in is
+  // required and notifications begin immediately. Supports both email and
+  // webhook (Slack / Discord) channels. A management token is still generated
+  // so the partner can self-manage via /manage/{token} and /unsubscribe/{token}.
+  //
+  // Pair with SubscribeToPage (self-signup with verification) depending on who
+  // is initiating the subscription.
   rpc CreatePageSubscription(CreatePageSubscriptionRequest) returns (CreatePageSubscriptionResponse) {
     option (gnostic.openapi.v3.operation) = {
-      description: "Creates a vendor-added subscriber (email or webhook) on a status page. Skips the verification flow — the partner starts receiving notifications immediately. A management token is still generated for self-service management and unsubscribe."
+      description: "Operator-added subscriber (email or webhook) with no verification flow — the partner starts receiving notifications immediately. Supports Slack and Discord webhook URLs in addition to email. A management token is still generated so the subscriber can self-manage (update scope, unsubscribe) without operator involvement. Use this for vendor/partner integrations where consent is established out-of-band; use SubscribeToPage for subscriber-initiated signups that require double opt-in."
     };
   }
 
