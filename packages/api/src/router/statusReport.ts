@@ -1,4 +1,5 @@
 import { Events } from "@openstatus/analytics";
+import { NotFoundError } from "@openstatus/services";
 import {
   AddStatusReportUpdateInput,
   CreateStatusReportInput,
@@ -150,6 +151,9 @@ export const statusReportRouter = createTRPCRouter({
           input: { id: input.id },
         });
       } catch (err) {
+        // Preserve the pre-migration idempotent behaviour — the old tRPC
+        // delete silently succeeded when the row was already gone.
+        if (err instanceof NotFoundError) return;
         toTRPCError(err);
       }
     }),

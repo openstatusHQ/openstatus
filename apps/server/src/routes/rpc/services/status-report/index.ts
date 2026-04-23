@@ -1,4 +1,4 @@
-import type { ServiceImpl } from "@connectrpc/connect";
+import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import type { StatusReportService } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 import {
@@ -32,7 +32,10 @@ function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   return ids.map((id) => {
     const n = Number(id);
     if (!Number.isFinite(n)) {
-      throw invalidDateFormatError(id); // reuse the numeric-parse error vocabulary
+      throw new ConnectError(
+        `Invalid page component id: "${id}"`,
+        Code.InvalidArgument,
+      );
     }
     return n;
   });
