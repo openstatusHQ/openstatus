@@ -1,5 +1,6 @@
 export * as schema from "./schema";
 export * from "drizzle-orm";
+export { SQLiteTransaction } from "drizzle-orm/sqlite-core";
 export * from "./db";
 // doing this because the external module not working see : https://github.com/vercel/next.js/issues/43433
 // export * from "./sync-db";

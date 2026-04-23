@@ -1,0 +1,26 @@
+{
+  "name": "@openstatus/services",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@logtape/logtape": "2.0.1",
+    "@openstatus/db": "workspace:*",
+    "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/bun": "latest",
+    "typescript": "5.9.3"
+  }
+}

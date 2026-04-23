@@ -1174,7 +1174,7 @@ importers:
         version: 2.6.2
       drizzle-orm:
         specifier: 0.44.4
-        version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.12)
+        version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.13)
       effect:
         specifier: 3.19.12
         version: 3.19.12
@@ -1391,10 +1391,10 @@ importers:
         version: 3.0.3
       drizzle-orm:
         specifier: 0.44.4
-        version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.12)
+        version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.13)
       drizzle-zod:
         specifier: 0.8.3
-        version: 0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.12))(zod@4.1.13)
+        version: 0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.13))(zod@4.1.13)
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -2011,6 +2011,28 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  packages/services:
+    dependencies:
+      '@logtape/logtape':
+        specifier: 2.0.1
+        version: 2.0.1
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../db
+      zod:
+        specifier: 4.1.13
+        version: 4.1.13
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/bun':
+        specifier: latest
+        version: 1.3.13
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -7260,6 +7282,9 @@ packages:
   '@types/bun@1.3.12':
     resolution: {integrity: sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A==}
 
+  '@types/bun@1.3.13':
+    resolution: {integrity: sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw==}
+
   '@types/caseless@0.12.5':
     resolution: {integrity: sha512-hWtVTC2q7hc7xZ/RLbxapMvDMgUnDvKvMOpKal4DrMyfGBUfB1oKaZlIRr6mJL+If3bAP6sV/QneGzF6tJjZDg==}
 
@@ -7870,6 +7895,9 @@ packages:
 
   bun-types@1.3.12:
     resolution: {integrity: sha512-HqOLj5PoFajAQciOMRiIZGNoKxDJSr6qigAttOX40vJuSp6DN/CxWp9s3C1Xwm4oH7ybueITwiaOcWXoYVoRkA==}
+
+  bun-types@1.3.13:
+    resolution: {integrity: sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA==}
 
   bundle-name@4.1.0:
     resolution: {integrity: sha512-tjwM5exMg6BGRI+kNmTntNsvdZS1X8BFYS6tnJ2hdH0kVxM6/eVZ2xy+FqStSWvYmtfFMDLIxurorHwDKfDz5Q==}
@@ -18070,6 +18098,10 @@ snapshots:
     dependencies:
       bun-types: 1.3.12
 
+  '@types/bun@1.3.13':
+    dependencies:
+      bun-types: 1.3.13
+
   '@types/caseless@0.12.5': {}
 
   '@types/connect@3.4.38':
@@ -18848,6 +18880,10 @@ snapshots:
     dependencies:
       '@types/node': 24.0.8
 
+  bun-types@1.3.13:
+    dependencies:
+      '@types/node': 24.0.8
+
   bundle-name@4.1.0:
     dependencies:
       run-applescript: 7.1.0
@@ -19390,16 +19426,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.12):
+  drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.13):
     optionalDependencies:
       '@libsql/client': 0.15.15
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.15.6
-      bun-types: 1.3.12
+      bun-types: 1.3.13
 
-  drizzle-zod@0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.12))(zod@4.1.13):
+  drizzle-zod@0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.13))(zod@4.1.13):
     dependencies:
-      drizzle-orm: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.12)
+      drizzle-orm: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.6)(bun-types@1.3.13)
       zod: 4.1.13
 
   dset@3.1.4: {}
