@@ -96,6 +96,10 @@ function parse(raw: unknown): PendingAction | undefined {
   return result.data;
 }
 
+export function generateActionId(): string {
+  return nanoid();
+}
+
 export async function store(
   action: Omit<PendingAction, "id" | "createdAt">,
 ): Promise<string> {
@@ -112,6 +116,39 @@ export async function store(
   ]);
 
   return id;
+}
+
+export async function storeWithId(
+  id: string,
+  action: Omit<PendingAction, "id" | "createdAt">,
+): Promise<void> {
+  const pending: PendingAction = { ...action, id, createdAt: Date.now() };
+
+  await Promise.all([
+    redis.set(`${ACTION_PREFIX}${id}`, JSON.stringify(pending), {
+      ex: TTL_SECONDS,
+    }),
+    redis.set(`${THREAD_PREFIX}${action.threadTs}`, id, {
+      ex: TTL_SECONDS,
+    }),
+  ]);
+}
+
+export async function updateMessageTs(
+  actionId: string,
+  messageTs: string,
+): Promise<void> {
+  const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);
+  if (!raw) return;
+
+  const existing = parse(raw);
+  if (!existing) return;
+
+  existing.messageTs = messageTs;
+
+  await redis.set(`${ACTION_PREFIX}${actionId}`, JSON.stringify(existing), {
+    ex: TTL_SECONDS,
+  });
 }
 
 export async function get(

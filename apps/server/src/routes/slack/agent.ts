@@ -1,15 +1,10 @@
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
+import { type Message, type Thread, toAiMessages } from "chat";
 import { createTools } from "./tools";
 
-interface SlackThreadMessage {
-  user?: string;
-  bot_id?: string;
-  text?: string;
-}
-
-interface AgentResult {
+export interface AgentResult {
   text: string;
   toolResults: Array<{ toolName: string; result: unknown }>;
 }
@@ -60,38 +55,32 @@ Maintenance scheduling:
 - Write a professional maintenance message describing what will happen during the window.`;
 }
 
-function convertThreadToMessages(
-  thread: SlackThreadMessage[],
-  botUserId: string,
-): ModelMessage[] {
-  const messages: ModelMessage[] = [];
-  for (const msg of thread) {
-    if (!msg.text) continue;
-    if (msg.bot_id || msg.user === botUserId) {
-      messages.push({ role: "assistant", content: msg.text });
-    } else {
-      messages.push({ role: "user", content: msg.text });
-    }
+async function collectMessages(thread: Thread, limit: number): Promise<Message[]> {
+  const msgs: Message[] = [];
+  for await (const msg of thread.messages) {
+    msgs.push(msg);
+    if (msgs.length >= limit) break;
   }
+  msgs.reverse();
+  return msgs;
+}
+
+export async function runAgentFromThread(
+  workspace: Workspace,
+  thread: Thread,
+  message: Message,
+): Promise<AgentResult> {
+  const tools = createTools(workspace);
+  const history = await collectMessages(thread, 100);
+  let messages = await toAiMessages(history);
+
   // The API requires the first message to have role "user".
-  // Drop any leading assistant messages (e.g. bot confirmations from a prior turn).
   while (messages.length > 0 && messages[0].role !== "user") {
     messages.shift();
   }
-  return messages;
-}
 
-export async function runAgent(
-  workspace: Workspace,
-  thread: SlackThreadMessage[],
-  botUserId: string,
-  userText?: string,
-): Promise<AgentResult> {
-  const tools = createTools(workspace);
-  let messages = convertThreadToMessages(thread, botUserId);
-
-  if (messages.length === 0 && userText) {
-    messages = [{ role: "user" as const, content: userText }];
+  if (messages.length === 0 && message.text) {
+    messages = [{ role: "user" as const, content: message.text }];
   }
 
   if (messages.length === 0) {
@@ -104,7 +93,7 @@ export async function runAgent(
   const result = await generateText({
     model: "anthropic/claude-sonnet-4.5",
     system: buildSystemPrompt(workspace.name ?? "Unknown"),
-    messages,
+    messages: messages as ModelMessage[],
     tools,
     stopWhen: stepCountIs(5),
   });
