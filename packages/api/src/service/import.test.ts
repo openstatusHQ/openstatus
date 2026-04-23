@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
-import { addLimitWarnings, clampPeriodicity } from "./import";
+import {
+  addLimitWarnings,
+  clampPeriodicity,
+  computePhaseStatus,
+} from "./import";
 
 function makeSummary(overrides?: Partial<ImportSummary>): ImportSummary {
   return {
@@ -359,6 +363,57 @@ describe("addLimitWarnings", () => {
     });
 
     expect(summary.errors).toEqual([]);
+  });
+});
+
+describe("computePhaseStatus", () => {
+  test("returns completed for empty resources", () => {
+    expect(computePhaseStatus([])).toBe("completed");
+  });
+
+  test("returns completed when all resources are created", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "created" },
+        { sourceId: "2", name: "B", status: "created" },
+      ]),
+    ).toBe("completed");
+  });
+
+  test("returns completed when all resources are skipped", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "skipped" },
+        { sourceId: "2", name: "B", status: "skipped" },
+      ]),
+    ).toBe("completed");
+  });
+
+  test("returns partial when some resources are skipped", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "created" },
+        { sourceId: "2", name: "B", status: "skipped" },
+      ]),
+    ).toBe("partial");
+  });
+
+  test("returns partial when some resources fail", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "created" },
+        { sourceId: "2", name: "B", status: "failed" },
+      ]),
+    ).toBe("partial");
+  });
+
+  test("returns failed when all resources fail", () => {
+    expect(
+      computePhaseStatus([
+        { sourceId: "1", name: "A", status: "failed" },
+        { sourceId: "2", name: "B", status: "failed" },
+      ]),
+    ).toBe("failed");
   });
 });
 

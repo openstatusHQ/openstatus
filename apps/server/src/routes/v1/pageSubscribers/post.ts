@@ -3,7 +3,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
-import { and, eq, isNotNull } from "@openstatus/db";
+import { and, eq, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
@@ -68,15 +68,17 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       });
     }
 
+    const normalizedEmail = input.email.toLowerCase();
+
     const alreadySubscribed = await db
       .select()
       .from(pageSubscriber)
       .where(
         and(
-          eq(pageSubscriber.email, input.email),
+          sql`LOWER(${pageSubscriber.email}) = ${normalizedEmail}`,
           eq(pageSubscriber.pageId, Number(id)),
-          isNotNull(pageSubscriber.acceptedAt),
-          isNotNull(pageSubscriber.unsubscribedAt),
+          eq(pageSubscriber.channelType, "email"),
+          isNull(pageSubscriber.unsubscribedAt),
         ),
       )
       .get();
@@ -95,7 +97,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .insert(pageSubscriber)
       .values({
         pageId: _page.id,
-        email: input.email,
+        email: normalizedEmail,
         token,
         expiresAt,
       })
@@ -110,7 +112,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
         page: _page.title,
       }),
       from: "OpenStatus <notification@notifications.openstatus.dev>",
-      to: [input.email],
+      to: [normalizedEmail],
       subject: "Verify your subscription",
     });
 
