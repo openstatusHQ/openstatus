@@ -74,6 +74,11 @@ export async function createInvitation(args: {
       .returning()
       .get();
 
+    // Dev-mode convenience: echo the invite URL so the developer can
+    // click it straight from the terminal without checking the DB.
+    // Strict equality on `"development"` so bun:test (which sets
+    // `NODE_ENV=test`) and CI (typically `undefined` or `"test"`) don't
+    // leak tokens into logs.
     if (process.env.NODE_ENV === "development") {
       console.log(
         `>>>> Invitation token: http://localhost:3000/invite?token=${token} <<<< `,

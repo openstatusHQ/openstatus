@@ -46,6 +46,16 @@ export async function listApiKeys(args: {
       keys.map((k) => k.createdById).filter((id): id is number => id != null),
     ),
   );
+  // Skip the creator lookup entirely when every key pre-dates the
+  // services migration (all `createdById` are null). Drizzle throws
+  // `"At least one value must be provided"` for an empty `inArray`,
+  // which would crash `listApiKeys` for those workspaces.
+  if (creatorIds.length === 0) {
+    return keys.map((key) => ({
+      ...(key as ApiKey),
+      createdBy: undefined,
+    }));
+  }
   const creators = await db
     .select({
       id: user.id,

@@ -74,12 +74,18 @@ export async function getWorkspaceWithUsage(args: {
     },
   });
 
+  // Same guard as `getWorkspace` — unreachable in practice (workspace
+  // resolved upstream) but keeps the error shape consistent with every
+  // other service, rather than letting `parse(undefined)` surface as
+  // a `ZodError`.
+  if (!result) throw new NotFoundError("workspace", ctx.workspace.id);
+
   const usage: WorkspaceUsage = {
-    monitors: result?.monitors?.length ?? 0,
-    notifications: result?.notifications?.length ?? 0,
-    pages: result?.pages?.length ?? 0,
+    monitors: result.monitors?.length ?? 0,
+    notifications: result.notifications?.length ?? 0,
+    pages: result.pages?.length ?? 0,
     pageComponents:
-      result?.pages?.flatMap((page) => page.pageComponents)?.length ?? 0,
+      result.pages?.flatMap((page) => page.pageComponents)?.length ?? 0,
     // Parity with the legacy router — checks usage was previously commented
     // out pending a real source and left as 0. Preserved here.
     checks: 0,

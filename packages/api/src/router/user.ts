@@ -17,10 +17,9 @@ export const userRouter = createTRPCRouter({
 
   deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
     try {
-      await deleteAccount({
-        ctx: toServiceCtx(ctx),
-        input: { userId: ctx.user.id },
-      });
+      // `userId` is derived from `ctx.actor` inside the service — no
+      // input needed.
+      await deleteAccount({ ctx: toServiceCtx(ctx) });
     } catch (err) {
       toTRPCError(err);
     }

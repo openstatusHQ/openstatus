@@ -7,8 +7,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type ServiceContext, withTransaction } from "../context";
-import { ForbiddenError } from "../errors";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
+import { ForbiddenError, UnauthorizedError } from "../errors";
 import { DeleteAccountInput } from "./schemas";
 
 /**
@@ -35,11 +39,21 @@ import { DeleteAccountInput } from "./schemas";
  */
 export async function deleteAccount(args: {
   ctx: ServiceContext;
-  input: DeleteAccountInput;
+  input?: DeleteAccountInput;
 }): Promise<void> {
   const { ctx } = args;
-  const input = DeleteAccountInput.parse(args.input);
-  const { userId } = input;
+  if (args.input !== undefined) DeleteAccountInput.parse(args.input);
+
+  // `userId` is derived from `ctx.actor`, not input — account deletion
+  // is strictly self-service and must target the authenticated user,
+  // never an arbitrary id supplied by the caller. Matches the same
+  // pattern established by `acceptInvitation` / `createApiKey`.
+  const userId = tryGetActorUserId(ctx.actor);
+  if (userId == null) {
+    throw new UnauthorizedError(
+      "Account deletion requires a known user actor.",
+    );
+  }
 
   await withTransaction(ctx, async (tx) => {
     const ownedRows = await tx.query.usersToWorkspaces.findMany({
