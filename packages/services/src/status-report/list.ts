@@ -14,6 +14,7 @@ import {
   page as pageTable,
   selectPageSchema,
   statusReport,
+  statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
@@ -24,7 +25,7 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "../types";
-import { getReportInWorkspace, getUpdatesForReport } from "./internal";
+import { getReportInWorkspace } from "./internal";
 import {
   GetStatusReportInput,
   ListStatusReportsInput,
@@ -61,55 +62,97 @@ export type ListStatusReportsResult = {
   totalSize: number;
 };
 
-async function loadPageWithComponents(
+/**
+ * Load relations for a set of status reports in three batched queries
+ * (updates, component associations, pages + page components) regardless of
+ * how many reports were passed in. Avoids the O(N) per-row pattern that
+ * pairs badly with the dashboard's effectively-unlimited list request.
+ */
+async function enrichReportsBatch(
   db: DB,
-  pageId: number,
-): Promise<(Page & { pageComponents: PageComponent[] }) | null> {
-  const [pageRow, siblings] = await Promise.all([
-    db.select().from(pageTable).where(eq(pageTable.id, pageId)).get(),
-    db
-      .select()
-      .from(pageComponent)
-      .where(eq(pageComponent.pageId, pageId))
-      .all(),
-  ]);
-  if (!pageRow) return null;
-  return {
-    ...selectPageSchema.parse(pageRow),
-    pageComponents: siblings as PageComponent[],
-  };
-}
+  rows: StatusReport[],
+): Promise<StatusReportWithRelations[]> {
+  if (rows.length === 0) return [];
 
-async function enrichReport(
-  db: DB,
-  report: StatusReport,
-): Promise<StatusReportWithRelations> {
-  const [updates, components, page] = await Promise.all([
-    getUpdatesForReport(db, report.id),
-    db
-      .select()
-      .from(pageComponent)
-      .innerJoin(
-        statusReportsToPageComponents,
-        eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
-      )
-      .where(eq(statusReportsToPageComponents.statusReportId, report.id))
-      .all()
-      .then((rows) =>
-        rows.map((r) => r.page_component as unknown as PageComponent),
-      ),
-    report.pageId === null
-      ? Promise.resolve(null)
-      : loadPageWithComponents(db, report.pageId),
-  ]);
+  const reportIds = rows.map((r) => r.id);
+  const pageIdsSet = new Set<number>();
+  for (const r of rows) if (r.pageId != null) pageIdsSet.add(r.pageId);
+  const pageIds = Array.from(pageIdsSet);
 
-  return {
-    ...report,
-    updates,
-    pageComponents: components,
-    pageComponentIds: components.map((c) => c.id),
-    page,
-  };
+  // One query: all updates for all reports, newest-first.
+  const allUpdates = await db
+    .select()
+    .from(statusReportUpdate)
+    .where(inArray(statusReportUpdate.statusReportId, reportIds))
+    .orderBy(desc(statusReportUpdate.date))
+    .all();
+  const updatesByReport = new Map<number, StatusReportUpdate[]>();
+  for (const u of allUpdates) {
+    const arr = updatesByReport.get(u.statusReportId);
+    if (arr) arr.push(u);
+    else updatesByReport.set(u.statusReportId, [u]);
+  }
+
+  // One query: all component associations joined to their components.
+  const assocRows = await db
+    .select()
+    .from(pageComponent)
+    .innerJoin(
+      statusReportsToPageComponents,
+      eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
+    )
+    .where(inArray(statusReportsToPageComponents.statusReportId, reportIds))
+    .all();
+  const componentsByReport = new Map<number, PageComponent[]>();
+  for (const row of assocRows) {
+    const reportId = (
+      row.status_report_to_page_component as { statusReportId: number }
+    ).statusReportId;
+    const component = row.page_component as unknown as PageComponent;
+    const arr = componentsByReport.get(reportId);
+    if (arr) arr.push(component);
+    else componentsByReport.set(reportId, [component]);
+  }
+
+  // Two queries: distinct pages + their component rosters. Keyed by pageId so
+  // multiple reports sharing a page share the same Page object.
+  const pageById = new Map<
+    number,
+    Page & { pageComponents: PageComponent[] }
+  >();
+  if (pageIds.length > 0) {
+    const [pageRows, pageSiblings] = await Promise.all([
+      db.select().from(pageTable).where(inArray(pageTable.id, pageIds)).all(),
+      db
+        .select()
+        .from(pageComponent)
+        .where(inArray(pageComponent.pageId, pageIds))
+        .all(),
+    ]);
+    const siblingsByPageId = new Map<number, PageComponent[]>();
+    for (const c of pageSiblings) {
+      const arr = siblingsByPageId.get(c.pageId);
+      if (arr) arr.push(c as unknown as PageComponent);
+      else siblingsByPageId.set(c.pageId, [c as unknown as PageComponent]);
+    }
+    for (const p of pageRows) {
+      pageById.set(p.id, {
+        ...selectPageSchema.parse(p),
+        pageComponents: siblingsByPageId.get(p.id) ?? [],
+      });
+    }
+  }
+
+  return rows.map((r) => {
+    const components = componentsByReport.get(r.id) ?? [];
+    return {
+      ...r,
+      updates: updatesByReport.get(r.id) ?? [],
+      pageComponents: components,
+      pageComponentIds: components.map((c) => c.id),
+      page: r.pageId != null ? pageById.get(r.pageId) ?? null : null,
+    };
+  });
 }
 
 export async function listStatusReports(args: {
@@ -153,7 +196,7 @@ export async function listStatusReports(args: {
   ]);
 
   const totalSize = countRow?.count ?? 0;
-  const items = await Promise.all(rows.map((r) => enrichReport(db, r)));
+  const items = await enrichReportsBatch(db, rows);
   return { items, totalSize };
 }
 
@@ -170,5 +213,8 @@ export async function getStatusReport(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  return enrichReport(db, report);
+  const [enriched] = await enrichReportsBatch(db, [report]);
+  // `enrichReportsBatch` guarantees a 1:1 mapping for a non-empty input.
+  // biome-ignore lint/style/noNonNullAssertion: always non-null for len === 1
+  return enriched!;
 }
