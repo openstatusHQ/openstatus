@@ -1062,7 +1062,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         .where(
           and(
             eq(pageSubscriber.pageId, pageData.id),
-            eq(pageSubscriber.email, req.identifier.value),
+            eq(pageSubscriber.email, req.identifier.value.toLowerCase()),
           ),
         )
         .get();

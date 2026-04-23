@@ -18,6 +18,14 @@ export function detectWebhookFlavor(url: string): WebhookFlavor {
   return "generic";
 }
 
+function redactWebhookUrl(url: string): string {
+  try {
+    return `${new URL(url).origin}/***`;
+  } catch {
+    return "<invalid-url>";
+  }
+}
+
 function resolveStatusPageOrigin(subscription: Subscription): string {
   return subscription.customDomain
     ? `https://${subscription.customDomain}`
@@ -371,13 +379,13 @@ export async function sendWebhookNotifications(
 
         if (!response.ok) {
           console.error(
-            `Webhook notification failed for ${subscription.webhookUrl}: ${response.status} ${response.statusText}`,
+            `Webhook notification failed for ${redactWebhookUrl(subscription.webhookUrl)}: ${response.status} ${response.statusText}`,
           );
           throw new Error(`Webhook returned ${response.status}`);
         }
       } catch (error) {
         console.error(
-          `Failed to send webhook notification to ${subscription.webhookUrl}:`,
+          `Failed to send webhook notification to ${redactWebhookUrl(subscription.webhookUrl)}:`,
           error,
         );
         throw error;
