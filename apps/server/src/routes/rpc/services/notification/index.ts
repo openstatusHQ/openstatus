@@ -58,8 +58,12 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
             monitors: req.monitorIds.map((id) => Number(id)),
           },
         });
+        // Reflect what was actually persisted — the service dedupes
+        // `monitors` before insert, so echoing `req.monitorIds` verbatim
+        // would overstate the stored state when the input has duplicates.
+        const storedMonitorIds = Array.from(new Set(req.monitorIds));
         return {
-          notification: dbNotificationToProto(record, req.monitorIds),
+          notification: dbNotificationToProto(record, storedMonitorIds),
         };
       } catch (err) {
         toConnectError(err);
