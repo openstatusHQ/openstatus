@@ -45,8 +45,15 @@ export async function addLimitWarnings(
         `Component limit reached (${maxComponents}). Upgrade your plan to import components.`,
       );
     } else if (componentsPhase.resources.length > remaining) {
+      // Worst-case warning: resource count includes items that will be
+      // skipped as duplicates (phase writers dedupe by name + pageId at
+      // insert time). Phrased as "up to N new" so the number is an
+      // upper bound on quota consumption, not a guaranteed rejection
+      // count. Exact new-vs-duplicate split requires a per-component
+      // existence check we skip at preview time to keep the dry-run
+      // fast.
       summary.errors.push(
-        `Only ${remaining} of ${componentsPhase.resources.length} components can be imported due to plan limit (${maxComponents}).`,
+        `Only ${remaining} new component${remaining === 1 ? "" : "s"} may be created due to plan limit (${maxComponents}); some of the ${componentsPhase.resources.length} in the import may already exist and be skipped.`,
       );
     }
   }
@@ -83,8 +90,13 @@ export async function addLimitWarnings(
         `Monitor limit reached (${maxMonitors}). Upgrade your plan to import monitors.`,
       );
     } else if (monitorsPhase.resources.length > remaining) {
+      // Same worst-case framing as the components warning — phase
+      // writers dedupe by url + workspaceId at insert time, so the
+      // resource count includes items that will be skipped. The exact
+      // new-vs-existing split needs a per-monitor existence check we
+      // skip at preview time.
       summary.errors.push(
-        `Only ${remaining} of ${monitorsPhase.resources.length} monitors can be imported due to plan limit (${maxMonitors}).`,
+        `Only ${remaining} new monitor${remaining === 1 ? "" : "s"} may be created due to plan limit (${maxMonitors}); some of the ${monitorsPhase.resources.length} in the import may already exist and be skipped.`,
       );
     }
   }

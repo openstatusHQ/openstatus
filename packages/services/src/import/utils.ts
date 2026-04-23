@@ -17,13 +17,22 @@ export const PERIODICITY_ORDER = [
  * Map a requested periodicity to the closest value the plan allows, never
  * faster than the request. Falls back to the slowest allowed value when
  * no slower tier is available.
+ *
+ * For unknown periodicity strings (values not in `PERIODICITY_ORDER`),
+ * falls back to the slowest allowed tier rather than restarting the
+ * walk from index 0 — the old behavior could return a *faster*
+ * interval than requested (e.g. `"2m"` → `"30s"`), violating the
+ * never-faster-than-requested invariant.
  */
 export function clampPeriodicity(requested: string, allowed: string[]): string {
   if (allowed.includes(requested)) return requested;
   const reqIdx = PERIODICITY_ORDER.indexOf(
     requested as (typeof PERIODICITY_ORDER)[number],
   );
-  for (let i = Math.max(reqIdx, 0); i < PERIODICITY_ORDER.length; i++) {
+  if (reqIdx === -1) {
+    return allowed[allowed.length - 1] ?? "10m";
+  }
+  for (let i = reqIdx; i < PERIODICITY_ORDER.length; i++) {
     if (allowed.includes(PERIODICITY_ORDER[i])) {
       return PERIODICITY_ORDER[i];
     }

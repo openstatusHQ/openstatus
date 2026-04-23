@@ -428,7 +428,10 @@ test("preview shows component limit warning on free plan", async () => {
   });
 
   expect(result.errors.length).toBeGreaterThan(0);
-  expect(result.errors.some((e) => e.includes("3 of 4"))).toBe(true);
+  // Warning was reworded to clarify the worst-case count (see
+  // `limits.ts` — dropped the `"X of Y"` fraction because it implied
+  // a hard rejection count when duplicates would actually be skipped).
+  expect(result.errors.some((e) => e.includes("3 new component"))).toBe(true);
 });
 
 test("preview shows custom domain warning on free plan", async () => {

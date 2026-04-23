@@ -121,13 +121,22 @@
         "apps/server/src/routes/rpc/handlers/health/**",
         "apps/server/src/routes/rpc/handlers/status-report/**",
         "apps/server/src/routes/rpc/handlers/maintenance/**",
-        "apps/server/src/routes/rpc/handlers/notification/index.ts",
+        "apps/server/src/routes/rpc/handlers/notification/**",
         "apps/server/src/routes/slack/interactions.ts"
       ],
       "ignore": [
         // Tests legitimately manage db state for fixtures and cleanup.
         "**/__tests__/**",
-        "**/*.test.ts"
+        "**/*.test.ts",
+        // Notification handler siblings that still read db directly —
+        // `limits.ts` queries workspace quotas, `converters.ts` needs
+        // db enum shapes for proto round-trip. Both stay exempt until
+        // those responsibilities move into services. Using `**` above
+        // + these ignores (instead of whitelisting just `index.ts`)
+        // means new files added to the notification handler are
+        // enforced by default rather than silently slipping through.
+        "apps/server/src/routes/rpc/handlers/notification/limits.ts",
+        "apps/server/src/routes/rpc/handlers/notification/converters.ts"
       ],
       "linter": {
         "rules": {
