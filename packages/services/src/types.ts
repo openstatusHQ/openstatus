@@ -21,3 +21,5 @@ export type {
 } from "@openstatus/db/src/schema";
 
 export type { Page, PageComponent } from "@openstatus/db/src/schema";
+
+export type { Maintenance } from "@openstatus/db/src/schema";

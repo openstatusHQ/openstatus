@@ -12,6 +12,10 @@
     "./status-report": {
       "import": "./src/status-report/index.ts",
       "types": "./src/status-report/index.ts"
+    },
+    "./maintenance": {
+      "import": "./src/maintenance/index.ts",
+      "types": "./src/maintenance/index.ts"
     }
   },
   "scripts": {
