@@ -1,4 +1,7 @@
 import { mock } from "bun:test";
+// Import the real module BEFORE mock.module runs so we can spread real
+// service functions (createSubscription, updateChannel, etc.) into the
+// replacement while still stubbing the dispatch-side spies.
 import * as realSubscriptions from "@openstatus/subscriptions";
 
 // Subscription dispatch spies — accessible in tests via globalThis.__subscriptionSpies

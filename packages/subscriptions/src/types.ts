@@ -37,6 +37,14 @@ export interface PageUpdate {
   pageComponentIds: number[]; // For subscription matching
   pageComponents: string[]; // Component names for display
   date: string; // can be single string or "from - to"
+
+  // Optional fields consumed by the prepared (staged) generic webhook payload.
+  // Populated by the matching dispatcher; ignored by email/Slack/Discord
+  // builders, which key off the fields above.
+  updateId?: number; // statusReportUpdate.id (status reports only)
+  pageComponentsWithId?: { id: number; name: string }[];
+  startsAt?: string; // maintenance only, ISO
+  endsAt?: string; // maintenance only, ISO
 }
 
 /**

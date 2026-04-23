@@ -1,6 +1,63 @@
+import { COLORS, COLOR_DECIMALS } from "@openstatus/notification-base";
 import { assertSafeUrl } from "@openstatus/utils";
 import { z } from "zod";
 import type { PageUpdate, Subscription } from "../types";
+
+export type WebhookFlavor = "slack" | "discord" | "generic";
+
+const SLACK_PREFIX = "https://hooks.slack.com/services/";
+const DISCORD_PREFIX = "https://discord.com/api/webhooks/";
+
+/**
+ * Classify a webhook URL by its incoming-webhook origin so we can emit
+ * channel-native payloads. Unknown URLs fall back to generic JSON.
+ */
+export function detectWebhookFlavor(url: string): WebhookFlavor {
+  if (url.startsWith(SLACK_PREFIX)) return "slack";
+  if (url.startsWith(DISCORD_PREFIX)) return "discord";
+  return "generic";
+}
+
+function redactWebhookUrl(url: string): string {
+  try {
+    return `${new URL(url).origin}/***`;
+  } catch {
+    return "<invalid-url>";
+  }
+}
+
+function resolveStatusPageOrigin(subscription: Subscription): string {
+  return subscription.customDomain
+    ? `https://${subscription.customDomain}`
+    : `https://${subscription.pageSlug}.openstatus.dev`;
+}
+
+function buildManagementLinks(subscription: Subscription) {
+  if (!subscription.token) {
+    return { manageUrl: null, unsubscribeUrl: null };
+  }
+  const origin = resolveStatusPageOrigin(subscription);
+  return {
+    manageUrl: `${origin}/manage/${subscription.token}`,
+    unsubscribeUrl: `${origin}/unsubscribe/${subscription.token}`,
+  };
+}
+
+type StatusColor = "red" | "yellow" | "green" | "blue";
+
+function statusColor(status: PageUpdate["status"]): StatusColor {
+  switch (status) {
+    case "investigating":
+    case "identified":
+      return "red";
+    case "monitoring":
+      return "yellow";
+    case "resolved":
+      return "green";
+    case "maintenance":
+      return "blue";
+  }
+}
 
 export async function validateWebhookConfig(config: unknown) {
   const schema = z.object({
@@ -51,11 +108,235 @@ export async function sendWebhookVerification(
   }
 }
 
+type ManagementLinks = ReturnType<typeof buildManagementLinks>;
+
+function buildSlackPayload(
+  pageUpdate: PageUpdate,
+  subscription: Subscription,
+  links: ManagementLinks,
+) {
+  const color = statusColor(pageUpdate.status);
+
+  const blocks: Record<string, unknown>[] = [
+    {
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: pageUpdate.title,
+        emoji: true,
+      },
+    },
+    {
+      type: "section",
+      fields: [
+        {
+          type: "mrkdwn",
+          text: `*Status*\n${pageUpdate.status}`,
+        },
+        {
+          type: "mrkdwn",
+          text: `*Page*\n${subscription.pageName}`,
+        },
+      ],
+    },
+  ];
+
+  if (pageUpdate.message) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: pageUpdate.message,
+      },
+    });
+  }
+
+  if (pageUpdate.pageComponents.length > 0) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Affected*\n${pageUpdate.pageComponents.join(", ")}`,
+      },
+    });
+  }
+
+  blocks.push({
+    type: "context",
+    elements: [
+      {
+        type: "mrkdwn",
+        text: pageUpdate.date,
+      },
+    ],
+  });
+
+  if (links.manageUrl && links.unsubscribeUrl) {
+    blocks.push({
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `<${links.manageUrl}|Manage> · <${links.unsubscribeUrl}|Unsubscribe>`,
+        },
+      ],
+    });
+  }
+
+  return {
+    attachments: [
+      {
+        color: COLORS[color],
+        blocks,
+      },
+    ],
+  };
+}
+
+function buildDiscordPayload(
+  pageUpdate: PageUpdate,
+  subscription: Subscription,
+  links: ManagementLinks,
+) {
+  const color = statusColor(pageUpdate.status);
+
+  const descriptionParts: string[] = [];
+  if (pageUpdate.message) descriptionParts.push(pageUpdate.message);
+  if (pageUpdate.pageComponents.length > 0) {
+    descriptionParts.push(
+      `**Affected:** ${pageUpdate.pageComponents.join(", ")}`,
+    );
+  }
+  if (links.manageUrl && links.unsubscribeUrl) {
+    descriptionParts.push(
+      `[Manage](${links.manageUrl}) · [Unsubscribe](${links.unsubscribeUrl})`,
+    );
+  }
+
+  return {
+    embeds: [
+      {
+        title: pageUpdate.title,
+        description: descriptionParts.join("\n\n") || undefined,
+        color: COLOR_DECIMALS[color],
+        fields: [
+          {
+            name: "Status",
+            value: pageUpdate.status,
+            inline: true,
+          },
+          {
+            name: "Page",
+            value: subscription.pageName,
+            inline: true,
+          },
+        ],
+        footer: {
+          text: pageUpdate.date,
+        },
+      },
+    ],
+  };
+}
+
+/**
+ * Prepared (staged) generic webhook payload. Currently unreachable in
+ * production — the input gate rejects non-Slack/Discord URLs, and the
+ * dispatcher filters the same at send-time. Exported for unit-test coverage
+ * so the contract stays green while generic webhooks are held back.
+ */
+export function buildGenericPayload(
+  pageUpdate: PageUpdate,
+  subscription: Subscription,
+  links: ManagementLinks,
+) {
+  const page = {
+    id: subscription.pageId,
+    name: subscription.pageName,
+    slug: subscription.pageSlug,
+  };
+  const components =
+    pageUpdate.pageComponentsWithId ??
+    pageUpdate.pageComponents.map((name, i) => ({ id: i, name }));
+  const subscriptionBlock = {
+    manage_url: links.manageUrl,
+    unsubscribe_url: links.unsubscribeUrl,
+  };
+
+  if (pageUpdate.status === "maintenance") {
+    return {
+      type: "maintenance" as const,
+      data: {
+        maintenance: {
+          id: pageUpdate.id,
+          title: pageUpdate.title,
+          message: pageUpdate.message,
+          starts_at: pageUpdate.startsAt,
+          ends_at: pageUpdate.endsAt,
+          page,
+          components,
+        },
+      },
+      subscription: subscriptionBlock,
+    };
+  }
+
+  return {
+    type: "status_report" as const,
+    data: {
+      status_report: {
+        id: pageUpdate.id,
+        title: pageUpdate.title,
+        update: {
+          id: pageUpdate.updateId,
+          status: pageUpdate.status,
+          message: pageUpdate.message,
+          created_at: pageUpdate.date,
+        },
+        page,
+        components,
+      },
+    },
+    subscription: subscriptionBlock,
+  };
+}
+
+function buildNotificationPayload(
+  pageUpdate: PageUpdate,
+  subscription: Subscription,
+) {
+  if (!hasWebhookUrl(subscription)) {
+    throw new Error("Subscription has no webhook URL");
+  }
+  const flavor = detectWebhookFlavor(subscription.webhookUrl);
+  const links = buildManagementLinks(subscription);
+
+  switch (flavor) {
+    case "slack":
+      return buildSlackPayload(pageUpdate, subscription, links);
+    case "discord":
+      return buildDiscordPayload(pageUpdate, subscription, links);
+    case "generic":
+      return buildGenericPayload(pageUpdate, subscription, links);
+  }
+}
+
 export async function sendWebhookNotifications(
   subscriptions: Subscription[],
   pageUpdate: PageUpdate,
 ) {
-  const validSubscriptions = subscriptions.filter(hasWebhookUrl);
+  // Defense-in-depth: the input gate (tRPC + service layer) already rejects
+  // non-Slack/Discord URLs at save time. Drop any that slip through so the
+  // unreachable generic payload never ships to an unapproved destination.
+  const validSubscriptions = subscriptions
+    .filter(hasWebhookUrl)
+    .filter((sub) => {
+      if (detectWebhookFlavor(sub.webhookUrl) !== "generic") return true;
+      console.warn(
+        `Dropping webhook subscription ${sub.id}: generic URLs are not currently supported`,
+      );
+      return false;
+    });
   if (validSubscriptions.length === 0) return;
 
   await Promise.allSettled(
@@ -71,18 +352,7 @@ export async function sendWebhookNotifications(
         );
       }
 
-      const payload = {
-        type: "page_update",
-        page: { id: subscription.pageId, name: subscription.pageName },
-        update: {
-          id: pageUpdate.id,
-          title: pageUpdate.title,
-          status: pageUpdate.status,
-          message: pageUpdate.message,
-          pageComponents: pageUpdate.pageComponents,
-          date: pageUpdate.date,
-        },
-      };
+      const payload = buildNotificationPayload(pageUpdate, subscription);
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -109,17 +379,100 @@ export async function sendWebhookNotifications(
 
         if (!response.ok) {
           console.error(
-            `Webhook notification failed for ${subscription.webhookUrl}: ${response.status} ${response.statusText}`,
+            `Webhook notification failed for ${redactWebhookUrl(subscription.webhookUrl)}: ${response.status} ${response.statusText}`,
           );
           throw new Error(`Webhook returned ${response.status}`);
         }
       } catch (error) {
         console.error(
-          `Failed to send webhook notification to ${subscription.webhookUrl}:`,
+          `Failed to send webhook notification to ${redactWebhookUrl(subscription.webhookUrl)}:`,
           error,
         );
         throw error;
       }
     }),
   );
+}
+
+/**
+ * Build a flavor-specific test payload (used by the "Send test" row action).
+ * Exported for unit-test coverage; also called by `sendTestWebhookRequest`.
+ */
+export function buildTestPayload(flavor: WebhookFlavor) {
+  switch (flavor) {
+    case "slack":
+      return {
+        attachments: [
+          {
+            color: COLORS.green,
+            blocks: [
+              {
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: "Test Notification",
+                  emoji: false,
+                },
+              },
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: "Your openstatus webhook is configured correctly.",
+                },
+              },
+            ],
+          },
+        ],
+      };
+    case "discord":
+      return {
+        embeds: [
+          {
+            title: "Test Notification",
+            description: "Your openstatus webhook is configured correctly.",
+            color: COLOR_DECIMALS.green,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+    case "generic":
+      return {
+        type: "test",
+        message: "Your openstatus webhook is configured correctly.",
+        timestamp: new Date().toISOString(),
+      };
+  }
+}
+
+/**
+ * Send a test payload to the given webhook URL. SSRF-checked and timeout-capped.
+ * Throws on non-2xx or network error.
+ */
+export async function sendTestWebhookRequest(input: {
+  url: string;
+  flavor: WebhookFlavor;
+  headers?: Record<string, string>;
+}) {
+  const { url, flavor, headers: extraHeaders = {} } = input;
+  await assertSafeUrl(url);
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "User-Agent": "OpenStatus-Webhooks/1.0",
+    ...extraHeaders,
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(buildTestPayload(flavor)),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Test webhook failed: ${response.status} ${response.statusText}`,
+    );
+  }
 }

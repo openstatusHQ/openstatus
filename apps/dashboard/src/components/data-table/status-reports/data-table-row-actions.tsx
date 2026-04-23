@@ -3,6 +3,7 @@
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { getNextStatus } from "@/data/status-report-updates.client";
 import { getActions } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -124,7 +125,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
       <FormSheetStatusReport
-        pageComponents={page?.pageComponents ?? []}
+        items={toCheckboxTreeItems(
+          page?.pageComponents ?? [],
+          page?.pageComponentGroups ?? [],
+        )}
         defaultValues={{
           title: row.original.title,
           status: row.original.status,

@@ -15,6 +15,7 @@ import {
   FormMaintenance,
   type FormValues,
 } from "@/components/forms/maintenance/form";
+import type { CheckboxTreeItem } from "@/components/ui/checkbox-tree";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useState } from "react";
 
@@ -22,11 +23,11 @@ export function FormSheetMaintenance({
   children,
   defaultValues,
   onSubmit,
-  pageComponents,
+  items,
   ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
-  pageComponents: { id: number; name: string }[];
+  items: CheckboxTreeItem[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -46,7 +47,7 @@ export function FormSheetMaintenance({
         <FormCardGroup className="overflow-y-auto">
           <FormCard className="overflow-auto rounded-none border-none">
             <FormMaintenance
-              pageComponents={pageComponents}
+              items={items}
               onSubmit={async (values) => {
                 await onSubmit(values);
                 setOpen(false);

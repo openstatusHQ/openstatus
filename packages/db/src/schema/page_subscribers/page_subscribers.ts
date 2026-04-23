@@ -14,7 +14,7 @@ export const pageSubscriber = sqliteTable(
   "page_subscriber",
   {
     id: integer("id").primaryKey(),
-    email: text("email").notNull(),
+    email: text("email"),
 
     pageId: integer("page_id")
       .notNull()
@@ -30,6 +30,18 @@ export const pageSubscriber = sqliteTable(
     // Added: webhook-specific fields (null for email channel)
     webhookUrl: text("webhook_url"),
     channelConfig: text("channel_config"),
+
+    // How the subscription was created. Vendor-added rows skip verification
+    // and are editable from the dashboard.
+    source: text("source", {
+      enum: ["self_signup", "vendor", "import"],
+    })
+      .notNull()
+      .default("self_signup"),
+
+    // Optional human-readable label (e.g. "Supabase #incidents").
+    // When set, rendered in place of the raw destination in UI.
+    name: text("name"),
 
     token: text("token"),
     acceptedAt: integer("accepted_at", { mode: "timestamp" }),
@@ -50,9 +62,9 @@ export const pageSubscriber = sqliteTable(
         sql`${table.unsubscribedAt} IS NULL AND ${table.channelType} = 'email'`,
       ),
 
-    // Partial unique index: one active webhook subscription per page
+    // Partial unique index: one active webhook subscription per page.
     webhookPageActiveIdx: uniqueIndex("idx_page_subscriber_webhook_page_active")
-      .on(table.webhookUrl, table.pageId)
+      .on(sql`LOWER(${table.webhookUrl})`, table.pageId)
       .where(
         sql`${table.unsubscribedAt} IS NULL AND ${table.channelType} = 'webhook'`,
       ),

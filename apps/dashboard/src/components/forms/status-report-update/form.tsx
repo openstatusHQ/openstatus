@@ -324,13 +324,13 @@ export function FormStatusReportUpdate({
                           onCheckedChange={field.onChange}
                         />
                         <Label htmlFor="notifySubscribers">
-                          Send email notification to subscribers
+                          Send notification to subscribers
                         </Label>
                       </div>
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Subscribers will receive an email when creating a status
+                      Subscribers will be notified when creating a status
                       report.
                     </FormDescription>
                   </FormItem>

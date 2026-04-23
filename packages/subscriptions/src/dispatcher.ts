@@ -48,6 +48,11 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
     date: update.date.toISOString(),
+    updateId: update.id,
+    pageComponentsWithId: pageComponents.map((c) => ({
+      id: c.id,
+      name: c.name,
+    })),
   });
 }
 
@@ -88,6 +93,12 @@ export async function dispatchMaintenanceUpdate(maintenanceId: number) {
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
     date: `${maintenanceWithComponents.from.toISOString()} - ${maintenanceWithComponents.to.toISOString()}`,
+    startsAt: maintenanceWithComponents.from.toISOString(),
+    endsAt: maintenanceWithComponents.to.toISOString(),
+    pageComponentsWithId: pageComponents.map((c) => ({
+      id: c.id,
+      name: c.name,
+    })),
   });
 }
 

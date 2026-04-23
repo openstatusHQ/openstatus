@@ -2,15 +2,15 @@
 // @generated from file openstatus/status_page/v1/page_subscriber.proto (package openstatus.status_page.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/status_page/v1/page_subscriber.proto.
  */
 export const file_openstatus_status_page_v1_page_subscriber: GenFile = /*@__PURE__*/
-  fileDesc("Ci9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3BhZ2Vfc3Vic2NyaWJlci5wcm90bxIZb3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MSKSAQoOUGFnZVN1YnNjcmliZXISCgoCaWQYASABKAkSDwoHcGFnZV9pZBgCIAEoCRINCgVlbWFpbBgDIAEoCRITCgthY2NlcHRlZF9hdBgEIAEoCRIXCg91bnN1YnNjcmliZWRfYXQYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRISCgp1cGRhdGVkX2F0GAcgASgJQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw");
+  fileDesc("Ci9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3BhZ2Vfc3Vic2NyaWJlci5wcm90bxIZb3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MSLyAgoOUGFnZVN1YnNjcmliZXISCgoCaWQYASABKAkSDwoHcGFnZV9pZBgCIAEoCRINCgVlbWFpbBgDIAEoCRITCgthY2NlcHRlZF9hdBgEIAEoCRIXCg91bnN1YnNjcmliZWRfYXQYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRISCgp1cGRhdGVkX2F0GAcgASgJEjsKBnNvdXJjZRgIIAEoDjIrLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlclNvdXJjZRIRCgRuYW1lGAkgASgJSACIAQESFAoMY2hhbm5lbF90eXBlGAogASgJEhgKC3dlYmhvb2tfdXJsGAsgASgJSAGIAQESGwoOY2hhbm5lbF9jb25maWcYDCABKAlIAogBARIVCg1jb21wb25lbnRfaWRzGA0gAygJQgcKBV9uYW1lQg4KDF93ZWJob29rX3VybEIRCg9fY2hhbm5lbF9jb25maWcqlAEKEFN1YnNjcmliZXJTb3VyY2USIQodU1VCU0NSSUJFUl9TT1VSQ0VfVU5TUEVDSUZJRUQQABIhCh1TVUJTQ1JJQkVSX1NPVVJDRV9TRUxGX1NJR05VUBABEhwKGFNVQlNDUklCRVJfU09VUkNFX1ZFTkRPUhACEhwKGFNVQlNDUklCRVJfU09VUkNFX0lNUE9SVBADQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw");
 
 /**
  * PageSubscriber represents a subscriber to a status page.
@@ -33,7 +33,7 @@ export type PageSubscriber = Message<"openstatus.status_page.v1.PageSubscriber">
   pageId: string;
 
   /**
-   * Email address of the subscriber.
+   * Email address of the subscriber (empty for webhook channels).
    *
    * @generated from field: string email = 3;
    */
@@ -66,6 +66,48 @@ export type PageSubscriber = Message<"openstatus.status_page.v1.PageSubscriber">
    * @generated from field: string updated_at = 7;
    */
   updatedAt: string;
+
+  /**
+   * How the subscription was created. Vendor-added rows skip verification.
+   *
+   * @generated from field: openstatus.status_page.v1.SubscriberSource source = 8;
+   */
+  source: SubscriberSource;
+
+  /**
+   * Optional human-readable label (e.g. "Supabase #incidents").
+   *
+   * @generated from field: optional string name = 9;
+   */
+  name?: string;
+
+  /**
+   * Channel type: "email" or "webhook".
+   *
+   * @generated from field: string channel_type = 10;
+   */
+  channelType: string;
+
+  /**
+   * Webhook URL (populated only for channel_type = "webhook").
+   *
+   * @generated from field: optional string webhook_url = 11;
+   */
+  webhookUrl?: string;
+
+  /**
+   * JSON-encoded channel config (e.g. custom headers). Populated for webhook channels.
+   *
+   * @generated from field: optional string channel_config = 12;
+   */
+  channelConfig?: string;
+
+  /**
+   * IDs of components this subscription is scoped to. Empty = entire page.
+   *
+   * @generated from field: repeated string component_ids = 13;
+   */
+  componentIds: string[];
 };
 
 /**
@@ -74,4 +116,43 @@ export type PageSubscriber = Message<"openstatus.status_page.v1.PageSubscriber">
  */
 export const PageSubscriberSchema: GenMessage<PageSubscriber> = /*@__PURE__*/
   messageDesc(file_openstatus_status_page_v1_page_subscriber, 0);
+
+/**
+ * SubscriberSource indicates how the subscription was created.
+ *
+ * @generated from enum openstatus.status_page.v1.SubscriberSource
+ */
+export enum SubscriberSource {
+  /**
+   * @generated from enum value: SUBSCRIBER_SOURCE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Created by the user themselves via the status-page subscribe form.
+   *
+   * @generated from enum value: SUBSCRIBER_SOURCE_SELF_SIGNUP = 1;
+   */
+  SELF_SIGNUP = 1,
+
+  /**
+   * Created by the page vendor (dashboard user), skipping verification.
+   *
+   * @generated from enum value: SUBSCRIBER_SOURCE_VENDOR = 2;
+   */
+  VENDOR = 2,
+
+  /**
+   * Imported from a third-party provider (Atlassian Statuspage, Better Stack, Instatus).
+   *
+   * @generated from enum value: SUBSCRIBER_SOURCE_IMPORT = 3;
+   */
+  IMPORT = 3,
+}
+
+/**
+ * Describes the enum openstatus.status_page.v1.SubscriberSource.
+ */
+export const SubscriberSourceSchema: GenEnum<SubscriberSource> = /*@__PURE__*/
+  enumDesc(file_openstatus_status_page_v1_page_subscriber, 0);
 

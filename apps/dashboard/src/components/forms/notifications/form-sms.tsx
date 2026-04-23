@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
+import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import {
   FormControl,
   FormDescription,
@@ -18,7 +18,6 @@ import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
-import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -132,39 +131,22 @@ export function FormSms({
                 <FormDescription>
                   Select the monitors you want to notify.
                 </FormDescription>
-                <div className="grid gap-3">
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        id="all"
-                        checked={field.value?.length === monitors.length}
-                        onCheckedChange={(checked) => {
-                          field.onChange(
-                            checked ? monitors.map((m) => m.id) : [],
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <Label htmlFor="all">Select all</Label>
-                  </div>
-                  {monitors.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id={String(item.id)}
-                          checked={field.value?.includes(item.id)}
-                          onCheckedChange={(checked) => {
-                            const newValue = checked
-                              ? [...(field.value || []), item.id]
-                              : field.value?.filter((id) => id !== item.id);
-                            field.onChange(newValue);
-                          }}
-                        />
-                      </FormControl>
-                      <Label htmlFor={String(item.id)}>{item.name}</Label>
-                    </div>
-                  ))}
-                </div>
+                <FormControl>
+                  <CheckboxTree
+                    items={[
+                      {
+                        id: -1,
+                        label: "Select all",
+                        children: monitors.map((m) => ({
+                          id: m.id,
+                          label: m.name,
+                        })),
+                      },
+                    ]}
+                    value={field.value ?? []}
+                    onValueChange={field.onChange}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

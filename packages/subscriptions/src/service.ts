@@ -1,10 +1,15 @@
-import { and, db, eq, inArray, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, ne, sql } from "@openstatus/db";
 import {
   page,
   pageComponent,
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
+import { assertSafeUrl } from "@openstatus/utils";
+import {
+  detectWebhookFlavor,
+  sendTestWebhookRequest,
+} from "./channels/webhook";
 
 /**
  * Subscription Service Layer
@@ -24,6 +29,11 @@ function maskEmail(email: string): string {
 
   const masked = localPart.length > 0 ? `${localPart[0]}***` : "***";
   return `${masked}@${domain}`;
+}
+
+function maskWebhookUrl(webhookUrl: string): string {
+  const url = new URL(webhookUrl);
+  return `${url.origin}***`;
 }
 
 interface UpsertEmailSubscriptionInput {
@@ -55,7 +65,7 @@ export async function upsertEmailSubscription(
   });
 
   if (!pageData) {
-    throw new Error(`Page ${pageId} not found`);
+    throw new Error("Page not found");
   }
 
   // Validate component IDs belong to this page
@@ -72,9 +82,7 @@ export async function upsertEmailSubscription(
       .all();
 
     if (validComponents.length !== componentIds.length) {
-      const validIds = validComponents.map((c) => c.id);
-      const invalidIds = componentIds.filter((id) => !validIds.includes(id));
-      throw new Error(`Invalid components: ${invalidIds.join(", ")}`);
+      throw new Error("Some components do not belong to this page");
     }
   }
 
@@ -295,6 +303,9 @@ export async function getSubscriptionByToken(token: string, domain?: string) {
     }
   }
 
+  // Intentionally omitting webhookUrl/channelConfig — this is a public,
+  // token-addressed endpoint and webhook URLs embed credential-bearing
+  // paths that shouldn't leave the server.
   return {
     id: subscription.id,
     pageId: subscription.pageId,
@@ -303,7 +314,9 @@ export async function getSubscriptionByToken(token: string, domain?: string) {
     customDomain: subscription.page.customDomain,
     channelType: subscription.channelType as "email" | "webhook",
     email: subscription.email ? maskEmail(subscription.email) : undefined,
-    webhookUrl: subscription.webhookUrl ?? undefined,
+    webhookUrl: subscription.webhookUrl
+      ? maskWebhookUrl(subscription.webhookUrl)
+      : undefined,
     acceptedAt: subscription.acceptedAt ?? undefined,
     unsubscribedAt: subscription.unsubscribedAt ?? undefined,
     componentIds: subscription.components.map((c) => c.pageComponentId),
@@ -424,6 +437,355 @@ export async function updateSubscriptionScope(
     acceptedAt: subscription.acceptedAt ?? undefined,
     componentIds,
   };
+}
+
+/**
+ * Create a vendor-added subscription (channel-agnostic).
+ *
+ * Skips the verification flow: `source = "vendor"`, `acceptedAt`
+ * stamped at creation, `expiresAt = null`. Token is still generated so the
+ * partner can self-manage via the existing `/manage/{token}` and
+ * `/unsubscribe/{token}` routes.
+ */
+export type CreateSubscriptionInput =
+  | {
+      pageId: number;
+      channelType: "email";
+      email: string;
+      name?: string | null;
+      componentIds?: number[];
+    }
+  | {
+      pageId: number;
+      channelType: "webhook";
+      webhookUrl: string;
+      name?: string | null;
+      channelConfig?: unknown;
+      componentIds?: number[];
+    };
+
+export async function createSubscription(input: CreateSubscriptionInput) {
+  const { pageId, channelType, name, componentIds = [] } = input;
+
+  const pageData = await db.query.page.findFirst({
+    where: eq(page.id, pageId),
+  });
+
+  if (!pageData) {
+    throw new Error("Page not found");
+  }
+
+  if (componentIds.length > 0) {
+    const validComponents = await db
+      .select({ id: pageComponent.id })
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, pageId),
+          inArray(pageComponent.id, componentIds),
+        ),
+      )
+      .all();
+
+    if (validComponents.length !== componentIds.length) {
+      throw new Error("Some components do not belong to this page");
+    }
+  }
+
+  let emailLower: string | null = null;
+  let webhookUrl: string | null = null;
+  let channelConfig: string | null = null;
+
+  if (channelType === "email") {
+    emailLower = input.email.toLowerCase();
+
+    const duplicate = await db.query.pageSubscriber.findFirst({
+      where: and(
+        eq(pageSubscriber.pageId, pageId),
+        eq(pageSubscriber.email, emailLower),
+        eq(pageSubscriber.channelType, "email"),
+        isNull(pageSubscriber.unsubscribedAt),
+      ),
+    });
+
+    if (duplicate) {
+      throw new Error(
+        "A subscriber with this email already exists for this page.",
+      );
+    }
+  } else {
+    webhookUrl = input.webhookUrl;
+    await assertSafeUrl(webhookUrl);
+
+    if (detectWebhookFlavor(webhookUrl) === "generic") {
+      throw new Error("Only Slack and Discord webhook URLs are supported.");
+    }
+
+    const duplicate = await db.query.pageSubscriber.findFirst({
+      where: and(
+        eq(pageSubscriber.pageId, pageId),
+        sql`LOWER(${pageSubscriber.webhookUrl}) = ${webhookUrl.toLowerCase()}`,
+        eq(pageSubscriber.channelType, "webhook"),
+        isNull(pageSubscriber.unsubscribedAt),
+      ),
+    });
+
+    if (duplicate) {
+      throw new Error(
+        "A subscriber with this webhook URL already exists for this page.",
+      );
+    }
+
+    channelConfig = input.channelConfig
+      ? JSON.stringify(input.channelConfig)
+      : null;
+  }
+
+  const token = crypto.randomUUID();
+  const now = new Date();
+
+  const subscription = await db.transaction(async (tx) => {
+    const sub = await tx
+      .insert(pageSubscriber)
+      .values({
+        channelType,
+        email: emailLower,
+        webhookUrl,
+        channelConfig,
+        pageId,
+        source: "vendor",
+        name: name ?? null,
+        token,
+        acceptedAt: now,
+        expiresAt: null,
+      })
+      .returning()
+      .get();
+
+    if (componentIds.length > 0) {
+      await tx
+        .insert(pageSubscriberToPageComponent)
+        .values(
+          componentIds.map((compId) => ({
+            pageSubscriberId: sub.id,
+            pageComponentId: compId,
+          })),
+        )
+        .run();
+    }
+
+    return sub;
+  });
+
+  return {
+    id: subscription.id,
+    pageId: subscription.pageId,
+    channelType: subscription.channelType as "email" | "webhook",
+    email: subscription.email ?? undefined,
+    webhookUrl: subscription.webhookUrl ?? undefined,
+    channelConfig: subscription.channelConfig ?? undefined,
+    source: subscription.source as "self_signup" | "vendor",
+    name: subscription.name ?? undefined,
+    token: subscription.token,
+    acceptedAt: subscription.acceptedAt ?? undefined,
+    componentIds,
+  };
+}
+
+/**
+ * Update a vendor-added subscription's channel config, name, or component scope.
+ *
+ * Self-signup rows are subscriber-owned (managed via token) and rejected here.
+ * Email rows reject `webhookUrl`/`channelConfig` (no webhook fields to edit).
+ * Webhook rows accept URL/headers/name/scope. Email / webhook identity keys
+ * (email, webhookUrl) are immutable on email rows; webhook URL is mutable.
+ *
+ * componentIds semantics:
+ *   - `undefined`  → do not touch scope (existing component links preserved).
+ *   - `[]`         → reset scope to "entire page" (all existing links removed).
+ *   - `[a, b, …]`  → replace scope with exactly these components. All IDs must
+ *                    belong to the target page or the update is rejected.
+ */
+export type UpdateChannelInput = {
+  subscriberId: number;
+  pageId: number;
+  name?: string | null;
+  webhookUrl?: string;
+  channelConfig?: unknown;
+  componentIds?: number[];
+};
+
+export async function updateChannel(input: UpdateChannelInput) {
+  const {
+    subscriberId,
+    pageId,
+    name,
+    webhookUrl,
+    channelConfig,
+    componentIds,
+  } = input;
+
+  const existing = await db.query.pageSubscriber.findFirst({
+    where: and(
+      eq(pageSubscriber.id, subscriberId),
+      eq(pageSubscriber.pageId, pageId),
+    ),
+  });
+
+  if (!existing) {
+    throw new Error("Subscriber not found");
+  }
+
+  if (existing.source !== "vendor") {
+    throw new Error(
+      "Self-signup subscribers manage their own subscription; use the unsubscribe action instead.",
+    );
+  }
+
+  if (existing.channelType === "email") {
+    if (webhookUrl !== undefined || channelConfig !== undefined) {
+      throw new Error("Email subscribers do not have webhook fields to edit.");
+    }
+  }
+
+  const updateFields: Record<string, unknown> = { updatedAt: new Date() };
+  if (name !== undefined) updateFields.name = name;
+
+  if (existing.channelType === "webhook") {
+    if (webhookUrl !== undefined && webhookUrl !== existing.webhookUrl) {
+      await assertSafeUrl(webhookUrl);
+      if (detectWebhookFlavor(webhookUrl) === "generic") {
+        throw new Error("Only Slack and Discord webhook URLs are supported.");
+      }
+
+      const duplicate = await db.query.pageSubscriber.findFirst({
+        where: and(
+          eq(pageSubscriber.pageId, pageId),
+          sql`LOWER(${pageSubscriber.webhookUrl}) = ${webhookUrl.toLowerCase()}`,
+          eq(pageSubscriber.channelType, "webhook"),
+          isNull(pageSubscriber.unsubscribedAt),
+          ne(pageSubscriber.id, subscriberId),
+        ),
+      });
+
+      if (duplicate) {
+        throw new Error(
+          "A subscriber with this webhook URL already exists for this page.",
+        );
+      }
+
+      updateFields.webhookUrl = webhookUrl;
+    }
+    if (channelConfig !== undefined) {
+      updateFields.channelConfig = channelConfig
+        ? JSON.stringify(channelConfig)
+        : null;
+    }
+  }
+
+  if (componentIds !== undefined && componentIds.length > 0) {
+    const validComponents = await db
+      .select({ id: pageComponent.id })
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, pageId),
+          inArray(pageComponent.id, componentIds),
+        ),
+      )
+      .all();
+
+    if (validComponents.length !== componentIds.length) {
+      throw new Error("Some components do not belong to this page");
+    }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(pageSubscriber)
+      .set(updateFields)
+      .where(eq(pageSubscriber.id, subscriberId))
+      .run();
+
+    if (componentIds !== undefined) {
+      await tx
+        .delete(pageSubscriberToPageComponent)
+        .where(eq(pageSubscriberToPageComponent.pageSubscriberId, subscriberId))
+        .run();
+
+      if (componentIds.length > 0) {
+        await tx
+          .insert(pageSubscriberToPageComponent)
+          .values(
+            componentIds.map((compId) => ({
+              pageSubscriberId: subscriberId,
+              pageComponentId: compId,
+            })),
+          )
+          .run();
+      }
+    }
+  });
+
+  return { id: subscriberId };
+}
+
+/**
+ * Send a test payload to a vendor-added webhook subscriber.
+ * Shape is flavor-aware (Slack blocks / Discord embed / generic JSON).
+ */
+export async function sendTestWebhook(subscriberId: number, pageId: number) {
+  const existing = await db.query.pageSubscriber.findFirst({
+    where: and(
+      eq(pageSubscriber.id, subscriberId),
+      eq(pageSubscriber.pageId, pageId),
+    ),
+  });
+
+  if (!existing) {
+    throw new Error("Subscriber not found");
+  }
+
+  if (existing.source !== "vendor") {
+    throw new Error(
+      "Only vendor-added webhook subscribers support test dispatch.",
+    );
+  }
+
+  if (existing.channelType !== "webhook" || !existing.webhookUrl) {
+    throw new Error("Subscriber is not a webhook channel");
+  }
+
+  if (existing.unsubscribedAt) {
+    throw new Error("Subscriber is unsubscribed");
+  }
+
+  const flavor = detectWebhookFlavor(existing.webhookUrl);
+  const headers = parseWebhookHeaders(existing.channelConfig);
+
+  await sendTestWebhookRequest({
+    url: existing.webhookUrl,
+    flavor,
+    headers,
+  });
+}
+
+function parseWebhookHeaders(
+  channelConfig: string | null,
+): Record<string, string> {
+  if (!channelConfig) return {};
+  try {
+    const config = JSON.parse(channelConfig) as {
+      headers?: { key: string; value: string }[];
+    };
+    const headers: Record<string, string> = {};
+    for (const h of config.headers ?? []) {
+      headers[h.key] = h.value;
+    }
+    return headers;
+  } catch {
+    return {};
+  }
 }
 
 /**

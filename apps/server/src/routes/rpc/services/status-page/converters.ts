@@ -5,6 +5,7 @@ import type {
   PageSubscriber,
   StatusPage,
   StatusPageSummary,
+  WebhookChannelHeader,
 } from "@openstatus/proto/status_page/v1";
 import {
   OverallStatus,
@@ -12,6 +13,7 @@ import {
   PageComponentType,
   PageTheme,
   Locale as ProtoLocale,
+  SubscriberSource,
 } from "@openstatus/proto/status_page/v1";
 
 /**
@@ -62,14 +64,20 @@ type DBPageComponentGroup = {
   updatedAt: Date | null;
 };
 
-type DBPageSubscriber = {
+export type DBPageSubscriber = {
   id: number;
   pageId: number;
-  email: string;
+  email: string | null;
   acceptedAt: Date | null;
   unsubscribedAt: Date | null;
   createdAt: Date | null;
   updatedAt: Date | null;
+  source: "self_signup" | "vendor" | "import";
+  name: string | null;
+  channelType: "email" | "webhook";
+  webhookUrl: string | null;
+  channelConfig: string | null;
+  componentIds?: number[];
 };
 
 /**
@@ -290,20 +298,75 @@ export function dbGroupToProto(
 }
 
 /**
- * Convert a DB subscriber to proto format.
+ * Normalize proto WebhookChannelHeader[] into plain {key,value}[].
+ *
+ * Drops runtime-only fields like `$typeName` so nothing proto-specific
+ * reaches the DB. Mirrors the pattern used by `headersToDbJson` in the
+ * monitor converters (`monitor/converters/headers.ts`).
  */
+export function protoHeadersToPlain(
+  headers: WebhookChannelHeader[] | undefined,
+): { key: string; value: string }[] {
+  return (headers ?? []).map((h) => ({ key: h.key, value: h.value }));
+}
+
+/**
+ * Convert a DB subscriber-source string to proto enum.
+ */
+export function dbSubscriberSourceToProto(
+  source: "self_signup" | "vendor" | "import",
+): SubscriberSource {
+  switch (source) {
+    case "self_signup":
+      return SubscriberSource.SELF_SIGNUP;
+    case "vendor":
+      return SubscriberSource.VENDOR;
+    case "import":
+      return SubscriberSource.IMPORT;
+    default:
+      return SubscriberSource.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert a DB subscriber to proto format.
+ *
+ * Mirrors the tRPC `list` behavior: non-vendor rows get the webhook URL
+ * reduced to origin-only and no `channelConfig`. Vendor-owned rows get
+ * the full URL + config because the vendor is the one who configured them.
+ */
+function webhookUrlForProto(
+  source: DBPageSubscriber["source"],
+  webhookUrl: string | null,
+): string | undefined {
+  if (!webhookUrl) return undefined;
+  if (source === "vendor") return webhookUrl;
+  try {
+    return new URL(webhookUrl).origin;
+  } catch {
+    return undefined;
+  }
+}
+
 export function dbSubscriberToProto(
   subscriber: DBPageSubscriber,
 ): PageSubscriber {
+  const isVendor = subscriber.source === "vendor";
   return {
     $typeName: "openstatus.status_page.v1.PageSubscriber" as const,
     id: String(subscriber.id),
     pageId: String(subscriber.pageId),
-    email: subscriber.email,
+    email: subscriber.email ?? "",
     acceptedAt: subscriber.acceptedAt?.toISOString() ?? "",
     unsubscribedAt: subscriber.unsubscribedAt?.toISOString() ?? "",
     createdAt: subscriber.createdAt?.toISOString() ?? "",
     updatedAt: subscriber.updatedAt?.toISOString() ?? "",
+    source: dbSubscriberSourceToProto(subscriber.source),
+    name: subscriber.name ?? undefined,
+    channelType: subscriber.channelType,
+    webhookUrl: webhookUrlForProto(subscriber.source, subscriber.webhookUrl),
+    channelConfig: isVendor ? subscriber.channelConfig ?? undefined : undefined,
+    componentIds: (subscriber.componentIds ?? []).map(String),
   };
 }
 
