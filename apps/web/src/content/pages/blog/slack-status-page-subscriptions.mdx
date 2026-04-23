@@ -1,0 +1,107 @@
+---
+title: "Let Customers Subscribe to Your Status Page in Slack"
+description: "Give customers real-time incident alerts in their own Slack channel via Slack Connect — without building a bot or maintaining integration code."
+author: "openstatus"
+publishedAt: "2026-04-23"
+category: "education"
+faq:
+  - question: "Do partners need an openstatus account to subscribe?"
+    answer: "No. Partners only need a Slack workspace and the invite link you send them. The channel lives in their workspace via Slack Connect and they never sign into openstatus."
+  - question: "What is Slack Connect?"
+    answer: "Slack Connect is Slack's native feature for sharing channels between separate workspaces. The channel exists in the partner's workspace but receives messages from yours — no guest accounts, no third-party apps, no shared admin seats."
+  - question: "Can partners change the components they are subscribed to?"
+    answer: "No. The page owner controls component scope. This is deliberate — it keeps partners from subscribing to components they aren't entitled to see, and keeps entitlement decisions auditable on your side."
+  - question: "What if a partner's entitlement changes?"
+    answer: "Update their subscription from the dashboard. Add or remove components and the change takes effect on the next event — no code change or redeploy required."
+  - question: "Does Slack Connect cost partners anything?"
+    answer: "No. Slack Connect is free for both sides as long as at least one of the two workspaces is on a paid Slack plan."
+  - question: "What about email or webhook subscriptions?"
+    answer: "Openstatus supports both in addition to Slack. Pick the channel that matches how each partner prefers to receive incident updates."
+---
+
+Every vendor hits this request sooner or later: *"Can we get your status updates in our Slack?"*
+
+The usual answer is some cursed combination of a webhook, a Zapier flow, a shared Slack channel, or — our personal favorite — an on-call engineer remembering, at 3 AM, to copy-paste the update into five customer channels. The ambitious teams go further and build an internal Slack bot that fans out incident notifications to a list of customer channels.
+
+Every one of those solutions has the same problem: you own it forever.
+
+A new partner onboards? Write more glue. A customer only wants alerts for your API and not your billing layer? Add filtering. Someone leaves Slack? Track them down and rewire the list. Sales promises a custom integration on a demo call? Enjoy your sprint.
+
+Stop vibe-coding internal notification tools. Openstatus lets you hand each partner their own Slack Connect channel, scoped to the components they actually care about, without writing integration code.
+
+## Why Self-Serve Slack Subscriptions Beat Internal Tooling
+
+When a vendor notification channel lives in your own codebase, it fails in predictable, unflattering ways. Purpose-built status page subscriptions close those gaps:
+
+- **No per-partner integration code.** Every partner gets the same channel topology without a custom build. The code you don't write is the code that doesn't page you.
+- **Scope each partner to the components they are entitled to see.** An API-tier customer shouldn't see alerts about the admin dashboard they don't use — or worse, about the internal component you forgot was connected.
+- **Each partner owns the Slack channel.** Slack Connect means the channel lives in *their* workspace. No guest seats, no shared admin accounts, no "please remove the ex-employee from #status-foo" tickets a year later.
+- **Entitlement changes are config, not a deploy.** When a customer upgrades tiers or churns, you update their subscription. No code change, no migration, no Jira ticket that sits in the backlog until the renewal call.
+
+The net effect: partner notifications become an access-control problem instead of an engineering backlog item.
+
+## What Your Partners Will Experience
+
+From the partner side, the flow is short and boring — which is exactly what you want from a notification integration:
+
+1. They receive a Slack Connect invite from you.
+2. They accept — the channel lives in their workspace, owned by them.
+3. Incidents and maintenance events for the components you selected land in that channel automatically.
+
+That's it. Partners don't need an openstatus account, they don't pick components themselves, and they don't manage a subscription dashboard. The channel is theirs; the scope is yours.
+
+{/* SCREENSHOT: Slack Connect invite accepted + sample incident in partner's channel */}
+
+## Setting Up a Partner Subscription
+
+On your side, onboarding a new partner takes three steps. Treat it like provisioning access — because that's what it is.
+
+### 1. Create the Subscription
+
+From your status page settings, open the subscribers section and create a new Slack Connect subscription. Name it after the partner. The company name works fine; so does "Acme (NA region)" if you're splitting by geography.
+
+{/* SCREENSHOT: create subscription form */}
+
+### 2. Pick the Components This Partner Should See
+
+This is the step that matters. Subscriptions are component-scoped, which means you decide exactly which parts of your platform this partner receives alerts for.
+
+A few defaults worth considering:
+
+- **Public API components** — almost always yes for integration partners.
+- **Customer-facing dashboards** — yes if the partner's end users log in.
+- **Internal tooling, beta components, shared infrastructure** — usually no. These leak information about your architecture and roadmap, and nobody wants to explain to a customer why they just got paged about a staging cluster.
+
+If you're not sure, err toward fewer components. You can always add more later. You cannot un-send a 2 AM page about a service the partner didn't know existed.
+
+{/* SCREENSHOT: component selection */}
+
+### 3. Send the Invite
+
+Openstatus generates a Slack Connect invite link. Share it with your partner contact through whichever channel you already use for account communications.
+
+Once they accept, the channel is live and scoped. The next incident affecting one of their components will post there — no further action required from either side.
+
+## What a Slack Notification Looks Like
+
+Partners see a structured message for each event type: incident opened, incident update, incident resolved, and scheduled maintenance.
+
+{/* SCREENSHOT: incident opened, updated, resolved, maintenance */}
+
+Messages post in real time as you update the incident on openstatus. What you write once goes to every subscribed partner's channel in parallel, filtered by their component scope. You don't pay a broadcast tax for having more partners, and you don't write the same update five times.
+
+## Who This Fits
+
+This pattern shows up in a few common shapes:
+
+- **SaaS vendors with enterprise customers.** Uptime clauses in contracts usually imply proactive notification. A scoped Slack Connect channel satisfies that without building a portal nobody logs into.
+- **API providers with integration partners.** Partners need to know when your API changes state, and they want it in the same Slack where their own incident response is already happening.
+- **Multi-tenant platforms with business customers.** Giving each tenant a channel scoped to their components avoids the noisy-neighbor problem where every customer sees every alert and learns to mute the channel.
+
+If your customers are paying for availability, this is the lowest-friction way to prove you take it seriously — and the lowest-friction way to stop maintaining the Rube Goldberg machine you built in 2023.
+
+## Get Started
+
+Slack Connect subscriptions work on any openstatus status page. Create a subscription in your dashboard, pick the components, and share the invite link with your partner contact. No code, no deploy, no long-term maintenance — just scoped alerts delivered where your partners already work.
+
+_Set up your first Slack Connect subscription from the [openstatus dashboard](https://app.openstatus.dev?ref=blog-slack-subscriptions) and retire the copy-paste on-call ritual._
