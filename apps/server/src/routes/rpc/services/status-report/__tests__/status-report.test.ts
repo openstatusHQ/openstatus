@@ -394,7 +394,10 @@ describe("StatusReportService.CreateStatusReport", () => {
 
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.message).toContain("does not match the page ID");
+    // Service throws `ConflictError("pageId X does not match the page
+    // (Y) of the selected components.")` — assertion matches the new
+    // service-layer wording.
+    expect(data.message).toContain("does not match the page");
   });
 
   test("creates status report when pageId matches component page", async () => {

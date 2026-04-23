@@ -199,7 +199,11 @@ test("statusReport.create rejects pageComponents from another workspace", async 
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    // Cross-workspace component IDs resolve to `NOT_FOUND` (not
+    // `FORBIDDEN`) — the service doesn't leak existence of resources
+    // in other workspaces, so callers see them as missing rather than
+    // off-limits. This is the new services-migration behavior.
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 
@@ -222,7 +226,8 @@ test("statusReport.updateStatus rejects pageComponents from another workspace", 
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    // See cross-workspace note in `statusReport.create` test above.
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 
   // Verify the report was NOT modified
