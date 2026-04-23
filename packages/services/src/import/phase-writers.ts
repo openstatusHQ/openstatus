@@ -12,17 +12,33 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { PhaseResult } from "@openstatus/importers";
 
-import type { DB } from "../context";
+import { emitAudit } from "../audit";
+import type { DB, ServiceContext } from "../context";
+import type { ImportProviderName } from "./schemas";
 import { clampPeriodicity, computePhaseStatus } from "./utils";
+
+/**
+ * Shared write-context threaded through every phase writer. Bundles the
+ * service ctx (actor + workspace for audit attribution), the active
+ * `tx`/db handle, and the provider name so per-resource audit rows carry
+ * `source: "import"` + the source provider.
+ */
+export type PhaseContext = {
+  ctx: ServiceContext;
+  tx: DB;
+  provider: ImportProviderName;
+};
 
 /**
  * Each phase writer mutates the phase in place:
  *   - sets per-resource `status` ("created" | "skipped" | "failed"),
  *   - stamps `openstatusId` on success,
  *   - records the per-resource `error` string on failure,
+ *   - emits one audit row per *created* resource (skipped rows already
+ *     have their original create audit; failed rows have nothing to
+ *     attribute),
  *   - rolls the phase-level `status` up from its resources.
  *
  * Writers never throw on a single-resource failure — they only throw on
@@ -30,13 +46,22 @@ import { clampPeriodicity, computePhaseStatus } from "./utils";
  * orchestrator in `run.ts` catches throws to abort the remaining phases.
  */
 
+function auditMeta(
+  pc: PhaseContext,
+  extra?: Record<string, unknown>,
+): Record<string, unknown> {
+  return { source: "import", provider: pc.provider, ...extra };
+}
+
 export async function writePagePhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
-  workspaceId: number,
   existingPageId?: number,
-  limits?: Limits,
 ): Promise<number> {
+  const { ctx, tx } = pc;
+  const workspaceId = ctx.workspace.id;
+  const limits = ctx.workspace.limits;
+
   const resource = phase.resources[0];
   if (!resource?.data) {
     throw new Error("No page data found in phase");
@@ -54,12 +79,12 @@ export async function writePagePhase(
 
   // Strip the custom domain when the plan doesn't allow one — imports are
   // tolerant (skip/warn) rather than all-or-nothing.
-  if (limits && !limits["custom-domain"]) {
+  if (!limits["custom-domain"]) {
     data.customDomain = "";
   }
 
   if (existingPageId) {
-    const existing = await db
+    const existing = await tx
       .select()
       .from(page)
       .where(
@@ -73,7 +98,7 @@ export async function writePagePhase(
       );
     }
 
-    await db
+    await tx
       .update(page)
       .set({ title: data.title, description: data.description })
       .where(eq(page.id, existingPageId));
@@ -85,7 +110,7 @@ export async function writePagePhase(
   }
 
   // Idempotency: slug is unique within a workspace.
-  const existingBySlug = await db
+  const existingBySlug = await tx
     .select()
     .from(page)
     .where(and(eq(page.slug, data.slug), eq(page.workspaceId, workspaceId)))
@@ -98,7 +123,7 @@ export async function writePagePhase(
     return existingBySlug.id;
   }
 
-  const [inserted] = await db
+  const [inserted] = await tx
     .insert(page)
     .values({
       workspaceId: data.workspaceId,
@@ -116,16 +141,26 @@ export async function writePagePhase(
   resource.openstatusId = inserted.id;
   resource.status = "created";
   phase.status = computePhaseStatus(phase.resources);
+
+  await emitAudit(tx, ctx, {
+    action: "page.create",
+    entityType: "page",
+    entityId: inserted.id,
+    metadata: auditMeta(pc, { sourceId: resource.sourceId, slug: data.slug }),
+  });
+
   return inserted.id;
 }
 
 export async function writeComponentGroupsPhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
-  workspaceId: number,
   pageId: number,
   groupIdMap: Map<string, number>,
 ): Promise<void> {
+  const { ctx, tx } = pc;
+  const workspaceId = ctx.workspace.id;
+
   for (const resource of phase.resources) {
     try {
       const data = resource.data as {
@@ -134,7 +169,7 @@ export async function writeComponentGroupsPhase(
         name: string;
       };
 
-      const existing = await db
+      const existing = await tx
         .select()
         .from(pageComponentGroup)
         .where(
@@ -152,7 +187,7 @@ export async function writeComponentGroupsPhase(
         continue;
       }
 
-      const [inserted] = await db
+      const [inserted] = await tx
         .insert(pageComponentGroup)
         .values({ workspaceId, pageId, name: data.name })
         .returning({ id: pageComponentGroup.id });
@@ -166,6 +201,17 @@ export async function writeComponentGroupsPhase(
       groupIdMap.set(resource.sourceId, inserted.id);
       resource.openstatusId = inserted.id;
       resource.status = "created";
+
+      await emitAudit(tx, ctx, {
+        action: "page_component_group.create",
+        entityType: "page_component_group",
+        entityId: inserted.id,
+        metadata: auditMeta(pc, {
+          sourceId: resource.sourceId,
+          pageId,
+          name: data.name,
+        }),
+      });
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
@@ -176,14 +222,16 @@ export async function writeComponentGroupsPhase(
 }
 
 export async function writeComponentsPhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
-  workspaceId: number,
   pageId: number,
   groupIdMap: Map<string, number>,
   componentIdMap: Map<string, number>,
   monitorIdMap?: Map<string, number>,
 ): Promise<void> {
+  const { ctx, tx } = pc;
+  const workspaceId = ctx.workspace.id;
+
   for (const resource of phase.resources) {
     if (resource.status === "skipped") continue;
 
@@ -211,7 +259,7 @@ export async function writeComponentsPhase(
         }
       }
 
-      const existing = await db
+      const existing = await tx
         .select()
         .from(pageComponent)
         .where(
@@ -233,7 +281,7 @@ export async function writeComponentsPhase(
         ? groupIdMap.get(data.sourceGroupId) ?? null
         : null;
 
-      const [inserted] = await db
+      const [inserted] = await tx
         .insert(pageComponent)
         .values({
           workspaceId,
@@ -256,6 +304,17 @@ export async function writeComponentsPhase(
       componentIdMap.set(resource.sourceId, inserted.id);
       resource.openstatusId = inserted.id;
       resource.status = "created";
+
+      await emitAudit(tx, ctx, {
+        action: "page_component.create",
+        entityType: "page_component",
+        entityId: inserted.id,
+        metadata: auditMeta(pc, {
+          sourceId: resource.sourceId,
+          pageId,
+          type: data.type,
+        }),
+      });
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
@@ -266,12 +325,14 @@ export async function writeComponentsPhase(
 }
 
 export async function writeIncidentsPhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
-  workspaceId: number,
   pageId: number,
   componentIdMap: Map<string, number>,
 ): Promise<void> {
+  const { ctx, tx } = pc;
+  const workspaceId = ctx.workspace.id;
+
   for (const resource of phase.resources) {
     try {
       const data = resource.data as {
@@ -289,7 +350,7 @@ export async function writeIncidentsPhase(
         sourceComponentIds: string[];
       };
 
-      const [insertedReport] = await db
+      const [insertedReport] = await tx
         .insert(statusReport)
         .values({
           title: data.report.title,
@@ -305,15 +366,43 @@ export async function writeIncidentsPhase(
         continue;
       }
 
+      await emitAudit(tx, ctx, {
+        action: "status_report.create",
+        entityType: "status_report",
+        entityId: insertedReport.id,
+        metadata: auditMeta(pc, {
+          sourceId: resource.sourceId,
+          pageId,
+          title: data.report.title,
+        }),
+      });
+
+      // Batch the update rows with `.returning()` so per-update audit can
+      // attribute the specific update ids.
       if (data.updates.length > 0) {
-        await db.insert(statusReportUpdate).values(
-          data.updates.map((u) => ({
-            status: u.status,
-            message: u.message,
-            date: u.date,
-            statusReportId: insertedReport.id,
-          })),
-        );
+        const insertedUpdates = await tx
+          .insert(statusReportUpdate)
+          .values(
+            data.updates.map((u) => ({
+              status: u.status,
+              message: u.message,
+              date: u.date,
+              statusReportId: insertedReport.id,
+            })),
+          )
+          .returning({ id: statusReportUpdate.id });
+
+        for (const row of insertedUpdates) {
+          await emitAudit(tx, ctx, {
+            action: "status_report.add_update",
+            entityType: "status_report_update",
+            entityId: row.id,
+            metadata: auditMeta(pc, {
+              sourceId: resource.sourceId,
+              statusReportId: insertedReport.id,
+            }),
+          });
+        }
       }
 
       const componentLinks: Array<{
@@ -330,7 +419,7 @@ export async function writeIncidentsPhase(
         }
       }
       if (componentLinks.length > 0) {
-        await db.insert(statusReportsToPageComponents).values(componentLinks);
+        await tx.insert(statusReportsToPageComponents).values(componentLinks);
       }
 
       resource.openstatusId = insertedReport.id;
@@ -345,12 +434,14 @@ export async function writeIncidentsPhase(
 }
 
 export async function writeMaintenancesPhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
-  workspaceId: number,
   pageId: number,
   componentIdMap: Map<string, number>,
 ): Promise<void> {
+  const { ctx, tx } = pc;
+  const workspaceId = ctx.workspace.id;
+
   for (const resource of phase.resources) {
     try {
       const data = resource.data as {
@@ -363,7 +454,7 @@ export async function writeMaintenancesPhase(
         sourceComponentIds: string[];
       };
 
-      const [inserted] = await db
+      const [inserted] = await tx
         .insert(maintenance)
         .values({
           title: data.title,
@@ -395,11 +486,22 @@ export async function writeMaintenancesPhase(
         }
       }
       if (componentLinks.length > 0) {
-        await db.insert(maintenancesToPageComponents).values(componentLinks);
+        await tx.insert(maintenancesToPageComponents).values(componentLinks);
       }
 
       resource.openstatusId = inserted.id;
       resource.status = "created";
+
+      await emitAudit(tx, ctx, {
+        action: "maintenance.create",
+        entityType: "maintenance",
+        entityId: inserted.id,
+        metadata: auditMeta(pc, {
+          sourceId: resource.sourceId,
+          pageId,
+          title: data.title,
+        }),
+      });
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
@@ -410,13 +512,15 @@ export async function writeMaintenancesPhase(
 }
 
 export async function writeMonitorsPhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
-  workspaceId: number,
   monitorIdMap: Map<string, number>,
-  limits: Limits,
 ): Promise<void> {
-  const [monitorCount] = await db
+  const { ctx, tx } = pc;
+  const workspaceId = ctx.workspace.id;
+  const limits = ctx.workspace.limits;
+
+  const [monitorCount] = await tx
     .select({ count: count() })
     .from(monitor)
     .where(
@@ -461,7 +565,7 @@ export async function writeMonitorsPhase(
       };
 
       // Idempotency: same url in the workspace (active only).
-      const existing = await db
+      const existing = await tx
         .select()
         .from(monitor)
         .where(
@@ -485,7 +589,7 @@ export async function writeMonitorsPhase(
         limits.periodicity,
       );
 
-      const [inserted] = await db
+      const [inserted] = await tx
         .insert(monitor)
         .values({
           workspaceId,
@@ -536,6 +640,17 @@ export async function writeMonitorsPhase(
       resource.openstatusId = inserted.id;
       resource.status = "created";
       importedCount++;
+
+      await emitAudit(tx, ctx, {
+        action: "monitor.create",
+        entityType: "monitor",
+        entityId: inserted.id,
+        metadata: auditMeta(pc, {
+          sourceId: resource.sourceId,
+          url: data.url,
+          jobType: data.jobType,
+        }),
+      });
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);
@@ -547,11 +662,13 @@ export async function writeMonitorsPhase(
 
 // TODO: migrate to new `pageSubscription` + `pageSubscriptionToPageComponent` tables
 export async function writeSubscribersPhase(
-  db: DB,
+  pc: PhaseContext,
   phase: PhaseResult,
   pageId: number,
   componentIdMap: Map<string, number>,
 ): Promise<void> {
+  const { ctx, tx } = pc;
+
   for (const resource of phase.resources) {
     try {
       const data = resource.data as {
@@ -563,7 +680,7 @@ export async function writeSubscribersPhase(
 
       const email = data.email.toLowerCase();
 
-      const existing = await db
+      const existing = await tx
         .select()
         .from(pageSubscriber)
         .where(
@@ -581,7 +698,7 @@ export async function writeSubscribersPhase(
         continue;
       }
 
-      const [inserted] = await db
+      const [inserted] = await tx
         .insert(pageSubscriber)
         .values({
           email,
@@ -613,11 +730,22 @@ export async function writeSubscribersPhase(
         }
       }
       if (componentLinks.length > 0) {
-        await db.insert(pageSubscriberToPageComponent).values(componentLinks);
+        await tx.insert(pageSubscriberToPageComponent).values(componentLinks);
       }
 
       resource.openstatusId = inserted.id;
       resource.status = "created";
+
+      await emitAudit(tx, ctx, {
+        action: "page_subscriber.create",
+        entityType: "page_subscriber",
+        entityId: inserted.id,
+        metadata: auditMeta(pc, {
+          sourceId: resource.sourceId,
+          pageId,
+          email,
+        }),
+      });
     } catch (err) {
       resource.status = "failed";
       resource.error = err instanceof Error ? err.message : String(err);

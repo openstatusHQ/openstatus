@@ -7,6 +7,7 @@ import type { ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { addLimitWarnings } from "./limits";
 import {
+  type PhaseContext,
   writeComponentGroupsPhase,
   writeComponentsPhase,
   writeIncidentsPhase,
@@ -26,8 +27,17 @@ import { RunImportInput } from "./schemas";
  * `withTransaction`: imports can span many minutes and hold locks across
  * dozens of writes, and the existing UX is phase-level recovery — a
  * failing phase aborts subsequent phases but preserves earlier phases'
- * writes. One audit row is emitted at the end regardless of outcome so
- * the observability signal fires even on partial/failed imports.
+ * writes.
+ *
+ * Audit emission is two-layered:
+ *   - Each phase writer emits per-resource rows (`page.create`,
+ *     `monitor.create`, etc.) for every resource it actually creates,
+ *     matching what the domain services would have emitted for normal
+ *     CRUD. Skipped rows have their original create audit already;
+ *     failed rows have nothing to attribute.
+ *   - One final `import.run` row captures the rollup (status + provider)
+ *     so a half-broken import still shows up as a single event without
+ *     having to scan per-resource audit.
  */
 export async function runImport(args: {
   ctx: ServiceContext;
@@ -35,13 +45,13 @@ export async function runImport(args: {
 }): Promise<ImportSummary> {
   const { ctx } = args;
   const input = RunImportInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const tx = ctx.db ?? defaultDb;
 
   // Verify pageId belongs to the workspace before doing any provider work.
   // Was previously duplicated at the router layer — owning this in the
   // service means all callers (tRPC / Slack / future) get the same check.
   if (input.pageId) {
-    const existing = await db
+    const existing = await tx
       .select({ id: page.id })
       .from(page)
       .where(
@@ -76,7 +86,7 @@ export async function runImport(args: {
     limits: ctx.workspace.limits,
     workspaceId: ctx.workspace.id,
     pageId: input.pageId,
-    db,
+    db: tx,
   });
 
   const idMaps = {
@@ -84,6 +94,8 @@ export async function runImport(args: {
     components: new Map<string, number>(),
     monitors: new Map<string, number>(),
   };
+
+  const pc: PhaseContext = { ctx, tx, provider: input.provider };
 
   let targetPageId = input.pageId;
   let phaseAborted = false;
@@ -98,42 +110,32 @@ export async function runImport(args: {
       switch (phase.phase) {
         case "monitors":
           if (input.options?.includeMonitors !== false) {
-            await writeMonitorsPhase(
-              db,
-              phase,
-              ctx.workspace.id,
-              idMaps.monitors,
-              ctx.workspace.limits,
-            );
+            await writeMonitorsPhase(pc, phase, idMaps.monitors);
           } else {
             phase.status = "skipped";
           }
           break;
         case "page":
-          targetPageId = await writePagePhase(
-            db,
-            phase,
-            ctx.workspace.id,
-            input.pageId,
-            ctx.workspace.limits,
-          );
+          targetPageId = await writePagePhase(pc, phase, input.pageId);
           break;
         case "componentGroups":
           if (targetPageId && input.options?.includeComponents !== false) {
             await writeComponentGroupsPhase(
-              db,
+              pc,
               phase,
-              ctx.workspace.id,
               targetPageId,
               idMaps.groups,
             );
-          } else if (input.options?.includeComponents === false) {
+          } else {
+            // Fall-through skip: either `includeComponents === false`
+            // (user opt-out) or `targetPageId` is missing (page phase
+            // produced nothing). Either way this phase has nothing to do.
             phase.status = "skipped";
           }
           break;
         case "components":
           if (targetPageId && input.options?.includeComponents !== false) {
-            const [compCount] = await db
+            const [compCount] = await tx
               .select({ count: count() })
               .from(pageComponent)
               .where(
@@ -145,7 +147,15 @@ export async function runImport(args: {
             const maxComponents = ctx.workspace.limits["page-components"];
             const remaining = maxComponents - (compCount?.count ?? 0);
             if (remaining <= 0) {
-              phase.status = "failed";
+              // Stamp each resource with a skip reason to mirror the
+              // `writeMonitorsPhase` pattern — otherwise users see a
+              // failed phase with no explanation and stale resource
+              // statuses.
+              for (const r of phase.resources) {
+                r.status = "skipped";
+                r.error = `Skipped: component limit reached (${maxComponents})`;
+              }
+              phase.status = "skipped";
               break;
             }
             if (phase.resources.length > remaining) {
@@ -160,41 +170,38 @@ export async function runImport(args: {
               phase.resources.push(...skipped);
             }
             await writeComponentsPhase(
-              db,
+              pc,
               phase,
-              ctx.workspace.id,
               targetPageId,
               idMaps.groups,
               idMaps.components,
               idMaps.monitors,
             );
-          } else if (input.options?.includeComponents === false) {
+          } else {
             phase.status = "skipped";
           }
           break;
         case "incidents":
           if (targetPageId && input.options?.includeStatusReports !== false) {
             await writeIncidentsPhase(
-              db,
+              pc,
               phase,
-              ctx.workspace.id,
               targetPageId,
               idMaps.components,
             );
-          } else if (input.options?.includeStatusReports === false) {
+          } else {
             phase.status = "skipped";
           }
           break;
         case "maintenances":
           if (targetPageId && input.options?.includeStatusReports !== false) {
             await writeMaintenancesPhase(
-              db,
+              pc,
               phase,
-              ctx.workspace.id,
               targetPageId,
               idMaps.components,
             );
-          } else if (input.options?.includeStatusReports === false) {
+          } else {
             phase.status = "skipped";
           }
           break;
@@ -205,7 +212,7 @@ export async function runImport(args: {
               break;
             }
             await writeSubscribersPhase(
-              db,
+              pc,
               phase,
               targetPageId,
               idMaps.components,
@@ -238,10 +245,10 @@ export async function runImport(args: {
         : "partial";
   summary.completedAt = new Date();
 
-  // Import is a write-heavy operation: one audit row regardless of final
-  // status so the observability signal fires for partial/failed runs too.
-  // Individual per-resource results stay in the returned summary.
-  await emitAudit(db, ctx, {
+  // Rollup audit: per-resource rows live inside each phase writer; this
+  // row summarises the whole run so partial/failed imports still fire
+  // the observability signal without scanning the full summary blob.
+  await emitAudit(tx, ctx, {
     action: "import.run",
     entityType: "page",
     entityId: targetPageId ?? 0,
