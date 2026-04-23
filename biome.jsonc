@@ -92,6 +92,7 @@
         "packages/api/src/router/incident.ts",
         "packages/api/src/router/monitor.ts",
         "packages/api/src/router/pageComponent.ts",
+        "packages/api/src/router/page.ts",
         "apps/server/src/routes/rpc/services/status-report/**",
         "apps/server/src/routes/rpc/services/maintenance/**",
         "apps/server/src/routes/rpc/services/notification/index.ts",

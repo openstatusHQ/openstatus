@@ -2032,6 +2032,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../db
+      '@openstatus/locales':
+        specifier: workspace:*
+        version: link:../locales
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions

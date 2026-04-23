@@ -32,6 +32,10 @@
     "./page-component": {
       "import": "./src/page-component/index.ts",
       "types": "./src/page-component/index.ts"
+    },
+    "./page": {
+      "import": "./src/page/index.ts",
+      "types": "./src/page/index.ts"
     }
   },
   "scripts": {
@@ -41,6 +45,7 @@
     "@logtape/logtape": "2.0.1",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
+    "@openstatus/locales": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
     "zod": "4.1.13"
