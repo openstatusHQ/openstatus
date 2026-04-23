@@ -375,7 +375,11 @@ describe("MaintenanceService.CreateMaintenance", () => {
 
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.message).toContain("does not match the page ID");
+    // Service throws `ConflictError("Selected components belong to page
+    // X, which does not match the maintenance's page Y.")` — wording
+    // shifted during the services migration; loosened to the stable
+    // fragment.
+    expect(data.message).toContain("does not match");
   });
 
   test("creates maintenance when pageId matches component page", async () => {
@@ -598,7 +602,11 @@ describe("MaintenanceService.CreateMaintenance", () => {
 
     expect(res.status).toBe(404);
     const data = await res.json();
-    expect(data.message).toContain("Page not found");
+    // Service throws `NotFoundError("page", id)` → `"page <id> not found"`
+    // (lowercase `page`). Pre-migration handler emitted
+    // `"Page not found"`; assertion loosened to `"not found"` to cover
+    // both.
+    expect(data.message).toContain("not found");
   });
 });
 
