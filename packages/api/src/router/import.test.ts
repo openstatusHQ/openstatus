@@ -21,7 +21,6 @@ import {
 } from "@openstatus/importers/statuspage/fixtures";
 
 import { edgeRouter } from "../edge";
-import { previewImport, runImport } from "../service/import";
 import { createInnerTRPCContext } from "../trpc";
 
 // ---------------------------------------------------------------------------
@@ -414,17 +413,18 @@ test("run with includeStatusReports creates status reports", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Limit warnings (call service directly to control limits)
+// Limit warnings (go through the caller with custom workspace limits to
+// drive the service's plan gates)
 // ---------------------------------------------------------------------------
 
 const freeLimits = { ...allPlans.free.limits };
 const starterLimits = { ...allPlans.starter.limits };
 
 test("preview shows component limit warning on free plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller({ ...freeLimits, "page-components": 3 });
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "page-components": 3 },
   });
 
   expect(result.errors.length).toBeGreaterThan(0);
@@ -432,30 +432,30 @@ test("preview shows component limit warning on free plan", async () => {
 });
 
 test("preview shows custom domain warning on free plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller({ ...freeLimits, "custom-domain": false });
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "custom-domain": false },
   });
 
   expect(result.errors.some((e) => e.includes("Custom domain"))).toBe(true);
 });
 
 test("preview shows subscriber warning on free plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller({ ...freeLimits, "status-subscribers": false });
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "status-subscribers": false },
   });
 
   expect(result.errors.some((e) => e.includes("Subscribers"))).toBe(true);
 });
 
 test("preview shows no warnings on starter plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller(starterLimits);
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: starterLimits,
   });
 
   // Only informational warnings about non-email subscribers are expected
@@ -482,11 +482,11 @@ test("run enforces component limit by truncating", async () => {
   if (!testPage) throw new Error("Failed to create test page");
   createdIds.pages.push(testPage.id);
 
-  const result = await runImport({
+  const c = makeCaller({ ...starterLimits, "page-components": 2 });
+  const result = await c.import.run({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
     pageId: testPage.id,
-    limits: { ...starterLimits, "page-components": 2 },
     options: { includeStatusReports: false, includeSubscribers: false },
   });
 
@@ -515,10 +515,10 @@ test("run enforces component limit by truncating", async () => {
 });
 
 test("run skips subscribers on free plan", async () => {
-  const result = await runImport({
+  const c = makeCaller({ ...freeLimits, "status-subscribers": false });
+  const result = await c.import.run({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "status-subscribers": false },
     options: { includeStatusReports: false, includeSubscribers: true },
   });
 

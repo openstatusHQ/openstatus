@@ -1,4 +1,4 @@
-import { and, count, db, eq, isNull } from "@openstatus/db";
+import { and, count, eq, isNull } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -13,427 +13,25 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
-import type {
-  ImportProvider,
-  ImportSummary,
-  PhaseResult,
-  ResourceResult,
-} from "@openstatus/importers";
-import { createBetterstackProvider } from "@openstatus/importers/betterstack";
-import { createInstatusProvider } from "@openstatus/importers/instatus";
-import { createStatuspageProvider } from "@openstatus/importers/statuspage";
-import { TRPCError } from "@trpc/server";
+import type { PhaseResult } from "@openstatus/importers";
 
-type ImportOptions = {
-  includeStatusReports?: boolean;
-  includeSubscribers?: boolean;
-  includeComponents?: boolean;
-  includeMonitors?: boolean;
-};
-
-type ProviderName = "statuspage" | "betterstack" | "instatus";
-
-function createProvider(name: ProviderName): ImportProvider {
-  switch (name) {
-    case "betterstack":
-      return createBetterstackProvider();
-    case "instatus":
-      return createInstatusProvider();
-    default:
-      return createStatuspageProvider();
-  }
-}
-
-function buildProviderConfig(config: {
-  provider: ProviderName;
-  apiKey: string;
-  workspaceId: number;
-  pageId?: number;
-  statuspagePageId?: string;
-  betterstackStatusPageId?: string;
-  instatusPageId?: string;
-}) {
-  const { provider, ...rest } = config;
-  switch (provider) {
-    case "betterstack":
-      return {
-        ...rest,
-        betterstackStatusPageId: config.betterstackStatusPageId,
-      };
-    case "instatus":
-      return { ...rest, instatusPageId: config.instatusPageId };
-    default:
-      return { ...rest, statuspagePageId: config.statuspagePageId };
-  }
-}
+import type { DB } from "../context";
+import { clampPeriodicity, computePhaseStatus } from "./utils";
 
 /**
- * Inspect an ImportSummary and push warnings into `summary.errors`
- * for any limits that would be hit during import.
+ * Each phase writer mutates the phase in place:
+ *   - sets per-resource `status` ("created" | "skipped" | "failed"),
+ *   - stamps `openstatusId` on success,
+ *   - records the per-resource `error` string on failure,
+ *   - rolls the phase-level `status` up from its resources.
  *
- * Used by both preview (to show warnings upfront) and run (before writes).
+ * Writers never throw on a single-resource failure — they only throw on
+ * infrastructure errors (e.g. a required page record is missing). The
+ * orchestrator in `run.ts` catches throws to abort the remaining phases.
  */
-export async function addLimitWarnings(
-  summary: ImportSummary,
-  config: {
-    limits: Limits;
-    workspaceId: number;
-    pageId?: number;
-  },
-): Promise<void> {
-  // 1. Component count limit
-  const componentsPhase = summary.phases.find((p) => p.phase === "components");
-  if (componentsPhase && componentsPhase.resources.length > 0) {
-    const maxComponents = config.limits["page-components"];
-    let existingCount = 0;
-    if (config.pageId) {
-      const [result] = await db
-        .select({ count: count() })
-        .from(pageComponent)
-        .where(
-          and(
-            eq(pageComponent.pageId, config.pageId),
-            eq(pageComponent.workspaceId, config.workspaceId),
-          ),
-        );
-      existingCount = result?.count ?? 0;
-    }
-    const remaining = maxComponents - existingCount;
-    if (remaining <= 0) {
-      summary.errors.push(
-        `Component limit reached (${maxComponents}). Upgrade your plan to import components.`,
-      );
-    } else if (componentsPhase.resources.length > remaining) {
-      summary.errors.push(
-        `Only ${remaining} of ${componentsPhase.resources.length} components can be imported due to plan limit (${maxComponents}).`,
-      );
-    }
-  }
 
-  // 2. Custom domain
-  if (!config.limits["custom-domain"]) {
-    const pagePhase = summary.phases.find((p) => p.phase === "page");
-    const pageData = pagePhase?.resources[0]?.data as
-      | { customDomain?: string }
-      | undefined;
-    if (pageData?.customDomain) {
-      summary.errors.push(
-        "Custom domain will be stripped during import. Upgrade your plan to use custom domains.",
-      );
-    }
-  }
-
-  // 3. Monitor count limit
-  const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
-  if (monitorsPhase && monitorsPhase.resources.length > 0) {
-    const maxMonitors = config.limits.monitors;
-    const [monitorCount] = await db
-      .select({ count: count() })
-      .from(monitor)
-      .where(
-        and(
-          eq(monitor.workspaceId, config.workspaceId),
-          isNull(monitor.deletedAt),
-        ),
-      );
-    const remaining = maxMonitors - (monitorCount?.count ?? 0);
-    if (remaining <= 0) {
-      summary.errors.push(
-        `Monitor limit reached (${maxMonitors}). Upgrade your plan to import monitors.`,
-      );
-    } else if (monitorsPhase.resources.length > remaining) {
-      summary.errors.push(
-        `Only ${remaining} of ${monitorsPhase.resources.length} monitors can be imported due to plan limit (${maxMonitors}).`,
-      );
-    }
-  }
-
-  // 4. Monitor periodicity clamping
-  if (monitorsPhase && monitorsPhase.resources.length > 0) {
-    const allowedPeriodicity: string[] = config.limits.periodicity;
-    const clamped = monitorsPhase.resources.filter((r) => {
-      const data = r.data as { periodicity?: string } | undefined;
-      return (
-        data?.periodicity && !allowedPeriodicity.includes(data.periodicity)
-      );
-    });
-    if (clamped.length > 0) {
-      summary.errors.push(
-        `${clamped.length} monitor${clamped.length === 1 ? "'s" : "s'"} check frequency will be adjusted to fit your plan's allowed intervals.`,
-      );
-    }
-  }
-
-  // 5. Subscribers
-  if (!config.limits["status-subscribers"]) {
-    const subscribersPhase = summary.phases.find(
-      (p) => p.phase === "subscribers",
-    );
-    if (subscribersPhase && subscribersPhase.resources.length > 0) {
-      summary.errors.push(
-        "Subscribers cannot be imported on your current plan. Upgrade to enable status page subscribers.",
-      );
-    }
-  }
-}
-
-export async function previewImport(config: {
-  provider: ProviderName;
-  apiKey: string;
-  statuspagePageId?: string;
-  betterstackStatusPageId?: string;
-  instatusPageId?: string;
-  workspaceId: number;
-  pageId?: number;
-  limits: Limits;
-}): Promise<ImportSummary> {
-  const provider = createProvider(config.provider);
-  const providerConfig = buildProviderConfig(config);
-
-  const validation = await provider.validate({
-    ...providerConfig,
-    dryRun: true,
-  });
-  if (!validation.valid) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Provider validation failed: ${validation.error}`,
-    });
-  }
-
-  const summary = await provider.run({ ...providerConfig, dryRun: true });
-  await addLimitWarnings(summary, config);
-  return summary;
-}
-
-export async function runImport(config: {
-  provider: ProviderName;
-  apiKey: string;
-  statuspagePageId?: string;
-  betterstackStatusPageId?: string;
-  instatusPageId?: string;
-  workspaceId: number;
-  pageId?: number;
-  options?: ImportOptions;
-  limits: Limits;
-}): Promise<ImportSummary> {
-  const provider = createProvider(config.provider);
-  const providerConfig = buildProviderConfig(config);
-
-  const validation = await provider.validate(providerConfig);
-  if (!validation.valid) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Provider validation failed: ${validation.error}`,
-    });
-  }
-
-  // Fetch and map all data
-  const summary = await provider.run(providerConfig);
-
-  // Add limit warnings (same as preview)
-  await addLimitWarnings(summary, config);
-
-  // Now write to DB phase by phase
-  const idMaps = {
-    groups: new Map<string, number>(), // sourceId -> openstatusId
-    components: new Map<string, number>(), // sourceId -> openstatusId
-    monitors: new Map<string, number>(), // sourceId -> openstatusId
-  };
-
-  let targetPageId = config.pageId;
-  let phaseAborted = false;
-
-  for (const phase of summary.phases) {
-    if (phaseAborted) {
-      phase.status = "skipped";
-      continue;
-    }
-
-    try {
-      switch (phase.phase) {
-        case "monitors":
-          if (config.options?.includeMonitors !== false) {
-            await writeMonitorsPhase(
-              phase,
-              config.workspaceId,
-              idMaps.monitors,
-              config.limits,
-            );
-          } else {
-            phase.status = "skipped";
-          }
-          break;
-        case "page":
-          targetPageId = await writePagePhase(
-            phase,
-            config.workspaceId,
-            config.pageId,
-            config.limits,
-          );
-          break;
-        case "componentGroups":
-          if (targetPageId && config.options?.includeComponents !== false) {
-            await writeComponentGroupsPhase(
-              phase,
-              config.workspaceId,
-              targetPageId,
-              idMaps.groups,
-            );
-          } else if (config.options?.includeComponents === false) {
-            phase.status = "skipped";
-          }
-          break;
-        case "components":
-          if (targetPageId && config.options?.includeComponents !== false) {
-            // Check page-components limit
-            const [compCount] = await db
-              .select({ count: count() })
-              .from(pageComponent)
-              .where(
-                and(
-                  eq(pageComponent.pageId, targetPageId),
-                  eq(pageComponent.workspaceId, config.workspaceId),
-                ),
-              );
-            const maxComponents = config.limits["page-components"];
-            const remaining = maxComponents - (compCount?.count ?? 0);
-            if (remaining <= 0) {
-              phase.status = "failed";
-              break;
-            }
-            if (phase.resources.length > remaining) {
-              // Trim resources to fit within limit
-              const skipped = phase.resources.splice(remaining);
-              for (const r of skipped) {
-                r.status = "skipped";
-                r.error = `Skipped: would exceed component limit (${maxComponents})`;
-              }
-              phase.resources.push(...skipped);
-            }
-            await writeComponentsPhase(
-              phase,
-              config.workspaceId,
-              targetPageId,
-              idMaps.groups,
-              idMaps.components,
-              idMaps.monitors,
-            );
-          } else if (config.options?.includeComponents === false) {
-            phase.status = "skipped";
-          }
-          break;
-        case "incidents":
-          if (targetPageId && config.options?.includeStatusReports !== false) {
-            await writeIncidentsPhase(
-              phase,
-              config.workspaceId,
-              targetPageId,
-              idMaps.components,
-            );
-          } else if (config.options?.includeStatusReports === false) {
-            phase.status = "skipped";
-          }
-          break;
-        case "maintenances":
-          if (targetPageId && config.options?.includeStatusReports !== false) {
-            await writeMaintenancesPhase(
-              phase,
-              config.workspaceId,
-              targetPageId,
-              idMaps.components,
-            );
-          } else if (config.options?.includeStatusReports === false) {
-            phase.status = "skipped";
-          }
-          break;
-        case "subscribers":
-          if (targetPageId && config.options?.includeSubscribers) {
-            if (!config.limits["status-subscribers"]) {
-              phase.status = "skipped";
-              break;
-            }
-            await writeSubscribersPhase(phase, targetPageId, idMaps.components);
-          } else {
-            phase.status = "skipped";
-          }
-          break;
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      summary.errors.push(`Phase "${phase.phase}" failed: ${msg}`);
-      phase.status = "failed";
-      phaseAborted = true;
-    }
-  }
-
-  // Compute overall status
-  const hasFailures = summary.phases.some((p) => p.status === "failed");
-  const hasPartial = summary.phases.some((p) => p.status === "partial");
-  const allSkippedOrCompleted = summary.phases.every(
-    (p) => p.status === "completed" || p.status === "skipped",
-  );
-
-  summary.status = hasFailures
-    ? "failed"
-    : hasPartial
-      ? "partial"
-      : allSkippedOrCompleted
-        ? "completed"
-        : "partial";
-  summary.completedAt = new Date();
-
-  return summary;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-const PERIODICITY_ORDER = ["30s", "1m", "5m", "10m", "30m", "1h"] as const;
-
-/**
- * Clamp a periodicity to the nearest allowed value for the plan.
- * Picks the closest allowed periodicity that is >= the requested one
- * (i.e. never faster than what the plan permits).
- */
-export function clampPeriodicity(requested: string, allowed: string[]): string {
-  if (allowed.includes(requested)) return requested;
-  const reqIdx = PERIODICITY_ORDER.indexOf(
-    requested as (typeof PERIODICITY_ORDER)[number],
-  );
-  // Find the smallest allowed periodicity that is >= requested
-  for (let i = Math.max(reqIdx, 0); i < PERIODICITY_ORDER.length; i++) {
-    if (allowed.includes(PERIODICITY_ORDER[i])) {
-      return PERIODICITY_ORDER[i];
-    }
-  }
-  // Fallback to the slowest allowed
-  return allowed[allowed.length - 1] ?? "10m";
-}
-
-// ---------------------------------------------------------------------------
-// Phase writers
-// ---------------------------------------------------------------------------
-
-export function computePhaseStatus(
-  resources: ResourceResult[],
-): PhaseResult["status"] {
-  if (resources.length === 0) return "completed";
-
-  const allFailed = resources.every((r) => r.status === "failed");
-  if (allFailed) return "failed";
-
-  const hasFailed = resources.some((r) => r.status === "failed");
-  const hasSkipped = resources.some((r) => r.status === "skipped");
-  const allSkipped = resources.every((r) => r.status === "skipped");
-
-  if (hasFailed || (hasSkipped && !allSkipped)) return "partial";
-
-  return "completed";
-}
-
-async function writePagePhase(
+export async function writePagePhase(
+  db: DB,
   phase: PhaseResult,
   workspaceId: number,
   existingPageId?: number,
@@ -454,12 +52,12 @@ async function writePagePhase(
     icon: string;
   };
 
-  // Strip custom domain if not allowed by plan
+  // Strip the custom domain when the plan doesn't allow one — imports are
+  // tolerant (skip/warn) rather than all-or-nothing.
   if (limits && !limits["custom-domain"]) {
     data.customDomain = "";
   }
 
-  // If a page ID was provided, verify and update it
   if (existingPageId) {
     const existing = await db
       .select()
@@ -486,7 +84,7 @@ async function writePagePhase(
     return existingPageId;
   }
 
-  // Check idempotency by slug (scoped to workspace)
+  // Idempotency: slug is unique within a workspace.
   const existingBySlug = await db
     .select()
     .from(page)
@@ -500,7 +98,6 @@ async function writePagePhase(
     return existingBySlug.id;
   }
 
-  // Insert new page
   const [inserted] = await db
     .insert(page)
     .values({
@@ -514,9 +111,7 @@ async function writePagePhase(
     })
     .returning({ id: page.id });
 
-  if (!inserted) {
-    throw new Error("Failed to insert page");
-  }
+  if (!inserted) throw new Error("Failed to insert page");
 
   resource.openstatusId = inserted.id;
   resource.status = "created";
@@ -524,7 +119,8 @@ async function writePagePhase(
   return inserted.id;
 }
 
-async function writeComponentGroupsPhase(
+export async function writeComponentGroupsPhase(
+  db: DB,
   phase: PhaseResult,
   workspaceId: number,
   pageId: number,
@@ -538,7 +134,6 @@ async function writeComponentGroupsPhase(
         name: string;
       };
 
-      // Check idempotency by name + pageId
       const existing = await db
         .select()
         .from(pageComponentGroup)
@@ -559,11 +154,7 @@ async function writeComponentGroupsPhase(
 
       const [inserted] = await db
         .insert(pageComponentGroup)
-        .values({
-          workspaceId,
-          pageId,
-          name: data.name,
-        })
+        .values({ workspaceId, pageId, name: data.name })
         .returning({ id: pageComponentGroup.id });
 
       if (!inserted) {
@@ -584,7 +175,8 @@ async function writeComponentGroupsPhase(
   phase.status = computePhaseStatus(phase.resources);
 }
 
-async function writeComponentsPhase(
+export async function writeComponentsPhase(
+  db: DB,
   phase: PhaseResult,
   workspaceId: number,
   pageId: number,
@@ -608,18 +200,17 @@ async function writeComponentsPhase(
         sourceGroupId: string | null;
       };
 
-      // Resolve monitor ID from source monitor ID
       if (data.type === "monitor") {
         if (data.sourceMonitorId && monitorIdMap) {
           data.monitorId = monitorIdMap.get(data.sourceMonitorId) ?? null;
         }
         if (!data.monitorId) {
-          // Monitor wasn't imported or no source — fall back to static
+          // Monitor wasn't imported; fall back to a static component so
+          // we don't drop the resource entirely.
           data.type = "static";
         }
       }
 
-      // Check idempotency by name + pageId
       const existing = await db
         .select()
         .from(pageComponent)
@@ -638,7 +229,6 @@ async function writeComponentsPhase(
         continue;
       }
 
-      // Resolve group ID from source group ID
       const resolvedGroupId = data.sourceGroupId
         ? groupIdMap.get(data.sourceGroupId) ?? null
         : null;
@@ -675,7 +265,8 @@ async function writeComponentsPhase(
   phase.status = computePhaseStatus(phase.resources);
 }
 
-async function writeIncidentsPhase(
+export async function writeIncidentsPhase(
+  db: DB,
   phase: PhaseResult,
   workspaceId: number,
   pageId: number,
@@ -698,7 +289,6 @@ async function writeIncidentsPhase(
         sourceComponentIds: string[];
       };
 
-      // Insert status report
       const [insertedReport] = await db
         .insert(statusReport)
         .values({
@@ -715,7 +305,6 @@ async function writeIncidentsPhase(
         continue;
       }
 
-      // Insert status report updates
       if (data.updates.length > 0) {
         await db.insert(statusReportUpdate).values(
           data.updates.map((u) => ({
@@ -727,7 +316,6 @@ async function writeIncidentsPhase(
         );
       }
 
-      // Link to page components
       const componentLinks: Array<{
         statusReportId: number;
         pageComponentId: number;
@@ -756,7 +344,8 @@ async function writeIncidentsPhase(
   phase.status = computePhaseStatus(phase.resources);
 }
 
-async function writeMaintenancesPhase(
+export async function writeMaintenancesPhase(
+  db: DB,
   phase: PhaseResult,
   workspaceId: number,
   pageId: number,
@@ -774,7 +363,6 @@ async function writeMaintenancesPhase(
         sourceComponentIds: string[];
       };
 
-      // Insert maintenance
       const [inserted] = await db
         .insert(maintenance)
         .values({
@@ -793,7 +381,6 @@ async function writeMaintenancesPhase(
         continue;
       }
 
-      // Link to page components
       const componentLinks: Array<{
         maintenanceId: number;
         pageComponentId: number;
@@ -822,7 +409,8 @@ async function writeMaintenancesPhase(
   phase.status = computePhaseStatus(phase.resources);
 }
 
-async function writeMonitorsPhase(
+export async function writeMonitorsPhase(
+  db: DB,
   phase: PhaseResult,
   workspaceId: number,
   monitorIdMap: Map<string, number>,
@@ -872,7 +460,7 @@ async function writeMonitorsPhase(
         sourceMonitorGroupId: string | null;
       };
 
-      // Idempotency check by url + workspaceId (exclude soft-deleted)
+      // Idempotency: same url in the workspace (active only).
       const existing = await db
         .select()
         .from(monitor)
@@ -892,7 +480,6 @@ async function writeMonitorsPhase(
         continue;
       }
 
-      // Clamp periodicity to what the plan allows
       const periodicity = clampPeriodicity(
         data.periodicity,
         limits.periodicity,
@@ -959,7 +546,8 @@ async function writeMonitorsPhase(
 }
 
 // TODO: migrate to new `pageSubscription` + `pageSubscriptionToPageComponent` tables
-async function writeSubscribersPhase(
+export async function writeSubscribersPhase(
+  db: DB,
   phase: PhaseResult,
   pageId: number,
   componentIdMap: Map<string, number>,
@@ -975,7 +563,6 @@ async function writeSubscribersPhase(
 
       const email = data.email.toLowerCase();
 
-      // Idempotency check by email + pageId
       const existing = await db
         .select()
         .from(pageSubscriber)
@@ -1012,7 +599,6 @@ async function writeSubscribersPhase(
         continue;
       }
 
-      // Link to page components
       const componentLinks: Array<{
         pageSubscriberId: number;
         pageComponentId: number;

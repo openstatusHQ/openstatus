@@ -97,6 +97,7 @@
         "packages/api/src/router/user.ts",
         "packages/api/src/router/invitation.ts",
         "packages/api/src/router/apiKey.ts",
+        "packages/api/src/router/import.ts",
         "apps/server/src/routes/rpc/services/status-report/**",
         "apps/server/src/routes/rpc/services/maintenance/**",
         "apps/server/src/routes/rpc/services/notification/index.ts",

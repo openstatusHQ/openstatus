@@ -2,11 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
-import {
-  addLimitWarnings,
-  clampPeriodicity,
-  computePhaseStatus,
-} from "./import";
+import { addLimitWarnings, clampPeriodicity, computePhaseStatus } from "../";
 
 function makeSummary(overrides?: Partial<ImportSummary>): ImportSummary {
   return {
