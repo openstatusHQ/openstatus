@@ -599,6 +599,12 @@ export async function createSubscription(input: CreateSubscriptionInput) {
  * Email rows reject `webhookUrl`/`channelConfig` (no webhook fields to edit).
  * Webhook rows accept URL/headers/name/scope. Email / webhook identity keys
  * (email, webhookUrl) are immutable on email rows; webhook URL is mutable.
+ *
+ * componentIds semantics:
+ *   - `undefined`  → do not touch scope (existing component links preserved).
+ *   - `[]`         → reset scope to "entire page" (all existing links removed).
+ *   - `[a, b, …]`  → replace scope with exactly these components. All IDs must
+ *                    belong to the target page or the update is rejected.
  */
 export type UpdateChannelInput = {
   subscriberId: number;
@@ -748,6 +754,10 @@ export async function sendTestWebhook(subscriberId: number, pageId: number) {
 
   if (existing.channelType !== "webhook" || !existing.webhookUrl) {
     throw new Error("Subscriber is not a webhook channel");
+  }
+
+  if (existing.unsubscribedAt) {
+    throw new Error("Subscriber is unsubscribed");
   }
 
   const flavor = detectWebhookFlavor(existing.webhookUrl);

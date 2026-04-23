@@ -14,6 +14,7 @@ import {
   type CheckboxTreeItem,
 } from "@/components/ui/checkbox-tree";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { detectWebhookFlavor } from "@openstatus/subscriptions/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -67,6 +68,12 @@ const formSchema = z
           code: "custom",
           path: ["webhookUrl"],
           message: "Please enter a valid URL",
+        });
+      } else if (detectWebhookFlavor(data.webhookUrl) === "generic") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["webhookUrl"],
+          message: "Only Slack and Discord webhook URLs are supported.",
         });
       }
     }
