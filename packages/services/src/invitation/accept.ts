@@ -7,8 +7,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError, NotFoundError } from "../errors";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
+import { ConflictError, NotFoundError, UnauthorizedError } from "../errors";
 import type { Workspace } from "../types";
 import { AcceptInvitationInput } from "./schemas";
 
@@ -23,6 +27,11 @@ import { AcceptInvitationInput } from "./schemas";
  * callers that both pass the initial read will see exactly one row
  * returned from the update; the loser throws `ConflictError` and the
  * transaction aborts before the membership insert runs.
+ *
+ * The membership is inserted under `ctx.actor`'s user id — taking it
+ * from input would let any caller that knows the token+email create
+ * a membership for an arbitrary user. Same defense pattern as
+ * `createApiKey.createdById`.
  */
 export async function acceptInvitation(args: {
   ctx: ServiceContext;
@@ -30,6 +39,13 @@ export async function acceptInvitation(args: {
 }): Promise<Workspace> {
   const { ctx } = args;
   const input = AcceptInvitationInput.parse(args.input);
+
+  const userId = tryGetActorUserId(ctx.actor);
+  if (userId == null) {
+    throw new UnauthorizedError(
+      "Invitations must be accepted by a known user actor.",
+    );
+  }
 
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.invitation.findFirst({
@@ -59,7 +75,7 @@ export async function acceptInvitation(args: {
     }
 
     await tx.insert(usersToWorkspaces).values({
-      userId: input.userId,
+      userId,
       workspaceId: existing.workspaceId,
       role: existing.role,
     });

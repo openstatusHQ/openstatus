@@ -21,7 +21,6 @@ export type GetInvitationByTokenInput = z.infer<
 
 export const AcceptInvitationInput = z.object({
   id: z.number().int(),
-  userId: z.number().int(),
   email: z.email(),
 });
 export type AcceptInvitationInput = z.infer<typeof AcceptInvitationInput>;

@@ -58,6 +58,11 @@ export async function createInvitation(args: {
 
     const token = crypto.randomUUID();
 
+    // `role` is not specified here and falls through to the schema
+    // default (`member`). Matches the legacy router, which only picked
+    // `email` out of the insert schema and never exposed role on the
+    // invite surface — specifying it is a future opt-in, not an
+    // unintentional regression.
     const row = await tx
       .insert(invitation)
       .values({

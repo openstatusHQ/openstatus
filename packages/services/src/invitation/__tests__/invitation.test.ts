@@ -169,6 +169,8 @@ describe("deleteInvitation", () => {
 
 describe("acceptInvitation", () => {
   test("stamps acceptedAt and inserts a workspace membership", async () => {
+    // The user id comes from `ctx.actor`, not from input — so we build
+    // a ctx scoped to the accepting user rather than passing an id.
     const acceptingUserId = 3;
     const email = `${TEST_PREFIX}-accept-${acceptingUserId}-${Date.now()}@example.com`;
     const created = await createInvitation({
@@ -176,11 +178,14 @@ describe("acceptInvitation", () => {
       input: { email },
     });
     createdInvitationIds.push(created.id);
+    const acceptingCtx = makeUserCtx(teamCtx.workspace, {
+      userId: acceptingUserId,
+    });
 
     try {
       const workspaceRow = await acceptInvitation({
-        ctx: teamCtx,
-        input: { id: created.id, userId: acceptingUserId, email },
+        ctx: acceptingCtx,
+        input: { id: created.id, email },
       });
       expect(workspaceRow.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
 
@@ -208,7 +213,7 @@ describe("acceptInvitation", () => {
     await expect(
       acceptInvitation({
         ctx: teamCtx,
-        input: { id: 999_999, userId: 1, email: "nope@example.com" },
+        input: { id: 999_999, email: "nope@example.com" },
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });

@@ -90,7 +90,6 @@ export const invitationRouter = createTRPCRouter({
           ctx: toServiceCtx(ctx),
           input: {
             id: input.id,
-            userId: ctx.user.id,
             email: ctx.user.email,
           },
         });

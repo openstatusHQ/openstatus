@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
   type GetWorkspaceWithUsageInput,
@@ -38,6 +39,12 @@ export async function getWorkspace(args: {
   const result = await db.query.workspace.findFirst({
     where: eq(workspace.id, ctx.workspace.id),
   });
+
+  // Shouldn't be reachable in practice — `ctx.workspace` was already
+  // resolved upstream — but guard explicitly so callers see the same
+  // `NotFoundError` shape every other service throws when a row is
+  // missing, rather than a `ZodError` from `parse(undefined)`.
+  if (!result) throw new NotFoundError("workspace", ctx.workspace.id);
 
   return selectWorkspaceSchema.parse(result);
 }

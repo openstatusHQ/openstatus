@@ -22,6 +22,16 @@ import { DeleteAccountInput } from "./schemas";
  *
  * All four writes run in a single transaction so a partial failure never
  * leaves the account half-deleted.
+ *
+ * **Scope note — owned workspaces are not cleaned up here.** The user's
+ * `usersToWorkspaces` rows where `role === "owner"` survive, along with
+ * every workspace / monitor / page they own. Since only free-plan users
+ * reach this path (the paid-plan guard above), the outcome is an
+ * orphaned free workspace with no active owner, which matches the
+ * legacy router behavior. Workspace-level cleanup (reclaim slots, tombstone
+ * unowned free workspaces) is explicitly out of scope for this service —
+ * if/when it lands, it'll be a separate admin / scheduled job rather
+ * than inline here.
  */
 export async function deleteAccount(args: {
   ctx: ServiceContext;
