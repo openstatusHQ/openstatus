@@ -28,6 +28,10 @@
     "./notification": {
       "import": "./src/notification/index.ts",
       "types": "./src/notification/index.ts"
+    },
+    "./page-component": {
+      "import": "./src/page-component/index.ts",
+      "types": "./src/page-component/index.ts"
     }
   },
   "scripts": {

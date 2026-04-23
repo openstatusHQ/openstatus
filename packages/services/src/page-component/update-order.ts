@@ -1,0 +1,308 @@
+import { and, eq, inArray, ne, sql } from "@openstatus/db";
+import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
+
+import { emitAudit } from "../audit";
+import { type ServiceContext, withTransaction } from "../context";
+import { LimitExceededError } from "../errors";
+import { assertPageInWorkspace, validateMonitorIds } from "./internal";
+import { UpdatePageComponentOrderInput } from "./schemas";
+
+/**
+ * Replace the full order/layout of a page's components and groups in one
+ * transaction. Mirrors the pre-migration tRPC behaviour exactly — the
+ * update-order flow is a diff-and-reconcile pass:
+ *
+ *   1. Validate the page is in the workspace.
+ *   2. Enforce the `page-components` plan limit across the workspace.
+ *   3. Validate every monitor id on the input set belongs to the workspace.
+ *   4. Delete removed monitor and static components.
+ *   5. Clear `groupId` on all components (prevents FK errors before the
+ *      next step), then delete existing groups and recreate them.
+ *   6. Upsert monitor components via the `(pageId, monitorId)` unique
+ *      constraint (preserves existing ids).
+ *   7. Update existing static components by id; insert new ones.
+ */
+export async function updatePageComponentOrder(args: {
+  ctx: ServiceContext;
+  input: UpdatePageComponentOrderInput;
+}): Promise<void> {
+  const { ctx } = args;
+  const input = UpdatePageComponentOrderInput.parse(args.input);
+
+  await withTransaction(ctx, async (tx) => {
+    await assertPageInWorkspace({
+      tx,
+      pageId: input.pageId,
+      workspaceId: ctx.workspace.id,
+    });
+
+    const pageComponentLimit = ctx.workspace.limits["page-components"];
+
+    const existingComponents = await tx
+      .select()
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, input.pageId),
+          eq(pageComponent.workspaceId, ctx.workspace.id),
+        ),
+      )
+      .all();
+
+    // Count components on OTHER pages so we can reject requests that push
+    // the workspace past the plan cap.
+    const otherPagesComponentCount = await tx
+      .select({ id: pageComponent.id })
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.workspaceId, ctx.workspace.id),
+          ne(pageComponent.pageId, input.pageId),
+        ),
+      )
+      .all();
+
+    const inputComponentCount =
+      input.components.length +
+      input.groups.reduce((sum, g) => sum + g.components.length, 0);
+
+    const totalAfterUpdate =
+      otherPagesComponentCount.length + inputComponentCount;
+
+    if (totalAfterUpdate > pageComponentLimit) {
+      throw new LimitExceededError("page-components", pageComponentLimit);
+    }
+
+    const existingGroups = await tx
+      .select()
+      .from(pageComponentGroup)
+      .where(
+        and(
+          eq(pageComponentGroup.pageId, input.pageId),
+          eq(pageComponentGroup.workspaceId, ctx.workspace.id),
+        ),
+      )
+      .all();
+
+    const existingGroupIds = existingGroups.map((g) => g.id);
+
+    const inputMonitorIds = [
+      ...input.components
+        .filter((c) => c.type === "monitor" && c.monitorId)
+        .map((c) => c.monitorId),
+      ...input.groups.flatMap((g) =>
+        g.components
+          .filter((c) => c.type === "monitor" && c.monitorId)
+          .map((c) => c.monitorId),
+      ),
+    ] as number[];
+
+    await validateMonitorIds({
+      tx,
+      workspaceId: ctx.workspace.id,
+      monitorIds: inputMonitorIds,
+    });
+
+    const inputStaticComponentIds = [
+      ...input.components
+        .filter((c) => c.type === "static" && c.id)
+        .map((c) => c.id),
+      ...input.groups.flatMap((g) =>
+        g.components
+          .filter((c) => c.type === "static" && c.id)
+          .map((c) => c.id),
+      ),
+    ] as number[];
+
+    // Remove monitor components whose monitorId isn't in the new input.
+    const removedMonitorComponents = existingComponents.filter(
+      (c) =>
+        c.type === "monitor" &&
+        c.monitorId &&
+        !inputMonitorIds.includes(c.monitorId),
+    );
+
+    const hasStaticComponentsInInput =
+      input.components.some((c) => c.type === "static") ||
+      input.groups.some((g) => g.components.some((c) => c.type === "static"));
+
+    // Static component removal: if any input static components carry ids
+    // we keep those and drop the rest; otherwise drop all existing static
+    // components. Matches the pre-migration semantics for the "recreate
+    // from scratch" flow the dashboard uses.
+    const removedStaticComponents = existingComponents.filter((c) => {
+      if (c.type !== "static") return false;
+      if (hasStaticComponentsInInput) {
+        if (inputStaticComponentIds.length > 0) {
+          return !inputStaticComponentIds.includes(c.id);
+        }
+        return true;
+      }
+      return true;
+    });
+
+    const removedComponentIds = [
+      ...removedMonitorComponents.map((c) => c.id),
+      ...removedStaticComponents.map((c) => c.id),
+    ];
+
+    if (removedComponentIds.length > 0) {
+      await tx
+        .delete(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, input.pageId),
+            eq(pageComponent.workspaceId, ctx.workspace.id),
+            inArray(pageComponent.id, removedComponentIds),
+          ),
+        );
+    }
+
+    // Clear `groupId` before deleting groups — otherwise the FK blocks us.
+    if (existingGroupIds.length > 0) {
+      await tx
+        .update(pageComponent)
+        .set({ groupId: null })
+        .where(
+          and(
+            eq(pageComponent.pageId, input.pageId),
+            eq(pageComponent.workspaceId, ctx.workspace.id),
+            inArray(pageComponent.groupId, existingGroupIds),
+          ),
+        );
+    }
+
+    if (existingGroupIds.length > 0) {
+      await tx
+        .delete(pageComponentGroup)
+        .where(
+          and(
+            eq(pageComponentGroup.pageId, input.pageId),
+            eq(pageComponentGroup.workspaceId, ctx.workspace.id),
+          ),
+        );
+    }
+
+    const newGroups: Array<{ id: number; name: string }> = [];
+    if (input.groups.length > 0) {
+      const createdGroups = await tx
+        .insert(pageComponentGroup)
+        .values(
+          input.groups.map((g) => ({
+            pageId: input.pageId,
+            workspaceId: ctx.workspace.id,
+            name: g.name,
+            defaultOpen: g.defaultOpen,
+          })),
+        )
+        .returning();
+      newGroups.push(...createdGroups);
+    }
+
+    const groupComponentValues = input.groups.flatMap((g, i) =>
+      g.components.map((c) => ({
+        id: c.id,
+        pageId: input.pageId,
+        workspaceId: ctx.workspace.id,
+        name: c.name,
+        description: c.description,
+        type: c.type,
+        monitorId: c.monitorId,
+        order: g.order,
+        groupId: newGroups[i]?.id,
+        groupOrder: c.order,
+      })),
+    );
+
+    const standaloneComponentValues = input.components.map((c) => ({
+      id: c.id,
+      pageId: input.pageId,
+      workspaceId: ctx.workspace.id,
+      name: c.name,
+      description: c.description,
+      type: c.type,
+      monitorId: c.monitorId,
+      order: c.order,
+      groupId: null as number | null,
+      groupOrder: null as number | null,
+    }));
+
+    const allComponentValues = [
+      ...groupComponentValues,
+      ...standaloneComponentValues,
+    ];
+
+    const monitorComponents = allComponentValues.filter(
+      (c) => c.type === "monitor" && c.monitorId,
+    );
+    const staticComponents = allComponentValues.filter(
+      (c) => c.type === "static",
+    );
+
+    // Use the `(pageId, monitorId)` unique constraint to preserve ids.
+    if (monitorComponents.length > 0) {
+      await tx
+        .insert(pageComponent)
+        .values(monitorComponents)
+        .onConflictDoUpdate({
+          target: [pageComponent.pageId, pageComponent.monitorId],
+          set: {
+            name: sql.raw("excluded.`name`"),
+            description: sql.raw("excluded.`description`"),
+            order: sql.raw("excluded.`order`"),
+            groupId: sql.raw("excluded.`group_id`"),
+            groupOrder: sql.raw("excluded.`group_order`"),
+            updatedAt: sql`(strftime('%s', 'now'))`,
+          },
+        });
+    }
+
+    const existingComponentIds = new Set(existingComponents.map((c) => c.id));
+
+    for (const c of staticComponents) {
+      if (c.id && existingComponentIds.has(c.id)) {
+        await tx
+          .update(pageComponent)
+          .set({
+            name: c.name,
+            description: c.description,
+            type: c.type,
+            monitorId: c.monitorId,
+            order: c.order,
+            groupId: c.groupId,
+            groupOrder: c.groupOrder,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(pageComponent.id, c.id),
+              eq(pageComponent.pageId, input.pageId),
+              eq(pageComponent.workspaceId, ctx.workspace.id),
+            ),
+          );
+      } else {
+        await tx.insert(pageComponent).values({
+          pageId: c.pageId,
+          workspaceId: c.workspaceId,
+          name: c.name,
+          description: c.description,
+          type: c.type,
+          monitorId: c.monitorId,
+          order: c.order,
+          groupId: c.groupId,
+          groupOrder: c.groupOrder,
+        });
+      }
+    }
+
+    await emitAudit(tx, ctx, {
+      action: "page_component.update_order",
+      entityType: "page",
+      entityId: input.pageId,
+      metadata: {
+        componentCount: inputComponentCount,
+        groupCount: input.groups.length,
+      },
+    });
+  });
+}
