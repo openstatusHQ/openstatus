@@ -2,6 +2,7 @@ import {
   type Assertion,
   DnsRecordAssertion,
   HeaderAssertion,
+  JsonBodyAssertion,
   StatusAssertion,
   TextBodyAssertion,
   serialize,
@@ -160,10 +161,10 @@ export function serialiseAssertions(
       assertions.push(new HeaderAssertion(a as never));
     else if (a.type === "textBody")
       assertions.push(new TextBodyAssertion(a as never));
+    else if (a.type === "jsonBody")
+      assertions.push(new JsonBodyAssertion(a as never));
     else if (a.type === "dnsRecord")
       assertions.push(new DnsRecordAssertion(a as never));
-    // `jsonBody` doesn't map to a runtime Assertion class today — preserve
-    // whatever the old tRPC did: silently skip.
   }
   return serialize(assertions);
 }

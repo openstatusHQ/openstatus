@@ -24,6 +24,8 @@ export async function deleteMonitor(args: {
   const input = DeleteMonitorInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
+    // Filter out already soft-deleted rows — otherwise a second call would
+    // re-run the side effects and emit a duplicate audit.
     const existing = await tx
       .select()
       .from(monitor)
@@ -31,6 +33,7 @@ export async function deleteMonitor(args: {
         and(
           eq(monitor.id, input.id),
           eq(monitor.workspaceId, ctx.workspace.id),
+          isNull(monitor.deletedAt),
         ),
       )
       .get();

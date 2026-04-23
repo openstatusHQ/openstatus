@@ -58,6 +58,7 @@ export type ListMonitorsResult = {
 async function enrichMonitorsBatch(
   db: DB,
   rows: Array<typeof monitor.$inferSelect>,
+  workspaceId: number,
   include: { notifications?: boolean; privateLocations?: boolean } = {},
 ): Promise<MonitorWithRelations[]> {
   if (rows.length === 0) return [];
@@ -71,12 +72,25 @@ async function enrichMonitorsBatch(
         monitorTagsToMonitors,
         eq(monitorTagsToMonitors.monitorTagId, monitorTag.id),
       )
-      .where(inArray(monitorTagsToMonitors.monitorId, ids))
+      .where(
+        and(
+          inArray(monitorTagsToMonitors.monitorId, ids),
+          eq(monitorTag.workspaceId, workspaceId),
+        ),
+      )
       .all(),
     db
       .select()
       .from(incidentTable)
-      .where(inArray(incidentTable.monitorId, ids))
+      .where(
+        and(
+          inArray(incidentTable.monitorId, ids),
+          // Scope to caller's workspace — defence-in-depth in case an
+          // incident.monitorId somehow points cross-workspace. The
+          // `incident.monitorId` FK doesn't enforce workspace ownership.
+          eq(incidentTable.workspaceId, workspaceId),
+        ),
+      )
       .all(),
     include.notifications
       ? db
@@ -86,7 +100,12 @@ async function enrichMonitorsBatch(
             notificationsToMonitors,
             eq(notificationsToMonitors.notificationId, notification.id),
           )
-          .where(inArray(notificationsToMonitors.monitorId, ids))
+          .where(
+            and(
+              inArray(notificationsToMonitors.monitorId, ids),
+              eq(notification.workspaceId, workspaceId),
+            ),
+          )
           .all()
       : Promise.resolve([] as never[]),
     include.privateLocations
@@ -97,7 +116,12 @@ async function enrichMonitorsBatch(
             privateLocationToMonitors,
             eq(privateLocationToMonitors.privateLocationId, privateLocation.id),
           )
-          .where(inArray(privateLocationToMonitors.monitorId, ids))
+          .where(
+            and(
+              inArray(privateLocationToMonitors.monitorId, ids),
+              eq(privateLocation.workspaceId, workspaceId),
+            ),
+          )
           .all()
       : Promise.resolve([] as never[]),
   ]);
@@ -188,7 +212,7 @@ export async function listMonitors(args: {
   ]);
 
   const totalSize = countRow?.count ?? 0;
-  const enriched = await enrichMonitorsBatch(db, rows);
+  const enriched = await enrichMonitorsBatch(db, rows, ctx.workspace.id);
   // `list` only exposes tags + incidents to match the tRPC `list` shape.
   const items: MonitorListItem[] = enriched.map(
     ({ notifications: _n, privateLocations: _p, ...rest }) => rest,
@@ -208,7 +232,7 @@ export async function getMonitor(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  const [enriched] = await enrichMonitorsBatch(db, [record], {
+  const [enriched] = await enrichMonitorsBatch(db, [record], ctx.workspace.id, {
     notifications: true,
     privateLocations: true,
   });

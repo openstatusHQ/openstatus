@@ -85,10 +85,12 @@ export const UpdateMonitorPublicInput = z.object({
 });
 export type UpdateMonitorPublicInput = z.infer<typeof UpdateMonitorPublicInput>;
 
+// Bounds mirror `insertMonitorSchema` (0–60_000 ms) — the persisted checker
+// timeout is hard-capped at 60 s and rejects negatives.
 export const UpdateMonitorResponseTimeInput = z.object({
   id: z.number().int(),
-  timeout: z.number().int(),
-  degradedAfter: z.number().int().nullish(),
+  timeout: z.coerce.number().gte(0).lte(60_000),
+  degradedAfter: z.coerce.number().gte(0).lte(60_000).nullish(),
 });
 export type UpdateMonitorResponseTimeInput = z.infer<
   typeof UpdateMonitorResponseTimeInput

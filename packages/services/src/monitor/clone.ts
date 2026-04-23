@@ -30,11 +30,14 @@ export async function cloneMonitor(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    const { id: _id, ...rest } = source;
+    const { id: _id, status: _status, ...rest } = source;
     const row = await tx
       .insert(monitor)
       .values({
         ...rest,
+        // Don't inherit the source's current health — a freshly cloned
+        // monitor hasn't been checked yet; let the next check settle it.
+        status: "active",
         name: `${source.name} (Copy)`,
         createdAt: new Date(),
         updatedAt: new Date(),
