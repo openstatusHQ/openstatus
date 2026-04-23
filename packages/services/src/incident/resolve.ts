@@ -1,4 +1,4 @@
-import { eq } from "@openstatus/db";
+import { and, eq, isNull } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -7,7 +7,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ConflictError, InternalServiceError } from "../errors";
+import { ConflictError } from "../errors";
 import type { Incident } from "../types";
 import { getIncidentInWorkspace } from "./internal";
 import { ResolveIncidentInput } from "./schemas";
@@ -30,6 +30,9 @@ export async function resolveIncident(args: {
     }
 
     const now = new Date();
+    // Conditional update — atomically flips `resolved_at` only while it is
+    // still NULL. Concurrent resolvers lose the race and get a no-row
+    // return, which we translate into the same `ConflictError`.
     const updated = await tx
       .update(incidentTable)
       .set({
@@ -37,13 +40,16 @@ export async function resolveIncident(args: {
         resolvedBy: tryGetActorUserId(ctx.actor),
         updatedAt: now,
       })
-      .where(eq(incidentTable.id, existing.id))
+      .where(
+        and(
+          eq(incidentTable.id, existing.id),
+          isNull(incidentTable.resolvedAt),
+        ),
+      )
       .returning()
       .get();
     if (!updated) {
-      throw new InternalServiceError(
-        `failed to resolve incident ${existing.id}`,
-      );
+      throw new ConflictError("Incident already resolved.");
     }
 
     await emitAudit(tx, ctx, {
