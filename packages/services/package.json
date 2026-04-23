@@ -24,6 +24,10 @@
     "./monitor": {
       "import": "./src/monitor/index.ts",
       "types": "./src/monitor/index.ts"
+    },
+    "./notification": {
+      "import": "./src/notification/index.ts",
+      "types": "./src/notification/index.ts"
     }
   },
   "scripts": {
