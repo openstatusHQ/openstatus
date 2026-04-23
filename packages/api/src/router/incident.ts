@@ -1,38 +1,33 @@
+import { Events } from "@openstatus/analytics";
+import { NotFoundError } from "@openstatus/services";
+import {
+  acknowledgeIncident,
+  deleteIncident,
+  listIncidents,
+  resolveIncident,
+} from "@openstatus/services/incident";
 import { z } from "zod";
 
-import { type SQL, and, asc, desc, eq, gte, schema } from "@openstatus/db";
-import {
-  incidentTable,
-  selectIncidentSchema,
-  selectMonitorSchema,
-} from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
-import { TRPCError } from "@trpc/server";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { getPeriodDate, periods } from "./utils";
+import { periods } from "./utils";
 
 export const incidentRouter = createTRPCRouter({
   delete: protectedProcedure
     .meta({ track: Events.DeleteIncident })
     .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const incidentToDelete = await opts.ctx.db
-        .select()
-        .from(schema.incidentTable)
-        .where(
-          and(
-            eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-      if (!incidentToDelete) return;
-
-      await opts.ctx.db
-        .delete(schema.incidentTable)
-        .where(eq(schema.incidentTable.id, incidentToDelete.id))
-        .run();
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteIncident({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+      } catch (err) {
+        // Preserve the pre-migration idempotent behaviour — the old tRPC
+        // delete silently returned when the row was already gone.
+        if (err instanceof NotFoundError) return;
+        toTRPCError(err);
+      }
     }),
 
   list: protectedProcedure
@@ -45,121 +40,71 @@ export const incidentRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(incidentTable.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      if (opts.input?.period) {
-        whereConditions.push(
-          gte(incidentTable.startedAt, getPeriodDate(opts.input.period)),
-        );
+    .query(async ({ ctx, input }) => {
+      try {
+        const { items } = await listIncidents({
+          ctx: toServiceCtx(ctx),
+          input: {
+            monitorId: input?.monitorId ?? undefined,
+            period: input?.period,
+            order: input?.order ?? "desc",
+            // Same sentinel as status-report / maintenance — dashboard has
+            // no paging UI; Connect-equivalent would cap externally.
+            limit: 10_000,
+            offset: 0,
+          },
+        });
+        return items.map(narrowMonitor);
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      if (opts.input?.monitorId) {
-        whereConditions.push(eq(incidentTable.monitorId, opts.input.monitorId));
-      }
-
-      const result = await opts.ctx.db.query.incidentTable.findMany({
-        where: and(...whereConditions),
-        with: {
-          monitor: true,
-        },
-        orderBy:
-          opts.input?.order === "asc"
-            ? asc(incidentTable.startedAt)
-            : desc(incidentTable.startedAt),
-      });
-
-      return selectIncidentSchema
-        .extend({
-          monitor: selectMonitorSchema,
-        })
-        .array()
-        .parse(result);
     }),
 
   acknowledge: protectedProcedure
     .meta({ track: Events.AcknowledgeIncident })
     .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const currentIncident = await opts.ctx.db
-        .select()
-        .from(schema.incidentTable)
-        .where(
-          and(
-            eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-      if (!currentIncident) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Incident not found",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await acknowledgeIncident({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
         });
+        // Old contract was `return true`; preserve.
+        return true;
+      } catch (err) {
+        toTRPCError(err);
       }
-      if (currentIncident.acknowledgedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Incident already acknowledged",
-        });
-      }
-      await opts.ctx.db
-        .update(schema.incidentTable)
-        .set({
-          acknowledgedAt: new Date(),
-          acknowledgedBy: opts.ctx.user.id,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
-        );
-      return true;
     }),
 
   resolve: protectedProcedure
     .meta({ track: Events.ResolveIncident })
     .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const currentIncident = await opts.ctx.db
-        .select()
-        .from(schema.incidentTable)
-        .where(
-          and(
-            eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-      if (!currentIncident) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Incident not found",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await resolveIncident({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
         });
+        return true;
+      } catch (err) {
+        toTRPCError(err);
       }
-      if (currentIncident.resolvedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Incident already resolved",
-        });
-      }
-      await opts.ctx.db
-        .update(schema.incidentTable)
-        .set({
-          resolvedAt: new Date(),
-          resolvedBy: opts.ctx.user.id,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
-        );
-      return true;
     }),
 });
+
+/**
+ * Narrow `monitor` to non-null for the tRPC list return — the old zod
+ * parse required `monitor: selectMonitorSchema`. Every incident is expected
+ * to have a monitor (FK with `set default` on delete), so a null here is a
+ * data-integrity signal we surface rather than silently return.
+ */
+function narrowMonitor<T extends { id: number; monitor: unknown }>(
+  incident: T,
+): T & { monitor: NonNullable<T["monitor"]> } {
+  if (incident.monitor == null) {
+    throw new Error(
+      `incident ${incident.id} has no associated monitor (data inconsistency)`,
+    );
+  }
+  return incident as T & { monitor: NonNullable<T["monitor"]> };
+}

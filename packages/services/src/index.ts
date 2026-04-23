@@ -6,6 +6,7 @@ export {
   type ServiceContext,
   extractActorId,
   isTx,
+  tryGetActorUserId,
   withTransaction,
 } from "./context";
 

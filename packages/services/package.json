@@ -16,6 +16,10 @@
     "./maintenance": {
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
+    },
+    "./incident": {
+      "import": "./src/incident/index.ts",
+      "types": "./src/incident/index.ts"
     }
   },
   "scripts": {

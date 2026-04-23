@@ -89,6 +89,7 @@
       "include": [
         "packages/api/src/router/statusReport.ts",
         "packages/api/src/router/maintenance.ts",
+        "packages/api/src/router/incident.ts",
         "apps/server/src/routes/rpc/services/status-report/**",
         "apps/server/src/routes/rpc/services/maintenance/**",
         "apps/server/src/routes/slack/interactions.ts"
