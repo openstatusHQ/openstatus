@@ -43,7 +43,7 @@ export async function createNotification(args: {
     // Plan gate on provider (sms / pagerduty / opsgenie / …).
     assertProviderAllowed(ctx.workspace, input.provider);
 
-    validateNotificationData(input.data);
+    validateNotificationData(input.provider, input.data);
 
     const validatedMonitors = await validateMonitorIds({
       tx,

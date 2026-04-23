@@ -9,6 +9,7 @@ import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
 import type { Notification } from "../types";
 import {
+  assertProviderAllowed,
   getNotificationInWorkspace,
   validateMonitorIds,
   validateNotificationData,
@@ -29,7 +30,12 @@ export async function updateNotification(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    validateNotificationData(input.data);
+    // Re-check the plan gate against the stored provider. After a plan
+    // downgrade a previously allowed channel (e.g. pagerduty) should no
+    // longer be editable — matches the create-time gate.
+    assertProviderAllowed(ctx.workspace, existing.provider);
+
+    validateNotificationData(existing.provider, input.data);
 
     const validatedMonitors = await validateMonitorIds({
       tx,

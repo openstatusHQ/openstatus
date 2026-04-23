@@ -139,6 +139,21 @@ describe("createNotification", () => {
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
+  test("throws ValidationError when data payload key doesn't match provider", async () => {
+    await expect(
+      createNotification({
+        ctx: teamCtx,
+        input: {
+          name: `${TEST_PREFIX}-mismatch`,
+          provider: "discord",
+          // Valid slack payload, but provider is discord → rejected.
+          data: { slack: "https://hooks.slack.com/services/x/y/z" },
+          monitors: [],
+        },
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
   test("throws LimitExceededError when plan blocks the provider", async () => {
     // free plan has `pagerduty: false`.
     await expect(

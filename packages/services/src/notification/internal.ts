@@ -93,10 +93,24 @@ export function assertProviderAllowed(
   }
 }
 
-/** Validate the loose `data` payload against the canonical channel schema. */
-export function validateNotificationData(data: NotificationDataInput): void {
+/**
+ * Validate the `data` payload and assert that it contains the key matching
+ * the given `provider`. The top-level `NotificationDataSchema` is a union
+ * that accepts any provider's shape; checking the key here rejects
+ * mismatched provider/payload combos (e.g. `provider: "discord"` with
+ * `data: { slack: "…" }`).
+ */
+export function validateNotificationData(
+  provider: NotificationProvider,
+  data: NotificationDataInput,
+): void {
   const parsed = NotificationDataSchema.safeParse(data);
   if (!parsed.success) {
     throw new ValidationError("Invalid notification data.", parsed.error);
+  }
+  if (!(provider in data)) {
+    throw new ValidationError(
+      `Notification data is missing the "${provider}" payload.`,
+    );
   }
 }
