@@ -47,19 +47,13 @@ export async function updateMaintenance(args: {
         pageComponentIds: input.pageComponentIds,
       });
 
-      if (
-        validated.pageId !== null &&
-        existing.pageId !== null &&
-        validated.pageId !== existing.pageId
-      ) {
-        throw new ConflictError(
-          `Selected components belong to page ${validated.pageId}, which does not match the maintenance's page ${existing.pageId}.`,
-        );
-      }
-
-      if (existing.pageId === null && validated.pageId !== null) {
-        updateValues.pageId = validated.pageId;
-      }
+      // `pageId` follows the association set: a new non-empty set moves
+      // the maintenance to that page; an empty set nulls it. Matches the
+      // pattern established on status-report update and what the Connect
+      // `UpdateMaintenance` tests have encoded since the original handler.
+      // Mixed-page inputs are rejected upstream by
+      // `validatePageComponentIds` (all ids must share a page).
+      updateValues.pageId = validated.pageId;
 
       await updatePageComponentAssociations({
         tx,

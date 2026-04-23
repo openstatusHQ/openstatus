@@ -576,7 +576,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
 
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.message).toContain("Start time (from) must be before end time");
+    expect(data.message).toContain("End date must be after start date");
   });
 
   test("returns error for non-existent page", async () => {
@@ -1020,7 +1020,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
 
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.message).toContain("Start time (from) must be before end time");
+    expect(data.message).toContain("End date must be after start date");
   });
 
   test("title-only update preserves component associations and pageId", async () => {

@@ -7,7 +7,7 @@ import {
   expect,
   test,
 } from "bun:test";
-import { db, eq } from "@openstatus/db";
+import { db, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -53,6 +53,15 @@ let testPageId: number;
 let testPageComponentId: number;
 let auditBuffer: AuditLogRecord[];
 let auditReset: () => void;
+
+/**
+ * Tests push created maintenance ids here instead of issuing an inline
+ * `db.delete()` at the end of their body. `afterEach` drains the array,
+ * so cleanup runs even when an assertion throws midway through a test —
+ * otherwise a failing assertion leaves orphans that flake subsequent
+ * runs.
+ */
+const createdMaintenanceIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -104,8 +113,15 @@ beforeEach(() => {
   subscriptionSpies?.dispatchMaintenanceUpdate.mockClear();
 });
 
-afterEach(() => {
+afterEach(async () => {
   auditReset();
+  if (createdMaintenanceIds.length > 0) {
+    await db
+      .delete(maintenance)
+      .where(inArray(maintenance.id, createdMaintenanceIds))
+      .catch(() => undefined);
+    createdMaintenanceIds.length = 0;
+  }
 });
 
 function futureRange(startIn = 60 * 60 * 1000) {
@@ -146,7 +162,7 @@ describe("createMaintenance", () => {
       entityId: record.id,
     });
 
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 
   test("throws when page is in another workspace", async () => {
@@ -213,7 +229,7 @@ describe("updateMaintenance", () => {
       .all();
     expect(assoc).toHaveLength(0);
 
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 
   test("throws NotFoundError for cross-workspace update", async () => {
@@ -235,7 +251,7 @@ describe("updateMaintenance", () => {
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
 
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 });
 
@@ -297,7 +313,7 @@ describe("list / get", () => {
     });
     expect(items.find((m) => m.id === record.id)).toBeUndefined();
 
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 
   test("list returns totalSize and enriched relations", async () => {
@@ -319,7 +335,7 @@ describe("list / get", () => {
     expect(full.pageComponents.map((c) => c.id)).toEqual([testPageComponentId]);
     expect(full.pageComponentIds).toEqual([testPageComponentId]);
 
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 });
 
@@ -343,7 +359,7 @@ describe("notifyMaintenance", () => {
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
 
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 });
 
@@ -369,6 +385,6 @@ describe("slack actor path", () => {
       entityId: record.id,
       actorType: "slack",
     });
-    await db.delete(maintenance).where(eq(maintenance.id, record.id));
+    createdMaintenanceIds.push(record.id);
   });
 });
