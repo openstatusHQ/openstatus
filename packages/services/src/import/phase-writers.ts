@@ -126,7 +126,12 @@ export async function writePagePhase(
   const [inserted] = await tx
     .insert(page)
     .values({
-      workspaceId: data.workspaceId,
+      // `workspaceId` from ctx, not from provider-mapped `data`. Every
+      // other phase writer (monitor / components / subscriber) already
+      // uses the ctx-derived value; this keeps the authority consistent
+      // and defends against the (unlikely) case where a provider mapper
+      // round-trips the wrong workspace id into resource data.
+      workspaceId,
       title: data.title,
       description: data.description,
       slug: data.slug,
