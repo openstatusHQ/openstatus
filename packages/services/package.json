@@ -31,7 +31,9 @@
   },
   "dependencies": {
     "@logtape/logtape": "2.0.1",
+    "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
+    "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
     "zod": "4.1.13"
   },
