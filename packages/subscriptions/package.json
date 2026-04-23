@@ -8,6 +8,10 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./client": {
+      "import": "./src/client.ts",
+      "types": "./src/client.ts"
     }
   },
   "scripts": {

@@ -263,7 +263,8 @@ export function FormSubscriber({
                   ) : (
                     <FormDescription>
                       By adding this email, you confirm this contact has
-                      consented to receive status updates.
+                      consented to receive status updates. We'll not be sending
+                      a confirmation email.
                     </FormDescription>
                   )}
                   <FormMessage />
@@ -289,7 +290,7 @@ export function FormSubscriber({
                     </FormControl>
                     <FormDescription>
                       Only Slack and Discord webhook URLs are supported for now
-                      — more channels coming soon.
+                      - more channels to come.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

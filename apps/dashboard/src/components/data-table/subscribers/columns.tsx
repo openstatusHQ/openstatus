@@ -2,7 +2,7 @@
 
 import { formatDate } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
-import { detectWebhookFlavor } from "@openstatus/subscriptions";
+import { detectWebhookFlavor } from "@openstatus/subscriptions/client";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Tooltip,

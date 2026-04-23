@@ -42,7 +42,7 @@ export function FormSheetSubscriber({
   items,
   editMode = false,
   title = "Add subscriber",
-  description = "Add an email or webhook subscriber. Partner starts receiving notifications immediately — no verification required.",
+  description = "Add an email or webhook subscriber. Partner starts receiving notifications immediately - no verification required.",
   open: controlledOpen,
   onOpenChange,
   triggerProps,
