@@ -154,6 +154,26 @@ describe("createNotification", () => {
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
+  test("throws ValidationError when provider payload is malformed but another provider's is valid", async () => {
+    // The canonical data schema for the selected provider must match.
+    // A plain key-presence check would have missed this: `discord: "not-a-url"`
+    // fails `urlSchema`, but a valid `slack` field could've hidden it.
+    await expect(
+      createNotification({
+        ctx: teamCtx,
+        input: {
+          name: `${TEST_PREFIX}-invalid-payload`,
+          provider: "discord",
+          data: {
+            discord: "not-a-url",
+            slack: "https://hooks.slack.com/services/x/y/z",
+          },
+          monitors: [],
+        },
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
   test("throws LimitExceededError when plan blocks the provider", async () => {
     // free plan has `pagerduty: false`.
     await expect(

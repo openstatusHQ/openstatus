@@ -1,9 +1,21 @@
 import { and, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, notification } from "@openstatus/db/src/schema";
 import {
-  NotificationDataSchema,
   type NotificationProvider,
+  discordDataSchema,
+  emailDataSchema,
+  googleChatDataSchema,
+  grafanaOncallDataSchema,
+  ntfyDataSchema,
+  opsgenieDataSchema,
+  pagerdutyDataSchema,
+  phoneDataSchema,
+  slackDataSchema,
+  telegramDataSchema,
+  webhookDataSchema,
+  whatsappDataSchema,
 } from "@openstatus/db/src/schema";
+import type { ZodType } from "zod";
 
 import type { DB } from "../context";
 import {
@@ -93,24 +105,42 @@ export function assertProviderAllowed(
   }
 }
 
+// Provider → canonical data schema. Each provider-specific schema is
+// keyed by the provider name itself, so validating against the exact
+// schema guarantees both (a) the key is present, and (b) its payload has
+// the right shape. Just asserting `provider in data` would let a case
+// like `{ discord: "invalid-url", slack: "valid-url" }` slip through —
+// the union parse picks the slack variant and the key check sees discord.
+const providerDataSchemas = {
+  discord: discordDataSchema,
+  email: emailDataSchema,
+  "google-chat": googleChatDataSchema,
+  "grafana-oncall": grafanaOncallDataSchema,
+  ntfy: ntfyDataSchema,
+  opsgenie: opsgenieDataSchema,
+  pagerduty: pagerdutyDataSchema,
+  slack: slackDataSchema,
+  sms: phoneDataSchema,
+  telegram: telegramDataSchema,
+  webhook: webhookDataSchema,
+  whatsapp: whatsappDataSchema,
+} as const satisfies Record<NotificationProvider, ZodType>;
+
 /**
- * Validate the `data` payload and assert that it contains the key matching
- * the given `provider`. The top-level `NotificationDataSchema` is a union
- * that accepts any provider's shape; checking the key here rejects
- * mismatched provider/payload combos (e.g. `provider: "discord"` with
- * `data: { slack: "…" }`).
+ * Validate that `data` is the canonical payload for the given `provider`.
+ * Runs the provider-specific Zod schema — this checks both key presence
+ * and the value's shape/content in one pass.
  */
 export function validateNotificationData(
   provider: NotificationProvider,
   data: NotificationDataInput,
 ): void {
-  const parsed = NotificationDataSchema.safeParse(data);
+  const schema = providerDataSchemas[provider];
+  const parsed = schema.safeParse(data);
   if (!parsed.success) {
-    throw new ValidationError("Invalid notification data.", parsed.error);
-  }
-  if (!(provider in data)) {
     throw new ValidationError(
-      `Notification data is missing the "${provider}" payload.`,
+      `Invalid data for provider "${provider}".`,
+      parsed.error,
     );
   }
 }
