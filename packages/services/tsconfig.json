@@ -1,5 +1,5 @@
 {
-  "extends": "@openstatus/tsconfig/base.json",
+  "extends": "@openstatus/tsconfig/react-library.json",
   "include": ["src", "test"],
   "exclude": ["dist", "build", "node_modules"]
 }

@@ -26,6 +26,7 @@
     "@openstatus/notification-twillio-whatsapp": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/regions": "workspace:*",
+    "@openstatus/services": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
