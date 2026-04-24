@@ -137,13 +137,17 @@ export async function updatePagePasswordProtection(args: {
       .update(page)
       .set({
         accessType: input.accessType,
-        // `?? null` on both array columns so a null/undefined input clears
-        // the DB value (e.g. when switching access type) — without it,
-        // drizzle sees `undefined` and skips the column, leaving stale
-        // authEmailDomains / allowedIpRanges behind.
-        authEmailDomains: input.authEmailDomains?.join(",") ?? null,
+        // `|| null` (not `??`) on both array columns so three inputs
+        // all clear the DB value: `undefined`, `null`, and `[]`. An
+        // empty array joins to `""`, which `??` wouldn't coerce — we'd
+        // persist the empty string instead of nulling the column,
+        // leaving a misleading "present but blank" state. `|| null`
+        // treats `""` as falsy and maps it to `null`, while real
+        // non-empty joins (e.g. `"a@b.com"` / `"10.0.0.0/24"`) pass
+        // through unchanged.
+        authEmailDomains: input.authEmailDomains?.join(",") || null,
         password: input.password,
-        allowedIpRanges: input.allowedIpRanges?.join(",") ?? null,
+        allowedIpRanges: input.allowedIpRanges?.join(",") || null,
         ...(input.allowIndex !== undefined && { allowIndex: input.allowIndex }),
         updatedAt: new Date(),
       })

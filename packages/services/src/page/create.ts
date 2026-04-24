@@ -46,7 +46,11 @@ export async function createPage(args: {
       .insert(page)
       .values({
         workspaceId: ctx.workspace.id,
-        configuration: JSON.stringify(configuration),
+        // `page.configuration` is a drizzle `text("…", { mode: "json" })`
+        // column — drizzle serialises objects automatically. Calling
+        // `JSON.stringify` first would double-encode and persist a raw
+        // JSON string, breaking downstream reads that expect an object.
+        configuration,
         ...pageProps,
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),

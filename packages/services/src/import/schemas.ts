@@ -7,12 +7,26 @@ export const importProviders = [
 ] as const;
 export type ImportProviderName = (typeof importProviders)[number];
 
+/**
+ * `nullish().transform(v => v ?? undefined)` preserves the legacy
+ * router contract (which accepted `null` for every provider page-id
+ * field via `.nullish()`) while normalising the value to `undefined`
+ * inside the service — downstream `buildProviderConfig` expects
+ * `string | undefined` and doesn't want to learn about `null`.
+ * Switching these to plain `.optional()` would've silently rejected
+ * every client still sending `null`.
+ */
+const nullishString = z
+  .string()
+  .nullish()
+  .transform((v) => v ?? undefined);
+
 const providerFields = {
   provider: z.enum(importProviders),
   apiKey: z.string().min(1),
-  statuspagePageId: z.string().optional(),
-  betterstackStatusPageId: z.string().optional(),
-  instatusPageId: z.string().optional(),
+  statuspagePageId: nullishString,
+  betterstackStatusPageId: nullishString,
+  instatusPageId: nullishString,
 };
 
 export const PreviewImportInput = z.object({

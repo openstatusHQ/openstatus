@@ -1,5 +1,9 @@
 import { insertPageSchema } from "@openstatus/db/src/schema";
 import { pageAccessTypes } from "@openstatus/db/src/schema/pages/constants";
+import {
+  customDomainSchema,
+  slugSchema,
+} from "@openstatus/db/src/schema/pages/validation";
 import { locales } from "@openstatus/locales";
 import { z } from "zod";
 
@@ -39,7 +43,11 @@ export type CreatePageInput = {
 /** Minimal create — the onboarding / `new` path with no monitors. */
 export const NewPageInput = z.object({
   title: z.string(),
-  slug: z.string().toLowerCase(),
+  // Canonical `slugSchema` from db validation — regex + min(3).
+  // Plain `z.string().toLowerCase()` here let malformed slugs through
+  // that `insertPageSchema` would reject, so `create` and `new` had
+  // diverging contracts.
+  slug: slugSchema,
   icon: z.string().nullish(),
   description: z.string().nullish(),
 });
@@ -57,14 +65,17 @@ export const ListPagesInput = z.object({
 export type ListPagesInput = z.infer<typeof ListPagesInput>;
 
 export const GetSlugAvailableInput = z.object({
-  slug: z.string().toLowerCase(),
+  // Same canonical `slugSchema` — don't want `getSlugAvailable` to
+  // return a confident "available" answer for strings that `createPage`
+  // would reject at insert time.
+  slug: slugSchema,
 });
 export type GetSlugAvailableInput = z.infer<typeof GetSlugAvailableInput>;
 
 export const UpdatePageGeneralInput = z.object({
   id: z.number().int(),
   title: z.string(),
-  slug: z.string().toLowerCase(),
+  slug: slugSchema,
   description: z.string().nullish(),
   icon: z.string().nullish(),
 });
@@ -77,7 +88,11 @@ export type UpdatePageGeneralInput = z.infer<typeof UpdatePageGeneralInput>;
  */
 export const UpdatePageCustomDomainInput = z.object({
   id: z.number().int(),
-  customDomain: z.string().toLowerCase(),
+  // Canonical `customDomainSchema` enforces the same `no http://`,
+  // `no https://`, `no www.` rules as `insertPageSchema`; empty string
+  // ("" branch of the `.or(...)`) is still allowed so callers can
+  // clear the domain.
+  customDomain: customDomainSchema,
 });
 export type UpdatePageCustomDomainInput = z.infer<
   typeof UpdatePageCustomDomainInput
