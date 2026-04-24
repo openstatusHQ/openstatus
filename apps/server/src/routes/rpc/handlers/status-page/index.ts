@@ -29,12 +29,30 @@ import {
   PageAccessType,
 } from "@openstatus/proto/status_page/v1";
 import {
+  ConflictError,
+  NotFoundError,
+  withTransaction,
+} from "@openstatus/services";
+import {
+  createPage,
+  deletePage,
+  getPage,
+  listPages,
+  updatePageAppearance,
+  updatePageCustomDomain,
+  updatePageGeneral,
+  updatePageLinks,
+  updatePageLocales,
+  updatePagePasswordProtection,
+} from "@openstatus/services/page";
+import {
   createSubscription as createSubscriptionService,
   detectWebhookFlavor,
   getChannel,
   upsertEmailSubscription,
 } from "@openstatus/subscriptions";
 
+import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
   type DBPageSubscriber,
@@ -63,11 +81,9 @@ import {
   passwordRequiredError,
   slugAlreadyExistsError,
   statusPageAccessDeniedError,
-  statusPageCreateFailedError,
   statusPageIdRequiredError,
   statusPageNotFoundError,
   statusPageNotPublishedError,
-  statusPageUpdateFailedError,
   subscriberCreateFailedError,
   subscriberNotFoundError,
 } from "./errors";
@@ -78,9 +94,35 @@ import {
   checkNoIndexLimit,
   checkPageComponentLimits,
   checkPasswordProtectionLimit,
-  checkStatusPageLimits,
   checkStatusSubscribersLimit,
 } from "./limits";
+
+/**
+ * Normalize a service `Page` back into the converter's raw-db shape.
+ *
+ * The service parses `authEmailDomains` / `allowedIpRanges` into arrays
+ * via `selectPageSchema`; the converters (shared with the 13 still-on-db
+ * methods below) expect the comma-joined string form the DB stores.
+ */
+function serviceToConverterPage<
+  P extends {
+    authEmailDomains: string[];
+    allowedIpRanges: string[];
+  },
+>(
+  p: P,
+): Omit<P, "authEmailDomains" | "allowedIpRanges"> & {
+  authEmailDomains: string | null;
+  allowedIpRanges: string | null;
+} {
+  return {
+    ...p,
+    authEmailDomains:
+      p.authEmailDomains.length > 0 ? p.authEmailDomains.join(",") : null,
+    allowedIpRanges:
+      p.allowedIpRanges.length > 0 ? p.allowedIpRanges.join(",") : null,
+  };
+}
 
 /**
  * Helper to get a status page by ID with workspace scope.
@@ -240,376 +282,464 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   // ==========================================================================
   // Page CRUD
   // ==========================================================================
+  //
+  // Known gap (predates the services migration): both `createStatusPage`
+  // and `updateStatusPage` accept and persist `customDomain`, but
+  // neither calls the Vercel add/remove API the way the tRPC
+  // `updateCustomDomain` procedure does. Clients setting a custom domain
+  // via gRPC will get a db row that says the domain is set, but routing
+  // won't actually work until a tRPC/dashboard round-trip picks up the
+  // diff. The fix is to lift the Vercel sync (`addDomainToVercel` /
+  // `removeDomainFromVercel`) into a shared transport-layer helper the
+  // Connect handlers can reuse, kept out of the service layer. Tracked
+  // as a follow-up; not landing here to avoid widening the behavioural
+  // blast radius of the migration PR on external API consumers.
 
   async createStatusPage(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const sCtx = toServiceCtx(rpcCtx);
+      const limits = rpcCtx.workspace.limits;
 
-    // Check workspace limits for status pages
-    await checkStatusPageLimits(workspaceId, limits);
-
-    // Check if slug already exists
-    const existingPage = await getPageBySlug(req.slug);
-    if (existingPage) {
-      throw slugAlreadyExistsError(req.slug);
-    }
-
-    // Check i18n limits
-    if (!limits.i18n) {
-      if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
-        throw new ConnectError(
-          "Upgrade to configure locales.",
-          Code.PermissionDenied,
-        );
+      // Slug uniqueness — preserved at handler to keep the granular
+      // `slugAlreadyExistsError(slug)` (AlreadyExists + metadata) rather
+      // than the service's generic ConflictError → InvalidArgument mapping.
+      const existingPage = await getPageBySlug(req.slug);
+      if (existingPage) {
+        throw slugAlreadyExistsError(req.slug);
       }
-      if (req.locales.length > 0) {
-        throw new ConnectError(
-          "Upgrade to configure locales.",
-          Code.PermissionDenied,
-        );
-      }
-    }
 
-    // Resolve locale values
-    const defaultLocale =
-      req.defaultLocale !== undefined && req.defaultLocale !== 0
-        ? protoLocaleToDb(req.defaultLocale)
-        : "en";
-    const validLocales = req.locales.filter((l) => l !== 0);
-    const locales =
-      validLocales.length > 0
-        ? [...new Set(validLocales.map(protoLocaleToDb))]
-        : null;
-
-    // Validate defaultLocale is included in locales when locales are provided
-    if (locales && !locales.includes(defaultLocale)) {
-      throw new ConnectError(
-        "Default locale must be included in the locales list",
-        Code.InvalidArgument,
-      );
-    }
-
-    // Validate icon URL
-    const icon = req.icon ?? "";
-    if (icon) {
-      validateIconUrl(icon);
-    }
-
-    // Validate custom domain
-    const customDomain = req.customDomain ?? "";
-    if (customDomain) {
-      checkCustomDomainLimit(limits);
-      validateCustomDomain(customDomain);
-    }
-
-    // Resolve theme
-    const forceTheme =
-      req.theme !== undefined && req.theme !== 0
-        ? protoThemeToDb(req.theme)
-        : "system";
-
-    // Resolve access type and associated fields
-    const reqAccessType = req.accessType;
-    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
-    const accessType = hasAccessType
-      ? protoAccessTypeToDb(reqAccessType)
-      : "public";
-
-    let password: string | null = null;
-    let authEmailDomains: string | null = null;
-    let allowedIpRanges: string | null = null;
-
-    if (hasAccessType) {
-      if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
-        checkPasswordProtectionLimit(limits);
-        const trimmedPassword = req.password?.trim() ?? "";
-        if (!trimmedPassword) {
-          throw passwordRequiredError();
+      // i18n — keep at handler to preserve PermissionDenied over the
+      // service's LimitExceededError → ResourceExhausted mapping.
+      if (!limits.i18n) {
+        if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
+          throw new ConnectError(
+            "Upgrade to configure locales.",
+            Code.PermissionDenied,
+          );
         }
-        password = trimmedPassword;
-      } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
-        checkEmailDomainProtectionLimit(limits);
-        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
-        authEmailDomains = validatedDomains.join(",");
-      } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
-        checkIpRestrictionLimit(limits);
-        const validated = validateAllowedIpRanges(req.allowedIpRanges ?? "");
-        allowedIpRanges = validated.join(",");
+        if (req.locales.length > 0) {
+          throw new ConnectError(
+            "Upgrade to configure locales.",
+            Code.PermissionDenied,
+          );
+        }
       }
+
+      const defaultLocale =
+        req.defaultLocale !== undefined && req.defaultLocale !== 0
+          ? protoLocaleToDb(req.defaultLocale)
+          : "en";
+      const validLocales = req.locales.filter((l) => l !== 0);
+      const locales =
+        validLocales.length > 0
+          ? [...new Set(validLocales.map(protoLocaleToDb))]
+          : null;
+      if (locales && !locales.includes(defaultLocale)) {
+        throw new ConnectError(
+          "Default locale must be included in the locales list",
+          Code.InvalidArgument,
+        );
+      }
+
+      // Proto-specific format validations (regex / URL shape) — these
+      // don't exist in the zod insert schema, so they stay at handler.
+      const icon = req.icon ?? "";
+      if (icon) validateIconUrl(icon);
+
+      const customDomain = req.customDomain ?? "";
+      if (customDomain) {
+        checkCustomDomainLimit(limits);
+        validateCustomDomain(customDomain);
+      }
+
+      const forceTheme =
+        req.theme !== undefined && req.theme !== 0
+          ? protoThemeToDb(req.theme)
+          : "system";
+
+      const reqAccessType = req.accessType;
+      const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
+      const accessType = hasAccessType
+        ? protoAccessTypeToDb(reqAccessType)
+        : "public";
+
+      let password: string | null = null;
+      let authEmailDomains: string[] | undefined;
+      let allowedIpRanges: string[] | undefined;
+
+      if (hasAccessType) {
+        if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
+          checkPasswordProtectionLimit(limits);
+          const trimmedPassword = req.password?.trim() ?? "";
+          if (!trimmedPassword) throw passwordRequiredError();
+          password = trimmedPassword;
+        } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
+          checkEmailDomainProtectionLimit(limits);
+          authEmailDomains = validateAuthEmailDomains(req.authEmailDomains);
+        } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
+          checkIpRestrictionLimit(limits);
+          allowedIpRanges = validateAllowedIpRanges(req.allowedIpRanges ?? "");
+        }
+      }
+
+      const allowIndex = req.allowIndex ?? true;
+      if (req.allowIndex !== undefined && !allowIndex) {
+        checkNoIndexLimit(limits);
+      }
+
+      // `published` relies on DB default (false). The service's
+      // CreatePageInput type doesn't surface the column, and its behavior
+      // matches the legacy `published: false` write on create.
+      const created = await createPage({
+        ctx: sCtx,
+        input: {
+          title: req.title,
+          description: req.description ?? "",
+          slug: req.slug,
+          customDomain,
+          icon,
+          forceTheme,
+          accessType,
+          password,
+          authEmailDomains,
+          allowedIpRanges,
+          homepageUrl: req.homepageUrl ?? null,
+          contactUrl: req.contactUrl ?? null,
+          defaultLocale,
+          locales,
+          allowIndex,
+        },
+      });
+
+      return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Resolve allow_index
-    const allowIndex = req.allowIndex ?? true;
-    if (req.allowIndex !== undefined && !allowIndex) {
-      checkNoIndexLimit(limits);
-    }
-
-    // Create the status page
-    const newPage = await db
-      .insert(page)
-      .values({
-        workspaceId,
-        title: req.title,
-        description: req.description ?? "",
-        slug: req.slug,
-        customDomain,
-        published: false,
-        icon,
-        forceTheme,
-        accessType,
-        password,
-        authEmailDomains,
-        allowedIpRanges,
-        homepageUrl: req.homepageUrl ?? null,
-        contactUrl: req.contactUrl ?? null,
-        defaultLocale,
-        locales,
-        allowIndex,
-      })
-      .returning()
-      .get();
-
-    if (!newPage) {
-      throw statusPageCreateFailedError();
-    }
-
-    return {
-      statusPage: dbPageToProto(newPage),
-    };
   },
 
   async getStatusPage(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const id = req.id?.trim();
+      if (!id) throw statusPageIdRequiredError();
 
-    const id = req.id?.trim();
-    if (!id) {
-      throw statusPageIdRequiredError();
+      try {
+        const pageData = await getPage({
+          ctx: toServiceCtx(rpcCtx),
+          input: { id: Number(id) },
+        });
+        return {
+          statusPage: dbPageToProto(serviceToConverterPage(pageData)),
+        };
+      } catch (err) {
+        // Preserve the handler-specific `statusPageNotFoundError` (includes
+        // page-id metadata header) over the service's generic NotFoundError.
+        if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
+        throw err;
+      }
+    } catch (err) {
+      toConnectError(err);
     }
-
-    const pageData = await getPageById(Number(id), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(id);
-    }
-
-    return {
-      statusPage: dbPageToProto(pageData),
-    };
   },
 
   async listStatusPages(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
+      const offset = req.offset ?? 0;
 
-    const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
-    const offset = req.offset ?? 0;
+      // Status-page quota is bounded per workspace (plan limit), so it's
+      // fine to fetch all via the service and paginate in-memory rather
+      // than expand the service's `ListPagesInput` shape for this migration.
+      const all = await listPages({
+        ctx: toServiceCtx(rpcCtx),
+        input: { order: "desc" },
+      });
 
-    // Get total count
-    const countResult = await db
-      .select({ count: count() })
-      .from(page)
-      .where(eq(page.workspaceId, workspaceId))
-      .get();
-
-    const totalCount = countResult?.count ?? 0;
-
-    // Get pages
-    const pages = await db
-      .select()
-      .from(page)
-      .where(eq(page.workspaceId, workspaceId))
-      .orderBy(desc(page.createdAt))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    return {
-      statusPages: pages.map(dbPageToProtoSummary),
-      totalSize: totalCount,
-    };
+      return {
+        statusPages: all
+          .slice(offset, offset + limit)
+          .map((p) => dbPageToProtoSummary(serviceToConverterPage(p))),
+        totalSize: all.length,
+      };
+    } catch (err) {
+      toConnectError(err);
+    }
   },
 
   async updateStatusPage(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const sCtx = toServiceCtx(rpcCtx);
+      const limits = rpcCtx.workspace.limits;
 
-    const id = req.id?.trim();
-    if (!id) {
-      throw statusPageIdRequiredError();
-    }
+      const id = req.id?.trim();
+      if (!id) throw statusPageIdRequiredError();
+      const pageId = Number(id);
 
-    // Check i18n limits
-    if (!limits.i18n) {
-      if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
-        throw new ConnectError(
-          "Upgrade to configure locales.",
-          Code.PermissionDenied,
-        );
+      // i18n — keep at handler to preserve PermissionDenied.
+      if (!limits.i18n) {
+        if (req.defaultLocale !== undefined && req.defaultLocale !== 0) {
+          throw new ConnectError(
+            "Upgrade to configure locales.",
+            Code.PermissionDenied,
+          );
+        }
+        if (req.locales.length > 0) {
+          throw new ConnectError(
+            "Upgrade to configure locales.",
+            Code.PermissionDenied,
+          );
+        }
       }
-      if (req.locales.length > 0) {
-        throw new ConnectError(
-          "Upgrade to configure locales.",
-          Code.PermissionDenied,
-        );
+
+      // Load existing via service so the rest of this handler orchestrates
+      // per-section service calls against a consistent snapshot.
+      let existing: Awaited<ReturnType<typeof getPage>>;
+      try {
+        existing = await getPage({ ctx: sCtx, input: { id: pageId } });
+      } catch (err) {
+        if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
+        throw err;
       }
-    }
 
-    const pageData = await getPageById(Number(id), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(id);
-    }
-
-    // Check if new slug conflicts with another page
-    if (req.slug && req.slug !== pageData.slug) {
-      const existingPage = await getPageBySlug(req.slug);
-      if (existingPage && existingPage.id !== pageData.id) {
-        throw slugAlreadyExistsError(req.slug);
+      // Slug uniqueness — pre-check at handler to preserve the granular
+      // `slugAlreadyExistsError(slug)` (AlreadyExists + metadata).
+      if (req.slug && req.slug !== existing.slug) {
+        const slugRow = await getPageBySlug(req.slug);
+        if (slugRow && slugRow.id !== existing.id) {
+          throw slugAlreadyExistsError(req.slug);
+        }
       }
-    }
 
-    // Build update values
-    const updateValues: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
+      // Access-type branch decides what the persisted auth fields become.
+      const reqAccessType = req.accessType;
+      const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
 
-    if (req.title !== undefined && req.title !== "") {
-      updateValues.title = req.title;
-    }
-    if (req.description !== undefined) {
-      updateValues.description = req.description;
-    }
-    if (req.slug !== undefined && req.slug !== "") {
-      updateValues.slug = req.slug;
-    }
-    if (req.homepageUrl !== undefined) {
-      updateValues.homepageUrl = req.homepageUrl || null;
-    }
-    if (req.contactUrl !== undefined) {
-      updateValues.contactUrl = req.contactUrl || null;
-    }
-    if (req.defaultLocale !== undefined) {
-      updateValues.defaultLocale = protoLocaleToDb(req.defaultLocale);
-    }
-    const validLocales = req.locales.filter((l) => l !== 0);
-    updateValues.locales =
-      validLocales.length > 0
-        ? [...new Set(validLocales.map(protoLocaleToDb))]
-        : null;
+      let nextAccessType = existing.accessType;
+      let nextPassword: string | null = existing.password ?? null;
+      let nextAuthEmailDomains: string[] | undefined =
+        existing.authEmailDomains;
+      let nextAllowedIpRanges: string[] | undefined = existing.allowedIpRanges;
 
-    // Validate defaultLocale is included in locales
-    const finalDefaultLocale =
-      (updateValues.defaultLocale as string) ?? pageData.defaultLocale;
-    const finalLocales =
-      "locales" in updateValues
-        ? (updateValues.locales as string[] | null)
-        : (pageData.locales as string[] | null);
-    if (finalLocales && !finalLocales.includes(finalDefaultLocale)) {
-      throw new ConnectError(
-        "Default locale must be included in the locales list",
-        Code.InvalidArgument,
-      );
-    }
-
-    // Handle icon
-    if (req.icon !== undefined) {
-      if (req.icon) {
-        validateIconUrl(req.icon);
+      if (hasAccessType) {
+        nextAccessType = protoAccessTypeToDb(reqAccessType);
+        if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
+          checkPasswordProtectionLimit(limits);
+          const trimmedPassword = req.password?.trim() ?? "";
+          if (!trimmedPassword) throw passwordRequiredError();
+          nextPassword = trimmedPassword;
+          nextAuthEmailDomains = undefined;
+          nextAllowedIpRanges = undefined;
+        } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
+          checkEmailDomainProtectionLimit(limits);
+          nextAuthEmailDomains = validateAuthEmailDomains(req.authEmailDomains);
+          nextPassword = null;
+          nextAllowedIpRanges = undefined;
+        } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
+          checkIpRestrictionLimit(limits);
+          nextAllowedIpRanges = validateAllowedIpRanges(
+            req.allowedIpRanges ?? "",
+          );
+          nextPassword = null;
+          nextAuthEmailDomains = undefined;
+        } else {
+          // Switching to PUBLIC or other — clear stale auth data.
+          nextPassword = null;
+          nextAuthEmailDomains = undefined;
+          nextAllowedIpRanges = undefined;
+        }
       }
-      updateValues.icon = req.icon;
-    }
 
-    // Handle custom domain
-    if (req.customDomain !== undefined) {
-      if (req.customDomain) {
+      const hasAllowIndex = req.allowIndex !== undefined;
+      if (hasAllowIndex && !req.allowIndex) checkNoIndexLimit(limits);
+      const nextAllowIndex = hasAllowIndex
+        ? req.allowIndex
+        : existing.allowIndex;
+
+      if (req.customDomain !== undefined && req.customDomain) {
         checkCustomDomainLimit(limits);
         validateCustomDomain(req.customDomain);
       }
-      updateValues.customDomain = req.customDomain;
-    }
+      if (req.icon !== undefined && req.icon) validateIconUrl(req.icon);
 
-    // Handle theme
-    if (req.theme !== undefined && req.theme !== 0) {
-      updateValues.forceTheme = protoThemeToDb(req.theme);
-    }
+      // Locale merge + cross-field validation.
+      const nextDefaultLocale =
+        req.defaultLocale !== undefined
+          ? protoLocaleToDb(req.defaultLocale)
+          : existing.defaultLocale;
+      const validLocales = req.locales.filter((l) => l !== 0);
+      const nextLocales =
+        validLocales.length > 0
+          ? [...new Set(validLocales.map(protoLocaleToDb))]
+          : null;
+      if (nextLocales && !nextLocales.includes(nextDefaultLocale)) {
+        throw new ConnectError(
+          "Default locale must be included in the locales list",
+          Code.InvalidArgument,
+        );
+      }
+      const localesChanged =
+        req.defaultLocale !== undefined || req.locales.length > 0;
 
-    // Handle access type (password and authEmailDomains only written when accessType is present)
-    const reqAccessType = req.accessType;
-    const hasAccessType = reqAccessType !== undefined && reqAccessType !== 0;
-    if (hasAccessType) {
-      if (reqAccessType === PageAccessType.PASSWORD_PROTECTED) {
-        checkPasswordProtectionLimit(limits);
-        const trimmedPassword = req.password?.trim() ?? "";
-        if (!trimmedPassword) {
-          throw passwordRequiredError();
+      const generalChanged =
+        (req.title !== undefined && req.title !== "") ||
+        req.description !== undefined ||
+        (req.slug !== undefined && req.slug !== "") ||
+        req.icon !== undefined;
+
+      const linksChanged =
+        req.homepageUrl !== undefined || req.contactUrl !== undefined;
+
+      // Snapshot the narrowed primitives so TS retains their non-undefined
+      // types inside the transaction closure below.
+      const themeForUpdate =
+        req.theme !== undefined && req.theme !== 0 ? req.theme : undefined;
+      const customDomainForUpdate =
+        req.customDomain !== undefined ? req.customDomain : undefined;
+      const accessChanged = hasAccessType || hasAllowIndex;
+
+      // Wrap all per-section updates in a single transaction so partial
+      // failures don't leave the page in a half-updated state. Each
+      // per-section service call's internal `withTransaction` detects
+      // the pre-opened tx and skips nesting.
+      await withTransaction(sCtx, async (tx) => {
+        const txCtx = { ...sCtx, db: tx };
+
+        if (generalChanged) {
+          try {
+            await updatePageGeneral({
+              ctx: txCtx,
+              input: {
+                id: pageId,
+                title:
+                  req.title !== undefined && req.title !== ""
+                    ? req.title
+                    : existing.title,
+                slug:
+                  req.slug !== undefined && req.slug !== ""
+                    ? req.slug
+                    : existing.slug,
+                description:
+                  req.description !== undefined
+                    ? req.description
+                    : existing.description,
+                icon: req.icon !== undefined ? req.icon : existing.icon,
+              },
+            });
+          } catch (err) {
+            // Close the slug-race gap: if two callers both cleared the
+            // handler's pre-check and the loser's `assertSlugAvailable`
+            // inside the service throws `ConflictError`, the default
+            // mapping surfaces as `Code.InvalidArgument`. Rethrow as the
+            // granular `slugAlreadyExistsError` so gRPC clients keying on
+            // `Code.AlreadyExists` get a consistent code whether they
+            // lose at the pre-check or at the inner transaction.
+            if (err instanceof ConflictError && req.slug) {
+              throw slugAlreadyExistsError(req.slug);
+            }
+            throw err;
+          }
         }
-        updateValues.password = trimmedPassword;
-        updateValues.authEmailDomains = null;
-        updateValues.allowedIpRanges = null;
-      } else if (reqAccessType === PageAccessType.AUTHENTICATED) {
-        checkEmailDomainProtectionLimit(limits);
-        const validatedDomains = validateAuthEmailDomains(req.authEmailDomains);
-        updateValues.authEmailDomains = validatedDomains.join(",");
-        updateValues.password = null;
-        updateValues.allowedIpRanges = null;
-      } else if (reqAccessType === PageAccessType.IP_RESTRICTED) {
-        checkIpRestrictionLimit(limits);
-        const validated = validateAllowedIpRanges(req.allowedIpRanges ?? "");
-        updateValues.allowedIpRanges = validated.join(",");
-        updateValues.password = null;
-        updateValues.authEmailDomains = null;
-      } else {
-        // Switching to PUBLIC or other — clear stale data
-        updateValues.password = null;
-        updateValues.authEmailDomains = null;
-        updateValues.allowedIpRanges = null;
-      }
-      updateValues.accessType = protoAccessTypeToDb(reqAccessType);
+
+        if (linksChanged) {
+          await updatePageLinks({
+            ctx: txCtx,
+            input: {
+              id: pageId,
+              homepageUrl:
+                req.homepageUrl !== undefined
+                  ? req.homepageUrl || null
+                  : existing.homepageUrl,
+              contactUrl:
+                req.contactUrl !== undefined
+                  ? req.contactUrl || null
+                  : existing.contactUrl,
+            },
+          });
+        }
+
+        if (themeForUpdate !== undefined) {
+          const existingConfig =
+            typeof existing.configuration === "object" &&
+            existing.configuration !== null
+              ? (existing.configuration as Record<string, unknown>)
+              : {};
+          const existingTheme =
+            typeof existingConfig.theme === "string"
+              ? existingConfig.theme
+              : "default";
+          await updatePageAppearance({
+            ctx: txCtx,
+            input: {
+              id: pageId,
+              forceTheme: protoThemeToDb(themeForUpdate),
+              configuration: { theme: existingTheme },
+            },
+          });
+        }
+
+        if (customDomainForUpdate !== undefined) {
+          await updatePageCustomDomain({
+            ctx: txCtx,
+            input: { id: pageId, customDomain: customDomainForUpdate },
+          });
+        }
+
+        if (localesChanged) {
+          await updatePageLocales({
+            ctx: txCtx,
+            input: {
+              id: pageId,
+              defaultLocale: nextDefaultLocale,
+              locales: nextLocales,
+            },
+          });
+        }
+
+        if (accessChanged) {
+          await updatePagePasswordProtection({
+            ctx: txCtx,
+            input: {
+              id: pageId,
+              accessType: nextAccessType,
+              authEmailDomains: nextAuthEmailDomains,
+              password: nextPassword,
+              allowedIpRanges: nextAllowedIpRanges,
+              allowIndex: nextAllowIndex,
+            },
+          });
+        }
+      });
+
+      const updated = await getPage({ ctx: sCtx, input: { id: pageId } });
+      return { statusPage: dbPageToProto(serviceToConverterPage(updated)) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Handle allow_index
-    if (req.allowIndex !== undefined) {
-      if (!req.allowIndex) {
-        checkNoIndexLimit(limits);
-      }
-      updateValues.allowIndex = req.allowIndex;
-    }
-
-    const updatedPage = await db
-      .update(page)
-      .set(updateValues)
-      .where(eq(page.id, pageData.id))
-      .returning()
-      .get();
-
-    if (!updatedPage) {
-      throw statusPageUpdateFailedError(req.id);
-    }
-
-    return {
-      statusPage: dbPageToProto(updatedPage),
-    };
   },
 
   async deleteStatusPage(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const id = req.id?.trim();
+      if (!id) throw statusPageIdRequiredError();
 
-    const id = req.id?.trim();
-    if (!id) {
-      throw statusPageIdRequiredError();
+      try {
+        await deletePage({
+          ctx: toServiceCtx(rpcCtx),
+          input: { id: Number(id) },
+        });
+      } catch (err) {
+        if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
+        throw err;
+      }
+
+      return { success: true };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    const pageData = await getPageById(Number(id), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(id);
-    }
-
-    // Delete the page (cascade will delete components, groups, subscribers)
-    await db.delete(page).where(eq(page.id, pageData.id));
-
-    return { success: true };
   },
 
   // ==========================================================================

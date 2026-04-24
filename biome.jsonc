@@ -80,10 +80,30 @@
     ]
   },
   // Overrides: scope the `@openstatus/db` / drizzle import ban to files that
-  // have been migrated onto `@openstatus/services`. The include list grows
-  // one domain per migration PR; when every domain has migrated, the final
-  // PR broadens this to cover all routers/handlers and drops the db dep
-  // from `packages/api` and `apps/server` outright.
+  // have been migrated onto `@openstatus/services`. Grown one domain per
+  // migration PR.
+  //
+  // Still outside the scope (each is its own follow-up):
+  //   - `packages/api/src/router/statusPage.ts` — public viewer endpoints
+  //     (~1280 lines) run under `publicProcedure` without an authed
+  //     `ServiceContext`.
+  //   - `packages/api/src/router/{member,integration,monitorTag,
+  //     pageSubscriber,privateLocation,checker,feedback,stripe,tinybird,
+  //     email}.ts` — small domains not yet lifted into services.
+  //   - `apps/server/src/routes/rpc/handlers/monitor/**` — Connect monitor
+  //     handler (~880 lines, 6 jobType-specific methods).
+  //   - `apps/server/src/routes/rpc/handlers/status-page/**` — 13 of 18
+  //     methods (components / groups / subscribers / viewer) still use db;
+  //     page CRUD is migrated but the file imports db for the rest.
+  //   - `apps/server/src/routes/v1/**` — the public HTTP API surface;
+  //     entirely unmigrated, intended to ride on top of services later.
+  //   - `apps/server/src/routes/slack/**` except `interactions.ts` — tools,
+  //     handler, oauth, workspace-resolver still use db.
+  //   - `apps/server/src/routes/public/**` — public-facing HTTP routes.
+  //
+  // When those migrate, their paths get added here. The final consolidation
+  // (broadening to `router/**` + dropping the db dep from `packages/api` +
+  // `apps/server`) comes after.
   "overrides": [
     {
       "include": [
@@ -92,15 +112,31 @@
         "packages/api/src/router/incident.ts",
         "packages/api/src/router/monitor.ts",
         "packages/api/src/router/pageComponent.ts",
-        "apps/server/src/routes/rpc/services/status-report/**",
-        "apps/server/src/routes/rpc/services/maintenance/**",
-        "apps/server/src/routes/rpc/services/notification/index.ts",
+        "packages/api/src/router/page.ts",
+        "packages/api/src/router/workspace.ts",
+        "packages/api/src/router/user.ts",
+        "packages/api/src/router/invitation.ts",
+        "packages/api/src/router/apiKey.ts",
+        "packages/api/src/router/import.ts",
+        "apps/server/src/routes/rpc/handlers/health/**",
+        "apps/server/src/routes/rpc/handlers/status-report/**",
+        "apps/server/src/routes/rpc/handlers/maintenance/**",
+        "apps/server/src/routes/rpc/handlers/notification/**",
         "apps/server/src/routes/slack/interactions.ts"
       ],
       "ignore": [
         // Tests legitimately manage db state for fixtures and cleanup.
         "**/__tests__/**",
-        "**/*.test.ts"
+        "**/*.test.ts",
+        // Notification handler siblings that still read db directly —
+        // `limits.ts` queries workspace quotas, `converters.ts` needs
+        // db enum shapes for proto round-trip. Both stay exempt until
+        // those responsibilities move into services. Using `**` above
+        // + these ignores (instead of whitelisting just `index.ts`)
+        // means new files added to the notification handler are
+        // enforced by default rather than silently slipping through.
+        "apps/server/src/routes/rpc/handlers/notification/limits.ts",
+        "apps/server/src/routes/rpc/handlers/notification/converters.ts"
       ],
       "linter": {
         "rules": {
