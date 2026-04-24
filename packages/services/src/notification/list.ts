@@ -1,5 +1,4 @@
 import {
-  type SQL,
   and,
   asc,
   db as defaultDb,
@@ -86,8 +85,7 @@ export async function listNotifications(args: {
   const input = ListNotificationsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
-  const conditions: SQL[] = [eq(notification.workspaceId, ctx.workspace.id)];
-  const whereClause = and(...conditions);
+  const whereClause = eq(notification.workspaceId, ctx.workspace.id);
 
   const [countRow, rows] = await Promise.all([
     db

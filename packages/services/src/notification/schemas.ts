@@ -7,8 +7,11 @@ export const notificationProviderSchema = z.enum(notificationProvider);
 // `data` mirrors the existing tRPC input shape: a partial record keyed by
 // provider where each value is either a simple string (urls, phone numbers,
 // tokens) or a nested record for structured configs (webhook headers, etc.).
-// Persisted as a single JSON string on `notification.data`.
-const dataSchema = z.partialRecord(
+// Persisted as a single JSON string on `notification.data`. Exported so the
+// tRPC router reuses the same shape — otherwise the router's hand-rolled
+// copy can silently drift from the service and accept inputs the service
+// will reject.
+export const NotificationDataInputSchema = z.partialRecord(
   notificationProviderSchema,
   z.union([
     z.string(),
@@ -21,12 +24,12 @@ const dataSchema = z.partialRecord(
     ),
   ]),
 );
-export type NotificationDataInput = z.infer<typeof dataSchema>;
+export type NotificationDataInput = z.infer<typeof NotificationDataInputSchema>;
 
 export const CreateNotificationInput = z.object({
   name: z.string().min(1),
   provider: notificationProviderSchema,
-  data: dataSchema,
+  data: NotificationDataInputSchema,
   monitors: z.array(z.number().int()).default([]),
 });
 export type CreateNotificationInput = z.infer<typeof CreateNotificationInput>;
@@ -34,7 +37,7 @@ export type CreateNotificationInput = z.infer<typeof CreateNotificationInput>;
 export const UpdateNotificationInput = z.object({
   id: z.number().int(),
   name: z.string().min(1),
-  data: dataSchema,
+  data: NotificationDataInputSchema,
   monitors: z.array(z.number().int()).default([]),
 });
 export type UpdateNotificationInput = z.infer<typeof UpdateNotificationInput>;

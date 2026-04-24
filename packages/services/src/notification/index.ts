@@ -14,6 +14,7 @@ export {
   GetNotificationInput,
   ListNotificationsInput,
   type NotificationDataInput,
+  NotificationDataInputSchema,
   notificationProvider,
   notificationProviderSchema,
   UpdateNotificationInput,

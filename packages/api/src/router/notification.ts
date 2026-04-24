@@ -16,10 +16,10 @@ import {
 } from "@openstatus/db/src/schema";
 import { NotFoundError } from "@openstatus/services";
 import {
+  NotificationDataInputSchema,
   createNotification,
   deleteNotification,
   listNotifications,
-  notificationProvider as servicesNotificationProvider,
   updateNotification,
 } from "@openstatus/services/notification";
 
@@ -48,20 +48,6 @@ import {
 } from "../service/telegram-updates";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-const dataInputSchema = z.partialRecord(
-  z.enum(servicesNotificationProvider),
-  z
-    .string()
-    .or(
-      z.record(
-        z.string(),
-        z
-          .string()
-          .or(z.array(z.object({ key: z.string(), value: z.string() }))),
-      ),
-    ),
-);
-
 export const notificationRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     try {
@@ -88,7 +74,7 @@ export const notificationRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         name: z.string(),
-        data: dataInputSchema,
+        data: NotificationDataInputSchema,
         monitors: z.array(z.number()),
       }),
     )
@@ -113,7 +99,7 @@ export const notificationRouter = createTRPCRouter({
     .input(
       z.object({
         provider: z.enum(notificationProvider),
-        data: dataInputSchema,
+        data: NotificationDataInputSchema,
         name: z.string(),
         monitors: z.array(z.number()).prefault([]),
       }),
@@ -155,7 +141,7 @@ export const notificationRouter = createTRPCRouter({
     .input(
       z.object({
         provider: z.enum(notificationProvider),
-        data: dataInputSchema,
+        data: NotificationDataInputSchema,
       }),
     )
     .mutation(async (opts) => {
