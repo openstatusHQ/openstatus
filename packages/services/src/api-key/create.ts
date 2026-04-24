@@ -8,7 +8,7 @@ import {
   withTransaction,
 } from "../context";
 import { InternalServiceError, UnauthorizedError } from "../errors";
-import type { ApiKey } from "../types";
+import type { PublicApiKey } from "./list";
 import { CreateApiKeyInput } from "./schemas";
 
 /**
@@ -26,7 +26,7 @@ import { CreateApiKeyInput } from "./schemas";
 export async function createApiKey(args: {
   ctx: ServiceContext;
   input: CreateApiKeyInput;
-}): Promise<{ token: string; key: ApiKey }> {
+}): Promise<{ token: string; key: PublicApiKey }> {
   const { ctx } = args;
   const input = CreateApiKeyInput.parse(args.input);
 
@@ -64,6 +64,11 @@ export async function createApiKey(args: {
       metadata: { name: input.name },
     });
 
-    return { token, key: key as ApiKey };
+    // Strip `hashedToken` before returning — callers only need the
+    // plaintext `token` (shown once) plus the metadata row. Letting
+    // the bcrypt hash ride out on the create response leaks the same
+    // column `listApiKeys` already takes pains to exclude.
+    const { hashedToken: _hashed, ...publicKey } = key;
+    return { token, key: publicKey };
   });
 }

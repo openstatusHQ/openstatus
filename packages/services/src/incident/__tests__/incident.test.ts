@@ -181,6 +181,19 @@ describe("resolveIncident", () => {
 
     await db.delete(incidentTable).where(eq(incidentTable.id, incident.id));
   });
+
+  test("throws NotFoundError for a cross-workspace incident", async () => {
+    const incident = await insertIncident({
+      workspaceId: teamCtx.workspace.id,
+      monitorId: testMonitorId,
+    });
+
+    await expect(
+      resolveIncident({ ctx: freeCtx, input: { id: incident.id } }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    await db.delete(incidentTable).where(eq(incidentTable.id, incident.id));
+  });
 });
 
 describe("deleteIncident", () => {
@@ -198,6 +211,12 @@ describe("deleteIncident", () => {
       .where(eq(incidentTable.id, incident.id))
       .all();
     expect(remaining).toHaveLength(0);
+
+    await expectAuditRow(auditBuffer, {
+      action: "incident.delete",
+      entityType: "incident",
+      entityId: incident.id,
+    });
   });
 
   test("throws NotFoundError for cross-workspace delete", async () => {

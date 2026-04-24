@@ -4,6 +4,7 @@ import {
   monitorTagsToMonitors,
   notificationsToMonitors,
   pageComponent,
+  privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -52,6 +53,14 @@ export async function deleteMonitor(args: {
     await tx
       .delete(pageComponent)
       .where(eq(pageComponent.monitorId, existing.id));
+    // Also tear down `privateLocationToMonitors` — this join table was
+    // previously left behind on soft-delete, leaving orphaned
+    // `(privateLocationId, monitorId)` rows pointing at a tombstoned
+    // monitor. Scheduling queries that read this join can then try to
+    // route probes to a deleted monitor.
+    await tx
+      .delete(privateLocationToMonitors)
+      .where(eq(privateLocationToMonitors.monitorId, existing.id));
 
     await emitAudit(tx, ctx, {
       action: "monitor.delete",
@@ -128,6 +137,12 @@ export async function deleteMonitors(args: {
           eq(pageComponent.workspaceId, ctx.workspace.id),
         ),
       );
+    // Match the single-delete cleanup — bulk soft-delete also has to
+    // strip `privateLocationToMonitors` so scheduling queries don't
+    // keep routing probes to tombstoned monitors.
+    await tx
+      .delete(privateLocationToMonitors)
+      .where(inArray(privateLocationToMonitors.monitorId, ids));
 
     for (const row of existing) {
       await emitAudit(tx, ctx, {

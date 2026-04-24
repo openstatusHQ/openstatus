@@ -54,7 +54,12 @@ export const incidentRouter = createTRPCRouter({
             offset: 0,
           },
         });
-        return items.map(narrowMonitor);
+        // Filter-and-log instead of throwing on orphaned rows: a single
+        // incident missing its monitor (data-migration artifact, partial
+        // cascade) shouldn't blow up the whole list and break the
+        // `/overview` / `/monitors/:id/incidents` surfaces. We still log
+        // so the inconsistency remains visible.
+        return items.filter(hasMonitor);
       } catch (err) {
         toTRPCError(err);
       }
@@ -93,18 +98,21 @@ export const incidentRouter = createTRPCRouter({
 });
 
 /**
- * Narrow `monitor` to non-null for the tRPC list return — the old zod
- * parse required `monitor: selectMonitorSchema`. Every incident is expected
- * to have a monitor (FK with `set default` on delete), so a null here is a
- * data-integrity signal we surface rather than silently return.
+ * Type predicate: narrow `monitor` to non-null for the tRPC list return.
+ * The old zod parse required `monitor: selectMonitorSchema`, so clients
+ * rely on the non-null shape. An orphan here is a data-integrity signal
+ * (FK `set default` on delete should prevent it, but migrations /
+ * partial cascades have produced them historically) — we log and drop
+ * rather than throw, so a single bad row can't break the whole list.
  */
-function narrowMonitor<T extends { id: number; monitor: unknown }>(
+function hasMonitor<T extends { id: number; monitor: unknown }>(
   incident: T,
-): T & { monitor: NonNullable<T["monitor"]> } {
+): incident is T & { monitor: NonNullable<T["monitor"]> } {
   if (incident.monitor == null) {
-    throw new Error(
-      `incident ${incident.id} has no associated monitor (data inconsistency)`,
+    console.warn(
+      `incident ${incident.id} has no associated monitor (data inconsistency); dropping from list`,
     );
+    return false;
   }
-  return incident as T & { monitor: NonNullable<T["monitor"]> };
+  return true;
 }

@@ -97,10 +97,14 @@ export async function listNotifications(args: {
       .select()
       .from(notification)
       .where(whereClause)
+      // Secondary sort by `id` (matching the primary direction) so
+      // pages are stable when two rows share a `createdAt` — pure
+      // `createdAt ORDER BY` can shuffle ties across requests, which
+      // drops or duplicates rows at page boundaries.
       .orderBy(
-        input.order === "asc"
-          ? asc(notification.createdAt)
-          : desc(notification.createdAt),
+        ...(input.order === "asc"
+          ? [asc(notification.createdAt), asc(notification.id)]
+          : [desc(notification.createdAt), desc(notification.id)]),
       )
       .limit(input.limit)
       .offset(input.offset)
