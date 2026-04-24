@@ -87,7 +87,13 @@ export async function deleteMonitors(args: {
       )
       .all();
     if (existing.length !== ids.length) {
-      throw new NotFoundError("monitor", ids[0] ?? -1);
+      // Report the first *actually missing* id rather than always
+      // blaming `ids[0]`, which misled callers whenever a mix of valid
+      // and invalid ids was passed (valid `ids[0]` still appeared in
+      // the error even though a later id was the real miss).
+      const foundIds = new Set(existing.map((r) => r.id));
+      const missingId = ids.find((id) => !foundIds.has(id)) ?? -1;
+      throw new NotFoundError("monitor", missingId);
     }
 
     await tx

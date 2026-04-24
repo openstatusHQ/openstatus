@@ -244,6 +244,30 @@ describe("deleteMonitor", () => {
       deleteMonitor({ ctx: freeCtx, input: { id: row.id } }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  test("second delete returns NotFoundError (idempotency guard)", async () => {
+    // Regression for the Cubic P2 fix: `getMonitorInWorkspace` filters
+    // by `isNull(deletedAt)`, so a second `deleteMonitor` on the same
+    // id should throw `NotFoundError` rather than silently re-running
+    // the soft-delete / cascade / audit sequence on a tombstoned row.
+    const row = await createMonitor({
+      ctx: teamCtx,
+      input: {
+        name: `${TEST_PREFIX}-double-delete`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: false,
+      },
+    });
+    track(row.id);
+    await deleteMonitor({ ctx: teamCtx, input: { id: row.id } });
+    await expect(
+      deleteMonitor({ ctx: teamCtx, input: { id: row.id } }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
 });
 
 describe("deleteMonitors (bulk)", () => {

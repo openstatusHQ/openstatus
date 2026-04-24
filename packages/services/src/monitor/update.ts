@@ -136,9 +136,7 @@ export async function updateMonitorOtel(args: {
       .update(monitor)
       .set({
         otelEndpoint: input.otelEndpoint,
-        otelHeaders: input.otelHeaders
-          ? JSON.stringify(input.otelHeaders)
-          : undefined,
+        otelHeaders: headersToDbJson(input.otelHeaders),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))
@@ -225,7 +223,14 @@ export async function bulkUpdateMonitors(args: {
     if (input.public !== undefined) set.public = input.public;
     if (input.active !== undefined) set.active = input.active;
 
-    await tx
+    // `.returning()` the ids that actually matched so the audit loop
+    // below can attribute only what we wrote. Looping over
+    // `input.ids` directly emitted `monitor.bulk_update` rows for ids
+    // the WHERE clause silently dropped (wrong workspace, already
+    // soft-deleted) — that's a new audit-log pollution, not a
+    // preserved legacy behaviour (the pre-migration code had no audit
+    // trail at all).
+    const updated = await tx
       .update(monitor)
       .set(set)
       .where(
@@ -234,9 +239,10 @@ export async function bulkUpdateMonitors(args: {
           eq(monitor.workspaceId, ctx.workspace.id),
           isNull(monitor.deletedAt),
         ),
-      );
+      )
+      .returning({ id: monitor.id });
 
-    for (const id of input.ids) {
+    for (const { id } of updated) {
       await emitAudit(tx, ctx, {
         action: "monitor.bulk_update",
         entityType: "monitor",
