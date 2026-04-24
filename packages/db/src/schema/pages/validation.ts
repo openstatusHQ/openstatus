@@ -93,6 +93,7 @@ export const pageConfigurationSchema = z.object({
     .nullish()
     .prefault("default"),
 });
+export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().prefault(""),
