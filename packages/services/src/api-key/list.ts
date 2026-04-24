@@ -67,27 +67,7 @@ export async function listApiKeys(args: {
 
   if (keys.length === 0) return [];
 
-  // Filter out any null `createdById` — the new `createApiKey` enforces
-  // a non-null creator, but legacy rows (or backfills from before the
-  // services migration) may have null. SQL's `x IN (NULL)` is `UNKNOWN`
-  // rather than a match, so passing a nullable list wouldn't cause a
-  // false positive — but drizzle's types model the array as `number[]`,
-  // so sanitising upfront keeps the type honest and avoids surprises.
-  const creatorIds = Array.from(
-    new Set(
-      keys.map((k) => k.createdById).filter((id): id is number => id != null),
-    ),
-  );
-  // Skip the creator lookup entirely when every key pre-dates the
-  // services migration (all `createdById` are null). Drizzle throws
-  // `"At least one value must be provided"` for an empty `inArray`,
-  // which would crash `listApiKeys` for those workspaces.
-  if (creatorIds.length === 0) {
-    return keys.map((key) => ({
-      ...selectPublicApiKeySchema.parse(key),
-      createdBy: undefined,
-    }));
-  }
+  const creatorIds = Array.from(new Set(keys.map((k) => k.createdById)));
   const creators = await db
     .select({
       id: user.id,
