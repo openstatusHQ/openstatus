@@ -10,6 +10,27 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
+        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        org.opencontainers.image.stage: build
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
@@ -86,38 +107,17 @@ effective: |
         source: packages/theme-store/package.json
       - target: packages/locales/package.json
         source: packages/locales/package.json
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652
+    digest: sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f
   label:
-    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.base.digest: sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f
+    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     io.dofigen.version: 2.7.0
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.base.digest: sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652
-    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.title: OpenStatus Server
   user:
     user: '1000'
@@ -148,7 +148,7 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652
+          digest: sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f
     oven:
       bun:
         1.3.6:

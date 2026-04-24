@@ -62,11 +62,11 @@ COPY \
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652 AS runtime
+FROM debian@sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f AS runtime
 LABEL \
     io.dofigen.version="2.7.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652" \
+    org.opencontainers.image.base.digest="sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
