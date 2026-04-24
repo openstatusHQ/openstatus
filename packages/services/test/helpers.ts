@@ -1,6 +1,7 @@
 import { expect } from "bun:test";
-import { db, eq, inArray } from "@openstatus/db";
+import { and, db, desc, eq, inArray } from "@openstatus/db";
 import {
+  auditLog,
   notification,
   page,
   pageComponent,
@@ -8,8 +9,6 @@ import {
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
 
-import type { AuditLogRecord } from "../src/audit";
-import { installTestAuditBuffer, uninstallTestAuditBuffer } from "../src/audit";
 import type { Actor, ServiceContext } from "../src/context";
 import type { Workspace } from "../src/types";
 
@@ -48,6 +47,14 @@ export async function cleanQuotaGatedTables(
   await db
     .delete(notification)
     .where(eq(notification.workspaceId, workspaceId))
+    .catch(() => undefined);
+}
+
+/** Wipe audit_log rows for a workspace. Call in `beforeEach` / `afterEach`. */
+export async function clearAuditLog(workspaceId: number): Promise<void> {
+  await db
+    .delete(auditLog)
+    .where(eq(auditLog.workspaceId, workspaceId))
     .catch(() => undefined);
 }
 
@@ -129,43 +136,53 @@ export function makeSystemCtx(
 }
 
 /**
- * Install the audit buffer for the scope of a test. Returns the live buffer
- * plus a cleanup fn — use in beforeEach / afterEach or with { using } semantics.
+ * Read audit rows for a workspace, optionally filtered by entity.
+ * Sort is `(id DESC)` — the autoincrement id is monotonic within the
+ * test DB and gives deterministic order even for rows written in the
+ * same millisecond.
  */
-export function withAuditBuffer(): {
-  buffer: AuditLogRecord[];
-  reset: () => void;
-} {
-  const buffer = installTestAuditBuffer();
-  return {
-    buffer,
-    reset: () => {
-      uninstallTestAuditBuffer();
-    },
-  };
+export async function readAuditLog(filter: {
+  workspaceId: number;
+  entityType?: string;
+  entityId?: string | number;
+}): Promise<(typeof auditLog.$inferSelect)[]> {
+  const clauses = [eq(auditLog.workspaceId, filter.workspaceId)];
+  if (filter.entityType !== undefined) {
+    clauses.push(eq(auditLog.entityType, filter.entityType));
+  }
+  if (filter.entityId !== undefined) {
+    clauses.push(eq(auditLog.entityId, String(filter.entityId)));
+  }
+  return db
+    .select()
+    .from(auditLog)
+    .where(and(...clauses))
+    .orderBy(desc(auditLog.id))
+    .all();
 }
 
 /**
  * Assert an audit row matching `match` was recorded during the test.
- * Requires an active audit buffer (installTestAuditBuffer / withAuditBuffer).
- * In v1 this scans the in-memory buffer; in v2 it will query the audit_log
- * table. Call sites do not change.
+ * Queries the real `audit_log` table — ensure tests clean rows per
+ * workspace (see `clearAuditLog`) or rely on fresh entity ids to
+ * avoid cross-test matches.
  */
-export async function expectAuditRow(
-  buffer: AuditLogRecord[],
-  match: {
-    action: string;
-    entityType: string;
-    entityId: string | number;
-    actorType?: Actor["type"];
-  },
-): Promise<void> {
+export async function expectAuditRow(match: {
+  workspaceId: number;
+  action: string;
+  entityType: string;
+  entityId: string | number;
+  actorType?: Actor["type"];
+}): Promise<void> {
   const expectedEntityId = String(match.entityId);
-  const hit = buffer.find(
+  const rows = await readAuditLog({
+    workspaceId: match.workspaceId,
+    entityType: match.entityType,
+    entityId: expectedEntityId,
+  });
+  const hit = rows.find(
     (row) =>
       row.action === match.action &&
-      row.entityType === match.entityType &&
-      row.entityId === expectedEntityId &&
       (match.actorType === undefined || row.actorType === match.actorType),
   );
   expect(

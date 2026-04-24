@@ -72,7 +72,6 @@ export async function updateNotification(args: {
       entityId: existing.id,
       before: existing,
       after: updated,
-      metadata: { provider: existing.provider },
     });
 
     return selectNotificationSchema.parse(updated);

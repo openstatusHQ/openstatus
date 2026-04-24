@@ -57,7 +57,7 @@ export async function updateMonitorGeneral(args: {
       .get();
 
     await emitAudit(tx, ctx, {
-      action: "monitor.update_general",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
       before: existing,
@@ -80,16 +80,18 @@ export async function updateMonitorRetry(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    await tx
+    const updated = await tx
       .update(monitor)
       .set({ retry: input.retry, updatedAt: new Date() })
       .where(eq(monitor.id, existing.id))
-      .run();
+      .returning()
+      .get();
     await emitAudit(tx, ctx, {
-      action: "monitor.update_retry",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      metadata: { retry: input.retry },
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -106,16 +108,18 @@ export async function updateMonitorFollowRedirects(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    await tx
+    const updated = await tx
       .update(monitor)
       .set({ followRedirects: input.followRedirects, updatedAt: new Date() })
       .where(eq(monitor.id, existing.id))
-      .run();
+      .returning()
+      .get();
     await emitAudit(tx, ctx, {
-      action: "monitor.update_follow_redirects",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      metadata: { followRedirects: input.followRedirects },
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -132,7 +136,7 @@ export async function updateMonitorOtel(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    await tx
+    const updated = await tx
       .update(monitor)
       .set({
         otelEndpoint: input.otelEndpoint,
@@ -140,11 +144,14 @@ export async function updateMonitorOtel(args: {
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))
-      .run();
+      .returning()
+      .get();
     await emitAudit(tx, ctx, {
-      action: "monitor.update_otel",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -161,16 +168,18 @@ export async function updateMonitorPublic(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    await tx
+    const updated = await tx
       .update(monitor)
       .set({ public: input.public, updatedAt: new Date() })
       .where(eq(monitor.id, existing.id))
-      .run();
+      .returning()
+      .get();
     await emitAudit(tx, ctx, {
-      action: "monitor.update_public",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      metadata: { public: input.public },
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -187,7 +196,7 @@ export async function updateMonitorResponseTime(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    await tx
+    const updated = await tx
       .update(monitor)
       .set({
         timeout: input.timeout,
@@ -195,11 +204,14 @@ export async function updateMonitorResponseTime(args: {
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))
-      .run();
+      .returning()
+      .get();
     await emitAudit(tx, ctx, {
-      action: "monitor.update_response_time",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -219,20 +231,12 @@ export async function bulkUpdateMonitors(args: {
   if (input.public === undefined && input.active === undefined) return;
 
   await withTransaction(ctx, async (tx) => {
-    const set: Record<string, unknown> = { updatedAt: new Date() };
-    if (input.public !== undefined) set.public = input.public;
-    if (input.active !== undefined) set.active = input.active;
-
-    // `.returning()` the ids that actually matched so the audit loop
-    // below can attribute only what we wrote. Looping over
-    // `input.ids` directly emitted `monitor.bulk_update` rows for ids
-    // the WHERE clause silently dropped (wrong workspace, already
-    // soft-deleted) — that's a new audit-log pollution, not a
-    // preserved legacy behaviour (the pre-migration code had no audit
-    // trail at all).
-    const updated = await tx
-      .update(monitor)
-      .set(set)
+    // Fetch current rows so per-monitor audit entries carry a real
+    // `before` snapshot — the diff is the only way readers can tell
+    // which flag actually flipped for each row.
+    const existingRows = await tx
+      .select()
+      .from(monitor)
       .where(
         and(
           inArray(monitor.id, input.ids),
@@ -240,17 +244,41 @@ export async function bulkUpdateMonitors(args: {
           isNull(monitor.deletedAt),
         ),
       )
-      .returning({ id: monitor.id });
+      .all();
+    if (existingRows.length === 0) return;
 
-    for (const { id } of updated) {
+    const set: Record<string, unknown> = { updatedAt: new Date() };
+    if (input.public !== undefined) set.public = input.public;
+    if (input.active !== undefined) set.active = input.active;
+
+    // `.returning()` the full rows that actually matched so the audit
+    // loop below attributes only what we wrote and carries the new
+    // snapshot for each monitor.
+    const updatedRows = await tx
+      .update(monitor)
+      .set(set)
+      .where(
+        and(
+          inArray(
+            monitor.id,
+            existingRows.map((r) => r.id),
+          ),
+          eq(monitor.workspaceId, ctx.workspace.id),
+          isNull(monitor.deletedAt),
+        ),
+      )
+      .returning()
+      .all();
+
+    const existingById = new Map(existingRows.map((r) => [r.id, r]));
+    for (const updated of updatedRows) {
+      const before = existingById.get(updated.id);
       await emitAudit(tx, ctx, {
-        action: "monitor.bulk_update",
+        action: "monitor.update",
         entityType: "monitor",
-        entityId: id,
-        metadata: {
-          public: input.public,
-          active: input.active,
-        },
+        entityId: updated.id,
+        ...(before ? { before } : {}),
+        after: updated,
       });
     }
   });

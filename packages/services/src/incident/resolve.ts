@@ -53,7 +53,7 @@ export async function resolveIncident(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "incident.resolve",
+      action: "incident.update",
       entityType: "incident",
       entityId: updated.id,
       before: existing,

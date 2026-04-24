@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -22,12 +21,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { LimitExceededError, NotFoundError } from "../../errors";
 
@@ -35,8 +33,6 @@ const TEST_PREFIX = "svc-inv-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdInvitationIds: number[] = [];
 
 beforeAll(async () => {
@@ -102,12 +98,10 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const session = withAuditBuffer();
-  auditBuffer = session.buffer;
-  auditReset = session.reset;
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
-afterEach(() => auditReset());
 
 describe("createInvitation", () => {
   test("creates an invitation scoped to the caller's workspace", async () => {
@@ -123,7 +117,8 @@ describe("createInvitation", () => {
     expect(row.token).toBeDefined();
     expect(row.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "invitation.create",
       entityType: "invitation",
       entityId: row.id,

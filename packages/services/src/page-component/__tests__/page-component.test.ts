@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -20,12 +19,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { deletePageComponent } from "../delete";
@@ -39,8 +37,6 @@ let freeCtx: ServiceContext;
 let testPageId: number;
 let teamMonitorId: number;
 let freeMonitorId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdComponentIds: number[] = [];
 
 beforeAll(async () => {
@@ -118,14 +114,9 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
-});
-
-afterEach(() => {
-  auditReset();
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
 
 describe("updatePageComponentOrder", () => {
@@ -178,8 +169,9 @@ describe("updatePageComponentOrder", () => {
     expect(components).toHaveLength(3);
     expect(groups).toHaveLength(1);
 
-    await expectAuditRow(auditBuffer, {
-      action: "page_component.update_order",
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "page_component.update",
       entityType: "page",
       entityId: testPageId,
     });

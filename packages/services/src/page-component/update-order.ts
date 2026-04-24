@@ -322,13 +322,9 @@ export async function updatePageComponentOrder(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "page_component.update_order",
+      action: "page_component.update",
       entityType: "page",
       entityId: input.pageId,
-      metadata: {
-        componentCount: inputComponentCount,
-        groupCount: input.groups.length,
-      },
     });
   });
 }

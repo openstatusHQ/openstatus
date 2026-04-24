@@ -58,7 +58,7 @@ export async function deleteStatusReportUpdate(args: {
       .where(eq(statusReportUpdate.id, existing.id));
 
     await emitAudit(tx, ctx, {
-      action: "status_report.delete_update",
+      action: "status_report_update.delete",
       entityType: "status_report_update",
       entityId: existing.id,
       before: existing,

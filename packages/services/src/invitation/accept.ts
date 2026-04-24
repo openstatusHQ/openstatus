@@ -109,10 +109,9 @@ export async function acceptInvitation(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "invitation.accept",
+      action: "invitation.update",
       entityType: "invitation",
       entityId: input.id,
-      metadata: { workspaceId: existing.workspaceId, role: existing.role },
     });
 
     return selectWorkspaceSchema.parse(existing.workspace);

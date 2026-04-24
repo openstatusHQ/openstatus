@@ -106,7 +106,7 @@ export async function deleteAccount(args: {
       .where(eq(user.id, userId));
 
     await emitAudit(tx, ctx, {
-      action: "user.delete_account",
+      action: "user.delete",
       entityType: "user",
       entityId: userId,
     });

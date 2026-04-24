@@ -2,7 +2,6 @@ import { db as defaultDb, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
-import { emitAudit } from "../audit";
 import type { ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { NotifyMaintenanceInput } from "./schemas";
@@ -42,10 +41,4 @@ export async function notifyMaintenance(args: {
   }
 
   await dispatchMaintenanceUpdate(input.maintenanceId);
-
-  await emitAudit(db, ctx, {
-    action: "maintenance.notify",
-    entityType: "maintenance",
-    entityId: input.maintenanceId,
-  });
 }

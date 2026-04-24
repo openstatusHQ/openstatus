@@ -54,7 +54,7 @@ export async function acknowledgeIncident(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "incident.acknowledge",
+      action: "incident.update",
       entityType: "incident",
       entityId: updated.id,
       before: existing,

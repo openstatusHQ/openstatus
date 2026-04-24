@@ -17,16 +17,24 @@ export async function updateWorkspaceName(args: {
   const input = UpdateWorkspaceNameInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
-    await tx
+    const existing = await tx
+      .select()
+      .from(workspace)
+      .where(eq(workspace.id, ctx.workspace.id))
+      .get();
+    const updated = await tx
       .update(workspace)
       .set({ name: input.name, updatedAt: new Date() })
-      .where(eq(workspace.id, ctx.workspace.id));
+      .where(eq(workspace.id, ctx.workspace.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "workspace.update_name",
+      action: "workspace.update",
       entityType: "workspace",
       entityId: ctx.workspace.id,
-      metadata: { name: input.name },
+      ...(existing ? { before: existing } : {}),
+      after: updated,
     });
   });
 }

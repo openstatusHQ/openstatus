@@ -453,7 +453,7 @@ export async function writeIncidentsPhase(
 
         for (const row of insertedUpdates) {
           await emitAudit(tx, ctx, {
-            action: "status_report.add_update",
+            action: "status_report_update.create",
             entityType: "status_report_update",
             entityId: row.id,
             metadata: auditMeta(pc, {

@@ -62,14 +62,16 @@ export async function updateMonitorSchedulingRegions(args: {
       privateLocationIds: input.privateLocations,
     });
 
-    await tx
+    const updated = await tx
       .update(monitor)
       .set({
         regions: input.regions.join(","),
         periodicity: input.periodicity,
         updatedAt: new Date(),
       })
-      .where(eq(monitor.id, existing.id));
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
 
     await tx
       .delete(privateLocationToMonitors)
@@ -83,15 +85,15 @@ export async function updateMonitorSchedulingRegions(args: {
       );
     }
 
+    // `before`/`after` carry the `regions` + `periodicity` diff.
+    // Private-location membership lives in a join table and isn't
+    // reflected in the snapshot — documented gap, not a bug.
     await emitAudit(tx, ctx, {
-      action: "monitor.update_scheduling_regions",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      metadata: {
-        regions: input.regions,
-        periodicity: input.periodicity,
-        privateLocationIds: validatedLocations,
-      },
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -128,11 +130,21 @@ export async function updateMonitorTags(args: {
       );
     }
 
+    // Tag membership isn't on the monitor row — synthesize `before`/`after`
+    // snapshots from the relation so the diff captures the set change.
+    const existingTagIds = (
+      await tx
+        .select({ tagId: monitorTagsToMonitors.monitorTagId })
+        .from(monitorTagsToMonitors)
+        .where(eq(monitorTagsToMonitors.monitorId, existing.id))
+        .all()
+    ).map((r) => r.tagId);
     await emitAudit(tx, ctx, {
-      action: "monitor.update_tags",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      metadata: { tagIds: validatedTags },
+      before: { tagIds: [...existingTagIds].sort() },
+      after: { tagIds: [...validatedTags].sort() },
     });
   });
 }
@@ -169,11 +181,21 @@ export async function updateMonitorNotifiers(args: {
       );
     }
 
+    // Notifier membership isn't on the monitor row — synthesize snapshots
+    // from the relation so the diff records the set change.
+    const existingNotifierIds = (
+      await tx
+        .select({ notificationId: notificationsToMonitors.notificationId })
+        .from(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.monitorId, existing.id))
+        .all()
+    ).map((r) => r.notificationId);
     await emitAudit(tx, ctx, {
-      action: "monitor.update_notifiers",
+      action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      metadata: { notificationIds: validatedNotifiers },
+      before: { notificationIds: [...existingNotifierIds].sort() },
+      after: { notificationIds: [...validatedNotifiers].sort() },
     });
   });
 }

@@ -456,6 +456,13 @@
       "when": 1776753844046,
       "tag": "0064_dusty_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "6",
+      "when": 1777044904253,
+      "tag": "0065_stiff_hiroim",
+      "breakpoints": true
     }
   ]
 }

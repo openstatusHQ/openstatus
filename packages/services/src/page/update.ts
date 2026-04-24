@@ -41,7 +41,7 @@ export async function updatePageGeneral(args: {
       });
     }
 
-    await tx
+    const updated = await tx
       .update(page)
       .set({
         title: input.title,
@@ -50,30 +50,24 @@ export async function updatePageGeneral(args: {
         icon: input.icon ?? "",
         updatedAt: new Date(),
       })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_general",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
       before: existing,
+      after: updated,
     });
   });
 }
 
-/**
- * Only persists the `customDomain` change. External integration (Vercel
- * add/remove) is the caller's responsibility — services don't reach out
- * to third-party APIs. The tRPC / Connect adapter calls the Vercel API
- * around the service call.
- *
- * Returns `{ existingDomain }` so the caller can diff without another
- * read.
- */
 export async function updatePageCustomDomain(args: {
   ctx: ServiceContext;
   input: UpdatePageCustomDomainInput;
-}): Promise<{ existingDomain: string }> {
+}): Promise<{ existingDomain: string | null }> {
   const { ctx } = args;
   const input = UpdatePageCustomDomainInput.parse(args.input);
 
@@ -84,19 +78,19 @@ export async function updatePageCustomDomain(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    await tx
+    const updated = await tx
       .update(page)
       .set({ customDomain: input.customDomain, updatedAt: new Date() })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_custom_domain",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
-      metadata: {
-        from: existing.customDomain,
-        to: input.customDomain,
-      },
+      before: existing,
+      after: updated,
     });
 
     return { existingDomain: existing.customDomain };
@@ -133,7 +127,7 @@ export async function updatePagePasswordProtection(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    await tx
+    const updated = await tx
       .update(page)
       .set({
         accessType: input.accessType,
@@ -151,13 +145,16 @@ export async function updatePagePasswordProtection(args: {
         ...(input.allowIndex !== undefined && { allowIndex: input.allowIndex }),
         updatedAt: new Date(),
       })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_password_protection",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
-      metadata: { accessType: input.accessType },
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -182,7 +179,7 @@ export async function updatePageAppearance(args: {
         ? (existing.configuration as Record<string, unknown>)
         : {};
 
-    await tx
+    const updated = await tx
       .update(page)
       .set({
         forceTheme: input.forceTheme,
@@ -192,12 +189,16 @@ export async function updatePageAppearance(args: {
         },
         updatedAt: new Date(),
       })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_appearance",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -215,19 +216,23 @@ export async function updatePageLinks(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
-    await tx
+    const updated = await tx
       .update(page)
       .set({
         homepageUrl: input.homepageUrl,
         contactUrl: input.contactUrl,
         updatedAt: new Date(),
       })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_links",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -250,19 +255,23 @@ export async function updatePageLocales(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    await tx
+    const updated = await tx
       .update(page)
       .set({
         defaultLocale: input.defaultLocale,
         locales: input.locales,
         updatedAt: new Date(),
       })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_locales",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
+      before: existing,
+      after: updated,
     });
   });
 }
@@ -287,7 +296,7 @@ export async function updatePageConfiguration(args: {
         ? (existing.configuration as Record<string, unknown>)
         : {};
 
-    await tx
+    const updated = await tx
       .update(page)
       .set({
         configuration: {
@@ -296,12 +305,16 @@ export async function updatePageConfiguration(args: {
         },
         updatedAt: new Date(),
       })
-      .where(eq(page.id, existing.id));
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
 
     await emitAudit(tx, ctx, {
-      action: "page.update_configuration",
+      action: "page.update",
       entityType: "page",
       entityId: existing.id,
+      before: existing,
+      after: updated,
     });
   });
 }

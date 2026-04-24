@@ -33,7 +33,7 @@ export async function revokeApiKey(args: {
     await tx.delete(apiKey).where(eq(apiKey.id, input.id));
 
     await emitAudit(tx, ctx, {
-      action: "api_key.revoke",
+      action: "api_key.delete",
       entityType: "api_key",
       entityId: input.id,
     });

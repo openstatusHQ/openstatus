@@ -76,7 +76,6 @@ export async function createNotification(args: {
       entityType: "notification",
       entityId: row.id,
       after: row,
-      metadata: { provider: input.provider },
     });
 
     return selectNotificationSchema.parse(row);

@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -16,12 +15,11 @@ import {
 } from "../../../test/fixtures";
 import {
   cleanQuotaGatedTables,
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import {
   ConflictError,
@@ -39,8 +37,6 @@ const TEST_PREFIX = "svc-page-test";
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdPageIds: number[] = [];
 
 beforeAll(async () => {
@@ -88,14 +84,9 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
-});
-
-afterEach(() => {
-  auditReset();
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
 
 function track(id: number) {
@@ -115,7 +106,8 @@ describe("newPage", () => {
     });
     track(row.id);
     expect(row.slug).toBe(slug);
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "page.create",
       entityType: "page",
       entityId: row.id,

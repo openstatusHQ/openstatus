@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -15,12 +14,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { ConflictError, NotFoundError } from "../../errors";
 import { acknowledgeIncident } from "../acknowledge";
@@ -33,8 +31,6 @@ const TEST_PREFIX = "svc-incident-test";
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let testMonitorId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -65,14 +61,9 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
-});
-
-afterEach(() => {
-  auditReset();
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
 
 let nextStartedAtOffset = 0;
@@ -114,8 +105,9 @@ describe("acknowledgeIncident", () => {
     expect(updated.acknowledgedAt).toBeInstanceOf(Date);
     expect(updated.acknowledgedBy).toBe(1);
 
-    await expectAuditRow(auditBuffer, {
-      action: "incident.acknowledge",
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "incident.update",
       entityType: "incident",
       entityId: incident.id,
     });
@@ -212,7 +204,8 @@ describe("deleteIncident", () => {
       .all();
     expect(remaining).toHaveLength(0);
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "incident.delete",
       entityType: "incident",
       entityId: incident.id,
