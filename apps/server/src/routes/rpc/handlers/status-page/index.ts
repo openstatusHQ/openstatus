@@ -52,6 +52,7 @@ import {
   getChannel,
   upsertEmailSubscription,
 } from "@openstatus/subscriptions";
+import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
@@ -698,24 +699,16 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
               ? (existing.configuration as Record<string, unknown>)
               : {};
           // `theme` is typed on the service input as a `THEME_KEYS`
-          // enum member. The existing column may have any string (or
+          // enum member. The existing column may carry any string (or
           // be missing) from pre-enforcement writes; fall back to
-          // `"default"` (a known enum member) rather than passing an
-          // arbitrary string through.
-          const VALID_THEMES = [
-            "default",
-            "default-rounded",
-            "supabase",
-            "github-contrast",
-            "dracula",
-          ] as const;
-          type ValidTheme = (typeof VALID_THEMES)[number];
-          const existingTheme: ValidTheme =
+          // `"default"` for unknown values rather than forwarding them
+          // through to the tighter service input. Use the canonical
+          // `THEME_KEYS` so a new theme added to `@openstatus/theme-
+          // store` stays accepted here without a manual copy.
+          const existingTheme: ThemeKey =
             typeof existingConfig.theme === "string" &&
-            (VALID_THEMES as ReadonlyArray<string>).includes(
-              existingConfig.theme,
-            )
-              ? (existingConfig.theme as ValidTheme)
+            (THEME_KEYS as ReadonlyArray<string>).includes(existingConfig.theme)
+              ? (existingConfig.theme as ThemeKey)
               : "default";
           await updatePageAppearance({
             ctx: txCtx,
