@@ -13,6 +13,21 @@ import { TableCellDate } from "../table-cell-date";
 
 type AuditLog = RouterOutputs["auditLog"]["list"][number];
 
+/**
+ * djb2 — tiny deterministic string hash. Used to derive a stable avatar
+ * seed from the user's email without shipping the email itself to
+ * dicebear's URL. Not cryptographic (nothing about the avatar needs to
+ * be secret), just non-leaking: the third-party service receives an
+ * opaque slug, not a workspace member's address.
+ */
+function hashEmailSeed(email: string): string {
+  let hash = 5381;
+  for (let i = 0; i < email.length; i++) {
+    hash = (hash * 33) ^ email.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 function getActionBadgeColor(action: string) {
   if (action.endsWith(".create"))
     return "bg-success/10 text-success border-success/20";
@@ -31,15 +46,18 @@ export const columns: ColumnDef<AuditLog>[] = [
     cell: ({ row }) => {
       const user = row.original.user;
       if (!user) return <span className="text-muted-foreground">-</span>;
+      const imgSrc =
+        user.photoUrl ||
+        // Seed with a hash of the email — dicebear logs request
+        // URLs, so shipping raw emails as query params would
+        // leak workspace member PII to a third party on every
+        // audit-log render. Hashing keeps the avatar stable per
+        // user without exposing the address.
+        `https://api.dicebear.com/9.x/glass/svg?seed=${user.email ? hashEmailSeed(user.email) : user.id}`;
       return (
         <div className="flex items-center gap-2">
           <Avatar className="size-6 rounded-md">
-            <AvatarImage
-              src={
-                user.photoUrl ||
-                `https://api.dicebear.com/9.x/glass/svg?seed=${user.email}`
-              }
-            />
+            <AvatarImage src={imgSrc} />
             <AvatarFallback className="rounded-lg uppercase">
               {user?.name?.slice(0, 2)}
             </AvatarFallback>

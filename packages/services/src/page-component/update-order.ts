@@ -3,7 +3,7 @@ import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { LimitExceededError, ValidationError } from "../errors";
 import { assertPageInWorkspace, validateMonitorIds } from "./internal";
 import { UpdatePageComponentOrderInput } from "./schemas";
 
@@ -28,6 +28,18 @@ export async function updatePageComponentOrder(args: {
 }): Promise<void> {
   const { ctx } = args;
   const input = UpdatePageComponentOrderInput.parse(args.input);
+
+  // Reject duplicate group ids up front — otherwise the diff loop
+  // UPDATEs the same row twice (each iteration clobbering the previous
+  // write) and silently collapses two input groups' components into one
+  // persisted group. A rare client bug, but the failure mode is data
+  // loss on the association side.
+  const inputGroupIds = input.groups
+    .map((g) => g.id)
+    .filter((id): id is number => id != null);
+  if (new Set(inputGroupIds).size !== inputGroupIds.length) {
+    throw new ValidationError("Duplicate group id in input.");
+  }
 
   await withTransaction(ctx, async (tx) => {
     await assertPageInWorkspace({
@@ -116,6 +128,32 @@ export async function updatePageComponentOrder(args: {
           .map((c) => c.id),
       ),
     ] as number[];
+
+    // Guardrail against mass-delete via id-loss. If the input has any
+    // static components *and* none of them carry ids, the diff below
+    // treats every existing static as "removed" and cascades through
+    // `statusReportsToPageComponents`, `maintenancesToPageComponents`,
+    // and `pageSubscriberToPageComponent`. Reject the call instead.
+    //
+    // The legitimate "delete all statics" intent is an input with zero
+    // static entries, which still runs through the normal diff — this
+    // guard only catches the ambiguous "new statics alongside existing
+    // ones, but the client forgot to round-trip the existing ids" case.
+    const inputHasAnyStatic =
+      input.components.some((c) => c.type === "static") ||
+      input.groups.some((g) => g.components.some((c) => c.type === "static"));
+    const hasExistingStatics = existingComponents.some(
+      (c) => c.type === "static",
+    );
+    if (
+      inputHasAnyStatic &&
+      inputStaticComponentIds.length === 0 &&
+      hasExistingStatics
+    ) {
+      throw new ValidationError(
+        "Existing static components must round-trip their ids.",
+      );
+    }
 
     // Remove monitor components whose monitorId isn't in the new input.
     const removedMonitorComponents = existingComponents.filter(

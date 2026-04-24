@@ -50,7 +50,7 @@ const EXAMPLES = [
     user: {
       id: 42,
       name: "Max Kaske",
-      email: "me@maxkaske.dev",
+      email: "m@openstatus.dev",
       photoUrl: null,
     },
   },
@@ -71,7 +71,7 @@ const EXAMPLES = [
     user: {
       id: 42,
       name: "Max Kaske",
-      email: "me@maxkaske.dev",
+      email: "m@openstatus.dev",
       photoUrl: null,
     },
   },
@@ -92,7 +92,7 @@ const EXAMPLES = [
     user: {
       id: 42,
       name: "Thibault Le Ouay Ducasse",
-      email: "me@thibaultleouay.dev",
+      email: "t@openstatus.dev",
       photoUrl: null,
     },
   },
