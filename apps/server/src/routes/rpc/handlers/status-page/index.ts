@@ -391,9 +391,16 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // `published` relies on DB default (false). The service's
       // CreatePageInput type doesn't surface the column, and its behavior
       // matches the legacy `published: false` write on create.
+      //
+      // `workspaceId: sCtx.workspace.id` — `CreatePageInput` re-exports
+      // the drizzle `insertPageSchema`, which requires `workspaceId` at
+      // parse time. The service destructures it and uses
+      // `ctx.workspace.id` on insert (so the input value is ignored),
+      // but the zod parse fires first and rejects without the field.
       const created = await createPage({
         ctx: sCtx,
         input: {
+          workspaceId: sCtx.workspace.id,
           title: req.title,
           description: req.description ?? "",
           slug: req.slug,
@@ -580,8 +587,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           Code.InvalidArgument,
         );
       }
-      const localesChanged =
-        req.defaultLocale !== undefined || req.locales.length > 0;
+      // `UpdateStatusPage` syncs locales on every call when the
+      // workspace has i18n — proto can't distinguish "field omitted"
+      // from "field = []", so the wire contract is "empty locales
+      // means clear". Gating on `req.locales.length > 0` meant omit
+      // and empty both became no-ops, leaving stale locales on the
+      // page. Skip the call only on plans without i18n, where the
+      // service would throw `LimitExceededError` regardless.
+      const localesChanged = limits.i18n === true;
 
       const generalChanged =
         (req.title !== undefined && req.title !== "") ||
@@ -666,9 +679,25 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             existing.configuration !== null
               ? (existing.configuration as Record<string, unknown>)
               : {};
-          const existingTheme =
-            typeof existingConfig.theme === "string"
-              ? existingConfig.theme
+          // `theme` is typed on the service input as a `THEME_KEYS`
+          // enum member. The existing column may have any string (or
+          // be missing) from pre-enforcement writes; fall back to
+          // `"default"` (a known enum member) rather than passing an
+          // arbitrary string through.
+          const VALID_THEMES = [
+            "default",
+            "default-rounded",
+            "supabase",
+            "github-contrast",
+            "dracula",
+          ] as const;
+          type ValidTheme = (typeof VALID_THEMES)[number];
+          const existingTheme: ValidTheme =
+            typeof existingConfig.theme === "string" &&
+            (VALID_THEMES as ReadonlyArray<string>).includes(
+              existingConfig.theme,
+            )
+              ? (existingConfig.theme as ValidTheme)
               : "default";
           await updatePageAppearance({
             ctx: txCtx,

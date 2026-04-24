@@ -8,6 +8,8 @@ import {
   updateNotification,
 } from "@openstatus/services/notification";
 
+import { ForbiddenError } from "@openstatus/services";
+
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
@@ -17,7 +19,7 @@ import {
   protoDataToDb,
   protoProviderToDb,
 } from "./converters";
-import { notificationIdRequiredError } from "./errors";
+import { monitorNotFoundError, notificationIdRequiredError } from "./errors";
 import { getNotificationLimitInfo } from "./limits";
 import { sendTestNotification } from "./test-providers";
 
@@ -44,6 +46,22 @@ function protoDataToServiceInput(
   return JSON.parse(protoDataToDb(provider, data));
 }
 
+/**
+ * Remap the service's `ForbiddenError` (thrown by `validateMonitorIds`
+ * on an unknown or cross-workspace monitor) to `monitorNotFoundError`
+ * (Code.NotFound / HTTP 404). The service deliberately doesn't
+ * distinguish "monitor doesn't exist" from "monitor in another
+ * workspace" (an existence-leak guard), but the Connect contract
+ * surfaces this as 404 so clients keying on the status code get the
+ * same "resource not accessible" signal regardless of cause.
+ */
+function rethrowMonitorNotFound(err: unknown, monitorIds: string[]): never {
+  if (err instanceof ForbiddenError && err.message.startsWith("Monitor ")) {
+    throw monitorNotFoundError(monitorIds.join(","));
+  }
+  throw err;
+}
+
 export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
   {
     async createNotification(req, ctx) {
@@ -59,7 +77,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
             data: protoDataToServiceInput(req.provider, req.data) as never,
             monitors: req.monitorIds.map((id) => Number(id)),
           },
-        });
+        }).catch((err) => rethrowMonitorNotFound(err, req.monitorIds));
         // Re-fetch to get the authoritative persisted monitor set —
         // mirrors the `updateNotification` pattern and removes the
         // approximation that used to echo `req.monitorIds` deduped.
@@ -162,7 +180,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
               ? req.monitorIds.map((mid) => Number(mid))
               : existing.monitors.map((m) => m.id),
           },
-        });
+        }).catch((err) => rethrowMonitorNotFound(err, req.monitorIds));
 
         const full = await getNotification({ ctx: sCtx, input: { id } });
         return {
