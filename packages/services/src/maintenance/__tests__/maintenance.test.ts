@@ -127,7 +127,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await db
     .delete(pageComponent)
-    .where(inArray(pageComponent.id, [testPageComponentId, otherPageComponentId]))
+    .where(
+      inArray(pageComponent.id, [testPageComponentId, otherPageComponentId]),
+    )
     .catch(() => undefined);
   await db
     .delete(page)
