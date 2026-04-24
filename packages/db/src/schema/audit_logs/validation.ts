@@ -153,34 +153,21 @@ export const auditActionSchema = z.discriminatedUnion("action", [
  * Audit-entry input schema — the action/entityType/entityId+metadata
  * discriminant plus optional `before`/`after` snapshots.
  *
+ * Derived from `auditActionSchema` via `.and()` so the variant list
+ * stays single-sourced — adding a new action here would otherwise
+ * require two parallel edits.
+ *
  * The `before`/`after` snapshots are intentionally loose
- * (`Record<string, unknown>`): their shapes mirror the underlying entity
- * tables and binding them to this schema would force a cycle with every
- * column definition.
+ * (`Record<string, unknown>`): their shapes mirror the underlying
+ * entity tables and binding them to this schema would force a cycle
+ * with every column definition.
  */
-export const auditEntrySchema = z
-  .discriminatedUnion("action", [
-    ...monitorActions,
-    ...pageActions,
-    ...pageComponentActions,
-    ...pageComponentGroupActions,
-    ...pageSubscriberActions,
-    ...apiKeyActions,
-    ...notificationActions,
-    ...userActions,
-    ...workspaceActions,
-    ...maintenanceActions,
-    ...incidentActions,
-    ...statusReportActions,
-    ...statusReportUpdateActions,
-    ...invitationActions,
-  ])
-  .and(
-    z.object({
-      before: snapshotSchema.optional(),
-      after: snapshotSchema.optional(),
-    }),
-  );
+export const auditEntrySchema = auditActionSchema.and(
+  z.object({
+    before: snapshotSchema.optional(),
+    after: snapshotSchema.optional(),
+  }),
+);
 
 export const insertAuditLogSchema = createInsertSchema(auditLog);
 export const selectAuditLogSchema = createSelectSchema(auditLog);

@@ -118,6 +118,17 @@ export async function updateMonitorTags(args: {
       tagIds: input.tags,
     });
 
+    // Capture the pre-mutation tag set *before* the delete — tag
+    // membership lives on the join table so the "before" snapshot must
+    // be read while the old rows still exist.
+    const existingTagIds = (
+      await tx
+        .select({ tagId: monitorTagsToMonitors.monitorTagId })
+        .from(monitorTagsToMonitors)
+        .where(eq(monitorTagsToMonitors.monitorId, existing.id))
+        .all()
+    ).map((r) => r.tagId);
+
     await tx
       .delete(monitorTagsToMonitors)
       .where(eq(monitorTagsToMonitors.monitorId, existing.id));
@@ -130,15 +141,6 @@ export async function updateMonitorTags(args: {
       );
     }
 
-    // Tag membership isn't on the monitor row — synthesize `before`/`after`
-    // snapshots from the relation so the diff captures the set change.
-    const existingTagIds = (
-      await tx
-        .select({ tagId: monitorTagsToMonitors.monitorTagId })
-        .from(monitorTagsToMonitors)
-        .where(eq(monitorTagsToMonitors.monitorId, existing.id))
-        .all()
-    ).map((r) => r.tagId);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
@@ -169,6 +171,17 @@ export async function updateMonitorNotifiers(args: {
       notificationIds: input.notifiers,
     });
 
+    // Capture the pre-mutation notifier set *before* the delete — the
+    // relation lives on the join table so reading it after we'd wipe
+    // the old rows would record the new state as the "before".
+    const existingNotifierIds = (
+      await tx
+        .select({ notificationId: notificationsToMonitors.notificationId })
+        .from(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.monitorId, existing.id))
+        .all()
+    ).map((r) => r.notificationId);
+
     await tx
       .delete(notificationsToMonitors)
       .where(eq(notificationsToMonitors.monitorId, existing.id));
@@ -181,15 +194,6 @@ export async function updateMonitorNotifiers(args: {
       );
     }
 
-    // Notifier membership isn't on the monitor row — synthesize snapshots
-    // from the relation so the diff records the set change.
-    const existingNotifierIds = (
-      await tx
-        .select({ notificationId: notificationsToMonitors.notificationId })
-        .from(notificationsToMonitors)
-        .where(eq(notificationsToMonitors.monitorId, existing.id))
-        .all()
-    ).map((r) => r.notificationId);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
