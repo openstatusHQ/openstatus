@@ -340,6 +340,40 @@ describe("cloneMonitor", () => {
     expect(clone.name).toBe(`${source.name} (Copy)`);
     expect(clone.url).toBe(source.url);
   });
+
+  test("resets status to active even when source is degraded/error", async () => {
+    // Regression for the Cubic P2 fix: `clone.ts` destructures
+    // `status` out of the source row before spreading, so a clone
+    // always starts in `"active"` state rather than inheriting the
+    // source's stale health. Flipping the source's status via a
+    // direct db update — `createMonitor` doesn't accept `status`
+    // input, and `"active"` is the insert default.
+    const source = await createMonitor({
+      ctx: teamCtx,
+      input: {
+        name: `${TEST_PREFIX}-clone-status-reset`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: false,
+      },
+    });
+    track(source.id);
+    await db
+      .update(monitor)
+      .set({ status: "error" })
+      .where(eq(monitor.id, source.id));
+
+    const clone = await cloneMonitor({
+      ctx: teamCtx,
+      input: { id: source.id },
+    });
+    track(clone.id);
+
+    expect(clone.status).toBe("active");
+  });
 });
 
 describe("updateMonitorTags / updateMonitorNotifiers", () => {

@@ -96,17 +96,38 @@ export async function deleteMonitors(args: {
       throw new NotFoundError("monitor", missingId);
     }
 
+    // Layered defense: repeat `workspaceId` on every mutation that has
+    // the column, even though the pre-check above already validated
+    // all ids belong to the caller's workspace (same transaction,
+    // deduped ids). The belt-and-braces `AND workspace_id = ?` closes
+    // the copy-paste footgun if this block ever gets reused in a
+    // context without the pre-check. `monitorTagsToMonitors` and
+    // `notificationsToMonitors` don't carry `workspaceId` — they're
+    // scoped through the `monitor` FK's cascade, so the pre-check is
+    // the only practical guard there.
     await tx
       .update(monitor)
       .set({ deletedAt: new Date(), active: false })
-      .where(inArray(monitor.id, ids));
+      .where(
+        and(
+          inArray(monitor.id, ids),
+          eq(monitor.workspaceId, ctx.workspace.id),
+        ),
+      );
     await tx
       .delete(monitorTagsToMonitors)
       .where(inArray(monitorTagsToMonitors.monitorId, ids));
     await tx
       .delete(notificationsToMonitors)
       .where(inArray(notificationsToMonitors.monitorId, ids));
-    await tx.delete(pageComponent).where(inArray(pageComponent.monitorId, ids));
+    await tx
+      .delete(pageComponent)
+      .where(
+        and(
+          inArray(pageComponent.monitorId, ids),
+          eq(pageComponent.workspaceId, ctx.workspace.id),
+        ),
+      );
 
     for (const row of existing) {
       await emitAudit(tx, ctx, {
