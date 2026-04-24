@@ -1,8 +1,11 @@
-import { page, pageComponent } from "@openstatus/db/src/schema";
+import {
+  page,
+  pageComponent,
+  selectPageSchema,
+} from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError } from "../errors";
 import type { Page } from "../types";
 import {
   assertAccessTypeAllowed,
@@ -87,7 +90,12 @@ export async function createPage(args: {
       metadata: { slug: row.slug },
     });
 
-    return row as unknown as Page;
+    // `selectPageSchema.parse` normalises the drizzle row into the
+    // `Page` shape callers expect: `authEmailDomains` / `allowedIpRanges`
+    // go from the raw comma-joined string (drizzle-inferred) to the
+    // `string[]` the `selectPageSchema` defines. Previously this used
+    // `row as unknown as Page`, which hid the drift.
+    return selectPageSchema.parse(row);
   });
 }
 
@@ -134,9 +142,11 @@ export async function newPage(args: {
       metadata: { slug: row.slug, source: "new" },
     });
 
-    return row as unknown as Page;
+    // `selectPageSchema.parse` normalises the drizzle row into the
+    // `Page` shape callers expect: `authEmailDomains` / `allowedIpRanges`
+    // go from the raw comma-joined string (drizzle-inferred) to the
+    // `string[]` the `selectPageSchema` defines. Previously this used
+    // `row as unknown as Page`, which hid the drift.
+    return selectPageSchema.parse(row);
   });
 }
-
-// Re-export to silence "unused" noise in some tsconfigs.
-void ConflictError;

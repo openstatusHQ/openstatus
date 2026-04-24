@@ -22,6 +22,7 @@ import {
 
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
 import type { ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
 import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
 import { getPageInWorkspace } from "./internal";
 import { GetPageInput, GetSlugAvailableInput, ListPagesInput } from "./schemas";
@@ -139,6 +140,35 @@ export async function getPage(args: {
       selectPageComponentGroupSchema.parse(g),
     ),
   };
+}
+
+/**
+ * Narrow "just the customDomain" read, scoped to the caller's workspace.
+ *
+ * The tRPC `updateCustomDomain` procedure needs the *pre-update* domain
+ * so it can call Vercel add/remove before the db write — it can't use
+ * the `existingDomain` returned from `updatePageCustomDomain` because
+ * Vercel needs the old value up front. Using `getPage` (the full-
+ * relations read) here would fire 3 extra batched queries for
+ * maintenances / pageComponents / pageComponentGroups we don't need.
+ * This one-column select replaces that with a single indexed lookup.
+ */
+export async function getPageCustomDomain(args: {
+  ctx: ServiceContext;
+  input: GetPageInput;
+}): Promise<string> {
+  const { ctx } = args;
+  const input = GetPageInput.parse(args.input);
+  const db = ctx.db ?? defaultDb;
+
+  const row = await db
+    .select({ customDomain: page.customDomain })
+    .from(page)
+    .where(and(eq(page.id, input.id), eq(page.workspaceId, ctx.workspace.id)))
+    .get();
+
+  if (!row) throw new NotFoundError("page", input.id);
+  return row.customDomain;
 }
 
 /** Returns `true` when the slug is free (not reserved, not taken). */

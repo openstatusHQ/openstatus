@@ -103,6 +103,16 @@ export async function updatePageCustomDomain(args: {
   });
 }
 
+/**
+ * Update the page's access-type + all the fields scoped to it
+ * (password / authEmailDomains / allowedIpRanges / allowIndex).
+ *
+ * The legacy boolean `passwordProtected` column isn't touched here —
+ * it's schema-deprecated and the v1 REST read path derives it from
+ * `accessType` via `normalizePasswordProtected` (see
+ * `apps/server/src/routes/v1/pages/schema.ts`). Deliberately omitted
+ * so we're not writing two sources of truth for the same signal.
+ */
 export async function updatePagePasswordProtection(args: {
   ctx: ServiceContext;
   input: UpdatePagePasswordProtectionInput;

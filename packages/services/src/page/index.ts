@@ -2,6 +2,7 @@ export { createPage, newPage } from "./create";
 export { deletePage } from "./delete";
 export {
   getPage,
+  getPageCustomDomain,
   getSlugAvailable,
   listPages,
   type PageListItem,

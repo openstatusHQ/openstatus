@@ -12,6 +12,7 @@ import {
   createPage,
   deletePage,
   getPage,
+  getPageCustomDomain,
   getSlugAvailable,
   listPages,
   newPage,
@@ -217,10 +218,17 @@ export const pageRouter = createTRPCRouter({
       // Resolve the existing domain via the service so the Vercel diff below
       // sees the true pre-change state, then the service persists the new
       // value. Vercel add/remove calls stay at the transport layer.
+      //
+      // `getPageCustomDomain` (narrow one-column read) instead of
+      // `getPage` (3 batched relation queries) — Vercel only needs the
+      // old domain string, so fanning out the full-relations read on
+      // every domain update was wasteful.
       try {
         const sCtx = toServiceCtx(ctx);
-        const current = await getPage({ ctx: sCtx, input: { id: input.id } });
-        const oldDomain = current.customDomain;
+        const oldDomain = await getPageCustomDomain({
+          ctx: sCtx,
+          input: { id: input.id },
+        });
         const newDomain = input.customDomain;
 
         if (newDomain && !oldDomain) {

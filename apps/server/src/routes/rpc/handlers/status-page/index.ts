@@ -28,7 +28,11 @@ import {
   OverallStatus,
   PageAccessType,
 } from "@openstatus/proto/status_page/v1";
-import { NotFoundError, withTransaction } from "@openstatus/services";
+import {
+  ConflictError,
+  NotFoundError,
+  withTransaction,
+} from "@openstatus/services";
 import {
   createPage,
   deletePage,
@@ -278,6 +282,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   // ==========================================================================
   // Page CRUD
   // ==========================================================================
+  //
+  // Known gap (predates the services migration): both `createStatusPage`
+  // and `updateStatusPage` accept and persist `customDomain`, but
+  // neither calls the Vercel add/remove API the way the tRPC
+  // `updateCustomDomain` procedure does. Clients setting a custom domain
+  // via gRPC will get a db row that says the domain is set, but routing
+  // won't actually work until a tRPC/dashboard round-trip picks up the
+  // diff. The fix is to lift the Vercel sync (`addDomainToVercel` /
+  // `removeDomainFromVercel`) into a shared transport-layer helper the
+  // Connect handlers can reuse, kept out of the service layer. Tracked
+  // as a follow-up; not landing here to avoid widening the behavioural
+  // blast radius of the migration PR on external API consumers.
 
   async createStatusPage(req, ctx) {
     try {
@@ -592,25 +608,39 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         const txCtx = { ...sCtx, db: tx };
 
         if (generalChanged) {
-          await updatePageGeneral({
-            ctx: txCtx,
-            input: {
-              id: pageId,
-              title:
-                req.title !== undefined && req.title !== ""
-                  ? req.title
-                  : existing.title,
-              slug:
-                req.slug !== undefined && req.slug !== ""
-                  ? req.slug
-                  : existing.slug,
-              description:
-                req.description !== undefined
-                  ? req.description
-                  : existing.description,
-              icon: req.icon !== undefined ? req.icon : existing.icon,
-            },
-          });
+          try {
+            await updatePageGeneral({
+              ctx: txCtx,
+              input: {
+                id: pageId,
+                title:
+                  req.title !== undefined && req.title !== ""
+                    ? req.title
+                    : existing.title,
+                slug:
+                  req.slug !== undefined && req.slug !== ""
+                    ? req.slug
+                    : existing.slug,
+                description:
+                  req.description !== undefined
+                    ? req.description
+                    : existing.description,
+                icon: req.icon !== undefined ? req.icon : existing.icon,
+              },
+            });
+          } catch (err) {
+            // Close the slug-race gap: if two callers both cleared the
+            // handler's pre-check and the loser's `assertSlugAvailable`
+            // inside the service throws `ConflictError`, the default
+            // mapping surfaces as `Code.InvalidArgument`. Rethrow as the
+            // granular `slugAlreadyExistsError` so gRPC clients keying on
+            // `Code.AlreadyExists` get a consistent code whether they
+            // lose at the pre-check or at the inner transaction.
+            if (err instanceof ConflictError && req.slug) {
+              throw slugAlreadyExistsError(req.slug);
+            }
+            throw err;
+          }
         }
 
         if (linksChanged) {
