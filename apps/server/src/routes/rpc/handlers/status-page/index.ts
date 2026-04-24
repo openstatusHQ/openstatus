@@ -30,6 +30,7 @@ import {
 } from "@openstatus/proto/status_page/v1";
 import {
   ConflictError,
+  LimitExceededError,
   NotFoundError,
   withTransaction,
 } from "@openstatus/services";
@@ -417,6 +418,23 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           locales,
           allowIndex,
         },
+      }).catch((err) => {
+        // Same handler-layer remap as the `i18n` pre-check above —
+        // preserve `PermissionDenied` (403) for "plan quota reached"
+        // on `status-pages`. The service throws `LimitExceededError`
+        // which the Connect adapter maps to `ResourceExhausted`
+        // (429), but the gRPC contract here is 403 for "upgrade
+        // required".
+        if (
+          err instanceof LimitExceededError &&
+          err.message.startsWith("status-pages")
+        ) {
+          throw new ConnectError(
+            "You reached your status-page limits.",
+            Code.PermissionDenied,
+          );
+        }
+        throw err;
       });
 
       return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
