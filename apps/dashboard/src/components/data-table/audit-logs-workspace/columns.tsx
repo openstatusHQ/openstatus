@@ -34,7 +34,12 @@ export const columns: ColumnDef<AuditLog>[] = [
       return (
         <div className="flex items-center gap-2">
           <Avatar className="size-6 rounded-md">
-            <AvatarImage src={user.photoUrl ?? undefined} />
+            <AvatarImage
+              src={
+                user.photoUrl ||
+                `https://api.dicebear.com/9.x/glass/svg?seed=${user.email}`
+              }
+            />
             <AvatarFallback className="rounded-lg uppercase">
               {user?.name?.slice(0, 2)}
             </AvatarFallback>
