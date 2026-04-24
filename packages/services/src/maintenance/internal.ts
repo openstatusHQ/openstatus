@@ -8,7 +8,6 @@ import {
 
 import type { DB } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
-import type { PageComponent } from "../types";
 
 export type ValidatedPageComponents = {
   componentIds: number[];
@@ -115,34 +114,4 @@ export async function getMaintenanceInWorkspace(args: {
     .get();
   if (!row) throw new NotFoundError("maintenance", id);
   return row;
-}
-
-/** Fetch the associated component ids for a maintenance. */
-export async function getPageComponentIdsForMaintenance(
-  tx: DB,
-  maintenanceId: number,
-): Promise<number[]> {
-  const rows = await tx
-    .select({ pageComponentId: maintenancesToPageComponents.pageComponentId })
-    .from(maintenancesToPageComponents)
-    .where(eq(maintenancesToPageComponents.maintenanceId, maintenanceId))
-    .all();
-  return rows.map((r) => r.pageComponentId);
-}
-
-/** Fetch the full associated component rows for a maintenance. */
-export async function getPageComponentsForMaintenance(
-  tx: DB,
-  maintenanceId: number,
-): Promise<PageComponent[]> {
-  const rows = await tx
-    .select()
-    .from(pageComponent)
-    .innerJoin(
-      maintenancesToPageComponents,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(eq(maintenancesToPageComponents.maintenanceId, maintenanceId))
-    .all();
-  return rows.map((r) => r.page_component as unknown as PageComponent);
 }

@@ -138,10 +138,7 @@ async function executeAction(
 
   // Hoisted out of the switch: every service-backed branch below uses
   // the same ctx, and `toServiceCtx` loads the workspace row from the
-  // db. Computing it once halves the per-action db traffic. Lazy enough
-  // — the `createMaintenance` branch still goes direct to db (migrates
-  // in PR 2) and doesn't need ctx, but the extra lookup there is
-  // negligible against the maintenance write volume.
+  // db. Computing it once halves the per-action db traffic.
   const ctx = await toServiceCtx({
     pending,
     slackUserId: origin.slackUserId,
@@ -276,11 +273,6 @@ async function executeAction(
         pageComponentIds: maintenanceComponentIds,
       } = action.params;
 
-      const ctx = await toServiceCtx({
-        pending,
-        slackUserId: origin.slackUserId,
-        teamId: origin.teamId,
-      });
       const newMaintenance = await createMaintenance({
         ctx,
         input: {

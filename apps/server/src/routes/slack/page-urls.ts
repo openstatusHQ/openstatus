@@ -24,15 +24,21 @@ export async function getPageUrl(pageId: number): Promise<string | null> {
 export async function getReportUrl(
   pageId: number,
   reportId: number,
-): Promise<string> {
+): Promise<string | null> {
   const statusPage = await db
     .select({ slug: page.slug, customDomain: page.customDomain })
     .from(page)
     .where(eq(page.id, pageId))
     .get();
 
-  const baseUrl = statusPage?.customDomain
+  // Mirror `getPageUrl`'s null-on-missing contract. Previously a missing
+  // page row produced `https://undefined.openstatus.dev/events/report/…`
+  // (because `statusPage?.slug` was undefined). Every existing caller
+  // already guards with `reportUrl ? … : …`, so returning `null` here
+  // is drop-in safe and keeps the two helpers symmetric.
+  if (!statusPage) return null;
+  const baseUrl = statusPage.customDomain
     ? `https://${statusPage.customDomain}`
-    : `https://${statusPage?.slug}.openstatus.dev`;
+    : `https://${statusPage.slug}.openstatus.dev`;
   return `${baseUrl}/events/report/${reportId}`;
 }
