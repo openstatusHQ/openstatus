@@ -6,6 +6,7 @@ export {
   type ServiceContext,
   extractActorId,
   isTx,
+  tryGetActorUserId,
   withTransaction,
 } from "./context";
 
@@ -15,6 +16,7 @@ export {
   InternalServiceError,
   LimitExceededError,
   NotFoundError,
+  PreconditionFailedError,
   ServiceError,
   type ServiceErrorCode,
   UnauthorizedError,

@@ -42,6 +42,7 @@
     "@openstatus/error": "workspace:*",
     "@openstatus/proto": "workspace:*",
     "@openstatus/regions": "workspace:*",
+    "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",

@@ -54,3 +54,22 @@ export function extractActorId(actor: Actor): string {
       return actor.externalId ?? actor.source;
   }
 }
+
+/**
+ * Return the openstatus `user.id` attributable to this actor, or `null`
+ * when none is available. Used by mutations that stamp a `*_by` column.
+ * `slack` and `apiKey` actors may carry an optional linked userId once
+ * the corresponding mapping layers exist.
+ */
+export function tryGetActorUserId(actor: Actor): number | null {
+  switch (actor.type) {
+    case "user":
+      return actor.userId;
+    case "apiKey":
+    case "slack":
+      return actor.userId ?? null;
+    case "system":
+    case "webhook":
+      return null;
+  }
+}

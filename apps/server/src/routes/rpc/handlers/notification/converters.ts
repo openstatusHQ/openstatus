@@ -1,4 +1,5 @@
 import { create } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@connectrpc/connect";
 import type { NotificationProvider as DBNotificationProvider } from "@openstatus/db/src/schema";
 import type {
   Notification,
@@ -99,7 +100,11 @@ export function validateProviderDataConsistency(
 }
 
 /**
- * Maps proto NotificationProvider enum to DB provider string.
+ * Maps proto NotificationProvider enum to DB provider string. Throws
+ * `InvalidArgument` for unknown/unspecified values — silently falling
+ * back to `"email"` (the previous default) would create the wrong
+ * channel type for a misconfigured client and persist it, which is
+ * much worse than a loud error at the boundary.
  */
 export function protoProviderToDb(
   provider: NotificationProvider,
@@ -118,7 +123,14 @@ export function protoProviderToDb(
     [NotificationProvider.WEBHOOK]: "webhook",
     [NotificationProvider.WHATSAPP]: "whatsapp",
   };
-  return mapping[provider] ?? "email";
+  const mapped = mapping[provider];
+  if (!mapped) {
+    throw new ConnectError(
+      `Unknown or unspecified notification provider: ${NotificationProvider[provider] ?? provider}`,
+      Code.InvalidArgument,
+    );
+  }
+  return mapped;
 }
 
 /**
