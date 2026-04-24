@@ -15,6 +15,7 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  cleanQuotaGatedTables,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
@@ -47,6 +48,12 @@ beforeAll(async () => {
   const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
+
+  // Clear leftover quota-gated rows on the free workspace so
+  // negative-path tests hit their intended assertion (e.g.
+  // `assertStatusPageQuota` on free = 1 page) regardless of what
+  // prior runs left behind.
+  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
 
   const teamMonitor = await db
     .insert(monitor)

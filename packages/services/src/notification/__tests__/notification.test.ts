@@ -19,6 +19,7 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  cleanQuotaGatedTables,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
@@ -52,16 +53,11 @@ beforeAll(async () => {
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
 
-  // Clear any stale rows on the free workspace before the suite
-  // runs. `createNotification`'s first check is `count() >=
-  // notification-channels` (free plan = 1), so a single leftover
-  // row from a prior run / aborted test would trip `LimitExceeded`
-  // before tests that expected e.g. a `ForbiddenError` could reach
-  // their own failure mode.
-  await db
-    .delete(notification)
-    .where(eq(notification.workspaceId, SEEDED_WORKSPACE_FREE_ID))
-    .catch(() => undefined);
+  // Clear quota-gated rows on the free workspace so
+  // `notification-channels: 1` (free plan) can actually be exercised
+  // by negative-path tests — any leftover row from prior runs tripped
+  // `LimitExceededError` before the intended assertion fired.
+  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
 
   const monitorRow = await db
     .insert(monitor)
