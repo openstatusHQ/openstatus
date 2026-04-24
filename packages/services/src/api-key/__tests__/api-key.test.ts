@@ -65,7 +65,17 @@ describe("createApiKey", () => {
 
     expect(token).toMatch(/^os_[a-f0-9]{32}$/);
     expect(key.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
-    expect(key.hashedToken).toMatch(/^\$2[aby]\$/);
+
+    // `hashedToken` is stripped from the service response (see
+    // `api-key/create.ts` — the caller only needs the plaintext
+    // `token` once). Verify the bcrypt hash is actually persisted by
+    // reading the row back from the db.
+    const stored = await db
+      .select({ hashedToken: apiKey.hashedToken })
+      .from(apiKey)
+      .where(eq(apiKey.id, key.id))
+      .get();
+    expect(stored?.hashedToken).toMatch(/^\$2[aby]\$/);
 
     await expectAuditRow(auditBuffer, {
       action: "api_key.create",

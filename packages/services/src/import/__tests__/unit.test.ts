@@ -41,7 +41,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "page-components": 20 }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -64,7 +64,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "page-components": 3 }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -88,7 +88,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "page-components": 3 }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors.length).toBe(1);
@@ -107,7 +107,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "page-components": 3 }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -120,7 +120,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "page-components": 3 }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -151,7 +151,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "custom-domain": false }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors.length).toBe(1);
@@ -178,7 +178,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "custom-domain": false }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -204,7 +204,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "custom-domain": true }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -231,7 +231,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "status-subscribers": false }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors.length).toBe(1);
@@ -245,7 +245,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "status-subscribers": false }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -266,7 +266,7 @@ describe("addLimitWarnings", () => {
 
       await addLimitWarnings(summary, {
         limits: makeLimits({ "status-subscribers": true }),
-        workspaceId: 1,
+        workspaceId: 2,
       });
 
       expect(summary.errors).toEqual([]);
@@ -314,7 +314,7 @@ describe("addLimitWarnings", () => {
     // Free plan: page-components=3, custom-domain=false, status-subscribers=false
     await addLimitWarnings(summary, {
       limits: makeLimits(),
-      workspaceId: 1,
+      workspaceId: 2,
     });
 
     expect(summary.errors.length).toBe(3);
@@ -362,7 +362,7 @@ describe("addLimitWarnings", () => {
 
     await addLimitWarnings(summary, {
       limits: { ...allPlans.starter.limits },
-      workspaceId: 1,
+      workspaceId: 2,
     });
 
     expect(summary.errors).toEqual([]);

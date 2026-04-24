@@ -67,13 +67,13 @@ function restoreFetch() {
   globalThis.fetch = originalFetch;
 }
 
-function makeCaller(limitsOverride?: Partial<Limits>) {
+function makeCaller(limitsOverride?: Partial<Limits>, workspaceId = 1) {
   const limits = { ...allPlans.starter.limits, ...limitsOverride };
   const ctx = createInnerTRPCContext({
     req: undefined,
     session: { user: { id: "1" } },
     // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1, limits },
+    workspace: { id: workspaceId, limits },
     // Populate `user` too so the `NODE_ENV=test` escape hatch in
     // `enforceUserIsAuthed` takes — otherwise the middleware would
     // fall through to the DB read and replace our override limits
@@ -428,7 +428,11 @@ const freeLimits = { ...allPlans.free.limits };
 const starterLimits = { ...allPlans.starter.limits };
 
 test("preview shows component limit warning on free plan", async () => {
-  const c = makeCaller({ ...freeLimits, "page-components": 3 });
+  // Use workspaceId 2 (free seed) so the workspace-wide component count
+  // starts at 0 — workspace 1 has 2 seeded page components from the
+  // shared seed, which would make `remaining = 1` instead of 3 and
+  // change the warning wording.
+  const c = makeCaller({ ...freeLimits, "page-components": 3 }, 2);
   const result = await c.import.preview({
     provider: "statuspage",
     apiKey: "test-key",
@@ -453,9 +457,15 @@ test("preview shows custom domain warning on free plan", async () => {
 
 test("preview shows subscriber warning on free plan", async () => {
   const c = makeCaller({ ...freeLimits, "status-subscribers": false });
+  // Pass `options.includeSubscribers: true` explicitly — the warning
+  // fires only when the user *intends* to import subscribers (and the
+  // plan disallows it). Default `includeSubscribers` is `false`
+  // (matches `ImportOptions`), so without the override the preview
+  // correctly stays silent for users who aren't importing subscribers.
   const result = await c.import.preview({
     provider: "statuspage",
     apiKey: "test-key",
+    options: { includeSubscribers: true },
   });
 
   expect(result.errors.some((e) => e.includes("Subscribers"))).toBe(true);
