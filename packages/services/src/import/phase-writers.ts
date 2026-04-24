@@ -386,6 +386,26 @@ export async function writeIncidentsPhase(
       if (existingReport) {
         resource.openstatusId = existingReport.id;
         resource.status = "skipped";
+        // Reconcile component links on rerun. First run may have
+        // written the report with a partial `componentIdMap` (some
+        // components failed in their per-resource catch), so the link
+        // set is a strict subset of `sourceComponentIds`. On rerun the
+        // map is typically more complete — reinsert with
+        // `onConflictDoNothing` so the composite PK dedupes already-
+        // written pairs and new ones land.
+        const reconciliationLinks = data.sourceComponentIds
+          .map((sourceId) => componentIdMap.get(sourceId))
+          .filter((id): id is number => id != null)
+          .map((pageComponentId) => ({
+            statusReportId: existingReport.id,
+            pageComponentId,
+          }));
+        if (reconciliationLinks.length > 0) {
+          await tx
+            .insert(statusReportsToPageComponents)
+            .values(reconciliationLinks)
+            .onConflictDoNothing();
+        }
         continue;
       }
 
@@ -516,6 +536,24 @@ export async function writeMaintenancesPhase(
       if (existing) {
         resource.openstatusId = existing.id;
         resource.status = "skipped";
+        // Same reconciliation rationale as `writeIncidentsPhase` — a
+        // partial `componentIdMap` on the first run means the link
+        // set may be incomplete, and the composite PK on
+        // `(maintenanceId, pageComponentId)` makes the re-insert a
+        // no-op for pairs that already exist.
+        const reconciliationLinks = data.sourceComponentIds
+          .map((sourceId) => componentIdMap.get(sourceId))
+          .filter((id): id is number => id != null)
+          .map((pageComponentId) => ({
+            maintenanceId: existing.id,
+            pageComponentId,
+          }));
+        if (reconciliationLinks.length > 0) {
+          await tx
+            .insert(maintenancesToPageComponents)
+            .values(reconciliationLinks)
+            .onConflictDoNothing();
+        }
         continue;
       }
 
