@@ -104,14 +104,14 @@ export function DataTableRowDetails({ row }: { row: AuditLog }) {
               <div
                 key={change.field}
                 className={cn(
-                  "grid grid-cols-[160px_1fr]",
+                  "grid grid-cols-1 md:grid-cols-4",
                   idx > 0 && "border-t",
                 )}
               >
-                <div className="border-r bg-muted/40 px-3 py-2 font-mono text-muted-foreground">
+                <div className="truncate border-r bg-muted/40 px-3 py-2 font-mono text-muted-foreground md:col-span-1">
                   {change.field}
                 </div>
-                <div className="grid">
+                <div className="grid truncate md:col-span-3">
                   {"before" in change ? (
                     <DiffLine kind="removed" value={change.before} />
                   ) : null}
