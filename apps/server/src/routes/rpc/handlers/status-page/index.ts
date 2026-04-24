@@ -430,7 +430,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           err.message.startsWith("status-pages")
         ) {
           throw new ConnectError(
-            "You reached your status-page limits.",
+            "Upgrade for more status pages.",
             Code.PermissionDenied,
           );
         }
