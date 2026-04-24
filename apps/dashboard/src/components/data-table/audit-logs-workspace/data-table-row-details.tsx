@@ -14,11 +14,15 @@ type ChangeRow = {
 /**
  * Fields we never surface in the CHANGES view.
  *
- * `createdAt`/`updatedAt` are churny bookkeeping — already filtered from
- * `changedFields` by `diffTopLevel` in the services package, but they
- * still show up on create/delete snapshots.
+ * `createdAt`/`updatedAt`/`deletedAt` are churny bookkeeping — already
+ * filtered from `changedFields` by `diffTopLevel` in the services
+ * package, but they still show up on create/delete snapshots.
  *
- * `id`/`workspaceId` duplicate info already on the row header.
+ * `workspaceId` is implied by the workspace scope of the audit log
+ * itself — noise, not signal.
+ *
+ * `id` stays visible: with per-entity audit rows, the entity id tells
+ * the reader *which* component / group / monitor this row refers to.
  *
  * This is a display-side belt-and-braces only. Proper secret/PII
  * redaction (webhook URLs with tokens, hashed api keys, etc.) is the
@@ -26,7 +30,6 @@ type ChangeRow = {
  * boundary.
  */
 const HIDDEN_FIELDS = new Set([
-  "id",
   "workspaceId",
   "createdAt",
   "updatedAt",
