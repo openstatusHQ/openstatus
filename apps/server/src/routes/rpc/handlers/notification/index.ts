@@ -28,18 +28,20 @@ type ProtoData = Parameters<typeof protoDataToDb>[1];
  * the service expects (`Partial<Record<Provider, …>>`). Round-trips through
  * the existing `protoDataToDb` helper + JSON.parse so we don't reimplement
  * the per-provider mapping.
+ *
+ * A `JSON.parse` failure here would mean `protoDataToDb` itself produced
+ * malformed output — a programmer error, not a user-input issue. Letting
+ * the throw propagate surfaces it as `Code.Internal` via `toConnectError`,
+ * which is the signal we want; catch-and-return-empty would hide the
+ * bug and feed an empty object into `validateNotificationData`,
+ * producing a generic validation failure far from the root cause.
  */
 function protoDataToServiceInput(
   provider: number,
   data: ProtoData | undefined,
 ): Record<string, unknown> {
   if (!data) return {};
-  const dataStr = protoDataToDb(provider, data);
-  try {
-    return JSON.parse(dataStr);
-  } catch {
-    return {};
-  }
+  return JSON.parse(protoDataToDb(provider, data));
 }
 
 export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
@@ -58,12 +60,21 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
             monitors: req.monitorIds.map((id) => Number(id)),
           },
         });
-        // Reflect what was actually persisted — the service dedupes
-        // `monitors` before insert, so echoing `req.monitorIds` verbatim
-        // would overstate the stored state when the input has duplicates.
-        const storedMonitorIds = Array.from(new Set(req.monitorIds));
+        // Re-fetch to get the authoritative persisted monitor set —
+        // mirrors the `updateNotification` pattern and removes the
+        // approximation that used to echo `req.monitorIds` deduped.
+        // `createNotification` returns only the base row; the monitor
+        // ids come from the `notifications_to_monitors` associations
+        // which `getNotification` batches alongside the read.
+        const full = await getNotification({
+          ctx: sCtx,
+          input: { id: record.id },
+        });
         return {
-          notification: dbNotificationToProto(record, storedMonitorIds),
+          notification: dbNotificationToProto(
+            full,
+            full.monitors.map((m) => String(m.id)),
+          ),
         };
       } catch (err) {
         toConnectError(err);
@@ -142,7 +153,11 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
             data:
               req.data !== undefined
                 ? (protoDataToServiceInput(provider, req.data) as never)
-                : (JSON.parse(existing.data) as never),
+                : // Drizzle infers the column as `string | null` (the
+                  // schema has a `default("{}")` but no `.notNull()`),
+                  // so the fallback to `"{}"` prevents a
+                  // `SyntaxError` when a legacy row left `data` NULL.
+                  (JSON.parse(existing.data ?? "{}") as never),
             monitors: req.updateMonitorIds
               ? req.monitorIds.map((mid) => Number(mid))
               : existing.monitors.map((m) => m.id),
@@ -178,8 +193,16 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
     },
 
     async sendTestNotification(req, _ctx) {
-      const result = await sendTestNotification(req.provider, req.data);
-      return result;
+      // Wrapped in `toConnectError` for symmetry with the CRUD handlers
+      // above — any `ServiceError` / `ZodError` thrown from within
+      // `test-providers.ts` (or a future helper it grows) gets mapped
+      // to the right gRPC status instead of falling through to the
+      // interceptor's generic catch.
+      try {
+        return await sendTestNotification(req.provider, req.data);
+      } catch (err) {
+        toConnectError(err);
+      }
     },
 
     async checkNotificationLimit(_req, ctx) {
