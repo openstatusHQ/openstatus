@@ -89,8 +89,15 @@ async function enrichPageComponentsBatch(
             )
             .all()
         : Promise.resolve([] as never[]),
+      // Explicit column selection on join queries — keeps the row shape
+      // in our hands instead of relying on drizzle's auto-derived
+      // `row.<table_name>` keys (named after the JS variable, fragile to
+      // schema renames).
       db
-        .select()
+        .select({
+          pageComponentId: statusReportsToPageComponents.pageComponentId,
+          report: statusReport,
+        })
         .from(statusReport)
         .innerJoin(
           statusReportsToPageComponents,
@@ -104,7 +111,10 @@ async function enrichPageComponentsBatch(
         )
         .all(),
       db
-        .select()
+        .select({
+          pageComponentId: maintenancesToPageComponents.pageComponentId,
+          maintenance,
+        })
         .from(maintenance)
         .innerJoin(
           maintenancesToPageComponents,
@@ -120,43 +130,29 @@ async function enrichPageComponentsBatch(
     ]);
 
   const monitorById = new Map<number, Monitor>();
-  for (const m of monitorRows as Array<typeof monitor.$inferSelect>) {
+  for (const m of monitorRows) {
     monitorById.set(m.id, selectMonitorSchema.parse(m));
   }
 
   const groupById = new Map<number, PageComponentGroupRow>();
-  for (const g of groupRows as PageComponentGroupRow[]) {
+  for (const g of groupRows) {
     groupById.set(g.id, selectPageComponentGroupSchema.parse(g));
   }
 
   const statusReportsByComponent = new Map<number, StatusReport[]>();
-  for (const row of statusReportRows as Array<{
-    status_report: typeof statusReport.$inferSelect;
-    status_report_to_page_component: {
-      pageComponentId: number;
-      createdAt: Date | null;
-    };
-  }>) {
-    const cId = row.status_report_to_page_component.pageComponentId;
-    const parsed = selectStatusReportSchema.parse(row.status_report);
-    const arr = statusReportsByComponent.get(cId);
+  for (const row of statusReportRows) {
+    const parsed = selectStatusReportSchema.parse(row.report);
+    const arr = statusReportsByComponent.get(row.pageComponentId);
     if (arr) arr.push(parsed);
-    else statusReportsByComponent.set(cId, [parsed]);
+    else statusReportsByComponent.set(row.pageComponentId, [parsed]);
   }
 
   const maintenancesByComponent = new Map<number, Maintenance[]>();
-  for (const row of maintenanceRows as Array<{
-    maintenance: typeof maintenance.$inferSelect;
-    maintenance_to_page_component: {
-      pageComponentId: number;
-      createdAt: Date | null;
-    };
-  }>) {
-    const cId = row.maintenance_to_page_component.pageComponentId;
+  for (const row of maintenanceRows) {
     const parsed = selectMaintenanceSchema.parse(row.maintenance);
-    const arr = maintenancesByComponent.get(cId);
+    const arr = maintenancesByComponent.get(row.pageComponentId);
     if (arr) arr.push(parsed);
-    else maintenancesByComponent.set(cId, [parsed]);
+    else maintenancesByComponent.set(row.pageComponentId, [parsed]);
   }
 
   return rows.map((r) => ({

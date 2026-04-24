@@ -32,7 +32,7 @@ export async function listInvitations(args: {
     ),
   });
 
-  return rows as Invitation[];
+  return rows.map((r) => selectInvitationSchema.parse(r));
 }
 
 export type InvitationWithWorkspace = Invitation & { workspace: Workspace };
@@ -68,5 +68,5 @@ export async function getInvitationByToken(args: {
 
   return selectInvitationSchema
     .extend({ workspace: selectWorkspaceSchema })
-    .parse(result) as InvitationWithWorkspace;
+    .parse(result);
 }

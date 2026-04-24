@@ -43,8 +43,14 @@ async function enrichNotificationsBatch(
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
 
+  // Explicit column selection on the join — keeps the row shape in our
+  // hands instead of relying on drizzle's auto-derived `row.<table_name>`
+  // keys (named after the JS variable, fragile to schema renames).
   const assocRows = await db
-    .select()
+    .select({
+      notificationId: notificationsToMonitors.notificationId,
+      monitor,
+    })
     .from(monitor)
     .innerJoin(
       notificationsToMonitors,
@@ -60,15 +66,11 @@ async function enrichNotificationsBatch(
     .all();
 
   const monitorsByNotification = new Map<number, Monitor[]>();
-  for (const row of assocRows as Array<{
-    monitor: typeof monitor.$inferSelect;
-    notifications_to_monitors: { notificationId: number };
-  }>) {
-    const nId = row.notifications_to_monitors.notificationId;
+  for (const row of assocRows) {
     const parsed = selectMonitorSchema.parse(row.monitor);
-    const arr = monitorsByNotification.get(nId);
+    const arr = monitorsByNotification.get(row.notificationId);
     if (arr) arr.push(parsed);
-    else monitorsByNotification.set(nId, [parsed]);
+    else monitorsByNotification.set(row.notificationId, [parsed]);
   }
 
   return rows.map((r) => ({

@@ -18,7 +18,11 @@ import {
   notificationsToMonitors,
   privateLocation,
   privateLocationToMonitors,
+  selectIncidentSchema,
   selectMonitorSchema,
+  selectMonitorTagSchema,
+  selectNotificationSchema,
+  selectPrivateLocationSchema,
 } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
@@ -64,9 +68,16 @@ async function enrichMonitorsBatch(
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
 
+  // Explicit column selection (not `select()`) keeps the join row shape in
+  // our hands instead of relying on drizzle's auto-derived `row.<table_name>`
+  // keys, which are named after the JS variable and silently break on
+  // schema rename.
   const [tagRows, incidentRows, notifRows, locRows] = await Promise.all([
     db
-      .select()
+      .select({
+        monitorId: monitorTagsToMonitors.monitorId,
+        tag: monitorTag,
+      })
       .from(monitorTag)
       .innerJoin(
         monitorTagsToMonitors,
@@ -94,7 +105,10 @@ async function enrichMonitorsBatch(
       .all(),
     include.notifications
       ? db
-          .select()
+          .select({
+            monitorId: notificationsToMonitors.monitorId,
+            notification,
+          })
           .from(notification)
           .innerJoin(
             notificationsToMonitors,
@@ -107,10 +121,13 @@ async function enrichMonitorsBatch(
             ),
           )
           .all()
-      : Promise.resolve([] as never[]),
+      : Promise.resolve([]),
     include.privateLocations
       ? db
-          .select()
+          .select({
+            monitorId: privateLocationToMonitors.monitorId,
+            location: privateLocation,
+          })
           .from(privateLocation)
           .innerJoin(
             privateLocationToMonitors,
@@ -123,48 +140,41 @@ async function enrichMonitorsBatch(
             ),
           )
           .all()
-      : Promise.resolve([] as never[]),
+      : Promise.resolve([]),
   ]);
 
   const tagsByMonitor = new Map<number, MonitorTag[]>();
-  for (const row of tagRows as Array<{
-    monitor_tag: MonitorTag;
-    monitor_tag_to_monitor: { monitorId: number };
-  }>) {
-    const mId = row.monitor_tag_to_monitor.monitorId;
-    const arr = tagsByMonitor.get(mId);
-    if (arr) arr.push(row.monitor_tag);
-    else tagsByMonitor.set(mId, [row.monitor_tag]);
+  for (const row of tagRows) {
+    const tag = selectMonitorTagSchema.parse(row.tag);
+    const arr = tagsByMonitor.get(row.monitorId);
+    if (arr) arr.push(tag);
+    else tagsByMonitor.set(row.monitorId, [tag]);
   }
 
   const incidentsByMonitor = new Map<number, Incident[]>();
-  for (const row of incidentRows as Incident[]) {
+  for (const row of incidentRows) {
     if (row.monitorId == null) continue;
+    const incident = selectIncidentSchema.parse(row);
     const arr = incidentsByMonitor.get(row.monitorId);
-    if (arr) arr.push(row);
-    else incidentsByMonitor.set(row.monitorId, [row]);
+    if (arr) arr.push(incident);
+    else incidentsByMonitor.set(row.monitorId, [incident]);
   }
 
   const notifsByMonitor = new Map<number, Notification[]>();
-  for (const row of notifRows as Array<{
-    notification: Notification;
-    notifications_to_monitors: { monitorId: number };
-  }>) {
-    const mId = row.notifications_to_monitors.monitorId;
-    const arr = notifsByMonitor.get(mId);
-    if (arr) arr.push(row.notification);
-    else notifsByMonitor.set(mId, [row.notification]);
+  for (const row of notifRows) {
+    const parsed = selectNotificationSchema.parse(row.notification);
+    const arr = notifsByMonitor.get(row.monitorId);
+    if (arr) arr.push(parsed);
+    else notifsByMonitor.set(row.monitorId, [parsed]);
   }
 
   const locsByMonitor = new Map<number, PrivateLocation[]>();
-  for (const row of locRows as Array<{
-    private_location: PrivateLocation;
-    private_location_to_monitor: { monitorId: number };
-  }>) {
-    const mId = row.private_location_to_monitor.monitorId;
-    const arr = locsByMonitor.get(mId);
-    if (arr) arr.push(row.private_location);
-    else locsByMonitor.set(mId, [row.private_location]);
+  for (const row of locRows) {
+    if (row.monitorId == null) continue;
+    const parsed = selectPrivateLocationSchema.parse(row.location);
+    const arr = locsByMonitor.get(row.monitorId);
+    if (arr) arr.push(parsed);
+    else locsByMonitor.set(row.monitorId, [parsed]);
   }
 
   return rows.map((r) => ({
