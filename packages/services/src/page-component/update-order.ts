@@ -86,20 +86,21 @@ export async function updatePageComponentOrder(args: {
 
     const existingGroupIds = existingGroups.map((g) => g.id);
 
-    // After the discriminated-union in `schemas.ts`, `c.type === "monitor"`
-    // narrows the component to the arm that has a required `monitorId:
-    // number` — no need for the `&& c.monitorId` guard, and no `as`
-    // coercion on the result.
+    // `schemas.ts` enforces the `type === "monitor" → monitorId != null`
+    // invariant via `.refine`, but the refined type is still flat so we
+    // keep the defensive `&& c.monitorId` guard to narrow
+    // `monitorId: number | null | undefined` to `number` for TS. The
+    // refine parse would have already rejected any violating input.
     const inputMonitorIds = [
       ...input.components
-        .filter((c) => c.type === "monitor")
+        .filter((c) => c.type === "monitor" && c.monitorId)
         .map((c) => c.monitorId),
       ...input.groups.flatMap((g) =>
         g.components
-          .filter((c) => c.type === "monitor")
+          .filter((c) => c.type === "monitor" && c.monitorId)
           .map((c) => c.monitorId),
       ),
-    ];
+    ] as number[];
 
     await validateMonitorIds({
       tx,
@@ -212,9 +213,6 @@ export async function updatePageComponentOrder(args: {
       newGroups.push(created);
     }
 
-    // The CHECK constraint requires `monitor_id IS NULL` for `type
-    // = 'static'`, so we ternary on the discriminant. TS already knows
-    // `c.monitorId` is defined on the "monitor" arm after narrowing.
     const groupComponentValues = input.groups.flatMap((g, i) =>
       g.components.map((c) => ({
         id: c.id,
@@ -223,7 +221,7 @@ export async function updatePageComponentOrder(args: {
         name: c.name,
         description: c.description,
         type: c.type,
-        monitorId: c.type === "monitor" ? c.monitorId : null,
+        monitorId: c.monitorId,
         order: g.order,
         groupId: newGroups[i]?.id,
         groupOrder: c.order,
@@ -237,7 +235,7 @@ export async function updatePageComponentOrder(args: {
       name: c.name,
       description: c.description,
       type: c.type,
-      monitorId: c.type === "monitor" ? c.monitorId : null,
+      monitorId: c.monitorId,
       order: c.order,
       groupId: null as number | null,
       groupOrder: null as number | null,
@@ -248,12 +246,8 @@ export async function updatePageComponentOrder(args: {
       ...standaloneComponentValues,
     ];
 
-    // `c.monitorId` is now guaranteed non-null by the discriminated-
-    // union schema when `c.type === "monitor"` — drop the defensive
-    // `&& c.monitorId` branch that used to silently skip malformed
-    // rows.
     const monitorComponents = allComponentValues.filter(
-      (c) => c.type === "monitor",
+      (c) => c.type === "monitor" && c.monitorId,
     );
     const staticComponents = allComponentValues.filter(
       (c) => c.type === "static",

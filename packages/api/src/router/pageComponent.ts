@@ -60,10 +60,9 @@ export const pageComponentRouter = createTRPCRouter({
     .meta({ track: Events.UpdatePageComponentOrder, trackProps: ["pageId"] })
     // Reuse the service's canonical input schema directly — the local
     // flat `z.object` that lived here previously let components slip
-    // through with `type: "monitor"` but no `monitorId`, which the
-    // service (now a discriminated union) rejects. Sharing the schema
-    // keeps the two layers in lockstep so dashboard build + service
-    // validation enforce the same shape.
+    // through with `type: "monitor"` but no `monitorId`. The service
+    // schema carries a `.refine` enforcing that invariant, so sharing
+    // it keeps router validation in lockstep with the service.
     .input(UpdatePageComponentOrderInput)
     .mutation(async ({ ctx, input }) => {
       try {
