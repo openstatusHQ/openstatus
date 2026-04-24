@@ -8,10 +8,6 @@ export const ErrorReason = {
   MAINTENANCE_ID_REQUIRED: "MAINTENANCE_ID_REQUIRED",
   MAINTENANCE_CREATE_FAILED: "MAINTENANCE_CREATE_FAILED",
   MAINTENANCE_UPDATE_FAILED: "MAINTENANCE_UPDATE_FAILED",
-  PAGE_COMPONENT_NOT_FOUND: "PAGE_COMPONENT_NOT_FOUND",
-  PAGE_COMPONENTS_MIXED_PAGES: "PAGE_COMPONENTS_MIXED_PAGES",
-  PAGE_ID_COMPONENT_MISMATCH: "PAGE_ID_COMPONENT_MISMATCH",
-  PAGE_NOT_FOUND: "PAGE_NOT_FOUND",
   INVALID_DATE_FORMAT: "INVALID_DATE_FORMAT",
   INVALID_DATE_RANGE: "INVALID_DATE_RANGE",
 } as const;
@@ -92,45 +88,6 @@ export function maintenanceUpdateFailedError(
 }
 
 /**
- * Creates a "page component not found" error.
- */
-export function pageComponentNotFoundError(
-  pageComponentId: string,
-): ConnectError {
-  return createError(
-    "Page component not found",
-    Code.NotFound,
-    ErrorReason.PAGE_COMPONENT_NOT_FOUND,
-    { "page-component-id": pageComponentId },
-  );
-}
-
-/**
- * Creates a "page components from mixed pages" error.
- */
-export function pageComponentsMixedPagesError(): ConnectError {
-  return createError(
-    "All page components must belong to the same page",
-    Code.InvalidArgument,
-    ErrorReason.PAGE_COMPONENTS_MIXED_PAGES,
-  );
-}
-
-/**
- * Creates a "page not found" error.
- */
-export function pageNotFoundError(pageId: string): ConnectError {
-  return createError(
-    "Page not found",
-    Code.NotFound,
-    ErrorReason.PAGE_NOT_FOUND,
-    {
-      "page-id": pageId,
-    },
-  );
-}
-
-/**
  * Creates an "invalid date format" error.
  */
 export function invalidDateFormatError(dateValue: string): ConnectError {
@@ -151,23 +108,5 @@ export function invalidDateRangeError(from: string, to: string): ConnectError {
     Code.InvalidArgument,
     ErrorReason.INVALID_DATE_RANGE,
     { from, to },
-  );
-}
-
-/**
- * Creates a "page ID and component page mismatch" error.
- */
-export function pageIdComponentMismatchError(
-  providedPageId: string,
-  componentPageId: string,
-): ConnectError {
-  return createError(
-    `Page ID ${providedPageId} does not match the page ID ${componentPageId} of the provided components`,
-    Code.InvalidArgument,
-    ErrorReason.PAGE_ID_COMPONENT_MISMATCH,
-    {
-      "provided-page-id": providedPageId,
-      "component-page-id": componentPageId,
-    },
   );
 }
