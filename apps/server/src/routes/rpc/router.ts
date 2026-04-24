@@ -6,6 +6,12 @@ import { NotificationService } from "@openstatus/proto/notification/v1";
 import { StatusPageService } from "@openstatus/proto/status_page/v1";
 import { StatusReportService } from "@openstatus/proto/status_report/v1";
 
+import { healthServiceImpl } from "./handlers/health";
+import { maintenanceServiceImpl } from "./handlers/maintenance";
+import { monitorServiceImpl } from "./handlers/monitor";
+import { notificationServiceImpl } from "./handlers/notification";
+import { statusPageServiceImpl } from "./handlers/status-page";
+import { statusReportServiceImpl } from "./handlers/status-report";
 import {
   authInterceptor,
   errorInterceptor,
@@ -13,12 +19,6 @@ import {
   trackingInterceptor,
   validationInterceptor,
 } from "./interceptors";
-import { healthServiceImpl } from "./services/health";
-import { maintenanceServiceImpl } from "./services/maintenance";
-import { monitorServiceImpl } from "./services/monitor";
-import { notificationServiceImpl } from "./services/notification";
-import { statusPageServiceImpl } from "./services/status-page";
-import { statusReportServiceImpl } from "./services/status-report";
 
 /**
  * Create ConnectRPC router with services.
