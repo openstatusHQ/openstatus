@@ -65,20 +65,14 @@ describe("getWorkspaceWithUsage", () => {
   test("attaches a zero-or-positive usage block", async () => {
     const result = await getWorkspaceWithUsage({ ctx: teamCtx });
     expect(result.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
-    expect(result.usage).toMatchObject({
-      monitors: expect.any(Number),
-      notifications: expect.any(Number),
-      pages: expect.any(Number),
-      pageComponents: expect.any(Number),
-      checks: 0,
-    });
-    // `toMatchObject` above already pinned each field to `Number`;
-    // this extra loop asserts every value is also non-negative. Use
-    // a type-narrowing guard before `toBeGreaterThanOrEqual` because
-    // bun:test throws "must be numbers or bigints" when the received
-    // value is anything else, which has masked the actual assertion
-    // failure in past CI runs. Keep the loop over the known
-    // `WorkspaceUsage` keys so zod-schema extras can't contribute.
+
+    // Iterate the usage object *before* any `toMatchObject` call —
+    // bun:test's `toMatchObject` implementation mutates the received
+    // object in place, replacing number fields with the
+    // `expect.any(Number)` asymmetric-matcher stub on the expected
+    // side. Subsequent reads of `result.usage.<key>` then return the
+    // matcher object (typeof "object"), not the original count. Do
+    // the value-shape + non-negative check first.
     for (const key of [
       "monitors",
       "notifications",
@@ -92,6 +86,7 @@ describe("getWorkspaceWithUsage", () => {
         expect(value).toBeGreaterThanOrEqual(0);
       }
     }
+    expect(result.usage.checks).toBe(0);
   });
 });
 
