@@ -86,16 +86,20 @@ export async function updatePageComponentOrder(args: {
 
     const existingGroupIds = existingGroups.map((g) => g.id);
 
+    // After the discriminated-union in `schemas.ts`, `c.type === "monitor"`
+    // narrows the component to the arm that has a required `monitorId:
+    // number` — no need for the `&& c.monitorId` guard, and no `as`
+    // coercion on the result.
     const inputMonitorIds = [
       ...input.components
-        .filter((c) => c.type === "monitor" && c.monitorId)
+        .filter((c) => c.type === "monitor")
         .map((c) => c.monitorId),
       ...input.groups.flatMap((g) =>
         g.components
-          .filter((c) => c.type === "monitor" && c.monitorId)
+          .filter((c) => c.type === "monitor")
           .map((c) => c.monitorId),
       ),
-    ] as number[];
+    ];
 
     await validateMonitorIds({
       tx,
@@ -122,21 +126,19 @@ export async function updatePageComponentOrder(args: {
         !inputMonitorIds.includes(c.monitorId),
     );
 
-    const hasStaticComponentsInInput =
-      input.components.some((c) => c.type === "static") ||
-      input.groups.some((g) => g.components.some((c) => c.type === "static"));
-
     // Static component removal: if any input static components carry ids
     // we keep those and drop the rest; otherwise drop all existing static
     // components. Matches the pre-migration semantics for the "recreate
     // from scratch" flow the dashboard uses.
+    //
+    // Simplified from a previous two-step guard that branched on
+    // `hasStaticComponentsInInput` first — both "input has static with
+    // no ids" and "input has no static at all" collapsed to the same
+    // "drop all" action, so the outer check was dead weight.
     const removedStaticComponents = existingComponents.filter((c) => {
       if (c.type !== "static") return false;
-      if (hasStaticComponentsInInput) {
-        if (inputStaticComponentIds.length > 0) {
-          return !inputStaticComponentIds.includes(c.id);
-        }
-        return true;
+      if (inputStaticComponentIds.length > 0) {
+        return !inputStaticComponentIds.includes(c.id);
       }
       return true;
     });
@@ -183,22 +185,36 @@ export async function updatePageComponentOrder(args: {
         );
     }
 
+    // Sequential inserts instead of a bulk `.values([...]).returning()`.
+    // The previous bulk call relied on Drizzle/SQLite returning rows in
+    // the same order as they were inserted to line up `newGroups[i]`
+    // with `input.groups[i]` when the component mapping below runs.
+    // Turso/libSQL happens to preserve that order today, but it's an
+    // implicit coupling — any future driver change, batch split, or
+    // sort side-effect would silently land components in the wrong
+    // group with no error signal. Inserting one at a time is trivial
+    // cost for a small set (groups on a status page are capped) and
+    // makes the index alignment a guarantee rather than an assumption.
     const newGroups: Array<{ id: number; name: string }> = [];
-    if (input.groups.length > 0) {
-      const createdGroups = await tx
+    for (const g of input.groups) {
+      const [created] = await tx
         .insert(pageComponentGroup)
-        .values(
-          input.groups.map((g) => ({
-            pageId: input.pageId,
-            workspaceId: ctx.workspace.id,
-            name: g.name,
-            defaultOpen: g.defaultOpen,
-          })),
-        )
+        .values({
+          pageId: input.pageId,
+          workspaceId: ctx.workspace.id,
+          name: g.name,
+          defaultOpen: g.defaultOpen,
+        })
         .returning();
-      newGroups.push(...createdGroups);
+      if (!created) {
+        throw new Error("Failed to insert page component group");
+      }
+      newGroups.push(created);
     }
 
+    // The CHECK constraint requires `monitor_id IS NULL` for `type
+    // = 'static'`, so we ternary on the discriminant. TS already knows
+    // `c.monitorId` is defined on the "monitor" arm after narrowing.
     const groupComponentValues = input.groups.flatMap((g, i) =>
       g.components.map((c) => ({
         id: c.id,
@@ -207,7 +223,7 @@ export async function updatePageComponentOrder(args: {
         name: c.name,
         description: c.description,
         type: c.type,
-        monitorId: c.monitorId,
+        monitorId: c.type === "monitor" ? c.monitorId : null,
         order: g.order,
         groupId: newGroups[i]?.id,
         groupOrder: c.order,
@@ -221,7 +237,7 @@ export async function updatePageComponentOrder(args: {
       name: c.name,
       description: c.description,
       type: c.type,
-      monitorId: c.monitorId,
+      monitorId: c.type === "monitor" ? c.monitorId : null,
       order: c.order,
       groupId: null as number | null,
       groupOrder: null as number | null,
@@ -232,8 +248,12 @@ export async function updatePageComponentOrder(args: {
       ...standaloneComponentValues,
     ];
 
+    // `c.monitorId` is now guaranteed non-null by the discriminated-
+    // union schema when `c.type === "monitor"` — drop the defensive
+    // `&& c.monitorId` branch that used to silently skip malformed
+    // rows.
     const monitorComponents = allComponentValues.filter(
-      (c) => c.type === "monitor" && c.monitorId,
+      (c) => c.type === "monitor",
     );
     const staticComponents = allComponentValues.filter(
       (c) => c.type === "static",

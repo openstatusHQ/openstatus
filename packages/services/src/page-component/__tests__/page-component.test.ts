@@ -7,7 +7,7 @@ import {
   expect,
   test,
 } from "bun:test";
-import { db, eq, inArray } from "@openstatus/db";
+import { and, db, eq, inArray } from "@openstatus/db";
 import {
   monitor,
   page,
@@ -216,6 +216,60 @@ describe("updatePageComponentOrder", () => {
         },
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  test("upserts monitor components without creating duplicates", async () => {
+    // The `(pageId, monitorId)` unique constraint + `onConflictDoUpdate`
+    // is the riskiest path in this service: a regression here would
+    // silently insert duplicate rows on every re-invocation. Run the
+    // service twice with the same `monitorId` — expect exactly one
+    // row, with the second call's values winning the update.
+    await updatePageComponentOrder({
+      ctx: teamCtx,
+      input: {
+        pageId: testPageId,
+        components: [
+          {
+            order: 0,
+            name: `${TEST_PREFIX}-upsert-initial`,
+            type: "monitor",
+            monitorId: teamMonitorId,
+          },
+        ],
+        groups: [],
+      },
+    });
+    await updatePageComponentOrder({
+      ctx: teamCtx,
+      input: {
+        pageId: testPageId,
+        components: [
+          {
+            order: 5,
+            name: `${TEST_PREFIX}-upsert-renamed`,
+            type: "monitor",
+            monitorId: teamMonitorId,
+          },
+        ],
+        groups: [],
+      },
+    });
+
+    const rows = await db
+      .select()
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, testPageId),
+          eq(pageComponent.type, "monitor"),
+          eq(pageComponent.monitorId, teamMonitorId),
+        ),
+      )
+      .all();
+    for (const r of rows) createdComponentIds.push(r.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.name).toBe(`${TEST_PREFIX}-upsert-renamed`);
+    expect(rows[0]?.order).toBe(5);
   });
 });
 
