@@ -2,11 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
-import {
-  addLimitWarnings,
-  clampPeriodicity,
-  computePhaseStatus,
-} from "./import";
+import { addLimitWarnings, clampPeriodicity, computePhaseStatus } from "../";
 
 function makeSummary(overrides?: Partial<ImportSummary>): ImportSummary {
   return {
@@ -96,7 +92,12 @@ describe("addLimitWarnings", () => {
       });
 
       expect(summary.errors.length).toBe(1);
-      expect(summary.errors[0]).toContain("3 of 4");
+      // Wording: "Only 3 new components may be created … 4 in the import".
+      // Both numbers land in the message — assert on the salient
+      // fragments instead of the exact string so future phrasing tweaks
+      // don't churn the assertion.
+      expect(summary.errors[0]).toContain("3 new component");
+      expect(summary.errors[0]).toContain("4 in the import");
     });
 
     test("no warning when components phase is empty", async () => {
@@ -317,7 +318,9 @@ describe("addLimitWarnings", () => {
     });
 
     expect(summary.errors.length).toBe(3);
-    expect(summary.errors.some((e) => e.includes("3 of 4"))).toBe(true);
+    expect(summary.errors.some((e) => e.includes("3 new component"))).toBe(
+      true,
+    );
     expect(summary.errors.some((e) => e.includes("Custom domain"))).toBe(true);
     expect(summary.errors.some((e) => e.includes("Subscribers"))).toBe(true);
   });
@@ -458,6 +461,21 @@ describe("clampPeriodicity", () => {
 
     test("clamps 30s to 1m", () => {
       expect(clampPeriodicity("30s", starterPlan)).toBe("1m");
+    });
+  });
+
+  describe("unknown requested periodicity", () => {
+    // An unknown periodicity string (e.g. `"2m"` — not in
+    // `PERIODICITY_ORDER`) previously clamped from index 0 (the
+    // fastest tier), which could pick a *faster* interval than
+    // requested. It should fall back to the slowest allowed instead,
+    // erring toward the "never faster than requested" invariant.
+    test("falls back to slowest allowed on unknown value", () => {
+      expect(clampPeriodicity("2m", ["5m", "10m", "30m"])).toBe("30m");
+    });
+
+    test("falls back to 10m when `allowed` is empty", () => {
+      expect(clampPeriodicity("2m", [])).toBe("10m");
     });
   });
 });

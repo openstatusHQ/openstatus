@@ -119,14 +119,32 @@ export function FormComponentsUpdate() {
         onSubmit={async (values) => {
           await updatePageConfigurationMutation.mutateAsync({
             id: Number.parseInt(id),
+            // `FormConfiguration` keeps its internal values loose
+            // (strings from radios/selects); the server input now
+            // reuses the canonical `pageConfigurationSchema`, so tRPC
+            // runs a strict parse at the boundary. The casts here
+            // reflect the UI contract (the select options match the
+            // enum members) — an invalid submit surfaces as a zod
+            // error from the router.
             configuration: {
               uptime:
                 typeof values.configuration.uptime === "boolean"
                   ? values.configuration.uptime
                   : values.configuration.uptime === "true",
-              value: values.configuration.value ?? "duration",
-              type: values.configuration.type ?? "absolute",
-              theme: values.configuration.theme ?? undefined,
+              value: (values.configuration.value ?? "duration") as
+                | "duration"
+                | "requests"
+                | "manual",
+              type: (values.configuration.type ?? "absolute") as
+                | "manual"
+                | "absolute",
+              theme: (values.configuration.theme ?? undefined) as
+                | "default"
+                | "default-rounded"
+                | "supabase"
+                | "github-contrast"
+                | "dracula"
+                | undefined,
             },
           });
         }}

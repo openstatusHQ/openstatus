@@ -518,6 +518,9 @@ importers:
       '@openstatus/subscriptions':
         specifier: workspace:*
         version: link:../../packages/subscriptions
+      '@openstatus/theme-store':
+        specifier: workspace:*
+        version: link:../../packages/theme-store
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -2032,12 +2035,21 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../db
+      '@openstatus/importers':
+        specifier: workspace:*
+        version: link:../importers
+      '@openstatus/locales':
+        specifier: workspace:*
+        version: link:../locales
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions
       '@openstatus/subscriptions':
         specifier: workspace:*
         version: link:../subscriptions
+      '@openstatus/theme-store':
+        specifier: workspace:*
+        version: link:../theme-store
       zod:
         specifier: 4.1.13
         version: 4.1.13
