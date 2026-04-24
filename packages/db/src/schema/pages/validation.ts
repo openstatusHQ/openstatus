@@ -7,7 +7,11 @@ import { z } from "zod";
 import { pageAccessTypes } from "./constants";
 import { page } from "./page";
 
-const slugSchema = z
+// Exported so `@openstatus/services` can reuse the canonical rules in
+// its own `NewPageInput` / `UpdatePage*Input` schemas without
+// duplicating the regex. Keep these as the single source of truth for
+// slug and custom-domain shape validation.
+export const slugSchema = z
   .string()
   .regex(
     /^[A-Za-z0-9-]+$/,
@@ -16,7 +20,7 @@ const slugSchema = z
   .min(3)
   .toLowerCase();
 
-const customDomainSchema = z
+export const customDomainSchema = z
   .string()
   .regex(
     /^(?!https?:\/\/|www.)([a-zA-Z0-9]+(.[a-zA-Z0-9]+)+.*)$/,
@@ -89,6 +93,7 @@ export const pageConfigurationSchema = z.object({
     .nullish()
     .prefault("default"),
 });
+export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().prefault(""),

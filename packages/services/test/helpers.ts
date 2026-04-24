@@ -1,6 +1,9 @@
 import { expect } from "bun:test";
-import { db, eq } from "@openstatus/db";
+import { db, eq, inArray } from "@openstatus/db";
 import {
+  notification,
+  page,
+  pageComponent,
   selectWorkspaceSchema,
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
@@ -9,6 +12,44 @@ import type { AuditLogRecord } from "../src/audit";
 import { installTestAuditBuffer, uninstallTestAuditBuffer } from "../src/audit";
 import type { Actor, ServiceContext } from "../src/context";
 import type { Workspace } from "../src/types";
+
+/**
+ * Clear leftover quota-gated rows on a workspace so tests that rely on
+ * a specific cap state (e.g. `free` plan has `status-pages: 1`,
+ * `notification-channels: 1`) can run regardless of what prior tests
+ * or aborted runs left behind.
+ *
+ * Intended for `beforeAll` of suites that exercise the `free`
+ * workspace — the tight-plan negative tests break randomly otherwise
+ * because cumulative state trips a quota check before the test can
+ * hit its intended assertion. Scoped to the two tables that have bit
+ * us repeatedly in CI; extend when a new quota-gated table surfaces.
+ */
+export async function cleanQuotaGatedTables(
+  workspaceId: number,
+): Promise<void> {
+  // Pages → delete dependent pageComponents first to satisfy FKs.
+  const pages = await db
+    .select({ id: page.id })
+    .from(page)
+    .where(eq(page.workspaceId, workspaceId))
+    .all();
+  const pageIds = pages.map((p) => p.id);
+  if (pageIds.length > 0) {
+    await db
+      .delete(pageComponent)
+      .where(inArray(pageComponent.pageId, pageIds))
+      .catch(() => undefined);
+    await db
+      .delete(page)
+      .where(inArray(page.id, pageIds))
+      .catch(() => undefined);
+  }
+  await db
+    .delete(notification)
+    .where(eq(notification.workspaceId, workspaceId))
+    .catch(() => undefined);
+}
 
 /**
  * Load a seeded workspace by id (defaults to id=1, the `team` plan fixture).

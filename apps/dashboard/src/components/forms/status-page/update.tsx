@@ -2,6 +2,7 @@ import { Link } from "@/components/common/link";
 import { Note } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
+import type { ThemeKey } from "@openstatus/theme-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -145,7 +146,14 @@ export function FormStatusPageUpdate() {
           await updatePageAppearanceMutation.mutateAsync({
             id: Number.parseInt(id),
             forceTheme: values.forceTheme,
-            configuration: values.configuration,
+            // `FormAppearance` keeps its internal `theme` value as a
+            // loose `string`; cast to the canonical `ThemeKey` from
+            // `@openstatus/theme-store` (same source the service input
+            // enum is derived from). Invalid submits are caught by the
+            // router's zod parse.
+            configuration: {
+              theme: values.configuration.theme as ThemeKey,
+            },
           });
         }}
       />

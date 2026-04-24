@@ -3,8 +3,7 @@ import {
   selectWorkspaceSchema,
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
-import { type ServiceContext, ServiceError } from "@openstatus/services";
-import { ZodError } from "zod";
+import type { ServiceContext } from "@openstatus/services";
 
 import type { PendingAction } from "./confirmation-store";
 
@@ -43,33 +42,21 @@ export async function toServiceCtx(args: {
 
 /**
  * Convert a service (or unknown) error into a Slack-friendly message.
- * Slack's UI is single-line plain text, so we surface actionable text only
- * and leave full error details to logtape/Sentry observability sinks.
  *
- * `NOT_FOUND` messages are sanitised before reaching Slack because
- * `NotFoundError` formats as `"<entity> <id> not found"` (e.g.
- * `"page_component 17 not found"`) — internal row IDs have no meaning
- * to Slack users and shouldn't leak out of the service boundary. Other
- * `ServiceError` subclasses take a hand-written message at their call
- * site, so they're safe to forward verbatim.
+ * **Always returns the same generic string: `"Something went wrong.
+ * Please try again."`** Slack users aren't developers — they don't need
+ * (and shouldn't see) the specific error detail. The constraint is
+ * codified by the `does not leak internal error details` test case and
+ * was the existing pre-services behaviour we need to preserve. Full
+ * error text still flows to logtape / Sentry via the catch site.
+ *
+ * Notable things this intentionally suppresses:
+ *   - `NotFoundError` formats as `"<entity> <id> not found"` — internal
+ *     row IDs have no meaning to Slack users.
+ *   - `ConflictError` / `ValidationError` often carry SQL-ish phrasing
+ *     or internal column names.
+ *   - `ZodError` emits a raw JSON issue list.
  */
-export function toSlackMessage(err: unknown): string {
-  if (err instanceof ZodError) {
-    return ":x: The request was invalid.";
-  }
-  if (err instanceof ServiceError) {
-    switch (err.code) {
-      case "NOT_FOUND":
-        return ":x: Couldn't find what you were looking for.";
-      case "FORBIDDEN":
-      case "UNAUTHORIZED":
-      case "CONFLICT":
-      case "VALIDATION":
-      case "LIMIT_EXCEEDED":
-        return `:x: ${err.message}`;
-      case "INTERNAL":
-        return ":x: Something went wrong. Please try again.";
-    }
-  }
+export function toSlackMessage(_err: unknown): string {
   return ":x: Something went wrong. Please try again.";
 }

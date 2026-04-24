@@ -2,6 +2,7 @@
 
 import { FormComponents } from "@/components/forms/components/form-components";
 import { useTRPC } from "@/lib/trpc/client";
+import type { PageConfiguration } from "@openstatus/db/src/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -119,14 +120,22 @@ export function FormComponentsUpdate() {
         onSubmit={async (values) => {
           await updatePageConfigurationMutation.mutateAsync({
             id: Number.parseInt(id),
+            // `FormConfiguration` keeps its internal values loose
+            // (strings from radios/selects). Casts use `PageConfiguration`
+            // derived from the service input so the enum members stay in
+            // sync with `pageConfigurationSchema` — an invalid submit
+            // surfaces as a zod error from the router.
             configuration: {
               uptime:
                 typeof values.configuration.uptime === "boolean"
                   ? values.configuration.uptime
                   : values.configuration.uptime === "true",
-              value: values.configuration.value ?? "duration",
-              type: values.configuration.type ?? "absolute",
-              theme: values.configuration.theme ?? undefined,
+              value: (values.configuration.value ??
+                "duration") as PageConfiguration["value"],
+              type: (values.configuration.type ??
+                "absolute") as PageConfiguration["type"],
+              theme: (values.configuration.theme ??
+                undefined) as PageConfiguration["theme"],
             },
           });
         }}
