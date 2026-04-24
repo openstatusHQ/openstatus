@@ -85,11 +85,14 @@ export async function createInvitation(args: {
       );
     }
 
+    // Strip `token` — it's the email-link capability, never audit it.
+    // Everything else on the row is fine as an `after` snapshot.
+    const { token: _token, ...safe } = row;
     await emitAudit(tx, ctx, {
       action: "invitation.create",
       entityType: "invitation",
       entityId: row.id,
-      metadata: { email: input.email },
+      after: safe,
     });
 
     return row as Invitation;

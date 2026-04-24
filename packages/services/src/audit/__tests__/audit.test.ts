@@ -24,6 +24,22 @@ import type { ServiceContext } from "../../context";
 
 import { diffTopLevel, emitAudit } from "../emit";
 
+/**
+ * Test-only escape hatch around `emitAudit`'s compile-time snapshot
+ * contract (`.create` requires `after`, `.delete` requires `before`,
+ * `.update` requires both). Several tests here intentionally pass
+ * bare entries to exercise the runtime path — column persistence,
+ * actor derivation, ordering — without caring about snapshot shape.
+ * Real call sites must satisfy the full type.
+ */
+async function emitLoose(
+  tx: Parameters<typeof emitAudit>[0],
+  ctx: ServiceContext,
+  entry: unknown,
+) {
+  return emitAudit(tx, ctx, entry as AuditEntry);
+}
+
 let teamCtx: ServiceContext;
 
 beforeAll(async () => {
@@ -119,7 +135,7 @@ describe("diffTopLevel", () => {
 describe("emitAudit — row persistence", () => {
   test("inserts a row with the expected columns", async () => {
     await db.transaction(async (tx) => {
-      await emitAudit(tx, teamCtx, {
+      await emitLoose(tx, teamCtx, {
         action: "monitor.create",
         entityType: "monitor",
         entityId: 9001,
@@ -155,7 +171,7 @@ describe("emitAudit — row persistence", () => {
 
   test("stringifies numeric entityIds", async () => {
     await db.transaction(async (tx) => {
-      await emitAudit(tx, teamCtx, {
+      await emitLoose(tx, teamCtx, {
         action: "page.delete",
         entityType: "page",
         entityId: 42,
@@ -173,7 +189,7 @@ describe("emitAudit — row persistence", () => {
     let threw = false;
     try {
       await db.transaction(async (tx) => {
-        await emitAudit(tx, teamCtx, {
+        await emitLoose(tx, teamCtx, {
           action: "monitor.create",
           entityType: "monitor",
           entityId: 9002,
@@ -304,7 +320,7 @@ describe("emitAudit — changed_fields derivation", () => {
 describe("emitAudit — actor derivation", () => {
   test("user actor → actorId and actorUserId are the same id", async () => {
     await db.transaction(async (tx) => {
-      await emitAudit(tx, teamCtx, {
+      await emitLoose(tx, teamCtx, {
         action: "workspace.update",
         entityType: "workspace",
         entityId: teamCtx.workspace.id,
@@ -322,7 +338,7 @@ describe("emitAudit — actor derivation", () => {
   test("apiKey actor without linked user → actorUserId null", async () => {
     const ctx = makeApiKeyCtx(teamCtx.workspace, { keyId: "k_anon" });
     await db.transaction(async (tx) => {
-      await emitAudit(tx, ctx, {
+      await emitLoose(tx, ctx, {
         action: "api_key.delete",
         entityType: "api_key",
         entityId: 9200,
@@ -344,7 +360,7 @@ describe("emitAudit — actor derivation", () => {
       userId: 42,
     });
     await db.transaction(async (tx) => {
-      await emitAudit(tx, ctx, {
+      await emitLoose(tx, ctx, {
         action: "api_key.delete",
         entityType: "api_key",
         entityId: 9201,
@@ -367,7 +383,7 @@ describe("emitAudit — actor derivation", () => {
       userId: 7,
     });
     await db.transaction(async (tx) => {
-      await emitAudit(tx, ctx, {
+      await emitLoose(tx, ctx, {
         action: "maintenance.update",
         entityType: "maintenance",
         entityId: 9300,
@@ -386,7 +402,7 @@ describe("emitAudit — actor derivation", () => {
   test("system actor → actorId is the job name, actorUserId null", async () => {
     const ctx = makeSystemCtx(teamCtx.workspace, { job: "cleanup-job" });
     await db.transaction(async (tx) => {
-      await emitAudit(tx, ctx, {
+      await emitLoose(tx, ctx, {
         action: "monitor.delete",
         entityType: "monitor",
         entityId: 9400,
@@ -407,7 +423,7 @@ describe("emitAudit — ordering", () => {
   test("autoincrement id provides a stable tiebreaker within the same ms", async () => {
     await db.transaction(async (tx) => {
       for (let i = 0; i < 5; i++) {
-        await emitAudit(tx, teamCtx, {
+        await emitLoose(tx, teamCtx, {
           action: "monitor.update",
           entityType: "monitor",
           entityId: 9500 + i,
@@ -437,13 +453,12 @@ describe("emitAudit — ordering", () => {
 
 describe("emitAudit — entry-shape regressions", () => {
   test("entry without metadata serializes null to the metadata column", async () => {
-    const entry: AuditEntry = {
-      action: "monitor.update",
-      entityType: "monitor",
-      entityId: 9600,
-    };
     await db.transaction(async (tx) => {
-      await emitAudit(tx, teamCtx, entry);
+      await emitLoose(tx, teamCtx, {
+        action: "monitor.update",
+        entityType: "monitor",
+        entityId: 9600,
+      });
     });
     const [row] = await readAuditLog({
       workspaceId: teamCtx.workspace.id,

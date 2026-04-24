@@ -33,7 +33,7 @@ export const columns: ColumnDef<AuditLog>[] = [
       if (!user) return <span className="text-muted-foreground">-</span>;
       return (
         <div className="flex items-center gap-2">
-          <Avatar className="size-6 rounded-lg">
+          <Avatar className="size-6 rounded-md">
             <AvatarImage src={user.photoUrl ?? undefined} />
             <AvatarFallback className="rounded-lg uppercase">
               {user?.name?.slice(0, 2)}

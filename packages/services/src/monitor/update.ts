@@ -272,12 +272,17 @@ export async function bulkUpdateMonitors(args: {
 
     const existingById = new Map(existingRows.map((r) => [r.id, r]));
     for (const updated of updatedRows) {
+      // `updatedRows` is a strict subset of `existingRows` (same WHERE
+      // + ids derived from `existingRows`), so the lookup always hits.
+      // If it ever doesn't, the update violated that invariant and we
+      // shouldn't emit an audit row at all.
       const before = existingById.get(updated.id);
+      if (!before) continue;
       await emitAudit(tx, ctx, {
         action: "monitor.update",
         entityType: "monitor",
         entityId: updated.id,
-        ...(before ? { before } : {}),
+        before,
         after: updated,
       });
     }

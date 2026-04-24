@@ -96,7 +96,7 @@ export function DataTableRowDetails({ row }: { row: AuditLog }) {
     <div className="grid gap-3 bg-muted/30 p-4 text-xs">
       {changes.length ? (
         <div className="grid gap-2">
-          <div className="font-medium text-muted-foreground text-[11px] uppercase tracking-wider">
+          <div className="font-medium text-[11px] text-muted-foreground uppercase tracking-wider">
             Changes
           </div>
           <div className="overflow-hidden rounded-md border bg-background">

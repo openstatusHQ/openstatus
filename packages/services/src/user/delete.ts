@@ -12,7 +12,11 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { PreconditionFailedError, UnauthorizedError } from "../errors";
+import {
+  NotFoundError,
+  PreconditionFailedError,
+  UnauthorizedError,
+} from "../errors";
 import { DeleteAccountInput } from "./schemas";
 
 /**
@@ -59,6 +63,10 @@ export async function deleteAccount(args: {
     const existing = await tx.query.user.findFirst({
       where: eq(user.id, userId),
     });
+
+    // Actor's user id resolved to nothing — anomalous, don't proceed
+    // silently and don't emit an audit row for a phantom delete.
+    if (!existing) throw new NotFoundError("user", userId);
 
     const ownedRows = await tx.query.usersToWorkspaces.findMany({
       where: and(

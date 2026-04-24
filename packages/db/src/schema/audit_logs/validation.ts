@@ -157,10 +157,12 @@ export const auditActionSchema = z.discriminatedUnion("action", [
  * stays single-sourced — adding a new action here would otherwise
  * require two parallel edits.
  *
- * The `before`/`after` snapshots are intentionally loose
+ * The `before`/`after` snapshots are intentionally loose at runtime
  * (`Record<string, unknown>`): their shapes mirror the underlying
  * entity tables and binding them to this schema would force a cycle
- * with every column definition.
+ * with every column definition. Shape *presence* is enforced in
+ * TypeScript via the `AuditEntry` type below, keyed off the action
+ * verb suffix.
  */
 export const auditEntrySchema = auditActionSchema.and(
   z.object({
@@ -173,6 +175,29 @@ export const insertAuditLogSchema = createInsertSchema(auditLog);
 export const selectAuditLogSchema = createSelectSchema(auditLog);
 
 export type AuditAction = z.infer<typeof auditActionSchema>;
-export type AuditEntry = z.infer<typeof auditEntrySchema>;
+
+type Snapshot = Record<string, unknown>;
+
+/**
+ * Snapshot presence is derived from the action's verb suffix:
+ *
+ * - `*.create` — `after` required, `before` forbidden.
+ * - `*.delete` — `before` required, `after` forbidden.
+ * - `*.update` — both `before` and `after` required.
+ *
+ * Enforced at the `emitAudit` call site via the parameter type; Zod
+ * stays loose at runtime so the schema file doesn't need to know each
+ * entity's column list.
+ */
+export type AuditEntry = AuditAction extends infer A
+  ? A extends { action: `${string}.create` }
+    ? A & { after: Snapshot; before?: never }
+    : A extends { action: `${string}.delete` }
+      ? A & { before: Snapshot; after?: never }
+      : A extends { action: `${string}.update` }
+        ? A & { before: Snapshot; after: Snapshot }
+        : A & { before?: Snapshot; after?: Snapshot }
+  : never;
+
 export type AuditActionName = AuditAction["action"];
 export type AuditEntityType = AuditAction["entityType"];

@@ -3,6 +3,7 @@ import { workspace } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import { UpdateWorkspaceNameInput } from "./schemas";
 
 /**
@@ -22,6 +23,11 @@ export async function updateWorkspaceName(args: {
       .from(workspace)
       .where(eq(workspace.id, ctx.workspace.id))
       .get();
+    // Workspace is derived from `ctx.workspace`, so absence here is a
+    // state anomaly (concurrent delete?). Fail closed rather than emit
+    // an audit row without a `before` snapshot.
+    if (!existing) throw new NotFoundError("workspace", ctx.workspace.id);
+
     const updated = await tx
       .update(workspace)
       .set({ name: input.name, updatedAt: new Date() })
@@ -33,7 +39,7 @@ export async function updateWorkspaceName(args: {
       action: "workspace.update",
       entityType: "workspace",
       entityId: ctx.workspace.id,
-      ...(existing ? { before: existing } : {}),
+      before: existing,
       after: updated,
     });
   });

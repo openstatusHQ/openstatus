@@ -139,7 +139,7 @@ export async function writePagePhase(
       published: data.published,
       icon: data.icon,
     })
-    .returning({ id: page.id });
+    .returning();
 
   if (!inserted) throw new Error("Failed to insert page");
 
@@ -152,6 +152,7 @@ export async function writePagePhase(
     entityType: "page",
     entityId: inserted.id,
     metadata: auditMeta(pc, { sourceId: resource.sourceId, slug: data.slug }),
+    after: inserted,
   });
 
   return inserted.id;
@@ -195,7 +196,7 @@ export async function writeComponentGroupsPhase(
       const [inserted] = await tx
         .insert(pageComponentGroup)
         .values({ workspaceId, pageId, name: data.name })
-        .returning({ id: pageComponentGroup.id });
+        .returning();
 
       if (!inserted) {
         resource.status = "failed";
@@ -211,6 +212,7 @@ export async function writeComponentGroupsPhase(
         action: "page_component_group.create",
         entityType: "page_component_group",
         entityId: inserted.id,
+        after: inserted,
         metadata: auditMeta(pc, {
           sourceId: resource.sourceId,
           pageId,
@@ -308,7 +310,7 @@ export async function writeComponentsPhase(
           order: data.order,
           groupId: resolvedGroupId,
         })
-        .returning({ id: pageComponent.id });
+        .returning();
 
       if (!inserted) {
         resource.status = "failed";
@@ -329,6 +331,7 @@ export async function writeComponentsPhase(
           pageId,
           type: data.type,
         }),
+        after: inserted,
       });
     } catch (err) {
       resource.status = "failed";
@@ -417,7 +420,7 @@ export async function writeIncidentsPhase(
           workspaceId,
           pageId,
         })
-        .returning({ id: statusReport.id });
+        .returning();
 
       if (!insertedReport) {
         resource.status = "failed";
@@ -434,6 +437,7 @@ export async function writeIncidentsPhase(
           pageId,
           title: data.report.title,
         }),
+        after: insertedReport,
       });
 
       // Batch the update rows with `.returning()` so per-update audit can
@@ -449,7 +453,7 @@ export async function writeIncidentsPhase(
               statusReportId: insertedReport.id,
             })),
           )
-          .returning({ id: statusReportUpdate.id });
+          .returning();
 
         for (const row of insertedUpdates) {
           await emitAudit(tx, ctx, {
@@ -460,6 +464,7 @@ export async function writeIncidentsPhase(
               sourceId: resource.sourceId,
               statusReportId: insertedReport.id,
             }),
+            after: row,
           });
         }
       }
@@ -567,7 +572,7 @@ export async function writeMaintenancesPhase(
           workspaceId,
           pageId,
         })
-        .returning({ id: maintenance.id });
+        .returning();
 
       if (!inserted) {
         resource.status = "failed";
@@ -604,6 +609,7 @@ export async function writeMaintenancesPhase(
           pageId,
           title: data.title,
         }),
+        after: inserted,
       });
     } catch (err) {
       resource.status = "failed";
@@ -731,7 +737,7 @@ export async function writeMonitorsPhase(
             | "OPTIONS",
           timeout: data.timeout,
         })
-        .returning({ id: monitor.id });
+        .returning();
 
       if (!inserted) {
         resource.status = "failed";
@@ -753,6 +759,7 @@ export async function writeMonitorsPhase(
           url: data.url,
           jobType: data.jobType,
         }),
+        after: inserted,
       });
     } catch (err) {
       resource.status = "failed";
@@ -829,7 +836,7 @@ export async function writeSubscribersPhase(
           token: crypto.randomUUID(),
           acceptedAt: data.confirmed ? new Date() : undefined,
         })
-        .returning({ id: pageSubscriber.id });
+        .returning();
 
       if (!inserted) {
         resource.status = "failed";
@@ -857,6 +864,9 @@ export async function writeSubscribersPhase(
       resource.openstatusId = inserted.id;
       resource.status = "created";
 
+      // Strip `token` — it's the unsubscribe / management capability
+      // link. Everything else on the row is fine to audit.
+      const { token: _token, ...safe } = inserted;
       await emitAudit(tx, ctx, {
         action: "page_subscriber.create",
         entityType: "page_subscriber",
@@ -866,6 +876,7 @@ export async function writeSubscribersPhase(
           pageId,
           email,
         }),
+        after: safe,
       });
     } catch (err) {
       resource.status = "failed";

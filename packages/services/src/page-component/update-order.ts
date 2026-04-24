@@ -321,10 +321,26 @@ export async function updatePageComponentOrder(args: {
       }
     }
 
+    // Refetch the layout so `after` reflects inserted / reassigned ids.
+    // The action is audited against the page (the "layout" entity),
+    // not individual components, so a list snapshot is the right shape.
+    const updatedComponents = await tx
+      .select()
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, input.pageId),
+          eq(pageComponent.workspaceId, ctx.workspace.id),
+        ),
+      )
+      .all();
+
     await emitAudit(tx, ctx, {
       action: "page_component.update",
       entityType: "page",
       entityId: input.pageId,
+      before: { components: existingComponents },
+      after: { components: updatedComponents },
     });
   });
 }

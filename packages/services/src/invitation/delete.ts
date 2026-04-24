@@ -28,7 +28,10 @@ export async function deleteInvitation(args: {
   const input = DeleteInvitationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
-    const deleted = await tx
+    // `.returning()` the full row so we don't need a separate SELECT
+    // for the audit snapshot. `token` (email-link capability) is
+    // stripped before emitting; everything else is safe.
+    const [deleted] = await tx
       .delete(invitation)
       .where(
         and(
@@ -37,14 +40,16 @@ export async function deleteInvitation(args: {
           isNull(invitation.acceptedAt),
         ),
       )
-      .returning({ id: invitation.id });
+      .returning();
 
-    if (deleted.length === 0) return;
+    if (!deleted) return;
 
+    const { token: _token, ...before } = deleted;
     await emitAudit(tx, ctx, {
       action: "invitation.delete",
       entityType: "invitation",
       entityId: input.id,
+      before,
     });
   });
 }
