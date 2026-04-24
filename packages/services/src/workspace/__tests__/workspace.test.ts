@@ -72,11 +72,13 @@ describe("getWorkspaceWithUsage", () => {
       pageComponents: expect.any(Number),
       checks: 0,
     });
-    // Iterate only the known `WorkspaceUsage` keys — `result.usage`
-    // may carry extra fields from zod schema parsing that aren't
-    // numeric (e.g. pass-through relation data), so a blanket
-    // `Object.values(...)` comparison breaks on the first non-numeric
-    // entry.
+    // `toMatchObject` above already pinned each field to `Number`;
+    // this extra loop asserts every value is also non-negative. Use
+    // a type-narrowing guard before `toBeGreaterThanOrEqual` because
+    // bun:test throws "must be numbers or bigints" when the received
+    // value is anything else, which has masked the actual assertion
+    // failure in past CI runs. Keep the loop over the known
+    // `WorkspaceUsage` keys so zod-schema extras can't contribute.
     for (const key of [
       "monitors",
       "notifications",
@@ -84,7 +86,11 @@ describe("getWorkspaceWithUsage", () => {
       "pageComponents",
       "checks",
     ] as const) {
-      expect(result.usage[key]).toBeGreaterThanOrEqual(0);
+      const value = result.usage[key];
+      expect(typeof value).toBe("number");
+      if (typeof value === "number") {
+        expect(value).toBeGreaterThanOrEqual(0);
+      }
     }
   });
 });

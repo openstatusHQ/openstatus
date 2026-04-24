@@ -8,7 +8,7 @@ import {
   test,
 } from "bun:test";
 import { db, eq, inArray } from "@openstatus/db";
-import { invitation, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { invitation, user, usersToWorkspaces } from "@openstatus/db/src/schema";
 
 import {
   acceptInvitation,
@@ -59,6 +59,24 @@ beforeAll(async () => {
     .insert(usersToWorkspaces)
     .values({ workspaceId: SEEDED_WORKSPACE_FREE_ID, userId: 1 })
     .onConflictDoNothing();
+
+  // Seed the accepting user for the `acceptInvitation` test below.
+  // The test accepts as `userId: 3` and the ensuing
+  // `users_to_workspaces` insert has an FK on `user.id` — without a
+  // seeded row the insert blows up with a `SQLITE_CONSTRAINT`
+  // surfacing as a hook-timeout in the suite. Tear it down in
+  // `afterAll` alongside the membership.
+  await db
+    .insert(user)
+    .values({
+      id: 3,
+      tenantId: "invitation-test-3",
+      firstName: "Accept",
+      lastName: "Tester",
+      email: "accept-tester@example.test",
+      photoUrl: "",
+    })
+    .onConflictDoNothing();
 });
 
 afterAll(async () => {
@@ -70,6 +88,17 @@ afterAll(async () => {
   await db
     .delete(usersToWorkspaces)
     .where(eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_FREE_ID))
+    .catch(() => undefined);
+  // `acceptInvitation` test seeded user 3 as the accepting user —
+  // clean up membership (test does this in-test, but harmless to
+  // re-run) and the user row itself.
+  await db
+    .delete(usersToWorkspaces)
+    .where(eq(usersToWorkspaces.userId, 3))
+    .catch(() => undefined);
+  await db
+    .delete(user)
+    .where(eq(user.id, 3))
     .catch(() => undefined);
 });
 
