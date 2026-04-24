@@ -798,6 +798,24 @@ export async function writeSubscribersPhase(
       if (existing) {
         resource.openstatusId = existing.id;
         resource.status = "skipped";
+        // Same reconciliation rationale as `writeIncidentsPhase` — a
+        // partial `componentIdMap` on the first run means the link
+        // set may be incomplete, and the composite PK on
+        // `(pageSubscriberId, pageComponentId)` makes the re-insert a
+        // no-op for pairs that already exist.
+        const reconciliationLinks = data.sourceComponentIds
+          .map((sourceId) => componentIdMap.get(sourceId))
+          .filter((id): id is number => id != null)
+          .map((pageComponentId) => ({
+            pageSubscriberId: existing.id,
+            pageComponentId,
+          }));
+        if (reconciliationLinks.length > 0) {
+          await tx
+            .insert(pageSubscriberToPageComponent)
+            .values(reconciliationLinks)
+            .onConflictDoNothing();
+        }
         continue;
       }
 

@@ -44,6 +44,16 @@ beforeAll(async () => {
   const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
+
+  // Seed membership for the free workspace so the `members: 1` cap
+  // can actually be reached by a subsequent `createInvitation` — the
+  // shared DB seed only adds a row for workspace 1 (team). Without
+  // this, the members-cap assertion below passes against `0 < 1` and
+  // never reaches the LimitExceededError branch.
+  await db
+    .insert(usersToWorkspaces)
+    .values({ workspaceId: SEEDED_WORKSPACE_FREE_ID, userId: 2 })
+    .onConflictDoNothing();
 });
 
 afterAll(async () => {
@@ -52,6 +62,10 @@ afterAll(async () => {
       .delete(invitation)
       .where(inArray(invitation.id, createdInvitationIds));
   }
+  await db
+    .delete(usersToWorkspaces)
+    .where(eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_FREE_ID))
+    .catch(() => undefined);
 });
 
 beforeEach(() => {

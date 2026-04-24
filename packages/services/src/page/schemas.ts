@@ -2,9 +2,11 @@ import { insertPageSchema } from "@openstatus/db/src/schema";
 import { pageAccessTypes } from "@openstatus/db/src/schema/pages/constants";
 import {
   customDomainSchema,
+  pageConfigurationSchema,
   slugSchema,
 } from "@openstatus/db/src/schema/pages/validation";
 import { locales } from "@openstatus/locales";
+import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { z } from "zod";
 
 export { pageAccessTypes };
@@ -126,7 +128,13 @@ export type UpdatePagePasswordProtectionInput = z.infer<
 export const UpdatePageAppearanceInput = z.object({
   id: z.number().int(),
   forceTheme: z.enum(["light", "dark", "system"]),
-  configuration: z.object({ theme: z.string() }),
+  // `theme` must be a known THEME_KEYS member — the status-page read
+  // path parses `configuration` through `pageConfigurationSchema` which
+  // uses the same enum. An arbitrary string here persists fine but
+  // fails the read-side parse with an opaque zod error.
+  configuration: z.object({
+    theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]),
+  }),
 });
 export type UpdatePageAppearanceInput = z.infer<
   typeof UpdatePageAppearanceInput
@@ -154,11 +162,16 @@ export const UpdatePageLocalesInput = z
   );
 export type UpdatePageLocalesInput = z.infer<typeof UpdatePageLocalesInput>;
 
+// Reuse the canonical `pageConfigurationSchema` — the read path runs
+// stored configuration through it, so anything the update accepts that
+// doesn't round-trip here would surface as an opaque parse error at
+// status-page render time rather than at write time. The prior
+// `z.record(z.string(), z.union([z.string(), z.boolean()]))` happily
+// persisted any key/value and broke the read parser on values outside
+// the defined enums.
 export const UpdatePageConfigurationInput = z.object({
   id: z.number().int(),
-  configuration: z
-    .record(z.string(), z.union([z.string(), z.boolean()]).optional())
-    .nullish(),
+  configuration: pageConfigurationSchema.nullish(),
 });
 export type UpdatePageConfigurationInput = z.infer<
   typeof UpdatePageConfigurationInput

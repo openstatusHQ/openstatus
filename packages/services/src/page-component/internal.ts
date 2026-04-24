@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "@openstatus/db";
+import { and, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -33,10 +33,19 @@ export async function validateMonitorIds(args: {
   const { tx, workspaceId, monitorIds } = args;
   if (monitorIds.length === 0) return;
   const ids = Array.from(new Set(monitorIds));
+  // Exclude soft-deleted monitors — a deleted monitor's id shouldn't be
+  // attachable to a fresh page component. Without this filter the row
+  // count matches on ids pointing at rows that are already tombstoned.
   const rows = await tx
     .select({ id: monitor.id })
     .from(monitor)
-    .where(and(inArray(monitor.id, ids), eq(monitor.workspaceId, workspaceId)))
+    .where(
+      and(
+        inArray(monitor.id, ids),
+        eq(monitor.workspaceId, workspaceId),
+        isNull(monitor.deletedAt),
+      ),
+    )
     .all();
   if (rows.length !== ids.length) {
     throw new ForbiddenError("Invalid monitor IDs.");

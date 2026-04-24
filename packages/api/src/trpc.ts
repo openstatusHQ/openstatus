@@ -149,6 +149,23 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
+  // Test escape hatch: when NODE_ENV=test and the caller already
+  // populated `workspace` + `user` on the inner context (via
+  // `createInnerTRPCContext` in a test helper), trust it and skip the
+  // DB round-trip. Without this, router-level limit tests that pass
+  // an override `workspace.limits` object see it immediately replaced
+  // by the seeded team-plan workspace below — the override never
+  // reaches the service and the test asserts against the wrong plan.
+  if (
+    process.env.NODE_ENV === "test" &&
+    ctx.workspace != null &&
+    ctx.user != null
+  ) {
+    return opts.next({
+      ctx: { ...ctx, user: ctx.user, workspace: ctx.workspace },
+    });
+  }
+
   // /**
   //  * Attach `user` and `workspace` | `activeWorkspace` infos to context by
   //  * comparing the `user.tenantId` to clerk's `auth.userId`

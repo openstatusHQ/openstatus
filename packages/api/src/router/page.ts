@@ -9,6 +9,8 @@ import {
   // `CreatePageInput` re-exports the drizzle insert schema so routers
   // don't need to import it directly from `@openstatus/db`.
   CreatePageInput as CreatePageInputSchema,
+  UpdatePageAppearanceInput,
+  UpdatePageConfigurationInput,
   UpdatePageCustomDomainInput,
   createPage,
   deletePage,
@@ -298,13 +300,11 @@ export const pageRouter = createTRPCRouter({
 
   updateAppearance: protectedProcedure
     .meta({ track: Events.UpdatePage })
-    .input(
-      z.object({
-        id: z.number(),
-        forceTheme: z.enum(["light", "dark", "system"]),
-        configuration: z.object({ theme: z.string() }),
-      }),
-    )
+    // Reuse the service schema so `configuration.theme` is validated
+    // against `THEME_KEYS` at the tRPC boundary; the prior local
+    // `z.object({ theme: z.string() })` accepted arbitrary strings
+    // that later failed the status-page read-parse.
+    .input(UpdatePageAppearanceInput)
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageAppearance({
@@ -367,14 +367,11 @@ export const pageRouter = createTRPCRouter({
 
   updatePageConfiguration: protectedProcedure
     .meta({ track: Events.UpdatePage })
-    .input(
-      z.object({
-        id: z.number(),
-        configuration: z
-          .record(z.string(), z.string().or(z.boolean()).optional())
-          .nullish(),
-      }),
-    )
+    // Reuse the service's canonical `pageConfigurationSchema`-backed
+    // input — the old `z.record(z.string(), z.string()|z.boolean())`
+    // accepted any key and any string value, persisting configurations
+    // the status-page read parser would reject.
+    .input(UpdatePageConfigurationInput)
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageConfiguration({

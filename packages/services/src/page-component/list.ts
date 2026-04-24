@@ -6,6 +6,7 @@ import {
   desc,
   eq,
   inArray,
+  isNull,
 } from "@openstatus/db";
 import {
   maintenance,
@@ -69,6 +70,9 @@ async function enrichPageComponentsBatch(
               and(
                 inArray(monitor.id, monitorIds),
                 eq(monitor.workspaceId, workspaceId),
+                // Skip soft-deleted monitors so the enrichment map
+                // doesn't resurrect tombstoned rows as `component.monitor`.
+                isNull(monitor.deletedAt),
               ),
             )
             .all()

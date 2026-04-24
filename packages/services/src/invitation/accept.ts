@@ -66,24 +66,43 @@ export async function acceptInvitation(args: {
     if (!existing) throw new NotFoundError("invitation", input.id);
 
     // Conditional UPDATE — the `isNull(acceptedAt)` predicate makes the
-    // write a no-op for any row another caller has already claimed, even
-    // if both callers passed the read check above. Returning rowcount ==
-    // 0 means we lost the race.
+    // write a no-op for any row another caller has already claimed,
+    // even if both callers passed the read check above. Rowcount == 0
+    // means we lost the race. The `gte(expiresAt, now)` condition is
+    // re-asserted here to close a TOCTOU gap: without it, an invitation
+    // whose expiry is exactly the moment between the read and the write
+    // can be silently accepted past the deadline.
     const claimed = await tx
       .update(invitation)
       .set({ acceptedAt: new Date() })
-      .where(and(eq(invitation.id, input.id), isNull(invitation.acceptedAt)))
+      .where(
+        and(
+          eq(invitation.id, input.id),
+          isNull(invitation.acceptedAt),
+          gte(invitation.expiresAt, new Date()),
+        ),
+      )
       .returning({ id: invitation.id });
 
     if (claimed.length === 0) {
       throw new ConflictError("Invitation already accepted.");
     }
 
-    await tx.insert(usersToWorkspaces).values({
-      userId,
-      workspaceId: existing.workspaceId,
-      role: existing.role,
-    });
+    // `onConflictDoNothing` keyed on the `(userId, workspaceId)` unique
+    // constraint — idempotent for an invitee who's already a member of
+    // the target workspace (e.g. they were added directly before the
+    // invitation token was redeemed). Without this the final insert
+    // explodes on the unique violation after the invitation row was
+    // already stamped accepted, leaving the token consumed with no
+    // membership change the caller can distinguish from success.
+    await tx
+      .insert(usersToWorkspaces)
+      .values({
+        userId,
+        workspaceId: existing.workspaceId,
+        role: existing.role,
+      })
+      .onConflictDoNothing();
 
     if (!existing.workspace) {
       throw new NotFoundError("workspace", existing.workspaceId);

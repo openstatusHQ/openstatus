@@ -29,6 +29,14 @@ const providerFields = {
   instatusPageId: nullishString,
 };
 
+export const ImportOptions = z.object({
+  includeStatusReports: z.boolean().default(true),
+  includeSubscribers: z.boolean().default(false),
+  includeComponents: z.boolean().default(true),
+  includeMonitors: z.boolean().default(true),
+});
+export type ImportOptions = z.infer<typeof ImportOptions>;
+
 export const PreviewImportInput = z.object({
   ...providerFields,
   /**
@@ -37,16 +45,15 @@ export const PreviewImportInput = z.object({
    * warnings line up with what `run` will actually do.
    */
   pageId: z.number().int().optional(),
+  /**
+   * Optional same-shape `options` as `RunImportInput`. Exposed on preview
+   * so warning generation can match what the actual run would do — e.g.
+   * a user planning `includeSubscribers: false` shouldn't see a
+   * "subscribers cannot be imported" warning here.
+   */
+  options: ImportOptions.partial().optional(),
 });
 export type PreviewImportInput = z.infer<typeof PreviewImportInput>;
-
-export const ImportOptions = z.object({
-  includeStatusReports: z.boolean().default(true),
-  includeSubscribers: z.boolean().default(false),
-  includeComponents: z.boolean().default(true),
-  includeMonitors: z.boolean().default(true),
-});
-export type ImportOptions = z.infer<typeof ImportOptions>;
 
 export const RunImportInput = z.object({
   ...providerFields,

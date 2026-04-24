@@ -74,6 +74,13 @@ function makeCaller(limitsOverride?: Partial<Limits>) {
     session: { user: { id: "1" } },
     // @ts-expect-error - minimal workspace for test
     workspace: { id: 1, limits },
+    // Populate `user` too so the `NODE_ENV=test` escape hatch in
+    // `enforceUserIsAuthed` takes — otherwise the middleware would
+    // fall through to the DB read and replace our override limits
+    // with the seeded team-plan workspace, making every assertion
+    // below a no-op against the real team plan.
+    // @ts-expect-error - minimal user for test
+    user: { id: 1 },
   });
   return edgeRouter.createCaller(ctx);
 }

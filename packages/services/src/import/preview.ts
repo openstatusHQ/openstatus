@@ -48,6 +48,7 @@ export async function previewImport(args: {
     workspaceId: ctx.workspace.id,
     pageId: input.pageId,
     db,
+    options: input.options,
   });
   return summary;
 }

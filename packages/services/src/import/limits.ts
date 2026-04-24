@@ -4,12 +4,20 @@ import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
 
 import type { DB } from "../context";
+import type { ImportOptions } from "./schemas";
 
 /**
  * Inspect an `ImportSummary` and push per-limit warning strings into
  * `summary.errors`. Shared by `preview` (to surface warnings upfront) and
  * `run` (re-emitted alongside the actual writes). Pure: no mutations to
  * the DB, only to the summary argument.
+ *
+ * `options` gates the per-phase warnings against the same include flags
+ * `run` uses — without this, a user importing with `includeSubscribers:
+ * false` on a plan that disables subscribers would see a misleading
+ * "subscribers cannot be imported" warning even though the phase is
+ * opted out anyway. Defaults mirror `ImportOptions` defaults
+ * (status reports on, subscribers off, components on, monitors on).
  */
 export async function addLimitWarnings(
   summary: ImportSummary,
@@ -18,9 +26,13 @@ export async function addLimitWarnings(
     workspaceId: number;
     pageId?: number;
     db?: DB;
+    options?: Partial<ImportOptions>;
   },
 ): Promise<void> {
   const db = config.db ?? defaultDb;
+  const includeComponents = config.options?.includeComponents ?? true;
+  const includeMonitors = config.options?.includeMonitors ?? true;
+  const includeSubscribers = config.options?.includeSubscribers ?? false;
 
   // 1. Page component count
   //
@@ -31,7 +43,11 @@ export async function addLimitWarnings(
   // an empty page with plenty of workspace-wide pressure would look
   // safe here and blow up at insert time.
   const componentsPhase = summary.phases.find((p) => p.phase === "components");
-  if (componentsPhase && componentsPhase.resources.length > 0) {
+  if (
+    includeComponents &&
+    componentsPhase &&
+    componentsPhase.resources.length > 0
+  ) {
     const maxComponents = config.limits["page-components"];
     const [result] = await db
       .select({ count: count() })
@@ -72,7 +88,7 @@ export async function addLimitWarnings(
 
   // 3. Monitor count
   const monitorsPhase = summary.phases.find((p) => p.phase === "monitors");
-  if (monitorsPhase && monitorsPhase.resources.length > 0) {
+  if (includeMonitors && monitorsPhase && monitorsPhase.resources.length > 0) {
     const maxMonitors = config.limits.monitors;
     const [monitorCount] = await db
       .select({ count: count() })
@@ -101,7 +117,7 @@ export async function addLimitWarnings(
   }
 
   // 4. Monitor periodicity clamping
-  if (monitorsPhase && monitorsPhase.resources.length > 0) {
+  if (includeMonitors && monitorsPhase && monitorsPhase.resources.length > 0) {
     const allowedPeriodicity: string[] = config.limits.periodicity;
     const clamped = monitorsPhase.resources.filter((r) => {
       const data = r.data as { periodicity?: string } | undefined;
@@ -117,7 +133,7 @@ export async function addLimitWarnings(
   }
 
   // 5. Subscribers on plans that disable them
-  if (!config.limits["status-subscribers"]) {
+  if (includeSubscribers && !config.limits["status-subscribers"]) {
     const subscribersPhase = summary.phases.find(
       (p) => p.phase === "subscribers",
     );

@@ -87,6 +87,7 @@ export async function runImport(args: {
     workspaceId: ctx.workspace.id,
     pageId: input.pageId,
     db: tx,
+    options: input.options,
   });
 
   const idMaps = {

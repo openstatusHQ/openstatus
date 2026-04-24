@@ -12,7 +12,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ForbiddenError, UnauthorizedError } from "../errors";
+import { PreconditionFailedError, UnauthorizedError } from "../errors";
 import { DeleteAccountInput } from "./schemas";
 
 /**
@@ -69,7 +69,14 @@ export async function deleteAccount(args: {
     );
 
     if (hasPaidWorkspace) {
-      throw new ForbiddenError(
+      // `PreconditionFailedError` (maps to tRPC `PRECONDITION_FAILED`)
+      // rather than `ForbiddenError` — the pre-migration tRPC handler
+      // used `PRECONDITION_FAILED` for this case so the UI could
+      // distinguish "missing permissions" from "missing prerequisite
+      // state" and render a different copy ("cancel your subscription
+      // first"). Collapsing both to `FORBIDDEN` via generic service-
+      // error mapping regressed the distinction.
+      throw new PreconditionFailedError(
         "You must cancel your subscription before deleting your account.",
       );
     }

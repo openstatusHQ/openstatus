@@ -56,6 +56,11 @@ export function toTRPCError(err: unknown): never {
         });
       case "LIMIT_EXCEEDED":
         throw new TRPCError({ code: "FORBIDDEN", message: err.message });
+      case "PRECONDITION_FAILED":
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: err.message,
+        });
       case "INTERNAL":
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

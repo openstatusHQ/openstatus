@@ -271,10 +271,22 @@ export async function updatePageComponentOrder(args: {
         });
     }
 
-    const existingComponentIds = new Set(existingComponents.map((c) => c.id));
+    // Restrict the "take update path" set to ids that (a) still exist
+    // after the delete pass above and (b) correspond to *static* rows.
+    // Without both filters, an input static carrying an id that just
+    // got deleted (e.g. because the row was a monitor component whose
+    // monitorId is no longer in the input set) would match `has(id)`
+    // on the stale pre-delete snapshot, take the UPDATE branch, and
+    // silently no-op — the new static never gets inserted.
+    const removedIdSet = new Set(removedComponentIds);
+    const existingStaticComponentIds = new Set(
+      existingComponents
+        .filter((c) => c.type === "static" && !removedIdSet.has(c.id))
+        .map((c) => c.id),
+    );
 
     for (const c of staticComponents) {
-      if (c.id && existingComponentIds.has(c.id)) {
+      if (c.id && existingStaticComponentIds.has(c.id)) {
         await tx
           .update(pageComponent)
           .set({
