@@ -1,5 +1,9 @@
 import { and, eq, gte, isNull } from "@openstatus/db";
-import { invitation, usersToWorkspaces } from "@openstatus/db/src/schema";
+import {
+  invitation,
+  selectInvitationSchema,
+  usersToWorkspaces,
+} from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
@@ -92,6 +96,6 @@ export async function createInvitation(args: {
       metadata: { email: input.email },
     });
 
-    return row as Invitation;
+    return selectInvitationSchema.parse(row);
   });
 }

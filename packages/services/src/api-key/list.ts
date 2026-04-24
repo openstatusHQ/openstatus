@@ -1,9 +1,18 @@
 import { db as defaultDb, eq, inArray } from "@openstatus/db";
-import { apiKey, user } from "@openstatus/db/src/schema";
+import { apiKey, selectApiKeySchema, user } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
 import type { ApiKey } from "../types";
 import type { ListApiKeysInput } from "./schemas";
+
+/**
+ * Public projection schema — derived from `selectApiKeySchema` so column /
+ * default changes flow through. Stripping `hashedToken` here means the
+ * bcrypt hash never reaches a list response, even by accident.
+ */
+const selectPublicApiKeySchema = selectApiKeySchema.omit({
+  hashedToken: true,
+});
 
 export type ApiKeyCreator = {
   id: number;
@@ -75,7 +84,7 @@ export async function listApiKeys(args: {
   // which would crash `listApiKeys` for those workspaces.
   if (creatorIds.length === 0) {
     return keys.map((key) => ({
-      ...(key as PublicApiKey),
+      ...selectPublicApiKeySchema.parse(key),
       createdBy: undefined,
     }));
   }
@@ -93,7 +102,7 @@ export async function listApiKeys(args: {
   const creatorsById = new Map(creators.map((c) => [c.id, c]));
 
   return keys.map((key) => ({
-    ...(key as PublicApiKey),
+    ...selectPublicApiKeySchema.parse(key),
     createdBy: creatorsById.get(key.createdById),
   }));
 }

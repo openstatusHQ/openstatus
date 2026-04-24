@@ -1,5 +1,5 @@
 import { db as defaultDb, eq } from "@openstatus/db";
-import { apiKey } from "@openstatus/db/src/schema";
+import { apiKey, selectApiKeySchema } from "@openstatus/db/src/schema";
 import {
   shouldUpdateLastUsed as checkShouldUpdateLastUsed,
   verifyApiKeyHash,
@@ -42,7 +42,7 @@ export async function verifyApiKey(
   if (!(await verifyApiKeyHash(parsed.token, key.hashedToken))) return null;
   if (key.expiresAt && key.expiresAt < new Date()) return null;
 
-  return key as ApiKey;
+  return selectApiKeySchema.parse(key);
 }
 
 /**
