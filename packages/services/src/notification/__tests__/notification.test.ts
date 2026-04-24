@@ -264,6 +264,79 @@ describe("updateNotification", () => {
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  test("emits a notification.update audit row", async () => {
+    const row = await createNotification({
+      ctx: teamCtx,
+      input: {
+        name: `${TEST_PREFIX}-update-audit`,
+        provider: "discord",
+        data: { discord: "https://discord.com/api/webhooks/1/abc" },
+        monitors: [],
+      },
+    });
+    track(row.id);
+
+    await updateNotification({
+      ctx: teamCtx,
+      input: {
+        id: row.id,
+        name: `${TEST_PREFIX}-update-audit-renamed`,
+        data: { discord: "https://discord.com/api/webhooks/2/def" },
+        monitors: [],
+      },
+    });
+
+    // `provider` is attached to the audit entry's `metadata` but the v1
+    // buffered `AuditLogRecord` shape drops it (logs, not PII-bearing
+    // structured data). Assert the action/entity signals fire; metadata
+    // coverage lands with the v2 audit-table move.
+    await expectAuditRow(auditBuffer, {
+      action: "notification.update",
+      entityType: "notification",
+      entityId: row.id,
+    });
+  });
+
+  test("throws LimitExceededError when plan gate blocks update", async () => {
+    // Regression for the post-downgrade case: the row was created on a
+    // plan that allowed pagerduty, but the current workspace no longer
+    // does. The pre-fix update flow never re-checked the gate, so an
+    // editable form field remained open to channels the plan had since
+    // revoked. Simulate it by bypassing the create-time gate with a
+    // direct db insert bound to the free workspace.
+    const [inserted] = await db
+      .insert(notification)
+      .values({
+        workspaceId: SEEDED_WORKSPACE_FREE_ID,
+        name: `${TEST_PREFIX}-downgrade-gate`,
+        provider: "pagerduty",
+        data: JSON.stringify({
+          pagerduty: JSON.stringify({
+            integration_keys: [{ id: "k1", integration_key: "x" }],
+          }),
+        }),
+      })
+      .returning();
+    if (!inserted) throw new Error("direct insert failed");
+    track(inserted.id);
+
+    await expect(
+      updateNotification({
+        ctx: freeCtx,
+        input: {
+          id: inserted.id,
+          name: "would-be-rename",
+          data: {
+            pagerduty: JSON.stringify({
+              integration_keys: [{ id: "k1", integration_key: "y" }],
+            }),
+          },
+          monitors: [],
+        },
+      }),
+    ).rejects.toBeInstanceOf(LimitExceededError);
+  });
 });
 
 describe("deleteNotification", () => {
