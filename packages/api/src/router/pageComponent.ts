@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Events } from "@openstatus/analytics";
 import { NotFoundError } from "@openstatus/services";
 import {
+  UpdatePageComponentOrderInput,
   deletePageComponent,
   listPageComponents,
   updatePageComponentOrder,
@@ -57,47 +58,18 @@ export const pageComponentRouter = createTRPCRouter({
 
   updateOrder: protectedProcedure
     .meta({ track: Events.UpdatePageComponentOrder, trackProps: ["pageId"] })
-    .input(
-      z.object({
-        pageId: z.number(),
-        components: z.array(
-          z.object({
-            id: z.number().optional(),
-            monitorId: z.number().nullish(),
-            order: z.number(),
-            name: z.string(),
-            description: z.string().nullish(),
-            type: z.enum(["monitor", "static"]),
-          }),
-        ),
-        groups: z.array(
-          z.object({
-            order: z.number(),
-            name: z.string(),
-            defaultOpen: z.boolean().optional().default(false),
-            components: z.array(
-              z.object({
-                id: z.number().optional(),
-                monitorId: z.number().nullish(),
-                order: z.number(),
-                name: z.string(),
-                description: z.string().nullish(),
-                type: z.enum(["monitor", "static"]),
-              }),
-            ),
-          }),
-        ),
-      }),
-    )
+    // Reuse the service's canonical input schema directly — the local
+    // flat `z.object` that lived here previously let components slip
+    // through with `type: "monitor"` but no `monitorId`, which the
+    // service (now a discriminated union) rejects. Sharing the schema
+    // keeps the two layers in lockstep so dashboard build + service
+    // validation enforce the same shape.
+    .input(UpdatePageComponentOrderInput)
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageComponentOrder({
           ctx: toServiceCtx(ctx),
-          input: {
-            pageId: input.pageId,
-            components: input.components,
-            groups: input.groups,
-          },
+          input,
         });
         return { success: true };
       } catch (err) {

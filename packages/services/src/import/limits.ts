@@ -23,22 +23,21 @@ export async function addLimitWarnings(
   const db = config.db ?? defaultDb;
 
   // 1. Page component count
+  //
+  // `page-components` is a **workspace-wide** plan cap — the
+  // `page-component/update-order` service enforces it by counting
+  // every component across every page, not just the target one. This
+  // preview warning has to match that scope, otherwise imports into
+  // an empty page with plenty of workspace-wide pressure would look
+  // safe here and blow up at insert time.
   const componentsPhase = summary.phases.find((p) => p.phase === "components");
   if (componentsPhase && componentsPhase.resources.length > 0) {
     const maxComponents = config.limits["page-components"];
-    let existingCount = 0;
-    if (config.pageId) {
-      const [result] = await db
-        .select({ count: count() })
-        .from(pageComponent)
-        .where(
-          and(
-            eq(pageComponent.pageId, config.pageId),
-            eq(pageComponent.workspaceId, config.workspaceId),
-          ),
-        );
-      existingCount = result?.count ?? 0;
-    }
+    const [result] = await db
+      .select({ count: count() })
+      .from(pageComponent)
+      .where(eq(pageComponent.workspaceId, config.workspaceId));
+    const existingCount = result?.count ?? 0;
     const remaining = maxComponents - existingCount;
     if (remaining <= 0) {
       summary.errors.push(

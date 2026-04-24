@@ -135,15 +135,16 @@ export async function runImport(args: {
           break;
         case "components":
           if (targetPageId && input.options?.includeComponents !== false) {
+            // Workspace-wide count — `page-components` is the plan cap
+            // across every page in the workspace (see
+            // `page-component/update-order`). Scoping to `targetPageId`
+            // alone would let an import into an empty page push the
+            // workspace past the cap because components on other
+            // pages go uncounted.
             const [compCount] = await tx
               .select({ count: count() })
               .from(pageComponent)
-              .where(
-                and(
-                  eq(pageComponent.pageId, targetPageId),
-                  eq(pageComponent.workspaceId, ctx.workspace.id),
-                ),
-              );
+              .where(eq(pageComponent.workspaceId, ctx.workspace.id));
             const maxComponents = ctx.workspace.limits["page-components"];
             const remaining = maxComponents - (compCount?.count ?? 0);
             if (remaining <= 0) {
@@ -248,16 +249,38 @@ export async function runImport(args: {
   // Rollup audit: per-resource rows live inside each phase writer; this
   // row summarises the whole run so partial/failed imports still fire
   // the observability signal without scanning the full summary blob.
-  await emitAudit(tx, ctx, {
-    action: "import.run",
-    entityType: "page",
-    entityId: targetPageId ?? 0,
-    metadata: {
-      provider: input.provider,
-      status: summary.status,
-      pageId: targetPageId,
-    },
-  });
+  //
+  // Entity attribution matches what the run actually touched. When a
+  // page was created or reused (`targetPageId` is set) the row points
+  // at it; when the page phase failed early and no page is in play we
+  // fall back to the workspace so the audit never carries a ghost
+  // `page 0` reference that breaks downstream "find audits for this
+  // entity" queries.
+  await emitAudit(
+    tx,
+    ctx,
+    targetPageId
+      ? {
+          action: "import.run",
+          entityType: "page",
+          entityId: targetPageId,
+          metadata: {
+            provider: input.provider,
+            status: summary.status,
+            pageId: targetPageId,
+          },
+        }
+      : {
+          action: "import.run",
+          entityType: "workspace",
+          entityId: ctx.workspace.id,
+          metadata: {
+            provider: input.provider,
+            status: summary.status,
+            pageId: null,
+          },
+        },
+  );
 
   return summary;
 }

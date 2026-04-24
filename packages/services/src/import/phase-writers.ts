@@ -258,9 +258,19 @@ export async function writeComponentsPhase(
           data.monitorId = monitorIdMap.get(data.sourceMonitorId) ?? null;
         }
         if (!data.monitorId) {
-          // Monitor wasn't imported; fall back to a static component so
-          // we don't drop the resource entirely.
+          // Monitor wasn't imported — usually because the monitors
+          // phase was skipped (e.g. `options.includeMonitors === false`)
+          // or the monitor itself failed to import. We fall back to a
+          // static component so the component still lands, but flag
+          // the degrade so the summary doesn't quietly report a
+          // "created" monitor component with no monitor attached.
+          // `resource.error` is set even though the resource will end
+          // up `created` — the other phase writers follow the same
+          // convention when degrading.
           data.type = "static";
+          resource.error = data.sourceMonitorId
+            ? `Source monitor ${data.sourceMonitorId} was not imported; created as static instead.`
+            : "No source monitor available; created as static instead.";
         }
       }
 
@@ -354,6 +364,30 @@ export async function writeIncidentsPhase(
         }>;
         sourceComponentIds: string[];
       };
+
+      // Idempotency by `(title, pageId)` — every other phase writer
+      // (page slug, monitor url, component name, subscriber email)
+      // skips on duplicate before inserting, and imports are
+      // explicitly re-runnable per `run.ts`'s phase-level recovery
+      // model. Without this check, re-running an import would land
+      // duplicate status reports on every pass.
+      const existingReport = await tx
+        .select({ id: statusReport.id })
+        .from(statusReport)
+        .where(
+          and(
+            eq(statusReport.pageId, pageId),
+            eq(statusReport.workspaceId, workspaceId),
+            eq(statusReport.title, data.report.title),
+          ),
+        )
+        .get();
+
+      if (existingReport) {
+        resource.openstatusId = existingReport.id;
+        resource.status = "skipped";
+        continue;
+      }
 
       const [insertedReport] = await tx
         .insert(statusReport)
@@ -458,6 +492,32 @@ export async function writeMaintenancesPhase(
         pageId: number;
         sourceComponentIds: string[];
       };
+
+      // Idempotency by `(title, pageId, from, to)` — re-running an
+      // import shouldn't create duplicate maintenance windows on each
+      // pass. `title + pageId` alone could collide on unrelated future
+      // maintenances sharing a name ("DB upgrade"), so the `from/to`
+      // pair pins the match to a specific scheduled window. Same
+      // reasoning as the status-report idempotency check above.
+      const existing = await tx
+        .select({ id: maintenance.id })
+        .from(maintenance)
+        .where(
+          and(
+            eq(maintenance.pageId, pageId),
+            eq(maintenance.workspaceId, workspaceId),
+            eq(maintenance.title, data.title),
+            eq(maintenance.from, data.from),
+            eq(maintenance.to, data.to),
+          ),
+        )
+        .get();
+
+      if (existing) {
+        resource.openstatusId = existing.id;
+        resource.status = "skipped";
+        continue;
+      }
 
       const [inserted] = await tx
         .insert(maintenance)

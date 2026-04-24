@@ -9,6 +9,7 @@ import {
   // `CreatePageInput` re-exports the drizzle insert schema so routers
   // don't need to import it directly from `@openstatus/db`.
   CreatePageInput as CreatePageInputSchema,
+  UpdatePageCustomDomainInput,
   createPage,
   deletePage,
   getPage,
@@ -206,7 +207,16 @@ export const pageRouter = createTRPCRouter({
 
   updateCustomDomain: protectedProcedure
     .meta({ track: Events.UpdatePageDomain, trackProps: ["customDomain"] })
-    .input(z.object({ id: z.number(), customDomain: z.string().toLowerCase() }))
+    // Validate customDomain *before* the handler body runs — reusing
+    // the service's `UpdatePageCustomDomainInput` (backed by the
+    // canonical `customDomainSchema`) guarantees that malformed
+    // domains (`http://…`, `www.…`, format garbage) are rejected
+    // with a `ZodError` at tRPC's input layer, before any Vercel
+    // add/remove call fires. Previously the format check ran inside
+    // the service — reached only *after* Vercel mutations, which
+    // meant a bad input could leave Vercel holding a domain the db
+    // had then rejected.
+    .input(UpdatePageCustomDomainInput)
     .mutation(async ({ ctx, input }) => {
       if (input.customDomain.includes("openstatus")) {
         throw new TRPCError({

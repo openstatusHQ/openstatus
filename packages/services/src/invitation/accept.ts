@@ -3,7 +3,6 @@ import {
   invitation,
   selectWorkspaceSchema,
   usersToWorkspaces,
-  workspace,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
@@ -48,6 +47,12 @@ export async function acceptInvitation(args: {
   }
 
   return withTransaction(ctx, async (tx) => {
+    // Load the invitation with its workspace in one round-trip — we use
+    // `existing.workspace` for the service's return value, so there's
+    // no point re-fetching it by id afterwards. Keeping a single read
+    // also avoids a read-skew window where a just-renamed workspace
+    // would appear with one name on the db fetch and another on the
+    // relation join.
     const existing = await tx.query.invitation.findFirst({
       where: and(
         eq(invitation.id, input.id),
@@ -80,11 +85,9 @@ export async function acceptInvitation(args: {
       role: existing.role,
     });
 
-    const fresh = await tx.query.workspace.findFirst({
-      where: eq(workspace.id, existing.workspaceId),
-    });
-
-    if (!fresh) throw new NotFoundError("workspace", existing.workspaceId);
+    if (!existing.workspace) {
+      throw new NotFoundError("workspace", existing.workspaceId);
+    }
 
     await emitAudit(tx, ctx, {
       action: "invitation.accept",
@@ -93,6 +96,6 @@ export async function acceptInvitation(args: {
       metadata: { workspaceId: existing.workspaceId, role: existing.role },
     });
 
-    return selectWorkspaceSchema.parse(fresh);
+    return selectWorkspaceSchema.parse(existing.workspace);
   });
 }

@@ -3,6 +3,7 @@ export {
   type ApiKeyCreator,
   type ApiKeyWithCreator,
   listApiKeys,
+  type PublicApiKey,
 } from "./list";
 export { revokeApiKey } from "./revoke";
 export { updateApiKeyLastUsed, verifyApiKey } from "./verify";
