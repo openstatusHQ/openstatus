@@ -57,11 +57,21 @@ export async function createApiKey(args: {
       throw new InternalServiceError("Failed to create API key");
     }
 
+    // Narrow snapshot: `hashedToken` is a secret (bcrypt hash), and
+    // `workspaceId`/`createdById`/timestamps are already derivable from
+    // the row header or the actor. Keep the audit payload to the fields
+    // a reader actually needs to identify which key this was.
     await emitAudit(tx, ctx, {
       action: "api_key.create",
       entityType: "api_key",
       entityId: key.id,
-      metadata: { name: input.name },
+      after: {
+        id: key.id,
+        name: key.name,
+        description: key.description,
+        prefix: key.prefix,
+        expiresAt: key.expiresAt,
+      },
     });
 
     // Strip `hashedToken` before returning — callers only need the

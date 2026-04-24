@@ -56,6 +56,10 @@ export async function deleteAccount(args: {
   }
 
   await withTransaction(ctx, async (tx) => {
+    const existing = await tx.query.user.findFirst({
+      where: eq(user.id, userId),
+    });
+
     const ownedRows = await tx.query.usersToWorkspaces.findMany({
       where: and(
         eq(usersToWorkspaces.userId, userId),
@@ -109,6 +113,7 @@ export async function deleteAccount(args: {
       action: "user.delete",
       entityType: "user",
       entityId: userId,
+      before: existing,
     });
   });
 }
