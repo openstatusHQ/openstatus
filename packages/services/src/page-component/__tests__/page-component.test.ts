@@ -169,11 +169,27 @@ describe("updatePageComponentOrder", () => {
     expect(components).toHaveLength(3);
     expect(groups).toHaveLength(1);
 
+    // Per-entity audit emits — assert one representative of each kind.
+    // The service writes one row per component / group, so every id in
+    // `components` + `groups` should appear, not a single page-level row.
+    const monitorComponent = components.find((c) => c.type === "monitor");
+    expect(monitorComponent).toBeDefined();
+    if (!monitorComponent) throw new Error("unreachable");
     await expectAuditRow({
       workspaceId: teamCtx.workspace.id,
-      action: "page_component.update",
-      entityType: "page",
-      entityId: testPageId,
+      action: "page_component.create",
+      entityType: "page_component",
+      entityId: monitorComponent.id,
+    });
+
+    const group = groups[0];
+    expect(group).toBeDefined();
+    if (!group) throw new Error("unreachable");
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "page_component_group.create",
+      entityType: "page_component_group",
+      entityId: group.id,
     });
   });
 
