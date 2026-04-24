@@ -50,9 +50,14 @@ beforeAll(async () => {
   // shared DB seed only adds a row for workspace 1 (team). Without
   // this, the members-cap assertion below passes against `0 < 1` and
   // never reaches the LimitExceededError branch.
+  //
+  // `userId: 1` instead of `2` — only user 1 is in the shared seed,
+  // and the `user_id` FK on `users_to_workspaces` rejects unknown
+  // ids. The cap check just counts rows by `workspace_id`, so which
+  // user occupies the slot doesn't matter.
   await db
     .insert(usersToWorkspaces)
-    .values({ workspaceId: SEEDED_WORKSPACE_FREE_ID, userId: 2 })
+    .values({ workspaceId: SEEDED_WORKSPACE_FREE_ID, userId: 1 })
     .onConflictDoNothing();
 });
 

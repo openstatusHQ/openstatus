@@ -229,9 +229,16 @@ describe("addLimitWarnings", () => {
         ],
       });
 
+      // `addLimitWarnings` gates subscribers warnings on
+      // `options.includeSubscribers` (Cubic P2 — otherwise users who
+      // aren't importing subscribers get a noise warning). Default
+      // matches `ImportOptions` (`false`), so the warning only fires
+      // when the caller explicitly opts in. Tests that want to exercise
+      // the warning pass `options.includeSubscribers: true`.
       await addLimitWarnings(summary, {
         limits: makeLimits({ "status-subscribers": false }),
         workspaceId: 2,
+        options: { includeSubscribers: true },
       });
 
       expect(summary.errors.length).toBe(1);
@@ -246,6 +253,7 @@ describe("addLimitWarnings", () => {
       await addLimitWarnings(summary, {
         limits: makeLimits({ "status-subscribers": false }),
         workspaceId: 2,
+        options: { includeSubscribers: true },
       });
 
       expect(summary.errors).toEqual([]);
@@ -267,6 +275,7 @@ describe("addLimitWarnings", () => {
       await addLimitWarnings(summary, {
         limits: makeLimits({ "status-subscribers": true }),
         workspaceId: 2,
+        options: { includeSubscribers: true },
       });
 
       expect(summary.errors).toEqual([]);
@@ -312,9 +321,12 @@ describe("addLimitWarnings", () => {
     });
 
     // Free plan: page-components=3, custom-domain=false, status-subscribers=false
+    // Opt in to subscribers so the subscribers-disallowed warning fires
+    // (default `includeSubscribers` is `false` → warning silent).
     await addLimitWarnings(summary, {
       limits: makeLimits(),
       workspaceId: 2,
+      options: { includeSubscribers: true },
     });
 
     expect(summary.errors.length).toBe(3);

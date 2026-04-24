@@ -138,6 +138,12 @@ describe("newPage", () => {
 });
 
 describe("createPage (full form)", () => {
+  // `CreatePageInput` re-exports the drizzle `insertPageSchema`, which
+  // requires `workspaceId` at parse time. The service strips the input
+  // value and uses `ctx.workspace.id` when persisting (so the input
+  // value is informational only), but parse-time validation still
+  // fails without the field. Passing `ctx.workspace.id` satisfies the
+  // schema and matches what the router does.
   test("attaches monitors as pageComponents", async () => {
     const slug = uniqueSlug("full");
     const row = await createPage({
@@ -147,6 +153,7 @@ describe("createPage (full form)", () => {
         slug,
         description: "desc",
         customDomain: "",
+        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
         monitors: [{ monitorId: teamMonitorId }],
       },
     });
@@ -169,6 +176,7 @@ describe("createPage (full form)", () => {
           slug,
           description: "",
           customDomain: "",
+          workspaceId: SEEDED_WORKSPACE_FREE_ID,
           monitors: [{ monitorId: teamMonitorId }],
         },
       }),

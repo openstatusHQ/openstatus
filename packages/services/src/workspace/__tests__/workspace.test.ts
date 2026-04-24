@@ -72,8 +72,19 @@ describe("getWorkspaceWithUsage", () => {
       pageComponents: expect.any(Number),
       checks: 0,
     });
-    for (const value of Object.values(result.usage)) {
-      expect(value).toBeGreaterThanOrEqual(0);
+    // Iterate only the known `WorkspaceUsage` keys — `result.usage`
+    // may carry extra fields from zod schema parsing that aren't
+    // numeric (e.g. pass-through relation data), so a blanket
+    // `Object.values(...)` comparison breaks on the first non-numeric
+    // entry.
+    for (const key of [
+      "monitors",
+      "notifications",
+      "pages",
+      "pageComponents",
+      "checks",
+    ] as const) {
+      expect(result.usage[key]).toBeGreaterThanOrEqual(0);
     }
   });
 });
