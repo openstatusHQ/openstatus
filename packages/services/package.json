@@ -20,6 +20,42 @@
     "./incident": {
       "import": "./src/incident/index.ts",
       "types": "./src/incident/index.ts"
+    },
+    "./monitor": {
+      "import": "./src/monitor/index.ts",
+      "types": "./src/monitor/index.ts"
+    },
+    "./notification": {
+      "import": "./src/notification/index.ts",
+      "types": "./src/notification/index.ts"
+    },
+    "./page-component": {
+      "import": "./src/page-component/index.ts",
+      "types": "./src/page-component/index.ts"
+    },
+    "./page": {
+      "import": "./src/page/index.ts",
+      "types": "./src/page/index.ts"
+    },
+    "./workspace": {
+      "import": "./src/workspace/index.ts",
+      "types": "./src/workspace/index.ts"
+    },
+    "./user": {
+      "import": "./src/user/index.ts",
+      "types": "./src/user/index.ts"
+    },
+    "./invitation": {
+      "import": "./src/invitation/index.ts",
+      "types": "./src/invitation/index.ts"
+    },
+    "./api-key": {
+      "import": "./src/api-key/index.ts",
+      "types": "./src/api-key/index.ts"
+    },
+    "./import": {
+      "import": "./src/import/index.ts",
+      "types": "./src/import/index.ts"
     }
   },
   "scripts": {
@@ -27,8 +63,13 @@
   },
   "dependencies": {
     "@logtape/logtape": "2.0.1",
+    "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
+    "@openstatus/importers": "workspace:*",
+    "@openstatus/locales": "workspace:*",
+    "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
+    "@openstatus/theme-store": "workspace:*",
     "zod": "4.1.13"
   },
   "devDependencies": {

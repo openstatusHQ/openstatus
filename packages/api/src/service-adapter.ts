@@ -63,6 +63,11 @@ export function toTRPCError(err: unknown): never {
           code: "TOO_MANY_REQUESTS",
           message: err.message,
         });
+      case "PRECONDITION_FAILED":
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: err.message,
+        });
       case "INTERNAL":
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

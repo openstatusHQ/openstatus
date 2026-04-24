@@ -145,7 +145,18 @@ export function FormStatusPageUpdate() {
           await updatePageAppearanceMutation.mutateAsync({
             id: Number.parseInt(id),
             forceTheme: values.forceTheme,
-            configuration: values.configuration,
+            // `theme` is now a `THEME_KEYS` enum at the service input;
+            // the form's value type stays `string` because `FormAppearance`
+            // doesn't narrow. Invalid values surface as a zod error from
+            // the router.
+            configuration: {
+              theme: values.configuration.theme as
+                | "default"
+                | "default-rounded"
+                | "supabase"
+                | "github-contrast"
+                | "dracula",
+            },
           });
         }}
       />

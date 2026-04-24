@@ -25,3 +25,11 @@ export type { Page, PageComponent } from "@openstatus/db/src/schema";
 export type { Maintenance } from "@openstatus/db/src/schema";
 
 export type { Incident, Monitor } from "@openstatus/db/src/schema";
+
+export type {
+  MonitorTag,
+  Notification,
+  PrivateLocation,
+} from "@openstatus/db/src/schema";
+
+export type { ApiKey, Invitation, User } from "@openstatus/db/src/schema";

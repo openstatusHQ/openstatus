@@ -1,30 +1,44 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { type SQL, and, desc, eq, inArray, isNull, sql } from "@openstatus/db";
-import {
-  insertPageSchema,
-  monitor,
-  page,
-  pageAccessTypes,
-  pageComponent,
-  selectMaintenanceSchema,
-  selectPageComponentGroupSchema,
-  selectPageComponentSchema,
-  selectPageSchema,
-  subdomainSafeList,
-} from "@openstatus/db/src/schema";
-
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
+import { NotFoundError } from "@openstatus/services";
+import {
+  type CreatePageInput,
+  // `CreatePageInput` re-exports the drizzle insert schema so routers
+  // don't need to import it directly from `@openstatus/db`.
+  CreatePageInput as CreatePageInputSchema,
+  UpdatePageAppearanceInput,
+  UpdatePageConfigurationInput,
+  UpdatePageCustomDomainInput,
+  createPage,
+  deletePage,
+  getPage,
+  getPageCustomDomain,
+  getSlugAvailable,
+  listPages,
+  newPage,
+  pageAccessTypes,
+  updatePageAppearance,
+  updatePageConfiguration,
+  updatePageCustomDomain,
+  updatePageGeneral,
+  updatePageLinks,
+  updatePageLocales,
+  updatePagePasswordProtection,
+} from "@openstatus/services/page";
+
 import { env } from "../env";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 if (process.env.NODE_ENV === "test") {
   require("../test/preload");
 }
 
-// Helper functions to reuse Vercel API logic
+// Vercel domain helpers — transport-layer external integrations that
+// don't belong in the service layer.
 async function addDomainToVercel(domain: string) {
   const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
@@ -78,217 +92,70 @@ async function removeDomainFromVercel(domain: string) {
 export const pageRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreatePage, trackProps: ["slug"] })
-    .input(insertPageSchema)
-    .mutation(async (opts) => {
-      const { monitors, workspaceId, id, configuration, ...pageProps } =
-        opts.input;
-
-      const monitorIds = monitors?.map((item) => item.monitorId) || [];
-
-      const pageNumbers = (
-        await opts.ctx.db.query.page.findMany({
-          where: eq(page.workspaceId, opts.ctx.workspace.id),
-        })
-      ).length;
-
-      const limit = opts.ctx.workspace.limits;
-
-      // the user has reached the status page number limits
-      if (pageNumbers >= limit["status-pages"]) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You reached your status-page limits.",
+    .input(CreatePageInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await createPage({
+          ctx: toServiceCtx(ctx),
+          input: input as CreatePageInput,
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      // the user is not eligible for password protection
-      if (
-        limit["password-protection"] === false &&
-        opts.input.passwordProtected === true
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Password protection is not available for your current plan.",
-        });
-      }
-
-      if (
-        limit["ip-restriction"] === false &&
-        opts.input.accessType === "ip-restriction"
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "IP restriction is not available for your current plan.",
-        });
-      }
-
-      if (
-        opts.input.accessType === "ip-restriction" &&
-        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "At least one IP range is required for IP restriction.",
-        });
-      }
-
-      const newPage = await opts.ctx.db
-        .insert(page)
-        .values({
-          workspaceId: opts.ctx.workspace.id,
-          configuration: JSON.stringify(configuration),
-          ...pageProps,
-          authEmailDomains: pageProps.authEmailDomains?.join(","),
-          allowedIpRanges: pageProps.allowedIpRanges?.join(","),
-        })
-        .returning()
-        .get();
-
-      if (monitorIds.length) {
-        // We should make sure the user has access to the monitors AND they are active
-        const allMonitors = await opts.ctx.db.query.monitor.findMany({
-          where: and(
-            inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-            eq(monitor.active, true), // Only allow active monitors
-            isNull(monitor.deletedAt),
-          ),
-        });
-
-        if (allMonitors.length !== monitorIds.length) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message:
-              "You don't have access to all the monitors or some monitors are inactive.",
-          });
-        }
-
-        // Build a map for quick lookup
-        const monitorMap = new Map(allMonitors.map((m) => [m.id, m]));
-
-        // Build pageComponent values (primary table)
-        const pageComponentValues = monitors
-          .map(({ monitorId }, index) => {
-            const m = monitorMap.get(monitorId);
-            if (!m || !m.workspaceId) return null;
-            return {
-              workspaceId: m.workspaceId,
-              pageId: newPage.id,
-              type: "monitor" as const,
-              monitorId,
-              name: m.externalName || m.name,
-              order: index,
-              groupId: null,
-              groupOrder: 0,
-            };
-          })
-          .filter((v): v is NonNullable<typeof v> => v !== null);
-
-        // Insert into pageComponents (primary table)
-        await opts.ctx.db
-          .insert(pageComponent)
-          .values(pageComponentValues)
-          .run();
-      }
-
-      return newPage;
     }),
 
   delete: protectedProcedure
     .meta({ track: Events.DeletePage })
     .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.id, opts.input.id),
-        eq(page.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      await opts.ctx.db
-        .delete(page)
-        .where(and(...whereConditions))
-        .run();
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deletePage({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+      } catch (err) {
+        if (err instanceof NotFoundError) return;
+        toTRPCError(err);
+      }
     }),
 
   getSlugUniqueness: protectedProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
-    .query(async (opts) => {
-      // had filter on some words we want to keep for us
-      if (subdomainSafeList.includes(opts.input.slug)) {
-        return false;
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getSlugAvailable({
+          ctx: toServiceCtx(ctx),
+          input: { slug: input.slug },
+        });
+      } catch (err) {
+        toTRPCError(err);
       }
-      const result = await opts.ctx.db.query.page.findMany({
-        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
-      });
-      return !(result?.length > 0);
     }),
 
   list: protectedProcedure
-    .input(
-      z
-        .object({
-          order: z.enum(["asc", "desc"]).optional(),
-        })
-        .optional(),
-    )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const result = await opts.ctx.db.query.page.findMany({
-        where: and(...whereConditions),
-        with: {
-          statusReports: true,
-        },
-        orderBy: (pages, { asc }) => [
-          opts.input?.order === "asc"
-            ? asc(pages.createdAt)
-            : desc(pages.createdAt),
-        ],
-      });
-
-      return result;
+    .input(z.object({ order: z.enum(["asc", "desc"]).optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        return await listPages({
+          ctx: toServiceCtx(ctx),
+          input: { order: input?.order ?? "desc" },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   get: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      const data = await opts.ctx.db.query.page.findFirst({
-        where: and(...whereConditions),
-        with: {
-          maintenances: true,
-          pageComponents: true,
-          pageComponentGroups: true,
-        },
-      });
-
-      if (!data) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Page not found",
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getPage({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      return selectPageSchema
-        .extend({
-          pageComponentGroups: z
-            .array(selectPageComponentGroupSchema)
-            .prefault([]),
-          maintenances: z.array(selectMaintenanceSchema).prefault([]),
-          pageComponents: z.array(selectPageComponentSchema).prefault([]),
-        })
-        .parse({
-          ...data,
-          pageComponentGroups: data.pageComponentGroups ?? [],
-          maintenances: data.maintenances,
-          pageComponents: data.pageComponents,
-        });
     }),
 
   // TODO: rename to create
@@ -302,59 +169,20 @@ export const pageRouter = createTRPCRouter({
         description: z.string().nullish(),
       }),
     )
-    .mutation(async (opts) => {
-      const pageNumbers = (
-        await opts.ctx.db.query.page.findMany({
-          where: eq(page.workspaceId, opts.ctx.workspace.id),
-        })
-      ).length;
-
-      const limit = opts.ctx.workspace.limits;
-
-      // the user has reached the status page number limits
-      if (pageNumbers >= limit["status-pages"]) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You reached your status-page limits.",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await newPage({
+          ctx: toServiceCtx(ctx),
+          input: {
+            title: input.title,
+            slug: input.slug,
+            icon: input.icon,
+            description: input.description,
+          },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const result = await opts.ctx.db.query.page.findMany({
-        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
-      });
-
-      if (subdomainSafeList.includes(opts.input.slug) || result?.length > 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "This slug is already taken. Please choose another one.",
-        });
-      }
-
-      // REMINDER: default config from legacy page
-      const defaultConfiguration = {
-        type: "absolute",
-        value: "requests",
-        uptime: true,
-        theme: "default-rounded",
-      } satisfies Record<string, string | boolean | undefined>;
-
-      const newPage = await opts.ctx.db
-        .insert(page)
-        .values({
-          workspaceId: opts.ctx.workspace.id,
-          title: opts.input.title,
-          slug: opts.input.slug,
-          description: opts.input.description ?? "",
-          icon: opts.input.icon ?? "",
-          legacyPage: false,
-          configuration: defaultConfiguration,
-          customDomain: "", // TODO: make nullable
-          allowIndex: true,
-        })
-        .returning()
-        .get();
-
-      return newPage;
     }),
 
   updateGeneral: protectedProcedure
@@ -368,112 +196,72 @@ export const pageRouter = createTRPCRouter({
         icon: z.string().nullish(),
       }),
     )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      const result = await opts.ctx.db.query.page.findMany({
-        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
-      });
-
-      const oldSlug = await opts.ctx.db.query.page.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (
-        subdomainSafeList.includes(opts.input.slug) ||
-        (oldSlug?.slug !== opts.input.slug && result?.length > 0)
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "This slug is already taken. Please choose another one.",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageGeneral({
+          ctx: toServiceCtx(ctx),
+          input,
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      await opts.ctx.db
-        .update(page)
-        .set({
-          title: opts.input.title,
-          slug: opts.input.slug,
-          description: opts.input.description ?? "",
-          icon: opts.input.icon ?? "",
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
     }),
 
   updateCustomDomain: protectedProcedure
     .meta({ track: Events.UpdatePageDomain, trackProps: ["customDomain"] })
-    .input(z.object({ id: z.number(), customDomain: z.string().toLowerCase() }))
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      if (opts.input.customDomain.includes("openstatus")) {
+    // Validate customDomain *before* the handler body runs — reusing
+    // the service's `UpdatePageCustomDomainInput` (backed by the
+    // canonical `customDomainSchema`) guarantees that malformed
+    // domains (`http://…`, `www.…`, format garbage) are rejected
+    // with a `ZodError` at tRPC's input layer, before any Vercel
+    // add/remove call fires. Previously the format check ran inside
+    // the service — reached only *after* Vercel mutations, which
+    // meant a bad input could leave Vercel holding a domain the db
+    // had then rejected.
+    .input(UpdatePageCustomDomainInput)
+    .mutation(async ({ ctx, input }) => {
+      if (input.customDomain.includes("openstatus")) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Domain cannot contain 'openstatus'",
         });
       }
 
-      // Get the current page to check the existing custom domain
-      const currentPage = await opts.ctx.db.query.page.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!currentPage) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Page not found",
+      // Resolve the existing domain via the service so the Vercel diff below
+      // sees the true pre-change state, then the service persists the new
+      // value. Vercel add/remove calls stay at the transport layer.
+      //
+      // `getPageCustomDomain` (narrow one-column read) instead of
+      // `getPage` (3 batched relation queries) — Vercel only needs the
+      // old domain string, so fanning out the full-relations read on
+      // every domain update was wasteful.
+      try {
+        const sCtx = toServiceCtx(ctx);
+        const oldDomain = await getPageCustomDomain({
+          ctx: sCtx,
+          input: { id: input.id },
         });
-      }
+        const newDomain = input.customDomain;
 
-      const oldDomain = currentPage.customDomain;
-      const newDomain = opts.input.customDomain;
+        if (newDomain && !oldDomain) {
+          await addDomainToVercel(newDomain);
+        } else if (oldDomain && newDomain && newDomain !== oldDomain) {
+          await addDomainToVercel(newDomain);
+          await removeDomainFromVercel(oldDomain);
+        } else if (oldDomain && newDomain === "") {
+          await removeDomainFromVercel(oldDomain);
+        } else if (newDomain) {
+          await addDomainToVercel(newDomain);
+        } else {
+          return;
+        }
 
-      // Vercel operations first — if they fail, DB is not touched
-      if (newDomain && !oldDomain) {
-        // Adding a new domain
-        await addDomainToVercel(newDomain);
-
-        await opts.ctx.db
-          .update(page)
-          .set({ customDomain: newDomain, updatedAt: new Date() })
-          .where(and(...whereConditions))
-          .run();
-      } else if (oldDomain && newDomain && newDomain !== oldDomain) {
-        // Changing domain - add new first, then remove old
-        await addDomainToVercel(newDomain);
-        await removeDomainFromVercel(oldDomain);
-
-        await opts.ctx.db
-          .update(page)
-          .set({ customDomain: newDomain, updatedAt: new Date() })
-          .where(and(...whereConditions))
-          .run();
-      } else if (oldDomain && newDomain === "") {
-        // Removing domain
-        await removeDomainFromVercel(oldDomain);
-
-        await opts.ctx.db
-          .update(page)
-          .set({ customDomain: "", updatedAt: new Date() })
-          .where(and(...whereConditions))
-          .run();
-      } else if (newDomain) {
-        // Same domain re-submitted — ensure it's synced to Vercel
-        await addDomainToVercel(newDomain);
-
-        await opts.ctx.db
-          .update(page)
-          .set({ customDomain: newDomain, updatedAt: new Date() })
-          .where(and(...whereConditions))
-          .run();
+        await updatePageCustomDomain({
+          ctx: sCtx,
+          input: { id: input.id, customDomain: newDomain },
+        });
+      } catch (err) {
+        toTRPCError(err);
       }
     }),
 
@@ -499,128 +287,33 @@ export const pageRouter = createTRPCRouter({
         allowIndex: z.boolean().optional(),
       }),
     )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      const limit = opts.ctx.workspace.limits;
-
-      // the user is not eligible for password protection
-      if (
-        limit["password-protection"] === false &&
-        opts.input.accessType === "password"
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Password protection is not available for your current plan.",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePagePasswordProtection({
+          ctx: toServiceCtx(ctx),
+          input,
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      if (
-        limit["email-domain-protection"] === false &&
-        opts.input.accessType === "email-domain"
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Email domain protection is not available for your current plan.",
-        });
-      }
-
-      if (
-        limit["ip-restriction"] === false &&
-        opts.input.accessType === "ip-restriction"
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "IP restriction is not available for your current plan.",
-        });
-      }
-
-      if (
-        opts.input.accessType === "ip-restriction" &&
-        (!opts.input.allowedIpRanges || opts.input.allowedIpRanges.length === 0)
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "At least one IP range is required for IP restriction.",
-        });
-      }
-
-      if (opts.input.allowIndex === false && limit["no-index"] === false) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Disabling search engine indexing is not available for your current plan.",
-        });
-      }
-
-      await opts.ctx.db
-        .update(page)
-        .set({
-          accessType: opts.input.accessType,
-          authEmailDomains: opts.input.authEmailDomains?.join(","),
-          password: opts.input.password,
-          allowedIpRanges: opts.input.allowedIpRanges?.join(",") ?? null,
-          ...(opts.input.allowIndex !== undefined && {
-            allowIndex: opts.input.allowIndex,
-          }),
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
     }),
 
   updateAppearance: protectedProcedure
     .meta({ track: Events.UpdatePage })
-    .input(
-      z.object({
-        id: z.number(),
-        forceTheme: z.enum(["light", "dark", "system"]),
-        configuration: z.object({
-          theme: z.string(),
-        }),
-      }),
-    )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_page) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Page not found",
+    // Reuse the service schema so `configuration.theme` is validated
+    // against `THEME_KEYS` at the tRPC boundary; the prior local
+    // `z.object({ theme: z.string() })` accepted arbitrary strings
+    // that later failed the status-page read-parse.
+    .input(UpdatePageAppearanceInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageAppearance({
+          ctx: toServiceCtx(ctx),
+          input,
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const currentConfiguration =
-        (typeof _page.configuration === "object" &&
-          _page.configuration !== null &&
-          _page.configuration) ||
-        {};
-      const updatedConfiguration = {
-        ...currentConfiguration,
-        theme: opts.input.configuration.theme,
-      };
-
-      await opts.ctx.db
-        .update(page)
-        .set({
-          forceTheme: opts.input.forceTheme,
-          configuration: updatedConfiguration,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
     }),
 
   updateLinks: protectedProcedure
@@ -632,21 +325,15 @@ export const pageRouter = createTRPCRouter({
         contactUrl: z.string().nullish(),
       }),
     )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      await opts.ctx.db
-        .update(page)
-        .set({
-          homepageUrl: opts.input.homepageUrl,
-          contactUrl: opts.input.contactUrl,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageLinks({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateLocales: protectedProcedure
@@ -659,86 +346,40 @@ export const pageRouter = createTRPCRouter({
           locales: z.array(z.enum(locales)).nullable(),
         })
         .refine(
-          (data) => {
-            if (data.locales) {
-              return data.locales.includes(data.defaultLocale);
-            }
-            return true;
-          },
+          (data) =>
+            data.locales ? data.locales.includes(data.defaultLocale) : true,
           {
             message: "Default locale must be included in the locales list",
             path: ["defaultLocale"],
           },
         ),
     )
-    .mutation(async (opts) => {
-      if (!opts.ctx.workspace.limits.i18n) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Upgrade to configure locales.",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageLocales({
+          ctx: toServiceCtx(ctx),
+          input,
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      await opts.ctx.db
-        .update(page)
-        .set({
-          defaultLocale: opts.input.defaultLocale,
-          locales: opts.input.locales,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
     }),
 
   updatePageConfiguration: protectedProcedure
     .meta({ track: Events.UpdatePage })
-    .input(
-      z.object({
-        id: z.number(),
-        configuration: z
-          .record(z.string(), z.string().or(z.boolean()).optional())
-          .nullish(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_page) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Page not found",
+    // Reuse the service's canonical `pageConfigurationSchema`-backed
+    // input — the old `z.record(z.string(), z.string()|z.boolean())`
+    // accepted any key and any string value, persisting configurations
+    // the status-page read parser would reject.
+    .input(UpdatePageConfigurationInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageConfiguration({
+          ctx: toServiceCtx(ctx),
+          input,
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const currentConfiguration =
-        (typeof _page.configuration === "object" &&
-          _page.configuration !== null &&
-          _page.configuration) ||
-        {};
-      const updatedConfiguration = {
-        ...currentConfiguration,
-        ...opts.input.configuration,
-      };
-
-      await opts.ctx.db
-        .update(page)
-        .set({
-          configuration: updatedConfiguration,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
     }),
 });

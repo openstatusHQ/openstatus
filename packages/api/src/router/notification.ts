@@ -1,26 +1,27 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, count, eq, inArray } from "@openstatus/db";
 import {
-  NotificationDataSchema,
   discordDataSchema,
   googleChatDataSchema,
   grafanaOncallDataSchema,
-  monitor,
-  notification,
   notificationProvider,
-  notificationsToMonitors,
   ntfyDataSchema,
   opsgenieDataSchema,
   pagerdutyDataSchema,
-  selectMonitorSchema,
-  selectNotificationSchema,
   slackDataSchema,
   telegramDataSchema,
   webhookDataSchema,
   whatsappDataSchema,
 } from "@openstatus/db/src/schema";
+import { NotFoundError } from "@openstatus/services";
+import {
+  NotificationDataInputSchema,
+  createNotification,
+  deleteNotification,
+  listNotifications,
+  updateNotification,
+} from "@openstatus/services/notification";
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
@@ -40,6 +41,7 @@ import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
 import { redis } from "@openstatus/upstash";
 import { nanoid } from "nanoid";
 
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import {
   type TelegramGetUpdatesResponse,
   processTelegramUpdates,
@@ -47,29 +49,22 @@ import {
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
-  list: protectedProcedure.query(async (opts) => {
-    const notifications = await opts.ctx.db.query.notification.findMany({
-      where: eq(notification.workspaceId, opts.ctx.workspace.id),
-      with: {
-        monitor: {
-          with: {
-            monitor: true,
-          },
+  list: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const { items } = await listNotifications({
+        ctx: toServiceCtx(ctx),
+        input: {
+          // Dashboard has no paging UI; match the sentinel pattern used
+          // across the other domains.
+          limit: 10_000,
+          offset: 0,
+          order: "desc",
         },
-      },
-    });
-
-    return selectNotificationSchema
-      .extend({
-        monitors: selectMonitorSchema.array(),
-      })
-      .array()
-      .parse(
-        notifications.map((notification) => ({
-          ...notification,
-          monitors: notification.monitor.map(({ monitor }) => monitor),
-        })),
-      );
+      });
+      return items;
+    } catch (err) {
+      toTRPCError(err);
+    }
   }),
 
   // TODO: rename to update after migration
@@ -79,92 +74,24 @@ export const notificationRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         name: z.string(),
-        data: z.partialRecord(
-          z.enum(notificationProvider),
-          z
-            .string()
-            .or(
-              z.record(
-                z.string(),
-                z
-                  .string()
-                  .or(
-                    z.array(z.object({ key: z.string(), value: z.string() })),
-                  ),
-              ),
-            ),
-        ),
+        data: NotificationDataInputSchema,
         monitors: z.array(z.number()),
       }),
     )
-    .mutation(async (opts) => {
-      const existing = await opts.ctx.db.query.notification.findFirst({
-        where: and(
-          eq(notification.id, opts.input.id),
-          eq(notification.workspaceId, opts.ctx.workspace.id),
-        ),
-      });
-
-      if (!existing) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Notification not found",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updateNotification({
+          ctx: toServiceCtx(ctx),
+          input: {
+            id: input.id,
+            name: input.name,
+            data: input.data,
+            monitors: input.monitors,
+          },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const allMonitors = await opts.ctx.db.query.monitor.findMany({
-        where: and(
-          eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.monitors),
-        ),
-      });
-
-      if (allMonitors.length !== opts.input.monitors.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to all the monitors.",
-        });
-      }
-
-      const _data = NotificationDataSchema.safeParse(opts.input.data);
-
-      if (!_data.success) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: SchemaError.fromZod(_data.error, opts.input).message,
-        });
-      }
-
-      await opts.ctx.db.transaction(async (tx) => {
-        await tx
-          .update(notification)
-          .set({
-            name: opts.input.name,
-            data: JSON.stringify(opts.input.data),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(notification.id, opts.input.id),
-              eq(notification.workspaceId, opts.ctx.workspace.id),
-            ),
-          );
-
-        await tx
-          .delete(notificationsToMonitors)
-          .where(
-            and(eq(notificationsToMonitors.notificationId, opts.input.id)),
-          );
-
-        if (opts.input.monitors.length) {
-          await tx.insert(notificationsToMonitors).values(
-            opts.input.monitors.map((monitorId) => ({
-              notificationId: opts.input.id,
-              monitorId,
-            })),
-          );
-        }
-      });
     }),
 
   new: protectedProcedure
@@ -172,145 +99,49 @@ export const notificationRouter = createTRPCRouter({
     .input(
       z.object({
         provider: z.enum(notificationProvider),
-        data: z.partialRecord(
-          z.enum(notificationProvider),
-          z
-            .record(
-              z.string(),
-              z
-                .string()
-                .or(z.array(z.object({ key: z.string(), value: z.string() }))),
-            )
-            .or(z.string()),
-        ),
+        data: NotificationDataInputSchema,
         name: z.string(),
         monitors: z.array(z.number()).prefault([]),
       }),
     )
-    .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
-
-      const res = await opts.ctx.db
-        .select({ count: count() })
-        .from(notification)
-        .where(eq(notification.workspaceId, opts.ctx.workspace.id))
-        .get();
-
-      // the user has reached the limits
-      if (res && res.count >= limits["notification-channels"]) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You reached your notification limits.",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await createNotification({
+          ctx: toServiceCtx(ctx),
+          input: {
+            name: input.name,
+            provider: input.provider,
+            data: input.data,
+            monitors: input.monitors,
+          },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const allMonitors = await opts.ctx.db.query.monitor.findMany({
-        where: and(
-          eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.monitors),
-        ),
-      });
-
-      if (allMonitors.length !== opts.input.monitors.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to all the monitors.",
-        });
-      }
-
-      const limitedProviders = [
-        "sms",
-        "pagerduty",
-        "opsgenie",
-        "grafana-oncall",
-        "whatsapp",
-      ] as const;
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      if (limitedProviders.includes(opts.input.provider as any)) {
-        const isAllowed =
-          opts.ctx.workspace.limits[
-            opts.input.provider as
-              | "sms"
-              | "pagerduty"
-              | "opsgenie"
-              | "grafana-oncall"
-              | "whatsapp"
-          ];
-
-        if (!isAllowed) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Upgrade to use the notification channel.",
-          });
-        }
-      }
-
-      const _data = NotificationDataSchema.safeParse(opts.input.data);
-
-      if (!_data.success) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: SchemaError.fromZod(_data.error, opts.input).message,
-        });
-      }
-
-      const _notification = await opts.ctx.db.transaction(async (tx) => {
-        const _notification = await tx
-          .insert(notification)
-          .values({
-            name: opts.input.name,
-            provider: opts.input.provider,
-            data: JSON.stringify(opts.input.data),
-            workspaceId: opts.ctx.workspace.id,
-          })
-          .returning()
-          .get();
-
-        if (opts.input.monitors.length) {
-          await tx.insert(notificationsToMonitors).values(
-            opts.input.monitors.map((monitorId) => ({
-              notificationId: _notification.id,
-              monitorId,
-            })),
-          );
-        }
-
-        return _notification;
-      });
-
-      return _notification;
     }),
 
   delete: protectedProcedure
     .meta({ track: Events.DeleteNotification })
     .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      await opts.ctx.db
-        .delete(notification)
-        .where(
-          and(
-            eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .run();
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteNotification({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+      } catch (err) {
+        // Preserve the pre-migration idempotent behaviour — the old tRPC
+        // delete didn't throw on missing.
+        if (err instanceof NotFoundError) return;
+        toTRPCError(err);
+      }
     }),
 
   sendTest: protectedProcedure
     .input(
       z.object({
         provider: z.enum(notificationProvider),
-        data: z.partialRecord(
-          z.enum(notificationProvider),
-          z
-            .record(
-              z.string(),
-              z
-                .string()
-                .or(z.array(z.object({ key: z.string(), value: z.string() }))),
-            )
-            .or(z.string()),
-        ),
+        data: NotificationDataInputSchema,
       }),
     )
     .mutation(async (opts) => {

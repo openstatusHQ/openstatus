@@ -1,329 +1,208 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
 import {
-  type Assertion,
-  DnsRecordAssertion,
-  HeaderAssertion,
-  StatusAssertion,
-  TextBodyAssertion,
   headerAssertion,
   jsonBodyAssertion,
   recordAssertion,
-  serialize,
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { type SQL, and, count, eq, inArray, isNull } from "@openstatus/db";
+import { NotFoundError } from "@openstatus/services";
 import {
-  insertMonitorSchema,
-  monitor,
+  type CreateMonitorInput,
+  type UpdateMonitorGeneralInput,
+  bulkUpdateMonitors,
+  cloneMonitor,
+  createMonitor,
+  deleteMonitor,
+  deleteMonitors,
+  getMonitor,
+  listMonitors,
   monitorJobTypes,
   monitorMethods,
-  monitorTag,
-  monitorTagsToMonitors,
-  notification,
-  notificationsToMonitors,
-  pageComponent,
-  privateLocation,
-  privateLocationToMonitors,
-  selectIncidentSchema,
-  selectMonitorSchema,
-  selectMonitorTagSchema,
-  selectNotificationSchema,
-  selectPrivateLocationSchema,
-} from "@openstatus/db/src/schema";
+  monitorPeriodicity,
+  updateMonitorFollowRedirects,
+  updateMonitorGeneral,
+  updateMonitorNotifiers,
+  updateMonitorOtel,
+  updateMonitorPublic,
+  updateMonitorResponseTime,
+  updateMonitorRetry,
+  updateMonitorSchedulingRegions,
+  updateMonitorTags,
+} from "@openstatus/services/monitor";
+import { z } from "zod";
 
 import { Events } from "@openstatus/analytics";
-import {
-  freeFlyRegions,
-  monitorPeriodicity,
-  monitorRegions,
-} from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/regions";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { testDns, testHttp, testTcp } from "./checker";
+
+// tRPC-side input schemas. These preserve the existing wire contract exactly.
+
+const headerPair = z.object({ key: z.string(), value: z.string() });
+const assertionUnion = z.discriminatedUnion("type", [
+  statusAssertion,
+  headerAssertion,
+  textBodyAssertion,
+  jsonBodyAssertion,
+  recordAssertion,
+]);
+
+const newMonitorTRPCInput = z.object({
+  name: z.string(),
+  jobType: z.enum(monitorJobTypes),
+  url: z.string(),
+  method: z.enum(monitorMethods),
+  headers: z.array(headerPair),
+  body: z.string().optional(),
+  assertions: z.array(assertionUnion),
+  active: z.boolean().prefault(false),
+  saveCheck: z.boolean().prefault(false),
+  skipCheck: z.boolean().prefault(false),
+});
+
+const updateGeneralTRPCInput = z.object({
+  id: z.number(),
+  jobType: z.enum(monitorJobTypes),
+  url: z.string(),
+  method: z.enum(monitorMethods),
+  headers: z.array(headerPair),
+  body: z.string().optional(),
+  name: z.string(),
+  assertions: z.array(assertionUnion),
+  active: z.boolean().prefault(true),
+  skipCheck: z.boolean().prefault(true),
+  saveCheck: z.boolean().prefault(false),
+});
 
 export const monitorRouter = createTRPCRouter({
   delete: protectedProcedure
     .meta({ track: Events.DeleteMonitor })
     .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const monitorToDelete = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-      if (!monitorToDelete) return;
-
-      await opts.ctx.db.transaction(async (tx) => {
-        await tx
-          .update(monitor)
-          .set({ deletedAt: new Date(), active: false })
-          .where(eq(monitor.id, monitorToDelete.id));
-        await tx
-          .delete(monitorTagsToMonitors)
-          .where(eq(monitorTagsToMonitors.monitorId, monitorToDelete.id));
-        await tx
-          .delete(notificationsToMonitors)
-          .where(eq(notificationsToMonitors.monitorId, monitorToDelete.id));
-        await tx
-          .delete(pageComponent)
-          .where(eq(pageComponent.monitorId, monitorToDelete.id));
-      });
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteMonitor({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
+        });
+      } catch (err) {
+        // Preserve the pre-migration idempotent behaviour — old code
+        // silently returned when the row was already gone.
+        if (err instanceof NotFoundError) return;
+        toTRPCError(err);
+      }
     }),
 
   deleteMonitors: protectedProcedure
     .input(z.object({ ids: z.number().array() }))
-    .mutation(async (opts) => {
-      const _monitors = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            inArray(monitor.id, opts.input.ids),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .all();
-
-      if (_monitors.length !== opts.input.ids.length) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found.",
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteMonitors({
+          ctx: toServiceCtx(ctx),
+          input: { ids: input.ids },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      await opts.ctx.db.transaction(async (tx) => {
-        await tx
-          .update(monitor)
-          .set({ deletedAt: new Date(), active: false })
-          .where(inArray(monitor.id, opts.input.ids));
-        await tx
-          .delete(monitorTagsToMonitors)
-          .where(inArray(monitorTagsToMonitors.monitorId, opts.input.ids));
-        await tx
-          .delete(notificationsToMonitors)
-          .where(inArray(notificationsToMonitors.monitorId, opts.input.ids));
-        await tx
-          .delete(pageComponent)
-          .where(inArray(pageComponent.monitorId, opts.input.ids));
-      });
     }),
 
   updateMonitors: protectedProcedure
     .input(
-      insertMonitorSchema
-        .pick({ public: true, active: true })
-        .partial() // batched updates
-        .extend({ ids: z.number().array() }), // array of monitor ids to update
+      z.object({
+        ids: z.number().array(),
+        public: z.boolean().optional(),
+        active: z.boolean().optional(),
+      }),
     )
-    .mutation(async (opts) => {
-      await opts.ctx.db
-        .update(monitor)
-        .set(opts.input)
-        .where(
-          and(
-            inArray(monitor.id, opts.input.ids),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
-        );
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await bulkUpdateMonitors({
+          ctx: toServiceCtx(ctx),
+          input: {
+            ids: input.ids,
+            public: input.public,
+            active: input.active,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   list: protectedProcedure
-    .input(
-      z
-        .object({
-          order: z.enum(["asc", "desc"]).optional(),
-        })
-        .optional(),
-    )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      const result = await opts.ctx.db.query.monitor.findMany({
-        where: and(...whereConditions),
-        with: {
-          monitorTagsToMonitors: {
-            with: { monitorTag: true },
+    .input(z.object({ order: z.enum(["asc", "desc"]).optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const { items } = await listMonitors({
+          ctx: toServiceCtx(ctx),
+          input: {
+            // tRPC consumers (dashboard) want the full set; no paging UI.
+            limit: 10_000,
+            offset: 0,
+            order: input?.order ?? "desc",
           },
-          incidents: {
-            orderBy: (incident, { desc }) => [desc(incident.createdAt)],
-          },
-        },
-        orderBy: (monitor, { asc, desc }) =>
-          opts.input?.order === "asc"
-            ? [asc(monitor.active), asc(monitor.createdAt)]
-            : [desc(monitor.active), desc(monitor.createdAt)],
-      });
-
-      return z
-        .array(
-          selectMonitorSchema.extend({
-            tags: z.array(selectMonitorTagSchema).prefault([]),
-            incidents: z.array(selectIncidentSchema).prefault([]),
-          }),
-        )
-        .parse(
-          result.map((data) => ({
-            ...data,
-            tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
-          })),
-        );
+        });
+        return items;
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   get: protectedProcedure
     .input(z.object({ id: z.coerce.number() }))
     .query(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      const data = await ctx.db.query.monitor.findFirst({
-        where: and(...whereConditions),
-        with: {
-          monitorsToNotifications: {
-            with: { notification: true },
-          },
-          monitorTagsToMonitors: {
-            with: { monitorTag: true },
-          },
-          incidents: true,
-          privateLocationToMonitors: {
-            with: { privateLocation: true },
-          },
-        },
-      });
-
-      if (!data) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
+      try {
+        return await getMonitor({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      return selectMonitorSchema
-        .extend({
-          notifications: z.array(selectNotificationSchema).prefault([]),
-          tags: z.array(selectMonitorTagSchema).prefault([]),
-          incidents: z.array(selectIncidentSchema).prefault([]),
-          privateLocations: z.array(selectPrivateLocationSchema).prefault([]),
-        })
-        .parse({
-          ...data,
-          notifications: data.monitorsToNotifications.map(
-            (m) => m.notification,
-          ),
-          tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
-          incidents: data.incidents,
-          privateLocations: data.privateLocationToMonitors.map(
-            (p) => p.privateLocation,
-          ),
-        });
     }),
 
   clone: protectedProcedure
     .meta({ track: Events.CloneMonitor })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      const _monitors = await ctx.db.query.monitor.findMany({
-        where: and(
-          eq(monitor.workspaceId, ctx.workspace.id),
-          isNull(monitor.deletedAt),
-        ),
-      });
-
-      if (_monitors.length >= ctx.workspace.limits.monitors) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You have reached the maximum number of monitors.",
+      try {
+        return await cloneMonitor({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const data = await ctx.db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!data) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found.",
-        });
-      }
-
-      const [newMonitor] = await ctx.db
-        .insert(monitor)
-        .values({
-          ...data,
-          id: undefined, // let the db generate the id
-          name: `${data.name} (Copy)`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
-
-      if (!newMonitor) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to clone monitor.",
-        });
-      }
-
-      return newMonitor;
     }),
 
   updateRetry: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), retry: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      await ctx.db
-        .update(monitor)
-        .set({ retry: input.retry, updatedAt: new Date() })
-        .where(and(...whereConditions))
-        .run();
+      try {
+        await updateMonitorRetry({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id, retry: input.retry },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateFollowRedirects: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), followRedirects: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      await ctx.db
-        .update(monitor)
-        .set({
-          followRedirects: input.followRedirects,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
+      try {
+        await updateMonitorFollowRedirects({
+          ctx: toServiceCtx(ctx),
+          input: {
+            id: input.id,
+            followRedirects: input.followRedirects,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateOtel: protectedProcedure
@@ -332,46 +211,36 @@ export const monitorRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         otelEndpoint: z.string(),
-        otelHeaders: z
-          .array(z.object({ key: z.string(), value: z.string() }))
-          .optional(),
+        otelHeaders: z.array(headerPair).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      await ctx.db
-        .update(monitor)
-        .set({
-          otelEndpoint: input.otelEndpoint,
-          otelHeaders: input.otelHeaders
-            ? JSON.stringify(input.otelHeaders)
-            : undefined,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
+      try {
+        await updateMonitorOtel({
+          ctx: toServiceCtx(ctx),
+          input: {
+            id: input.id,
+            otelEndpoint: input.otelEndpoint,
+            otelHeaders: input.otelHeaders,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updatePublic: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), public: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      await ctx.db
-        .update(monitor)
-        .set({ public: input.public, updatedAt: new Date() })
-        .where(and(...whereConditions))
-        .run();
+      try {
+        await updateMonitorPublic({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id, public: input.public },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateSchedulingRegions: protectedProcedure
@@ -385,90 +254,19 @@ export const monitorRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      const limits = ctx.workspace.limits;
-
-      if (!limits.periodicity.includes(input.periodicity)) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Upgrade to check more often.",
-        });
-      }
-
-      if (limits["max-regions"] < input.regions.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You have reached the maximum number of regions.",
-        });
-      }
-
-      if (
-        input.regions.length > 0 &&
-        !input.regions.every((r) =>
-          limits.regions.includes(r as (typeof limits)["regions"][number]),
-        )
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to this region.",
-        });
-      }
-
-      const existingMonitor = await ctx.db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!existingMonitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found.",
-        });
-      }
-
-      if (input.privateLocations && input.privateLocations.length > 0) {
-        const validLocations = await ctx.db.query.privateLocation.findMany({
-          where: and(
-            eq(privateLocation.workspaceId, ctx.workspace.id),
-            inArray(privateLocation.id, input.privateLocations),
-          ),
-        });
-        if (validLocations.length !== input.privateLocations.length) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Invalid private location IDs.",
-          });
-        }
-      }
-
-      await ctx.db.transaction(async (tx) => {
-        await tx
-          .update(monitor)
-          .set({
-            regions: input.regions.join(","),
+      try {
+        await updateMonitorSchedulingRegions({
+          ctx: toServiceCtx(ctx),
+          input: {
+            id: input.id,
+            regions: input.regions,
             periodicity: input.periodicity,
-            updatedAt: new Date(),
-          })
-          .where(and(...whereConditions))
-          .run();
-
-        await tx
-          .delete(privateLocationToMonitors)
-          .where(eq(privateLocationToMonitors.monitorId, input.id));
-
-        if (input.privateLocations && input.privateLocations.length > 0) {
-          await tx.insert(privateLocationToMonitors).values(
-            input.privateLocations.map((privateLocationId) => ({
-              monitorId: input.id,
-              privateLocationId,
-            })),
-          );
-        }
-      });
+            privateLocations: input.privateLocations,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateResponseTime: protectedProcedure
@@ -481,333 +279,147 @@ export const monitorRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
-
-      await ctx.db
-        .update(monitor)
-        .set({
-          timeout: input.timeout,
-          degradedAfter: input.degradedAfter,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
+      try {
+        await updateMonitorResponseTime({
+          ctx: toServiceCtx(ctx),
+          input: {
+            id: input.id,
+            timeout: input.timeout,
+            degradedAfter: input.degradedAfter,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateTags: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), tags: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
-      const existingMonitor = await ctx.db.query.monitor.findFirst({
-        where: and(
-          eq(monitor.id, input.id),
-          eq(monitor.workspaceId, ctx.workspace.id),
-        ),
-      });
-
-      if (!existingMonitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found.",
+      try {
+        await updateMonitorTags({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id, tags: input.tags },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const allTags = await ctx.db.query.monitorTag.findMany({
-        where: and(
-          eq(monitorTag.workspaceId, ctx.workspace.id),
-          inArray(monitorTag.id, input.tags),
-        ),
-      });
-
-      if (allTags.length !== input.tags.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to this tag.",
-        });
-      }
-
-      await ctx.db.transaction(async (tx) => {
-        await tx
-          .delete(monitorTagsToMonitors)
-          .where(and(eq(monitorTagsToMonitors.monitorId, input.id)));
-
-        if (input.tags.length > 0) {
-          await tx.insert(monitorTagsToMonitors).values(
-            input.tags.map((tagId) => ({
-              monitorId: input.id,
-              monitorTagId: tagId,
-            })),
-          );
-        }
-      });
     }),
 
   updateGeneral: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
-    .input(
-      z.object({
-        id: z.number(),
-        jobType: z.enum(monitorJobTypes),
-        url: z.string(),
-        method: z.enum(monitorMethods),
-        headers: z.array(z.object({ key: z.string(), value: z.string() })),
-        body: z.string().optional(),
-        name: z.string(),
-        assertions: z.array(
-          z.discriminatedUnion("type", [
-            statusAssertion,
-            headerAssertion,
-            textBodyAssertion,
-            jsonBodyAssertion,
-            recordAssertion,
-          ]),
-        ),
-        active: z.boolean().prefault(true),
-        // skip the test check if assertions are OK
-        skipCheck: z.boolean().prefault(true),
-        // save check in db (iff success? -> e.g. onboarding to get a first ping)
-        saveCheck: z.boolean().prefault(false),
-      }),
-    )
+    .input(updateGeneralTRPCInput)
     .mutation(async ({ ctx, input }) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, input.id),
-        eq(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ];
+      try {
+        // Pre-save endpoint check — kept at the tRPC layer because the
+        // `testHttp` / `testTcp` / `testDns` helpers hit external URLs and
+        // are tRPC-specific UX; services unconditionally save.
+        if (!input.skipCheck && input.active) {
+          if (input.jobType === "http") {
+            await testHttp({
+              url: input.url,
+              method: input.method,
+              headers: input.headers,
+              body: input.body,
+              assertions: input.assertions.filter(
+                (a) => a.type !== "dnsRecord",
+              ),
+              region: "ams",
+            });
+          } else if (input.jobType === "tcp") {
+            await testTcp({ url: input.url, region: "ams" });
+          } else if (input.jobType === "dns") {
+            await testDns({
+              url: input.url,
+              region: "ams",
+              assertions: input.assertions.filter(
+                (a) => a.type === "dnsRecord",
+              ),
+            });
+          }
+        }
 
-      const assertions: Assertion[] = [];
-      for (const a of input.assertions ?? []) {
-        if (a.type === "status") {
-          assertions.push(new StatusAssertion(a));
-        }
-        if (a.type === "header") {
-          assertions.push(new HeaderAssertion(a));
-        }
-        if (a.type === "textBody") {
-          assertions.push(new TextBodyAssertion(a));
-        }
-        if (a.type === "dnsRecord") {
-          assertions.push(new DnsRecordAssertion(a));
-        }
-      }
-
-      // NOTE: we are checking the endpoint before saving
-      if (!input.skipCheck && input.active) {
-        if (input.jobType === "http") {
-          await testHttp({
-            url: input.url,
-            method: input.method,
-            headers: input.headers,
-            body: input.body,
-            // Filter out DNS record assertions as they can't be validated via HTTP
-            assertions: input.assertions.filter((a) => a.type !== "dnsRecord"),
-            region: "ams",
-          });
-        } else if (input.jobType === "tcp") {
-          await testTcp({
-            url: input.url,
-            region: "ams",
-          });
-        } else if (input.jobType === "dns") {
-          await testDns({
-            url: input.url,
-            region: "ams",
-            assertions: input.assertions.filter((a) => a.type === "dnsRecord"),
-          });
-        }
-      }
-
-      await ctx.db
-        .update(monitor)
-        .set({
+        const serviceInput: UpdateMonitorGeneralInput = {
+          id: input.id,
           name: input.name,
           jobType: input.jobType,
           url: input.url,
           method: input.method,
-          headers: input.headers ? JSON.stringify(input.headers) : undefined,
+          headers: input.headers,
           body: input.body,
+          assertions: input.assertions,
           active: input.active,
-          assertions: serialize(assertions),
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
+        };
+        await updateMonitorGeneral({
+          ctx: toServiceCtx(ctx),
+          input: serviceInput,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   updateNotifiers: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), notifiers: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
-      const existingMonitor = await ctx.db.query.monitor.findFirst({
-        where: and(
-          eq(monitor.id, input.id),
-          eq(monitor.workspaceId, ctx.workspace.id),
-        ),
-      });
-
-      if (!existingMonitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found.",
+      try {
+        await updateMonitorNotifiers({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.id, notifiers: input.notifiers },
         });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      const allNotifiers = await ctx.db.query.notification.findMany({
-        where: and(
-          eq(notification.workspaceId, ctx.workspace.id),
-          inArray(notification.id, input.notifiers),
-        ),
-      });
-
-      if (allNotifiers.length !== input.notifiers.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to this notifier.",
-        });
-      }
-
-      await ctx.db.transaction(async (tx) => {
-        await tx
-          .delete(notificationsToMonitors)
-          .where(and(eq(notificationsToMonitors.monitorId, input.id)));
-
-        if (input.notifiers.length > 0) {
-          await tx.insert(notificationsToMonitors).values(
-            input.notifiers.map((notifierId) => ({
-              monitorId: input.id,
-              notificationId: notifierId,
-            })),
-          );
-        }
-      });
     }),
 
   new: protectedProcedure
     .meta({ track: Events.CreateMonitor, trackProps: ["url", "jobType"] })
-    .input(
-      z.object({
-        name: z.string(),
-        jobType: z.enum(monitorJobTypes),
-        url: z.string(),
-        method: z.enum(monitorMethods),
-        headers: z.array(z.object({ key: z.string(), value: z.string() })),
-        body: z.string().optional(),
-        assertions: z.array(
-          z.discriminatedUnion("type", [
-            statusAssertion,
-            headerAssertion,
-            textBodyAssertion,
-            jsonBodyAssertion,
-            recordAssertion,
-          ]),
-        ),
-        active: z.boolean().prefault(false),
-        saveCheck: z.boolean().prefault(false),
-        skipCheck: z.boolean().prefault(false),
-      }),
-    )
+    .input(newMonitorTRPCInput)
     .mutation(async ({ ctx, input }) => {
-      const limits = ctx.workspace.limits;
-
-      const res = await ctx.db
-        .select({ count: count() })
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.workspaceId, ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
-        )
-        .get();
-
-      // the user has reached the limits
-      if (res && res.count >= limits.monitors) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You reached your monitor limits.",
-        });
-      }
-
-      const assertions: Assertion[] = [];
-      for (const a of input.assertions ?? []) {
-        if (a.type === "status") {
-          assertions.push(new StatusAssertion(a));
+      try {
+        if (!input.skipCheck) {
+          if (input.jobType === "http") {
+            await testHttp({
+              url: input.url,
+              method: input.method,
+              headers: input.headers,
+              body: input.body,
+              assertions: input.assertions.filter(
+                (a) => a.type !== "dnsRecord",
+              ),
+              region: "ams",
+            });
+          } else if (input.jobType === "tcp") {
+            await testTcp({ url: input.url, region: "ams" });
+          } else if (input.jobType === "dns") {
+            await testDns({
+              url: input.url,
+              region: "ams",
+              assertions: input.assertions.filter(
+                (a) => a.type === "dnsRecord",
+              ),
+            });
+          }
         }
-        if (a.type === "header") {
-          assertions.push(new HeaderAssertion(a));
-        }
-        if (a.type === "textBody") {
-          assertions.push(new TextBodyAssertion(a));
-        }
-        if (a.type === "dnsRecord") {
-          assertions.push(new DnsRecordAssertion(a));
-        }
-      }
 
-      // NOTE: we are checking the endpoint before saving
-      if (!input.skipCheck) {
-        if (input.jobType === "http") {
-          await testHttp({
-            url: input.url,
-            method: input.method,
-            headers: input.headers,
-            body: input.body,
-            // Filter out DNS record assertions as they can't be validated via HTTP
-            assertions: input.assertions.filter((a) => a.type !== "dnsRecord"),
-            region: "ams",
-          });
-        } else if (input.jobType === "tcp") {
-          await testTcp({
-            url: input.url,
-            region: "ams",
-          });
-        } else if (input.jobType === "dns") {
-          await testDns({
-            url: input.url,
-            region: "ams",
-            assertions: input.assertions.filter((a) => a.type === "dnsRecord"),
-          });
-        }
-      }
-
-      const selectableRegions =
-        ctx.workspace.plan === "free" ? freeFlyRegions : monitorRegions;
-      const randomRegions = ctx.workspace.plan === "free" ? 4 : 6;
-
-      const regions = [...selectableRegions]
-        // NOTE: make sure we don't use deprecated regions
-        .filter((r) => {
-          const deprecated = regionDict[r].deprecated;
-          if (!deprecated) return true;
-          return false;
-        })
-        .sort(() => 0.5 - Math.random())
-        .slice(0, randomRegions);
-
-      const newMonitor = await ctx.db
-        .insert(monitor)
-        .values({
+        const serviceInput: CreateMonitorInput = {
           name: input.name,
           jobType: input.jobType,
           url: input.url,
           method: input.method,
-          headers: input.headers ? JSON.stringify(input.headers) : undefined,
+          headers: input.headers,
           body: input.body,
+          assertions: input.assertions,
           active: input.active,
-          workspaceId: ctx.workspace.id,
-          periodicity: ctx.workspace.plan === "free" ? "30m" : "1m",
-          regions: regions.join(","),
-          assertions: serialize(assertions),
-          updatedAt: new Date(),
-        })
-        .returning()
-        .get();
-
-      return newMonitor;
+        };
+        return await createMonitor({
+          ctx: toServiceCtx(ctx),
+          input: serviceInput,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 });
