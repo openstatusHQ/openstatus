@@ -31,6 +31,11 @@ const componentInput = z
   );
 
 const groupInput = z.object({
+  // `id` is required to round-trip existing groups. Omitting it flags the
+  // group as new → gets INSERTed and a fresh id. Without this, every
+  // reorder deletes and recreates groups, cascading their FKs (component
+  // assignments, subscriber scopes) off a cliff.
+  id: z.number().int().optional(),
   order: z.number().int(),
   name: z.string(),
   defaultOpen: z.boolean().optional().default(false),

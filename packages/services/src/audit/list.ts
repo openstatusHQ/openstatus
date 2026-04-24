@@ -1,4 +1,12 @@
-import { type SQL, and, db as defaultDb, desc, eq, gte } from "@openstatus/db";
+import {
+  type SQL,
+  and,
+  db as defaultDb,
+  desc,
+  eq,
+  gte,
+  isNull,
+} from "@openstatus/db";
 import { auditLog, user } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
@@ -67,7 +75,15 @@ export async function listAuditLogs(args: {
       },
     })
     .from(auditLog)
-    .leftJoin(user, eq(user.id, auditLog.actorUserId))
+    // Narrow the join so soft-deleted users don't surface as actors.
+    // `deleteAccount` preserves the row (deletedAt + PII wipe), which
+    // a bare `eq(user.id, actorUserId)` would still match, returning a
+    // user object with blanked fields instead of `user: null`. Readers
+    // can't distinguish that from a real actor without the `isNull`.
+    .leftJoin(
+      user,
+      and(eq(user.id, auditLog.actorUserId), isNull(user.deletedAt)),
+    )
     .where(and(...conditions))
     .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
     .all();

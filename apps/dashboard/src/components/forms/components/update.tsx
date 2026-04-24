@@ -109,7 +109,7 @@ export function FormComponentsUpdate() {
           await updateComponentsMutation.mutateAsync({
             pageId: Number.parseInt(id),
             components: values.components,
-            groups: values.groups.map(({ id: _groupId, ...rest }) => rest),
+            groups: values.groups,
           });
         }}
       />

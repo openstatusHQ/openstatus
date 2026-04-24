@@ -50,7 +50,7 @@ const EXAMPLES = [
     user: {
       id: 42,
       name: "Max Kaske",
-      email: "max@openstatus.dev",
+      email: "me@maxkaske.dev",
       photoUrl: null,
     },
   },
@@ -71,7 +71,7 @@ const EXAMPLES = [
     user: {
       id: 42,
       name: "Max Kaske",
-      email: "max@openstatus.dev",
+      email: "me@maxkaske.dev",
       photoUrl: null,
     },
   },
@@ -89,7 +89,12 @@ const EXAMPLES = [
     metadata: null,
     changedFields: null,
     createdAt: new Date("2026-04-22T09:15:00Z"),
-    user: null,
+    user: {
+      id: 42,
+      name: "Thibault Le Ouay Ducasse",
+      email: "me@thibaultleouay.dev",
+      photoUrl: null,
+    },
   },
 ] satisfies AuditLog[];
 

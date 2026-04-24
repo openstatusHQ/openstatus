@@ -61,10 +61,7 @@ const pageComponentActions = [
   action("page_component.create", "page_component", intId, {
     optionalMetadata: true,
   }),
-  // Page-level reorder lives under `page_component.update` but is
-  // audited against the parent page — the action targets the page's
-  // component *layout*, not an individual component.
-  action("page_component.update", "page", intId),
+  action("page_component.update", "page_component", intId),
   action("page_component.delete", "page_component", intId),
 ] as const;
 
@@ -72,6 +69,8 @@ const pageComponentGroupActions = [
   action("page_component_group.create", "page_component_group", intId, {
     optionalMetadata: true,
   }),
+  action("page_component_group.update", "page_component_group", intId),
+  action("page_component_group.delete", "page_component_group", intId),
 ] as const;
 
 const pageSubscriberActions = [
