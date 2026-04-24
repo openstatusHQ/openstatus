@@ -10,13 +10,6 @@ export const maintenanceListPeriods = ["1d", "7d", "14d"] as const;
 export type MaintenanceListPeriod = (typeof maintenanceListPeriods)[number];
 export const maintenanceListPeriodSchema = z.enum(maintenanceListPeriods);
 
-const dateRange = z
-  .object({ from: z.coerce.date(), to: z.coerce.date() })
-  .refine((v) => v.from < v.to, {
-    path: ["to"],
-    error: "End date must be after start date.",
-  });
-
 export const CreateMaintenanceInput = z
   .object({
     title: z.string().min(1).max(256),
@@ -64,7 +57,3 @@ export const NotifyMaintenanceInput = z.object({
   maintenanceId: z.number().int(),
 });
 export type NotifyMaintenanceInput = z.infer<typeof NotifyMaintenanceInput>;
-
-// Re-exported to satisfy the "refine is unused" TS check when a consumer
-// wants to validate a raw `{from, to}` pair without the full CreateInput.
-export { dateRange as MaintenanceDateRange };

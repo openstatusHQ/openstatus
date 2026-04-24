@@ -63,8 +63,18 @@ export const maintenanceServiceImpl: ServiceImpl<typeof MaintenanceService> = {
         });
       }
 
+      // Re-fetch so the response reflects stored IDs (dedup + validation
+      // applied), not the raw request. Matches updateMaintenance and
+      // createNotification.
+      const full = await getMaintenance({
+        ctx: sCtx,
+        input: { id: record.id },
+      });
       return {
-        maintenance: dbMaintenanceToProto(record, req.pageComponentIds),
+        maintenance: dbMaintenanceToProto(
+          full,
+          full.pageComponentIds.map(String),
+        ),
       };
     } catch (err) {
       toConnectError(err);

@@ -106,6 +106,10 @@ export async function listMaintenances(args: {
   }
   const whereClause = and(...conditions);
 
+  // Count and page queries run in parallel outside a transaction — a
+  // concurrent insert between them can leave `totalSize` one off from the
+  // returned page. Best-effort is fine for list pagination (Connect clients
+  // re-fetch; tRPC callers use a 10k sentinel and ignore totalSize).
   const [countRow, rows] = await Promise.all([
     db
       .select({ count: sql<number>`count(*)` })

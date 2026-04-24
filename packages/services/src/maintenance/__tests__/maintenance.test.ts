@@ -28,7 +28,7 @@ import {
 } from "../../../test/helpers";
 import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
-import { ForbiddenError, NotFoundError } from "../../errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { createMaintenance } from "../create";
 import { deleteMaintenance } from "../delete";
 import { getMaintenance, listMaintenances } from "../list";
@@ -51,6 +51,10 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let testPageId: number;
 let testPageComponentId: number;
+// Second page + component on the same workspace, used to exercise the
+// "all components must share a page" ConflictError branch.
+let otherPageId: number;
+let otherPageComponentId: number;
 let auditBuffer: AuditLogRecord[];
 let auditReset: () => void;
 
@@ -93,16 +97,41 @@ beforeAll(async () => {
     .returning()
     .get();
   testPageComponentId = componentRow.id;
+
+  const otherPageRow = await db
+    .insert(page)
+    .values({
+      workspaceId: team.id,
+      title: `${TEST_PREFIX}-other-page`,
+      description: "other test page",
+      slug: `${TEST_PREFIX}-other-page-slug`,
+      customDomain: "",
+    })
+    .returning()
+    .get();
+  otherPageId = otherPageRow.id;
+
+  const otherComponentRow = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: team.id,
+      pageId: otherPageId,
+      name: `${TEST_PREFIX}-other-component`,
+      type: "static",
+    })
+    .returning()
+    .get();
+  otherPageComponentId = otherComponentRow.id;
 });
 
 afterAll(async () => {
   await db
     .delete(pageComponent)
-    .where(eq(pageComponent.id, testPageComponentId))
+    .where(inArray(pageComponent.id, [testPageComponentId, otherPageComponentId]))
     .catch(() => undefined);
   await db
     .delete(page)
-    .where(eq(page.id, testPageId))
+    .where(inArray(page.id, [testPageId, otherPageId]))
     .catch(() => undefined);
 });
 
@@ -197,6 +226,47 @@ describe("createMaintenance", () => {
       }),
     ).rejects.toThrow();
   });
+
+  test("deduplicates pageComponentIds", async () => {
+    // Duplicate ids in the input would violate the composite PK on
+    // `maintenances_to_page_components` if not deduped. Guard against a
+    // regression where the `Set` in `validatePageComponentIds` is dropped.
+    const record = await createMaintenance({
+      ctx: teamCtx,
+      input: {
+        title: `${TEST_PREFIX}-dedupe`,
+        message: "m",
+        ...futureRange(),
+        pageId: testPageId,
+        pageComponentIds: [testPageComponentId, testPageComponentId],
+      },
+    });
+
+    const assoc = await db
+      .select()
+      .from(maintenancesToPageComponents)
+      .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
+      .all();
+    expect(assoc).toHaveLength(1);
+    expect(assoc[0].pageComponentId).toBe(testPageComponentId);
+
+    createdMaintenanceIds.push(record.id);
+  });
+
+  test("throws ConflictError when components span multiple pages", async () => {
+    await expect(
+      createMaintenance({
+        ctx: teamCtx,
+        input: {
+          title: `${TEST_PREFIX}-mixed-pages`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId, otherPageComponentId],
+        },
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
 });
 
 describe("updateMaintenance", () => {
@@ -250,6 +320,57 @@ describe("updateMaintenance", () => {
         input: { id: record.id, title: "blocked" },
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
+
+    createdMaintenanceIds.push(record.id);
+  });
+
+  test("rejects partial update that crosses the from/to invariant", async () => {
+    // The Zod refine on CreateMaintenanceInput only catches simultaneous
+    // `{from, to}` submissions. A partial update that moves only `to`
+    // earlier than the stored `from` has to be rejected by the service's
+    // own effective-range check. Regression guard for that code path.
+    const record = await createMaintenance({
+      ctx: teamCtx,
+      input: {
+        title: `${TEST_PREFIX}-range-update`,
+        message: "m",
+        ...futureRange(60 * 60 * 1000),
+        pageId: testPageId,
+        pageComponentIds: [],
+      },
+    });
+
+    await expect(
+      updateMaintenance({
+        ctx: teamCtx,
+        input: { id: record.id, to: new Date(Date.now() - 60 * 60 * 1000) },
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+
+    createdMaintenanceIds.push(record.id);
+  });
+
+  test("throws ConflictError when pageComponentIds span multiple pages", async () => {
+    const record = await createMaintenance({
+      ctx: teamCtx,
+      input: {
+        title: `${TEST_PREFIX}-update-mixed-pages`,
+        message: "m",
+        ...futureRange(),
+        pageId: testPageId,
+        pageComponentIds: [testPageComponentId],
+      },
+    });
+
+    await expect(
+      updateMaintenance({
+        ctx: teamCtx,
+        input: {
+          id: record.id,
+          pageComponentIds: [testPageComponentId, otherPageComponentId],
+        },
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
 
     createdMaintenanceIds.push(record.id);
   });
