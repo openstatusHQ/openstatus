@@ -60,6 +60,13 @@ export async function updatePrivateLocation(args: {
       .returning()
       .get();
 
+    // Drizzle's `.returning().get()` is typed `T | undefined`. The
+    // `findFirst` above guarantees the row exists in this tx, but a
+    // future change to the WHERE could silently drop the row and the
+    // next line would crash with `Cannot read property 'id' of
+    // undefined`. Re-throw NotFound so the failure mode stays sane.
+    if (!row) throw new NotFoundError("private_location", input.id);
+
     await tx
       .delete(privateLocationToMonitors)
       .where(eq(privateLocationToMonitors.privateLocationId, row.id));

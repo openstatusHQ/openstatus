@@ -45,10 +45,9 @@ export async function createPageSubscriber(args: {
   // Atomicity trade-off: because `createSubscription` commits its own tx
   // before we get here to emit the audit row, an audit-insert failure
   // below cannot roll back the subscriber row. This inverts the usual
-  // "fail-closed audit" guarantee. Threading a tx into the subscriptions
-  // package would require widening its public signature across consumers
-  // and is deferred. The audit emit is best-effort post-commit; if it
-  // fails the caller sees the error but the subscription persists.
+  // "fail-closed audit" guarantee from CLAUDE.md. Threading a tx into
+  // the subscriptions package would require widening its public
+  // signature across consumers and is tracked in #2120.
   await withTransaction(ctx, async (tx) => {
     const pageWithWorkspace = await loadPageForWorkspace({
       tx,
