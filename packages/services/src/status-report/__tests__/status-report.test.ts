@@ -169,6 +169,13 @@ describe("createStatusReport", () => {
       entityId: report.id,
     });
 
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "status_report_update.create",
+      entityType: "status_report_update",
+      entityId: initialUpdate.id,
+    });
+
     createdReportIds.push(report.id);
   });
 

@@ -84,6 +84,14 @@ export async function createStatusReport(args: {
       after: newReport,
     });
 
+    await emitAudit(tx, ctx, {
+      action: "status_report_update.create",
+      entityType: "status_report_update",
+      entityId: initialUpdate.id,
+      after: initialUpdate,
+      metadata: { statusReportId: newReport.id },
+    });
+
     return { statusReport: newReport, initialUpdate };
   });
 }
