@@ -131,12 +131,54 @@ const invitationActions = [
   action("invitation.delete", "invitation", intId),
 ] as const;
 
+// Several entities below carry only a subset of the create/update/delete
+// triplet. This is intentional, not an oversight:
+//   - `member`: rows are created via `invitation.accept`, not directly.
+//   - `integration`: rows are created by the OAuth callback handler,
+//     which lives outside the service layer for now.
+//   - `incident`: rows originate from the checker pipeline, not user
+//     mutations.
+// When those write paths migrate to the service layer, add the missing
+// verbs alongside.
+const memberActions = [
+  // `entityId` is the removed user's id. Member rows have no surrogate key —
+  // they're (userId, workspaceId) composite — so the user id is the most
+  // useful identifier to fix on in the audit log.
+  action("member.delete", "member", intId),
+] as const;
+
+const integrationActions = [
+  action("integration.delete", "integration", intId),
+] as const;
+
+const monitorTagActions = [
+  action("monitor_tag.create", "monitor_tag", intId, {
+    optionalMetadata: true,
+  }),
+  action("monitor_tag.update", "monitor_tag", intId),
+  action("monitor_tag.delete", "monitor_tag", intId),
+] as const;
+
+const privateLocationActions = [
+  action("private_location.create", "private_location", intId, {
+    optionalMetadata: true,
+  }),
+  action("private_location.update", "private_location", intId),
+  action("private_location.delete", "private_location", intId),
+] as const;
+
+const extraPageSubscriberActions = [
+  action("page_subscriber.update", "page_subscriber", intId),
+  action("page_subscriber.delete", "page_subscriber", intId),
+] as const;
+
 export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorActions,
   ...pageActions,
   ...pageComponentActions,
   ...pageComponentGroupActions,
   ...pageSubscriberActions,
+  ...extraPageSubscriberActions,
   ...apiKeyActions,
   ...notificationActions,
   ...userActions,
@@ -146,6 +188,10 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...statusReportActions,
   ...statusReportUpdateActions,
   ...invitationActions,
+  ...memberActions,
+  ...integrationActions,
+  ...monitorTagActions,
+  ...privateLocationActions,
 ]);
 
 /**

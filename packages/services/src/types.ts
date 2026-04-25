@@ -29,6 +29,7 @@ export type { Incident, Monitor } from "@openstatus/db/src/schema";
 export type {
   MonitorTag,
   Notification,
+  PageSubscriber,
   PrivateLocation,
 } from "@openstatus/db/src/schema";
 

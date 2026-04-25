@@ -1,0 +1,65 @@
+import {
+  privateLocation,
+  privateLocationToMonitors,
+  selectPrivateLocationSchema,
+} from "@openstatus/db/src/schema";
+
+import { emitAudit } from "../audit";
+import { type ServiceContext, withTransaction } from "../context";
+import type { PrivateLocation } from "../types";
+import { assertMonitorsInWorkspace } from "./internal";
+import { CreatePrivateLocationInput } from "./schemas";
+
+/**
+ * Create a private location and attach it to the given monitors.
+ *
+ * `token` is audited as part of the `after` snapshot because private-
+ * location tokens are workspace-scoped agent credentials visible in the
+ * dashboard UI — treating them as "secret" in the audit log but plain-text
+ * in the settings screen would be inconsistent. If that ever changes,
+ * strip it here the way invitation tokens are stripped.
+ */
+export async function createPrivateLocation(args: {
+  ctx: ServiceContext;
+  input: CreatePrivateLocationInput;
+}): Promise<PrivateLocation> {
+  const { ctx } = args;
+  const input = CreatePrivateLocationInput.parse(args.input);
+
+  return withTransaction(ctx, async (tx) => {
+    await assertMonitorsInWorkspace({
+      tx,
+      workspaceId: ctx.workspace.id,
+      monitorIds: input.monitors,
+    });
+
+    const row = await tx
+      .insert(privateLocation)
+      .values({
+        name: input.name,
+        token: input.token,
+        workspaceId: ctx.workspace.id,
+      })
+      .returning()
+      .get();
+
+    if (input.monitors.length > 0) {
+      await tx.insert(privateLocationToMonitors).values(
+        input.monitors.map((monitorId) => ({
+          privateLocationId: row.id,
+          monitorId,
+        })),
+      );
+    }
+
+    const parsed = selectPrivateLocationSchema.parse(row);
+    await emitAudit(tx, ctx, {
+      action: "private_location.create",
+      entityType: "private_location",
+      entityId: parsed.id,
+      after: { ...parsed, monitorIds: input.monitors },
+    });
+
+    return parsed;
+  });
+}
