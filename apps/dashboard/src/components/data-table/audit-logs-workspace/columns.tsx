@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
+import { SlackIcon } from "@openstatus/icons";
 import {
   Avatar,
   AvatarFallback,
@@ -9,6 +10,7 @@ import {
 } from "@openstatus/ui/components/ui/avatar";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
+import { KeyIcon, ServerIcon } from "lucide-react";
 import { TableCellDate } from "../table-cell-date";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
@@ -45,7 +47,40 @@ export const columns: ColumnDef<AuditLog>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const user = row.original.user;
-      if (!user) return <span className="text-muted-foreground">-</span>;
+      const type = row.original.actorType;
+      if (!user) {
+        if (type === "apiKey") {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
+                <KeyIcon className="size-4 text-muted-foreground" />
+              </div>
+              <span className="text-muted-foreground">API Key</span>
+            </div>
+          );
+        }
+        if (type === "slack") {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
+                <SlackIcon className="size-4 text-muted-foreground" />
+              </div>
+              <span className="text-muted-foreground">Slack</span>
+            </div>
+          );
+        }
+        if (type === "system") {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
+                <ServerIcon className="size-4 text-muted-foreground" />
+              </div>
+              <span className="text-muted-foreground">System</span>
+            </div>
+          );
+        }
+        return <span className="text-muted-foreground">-</span>;
+      }
       const imgSrc =
         user.photoUrl ||
         // Seed with a hash of the email — dicebear logs request

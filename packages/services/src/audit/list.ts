@@ -8,7 +8,12 @@ import {
   isNull,
   sql,
 } from "@openstatus/db";
-import { auditLog, user } from "@openstatus/db/src/schema";
+import {
+  auditLog,
+  selectAuditLogSchema,
+  user,
+} from "@openstatus/db/src/schema";
+import type { z } from "zod";
 
 import type { ServiceContext } from "../context";
 import { ListAuditLogsInput } from "./schemas";
@@ -22,7 +27,7 @@ import { ListAuditLogsInput } from "./schemas";
  */
 const READ_WINDOW_DAYS = 14;
 
-export type AuditLogListItem = typeof auditLog.$inferSelect & {
+export type AuditLogListItem = z.infer<typeof selectAuditLogSchema> & {
   user: {
     id: number;
     name: string | null;
@@ -108,7 +113,7 @@ export async function listAuditLogs(args: {
   ]);
 
   const items = rows.map((row) => ({
-    ...row.auditLog,
+    ...selectAuditLogSchema.parse(row.auditLog),
     user: row.user?.id != null ? row.user : null,
   }));
   return { items, totalSize: countRow?.count ?? 0 };
