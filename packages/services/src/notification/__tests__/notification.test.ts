@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -20,12 +19,11 @@ import {
 } from "../../../test/fixtures";
 import {
   cleanQuotaGatedTables,
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import {
   ForbiddenError,
@@ -43,8 +41,6 @@ const TEST_PREFIX = "svc-notification-test";
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdNotificationIds: number[] = [];
 
 beforeAll(async () => {
@@ -88,14 +84,9 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
-});
-
-afterEach(() => {
-  auditReset();
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
 
 function track(id: number) {
@@ -124,7 +115,8 @@ describe("createNotification", () => {
       .all();
     expect(assoc.map((a) => a.monitorId)).toEqual([teamMonitorId]);
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "notification.create",
       entityType: "notification",
       entityId: row.id,
@@ -294,11 +286,8 @@ describe("updateNotification", () => {
       },
     });
 
-    // `provider` is attached to the audit entry's `metadata` but the v1
-    // buffered `AuditLogRecord` shape drops it (logs, not PII-bearing
-    // structured data). Assert the action/entity signals fire; metadata
-    // coverage lands with the v2 audit-table move.
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "notification.update",
       entityType: "notification",
       entityId: row.id,

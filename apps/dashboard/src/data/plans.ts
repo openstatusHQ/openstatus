@@ -141,7 +141,6 @@ export const config: Record<
       {
         value: "audit-log",
         label: "Audit log",
-        badge: "Planned",
       },
     ],
   },

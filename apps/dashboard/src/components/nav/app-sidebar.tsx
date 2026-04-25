@@ -8,6 +8,7 @@ import {
   Globe,
   LayoutGrid,
   PanelTop,
+  ScanEye,
   Terminal,
 } from "lucide-react";
 import * as React from "react";
@@ -75,6 +76,11 @@ const data = {
       name: "Private Locations",
       url: "/private-locations",
       icon: Globe,
+    },
+    {
+      name: "Audit Logs",
+      url: "/audit-logs",
+      icon: ScanEye,
     },
     {
       name: "Agents",

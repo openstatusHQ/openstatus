@@ -27,9 +27,15 @@ export function FormComponentsUpdate() {
 
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
-      onSuccess: () => {
-        refetch();
-        refetchComponents();
+      onSuccess: async () => {
+        // Remount the form after save. Newly-added components/groups get
+        // `Date.now()` placeholder ids (see `form-components.tsx`). The
+        // server returns real ids, but RHF only reads `defaultValues` on
+        // mount — without a remount the next save would round-trip the
+        // placeholders, causing the server's diff to treat real rows as
+        // "removed" (delete) and placeholders as "new" (create).
+        await Promise.all([refetch(), refetchComponents()]);
+        setFormKey((k) => k + 1);
       },
     }),
   );
@@ -109,7 +115,7 @@ export function FormComponentsUpdate() {
           await updateComponentsMutation.mutateAsync({
             pageId: Number.parseInt(id),
             components: values.components,
-            groups: values.groups.map(({ id: _groupId, ...rest }) => rest),
+            groups: values.groups,
           });
         }}
       />

@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -20,12 +19,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { deletePageComponent } from "../delete";
@@ -39,8 +37,6 @@ let freeCtx: ServiceContext;
 let testPageId: number;
 let teamMonitorId: number;
 let freeMonitorId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdComponentIds: number[] = [];
 
 beforeAll(async () => {
@@ -118,14 +114,9 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
-});
-
-afterEach(() => {
-  auditReset();
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
 
 describe("updatePageComponentOrder", () => {
@@ -178,10 +169,27 @@ describe("updatePageComponentOrder", () => {
     expect(components).toHaveLength(3);
     expect(groups).toHaveLength(1);
 
-    await expectAuditRow(auditBuffer, {
-      action: "page_component.update_order",
-      entityType: "page",
-      entityId: testPageId,
+    // Per-entity audit emits — assert one representative of each kind.
+    // The service writes one row per component / group, so every id in
+    // `components` + `groups` should appear, not a single page-level row.
+    const monitorComponent = components.find((c) => c.type === "monitor");
+    expect(monitorComponent).toBeDefined();
+    if (!monitorComponent) throw new Error("unreachable");
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "page_component.create",
+      entityType: "page_component",
+      entityId: monitorComponent.id,
+    });
+
+    const group = groups[0];
+    expect(group).toBeDefined();
+    if (!group) throw new Error("unreachable");
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "page_component_group.create",
+      entityType: "page_component_group",
+      entityId: group.id,
     });
   });
 

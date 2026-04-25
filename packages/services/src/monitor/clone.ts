@@ -49,10 +49,11 @@ export async function cloneMonitor(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "monitor.clone",
+      action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
-      metadata: { sourceMonitorId: source.id },
+      after: row,
+      metadata: { clonedFromMonitorId: source.id },
     });
 
     return selectMonitorSchema.parse(row);

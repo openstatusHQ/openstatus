@@ -2,7 +2,6 @@ import { db as defaultDb, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
-import { emitAudit } from "../audit";
 import type { ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { NotifyStatusReportInput } from "./schemas";
@@ -54,10 +53,4 @@ export async function notifyStatusReport(args: {
   }
 
   await dispatchStatusReportUpdate(input.statusReportUpdateId);
-
-  await emitAudit(db, ctx, {
-    action: "status_report.notify",
-    entityType: "status_report_update",
-    entityId: input.statusReportUpdateId,
-  });
 }

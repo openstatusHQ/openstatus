@@ -22,13 +22,12 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeSlackCtx,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { addStatusReportUpdate } from "../add-update";
@@ -62,8 +61,6 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let testPageId: number;
 let testPageComponentId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 
 /**
  * Tests push created statusReport ids here instead of issuing an inline
@@ -122,15 +119,13 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
   subscriptionSpies?.dispatchStatusReportUpdate.mockClear();
 });
 
 afterEach(async () => {
-  auditReset();
   if (createdReportIds.length > 0) {
     await db
       .delete(statusReport)
@@ -167,7 +162,8 @@ describe("createStatusReport", () => {
       .all();
     expect(assoc.map((a) => a.pageComponentId)).toEqual([testPageComponentId]);
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "status_report.create",
       entityType: "status_report",
       entityId: report.id,
@@ -221,8 +217,9 @@ describe("addStatusReportUpdate", () => {
     expect(newUpdate.status).toBe("monitoring");
     expect(newUpdate.statusReportId).toBe(report.id);
 
-    await expectAuditRow(auditBuffer, {
-      action: "status_report.add_update",
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "status_report_update.create",
       entityType: "status_report_update",
       entityId: newUpdate.id,
     });
@@ -558,7 +555,8 @@ describe("slack actor path", () => {
         pageComponentIds: [],
       },
     });
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "status_report.create",
       entityType: "status_report",
       entityId: report.id,

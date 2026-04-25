@@ -24,11 +24,14 @@ export {
 } from "./errors";
 
 export {
+  type AuditAction,
+  type AuditActionName,
+  auditActionSchema,
+  type AuditEntityType,
   type AuditEntry,
-  type AuditLogRecord,
+  auditEntrySchema,
+  diffTopLevel,
   emitAudit,
-  installTestAuditBuffer,
-  uninstallTestAuditBuffer,
 } from "./audit";
 
 export {

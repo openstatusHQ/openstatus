@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -21,12 +20,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import { cloneMonitor } from "../clone";
@@ -42,8 +40,6 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let testTagId: number;
 let testNotificationId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdMonitorIds: number[] = [];
 
 beforeAll(async () => {
@@ -93,14 +89,9 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
-});
-
-afterEach(() => {
-  auditReset();
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
 });
 
 function track(id: number) {
@@ -128,7 +119,8 @@ describe("createMonitor", () => {
     expect(row.url).toBe("https://example.com");
     expect(row.regions.length).toBeGreaterThan(0);
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
@@ -548,8 +540,9 @@ describe("updateMonitorGeneral", () => {
     expect(updated.name).toBe(`${TEST_PREFIX}-gen-renamed`);
     expect(updated.url).toBe("https://example.org");
     expect(updated.method).toBe("POST");
-    await expectAuditRow(auditBuffer, {
-      action: "monitor.update_general",
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "monitor.update",
       entityType: "monitor",
       entityId: row.id,
     });

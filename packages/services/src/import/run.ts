@@ -2,7 +2,6 @@ import { and, count, db as defaultDb, eq } from "@openstatus/db";
 import { page, pageComponent } from "@openstatus/db/src/schema";
 import type { ImportSummary } from "@openstatus/importers";
 
-import { emitAudit } from "../audit";
 import type { ServiceContext } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { addLimitWarnings } from "./limits";
@@ -29,15 +28,12 @@ import { RunImportInput } from "./schemas";
  * failing phase aborts subsequent phases but preserves earlier phases'
  * writes.
  *
- * Audit emission is two-layered:
- *   - Each phase writer emits per-resource rows (`page.create`,
- *     `monitor.create`, etc.) for every resource it actually creates,
- *     matching what the domain services would have emitted for normal
- *     CRUD. Skipped rows have their original create audit already;
- *     failed rows have nothing to attribute.
- *   - One final `import.run` row captures the rollup (status + provider)
- *     so a half-broken import still shows up as a single event without
- *     having to scan per-resource audit.
+ * Audit emission: each phase writer emits per-resource rows
+ * (`page.create`, `monitor.create`, etc.) for every resource it
+ * actually creates, matching what the domain services would emit for
+ * normal CRUD. Skipped rows have their original create audit already;
+ * failed rows have nothing to attribute. No rollup row — the action
+ * union only allows create/update/delete verbs per entity.
  */
 export async function runImport(args: {
   ctx: ServiceContext;
@@ -246,42 +242,6 @@ export async function runImport(args: {
         ? "completed"
         : "partial";
   summary.completedAt = new Date();
-
-  // Rollup audit: per-resource rows live inside each phase writer; this
-  // row summarises the whole run so partial/failed imports still fire
-  // the observability signal without scanning the full summary blob.
-  //
-  // Entity attribution matches what the run actually touched. When a
-  // page was created or reused (`targetPageId` is set) the row points
-  // at it; when the page phase failed early and no page is in play we
-  // fall back to the workspace so the audit never carries a ghost
-  // `page 0` reference that breaks downstream "find audits for this
-  // entity" queries.
-  await emitAudit(
-    tx,
-    ctx,
-    targetPageId
-      ? {
-          action: "import.run",
-          entityType: "page",
-          entityId: targetPageId,
-          metadata: {
-            provider: input.provider,
-            status: summary.status,
-            pageId: targetPageId,
-          },
-        }
-      : {
-          action: "import.run",
-          entityType: "workspace",
-          entityId: ctx.workspace.id,
-          metadata: {
-            provider: input.provider,
-            status: summary.status,
-            pageId: null,
-          },
-        },
-  );
 
   return summary;
 }

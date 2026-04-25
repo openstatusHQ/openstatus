@@ -13,6 +13,7 @@ import {
   maintenance,
   maintenancesToPageComponents,
   pageComponent,
+  selectPageComponentSchema,
 } from "@openstatus/db/src/schema";
 
 import type { DB, ServiceContext } from "../context";
@@ -59,8 +60,15 @@ async function enrichMaintenancesBatch(
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
 
+  // Explicit column selection (not `select()`) keeps the row shape in our
+  // hands instead of relying on drizzle's auto-derived `row.<table_name>`
+  // keys, which are named after the JS variable and silently break on
+  // schema rename.
   const assocRows = await db
-    .select()
+    .select({
+      maintenanceId: maintenancesToPageComponents.maintenanceId,
+      component: pageComponent,
+    })
     .from(pageComponent)
     .innerJoin(
       maintenancesToPageComponents,
@@ -71,12 +79,10 @@ async function enrichMaintenancesBatch(
 
   const componentsByMaintenance = new Map<number, PageComponent[]>();
   for (const row of assocRows) {
-    const mId = (row.maintenance_to_page_component as { maintenanceId: number })
-      .maintenanceId;
-    const component = row.page_component as unknown as PageComponent;
-    const arr = componentsByMaintenance.get(mId);
+    const component = selectPageComponentSchema.parse(row.component);
+    const arr = componentsByMaintenance.get(row.maintenanceId);
     if (arr) arr.push(component);
-    else componentsByMaintenance.set(mId, [component]);
+    else componentsByMaintenance.set(row.maintenanceId, [component]);
   }
 
   return rows.map((r) => {

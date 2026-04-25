@@ -20,8 +20,17 @@ export async function revokeApiKey(args: {
   const input = RevokeApiKeyInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
+    // Narrow select: matches the fields we put in the audit `before`
+    // snapshot. `hashedToken` stays off the wire even within the tx,
+    // and `workspaceId` is implied by the WHERE clause.
     const row = await tx
-      .select({ id: apiKey.id })
+      .select({
+        id: apiKey.id,
+        name: apiKey.name,
+        description: apiKey.description,
+        prefix: apiKey.prefix,
+        expiresAt: apiKey.expiresAt,
+      })
       .from(apiKey)
       .where(
         and(eq(apiKey.id, input.id), eq(apiKey.workspaceId, ctx.workspace.id)),
@@ -33,9 +42,10 @@ export async function revokeApiKey(args: {
     await tx.delete(apiKey).where(eq(apiKey.id, input.id));
 
     await emitAudit(tx, ctx, {
-      action: "api_key.revoke",
+      action: "api_key.delete",
       entityType: "api_key",
       entityId: input.id,
+      before: row,
     });
   });
 }

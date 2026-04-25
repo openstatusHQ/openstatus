@@ -126,7 +126,7 @@ export async function updateStatusReportUpdate(args: {
     }
 
     await emitAudit(tx, ctx, {
-      action: "status_report.update_update",
+      action: "status_report_update.update",
       entityType: "status_report_update",
       entityId: updated.id,
       before: existing,

@@ -1,9 +1,18 @@
 import { db as defaultDb, eq, inArray } from "@openstatus/db";
-import { apiKey, user } from "@openstatus/db/src/schema";
+import { apiKey, selectApiKeySchema, user } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
 import type { ApiKey } from "../types";
 import type { ListApiKeysInput } from "./schemas";
+
+/**
+ * Public projection schema — derived from `selectApiKeySchema` so column /
+ * default changes flow through. Stripping `hashedToken` here means the
+ * bcrypt hash never reaches a list response, even by accident.
+ */
+const selectPublicApiKeySchema = selectApiKeySchema.omit({
+  hashedToken: true,
+});
 
 export type ApiKeyCreator = {
   id: number;
@@ -58,27 +67,7 @@ export async function listApiKeys(args: {
 
   if (keys.length === 0) return [];
 
-  // Filter out any null `createdById` — the new `createApiKey` enforces
-  // a non-null creator, but legacy rows (or backfills from before the
-  // services migration) may have null. SQL's `x IN (NULL)` is `UNKNOWN`
-  // rather than a match, so passing a nullable list wouldn't cause a
-  // false positive — but drizzle's types model the array as `number[]`,
-  // so sanitising upfront keeps the type honest and avoids surprises.
-  const creatorIds = Array.from(
-    new Set(
-      keys.map((k) => k.createdById).filter((id): id is number => id != null),
-    ),
-  );
-  // Skip the creator lookup entirely when every key pre-dates the
-  // services migration (all `createdById` are null). Drizzle throws
-  // `"At least one value must be provided"` for an empty `inArray`,
-  // which would crash `listApiKeys` for those workspaces.
-  if (creatorIds.length === 0) {
-    return keys.map((key) => ({
-      ...(key as PublicApiKey),
-      createdBy: undefined,
-    }));
-  }
+  const creatorIds = Array.from(new Set(keys.map((k) => k.createdById)));
   const creators = await db
     .select({
       id: user.id,
@@ -93,7 +82,7 @@ export async function listApiKeys(args: {
   const creatorsById = new Map(creators.map((c) => [c.id, c]));
 
   return keys.map((key) => ({
-    ...(key as PublicApiKey),
+    ...selectPublicApiKeySchema.parse(key),
     createdBy: creatorsById.get(key.createdById),
   }));
 }

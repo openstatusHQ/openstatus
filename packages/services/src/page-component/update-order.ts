@@ -3,7 +3,7 @@ import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { LimitExceededError, ValidationError } from "../errors";
 import { assertPageInWorkspace, validateMonitorIds } from "./internal";
 import { UpdatePageComponentOrderInput } from "./schemas";
 
@@ -28,6 +28,18 @@ export async function updatePageComponentOrder(args: {
 }): Promise<void> {
   const { ctx } = args;
   const input = UpdatePageComponentOrderInput.parse(args.input);
+
+  // Reject duplicate group ids up front — otherwise the diff loop
+  // UPDATEs the same row twice (each iteration clobbering the previous
+  // write) and silently collapses two input groups' components into one
+  // persisted group. A rare client bug, but the failure mode is data
+  // loss on the association side.
+  const inputGroupIds = input.groups
+    .map((g) => g.id)
+    .filter((id): id is number => id != null);
+  if (new Set(inputGroupIds).size !== inputGroupIds.length) {
+    throw new ValidationError("Duplicate group id in input.");
+  }
 
   await withTransaction(ctx, async (tx) => {
     await assertPageInWorkspace({
@@ -84,8 +96,6 @@ export async function updatePageComponentOrder(args: {
       )
       .all();
 
-    const existingGroupIds = existingGroups.map((g) => g.id);
-
     // `schemas.ts` enforces the `type === "monitor" → monitorId != null`
     // invariant via `.refine`, but the refined type is still flat so we
     // keep the defensive `&& c.monitorId` guard to narrow
@@ -119,6 +129,32 @@ export async function updatePageComponentOrder(args: {
       ),
     ] as number[];
 
+    // Guardrail against mass-delete via id-loss. If the input has any
+    // static components *and* none of them carry ids, the diff below
+    // treats every existing static as "removed" and cascades through
+    // `statusReportsToPageComponents`, `maintenancesToPageComponents`,
+    // and `pageSubscriberToPageComponent`. Reject the call instead.
+    //
+    // The legitimate "delete all statics" intent is an input with zero
+    // static entries, which still runs through the normal diff — this
+    // guard only catches the ambiguous "new statics alongside existing
+    // ones, but the client forgot to round-trip the existing ids" case.
+    const inputHasAnyStatic =
+      input.components.some((c) => c.type === "static") ||
+      input.groups.some((g) => g.components.some((c) => c.type === "static"));
+    const hasExistingStatics = existingComponents.some(
+      (c) => c.type === "static",
+    );
+    if (
+      inputHasAnyStatic &&
+      inputStaticComponentIds.length === 0 &&
+      hasExistingStatics
+    ) {
+      throw new ValidationError(
+        "Existing static components must round-trip their ids.",
+      );
+    }
+
     // Remove monitor components whose monitorId isn't in the new input.
     const removedMonitorComponents = existingComponents.filter(
       (c) =>
@@ -127,28 +163,29 @@ export async function updatePageComponentOrder(args: {
         !inputMonitorIds.includes(c.monitorId),
     );
 
-    // Static component removal: if any input static components carry ids
-    // we keep those and drop the rest; otherwise drop all existing static
-    // components. Matches the pre-migration semantics for the "recreate
-    // from scratch" flow the dashboard uses.
+    // Static component removal: drop existing statics whose ids aren't
+    // round-tripped by the input. Components with matching ids take the
+    // UPDATE branch below, new statics (no id) get INSERTed.
     //
-    // Simplified from a previous two-step guard that branched on
-    // `hasStaticComponentsInInput` first — both "input has static with
-    // no ids" and "input has no static at all" collapsed to the same
-    // "drop all" action, so the outer check was dead weight.
-    const removedStaticComponents = existingComponents.filter((c) => {
-      if (c.type !== "static") return false;
-      if (inputStaticComponentIds.length > 0) {
-        return !inputStaticComponentIds.includes(c.id);
-      }
-      return true;
-    });
+    // The previous "if input has no ids, drop all" fallback was a
+    // footgun: `pageSubscriberToPageComponent`, `maintenancesToPageComponents`,
+    // and `statusReportsToPageComponents` all FK to `page_component.id`
+    // with `ON DELETE CASCADE`, so recreate-on-each-save would wipe every
+    // subscriber scope / active maintenance / status-report association
+    // the moment a static came in without its id.
+    const removedStaticComponents = existingComponents.filter(
+      (c) => c.type === "static" && !inputStaticComponentIds.includes(c.id),
+    );
 
     const removedComponentIds = [
       ...removedMonitorComponents.map((c) => c.id),
       ...removedStaticComponents.map((c) => c.id),
     ];
 
+    const removedComponents = [
+      ...removedMonitorComponents,
+      ...removedStaticComponents,
+    ];
     if (removedComponentIds.length > 0) {
       await tx
         .delete(pageComponent)
@@ -159,10 +196,39 @@ export async function updatePageComponentOrder(args: {
             inArray(pageComponent.id, removedComponentIds),
           ),
         );
+
+      for (const row of removedComponents) {
+        await emitAudit(tx, ctx, {
+          action: "page_component.delete",
+          entityType: "page_component",
+          entityId: row.id,
+          before: row,
+        });
+      }
     }
 
-    // Clear `groupId` before deleting groups — otherwise the FK blocks us.
-    if (existingGroupIds.length > 0) {
+    // Groups: diff-and-reconcile by id instead of delete-and-recreate.
+    //
+    // Every FK pointing at a page-component or group has `ON DELETE`
+    // semantics that matter on the dashboard flow — subscribers,
+    // maintenances, and status reports FK to component ids with CASCADE;
+    // components FK to group ids with SET NULL. Blindly dropping groups
+    // on every save would flatten nested components out into the top
+    // level. Preserving ids keeps those associations intact.
+    const existingGroupById = new Map(existingGroups.map((g) => [g.id, g]));
+    const inputGroupIdSet = new Set(
+      input.groups.map((g) => g.id).filter((id): id is number => id != null),
+    );
+    const groupsToDelete = existingGroups.filter(
+      (g) => !inputGroupIdSet.has(g.id),
+    );
+
+    // `page_component.group_id` is `ON DELETE SET NULL`, so we could let
+    // the FK null out orphaned refs. Clearing explicitly here is cheaper
+    // than surfacing a half-broken layout in the (rare) case the cascade
+    // misfires, and keeps behavior identical to the pre-refactor flow.
+    if (groupsToDelete.length > 0) {
+      const idsToDelete = groupsToDelete.map((g) => g.id);
       await tx
         .update(pageComponent)
         .set({ groupId: null })
@@ -170,47 +236,87 @@ export async function updatePageComponentOrder(args: {
           and(
             eq(pageComponent.pageId, input.pageId),
             eq(pageComponent.workspaceId, ctx.workspace.id),
-            inArray(pageComponent.groupId, existingGroupIds),
+            inArray(pageComponent.groupId, idsToDelete),
           ),
         );
-    }
-
-    if (existingGroupIds.length > 0) {
       await tx
         .delete(pageComponentGroup)
         .where(
           and(
             eq(pageComponentGroup.pageId, input.pageId),
             eq(pageComponentGroup.workspaceId, ctx.workspace.id),
+            inArray(pageComponentGroup.id, idsToDelete),
           ),
         );
+
+      for (const g of groupsToDelete) {
+        await emitAudit(tx, ctx, {
+          action: "page_component_group.delete",
+          entityType: "page_component_group",
+          entityId: g.id,
+          before: g,
+        });
+      }
     }
 
-    // Sequential inserts instead of a bulk `.values([...]).returning()`.
-    // The previous bulk call relied on Drizzle/SQLite returning rows in
-    // the same order as they were inserted to line up `newGroups[i]`
-    // with `input.groups[i]` when the component mapping below runs.
-    // Turso/libSQL happens to preserve that order today, but it's an
-    // implicit coupling — any future driver change, batch split, or
-    // sort side-effect would silently land components in the wrong
-    // group with no error signal. Inserting one at a time is trivial
-    // cost for a small set (groups on a status page are capped) and
-    // makes the index alignment a guarantee rather than an assumption.
+    // Walk input.groups in order so `newGroups[i]` lines up with
+    // `input.groups[i]` for the component mapping below. Each slot
+    // resolves to an existing group id (UPDATE path) or a freshly
+    // inserted one (CREATE path).
     const newGroups: Array<{ id: number; name: string }> = [];
     for (const g of input.groups) {
-      const [created] = await tx
-        .insert(pageComponentGroup)
-        .values({
-          pageId: input.pageId,
-          workspaceId: ctx.workspace.id,
-          name: g.name,
-          defaultOpen: g.defaultOpen,
-        })
-        .returning();
-      if (!created) {
-        throw new Error("Failed to insert page component group");
+      const existing = g.id != null ? existingGroupById.get(g.id) : undefined;
+
+      if (existing) {
+        const [updated] = await tx
+          .update(pageComponentGroup)
+          .set({
+            name: g.name,
+            defaultOpen: g.defaultOpen,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(pageComponentGroup.id, existing.id),
+              eq(pageComponentGroup.pageId, input.pageId),
+              eq(pageComponentGroup.workspaceId, ctx.workspace.id),
+            ),
+          )
+          .returning();
+        if (!updated) {
+          throw new Error("Failed to update page component group");
+        }
+        newGroups.push({ id: updated.id, name: updated.name });
+
+        await emitAudit(tx, ctx, {
+          action: "page_component_group.update",
+          entityType: "page_component_group",
+          entityId: updated.id,
+          before: existing,
+          after: updated,
+        });
+      } else {
+        const [created] = await tx
+          .insert(pageComponentGroup)
+          .values({
+            pageId: input.pageId,
+            workspaceId: ctx.workspace.id,
+            name: g.name,
+            defaultOpen: g.defaultOpen,
+          })
+          .returning();
+        if (!created) {
+          throw new Error("Failed to insert page component group");
+        }
+        newGroups.push({ id: created.id, name: created.name });
+
+        await emitAudit(tx, ctx, {
+          action: "page_component_group.create",
+          entityType: "page_component_group",
+          entityId: created.id,
+          after: created,
+        });
       }
-      newGroups.push(created);
     }
 
     const groupComponentValues = input.groups.flatMap((g, i) =>
@@ -254,10 +360,30 @@ export async function updatePageComponentOrder(args: {
     );
 
     // Use the `(pageId, monitorId)` unique constraint to preserve ids.
+    // Pre-classify create vs update by looking up each input monitorId in
+    // the pre-upsert snapshot, so we can emit the right audit action per
+    // row regardless of which branch the upsert takes for that row.
+    const existingByMonitorId = new Map(
+      existingComponents
+        .filter(
+          (c): c is typeof c & { monitorId: number } =>
+            c.type === "monitor" && c.monitorId != null,
+        )
+        .map((c) => [c.monitorId, c]),
+    );
+
     if (monitorComponents.length > 0) {
-      await tx
+      // Strip the client-supplied `id` before insert. The dashboard sends
+      // `Date.now()` as a placeholder for newly-added components; on a
+      // non-conflicting INSERT SQLite would persist that timestamp as the
+      // rowid. The `onConflictDoUpdate` SET clause doesn't touch `id`, so
+      // existing rows keep their real ids either way.
+      const monitorInsertValues = monitorComponents.map(
+        ({ id: _id, ...rest }) => rest,
+      );
+      const upserted = await tx
         .insert(pageComponent)
-        .values(monitorComponents)
+        .values(monitorInsertValues)
         .onConflictDoUpdate({
           target: [pageComponent.pageId, pageComponent.monitorId],
           set: {
@@ -268,7 +394,29 @@ export async function updatePageComponentOrder(args: {
             groupOrder: sql.raw("excluded.`group_order`"),
             updatedAt: sql`(strftime('%s', 'now'))`,
           },
-        });
+        })
+        .returning();
+
+      for (const after of upserted) {
+        if (after.monitorId == null) continue;
+        const before = existingByMonitorId.get(after.monitorId);
+        if (before) {
+          await emitAudit(tx, ctx, {
+            action: "page_component.update",
+            entityType: "page_component",
+            entityId: after.id,
+            before,
+            after,
+          });
+        } else {
+          await emitAudit(tx, ctx, {
+            action: "page_component.create",
+            entityType: "page_component",
+            entityId: after.id,
+            after,
+          });
+        }
+      }
     }
 
     // Restrict the "take update path" set to ids that (a) still exist
@@ -279,15 +427,16 @@ export async function updatePageComponentOrder(args: {
     // on the stale pre-delete snapshot, take the UPDATE branch, and
     // silently no-op — the new static never gets inserted.
     const removedIdSet = new Set(removedComponentIds);
-    const existingStaticComponentIds = new Set(
+    const existingStaticById = new Map(
       existingComponents
         .filter((c) => c.type === "static" && !removedIdSet.has(c.id))
-        .map((c) => c.id),
+        .map((c) => [c.id, c]),
     );
 
     for (const c of staticComponents) {
-      if (c.id && existingStaticComponentIds.has(c.id)) {
-        await tx
+      const before = c.id ? existingStaticById.get(c.id) : undefined;
+      if (before) {
+        const [after] = await tx
           .update(pageComponent)
           .set({
             name: c.name,
@@ -301,34 +450,49 @@ export async function updatePageComponentOrder(args: {
           })
           .where(
             and(
-              eq(pageComponent.id, c.id),
+              eq(pageComponent.id, before.id),
               eq(pageComponent.pageId, input.pageId),
               eq(pageComponent.workspaceId, ctx.workspace.id),
             ),
-          );
+          )
+          .returning();
+        if (!after) {
+          throw new Error("Failed to update static component");
+        }
+
+        await emitAudit(tx, ctx, {
+          action: "page_component.update",
+          entityType: "page_component",
+          entityId: after.id,
+          before,
+          after,
+        });
       } else {
-        await tx.insert(pageComponent).values({
-          pageId: c.pageId,
-          workspaceId: c.workspaceId,
-          name: c.name,
-          description: c.description,
-          type: c.type,
-          monitorId: c.monitorId,
-          order: c.order,
-          groupId: c.groupId,
-          groupOrder: c.groupOrder,
+        const [created] = await tx
+          .insert(pageComponent)
+          .values({
+            pageId: c.pageId,
+            workspaceId: c.workspaceId,
+            name: c.name,
+            description: c.description,
+            type: c.type,
+            monitorId: c.monitorId,
+            order: c.order,
+            groupId: c.groupId,
+            groupOrder: c.groupOrder,
+          })
+          .returning();
+        if (!created) {
+          throw new Error("Failed to insert static component");
+        }
+
+        await emitAudit(tx, ctx, {
+          action: "page_component.create",
+          entityType: "page_component",
+          entityId: created.id,
+          after: created,
         });
       }
     }
-
-    await emitAudit(tx, ctx, {
-      action: "page_component.update_order",
-      entityType: "page",
-      entityId: input.pageId,
-      metadata: {
-        componentCount: inputComponentCount,
-        groupCount: input.groups.length,
-      },
-    });
   });
 }

@@ -12,6 +12,7 @@ import {
 import {
   pageComponent,
   page as pageTable,
+  selectPageComponentSchema,
   selectPageSchema,
   statusReport,
   statusReportUpdate,
@@ -112,7 +113,7 @@ async function enrichReportsBatch(
     .all();
   const componentsByReport = new Map<number, PageComponent[]>();
   for (const row of assocRows) {
-    const component = row.component as unknown as PageComponent;
+    const component = selectPageComponentSchema.parse(row.component);
     const arr = componentsByReport.get(row.reportId);
     if (arr) arr.push(component);
     else componentsByReport.set(row.reportId, [component]);
@@ -135,9 +136,10 @@ async function enrichReportsBatch(
     ]);
     const siblingsByPageId = new Map<number, PageComponent[]>();
     for (const c of pageSiblings) {
-      const arr = siblingsByPageId.get(c.pageId);
-      if (arr) arr.push(c as unknown as PageComponent);
-      else siblingsByPageId.set(c.pageId, [c as unknown as PageComponent]);
+      const parsed = selectPageComponentSchema.parse(c);
+      const arr = siblingsByPageId.get(parsed.pageId);
+      if (arr) arr.push(parsed);
+      else siblingsByPageId.set(parsed.pageId, [parsed]);
     }
     for (const p of pageRows) {
       pageById.set(p.id, {

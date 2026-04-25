@@ -72,9 +72,10 @@ export async function acceptInvitation(args: {
     // re-asserted here to close a TOCTOU gap: without it, an invitation
     // whose expiry is exactly the moment between the read and the write
     // can be silently accepted past the deadline.
+    const acceptedAt = new Date();
     const claimed = await tx
       .update(invitation)
-      .set({ acceptedAt: new Date() })
+      .set({ acceptedAt })
       .where(
         and(
           eq(invitation.id, input.id),
@@ -108,11 +109,15 @@ export async function acceptInvitation(args: {
       throw new NotFoundError("workspace", existing.workspaceId);
     }
 
+    // Strip `token` (email-link capability) from the snapshot; construct the snapshots from the pre-fetched row
+    // to avoid a second SELECT after the UPDATE.
+    const { token: _token, ...before } = existing;
     await emitAudit(tx, ctx, {
-      action: "invitation.accept",
+      action: "invitation.update",
       entityType: "invitation",
       entityId: input.id,
-      metadata: { workspaceId: existing.workspaceId, role: existing.role },
+      before,
+      after: { ...before, acceptedAt },
     });
 
     return selectWorkspaceSchema.parse(existing.workspace);

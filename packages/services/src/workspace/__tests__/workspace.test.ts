@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -18,18 +17,15 @@ import {
 } from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 
 let teamCtx: ServiceContext;
 let originalName: string | null = null;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -46,12 +42,9 @@ afterAll(async () => {
   }
 });
 
-beforeEach(() => {
-  const session = withAuditBuffer();
-  auditBuffer = session.buffer;
-  auditReset = session.reset;
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
 });
-afterEach(() => auditReset());
 
 describe("getWorkspace", () => {
   test("returns the caller's workspace", async () => {
@@ -124,8 +117,9 @@ describe("updateWorkspaceName", () => {
       .get();
     expect(row?.name).toBe(nextName);
 
-    await expectAuditRow(auditBuffer, {
-      action: "workspace.update_name",
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
+      action: "workspace.update",
       entityType: "workspace",
       entityId: SEEDED_WORKSPACE_TEAM_ID,
       actorType: "user",

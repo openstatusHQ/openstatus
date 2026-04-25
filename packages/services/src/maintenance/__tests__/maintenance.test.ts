@@ -20,13 +20,12 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeSlackCtx,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { createMaintenance } from "../create";
@@ -55,8 +54,6 @@ let testPageComponentId: number;
 // "all components must share a page" ConflictError branch.
 let otherPageId: number;
 let otherPageComponentId: number;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 
 /**
  * Tests push created maintenance ids here instead of issuing an inline
@@ -137,15 +134,13 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(() => {
-  const hooks = withAuditBuffer();
-  auditBuffer = hooks.buffer;
-  auditReset = hooks.reset;
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
+  await clearAuditLog(freeCtx.workspace.id);
   subscriptionSpies?.dispatchMaintenanceUpdate.mockClear();
 });
 
 afterEach(async () => {
-  auditReset();
   if (createdMaintenanceIds.length > 0) {
     await db
       .delete(maintenance)
@@ -187,7 +182,8 @@ describe("createMaintenance", () => {
       .all();
     expect(assoc.map((a) => a.pageComponentId)).toEqual([testPageComponentId]);
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "maintenance.create",
       entityType: "maintenance",
       entityId: record.id,
@@ -502,7 +498,8 @@ describe("slack actor path", () => {
         pageComponentIds: [],
       },
     });
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "maintenance.create",
       entityType: "maintenance",
       entityId: record.id,

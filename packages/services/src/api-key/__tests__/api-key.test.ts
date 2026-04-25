@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -19,20 +18,17 @@ import {
 } from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
+  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
-  withAuditBuffer,
 } from "../../../test/helpers";
-import type { AuditLogRecord } from "../../audit";
 import type { ServiceContext } from "../../context";
 import { NotFoundError } from "../../errors";
 
 const TEST_PREFIX = "svc-apikey-test";
 
 let teamCtx: ServiceContext;
-let auditBuffer: AuditLogRecord[];
-let auditReset: () => void;
 const createdKeyIds: number[] = [];
 
 beforeAll(async () => {
@@ -46,12 +42,9 @@ afterAll(async () => {
   }
 });
 
-beforeEach(() => {
-  const session = withAuditBuffer();
-  auditBuffer = session.buffer;
-  auditReset = session.reset;
+beforeEach(async () => {
+  await clearAuditLog(teamCtx.workspace.id);
 });
-afterEach(() => auditReset());
 
 describe("createApiKey", () => {
   test("returns plaintext token once and stores a bcrypt hash", async () => {
@@ -77,7 +70,8 @@ describe("createApiKey", () => {
       .get();
     expect(stored?.hashedToken).toMatch(/^\$2[aby]\$/);
 
-    await expectAuditRow(auditBuffer, {
+    await expectAuditRow({
+      workspaceId: teamCtx.workspace.id,
       action: "api_key.create",
       entityType: "api_key",
       entityId: key.id,
