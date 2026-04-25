@@ -93,6 +93,7 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
+    "@openstatus/utils": "workspace:*",
     "zod": "4.1.13"
   },
   "devDependencies": {
