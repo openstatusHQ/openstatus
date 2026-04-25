@@ -373,9 +373,17 @@ export async function updatePageComponentOrder(args: {
     );
 
     if (monitorComponents.length > 0) {
+      // Strip the client-supplied `id` before insert. The dashboard sends
+      // `Date.now()` as a placeholder for newly-added components; on a
+      // non-conflicting INSERT SQLite would persist that timestamp as the
+      // rowid. The `onConflictDoUpdate` SET clause doesn't touch `id`, so
+      // existing rows keep their real ids either way.
+      const monitorInsertValues = monitorComponents.map(
+        ({ id: _id, ...rest }) => rest,
+      );
       const upserted = await tx
         .insert(pageComponent)
-        .values(monitorComponents)
+        .values(monitorInsertValues)
         .onConflictDoUpdate({
           target: [pageComponent.pageId, pageComponent.monitorId],
           set: {
