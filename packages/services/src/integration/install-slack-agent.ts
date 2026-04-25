@@ -64,7 +64,7 @@ export async function installSlackAgent(args: {
             action: "integration.delete",
             entityType: "integration",
             entityId: deleted.id,
-            before: snapshotIntegration(deleted),
+            before: await snapshotIntegration(deleted),
           });
         }
       }
@@ -86,8 +86,8 @@ export async function installSlackAgent(args: {
         action: "integration.update",
         entityType: "integration",
         entityId: updated.id,
-        before: snapshotIntegration(existing),
-        after: snapshotIntegration(updated),
+        before: await snapshotIntegration(existing),
+        after: await snapshotIntegration(updated),
       });
       return updated;
     }
@@ -107,7 +107,7 @@ export async function installSlackAgent(args: {
       action: "integration.create",
       entityType: "integration",
       entityId: created.id,
-      after: snapshotIntegration(created),
+      after: await snapshotIntegration(created),
     });
     return created;
   });

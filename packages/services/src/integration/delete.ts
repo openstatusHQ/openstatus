@@ -73,7 +73,7 @@ export async function deleteIntegration(args: {
       action: "integration.delete",
       entityType: "integration",
       entityId: deleted.id,
-      before: snapshotIntegration(deleted),
+      before: await snapshotIntegration(deleted),
     });
   });
 
