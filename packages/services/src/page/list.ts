@@ -171,6 +171,21 @@ export async function getPageCustomDomain(args: {
   return row.customDomain;
 }
 
+/**
+ * Cross-workspace lookup of a page by slug. Returns the raw row (not parsed
+ * via `selectPageSchema`) because callers in the public status-page render
+ * path expect the DB shape (`authEmailDomains` / `allowedIpRanges` as
+ * comma-joined strings rather than arrays). Workspace scoping is the
+ * caller's responsibility — slugs are globally unique, so the lookup
+ * intentionally ignores `ctx.workspace`.
+ */
+export async function getPageBySlug(args: {
+  input: { slug: string };
+}): Promise<typeof page.$inferSelect | undefined> {
+  const slug = args.input.slug.toLowerCase();
+  return defaultDb.select().from(page).where(eq(page.slug, slug)).get();
+}
+
 /** Returns `true` when the slug is free (not reserved, not taken). */
 export async function getSlugAvailable(args: {
   ctx: ServiceContext;

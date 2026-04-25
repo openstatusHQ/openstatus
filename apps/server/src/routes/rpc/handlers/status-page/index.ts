@@ -38,6 +38,7 @@ import {
   createPage,
   deletePage,
   getPage,
+  getPageBySlug,
   listPages,
   updatePageAppearance,
   updatePageCustomDomain,
@@ -46,6 +47,7 @@ import {
   updatePageLocales,
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
+import { deletePageComponent } from "@openstatus/services/page-component";
 import {
   createSubscription as createSubscriptionService,
   detectWebhookFlavor,
@@ -135,15 +137,6 @@ async function getPageById(id: number, workspaceId: number) {
     .from(page)
     .where(and(eq(page.id, id), eq(page.workspaceId, workspaceId)))
     .get();
-}
-
-/**
- * Helper to get a status page by slug.
- * Normalizes the slug to lowercase before querying.
- */
-async function getPageBySlug(slug: string) {
-  const normalizedSlug = slug.toLowerCase();
-  return db.select().from(page).where(eq(page.slug, normalizedSlug)).get();
 }
 
 /**
@@ -306,7 +299,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // Slug uniqueness — preserved at handler to keep the granular
       // `slugAlreadyExistsError(slug)` (AlreadyExists + metadata) rather
       // than the service's generic ConflictError → InvalidArgument mapping.
-      const existingPage = await getPageBySlug(req.slug);
+      const existingPage = await getPageBySlug({ input: { slug: req.slug } });
       if (existingPage) {
         throw slugAlreadyExistsError(req.slug);
       }
@@ -533,7 +526,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // Slug uniqueness — pre-check at handler to preserve the granular
       // `slugAlreadyExistsError(slug)` (AlreadyExists + metadata).
       if (req.slug && req.slug !== existing.slug) {
-        const slugRow = await getPageBySlug(req.slug);
+        const slugRow = await getPageBySlug({ input: { slug: req.slug } });
         if (slugRow && slugRow.id !== existing.id) {
           throw slugAlreadyExistsError(req.slug);
         }
@@ -891,20 +884,21 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async removeComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    const sCtx = toServiceCtx(rpcCtx);
 
     const id = req.id?.trim();
     if (!id) {
       throw pageComponentNotFoundError(req.id);
     }
 
-    const component = await getComponentById(Number(id), workspaceId);
-    if (!component) {
-      throw pageComponentNotFoundError(id);
+    try {
+      await deletePageComponent({ ctx: sCtx, input: { id: Number(id) } });
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw pageComponentNotFoundError(id);
+      }
+      toConnectError(err);
     }
-
-    // Delete the component
-    await db.delete(pageComponent).where(eq(pageComponent.id, component.id));
 
     return { success: true };
   },
@@ -1342,7 +1336,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       pageData = await getPageById(Number(identifierValue), workspaceId);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
-      pageData = await getPageBySlug(identifierValue);
+      pageData = await getPageBySlug({ input: { slug: identifierValue } });
       isPublicAccess = true;
     } else {
       throw statusPageIdRequiredError();
@@ -1519,7 +1513,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       pageData = await getPageById(Number(identifierValue), workspaceId);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
-      pageData = await getPageBySlug(identifierValue);
+      pageData = await getPageBySlug({ input: { slug: identifierValue } });
       isPublicAccess = true;
     } else {
       throw statusPageIdRequiredError();

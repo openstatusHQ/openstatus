@@ -29,7 +29,7 @@ import {
 } from "../../errors";
 import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
-import { getPage, getSlugAvailable, listPages } from "../list";
+import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
 import { updatePageGeneral, updatePageLocales } from "../update";
 
 const TEST_PREFIX = "svc-page-test";
@@ -312,6 +312,55 @@ describe("list / get / getSlugAvailable", () => {
         input: { slug: uniqueSlug("free-slug") },
       }),
     ).toBe(true);
+  });
+});
+
+describe("getPageBySlug", () => {
+  test("returns the row when slug exists", async () => {
+    const p = await newPage({
+      ctx: teamCtx,
+      input: { title: "BySlug", slug: uniqueSlug("by-slug") },
+    });
+    track(p.id);
+
+    const row = await getPageBySlug({ input: { slug: p.slug } });
+    expect(row?.id).toBe(p.id);
+    expect(row?.slug).toBe(p.slug);
+  });
+
+  test("normalizes slug casing", async () => {
+    const slug = uniqueSlug("case");
+    const p = await newPage({
+      ctx: teamCtx,
+      input: { title: "Case", slug },
+    });
+    track(p.id);
+
+    const upper = await getPageBySlug({ input: { slug: slug.toUpperCase() } });
+    expect(upper?.id).toBe(p.id);
+  });
+
+  test("returns undefined when slug is missing", async () => {
+    const row = await getPageBySlug({
+      input: { slug: `${TEST_PREFIX}-missing-${Date.now()}` },
+    });
+    expect(row).toBeUndefined();
+  });
+
+  test("ignores workspace scope (cross-workspace lookup)", async () => {
+    // Page lives in the team workspace; querying without any ctx still
+    // resolves it — this is the contract that lets the public status-page
+    // render path resolve a slug for unauthenticated visitors.
+    const p = await newPage({
+      ctx: teamCtx,
+      input: { title: "Cross", slug: uniqueSlug("cross") },
+    });
+    track(p.id);
+
+    const row = await getPageBySlug({ input: { slug: p.slug } });
+    expect(row?.workspaceId).toBe(teamCtx.workspace.id);
+    // (No `ctx` passed at all → confirms the helper does not rely on
+    // workspace scoping.)
   });
 });
 

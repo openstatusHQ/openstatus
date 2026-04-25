@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
+  auditLog,
   monitor,
   page,
   pageComponent,
@@ -1383,6 +1384,56 @@ describe("StatusPageService.RemoveComponent", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("emits a page_component.delete audit row", async () => {
+    // Routing through `deletePageComponent` is what wires the audit row
+    // — the previous inline `db.delete(pageComponent)` skipped it.
+    const component = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        type: "static",
+        monitorId: null,
+        name: `${TEST_PREFIX}-component-audit`,
+        order: 0,
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "RemoveComponent",
+        { id: String(component.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+
+      const row = await db
+        .select()
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.workspaceId, 1),
+            eq(auditLog.entityType, "page_component"),
+            eq(auditLog.entityId, String(component.id)),
+            eq(auditLog.action, "page_component.delete"),
+          ),
+        )
+        .get();
+      expect(row).toBeDefined();
+    } finally {
+      await db
+        .delete(auditLog)
+        .where(
+          and(
+            eq(auditLog.entityType, "page_component"),
+            eq(auditLog.entityId, String(component.id)),
+          ),
+        );
+      await db.delete(pageComponent).where(eq(pageComponent.id, component.id));
+    }
   });
 });
 
