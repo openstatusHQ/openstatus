@@ -29,6 +29,10 @@ const VICTIM_USER_ID = 4242;
 const NON_OWNER_USER_ID = 4243;
 
 let teamCtx: ServiceContext;
+// Captured so we can restore the seeded owner row in afterAll. The seed
+// owns user 1's role for workspace 1; mutating it in place would leak
+// into other suites that share the team workspace.
+let ownerRoleBefore: "owner" | "admin" | "member" | null = null;
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -58,6 +62,18 @@ beforeAll(async () => {
       },
     ])
     .onConflictDoNothing();
+
+  const existingOwner = await db
+    .select({ role: usersToWorkspaces.role })
+    .from(usersToWorkspaces)
+    .where(
+      and(
+        eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+        eq(usersToWorkspaces.userId, OWNER_USER_ID),
+      ),
+    )
+    .get();
+  ownerRoleBefore = existingOwner?.role ?? null;
 
   // Caller (owner) — already in seed for workspace 1, but the seed's
   // `users_to_workspaces` row may have a non-owner role; force `owner`.
@@ -117,6 +133,31 @@ afterAll(async () => {
     .delete(user)
     .where(eq(user.id, NON_OWNER_USER_ID))
     .catch(() => undefined);
+
+  // Restore the seeded owner row to whatever it was before this suite —
+  // forcing `owner` in beforeAll otherwise pollutes shared fixtures.
+  if (ownerRoleBefore !== null) {
+    await db
+      .update(usersToWorkspaces)
+      .set({ role: ownerRoleBefore })
+      .where(
+        and(
+          eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(usersToWorkspaces.userId, OWNER_USER_ID),
+        ),
+      )
+      .catch(() => undefined);
+  } else {
+    await db
+      .delete(usersToWorkspaces)
+      .where(
+        and(
+          eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(usersToWorkspaces.userId, OWNER_USER_ID),
+        ),
+      )
+      .catch(() => undefined);
+  }
 });
 
 beforeEach(async () => {

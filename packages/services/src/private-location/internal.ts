@@ -18,13 +18,15 @@ export async function assertMonitorsInWorkspace(args: {
   const { tx, workspaceId, monitorIds } = args;
   if (monitorIds.length === 0) return;
 
+  const uniqueIds = Array.from(new Set(monitorIds));
+
   const valid = await tx.query.monitor.findMany({
     where: and(
       eq(monitor.workspaceId, workspaceId),
-      inArray(monitor.id, monitorIds),
+      inArray(monitor.id, uniqueIds),
     ),
   });
-  if (valid.length !== monitorIds.length) {
+  if (valid.length !== uniqueIds.length) {
     throw new ForbiddenError("Invalid monitor IDs.");
   }
 }

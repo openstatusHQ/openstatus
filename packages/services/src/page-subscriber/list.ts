@@ -1,12 +1,9 @@
-import { getLogger } from "@logtape/logtape";
 import { and, db as defaultDb, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import { ListPageSubscribersInput } from "./schemas";
-
-const logger = getLogger(["services", "page-subscriber"]);
 
 /**
  * Reduce a webhook URL to its origin for non-vendor rows so the secret
@@ -27,7 +24,7 @@ function webhookUrlForList(
   try {
     return new URL(webhookUrl).origin;
   } catch {
-    logger.warn("page_subscriber row has a malformed webhook URL", {
+    console.warn("page_subscriber row has a malformed webhook URL", {
       subscriberId,
       source,
     });

@@ -1,12 +1,9 @@
-import { getLogger } from "@logtape/logtape";
 import { db as defaultDb, eq, sql } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import type { ServiceContext } from "../context";
 import type { ListIntegrationsInput } from "./schemas";
-
-const logger = getLogger(["services", "integration"]);
 
 const integrationSummarySchema = z.object({
   id: z.number(),
@@ -23,18 +20,25 @@ function safeJsonParse(
   value: string | null,
 ): Record<string, unknown> {
   if (!value) return {};
+  let parsed: unknown;
   try {
-    return JSON.parse(value) as Record<string, unknown>;
+    parsed = JSON.parse(value);
   } catch (cause) {
-    // Don't fail the whole list on one corrupt row, but make the
-    // corruption observable so it can be triaged. `value` itself is
-    // intentionally not logged — it could be arbitrary user data.
-    logger.warn("integration row has malformed `data` JSON", {
+    console.warn("integration row has malformed `data` JSON", {
       integrationId: rowId,
       cause: cause instanceof Error ? cause.message : "unknown",
     });
     return {};
   }
+  // Valid JSON but wrong shape (string, number, array, null) would fail
+  // the row-level `z.record` check and crash the whole list.
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    console.warn("integration row has non-object `data` JSON", {
+      integrationId: rowId,
+    });
+    return {};
+  }
+  return parsed as Record<string, unknown>;
 }
 
 /**

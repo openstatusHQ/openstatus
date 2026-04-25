@@ -83,15 +83,20 @@ export async function syncMonitorTags(args: {
           .returning()
           .get();
 
-        results.push(selectMonitorTagSchema.parse(updated));
+        // Caller passed an id that doesn't belong to this workspace — skip
+        // it rather than crashing the whole sync on a parse of `undefined`.
+        if (!updated) continue;
+
+        const parsed = selectMonitorTagSchema.parse(updated);
+        results.push(parsed);
 
         if (before) {
           await emitAudit(tx, ctx, {
             action: "monitor_tag.update",
             entityType: "monitor_tag",
-            entityId: updated.id,
+            entityId: parsed.id,
             before: selectMonitorTagSchema.parse(before),
-            after: selectMonitorTagSchema.parse(updated),
+            after: parsed,
           });
         }
       } else {
