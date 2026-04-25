@@ -123,9 +123,12 @@ export async function createPageSubscriber(args: {
           "A subscriber with this webhook URL already exists for this page.",
         );
       }
-      channelConfig = input.headers
-        ? JSON.stringify({ headers: input.headers })
-        : null;
+      // Empty array is truthy in JS, so check `length > 0` — otherwise
+      // we'd persist `{"headers":[]}` instead of leaving the column null.
+      channelConfig =
+        input.headers && input.headers.length > 0
+          ? JSON.stringify({ headers: input.headers })
+          : null;
     }
 
     const row = await tx
