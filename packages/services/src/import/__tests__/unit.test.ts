@@ -1,4 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { db, eq } from "@openstatus/db";
+import { monitor, pageComponent } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
@@ -20,7 +22,22 @@ function makeLimits(overrides?: Partial<Limits>): Limits {
   return { ...allPlans.free.limits, ...overrides };
 }
 
+// `addLimitWarnings` issues real `count(*)` queries against
+// `pageComponent` and `monitor`. The expectations below assume an empty
+// workspace, so clear any rows other suites may have left behind in
+// workspace 2 before each test. Real DB, real reads — just owned state.
+const TEST_WORKSPACE_ID = 2;
+
 describe("addLimitWarnings", () => {
+  beforeEach(async () => {
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.workspaceId, TEST_WORKSPACE_ID));
+    await db
+      .delete(monitor)
+      .where(eq(monitor.workspaceId, TEST_WORKSPACE_ID));
+  });
+
   // -------------------------------------------------------------------------
   // Component limits
   // -------------------------------------------------------------------------
