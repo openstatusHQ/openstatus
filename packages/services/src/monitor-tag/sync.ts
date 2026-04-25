@@ -68,6 +68,15 @@ export async function syncMonitorTags(args: {
     for (const tag of tags) {
       if (tag.id !== undefined) {
         const before = existingById.get(tag.id);
+
+        // Caller passed an id that doesn't belong to this workspace.
+        // Fail-closed: throwing rolls back the surrounding transaction
+        // (including the earlier deletions), rather than letting a
+        // partial sync commit when the input is malformed.
+        if (!before) {
+          throw new ForbiddenError("Invalid monitor tag IDs.");
+        }
+
         const updated = await tx
           .update(monitorTag)
           .set({
@@ -84,26 +93,19 @@ export async function syncMonitorTags(args: {
           .returning()
           .get();
 
-        // Caller passed an id that doesn't belong to this workspace.
-        // Fail-closed: throwing rolls back the surrounding transaction
-        // (including the earlier deletions), rather than letting a
-        // partial sync commit when the input is malformed.
-        if (!updated) {
-          throw new ForbiddenError("Invalid monitor tag IDs.");
-        }
-
-        const parsed = selectMonitorTagSchema.parse(updated);
+        // libSQL's HTTP transport can omit RETURNING rows when the UPDATE
+        // doesn't change any column values; ownership was already proven
+        // via `before`, so fall back to it for the post-image.
+        const parsed = selectMonitorTagSchema.parse(updated ?? before);
         results.push(parsed);
 
-        if (before) {
-          await emitAudit(tx, ctx, {
-            action: "monitor_tag.update",
-            entityType: "monitor_tag",
-            entityId: parsed.id,
-            before: selectMonitorTagSchema.parse(before),
-            after: parsed,
-          });
-        }
+        await emitAudit(tx, ctx, {
+          action: "monitor_tag.update",
+          entityType: "monitor_tag",
+          entityId: parsed.id,
+          before: selectMonitorTagSchema.parse(before),
+          after: parsed,
+        });
       } else {
         const created = await tx
           .insert(monitorTag)
