@@ -2,7 +2,7 @@ import { db as defaultDb, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
-import type { ListPrivateLocationsInput } from "./schemas";
+import { ListPrivateLocationsInput } from "./schemas";
 
 /**
  * List private locations in the caller's workspace, each one flattened to
@@ -18,6 +18,7 @@ export async function listPrivateLocations(args: {
   ctx: ServiceContext;
   input?: ListPrivateLocationsInput;
 }) {
+  ListPrivateLocationsInput.parse(args.input ?? {});
   const db = args.ctx.db ?? defaultDb;
 
   const rows = await db.query.privateLocation.findMany({

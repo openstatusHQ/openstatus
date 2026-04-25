@@ -2,7 +2,7 @@ import { db as defaultDb, eq } from "@openstatus/db";
 import { monitorTag } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
-import type { ListMonitorTagsInput } from "./schemas";
+import { ListMonitorTagsInput } from "./schemas";
 
 /**
  * List tags for the caller's workspace, with the join rows linking each
@@ -17,6 +17,7 @@ export async function listMonitorTags(args: {
   ctx: ServiceContext;
   input?: ListMonitorTagsInput;
 }) {
+  ListMonitorTagsInput.parse(args.input ?? {});
   const db = args.ctx.db ?? defaultDb;
 
   return db.query.monitorTag.findMany({

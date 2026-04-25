@@ -14,7 +14,7 @@ export const InstallSlackAgentInputSchema = z.object({
   }),
   data: z.object({
     teamId: z.string().min(1),
-    teamName: z.string(),
+    teamName: z.string().min(1),
     appId: z.string().min(1),
     scopes: z.string(),
     installedBy: z.string().min(1),

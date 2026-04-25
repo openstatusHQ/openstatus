@@ -3,7 +3,7 @@ import { integration } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import type { ServiceContext } from "../context";
-import type { ListIntegrationsInput } from "./schemas";
+import { ListIntegrationsInput } from "./schemas";
 
 const integrationSummarySchema = z.object({
   id: z.number(),
@@ -52,6 +52,7 @@ export async function listIntegrations(args: {
   ctx: ServiceContext;
   input?: ListIntegrationsInput;
 }): Promise<IntegrationSummary[]> {
+  ListIntegrationsInput.parse(args.input ?? {});
   const db = args.ctx.db ?? defaultDb;
 
   const rows = await db

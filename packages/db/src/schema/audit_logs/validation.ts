@@ -77,6 +77,8 @@ const pageSubscriberActions = [
   action("page_subscriber.create", "page_subscriber", intId, {
     optionalMetadata: true,
   }),
+  action("page_subscriber.update", "page_subscriber", intId),
+  action("page_subscriber.delete", "page_subscriber", intId),
 ] as const;
 
 const apiKeyActions = [
@@ -169,18 +171,12 @@ const privateLocationActions = [
   action("private_location.delete", "private_location", intId),
 ] as const;
 
-const extraPageSubscriberActions = [
-  action("page_subscriber.update", "page_subscriber", intId),
-  action("page_subscriber.delete", "page_subscriber", intId),
-] as const;
-
 export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorActions,
   ...pageActions,
   ...pageComponentActions,
   ...pageComponentGroupActions,
   ...pageSubscriberActions,
-  ...extraPageSubscriberActions,
   ...apiKeyActions,
   ...notificationActions,
   ...userActions,
