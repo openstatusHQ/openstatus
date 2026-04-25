@@ -33,9 +33,7 @@ describe("addLimitWarnings", () => {
     await db
       .delete(pageComponent)
       .where(eq(pageComponent.workspaceId, TEST_WORKSPACE_ID));
-    await db
-      .delete(monitor)
-      .where(eq(monitor.workspaceId, TEST_WORKSPACE_ID));
+    await db.delete(monitor).where(eq(monitor.workspaceId, TEST_WORKSPACE_ID));
   });
 
   // -------------------------------------------------------------------------
