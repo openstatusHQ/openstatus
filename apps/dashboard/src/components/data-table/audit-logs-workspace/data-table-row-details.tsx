@@ -98,32 +98,47 @@ export function DataTableRowDetails({ row }: { row: AuditLog }) {
   return (
     <div className="grid gap-3 bg-muted/30 p-4 text-xs">
       {changes.length ? (
-        <div className="grid gap-2">
-          <div className="font-medium text-[11px] text-muted-foreground uppercase tracking-wider">
-            Changes
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div className="col-span-2 grid gap-2">
+            <div className="font-medium text-muted-foreground uppercase tracking-wider">
+              Changes
+            </div>
+            <div className="overflow-hidden rounded-md border bg-background">
+              {changes.map((change, idx) => (
+                <div
+                  key={change.field}
+                  className={cn(
+                    "grid grid-cols-1 md:grid-cols-4",
+                    idx > 0 && "border-t",
+                  )}
+                >
+                  <div className="truncate border-r bg-muted/40 px-3 py-2 font-mono text-muted-foreground md:col-span-1">
+                    {change.field}
+                  </div>
+                  <div className="grid truncate md:col-span-3">
+                    {"before" in change ? (
+                      <DiffLine kind="removed" value={change.before} />
+                    ) : null}
+                    {"after" in change ? (
+                      <DiffLine kind="added" value={change.after} />
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="overflow-hidden rounded-md border bg-background">
-            {changes.map((change, idx) => (
-              <div
-                key={change.field}
-                className={cn(
-                  "grid grid-cols-1 md:grid-cols-4",
-                  idx > 0 && "border-t",
-                )}
-              >
-                <div className="truncate border-r bg-muted/40 px-3 py-2 font-mono text-muted-foreground md:col-span-1">
-                  {change.field}
-                </div>
-                <div className="grid truncate md:col-span-3">
-                  {"before" in change ? (
-                    <DiffLine kind="removed" value={change.before} />
-                  ) : null}
-                  {"after" in change ? (
-                    <DiffLine kind="added" value={change.after} />
-                  ) : null}
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col gap-2">
+            <div className="font-medium text-muted-foreground uppercase tracking-wider">
+              Entry
+            </div>
+            <div className="grid grid-cols-2 gap-2 border border-transparent font-mono">
+              {/* <div className="text-muted-foreground">ID</div>
+              <div className="truncate">{row.id}</div> */}
+              <div className="text-muted-foreground">Entity Type</div>
+              <div className="truncate">{row.entityType}</div>
+              <div className="text-muted-foreground">Entity ID</div>
+              <div className="truncate">{row.entityId}</div>
+            </div>
           </div>
         </div>
       ) : null}
