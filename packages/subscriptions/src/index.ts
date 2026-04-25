@@ -24,7 +24,6 @@ export {
 
 // Export service functions
 export {
-  createSubscription,
   upsertEmailSubscription,
   hasPendingUnexpiredSubscription,
   verifySubscription,
@@ -34,10 +33,7 @@ export {
   updateSubscriptionScope,
   unsubscribe,
 } from "./service";
-export type {
-  CreateSubscriptionInput,
-  UpdateChannelInput,
-} from "./service";
+export type { UpdateChannelInput } from "./service";
 
 // Export types
 export type { Subscription, PageUpdate, SubscriptionChannel } from "./types";

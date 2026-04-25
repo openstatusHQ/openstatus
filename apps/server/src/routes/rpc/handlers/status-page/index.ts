@@ -32,6 +32,7 @@ import {
   ConflictError,
   LimitExceededError,
   NotFoundError,
+  ServiceError,
   withTransaction,
 } from "@openstatus/services";
 import {
@@ -48,18 +49,13 @@ import {
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
 import { deletePageComponent } from "@openstatus/services/page-component";
-import {
-  createSubscription as createSubscriptionService,
-  detectWebhookFlavor,
-  getChannel,
-  upsertEmailSubscription,
-} from "@openstatus/subscriptions";
+import { createPageSubscriber } from "@openstatus/services/page-subscriber";
+import { getChannel, upsertEmailSubscription } from "@openstatus/subscriptions";
 import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
-  type DBPageSubscriber,
   dbComponentToProto,
   dbGroupToProto,
   dbPageToProto,
@@ -1129,82 +1125,65 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async createPageSubscription(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    const sCtx = toServiceCtx(rpcCtx);
 
-    if (!rpcCtx.workspace.limits["status-subscribers"]) {
-      throw new ConnectError(
-        "Upgrade to use status subscribers",
-        Code.PermissionDenied,
-      );
-    }
-
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
+    const pageId = Number(req.pageId);
     const componentIds = (req.componentIds ?? []).map((id) => Number(id));
     const name = req.name ?? null;
 
-    let subscriberRow: DBPageSubscriber | undefined;
+    if (
+      req.channel.case !== "emailChannel" &&
+      req.channel.case !== "webhookChannel"
+    ) {
+      throw new ConnectError(
+        "channel oneof must be set to email_channel or webhook_channel",
+        Code.InvalidArgument,
+      );
+    }
+
+    let result: Awaited<ReturnType<typeof createPageSubscriber>>;
     try {
       if (req.channel.case === "emailChannel") {
-        const created = await createSubscriptionService({
-          pageId: pageData.id,
-          channelType: "email",
-          email: req.channel.value.email,
-          name,
-          componentIds,
+        result = await createPageSubscriber({
+          ctx: sCtx,
+          input: {
+            pageId,
+            channelType: "email",
+            email: req.channel.value.email,
+            name,
+            componentIds,
+          },
         });
-        subscriberRow = await db
-          .select()
-          .from(pageSubscriber)
-          .where(eq(pageSubscriber.id, created.id))
-          .get();
-      } else if (req.channel.case === "webhookChannel") {
-        const webhookUrl = req.channel.value.webhookUrl;
-        if (detectWebhookFlavor(webhookUrl) === "generic") {
-          throw new ConnectError(
-            "Only Slack and Discord webhook URLs are supported.",
-            Code.InvalidArgument,
-          );
-        }
-        const headers = protoHeadersToPlain(req.channel.value.headers);
-        const created = await createSubscriptionService({
-          pageId: pageData.id,
-          channelType: "webhook",
-          webhookUrl,
-          name,
-          channelConfig: headers.length > 0 ? { headers } : undefined,
-          componentIds,
-        });
-        subscriberRow = await db
-          .select()
-          .from(pageSubscriber)
-          .where(eq(pageSubscriber.id, created.id))
-          .get();
       } else {
-        throw new ConnectError(
-          "channel oneof must be set to email_channel or webhook_channel",
-          Code.InvalidArgument,
-        );
+        result = await createPageSubscriber({
+          ctx: sCtx,
+          input: {
+            pageId,
+            channelType: "webhook",
+            webhookUrl: req.channel.value.webhookUrl,
+            name,
+            headers: protoHeadersToPlain(req.channel.value.headers),
+            componentIds,
+          },
+        });
       }
     } catch (error) {
       if (error instanceof ConnectError) throw error;
-      // Don't echo raw service-layer error messages to RPC clients; they may
-      // contain details that shouldn't be exposed. Log server-side for debugging.
+      // Service-layer ServiceErrors map cleanly via toConnectError
+      // (NotFound → NotFound, Conflict/Validation → InvalidArgument,
+      // Forbidden → PermissionDenied, etc). Anything else surfaces as
+      // Internal — don't echo raw messages to RPC clients.
+      if (error instanceof ServiceError) {
+        toConnectError(error);
+      }
       console.error("createPageSubscription failed:", error);
-      throw subscriberCreateFailedError();
-    }
-
-    if (!subscriberRow) {
       throw subscriberCreateFailedError();
     }
 
     return {
       subscriber: dbSubscriberToProto({
-        ...subscriberRow,
-        componentIds,
+        ...result.row,
+        componentIds: result.componentIds,
       }),
     };
   },
