@@ -6,6 +6,7 @@ import {
   eq,
   gte,
   isNull,
+  sql,
 } from "@openstatus/db";
 import { auditLog, user } from "@openstatus/db/src/schema";
 
@@ -30,6 +31,11 @@ export type AuditLogListItem = typeof auditLog.$inferSelect & {
   } | null;
 };
 
+export type ListAuditLogsResult = {
+  items: AuditLogListItem[];
+  totalSize: number;
+};
+
 /**
  * List audit-log rows for the caller's workspace, optionally scoped
  * to a single entity. Bounded to the last `READ_WINDOW_DAYS`.
@@ -46,7 +52,7 @@ export type AuditLogListItem = typeof auditLog.$inferSelect & {
 export async function listAuditLogs(args: {
   ctx: ServiceContext;
   input?: ListAuditLogsInput;
-}): Promise<AuditLogListItem[]> {
+}): Promise<ListAuditLogsResult> {
   const { ctx } = args;
   const input = ListAuditLogsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
@@ -57,39 +63,53 @@ export async function listAuditLogs(args: {
     eq(auditLog.workspaceId, ctx.workspace.id),
     gte(auditLog.createdAt, since),
   ];
-  if (input?.entityType) {
+  if (input.entityType) {
     conditions.push(eq(auditLog.entityType, input.entityType));
   }
-  if (input?.entityId) {
+  if (input.entityId) {
     conditions.push(eq(auditLog.entityId, input.entityId));
   }
+  const whereClause = and(...conditions);
 
-  const rows = await db
-    .select({
-      auditLog,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        photoUrl: user.photoUrl,
-      },
-    })
-    .from(auditLog)
-    // Narrow the join so soft-deleted users don't surface as actors.
-    // `deleteAccount` preserves the row (deletedAt + PII wipe), which
-    // a bare `eq(user.id, actorUserId)` would still match, returning a
-    // user object with blanked fields instead of `user: null`. Readers
-    // can't distinguish that from a real actor without the `isNull`.
-    .leftJoin(
-      user,
-      and(eq(user.id, auditLog.actorUserId), isNull(user.deletedAt)),
-    )
-    .where(and(...conditions))
-    .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
-    .all();
+  // Count and page queries run in parallel outside a transaction — a
+  // concurrent insert between them can leave `totalSize` one off from the
+  // returned page. Best-effort is fine for list pagination.
+  const [countRow, rows] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(auditLog)
+      .where(whereClause)
+      .get(),
+    db
+      .select({
+        auditLog,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          photoUrl: user.photoUrl,
+        },
+      })
+      .from(auditLog)
+      // Narrow the join so soft-deleted users don't surface as actors.
+      // `deleteAccount` preserves the row (deletedAt + PII wipe), which
+      // a bare `eq(user.id, actorUserId)` would still match, returning a
+      // user object with blanked fields instead of `user: null`. Readers
+      // can't distinguish that from a real actor without the `isNull`.
+      .leftJoin(
+        user,
+        and(eq(user.id, auditLog.actorUserId), isNull(user.deletedAt)),
+      )
+      .where(whereClause)
+      .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
+      .limit(input.limit)
+      .offset(input.offset)
+      .all(),
+  ]);
 
-  return rows.map((row) => ({
+  const items = rows.map((row) => ({
     ...row.auditLog,
     user: row.user?.id != null ? row.user : null,
   }));
+  return { items, totalSize: countRow?.count ?? 0 };
 }

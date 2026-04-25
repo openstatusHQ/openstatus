@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
 
-type AuditLog = RouterOutputs["auditLog"]["list"][number];
+type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 
 type ChangeRow = {
   field: string;

@@ -30,7 +30,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useState } from "react";
 
-type AuditLog = RouterOutputs["auditLog"]["list"][number];
+type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 
 const EXAMPLES = [
   {
@@ -102,7 +102,7 @@ export function Client() {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: auditLogs } = useQuery(trpc.auditLog.list.queryOptions());
+  const { data: auditLogs } = useQuery(trpc.auditLog.list.queryOptions({}));
 
   if (!workspace) return null;
 
@@ -149,10 +149,10 @@ export function Client() {
               limit="audit-log"
             />
           </BillingOverlayContainer>
-        ) : auditLogs?.length ? (
+        ) : auditLogs?.items.length ? (
           <DataTable
             columns={columns}
-            data={auditLogs}
+            data={auditLogs.items}
             onRowClick={(row) =>
               row.getCanExpand() ? row.toggleExpanded() : undefined
             }

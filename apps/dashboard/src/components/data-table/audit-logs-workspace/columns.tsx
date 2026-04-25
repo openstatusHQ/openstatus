@@ -11,7 +11,7 @@ import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TableCellDate } from "../table-cell-date";
 
-type AuditLog = RouterOutputs["auditLog"]["list"][number];
+type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 
 /**
  * djb2 — tiny deterministic string hash. Used to derive a stable avatar
