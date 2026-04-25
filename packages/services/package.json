@@ -66,7 +66,6 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@logtape/logtape": "2.0.1",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/importers": "workspace:*",

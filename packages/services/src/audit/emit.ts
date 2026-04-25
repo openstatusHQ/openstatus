@@ -1,4 +1,3 @@
-import { getLogger } from "@logtape/logtape";
 import { auditLog } from "@openstatus/db/src/schema";
 import { type AuditEntry, auditEntrySchema } from "@openstatus/db/src/schema";
 
@@ -8,8 +7,6 @@ import {
   extractActorId,
   tryGetActorUserId,
 } from "../context";
-
-const logger = getLogger(["services", "audit"]);
 
 /** Keys excluded from the top-level diff — always churny, never informative. */
 const DIFF_IGNORE = new Set(["updatedAt", "createdAt"]);
@@ -61,9 +58,6 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   }
   return true;
 }
-
-/** Warn when a single row's serialised JSON exceeds this size. */
-const SIZE_WARN_BYTES = 64 * 1024;
 
 /**
  * Shallow diff between two entity snapshots. Reports top-level keys that
@@ -142,19 +136,6 @@ export async function emitAudit(
     metadata: (metadata ?? null) as Record<string, unknown> | null,
     changedFields,
   };
-
-  // Early signal that payloads are getting fat — not an error. Retention
-  // and truncation policy is a separate PR.
-  const size =
-    (before ? JSON.stringify(before).length : 0) +
-    (after ? JSON.stringify(after).length : 0) +
-    (metadata ? JSON.stringify(metadata).length : 0);
-  if (size > SIZE_WARN_BYTES) {
-    logger.warn(
-      `audit row exceeds ${SIZE_WARN_BYTES}B for action ${parsed.action}`,
-      { action: parsed.action, entityType: parsed.entityType, size },
-    );
-  }
 
   await tx.insert(auditLog).values(row);
 }
