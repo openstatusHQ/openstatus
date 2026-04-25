@@ -137,6 +137,16 @@ describe("newPage", () => {
 });
 
 describe("createPage (full form)", () => {
+  // Re-clear the free workspace before each test in this block — the
+  // `beforeAll` cleanup races against other test files (bun runs files
+  // in parallel workers against the shared turso dev DB), and the
+  // `rejects cross-workspace monitor` case needs free at 0 pages so
+  // `assertStatusPageQuota` doesn't trip before the cross-workspace
+  // monitor check runs.
+  beforeEach(async () => {
+    await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+  });
+
   // `CreatePageInput` re-exports the drizzle `insertPageSchema`, which
   // requires `workspaceId` at parse time. The service strips the input
   // value and uses `ctx.workspace.id` when persisting (so the input
@@ -228,6 +238,13 @@ describe("updatePageGeneral", () => {
 });
 
 describe("updatePageLocales", () => {
+  // Same reason as `createPage (full form)` — the i18n test creates a
+  // page in the free workspace as setup, so we need to guarantee free
+  // is at 0 pages right before it runs, not just at suite start.
+  beforeEach(async () => {
+    await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+  });
+
   test("rejects when plan lacks i18n", async () => {
     // free plan has i18n: false
     const p = await newPage({
