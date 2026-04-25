@@ -3,6 +3,7 @@ import { monitorTag, selectMonitorTagSchema } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
+import { ForbiddenError } from "../errors";
 import type { MonitorTag } from "../types";
 import { SyncMonitorTagsInput } from "./schemas";
 
@@ -83,9 +84,13 @@ export async function syncMonitorTags(args: {
           .returning()
           .get();
 
-        // Caller passed an id that doesn't belong to this workspace — skip
-        // it rather than crashing the whole sync on a parse of `undefined`.
-        if (!updated) continue;
+        // Caller passed an id that doesn't belong to this workspace.
+        // Fail-closed: throwing rolls back the surrounding transaction
+        // (including the earlier deletions), rather than letting a
+        // partial sync commit when the input is malformed.
+        if (!updated) {
+          throw new ForbiddenError("Invalid monitor tag IDs.");
+        }
 
         const parsed = selectMonitorTagSchema.parse(updated);
         results.push(parsed);
