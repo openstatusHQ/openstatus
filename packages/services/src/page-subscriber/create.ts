@@ -41,6 +41,14 @@ export async function createPageSubscriber(args: {
   // subscriptions package. We don't try to nest them — the two concerns
   // (authz gate, create) are separately committable and the plan-gate
   // result can't change in the ~microseconds between them.
+  //
+  // Atomicity trade-off: because `createSubscription` commits its own tx
+  // before we get here to emit the audit row, an audit-insert failure
+  // below cannot roll back the subscriber row. This inverts the usual
+  // "fail-closed audit" guarantee. Threading a tx into the subscriptions
+  // package would require widening its public signature across consumers
+  // and is deferred. The audit emit is best-effort post-commit; if it
+  // fails the caller sees the error but the subscription persists.
   await withTransaction(ctx, async (tx) => {
     const pageWithWorkspace = await loadPageForWorkspace({
       tx,
