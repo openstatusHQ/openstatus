@@ -63,7 +63,7 @@ export const columns: ColumnDef<AuditLog>[] = [
             </AvatarFallback>
           </Avatar>
           <span className="truncate font-commit-mono text-xs tracking-tight">
-            {user.email}
+            {user.name ?? user.email ?? "—"}
           </span>
         </div>
       );

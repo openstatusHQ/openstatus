@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyRow } from "@/components/common/copy-row";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
 
@@ -96,14 +97,14 @@ export function DataTableRowDetails({ row }: { row: AuditLog }) {
   const changes = buildChanges(row);
 
   return (
-    <div className="grid gap-3 bg-muted/30 p-4 text-xs">
+    <div className="bg-muted/30 p-4">
       {changes.length ? (
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-          <div className="col-span-2 grid gap-2">
-            <div className="font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="col-span-2 flex flex-col gap-2">
+            <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
               Changes
             </div>
-            <div className="overflow-hidden rounded-md border bg-background">
+            <div className="overflow-hidden rounded-md border bg-background text-sm">
               {changes.map((change, idx) => (
                 <div
                   key={change.field}
@@ -128,17 +129,21 @@ export function DataTableRowDetails({ row }: { row: AuditLog }) {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <div className="font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
               Entry
             </div>
-            <div className="grid grid-cols-2 gap-2 border border-transparent font-mono">
-              {/* <div className="text-muted-foreground">ID</div>
-              <div className="truncate">{row.id}</div> */}
-              <div className="text-muted-foreground">Entity Type</div>
-              <div className="truncate">{row.entityType}</div>
-              <div className="text-muted-foreground">Entity ID</div>
-              <div className="truncate">{row.entityId}</div>
-            </div>
+            <dl className="flex flex-col gap-1.5">
+              <CopyRow label="Entity Type" value={row.entityType} />
+              <CopyRow label="Entity ID" value={row.entityId} />
+              <CopyRow label="Actor Type" value={row.actorType} />
+              <CopyRow label="Actor ID" value={row.actorId} />
+              {row.user?.name ? (
+                <CopyRow label="User Name" value={row.user.name} />
+              ) : null}
+              {row.user?.email ? (
+                <CopyRow label="User Email" value={row.user.email} />
+              ) : null}
+            </dl>
           </div>
         </div>
       ) : null}
@@ -155,21 +160,14 @@ function DiffLine({
 }) {
   const sign = kind === "added" ? "+" : "-";
   return (
-    <div className="flex items-start gap-2 px-3 py-2 font-mono">
-      <span
-        className={cn("select-none text-muted-foreground", {
-          "text-success": kind === "added",
-          "text-destructive": kind === "removed",
-        })}
-      >
+    <div
+      className="group flex items-start gap-2 px-3 py-2 font-mono has-[+[data-kind=added]]:pb-0"
+      data-kind={kind}
+    >
+      <span className="select-none text-muted-foreground group-data-[kind=added]:text-success group-data-[kind=removed]:text-destructive">
         {sign}
       </span>
-      <span
-        className={cn("whitespace-pre-wrap break-all", {
-          "text-foreground": kind === "added",
-          "text-muted-foreground line-through": kind === "removed",
-        })}
-      >
+      <span className="whitespace-pre-wrap break-all group-data-[kind=added]:text-foreground group-data-[kind=removed]:text-muted-foreground group-data-[kind=removed]:line-through">
         {formatValue(value)}
       </span>
     </div>

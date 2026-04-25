@@ -113,7 +113,8 @@ export function Client() {
       <SectionHeader>
         <SectionTitle>Audit Logs</SectionTitle>
         <SectionDescription>
-          Track mutating actions taken against your workspace.
+          Track mutating actions taken against your workspace from the last 14
+          days.
         </SectionDescription>
       </SectionHeader>
       <Section>
