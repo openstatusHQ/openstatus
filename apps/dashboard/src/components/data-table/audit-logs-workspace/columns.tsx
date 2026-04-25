@@ -68,6 +68,9 @@ export const columns: ColumnDef<AuditLog>[] = [
         </div>
       );
     },
+    meta: {
+      cellClassName: "max-w-[200px] truncate max-w-auto",
+    },
   },
   {
     accessorKey: "action",
