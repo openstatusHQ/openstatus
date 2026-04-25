@@ -1,4 +1,3 @@
-import { getLogger } from "@logtape/logtape";
 import { and, desc, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 
@@ -11,7 +10,6 @@ import {
 import { snapshotIntegration } from "./snapshot";
 
 const SLACK_AGENT_NAME = "slack-agent";
-const logger = getLogger(["services", "integration", "install-slack-agent"]);
 
 /**
  * Upsert the workspace's Slack agent integration after a successful OAuth
@@ -49,7 +47,7 @@ export async function installSlackAgent(args: {
     const [existing, ...stale] = existingRows;
 
     if (stale.length > 0) {
-      logger.warn("found duplicate slack-agent rows; consolidating", {
+      console.warn("found duplicate slack-agent rows; consolidating", {
         workspaceId: ctx.workspace.id,
         keepId: existing?.id,
         dropIds: stale.map((r) => r.id),
