@@ -134,8 +134,6 @@ const invitationActions = [
 // Several entities below carry only a subset of the create/update/delete
 // triplet. This is intentional, not an oversight:
 //   - `member`: rows are created via `invitation.accept`, not directly.
-//   - `integration`: rows are created by the OAuth callback handler,
-//     which lives outside the service layer for now.
 //   - `incident`: rows originate from the checker pipeline, not user
 //     mutations.
 // When those write paths migrate to the service layer, add the missing
@@ -148,6 +146,10 @@ const memberActions = [
 ] as const;
 
 const integrationActions = [
+  action("integration.create", "integration", intId, {
+    optionalMetadata: true,
+  }),
+  action("integration.update", "integration", intId),
   action("integration.delete", "integration", intId),
 ] as const;
 

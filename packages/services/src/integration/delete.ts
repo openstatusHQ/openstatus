@@ -1,12 +1,10 @@
 import { and, eq } from "@openstatus/db";
-import {
-  integration,
-  selectIntegrationSchema,
-} from "@openstatus/db/src/schema";
+import { integration } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
 import { DeleteIntegrationInput } from "./schemas";
+import { snapshotIntegration } from "./snapshot";
 
 /**
  * Best-effort revoke of a Slack bot token before deleting the row.
@@ -71,16 +69,11 @@ export async function deleteIntegration(args: {
     const credential = deleted.credential as { botToken?: string } | null;
     if (credential?.botToken) revokeBotToken = credential.botToken;
 
-    // Parse through the select schema so the snapshot shape is stable
-    // across schema evolution, then strip `credential` — it carries the
-    // bot token and any future signing secret, never audit it.
-    const parsed = selectIntegrationSchema.parse(deleted);
-    const { credential: _credential, ...before } = parsed;
     await emitAudit(tx, ctx, {
       action: "integration.delete",
       entityType: "integration",
-      entityId: parsed.id,
-      before,
+      entityId: deleted.id,
+      before: snapshotIntegration(deleted),
     });
   });
 

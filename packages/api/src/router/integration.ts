@@ -15,10 +15,14 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
  * secret and better kept alongside the Slack OAuth surface than inflated
  * into a service verb.
  */
-function signInstallToken(workspaceId: number, ts: number): string {
+function signInstallToken(args: {
+  workspaceId: number;
+  userId: number;
+  ts: number;
+}): string {
   const secret = process.env.SLACK_SIGNING_SECRET;
   if (!secret) throw new Error("Slack not configured");
-  const payload = JSON.stringify({ workspaceId, ts });
+  const payload = JSON.stringify(args);
   const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
   return Buffer.from(`${payload}.${sig}`).toString("base64url");
 }
@@ -33,7 +37,11 @@ export const integrationRouter = createTRPCRouter({
   }),
 
   generateInstallToken: protectedProcedure.mutation(async ({ ctx }) => {
-    const token = signInstallToken(ctx.workspace.id, Date.now());
+    const token = signInstallToken({
+      workspaceId: ctx.workspace.id,
+      userId: ctx.user.id,
+      ts: Date.now(),
+    });
     return { token };
   }),
 
