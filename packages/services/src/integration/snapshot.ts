@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { integration } from "@openstatus/db/src/schema";
+import type { integration } from "@openstatus/db/src/schema";
 
 // Drizzle's inferred row type — JSON columns surface as `unknown` here,
 // vs the zod-derived `Integration` type which narrows them to `Json`.
