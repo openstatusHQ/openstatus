@@ -132,9 +132,7 @@ export async function updatePageSubscriberChannel(args: {
         )
         .all();
       if (valid.length !== input.componentIds.length) {
-        throw new ValidationError(
-          "Some components do not belong to this page",
-        );
+        throw new ValidationError("Some components do not belong to this page");
       }
     }
 

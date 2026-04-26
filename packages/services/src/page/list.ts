@@ -21,7 +21,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
-import { getReadDb, type ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
 import { getPageInWorkspace } from "./internal";

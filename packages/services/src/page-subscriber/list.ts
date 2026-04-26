@@ -1,7 +1,7 @@
 import { and, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
-import { getReadDb, type ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { ListPageSubscribersInput } from "./schemas";
 

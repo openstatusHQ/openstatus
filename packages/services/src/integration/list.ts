@@ -2,7 +2,7 @@ import { eq, sql } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import { getReadDb, type ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import { ListIntegrationsInput } from "./schemas";
 
 const integrationSummarySchema = z.object({

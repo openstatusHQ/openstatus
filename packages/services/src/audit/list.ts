@@ -6,7 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { z } from "zod";
 
-import { getReadDb, type ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import { ListAuditLogsInput } from "./schemas";
 
 /**

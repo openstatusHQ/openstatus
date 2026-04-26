@@ -6,7 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import { getReadDb, type ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import type { ListMembersInput } from "./schemas";
 
 const memberRowSchema = z.object({

@@ -1,7 +1,7 @@
 import { eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
-import { getReadDb, type ServiceContext } from "../context";
+import { type ServiceContext, getReadDb } from "../context";
 import { ListPrivateLocationsInput } from "./schemas";
 
 /**
