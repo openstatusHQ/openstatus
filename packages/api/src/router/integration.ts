@@ -1,90 +1,60 @@
 // biome-ignore lint/style/useNodejsImportProtocol: some error with build
 import crypto from "crypto";
+import {
+  deleteIntegration,
+  listIntegrations,
+} from "@openstatus/services/integration";
 import { z } from "zod";
 
-import { and, eq, sql } from "@openstatus/db";
-import { integration } from "@openstatus/db/src/schema";
-
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-function signInstallToken(workspaceId: number, ts: number): string {
+/**
+ * Slack install-token generation stays router-local: no DB work, no
+ * workspace-scoped business rule — it's just HMAC plumbing against an env
+ * secret and better kept alongside the Slack OAuth surface than inflated
+ * into a service verb.
+ */
+function signInstallToken(args: {
+  workspaceId: number;
+  userId: number;
+  ts: number;
+}): string {
   const secret = process.env.SLACK_SIGNING_SECRET;
   if (!secret) throw new Error("Slack not configured");
-  const payload = JSON.stringify({ workspaceId, ts });
+  const payload = JSON.stringify(args);
   const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
   return Buffer.from(`${payload}.${sig}`).toString("base64url");
 }
 
-function safeJsonParse(value: string | null): Record<string, unknown> {
-  if (!value) return {};
-  try {
-    return JSON.parse(value) as Record<string, unknown>;
-  } catch {
-    return {};
-  }
-}
-
 export const integrationRouter = createTRPCRouter({
-  list: protectedProcedure.query(async (opts) => {
-    const rows = await opts.ctx.db
-      .select({
-        id: integration.id,
-        name: integration.name,
-        externalId: integration.externalId,
-        rawData: sql<string>`${integration.data}`,
-        createdAt: integration.createdAt,
-      })
-      .from(integration)
-      .where(eq(integration.workspaceId, opts.ctx.workspace.id))
-      .all();
-
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      externalId: row.externalId,
-      data: safeJsonParse(row.rawData),
-      createdAt: row.createdAt,
-    }));
+  list: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      return await listIntegrations({ ctx: toServiceCtx(ctx) });
+    } catch (err) {
+      toTRPCError(err);
+    }
   }),
 
-  generateInstallToken: protectedProcedure.mutation(async (opts) => {
-    const token = signInstallToken(opts.ctx.workspace.id, Date.now());
+  generateInstallToken: protectedProcedure.mutation(async ({ ctx }) => {
+    const token = signInstallToken({
+      workspaceId: ctx.workspace.id,
+      userId: ctx.user.id,
+      ts: Date.now(),
+    });
     return { token };
   }),
 
   deleteIntegration: protectedProcedure
     .input(z.object({ integrationId: z.number() }))
-    .mutation(async (opts) => {
-      const existing = await opts.ctx.db
-        .select()
-        .from(integration)
-        .where(
-          and(
-            eq(integration.id, opts.input.integrationId),
-            eq(integration.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-
-      if (!existing) return;
-
-      const cred = existing.credential as { botToken?: string } | null;
-      if (cred?.botToken) {
-        try {
-          await fetch("https://slack.com/api/auth.revoke", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${cred.botToken}`,
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-          });
-        } catch {
-          // Token may already be invalid
-        }
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await deleteIntegration({
+          ctx: toServiceCtx(ctx),
+          input: { id: input.integrationId },
+        });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      await opts.ctx.db
-        .delete(integration)
-        .where(eq(integration.id, existing.id));
     }),
 });

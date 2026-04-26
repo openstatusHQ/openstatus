@@ -1,6 +1,5 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -9,7 +8,6 @@ import {
 } from "bun:test";
 import { db, eq, inArray } from "@openstatus/db";
 import {
-  maintenance,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -20,11 +18,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
-  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeSlackCtx,
   makeUserCtx,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
@@ -54,15 +52,6 @@ let testPageComponentId: number;
 // "all components must share a page" ConflictError branch.
 let otherPageId: number;
 let otherPageComponentId: number;
-
-/**
- * Tests push created maintenance ids here instead of issuing an inline
- * `db.delete()` at the end of their body. `afterEach` drains the array,
- * so cleanup runs even when an assertion throws midway through a test —
- * otherwise a failing assertion leaves orphans that flake subsequent
- * runs.
- */
-const createdMaintenanceIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -134,20 +123,8 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(async () => {
-  await clearAuditLog(teamCtx.workspace.id);
-  await clearAuditLog(freeCtx.workspace.id);
+beforeEach(() => {
   subscriptionSpies?.dispatchMaintenanceUpdate.mockClear();
-});
-
-afterEach(async () => {
-  if (createdMaintenanceIds.length > 0) {
-    await db
-      .delete(maintenance)
-      .where(inArray(maintenance.id, createdMaintenanceIds))
-      .catch(() => undefined);
-    createdMaintenanceIds.length = 0;
-  }
 });
 
 function futureRange(startIn = 60 * 60 * 1000) {
@@ -160,351 +137,371 @@ function futureRange(startIn = 60 * 60 * 1000) {
 
 describe("createMaintenance", () => {
   test("creates + associations + audit", async () => {
-    const range = futureRange();
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-happy`,
-        message: "planned work",
-        ...range,
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const range = futureRange();
+      const record = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-happy`,
+          message: "planned work",
+          ...range,
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      expect(record.title).toBe(`${TEST_PREFIX}-happy`);
+      expect(record.pageId).toBe(testPageId);
+
+      const assoc = await tx
+        .select()
+        .from(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
+        .all();
+      expect(assoc.map((a) => a.pageComponentId)).toEqual([
+        testPageComponentId,
+      ]);
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance.create",
+        entityType: "maintenance",
+        entityId: record.id,
+        db: tx,
+      });
     });
-
-    expect(record.title).toBe(`${TEST_PREFIX}-happy`);
-    expect(record.pageId).toBe(testPageId);
-
-    const assoc = await db
-      .select()
-      .from(maintenancesToPageComponents)
-      .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
-      .all();
-    expect(assoc.map((a) => a.pageComponentId)).toEqual([testPageComponentId]);
-
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "maintenance.create",
-      entityType: "maintenance",
-      entityId: record.id,
-    });
-
-    createdMaintenanceIds.push(record.id);
   });
 
   test("throws when page is in another workspace", async () => {
-    const range = futureRange();
-    await expect(
-      createMaintenance({
-        ctx: freeCtx,
-        input: {
-          title: `${TEST_PREFIX}-cross-ws`,
-          message: "m",
-          ...range,
-          pageId: testPageId,
-          pageComponentIds: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await withTestTransaction(async (tx) => {
+      const range = futureRange();
+      await expect(
+        createMaintenance({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            title: `${TEST_PREFIX}-cross-ws`,
+            message: "m",
+            ...range,
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 
   test("throws ZodError when from >= to", async () => {
-    const now = new Date();
-    await expect(
-      createMaintenance({
-        ctx: teamCtx,
-        input: {
-          title: `${TEST_PREFIX}-range`,
-          message: "m",
-          from: now,
-          to: now,
-          pageId: testPageId,
-          pageComponentIds: [],
-        },
-      }),
-    ).rejects.toThrow();
+    await withTestTransaction(async (tx) => {
+      const now = new Date();
+      await expect(
+        createMaintenance({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            title: `${TEST_PREFIX}-range`,
+            message: "m",
+            from: now,
+            to: now,
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        }),
+      ).rejects.toThrow();
+    });
   });
 
   test("deduplicates pageComponentIds", async () => {
-    // Duplicate ids in the input would violate the composite PK on
-    // `maintenances_to_page_components` if not deduped. Guard against a
-    // regression where the `Set` in `validatePageComponentIds` is dropped.
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-dedupe`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId, testPageComponentId],
-      },
-    });
-
-    const assoc = await db
-      .select()
-      .from(maintenancesToPageComponents)
-      .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
-      .all();
-    expect(assoc).toHaveLength(1);
-    expect(assoc[0].pageComponentId).toBe(testPageComponentId);
-
-    createdMaintenanceIds.push(record.id);
-  });
-
-  test("throws ConflictError when components span multiple pages", async () => {
-    await expect(
-      createMaintenance({
-        ctx: teamCtx,
+    await withTestTransaction(async (tx) => {
+      // Duplicate ids in the input would violate the composite PK on
+      // `maintenances_to_page_components` if not deduped. Guard against a
+      // regression where the `Set` in `validatePageComponentIds` is dropped.
+      const record = await createMaintenance({
+        ctx: { ...teamCtx, db: tx },
         input: {
-          title: `${TEST_PREFIX}-mixed-pages`,
+          title: `${TEST_PREFIX}-dedupe`,
           message: "m",
           ...futureRange(),
           pageId: testPageId,
-          pageComponentIds: [testPageComponentId, otherPageComponentId],
+          pageComponentIds: [testPageComponentId, testPageComponentId],
         },
-      }),
-    ).rejects.toBeInstanceOf(ConflictError);
+      });
+
+      const assoc = await tx
+        .select()
+        .from(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
+        .all();
+      expect(assoc).toHaveLength(1);
+      expect(assoc[0].pageComponentId).toBe(testPageComponentId);
+    });
+  });
+
+  test("throws ConflictError when components span multiple pages", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createMaintenance({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            title: `${TEST_PREFIX}-mixed-pages`,
+            message: "m",
+            ...futureRange(),
+            pageId: testPageId,
+            pageComponentIds: [testPageComponentId, otherPageComponentId],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
   });
 });
 
 describe("updateMaintenance", () => {
   test("updates title + replaces associations", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-update`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const record = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-update`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      const updated = await updateMaintenance({
+        ctx,
+        input: {
+          id: record.id,
+          title: `${TEST_PREFIX}-update-renamed`,
+          pageComponentIds: [],
+        },
+      });
+      expect(updated.title).toBe(`${TEST_PREFIX}-update-renamed`);
+
+      const assoc = await tx
+        .select()
+        .from(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
+        .all();
+      expect(assoc).toHaveLength(0);
     });
-
-    const updated = await updateMaintenance({
-      ctx: teamCtx,
-      input: {
-        id: record.id,
-        title: `${TEST_PREFIX}-update-renamed`,
-        pageComponentIds: [],
-      },
-    });
-    expect(updated.title).toBe(`${TEST_PREFIX}-update-renamed`);
-
-    const assoc = await db
-      .select()
-      .from(maintenancesToPageComponents)
-      .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
-      .all();
-    expect(assoc).toHaveLength(0);
-
-    createdMaintenanceIds.push(record.id);
   });
 
   test("throws NotFoundError for cross-workspace update", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-cross-ws-update`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const record = await createMaintenance({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-cross-ws-update`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        updateMaintenance({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: record.id, title: "blocked" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
-
-    await expect(
-      updateMaintenance({
-        ctx: freeCtx,
-        input: { id: record.id, title: "blocked" },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
-
-    createdMaintenanceIds.push(record.id);
   });
 
   test("rejects partial update that crosses the from/to invariant", async () => {
-    // The Zod refine on CreateMaintenanceInput only catches simultaneous
-    // `{from, to}` submissions. A partial update that moves only `to`
-    // earlier than the stored `from` has to be rejected by the service's
-    // own effective-range check. Regression guard for that code path.
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-range-update`,
-        message: "m",
-        ...futureRange(60 * 60 * 1000),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      // The Zod refine on CreateMaintenanceInput only catches simultaneous
+      // `{from, to}` submissions. A partial update that moves only `to`
+      // earlier than the stored `from` has to be rejected by the service's
+      // own effective-range check. Regression guard for that code path.
+      const record = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-range-update`,
+          message: "m",
+          ...futureRange(60 * 60 * 1000),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        updateMaintenance({
+          ctx,
+          input: { id: record.id, to: new Date(Date.now() - 60 * 60 * 1000) },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
     });
-
-    await expect(
-      updateMaintenance({
-        ctx: teamCtx,
-        input: { id: record.id, to: new Date(Date.now() - 60 * 60 * 1000) },
-      }),
-    ).rejects.toBeInstanceOf(ConflictError);
-
-    createdMaintenanceIds.push(record.id);
   });
 
   test("throws ConflictError when pageComponentIds span multiple pages", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-update-mixed-pages`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
-    });
-
-    await expect(
-      updateMaintenance({
-        ctx: teamCtx,
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const record = await createMaintenance({
+        ctx,
         input: {
-          id: record.id,
-          pageComponentIds: [testPageComponentId, otherPageComponentId],
+          title: `${TEST_PREFIX}-update-mixed-pages`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
         },
-      }),
-    ).rejects.toBeInstanceOf(ConflictError);
+      });
 
-    createdMaintenanceIds.push(record.id);
+      await expect(
+        updateMaintenance({
+          ctx,
+          input: {
+            id: record.id,
+            pageComponentIds: [testPageComponentId, otherPageComponentId],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
   });
 });
 
 describe("deleteMaintenance", () => {
   test("cascades associations", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-delete`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const record = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-delete`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      await deleteMaintenance({ ctx, input: { id: record.id } });
+
+      const remainingAssoc = await tx
+        .select()
+        .from(maintenancesToPageComponents)
+        .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
+        .all();
+      expect(remainingAssoc).toHaveLength(0);
     });
-
-    await deleteMaintenance({ ctx: teamCtx, input: { id: record.id } });
-
-    const remaining = await db
-      .select()
-      .from(maintenance)
-      .where(eq(maintenance.id, record.id))
-      .all();
-    const remainingAssoc = await db
-      .select()
-      .from(maintenancesToPageComponents)
-      .where(eq(maintenancesToPageComponents.maintenanceId, record.id))
-      .all();
-    expect(remaining).toHaveLength(0);
-    expect(remainingAssoc).toHaveLength(0);
   });
 });
 
 describe("list / get", () => {
   test("respects workspace isolation", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-isolation`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const record = await createMaintenance({
+        ctx: teamCtxTx,
+        input: {
+          title: `${TEST_PREFIX}-isolation`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        getMaintenance({ ctx: freeCtxTx, input: { id: record.id } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+
+      const { items } = await listMaintenances({
+        ctx: freeCtxTx,
+        input: {
+          limit: 100,
+          offset: 0,
+          pageId: testPageId,
+          order: "desc",
+        },
+      });
+      expect(items.find((m) => m.id === record.id)).toBeUndefined();
     });
-
-    await expect(
-      getMaintenance({ ctx: freeCtx, input: { id: record.id } }),
-    ).rejects.toBeInstanceOf(NotFoundError);
-
-    const { items } = await listMaintenances({
-      ctx: freeCtx,
-      input: {
-        limit: 100,
-        offset: 0,
-        pageId: testPageId,
-        order: "desc",
-      },
-    });
-    expect(items.find((m) => m.id === record.id)).toBeUndefined();
-
-    createdMaintenanceIds.push(record.id);
   });
 
   test("list returns totalSize and enriched relations", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-list-enrich`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
-    });
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const record = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-list-enrich`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
 
-    const full = await getMaintenance({
-      ctx: teamCtx,
-      input: { id: record.id },
+      const full = await getMaintenance({
+        ctx,
+        input: { id: record.id },
+      });
+      expect(full.pageComponents.map((c) => c.id)).toEqual([
+        testPageComponentId,
+      ]);
+      expect(full.pageComponentIds).toEqual([testPageComponentId]);
     });
-    expect(full.pageComponents.map((c) => c.id)).toEqual([testPageComponentId]);
-    expect(full.pageComponentIds).toEqual([testPageComponentId]);
-
-    createdMaintenanceIds.push(record.id);
   });
 });
 
 describe("notifyMaintenance", () => {
   test("throws when maintenance belongs to another workspace", async () => {
-    const record = await createMaintenance({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-notify-cross-ws`,
-        message: "m",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const record = await createMaintenance({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-notify-cross-ws`,
+          message: "m",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        notifyMaintenance({
+          ctx: { ...freeCtx, db: tx },
+          input: { maintenanceId: record.id },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
-
-    await expect(
-      notifyMaintenance({
-        ctx: freeCtx,
-        input: { maintenanceId: record.id },
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-
-    createdMaintenanceIds.push(record.id);
   });
 });
 
 describe("slack actor path", () => {
   test("createMaintenance succeeds with a slack actor", async () => {
-    const ctx = makeSlackCtx(teamCtx.workspace, {
-      teamId: "T123",
-      slackUserId: "U123",
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeSlackCtx(teamCtx.workspace, {
+          teamId: "T123",
+          slackUserId: "U123",
+        }),
+        db: tx,
+      };
+      const record = await createMaintenance({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-slack`,
+          message: "scheduled via slack",
+          ...futureRange(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "maintenance.create",
+        entityType: "maintenance",
+        entityId: record.id,
+        actorType: "slack",
+        db: tx,
+      });
     });
-    const record = await createMaintenance({
-      ctx,
-      input: {
-        title: `${TEST_PREFIX}-slack`,
-        message: "scheduled via slack",
-        ...futureRange(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "maintenance.create",
-      entityType: "maintenance",
-      entityId: record.id,
-      actorType: "slack",
-    });
-    createdMaintenanceIds.push(record.id);
   });
 });

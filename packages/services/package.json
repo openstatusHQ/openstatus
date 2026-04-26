@@ -60,6 +60,26 @@
     "./audit": {
       "import": "./src/audit/index.ts",
       "types": "./src/audit/index.ts"
+    },
+    "./member": {
+      "import": "./src/member/index.ts",
+      "types": "./src/member/index.ts"
+    },
+    "./monitor-tag": {
+      "import": "./src/monitor-tag/index.ts",
+      "types": "./src/monitor-tag/index.ts"
+    },
+    "./integration": {
+      "import": "./src/integration/index.ts",
+      "types": "./src/integration/index.ts"
+    },
+    "./private-location": {
+      "import": "./src/private-location/index.ts",
+      "types": "./src/private-location/index.ts"
+    },
+    "./page-subscriber": {
+      "import": "./src/page-subscriber/index.ts",
+      "types": "./src/page-subscriber/index.ts"
     }
   },
   "scripts": {
@@ -73,6 +93,7 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
+    "@openstatus/utils": "workspace:*",
     "zod": "4.1.13"
   },
   "devDependencies": {

@@ -76,10 +76,12 @@ export function toTRPCError(err: unknown): never {
         });
     }
   }
-  const message = err instanceof Error ? err.message : "Unknown error";
+  // Unknown errors: never surface raw `err.message` to clients — it can
+  // leak DB strings, stack-trace fragments, third-party SDK internals.
+  // Keep the original on `cause` for Sentry/log redaction.
   throw new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
-    message,
+    message: "Internal server error",
     cause: err,
   });
 }

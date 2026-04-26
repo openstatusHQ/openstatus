@@ -32,12 +32,14 @@ import {
   ConflictError,
   LimitExceededError,
   NotFoundError,
+  ServiceError,
   withTransaction,
 } from "@openstatus/services";
 import {
   createPage,
   deletePage,
   getPage,
+  getPageBySlug,
   listPages,
   updatePageAppearance,
   updatePageCustomDomain,
@@ -46,18 +48,17 @@ import {
   updatePageLocales,
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
+import { deletePageComponent } from "@openstatus/services/page-component";
 import {
-  createSubscription as createSubscriptionService,
-  detectWebhookFlavor,
-  getChannel,
-  upsertEmailSubscription,
-} from "@openstatus/subscriptions";
+  createPageSubscriber,
+  upsertSelfSignupSubscriber,
+} from "@openstatus/services/page-subscriber";
+import { getChannel } from "@openstatus/subscriptions";
 import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
-  type DBPageSubscriber,
   dbComponentToProto,
   dbGroupToProto,
   dbPageToProto,
@@ -135,15 +136,6 @@ async function getPageById(id: number, workspaceId: number) {
     .from(page)
     .where(and(eq(page.id, id), eq(page.workspaceId, workspaceId)))
     .get();
-}
-
-/**
- * Helper to get a status page by slug.
- * Normalizes the slug to lowercase before querying.
- */
-async function getPageBySlug(slug: string) {
-  const normalizedSlug = slug.toLowerCase();
-  return db.select().from(page).where(eq(page.slug, normalizedSlug)).get();
 }
 
 /**
@@ -306,7 +298,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // Slug uniqueness — preserved at handler to keep the granular
       // `slugAlreadyExistsError(slug)` (AlreadyExists + metadata) rather
       // than the service's generic ConflictError → InvalidArgument mapping.
-      const existingPage = await getPageBySlug(req.slug);
+      const existingPage = await getPageBySlug({ input: { slug: req.slug } });
       if (existingPage) {
         throw slugAlreadyExistsError(req.slug);
       }
@@ -533,7 +525,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // Slug uniqueness — pre-check at handler to preserve the granular
       // `slugAlreadyExistsError(slug)` (AlreadyExists + metadata).
       if (req.slug && req.slug !== existing.slug) {
-        const slugRow = await getPageBySlug(req.slug);
+        const slugRow = await getPageBySlug({ input: { slug: req.slug } });
         if (slugRow && slugRow.id !== existing.id) {
           throw slugAlreadyExistsError(req.slug);
         }
@@ -891,20 +883,21 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async removeComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    const sCtx = toServiceCtx(rpcCtx);
 
     const id = req.id?.trim();
     if (!id) {
       throw pageComponentNotFoundError(req.id);
     }
 
-    const component = await getComponentById(Number(id), workspaceId);
-    if (!component) {
-      throw pageComponentNotFoundError(id);
+    try {
+      await deletePageComponent({ ctx: sCtx, input: { id: Number(id) } });
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw pageComponentNotFoundError(id);
+      }
+      toConnectError(err);
     }
-
-    // Delete the component
-    await db.delete(pageComponent).where(eq(pageComponent.id, component.id));
 
     return { success: true };
   },
@@ -1085,9 +1078,11 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(req.pageId);
     }
 
-    const result = await upsertEmailSubscription({
-      email: req.email,
-      pageId: pageData.id,
+    const result = await upsertSelfSignupSubscriber({
+      input: {
+        email: req.email,
+        pageId: pageData.id,
+      },
     });
 
     const row = await db
@@ -1135,82 +1130,65 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async createPageSubscription(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    const sCtx = toServiceCtx(rpcCtx);
 
-    if (!rpcCtx.workspace.limits["status-subscribers"]) {
-      throw new ConnectError(
-        "Upgrade to use status subscribers",
-        Code.PermissionDenied,
-      );
-    }
-
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
+    const pageId = Number(req.pageId);
     const componentIds = (req.componentIds ?? []).map((id) => Number(id));
     const name = req.name ?? null;
 
-    let subscriberRow: DBPageSubscriber | undefined;
+    if (
+      req.channel.case !== "emailChannel" &&
+      req.channel.case !== "webhookChannel"
+    ) {
+      throw new ConnectError(
+        "channel oneof must be set to email_channel or webhook_channel",
+        Code.InvalidArgument,
+      );
+    }
+
+    let result: Awaited<ReturnType<typeof createPageSubscriber>>;
     try {
       if (req.channel.case === "emailChannel") {
-        const created = await createSubscriptionService({
-          pageId: pageData.id,
-          channelType: "email",
-          email: req.channel.value.email,
-          name,
-          componentIds,
+        result = await createPageSubscriber({
+          ctx: sCtx,
+          input: {
+            pageId,
+            channelType: "email",
+            email: req.channel.value.email,
+            name,
+            componentIds,
+          },
         });
-        subscriberRow = await db
-          .select()
-          .from(pageSubscriber)
-          .where(eq(pageSubscriber.id, created.id))
-          .get();
-      } else if (req.channel.case === "webhookChannel") {
-        const webhookUrl = req.channel.value.webhookUrl;
-        if (detectWebhookFlavor(webhookUrl) === "generic") {
-          throw new ConnectError(
-            "Only Slack and Discord webhook URLs are supported.",
-            Code.InvalidArgument,
-          );
-        }
-        const headers = protoHeadersToPlain(req.channel.value.headers);
-        const created = await createSubscriptionService({
-          pageId: pageData.id,
-          channelType: "webhook",
-          webhookUrl,
-          name,
-          channelConfig: headers.length > 0 ? { headers } : undefined,
-          componentIds,
-        });
-        subscriberRow = await db
-          .select()
-          .from(pageSubscriber)
-          .where(eq(pageSubscriber.id, created.id))
-          .get();
       } else {
-        throw new ConnectError(
-          "channel oneof must be set to email_channel or webhook_channel",
-          Code.InvalidArgument,
-        );
+        result = await createPageSubscriber({
+          ctx: sCtx,
+          input: {
+            pageId,
+            channelType: "webhook",
+            webhookUrl: req.channel.value.webhookUrl,
+            name,
+            headers: protoHeadersToPlain(req.channel.value.headers),
+            componentIds,
+          },
+        });
       }
     } catch (error) {
       if (error instanceof ConnectError) throw error;
-      // Don't echo raw service-layer error messages to RPC clients; they may
-      // contain details that shouldn't be exposed. Log server-side for debugging.
+      // Service-layer ServiceErrors map cleanly via toConnectError
+      // (NotFound → NotFound, Conflict/Validation → InvalidArgument,
+      // Forbidden → PermissionDenied, etc). Anything else surfaces as
+      // Internal — don't echo raw messages to RPC clients.
+      if (error instanceof ServiceError) {
+        toConnectError(error);
+      }
       console.error("createPageSubscription failed:", error);
-      throw subscriberCreateFailedError();
-    }
-
-    if (!subscriberRow) {
       throw subscriberCreateFailedError();
     }
 
     return {
       subscriber: dbSubscriberToProto({
-        ...subscriberRow,
-        componentIds,
+        ...result.row,
+        componentIds: result.componentIds,
       }),
     };
   },
@@ -1342,7 +1320,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       pageData = await getPageById(Number(identifierValue), workspaceId);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
-      pageData = await getPageBySlug(identifierValue);
+      pageData = await getPageBySlug({ input: { slug: identifierValue } });
       isPublicAccess = true;
     } else {
       throw statusPageIdRequiredError();
@@ -1519,7 +1497,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       pageData = await getPageById(Number(identifierValue), workspaceId);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
-      pageData = await getPageBySlug(identifierValue);
+      pageData = await getPageBySlug({ input: { slug: identifierValue } });
       isPublicAccess = true;
     } else {
       throw statusPageIdRequiredError();

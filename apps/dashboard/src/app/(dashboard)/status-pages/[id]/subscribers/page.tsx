@@ -154,6 +154,7 @@ export default function Page() {
           <BillingOverlayContainer>
             <DataTable
               columns={columns}
+              toolbarComponent={SubscribersDataTableToolbar}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>

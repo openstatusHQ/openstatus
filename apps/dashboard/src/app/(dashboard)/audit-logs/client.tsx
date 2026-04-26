@@ -21,6 +21,7 @@ import {
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/audit-logs-workspace/columns";
 import { DataTableRowDetails } from "@/components/data-table/audit-logs-workspace/data-table-row-details";
+import { AuditLogsDataTableToolbar } from "@/components/data-table/audit-logs-workspace/data-table-toolbar";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
@@ -49,7 +50,7 @@ const EXAMPLES = [
     createdAt: new Date("2026-04-24T10:00:00Z"),
     user: {
       id: 42,
-      name: "Max Kaske",
+      name: "Maximilian Kaske",
       email: "m@openstatus.dev",
       photoUrl: null,
     },
@@ -70,31 +71,26 @@ const EXAMPLES = [
     createdAt: new Date("2026-04-23T16:30:00Z"),
     user: {
       id: 42,
-      name: "Max Kaske",
-      email: "m@openstatus.dev",
+      name: "Thibault Le Ouay Ducasse",
+      email: "t@openstatus.dev",
       photoUrl: null,
     },
   },
   {
     id: 3,
     workspaceId: 1,
-    actorType: "apiKey",
+    actorType: "slack",
     actorId: "k_abc123",
     actorUserId: null,
-    action: "notification.delete",
-    entityType: "notification",
+    action: "status_report.create",
+    entityType: "status_report",
     entityId: "12",
     before: null,
     after: null,
     metadata: null,
     changedFields: null,
     createdAt: new Date("2026-04-22T09:15:00Z"),
-    user: {
-      id: 42,
-      name: "Thibault Le Ouay Ducasse",
-      email: "t@openstatus.dev",
-      photoUrl: null,
-    },
+    user: null,
   },
 ] satisfies AuditLog[];
 
@@ -123,6 +119,11 @@ export function Client() {
             <DataTable
               columns={columns}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
+              defaultColumnVisibility={{
+                actorType: false,
+                entityType: false,
+              }}
+              toolbarComponent={AuditLogsDataTableToolbar}
               rowComponent={({ row }) => (
                 <DataTableRowDetails row={row.original} />
               )}
@@ -154,6 +155,11 @@ export function Client() {
           <DataTable
             columns={columns}
             data={auditLogs.items}
+            defaultColumnVisibility={{
+              actorType: false,
+              entityType: false,
+            }}
+            toolbarComponent={AuditLogsDataTableToolbar}
             onRowClick={(row) =>
               row.getCanExpand() ? row.toggleExpanded() : undefined
             }

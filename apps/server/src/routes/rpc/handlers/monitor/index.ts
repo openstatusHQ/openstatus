@@ -3,13 +3,7 @@ import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { tb } from "@/libs/clients";
 import type { ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
-import {
-  monitor,
-  monitorRun,
-  monitorTagsToMonitors,
-  notificationsToMonitors,
-  pageComponent,
-} from "@openstatus/db/src/schema";
+import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
@@ -23,7 +17,10 @@ import type {
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
+import { NotFoundError } from "@openstatus/services";
+import { deleteMonitor } from "@openstatus/services/monitor";
 
+import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
   MONITOR_DEFAULTS,
@@ -561,33 +558,18 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async deleteMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-
-    if (!dbMon) {
-      throw monitorNotFoundError(req.id);
+    try {
+      await deleteMonitor({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: Number(req.id) },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      toConnectError(err);
     }
-
-    // Soft delete and clean up related rows atomically
-    await db.transaction(async (tx) => {
-      await tx
-        .update(monitor)
-        .set({
-          active: false,
-          deletedAt: new Date(),
-        })
-        .where(eq(monitor.id, dbMon.id));
-      await tx
-        .delete(monitorTagsToMonitors)
-        .where(eq(monitorTagsToMonitors.monitorId, dbMon.id));
-      await tx
-        .delete(notificationsToMonitors)
-        .where(eq(notificationsToMonitors.monitorId, dbMon.id));
-      await tx
-        .delete(pageComponent)
-        .where(eq(pageComponent.monitorId, dbMon.id));
-    });
 
     return { success: true };
   },

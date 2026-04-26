@@ -22,22 +22,9 @@ export {
   dispatchPageUpdate,
 } from "./dispatcher";
 
-// Export service functions
-export {
-  createSubscription,
-  upsertEmailSubscription,
-  hasPendingUnexpiredSubscription,
-  verifySubscription,
-  getSubscriptionByToken,
-  sendTestWebhook,
-  updateChannel,
-  updateSubscriptionScope,
-  unsubscribe,
-} from "./service";
-export type {
-  CreateSubscriptionInput,
-  UpdateChannelInput,
-} from "./service";
+// Subscription CRUD lives in `@openstatus/services/page-subscriber` —
+// this package now only ships the channel + dispatcher primitives that
+// the service layer composes on top of.
 
 // Export types
 export type { Subscription, PageUpdate, SubscriptionChannel } from "./types";

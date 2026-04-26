@@ -21,7 +21,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
-import type { ServiceContext } from "../context";
+import { type DB, type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
 import { getPageInWorkspace } from "./internal";
@@ -45,7 +45,7 @@ export async function listPages(args: {
 }): Promise<PageListItem[]> {
   const { ctx } = args;
   const input = ListPagesInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const pageRows = await db
     .select()
@@ -89,7 +89,7 @@ export async function getPage(args: {
 }): Promise<PageWithRelations> {
   const { ctx } = args;
   const input = GetPageInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const record = await getPageInWorkspace({
     tx: db,
@@ -159,7 +159,7 @@ export async function getPageCustomDomain(args: {
 }): Promise<string> {
   const { ctx } = args;
   const input = GetPageInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const row = await db
     .select({ customDomain: page.customDomain })
@@ -171,6 +171,23 @@ export async function getPageCustomDomain(args: {
   return row.customDomain;
 }
 
+/**
+ * Cross-workspace lookup of a page by slug. Returns the raw row (not parsed
+ * via `selectPageSchema`) because callers in the public status-page render
+ * path expect the DB shape (`authEmailDomains` / `allowedIpRanges` as
+ * comma-joined strings rather than arrays). Workspace scoping is the
+ * caller's responsibility — slugs are globally unique, so the lookup
+ * intentionally ignores `ctx.workspace`.
+ */
+export async function getPageBySlug(
+  args: { input: { slug: string } },
+  opts: { db?: DB } = {},
+): Promise<typeof page.$inferSelect | undefined> {
+  const slug = args.input.slug.toLowerCase();
+  const db = opts.db ?? defaultDb;
+  return db.select().from(page).where(eq(page.slug, slug)).get();
+}
+
 /** Returns `true` when the slug is free (not reserved, not taken). */
 export async function getSlugAvailable(args: {
   ctx: ServiceContext;
@@ -178,7 +195,7 @@ export async function getSlugAvailable(args: {
 }): Promise<boolean> {
   const { ctx } = args;
   const input = GetSlugAvailableInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   if (subdomainSafeList.includes(input.slug)) return false;
   const rows = await db

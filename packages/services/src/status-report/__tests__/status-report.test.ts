@@ -1,13 +1,12 @@
 import {
   afterAll,
-  afterEach,
   beforeAll,
   beforeEach,
   describe,
   expect,
   test,
 } from "bun:test";
-import { db, eq, inArray } from "@openstatus/db";
+import { db, eq } from "@openstatus/db";
 import {
   page,
   pageComponent,
@@ -22,11 +21,11 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
-  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeSlackCtx,
   makeUserCtx,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
@@ -61,16 +60,6 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let testPageId: number;
 let testPageComponentId: number;
-
-/**
- * Tests push created statusReport ids here instead of issuing an inline
- * `db.delete()` at the end of their body. `afterEach` drains the array,
- * so cleanup runs even when an assertion throws midway through a test —
- * otherwise a failing assertion leaves orphans that flake subsequent
- * runs. Individual tests can still push additional ids mid-test if they
- * create multiple reports.
- */
-const createdReportIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -119,449 +108,474 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(async () => {
-  await clearAuditLog(teamCtx.workspace.id);
-  await clearAuditLog(freeCtx.workspace.id);
+beforeEach(() => {
   subscriptionSpies?.dispatchStatusReportUpdate.mockClear();
-});
-
-afterEach(async () => {
-  if (createdReportIds.length > 0) {
-    await db
-      .delete(statusReport)
-      .where(inArray(statusReport.id, createdReportIds))
-      .catch(() => undefined);
-    createdReportIds.length = 0;
-  }
 });
 
 describe("createStatusReport", () => {
   test("creates report + initial update + associations and emits audit", async () => {
-    const { statusReport: report, initialUpdate } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-create-happy`,
-        status: "investigating",
-        message: "starting investigation",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-create-happy`,
+          status: "investigating",
+          message: "starting investigation",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      expect(report.id).toBeGreaterThan(0);
+      expect(report.title).toBe(`${TEST_PREFIX}-create-happy`);
+      expect(report.pageId).toBe(testPageId);
+      expect(initialUpdate.statusReportId).toBe(report.id);
+      expect(initialUpdate.message).toBe("starting investigation");
+
+      const assoc = await tx
+        .select()
+        .from(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, report.id))
+        .all();
+      expect(assoc.map((a) => a.pageComponentId)).toEqual([
+        testPageComponentId,
+      ]);
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "status_report.create",
+        entityType: "status_report",
+        entityId: report.id,
+        db: tx,
+      });
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "status_report_update.create",
+        entityType: "status_report_update",
+        entityId: initialUpdate.id,
+        db: tx,
+      });
     });
-
-    expect(report.id).toBeGreaterThan(0);
-    expect(report.title).toBe(`${TEST_PREFIX}-create-happy`);
-    expect(report.pageId).toBe(testPageId);
-    expect(initialUpdate.statusReportId).toBe(report.id);
-    expect(initialUpdate.message).toBe("starting investigation");
-
-    const assoc = await db
-      .select()
-      .from(statusReportsToPageComponents)
-      .where(eq(statusReportsToPageComponents.statusReportId, report.id))
-      .all();
-    expect(assoc.map((a) => a.pageComponentId)).toEqual([testPageComponentId]);
-
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "status_report.create",
-      entityType: "status_report",
-      entityId: report.id,
-    });
-
-    createdReportIds.push(report.id);
   });
 
   test("throws NotFoundError when the page is not in the workspace", async () => {
-    await expect(
-      createStatusReport({
-        ctx: freeCtx,
-        input: {
-          title: `${TEST_PREFIX}-create-cross-ws`,
-          status: "investigating",
-          message: "should fail",
-          date: new Date(),
-          pageId: testPageId, // page belongs to team workspace
-          pageComponentIds: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createStatusReport({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            title: `${TEST_PREFIX}-create-cross-ws`,
+            status: "investigating",
+            message: "should fail",
+            date: new Date(),
+            pageId: testPageId, // page belongs to team workspace
+            pageComponentIds: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 });
 
 describe("addStatusReportUpdate", () => {
   test("appends an update and bumps parent status", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-add-update`,
-        status: "investigating",
-        message: "initial",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
-
-    const { statusReport: bumped, statusReportUpdate: newUpdate } =
-      await addStatusReportUpdate({
-        ctx: teamCtx,
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
         input: {
-          statusReportId: report.id,
-          status: "monitoring",
-          message: "moved to monitoring",
+          title: `${TEST_PREFIX}-add-update`,
+          status: "investigating",
+          message: "initial",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
         },
       });
 
-    expect(bumped.status).toBe("monitoring");
-    expect(newUpdate.status).toBe("monitoring");
-    expect(newUpdate.statusReportId).toBe(report.id);
+      const { statusReport: bumped, statusReportUpdate: newUpdate } =
+        await addStatusReportUpdate({
+          ctx,
+          input: {
+            statusReportId: report.id,
+            status: "monitoring",
+            message: "moved to monitoring",
+          },
+        });
 
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "status_report_update.create",
-      entityType: "status_report_update",
-      entityId: newUpdate.id,
+      expect(bumped.status).toBe("monitoring");
+      expect(newUpdate.status).toBe("monitoring");
+      expect(newUpdate.statusReportId).toBe(report.id);
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "status_report_update.create",
+        entityType: "status_report_update",
+        entityId: newUpdate.id,
+        db: tx,
+      });
     });
-
-    createdReportIds.push(report.id);
   });
 
   test("throws NotFoundError for a status report in another workspace", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-cross-ws-add`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
-
-    await expect(
-      addStatusReportUpdate({
-        ctx: freeCtx,
+    await withTestTransaction(async (tx) => {
+      const { statusReport: report } = await createStatusReport({
+        ctx: { ...teamCtx, db: tx },
         input: {
-          statusReportId: report.id,
-          status: "monitoring",
-          message: "cross-ws",
+          title: `${TEST_PREFIX}-cross-ws-add`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
         },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+      });
 
-    createdReportIds.push(report.id);
+      await expect(
+        addStatusReportUpdate({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            statusReportId: report.id,
+            status: "monitoring",
+            message: "cross-ws",
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 });
 
 describe("resolveStatusReport", () => {
   test("appends a resolved update and flips parent status", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-resolve`,
-        status: "investigating",
-        message: "oops",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-resolve`,
+          status: "investigating",
+          message: "oops",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
 
-    const { statusReport: resolved } = await resolveStatusReport({
-      ctx: teamCtx,
-      input: { statusReportId: report.id, message: "all clear" },
+      const { statusReport: resolved } = await resolveStatusReport({
+        ctx,
+        input: { statusReportId: report.id, message: "all clear" },
+      });
+      expect(resolved.status).toBe("resolved");
     });
-    expect(resolved.status).toBe("resolved");
-    createdReportIds.push(report.id);
   });
 });
 
 describe("updateStatusReport", () => {
   test("updates title and replaces associations", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-update`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-update`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      const updated = await updateStatusReport({
+        ctx,
+        input: {
+          id: report.id,
+          title: `${TEST_PREFIX}-update-renamed`,
+          pageComponentIds: [],
+        },
+      });
+      expect(updated.title).toBe(`${TEST_PREFIX}-update-renamed`);
+
+      const assoc = await tx
+        .select()
+        .from(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, report.id))
+        .all();
+      expect(assoc).toHaveLength(0);
     });
-
-    const updated = await updateStatusReport({
-      ctx: teamCtx,
-      input: {
-        id: report.id,
-        title: `${TEST_PREFIX}-update-renamed`,
-        pageComponentIds: [],
-      },
-    });
-    expect(updated.title).toBe(`${TEST_PREFIX}-update-renamed`);
-
-    const assoc = await db
-      .select()
-      .from(statusReportsToPageComponents)
-      .where(eq(statusReportsToPageComponents.statusReportId, report.id))
-      .all();
-    expect(assoc).toHaveLength(0);
-
-    createdReportIds.push(report.id);
   });
 });
 
 describe("deleteStatusReport", () => {
   test("cascades updates + associations", async () => {
-    const { statusReport: report, initialUpdate } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-delete`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-delete`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      await deleteStatusReport({ ctx, input: { id: report.id } });
+
+      const remainingReport = await tx
+        .select()
+        .from(statusReport)
+        .where(eq(statusReport.id, report.id))
+        .all();
+      const remainingUpdate = await tx
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.id, initialUpdate.id))
+        .all();
+      const remainingAssoc = await tx
+        .select()
+        .from(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, report.id))
+        .all();
+      expect(remainingReport).toHaveLength(0);
+      expect(remainingUpdate).toHaveLength(0);
+      expect(remainingAssoc).toHaveLength(0);
     });
-
-    await deleteStatusReport({ ctx: teamCtx, input: { id: report.id } });
-
-    const remainingReport = await db
-      .select()
-      .from(statusReport)
-      .where(eq(statusReport.id, report.id))
-      .all();
-    const remainingUpdate = await db
-      .select()
-      .from(statusReportUpdate)
-      .where(eq(statusReportUpdate.id, initialUpdate.id))
-      .all();
-    const remainingAssoc = await db
-      .select()
-      .from(statusReportsToPageComponents)
-      .where(eq(statusReportsToPageComponents.statusReportId, report.id))
-      .all();
-    expect(remainingReport).toHaveLength(0);
-    expect(remainingUpdate).toHaveLength(0);
-    expect(remainingAssoc).toHaveLength(0);
   });
 
   test("throws NotFoundError for cross-workspace delete", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-cross-ws-delete`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const { statusReport: report } = await createStatusReport({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-cross-ws-delete`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        deleteStatusReport({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: report.id },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
-
-    await expect(
-      deleteStatusReport({ ctx: freeCtx, input: { id: report.id } }),
-    ).rejects.toBeInstanceOf(NotFoundError);
-
-    createdReportIds.push(report.id);
   });
 });
 
 describe("deleteStatusReportUpdate", () => {
   test("removes a single update and emits audit", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-delete-update`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
-    const { statusReportUpdate: newUpdate } = await addStatusReportUpdate({
-      ctx: teamCtx,
-      input: {
-        statusReportId: report.id,
-        status: "monitoring",
-        message: "to be deleted",
-      },
-    });
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-delete-update`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      const { statusReportUpdate: newUpdate } = await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "monitoring",
+          message: "to be deleted",
+        },
+      });
 
-    await deleteStatusReportUpdate({
-      ctx: teamCtx,
-      input: { id: newUpdate.id },
+      await deleteStatusReportUpdate({
+        ctx,
+        input: { id: newUpdate.id },
+      });
+
+      const remaining = await tx
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.id, newUpdate.id))
+        .all();
+      expect(remaining).toHaveLength(0);
     });
-
-    const remaining = await db
-      .select()
-      .from(statusReportUpdate)
-      .where(eq(statusReportUpdate.id, newUpdate.id))
-      .all();
-    expect(remaining).toHaveLength(0);
-
-    createdReportIds.push(report.id);
   });
 });
 
 describe("updateStatusReportUpdate", () => {
   test("edits message + date; returns updated row", async () => {
-    const { statusReport: report, initialUpdate } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-edit-update`,
-        status: "investigating",
-        message: "before",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-edit-update`,
+          status: "investigating",
+          message: "before",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
 
-    const edited = await updateStatusReportUpdate({
-      ctx: teamCtx,
-      input: { id: initialUpdate.id, message: "after" },
+      const edited = await updateStatusReportUpdate({
+        ctx,
+        input: { id: initialUpdate.id, message: "after" },
+      });
+      expect(edited.message).toBe("after");
     });
-    expect(edited.message).toBe("after");
-
-    createdReportIds.push(report.id);
   });
 
   test("throws ForbiddenError for cross-workspace edit", async () => {
-    const { statusReport: report, initialUpdate } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-cross-ws-edit`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const { initialUpdate } = await createStatusReport({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-cross-ws-edit`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        updateStatusReportUpdate({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: initialUpdate.id, message: "blocked" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
-
-    await expect(
-      updateStatusReportUpdate({
-        ctx: freeCtx,
-        input: { id: initialUpdate.id, message: "blocked" },
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-
-    createdReportIds.push(report.id);
   });
 });
 
 describe("listStatusReports / getStatusReport", () => {
   test("respects workspace isolation", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-isolation`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx: teamCtxTx,
+        input: {
+          title: `${TEST_PREFIX}-isolation`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        getStatusReport({ ctx: freeCtxTx, input: { id: report.id } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+
+      const { items: freeItems } = await listStatusReports({
+        ctx: freeCtxTx,
+        input: {
+          limit: 100,
+          offset: 0,
+          statuses: [],
+          order: "desc",
+          pageId: testPageId,
+        },
+      });
+      expect(freeItems.find((r) => r.id === report.id)).toBeUndefined();
     });
-
-    await expect(
-      getStatusReport({ ctx: freeCtx, input: { id: report.id } }),
-    ).rejects.toBeInstanceOf(NotFoundError);
-
-    const { items: freeItems } = await listStatusReports({
-      ctx: freeCtx,
-      input: {
-        limit: 100,
-        offset: 0,
-        statuses: [],
-        order: "desc",
-        pageId: testPageId,
-      },
-    });
-    expect(freeItems.find((r) => r.id === report.id)).toBeUndefined();
-
-    createdReportIds.push(report.id);
   });
 
   test("returns totalSize and enriched relations", async () => {
-    const { statusReport: report } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-list-enrich`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [testPageComponentId],
-      },
-    });
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-list-enrich`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
 
-    const full = await getStatusReport({
-      ctx: teamCtx,
-      input: { id: report.id },
+      const full = await getStatusReport({
+        ctx,
+        input: { id: report.id },
+      });
+      expect(full.updates).toHaveLength(1);
+      expect(full.pageComponents.map((c) => c.id)).toEqual([
+        testPageComponentId,
+      ]);
+      expect(full.page?.id).toBe(testPageId);
     });
-    expect(full.updates).toHaveLength(1);
-    expect(full.pageComponents.map((c) => c.id)).toEqual([testPageComponentId]);
-    expect(full.page?.id).toBe(testPageId);
-
-    createdReportIds.push(report.id);
   });
 });
 
 describe("notifyStatusReport", () => {
   test("throws when update belongs to another workspace", async () => {
-    const { statusReport: report, initialUpdate } = await createStatusReport({
-      ctx: teamCtx,
-      input: {
-        title: `${TEST_PREFIX}-notify-cross-ws`,
-        status: "investigating",
-        message: "m",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const { initialUpdate } = await createStatusReport({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          title: `${TEST_PREFIX}-notify-cross-ws`,
+          status: "investigating",
+          message: "m",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+
+      await expect(
+        notifyStatusReport({
+          ctx: { ...freeCtx, db: tx },
+          input: { statusReportUpdateId: initialUpdate.id },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
-
-    await expect(
-      notifyStatusReport({
-        ctx: freeCtx,
-        input: { statusReportUpdateId: initialUpdate.id },
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-
-    createdReportIds.push(report.id);
   });
 });
 
 describe("slack actor path", () => {
   test("createStatusReport succeeds with a slack actor", async () => {
-    const ctx = makeSlackCtx(teamCtx.workspace, {
-      teamId: "T123",
-      slackUserId: "U123",
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeSlackCtx(teamCtx.workspace, {
+          teamId: "T123",
+          slackUserId: "U123",
+        }),
+        db: tx,
+      };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-slack`,
+          status: "investigating",
+          message: "via slack",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [],
+        },
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "status_report.create",
+        entityType: "status_report",
+        entityId: report.id,
+        actorType: "slack",
+        db: tx,
+      });
     });
-    const { statusReport: report } = await createStatusReport({
-      ctx,
-      input: {
-        title: `${TEST_PREFIX}-slack`,
-        status: "investigating",
-        message: "via slack",
-        date: new Date(),
-        pageId: testPageId,
-        pageComponentIds: [],
-      },
-    });
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "status_report.create",
-      entityType: "status_report",
-      entityId: report.id,
-      actorType: "slack",
-    });
-    createdReportIds.push(report.id);
   });
 });

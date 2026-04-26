@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { db, eq } from "@openstatus/db";
-import { monitor, pageComponent } from "@openstatus/db/src/schema";
+import { and, db, eq } from "@openstatus/db";
+import {
+  auditLog,
+  monitor,
+  pageComponent,
+  privateLocation,
+  privateLocationToMonitors,
+} from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 
 import { app } from "@/index";
@@ -466,6 +472,111 @@ describe("MonitorService.DeleteMonitor", () => {
       expect(stillExists?.deletedAt).toBeNull();
     } finally {
       await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
+    }
+  });
+
+  test("clears privateLocationToMonitors join row", async () => {
+    // Insert a private location and join it to a fresh monitor. The pre-
+    // service implementation only stripped tag/notification/component
+    // joins, leaving this row pointing at a tombstoned monitor — the
+    // service-routed delete must clear it as well.
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-delete-with-private-location`,
+        url: "https://pl.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    const pl = await db
+      .insert(privateLocation)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl`,
+        token: `${TEST_PREFIX}-pl-token-${mon.id}`,
+      })
+      .returning()
+      .get();
+
+    await db
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: pl.id, monitorId: mon.id });
+
+    try {
+      const res = await connectRequest(
+        "DeleteMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+
+      const join = await db
+        .select()
+        .from(privateLocationToMonitors)
+        .where(eq(privateLocationToMonitors.monitorId, mon.id))
+        .get();
+      expect(join).toBeUndefined();
+    } finally {
+      await db
+        .delete(privateLocationToMonitors)
+        .where(eq(privateLocationToMonitors.privateLocationId, pl.id));
+      await db.delete(privateLocation).where(eq(privateLocation.id, pl.id));
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("emits a monitor.delete audit row", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-delete-audit`,
+        url: "https://audit.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "DeleteMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+
+      const row = await db
+        .select()
+        .from(auditLog)
+        .where(
+          and(
+            eq(auditLog.workspaceId, 1),
+            eq(auditLog.entityType, "monitor"),
+            eq(auditLog.entityId, String(mon.id)),
+            eq(auditLog.action, "monitor.delete"),
+          ),
+        )
+        .get();
+      expect(row).toBeDefined();
+    } finally {
+      await db
+        .delete(auditLog)
+        .where(
+          and(
+            eq(auditLog.entityType, "monitor"),
+            eq(auditLog.entityId, String(mon.id)),
+          ),
+        );
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
     }
   });
 

@@ -1,8 +1,15 @@
 import crypto from "node:crypto";
 import { env } from "@/env";
-import { and, db, eq } from "@openstatus/db";
-import { integration } from "@openstatus/db/src/schema";
+import { getLogger } from "@logtape/logtape";
+import { db, eq } from "@openstatus/db";
+import {
+  selectWorkspaceSchema,
+  workspace as workspaceTable,
+} from "@openstatus/db/src/schema";
+import { installSlackAgent } from "@openstatus/services/integration";
 import type { Context } from "hono";
+
+const logger = getLogger(["api-server", "slack", "oauth"]);
 
 const SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize";
 const SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access";
@@ -22,6 +29,9 @@ const BOT_SCOPES = [
 
 interface OAuthState {
   workspaceId: number;
+  // The openstatus user who initiated the install. Optional so in-flight
+  // installs that started before this field was added still parse.
+  userId?: number;
   ts: number;
 }
 
@@ -55,6 +65,7 @@ export async function handleSlackInstall(c: Context) {
 
   const state = encodeState({
     workspaceId: installPayload.workspaceId,
+    userId: installPayload.userId,
     ts: Date.now(),
   });
 
@@ -103,52 +114,63 @@ export async function handleSlackOAuthCallback(c: Context) {
 
   const tokenData = (await tokenRes.json()) as SlackOAuthResponse;
   if (!tokenData.ok) {
-    console.error("[slack oauth] token exchange failed:", tokenData.error);
+    logger.error("token exchange failed", { error: tokenData.error });
     return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
   }
 
-  const credential = {
-    botToken: tokenData.access_token,
-    botUserId: tokenData.bot_user_id,
-  };
-
-  const data = {
-    teamId: tokenData.team.id,
-    teamName: tokenData.team.name,
-    appId: tokenData.app_id,
-    scopes: tokenData.scope,
-    installedBy: tokenData.authed_user.id,
-  };
-
-  const existing = await db
+  const workspaceRow = await db
     .select()
-    .from(integration)
-    .where(
-      and(
-        eq(integration.name, "slack-agent"),
-        eq(integration.workspaceId, state.workspaceId),
-      ),
-    )
+    .from(workspaceTable)
+    .where(eq(workspaceTable.id, state.workspaceId))
     .get();
-
-  if (existing) {
-    await db
-      .update(integration)
-      .set({
-        externalId: tokenData.team.id,
-        credential,
-        data,
-        updatedAt: new Date(),
-      })
-      .where(eq(integration.id, existing.id));
-  } else {
-    await db.insert(integration).values({
-      name: "slack-agent",
+  if (!workspaceRow) {
+    logger.error("workspace not found at callback", {
       workspaceId: state.workspaceId,
-      externalId: tokenData.team.id,
-      credential,
-      data,
     });
+    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+  }
+
+  const workspaceParsed = selectWorkspaceSchema.safeParse(workspaceRow);
+  if (!workspaceParsed.success) {
+    logger.error("workspace row failed schema parse", {
+      workspaceId: state.workspaceId,
+      issues: workspaceParsed.error.issues,
+    });
+    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+  }
+
+  try {
+    await installSlackAgent({
+      ctx: {
+        workspace: workspaceParsed.data,
+        actor: {
+          type: "slack",
+          teamId: tokenData.team.id,
+          slackUserId: tokenData.authed_user.id,
+          userId: state.userId,
+        },
+      },
+      input: {
+        externalId: tokenData.team.id,
+        credential: {
+          botToken: tokenData.access_token,
+          botUserId: tokenData.bot_user_id,
+        },
+        data: {
+          teamId: tokenData.team.id,
+          teamName: tokenData.team.name,
+          appId: tokenData.app_id,
+          scopes: tokenData.scope,
+          installedBy: tokenData.authed_user.id,
+        },
+      },
+    });
+  } catch (err) {
+    logger.error("installSlackAgent failed", {
+      workspaceId: state.workspaceId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
   }
 
   return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=success`);
@@ -203,7 +225,9 @@ function verifyHmac(payload: string, signature: string): boolean {
 
 const INSTALL_TOKEN_TTL_MS = 5 * 60 * 1000;
 
-function verifyInstallToken(token: string): { workspaceId: number } | null {
+function verifyInstallToken(
+  token: string,
+): { workspaceId: number; userId?: number } | null {
   try {
     const decoded = Buffer.from(token, "base64url").toString();
     const dotIdx = decoded.lastIndexOf(".");
@@ -214,10 +238,14 @@ function verifyInstallToken(token: string): { workspaceId: number } | null {
 
     if (!verifyHmac(payload, signature)) return null;
 
-    const data = JSON.parse(payload) as { workspaceId: number; ts: number };
+    const data = JSON.parse(payload) as {
+      workspaceId: number;
+      userId?: number;
+      ts: number;
+    };
     if (Date.now() - data.ts > INSTALL_TOKEN_TTL_MS) return null;
 
-    return { workspaceId: data.workspaceId };
+    return { workspaceId: data.workspaceId, userId: data.userId };
   } catch {
     return null;
   }

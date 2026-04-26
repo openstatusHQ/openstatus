@@ -14,7 +14,8 @@ export type Actor =
   | { type: "apiKey"; keyId: string; userId?: number }
   | { type: "slack"; teamId: string; slackUserId: string; userId?: number }
   | { type: "system"; job: string }
-  | { type: "webhook"; source: string; externalId?: string };
+  | { type: "webhook"; source: string; externalId?: string }
+  | { type: "subscriber"; subscriberId: number };
 
 export type ServiceContext = {
   workspace: Workspace;
@@ -40,6 +41,17 @@ export async function withTransaction<T>(
   return (db as DrizzleClient).transaction(fn);
 }
 
+/**
+ * Read-side DB resolver for list / get verbs. Use the caller's tx if one
+ * was threaded through `ctx.db` (so reads observe in-flight writes), else
+ * fall back to the default client. Equivalent to the inlined
+ * `ctx.db ?? defaultDb` pattern, kept as a helper so service files don't
+ * import `defaultDb` just to write the same expression.
+ */
+export function getReadDb(ctx: ServiceContext): DB {
+  return ctx.db ?? defaultDb;
+}
+
 export function extractActorId(actor: Actor): string {
   switch (actor.type) {
     case "user":
@@ -52,6 +64,8 @@ export function extractActorId(actor: Actor): string {
       return actor.job;
     case "webhook":
       return actor.externalId ?? actor.source;
+    case "subscriber":
+      return String(actor.subscriberId);
   }
 }
 
@@ -70,6 +84,7 @@ export function tryGetActorUserId(actor: Actor): number | null {
       return actor.userId ?? null;
     case "system":
     case "webhook":
+    case "subscriber":
       return null;
   }
 }
