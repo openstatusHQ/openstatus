@@ -3,6 +3,7 @@ import { integration } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
+import { InternalServiceError, NotFoundError } from "../errors";
 import {
   type InstallSlackAgentInput,
   InstallSlackAgentInputSchema,
@@ -79,6 +80,7 @@ export async function installSlackAgent(args: {
         })
         .where(eq(integration.id, existing.id))
         .returning();
+      if (!updated) throw new NotFoundError("integration", existing.id);
 
       await emitAudit(tx, ctx, {
         action: "integration.update",
@@ -100,6 +102,9 @@ export async function installSlackAgent(args: {
         data: input.data,
       })
       .returning();
+    if (!created) {
+      throw new InternalServiceError("Failed to insert slack-agent integration");
+    }
 
     await emitAudit(tx, ctx, {
       action: "integration.create",

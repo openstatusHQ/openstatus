@@ -70,25 +70,25 @@ export async function upsertSelfSignupSubscriber(args: {
   // accept self-signups; the row never exists.
   assertSubscribersAllowed(workspace);
 
-  if (componentIds.length > 0) {
-    const valid = await readDb
-      .select({ id: pageComponent.id })
-      .from(pageComponent)
-      .where(
-        and(
-          eq(pageComponent.pageId, input.pageId),
-          inArray(pageComponent.id, componentIds),
-        ),
-      )
-      .all();
-    if (valid.length !== componentIds.length) {
-      throw new ValidationError("Some components do not belong to this page");
-    }
-  }
-
   const emailLower = input.email.toLowerCase();
 
   return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+    if (componentIds.length > 0) {
+      const valid = await tx
+        .select({ id: pageComponent.id })
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, input.pageId),
+            inArray(pageComponent.id, componentIds),
+          ),
+        )
+        .all();
+      if (valid.length !== componentIds.length) {
+        throw new ValidationError("Some components do not belong to this page");
+      }
+    }
+
     const existing = await tx.query.pageSubscriber.findFirst({
       where: and(
         eq(pageSubscriber.email, emailLower),

@@ -283,6 +283,31 @@ describe("emitAudit — changed_fields derivation", () => {
     });
   });
 
+  test("metadata-only update with empty row diff still lands", async () => {
+    // Off-row mutations (e.g. component-scope edits on `page_subscriber`)
+    // change a join table, not the row itself — `before === after` for
+    // every column. The metadata is the signal, so the row must land.
+    await withTestTransaction(async (tx) => {
+      await emitLoose(tx, teamCtx, {
+        action: "page_subscriber.update",
+        entityType: "page_subscriber",
+        entityId: 9106,
+        before: { name: "same" },
+        after: { name: "same" },
+        metadata: { componentIds: [1, 2] },
+      });
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "page_subscriber",
+        entityId: 9106,
+        db: tx,
+      });
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.changedFields).toEqual([]);
+      expect(rows[0]?.metadata).toEqual({ componentIds: [1, 2] });
+    });
+  });
+
   test("populated with the changed top-level keys", async () => {
     await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {

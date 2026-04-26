@@ -119,9 +119,17 @@ export async function emitAudit(
   // Skip the insert — an empty-diff row has no informational value
   // (the action name alone doesn't tell us what the user tried to
   // change, and `before === after` duplicates the live entity state).
-  // Creates / deletes / metadata-only updates still land because
-  // `changedFields` is `null` in those cases, not `[]`.
-  if (changedFields !== null && changedFields.length === 0) return;
+  // Exception: when `metadata` is present, the change lives outside
+  // the row (e.g. component-scope edits on `page_subscriber` mutate
+  // a join table, not the row itself). The metadata is the signal,
+  // so the row still lands. Pure no-ops (no diff, no metadata) drop.
+  if (
+    changedFields !== null &&
+    changedFields.length === 0 &&
+    metadata === undefined
+  ) {
+    return;
+  }
 
   const row = {
     workspaceId: ctx.workspace.id,
