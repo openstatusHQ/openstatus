@@ -1,7 +1,7 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { Tag, X } from "lucide-react";
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
@@ -40,6 +40,7 @@ export function MonitorDataTableToolbar({
               label: tag.name,
               value: tag.id,
             }))}
+            icon={Tag}
           />
         )}
         {isFiltered && (
