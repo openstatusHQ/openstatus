@@ -1,0 +1,216 @@
+---
+title: "Audit humans and agents - don't leave them unobserved"
+description: "One package, one table, zero blind spots. How we wrangled CRUD from three surfaces into a single source of truth - and got a workspace-wide audit log almost for free. Another step toward compliance."
+author: "Maximilian Kaske"
+publishedAt: "2026-04-27"
+image: "/assets/posts/audit-humans-and-agents/audit-humans-and-agents.png"
+category: "engineering"
+---
+
+Three apps. Three ways to write the same SQL. Zero ways to know who did what. We finally fixed all three at once - and the audit log fell out for free. Another step towards compliance.
+
+## Three surfaces, three CRUDs, zero blame
+
+Three surfaces talk to our database: the public **REST API** (Hono), the dashboard **tRPC layer** (Next.js), and the **Slack agent** (tools, MCP upcoming). Until recently, all three reimplemented the same CRUD operations independently. Three _"create status report report"_ functions. Three _"update page"_ paths. Three places to forget a side-effect, three places to fix the same bug, and exactly one of them would still be wrong on Friday afternoon.
+
+We're not in "add a new table" mode right now - we're consolidating around what's already there. Sometimes you have to take a few steps back to take more steps forward. Before adding anything new, we wanted to stop maintaining the same query three times. Turns out the fix was a package, not a process.
+
+## One package, one signature
+
+So we built `@openstatus/services` - one package, one source of truth for every mutating database operation. Every surface (REST, tRPC, Slack) calls into it. Tests for the CRUD layer live with the service, not scattered across three consumers each pretending they invented `INSERT`.
+
+It sounds stupid simple, and it is. The hard part wasn't the design, it was carving out the week to ship it inside the [`openstatusHQ/openstatus`](https://github.com/openstatusHQ/openstatus) monorepo without breaking everything our users were doing in the meantime.
+
+The shape every service function takes:
+
+```ts
+export async function updateMonitor(args: {
+  ctx: ServiceContext;
+  input: UpdateMonitorInput;
+}): Promise<Monitor> {
+  const { ctx } = args;
+  const input = UpdateMonitorInput.parse(args.input);
+
+  return withTransaction(ctx, async (tx) => {
+    const existing = await getMonitorInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+
+    const updated = await tx
+      .update(monitor)
+      .set({ /* ...fields... */ })
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "monitor.update",
+      entityType: "monitor",
+      entityId: existing.id,
+      before: existing,
+      after: updated,
+    });
+
+    return selectMonitorSchema.parse(updated);
+  });
+}
+```
+
+Three things matter here: the `ctx` carries the actor and workspace, `withTransaction` makes the audit insert atomic with the mutation, and `emitAudit` is the single chokepoint for "something happened, write it down."
+
+> If your audit log isn't atomic with the mutation, it isn't an audit log.
+
+## The audit log, almost for free
+
+Once every insert/update/delete went through `emitAudit`, adding a durable log was almost free. There was simply nowhere left to forget.
+
+```ts
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    workspaceId: integer("workspace_id").notNull(),
+    actorType: text("actor_type").notNull(),     // "user" | "apiKey" | "slack" | "system" | "webhook"
+    actorId: text("actor_id").notNull(),         // polymorphic (userId | keyId | slackUserId | ...)
+    actorUserId: integer("actor_user_id"),       // denormalized blame; nullable
+    action: text("action").notNull(),            // "monitor.update", "page.delete", ...
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    before: text("before", { mode: "json" }).$type<Record<string, unknown>>(),
+    after:  text("after",  { mode: "json" }).$type<Record<string, unknown>>(),
+    metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown>>(),
+    changedFields: text("changed_fields", { mode: "json" }).$type<string[]>(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    workspaceCreatedIdx: index("audit_log_workspace_created_idx")
+      .on(t.workspaceId, t.createdAt),
+    entityIdx: index("audit_log_entity_idx")
+      .on(t.workspaceId, t.entityType, t.entityId, t.createdAt),
+  }),
+);
+```
+
+A few choices worth flagging:
+
+- **No foreign keys.** Audit rows outlive their subjects. Workspace deletion shouldn't cascade-nuke history; a soft-deleted user shouldn't block inserts. References are informational, enforced in app code. (Foreign keys on audit tables are a foot-gun. Don't.)
+- **`entityId` is text.** `api_key` uses string keyIds, everything else uses integers - text is the only common shape.
+- **Two indexes.** `(workspace, created_at)` for "show my audit log"; `(workspace, entityType, entityId, created_at)` for per-entity history. "By actor" is additive later if a query demands it.
+- **Order by `(created_at DESC, id DESC)`.** Bulk operations emit several rows in the same millisecond; the autoincrement id breaks ties deterministically.
+
+### Validation: discriminated unions all the way down
+
+Every variant of `action` carries its own shape - `monitor.update` looks different from `api_key.create`. Zod's discriminated unions make that legible at runtime, and TypeScript infers the right snapshot requirements from the verb suffix.
+
+```ts
+const monitorActions = [
+  action("monitor.create", "monitor", intId, { optionalMetadata: true }),
+  action("monitor.update", "monitor", intId),
+  action("monitor.delete", "monitor", intId),
+] as const;
+
+// ... pages, page_components, api_keys, notifications, maintenances, etc.
+
+export const auditActionSchema = z.discriminatedUnion("action", [
+  ...monitorActions,
+  ...pageActions,
+  ...apiKeyActions,
+  // ...
+]);
+
+export const auditEntrySchema = auditActionSchema.and(
+  z.object({
+    before: snapshotSchema.optional(),
+    after:  snapshotSchema.optional(),
+  }),
+);
+
+/**
+ * Snapshot presence is derived from the action verb at the type level:
+ *   *.create  → after required, before forbidden
+ *   *.delete  → before required, after forbidden
+ *   *.update  → both required
+ */
+export type AuditEntry = AuditAction extends infer A
+  ? A extends { action: `${string}.create` }
+    ? A & { after: Snapshot; before?: never }
+    : A extends { action: `${string}.delete` }
+      ? A & { before: Snapshot; after?: never }
+      : A extends { action: `${string}.update` }
+        ? A & { before: Snapshot; after: Snapshot }
+        : A & { before?: Snapshot; after?: Snapshot }
+  : never;
+```
+
+Adding a new audit action is one variant edit. Forgetting `before` on a `monitor.update` is a red squiggle at the call site - not a sad gap in your audit log six months later when someone's trying to figure out who broke production.
+
+The actor is its own discriminated union for the same reason:
+
+```ts
+export type Actor =
+  | { type: "user";    userId: number }
+  | { type: "apiKey";  keyId: string;   userId?: number }
+  | { type: "slack";   teamId: string;  slackUserId: string; userId?: number }
+  // ...
+```
+
+We keep both `actorId` (what authenticated the call - forensics) and `actorUserId` (which human gets blamed - accountability). When an apiKey is owned by a user, both columns get filled. "Show me everything Alex did, including via her CLI tokens and Slack" becomes a single index lookup, not an archaeological dig.
+
+### Atomicity: the audit row lives or dies with the mutation
+
+`emitAudit` writes inside the caller's transaction. If the audit insert fails, the surrounding update rolls back. If the surrounding update fails, the audit row never exists.
+
+```ts
+export async function emitAudit(
+  tx: DB,
+  ctx: ServiceContext,
+  entry: AuditEntry,
+): Promise<void> {
+  const parsed = auditEntrySchema.parse(entry);  // throws → tx rolls back
+
+  const changedFields =
+    parsed.before !== undefined && parsed.after !== undefined
+      ? diffTopLevel(parsed.before, parsed.after)
+      : null;
+
+  // No-op update: caller passed both snapshots, nothing changed → skip.
+  if (changedFields !== null && changedFields.length === 0) return;
+
+  await tx.insert(auditLog).values({
+    workspaceId: ctx.workspace.id,
+    actorType: ctx.actor.type,
+    actorId: extractActorId(ctx.actor),
+    actorUserId: tryGetActorUserId(ctx.actor),
+    action: parsed.action,
+    entityType: parsed.entityType,
+    entityId: String(parsed.entityId),
+    before: parsed.before ?? null,
+    after: parsed.after ?? null,
+    metadata: "metadata" in parsed ? (parsed.metadata ?? null) : null,
+    changedFields,
+  });
+}
+```
+
+This is fail-closed on purpose. Once the dashboard exposes the log, "the audit trail is complete for every successful operation" is a much stronger promise than "the audit trail mostly works, probably." Fail-open silently breaks that - and you find out about it during the actual audit you were trying to prepare for. Hard pass.
+
+`changedFields` is a top-level shallow diff. Nested JSON columns (`headers`, `assertions`, `locales`) report as a single key - the UI does deeper diffs client-side. Empty array means "both supplied, nothing changed" and the row is skipped; `null` means "this was a create or delete" and the row stands.
+
+## Where it lands
+
+The audit log is live in the dashboard for **Pro workspaces**.
+
+<Image
+  src="/assets/posts/audit-humans-and-agents/audit-log-table.png"
+  alt="The audit log table view in the openstatus dashboard."
+/>
+
+The same table that answers "who renamed this monitor at 2am?" for an on-call engineer also answers "show me every privileged change in the last 14 days" for whoever shows up with an auditor's checklist. Another step toward compliance, with the bonus of being genuinely useful on a Tuesday.
+
+Open ` Audit Logs` in your [openstatus dashboard](https://app.openstatus.dev?ref=blog-audit-log) to see every mutation across REST, tRPC, and Slack - by human or agent.
+
+The boring, important win is already in the bag: every mutation in openstatus - from any surface, by any actor - lands in one row in one table. That's the bit you can't bolt on later. Everything else is a refactor.
