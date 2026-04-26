@@ -103,7 +103,9 @@ export async function installSlackAgent(args: {
       })
       .returning();
     if (!created) {
-      throw new InternalServiceError("Failed to insert slack-agent integration");
+      throw new InternalServiceError(
+        "Failed to insert slack-agent integration",
+      );
     }
 
     await emitAudit(tx, ctx, {
