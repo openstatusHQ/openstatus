@@ -270,4 +270,51 @@ describe("deleteMember", () => {
     }
     expect(thrown).toBeInstanceOf(NotFoundError);
   });
+
+  test("target user in another workspace is a silent no-op (workspace-scoped DELETE)", async () => {
+    // VICTIM is in the team workspace. Caller is owner of free workspace.
+    // The delete WHERE filters by ctx.workspace.id, so the team-workspace
+    // row is never matched — verifies the workspace scope on the DELETE.
+    const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
+    await db
+      .insert(usersToWorkspaces)
+      .values({
+        workspaceId: free.id,
+        userId: OWNER_USER_ID,
+        role: "owner",
+      })
+      .onConflictDoUpdate({
+        target: [usersToWorkspaces.userId, usersToWorkspaces.workspaceId],
+        set: { role: "owner" },
+      });
+
+    try {
+      await deleteMember({
+        ctx: makeUserCtx(free, { userId: OWNER_USER_ID }),
+        input: { userId: VICTIM_USER_ID },
+      });
+
+      const stillThere = await db
+        .select()
+        .from(usersToWorkspaces)
+        .where(
+          and(
+            eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+            eq(usersToWorkspaces.userId, VICTIM_USER_ID),
+          ),
+        )
+        .get();
+      expect(stillThere).toBeDefined();
+    } finally {
+      await db
+        .delete(usersToWorkspaces)
+        .where(
+          and(
+            eq(usersToWorkspaces.workspaceId, free.id),
+            eq(usersToWorkspaces.userId, OWNER_USER_ID),
+          ),
+        )
+        .catch(() => undefined);
+    }
+  });
 });

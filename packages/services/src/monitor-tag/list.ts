@@ -1,7 +1,7 @@
-import { db as defaultDb, eq } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import { monitorTag } from "@openstatus/db/src/schema";
 
-import type { ServiceContext } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { ListMonitorTagsInput } from "./schemas";
 
 /**
@@ -18,7 +18,7 @@ export async function listMonitorTags(args: {
   input?: ListMonitorTagsInput;
 }) {
   ListMonitorTagsInput.parse(args.input ?? {});
-  const db = args.ctx.db ?? defaultDb;
+  const db = getReadDb(args.ctx);
 
   return db.query.monitorTag.findMany({
     where: eq(monitorTag.workspaceId, args.ctx.workspace.id),

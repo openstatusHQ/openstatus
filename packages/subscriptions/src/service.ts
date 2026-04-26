@@ -1,11 +1,10 @@
-import { and, db, eq, inArray, isNull, ne, sql } from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   page,
   pageComponent,
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
-import { assertSafeUrl } from "@openstatus/utils";
 import {
   detectWebhookFlavor,
   sendTestWebhookRequest,
@@ -437,144 +436,6 @@ export async function updateSubscriptionScope(
     acceptedAt: subscription.acceptedAt ?? undefined,
     componentIds,
   };
-}
-
-/**
- * Update a vendor-added subscription's channel config, name, or component scope.
- *
- * Self-signup rows are subscriber-owned (managed via token) and rejected here.
- * Email rows reject `webhookUrl`/`channelConfig` (no webhook fields to edit).
- * Webhook rows accept URL/headers/name/scope. Email / webhook identity keys
- * (email, webhookUrl) are immutable on email rows; webhook URL is mutable.
- *
- * componentIds semantics:
- *   - `undefined`  → do not touch scope (existing component links preserved).
- *   - `[]`         → reset scope to "entire page" (all existing links removed).
- *   - `[a, b, …]`  → replace scope with exactly these components. All IDs must
- *                    belong to the target page or the update is rejected.
- */
-export type UpdateChannelInput = {
-  subscriberId: number;
-  pageId: number;
-  name?: string | null;
-  webhookUrl?: string;
-  channelConfig?: unknown;
-  componentIds?: number[];
-};
-
-export async function updateChannel(input: UpdateChannelInput) {
-  const {
-    subscriberId,
-    pageId,
-    name,
-    webhookUrl,
-    channelConfig,
-    componentIds,
-  } = input;
-
-  const existing = await db.query.pageSubscriber.findFirst({
-    where: and(
-      eq(pageSubscriber.id, subscriberId),
-      eq(pageSubscriber.pageId, pageId),
-    ),
-  });
-
-  if (!existing) {
-    throw new Error("Subscriber not found");
-  }
-
-  if (existing.source !== "vendor") {
-    throw new Error(
-      "Self-signup subscribers manage their own subscription; use the unsubscribe action instead.",
-    );
-  }
-
-  if (existing.channelType === "email") {
-    if (webhookUrl !== undefined || channelConfig !== undefined) {
-      throw new Error("Email subscribers do not have webhook fields to edit.");
-    }
-  }
-
-  const updateFields: Record<string, unknown> = { updatedAt: new Date() };
-  if (name !== undefined) updateFields.name = name;
-
-  if (existing.channelType === "webhook") {
-    if (webhookUrl !== undefined && webhookUrl !== existing.webhookUrl) {
-      await assertSafeUrl(webhookUrl);
-      if (detectWebhookFlavor(webhookUrl) === "generic") {
-        throw new Error("Only Slack and Discord webhook URLs are supported.");
-      }
-
-      const duplicate = await db.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.pageId, pageId),
-          sql`LOWER(${pageSubscriber.webhookUrl}) = ${webhookUrl.toLowerCase()}`,
-          eq(pageSubscriber.channelType, "webhook"),
-          isNull(pageSubscriber.unsubscribedAt),
-          ne(pageSubscriber.id, subscriberId),
-        ),
-      });
-
-      if (duplicate) {
-        throw new Error(
-          "A subscriber with this webhook URL already exists for this page.",
-        );
-      }
-
-      updateFields.webhookUrl = webhookUrl;
-    }
-    if (channelConfig !== undefined) {
-      updateFields.channelConfig = channelConfig
-        ? JSON.stringify(channelConfig)
-        : null;
-    }
-  }
-
-  if (componentIds !== undefined && componentIds.length > 0) {
-    const validComponents = await db
-      .select({ id: pageComponent.id })
-      .from(pageComponent)
-      .where(
-        and(
-          eq(pageComponent.pageId, pageId),
-          inArray(pageComponent.id, componentIds),
-        ),
-      )
-      .all();
-
-    if (validComponents.length !== componentIds.length) {
-      throw new Error("Some components do not belong to this page");
-    }
-  }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .update(pageSubscriber)
-      .set(updateFields)
-      .where(eq(pageSubscriber.id, subscriberId))
-      .run();
-
-    if (componentIds !== undefined) {
-      await tx
-        .delete(pageSubscriberToPageComponent)
-        .where(eq(pageSubscriberToPageComponent.pageSubscriberId, subscriberId))
-        .run();
-
-      if (componentIds.length > 0) {
-        await tx
-          .insert(pageSubscriberToPageComponent)
-          .values(
-            componentIds.map((compId) => ({
-              pageSubscriberId: subscriberId,
-              pageComponentId: compId,
-            })),
-          )
-          .run();
-      }
-    }
-  });
-
-  return { id: subscriberId };
 }
 
 /**

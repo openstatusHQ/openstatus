@@ -21,7 +21,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
-import type { ServiceContext } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
 import { getPageInWorkspace } from "./internal";
@@ -45,7 +45,7 @@ export async function listPages(args: {
 }): Promise<PageListItem[]> {
   const { ctx } = args;
   const input = ListPagesInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const pageRows = await db
     .select()
@@ -89,7 +89,7 @@ export async function getPage(args: {
 }): Promise<PageWithRelations> {
   const { ctx } = args;
   const input = GetPageInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const record = await getPageInWorkspace({
     tx: db,
@@ -159,7 +159,7 @@ export async function getPageCustomDomain(args: {
 }): Promise<string> {
   const { ctx } = args;
   const input = GetPageInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const row = await db
     .select({ customDomain: page.customDomain })
@@ -193,7 +193,7 @@ export async function getSlugAvailable(args: {
 }): Promise<boolean> {
   const { ctx } = args;
   const input = GetSlugAvailableInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   if (subdomainSafeList.includes(input.slug)) return false;
   const rows = await db

@@ -1,4 +1,4 @@
-import { db as defaultDb, eq } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import {
   selectUserSchema,
   usersToWorkspaces,
@@ -6,7 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import type { ServiceContext } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import type { ListMembersInput } from "./schemas";
 
 const memberRowSchema = z.object({
@@ -21,7 +21,7 @@ export async function listMembers(args: {
   ctx: ServiceContext;
   input?: ListMembersInput;
 }): Promise<Member[]> {
-  const db = args.ctx.db ?? defaultDb;
+  const db = getReadDb(args.ctx);
 
   const rows = await db.query.usersToWorkspaces.findMany({
     where: eq(usersToWorkspaces.workspaceId, args.ctx.workspace.id),

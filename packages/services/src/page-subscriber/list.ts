@@ -1,7 +1,7 @@
-import { and, db as defaultDb, eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
-import type { ServiceContext } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import { ListPageSubscribersInput } from "./schemas";
 
@@ -58,7 +58,7 @@ export async function listPageSubscribers(args: {
 }): Promise<PageSubscriberListItem[]> {
   const { ctx } = args;
   const input = ListPageSubscribersInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const pageRow = await db.query.page.findFirst({
     where: and(

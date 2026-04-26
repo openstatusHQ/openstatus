@@ -29,11 +29,9 @@ export {
   verifySubscription,
   getSubscriptionByToken,
   sendTestWebhook,
-  updateChannel,
   updateSubscriptionScope,
   unsubscribe,
 } from "./service";
-export type { UpdateChannelInput } from "./service";
 
 // Export types
 export type { Subscription, PageUpdate, SubscriptionChannel } from "./types";

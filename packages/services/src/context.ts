@@ -40,6 +40,17 @@ export async function withTransaction<T>(
   return (db as DrizzleClient).transaction(fn);
 }
 
+/**
+ * Read-side DB resolver for list / get verbs. Use the caller's tx if one
+ * was threaded through `ctx.db` (so reads observe in-flight writes), else
+ * fall back to the default client. Equivalent to the inlined
+ * `ctx.db ?? defaultDb` pattern, kept as a helper so service files don't
+ * import `defaultDb` just to write the same expression.
+ */
+export function getReadDb(ctx: ServiceContext): DB {
+  return ctx.db ?? defaultDb;
+}
+
 export function extractActorId(actor: Actor): string {
   switch (actor.type) {
     case "user":

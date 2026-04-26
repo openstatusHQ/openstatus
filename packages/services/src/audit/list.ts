@@ -1,13 +1,4 @@
-import {
-  type SQL,
-  and,
-  db as defaultDb,
-  desc,
-  eq,
-  gte,
-  isNull,
-  sql,
-} from "@openstatus/db";
+import { type SQL, and, desc, eq, gte, isNull, sql } from "@openstatus/db";
 import {
   auditLog,
   selectAuditLogSchema,
@@ -15,7 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { z } from "zod";
 
-import type { ServiceContext } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { ListAuditLogsInput } from "./schemas";
 
 /**
@@ -60,7 +51,7 @@ export async function listAuditLogs(args: {
 }): Promise<ListAuditLogsResult> {
   const { ctx } = args;
   const input = ListAuditLogsInput.parse(args.input);
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
 
   const since = new Date(Date.now() - READ_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 

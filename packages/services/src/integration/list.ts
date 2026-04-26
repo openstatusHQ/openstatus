@@ -1,8 +1,8 @@
-import { db as defaultDb, eq, sql } from "@openstatus/db";
+import { eq, sql } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-import type { ServiceContext } from "../context";
+import { getReadDb, type ServiceContext } from "../context";
 import { ListIntegrationsInput } from "./schemas";
 
 const integrationSummarySchema = z.object({
@@ -53,7 +53,7 @@ export async function listIntegrations(args: {
   input?: ListIntegrationsInput;
 }): Promise<IntegrationSummary[]> {
   ListIntegrationsInput.parse(args.input ?? {});
-  const db = args.ctx.db ?? defaultDb;
+  const db = getReadDb(args.ctx);
 
   const rows = await db
     .select({
