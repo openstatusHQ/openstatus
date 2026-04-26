@@ -21,7 +21,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
-import { type ServiceContext, getReadDb } from "../context";
+import { type DB, type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
 import { getPageInWorkspace } from "./internal";
@@ -179,11 +179,13 @@ export async function getPageCustomDomain(args: {
  * caller's responsibility — slugs are globally unique, so the lookup
  * intentionally ignores `ctx.workspace`.
  */
-export async function getPageBySlug(args: {
-  input: { slug: string };
-}): Promise<typeof page.$inferSelect | undefined> {
+export async function getPageBySlug(
+  args: { input: { slug: string } },
+  opts: { db?: DB } = {},
+): Promise<typeof page.$inferSelect | undefined> {
   const slug = args.input.slug.toLowerCase();
-  return defaultDb.select().from(page).where(eq(page.slug, slug)).get();
+  const db = opts.db ?? defaultDb;
+  return db.select().from(page).where(eq(page.slug, slug)).get();
 }
 
 /** Returns `true` when the slug is free (not reserved, not taken). */

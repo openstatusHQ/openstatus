@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import { auditLog } from "@openstatus/db/src/schema";
 
@@ -19,6 +12,7 @@ import {
   makeSystemCtx,
   makeUserCtx,
   readAuditLog,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 
@@ -45,9 +39,8 @@ let teamCtx: ServiceContext;
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
-});
-
-beforeEach(async () => {
+  // Wipe rows from prior aborted runs — the fail-closed test below runs
+  // outside `withTestTransaction` and could leak on a botched prior run.
   await clearAuditLog(teamCtx.workspace.id);
 });
 
@@ -134,57 +127,63 @@ describe("diffTopLevel", () => {
 
 describe("emitAudit — row persistence", () => {
   test("inserts a row with the expected columns", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitLoose(tx, teamCtx, {
         action: "monitor.create",
         entityType: "monitor",
         entityId: 9001,
         metadata: { jobType: "http", url: "https://example.com" },
       });
-    });
 
-    const rows = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9001,
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9001,
+        db: tx,
+      });
+      expect(rows).toHaveLength(1);
+      const row = rows[0];
+      expect(row).toBeDefined();
+      if (!row) throw new Error("unreachable");
+      expect(row.workspaceId).toBe(teamCtx.workspace.id);
+      expect(row.action).toBe("monitor.create");
+      expect(row.entityType).toBe("monitor");
+      expect(row.entityId).toBe("9001");
+      expect(row.actorType).toBe("user");
+      expect(row.actorId).toBe("1");
+      expect(row.actorUserId).toBe(1);
+      expect(row.metadata).toEqual({
+        jobType: "http",
+        url: "https://example.com",
+      });
+      expect(row.before).toBeNull();
+      expect(row.after).toBeNull();
+      expect(row.changedFields).toBeNull();
+      expect(row.createdAt).toBeInstanceOf(Date);
     });
-    expect(rows).toHaveLength(1);
-    const row = rows[0];
-    expect(row).toBeDefined();
-    if (!row) throw new Error("unreachable");
-    expect(row.workspaceId).toBe(teamCtx.workspace.id);
-    expect(row.action).toBe("monitor.create");
-    expect(row.entityType).toBe("monitor");
-    expect(row.entityId).toBe("9001");
-    expect(row.actorType).toBe("user");
-    expect(row.actorId).toBe("1");
-    expect(row.actorUserId).toBe(1);
-    expect(row.metadata).toEqual({
-      jobType: "http",
-      url: "https://example.com",
-    });
-    expect(row.before).toBeNull();
-    expect(row.after).toBeNull();
-    expect(row.changedFields).toBeNull();
-    expect(row.createdAt).toBeInstanceOf(Date);
   });
 
   test("stringifies numeric entityIds", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitLoose(tx, teamCtx, {
         action: "page.delete",
         entityType: "page",
         entityId: 42,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "page",
+        entityId: 42,
+        db: tx,
+      });
+      expect(row?.entityId).toBe("42");
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "page",
-      entityId: 42,
-    });
-    expect(row?.entityId).toBe("42");
   });
 
+  // This test intentionally runs OUTSIDE `withTestTransaction`. Its whole
+  // point is to verify that a real outer transaction rolls back when an
+  // emit-bearing block throws — wrapping it in another tx would assert
+  // against the wrapping tx instead of the committed db.
   test("fail-closed: insert error rolls the enclosing tx back", async () => {
     let threw = false;
     try {
@@ -211,41 +210,43 @@ describe("emitAudit — row persistence", () => {
 
 describe("emitAudit — changed_fields derivation", () => {
   test("null when only after is supplied (create-shape)", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {
         action: "monitor.create",
         entityType: "monitor",
         entityId: 9100,
         after: { name: "fresh" },
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9100,
+        db: tx,
+      });
+      expect(row?.changedFields).toBeNull();
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9100,
-    });
-    expect(row?.changedFields).toBeNull();
   });
 
   test("null when only before is supplied (delete-shape)", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {
         action: "monitor.delete",
         entityType: "monitor",
         entityId: 9101,
         before: { name: "going" },
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9101,
+        db: tx,
+      });
+      expect(row?.changedFields).toBeNull();
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9101,
-    });
-    expect(row?.changedFields).toBeNull();
   });
 
   test("no-op update (before === after) skips the insert entirely", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {
         action: "monitor.update",
         entityType: "monitor",
@@ -253,17 +254,18 @@ describe("emitAudit — changed_fields derivation", () => {
         before: { name: "same", url: "https://x" },
         after: { name: "same", url: "https://x" },
       });
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9102,
+        db: tx,
+      });
+      expect(rows).toHaveLength(0);
     });
-    const rows = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9102,
-    });
-    expect(rows).toHaveLength(0);
   });
 
   test("ignoring updatedAt/createdAt only → still a no-op, still skipped", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {
         action: "monitor.update",
         entityType: "monitor",
@@ -271,17 +273,18 @@ describe("emitAudit — changed_fields derivation", () => {
         before: { name: "a", updatedAt: new Date("2025-01-01") },
         after: { name: "a", updatedAt: new Date("2025-06-01") },
       });
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9105,
+        db: tx,
+      });
+      expect(rows).toHaveLength(0);
     });
-    const rows = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9105,
-    });
-    expect(rows).toHaveLength(0);
   });
 
   test("populated with the changed top-level keys", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {
         action: "monitor.update",
         entityType: "monitor",
@@ -289,17 +292,18 @@ describe("emitAudit — changed_fields derivation", () => {
         before: { name: "old", url: "https://a", method: "GET" },
         after: { name: "new", url: "https://b", method: "GET" },
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9103,
+        db: tx,
+      });
+      expect(row?.changedFields?.sort()).toEqual(["name", "url"]);
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9103,
-    });
-    expect(row?.changedFields?.sort()).toEqual(["name", "url"]);
   });
 
   test("ignores updatedAt when computing the diff — a real change still records only the real key", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitAudit(tx, teamCtx, {
         action: "monitor.update",
         entityType: "monitor",
@@ -307,121 +311,127 @@ describe("emitAudit — changed_fields derivation", () => {
         before: { name: "old", updatedAt: new Date("2025-01-01") },
         after: { name: "new", updatedAt: new Date("2025-06-01") },
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9104,
+        db: tx,
+      });
+      expect(row?.changedFields).toEqual(["name"]);
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9104,
-    });
-    expect(row?.changedFields).toEqual(["name"]);
   });
 });
 
 describe("emitAudit — actor derivation", () => {
   test("user actor → actorId and actorUserId are the same id", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitLoose(tx, teamCtx, {
         action: "workspace.update",
         entityType: "workspace",
         entityId: teamCtx.workspace.id,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "workspace",
+        db: tx,
+      });
+      expect(row?.actorType).toBe("user");
+      expect(row?.actorId).toBe("1");
+      expect(row?.actorUserId).toBe(1);
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "workspace",
-    });
-    expect(row?.actorType).toBe("user");
-    expect(row?.actorId).toBe("1");
-    expect(row?.actorUserId).toBe(1);
   });
 
   test("apiKey actor without linked user → actorUserId null", async () => {
-    const ctx = makeApiKeyCtx(teamCtx.workspace, { keyId: "k_anon" });
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeApiKeyCtx(teamCtx.workspace, { keyId: "k_anon" });
       await emitLoose(tx, ctx, {
         action: "api_key.delete",
         entityType: "api_key",
         entityId: 9200,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "api_key",
+        entityId: 9200,
+        db: tx,
+      });
+      expect(row?.actorType).toBe("apiKey");
+      expect(row?.actorId).toBe("k_anon");
+      expect(row?.actorUserId).toBeNull();
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "api_key",
-      entityId: 9200,
-    });
-    expect(row?.actorType).toBe("apiKey");
-    expect(row?.actorId).toBe("k_anon");
-    expect(row?.actorUserId).toBeNull();
   });
 
   test("apiKey actor with linked user → actorUserId populated", async () => {
-    const ctx = makeApiKeyCtx(teamCtx.workspace, {
-      keyId: "k_linked",
-      userId: 42,
-    });
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeApiKeyCtx(teamCtx.workspace, {
+        keyId: "k_linked",
+        userId: 42,
+      });
       await emitLoose(tx, ctx, {
         action: "api_key.delete",
         entityType: "api_key",
         entityId: 9201,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "api_key",
+        entityId: 9201,
+        db: tx,
+      });
+      expect(row?.actorType).toBe("apiKey");
+      expect(row?.actorId).toBe("k_linked");
+      expect(row?.actorUserId).toBe(42);
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "api_key",
-      entityId: 9201,
-    });
-    expect(row?.actorType).toBe("apiKey");
-    expect(row?.actorId).toBe("k_linked");
-    expect(row?.actorUserId).toBe(42);
   });
 
   test("slack actor → actorId is slackUserId", async () => {
-    const ctx = makeSlackCtx(teamCtx.workspace, {
-      teamId: "T1",
-      slackUserId: "U9",
-      userId: 7,
-    });
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeSlackCtx(teamCtx.workspace, {
+        teamId: "T1",
+        slackUserId: "U9",
+        userId: 7,
+      });
       await emitLoose(tx, ctx, {
         action: "maintenance.update",
         entityType: "maintenance",
         entityId: 9300,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "maintenance",
+        entityId: 9300,
+        db: tx,
+      });
+      expect(row?.actorType).toBe("slack");
+      expect(row?.actorId).toBe("U9");
+      expect(row?.actorUserId).toBe(7);
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "maintenance",
-      entityId: 9300,
-    });
-    expect(row?.actorType).toBe("slack");
-    expect(row?.actorId).toBe("U9");
-    expect(row?.actorUserId).toBe(7);
   });
 
   test("system actor → actorId is the job name, actorUserId null", async () => {
-    const ctx = makeSystemCtx(teamCtx.workspace, { job: "cleanup-job" });
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeSystemCtx(teamCtx.workspace, { job: "cleanup-job" });
       await emitLoose(tx, ctx, {
         action: "monitor.delete",
         entityType: "monitor",
         entityId: 9400,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9400,
+        db: tx,
+      });
+      expect(row?.actorType).toBe("system");
+      expect(row?.actorId).toBe("cleanup-job");
+      expect(row?.actorUserId).toBeNull();
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9400,
-    });
-    expect(row?.actorType).toBe("system");
-    expect(row?.actorId).toBe("cleanup-job");
-    expect(row?.actorUserId).toBeNull();
   });
 });
 
 describe("emitAudit — ordering", () => {
   test("autoincrement id provides a stable tiebreaker within the same ms", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       for (let i = 0; i < 5; i++) {
         await emitLoose(tx, teamCtx, {
           action: "monitor.update",
@@ -429,51 +439,57 @@ describe("emitAudit — ordering", () => {
           entityId: 9500 + i,
         });
       }
+      const rows = await tx
+        .select()
+        .from(auditLog)
+        .where(eq(auditLog.workspaceId, teamCtx.workspace.id))
+        .orderBy(auditLog.id)
+        .all();
+      const emitted = rows.filter(
+        (r) =>
+          r.action === "monitor.update" &&
+          Number(r.entityId) >= 9500 &&
+          Number(r.entityId) < 9505,
+      );
+      expect(emitted).toHaveLength(5);
+      const ids = emitted.map((r) => Number(r.entityId));
+      expect(ids).toEqual([9500, 9501, 9502, 9503, 9504]);
+      // Ids are monotonically increasing → reads ordered by (createdAt DESC, id DESC)
+      // get a deterministic order even when createdAt collides.
+      for (let i = 1; i < emitted.length; i++) {
+        const prev = emitted[i - 1];
+        const curr = emitted[i];
+        if (!prev || !curr) throw new Error("unreachable");
+        expect(curr.id).toBeGreaterThan(prev.id);
+      }
     });
-    const rows = await db
-      .select()
-      .from(auditLog)
-      .where(eq(auditLog.workspaceId, teamCtx.workspace.id))
-      .orderBy(auditLog.id)
-      .all();
-    const emitted = rows.filter((r) => r.action === "monitor.update");
-    expect(emitted).toHaveLength(5);
-    const ids = emitted.map((r) => Number(r.entityId));
-    expect(ids).toEqual([9500, 9501, 9502, 9503, 9504]);
-    // Ids are monotonically increasing → reads ordered by (createdAt DESC, id DESC)
-    // get a deterministic order even when createdAt collides.
-    for (let i = 1; i < emitted.length; i++) {
-      const prev = emitted[i - 1];
-      const curr = emitted[i];
-      if (!prev || !curr) throw new Error("unreachable");
-      expect(curr.id).toBeGreaterThan(prev.id);
-    }
   });
 });
 
 describe("emitAudit — entry-shape regressions", () => {
   test("entry without metadata serializes null to the metadata column", async () => {
-    await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
       await emitLoose(tx, teamCtx, {
         action: "monitor.update",
         entityType: "monitor",
         entityId: 9600,
       });
+      const [row] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9600,
+        db: tx,
+      });
+      expect(row?.metadata).toBeNull();
     });
-    const [row] = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9600,
-    });
-    expect(row?.metadata).toBeNull();
   });
 });
 
 describe("emitAudit — runtime Zod validation", () => {
   test("rejects an unknown action string", async () => {
-    let threw = false;
-    try {
-      await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      let threw = false;
+      try {
         await emitAudit(tx, teamCtx, {
           // Cast through unknown — the runtime check is exactly the
           // point being tested; at compile time this would be a TS error.
@@ -481,23 +497,24 @@ describe("emitAudit — runtime Zod validation", () => {
           entityType: "monitor",
           entityId: 9700,
         } as unknown as AuditEntry);
+      } catch {
+        threw = true;
+      }
+      expect(threw).toBe(true);
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9700,
+        db: tx,
       });
-    } catch {
-      threw = true;
-    }
-    expect(threw).toBe(true);
-    const rows = await readAuditLog({
-      workspaceId: teamCtx.workspace.id,
-      entityType: "monitor",
-      entityId: 9700,
+      expect(rows).toHaveLength(0);
     });
-    expect(rows).toHaveLength(0);
   });
 
   test("rejects a mismatched entityType for a known action", async () => {
-    let threw = false;
-    try {
-      await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      let threw = false;
+      try {
         await emitAudit(tx, teamCtx, {
           action: "monitor.create",
           // `monitor.create` is bound to entityType: "monitor"; this should
@@ -505,27 +522,27 @@ describe("emitAudit — runtime Zod validation", () => {
           entityType: "page",
           entityId: 9701,
         } as unknown as AuditEntry);
-      });
-    } catch {
-      threw = true;
-    }
-    expect(threw).toBe(true);
+      } catch {
+        threw = true;
+      }
+      expect(threw).toBe(true);
+    });
   });
 
   test("rejects a non-integer entityId", async () => {
-    let threw = false;
-    try {
-      await db.transaction(async (tx) => {
+    await withTestTransaction(async (tx) => {
+      let threw = false;
+      try {
         await emitAudit(tx, teamCtx, {
           action: "monitor.delete",
           entityType: "monitor",
           // The schema requires `intId`; floats should fail.
           entityId: 1.5,
         } as unknown as AuditEntry);
-      });
-    } catch {
-      threw = true;
-    }
-    expect(threw).toBe(true);
+      } catch {
+        threw = true;
+      }
+      expect(threw).toBe(true);
+    });
   });
 });

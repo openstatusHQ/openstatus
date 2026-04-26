@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { and, db, eq, inArray } from "@openstatus/db";
 import {
   monitor,
@@ -19,10 +12,10 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
-  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
@@ -37,7 +30,6 @@ let freeCtx: ServiceContext;
 let testPageId: number;
 let teamMonitorId: number;
 let freeMonitorId: number;
-const createdComponentIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -90,12 +82,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (createdComponentIds.length > 0) {
-    await db
-      .delete(pageComponent)
-      .where(inArray(pageComponent.id, createdComponentIds))
-      .catch(() => undefined);
-  }
   await db
     .delete(pageComponent)
     .where(eq(pageComponent.pageId, testPageId))
@@ -114,205 +100,250 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(async () => {
-  await clearAuditLog(teamCtx.workspace.id);
-  await clearAuditLog(freeCtx.workspace.id);
-});
-
 describe("updatePageComponentOrder", () => {
   test("creates monitor + static components and a group", async () => {
-    await updatePageComponentOrder({
-      ctx: teamCtx,
-      input: {
-        pageId: testPageId,
-        components: [
-          {
-            order: 0,
-            name: `${TEST_PREFIX}-monitor-cmp`,
-            type: "monitor",
-            monitorId: teamMonitorId,
-          },
-          {
-            order: 1,
-            name: `${TEST_PREFIX}-static-cmp`,
-            type: "static",
-          },
-        ],
-        groups: [
-          {
-            order: 2,
-            name: `${TEST_PREFIX}-group`,
-            defaultOpen: false,
-            components: [
-              {
-                order: 0,
-                name: `${TEST_PREFIX}-grouped-static`,
-                type: "static",
-              },
-            ],
-          },
-        ],
-      },
-    });
-
-    const components = await db
-      .select()
-      .from(pageComponent)
-      .where(eq(pageComponent.pageId, testPageId))
-      .all();
-    for (const c of components) createdComponentIds.push(c.id);
-    const groups = await db
-      .select()
-      .from(pageComponentGroup)
-      .where(eq(pageComponentGroup.pageId, testPageId))
-      .all();
-    expect(components).toHaveLength(3);
-    expect(groups).toHaveLength(1);
-
-    // Per-entity audit emits — assert one representative of each kind.
-    // The service writes one row per component / group, so every id in
-    // `components` + `groups` should appear, not a single page-level row.
-    const monitorComponent = components.find((c) => c.type === "monitor");
-    expect(monitorComponent).toBeDefined();
-    if (!monitorComponent) throw new Error("unreachable");
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "page_component.create",
-      entityType: "page_component",
-      entityId: monitorComponent.id,
-    });
-
-    const group = groups[0];
-    expect(group).toBeDefined();
-    if (!group) throw new Error("unreachable");
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "page_component_group.create",
-      entityType: "page_component_group",
-      entityId: group.id,
-    });
-  });
-
-  test("rejects cross-workspace monitorId with ForbiddenError", async () => {
-    await expect(
-      updatePageComponentOrder({
-        ctx: teamCtx,
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await updatePageComponentOrder({
+        ctx,
         input: {
           pageId: testPageId,
           components: [
             {
               order: 0,
-              name: `${TEST_PREFIX}-cross-ws`,
+              name: `${TEST_PREFIX}-monitor-cmp`,
               type: "monitor",
-              monitorId: freeMonitorId,
+              monitorId: teamMonitorId,
+            },
+            {
+              order: 1,
+              name: `${TEST_PREFIX}-static-cmp`,
+              type: "static",
+            },
+          ],
+          groups: [
+            {
+              order: 2,
+              name: `${TEST_PREFIX}-group`,
+              defaultOpen: false,
+              components: [
+                {
+                  order: 0,
+                  name: `${TEST_PREFIX}-grouped-static`,
+                  type: "static",
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const components = await tx
+        .select()
+        .from(pageComponent)
+        .where(eq(pageComponent.pageId, testPageId))
+        .all();
+      const groups = await tx
+        .select()
+        .from(pageComponentGroup)
+        .where(eq(pageComponentGroup.pageId, testPageId))
+        .all();
+      expect(components).toHaveLength(3);
+      expect(groups).toHaveLength(1);
+
+      // Per-entity audit emits — assert one representative of each kind.
+      // The service writes one row per component / group, so every id in
+      // `components` + `groups` should appear, not a single page-level row.
+      const monitorComponent = components.find((c) => c.type === "monitor");
+      expect(monitorComponent).toBeDefined();
+      if (!monitorComponent) throw new Error("unreachable");
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page_component.create",
+        entityType: "page_component",
+        entityId: monitorComponent.id,
+        db: tx,
+      });
+
+      const group = groups[0];
+      expect(group).toBeDefined();
+      if (!group) throw new Error("unreachable");
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page_component_group.create",
+        entityType: "page_component_group",
+        entityId: group.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects cross-workspace monitorId with ForbiddenError", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        updatePageComponentOrder({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            pageId: testPageId,
+            components: [
+              {
+                order: 0,
+                name: `${TEST_PREFIX}-cross-ws`,
+                type: "monitor",
+                monitorId: freeMonitorId,
+              },
+            ],
+            groups: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects cross-workspace pageId with ForbiddenError", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        updatePageComponentOrder({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            pageId: testPageId, // team's page
+            components: [],
+            groups: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("upserts monitor components without creating duplicates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      // The `(pageId, monitorId)` unique constraint + `onConflictDoUpdate`
+      // is the riskiest path in this service: a regression here would
+      // silently insert duplicate rows on every re-invocation. Run the
+      // service twice with the same `monitorId` — expect exactly one
+      // row, with the second call's values winning the update.
+      await updatePageComponentOrder({
+        ctx,
+        input: {
+          pageId: testPageId,
+          components: [
+            {
+              order: 0,
+              name: `${TEST_PREFIX}-upsert-initial`,
+              type: "monitor",
+              monitorId: teamMonitorId,
             },
           ],
           groups: [],
         },
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-  });
-
-  test("rejects cross-workspace pageId with ForbiddenError", async () => {
-    await expect(
-      updatePageComponentOrder({
-        ctx: freeCtx,
+      });
+      await updatePageComponentOrder({
+        ctx,
         input: {
-          pageId: testPageId, // team's page
-          components: [],
+          pageId: testPageId,
+          components: [
+            {
+              order: 5,
+              name: `${TEST_PREFIX}-upsert-renamed`,
+              type: "monitor",
+              monitorId: teamMonitorId,
+            },
+          ],
           groups: [],
         },
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
-  });
+      });
 
-  test("upserts monitor components without creating duplicates", async () => {
-    // The `(pageId, monitorId)` unique constraint + `onConflictDoUpdate`
-    // is the riskiest path in this service: a regression here would
-    // silently insert duplicate rows on every re-invocation. Run the
-    // service twice with the same `monitorId` — expect exactly one
-    // row, with the second call's values winning the update.
-    await updatePageComponentOrder({
-      ctx: teamCtx,
-      input: {
-        pageId: testPageId,
-        components: [
-          {
-            order: 0,
-            name: `${TEST_PREFIX}-upsert-initial`,
-            type: "monitor",
-            monitorId: teamMonitorId,
-          },
-        ],
-        groups: [],
-      },
+      const rows = await tx
+        .select()
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, testPageId),
+            eq(pageComponent.type, "monitor"),
+            eq(pageComponent.monitorId, teamMonitorId),
+          ),
+        )
+        .all();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.name).toBe(`${TEST_PREFIX}-upsert-renamed`);
+      expect(rows[0]?.order).toBe(5);
     });
-    await updatePageComponentOrder({
-      ctx: teamCtx,
-      input: {
-        pageId: testPageId,
-        components: [
-          {
-            order: 5,
-            name: `${TEST_PREFIX}-upsert-renamed`,
-            type: "monitor",
-            monitorId: teamMonitorId,
-          },
-        ],
-        groups: [],
-      },
-    });
-
-    const rows = await db
-      .select()
-      .from(pageComponent)
-      .where(
-        and(
-          eq(pageComponent.pageId, testPageId),
-          eq(pageComponent.type, "monitor"),
-          eq(pageComponent.monitorId, teamMonitorId),
-        ),
-      )
-      .all();
-    for (const r of rows) createdComponentIds.push(r.id);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.name).toBe(`${TEST_PREFIX}-upsert-renamed`);
-    expect(rows[0]?.order).toBe(5);
   });
 });
 
 describe("listPageComponents", () => {
   test("respects workspace isolation", async () => {
-    const teamResult = await listPageComponents({
-      ctx: teamCtx,
-      input: { pageId: testPageId, order: "asc" },
-    });
-    expect(teamResult.length).toBeGreaterThan(0);
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      // Seed at least one component on the team's page so the team-side
+      // listing has something to return.
+      await updatePageComponentOrder({
+        ctx: teamCtxTx,
+        input: {
+          pageId: testPageId,
+          components: [
+            {
+              order: 0,
+              name: `${TEST_PREFIX}-list-cmp`,
+              type: "static",
+            },
+          ],
+          groups: [],
+        },
+      });
 
-    const freeResult = await listPageComponents({
-      ctx: freeCtx,
-      input: { pageId: testPageId, order: "asc" },
+      const teamResult = await listPageComponents({
+        ctx: teamCtxTx,
+        input: { pageId: testPageId, order: "asc" },
+      });
+      expect(teamResult.length).toBeGreaterThan(0);
+
+      const freeResult = await listPageComponents({
+        ctx: freeCtxTx,
+        input: { pageId: testPageId, order: "asc" },
+      });
+      expect(freeResult).toHaveLength(0);
     });
-    expect(freeResult).toHaveLength(0);
   });
 });
 
 describe("deletePageComponent", () => {
   test("throws NotFoundError for cross-workspace id", async () => {
-    const [anyComponent] = await db
-      .select()
-      .from(pageComponent)
-      .where(eq(pageComponent.pageId, testPageId))
-      .all();
-    if (!anyComponent) {
-      throw new Error("test setup broken: no components present");
-    }
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      // Seed a component on the team page so the cross-workspace delete
+      // has a real target id rather than asserting against an empty page.
+      await updatePageComponentOrder({
+        ctx: teamCtxTx,
+        input: {
+          pageId: testPageId,
+          components: [
+            {
+              order: 0,
+              name: `${TEST_PREFIX}-delete-target`,
+              type: "static",
+            },
+          ],
+          groups: [],
+        },
+      });
+      const [anyComponent] = await tx
+        .select()
+        .from(pageComponent)
+        .where(eq(pageComponent.pageId, testPageId))
+        .all();
+      if (!anyComponent) {
+        throw new Error("test setup broken: no components present");
+      }
 
-    await expect(
-      deletePageComponent({
-        ctx: freeCtx,
-        input: { id: anyComponent.id },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(
+        deletePageComponent({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: anyComponent.id },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 });

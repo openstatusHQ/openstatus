@@ -1,12 +1,5 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-import { db, eq, inArray } from "@openstatus/db";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
 
 import {
@@ -18,10 +11,10 @@ import {
 } from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { NotFoundError } from "../../errors";
@@ -29,156 +22,158 @@ import { NotFoundError } from "../../errors";
 const TEST_PREFIX = "svc-apikey-test";
 
 let teamCtx: ServiceContext;
-const createdKeyIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
 });
 
-afterAll(async () => {
-  if (createdKeyIds.length > 0) {
-    await db.delete(apiKey).where(inArray(apiKey.id, createdKeyIds));
-  }
-});
-
-beforeEach(async () => {
-  await clearAuditLog(teamCtx.workspace.id);
-});
-
 describe("createApiKey", () => {
   test("returns plaintext token once and stores a bcrypt hash", async () => {
-    const { token, key } = await createApiKey({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-create`,
-      },
-    });
-    createdKeyIds.push(key.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token, key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-create` },
+      });
 
-    expect(token).toMatch(/^os_[a-f0-9]{32}$/);
-    expect(key.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(token).toMatch(/^os_[a-f0-9]{32}$/);
+      expect(key.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
 
-    // `hashedToken` is stripped from the service response (see
-    // `api-key/create.ts` — the caller only needs the plaintext
-    // `token` once). Verify the bcrypt hash is actually persisted by
-    // reading the row back from the db.
-    const stored = await db
-      .select({ hashedToken: apiKey.hashedToken })
-      .from(apiKey)
-      .where(eq(apiKey.id, key.id))
-      .get();
-    expect(stored?.hashedToken).toMatch(/^\$2[aby]\$/);
+      const stored = await tx
+        .select({ hashedToken: apiKey.hashedToken })
+        .from(apiKey)
+        .where(eq(apiKey.id, key.id))
+        .get();
+      expect(stored?.hashedToken).toMatch(/^\$2[aby]\$/);
 
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "api_key.create",
-      entityType: "api_key",
-      entityId: key.id,
+      await expectAuditRow({
+        workspaceId: ctx.workspace.id,
+        action: "api_key.create",
+        entityType: "api_key",
+        entityId: key.id,
+        db: tx,
+      });
     });
   });
 });
 
 describe("listApiKeys", () => {
   test("enriches each key with creator info", async () => {
-    const { key } = await createApiKey({
-      ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-list` },
-    });
-    createdKeyIds.push(key.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-list` },
+      });
 
-    const rows = await listApiKeys({ ctx: teamCtx });
-    const found = rows.find((r) => r.id === key.id);
-    expect(found).toBeDefined();
-    expect(found?.createdBy?.id).toBe(1);
+      const rows = await listApiKeys({ ctx });
+      const found = rows.find((r) => r.id === key.id);
+      expect(found).toBeDefined();
+      expect(found?.createdBy?.id).toBe(1);
+    });
   });
 });
 
 describe("revokeApiKey", () => {
   test("deletes the key and throws NotFoundError for unknown ids", async () => {
-    const { key } = await createApiKey({
-      ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-revoke` },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-revoke` },
+      });
+
+      await revokeApiKey({ ctx, input: { id: key.id } });
+
+      const row = await tx
+        .select({ id: apiKey.id })
+        .from(apiKey)
+        .where(eq(apiKey.id, key.id))
+        .get();
+      expect(row).toBeUndefined();
+
+      await expect(
+        revokeApiKey({ ctx, input: { id: 999_999_999 } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
-
-    await revokeApiKey({ ctx: teamCtx, input: { id: key.id } });
-
-    const row = await db
-      .select({ id: apiKey.id })
-      .from(apiKey)
-      .where(eq(apiKey.id, key.id))
-      .get();
-    expect(row).toBeUndefined();
-
-    await expect(
-      revokeApiKey({ ctx: teamCtx, input: { id: 999_999_999 } }),
-    ).rejects.toBeInstanceOf(NotFoundError);
   });
 });
 
 describe("verifyApiKey", () => {
   test("resolves the stored row for a valid token", async () => {
-    const { token, key } = await createApiKey({
-      ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-verify` },
-    });
-    createdKeyIds.push(key.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token, key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-verify` },
+      });
 
-    const row = await verifyApiKey({ token });
-    expect(row?.id).toBe(key.id);
+      const row = await verifyApiKey({ token }, { db: tx });
+      expect(row?.id).toBe(key.id);
+    });
   });
 
   test("returns null for malformed tokens", async () => {
-    const row = await verifyApiKey({ token: "not-an-os-key" });
-    expect(row).toBeNull();
+    await withTestTransaction(async (tx) => {
+      const row = await verifyApiKey({ token: "not-an-os-key" }, { db: tx });
+      expect(row).toBeNull();
+    });
   });
 
   test("returns null for a prefix-match with wrong body", async () => {
-    const { token, key } = await createApiKey({
-      ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-verify-wrong` },
-    });
-    createdKeyIds.push(key.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-verify-wrong` },
+      });
 
-    // Swap the body after the prefix with another random hex sequence so
-    // prefix hits but hash comparison fails.
-    const wrong = `${token.slice(0, 11)}${"f".repeat(24)}`;
-    const row = await verifyApiKey({ token: wrong });
-    expect(row).toBeNull();
+      const wrong = `${token.slice(0, 11)}${"f".repeat(24)}`;
+      const row = await verifyApiKey({ token: wrong }, { db: tx });
+      expect(row).toBeNull();
+    });
   });
 });
 
 describe("updateApiKeyLastUsed", () => {
   test("skips the write when lastUsedAt is recent", async () => {
-    const { key } = await createApiKey({
-      ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-lastused` },
-    });
-    createdKeyIds.push(key.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-lastused` },
+      });
 
-    const now = new Date();
-    const wrote = await updateApiKeyLastUsed({
-      id: key.id,
-      lastUsedAt: now,
+      const now = new Date();
+      const wrote = await updateApiKeyLastUsed(
+        { id: key.id, lastUsedAt: now },
+        { db: tx },
+      );
+      expect(wrote).toBe(false);
     });
-    expect(wrote).toBe(false);
   });
 
   test("writes when lastUsedAt is null or past the debounce window", async () => {
-    const { key } = await createApiKey({
-      ctx: teamCtx,
-      input: { name: `${TEST_PREFIX}-lastused-null` },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-lastused-null` },
+      });
+
+      const wrote = await updateApiKeyLastUsed(
+        { id: key.id, lastUsedAt: null },
+        { db: tx },
+      );
+      expect(wrote).toBe(true);
+
+      const row = await tx
+        .select({ lastUsedAt: apiKey.lastUsedAt })
+        .from(apiKey)
+        .where(eq(apiKey.id, key.id))
+        .get();
+      expect(row?.lastUsedAt).toBeInstanceOf(Date);
     });
-    createdKeyIds.push(key.id);
-
-    const wrote = await updateApiKeyLastUsed({ id: key.id, lastUsedAt: null });
-    expect(wrote).toBe(true);
-
-    const row = await db
-      .select({ lastUsedAt: apiKey.lastUsedAt })
-      .from(apiKey)
-      .where(eq(apiKey.id, key.id))
-      .get();
-    expect(row?.lastUsedAt).toBeInstanceOf(Date);
   });
 });

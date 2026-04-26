@@ -1,7 +1,11 @@
 import { eq } from "@openstatus/db";
 import { monitorTag } from "@openstatus/db/src/schema";
 
-import { type ServiceContext, getReadDb } from "../context";
+import {
+  type DrizzleClient,
+  type ServiceContext,
+  getReadDb,
+} from "../context";
 import { ListMonitorTagsInput } from "./schemas";
 
 /**
@@ -18,7 +22,11 @@ export async function listMonitorTags(args: {
   input?: ListMonitorTagsInput;
 }) {
   ListMonitorTagsInput.parse(args.input ?? {});
-  const db = getReadDb(args.ctx);
+  // Cast through `DrizzleClient` so the relational `query` API preserves
+  // its inferred return type. `DB = DrizzleClient | DrizzleTx` widens
+  // the call result to `unknown` under the union; runtime is identical
+  // (both expose the same `.query.<table>.findMany` shape).
+  const db = getReadDb(args.ctx) as DrizzleClient;
 
   return db.query.monitorTag.findMany({
     where: eq(monitorTag.workspaceId, args.ctx.workspace.id),

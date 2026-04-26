@@ -1,12 +1,5 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-import { db, eq, inArray } from "@openstatus/db";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { db, eq } from "@openstatus/db";
 import {
   monitor,
   notification,
@@ -19,10 +12,10 @@ import {
 } from "../../../test/fixtures";
 import {
   cleanQuotaGatedTables,
-  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import {
@@ -41,7 +34,6 @@ const TEST_PREFIX = "svc-notification-test";
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
-const createdNotificationIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -72,320 +64,329 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (createdNotificationIds.length > 0) {
-    await db
-      .delete(notification)
-      .where(inArray(notification.id, createdNotificationIds))
-      .catch(() => undefined);
-  }
   await db
     .delete(monitor)
     .where(eq(monitor.id, teamMonitorId))
     .catch(() => undefined);
 });
 
-beforeEach(async () => {
-  await clearAuditLog(teamCtx.workspace.id);
-  await clearAuditLog(freeCtx.workspace.id);
-});
-
-function track(id: number) {
-  createdNotificationIds.push(id);
-  return id;
-}
-
 describe("createNotification", () => {
   test("creates a discord channel with monitors + audits", async () => {
-    const row = await createNotification({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-discord`,
-        provider: "discord",
-        data: { discord: "https://discord.com/api/webhooks/1/abc" },
-        monitors: [teamMonitorId],
-      },
-    });
-    track(row.id);
-    expect(row.provider).toBe("discord");
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createNotification({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-discord`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [teamMonitorId],
+        },
+      });
+      expect(row.provider).toBe("discord");
 
-    const assoc = await db
-      .select()
-      .from(notificationsToMonitors)
-      .where(eq(notificationsToMonitors.notificationId, row.id))
-      .all();
-    expect(assoc.map((a) => a.monitorId)).toEqual([teamMonitorId]);
+      const assoc = await tx
+        .select()
+        .from(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.notificationId, row.id))
+        .all();
+      expect(assoc.map((a) => a.monitorId)).toEqual([teamMonitorId]);
 
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "notification.create",
-      entityType: "notification",
-      entityId: row.id,
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "notification.create",
+        entityType: "notification",
+        entityId: row.id,
+        db: tx,
+      });
     });
   });
 
   test("throws ValidationError for malformed data", async () => {
-    await expect(
-      createNotification({
-        ctx: teamCtx,
-        input: {
-          name: `${TEST_PREFIX}-bad`,
-          provider: "discord",
-          // missing the required `discord` key
-          data: {},
-          monitors: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(ValidationError);
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createNotification({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-bad`,
+            provider: "discord",
+            // missing the required `discord` key
+            data: {},
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
   });
 
   test("throws ValidationError when data payload key doesn't match provider", async () => {
-    await expect(
-      createNotification({
-        ctx: teamCtx,
-        input: {
-          name: `${TEST_PREFIX}-mismatch`,
-          provider: "discord",
-          // Valid slack payload, but provider is discord → rejected.
-          data: { slack: "https://hooks.slack.com/services/x/y/z" },
-          monitors: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(ValidationError);
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createNotification({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-mismatch`,
+            provider: "discord",
+            // Valid slack payload, but provider is discord → rejected.
+            data: { slack: "https://hooks.slack.com/services/x/y/z" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
   });
 
   test("throws ValidationError when provider payload is malformed but another provider's is valid", async () => {
-    // The canonical data schema for the selected provider must match.
-    // A plain key-presence check would have missed this: `discord: "not-a-url"`
-    // fails `urlSchema`, but a valid `slack` field could've hidden it.
-    await expect(
-      createNotification({
-        ctx: teamCtx,
-        input: {
-          name: `${TEST_PREFIX}-invalid-payload`,
-          provider: "discord",
-          data: {
-            discord: "not-a-url",
-            slack: "https://hooks.slack.com/services/x/y/z",
+    await withTestTransaction(async (tx) => {
+      // The canonical data schema for the selected provider must match.
+      // A plain key-presence check would have missed this: `discord: "not-a-url"`
+      // fails `urlSchema`, but a valid `slack` field could've hidden it.
+      await expect(
+        createNotification({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-invalid-payload`,
+            provider: "discord",
+            data: {
+              discord: "not-a-url",
+              slack: "https://hooks.slack.com/services/x/y/z",
+            },
+            monitors: [],
           },
-          monitors: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(ValidationError);
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
   });
 
   test("throws LimitExceededError when plan blocks the provider", async () => {
-    // free plan has `pagerduty: false`.
-    await expect(
-      createNotification({
-        ctx: freeCtx,
-        input: {
-          name: `${TEST_PREFIX}-gated`,
-          provider: "pagerduty",
-          data: {
-            pagerduty: JSON.stringify({
-              integration_keys: [{ id: "k1", integration_key: "x" }],
-            }),
+    await withTestTransaction(async (tx) => {
+      // free plan has `pagerduty: false`.
+      await expect(
+        createNotification({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-gated`,
+            provider: "pagerduty",
+            data: {
+              pagerduty: JSON.stringify({
+                integration_keys: [{ id: "k1", integration_key: "x" }],
+              }),
+            },
+            monitors: [],
           },
-          monitors: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(LimitExceededError);
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
   });
 
   test("throws ForbiddenError for cross-workspace monitor", async () => {
-    await expect(
-      createNotification({
-        ctx: freeCtx,
-        input: {
-          name: `${TEST_PREFIX}-cross-ws`,
-          provider: "discord",
-          data: { discord: "https://discord.com/api/webhooks/1/abc" },
-          monitors: [teamMonitorId], // team's monitor
-        },
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenError);
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createNotification({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-cross-ws`,
+            provider: "discord",
+            data: { discord: "https://discord.com/api/webhooks/1/abc" },
+            monitors: [teamMonitorId], // team's monitor
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
   });
 });
 
 describe("updateNotification", () => {
   test("replaces name / data / monitor associations", async () => {
-    const row = await createNotification({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-update`,
-        provider: "discord",
-        data: { discord: "https://discord.com/api/webhooks/1/abc" },
-        monitors: [teamMonitorId],
-      },
-    });
-    track(row.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createNotification({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-update`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [teamMonitorId],
+        },
+      });
 
-    const updated = await updateNotification({
-      ctx: teamCtx,
-      input: {
-        id: row.id,
-        name: `${TEST_PREFIX}-update-renamed`,
-        data: { discord: "https://discord.com/api/webhooks/2/def" },
-        monitors: [],
-      },
-    });
-    expect(updated.name).toBe(`${TEST_PREFIX}-update-renamed`);
+      const updated = await updateNotification({
+        ctx,
+        input: {
+          id: row.id,
+          name: `${TEST_PREFIX}-update-renamed`,
+          data: { discord: "https://discord.com/api/webhooks/2/def" },
+          monitors: [],
+        },
+      });
+      expect(updated.name).toBe(`${TEST_PREFIX}-update-renamed`);
 
-    const assoc = await db
-      .select()
-      .from(notificationsToMonitors)
-      .where(eq(notificationsToMonitors.notificationId, row.id))
-      .all();
-    expect(assoc).toHaveLength(0);
+      const assoc = await tx
+        .select()
+        .from(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.notificationId, row.id))
+        .all();
+      expect(assoc).toHaveLength(0);
+    });
   });
 
   test("throws NotFoundError for cross-workspace update", async () => {
-    const row = await createNotification({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-cross-ws-update`,
-        provider: "discord",
-        data: { discord: "https://discord.com/api/webhooks/1/abc" },
-        monitors: [],
-      },
-    });
-    track(row.id);
-
-    await expect(
-      updateNotification({
-        ctx: freeCtx,
+    await withTestTransaction(async (tx) => {
+      const row = await createNotification({
+        ctx: { ...teamCtx, db: tx },
         input: {
-          id: row.id,
-          name: "blocked",
-          data: { discord: "https://discord.com/api/webhooks/x/y" },
+          name: `${TEST_PREFIX}-cross-ws-update`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
           monitors: [],
         },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+      });
+
+      await expect(
+        updateNotification({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            id: row.id,
+            name: "blocked",
+            data: { discord: "https://discord.com/api/webhooks/x/y" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 
   test("emits a notification.update audit row", async () => {
-    const row = await createNotification({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-update-audit`,
-        provider: "discord",
-        data: { discord: "https://discord.com/api/webhooks/1/abc" },
-        monitors: [],
-      },
-    });
-    track(row.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createNotification({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-update-audit`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [],
+        },
+      });
 
-    await updateNotification({
-      ctx: teamCtx,
-      input: {
-        id: row.id,
-        name: `${TEST_PREFIX}-update-audit-renamed`,
-        data: { discord: "https://discord.com/api/webhooks/2/def" },
-        monitors: [],
-      },
-    });
+      await updateNotification({
+        ctx,
+        input: {
+          id: row.id,
+          name: `${TEST_PREFIX}-update-audit-renamed`,
+          data: { discord: "https://discord.com/api/webhooks/2/def" },
+          monitors: [],
+        },
+      });
 
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "notification.update",
-      entityType: "notification",
-      entityId: row.id,
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "notification.update",
+        entityType: "notification",
+        entityId: row.id,
+        db: tx,
+      });
     });
   });
 
   test("throws LimitExceededError when plan gate blocks update", async () => {
-    // Regression for the post-downgrade case: the row was created on a
-    // plan that allowed pagerduty, but the current workspace no longer
-    // does. The pre-fix update flow never re-checked the gate, so an
-    // editable form field remained open to channels the plan had since
-    // revoked. Simulate it by bypassing the create-time gate with a
-    // direct db insert bound to the free workspace.
-    const [inserted] = await db
-      .insert(notification)
-      .values({
-        workspaceId: SEEDED_WORKSPACE_FREE_ID,
-        name: `${TEST_PREFIX}-downgrade-gate`,
-        provider: "pagerduty",
-        data: JSON.stringify({
-          pagerduty: JSON.stringify({
-            integration_keys: [{ id: "k1", integration_key: "x" }],
-          }),
-        }),
-      })
-      .returning();
-    if (!inserted) throw new Error("direct insert failed");
-    track(inserted.id);
-
-    await expect(
-      updateNotification({
-        ctx: freeCtx,
-        input: {
-          id: inserted.id,
-          name: "would-be-rename",
-          data: {
+    await withTestTransaction(async (tx) => {
+      // Regression for the post-downgrade case: the row was created on a
+      // plan that allowed pagerduty, but the current workspace no longer
+      // does. The pre-fix update flow never re-checked the gate, so an
+      // editable form field remained open to channels the plan had since
+      // revoked. Simulate it by bypassing the create-time gate with a
+      // direct db insert bound to the free workspace.
+      const [inserted] = await tx
+        .insert(notification)
+        .values({
+          workspaceId: SEEDED_WORKSPACE_FREE_ID,
+          name: `${TEST_PREFIX}-downgrade-gate`,
+          provider: "pagerduty",
+          data: JSON.stringify({
             pagerduty: JSON.stringify({
-              integration_keys: [{ id: "k1", integration_key: "y" }],
+              integration_keys: [{ id: "k1", integration_key: "x" }],
             }),
+          }),
+        })
+        .returning();
+      if (!inserted) throw new Error("direct insert failed");
+
+      await expect(
+        updateNotification({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            id: inserted.id,
+            name: "would-be-rename",
+            data: {
+              pagerduty: JSON.stringify({
+                integration_keys: [{ id: "k1", integration_key: "y" }],
+              }),
+            },
+            monitors: [],
           },
-          monitors: [],
-        },
-      }),
-    ).rejects.toBeInstanceOf(LimitExceededError);
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
   });
 });
 
 describe("deleteNotification", () => {
   test("removes the row", async () => {
-    const row = await createNotification({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-delete`,
-        provider: "discord",
-        data: { discord: "https://discord.com/api/webhooks/1/abc" },
-        monitors: [],
-      },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createNotification({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-delete`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [],
+        },
+      });
+
+      await deleteNotification({ ctx, input: { id: row.id } });
+
+      const remaining = await tx
+        .select()
+        .from(notification)
+        .where(eq(notification.id, row.id))
+        .all();
+      expect(remaining).toHaveLength(0);
     });
-    track(row.id);
-
-    await deleteNotification({ ctx: teamCtx, input: { id: row.id } });
-
-    const remaining = await db
-      .select()
-      .from(notification)
-      .where(eq(notification.id, row.id))
-      .all();
-    expect(remaining).toHaveLength(0);
   });
 });
 
 describe("list / get", () => {
   test("list returns enriched monitors scoped to the workspace", async () => {
-    const row = await createNotification({
-      ctx: teamCtx,
-      input: {
-        name: `${TEST_PREFIX}-enrich`,
-        provider: "discord",
-        data: { discord: "https://discord.com/api/webhooks/1/abc" },
-        monitors: [teamMonitorId],
-      },
-    });
-    track(row.id);
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const row = await createNotification({
+        ctx: teamCtxTx,
+        input: {
+          name: `${TEST_PREFIX}-enrich`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [teamMonitorId],
+        },
+      });
 
-    const full = await getNotification({
-      ctx: teamCtx,
-      input: { id: row.id },
-    });
-    expect(full.monitors.map((m) => m.id)).toEqual([teamMonitorId]);
+      const full = await getNotification({
+        ctx: teamCtxTx,
+        input: { id: row.id },
+      });
+      expect(full.monitors.map((m) => m.id)).toEqual([teamMonitorId]);
 
-    await expect(
-      getNotification({ ctx: freeCtx, input: { id: row.id } }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(
+        getNotification({ ctx: freeCtxTx, input: { id: row.id } }),
+      ).rejects.toBeInstanceOf(NotFoundError);
 
-    const { items: freeItems } = await listNotifications({
-      ctx: freeCtx,
-      input: { limit: 100, offset: 0, order: "desc" },
+      const { items: freeItems } = await listNotifications({
+        ctx: freeCtxTx,
+        input: { limit: 100, offset: 0, order: "desc" },
+      });
+      expect(freeItems.find((n) => n.id === row.id)).toBeUndefined();
     });
-    expect(freeItems.find((n) => n.id === row.id)).toBeUndefined();
   });
 });

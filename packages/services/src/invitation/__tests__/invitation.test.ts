@@ -1,12 +1,5 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-import { db, eq, inArray } from "@openstatus/db";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { db, eq } from "@openstatus/db";
 import { invitation, user, usersToWorkspaces } from "@openstatus/db/src/schema";
 
 import {
@@ -21,10 +14,10 @@ import {
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
 import {
-  clearAuditLog,
   expectAuditRow,
   loadSeededWorkspace,
   makeUserCtx,
+  withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { LimitExceededError, NotFoundError } from "../../errors";
@@ -33,7 +26,6 @@ const TEST_PREFIX = "svc-inv-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
-const createdInvitationIds: number[] = [];
 
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
@@ -76,18 +68,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (createdInvitationIds.length > 0) {
-    await db
-      .delete(invitation)
-      .where(inArray(invitation.id, createdInvitationIds));
-  }
   await db
     .delete(usersToWorkspaces)
     .where(eq(usersToWorkspaces.workspaceId, SEEDED_WORKSPACE_FREE_ID))
     .catch(() => undefined);
   // `acceptInvitation` test seeded user 3 as the accepting user —
-  // clean up membership (test does this in-test, but harmless to
-  // re-run) and the user row itself.
+  // clean up membership and the user row itself.
   await db
     .delete(usersToWorkspaces)
     .where(eq(usersToWorkspaces.userId, 3))
@@ -98,166 +84,174 @@ afterAll(async () => {
     .catch(() => undefined);
 });
 
-beforeEach(async () => {
-  await clearAuditLog(teamCtx.workspace.id);
-  await clearAuditLog(freeCtx.workspace.id);
-});
-
 describe("createInvitation", () => {
   test("creates an invitation scoped to the caller's workspace", async () => {
-    const email = `${TEST_PREFIX}-${Date.now()}@example.com`;
-    const row = await createInvitation({
-      ctx: teamCtx,
-      input: { email },
-    });
-    createdInvitationIds.push(row.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const email = `${TEST_PREFIX}-${Date.now()}@example.com`;
+      const row = await createInvitation({
+        ctx,
+        input: { email },
+      });
 
-    expect(row.email).toBe(email);
-    expect(row.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
-    expect(row.token).toBeDefined();
-    expect(row.expiresAt.getTime()).toBeGreaterThan(Date.now());
+      expect(row.email).toBe(email);
+      expect(row.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(row.token).toBeDefined();
+      expect(row.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
-    await expectAuditRow({
-      workspaceId: teamCtx.workspace.id,
-      action: "invitation.create",
-      entityType: "invitation",
-      entityId: row.id,
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "invitation.create",
+        entityType: "invitation",
+        entityId: row.id,
+        db: tx,
+      });
     });
   });
 
   test("enforces the members plan cap on free workspace", async () => {
-    // Free plan has `members: 1` — the owner already occupies that slot.
-    await expect(
-      createInvitation({
-        ctx: freeCtx,
-        input: { email: `${TEST_PREFIX}-overflow@example.com` },
-      }),
-    ).rejects.toBeInstanceOf(LimitExceededError);
+    await withTestTransaction(async (tx) => {
+      // Free plan has `members: 1` — the owner already occupies that slot.
+      await expect(
+        createInvitation({
+          ctx: { ...freeCtx, db: tx },
+          input: { email: `${TEST_PREFIX}-overflow@example.com` },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
   });
 });
 
 describe("listInvitations", () => {
   test("returns pending invitations for the workspace only", async () => {
-    const email = `${TEST_PREFIX}-list-${Date.now()}@example.com`;
-    const created = await createInvitation({
-      ctx: teamCtx,
-      input: { email },
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const email = `${TEST_PREFIX}-list-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx: teamCtxTx,
+        input: { email },
+      });
+
+      const rows = await listInvitations({ ctx: teamCtxTx });
+      const ids = rows.map((r) => r.id);
+      expect(ids).toContain(created.id);
+
+      const freeRows = await listInvitations({ ctx: freeCtxTx });
+      expect(freeRows.map((r) => r.id)).not.toContain(created.id);
     });
-    createdInvitationIds.push(created.id);
-
-    const rows = await listInvitations({ ctx: teamCtx });
-    const ids = rows.map((r) => r.id);
-    expect(ids).toContain(created.id);
-
-    const freeRows = await listInvitations({ ctx: freeCtx });
-    expect(freeRows.map((r) => r.id)).not.toContain(created.id);
   });
 });
 
 describe("getInvitationByToken", () => {
   test("resolves by token + email", async () => {
-    const email = `${TEST_PREFIX}-token-${Date.now()}@example.com`;
-    const created = await createInvitation({
-      ctx: teamCtx,
-      input: { email },
-    });
-    createdInvitationIds.push(created.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const email = `${TEST_PREFIX}-token-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx,
+        input: { email },
+      });
 
-    const row = await getInvitationByToken({
-      ctx: teamCtx,
-      input: { token: created.token, email },
+      const row = await getInvitationByToken({
+        ctx,
+        input: { token: created.token, email },
+      });
+      expect(row.id).toBe(created.id);
+      expect(row.workspace.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
     });
-    expect(row.id).toBe(created.id);
-    expect(row.workspace.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
   });
 
   test("rejects a valid token for the wrong email", async () => {
-    const email = `${TEST_PREFIX}-mismatch-${Date.now()}@example.com`;
-    const created = await createInvitation({
-      ctx: teamCtx,
-      input: { email },
-    });
-    createdInvitationIds.push(created.id);
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const email = `${TEST_PREFIX}-mismatch-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx,
+        input: { email },
+      });
 
-    await expect(
-      getInvitationByToken({
-        ctx: teamCtx,
-        input: {
-          token: created.token,
-          email: `other-${email}`,
-        },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+      await expect(
+        getInvitationByToken({
+          ctx,
+          input: {
+            token: created.token,
+            email: `other-${email}`,
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 });
 
 describe("deleteInvitation", () => {
   test("removes the row and is scoped to the caller's workspace", async () => {
-    const email = `${TEST_PREFIX}-delete-${Date.now()}@example.com`;
-    const created = await createInvitation({
-      ctx: teamCtx,
-      input: { email },
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const email = `${TEST_PREFIX}-delete-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx,
+        input: { email },
+      });
+
+      await deleteInvitation({ ctx, input: { id: created.id } });
+
+      const row = await tx
+        .select({ id: invitation.id })
+        .from(invitation)
+        .where(eq(invitation.id, created.id))
+        .get();
+      expect(row).toBeUndefined();
     });
-
-    await deleteInvitation({ ctx: teamCtx, input: { id: created.id } });
-
-    const row = await db
-      .select({ id: invitation.id })
-      .from(invitation)
-      .where(eq(invitation.id, created.id))
-      .get();
-    expect(row).toBeUndefined();
   });
 });
 
 describe("acceptInvitation", () => {
   test("stamps acceptedAt and inserts a workspace membership", async () => {
-    // The user id comes from `ctx.actor`, not from input — so we build
-    // a ctx scoped to the accepting user rather than passing an id.
-    const acceptingUserId = 3;
-    const email = `${TEST_PREFIX}-accept-${acceptingUserId}-${Date.now()}@example.com`;
-    const created = await createInvitation({
-      ctx: teamCtx,
-      input: { email },
-    });
-    createdInvitationIds.push(created.id);
-    const acceptingCtx = makeUserCtx(teamCtx.workspace, {
-      userId: acceptingUserId,
-    });
+    await withTestTransaction(async (tx) => {
+      // The user id comes from `ctx.actor`, not from input — so we build
+      // a ctx scoped to the accepting user rather than passing an id.
+      const acceptingUserId = 3;
+      const email = `${TEST_PREFIX}-accept-${acceptingUserId}-${Date.now()}@example.com`;
+      const created = await createInvitation({
+        ctx: { ...teamCtx, db: tx },
+        input: { email },
+      });
+      const acceptingCtx = {
+        ...makeUserCtx(teamCtx.workspace, { userId: acceptingUserId }),
+        db: tx,
+      };
 
-    try {
       const workspaceRow = await acceptInvitation({
         ctx: acceptingCtx,
         input: { id: created.id, email },
       });
       expect(workspaceRow.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
 
-      const updated = await db
+      const updated = await tx
         .select()
         .from(invitation)
         .where(eq(invitation.id, created.id))
         .get();
       expect(updated?.acceptedAt).not.toBeNull();
 
-      const membership = await db
+      const membership = await tx
         .select()
         .from(usersToWorkspaces)
         .where(eq(usersToWorkspaces.userId, acceptingUserId))
         .get();
       expect(membership?.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
-    } finally {
-      await db
-        .delete(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, acceptingUserId));
-    }
+    });
   });
 
   test("throws NotFoundError for an unknown or wrong-email invitation", async () => {
-    await expect(
-      acceptInvitation({
-        ctx: teamCtx,
-        input: { id: 999_999, email: "nope@example.com" },
-      }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+    await withTestTransaction(async (tx) => {
+      await expect(
+        acceptInvitation({
+          ctx: { ...teamCtx, db: tx },
+          input: { id: 999_999, email: "nope@example.com" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
   });
 });

@@ -9,8 +9,44 @@ import {
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
 
-import type { Actor, ServiceContext } from "../src/context";
+import type { Actor, DB, DrizzleTx, ServiceContext } from "../src/context";
 import type { Workspace } from "../src/types";
+
+class RollbackSignal extends Error {}
+
+/**
+ * Wrap a test body in a transaction that always rolls back, so per-test
+ * writes (rows, audit log entries, etc.) never reach the committed db.
+ *
+ * Usage:
+ *   await withTestTransaction(async (tx) => {
+ *     const ctx = { ...makeUserCtx(workspace), db: tx };
+ *     await createPage({ ctx, input });
+ *     await expectAuditRow({ ..., db: tx });
+ *   });
+ *
+ * Constraints:
+ *   - Top-level test wrapper only. Don't call inside service code or
+ *     nest two `withTestTransaction` calls — libsql HTTP doesn't
+ *     support savepoints.
+ *   - Inside the callback, replace any `db.select(...)` /
+ *     `db.insert(...)` / `db.delete(...)` with the same call on `tx`.
+ *     Reads via committed `db` will not see the in-tx writes.
+ */
+export async function withTestTransaction<T>(
+  fn: (tx: DrizzleTx) => Promise<T>,
+): Promise<T> {
+  let result!: T;
+  try {
+    await db.transaction(async (tx) => {
+      result = await fn(tx);
+      throw new RollbackSignal();
+    });
+  } catch (e) {
+    if (!(e instanceof RollbackSignal)) throw e;
+  }
+  return result;
+}
 
 /**
  * Clear leftover quota-gated rows on a workspace so tests that rely on
@@ -51,8 +87,12 @@ export async function cleanQuotaGatedTables(
 }
 
 /** Wipe audit_log rows for a workspace. Call in `beforeEach` / `afterEach`. */
-export async function clearAuditLog(workspaceId: number): Promise<void> {
-  await db
+export async function clearAuditLog(
+  workspaceId: number,
+  opts: { db?: DB } = {},
+): Promise<void> {
+  const conn = opts.db ?? db;
+  await conn
     .delete(auditLog)
     .where(eq(auditLog.workspaceId, workspaceId))
     .catch(() => undefined);
@@ -145,7 +185,9 @@ export async function readAuditLog(filter: {
   workspaceId: number;
   entityType?: string;
   entityId?: string | number;
+  db?: DB;
 }): Promise<(typeof auditLog.$inferSelect)[]> {
+  const conn = filter.db ?? db;
   const clauses = [eq(auditLog.workspaceId, filter.workspaceId)];
   if (filter.entityType !== undefined) {
     clauses.push(eq(auditLog.entityType, filter.entityType));
@@ -153,7 +195,7 @@ export async function readAuditLog(filter: {
   if (filter.entityId !== undefined) {
     clauses.push(eq(auditLog.entityId, String(filter.entityId)));
   }
-  return db
+  return conn
     .select()
     .from(auditLog)
     .where(and(...clauses))
@@ -173,12 +215,14 @@ export async function expectAuditRow(match: {
   entityType: string;
   entityId: string | number;
   actorType?: Actor["type"];
+  db?: DB;
 }): Promise<void> {
   const expectedEntityId = String(match.entityId);
   const rows = await readAuditLog({
     workspaceId: match.workspaceId,
     entityType: match.entityType,
     entityId: expectedEntityId,
+    db: match.db,
   });
   const hit = rows.find(
     (row) =>
