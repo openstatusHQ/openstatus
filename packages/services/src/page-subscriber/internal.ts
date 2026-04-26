@@ -37,16 +37,8 @@ export async function loadPageForWorkspace(args: {
  * plan is `false`. Preserves the legacy FORBIDDEN semantics (not 429) —
  * it's not a rate limit, the feature is a tier upsell.
  */
-export function assertSubscribersAllowed(pageWithWorkspace: {
-  workspace: unknown;
-}): void {
-  const workspace = selectWorkspaceSchema.safeParse(
-    pageWithWorkspace.workspace,
-  );
-  if (!workspace.success) {
-    throw new ValidationError("Workspace data is invalid");
-  }
-  if (!workspace.data.limits["status-subscribers"]) {
+export function assertSubscribersAllowed(workspace: Workspace): void {
+  if (!workspace.limits["status-subscribers"]) {
     throw new ForbiddenError("Upgrade to use status subscribers");
   }
 }

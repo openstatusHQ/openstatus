@@ -11,7 +11,11 @@ import { assertSafeUrl } from "@openstatus/utils";
 import { emitAudit } from "../audit";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, ValidationError } from "../errors";
-import { assertSubscribersAllowed, loadPageForWorkspace } from "./internal";
+import {
+  assertSubscribersAllowed,
+  loadPageForWorkspace,
+  parseWorkspaceForContext,
+} from "./internal";
 import { CreatePageSubscriberInput } from "./schemas";
 
 export type CreatePageSubscriberResult = {
@@ -71,7 +75,9 @@ export async function createPageSubscriber(args: {
       pageId: input.pageId,
       workspaceId: ctx.workspace.id,
     });
-    assertSubscribersAllowed(pageWithWorkspace);
+    assertSubscribersAllowed(
+      parseWorkspaceForContext(pageWithWorkspace.workspace),
+    );
 
     if (componentIds.length > 0) {
       const valid = await tx

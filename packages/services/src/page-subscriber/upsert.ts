@@ -68,7 +68,7 @@ export async function upsertSelfSignupSubscriber(args: {
   // Plan-gate before any DB writes — same upsell semantics as the
   // dashboard `createPageSubscriber` path. Free-plan pages don't
   // accept self-signups; the row never exists.
-  assertSubscribersAllowed({ workspace });
+  assertSubscribersAllowed(workspace);
 
   if (componentIds.length > 0) {
     const valid = await readDb
