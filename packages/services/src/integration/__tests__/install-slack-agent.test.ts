@@ -81,9 +81,7 @@ describe("installSlackAgent", () => {
       expect(row.before).toBeNull();
       // Bot token must never appear in the snapshot.
       expect(JSON.stringify(row.after)).not.toContain("xoxb-secret");
-      expect(
-        (row.after as Record<string, unknown>).credential,
-      ).toBeUndefined();
+      expect((row.after as Record<string, unknown>).credential).toBeUndefined();
     });
   });
 
@@ -228,9 +226,9 @@ describe("installSlackAgent", () => {
         entityType: "integration",
         db: tx,
       });
-      expect(
-        all.find((r) => r.action === "integration.delete")?.entityId,
-      ).toBe(String(first.id));
+      expect(all.find((r) => r.action === "integration.delete")?.entityId).toBe(
+        String(first.id),
+      );
       const updateRow = all.find((r) => r.action === "integration.update");
       expect(updateRow?.entityId).toBe(String(second.id));
       // The deleted sibling's snapshot must carry the fingerprint, same

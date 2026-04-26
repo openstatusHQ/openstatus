@@ -1,11 +1,7 @@
 import { eq } from "@openstatus/db";
 import { monitorTag } from "@openstatus/db/src/schema";
 
-import {
-  type DrizzleClient,
-  type ServiceContext,
-  getReadDb,
-} from "../context";
+import { type DrizzleClient, type ServiceContext, getReadDb } from "../context";
 import { ListMonitorTagsInput } from "./schemas";
 
 /**

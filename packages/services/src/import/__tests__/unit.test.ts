@@ -129,9 +129,7 @@ describe("addLimitWarnings", () => {
     test("no warning when components phase is empty", async () => {
       await withTestTransaction(async (tx) => {
         const summary = makeSummary({
-          phases: [
-            { phase: "components", status: "completed", resources: [] },
-          ],
+          phases: [{ phase: "components", status: "completed", resources: [] }],
         });
 
         await addLimitWarnings(summary, {

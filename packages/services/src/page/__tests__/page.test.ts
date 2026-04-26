@@ -268,9 +268,9 @@ describe("list / get / getSlugAvailable", () => {
         input: { title: "Slug", slug: uniqueSlug("slug") },
       });
 
-      expect(
-        await getSlugAvailable({ ctx, input: { slug: p.slug } }),
-      ).toBe(false);
+      expect(await getSlugAvailable({ ctx, input: { slug: p.slug } })).toBe(
+        false,
+      );
       expect(await getSlugAvailable({ ctx, input: { slug: "api" } })).toBe(
         false,
       );
