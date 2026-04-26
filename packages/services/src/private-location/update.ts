@@ -27,6 +27,11 @@ export async function updatePrivateLocation(args: {
   const { ctx } = args;
   const input = UpdatePrivateLocationInput.parse(args.input);
 
+  // The pivot table has no UNIQUE (private_location_id, monitor_id)
+  // constraint, so duplicate input ids would silently produce duplicate
+  // FK rows. Dedupe before insert; the audit snapshot follows suit.
+  const monitorIds = Array.from(new Set(input.monitors));
+
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.privateLocation.findFirst({
       where: and(
@@ -45,7 +50,7 @@ export async function updatePrivateLocation(args: {
     await assertMonitorsInWorkspace({
       tx,
       workspaceId: ctx.workspace.id,
-      monitorIds: input.monitors,
+      monitorIds,
     });
 
     const row = await tx
@@ -71,9 +76,9 @@ export async function updatePrivateLocation(args: {
       .delete(privateLocationToMonitors)
       .where(eq(privateLocationToMonitors.privateLocationId, row.id));
 
-    if (input.monitors.length > 0) {
+    if (monitorIds.length > 0) {
       await tx.insert(privateLocationToMonitors).values(
-        input.monitors.map((monitorId) => ({
+        monitorIds.map((monitorId) => ({
           privateLocationId: row.id,
           monitorId,
         })),
@@ -97,7 +102,7 @@ export async function updatePrivateLocation(args: {
       },
       after: {
         ...afterParsed,
-        monitorIds: [...input.monitors].sort((a, b) => a - b),
+        monitorIds: [...monitorIds].sort((a, b) => a - b),
       },
     });
 

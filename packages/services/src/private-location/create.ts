@@ -26,11 +26,16 @@ export async function createPrivateLocation(args: {
   const { ctx } = args;
   const input = CreatePrivateLocationInput.parse(args.input);
 
+  // The pivot table has no UNIQUE (private_location_id, monitor_id)
+  // constraint, so duplicate input ids would silently produce duplicate
+  // FK rows. Dedupe before insert; the audit snapshot follows suit.
+  const monitorIds = Array.from(new Set(input.monitors));
+
   return withTransaction(ctx, async (tx) => {
     await assertMonitorsInWorkspace({
       tx,
       workspaceId: ctx.workspace.id,
-      monitorIds: input.monitors,
+      monitorIds,
     });
 
     const row = await tx
@@ -43,9 +48,9 @@ export async function createPrivateLocation(args: {
       .returning()
       .get();
 
-    if (input.monitors.length > 0) {
+    if (monitorIds.length > 0) {
       await tx.insert(privateLocationToMonitors).values(
-        input.monitors.map((monitorId) => ({
+        monitorIds.map((monitorId) => ({
           privateLocationId: row.id,
           monitorId,
         })),
@@ -57,7 +62,7 @@ export async function createPrivateLocation(args: {
       action: "private_location.create",
       entityType: "private_location",
       entityId: parsed.id,
-      after: { ...parsed, monitorIds: input.monitors },
+      after: { ...parsed, monitorIds },
     });
 
     return parsed;

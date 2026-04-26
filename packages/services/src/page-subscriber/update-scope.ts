@@ -34,7 +34,7 @@ export async function updateSubscriberScope(args: {
     token: input.token,
     domain: input.domain,
   });
-  if (!resolved) throw new NotFoundError("page_subscriber", 0);
+  if (!resolved) throw new NotFoundError("page_subscriber");
   const { row, pageData, components: currentIds } = resolved;
 
   if (!row.acceptedAt) {

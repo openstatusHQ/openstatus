@@ -146,28 +146,32 @@ export const pageSubscriberRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const subscription = await getSubscriberByToken({
-        input: { token: opts.input.token, domain: opts.input.domain },
-      });
-
-      if (!subscription) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Subscription not found",
+      try {
+        const subscription = await getSubscriberByToken({
+          input: { token: opts.input.token, domain: opts.input.domain },
         });
-      }
 
-      return {
-        id: subscription.id,
-        email: subscription.email,
-        pageName: subscription.pageName,
-        pageSlug: subscription.pageSlug,
-        customDomain: subscription.customDomain,
-        channelType: subscription.channelType,
-        componentIds: subscription.componentIds,
-        acceptedAt: subscription.acceptedAt,
-        unsubscribedAt: subscription.unsubscribedAt,
-      };
+        if (!subscription) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Subscription not found",
+          });
+        }
+
+        return {
+          id: subscription.id,
+          email: subscription.email,
+          pageName: subscription.pageName,
+          pageSlug: subscription.pageSlug,
+          customDomain: subscription.customDomain,
+          channelType: subscription.channelType,
+          componentIds: subscription.componentIds,
+          acceptedAt: subscription.acceptedAt,
+          unsubscribedAt: subscription.unsubscribedAt,
+        };
+      } catch (error) {
+        throwFromException(error, "Failed to load subscription");
+      }
     }),
 
   /**
