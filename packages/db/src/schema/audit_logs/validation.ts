@@ -77,8 +77,12 @@ const pageSubscriberActions = [
   action("page_subscriber.create", "page_subscriber", intId, {
     optionalMetadata: true,
   }),
-  action("page_subscriber.update", "page_subscriber", intId),
-  action("page_subscriber.delete", "page_subscriber", intId),
+  action("page_subscriber.update", "page_subscriber", intId, {
+    optionalMetadata: true,
+  }),
+  action("page_subscriber.delete", "page_subscriber", intId, {
+    optionalMetadata: true,
+  }),
 ] as const;
 
 const apiKeyActions = [
