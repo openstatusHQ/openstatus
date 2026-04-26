@@ -65,3 +65,55 @@ export const DeletePageSubscriberInput = z.object({
 export type DeletePageSubscriberInput = z.infer<
   typeof DeletePageSubscriberInput
 >;
+
+// ===== Self-signup (visitor-driven) =====
+
+export const UpsertSelfSignupSubscriberInput = z.object({
+  email: z.email(),
+  pageId: z.number().int().positive(),
+  componentIds: componentIdList.optional(),
+});
+export type UpsertSelfSignupSubscriberInput = z.infer<
+  typeof UpsertSelfSignupSubscriberInput
+>;
+
+export const VerifySelfSignupSubscriberInput = z.object({
+  token: z.string(),
+  domain: z.string().toLowerCase().optional(),
+});
+export type VerifySelfSignupSubscriberInput = z.infer<
+  typeof VerifySelfSignupSubscriberInput
+>;
+
+export const GetSubscriberByTokenInput = z.object({
+  token: z.string(),
+  domain: z.string().toLowerCase().optional(),
+});
+export type GetSubscriberByTokenInput = z.infer<
+  typeof GetSubscriberByTokenInput
+>;
+
+export const HasPendingSubscriberInput = z.object({
+  email: z.email(),
+  pageId: z.number().int().positive(),
+});
+export type HasPendingSubscriberInput = z.infer<
+  typeof HasPendingSubscriberInput
+>;
+
+export const UpdateSubscriberScopeInput = z.object({
+  token: z.string(),
+  componentIds: componentIdList,
+  domain: z.string().toLowerCase().optional(),
+});
+export type UpdateSubscriberScopeInput = z.infer<
+  typeof UpdateSubscriberScopeInput
+>;
+
+export const UnsubscribeSubscriberInput = z.object({
+  token: z.string(),
+  domain: z.string().toLowerCase().optional(),
+});
+export type UnsubscribeSubscriberInput = z.infer<
+  typeof UnsubscribeSubscriberInput
+>;

@@ -14,7 +14,8 @@ export type Actor =
   | { type: "apiKey"; keyId: string; userId?: number }
   | { type: "slack"; teamId: string; slackUserId: string; userId?: number }
   | { type: "system"; job: string }
-  | { type: "webhook"; source: string; externalId?: string };
+  | { type: "webhook"; source: string; externalId?: string }
+  | { type: "subscriber"; subscriberId: number };
 
 export type ServiceContext = {
   workspace: Workspace;
@@ -63,6 +64,8 @@ export function extractActorId(actor: Actor): string {
       return actor.job;
     case "webhook":
       return actor.externalId ?? actor.source;
+    case "subscriber":
+      return String(actor.subscriberId);
   }
 }
 
@@ -81,6 +84,7 @@ export function tryGetActorUserId(actor: Actor): number | null {
       return actor.userId ?? null;
     case "system":
     case "webhook":
+    case "subscriber":
       return null;
   }
 }

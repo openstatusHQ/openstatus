@@ -16,13 +16,13 @@ import {
   statusReport,
 } from "@openstatus/db/src/schema";
 import {
-  getSubscriptionByToken,
-  hasPendingUnexpiredSubscription,
-  unsubscribe,
-  updateSubscriptionScope,
-  upsertEmailSubscription,
-  verifySubscription,
-} from "@openstatus/subscriptions";
+  getSubscriberByToken,
+  hasPendingSubscriber,
+  unsubscribeSubscriber,
+  updateSubscriberScope,
+  upsertSelfSignupSubscriber,
+  verifySelfSignupSubscriber,
+} from "@openstatus/services/page-subscriber";
 
 import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
@@ -1056,10 +1056,9 @@ export const statusPageRouter = createTRPCRouter({
       }
 
       // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
-      const isPending = await hasPendingUnexpiredSubscription(
-        opts.input.email,
-        _page.id,
-      );
+      const isPending = await hasPendingSubscriber({
+        input: { email: opts.input.email, pageId: _page.id },
+      });
       if (isPending) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -1068,12 +1067,14 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      const subscription = await upsertEmailSubscription({
-        email: opts.input.email,
-        pageId: _page.id,
-        componentIds: opts.input.subscribeComponents
-          ? opts.input.pageComponents
-          : [],
+      const subscription = await upsertSelfSignupSubscriber({
+        input: {
+          email: opts.input.email,
+          pageId: _page.id,
+          componentIds: opts.input.subscribeComponents
+            ? opts.input.pageComponents
+            : [],
+        },
       });
 
       // Already verified — no need to send another verification email
@@ -1092,10 +1093,9 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const subscription = await getSubscriptionByToken(
-        opts.input.token,
-        opts.input.slug,
-      );
+      const subscription = await getSubscriberByToken({
+        input: { token: opts.input.token, domain: opts.input.slug },
+      });
 
       if (!subscription) {
         throw new TRPCError({
@@ -1120,12 +1120,14 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       try {
-        await updateSubscriptionScope({
-          token: opts.input.token,
-          componentIds: opts.input.subscribeComponents
-            ? opts.input.pageComponents
-            : [],
-          domain: opts.input.slug,
+        await updateSubscriberScope({
+          input: {
+            token: opts.input.token,
+            componentIds: opts.input.subscribeComponents
+              ? opts.input.pageComponents
+              : [],
+            domain: opts.input.slug,
+          },
         });
       } catch (error) {
         if (error instanceof Error) {
@@ -1188,10 +1190,9 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       try {
-        const subscription = await verifySubscription(
-          opts.input.token,
-          opts.input.slug,
-        );
+        const subscription = await verifySelfSignupSubscriber({
+          input: { token: opts.input.token, domain: opts.input.slug },
+        });
 
         if (!subscription) {
           throw new TRPCError({
@@ -1246,10 +1247,9 @@ export const statusPageRouter = createTRPCRouter({
   getSubscriberByToken: publicProcedure
     .input(z.object({ token: z.uuid(), domain: z.string().toLowerCase() }))
     .query(async (opts) => {
-      const subscription = await getSubscriptionByToken(
-        opts.input.token,
-        opts.input.domain,
-      );
+      const subscription = await getSubscriberByToken({
+        input: { token: opts.input.token, domain: opts.input.domain },
+      });
 
       if (
         !subscription ||
@@ -1269,7 +1269,9 @@ export const statusPageRouter = createTRPCRouter({
     .input(z.object({ token: z.uuid(), domain: z.string().toLowerCase() }))
     .mutation(async (opts) => {
       try {
-        await unsubscribe(opts.input.token, opts.input.domain);
+        await unsubscribeSubscriber({
+          input: { token: opts.input.token, domain: opts.input.domain },
+        });
         return { success: true };
       } catch (error) {
         if (error instanceof Error) {

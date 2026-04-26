@@ -1,4 +1,5 @@
 import {
+  ListMonitorTagsInput,
   listMonitorTags,
   syncMonitorTags,
 } from "@openstatus/services/monitor-tag";
@@ -14,13 +15,15 @@ const tagSchema = z.object({
 });
 
 export const monitorTagRouter = createTRPCRouter({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      return await listMonitorTags({ ctx: toServiceCtx(ctx) });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
+  list: protectedProcedure
+    .input(ListMonitorTagsInput.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        return await listMonitorTags({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
 
   syncTags: protectedProcedure
     .input(z.array(tagSchema))

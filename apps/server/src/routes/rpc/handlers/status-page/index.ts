@@ -49,8 +49,11 @@ import {
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
 import { deletePageComponent } from "@openstatus/services/page-component";
-import { createPageSubscriber } from "@openstatus/services/page-subscriber";
-import { getChannel, upsertEmailSubscription } from "@openstatus/subscriptions";
+import {
+  createPageSubscriber,
+  upsertSelfSignupSubscriber,
+} from "@openstatus/services/page-subscriber";
+import { getChannel } from "@openstatus/subscriptions";
 import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
@@ -1075,9 +1078,11 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(req.pageId);
     }
 
-    const result = await upsertEmailSubscription({
-      email: req.email,
-      pageId: pageData.id,
+    const result = await upsertSelfSignupSubscriber({
+      input: {
+        email: req.email,
+        pageId: pageData.id,
+      },
     });
 
     const row = await db

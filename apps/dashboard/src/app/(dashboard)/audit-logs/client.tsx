@@ -49,7 +49,7 @@ const EXAMPLES = [
     createdAt: new Date("2026-04-24T10:00:00Z"),
     user: {
       id: 42,
-      name: "Max Kaske",
+      name: "Maximilian Kaske",
       email: "m@openstatus.dev",
       photoUrl: null,
     },

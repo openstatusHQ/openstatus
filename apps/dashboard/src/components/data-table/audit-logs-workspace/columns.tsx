@@ -10,7 +10,7 @@ import {
 } from "@openstatus/ui/components/ui/avatar";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
-import { KeyIcon, ServerIcon } from "lucide-react";
+import { KeyIcon, MailIcon, ServerIcon } from "lucide-react";
 import { TableCellDate } from "../table-cell-date";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
@@ -76,6 +76,16 @@ export const columns: ColumnDef<AuditLog>[] = [
                 <ServerIcon className="size-4 text-muted-foreground" />
               </div>
               <span className="text-muted-foreground">System</span>
+            </div>
+          );
+        }
+        if (type === "subscriber") {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
+                <MailIcon className="size-4 text-muted-foreground" />
+              </div>
+              <span className="text-muted-foreground">Subscriber</span>
             </div>
           );
         }

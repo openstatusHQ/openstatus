@@ -19,7 +19,11 @@ const memberRowSnapshot = z.object({
 });
 
 /**
- * Delete a member's workspace association.
+ * Delete a member's workspace association. Idempotent on the target row —
+ * if the target user has no membership in the caller's workspace (wrong id,
+ * already removed, or scoped to a different workspace), the call succeeds
+ * silently and no audit row is emitted. This matches the workspace-filtered
+ * DELETE semantics inherited from the legacy router.
  *
  * Authorization rules preserved from the legacy router:
  *   - only the caller's own membership row is consulted; the `owner` role is

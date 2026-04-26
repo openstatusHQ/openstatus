@@ -3,19 +3,17 @@ import {
   SAFE_SUBSCRIPTION_MESSAGES,
   createPageSubscriber,
   deletePageSubscriber,
+  getSubscriberByToken,
+  hasPendingSubscriber,
   listPageSubscribers,
   sendPageSubscriberTestWebhook,
+  unsubscribeSubscriber,
   updatePageSubscriberChannel,
+  updateSubscriberScope,
+  upsertSelfSignupSubscriber,
+  verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-import {
-  detectWebhookFlavor,
-  getSubscriptionByToken,
-  hasPendingUnexpiredSubscription,
-  unsubscribe,
-  updateSubscriptionScope,
-  upsertEmailSubscription,
-  verifySubscription,
-} from "@openstatus/subscriptions";
+import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -66,10 +64,9 @@ export const pageSubscriberRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const isPending = await hasPendingUnexpiredSubscription(
-        opts.input.email,
-        opts.input.pageId,
-      );
+      const isPending = await hasPendingSubscriber({
+        input: { email: opts.input.email, pageId: opts.input.pageId },
+      });
       if (isPending) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -79,10 +76,12 @@ export const pageSubscriberRouter = createTRPCRouter({
       }
 
       try {
-        const subscription = await upsertEmailSubscription({
-          email: opts.input.email,
-          pageId: opts.input.pageId,
-          componentIds: opts.input.componentIds,
+        const subscription = await upsertSelfSignupSubscriber({
+          input: {
+            email: opts.input.email,
+            pageId: opts.input.pageId,
+            componentIds: opts.input.componentIds,
+          },
         });
 
         return {
@@ -110,10 +109,9 @@ export const pageSubscriberRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       try {
-        const subscription = await verifySubscription(
-          opts.input.token,
-          opts.input.domain,
-        );
+        const subscription = await verifySelfSignupSubscriber({
+          input: { token: opts.input.token, domain: opts.input.domain },
+        });
 
         if (!subscription) {
           throw new TRPCError({
@@ -148,10 +146,9 @@ export const pageSubscriberRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const subscription = await getSubscriptionByToken(
-        opts.input.token,
-        opts.input.domain,
-      );
+      const subscription = await getSubscriberByToken({
+        input: { token: opts.input.token, domain: opts.input.domain },
+      });
 
       if (!subscription) {
         throw new TRPCError({
@@ -186,17 +183,18 @@ export const pageSubscriberRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       try {
-        const subscription = await updateSubscriptionScope({
-          token: opts.input.token,
-          componentIds: opts.input.componentIds,
-          domain: opts.input.domain,
+        await updateSubscriberScope({
+          input: {
+            token: opts.input.token,
+            componentIds: opts.input.componentIds,
+            domain: opts.input.domain,
+          },
         });
 
         return {
           success: true,
           subscription: {
-            id: subscription.id,
-            componentIds: subscription.componentIds,
+            componentIds: opts.input.componentIds,
           },
         };
       } catch (error) {
@@ -216,7 +214,9 @@ export const pageSubscriberRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       try {
-        await unsubscribe(opts.input.token, opts.input.domain);
+        await unsubscribeSubscriber({
+          input: { token: opts.input.token, domain: opts.input.domain },
+        });
         return { success: true };
       } catch (error) {
         throwFromException(error, "Failed to unsubscribe");

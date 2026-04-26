@@ -1,18 +1,24 @@
 import { Events } from "@openstatus/analytics";
-import { deleteMember, listMembers } from "@openstatus/services/member";
+import {
+  ListMembersInput,
+  deleteMember,
+  listMembers,
+} from "@openstatus/services/member";
 import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const memberRouter = createTRPCRouter({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      return await listMembers({ ctx: toServiceCtx(ctx) });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
+  list: protectedProcedure
+    .input(ListMembersInput.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        return await listMembers({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
 
   delete: protectedProcedure
     .meta({ track: Events.RemoveUser })

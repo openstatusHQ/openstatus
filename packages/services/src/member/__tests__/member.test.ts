@@ -20,6 +20,7 @@ import {
   loadSeededWorkspace,
   makeSystemCtx,
   makeUserCtx,
+  readAuditLog,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { NotFoundError, PreconditionFailedError } from "../../errors";
@@ -269,6 +270,23 @@ describe("deleteMember", () => {
       thrown = e;
     }
     expect(thrown).toBeInstanceOf(NotFoundError);
+  });
+
+  test("target userId with no membership in workspace is a silent no-op", async () => {
+    // Owner caller, but the target has no users_to_workspaces row at all.
+    // DELETE matches nothing → no throw, no audit row.
+    const NEVER_MEMBER_USER_ID = 9_876_543;
+    await deleteMember({
+      ctx: teamCtx,
+      input: { userId: NEVER_MEMBER_USER_ID },
+    });
+
+    const rows = await readAuditLog({
+      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      entityType: "member",
+      entityId: NEVER_MEMBER_USER_ID,
+    });
+    expect(rows).toHaveLength(0);
   });
 
   test("target user in another workspace is a silent no-op (workspace-scoped DELETE)", async () => {

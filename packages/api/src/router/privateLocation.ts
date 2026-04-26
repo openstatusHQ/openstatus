@@ -1,4 +1,5 @@
 import {
+  ListPrivateLocationsInput,
   createPrivateLocation,
   deletePrivateLocation,
   listPrivateLocations,
@@ -10,13 +11,15 @@ import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const privateLocationRouter = createTRPCRouter({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      return await listPrivateLocations({ ctx: toServiceCtx(ctx) });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
+  list: protectedProcedure
+    .input(ListPrivateLocationsInput.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        return await listPrivateLocations({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
 
   new: protectedProcedure
     .input(
