@@ -18,12 +18,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
-import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
+  icon?: React.ComponentType<{ className?: string }>;
   options: {
     label: string;
     value: string | number;
@@ -34,6 +34,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
+  icon: Icon,
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
@@ -44,12 +45,18 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircle />
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-8 border-dashed",
+            selectedValues?.size > 0 && "border-solid",
+          )}
+        >
+          {Icon ? <Icon /> : <PlusCircle />}
           {title}
           {selectedValues?.size > 0 && (
             <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
                 variant="secondary"
                 className="rounded-sm px-1 font-normal lg:hidden"
@@ -113,12 +120,16 @@ export function DataTableFacetedFilter<TData, TValue>({
                           : "opacity-50 [&_svg]:invisible",
                       )}
                     >
-                      <Check />
+                      <Check
+                        className={cn(
+                          isSelected ? "text-primary-foreground" : undefined,
+                        )}
+                      />
                     </div>
                     {option.icon && (
                       <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                     )}
-                    <span>{option.label}</span>
+                    <span className="truncate">{option.label}</span>
                     {facets?.get(option.value) && (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { Activity, MapPin, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@openstatus/ui/components/ui/button";
 
@@ -32,6 +32,7 @@ export function ResponseLogsDataTableToolbar({
               label: code.code.toString(),
               value: code.code.toString(),
             }))}
+            icon={Activity}
           />
         )}
         {table.getColumn("region") && (
@@ -42,6 +43,7 @@ export function ResponseLogsDataTableToolbar({
               label: region.location,
               value: region.code,
             }))}
+            icon={MapPin}
           />
         )}
         {table.getColumn("error") && (
@@ -52,6 +54,7 @@ export function ResponseLogsDataTableToolbar({
               { label: "Yes", value: "true" },
               { label: "No", value: "false" },
             ]}
+            icon={TriangleAlert}
           />
         )}
         {isFiltered && (

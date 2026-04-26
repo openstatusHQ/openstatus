@@ -4,7 +4,7 @@ import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-fa
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { Database, User, X, Zap } from "lucide-react";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 
@@ -48,18 +48,20 @@ export function AuditLogsDataTableToolbar({
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center gap-2">
-        {table.getColumn("action") && actionOptions.length > 0 && (
-          <DataTableFacetedFilter
-            column={table.getColumn("action")}
-            title="Action"
-            options={actionOptions}
-          />
-        )}
         {table.getColumn("actorType") && actorTypeOptions.length > 0 && (
           <DataTableFacetedFilter
             column={table.getColumn("actorType")}
             title="Actor type"
             options={actorTypeOptions}
+            icon={User}
+          />
+        )}
+        {table.getColumn("action") && actionOptions.length > 0 && (
+          <DataTableFacetedFilter
+            column={table.getColumn("action")}
+            title="Action"
+            options={actionOptions}
+            icon={Zap}
           />
         )}
         {table.getColumn("entityType") && entityTypeOptions.length > 0 && (
@@ -67,6 +69,7 @@ export function AuditLogsDataTableToolbar({
             column={table.getColumn("entityType")}
             title="Entity type"
             options={entityTypeOptions}
+            icon={Database}
           />
         )}
         {isFiltered && (

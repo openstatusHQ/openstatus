@@ -30,7 +30,7 @@ import {
 import { Fragment } from "react";
 import type { DataTableActionBarProps } from "./data-table-action-bar";
 import type { DataTablePaginationProps } from "./data-table-pagination";
-import type { DataTableToolbarProps } from "./data-table-toobar";
+import type { DataTableToolbarProps } from "./data-table-toolbar";
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
