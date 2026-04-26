@@ -122,6 +122,10 @@ export const columns: ColumnDef<AuditLog>[] = [
     header: "Action",
     enableSorting: false,
     enableHiding: false,
+    filterFn: (row, id, filterValue: string[]) => {
+      if (!filterValue?.length) return true;
+      return filterValue.includes(row.getValue(id) as string);
+    },
     cell: ({ row }) => {
       const value = row.getValue("action") as string;
       return (
@@ -132,6 +136,26 @@ export const columns: ColumnDef<AuditLog>[] = [
           {value}
         </Badge>
       );
+    },
+  },
+  {
+    accessorKey: "actorType",
+    header: () => null,
+    cell: () => null,
+    enableHiding: true,
+    filterFn: (row, id, filterValue: string[]) => {
+      if (!filterValue?.length) return true;
+      return filterValue.includes(row.getValue(id) as string);
+    },
+  },
+  {
+    accessorKey: "entityType",
+    header: () => null,
+    cell: () => null,
+    enableHiding: true,
+    filterFn: (row, id, filterValue: string[]) => {
+      if (!filterValue?.length) return true;
+      return filterValue.includes(row.getValue(id) as string);
     },
   },
   {

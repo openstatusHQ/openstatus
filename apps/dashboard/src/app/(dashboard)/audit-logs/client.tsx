@@ -21,6 +21,7 @@ import {
 } from "@/components/content/section";
 import { columns } from "@/components/data-table/audit-logs-workspace/columns";
 import { DataTableRowDetails } from "@/components/data-table/audit-logs-workspace/data-table-row-details";
+import { AuditLogsDataTableToolbar } from "@/components/data-table/audit-logs-workspace/data-table-toolbar";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
@@ -118,6 +119,11 @@ export function Client() {
             <DataTable
               columns={columns}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
+              defaultColumnVisibility={{
+                actorType: false,
+                entityType: false,
+              }}
+              toolbarComponent={AuditLogsDataTableToolbar}
               rowComponent={({ row }) => (
                 <DataTableRowDetails row={row.original} />
               )}
@@ -149,6 +155,11 @@ export function Client() {
           <DataTable
             columns={columns}
             data={auditLogs.items}
+            defaultColumnVisibility={{
+              actorType: false,
+              entityType: false,
+            }}
+            toolbarComponent={AuditLogsDataTableToolbar}
             onRowClick={(row) =>
               row.getCanExpand() ? row.toggleExpanded() : undefined
             }
