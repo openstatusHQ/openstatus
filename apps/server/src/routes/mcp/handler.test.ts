@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 
@@ -6,29 +7,43 @@ import { db, eq } from "@openstatus/db";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
 
+import { handleError } from "@/libs/errors";
 import { mcpRoute } from "./index";
 
-/** Build a fresh Hono app with the same middleware chain as production. */
+/**
+ * Build a fresh Hono app with the same middleware chain as production.
+ * `@hono/sentry` is mounted even without a DSN — `handleError` reads
+ * `c.get("sentry")` on client errors (status < 499) and would silently
+ * fail without it, masking 401s as 200s.
+ */
 function makeApp() {
   const app = new Hono<{ Variables: { event: Record<string, unknown> } }>();
+  app.use("*", sentry({ dsn: undefined }));
   app.use("*", requestId());
   app.use("*", async (c, next) => {
     // The auth middleware consults `c.get("event")` to record auth_method.
     c.set("event", {});
     await next();
   });
+  app.onError(handleError);
   app.route("/mcp", mcpRoute);
   return app;
 }
 
 const KEY = String(SEEDED_WORKSPACE_TEAM_ID);
 
-function jsonRpc(body: object, key: string | undefined = KEY): Request {
+/**
+ * Build a JSON-RPC POST request. Pass `key: false` to omit the
+ * `x-openstatus-key` header entirely (testing the unauthenticated
+ * path) — `undefined` would trigger the parameter default and
+ * silently authenticate, masking the missing-auth case.
+ */
+function jsonRpc(body: object, key: string | false = KEY): Request {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json, text/event-stream",
   };
-  if (key !== undefined) headers["x-openstatus-key"] = key;
+  if (key !== false) headers["x-openstatus-key"] = key;
   return new Request("http://localhost/mcp", {
     method: "POST",
     headers,
@@ -57,7 +72,7 @@ async function readJsonRpc(
 describe("MCP transport", () => {
   test("rejects requests missing x-openstatus-key with 401", async () => {
     const app = makeApp();
-    const res = await app.fetch(jsonRpc({ method: "tools/list" }, undefined));
+    const res = await app.fetch(jsonRpc({ method: "tools/list" }, false));
     expect(res.status).toBe(401);
   });
 
@@ -99,7 +114,7 @@ describe("MCP transport", () => {
     expect(Array.isArray(result.structuredContent?.items)).toBe(true);
   });
 
-  test("tools/call with unknown tool name returns a JSON-RPC error", async () => {
+  test("tools/call with unknown tool name surfaces an error", async () => {
     const app = makeApp();
     const res = await app.fetch(
       jsonRpc({
@@ -107,11 +122,16 @@ describe("MCP transport", () => {
         params: { name: "definitely_not_a_tool", arguments: {} },
       }),
     );
-    // The SDK either returns a JSON-RPC error (status 200, error field set)
-    // or 4xx with an error. Either is acceptable; assert "not success".
+    // The SDK can surface unknown-tool failures three ways: as a
+    // JSON-RPC error, an HTTP 4xx, or as a `tools/call` result with
+    // `isError: true`. Accept any — assert "not silently successful".
     if (res.status === 200) {
-      const body = await readJsonRpc(res);
-      expect(body.error).toBeDefined();
+      const body = (await readJsonRpc(res)) as {
+        result?: { isError?: boolean };
+        error?: { code: number; message: string };
+      };
+      const failed = body.error !== undefined || body.result?.isError === true;
+      expect(failed).toBe(true);
     } else {
       expect(res.status).toBeGreaterThanOrEqual(400);
     }
@@ -233,10 +253,16 @@ describe("MCP transport — audit stamping", () => {
     const createRow = rows.find((r) => r.action === "status_report.create");
     expect(createRow).toBeDefined();
     expect(createRow?.actorType).toBe("mcp");
-    // In dev mode the auth middleware sets keyId to the input key string
-    // (which we set to KEY = SEEDED_WORKSPACE_TEAM_ID). So actorId reflects
-    // the dev-key string, proving the real keyId is propagated end-to-end
-    // and not falling back to the `ws:N` placeholder.
+    // In dev mode `validateKey` short-circuits the custom-key DB
+    // lookup and treats the input string as both ownerId and keyId.
+    // Asserting actorId === KEY proves keyId propagates structurally
+    // through auth → adapter → service → audit, but does NOT exercise
+    // the production `api_key.id` path. A NODE_ENV=production test
+    // with a real api_key fixture would close that gap; out of scope
+    // here because flipping NODE_ENV reroutes other middleware.
     expect(createRow?.actorId).toBe(KEY);
+    // No `createdById` available in dev mode → audit's actorUserId
+    // is null. Production custom keys would carry the creator's id.
+    expect(createRow?.actorUserId).toBeNull();
   });
 });

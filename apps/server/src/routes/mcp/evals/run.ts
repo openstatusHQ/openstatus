@@ -1,23 +1,29 @@
 /**
  * MCP tool-selection eval. Standalone bun script — `pnpm eval:mcp`.
  *
- * Runs each case in `cases.ts` against Claude Haiku 4.5, asserting the
- * model picks the expected tool and includes the required args. Fails
- * the run if fewer than `PASS_THRESHOLD` of `cases.length` succeed.
+ * Runs each case in `cases.ts` against Claude Haiku 4.5 (via the AI
+ * Gateway), asserting the model picks the expected tool and includes
+ * the required args. Fails the run if fewer than `PASS_THRESHOLD` of
+ * `cases.length` succeed.
  *
- * Tool definitions here MIRROR what the MCP server exposes — same
- * names, same descriptions, same input shapes. Drift between the two
- * shows up as eval failures, prompting a sync.
+ * Tool catalogue here MIRRORS what the MCP server exposes (names,
+ * descriptions, input shapes, required fields). Drift is the obvious
+ * failure mode — when you edit a description in `tools/*.ts`, edit it
+ * here too. A future refactor can derive this catalogue from the
+ * production registrations to remove the duplication.
  *
  * Not in default CI. Cost: a handful of cents per run.
  */
 
-import { generateText, stepCountIs, tool } from "ai";
+import { gateway, generateText, stepCountIs, tool } from "ai";
 import { z } from "zod";
 
 import { type EvalCase, cases } from "./cases";
 
-const MODEL_ID = "anthropic/claude-haiku-4-5";
+// Resolved through the AI Gateway (`AI_GATEWAY_API_KEY` env). Using
+// `gateway(...)` instead of a bare string makes the routing path
+// explicit and gives a clearer error if the gateway is unconfigured.
+const MODEL = gateway("anthropic/claude-haiku-4-5");
 const PASS_THRESHOLD = 10;
 
 const statusEnum = z.enum([
@@ -27,18 +33,11 @@ const statusEnum = z.enum([
   "resolved",
 ]);
 
-/**
- * Tool catalogue mirrored from `apps/server/src/routes/mcp/tools/*.ts`.
- * Exec is a no-op — we only assert *which* tool gets selected, not
- * what it would have done.
- */
 const tools = {
   list_status_pages: tool({
     description:
       "List status pages in this workspace with their slug and ids. Use to discover the pageId required by create_status_report and create_maintenance.",
-    inputSchema: z.object({
-      limit: z.number().int().min(1).max(200).default(50).optional(),
-    }),
+    inputSchema: z.object({}),
     execute: async () => ({ items: [] }),
   }),
   list_status_reports: tool({
@@ -53,8 +52,9 @@ const tools = {
   }),
   list_maintenances: tool({
     description:
-      "List maintenance windows in this workspace. Returns scheduled and historical maintenance ordered by creation time (newest first). Use to see what's already scheduled before adding a new window.",
+      "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future) which is what callers usually want when scheduling. Pass `filter: 'all'` to include past maintenances too.",
     inputSchema: z.object({
+      filter: z.enum(["upcoming", "all"]).default("upcoming"),
       pageId: z.number().int().optional(),
       limit: z.number().int().min(1).max(200).default(50).optional(),
     }),
@@ -62,29 +62,31 @@ const tools = {
   }),
   create_status_report: tool({
     description:
-      "Create a new status report on a public status page. Audit-logged. The report begins with one initial update carrying the supplied message and status. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST belong to the same page.",
+      "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. MANDATORY workflow before calling: 1) Draft the title/status/message/components. 2) Show the draft to the user. 3) Ask explicitly: 'Should I notify subscribers?'. 4) Call only after both content and notify are confirmed. Subscriber notifications fire atomically — there is NO separate notify tool. pageId MUST come from list_status_pages.",
     inputSchema: z.object({
       title: z.string(),
       status: statusEnum,
       message: z.string(),
       pageId: z.number().int(),
       pageComponentIds: z.array(z.number().int()).optional(),
+      notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),
   }),
   add_status_report_update: tool({
     description:
-      "Append a new public update to an existing status report. Audit-logged. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved').",
+      "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. Use resolve_status_report instead if the new status would be 'resolved'. MANDATORY workflow: draft, show to user, ask about subscriber notification, then call. There is NO separate notify tool — if notify is false, this update never reaches subscribers.",
     inputSchema: z.object({
       statusReportId: z.number().int(),
       status: statusEnum,
       message: z.string(),
+      notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),
   }),
   update_status_report: tool({
     description:
-      "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Audit-logged.",
+      "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Does NOT and CANNOT notify subscribers. MANDATORY: draft, show, confirm before calling.",
     inputSchema: z.object({
       statusReportId: z.number().int(),
       title: z.string().optional(),
@@ -95,16 +97,17 @@ const tools = {
   }),
   resolve_status_report: tool({
     description:
-      "Resolve an active status report. Marks the incident as resolved and appends a final public update with the supplied message. Audit-logged.",
+      "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. MANDATORY: draft the resolution message, show to user, ask about subscriber notification, then call.",
     inputSchema: z.object({
       statusReportId: z.number().int(),
       message: z.string(),
+      notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),
   }),
   create_maintenance: tool({
     description:
-      "Schedule a maintenance window on a status page. Audit-logged. pageId MUST come from list_status_pages — never guess. Times are ISO 8601; the LLM is responsible for parsing natural-language dates into ISO before calling.",
+      "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. pageId MUST come from list_status_pages. Times are ISO 8601. MANDATORY: draft title/message/window, show to user, ask about subscriber notification, then call.",
     inputSchema: z.object({
       title: z.string(),
       message: z.string(),
@@ -112,6 +115,7 @@ const tools = {
       to: z.string(),
       pageId: z.number().int(),
       pageComponentIds: z.array(z.number().int()).optional(),
+      notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),
   }),
@@ -130,7 +134,7 @@ type CaseResult = {
 async function runCase(c: EvalCase): Promise<CaseResult> {
   try {
     const result = await generateText({
-      model: MODEL_ID,
+      model: MODEL,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: c.prompt }],
       tools,

@@ -37,17 +37,20 @@ export function toServiceCtx(args: {
  * Convert any error from a tool's `execute` body into either a
  * recoverable `CallToolResult` (so the LLM can retry with corrected
  * input) or a thrown `McpError` (so the JSON-RPC envelope surfaces a
- * transport-level failure).
- *
- * Mirrors the discrimination in `apps/server/src/routes/rpc/adapter.ts`
- * and is described in `mcp-plan.md` §"Error mapping".
+ * transport-level failure). Mirrors the discrimination in
+ * `apps/server/src/routes/rpc/adapter.ts`.
  */
 export function mapError(err: unknown): CallToolResult {
+  // ZodError surfaces from a service's `Input.parse(args.input)` —
+  // either a type mismatch the LLM passed or a refine() failure
+  // (e.g. `from > to` on `CreateMaintenanceInput`). Both are
+  // recoverable: the LLM can read the message and retry. Treated
+  // the same as `ServiceError.VALIDATION`.
   if (err instanceof ZodError) {
-    throw new McpError(
-      ErrorCode.InvalidParams,
-      `Invalid request: ${err.message}`,
-    );
+    return {
+      isError: true,
+      content: [{ type: "text", text: `Invalid input: ${err.message}` }],
+    };
   }
   if (err instanceof ServiceError) {
     switch (err.code) {

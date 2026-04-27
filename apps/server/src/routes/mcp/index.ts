@@ -1,6 +1,7 @@
 import { StreamableHTTPTransport } from "@hono/mcp";
 import { Hono } from "hono";
 
+import { handleError } from "@/libs/errors";
 import { authMiddleware } from "@/libs/middlewares/auth";
 import type { Variables } from "@/types";
 
@@ -8,6 +9,13 @@ import { toServiceCtx } from "./adapter";
 import { createMcpServer } from "./server";
 
 export const mcpRoute = new Hono<{ Variables: Variables }>({ strict: false });
+
+// Match production's global error handler at the sub-router level so
+// `OpenStatusApiError` (thrown by `authMiddleware` on bad/missing
+// keys) translates to the right HTTP status whether or not the parent
+// app has its own `onError` wired up. This makes the route portable
+// across mount points and self-contained for tests.
+mcpRoute.onError(handleError);
 
 mcpRoute.use("*", authMiddleware);
 
@@ -29,6 +37,12 @@ mcpRoute.all("/", async (c) => {
     requestId,
   });
 
+  // Stateless mode: a fresh `McpServer` + transport per request. Both
+  // are local to this scope and become garbage-collectable once the
+  // returned Response stream is consumed by Hono. We deliberately do
+  // NOT call `server.close()` in a `finally` — closing tears down the
+  // SSE stream before Hono finishes writing the body, sending an
+  // empty response to the client.
   const server = createMcpServer(ctx);
   const transport = new StreamableHTTPTransport();
   try {

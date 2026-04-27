@@ -34,12 +34,15 @@ import { registerStatusReportTools } from "./status-report";
  */
 function makeMcpCtx(
   workspace: Workspace,
-  opts: { db?: ServiceContext["db"] } = {},
+  opts: {
+    db?: ServiceContext["db"];
+    createdById?: number;
+  } = {},
 ): ServiceContext {
   return {
     ...toServiceCtx({
       workspace,
-      apiKey: { id: "test-key" },
+      apiKey: { id: "test-key", createdById: opts.createdById },
       requestId: "test-req",
     }),
     db: opts.db,
@@ -268,8 +271,36 @@ describe("create_status_report", () => {
       });
       expect(rows[0]?.actorType).toBe("mcp");
       expect(rows[0]?.actorId).toBe("test-key");
+      // No createdById on the test ctx → actorUserId stays null.
+      expect(rows[0]?.actorUserId).toBeNull();
       // notify defaulted false → no dispatch
       expect(out).toMatchObject({ notified: false });
+    });
+  });
+
+  test("propagates createdById to audit_log.actor_user_id", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpCtx(teamWorkspace, { db: tx, createdById: 1 });
+      const tools = registered("status-report", ctx);
+      const result = await callTool(tools, "create_status_report", {
+        title: `${TEST_PREFIX}-with-creator`,
+        status: "investigating",
+        message: "x",
+        pageId: testPageId,
+        pageComponentIds: [],
+        notify: false,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        statusReport: { id: number };
+      };
+      const rows = await readAuditLog({
+        workspaceId: teamWorkspace.id,
+        entityType: "status_report",
+        entityId: out.statusReport.id,
+        db: tx,
+      });
+      expect(rows[0]?.actorUserId).toBe(1);
     });
   });
 
@@ -310,23 +341,11 @@ describe("create_status_report", () => {
     });
   });
 
-  test("rejects calls that omit the required notify field", async () => {
-    await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
-      const tools = registered("status-report", ctx);
-      // Calling without `notify` must not silently default — the schema
-      // requires it, so the SDK throws. We catch the throw and assert.
-      await expect(
-        callTool(tools, "create_status_report", {
-          title: `${TEST_PREFIX}-no-notify-field`,
-          status: "investigating",
-          message: "x",
-          pageId: testPageId,
-          pageComponentIds: [],
-        }),
-      ).rejects.toBeDefined();
-    });
-  });
+  // The "rejects calls that omit `notify`" guarantee belongs to the
+  // SDK's input-validation step — exercised in handler.test.ts via the
+  // real `tools/call` JSON-RPC envelope. A handler-direct invocation
+  // (this file's pattern) bypasses that validation, so a unit test
+  // here can't catch the missing-required-field case.
 });
 
 describe("add_status_report_update", () => {

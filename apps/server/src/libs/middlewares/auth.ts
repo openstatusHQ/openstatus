@@ -93,9 +93,14 @@ export async function authMiddleware(
   };
   event.auth_method = result.authMethod;
   c.set("workspace", workspaceData);
-  if (result.keyId !== undefined) {
-    c.set("apiKey", { id: result.keyId, createdById: result.createdById });
-  }
+  // Always populate `apiKey` — falling back to a workspace-scoped
+  // placeholder for auth paths that didn't surface a stable key id
+  // (today: an Unkey response without `data.keyId`). Adapters can rely
+  // on the field being present without optional-chaining.
+  c.set("apiKey", {
+    id: result.keyId ?? `ws:${workspaceData.id}`,
+    createdById: result.createdById,
+  });
 
   await next();
 }

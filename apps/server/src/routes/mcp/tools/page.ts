@@ -10,7 +10,7 @@ import { runTool } from "../adapter";
 
 // Pages carry secrets (`password`, `customDomain` access controls) that
 // must never reach an LLM client. Output is a deliberately slim shape
-// — see mcp-plan.md §"Schemas".
+// (id, title, slug only) rather than the full row.
 //
 // No `limit` input: pages are low-cardinality (workspaces have a
 // handful), and `listPages` doesn't support `limit` push-down. A

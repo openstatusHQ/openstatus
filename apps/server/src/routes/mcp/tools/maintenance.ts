@@ -27,7 +27,7 @@ export function registerMaintenanceTools(
       "list_maintenances",
       {
         description:
-          "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future) which is what callers usually want when scheduling. Pass `filter: 'all'` to include past maintenances too.",
+          "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future) which is what callers usually want when scheduling. Pass `filter: 'all'` to include past maintenances too. Caveat: with `filter: 'upcoming'`, this scans up to 200 most-recent windows and post-filters; workspaces with very long maintenance history may see the upcoming subset truncated — assume the result is the most-recent slice, not exhaustive.",
         annotations: { readOnlyHint: true, openWorldHint: false },
         inputSchema: {
           filter: z
@@ -71,11 +71,19 @@ export function registerMaintenanceTools(
             listMaintenances({
               ctx,
               input: {
-                // Service has no `upcoming` flag, so we over-fetch and
-                // post-filter. Capped at READ_LIMIT_MAX before slicing
-                // the upcoming subset, which is fine for realistic
-                // schedules (handful per workspace).
-                limit: limit ?? READ_LIMIT_DEFAULT,
+                // The service has no `upcoming` flag, so we over-fetch
+                // and post-filter. For `upcoming`, fetch the maximum
+                // window the tool exposes so the post-filter has a
+                // best chance of returning a full page even when the
+                // workspace has lots of historical maintenances mixed
+                // in. This is a known ceiling — workspaces with more
+                // than READ_LIMIT_MAX past+upcoming windows will see
+                // the upcoming subset truncate; that's acceptable for
+                // v1 and matches the description's implied bound.
+                limit:
+                  filter === "upcoming"
+                    ? READ_LIMIT_MAX
+                    : limit ?? READ_LIMIT_DEFAULT,
                 offset: 0,
                 pageId,
                 order: "desc",
