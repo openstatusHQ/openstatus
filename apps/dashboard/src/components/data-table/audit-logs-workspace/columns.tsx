@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { SlackIcon } from "@openstatus/icons";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons";
 import {
   Avatar,
   AvatarFallback,
@@ -66,6 +66,16 @@ export const columns: ColumnDef<AuditLog>[] = [
                 <SlackIcon className="size-4 text-muted-foreground" />
               </div>
               <span className="text-muted-foreground">Slack</span>
+            </div>
+          );
+        }
+        if (type === "mcp") {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
+                <ModelContextProtocolIcon className="size-4 text-muted-foreground" />
+              </div>
+              <span className="text-muted-foreground">MCP</span>
             </div>
           );
         }

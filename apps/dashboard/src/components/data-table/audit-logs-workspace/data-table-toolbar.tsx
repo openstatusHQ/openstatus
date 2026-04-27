@@ -14,6 +14,7 @@ const ACTOR_TYPE_LABELS: Record<string, string> = {
   slack: "Slack",
   system: "System",
   subscriber: "Subscriber",
+  mcp: "MCP",
 };
 
 function toOptions(values: Iterable<string>, labels?: Record<string, string>) {
