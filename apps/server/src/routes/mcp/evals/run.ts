@@ -6,13 +6,27 @@
  * the required args. Fails the run if fewer than `PASS_THRESHOLD` of
  * `cases.length` succeed.
  *
- * Tool catalogue here MIRRORS what the MCP server exposes (names,
- * descriptions, input shapes, required fields). Drift is the obvious
- * failure mode — when you edit a description in `tools/*.ts`, edit it
- * here too. A future refactor can derive this catalogue from the
- * production registrations to remove the duplication.
- *
  * Not in default CI. Cost: a handful of cents per run.
+ *
+ * --------------------------------------------------------------------
+ * TODO: deduplicate tool catalogue.
+ *
+ * The `tools` map below MIRRORS the server registrations in:
+ *   - apps/server/src/routes/mcp/tools/page.ts
+ *   - apps/server/src/routes/mcp/tools/status-report.ts
+ *   - apps/server/src/routes/mcp/tools/maintenance.ts
+ *
+ * When you edit a description, input shape, or required field in any
+ * of those files, edit it here too — drift is silent because evals
+ * are not in CI.
+ *
+ * The clean fix is to import each `register*Tools` factory, run them
+ * against a stub `McpServer` + stub ctx (handlers never execute), and
+ * convert each `RegisteredTool.description` + `inputSchema` into the
+ * AI SDK `tool()` shape. Attempted in an earlier revision; deferred
+ * because the SDK's Zod-shape conversion path needs more care than a
+ * few lines.
+ * --------------------------------------------------------------------
  */
 
 import { gateway, generateText, stepCountIs, tool } from "ai";

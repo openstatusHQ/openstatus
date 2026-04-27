@@ -125,7 +125,7 @@ export function registerMaintenanceTools(
       "create_maintenance",
       {
         description:
-          "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects.\n\nMANDATORY workflow before calling:\n1. Draft the title, message, and time window (ISO 8601 from/to).\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers (email + integrations) about this maintenance window? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the content AND the notify decision.\n\nSubscriber notifications fire atomically with creation — you cannot notify retroactively. There is NO separate notify tool. If notify is omitted or false here, this window will never reach subscribers.\n\npageId MUST come from list_status_pages — never guess.",
+          "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects.\n\nMANDATORY workflow before calling:\n1. Draft the title, message, and time window (ISO 8601 from/to).\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers (email + integrations) about this maintenance window? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the content AND the notify decision.\n\nSubscriber notifications dispatch as part of this call only — you cannot notify retroactively for an existing window. There is NO separate notify tool. If notify is false here, this window will never reach subscribers. Note: the maintenance row persists even if the notify dispatch fails; the response's `notified` field reports whether subscribers were actually notified.\n\npageId MUST come from list_status_pages — never guess.",
         annotations: {
           destructiveHint: true,
           idempotentHint: false,
@@ -190,13 +190,24 @@ export function registerMaintenanceTools(
                 pageComponentIds: input.pageComponentIds ?? [],
               },
             });
+            // The maintenance row is already persisted; a notify
+            // dispatch failure must not propagate as a tool error.
+            // Otherwise the LLM treats the whole call as failed and
+            // may retry, double-publishing the window. Report
+            // partial success via `notified: false`.
+            let notified = false;
             if (input.notify) {
-              await notifyMaintenance({
-                ctx,
-                input: { maintenanceId: record.id },
-              });
+              try {
+                await notifyMaintenance({
+                  ctx,
+                  input: { maintenanceId: record.id },
+                });
+                notified = true;
+              } catch (err) {
+                console.warn("notifyMaintenance failed after create", err);
+              }
             }
-            return { record, notified: input.notify };
+            return { record, notified };
           },
           ({ record, notified }) => {
             const out = {

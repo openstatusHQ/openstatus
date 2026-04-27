@@ -130,7 +130,7 @@ export function registerStatusReportTools(
       "create_status_report",
       {
         description:
-          "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects.\n\nMANDATORY workflow before calling:\n1. Draft the title, status, message, and affected components.\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers (email + integrations) for this report? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the content AND the notify decision.\n\nSubscriber notifications fire atomically with creation — you cannot notify retroactively after this call returns. There is NO separate notify tool. If notify is omitted or false on this call, that update will never reach subscribers.\n\npageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST belong to the same page.",
+          "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects.\n\nMANDATORY workflow before calling:\n1. Draft the title, status, message, and affected components.\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers (email + integrations) for this report? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the content AND the notify decision.\n\nSubscriber notifications dispatch as part of this call only — you cannot notify retroactively for an existing update. There is NO separate notify tool. If notify is false here, that update will never reach subscribers. Note: the report persists even if the notify dispatch fails; the response's `notified` field reports whether subscribers were actually notified.\n\npageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST belong to the same page.",
         annotations: {
           destructiveHint: true,
           idempotentHint: false,
@@ -201,13 +201,24 @@ export function registerStatusReportTools(
                 date: input.date ? new Date(input.date) : new Date(),
               },
             });
+            // Mutation succeeded; the row exists. A notify failure
+            // here must NOT propagate as a tool error — that would
+            // leave the LLM thinking the whole call failed and
+            // possibly retrying create, double-publishing the
+            // report. Report partial success via `notified: false`.
+            let notified = false;
             if (input.notify) {
-              await notifyStatusReport({
-                ctx,
-                input: { statusReportUpdateId: result.initialUpdate.id },
-              });
+              try {
+                await notifyStatusReport({
+                  ctx,
+                  input: { statusReportUpdateId: result.initialUpdate.id },
+                });
+                notified = true;
+              } catch (err) {
+                console.warn("notifyStatusReport failed after create", err);
+              }
             }
-            return { ...result, notified: input.notify };
+            return { ...result, notified };
           },
           ({ statusReport, initialUpdate, notified }) => {
             const out = {
@@ -236,7 +247,7 @@ export function registerStatusReportTools(
       "add_status_report_update",
       {
         description:
-          "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved').\n\nMANDATORY workflow before calling:\n1. Draft the new status and message.\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers about this update? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the content AND the notify decision.\n\nSubscriber notifications fire atomically with the update — you cannot notify retroactively. There is NO separate notify tool. If notify is omitted or false here, this update will never reach subscribers.",
+          "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved').\n\nMANDATORY workflow before calling:\n1. Draft the new status and message.\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers about this update? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the content AND the notify decision.\n\nSubscriber notifications dispatch as part of this call only — you cannot notify retroactively. There is NO separate notify tool. If notify is false here, this update will never reach subscribers. Note: the update persists even if the notify dispatch fails; the response's `notified` field reports whether subscribers were actually notified.",
         annotations: {
           destructiveHint: true,
           idempotentHint: false,
@@ -283,13 +294,27 @@ export function registerStatusReportTools(
                 date: input.date ? new Date(input.date) : undefined,
               },
             });
+            // See `create_status_report` for the rationale: the
+            // update is already persisted, so a notify dispatch
+            // failure must not propagate as a tool error.
+            let notified = false;
             if (input.notify) {
-              await notifyStatusReport({
-                ctx,
-                input: { statusReportUpdateId: result.statusReportUpdate.id },
-              });
+              try {
+                await notifyStatusReport({
+                  ctx,
+                  input: {
+                    statusReportUpdateId: result.statusReportUpdate.id,
+                  },
+                });
+                notified = true;
+              } catch (err) {
+                console.warn(
+                  "notifyStatusReport failed after add-update",
+                  err,
+                );
+              }
             }
-            return { ...result, notified: input.notify };
+            return { ...result, notified };
           },
           ({ statusReportUpdate, notified }) => {
             const out = {
@@ -372,7 +397,7 @@ export function registerStatusReportTools(
       "resolve_status_report",
       {
         description:
-          "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects.\n\nMANDATORY workflow before calling:\n1. Draft the resolution message.\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers that this incident is resolved? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the message AND the notify decision.\n\nSubscriber notifications fire atomically with the resolve — you cannot notify retroactively. There is NO separate notify tool. If notify is omitted or false here, the resolution will never reach subscribers.",
+          "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects.\n\nMANDATORY workflow before calling:\n1. Draft the resolution message.\n2. Show the draft to the user for review.\n3. Ask explicitly: 'Should I notify subscribers that this incident is resolved? yes/no'.\n4. Only call this tool once the user has confirmed BOTH the message AND the notify decision.\n\nSubscriber notifications dispatch as part of this call only — you cannot notify retroactively. There is NO separate notify tool. If notify is false here, the resolution will never reach subscribers. Note: the report flips to resolved even if the notify dispatch fails; the response's `notified` field reports whether subscribers were actually notified.",
         annotations: {
           destructiveHint: true,
           idempotentHint: false,
@@ -415,13 +440,24 @@ export function registerStatusReportTools(
                 date: input.date ? new Date(input.date) : undefined,
               },
             });
+            // See `create_status_report` for the rationale: the
+            // resolution update is already persisted, so a notify
+            // dispatch failure must not propagate as a tool error.
+            let notified = false;
             if (input.notify) {
-              await notifyStatusReport({
-                ctx,
-                input: { statusReportUpdateId: result.statusReportUpdate.id },
-              });
+              try {
+                await notifyStatusReport({
+                  ctx,
+                  input: {
+                    statusReportUpdateId: result.statusReportUpdate.id,
+                  },
+                });
+                notified = true;
+              } catch (err) {
+                console.warn("notifyStatusReport failed after resolve", err);
+              }
             }
-            return { ...result, notified: input.notify };
+            return { ...result, notified };
           },
           ({ statusReportUpdate, notified }) => {
             const out = {

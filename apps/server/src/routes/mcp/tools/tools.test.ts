@@ -30,9 +30,11 @@ import { registerStatusReportTools } from "./status-report";
 /**
  * Build an MCP-flavoured `ServiceContext` for a workspace, optionally
  * threading a transaction through `ctx.db` so writes can be rolled back
- * via `withTestTransaction`.
+ * via `withTestTransaction`. Local to this test file — distinct from
+ * `makeMcpCtx` in `@openstatus/services/test/helpers`, which doesn't
+ * thread a tx and exists for service-package tests.
  */
-function makeMcpCtx(
+function makeMcpToolCtx(
   workspace: Workspace,
   opts: {
     db?: ServiceContext["db"];
@@ -145,7 +147,7 @@ async function callTool(
 describe("list_status_pages", () => {
   test("lists pages in the workspace, slim shape", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("page", ctx);
       const result = await callTool(tools, "list_status_pages", {});
       expect(result.isError).toBeUndefined();
@@ -181,7 +183,7 @@ describe("list_status_pages", () => {
         .get();
 
       // Call list_status_pages as the TEAM workspace.
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("page", ctx);
       const result = await callTool(tools, "list_status_pages", {});
       const items = (result.structuredContent as { items: { id: number }[] })
@@ -217,7 +219,7 @@ describe("list_status_reports", () => {
         .returning()
         .get();
 
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("status-report", ctx);
       const result = await callTool(tools, "list_status_reports", {
         filter: "active",
@@ -235,7 +237,7 @@ describe("list_status_reports", () => {
 describe("create_status_report", () => {
   test("creates a report + initial update and emits audit with transport=mcp", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("status-report", ctx);
       const result = await callTool(tools, "create_status_report", {
         title: `${TEST_PREFIX}-create`,
@@ -280,7 +282,7 @@ describe("create_status_report", () => {
 
   test("propagates createdById to audit_log.actor_user_id", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx, createdById: 1 });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx, createdById: 1 });
       const tools = registered("status-report", ctx);
       const result = await callTool(tools, "create_status_report", {
         title: `${TEST_PREFIX}-with-creator`,
@@ -306,7 +308,7 @@ describe("create_status_report", () => {
 
   test("notify: true reports notified back to caller", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("status-report", ctx);
       const result = await callTool(tools, "create_status_report", {
         title: `${TEST_PREFIX}-create-notify`,
@@ -327,7 +329,7 @@ describe("create_status_report", () => {
 
   test("returns isError: true when pageId is not in workspace (NOT_FOUND)", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("status-report", ctx);
       const result = await callTool(tools, "create_status_report", {
         title: `${TEST_PREFIX}-bad-page`,
@@ -351,7 +353,7 @@ describe("create_status_report", () => {
 describe("add_status_report_update", () => {
   test("appends an update and emits audit with transport=mcp", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const sr = await tx
         .insert(statusReport)
         .values({
@@ -390,7 +392,7 @@ describe("add_status_report_update", () => {
 describe("update_status_report", () => {
   test("edits a report's title and emits audit with transport=mcp", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const sr = await tx
         .insert(statusReport)
         .values({
@@ -427,7 +429,7 @@ describe("update_status_report", () => {
 describe("resolve_status_report", () => {
   test("resolves an active report and emits audit with transport=mcp", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const sr = await tx
         .insert(statusReport)
         .values({
@@ -478,7 +480,7 @@ describe("resolve_status_report", () => {
 describe("list_maintenances", () => {
   test("lists maintenances in the workspace", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("maintenance", ctx);
       const result = await callTool(tools, "list_maintenances", {});
       expect(result.isError).toBeUndefined();
@@ -492,7 +494,7 @@ describe("list_maintenances", () => {
 describe("create_maintenance", () => {
   test("creates a maintenance window and emits audit with transport=mcp", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("maintenance", ctx);
       const from = new Date("2026-04-30T14:00:00Z").toISOString();
       const to = new Date("2026-04-30T15:00:00Z").toISOString();
@@ -524,7 +526,7 @@ describe("create_maintenance", () => {
 
   test("returns isError: true when from > to (VALIDATION)", async () => {
     await withTestTransaction(async (tx) => {
-      const ctx = makeMcpCtx(teamWorkspace, { db: tx });
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("maintenance", ctx);
       const from = new Date("2026-04-30T15:00:00Z").toISOString();
       const to = new Date("2026-04-30T14:00:00Z").toISOString();

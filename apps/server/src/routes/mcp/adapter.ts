@@ -79,11 +79,16 @@ function serviceErrorToMcpCode(
   switch (code) {
     case "UNAUTHORIZED":
     case "FORBIDDEN":
-      // MCP has no dedicated auth code — InvalidRequest is the closest fit
-      // and matches what other MCP servers return for permission failures.
+      // JSON-RPC has no dedicated auth code; `InvalidRequest` is the
+      // closest standard fit and matches what other MCP servers
+      // return for permission failures.
       return ErrorCode.InvalidRequest;
     case "PRECONDITION_FAILED":
-      return ErrorCode.InvalidRequest;
+      // The caller could fix this with different arguments (e.g.
+      // delete the blocking subscription first), so `InvalidParams`
+      // (-32602) describes the failure better than `InvalidRequest`
+      // (-32600), which is reserved for malformed JSON-RPC envelopes.
+      return ErrorCode.InvalidParams;
     case "INTERNAL":
       return ErrorCode.InternalError;
   }

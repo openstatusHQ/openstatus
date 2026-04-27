@@ -44,7 +44,9 @@ The MCP client gates every tool call behind your approval — the server does no
 
 Every mutation tool has a **required** `notify: boolean` field — there is no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing.
 
-Notifications happen **atomically with the mutation**. There is no separate notify tool: if you create a status report or append an update with `notify: false`, that update will **never** reach subscribers — you cannot retroactively notify the same update later. This matches the dashboard and Slack agent semantics.
+Notifications dispatch as part of the same call. There is no separate notify tool: if you create a status report or append an update with `notify: false`, that update will **never** reach subscribers — you cannot retroactively notify the same update later. This matches the dashboard and Slack agent semantics.
+
+The mutation and the notify dispatch are sequential, not transactional. The mutation persists first; if the notify step then fails (transient provider issue, partial outage of an integration), the response carries `notified: false` and the row stays. Callers should treat `notified` as the source of truth for "did subscribers actually hear about it?"
 
 | Tool                       | What `notify: true` sends |
 |----------------------------|---------------------------|

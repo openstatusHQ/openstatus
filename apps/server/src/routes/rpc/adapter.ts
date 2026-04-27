@@ -49,6 +49,8 @@ export function toConnectError(err: unknown): never {
         throw new ConnectError(err.message, Code.InvalidArgument);
       case "LIMIT_EXCEEDED":
         throw new ConnectError(err.message, Code.ResourceExhausted);
+      case "PRECONDITION_FAILED":
+        throw new ConnectError(err.message, Code.FailedPrecondition);
       case "INTERNAL":
         throw new ConnectError(err.message, Code.Internal);
     }
