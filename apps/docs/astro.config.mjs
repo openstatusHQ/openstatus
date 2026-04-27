@@ -185,10 +185,6 @@ export default defineConfig({
           label: "Reference",
           items: [
             {
-              label: "CLI Reference",
-              slug: "reference/cli-reference",
-            },
-            {
               label: "API Reference V1 - Deprecated",
               link: "https://api.openstatus.dev/v1",
               // badge: { text: 'External' },
@@ -203,6 +199,14 @@ export default defineConfig({
               attrs: {
                 target: "_blank",
               },
+            },
+            {
+              label: "CLI Reference",
+              slug: "reference/cli-reference",
+            },
+            {
+              label: "MCP Server",
+              slug: "reference/mcp-server",
             },
             {
               label: "DNS Monitor",

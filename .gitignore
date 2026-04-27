@@ -84,3 +84,5 @@ plan.md
 .claude/skills/**
 .agents/skills/**
 skills-lock.json
+
+.mcp.json

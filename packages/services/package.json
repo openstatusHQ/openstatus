@@ -80,6 +80,14 @@
     "./page-subscriber": {
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
+    },
+    "./test/helpers": {
+      "import": "./test/helpers.ts",
+      "types": "./test/helpers.ts"
+    },
+    "./test/fixtures": {
+      "import": "./test/fixtures.ts",
+      "types": "./test/fixtures.ts"
     }
   },
   "scripts": {

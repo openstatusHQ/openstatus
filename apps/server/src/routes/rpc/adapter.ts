@@ -5,17 +5,18 @@ import { ZodError } from "zod";
 import type { RpcContext } from "./interceptors";
 
 /**
- * Translate Connect RPC auth context into a `ServiceContext`.
- *
- * TODO: Once the auth interceptor captures the API key id, expose it here
- * as `actor.keyId`. Until then we synthesise `ws:<workspaceId>` so audit
- * records still have a non-empty actor identifier — see the plan's open
- * question "Does Connect's auth interceptor capture API key ID today?".
+ * Translate Connect RPC auth context into a `ServiceContext`. The
+ * `apiKeyId` is the real key identifier captured by the auth
+ * interceptor — audit rows can attribute mutations to the specific key.
  */
 export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
   return {
     workspace: rpcCtx.workspace,
-    actor: { type: "apiKey", keyId: `ws:${rpcCtx.workspace.id}` },
+    actor: {
+      type: "apiKey",
+      keyId: rpcCtx.apiKey.id,
+      userId: rpcCtx.apiKey.createdById,
+    },
     requestId: rpcCtx.requestId,
   };
 }

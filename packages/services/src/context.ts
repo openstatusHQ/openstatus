@@ -12,6 +12,7 @@ export type DB = DrizzleClient | DrizzleTx;
 export type Actor =
   | { type: "user"; userId: number }
   | { type: "apiKey"; keyId: string; userId?: number }
+  | { type: "mcp"; keyId: string; userId?: number }
   | { type: "slack"; teamId: string; slackUserId: string; userId?: number }
   | { type: "system"; job: string }
   | { type: "webhook"; source: string; externalId?: string }
@@ -57,6 +58,7 @@ export function extractActorId(actor: Actor): string {
     case "user":
       return String(actor.userId);
     case "apiKey":
+    case "mcp":
       return actor.keyId;
     case "slack":
       return actor.slackUserId;
@@ -80,6 +82,7 @@ export function tryGetActorUserId(actor: Actor): number | null {
     case "user":
       return actor.userId;
     case "apiKey":
+    case "mcp":
     case "slack":
       return actor.userId ?? null;
     case "system":

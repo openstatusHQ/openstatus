@@ -93,12 +93,33 @@ export async function authMiddleware(
   };
   event.auth_method = result.authMethod;
   c.set("workspace", workspaceData);
+  if (result.keyId !== undefined) {
+    c.set("apiKey", { id: result.keyId, createdById: result.createdById });
+  }
 
   await next();
 }
 
 export async function validateKey(key: string): Promise<{
-  result: { valid: boolean; ownerId?: string; authMethod?: string };
+  result: {
+    valid: boolean;
+    ownerId?: string;
+    authMethod?: string;
+    /**
+     * Stable identifier for the API key itself, not the workspace it
+     * belongs to. Audit logs read this to attribute mutations to the
+     * specific key. Custom keys: the `api_key.id` row id. Unkey:
+     * `data.keyId`. Dev: the input string. Super-admin: a sentinel.
+     */
+    keyId?: string;
+    /**
+     * The openstatus user who created the API key — `api_key.created_by_id`
+     * for custom keys. Unkey/dev/super-admin don't expose a user
+     * mapping, so this is undefined for them; audit rows fall back to
+     * `actor_user_id = NULL`.
+     */
+    createdById?: number;
+  };
   error?: { message: string };
 }> {
   if (env.NODE_ENV === "production") {
@@ -143,6 +164,8 @@ export async function validateKey(key: string): Promise<{
             valid: true,
             ownerId: String(customKey.workspaceId),
             authMethod: "custom_key",
+            keyId: String(customKey.id),
+            createdById: customKey.createdById,
           },
         };
       }
@@ -162,6 +185,7 @@ export async function validateKey(key: string): Promise<{
           valid: res.value.data.valid,
           ownerId: res.value.data.identity?.externalId,
           authMethod: "unkey",
+          keyId: res.value.data.keyId,
         },
         error: undefined,
       };
@@ -169,7 +193,12 @@ export async function validateKey(key: string): Promise<{
     // Special bypass for our workspace
     if (key.startsWith("sa_") && key === env.SUPER_ADMIN_TOKEN) {
       return {
-        result: { valid: true, ownerId: "1", authMethod: "super_admin" },
+        result: {
+          valid: true,
+          ownerId: "1",
+          authMethod: "super_admin",
+          keyId: "super_admin",
+        },
       };
     }
     // In production, we only accept Unkey keys
@@ -179,6 +208,10 @@ export async function validateKey(key: string): Promise<{
     });
   }
 
-  // In dev / test mode we can use the key as the ownerId
-  return { result: { valid: true, ownerId: key, authMethod: "dev" } };
+  // In dev / test mode we can use the key as the ownerId. The same
+  // string also stands in for the keyId — there is no separate
+  // identity record to reference.
+  return {
+    result: { valid: true, ownerId: key, authMethod: "dev", keyId: key },
+  };
 }
