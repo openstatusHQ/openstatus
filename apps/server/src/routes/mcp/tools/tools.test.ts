@@ -424,6 +424,12 @@ describe("update_status_report", () => {
       expect(rows[0]?.actorId).toBe("test-key");
     });
   });
+
+  // The "rejects status: 'resolved'" guarantee is enforced by a Zod
+  // refine on the input schema — see handler.test.ts for the
+  // integration test that exercises it via a real `tools/call`. A
+  // handler-direct invocation here bypasses the SDK's input
+  // validation step, so the refine doesn't fire.
 });
 
 describe("resolve_status_report", () => {

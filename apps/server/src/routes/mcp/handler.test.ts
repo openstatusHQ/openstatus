@@ -137,6 +137,31 @@ describe("MCP transport", () => {
     }
   });
 
+  test("update_status_report rejects status: 'resolved' via Zod refine", async () => {
+    const app = makeApp();
+    // We don't need a real status report — input validation runs
+    // against the schema before the handler executes, so the SDK
+    // surfaces the refine error regardless of statusReportId.
+    const res = await app.fetch(
+      jsonRpc({
+        method: "tools/call",
+        params: {
+          name: "update_status_report",
+          arguments: { statusReportId: 1, status: "resolved" },
+        },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const body = (await readJsonRpc(res)) as {
+      result?: { isError?: boolean; content?: { text: string }[] };
+      error?: { code: number; message: string };
+    };
+    const failed = body.error !== undefined || body.result?.isError === true;
+    expect(failed).toBe(true);
+    const text = body.error?.message ?? body.result?.content?.[0]?.text ?? "";
+    expect(text).toMatch(/resolve_status_report/);
+  });
+
   test("tools/list advertises non-empty descriptions and schemas", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "tools/list" }));

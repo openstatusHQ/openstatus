@@ -19,6 +19,15 @@ import { runTool } from "../adapter";
 const READ_LIMIT_DEFAULT = 50;
 const READ_LIMIT_MAX = 200;
 
+/**
+ * "Active" = every status except `resolved`. Computed from the schema
+ * so adding a new variant (e.g. `degraded`) automatically extends the
+ * filter without touching this file.
+ */
+const ACTIVE_STATUSES = statusReportStatusSchema.options.filter(
+  (s) => s !== "resolved",
+);
+
 export function registerStatusReportTools(
   server: McpServer,
   ctx: ServiceContext,
@@ -83,10 +92,7 @@ export function registerStatusReportTools(
               input: {
                 limit: limit ?? READ_LIMIT_DEFAULT,
                 offset: 0,
-                statuses:
-                  filter === "active"
-                    ? ["investigating", "identified", "monitoring"]
-                    : [],
+                statuses: filter === "active" ? ACTIVE_STATUSES : [],
                 pageId,
                 order: "desc",
               },
@@ -308,10 +314,7 @@ export function registerStatusReportTools(
                 });
                 notified = true;
               } catch (err) {
-                console.warn(
-                  "notifyStatusReport failed after add-update",
-                  err,
-                );
+                console.warn("notifyStatusReport failed after add-update", err);
               }
             }
             return { ...result, notified };
@@ -348,9 +351,22 @@ export function registerStatusReportTools(
             .int()
             .describe("Report to edit. Resolve via list_status_reports."),
           title: z.string().min(1).max(256).optional().describe("New title."),
+          // Guard against `status: "resolved"` — that would flip the
+          // report's status without publishing a resolution update,
+          // leaving the public page in a divergent state (status
+          // reads "resolved" but no resolution message). Force the
+          // LLM to use resolve_status_report (which appends the
+          // final update) instead. The tool description already
+          // says this; the refine is the runtime backstop.
           status: statusReportStatusSchema
+            .refine((s) => s !== "resolved", {
+              error:
+                "update_status_report cannot set status to 'resolved' — use resolve_status_report instead, which also publishes a final resolution update.",
+            })
             .optional()
-            .describe("New status (without appending a public update entry)."),
+            .describe(
+              "New status (without appending a public update entry). Cannot be 'resolved' — use resolve_status_report for that.",
+            ),
           pageComponentIds: z
             .array(z.number().int())
             .optional()

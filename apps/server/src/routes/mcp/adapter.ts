@@ -58,6 +58,13 @@ export function mapError(err: unknown): CallToolResult {
       case "VALIDATION":
       case "CONFLICT":
       case "LIMIT_EXCEEDED":
+      case "PRECONDITION_FAILED":
+        // PRECONDITION_FAILED is recoverable in the LLM sense: the
+        // user can take a different action (cancel a subscription,
+        // free a quota slot) and try again. Surfacing it as
+        // `isError: true` lets the assistant relay the message to
+        // the user instead of retrying with mangled arguments,
+        // which is what `InvalidParams` would prompt.
         return {
           isError: true,
           content: [{ type: "text", text: err.message }],
@@ -65,7 +72,6 @@ export function mapError(err: unknown): CallToolResult {
       case "UNAUTHORIZED":
       case "FORBIDDEN":
       case "INTERNAL":
-      case "PRECONDITION_FAILED":
         throw new McpError(serviceErrorToMcpCode(err.code), err.message);
     }
   }
@@ -74,7 +80,7 @@ export function mapError(err: unknown): CallToolResult {
 }
 
 function serviceErrorToMcpCode(
-  code: "UNAUTHORIZED" | "FORBIDDEN" | "INTERNAL" | "PRECONDITION_FAILED",
+  code: "UNAUTHORIZED" | "FORBIDDEN" | "INTERNAL",
 ): ErrorCode {
   switch (code) {
     case "UNAUTHORIZED":
@@ -83,12 +89,6 @@ function serviceErrorToMcpCode(
       // closest standard fit and matches what other MCP servers
       // return for permission failures.
       return ErrorCode.InvalidRequest;
-    case "PRECONDITION_FAILED":
-      // The caller could fix this with different arguments (e.g.
-      // delete the blocking subscription first), so `InvalidParams`
-      // (-32602) describes the failure better than `InvalidRequest`
-      // (-32600), which is reserved for malformed JSON-RPC envelopes.
-      return ErrorCode.InvalidParams;
     case "INTERNAL":
       return ErrorCode.InternalError;
   }
