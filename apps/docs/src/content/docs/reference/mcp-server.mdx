@@ -31,7 +31,7 @@ The server exposes 8 tools, scoped to the workspace tied to your API key. Mutati
 |----------------------------|----------|---------|
 | `list_status_pages`        | read     | List public status pages with their slug and id. Used to discover the `pageId` required by mutation tools. |
 | `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). |
-| `list_maintenances`        | read     | List maintenance windows newest-first. |
+| `list_maintenances`        | read     | List maintenance windows. Defaults to upcoming-only; pass `filter: "all"` for the full list. Response includes `truncated: boolean` so the LLM can warn when the result may not be exhaustive. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |

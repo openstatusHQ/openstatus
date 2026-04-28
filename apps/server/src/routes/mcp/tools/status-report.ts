@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import type {
   McpServer,
   RegisteredTool,
@@ -15,6 +16,8 @@ import {
 import { z } from "zod";
 
 import { runTool } from "../adapter";
+
+const logger = getLogger("api-server");
 
 const READ_LIMIT_DEFAULT = 50;
 const READ_LIMIT_MAX = 200;
@@ -221,7 +224,15 @@ export function registerStatusReportTools(
                 });
                 notified = true;
               } catch (err) {
-                console.warn("notifyStatusReport failed after create", err);
+                logger.error(
+                  "notifyStatusReport failed after create_status_report {*}",
+                  {
+                    err,
+                    workspaceId: ctx.workspace.id,
+                    statusReportId: result.statusReport.id,
+                    statusReportUpdateId: result.initialUpdate.id,
+                  },
+                );
               }
             }
             return { ...result, notified };
@@ -314,7 +325,15 @@ export function registerStatusReportTools(
                 });
                 notified = true;
               } catch (err) {
-                console.warn("notifyStatusReport failed after add-update", err);
+                logger.error(
+                  "notifyStatusReport failed after add_status_report_update {*}",
+                  {
+                    err,
+                    workspaceId: ctx.workspace.id,
+                    statusReportId: result.statusReport.id,
+                    statusReportUpdateId: result.statusReportUpdate.id,
+                  },
+                );
               }
             }
             return { ...result, notified };
@@ -470,7 +489,15 @@ export function registerStatusReportTools(
                 });
                 notified = true;
               } catch (err) {
-                console.warn("notifyStatusReport failed after resolve", err);
+                logger.error(
+                  "notifyStatusReport failed after resolve_status_report {*}",
+                  {
+                    err,
+                    workspaceId: ctx.workspace.id,
+                    statusReportId: result.statusReport.id,
+                    statusReportUpdateId: result.statusReportUpdate.id,
+                  },
+                );
               }
             }
             return { ...result, notified };

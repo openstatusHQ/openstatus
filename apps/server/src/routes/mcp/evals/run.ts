@@ -38,6 +38,10 @@ import { type EvalCase, cases } from "./cases";
 // `gateway(...)` instead of a bare string makes the routing path
 // explicit and gives a clearer error if the gateway is unconfigured.
 const MODEL = gateway("anthropic/claude-haiku-4-5");
+// Lenient bar (10/12) accommodates model non-determinism even at
+// `temperature: 0` — a single flaky tool selection shouldn't tank
+// the run. Tighten if descriptions stabilize and runs trend toward
+// 12/12.
 const PASS_THRESHOLD = 10;
 
 const statusEnum = z.enum([
@@ -66,23 +70,24 @@ const tools = {
   }),
   list_maintenances: tool({
     description:
-      "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future) which is what callers usually want when scheduling. Pass `filter: 'all'` to include past maintenances too.",
+      "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future). Pass `filter: 'all'` to include past windows. Response carries `truncated: boolean` — if true, more matching windows exist and the LLM should warn the user.",
     inputSchema: z.object({
       filter: z.enum(["upcoming", "all"]).default("upcoming"),
       pageId: z.number().int().optional(),
       limit: z.number().int().min(1).max(200).default(50).optional(),
     }),
-    execute: async () => ({ items: [] }),
+    execute: async () => ({ items: [], truncated: false }),
   }),
   create_status_report: tool({
     description:
-      "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. MANDATORY workflow before calling: 1) Draft the title/status/message/components. 2) Show the draft to the user. 3) Ask explicitly: 'Should I notify subscribers?'. 4) Call only after both content and notify are confirmed. Subscriber notifications fire atomically — there is NO separate notify tool. pageId MUST come from list_status_pages.",
+      "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. MANDATORY workflow before calling: 1) Draft the title/status/message/components. 2) Show the draft to the user. 3) Ask explicitly: 'Should I notify subscribers?'. 4) Call only after both content and notify are confirmed. Subscriber notifications dispatch as part of this call only — there is NO separate notify tool. pageId MUST come from list_status_pages.",
     inputSchema: z.object({
       title: z.string(),
       status: statusEnum,
       message: z.string(),
       pageId: z.number().int(),
       pageComponentIds: z.array(z.number().int()).optional(),
+      date: z.string().optional(),
       notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),
@@ -94,17 +99,24 @@ const tools = {
       statusReportId: z.number().int(),
       status: statusEnum,
       message: z.string(),
+      date: z.string().optional(),
       notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),
   }),
   update_status_report: tool({
     description:
-      "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Does NOT and CANNOT notify subscribers. MANDATORY: draft, show, confirm before calling.",
+      "Edit metadata on an existing status report (title, status, affected components). Does NOT add a public update — use add_status_report_update for that. Does NOT and CANNOT notify subscribers — the schema rejects status: 'resolved' (use resolve_status_report). MANDATORY: draft, show, confirm before calling.",
     inputSchema: z.object({
       statusReportId: z.number().int(),
       title: z.string().optional(),
-      status: statusEnum.optional(),
+      // Mirrors the production refine that rejects "resolved".
+      status: statusEnum
+        .refine((s) => s !== "resolved", {
+          error:
+            "update_status_report cannot set status to 'resolved' — use resolve_status_report instead.",
+        })
+        .optional(),
       pageComponentIds: z.array(z.number().int()).optional(),
     }),
     execute: async () => ({ ok: true }),
@@ -115,6 +127,7 @@ const tools = {
     inputSchema: z.object({
       statusReportId: z.number().int(),
       message: z.string(),
+      date: z.string().optional(),
       notify: z.boolean(),
     }),
     execute: async () => ({ ok: true }),

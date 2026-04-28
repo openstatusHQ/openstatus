@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import type {
   McpServer,
   RegisteredTool,
@@ -11,6 +12,8 @@ import {
 import { z } from "zod";
 
 import { runTool } from "../adapter";
+
+const logger = getLogger("api-server");
 
 const READ_LIMIT_DEFAULT = 50;
 const READ_LIMIT_MAX = 200;
@@ -63,39 +66,49 @@ export function registerMaintenanceTools(
               pageComponentIds: z.array(z.number().int()),
             }),
           ),
+          truncated: z
+            .boolean()
+            .describe(
+              "True if there may be additional matching windows beyond what was returned (DB cap or local-cap hit). The LLM should warn the user that the list may not be exhaustive.",
+            ),
         },
       },
       async ({ filter, pageId, limit }) =>
         runTool(
-          () =>
-            listMaintenances({
+          async () => {
+            // The service has no `upcoming` flag, so we over-fetch
+            // and post-filter. For `upcoming`, fetch the maximum
+            // window the tool exposes so the post-filter has a best
+            // chance of returning a full page even when the
+            // workspace has lots of historical maintenances mixed in.
+            const fetchLimit =
+              filter === "upcoming"
+                ? READ_LIMIT_MAX
+                : limit ?? READ_LIMIT_DEFAULT;
+            const result = await listMaintenances({
               ctx,
               input: {
-                // The service has no `upcoming` flag, so we over-fetch
-                // and post-filter. For `upcoming`, fetch the maximum
-                // window the tool exposes so the post-filter has a
-                // best chance of returning a full page even when the
-                // workspace has lots of historical maintenances mixed
-                // in. This is a known ceiling — workspaces with more
-                // than READ_LIMIT_MAX past+upcoming windows will see
-                // the upcoming subset truncate; that's acceptable for
-                // v1 and matches the description's implied bound.
-                limit:
-                  filter === "upcoming"
-                    ? READ_LIMIT_MAX
-                    : limit ?? READ_LIMIT_DEFAULT,
+                limit: fetchLimit,
                 offset: 0,
                 pageId,
                 order: "desc",
               },
-            }),
-          ({ items }) => {
+            });
+            // If the DB returned a full page, there may be older
+            // rows we haven't seen — for `upcoming` that means
+            // future windows pushed off the end of the window are
+            // missing too.
+            const dbCapped = result.items.length === fetchLimit;
+            return { items: result.items, dbCapped };
+          },
+          ({ items, dbCapped }) => {
             const cap = limit ?? READ_LIMIT_DEFAULT;
             const now = Date.now();
             const filtered =
               filter === "upcoming"
                 ? items.filter((m) => m.to.getTime() > now)
                 : items;
+            const localCapped = filtered.length > cap;
             const summarised = filtered.slice(0, cap).map((m) => ({
               id: m.id,
               title: m.title,
@@ -105,14 +118,13 @@ export function registerMaintenanceTools(
               pageId: m.pageId,
               pageComponentIds: m.pageComponentIds,
             }));
+            const out = {
+              items: summarised,
+              truncated: localCapped || dbCapped,
+            };
             return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify({ items: summarised }),
-                },
-              ],
-              structuredContent: { items: summarised },
+              content: [{ type: "text", text: JSON.stringify(out) }],
+              structuredContent: out,
             };
           },
         ),
@@ -204,7 +216,14 @@ export function registerMaintenanceTools(
                 });
                 notified = true;
               } catch (err) {
-                console.warn("notifyMaintenance failed after create", err);
+                logger.error(
+                  "notifyMaintenance failed after create_maintenance {*}",
+                  {
+                    err,
+                    workspaceId: ctx.workspace.id,
+                    maintenanceId: record.id,
+                  },
+                );
               }
             }
             return { record, notified };

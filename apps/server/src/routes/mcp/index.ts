@@ -70,6 +70,11 @@ mcpRoute.all("/", async (c) => {
     await server.connect(transport);
     return await transport.handleRequest(c, parsedBody);
   } catch (err) {
+    // HTTP 200 + JSON-RPC error envelope is intentional. JSON-RPC 2.0
+    // expresses application-level errors *inside* the response body
+    // (the `error` field), with the transport HTTP status reserved
+    // for transport-level failures. Auth failures throw earlier and
+    // surface as HTTP 401 via `mcpRoute.onError(handleError)`.
     const message = err instanceof Error ? err.message : "Internal error";
     return c.json(
       {

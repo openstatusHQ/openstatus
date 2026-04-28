@@ -484,15 +484,18 @@ describe("resolve_status_report", () => {
 });
 
 describe("list_maintenances", () => {
-  test("lists maintenances in the workspace", async () => {
+  test("returns items and a boolean truncation flag", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("maintenance", ctx);
       const result = await callTool(tools, "list_maintenances", {});
       expect(result.isError).toBeUndefined();
-      expect(
-        Array.isArray((result.structuredContent as { items: unknown[] }).items),
-      ).toBe(true);
+      const out = result.structuredContent as {
+        items: unknown[];
+        truncated: boolean;
+      };
+      expect(Array.isArray(out.items)).toBe(true);
+      expect(typeof out.truncated).toBe("boolean");
     });
   });
 });
