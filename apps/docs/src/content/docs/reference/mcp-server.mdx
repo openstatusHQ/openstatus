@@ -30,8 +30,8 @@ The server exposes 8 tools, scoped to the workspace tied to your API key. Mutati
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
 | `list_status_pages`        | read     | List public status pages with their slug and id. Used to discover the `pageId` required by mutation tools. |
-| `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). |
-| `list_maintenances`        | read     | List maintenance windows. Defaults to upcoming-only; pass `filter: "all"` for the full list. Response includes `truncated: boolean` so the LLM can warn when the result may not be exhaustive. |
+| `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `list_maintenances`        | read     | List maintenance windows newest-first. Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |
@@ -46,7 +46,9 @@ Every mutation tool has a **required** `notify: boolean` field — there is no d
 
 Notifications dispatch as part of the same call. There is no separate notify tool: if you create a status report or append an update with `notify: false`, that update will **never** reach subscribers — you cannot retroactively notify the same update later. This matches the dashboard and Slack agent semantics.
 
-The mutation and the notify dispatch are sequential, not transactional. The mutation persists first; if the notify step then fails (transient provider issue, partial outage of an integration), the response carries `notified: false` and the row stays. Callers should treat `notified` as the source of truth for "did subscribers actually hear about it?"
+The mutation and the notify dispatch are sequential, not transactional. The mutation persists first; if the notify step then throws (transient provider issue, partial outage of an integration), the response carries `notified: false` and the row stays.
+
+`notified: true` means the dispatch call returned without throwing — **not** that every subscriber received a message. If the workspace plan doesn't include subscriber notifications, the service is a silent no-op and the response will still report `notified: true`. Treat the field as "the dispatch ran cleanly," not as a delivery receipt.
 
 | Tool                       | What `notify: true` sends |
 |----------------------------|---------------------------|
@@ -114,7 +116,7 @@ Error messages are not redacted — the consumer is an LLM that benefits from th
 
 ## Limits
 
-- Each `list_*` tool defaults to 50 items, capped at 200 per call. Pagination via cursor is not supported in v1; bump `limit` if you need more, otherwise use the dashboard.
+- `list_status_reports` and `list_maintenances` use offset pagination: `page` (1-indexed, default 1) and `perPage` (default 50, max 200). The response's `pagination.totalPages` tells the LLM whether more pages exist. `list_status_pages` is unpaginated (workspaces typically have a handful).
 - No per-key rate limiting today. Treat MCP usage like REST: one server call per tool invocation.
 
 ## Audit log
