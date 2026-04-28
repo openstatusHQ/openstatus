@@ -100,8 +100,8 @@ export async function authMiddleware(
   // when the fallback fires — audit attribution silently degrades to
   // workspace-level, which is a regression we want to notice.
   if (!result.keyId) {
-    console.warn(
-      "authMiddleware: keyId missing, falling back to workspace placeholder",
+    logger.warn(
+      "authMiddleware: keyId missing, falling back to workspace placeholder {*}",
       {
         workspaceId: workspaceData.id,
         authMethod: result.authMethod,
