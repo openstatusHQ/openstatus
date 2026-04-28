@@ -19,8 +19,8 @@ import { runTool } from "../adapter";
 
 const logger = getLogger("api-server");
 
-const READ_LIMIT_DEFAULT = 50;
-const READ_LIMIT_MAX = 200;
+const PER_PAGE_DEFAULT = 50;
+const PER_PAGE_MAX = 200;
 
 /**
  * "Active" = every status except `resolved`. Computed from the schema
@@ -43,7 +43,7 @@ export function registerStatusReportTools(
       "list_status_reports",
       {
         description:
-          "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns the most recent update per report so the LLM can see the current public message without a follow-up call.",
+          "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns the most recent update per report so the LLM can see the current public message without a follow-up call. Paginated via `page` (1-indexed) and `perPage`. The response's `pagination` object carries `totalSize`, `totalPages`, `page`, and `perPage` so the LLM can decide whether to fetch the next page or warn the user.",
         annotations: { readOnlyHint: true, openWorldHint: false },
         inputSchema: {
           filter: z
@@ -57,14 +57,20 @@ export function registerStatusReportTools(
             .int()
             .optional()
             .describe("If set, only reports attached to this page id."),
-          limit: z
+          page: z
             .number()
             .int()
             .min(1)
-            .max(READ_LIMIT_MAX)
-            .default(READ_LIMIT_DEFAULT)
+            .default(1)
+            .describe("1-indexed page number (default 1)."),
+          perPage: z
+            .number()
+            .int()
+            .min(1)
+            .max(PER_PAGE_MAX)
+            .default(PER_PAGE_DEFAULT)
             .describe(
-              `Max reports to return (default ${READ_LIMIT_DEFAULT}, max ${READ_LIMIT_MAX}).`,
+              `Items per page (default ${PER_PAGE_DEFAULT}, max ${PER_PAGE_MAX}).`,
             ),
         },
         outputSchema: {
@@ -85,22 +91,30 @@ export function registerStatusReportTools(
                 .nullable(),
             }),
           ),
+          pagination: z.object({
+            page: z.number().int(),
+            perPage: z.number().int(),
+            totalSize: z.number().int(),
+            totalPages: z.number().int(),
+          }),
         },
       },
-      async ({ filter, pageId, limit }) =>
+      async ({ filter, pageId, page, perPage }) =>
         runTool(
           () =>
             listStatusReports({
               ctx,
               input: {
-                limit: limit ?? READ_LIMIT_DEFAULT,
-                offset: 0,
+                limit: perPage ?? PER_PAGE_DEFAULT,
+                offset: ((page ?? 1) - 1) * (perPage ?? PER_PAGE_DEFAULT),
                 statuses: filter === "active" ? ACTIVE_STATUSES : [],
                 pageId,
                 order: "desc",
               },
             }),
-          ({ items }) => {
+          ({ items, totalSize }) => {
+            const currentPage = page ?? 1;
+            const size = perPage ?? PER_PAGE_DEFAULT;
             const summarised = items.map((r) => {
               const latestUpdate = r.updates[0] ?? null;
               return {
@@ -119,14 +133,23 @@ export function registerStatusReportTools(
                   : null,
               };
             });
+            const out = {
+              items: summarised,
+              pagination: {
+                page: currentPage,
+                perPage: size,
+                totalSize,
+                totalPages: Math.max(1, Math.ceil(totalSize / size)),
+              },
+            };
             return {
               content: [
                 {
                   type: "text",
-                  text: JSON.stringify({ items: summarised }),
+                  text: JSON.stringify(out),
                 },
               ],
-              structuredContent: { items: summarised },
+              structuredContent: out,
             };
           },
         ),

@@ -484,7 +484,7 @@ describe("resolve_status_report", () => {
 });
 
 describe("list_maintenances", () => {
-  test("returns items and a boolean truncation flag", async () => {
+  test("returns items and pagination metadata", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
       const tools = registered("maintenance", ctx);
@@ -492,10 +492,35 @@ describe("list_maintenances", () => {
       expect(result.isError).toBeUndefined();
       const out = result.structuredContent as {
         items: unknown[];
-        truncated: boolean;
+        pagination: {
+          page: number;
+          perPage: number;
+          totalSize: number;
+          totalPages: number;
+        };
       };
       expect(Array.isArray(out.items)).toBe(true);
-      expect(typeof out.truncated).toBe("boolean");
+      expect(out.pagination.page).toBe(1);
+      expect(out.pagination.perPage).toBe(50);
+      expect(typeof out.pagination.totalSize).toBe("number");
+      expect(out.pagination.totalPages).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  test("respects page and perPage inputs", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      const tools = registered("maintenance", ctx);
+      const result = await callTool(tools, "list_maintenances", {
+        page: 2,
+        perPage: 10,
+      });
+      expect(result.isError).toBeUndefined();
+      const out = result.structuredContent as {
+        pagination: { page: number; perPage: number };
+      };
+      expect(out.pagination.page).toBe(2);
+      expect(out.pagination.perPage).toBe(10);
     });
   });
 });

@@ -60,23 +60,30 @@ const tools = {
   }),
   list_status_reports: tool({
     description:
-      "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns the most recent update per report so the LLM can see the current public message without a follow-up call.",
+      "List status reports in this workspace, newest first. Filter by status (e.g. exclude 'resolved' to see active incidents). Returns the most recent update per report so the LLM can see the current public message without a follow-up call. Paginated via `page` (1-indexed) and `perPage`; response carries `pagination` with `totalSize` and `totalPages`.",
     inputSchema: z.object({
       filter: z.enum(["active", "all"]).default("active"),
       pageId: z.number().int().optional(),
-      limit: z.number().int().min(1).max(200).default(50).optional(),
+      page: z.number().int().min(1).default(1).optional(),
+      perPage: z.number().int().min(1).max(200).default(50).optional(),
     }),
-    execute: async () => ({ items: [] }),
+    execute: async () => ({
+      items: [],
+      pagination: { page: 1, perPage: 50, totalSize: 0, totalPages: 1 },
+    }),
   }),
   list_maintenances: tool({
     description:
-      "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future). Pass `filter: 'all'` to include past windows. Response carries `truncated: boolean` — if true, more matching windows exist and the LLM should warn the user.",
+      "List maintenance windows in this workspace, newest first. Paginated via `page` (1-indexed) and `perPage`; response carries `pagination` with `totalSize` and `totalPages`.",
     inputSchema: z.object({
-      filter: z.enum(["upcoming", "all"]).default("upcoming"),
       pageId: z.number().int().optional(),
-      limit: z.number().int().min(1).max(200).default(50).optional(),
+      page: z.number().int().min(1).default(1).optional(),
+      perPage: z.number().int().min(1).max(200).default(50).optional(),
     }),
-    execute: async () => ({ items: [], truncated: false }),
+    execute: async () => ({
+      items: [],
+      pagination: { page: 1, perPage: 50, totalSize: 0, totalPages: 1 },
+    }),
   }),
   create_status_report: tool({
     description:
@@ -148,7 +155,7 @@ const tools = {
   }),
 };
 
-const SYSTEM_PROMPT = `You are the OpenStatus assistant. Pick the right tool for each user request and call it with sensible parameters. NEVER guess a pageId — call list_status_pages first when you don't know it.`;
+const SYSTEM_PROMPT = `You are the openstatus assistant. Pick the right tool for each user request and call it with sensible parameters. NEVER guess a pageId — call list_status_pages first when you don't know it.`;
 
 type CaseResult = {
   case: EvalCase;

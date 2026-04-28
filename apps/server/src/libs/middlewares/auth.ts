@@ -96,7 +96,18 @@ export async function authMiddleware(
   // Always populate `apiKey` — falling back to a workspace-scoped
   // placeholder for auth paths that didn't surface a stable key id
   // (today: an Unkey response without `data.keyId`). Adapters can rely
-  // on the field being present without optional-chaining.
+  // on the field being present without optional-chaining. Warn loudly
+  // when the fallback fires — audit attribution silently degrades to
+  // workspace-level, which is a regression we want to notice.
+  if (!result.keyId) {
+    console.warn(
+      "authMiddleware: keyId missing, falling back to workspace placeholder",
+      {
+        workspaceId: workspaceData.id,
+        authMethod: result.authMethod,
+      },
+    );
+  }
   c.set("apiKey", {
     id: result.keyId ?? `ws:${workspaceData.id}`,
     createdById: result.createdById,

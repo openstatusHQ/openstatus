@@ -15,8 +15,8 @@ import { runTool } from "../adapter";
 
 const logger = getLogger("api-server");
 
-const READ_LIMIT_DEFAULT = 50;
-const READ_LIMIT_MAX = 200;
+const PER_PAGE_DEFAULT = 50;
+const PER_PAGE_MAX = 200;
 
 export function registerMaintenanceTools(
   server: McpServer,
@@ -30,28 +30,28 @@ export function registerMaintenanceTools(
       "list_maintenances",
       {
         description:
-          "List maintenance windows in this workspace. Defaults to upcoming-only (windows whose `to` is still in the future) which is what callers usually want when scheduling. Pass `filter: 'all'` to include past maintenances too. Caveat: with `filter: 'upcoming'`, this scans up to 200 most-recent windows and post-filters; workspaces with very long maintenance history may see the upcoming subset truncated — assume the result is the most-recent slice, not exhaustive.",
+          "List maintenance windows in this workspace, newest first. Paginated via `page` (1-indexed) and `perPage`. The response's `pagination` object carries `totalSize`, `totalPages`, `page`, and `perPage` so the LLM can decide whether to fetch the next page or warn the user that the result is paginated.",
         annotations: { readOnlyHint: true, openWorldHint: false },
         inputSchema: {
-          filter: z
-            .enum(["upcoming", "all"])
-            .default("upcoming")
-            .describe(
-              "upcoming = only windows whose end time is still in the future (default). all = every window regardless of date.",
-            ),
           pageId: z
             .number()
             .int()
             .optional()
             .describe("If set, only maintenances attached to this page id."),
-          limit: z
+          page: z
             .number()
             .int()
             .min(1)
-            .max(READ_LIMIT_MAX)
-            .default(READ_LIMIT_DEFAULT)
+            .default(1)
+            .describe("1-indexed page number (default 1)."),
+          perPage: z
+            .number()
+            .int()
+            .min(1)
+            .max(PER_PAGE_MAX)
+            .default(PER_PAGE_DEFAULT)
             .describe(
-              `Max maintenances to return (default ${READ_LIMIT_DEFAULT}, max ${READ_LIMIT_MAX}).`,
+              `Items per page (default ${PER_PAGE_DEFAULT}, max ${PER_PAGE_MAX}).`,
             ),
         },
         outputSchema: {
@@ -66,50 +66,30 @@ export function registerMaintenanceTools(
               pageComponentIds: z.array(z.number().int()),
             }),
           ),
-          truncated: z
-            .boolean()
-            .describe(
-              "True if there may be additional matching windows beyond what was returned (DB cap or local-cap hit). The LLM should warn the user that the list may not be exhaustive.",
-            ),
+          pagination: z.object({
+            page: z.number().int(),
+            perPage: z.number().int(),
+            totalSize: z.number().int(),
+            totalPages: z.number().int(),
+          }),
         },
       },
-      async ({ filter, pageId, limit }) =>
+      async ({ pageId, page, perPage }) =>
         runTool(
-          async () => {
-            // The service has no `upcoming` flag, so we over-fetch
-            // and post-filter. For `upcoming`, fetch the maximum
-            // window the tool exposes so the post-filter has a best
-            // chance of returning a full page even when the
-            // workspace has lots of historical maintenances mixed in.
-            const fetchLimit =
-              filter === "upcoming"
-                ? READ_LIMIT_MAX
-                : limit ?? READ_LIMIT_DEFAULT;
-            const result = await listMaintenances({
+          () =>
+            listMaintenances({
               ctx,
               input: {
-                limit: fetchLimit,
-                offset: 0,
+                limit: perPage ?? PER_PAGE_DEFAULT,
+                offset: ((page ?? 1) - 1) * (perPage ?? PER_PAGE_DEFAULT),
                 pageId,
                 order: "desc",
               },
-            });
-            // If the DB returned a full page, there may be older
-            // rows we haven't seen — for `upcoming` that means
-            // future windows pushed off the end of the window are
-            // missing too.
-            const dbCapped = result.items.length === fetchLimit;
-            return { items: result.items, dbCapped };
-          },
-          ({ items, dbCapped }) => {
-            const cap = limit ?? READ_LIMIT_DEFAULT;
-            const now = Date.now();
-            const filtered =
-              filter === "upcoming"
-                ? items.filter((m) => m.to.getTime() > now)
-                : items;
-            const localCapped = filtered.length > cap;
-            const summarised = filtered.slice(0, cap).map((m) => ({
+            }),
+          ({ items, totalSize }) => {
+            const currentPage = page ?? 1;
+            const size = perPage ?? PER_PAGE_DEFAULT;
+            const summarised = items.map((m) => ({
               id: m.id,
               title: m.title,
               message: m.message,
@@ -120,7 +100,12 @@ export function registerMaintenanceTools(
             }));
             const out = {
               items: summarised,
-              truncated: localCapped || dbCapped,
+              pagination: {
+                page: currentPage,
+                perPage: size,
+                totalSize,
+                totalPages: Math.max(1, Math.ceil(totalSize / size)),
+              },
             };
             return {
               content: [{ type: "text", text: JSON.stringify(out) }],
