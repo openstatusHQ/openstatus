@@ -21,30 +21,56 @@ import {
   sendBatchEmailHtml,
 } from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
+import { isSelfHost } from "@openstatus/utils";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
 import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const client = new CloudTasksClient({
-  projectId: env().GCP_PROJECT_ID,
-  fallback: "rest",
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
-
-const parent = client.queuePath(
-  env().GCP_PROJECT_ID,
-  env().GCP_LOCATION,
-  "workflow",
-);
-
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 
+function hasCloudTaskConfig() {
+  return Boolean(
+    env().GCP_PROJECT_ID.trim() &&
+      env().GCP_CLIENT_EMAIL.trim() &&
+      env().GCP_PRIVATE_KEY.trim() &&
+      env().GCP_LOCATION.trim(),
+  );
+}
+
+// Lazy-init: self-host mode has no GCP creds
+let _client: CloudTasksClient | null = null;
+function getCloudTasksClient() {
+  if (!_client) {
+    _client = new CloudTasksClient({
+      projectId: env().GCP_PROJECT_ID,
+      fallback: "rest",
+      credentials: {
+        client_email: env().GCP_CLIENT_EMAIL,
+        private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+      },
+    });
+  }
+  return _client;
+}
+
+function getParent() {
+  return getCloudTasksClient().queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    "workflow",
+  );
+}
+
 export async function LaunchMonitorWorkflow() {
+  if (isSelfHost() || !hasCloudTaskConfig()) {
+    console.log(
+      "Skipping monitor lifecycle workflow: Cloud Tasks are unavailable in self-host mode.",
+    );
+    return;
+  }
+
   // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
   const twoMonthAgo = new Date().setMonth(new Date().getMonth() - 2);
 
@@ -60,9 +86,6 @@ export async function LaunchMonitorWorkflow() {
     .leftJoin(schema.session, eq(schema.session.userId, schema.user.id))
     .where(isNull(schema.session.userId))
     .as("query");
-  // Only free users monitors are paused
-  // We don't need to handle multi users per workspace because free workspaces only have one user
-  // Only free users monitors are paused
 
   const u1 = await db
     .select({
@@ -100,9 +123,6 @@ export async function LaunchMonitorWorkflow() {
     .innerJoin(schema.session, eq(schema.session.userId, schema.user.id))
     .groupBy(schema.user.id)
     .as("maxSessionPerUser");
-  // Only free users monitors are paused
-  // We don't need to handle multi users per workspace because free workspaces only have one user
-  // Only free users monitors are paused
 
   const u = await db
     .select({
@@ -168,7 +188,6 @@ async function workflowInit({
     console.log(`user workflow already started for ${user.userId}`);
     return;
   }
-  // check if user has some running monitors
   const nbRunningMonitor = await db.$count(
     schema.monitor,
     and(
@@ -183,8 +202,8 @@ async function workflowInit({
   }
   const initialRun = new Date().getTime();
   await CreateTask({
-    parent,
-    client: client,
+    parent: getParent(),
+    client: getCloudTasksClient(),
     step: "14days",
     userId: user.userId,
     initialRun,
@@ -228,8 +247,8 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   }
 
   await CreateTask({
-    parent,
-    client: client,
+    parent: getParent(),
+    client: getCloudTasksClient(),
     step: "3days",
     userId: user.id,
     initialRun: workFlowRunTimestamp,
@@ -269,8 +288,8 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   }
 
   await CreateTask({
-    client,
-    parent,
+    client: getCloudTasksClient(),
+    parent: getParent(),
     step: "paused",
     userId,
     initialRun: workFlowRunTimestamp,
@@ -393,13 +412,10 @@ async function CreateTask({
 function getScheduledTime(step: z.infer<typeof workflowStepSchema>) {
   switch (step) {
     case "14days":
-      // let's triger it now
       return new Date().getTime() / 1000;
     case "3days":
-      // it's 11 days after the 14 days
       return new Date().setDate(new Date().getDate() + 11) / 1000;
     case "paused":
-      // it's 3 days after the 3 days step
       return new Date().setDate(new Date().getDate() + 3) / 1000;
     default:
       throw new Error("Invalid step");

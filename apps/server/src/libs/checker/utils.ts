@@ -2,7 +2,9 @@ import { OpenStatusApiError } from "@/libs/errors";
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
+  getCheckerBaseUrl,
   type httpPayloadSchema,
+  isSelfHost,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
@@ -72,6 +74,10 @@ export function getCheckerUrl(
     data: false,
   },
 ): string {
+  if (isSelfHost()) {
+    return `${getCheckerBaseUrl()}/checker/${monitor.jobType}?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
+  }
+
   switch (monitor.jobType) {
     case "http":
       return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
