@@ -52,10 +52,16 @@ const useCases = getUseCasePages();
 
 const useCasesSection = {
   label: "Use Cases",
-  items: useCases.map((page) => ({
-    label: page.metadata.title,
-    href: `/use-case/${page.slug}`,
-  })),
+  items: useCases
+    .sort(
+      (a, b) =>
+        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+    )
+    .slice(0, 6)
+    .map((page) => ({
+      label: page.metadata.title,
+      href: `/use-case/${page.slug}`,
+    })),
 };
 
 const resourcesHeaderSection = {
