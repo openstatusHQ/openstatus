@@ -111,4 +111,10 @@ USER 0:0
 RUN apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
 USER 1000:1000
 EXPOSE 3000
+HEALTHCHECK \
+    --interval=30s \
+    --timeout=10s \
+    --start-period=30s \
+    --retries=3 \
+    CMD curl -f http://localhost:3000/ping || exit 1
 ENTRYPOINT ["/app/apps/workflows/app"]
