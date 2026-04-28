@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (isAuthorizedDomain(req.url)) {
     const { cronCompleted, cronFailed } = runSentryCron("1-h-cron");
     try {
-      await cron({ periodicity: "1h", req });
+      await cron({ periodicity: "1h" });
       await cronCompleted();
     } catch (_error) {
       await cronFailed();
