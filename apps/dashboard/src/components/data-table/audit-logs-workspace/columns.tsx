@@ -75,7 +75,7 @@ export const columns: ColumnDef<AuditLog>[] = [
               <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
                 <ModelContextProtocolIcon className="size-4 text-muted-foreground" />
               </div>
-              <span className="text-muted-foreground">MCP</span>
+              <span className="text-muted-foreground">MCP Server</span>
             </div>
           );
         }
