@@ -43,7 +43,10 @@ func TestHandler_PingRegion(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.PingRegionHandler)
+		authed := router.Group("/")
+		authed.Use(handlers.AuthMiddleware(h.Secret))
+		authed.Use(handlers.FlyRegionMiddleware(h.CloudProvider, h.Region))
+		authed.POST("/checker/:region", h.PingRegionHandler)
 
 		w := httptest.NewRecorder()
 
@@ -67,7 +70,10 @@ func TestHandler_PingRegion(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.PingRegionHandler)
+		authed := router.Group("/")
+		authed.Use(handlers.AuthMiddleware(h.Secret))
+		authed.Use(handlers.FlyRegionMiddleware(h.CloudProvider, h.Region))
+		authed.POST("/checker/:region", h.PingRegionHandler)
 
 		w := httptest.NewRecorder()
 
@@ -96,7 +102,10 @@ func TestHandler_PingRegion(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.PingRegionHandler)
+		authed := router.Group("/")
+		authed.Use(handlers.AuthMiddleware(h.Secret))
+		authed.Use(handlers.FlyRegionMiddleware(h.CloudProvider, h.Region))
+		authed.POST("/checker/:region", h.PingRegionHandler)
 
 		w := httptest.NewRecorder()
 
