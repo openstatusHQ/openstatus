@@ -6,6 +6,7 @@ import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { WebMcpProvider } from "@/components/webmcp-provider";
 import { env } from "@/env";
 import {
   defaultMetadata,
@@ -51,6 +52,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <NuqsAdapter>
               <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
+              <WebMcpProvider />
             </NuqsAdapter>
           </ThemeProvider>
         </PlausibleProvider>

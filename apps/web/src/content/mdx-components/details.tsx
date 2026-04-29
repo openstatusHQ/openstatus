@@ -1,4 +1,5 @@
 import React from "react";
+import { slugify } from "./heading";
 
 export function Details({
   children,
@@ -10,7 +11,7 @@ export function Details({
   open?: boolean;
 }) {
   return (
-    <details open={open}>
+    <details id={slugify(summary)} open={open}>
       <summary>{summary}</summary>
       {React.isValidElement(children)
         ? // biome-ignore lint/suspicious/noExplicitAny: <explanation>
