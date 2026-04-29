@@ -262,14 +262,14 @@ export const headerLinks = [productsSection, resourcesHeaderSection];
 
 export const footerLinks = [
   productsSection,
-  useCasesSection,
-  resourcesFooterSection,
-  companySection,
-  compareSection,
-  blogSection,
   toolingSection,
+  resourcesFooterSection,
+  compareSection,
+  useCasesSection,
+  blogSection,
   toolsSection,
   communitySection,
+  companySection,
 ];
 
 // --------------------------------
