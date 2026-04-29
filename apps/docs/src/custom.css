@@ -1,5 +1,18 @@
 @layer my-reset, starlight;
 
+.page > header.header {
+  background-color: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--card-foreground));
+}
+
+.page > header.header .title-wrapper > a {
+  color: white;
+}
+:root[data-theme='light'] .page > header.header .title-wrapper > a {
+  color: black;
+}
+
 .card {
   border-radius: 0rem;
 }

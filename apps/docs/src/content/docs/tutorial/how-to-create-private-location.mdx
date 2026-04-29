@@ -11,20 +11,20 @@ import { Aside } from '@astrojs/starlight/components';
 |---|---|
 | **Time** | ~15 minutes |
 | **Level** | Advanced |
-| **Prerequisites** | OpenStatus account, Docker installed |
+| **Prerequisites** | openstatus account, Docker installed |
 
 In this tutorial, you'll set up a **private location** — a monitoring probe running on your own infrastructure. This lets you monitor internal applications, private APIs, and network resources behind your firewall without exposing them to the public internet.
 
 ### Prerequisites
 
-- An OpenStatus account ([openstatus.dev](https://www.openstatus.dev))
+- An openstatus account ([openstatus.dev](https://www.openstatus.dev))
 - Docker installed on your server or local machine (`docker --version` to verify)
 - At least one monitor already created (see [Create Your First Monitor](/tutorial/how-to-create-monitor))
 
 ### What you'll build
 
 By the end of this tutorial, you'll have:
-- A private location configured in OpenStatus
+- A private location configured in openstatus
 - A Docker container running the monitoring probe on your infrastructure
 - Monitors assigned to check from your private location
 
@@ -40,14 +40,14 @@ Private locations allow you to monitor internal applications from within your ow
 
 ## Step 1: Create a private location
 
-1. Navigate to **Settings** > **Private Locations** in your OpenStatus dashboard
+1. Navigate to **Settings** > **Private Locations** in your openstatus dashboard
 2. Click **Create Private Location**
 3. Give your location a descriptive name (e.g., "Office Network", "AWS us-east-1 VPC")
 4. Save the configuration
 
 After creation, you'll receive a **token**. Copy this token — you'll need it in the next step.
 
-<Aside type="caution">Keep your token secure. It authenticates your probe with the OpenStatus platform.</Aside>
+<Aside type="caution">Keep your token secure. It authenticates your probe with the openstatus platform.</Aside>
 
 ## Step 2: Deploy the Docker probe
 
@@ -87,13 +87,13 @@ abc123         ghcr.io/openstatushq/probe:latest  Up 2 minutes   openstatus-prob
 ## What you've accomplished
 
 You've successfully:
-- ✅ Created a private location in OpenStatus
+- ✅ Created a private location in openstatus
 - ✅ Deployed a monitoring probe on your own infrastructure
 - ✅ Assigned monitors to check from your private location
 
 ## Current limitations
 
-- Incidents are **not yet created** for monitors running via private locations. Continue using OpenStatus public regions if you need alerting.
+- Incidents are **not yet created** for monitors running via private locations. Continue using openstatus public regions if you need alerting.
 - Public monitors on status pages **do not yet support** private locations.
 
 ## Troubleshooting
