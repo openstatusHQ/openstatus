@@ -1,11 +1,9 @@
 // MCP Server Card — SEP-1649 (https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2127).
 // Served at /.well-known/mcp/server-card.json.
 //
-// MCP_SERVER_VERSION mirrors apps/server/package.json `version`. Kept in sync manually
-// because apps/web does not depend on @openstatus/server. Bump when the MCP server
-// ships a breaking change to its tool schemas; the value is informational and clients
-// can ignore it.
-const MCP_SERVER_VERSION = "0.0.1";
+// `OPENSTATUS_MCP_SERVER_VERSION` is read from apps/server/package.json at build time
+// in next.config.ts and inlined via Next's `env` config — no manual sync.
+const MCP_SERVER_VERSION = process.env.OPENSTATUS_MCP_SERVER_VERSION ?? "0.0.1";
 
 const card = {
   $schema: "https://modelcontextprotocol.io/schemas/server-card/draft.json",

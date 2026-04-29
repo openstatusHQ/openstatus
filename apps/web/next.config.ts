@@ -1,5 +1,23 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+
+// Read the MCP server version at build time from apps/server/package.json so the
+// `serverInfo.version` we publish in /.well-known/mcp/server-card.json never drifts.
+// Falls back to "0.0.0" if the sibling app isn't present in the build context (e.g.
+// a deploy that excludes apps/server). Exposed to runtime via Next's `env` config.
+function readMcpServerVersion(): string {
+  try {
+    const pkgPath = join(__dirname, "..", "server", "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as {
+      version?: string;
+    };
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
 
 // REMINDER: avoid Clickjacking attacks by setting the frame-ancestors directive
 const securityHeaders = [
@@ -32,10 +50,16 @@ const agentDiscoveryHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@openstatus/ui", "@openstatus/api", "next-mdx-remote"],
+  env: {
+    OPENSTATUS_MCP_SERVER_VERSION: readMcpServerVersion(),
+  },
   outputFileTracingIncludes: {
     "/": [
       "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
       "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
+    ],
+    "/.well-known/agent-skills/index.json": [
+      "./public/.well-known/agent-skills/**/*.md",
     ],
   },
   experimental: {

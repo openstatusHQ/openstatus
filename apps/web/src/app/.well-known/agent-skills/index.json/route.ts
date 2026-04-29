@@ -35,21 +35,31 @@ const SKILLS: SkillEntry[] = [
 const PUBLIC_DIR = join(process.cwd(), "public", ".well-known", "agent-skills");
 const SITE_ORIGIN = "https://www.openstatus.dev";
 
-async function digestFor(slug: string): Promise<string> {
-  const buf = await readFile(join(PUBLIC_DIR, slug, "SKILL.md"));
-  return `sha256:${createHash("sha256").update(buf).digest("hex")}`;
+async function digestFor(slug: string): Promise<string | null> {
+  try {
+    const buf = await readFile(join(PUBLIC_DIR, slug, "SKILL.md"));
+    return `sha256:${createHash("sha256").update(buf).digest("hex")}`;
+  } catch (err) {
+    console.warn(`[agent-skills] could not hash ${slug}/SKILL.md`, err);
+    return null;
+  }
 }
 
 export async function GET() {
-  const skills = await Promise.all(
-    SKILLS.map(async (s) => ({
-      name: s.name,
-      type: s.type,
-      description: s.description,
-      url: `${SITE_ORIGIN}/.well-known/agent-skills/${s.slug}/SKILL.md`,
-      digest: await digestFor(s.slug),
-    })),
+  const resolved = await Promise.all(
+    SKILLS.map(async (s) => {
+      const digest = await digestFor(s.slug);
+      if (!digest) return null;
+      return {
+        name: s.name,
+        type: s.type,
+        description: s.description,
+        url: `${SITE_ORIGIN}/.well-known/agent-skills/${s.slug}/SKILL.md`,
+        digest,
+      };
+    }),
   );
+  const skills = resolved.filter((s): s is NonNullable<typeof s> => s !== null);
 
   const body = JSON.stringify({
     $schema: "https://agentskills.io/schemas/discovery/v0.2.0.json",
