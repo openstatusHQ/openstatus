@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agentskills.io/schemas/discovery/v0.2.0.json",
+  "version": "0.2.0",
+  "publisher": {
+    "name": "Openstatus",
+    "url": "https://www.openstatus.dev"
+  },
+  "skills": [
+    {
+      "name": "openstatus-mcp",
+      "type": "skill",
+      "description": "Connect a Model Context Protocol client (Claude, ChatGPT, Cursor) to an openstatus workspace and drive status pages, status reports, and maintenance windows from chat.",
+      "url": "https://www.openstatus.dev/.well-known/agent-skills/openstatus-mcp/SKILL.md",
+      "digest": "sha256:6471acadfc5a39007a72fe21eafd704233caa95a253f12e675260c0e22a447f0"
+    },
+    {
+      "name": "openstatus-api",
+      "type": "skill",
+      "description": "Call the openstatus ConnectRPC API to manage monitors, status pages, and incidents from scripts, CI/CD, and custom integrations.",
+      "url": "https://www.openstatus.dev/.well-known/agent-skills/openstatus-api/SKILL.md",
+      "digest": "sha256:f309009b8a69f65d9f2b967c135d2fc849c2a712cba90dc51cf64bcf843941bb"
+    }
+  ]
+}

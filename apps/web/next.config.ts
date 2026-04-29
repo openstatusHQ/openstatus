@@ -9,6 +9,24 @@ const securityHeaders = [
   },
 ];
 
+// Link headers for agent discovery (RFC 8288 / RFC 8631).
+// service-doc: human-readable docs. service-desc: machine-readable API description.
+const homepageLinkHeader = [
+  '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+  '<https://docs.openstatus.dev>; rel="service-doc"; type="text/html"',
+  '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
+  '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
+  '<https://www.openstatus.dev/terms>; rel="terms-of-service"',
+  '<https://www.openstatus.dev/privacy>; rel="privacy-policy"',
+].join(", ");
+
+const agentDiscoveryHeaders = [
+  {
+    key: "Link",
+    value: homepageLinkHeader,
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -47,7 +65,10 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      { source: "/", headers: agentDiscoveryHeaders },
+    ];
   },
   async redirects() {
     return [

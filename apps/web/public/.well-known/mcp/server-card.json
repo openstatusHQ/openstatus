@@ -1,0 +1,71 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schemas/server-card/draft.json",
+  "serverInfo": {
+    "name": "openstatus",
+    "version": "0.0.1",
+    "title": "Openstatus",
+    "description": "Read and update openstatus status pages, status reports, and maintenance windows from any Model Context Protocol client.",
+    "homepage": "https://www.openstatus.dev/tooling/mcp-server",
+    "documentation": "https://docs.openstatus.dev/reference/mcp-server/",
+    "vendor": {
+      "name": "Openstatus",
+      "url": "https://www.openstatus.dev"
+    },
+    "license": "AGPL-3.0"
+  },
+  "transport": {
+    "type": "streamable-http",
+    "url": "https://api.openstatus.dev/mcp"
+  },
+  "authentication": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "x-openstatus-key",
+    "description": "Workspace API key. Generate one in Settings → API Tokens. Same credential used by the CLI, REST API, and Terraform provider."
+  },
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    }
+  },
+  "tools": [
+    {
+      "name": "list_status_pages",
+      "description": "List status pages in the workspace."
+    },
+    {
+      "name": "list_status_reports",
+      "description": "List status reports for a given status page."
+    },
+    {
+      "name": "create_status_report",
+      "description": "Open a new status report (incident). Requires explicit notify: true | false."
+    },
+    {
+      "name": "append_status_report_update",
+      "description": "Append an update to an open status report. Requires explicit notify: true | false."
+    },
+    {
+      "name": "resolve_status_report",
+      "description": "Resolve an open status report. Requires explicit notify: true | false."
+    },
+    {
+      "name": "update_status_report",
+      "description": "Edit metadata on an existing status report."
+    },
+    {
+      "name": "create_maintenance",
+      "description": "Schedule a maintenance window. Requires explicit notify: true | false."
+    },
+    {
+      "name": "update_maintenance",
+      "description": "Adjust a scheduled maintenance window."
+    }
+  ],
+  "links": {
+    "service-doc": "https://docs.openstatus.dev/reference/mcp-server/",
+    "service-desc": "https://api.openstatus.dev/openapi",
+    "terms-of-service": "https://www.openstatus.dev/terms",
+    "privacy-policy": "https://www.openstatus.dev/privacy"
+  }
+}
