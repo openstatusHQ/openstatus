@@ -200,6 +200,7 @@ export const PAGE_TYPES = [
   "unrelated",
   "compare",
   "tools",
+  "tooling",
   "guides",
   "use-case",
   "all",
@@ -221,6 +222,8 @@ export function getPages(type: PageType) {
       return getComparePages();
     case "tools":
       return getToolsPages();
+    case "tooling":
+      return getToolingPages();
     case "guides":
       return getGuides();
     case "use-case":
@@ -233,6 +236,7 @@ export function getPages(type: PageType) {
         ...getUnrelatedPages(),
         ...getComparePages(),
         ...getToolsPages(),
+        ...getToolingPages(),
         ...getGuides(),
         ...getUseCasePages(),
       ];
@@ -250,6 +254,7 @@ export function getCategories() {
       ...getUnrelatedPages().map((post) => post.metadata.category),
       ...getComparePages().map((post) => post.metadata.category),
       ...getToolsPages().map((post) => post.metadata.category),
+      ...getToolingPages().map((post) => post.metadata.category),
     ]),
   ] as const;
 }
