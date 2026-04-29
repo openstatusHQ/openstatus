@@ -17,10 +17,6 @@ const productsSection = {
       label: product.metadata.title,
       href: `/${product.slug}`,
     })),
-    {
-      label: "Tooling",
-      href: "/tooling",
-    },
   ],
 };
 
