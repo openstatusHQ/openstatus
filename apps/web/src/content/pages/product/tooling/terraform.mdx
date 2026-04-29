@@ -1,0 +1,77 @@
+---
+title: "Terraform"
+publishedAt: "2026-04-29"
+author: "Maximilian Kaske"
+description: "Manage monitors, notifications, and status pages as HCL — same plan-and-apply lifecycle as the rest of your infrastructure, with one command to bootstrap from an existing workspace."
+category: "Product"
+faq:
+  - question: "How does the Terraform provider compare to the CLI?"
+    answer: "The Terraform provider is the right choice if monitoring is part of a larger HCL-managed infrastructure. The CLI's YAML config is lighter to adopt and ships with openstatus terraform generate to bootstrap an HCL file from your existing workspace if you want to migrate."
+  - question: "What resources does the provider expose?"
+    answer: "Monitors, notification channels, status pages, status page subscribers, and maintenance windows — every primary entity in the dashboard. See the Terraform reference for the full list and schema."
+  - question: "How do I migrate an existing workspace into Terraform?"
+    answer: "Run openstatus terraform generate from the CLI. It fetches your full configuration and produces valid HCL with cross-references and import blocks — no hand-writing required."
+  - question: "Where do I get an API token?"
+    answer: "Generate one from Settings → API Tokens, then set OPENSTATUS_API_TOKEN before running terraform plan. The same token works across the CLI, API, and MCP server."
+---
+
+The [openstatus Terraform provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) treats monitoring as code: monitors, notifications, and status pages live in the same plan-and-apply lifecycle as the rest of your infrastructure.
+
+## Quickstart
+
+```hcl
+terraform {
+  required_providers {
+    openstatus = {
+      source = "openstatusHQ/openstatus"
+    }
+  }
+}
+
+resource "openstatus_monitor" "api" {
+  name      = "API"
+  url       = "https://api.example.com/health"
+  frequency = "1m"
+  regions   = ["iad", "ams", "syd"]
+}
+```
+
+```bash
+export OPENSTATUS_API_TOKEN=os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+terraform init
+terraform plan
+terraform apply
+```
+
+## What you can do
+
+- Manage every primary entity — monitors, notification channels, status pages, subscribers, maintenance windows — through HCL.
+- Roll changes out alongside the rest of your infrastructure (Vercel projects, DNS records, secrets).
+- Bootstrap an HCL file from your existing workspace with `openstatus terraform generate` — no hand-writing required.
+- Code-review monitor changes in the same PR that adds the service being monitored.
+
+## Bootstrap from an existing workspace
+
+If you already have monitors and status pages in the dashboard, the CLI generates HCL for you:
+
+```bash
+openstatus terraform generate
+```
+
+The output is a valid HCL configuration with cross-references between resources and `import` blocks pre-wired so `terraform plan` shows zero drift on first run.
+
+## Auth & audit
+
+Set `OPENSTATUS_API_TOKEN` before running Terraform. The token is the same one the CLI, API, and MCP server share — generate it from **Settings → API Tokens**.
+
+Every mutation through the provider lands in the audit log under `actor_type = 'api'`, so you can trace any change back to a key, a user, and a transport.
+
+## Other surfaces
+
+- Prefer a YAML config in your repo? See the [CLI](/tooling/cli) and `openstatus monitors apply`.
+- Building an in-app integration? Call the [API](/tooling/api) directly.
+- Want Claude or ChatGPT to read or update status reports? See the [MCP server](/tooling/mcp-server).
+
+## Reference
+
+Full resource list and schema in the [Terraform reference](https://docs.openstatus.dev/reference/terraform/).

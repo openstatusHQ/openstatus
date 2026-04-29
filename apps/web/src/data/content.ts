@@ -1,8 +1,8 @@
 import {
   getBlogPosts,
-  getChangelogPosts,
   getComparePages,
   getProductPages,
+  getToolingPages,
   getToolsPages,
   getUseCasePages,
 } from "@/content/utils";
@@ -12,10 +12,16 @@ const products = getProductPages();
 
 const productsSection = {
   label: "Products",
-  items: products.map((product) => ({
-    label: product.metadata.title,
-    href: `/${product.slug}`,
-  })),
+  items: [
+    ...products.map((product) => ({
+      label: product.metadata.title,
+      href: `/${product.slug}`,
+    })),
+    {
+      label: "Tooling",
+      href: "/tooling",
+    },
+  ],
 };
 
 const resourcesFooterSection = {
@@ -84,8 +90,8 @@ const resourcesHeaderSection = {
       href: "/changelog",
     },
     {
-      label: "Global Speed Checker",
-      href: "/play/checker",
+      label: "Tooling",
+      href: "/tooling",
     },
     {
       label: "Compare",
@@ -138,18 +144,12 @@ const blogSection = {
     })),
 };
 
-const changelogSection = {
-  label: "Changelog",
-  items: getChangelogPosts()
-    .sort(
-      (a, b) =>
-        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
-    )
-    .slice(0, 6)
-    .map((post) => ({
-      label: post.metadata.title,
-      href: `/changelog/${post.slug}`,
-    })),
+const toolingSection = {
+  label: "Tooling",
+  items: getToolingPages().map((page) => ({
+    label: page.metadata.title,
+    href: `/tooling/${page.slug}`,
+  })),
 };
 
 const compareSection = {
@@ -267,7 +267,7 @@ export const footerLinks = [
   companySection,
   compareSection,
   blogSection,
-  changelogSection,
+  toolingSection,
   toolsSection,
   communitySection,
 ];

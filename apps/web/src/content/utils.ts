@@ -171,6 +171,28 @@ export function getToolsPage(slug: string): MDXData {
   );
 }
 
+export function getToolingPages(): MDXData[] {
+  return getMDXDataFromDir(
+    path.join(process.cwd(), "src", "content", "pages", "product", "tooling"),
+    "/tooling",
+  );
+}
+
+export function getToolingPage(slug: string): MDXData {
+  return getMDXDataFromFile(
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "pages",
+      "product",
+      "tooling",
+      `${slug}.mdx`,
+    ),
+    "/tooling",
+  );
+}
+
 export const PAGE_TYPES = [
   "blog",
   "changelog",
