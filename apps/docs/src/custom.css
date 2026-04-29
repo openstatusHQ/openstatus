@@ -1,9 +1,16 @@
 @layer my-reset, starlight;
 
 .page > header.header {
-  background-color: white;
-  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
-  color: hsl(222.2 84% 4.9%);
+  background-color: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--card-foreground));
+}
+
+.page > header.header .title-wrapper > a {
+  color: white;
+}
+:root[data-theme='light'] .page > header.header .title-wrapper > a {
+  color: black;
 }
 
 .card {

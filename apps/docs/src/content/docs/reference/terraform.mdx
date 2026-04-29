@@ -1,11 +1,11 @@
 ---
 title: Terraform Provider Reference
-description: Technical specification for the OpenStatus Terraform Provider.
+description: Technical specification for the openstatus Terraform Provider.
 ---
 
 ## Overview
 
-The OpenStatus Terraform provider enables you to manage your monitoring infrastructure programmatically using HashiCorp Terraform. Define monitors, notification channels, and status pages as code — with full support for version control, automated deployments, and IaC workflows.
+The openstatus Terraform provider enables you to manage your monitoring infrastructure programmatically using HashiCorp Terraform. Define monitors, notification channels, and status pages as code — with full support for version control, automated deployments, and IaC workflows.
 
 **Key capabilities:**
 - Manage HTTP, TCP, and DNS monitors with assertions
@@ -40,8 +40,8 @@ provider "openstatus" {
 
 | Argument    | Type     | Required | Description                                                                 |
 | :---------- | :------- | :------- | :-------------------------------------------------------------------------- |
-| `api_token` | `string` | Yes      | Your OpenStatus API token. Can also be set via the `OPENSTATUS_API_TOKEN` environment variable. |
-| `base_url`  | `string` | No       | Base URL for the OpenStatus API. Defaults to `https://api.openstatus.dev/rpc`. |
+| `api_token` | `string` | Yes      | Your openstatus API token. Can also be set via the `OPENSTATUS_API_TOKEN` environment variable. |
+| `base_url`  | `string` | No       | Base URL for the openstatus API. Defaults to `https://api.openstatus.dev/rpc`. |
 
 ## Resources
 
@@ -441,7 +441,7 @@ Manages a status page with access control and branding.
 | `homepage_url`       | `string`       | No       | Link to your homepage.                                                         |
 | `contact_url`        | `string`       | No       | Link to your contact page.                                                     |
 | `icon`               | `string`       | No       | URL of the icon to display.                                                    |
-| `custom_domain`      | `string`       | No       | Custom domain (DNS must point to OpenStatus first).                            |
+| `custom_domain`      | `string`       | No       | Custom domain (DNS must point to openstatus first).                            |
 | `access_type`        | `string`       | No       | Access control: `public`, `password`, or `email-domain`.                       |
 | `password`           | `string`       | No       | Required when `access_type` is `password`. Sensitive.                          |
 | `auth_email_domains` | `list(string)` | No       | Required when `access_type` is `email-domain`.                                 |
@@ -839,6 +839,6 @@ resource "openstatus_status_page_component" "db_component" {
 - **[HTTP Monitor Reference](/reference/http-monitor)** — Detailed specification for HTTP monitor configuration.
 - **[TCP Monitor Reference](/reference/tcp-monitor)** — Detailed specification for TCP monitor configuration.
 - **[DNS Monitor Reference](/reference/dns-monitor)** — Detailed specification for DNS monitor configuration.
-- **[CLI Reference](/reference/cli-reference)** — Manage monitors using the OpenStatus command-line interface.
+- **[CLI Reference](/reference/cli-reference)** — Manage monitors using the openstatus command-line interface.
 - **[Terraform Registry](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest)** — Official provider page with version history.
 - **[Provider Source Code](https://github.com/openstatusHQ/terraform-provider-openstatus)** — GitHub repository for the Terraform provider.

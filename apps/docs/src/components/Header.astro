@@ -86,14 +86,14 @@ import SiteTitle from "./SiteTitle.astro";
   }
 
   .right-group .cta {
-    color: hsl(222.2 84% 4.9%);
+    color: hsl(var(--foreground));
     text-decoration: underline;
-    text-decoration-color: hsl(215.4 16.3% 46.9% / 0.5);
+    text-decoration-color: hsl(var(--muted-foreground) / 0.5);
     text-decoration-thickness: 2px;
     text-underline-offset: 2px;
     transition: all 0.15s ease;
   }
   .right-group .cta:hover {
-    text-decoration-color: hsl(215.4 16.3% 46.9%);
+    text-decoration-color: hsl(var(--muted-foreground));
   }
 </style>
