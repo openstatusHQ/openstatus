@@ -36,14 +36,6 @@ export default function ToolingListPage() {
   return (
     <div className="prose dark:prose-invert max-w-none">
       <h1>{TITLE}</h1>
-      <p className="text-lg">{DESCRIPTION}</p>
-      <p>
-        Openstatus is built for engineers. Everything the dashboard does —
-        managing uptime monitors, publishing status pages, posting status
-        reports, scheduling maintenance — is also reachable from your terminal,
-        CI pipeline, Terraform plan, and AI assistant. Same workspace, same API
-        key, same audit log.
-      </p>
       <ContentList data={pages} prefix="/tooling" />
     </div>
   );
