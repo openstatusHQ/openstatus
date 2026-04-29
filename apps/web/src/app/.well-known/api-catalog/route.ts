@@ -40,11 +40,18 @@ const linkset = {
     },
     {
       anchor: "https://api.openstatus.dev/mcp",
+      "service-desc": [
+        {
+          href: "https://www.openstatus.dev/.well-known/mcp/server-card.json",
+          type: "application/json",
+          title: "Openstatus MCP server card (SEP-1649)",
+        },
+      ],
       "service-doc": [
         {
-          href: "https://docs.openstatus.dev/api-reference/mcp",
+          href: "https://docs.openstatus.dev/reference/mcp-server/",
           type: "text/html",
-          title: "Openstatus MCP server",
+          title: "Openstatus MCP server reference",
         },
       ],
     },

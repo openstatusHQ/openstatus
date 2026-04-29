@@ -13,6 +13,7 @@ const securityHeaders = [
 // service-doc: human-readable docs. service-desc: machine-readable API description.
 const homepageLinkHeader = [
   '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+  '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '<https://docs.openstatus.dev>; rel="service-doc"; type="text/html"',
   '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
