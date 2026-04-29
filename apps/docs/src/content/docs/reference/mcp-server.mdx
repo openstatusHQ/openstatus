@@ -1,0 +1,128 @@
+---
+title: MCP Server
+description: Connect openstatus to AI assistants via the Model Context Protocol
+---
+
+The openstatus MCP server lets AI assistants (Claude Desktop, Cursor, and other [Model Context Protocol](https://modelcontextprotocol.io) clients) read and manage your status pages, status reports, and maintenance windows directly from a conversation.
+
+## Endpoint
+
+```
+https://api.openstatus.dev/mcp
+```
+
+The transport is **Streamable HTTP** (stateless). The server speaks JSON-RPC 2.0 over a single endpoint that accepts `GET`, `POST`, and `DELETE`.
+
+## Authentication
+
+Every request must include your openstatus API key in the `x-openstatus-key` header — the same key REST and ConnectRPC use. There is no separate MCP-only credential.
+
+```http
+x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Get a key from the dashboard's **Settings → API Tokens**.
+
+## Tools
+
+The server exposes 8 tools, scoped to the workspace tied to your API key. Mutations write to the audit log with `metadata.transport = "mcp"`.
+
+| Tool                       | Type     | Purpose |
+|----------------------------|----------|---------|
+| `list_status_pages`        | read     | List public status pages with their slug and id. Used to discover the `pageId` required by mutation tools. |
+| `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `list_maintenances`        | read     | List maintenance windows newest-first. Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
+| `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
+| `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |
+| `resolve_status_report`    | mutation | Mark a report resolved and post a final public update with the supplied message. |
+| `create_maintenance`       | mutation | Schedule a maintenance window (`from` / `to` are ISO 8601 strings). |
+
+The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
+
+### Notifying subscribers
+
+Every mutation tool has a **required** `notify: boolean` field — there is no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing.
+
+Notifications dispatch as part of the same call. There is no separate notify tool: if you create a status report or append an update with `notify: false`, that update will **never** reach subscribers — you cannot retroactively notify the same update later. This matches the dashboard and Slack agent semantics.
+
+The mutation and the notify dispatch are sequential, not transactional. The mutation persists first; if the notify step then throws (transient provider issue, partial outage of an integration), the response carries `notified: false` and the row stays.
+
+`notified: true` means the dispatch call returned without throwing — **not** that every subscriber received a message. If the workspace plan doesn't include subscriber notifications, the service is a silent no-op and the response will still report `notified: true`. Treat the field as "the dispatch ran cleanly," not as a delivery receipt.
+
+| Tool                       | What `notify: true` sends |
+|----------------------------|---------------------------|
+| `create_status_report`     | Notification for the initial update |
+| `add_status_report_update` | Notification for the new update |
+| `resolve_status_report`    | Resolution notification |
+| `create_maintenance`       | Maintenance scheduled notification |
+| `update_status_report`     | n/a — metadata-only edit, never has a notify path |
+
+The required `notify` field, combined with the mandatory draft-and-confirm workflow in each tool's description, encodes the contract that LLMs must:
+
+1. Draft the title/status/message/components.
+2. Show the draft to the user.
+3. Ask **explicitly** whether to notify subscribers.
+4. Only call the tool once both content and notify are confirmed.
+
+The tool's response includes a `notified: boolean` field so the assistant can confirm what actually went out. If the workspace plan doesn't include subscriber notifications, `notify: true` is a no-op inside the service (no error, just nothing dispatched).
+
+### Lookup-before-mutate
+
+`create_status_report` and `create_maintenance` require a `pageId`. The tool descriptions instruct the model to call `list_status_pages` first; **never** type a numeric id you don't know — make the assistant resolve it.
+
+## Configure Claude Desktop
+
+Add the server to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\\Claude\\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "openstatus": {
+      "url": "https://api.openstatus.dev/mcp",
+      "headers": {
+        "x-openstatus-key": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop. The 8 openstatus tools appear in the tool picker.
+
+## Configure Cursor
+
+In Cursor, open **Settings → MCP → Add Server**:
+
+```json
+{
+  "openstatus": {
+    "url": "https://api.openstatus.dev/mcp",
+    "headers": {
+      "x-openstatus-key": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  }
+}
+```
+
+## Errors
+
+Errors map by severity:
+
+- **Recoverable** (`NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LIMIT_EXCEEDED`) come back as a tool result with `isError: true`. The model can read the message and retry with corrected input.
+- **Transport-level** (`UNAUTHORIZED`, `FORBIDDEN`, `INTERNAL`, malformed input) come back as a JSON-RPC error.
+
+Error messages are not redacted — the consumer is an LLM that benefits from the detail.
+
+## Limits
+
+- `list_status_reports` and `list_maintenances` use offset pagination: `page` (1-indexed, default 1) and `perPage` (default 50, max 200). The response's `pagination.totalPages` tells the LLM whether more pages exist. `list_status_pages` is unpaginated (workspaces typically have a handful).
+- No per-key rate limiting today. Treat MCP usage like REST: one server call per tool invocation.
+
+## Audit log
+
+Every mutation invoked through MCP appears in the workspace audit log with:
+
+- `actor_type = "mcp"` — slice by surface: `WHERE actor_type = 'mcp'`.
+- `actor_id` = the API key's stable identifier (not the workspace id) — trace a specific key with `WHERE actor_id = '<keyId>'`.
+- `actor_user_id` = the openstatus user who created the API key (custom keys only) — attribute mutations back to a person with a join to the `user` table.

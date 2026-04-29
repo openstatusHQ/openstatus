@@ -443,6 +443,9 @@ importers:
       '@connectrpc/validate':
         specifier: ^0.2.0
         version: 0.2.0(@bufbuild/protobuf@2.10.2)(@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.10.2))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
+      '@hono/mcp':
+        specifier: 0.2.5
+        version: 0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.11.3))(hono@4.11.3)(zod@4.1.13)
       '@hono/sentry':
         specifier: 1.2.2
         version: 1.2.2(hono@4.11.3)
@@ -461,6 +464,9 @@ importers:
       '@logtape/sentry':
         specifier: 2.0.1
         version: 2.0.1(@logtape/logtape@2.0.1)(@sentry/core@10.31.0)
+      '@modelcontextprotocol/sdk':
+        specifier: 1.29.0
+        version: 1.29.0(zod@4.1.13)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -560,6 +566,9 @@ importers:
       hono:
         specifier: 4.11.3
         version: 4.11.3
+      hono-rate-limiter:
+        specifier: 0.4.2
+        version: 0.4.2(hono@4.11.3)
       nanoid:
         specifier: 5.0.7
         version: 5.0.7
@@ -3620,6 +3629,14 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  '@hono/mcp@0.2.5':
+    resolution: {integrity: sha512-JsaJes7VlNvUrUQ9j2b9C13xjFLvyKQY515aWtsdJ9cwhBmWz5od2yUCbDu7cX38GeADmlLmpu4BKNNAV6G27w==}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.25.1
+      hono: '*'
+      hono-rate-limiter: ^0.4.2
+      zod: ^3.25.0 || ^4.0.0
+
   '@hono/node-server@1.19.9':
     resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
     engines: {node: '>=18.14.1'}
@@ -4083,6 +4100,16 @@ packages:
 
   '@modelcontextprotocol/sdk@1.26.0':
     resolution: {integrity: sha512-Y5RmPncpiDtTXDbLKswIJzTqu2hyBKxTNsgKqKclDbhIgg1wgtf1fRuvxgTnRfcnxtvvgbIEcqUOzZrJ6iSReg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@cfworker/json-schema': ^4.1.1
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@cfworker/json-schema':
+        optional: true
+
+  '@modelcontextprotocol/sdk@1.29.0':
+    resolution: {integrity: sha512-zo37mZA9hJWpULgkRpowewez1y6ML5GsXJPY8FI0tBBCd77HEvza4jDqRKOXgHNn867PVGCyTdzqpz0izu5ZjQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -9276,6 +9303,11 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
+  hono-rate-limiter@0.4.2:
+    resolution: {integrity: sha512-AAtFqgADyrmbDijcRTT/HJfwqfvhalya2Zo+MgfdrMPas3zSMD8SU03cv+ZsYwRU1swv7zgVt0shwN059yzhjw==}
+    peerDependencies:
+      hono: ^4.1.1
+
   hono@4.11.3:
     resolution: {integrity: sha512-PmQi306+M/ct/m5s66Hrg+adPnkD5jiO6IjA7WhWw0gSBSo1EcRegwuI1deZ+wd5pzCGynCcn2DprnE4/yEV4w==}
     engines: {node: '>=16.9.0'}
@@ -14290,6 +14322,14 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
+  '@hono/mcp@0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.11.3))(hono@4.11.3)(zod@4.1.13)':
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.29.0(zod@4.1.13)
+      hono: 4.11.3
+      hono-rate-limiter: 0.4.2(hono@4.11.3)
+      pkce-challenge: 5.0.1
+      zod: 4.1.13
+
   '@hono/node-server@1.19.9(hono@4.11.8)':
     dependencies:
       hono: 4.11.8
@@ -14780,6 +14820,28 @@ snapshots:
       raw-body: 3.0.2
       zod: 3.25.76
       zod-to-json-schema: 3.25.1(zod@3.25.76)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@modelcontextprotocol/sdk@1.29.0(zod@4.1.13)':
+    dependencies:
+      '@hono/node-server': 1.19.9(hono@4.11.8)
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      content-type: 1.0.5
+      cors: 2.8.5
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.0.6
+      express: 5.2.1
+      express-rate-limit: 8.2.1(express@5.2.1)
+      hono: 4.11.8
+      jose: 6.1.3
+      json-schema-typed: 8.0.2
+      pkce-challenge: 5.0.1
+      raw-body: 3.0.2
+      zod: 4.1.13
+      zod-to-json-schema: 3.25.1(zod@4.1.13)
     transitivePeerDependencies:
       - supports-color
 
@@ -20432,6 +20494,10 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
+  hono-rate-limiter@0.4.2(hono@4.11.3):
+    dependencies:
+      hono: 4.11.3
+
   hono@4.11.3: {}
 
   hono@4.11.8: {}
@@ -24552,6 +24618,10 @@ snapshots:
   zod-to-json-schema@3.25.1(zod@3.25.76):
     dependencies:
       zod: 3.25.76
+
+  zod-to-json-schema@3.25.1(zod@4.1.13):
+    dependencies:
+      zod: 4.1.13
 
   zod-to-ts@1.2.0(typescript@5.9.3)(zod@3.25.76):
     dependencies:

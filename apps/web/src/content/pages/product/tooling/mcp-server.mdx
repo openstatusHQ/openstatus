@@ -1,0 +1,63 @@
+---
+title: "MCP Server"
+publishedAt: "2026-04-29"
+author: "Maximilian Kaske"
+description: "Connect Claude, ChatGPT, Cursor, and any other Model Context Protocol client to your workspace — chat-shaped AI access with audit-logged mutations and explicit notify semantics."
+category: "Product"
+faq:
+  - question: "What does the MCP server let an assistant do?"
+    answer: "The MCP server exposes 8 tools scoped to your workspace: list status pages, list and create status reports, append updates, resolve reports, edit metadata, and schedule maintenance windows. Every mutation writes to the audit log and the assistant must explicitly confirm whether to notify subscribers."
+  - question: "Are skills different from the MCP server?"
+    answer: "Skills are prompt and command bundles installed into your local agent (Claude Code, etc.) that wrap the openstatus CLI. The MCP server is a remote endpoint that any MCP-compatible client can connect to. Skills are great for terminal-shaped workflows; MCP is great for chat-shaped workflows."
+  - question: "Do I need a separate MCP credential?"
+    answer: "No. We don't implement the MCP OAuth flow — there's no consent screen and no extra credential to manage. Authentication is the x-openstatus-key header, the same key the CLI, API, and Terraform use."
+  - question: "Can the assistant accidentally notify subscribers?"
+    answer: "No. Every mutation tool requires the assistant to set notify: true | false explicitly. Models can't quietly fan out an alert by omitting the flag — and every call lands in the audit log under actor_type = 'mcp' so you can see exactly what happened."
+---
+
+The openstatus MCP server connects Claude Desktop, ChatGPT, Cursor, and any other [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace — so an AI assistant can read and update status pages, status reports, and maintenance windows directly from a conversation.
+
+## Quickstart
+
+```json
+{
+  "mcpServers": {
+    "openstatus": {
+      "url": "https://api.openstatus.dev/mcp",
+      "headers": {
+        "x-openstatus-key": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+Drop the snippet into your client's MCP config (`claude_desktop_config.json`, Cursor settings, ChatGPT custom connector), restart, and the openstatus tools appear in the picker. The server is stateless Streamable HTTP and scales horizontally.
+
+## What you can do
+
+The server exposes **8 tools** scoped to your workspace:
+
+- `list_status_pages` — discover the pages your assistant can act on.
+- `list_status_reports` / `create_status_report` — read and post incidents.
+- `append_status_report_update` / `resolve_status_report` — drive an incident through its lifecycle.
+- `update_status_report` — edit metadata after the fact.
+- `create_maintenance` / `update_maintenance` — schedule and adjust planned downtime.
+
+Every mutation tool requires `notify: true | false` — the assistant must explicitly choose whether to notify subscribers, so an LLM cannot quietly fan out an alert.
+
+## Auth & audit
+
+Authentication is the `x-openstatus-key` header — the same API key the CLI, API, and Terraform use. We don't implement the MCP OAuth flow: no separate credential to manage, no consent screen, just one key from **Settings → API Tokens**.
+
+Every mutation lands in the audit log under `actor_type = 'mcp'`, so you can trace any change back to a key, a user, and a transport.
+
+## Other surfaces
+
+- Want a terminal interface for AI agents (Claude Code, etc.) instead of chat? See [skills](/tooling/cli#ai-skills) on the CLI page.
+- Building an in-app integration? Call the [API](/tooling/api) directly.
+- Want Slack instead of Claude or ChatGPT? See the [Slack agent](/status-page#slack-agent).
+
+## Reference
+
+Full tool schema, error codes, and per-client config in the [MCP reference](https://docs.openstatus.dev/reference/mcp-server/).

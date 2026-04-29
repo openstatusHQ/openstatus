@@ -143,6 +143,21 @@ export function makeApiKeyCtx(
   };
 }
 
+export function makeMcpCtx(
+  workspace: Workspace,
+  opts: { keyId: string; userId?: number; requestId?: string },
+): ServiceContext {
+  return {
+    workspace,
+    actor: {
+      type: "mcp",
+      keyId: opts.keyId,
+      userId: opts.userId,
+    },
+    requestId: opts.requestId,
+  };
+}
+
 export function makeSlackCtx(
   workspace: Workspace,
   opts: {

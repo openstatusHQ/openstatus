@@ -9,7 +9,8 @@
     "dev": "bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
     "test": "bun test",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "eval:mcp": "bun run src/routes/mcp/evals/run.ts"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.10.2",
@@ -17,9 +18,11 @@
     "@connectrpc/connect": "2.1.1",
     "@connectrpc/connect-node": "2.1.1",
     "@connectrpc/validate": "^0.2.0",
+    "@hono/mcp": "0.2.5",
     "@hono/sentry": "1.2.2",
     "@hono/zod-openapi": "1.1.5",
     "@hono/zod-validator": "0.7.6",
+    "@modelcontextprotocol/sdk": "1.29.0",
     "@logtape/logtape": "2.0.1",
     "@logtape/otel": "2.0.1",
     "@logtape/sentry": "2.0.1",
@@ -54,6 +57,7 @@
     "@unkey/api": "2.2.0",
     "@upstash/qstash": "2.6.2",
     "hono": "4.11.3",
+    "hono-rate-limiter": "0.4.2",
     "nanoid": "5.0.7",
     "percentile": "1.6.0",
     "validator": "13.12.0",

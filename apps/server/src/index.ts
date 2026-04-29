@@ -22,6 +22,7 @@ import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
 import openapiYaml from "../static/openapi.yaml" with { type: "text" };
 import { env } from "./env";
 import { handleError } from "./libs/errors";
+import { mcpRoute } from "./routes/mcp";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
 import { slackRoute } from "./routes/slack";
@@ -244,6 +245,17 @@ app.route("/v1", api);
  * Slack Agent Routes
  */
 app.route("/slack", slackRoute);
+
+/**
+ * MCP Server Routes
+ *
+ * Streamable HTTP transport — single endpoint authenticated by
+ * `x-openstatus-key`. Per-request `McpServer` instance scoped to the
+ * caller's workspace via closure capture. Tools wrap
+ * `@openstatus/services` verbs; mutations write `metadata.transport:
+ * "mcp"` to the audit log via the shared `emitAudit` plumbing.
+ */
+app.route("/mcp", mcpRoute);
 
 /**
  * TODO: move to `workflows` app

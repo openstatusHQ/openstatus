@@ -104,6 +104,12 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "group",
+        label: "Search in Tooling...",
+        heading: "Tooling",
+        page: "tooling",
+      },
+      {
+        type: "group",
         label: "Search in Compare...",
         heading: "Compare",
         page: "compare",
