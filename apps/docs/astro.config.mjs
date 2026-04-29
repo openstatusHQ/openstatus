@@ -55,7 +55,8 @@ export default defineConfig({
         Header: "./src/components/Header.astro",
       },
       editLink: {
-        baseUrl: "https://github.com/openstatusHQ/openstatus/edit/main/apps/docs",
+        baseUrl:
+          "https://github.com/openstatusHQ/openstatus/edit/main/apps/docs",
       },
       customCss: [
         // Path to your Tailwind base styles:
