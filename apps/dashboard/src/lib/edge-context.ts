@@ -32,12 +32,16 @@ export async function getServiceContextFromRequest(
 
   if (!userAndWorkspace) return null;
 
-  const workspaceSlugCookie = req.headers
-    .get("cookie")
-    ?.split(";")
-    .map((c) => c.trim())
-    .find((c) => c.startsWith("workspace-slug="))
-    ?.split("=")[1];
+  // Use slice rather than split("=")[1] so values containing "=" (e.g.
+  // base64-padded variants in other flows) survive intact.
+  const workspaceSlugCookie = (() => {
+    const raw = req.headers
+      .get("cookie")
+      ?.split(";")
+      .map((c) => c.trim())
+      .find((c) => c.startsWith("workspace-slug="));
+    return raw ? raw.slice(raw.indexOf("=") + 1) : undefined;
+  })();
 
   const activeWorkspace =
     userAndWorkspace.usersToWorkspaces?.find(({ workspace }) => {

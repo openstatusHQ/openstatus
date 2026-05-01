@@ -6,7 +6,7 @@ const STATUS_PAGE_DOMAIN =
   process.env.NEXT_PUBLIC_STATUS_PAGE_DOMAIN ?? "openstatus.dev";
 
 /** Slug used as the placeholder iframe behind the onboarding scrim. */
-export const DEMO_PREVIEW_SLUG = "status";
+export const DEMO_PREVIEW_SLUG = "hello-world";
 
 export function StatusPageIframePreview({
   slug,

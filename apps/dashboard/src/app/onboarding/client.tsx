@@ -72,11 +72,16 @@ const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
 // Convert a hostname to a slug that satisfies the page schema
 // (`[A-Za-z0-9-]`, min length 3). Caller must pass a hostname — strip URL
 // scheme/`www` upstream.
+//
+// Picks the registrable label (penultimate segment) when present so
+// `api.mycompany.com` → `mycompany` rather than the generic `api`.
 function slugifyHostname(hostname: string): string {
-  return hostname
+  const labels = hostname
     .toLowerCase()
     .replace(/^www\./, "")
-    .split(".")[0]
+    .split(".");
+  const base = labels.length > 1 ? labels[labels.length - 2] : labels[0];
+  return base
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
@@ -196,7 +201,7 @@ export function Client() {
       message: `monitor=${monitor ?? "untouched"} page=${page ?? "untouched"}`,
       path: pathname,
     });
-  }, [step, monitor, page, pathname, createFeedbackMutation]);
+  }, [step, monitor, page, pathname, createFeedbackMutation.mutate]);
 
   // Strong-intent signal: user actually went through both the monitor and
   // status-page steps (no skips). Fires once per session, even if the user
@@ -221,7 +226,7 @@ export function Client() {
       message,
       path: pathname,
     });
-  }, [step, monitor, page, pathname, createFeedbackMutation]);
+  }, [step, monitor, page, pathname, createFeedbackMutation.mutate]);
 
   const stepperSteps = STEPS.map((s) => ({
     id: s.id,

@@ -117,7 +117,7 @@ export function OnboardingFormColumn({
   return (
     <section
       className={cn(
-        "col-span-1 flex w-full flex-col justify-center gap-6 p-4 md:min-h-0 md:overflow-y-auto md:p-8",
+        "col-span-1 flex w-full flex-col gap-6 px-4 py-8 md:min-h-0 md:overflow-y-auto md:px-8 md:py-32",
         SHELL_FORM_COLUMN,
         className,
       )}

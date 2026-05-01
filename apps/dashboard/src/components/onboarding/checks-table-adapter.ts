@@ -30,6 +30,10 @@ function sumPhases(phases: ReturnType<typeof calculatePhases>): number {
  * - `requestStatus` derived from status + state.
  * - `timing` is the raw start/done timestamps that `<HoverCardTiming>`
  *   diffs into phases.
+ * - `workspaceId` is intentionally `""` — no current row renderer
+ *   (`columns.tsx`, `data-table-basics.tsx`, `data-table-sheet.tsx`)
+ *   reads it. If a future renderer constructs a URL from `workspaceId`,
+ *   plumb the real id through here.
  */
 export function checkResultToResponseLog(
   result: CheckResult,
