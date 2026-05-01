@@ -20,7 +20,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/service.proto.
  */
 export const file_openstatus_monitor_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIlcKGENyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBI7Cgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yQga6SAPIAQEiUAoZQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRIzCgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yIlUKF0NyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0EjoKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckIGukgDyAEBIk4KGENyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3IiVQoXQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QSOgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9yQga6SAPIAQEiTgoYQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvciJ1ChhVcGRhdGVIVFRQTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESOAoHbW9uaXRvchgCIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvckgAiAEBQgoKCF9tb25pdG9yIlAKGVVwZGF0ZUhUVFBNb25pdG9yUmVzcG9uc2USMwoHbW9uaXRvchgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvciJzChdVcGRhdGVUQ1BNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARI3Cgdtb25pdG9yGAIgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3JIAIgBAUIKCghfbW9uaXRvciJOChhVcGRhdGVUQ1BNb25pdG9yUmVzcG9uc2USMgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5UQ1BNb25pdG9yInMKF1VwZGF0ZUROU01vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEjcKB21vbml0b3IYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvckgAiAEBQgoKCF9tb25pdG9yIk4KGFVwZGF0ZUROU01vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3IiLAoVVHJpZ2dlck1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIikKFlRyaWdnZXJNb25pdG9yUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIrChREZWxldGVNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASIoChVEZWxldGVNb25pdG9yUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJnChNMaXN0TW9uaXRvcnNSZXF1ZXN0Eh0KBWxpbWl0GAEgASgFQgm6SAYaBBhkKAFIAIgBARIcCgZvZmZzZXQYAiABKAVCB7pIBBoCKABIAYgBAUIICgZfbGltaXRCCQoHX29mZnNldCLXAQoUTGlzdE1vbml0b3JzUmVzcG9uc2USOQoNaHR0cF9tb25pdG9ycxgBIAMoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvchI3Cgx0Y3BfbW9uaXRvcnMYAiADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvchI3CgxkbnNfbW9uaXRvcnMYAyADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvchISCgp0b3RhbF9zaXplGAQgASgFIi4KF0dldE1vbml0b3JTdGF0dXNSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABInMKDFJlZ2lvblN0YXR1cxItCgZyZWdpb24YASABKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uEjQKBnN0YXR1cxgCIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzIlwKGEdldE1vbml0b3JTdGF0dXNSZXNwb25zZRIKCgJpZBgBIAEoCRI0CgdyZWdpb25zGAIgAygLMiMub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvblN0YXR1cyKxAQoNTW9uaXRvckNvbmZpZxIyCgRodHRwGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9ySAASMAoDdGNwGAIgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3JIABIwCgNkbnMYAyABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvckgAQggKBmNvbmZpZyKfAQoYR2V0TW9uaXRvclN1bW1hcnlSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEjQKCnRpbWVfcmFuZ2UYAiABKA4yIC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVGltZVJhbmdlEjgKB3JlZ2lvbnMYAyADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQgi6SAWSAQIQHCKsAgoZR2V0TW9uaXRvclN1bW1hcnlSZXNwb25zZRIKCgJpZBgBIAEoCRIUCgxsYXN0X3BpbmdfYXQYAiABKAkSGAoQdG90YWxfc3VjY2Vzc2Z1bBgDIAEoAxIWCg50b3RhbF9kZWdyYWRlZBgEIAEoAxIUCgx0b3RhbF9mYWlsZWQYBSABKAMSCwoDcDUwGAYgASgDEgsKA3A3NRgHIAEoAxILCgNwOTAYCCABKAMSCwoDcDk1GAkgASgDEgsKA3A5ORgKIAEoAxI0Cgp0aW1lX3JhbmdlGAsgASgOMiAub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRpbWVSYW5nZRIuCgdyZWdpb25zGAwgAygOMh0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvbiIoChFHZXRNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJLChJHZXRNb25pdG9yUmVzcG9uc2USNQoHbW9uaXRvchgBIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnKmEKCVRpbWVSYW5nZRIaChZUSU1FX1JBTkdFX1VOU1BFQ0lGSUVEEAASEQoNVElNRV9SQU5HRV8xRBABEhEKDVRJTUVfUkFOR0VfN0QQAhISCg5USU1FX1JBTkdFXzE0RBADMukRCg5Nb25pdG9yU2VydmljZRK5AwoRQ3JlYXRlSFRUUE1vbml0b3ISLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlSFRUUE1vbml0b3JSZXF1ZXN0GjAub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUhUVFBNb25pdG9yUmVzcG9uc2UiwAK6R7wCGrkCQ3JlYXRlcyBhIG5ldyBIVFRQIG1vbml0b3IgaW4gdGhlIGF1dGhlbnRpY2F0ZWQgd29ya3NwYWNlLiBDb25maWd1cmUgdGhlIHRhcmdldCBVUkwsIEhUVFAgbWV0aG9kLCByZXF1ZXN0IGhlYWRlcnMgYW5kIGJvZHksIHJlc3BvbnNlIGFzc2VydGlvbnMgKHN0YXR1cyBjb2RlLCBib2R5IGNvbnRlbnQsIGhlYWRlcnMpLCBjaGVjayBwZXJpb2RpY2l0eSwgZ2VvZ3JhcGhpYyByZWdpb25zLCBhbmQgb3B0aW9uYWwgT3BlblRlbGVtZXRyeSBleHBvcnQuIFRoZSBtb25pdG9yIHN0YXJ0cyBjaGVja2luZyBpbW1lZGlhdGVseSBpZiBzZXQgdG8gYWN0aXZlLhJzChBDcmVhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBDcmVhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXNwb25zZRJ2ChFVcGRhdGVIVFRQTW9uaXRvchIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVIVFRQTW9uaXRvclJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVXBkYXRlSFRUUE1vbml0b3JSZXNwb25zZRJzChBVcGRhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBVcGRhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZUROU01vbml0b3JSZXNwb25zZRLpAgoOVHJpZ2dlck1vbml0b3ISLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVHJpZ2dlck1vbml0b3JSZXF1ZXN0Gi0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRyaWdnZXJNb25pdG9yUmVzcG9uc2Ui+QG6R/UBGvIBTWFudWFsbHkgdHJpZ2dlcnMgYW4gaW1tZWRpYXRlIGNoZWNrIGZvciB0aGUgc3BlY2lmaWVkIG1vbml0b3IgYWNyb3NzIGFsbCBjb25maWd1cmVkIHJlZ2lvbnMuIFRoaXMgb3BlcmF0aW9uIGlzIHJhdGUtbGltaXRlZCB1bmRlciB0aGUgc3ludGhldGljLWNoZWNrcyBxdW90YS4gQSBtb25pdG9yIHJ1biByZWNvcmQgaXMgY3JlYXRlZCBhbmQgdGhlIGNoZWNrIGlzIGRpc3BhdGNoZWQgdG8gdGhlIGNoZWNrZXIgc2VydmljZS4SagoNRGVsZXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVzcG9uc2USbAoMTGlzdE1vbml0b3JzEioub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yc1JlcXVlc3QaKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JzUmVzcG9uc2UiA5ACARJ4ChBHZXRNb25pdG9yU3RhdHVzEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdGF0dXNSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdGF0dXNSZXNwb25zZSIDkAIBEqYDChFHZXRNb25pdG9yU3VtbWFyeRIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yU3VtbWFyeVJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuR2V0TW9uaXRvclN1bW1hcnlSZXNwb25zZSKtApACAbpHpgIaowJSZXR1cm5zIGFnZ3JlZ2F0ZWQgbWV0cmljcyBmb3IgYSBtb25pdG9yIGluY2x1ZGluZyBsYXRlbmN5IHBlcmNlbnRpbGVzIChwNTAsIHA3NSwgcDkwLCBwOTUsIHA5OSksIHJlcXVlc3QgY291bnRzIGJ5IHN0YXR1cyAoc3VjY2Vzc2Z1bCwgZGVncmFkZWQsIGZhaWxlZCksIGFuZCB0aGUgdGltZXN0YW1wIG9mIHRoZSBsYXN0IGNoZWNrLiBNZXRyaWNzIGNhbiBiZSBzY29wZWQgdG8gYSB0aW1lIHJhbmdlICgxIGRheSwgNyBkYXlzLCBvciAxNCBkYXlzKSBhbmQgZmlsdGVyZWQgYnkgc3BlY2lmaWMgcmVnaW9ucy4SZgoKR2V0TW9uaXRvchIoLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVxdWVzdBopLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVzcG9uc2UiA5ACAUJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor, file_openstatus_monitor_v1_tcp_monitor]);
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIlcKGENyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBI7Cgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yQga6SAPIAQEiUAoZQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRIzCgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yIlUKF0NyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0EjoKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckIGukgDyAEBIk4KGENyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3IiVQoXQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QSOgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9yQga6SAPIAQEiTgoYQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvciJ1ChhVcGRhdGVIVFRQTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESOAoHbW9uaXRvchgCIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvckgAiAEBQgoKCF9tb25pdG9yIlAKGVVwZGF0ZUhUVFBNb25pdG9yUmVzcG9uc2USMwoHbW9uaXRvchgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvciJzChdVcGRhdGVUQ1BNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARI3Cgdtb25pdG9yGAIgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3JIAIgBAUIKCghfbW9uaXRvciJOChhVcGRhdGVUQ1BNb25pdG9yUmVzcG9uc2USMgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5UQ1BNb25pdG9yInMKF1VwZGF0ZUROU01vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEjcKB21vbml0b3IYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvckgAiAEBQgoKCF9tb25pdG9yIk4KGFVwZGF0ZUROU01vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3IiLAoVVHJpZ2dlck1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIikKFlRyaWdnZXJNb25pdG9yUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIrChREZWxldGVNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASIoChVEZWxldGVNb25pdG9yUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJnChNMaXN0TW9uaXRvcnNSZXF1ZXN0Eh0KBWxpbWl0GAEgASgFQgm6SAYaBBhkKAFIAIgBARIcCgZvZmZzZXQYAiABKAVCB7pIBBoCKABIAYgBAUIICgZfbGltaXRCCQoHX29mZnNldCLXAQoUTGlzdE1vbml0b3JzUmVzcG9uc2USOQoNaHR0cF9tb25pdG9ycxgBIAMoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvchI3Cgx0Y3BfbW9uaXRvcnMYAiADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvchI3CgxkbnNfbW9uaXRvcnMYAyADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvchISCgp0b3RhbF9zaXplGAQgASgFIi4KF0dldE1vbml0b3JTdGF0dXNSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABInMKDFJlZ2lvblN0YXR1cxItCgZyZWdpb24YASABKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uEjQKBnN0YXR1cxgCIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzIlwKGEdldE1vbml0b3JTdGF0dXNSZXNwb25zZRIKCgJpZBgBIAEoCRI0CgdyZWdpb25zGAIgAygLMiMub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvblN0YXR1cyKxAQoNTW9uaXRvckNvbmZpZxIyCgRodHRwGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9ySAASMAoDdGNwGAIgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3JIABIwCgNkbnMYAyABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvckgAQggKBmNvbmZpZyKfAQoYR2V0TW9uaXRvclN1bW1hcnlSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEjQKCnRpbWVfcmFuZ2UYAiABKA4yIC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVGltZVJhbmdlEjgKB3JlZ2lvbnMYAyADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQgi6SAWSAQIQHCKsAgoZR2V0TW9uaXRvclN1bW1hcnlSZXNwb25zZRIKCgJpZBgBIAEoCRIUCgxsYXN0X3BpbmdfYXQYAiABKAkSGAoQdG90YWxfc3VjY2Vzc2Z1bBgDIAEoAxIWCg50b3RhbF9kZWdyYWRlZBgEIAEoAxIUCgx0b3RhbF9mYWlsZWQYBSABKAMSCwoDcDUwGAYgASgDEgsKA3A3NRgHIAEoAxILCgNwOTAYCCABKAMSCwoDcDk1GAkgASgDEgsKA3A5ORgKIAEoAxI0Cgp0aW1lX3JhbmdlGAsgASgOMiAub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRpbWVSYW5nZRIuCgdyZWdpb25zGAwgAygOMh0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvbiIoChFHZXRNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJLChJHZXRNb25pdG9yUmVzcG9uc2USNQoHbW9uaXRvchgBIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnIl4KEVJlc3BvbnNlTG9nVGltaW5nEgsKA2RucxgBIAEoBRIPCgdjb25uZWN0GAIgASgFEgsKA3RscxgDIAEoBRIMCgR0dGZiGAQgASgFEhAKCHRyYW5zZmVyGAUgASgFIoYDChNSZXNwb25zZUxvZ0xpc3RJdGVtEg8KAmlkGAEgASgJSACIAQESDwoHbGF0ZW5jeRgCIAEoBRIYCgtzdGF0dXNfY29kZRgDIAEoBUgBiAEBEhIKCm1vbml0b3JfaWQYBCABKAkSRwoOcmVxdWVzdF9zdGF0dXMYBSABKA4yLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVzcG9uc2VMb2dSZXF1ZXN0U3RhdHVzEg4KBnJlZ2lvbhgGIAEoCRIWCg5jcm9uX3RpbWVzdGFtcBgHIAEoAxI6Cgd0cmlnZ2VyGAggASgOMikub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlc3BvbnNlTG9nVHJpZ2dlchIRCgl0aW1lc3RhbXAYCSABKAMSPQoGdGltaW5nGAogASgLMigub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlc3BvbnNlTG9nVGltaW5nSAKIAQFCBQoDX2lkQg4KDF9zdGF0dXNfY29kZUIJCgdfdGltaW5nIqoCChFSZXNwb25zZUxvZ0RldGFpbBI3CgNsb2cYASABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVzcG9uc2VMb2dMaXN0SXRlbRILCgN1cmwYAiABKAkSDQoFZXJyb3IYAyABKAgSFAoHbWVzc2FnZRgEIAEoCUgAiAEBEkYKB2hlYWRlcnMYBSADKAsyNS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVzcG9uc2VMb2dEZXRhaWwuSGVhZGVyc0VudHJ5EhcKCmFzc2VydGlvbnMYBiABKAlIAYgBARouCgxIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIKCghfbWVzc2FnZUINCgtfYXNzZXJ0aW9ucyLjAQoeTGlzdE1vbml0b3JSZXNwb25zZUxvZ3NSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEhsKDmZyb21fdGltZXN0YW1wGAIgASgDSACIAQESGQoMdG9fdGltZXN0YW1wGAMgASgDSAGIAQESHQoFbGltaXQYBCABKAVCCbpIBhoEGGQoAUgCiAEBEhwKBm9mZnNldBgFIAEoBUIHukgEGgIoAEgDiAEBQhEKD19mcm9tX3RpbWVzdGFtcEIPCg1fdG9fdGltZXN0YW1wQggKBl9saW1pdEIJCgdfb2Zmc2V0InIKFVJlc3BvbnNlTG9nUGFnaW5hdGlvbhINCgVsaW1pdBgBIAEoBRIOCgZvZmZzZXQYAiABKAUSEAoIaGFzX21vcmUYAyABKAgSGAoLbmV4dF9vZmZzZXQYBCABKAVIAIgBAUIOCgxfbmV4dF9vZmZzZXQinQEKH0xpc3RNb25pdG9yUmVzcG9uc2VMb2dzUmVzcG9uc2USOAoEbG9ncxgBIAMoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZXNwb25zZUxvZ0xpc3RJdGVtEkAKCnBhZ2luYXRpb24YAiABKAsyLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVzcG9uc2VMb2dQYWdpbmF0aW9uIkwKHEdldE1vbml0b3JSZXNwb25zZUxvZ1JlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESFwoGbG9nX2lkGAIgASgJQge6SARyAhABIlYKHUdldE1vbml0b3JSZXNwb25zZUxvZ1Jlc3BvbnNlEjUKA2xvZxgBIAEoCzIoLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZXNwb25zZUxvZ0RldGFpbCphCglUaW1lUmFuZ2USGgoWVElNRV9SQU5HRV9VTlNQRUNJRklFRBAAEhEKDVRJTUVfUkFOR0VfMUQQARIRCg1USU1FX1JBTkdFXzdEEAISEgoOVElNRV9SQU5HRV8xNEQQAyrBAQoYUmVzcG9uc2VMb2dSZXF1ZXN0U3RhdHVzEisKJ1JFU1BPTlNFX0xPR19SRVFVRVNUX1NUQVRVU19VTlNQRUNJRklFRBAAEicKI1JFU1BPTlNFX0xPR19SRVFVRVNUX1NUQVRVU19TVUNDRVNTEAESJQohUkVTUE9OU0VfTE9HX1JFUVVFU1RfU1RBVFVTX0VSUk9SEAISKAokUkVTUE9OU0VfTE9HX1JFUVVFU1RfU1RBVFVTX0RFR1JBREVEEAMqdwoSUmVzcG9uc2VMb2dUcmlnZ2VyEiQKIFJFU1BPTlNFX0xPR19UUklHR0VSX1VOU1BFQ0lGSUVEEAASHQoZUkVTUE9OU0VfTE9HX1RSSUdHRVJfQ1JPThABEhwKGFJFU1BPTlNFX0xPR19UUklHR0VSX0FQSRACMoMUCg5Nb25pdG9yU2VydmljZRK5AwoRQ3JlYXRlSFRUUE1vbml0b3ISLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlSFRUUE1vbml0b3JSZXF1ZXN0GjAub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUhUVFBNb25pdG9yUmVzcG9uc2UiwAK6R7wCGrkCQ3JlYXRlcyBhIG5ldyBIVFRQIG1vbml0b3IgaW4gdGhlIGF1dGhlbnRpY2F0ZWQgd29ya3NwYWNlLiBDb25maWd1cmUgdGhlIHRhcmdldCBVUkwsIEhUVFAgbWV0aG9kLCByZXF1ZXN0IGhlYWRlcnMgYW5kIGJvZHksIHJlc3BvbnNlIGFzc2VydGlvbnMgKHN0YXR1cyBjb2RlLCBib2R5IGNvbnRlbnQsIGhlYWRlcnMpLCBjaGVjayBwZXJpb2RpY2l0eSwgZ2VvZ3JhcGhpYyByZWdpb25zLCBhbmQgb3B0aW9uYWwgT3BlblRlbGVtZXRyeSBleHBvcnQuIFRoZSBtb25pdG9yIHN0YXJ0cyBjaGVja2luZyBpbW1lZGlhdGVseSBpZiBzZXQgdG8gYWN0aXZlLhJzChBDcmVhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBDcmVhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXNwb25zZRJ2ChFVcGRhdGVIVFRQTW9uaXRvchIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVIVFRQTW9uaXRvclJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVXBkYXRlSFRUUE1vbml0b3JSZXNwb25zZRJzChBVcGRhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBVcGRhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZUROU01vbml0b3JSZXNwb25zZRLpAgoOVHJpZ2dlck1vbml0b3ISLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVHJpZ2dlck1vbml0b3JSZXF1ZXN0Gi0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRyaWdnZXJNb25pdG9yUmVzcG9uc2Ui+QG6R/UBGvIBTWFudWFsbHkgdHJpZ2dlcnMgYW4gaW1tZWRpYXRlIGNoZWNrIGZvciB0aGUgc3BlY2lmaWVkIG1vbml0b3IgYWNyb3NzIGFsbCBjb25maWd1cmVkIHJlZ2lvbnMuIFRoaXMgb3BlcmF0aW9uIGlzIHJhdGUtbGltaXRlZCB1bmRlciB0aGUgc3ludGhldGljLWNoZWNrcyBxdW90YS4gQSBtb25pdG9yIHJ1biByZWNvcmQgaXMgY3JlYXRlZCBhbmQgdGhlIGNoZWNrIGlzIGRpc3BhdGNoZWQgdG8gdGhlIGNoZWNrZXIgc2VydmljZS4SagoNRGVsZXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVzcG9uc2USbAoMTGlzdE1vbml0b3JzEioub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yc1JlcXVlc3QaKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JzUmVzcG9uc2UiA5ACARJ4ChBHZXRNb25pdG9yU3RhdHVzEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdGF0dXNSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdGF0dXNSZXNwb25zZSIDkAIBEqYDChFHZXRNb25pdG9yU3VtbWFyeRIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yU3VtbWFyeVJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuR2V0TW9uaXRvclN1bW1hcnlSZXNwb25zZSKtApACAbpHpgIaowJSZXR1cm5zIGFnZ3JlZ2F0ZWQgbWV0cmljcyBmb3IgYSBtb25pdG9yIGluY2x1ZGluZyBsYXRlbmN5IHBlcmNlbnRpbGVzIChwNTAsIHA3NSwgcDkwLCBwOTUsIHA5OSksIHJlcXVlc3QgY291bnRzIGJ5IHN0YXR1cyAoc3VjY2Vzc2Z1bCwgZGVncmFkZWQsIGZhaWxlZCksIGFuZCB0aGUgdGltZXN0YW1wIG9mIHRoZSBsYXN0IGNoZWNrLiBNZXRyaWNzIGNhbiBiZSBzY29wZWQgdG8gYSB0aW1lIHJhbmdlICgxIGRheSwgNyBkYXlzLCBvciAxNCBkYXlzKSBhbmQgZmlsdGVyZWQgYnkgc3BlY2lmaWMgcmVnaW9ucy4SZgoKR2V0TW9uaXRvchIoLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVxdWVzdBopLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVzcG9uc2UiA5ACARKNAQoXTGlzdE1vbml0b3JSZXNwb25zZUxvZ3MSNS5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JSZXNwb25zZUxvZ3NSZXF1ZXN0GjYub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yUmVzcG9uc2VMb2dzUmVzcG9uc2UiA5ACARKHAQoVR2V0TW9uaXRvclJlc3BvbnNlTG9nEjMub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JSZXNwb25zZUxvZ1JlcXVlc3QaNC5vcGVuc3RhdHVzLm1vbml0b3IudjEuR2V0TW9uaXRvclJlc3BvbnNlTG9nUmVzcG9uc2UiA5ACAUJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor, file_openstatus_monitor_v1_tcp_monitor]);
 
 /**
  * CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -745,6 +745,363 @@ export const GetMonitorResponseSchema: GenMessage<GetMonitorResponse> = /*@__PUR
   messageDesc(file_openstatus_monitor_v1_service, 25);
 
 /**
+ * ResponseLogTiming contains calculated timing phases in milliseconds.
+ *
+ * @generated from message openstatus.monitor.v1.ResponseLogTiming
+ */
+export type ResponseLogTiming = Message<"openstatus.monitor.v1.ResponseLogTiming"> & {
+  /**
+   * DNS lookup duration.
+   *
+   * @generated from field: int32 dns = 1;
+   */
+  dns: number;
+
+  /**
+   * TCP connection duration.
+   *
+   * @generated from field: int32 connect = 2;
+   */
+  connect: number;
+
+  /**
+   * TLS handshake duration.
+   *
+   * @generated from field: int32 tls = 3;
+   */
+  tls: number;
+
+  /**
+   * Time to first byte duration.
+   *
+   * @generated from field: int32 ttfb = 4;
+   */
+  ttfb: number;
+
+  /**
+   * Response transfer duration.
+   *
+   * @generated from field: int32 transfer = 5;
+   */
+  transfer: number;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.ResponseLogTiming.
+ * Use `create(ResponseLogTimingSchema)` to create a new message.
+ */
+export const ResponseLogTimingSchema: GenMessage<ResponseLogTiming> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 26);
+
+/**
+ * ResponseLogListItem is a compact response log entry.
+ *
+ * @generated from message openstatus.monitor.v1.ResponseLogListItem
+ */
+export type ResponseLogListItem = Message<"openstatus.monitor.v1.ResponseLogListItem"> & {
+  /**
+   * Response log ID.
+   *
+   * @generated from field: optional string id = 1;
+   */
+  id?: string;
+
+  /**
+   * Latency in milliseconds.
+   *
+   * @generated from field: int32 latency = 2;
+   */
+  latency: number;
+
+  /**
+   * HTTP status code.
+   *
+   * @generated from field: optional int32 status_code = 3;
+   */
+  statusCode?: number;
+
+  /**
+   * Monitor ID.
+   *
+   * @generated from field: string monitor_id = 4;
+   */
+  monitorId: string;
+
+  /**
+   * Request status classification.
+   *
+   * @generated from field: openstatus.monitor.v1.ResponseLogRequestStatus request_status = 5;
+   */
+  requestStatus: ResponseLogRequestStatus;
+
+  /**
+   * Region identifier. This can be a public region code or private location ID.
+   *
+   * @generated from field: string region = 6;
+   */
+  region: string;
+
+  /**
+   * Cron bucket timestamp in Unix milliseconds.
+   *
+   * @generated from field: int64 cron_timestamp = 7;
+   */
+  cronTimestamp: bigint;
+
+  /**
+   * Check trigger.
+   *
+   * @generated from field: openstatus.monitor.v1.ResponseLogTrigger trigger = 8;
+   */
+  trigger: ResponseLogTrigger;
+
+  /**
+   * Response timestamp in Unix milliseconds.
+   *
+   * @generated from field: int64 timestamp = 9;
+   */
+  timestamp: bigint;
+
+  /**
+   * Timing phases.
+   *
+   * @generated from field: optional openstatus.monitor.v1.ResponseLogTiming timing = 10;
+   */
+  timing?: ResponseLogTiming;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.ResponseLogListItem.
+ * Use `create(ResponseLogListItemSchema)` to create a new message.
+ */
+export const ResponseLogListItemSchema: GenMessage<ResponseLogListItem> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 27);
+
+/**
+ * ResponseLogDetail contains full response log debugging data.
+ *
+ * @generated from message openstatus.monitor.v1.ResponseLogDetail
+ */
+export type ResponseLogDetail = Message<"openstatus.monitor.v1.ResponseLogDetail"> & {
+  /**
+   * Compact response log fields.
+   *
+   * @generated from field: openstatus.monitor.v1.ResponseLogListItem log = 1;
+   */
+  log?: ResponseLogListItem;
+
+  /**
+   * Checked URL.
+   *
+   * @generated from field: string url = 2;
+   */
+  url: string;
+
+  /**
+   * Whether the check errored.
+   *
+   * @generated from field: bool error = 3;
+   */
+  error: boolean;
+
+  /**
+   * Error message, when present.
+   *
+   * @generated from field: optional string message = 4;
+   */
+  message?: string;
+
+  /**
+   * Redacted response headers.
+   *
+   * @generated from field: map<string, string> headers = 5;
+   */
+  headers: { [key: string]: string };
+
+  /**
+   * Serialized assertions used for the check.
+   *
+   * @generated from field: optional string assertions = 6;
+   */
+  assertions?: string;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.ResponseLogDetail.
+ * Use `create(ResponseLogDetailSchema)` to create a new message.
+ */
+export const ResponseLogDetailSchema: GenMessage<ResponseLogDetail> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 28);
+
+/**
+ * ListMonitorResponseLogsRequest is the request to list response logs.
+ *
+ * @generated from message openstatus.monitor.v1.ListMonitorResponseLogsRequest
+ */
+export type ListMonitorResponseLogsRequest = Message<"openstatus.monitor.v1.ListMonitorResponseLogsRequest"> & {
+  /**
+   * Monitor ID to list response logs for (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Start of the response log window as Unix milliseconds.
+   *
+   * @generated from field: optional int64 from_timestamp = 2;
+   */
+  fromTimestamp?: bigint;
+
+  /**
+   * End of the response log window as Unix milliseconds.
+   *
+   * @generated from field: optional int64 to_timestamp = 3;
+   */
+  toTimestamp?: bigint;
+
+  /**
+   * Maximum number of logs to return (1-100, defaults to 25).
+   *
+   * @generated from field: optional int32 limit = 4;
+   */
+  limit?: number;
+
+  /**
+   * Number of logs to skip for pagination (defaults to 0).
+   *
+   * @generated from field: optional int32 offset = 5;
+   */
+  offset?: number;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.ListMonitorResponseLogsRequest.
+ * Use `create(ListMonitorResponseLogsRequestSchema)` to create a new message.
+ */
+export const ListMonitorResponseLogsRequestSchema: GenMessage<ListMonitorResponseLogsRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 29);
+
+/**
+ * ResponseLogPagination contains offset pagination metadata.
+ *
+ * @generated from message openstatus.monitor.v1.ResponseLogPagination
+ */
+export type ResponseLogPagination = Message<"openstatus.monitor.v1.ResponseLogPagination"> & {
+  /**
+   * Requested page size.
+   *
+   * @generated from field: int32 limit = 1;
+   */
+  limit: number;
+
+  /**
+   * Requested offset.
+   *
+   * @generated from field: int32 offset = 2;
+   */
+  offset: number;
+
+  /**
+   * Whether more logs are available.
+   *
+   * @generated from field: bool has_more = 3;
+   */
+  hasMore: boolean;
+
+  /**
+   * Next offset if more logs are available.
+   *
+   * @generated from field: optional int32 next_offset = 4;
+   */
+  nextOffset?: number;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.ResponseLogPagination.
+ * Use `create(ResponseLogPaginationSchema)` to create a new message.
+ */
+export const ResponseLogPaginationSchema: GenMessage<ResponseLogPagination> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 30);
+
+/**
+ * ListMonitorResponseLogsResponse is the response containing response logs.
+ *
+ * @generated from message openstatus.monitor.v1.ListMonitorResponseLogsResponse
+ */
+export type ListMonitorResponseLogsResponse = Message<"openstatus.monitor.v1.ListMonitorResponseLogsResponse"> & {
+  /**
+   * Response logs.
+   *
+   * @generated from field: repeated openstatus.monitor.v1.ResponseLogListItem logs = 1;
+   */
+  logs: ResponseLogListItem[];
+
+  /**
+   * Pagination metadata.
+   *
+   * @generated from field: openstatus.monitor.v1.ResponseLogPagination pagination = 2;
+   */
+  pagination?: ResponseLogPagination;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.ListMonitorResponseLogsResponse.
+ * Use `create(ListMonitorResponseLogsResponseSchema)` to create a new message.
+ */
+export const ListMonitorResponseLogsResponseSchema: GenMessage<ListMonitorResponseLogsResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 31);
+
+/**
+ * GetMonitorResponseLogRequest is the request to get one response log.
+ *
+ * @generated from message openstatus.monitor.v1.GetMonitorResponseLogRequest
+ */
+export type GetMonitorResponseLogRequest = Message<"openstatus.monitor.v1.GetMonitorResponseLogRequest"> & {
+  /**
+   * Monitor ID to get a response log for (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Response log ID to retrieve (required).
+   *
+   * @generated from field: string log_id = 2;
+   */
+  logId: string;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.GetMonitorResponseLogRequest.
+ * Use `create(GetMonitorResponseLogRequestSchema)` to create a new message.
+ */
+export const GetMonitorResponseLogRequestSchema: GenMessage<GetMonitorResponseLogRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 32);
+
+/**
+ * GetMonitorResponseLogResponse is the response containing one response log.
+ *
+ * @generated from message openstatus.monitor.v1.GetMonitorResponseLogResponse
+ */
+export type GetMonitorResponseLogResponse = Message<"openstatus.monitor.v1.GetMonitorResponseLogResponse"> & {
+  /**
+   * Response log details.
+   *
+   * @generated from field: openstatus.monitor.v1.ResponseLogDetail log = 1;
+   */
+  log?: ResponseLogDetail;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.GetMonitorResponseLogResponse.
+ * Use `create(GetMonitorResponseLogResponseSchema)` to create a new message.
+ */
+export const GetMonitorResponseLogResponseSchema: GenMessage<GetMonitorResponseLogResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 33);
+
+/**
  * TimeRange represents the time period for metrics aggregation.
  *
  * @generated from enum openstatus.monitor.v1.TimeRange
@@ -784,6 +1141,81 @@ export enum TimeRange {
  */
 export const TimeRangeSchema: GenEnum<TimeRange> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_service, 0);
+
+/**
+ * ResponseLogRequestStatus is the result classification for an HTTP response log.
+ *
+ * @generated from enum openstatus.monitor.v1.ResponseLogRequestStatus
+ */
+export enum ResponseLogRequestStatus {
+  /**
+   * Unspecified request status.
+   *
+   * @generated from enum value: RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The monitor response satisfied its assertions.
+   *
+   * @generated from enum value: RESPONSE_LOG_REQUEST_STATUS_SUCCESS = 1;
+   */
+  SUCCESS = 1,
+
+  /**
+   * The monitor response failed its assertions or request.
+   *
+   * @generated from enum value: RESPONSE_LOG_REQUEST_STATUS_ERROR = 2;
+   */
+  ERROR = 2,
+
+  /**
+   * The monitor response was slower than the degraded threshold.
+   *
+   * @generated from enum value: RESPONSE_LOG_REQUEST_STATUS_DEGRADED = 3;
+   */
+  DEGRADED = 3,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.ResponseLogRequestStatus.
+ */
+export const ResponseLogRequestStatusSchema: GenEnum<ResponseLogRequestStatus> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_service, 1);
+
+/**
+ * ResponseLogTrigger describes what started the monitor check.
+ *
+ * @generated from enum openstatus.monitor.v1.ResponseLogTrigger
+ */
+export enum ResponseLogTrigger {
+  /**
+   * Unspecified trigger.
+   *
+   * @generated from enum value: RESPONSE_LOG_TRIGGER_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Scheduled monitor run.
+   *
+   * @generated from enum value: RESPONSE_LOG_TRIGGER_CRON = 1;
+   */
+  CRON = 1,
+
+  /**
+   * API-triggered monitor run.
+   *
+   * @generated from enum value: RESPONSE_LOG_TRIGGER_API = 2;
+   */
+  API = 2,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.ResponseLogTrigger.
+ */
+export const ResponseLogTriggerSchema: GenEnum<ResponseLogTrigger> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_service, 2);
 
 /**
  * MonitorService provides CRUD and operational commands for monitors.
@@ -911,6 +1343,26 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof GetMonitorRequestSchema;
     output: typeof GetMonitorResponseSchema;
+  },
+  /**
+   * ListMonitorResponseLogs returns paginated response logs for an HTTP monitor.
+   *
+   * @generated from rpc openstatus.monitor.v1.MonitorService.ListMonitorResponseLogs
+   */
+  listMonitorResponseLogs: {
+    methodKind: "unary";
+    input: typeof ListMonitorResponseLogsRequestSchema;
+    output: typeof ListMonitorResponseLogsResponseSchema;
+  },
+  /**
+   * GetMonitorResponseLog returns one response log for an HTTP monitor.
+   *
+   * @generated from rpc openstatus.monitor.v1.MonitorService.GetMonitorResponseLog
+   */
+  getMonitorResponseLog: {
+    methodKind: "unary";
+    input: typeof GetMonitorResponseLogRequestSchema;
+    output: typeof GetMonitorResponseLogResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_openstatus_monitor_v1_service, 0);

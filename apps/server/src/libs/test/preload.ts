@@ -64,49 +64,133 @@ mock.module("@openstatus/upstash", () => ({
   },
 }));
 
+const tinybirdMockData = {
+  httpListBiweekly: [] as unknown[],
+  httpGetBiweekly: [] as unknown[],
+};
+const tinybirdMockCalls = {
+  httpListBiweekly: [] as unknown[],
+  httpGetBiweekly: [] as unknown[],
+};
+
+(globalThis as Record<string, unknown>).__tinybirdMockData = tinybirdMockData;
+(globalThis as Record<string, unknown>).__tinybirdMockCalls = tinybirdMockCalls;
+
+const emptyTinybirdResponse = () => Promise.resolve({ data: [] });
+
+const tbMock = {
+  get legacy_httpStatus45d() {
+    return emptyTinybirdResponse;
+  },
+  get legacy_tcpStatus45d() {
+    return emptyTinybirdResponse;
+  },
+  get httpListBiweekly() {
+    return (params: unknown) => {
+      tinybirdMockCalls.httpListBiweekly.push(params);
+      return Promise.resolve({ data: tinybirdMockData.httpListBiweekly });
+    };
+  },
+  get httpGetBiweekly() {
+    return (params: unknown) => {
+      tinybirdMockCalls.httpGetBiweekly.push(params);
+      return Promise.resolve({ data: tinybirdMockData.httpGetBiweekly });
+    };
+  },
+  get httpMetricsDaily() {
+    return emptyTinybirdResponse;
+  },
+  get httpMetricsWeekly() {
+    return emptyTinybirdResponse;
+  },
+  get httpMetricsBiweekly() {
+    return emptyTinybirdResponse;
+  },
+  get tcpMetricsDaily() {
+    return emptyTinybirdResponse;
+  },
+  get tcpMetricsWeekly() {
+    return emptyTinybirdResponse;
+  },
+  get tcpMetricsBiweekly() {
+    return emptyTinybirdResponse;
+  },
+  get dnsMetricsDaily() {
+    return emptyTinybirdResponse;
+  },
+  get dnsMetricsWeekly() {
+    return emptyTinybirdResponse;
+  },
+  get dnsMetricsBiweekly() {
+    return emptyTinybirdResponse;
+  },
+};
+
+mock.module("@/libs/clients", () => ({
+  tb: tbMock,
+  redis: {
+    get: (key: string) => Promise.resolve(testRedisStore.get(key) ?? null),
+    set: (key: string, value: string) => {
+      testRedisStore.set(key, value);
+      return Promise.resolve("OK");
+    },
+    del: (key: string) => {
+      const existed = testRedisStore.has(key) ? 1 : 0;
+      testRedisStore.delete(key);
+      return Promise.resolve(existed);
+    },
+    getdel: (key: string) => {
+      const value = testRedisStore.get(key) ?? null;
+      testRedisStore.delete(key);
+      return Promise.resolve(value);
+    },
+    expire: (_key: string, _seconds: number) => Promise.resolve(1),
+  },
+}));
+
 mock.module("@openstatus/tinybird", () => ({
   OSTinybird: class {
     get legacy_httpStatus45d() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.legacy_httpStatus45d;
     }
     get legacy_tcpStatus45d() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.legacy_tcpStatus45d;
     }
     get httpListBiweekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.httpListBiweekly;
     }
     get httpGetBiweekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.httpGetBiweekly;
     }
     // HTTP metrics for GetMonitorSummary
     get httpMetricsDaily() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.httpMetricsDaily;
     }
     get httpMetricsWeekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.httpMetricsWeekly;
     }
     get httpMetricsBiweekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.httpMetricsBiweekly;
     }
     // TCP metrics for GetMonitorSummary
     get tcpMetricsDaily() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.tcpMetricsDaily;
     }
     get tcpMetricsWeekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.tcpMetricsWeekly;
     }
     get tcpMetricsBiweekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.tcpMetricsBiweekly;
     }
     // DNS metrics for GetMonitorSummary
     get dnsMetricsDaily() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.dnsMetricsDaily;
     }
     get dnsMetricsWeekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.dnsMetricsWeekly;
     }
     get dnsMetricsBiweekly() {
-      return () => Promise.resolve({ data: [] });
+      return tbMock.dnsMetricsBiweekly;
     }
   },
 }));

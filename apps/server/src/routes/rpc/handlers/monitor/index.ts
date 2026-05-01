@@ -11,9 +11,11 @@ import type {
   GetMonitorResponse,
   GetMonitorSummaryResponse,
   HTTPMonitor,
+  ListMonitorResponseLogsResponse,
   MonitorConfig,
   MonitorService,
   RegionStatus,
+  ResponseLogPagination,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
@@ -49,8 +51,11 @@ import {
   monitorTypeMismatchError,
   monitorUpdateFailedError,
   rateLimitExceededError,
+  responseLogNotFoundError,
+  responseLogsNotEnabledError,
 } from "./errors";
 import { checkMonitorLimits } from "./limits";
+import { toResponseLogDetail, toResponseLogListItem } from "./response-logs";
 import {
   getCommonDbValues,
   getCommonDbValuesForUpdate,
@@ -818,6 +823,86 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       timeRange: effectiveTimeRange,
       regions: stringsToRegions(regionStrings),
     } satisfies GetMonitorSummaryResponse;
+  },
+
+  async listMonitorResponseLogs(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    if (!rpcCtx.workspace.limits["response-logs"]) {
+      throw responseLogsNotEnabledError();
+    }
+
+    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    if (!dbMon) {
+      throw monitorNotFoundError(req.id);
+    }
+
+    if (dbMon.jobType !== "http") {
+      throw monitorTypeMismatchError(req.id, "http", dbMon.jobType);
+    }
+
+    const limit = Math.min(Math.max(req.limit ?? 25, 1), 100);
+    const offset = Math.max(req.offset ?? 0, 0);
+
+    // Fetch one extra row so the response can report whether another page exists.
+    const result = await tb.httpListBiweekly({
+      monitorId: req.id,
+      fromDate: req.fromTimestamp ? Number(req.fromTimestamp) : undefined,
+      toDate: req.toTimestamp ? Number(req.toTimestamp) : undefined,
+      limit: limit + 1,
+      offset,
+    });
+    const logs = result.data.slice(0, limit).map(toResponseLogListItem);
+    const hasMore = result.data.length > limit;
+
+    const pagination: ResponseLogPagination = {
+      $typeName: "openstatus.monitor.v1.ResponseLogPagination",
+      limit,
+      offset,
+      hasMore,
+      nextOffset: hasMore ? offset + limit : undefined,
+    };
+
+    return {
+      $typeName:
+        "openstatus.monitor.v1.ListMonitorResponseLogsResponse" as const,
+      logs,
+      pagination,
+    } satisfies ListMonitorResponseLogsResponse;
+  },
+
+  async getMonitorResponseLog(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    if (!rpcCtx.workspace.limits["response-logs"]) {
+      throw responseLogsNotEnabledError();
+    }
+
+    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    if (!dbMon) {
+      throw monitorNotFoundError(req.id);
+    }
+
+    if (dbMon.jobType !== "http") {
+      throw monitorTypeMismatchError(req.id, "http", dbMon.jobType);
+    }
+
+    const result = await tb.httpGetBiweekly({
+      id: req.logId,
+      monitorId: req.id,
+    });
+    const log = result.data[0];
+
+    if (!log) {
+      throw responseLogNotFoundError(req.id, req.logId);
+    }
+
+    return {
+      $typeName: "openstatus.monitor.v1.GetMonitorResponseLogResponse" as const,
+      log: toResponseLogDetail(log),
+    };
   },
 };
 

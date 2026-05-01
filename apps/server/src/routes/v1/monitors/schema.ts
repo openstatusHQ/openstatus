@@ -329,49 +329,6 @@ export const ResultRun = z.object({
     .optional(),
 });
 
-const triggerSchema = z.enum(["cron", "api"]).nullable().prefault("cron");
-const requestStatusSchema = z
-  .enum(["error", "success", "degraded"])
-  .nullable()
-  .optional();
-
-export const ResponseLogTimingPhases = z
-  .object({
-    dns: z.number(),
-    connect: z.number(),
-    tls: z.number(),
-    ttfb: z.number(),
-    transfer: z.number(),
-  })
-  .nullable()
-  .optional()
-  .openapi({
-    description: "Calculated timing phases in milliseconds.",
-  });
-
-export const ResponseLogListItem = z.object({
-  type: z.literal("http").prefault("http"),
-  id: z.string().nullable(),
-  latency: z.int(),
-  statusCode: z.int().nullable(),
-  monitorId: z.string(),
-  requestStatus: requestStatusSchema,
-  region: z.enum(monitorRegions).or(z.string()),
-  cronTimestamp: z.int(),
-  trigger: triggerSchema,
-  timestamp: z.number(),
-  timing: ResponseLogTimingPhases,
-});
-
-export const ResponseLogDetail = ResponseLogListItem.extend({
-  url: z.url(),
-  error: z.coerce.boolean(),
-  message: z.string().nullable(),
-  headers: z.record(z.string(), z.string()).nullable(),
-  assertions: z.string().nullable(),
-  body: z.string().nullable(),
-});
-
 const baseRequest = z.object({
   name: z.string().openapi({
     description: "Name of the monitor",

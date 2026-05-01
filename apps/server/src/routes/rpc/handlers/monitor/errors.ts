@@ -13,6 +13,8 @@ export const ErrorReason = {
   MONITOR_RUN_CREATE_FAILED: "MONITOR_RUN_CREATE_FAILED",
   MONITOR_INVALID_DATA: "MONITOR_INVALID_DATA",
   MONITOR_TYPE_MISMATCH: "MONITOR_TYPE_MISMATCH",
+  RESPONSE_LOG_NOT_FOUND: "RESPONSE_LOG_NOT_FOUND",
+  RESPONSE_LOGS_NOT_ENABLED: "RESPONSE_LOGS_NOT_ENABLED",
   RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
 } as const;
 
@@ -120,6 +122,32 @@ export function monitorTypeMismatchError(
       "expected-type": expectedType,
       "actual-type": actualType,
     },
+  );
+}
+
+/**
+ * Creates a "response log not found" error.
+ */
+export function responseLogNotFoundError(
+  monitorId: string,
+  logId: string,
+): ConnectError {
+  return createError(
+    "Response log not found",
+    Code.NotFound,
+    ErrorReason.RESPONSE_LOG_NOT_FOUND,
+    { "monitor-id": monitorId, "log-id": logId },
+  );
+}
+
+/**
+ * Creates a "response logs not enabled" error.
+ */
+export function responseLogsNotEnabledError(): ConnectError {
+  return createError(
+    "Upgrade for response logs",
+    Code.ResourceExhausted,
+    ErrorReason.RESPONSE_LOGS_NOT_ENABLED,
   );
 }
 

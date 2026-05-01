@@ -5,8 +5,6 @@ import type { Variables } from "../index";
 import { registerDeleteMonitor } from "./delete";
 import { registerGetMonitor } from "./get";
 import { registerGetAllMonitors } from "./get_all";
-import { registerGetMonitorLog } from "./logs/get";
-import { registerGetMonitorLogs } from "./logs/get_all";
 import { registerPostMonitor } from "./post";
 import { registerPostMonitorDNS } from "./post_dns";
 import { registerPostMonitorHTTP } from "./post_http";
@@ -36,8 +34,6 @@ registerPutHTTPMonitor(monitorsApi);
 registerPutTCPMonitor(monitorsApi);
 registerPutDNSMonitor(monitorsApi);
 //
-registerGetMonitorLogs(monitorsApi);
-registerGetMonitorLog(monitorsApi);
 registerGetMonitorSummary(monitorsApi);
 registerTriggerMonitor(monitorsApi);
 registerGetMonitorResult(monitorsApi);

@@ -630,6 +630,32 @@ components:
       title: GetMonitorResponse
       additionalProperties: false
       description: GetMonitorResponse is the response containing the monitor.
+    openstatus.monitor.v1.GetMonitorResponseLogRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to get a response log for (required).
+        logId:
+          type: string
+          title: log_id
+          minLength: 1
+          description: Response log ID to retrieve (required).
+      title: GetMonitorResponseLogRequest
+      additionalProperties: false
+      description: GetMonitorResponseLogRequest is the request to get one response log.
+    openstatus.monitor.v1.GetMonitorResponseLogResponse:
+      type: object
+      properties:
+        log:
+          title: log
+          description: Response log details.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogDetail'
+      title: GetMonitorResponseLogResponse
+      additionalProperties: false
+      description: GetMonitorResponseLogResponse is the response containing one response log.
     openstatus.monitor.v1.GetMonitorStatusRequest:
       type: object
       properties:
@@ -952,6 +978,66 @@ components:
       title: Headers
       additionalProperties: false
       description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ListMonitorResponseLogsRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to list response logs for (required).
+        fromTimestamp:
+          type:
+            - integer
+            - string
+            - "null"
+          title: from_timestamp
+          format: int64
+          description: Start of the response log window as Unix milliseconds.
+        toTimestamp:
+          type:
+            - integer
+            - string
+            - "null"
+          title: to_timestamp
+          format: int64
+          description: End of the response log window as Unix milliseconds.
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of logs to return (1-100, defaults to 25).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of logs to skip for pagination (defaults to 0).
+      title: ListMonitorResponseLogsRequest
+      additionalProperties: false
+      description: ListMonitorResponseLogsRequest is the request to list response logs.
+    openstatus.monitor.v1.ListMonitorResponseLogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogListItem'
+          title: logs
+          description: Response logs.
+        pagination:
+          title: pagination
+          description: Pagination metadata.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogPagination'
+      title: ListMonitorResponseLogsResponse
+      additionalProperties: false
+      description: ListMonitorResponseLogsResponse is the response containing response logs.
     openstatus.monitor.v1.ListMonitorsRequest:
       type: object
       properties:
@@ -1173,6 +1259,189 @@ components:
       title: RegionStatus
       additionalProperties: false
       description: RegionStatus represents the status of a monitor in a specific region.
+    openstatus.monitor.v1.ResponseLogDetail:
+      type: object
+      properties:
+        log:
+          title: log
+          description: Compact response log fields.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogListItem'
+        url:
+          type: string
+          title: url
+          description: Checked URL.
+        error:
+          type: boolean
+          title: error
+          description: Whether the check errored.
+        message:
+          type:
+            - string
+            - "null"
+          title: message
+          description: Error message, when present.
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+          description: Redacted response headers.
+        assertions:
+          type:
+            - string
+            - "null"
+          title: assertions
+          description: Serialized assertions used for the check.
+      title: ResponseLogDetail
+      additionalProperties: false
+      description: ResponseLogDetail contains full response log debugging data.
+    openstatus.monitor.v1.ResponseLogDetail.HeadersEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: HeadersEntry
+      additionalProperties: false
+    openstatus.monitor.v1.ResponseLogListItem:
+      type: object
+      properties:
+        id:
+          type:
+            - string
+            - "null"
+          title: id
+          description: Response log ID.
+        latency:
+          type: integer
+          title: latency
+          format: int32
+          description: Latency in milliseconds.
+        statusCode:
+          type:
+            - integer
+            - "null"
+          title: status_code
+          format: int32
+          description: HTTP status code.
+        monitorId:
+          type: string
+          title: monitor_id
+          description: Monitor ID.
+        requestStatus:
+          title: request_status
+          description: Request status classification.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogRequestStatus'
+        region:
+          type: string
+          title: region
+          description: Region identifier. This can be a public region code or private location ID.
+        cronTimestamp:
+          type:
+            - integer
+            - string
+          title: cron_timestamp
+          format: int64
+          description: Cron bucket timestamp in Unix milliseconds.
+        trigger:
+          title: trigger
+          description: Check trigger.
+          $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogTrigger'
+        timestamp:
+          type:
+            - integer
+            - string
+          title: timestamp
+          format: int64
+          description: Response timestamp in Unix milliseconds.
+        timing:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.ResponseLogTiming'
+            - type: "null"
+          title: timing
+          description: Timing phases.
+      title: ResponseLogListItem
+      additionalProperties: false
+      description: ResponseLogListItem is a compact response log entry.
+    openstatus.monitor.v1.ResponseLogPagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          title: limit
+          format: int32
+          description: Requested page size.
+        offset:
+          type: integer
+          title: offset
+          format: int32
+          description: Requested offset.
+        hasMore:
+          type: boolean
+          title: has_more
+          description: Whether more logs are available.
+        nextOffset:
+          type:
+            - integer
+            - "null"
+          title: next_offset
+          format: int32
+          description: Next offset if more logs are available.
+      title: ResponseLogPagination
+      additionalProperties: false
+      description: ResponseLogPagination contains offset pagination metadata.
+    openstatus.monitor.v1.ResponseLogRequestStatus:
+      type: string
+      title: ResponseLogRequestStatus
+      enum:
+        - RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED
+        - RESPONSE_LOG_REQUEST_STATUS_SUCCESS
+        - RESPONSE_LOG_REQUEST_STATUS_ERROR
+        - RESPONSE_LOG_REQUEST_STATUS_DEGRADED
+      description: ResponseLogRequestStatus is the result classification for an HTTP response log.
+    openstatus.monitor.v1.ResponseLogTiming:
+      type: object
+      properties:
+        dns:
+          type: integer
+          title: dns
+          format: int32
+          description: DNS lookup duration.
+        connect:
+          type: integer
+          title: connect
+          format: int32
+          description: TCP connection duration.
+        tls:
+          type: integer
+          title: tls
+          format: int32
+          description: TLS handshake duration.
+        ttfb:
+          type: integer
+          title: ttfb
+          format: int32
+          description: Time to first byte duration.
+        transfer:
+          type: integer
+          title: transfer
+          format: int32
+          description: Response transfer duration.
+      title: ResponseLogTiming
+      additionalProperties: false
+      description: ResponseLogTiming contains calculated timing phases in milliseconds.
+    openstatus.monitor.v1.ResponseLogTrigger:
+      type: string
+      title: ResponseLogTrigger
+      enum:
+        - RESPONSE_LOG_TRIGGER_UNSPECIFIED
+        - RESPONSE_LOG_TRIGGER_CRON
+        - RESPONSE_LOG_TRIGGER_API
+      description: ResponseLogTrigger describes what started the monitor check.
     openstatus.monitor.v1.StatusCodeAssertion:
       type: object
       properties:
@@ -4038,6 +4307,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/GetMonitorResponseLog:
+    get:
+      tags:
+        - MonitorService
+      summary: GetMonitorResponseLog
+      description: GetMonitorResponseLog returns one response log for an HTTP monitor.
+      operationId: MonitorService_GetMonitorResponseLog.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponseLogRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponseLogResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: GetMonitorResponseLog
+      description: GetMonitorResponseLog returns one response log for an HTTP monitor.
+      operationId: MonitorService_GetMonitorResponseLog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponseLogRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponseLogResponse'
   /rpc/openstatus.monitor.v1.MonitorService/GetMonitorStatus:
     get:
       tags:
@@ -4142,6 +4463,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/ListMonitorResponseLogs:
+    get:
+      tags:
+        - MonitorService
+      summary: ListMonitorResponseLogs
+      description: ListMonitorResponseLogs returns paginated response logs for an HTTP monitor.
+      operationId: MonitorService_ListMonitorResponseLogs.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorResponseLogsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorResponseLogsResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: ListMonitorResponseLogs
+      description: ListMonitorResponseLogs returns paginated response logs for an HTTP monitor.
+      operationId: MonitorService_ListMonitorResponseLogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorResponseLogsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorResponseLogsResponse'
   /rpc/openstatus.monitor.v1.MonitorService/ListMonitors:
     get:
       tags:

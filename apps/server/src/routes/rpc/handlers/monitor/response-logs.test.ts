@@ -1,12 +1,15 @@
 import { expect, test } from "bun:test";
 
-import { checkResponseLogsLimit, redactSensitiveHeaders } from "./utils";
+import { redactSensitiveHeaders } from "./response-logs";
 
-test("redactSensitiveHeaders removes secret-bearing response headers", () => {
+test("redactSensitiveHeaders redacts secret-bearing response headers", () => {
   const headers = redactSensitiveHeaders({
     "X-Request-Id": "req_123",
     "X-Trace-Id": "trace_123",
     "X-Deployment": "deploy_123",
+    "X-Api-Key": "key",
+    "X-Session-Id": "session",
+    "X-Credential-Id": "credential",
     "Set-Cookie": "atid=secret",
     "X-Service-Token": "secret",
     Authorization: "Bearer secret",
@@ -16,15 +19,11 @@ test("redactSensitiveHeaders removes secret-bearing response headers", () => {
     "X-Request-Id": "req_123",
     "X-Trace-Id": "trace_123",
     "X-Deployment": "deploy_123",
+    "X-Api-Key": "[redacted]",
+    "X-Session-Id": "[redacted]",
+    "X-Credential-Id": "[redacted]",
     "Set-Cookie": "[redacted]",
     "X-Service-Token": "[redacted]",
     Authorization: "[redacted]",
   });
-});
-
-test("checkResponseLogsLimit requires the response logs entitlement", () => {
-  expect(() => checkResponseLogsLimit({ "response-logs": true })).not.toThrow();
-  expect(() => checkResponseLogsLimit({ "response-logs": false })).toThrow(
-    "Upgrade for response logs",
-  );
 });
