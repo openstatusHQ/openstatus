@@ -2506,13 +2506,33 @@ describe("MonitorService.ListMonitorResponseLogs", () => {
   });
 
   test("returns not found for a monitor in another workspace", async () => {
-    const res = await connectRequest(
-      "ListMonitorResponseLogs",
-      { id: "5" },
-      { "x-openstatus-key": "1" },
-    );
+    const { calls } = getTinybirdMocks();
+    const otherWorkspaceMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-response-logs-other-ws`,
+        url: "https://other-ws-response-logs.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
 
-    expect(res.status).toBe(404);
+    try {
+      const res = await connectRequest(
+        "ListMonitorResponseLogs",
+        { id: String(otherWorkspaceMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+      expect(calls.httpListBiweekly).toEqual([]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
+    }
   });
 
   test("rejects non-HTTP monitors", async () => {
