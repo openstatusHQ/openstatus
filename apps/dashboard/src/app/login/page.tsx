@@ -30,10 +30,10 @@ export default async function Page(props: {
   const { redirectTo } = searchParamsCache.parse(searchParams);
 
   return (
-    <div className="my-4 grid w-full max-w-lg gap-6">
+    <div className="my-16 grid w-full max-w-lg gap-6">
       <div className="flex flex-col gap-1 text-center">
-        <h1 className="font-semibold text-3xl tracking-tight">Sign In</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="font-cal text-3xl tracking-tight">Sign In</h1>
+        <p className="text-pretty font-commit-mono text-muted-foreground text-sm">
           Get started now. No credit card required.
         </p>
       </div>
@@ -68,7 +68,7 @@ export default async function Page(props: {
           </LoginButton>
         </form>
       </div>
-      <p className="mx-auto max-w-md px-8 text-center text-muted-foreground text-sm">
+      <p className="mx-auto max-w-md text-pretty px-8 text-center text-muted-foreground text-xs">
         By clicking continue, you agree to our{" "}
         <Link
           href="https://openstatus.dev/legal/terms"

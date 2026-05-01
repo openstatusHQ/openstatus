@@ -2,6 +2,14 @@
 
 import { Note } from "@/components/common/note";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  BlueskyIcon,
+  GitHubIcon,
+  LinkedInIcon,
+  XIcon,
+  YouTubeIcon,
+} from "@openstatus/icons";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -17,37 +25,30 @@ import {
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check } from "lucide-react";
+import {
+  Check,
+  MoreHorizontal,
+  Newspaper,
+  Search,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const sources = [
-  {
-    id: "social-media",
-    title: "Twitter / LinkedIn / Bsky",
-  },
-  {
-    id: "github",
-    title: "GitHub",
-  },
-  {
-    id: "google",
-    title: "Google Search",
-  },
-  {
-    id: "recommendation",
-    title: "Friend / Colleague",
-  },
-  {
-    id: "blog",
-    title: "Blog / Article",
-  },
-  {
-    id: "other",
-    title: "Other",
-  },
+  { id: "search-engine", title: "Search Engine", icon: Search },
+  { id: "github", title: "GitHub", icon: GitHubIcon },
+  { id: "linkedin", title: "LinkedIn", icon: LinkedInIcon },
+  { id: "bluesky", title: "Bluesky", icon: BlueskyIcon },
+  { id: "twitter", title: "X / Twitter", icon: XIcon },
+  { id: "ai-chat", title: "AI Chat", icon: Sparkles },
+  { id: "recommendation", title: "Friend / Colleague", icon: Users },
+  { id: "youtube", title: "YouTube", icon: YouTubeIcon },
+  { id: "blog", title: "Blog / Article", icon: Newspaper },
+  { id: "other", title: "Other", icon: MoreHorizontal },
 ] as const;
 
 const schema = z.object({
@@ -119,47 +120,66 @@ export function QuestionForm({
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                  className="flex flex-wrap gap-2"
                 >
-                  {sources.map((item) => (
-                    <FormItem key={item.id} className="flex items-center gap-3">
-                      <FormControl>
-                        <RadioGroupItem value={item.id} id={item.id} />
-                      </FormControl>
-                      <FormLabel
-                        htmlFor={item.id}
-                        className="w-full font-normal"
-                      >
-                        {item.title}
-                      </FormLabel>
-                    </FormItem>
-                  ))}
+                  {sources.map((item) => {
+                    const selected = field.value === item.id;
+                    return (
+                      <FormItem key={item.id} className="space-y-0">
+                        <FormControl>
+                          <RadioGroupItem
+                            value={item.id}
+                            id={item.id}
+                            className="sr-only"
+                          />
+                        </FormControl>
+                        <FormLabel
+                          htmlFor={item.id}
+                          className="cursor-pointer font-normal"
+                        >
+                          <Badge
+                            variant={selected ? "default" : "outline"}
+                            className={cn(
+                              "transition-colors",
+                              !selected &&
+                                "text-muted-foreground hover:border-foreground hover:text-foreground",
+                            )}
+                          >
+                            <item.icon className="size-3" />
+                            {item.title}
+                          </Badge>
+                        </FormLabel>
+                      </FormItem>
+                    );
+                  })}
                 </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {watchSource === "other" && (
-          <FormField
-            control={form.control}
-            name="other"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder="Please specify"
-                    className="sm:w-1/2"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        )}
-        <Button size="sm" type="submit" disabled={isPending}>
-          {isPending ? "Submitting..." : "Submit"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {watchSource === "other" && (
+            <FormField
+              control={form.control}
+              name="other"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Please specify..."
+                      className="w-full"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
+          <Button size="sm" type="submit" disabled={isPending || !watchSource}>
+            {isPending ? "Submitting..." : "Submit"}
+          </Button>
+        </div>
       </form>
     </Form>
   );

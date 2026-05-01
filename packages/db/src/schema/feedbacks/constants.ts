@@ -3,6 +3,7 @@ export const feedbackSource = [
   "widget",
   "onboarding-intent",
   "onboarding-source",
+  "onboarding-completed",
 ] as const;
 
 export const feedbackType = [

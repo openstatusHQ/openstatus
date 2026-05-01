@@ -14,6 +14,13 @@ export {
   updateMonitorTags,
 } from "./relations";
 export {
+  type CheckResult,
+  type CheckResultError,
+  type CheckResultSuccess,
+  StreamMonitorPreviewInput,
+  streamMonitorPreview,
+} from "./stream-monitor-preview";
+export {
   bulkUpdateMonitors,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,

@@ -1,7 +1,6 @@
+import type { SearchParams } from "nuqs";
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
-
-import type { SearchParams } from "nuqs";
 
 export default async function Page({
   searchParams,

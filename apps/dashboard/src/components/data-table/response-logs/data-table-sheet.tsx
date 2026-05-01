@@ -21,10 +21,12 @@ export function Sheet({
   data,
   privateLocations,
   onClose,
+  showCopyUrl = true,
 }: {
   data: ResponseLog | null;
   privateLocations?: PrivateLocation[];
   onClose: () => void;
+  showCopyUrl?: boolean;
 }) {
   const { copy, isCopied } = useCopyToClipboard();
   if (!data) return null;
@@ -36,22 +38,26 @@ export function Sheet({
           <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
         </DataTableSheetHeader>
         <DataTableBasics data={data} privateLocations={privateLocations} />
-        <Separator />
-        <DataTableSheetFooter>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                copy(window.location.href, {
-                  withToast: false,
-                });
-              }
-            }}
-          >
-            Copy Request Log URL
-            {isCopied ? <Check /> : <Copy />}
-          </Button>
-        </DataTableSheetFooter>
+        {showCopyUrl ? (
+          <>
+            <Separator />
+            <DataTableSheetFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    copy(window.location.href, {
+                      withToast: false,
+                    });
+                  }
+                }}
+              >
+                Copy Request Log URL
+                {isCopied ? <Check /> : <Copy />}
+              </Button>
+            </DataTableSheetFooter>
+          </>
+        ) : null}
       </DataTableSheetContent>
     </DataTableSheet>
   );
