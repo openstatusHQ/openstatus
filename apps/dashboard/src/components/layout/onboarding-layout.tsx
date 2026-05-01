@@ -275,7 +275,7 @@ export function OnboardingPreviewPlaceholderText({
   return (
     <p
       className={cn(
-        "max-w-xs text-pretty rounded-md border border-border bg-background/60 p-2 text-center text-foreground text-sm backdrop-blur-md",
+        "max-w-xs text-pretty rounded-md border border-border p-2 text-center text-foreground text-sm backdrop-blur-sm",
         className,
       )}
       {...props}

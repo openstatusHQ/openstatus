@@ -194,6 +194,9 @@ export async function* streamMonitorPreview(args: {
     : undefined;
 
   const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    throw new Error("CRON_SECRET is not set");
+  }
 
   // Skip deprecated regions — fly (and other providers) no longer run
   // machines there, so probes time out and produce noise rows. Mirrors

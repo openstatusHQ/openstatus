@@ -56,13 +56,13 @@ export function checkResultToResponseLog(
       trigger: "api",
       monitorId: String(monitorId),
       url: monitorUrl,
-      error: 1,
+      error: true,
       message: result.message,
       headers: null,
       body: null,
       assertions: null,
       workspaceId: "",
-    } as unknown as OnboardingChecksRow;
+    } satisfies OnboardingChecksRow;
   }
 
   const requestStatus =
@@ -90,11 +90,11 @@ export function checkResultToResponseLog(
     trigger: "api",
     monitorId: String(monitorId),
     url: monitorUrl,
-    error: 0,
+    error: false,
     message: null,
     headers: result.headers ?? null,
     body: result.body ?? null,
     assertions: null,
     workspaceId: "",
-  } as unknown as OnboardingChecksRow;
+  } satisfies OnboardingChecksRow;
 }

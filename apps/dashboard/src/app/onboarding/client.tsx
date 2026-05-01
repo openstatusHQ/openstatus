@@ -58,7 +58,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { searchParamsParsers } from "./search-params";
 
 const STEPS = [
@@ -190,43 +190,33 @@ export function Client() {
     }
   }, [callbackUrl, router]);
 
-  // Final feedback emission when the user reaches step 3.
-  const finalEmittedRef = useRef(false);
-  useEffect(() => {
-    if (step !== "3") return;
-    if (finalEmittedRef.current) return;
-    finalEmittedRef.current = true;
+  // Fire telemetry when the user clicks Continue on step 3.
+  // Was previously two `useEffect`s gated on a ref — moved to an explicit
+  // user action so the side-effect only fires when the user actually
+  // commits to "I'm done", not whenever they land on the route.
+  const emitOnboardingTelemetry = useCallback(() => {
     createFeedbackMutation.mutate({
       source: "onboarding-completed",
       message: `monitor=${monitor ?? "untouched"} page=${page ?? "untouched"}`,
       path: pathname,
     });
-  }, [step, monitor, page, pathname, createFeedbackMutation.mutate]);
-
-  // Strong-intent signal: user actually went through both the monitor and
-  // status-page steps (no skips). Fires once per session, even if the user
-  // lands on step 3 directly via search params after the fact.
-  const intentEmittedRef = useRef(false);
-  useEffect(() => {
-    if (step !== "3") return;
-    if (!monitor || !page) return;
-    if (intentEmittedRef.current) return;
-    intentEmittedRef.current = true;
-    let message = "";
+    // Strong-intent: user followed at least one of the steps to completion.
+    let intentMessage = "";
     if (monitor === "completed" && page === "completed") {
-      message = "Status Page & Monitoring";
+      intentMessage = "Status Page & Monitoring";
     } else if (monitor === "completed") {
-      message = "Monitoring";
+      intentMessage = "Monitoring";
     } else if (page === "completed") {
-      message = "Status Page";
+      intentMessage = "Status Page";
     }
-    if (!message) return;
-    createFeedbackMutation.mutate({
-      source: "onboarding-intent",
-      message,
-      path: pathname,
-    });
-  }, [step, monitor, page, pathname, createFeedbackMutation.mutate]);
+    if (intentMessage) {
+      createFeedbackMutation.mutate({
+        source: "onboarding-intent",
+        message: intentMessage,
+        path: pathname,
+      });
+    }
+  }, [createFeedbackMutation.mutate, monitor, page, pathname]);
 
   const stepperSteps = STEPS.map((s) => ({
     id: s.id,
@@ -330,6 +320,7 @@ export function Client() {
             stepperSteps={stepperSteps}
             monitorStatus={monitor}
             pageStatus={page}
+            onContinue={emitOnboardingTelemetry}
             onQuestionnaireSubmit={async (values) => {
               await createFeedbackMutation.mutateAsync({
                 source: "onboarding-source",
@@ -613,11 +604,13 @@ function Step3({
   stepperSteps,
   monitorStatus,
   pageStatus,
+  onContinue,
   onQuestionnaireSubmit,
 }: {
   stepperSteps: OnboardingStep[];
   monitorStatus: "skipped" | "completed" | null;
   pageStatus: "skipped" | "completed" | null;
+  onContinue: () => void;
   onQuestionnaireSubmit: (values: {
     source: string;
     other?: string;
@@ -675,7 +668,7 @@ function Step3({
         </div>
         <OnboardingActions className="flex-wrap">
           <Button asChild>
-            <Link href="/overview">
+            <Link href="/overview" onClick={onContinue}>
               Continue <ArrowRight className="size-3" />
             </Link>
           </Button>

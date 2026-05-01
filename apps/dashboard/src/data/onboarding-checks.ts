@@ -91,11 +91,11 @@ export const exampleChecks: OnboardingChecksRow[] = SAMPLE.map(
       trigger: "api",
       monitorId: "0",
       url: "",
-      error: 0,
+      error: false,
       message: null,
       headers: null,
       body: null,
       assertions: null,
       workspaceId: "",
-    }) as unknown as OnboardingChecksRow,
+    }) satisfies OnboardingChecksRow,
 );
