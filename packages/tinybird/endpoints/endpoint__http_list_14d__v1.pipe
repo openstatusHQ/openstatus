@@ -14,6 +14,8 @@ SQL >
                 AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
             {% end %}
         ORDER BY time DESC
+        LIMIT {{ Int32(limit, 25) }}
+        OFFSET {{ Int32(offset, 0) }}
 
 
 TYPE ENDPOINT

@@ -72,6 +72,12 @@ mock.module("@openstatus/tinybird", () => ({
     get legacy_tcpStatus45d() {
       return () => Promise.resolve({ data: [] });
     }
+    get httpListBiweekly() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get httpGetBiweekly() {
+      return () => Promise.resolve({ data: [] });
+    }
     // HTTP metrics for GetMonitorSummary
     get httpMetricsDaily() {
       return () => Promise.resolve({ data: [] });

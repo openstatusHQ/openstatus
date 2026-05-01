@@ -16,18 +16,19 @@ export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
+    const tinybirdUrl = process.env.TINYBIRD_URL;
     if (
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "test"
+      (process.env.NODE_ENV === "development" ||
+        process.env.NODE_ENV === "test") &&
+      !tinybirdUrl
     ) {
       this.tb = new NoopTinybird();
     } else {
       // Use local Tinybird container if available (Docker/self-hosted)
       // https://www.tinybird.co/docs/api-reference
-      const tinybirdUrl = process.env.TINYBIRD_URL || "https://api.tinybird.co";
       this.tb = new Client({
         token,
-        baseUrl: tinybirdUrl,
+        baseUrl: tinybirdUrl || "https://api.tinybird.co",
       });
     }
   }
@@ -170,6 +171,8 @@ export class OSTinybird {
         monitorId: z.string(),
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
+        limit: z.int().optional(),
+        offset: z.int().optional(),
       }),
       data: z.object({
         type: z.literal("http").prefault("http"),
