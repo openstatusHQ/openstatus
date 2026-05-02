@@ -1,8 +1,8 @@
 import {
   type ResponseLogDetail,
   type ResponseLogListItem,
-  type ResponseLogTiming,
   ResponseLogRequestStatus,
+  type ResponseLogTiming,
   ResponseLogTrigger,
 } from "@openstatus/proto/monitor/v1";
 
@@ -99,7 +99,9 @@ function toResponseLogTrigger(trigger: TinybirdResponseLogListItem["trigger"]) {
   }
 }
 
-function toResponseLogTiming(timing: TinybirdTiming): ResponseLogTiming | undefined {
+function toResponseLogTiming(
+  timing: TinybirdTiming,
+): ResponseLogTiming | undefined {
   if (!timing) return undefined;
 
   return {

@@ -56,12 +56,16 @@ type TinybirdMockCalls = {
 
 function getTinybirdMocks() {
   return {
-    data: (globalThis as typeof globalThis & {
-      __tinybirdMockData: TinybirdMockData;
-    }).__tinybirdMockData,
-    calls: (globalThis as typeof globalThis & {
-      __tinybirdMockCalls: TinybirdMockCalls;
-    }).__tinybirdMockCalls,
+    data: (
+      globalThis as typeof globalThis & {
+        __tinybirdMockData: TinybirdMockData;
+      }
+    ).__tinybirdMockData,
+    calls: (
+      globalThis as typeof globalThis & {
+        __tinybirdMockCalls: TinybirdMockCalls;
+      }
+    ).__tinybirdMockCalls,
   };
 }
 
