@@ -17,7 +17,7 @@ import type {
   StatusBarData,
   StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
-import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 // ============================================================================
 // Layout Components
@@ -410,6 +410,7 @@ export function StatusComponentFooter({
   data: StatusBarData[];
   isLoading?: boolean;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <div
       data-slot="status-component-footer"
@@ -427,7 +428,7 @@ export function StatusComponentFooter({
           "-"
         )}
       </div>
-      <div>today</div>
+      <div>{labels.today}</div>
     </div>
   );
 }
@@ -540,6 +541,7 @@ export function StatusComponentStatus({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const labels = useStatusBlocksLabels();
   return (
     <div
       data-slot="status-component-status"
@@ -554,16 +556,16 @@ export function StatusComponentStatus({
       {...props}
     >
       <span className="hidden group-data-[variant=success]/component:block">
-        {systemStatusLabels.success.short}
+        {labels.systemStatus.success.short}
       </span>
       <span className="hidden group-data-[variant=degraded]/component:block">
-        {systemStatusLabels.degraded.short}
+        {labels.systemStatus.degraded.short}
       </span>
       <span className="hidden group-data-[variant=error]/component:block">
-        {systemStatusLabels.error.short}
+        {labels.systemStatus.error.short}
       </span>
       <span className="hidden group-data-[variant=info]/component:block">
-        {systemStatusLabels.info.short}
+        {labels.systemStatus.info.short}
       </span>
     </div>
   );

@@ -448,10 +448,12 @@ export function StatusBlankOverlay({
 export function StatusBlankEvents({
   title = "No reports found",
   description = "No reports found for this status page.",
+  action,
   ...props
 }: React.ComponentProps<typeof StatusBlankContainer> & {
   title?: string;
   description?: string;
+  action?: React.ReactNode;
 }) {
   return (
     <StatusBlankContainer {...props}>
@@ -464,6 +466,7 @@ export function StatusBlankEvents({
         <StatusBlankTitle>{title}</StatusBlankTitle>
         <StatusBlankDescription>{description}</StatusBlankDescription>
       </StatusBlankContent>
+      {action ? <StatusBlankAction>{action}</StatusBlankAction> : null}
     </StatusBlankContainer>
   );
 }
@@ -496,10 +499,12 @@ export function StatusBlankEvents({
 export function StatusBlankMonitors({
   title = "No public monitors",
   description = "No public monitors have been added to this page.",
+  action,
   ...props
 }: React.ComponentProps<typeof StatusBlankContainer> & {
   title?: string;
   description?: string;
+  action?: React.ReactNode;
 }) {
   return (
     <StatusBlankContainer {...props}>
@@ -512,6 +517,32 @@ export function StatusBlankMonitors({
         <StatusBlankTitle>{title}</StatusBlankTitle>
         <StatusBlankDescription>{description}</StatusBlankDescription>
       </StatusBlankContent>
+      {action ? <StatusBlankAction>{action}</StatusBlankAction> : null}
     </StatusBlankContainer>
+  );
+}
+
+/**
+ * StatusBlankAction - Styled wrapper for empty-state CTAs.
+ *
+ * Applies border + hover chrome around any actionable child (link, button).
+ * Wrapper apps pass a bare `<Link>` or `<button>`; this component owns the look.
+ */
+export function StatusBlankAction({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="status-blank-action"
+      className={cn(
+        "mt-2 inline-flex items-center justify-center rounded-md border border-border/70 px-3 py-1.5 font-mono text-muted-foreground text-sm hover:border-border hover:text-foreground [&>a]:no-underline [&>a]:text-inherit",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
   );
 }

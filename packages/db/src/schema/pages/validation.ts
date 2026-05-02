@@ -81,17 +81,29 @@ export const insertPageSchema = createInsertSchema(page, {
     },
   );
 
+// NOTE: every field uses `.nullish().transform(v => v ?? <default>)` so the
+// OUTPUT is always a concrete enum value — never `null`/`undefined`. `.prefault`
+// alone only handles `undefined`; without the transform a stored `null` (which
+// the write path permits) leaks through and tanks downstream consumers that
+// expect a strict enum (e.g. the status-page layout falling back to "absolute"
+// barType and rendering manual-mode bars as empty).
 export const pageConfigurationSchema = z.object({
   value: z
     .enum(["duration", "requests", "manual"])
     .nullish()
-    .prefault("requests"),
-  type: z.enum(["absolute", "manual"]).nullish().prefault("absolute"),
-  uptime: z.coerce.boolean().nullish().prefault(true),
+    .transform((v) => v ?? "requests"),
+  type: z
+    .enum(["absolute", "manual"])
+    .nullish()
+    .transform((v) => v ?? "absolute"),
+  uptime: z.coerce
+    .boolean()
+    .nullish()
+    .transform((v) => v ?? true),
   theme: z
     .enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]])
     .nullish()
-    .prefault("default"),
+    .transform((v) => v ?? "default"),
 });
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 

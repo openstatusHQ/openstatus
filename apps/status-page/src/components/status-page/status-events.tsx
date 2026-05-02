@@ -1,368 +1,84 @@
+"use client";
+
 import { ProcessMessage } from "@/components/content/process-message";
-import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
 import {
-  StatusEventTimelineDot,
-  StatusEventTimelineMessage,
-  StatusEventTimelineSeparator,
-  StatusEventTimelineTitle,
+  StatusEventTimelineMaintenance as BlockStatusEventTimelineMaintenance,
+  StatusEventTimelineReport as BlockStatusEventTimelineReport,
+  StatusEventTimelineReportUpdate as BlockStatusEventTimelineReportUpdate,
 } from "@openstatus/ui/components/blocks/status-events";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
-import { cn } from "@openstatus/ui/lib/utils";
-import { formatDistanceStrict } from "date-fns";
-import { Check } from "lucide-react";
-import { useExtracted, useLocale } from "next-intl";
 
-export function StatusEventGroup({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("flex flex-col gap-4", className)} {...props}>
-      {children}
-    </div>
-  );
-}
+// Re-export pass-through primitives that don't need glue.
+export {
+  StatusEvent,
+  StatusEventGroup,
+  StatusEventContent,
+  StatusEventTitle,
+  StatusEventTitleCheck,
+  StatusEventAffected,
+  StatusEventAffectedBadge,
+  StatusEventDate,
+  StatusEventAside,
+  StatusEventTimelineTitle,
+  StatusEventTimelineMessage,
+  StatusEventTimelineDot,
+  StatusEventTimelineSeparator,
+} from "@openstatus/ui/components/blocks/status-events";
 
-export function StatusEvent({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("relative flex flex-col gap-2", className)} {...props}>
-      {children}
-    </div>
-  );
-}
+const renderMarkdownMessage = (message: string) => (
+  <ProcessMessage value={message} />
+);
 
-export function StatusEventContent({
-  className,
-  hoverable = true,
-  children,
-  ...props
-}: React.ComponentProps<"div"> & {
-  hoverable?: boolean;
-}) {
-  // TODO: add Link
+/**
+ * StatusEventTimelineReport — wrapper that pipes user-authored markdown
+ * through `<ProcessMessage>` so report messages render with formatting.
+ */
+export function StatusEventTimelineReport(
+  props: Omit<
+    React.ComponentProps<typeof BlockStatusEventTimelineReport>,
+    "renderMessage"
+  >,
+) {
   return (
-    <div
-      data-hoverable={hoverable}
-      className={cn(
-        "group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2",
-        "data-[hoverable=true]:hover:cursor-pointer data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50",
-        className,
-      )}
+    <BlockStatusEventTimelineReport
+      renderMessage={renderMarkdownMessage}
       {...props}
-    >
-      {children}
-    </div>
+    />
   );
 }
 
-export function StatusEventTitle({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+/**
+ * StatusEventTimelineMaintenance — wrapper that pipes user-authored markdown
+ * through `<ProcessMessage>` so maintenance messages render with formatting.
+ */
+export function StatusEventTimelineMaintenance(
+  props: Omit<
+    React.ComponentProps<typeof BlockStatusEventTimelineMaintenance>,
+    "renderMessage"
+  >,
+) {
   return (
-    <div className={cn("font-medium", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-export function StatusEventTitleCheck({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  const t = useExtracted();
-  return (
-    <div className={cn("flex items-center pl-1", className)} {...props}>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
-              <Check className="size-3 shrink-0" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t("Report resolved")}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </div>
-  );
-}
-
-// TODO: affected monitors
-export function StatusEventAffected({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("flex flex-wrap gap-1", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-export function StatusEventAffectedBadge({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <Badge
-      variant="secondary"
-      className={cn("text-[10px]", className)}
+    <BlockStatusEventTimelineMaintenance
+      renderMessage={renderMarkdownMessage}
       {...props}
-    >
-      {children}
-    </Badge>
+    />
   );
 }
 
-export function StatusEventDate({
-  className,
-  date,
-  ...props
-}: React.ComponentProps<"div"> & {
-  date: Date;
-}) {
-  const locale = useLocale();
-  const isFuture = date > new Date();
-  const distance = formatDistanceStrict(date, new Date(), { addSuffix: true });
+/**
+ * StatusEventTimelineReportUpdate — wrapper for single-update rendering
+ * (used by the banner tabs to show only the latest update). Pipes markdown
+ * through `<ProcessMessage>`.
+ */
+export function StatusEventTimelineReportUpdate(
+  props: Omit<
+    React.ComponentProps<typeof BlockStatusEventTimelineReportUpdate>,
+    "renderMessage"
+  >,
+) {
   return (
-    <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
-      <div className="font-medium text-foreground">
-        {formatDate(date, { month: "short", locale })}
-      </div>{" "}
-      <Badge
-        variant="secondary"
-        className={cn(
-          "text-[10px]",
-          isFuture ? "bg-info text-background dark:text-foreground" : "",
-        )}
-      >
-        {distance}
-      </Badge>
-    </div>
-  );
-}
-
-export function StatusEventAside({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full">
-      <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-export function StatusEventTimelineReport({
-  className,
-  updates,
-  withDot = true,
-  maxUpdates,
-  reportId,
-  ...props
-}: React.ComponentProps<"div"> & {
-  // TODO: remove unused props
-  reportId: number;
-  updates: {
-    date: Date;
-    message: string;
-    status: "investigating" | "identified" | "monitoring" | "resolved";
-  }[];
-  withDot?: boolean;
-  maxUpdates?: number;
-}) {
-  const t = useExtracted();
-  const sortedUpdates = [...updates].sort(
-    (a, b) => b.date.getTime() - a.date.getTime(),
-  );
-  const displayedUpdates = maxUpdates
-    ? sortedUpdates.slice(0, maxUpdates)
-    : sortedUpdates;
-
-  return (
-    <div className={cn("text-muted-foreground text-sm", className)} {...props}>
-      {/* NOTE: make sure they are sorted by date */}
-      {displayedUpdates.map((update, index) => {
-        const updateDate = new Date(update.date);
-        let durationText: string | undefined;
-
-        if (index === 0) {
-          const startedAt = new Date(
-            sortedUpdates[sortedUpdates.length - 1].date,
-          );
-          const duration = formatDistanceStrict(startedAt, updateDate);
-
-          if (duration !== "0 seconds" && update.status === "resolved") {
-            durationText = t("(in {duration})", { duration });
-          }
-        } else {
-          const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
-          const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
-          durationText = t("({timeFromLast} earlier)", { timeFromLast });
-        }
-
-        return (
-          <StatusEventTimelineReportUpdate
-            key={index}
-            report={update}
-            duration={durationText}
-            withSeparator={index !== displayedUpdates.length - 1}
-            withDot={withDot}
-            isLast={index === displayedUpdates.length - 1}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-export function StatusEventTimelineReportUpdate({
-  report,
-  duration,
-  withSeparator = true,
-  withDot = true,
-  isLast = false,
-}: {
-  report: {
-    date: Date;
-    message: string;
-    status: "investigating" | "identified" | "monitoring" | "resolved";
-  };
-  withSeparator?: boolean;
-  duration?: string;
-  withDot?: boolean;
-  isLast?: boolean;
-}) {
-  const locale = useLocale();
-  const t = useExtracted();
-  const statusLabels = {
-    resolved: t("Resolved"),
-    monitoring: t("Monitoring"),
-    identified: t("Identified"),
-    investigating: t("Investigating"),
-  } as const;
-
-  return (
-    <div data-variant={report.status} className="group">
-      <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-4">
-          {withDot ? (
-            <div className="flex flex-col">
-              <div className="flex h-5 flex-col items-center justify-center">
-                <StatusEventTimelineDot />
-              </div>
-              {withSeparator ? <StatusEventTimelineSeparator /> : null}
-            </div>
-          ) : null}
-          <div className={cn(isLast ? "mb-0" : "mb-2")}>
-            <StatusEventTimelineTitle>
-              <span>{statusLabels[report.status]}</span>{" "}
-              <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
-                <TimestampHoverCard date={new Date(report.date)} asChild>
-                  <span>{formatDateTime(report.date, locale)}</span>
-                </TimestampHoverCard>
-              </span>{" "}
-              {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
-                  {duration}
-                </span>
-              ) : null}
-            </StatusEventTimelineTitle>
-            <StatusEventTimelineMessage>
-              {report.message.trim() === "" ? (
-                <span className="text-muted-foreground/70">-</span>
-              ) : (
-                <ProcessMessage value={report.message} />
-              )}
-            </StatusEventTimelineMessage>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function StatusEventTimelineMaintenance({
-  maintenance,
-  withDot = true,
-}: {
-  maintenance: {
-    title: string;
-    message: string;
-    from: Date;
-    to: Date;
-  };
-  withDot?: boolean;
-}) {
-  const locale = useLocale();
-  const t = useExtracted();
-  const duration = formatDistanceStrict(maintenance.from, maintenance.to);
-  const range = formatDateRange(maintenance.from, maintenance.to, locale);
-  // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
-  const [from, to] = range.split(" - ");
-  return (
-    <div data-variant="maintenance" className="group">
-      <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-4">
-          {withDot ? (
-            <div className="flex flex-col">
-              <div className="flex h-5 flex-col items-center justify-center">
-                <StatusEventTimelineDot />
-              </div>
-            </div>
-          ) : null}
-          {/* NOTE: is always last, no need for className="mb-2" */}
-          <div>
-            <StatusEventTimelineTitle>
-              <span>{t("Maintenance")}</span>{" "}
-              <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
-                <TimestampHoverCard date={maintenance.from} asChild>
-                  <span>{from}</span>
-                </TimestampHoverCard>
-                {" - "}
-                <TimestampHoverCard date={maintenance.to} asChild>
-                  <span>{to}</span>
-                </TimestampHoverCard>
-              </span>{" "}
-              {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
-                  {t("(for {duration})", { duration })}
-                </span>
-              ) : null}
-            </StatusEventTimelineTitle>
-            <StatusEventTimelineMessage>
-              {maintenance.message.trim() === "" ? (
-                <span className="text-muted-foreground/70">-</span>
-              ) : (
-                <ProcessMessage value={maintenance.message} />
-              )}
-            </StatusEventTimelineMessage>
-          </div>
-        </div>
-      </div>
-    </div>
+    <BlockStatusEventTimelineReportUpdate
+      renderMessage={renderMarkdownMessage}
+      {...props}
+    />
   );
 }

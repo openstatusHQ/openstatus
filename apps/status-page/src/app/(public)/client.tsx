@@ -10,20 +10,20 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { recomputeStyles } from "@/components/status-page/floating-button";
-import { StatusMonitorStatic } from "@/components/status-page/static/status-monitor-static";
-import {
-  Status,
-  StatusContent,
-  StatusDescription,
-  StatusHeader,
-  StatusTitle,
-} from "@/components/status-page/status";
+import { StatusComponentStatic } from "@/components/status-page/static/status-component-static";
 import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { StatusBanner } from "@openstatus/ui/components/blocks/status-banner";
+import {
+  Status,
+  StatusContent,
+  StatusDescription,
+  StatusHeader,
+  StatusTitle,
+} from "@openstatus/ui/components/blocks/status-layout";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Separator } from "@openstatus/ui/components/ui/separator";
@@ -298,7 +298,7 @@ function ThemePlaygroundStatus({
         <StatusBanner status="success" />
         <StatusContent>
           {/* TODO: create mock data */}
-          <StatusMonitorStatic
+          <StatusComponentStatic
             status="success"
             data={uptimeData?.data || []}
             monitor={monitors[0]}

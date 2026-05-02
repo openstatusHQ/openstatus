@@ -75,6 +75,21 @@ export function formatDate(
 }
 
 /**
+ * Formats a date with abbreviated month (e.g. "Jan 15, 2024").
+ *
+ * @param date - The date to format
+ * @param locale - Locale string for formatting (default: "en-US")
+ * @returns A formatted date string with abbreviated month
+ */
+export function formatDateShort(date: Date, locale = "en-US") {
+	return date.toLocaleDateString(locale, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+}
+
+/**
  * Formats a date with time, with locale support.
  *
  * @param date - The date to format
@@ -212,3 +227,38 @@ export const statusColors: Record<StatusType, string> = {
  * @deprecated Use statusColors instead
  */
 export const colors = statusColors;
+
+/**
+ * Default labels consumed by blocks when no StatusBlocksI18nProvider is mounted.
+ * Registry/web preview render with this set; the status-page app overrides via the provider.
+ */
+export const defaultStatusBlocksLabels = {
+	systemStatus: systemStatusLabels,
+	incidentStatus: incidentStatusLabels,
+	requestStatus: requestStatusLabels,
+
+	today: "Today",
+	ongoing: "Ongoing",
+	reportResolved: "Report resolved",
+	noRecentNotifications: "No recent notifications",
+	noRecentNotificationsDescription:
+		"There have been no reports within the last 7 days.",
+	noReports: "No reports",
+	noReportsDescription: "There are no reports to display.",
+	noPublicMonitors: "No public monitors",
+	noPublicMonitorsDescription: "There are no public monitors to display.",
+
+	ariaStatusTracker: "Status tracker",
+	ariaDayStatus: (n: number) => `Day ${n} status`,
+	clickAgainToUnpin: "Click again to unpin",
+
+	durationIn: (s: string) => `(in ${s})`,
+	durationEarlier: (s: string) => `(${s} earlier)`,
+	durationFor: (s: string) => `(for ${s})`,
+	durationAcross: (s: string) => `across ${s}`,
+
+	formatDate: (d: Date) => formatDate(d),
+	formatDateShort: (d: Date) => formatDateShort(d),
+	formatDateTime: (d: Date) => formatDateTime(d),
+	formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
+} as const;

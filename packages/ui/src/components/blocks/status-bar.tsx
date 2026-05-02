@@ -11,16 +11,13 @@ import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useCallback, useEffect, useRef, useState, forwardRef } from "react";
-import {
-  statusColors,
-  formatDateRange,
-  requestStatusLabels,
-} from "@openstatus/ui/components/blocks/status.utils";
+import { statusColors } from "@openstatus/ui/components/blocks/status.utils";
 import type {
   StatusBarData,
   StatusEventType,
   StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 interface StatusBarProps {
   data: StatusBarData[];
@@ -423,6 +420,7 @@ export function StatusBar({
   renderBar,
   renderEvent,
 }: StatusBarProps) {
+  const labels = useStatusBlocksLabels();
   const isTouch = useMediaQuery("(hover: none)");
   const { activeIndex, interactionType, containerRef, handlers, setButtonRef } =
     useStatusBar({
@@ -436,7 +434,7 @@ export function StatusBar({
       className="flex h-[50px] w-full items-end gap-px"
       data-slot="status-bar"
       role="toolbar"
-      aria-label="Status tracker"
+      aria-label={labels.ariaStatusTracker}
     >
       {data.map((item, index) => {
         const isActive = activeIndex === index;
@@ -493,6 +491,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
     },
     ref,
   ) => {
+    const labels = useStatusBlocksLabels();
     return (
       <HoverCard openDelay={0} closeDelay={0} open={isActive}>
         <HoverCardTrigger asChild>
@@ -507,7 +506,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
             onKeyDown={(e) => handlers.onKeyDown(e, index)}
             tabIndex={isLastItem && !isActive ? 0 : isActive ? 0 : -1}
             role="button"
-            aria-label={`Day ${index + 1} status`}
+            aria-label={labels.ariaDayStatus(index + 1)}
             aria-pressed={isPinned}
             aria-expanded={isActive}
             data-slot="status-bar-item"
@@ -595,14 +594,11 @@ function StatusBarCard({
   renderCard,
   renderEvent,
 }: StatusBarCardProps) {
+  const labels = useStatusBlocksLabels();
   return (
     <div data-slot="status-bar-card">
       <div className="p-2 text-xs">
-        {new Date(item.day).toLocaleDateString("default", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })}
+        {labels.formatDateShort(new Date(item.day))}
       </div>
       <Separator />
       <div className="space-y-1 p-2 text-sm">
@@ -644,7 +640,7 @@ function StatusBarCard({
         <>
           <Separator />
           <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
-            <span>Click again to unpin</span>
+            <span>{labels.clickAgainToUnpin}</span>
             <kbd className="ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded border border-input bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
               Esc
             </kbd>
@@ -709,6 +705,7 @@ function StatusBarContent({
   status: StatusType;
   value: string;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <div className="flex items-baseline gap-4" data-slot="status-bar-content">
       <div className="flex items-center gap-2">
@@ -718,7 +715,7 @@ function StatusBarContent({
             backgroundColor: statusColors[status],
           }}
         />
-        <div className="text-sm">{requestStatusLabels[status]}</div>
+        <div className="text-sm">{labels.requestStatus[status]}</div>
       </div>
       <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
         {value}
@@ -788,6 +785,7 @@ export function StatusBarEvent({
   to?: Date | null;
   type: StatusEventType;
 }) {
+  const labels = useStatusBlocksLabels();
   if (!from) return null;
 
   const status =
@@ -810,9 +808,9 @@ export function StatusBarEvent({
         </div>
       </div>
       <div className="mt-1 text-muted-foreground text-xs">
-        {formatDateRange(from, to ?? undefined)}{" "}
+        {labels.formatDateRange(from, to ?? undefined)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {formatDuration({ from, to, name, type })}
+          {formatDuration({ from, to, name, type, labels })}
         </span>
       </div>
     </div>
@@ -839,12 +837,15 @@ const formatDuration = ({
   from,
   to,
   name,
-}: React.ComponentProps<typeof StatusBarEvent>) => {
+  labels,
+}: React.ComponentProps<typeof StatusBarEvent> & {
+  labels: ReturnType<typeof useStatusBlocksLabels>;
+}) => {
   if (!from) return null;
-  if (!to) return "ongoing";
+  if (!to) return labels.ongoing;
   const duration = formatDistanceStrict(from, to);
   const isMultipleIncidents = name.includes("Downtime (");
-  if (isMultipleIncidents) return `across ${duration}`;
+  if (isMultipleIncidents) return labels.durationAcross(duration);
   if (duration === "0 seconds") return null;
   return duration;
 };

@@ -1,13 +1,13 @@
 "use client";
 
+import { useTRPC } from "@/lib/trpc/client";
 import {
   Status,
   StatusContent,
   StatusDescription,
   StatusHeader,
   StatusTitle,
-} from "@/components/status-page/status";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/blocks/status-layout";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 

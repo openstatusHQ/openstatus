@@ -142,6 +142,20 @@
       ]
     },
     {
+      "name": "status-i18n",
+      "type": "registry:block",
+      "title": "Status Blocks i18n Provider",
+      "description": "React context for supplying translated labels and locale-aware date formatters to status blocks. Optional — blocks fall back to defaultStatusBlocksLabels (en-US) when no provider is mounted.",
+      "registryDependencies": ["status-types", "status-utils"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-i18n.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-i18n.tsx"
+        }
+      ]
+    },
+    {
       "name": "status-timestamp",
       "type": "registry:block",
       "title": "Status Timestamp",
@@ -171,6 +185,7 @@
         "status-types",
         "status-utils",
         "status-timestamp",
+        "status-i18n",
         "tabs"
       ],
       "files": [
@@ -189,6 +204,8 @@
       "registryDependencies": [
         "status-icon",
         "status-types",
+        "status-utils",
+        "status-i18n",
         "skeleton",
         "tooltip",
         "use-media-query"
@@ -229,6 +246,7 @@
         "status-types",
         "status-utils",
         "status-timestamp",
+        "status-i18n",
         "badge",
         "separator",
         "tooltip"
@@ -250,6 +268,7 @@
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-i18n",
         "hover-card",
         "separator",
         "skeleton",
@@ -269,7 +288,12 @@
       "type": "registry:block",
       "title": "Status Feed",
       "description": "Unified feed component combining status reports and maintenance events",
-      "registryDependencies": ["status-blank", "status-events", "status-types"],
+      "registryDependencies": [
+        "status-blank",
+        "status-events",
+        "status-types",
+        "status-i18n"
+      ],
       "files": [
         {
           "path": "src/components/blocks/status-feed.tsx",
@@ -286,6 +310,7 @@
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-i18n",
         "status-icon",
         "status-layout",
         "status-blank",
@@ -305,6 +330,7 @@
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-i18n",
         "status-icon",
         "status-layout",
         "status-banner",

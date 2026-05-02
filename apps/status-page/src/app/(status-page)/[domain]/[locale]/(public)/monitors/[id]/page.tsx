@@ -14,13 +14,6 @@ import {
   ChartLineRegions,
   ChartLineRegionsSkeleton,
 } from "@/components/chart/chart-line-regions";
-import {
-  Status,
-  StatusContent,
-  StatusDescription,
-  StatusHeader,
-  StatusTitle,
-} from "@/components/status-page/status";
 import { StatusBlankMonitors } from "@/components/status-page/status-blank";
 import {
   StatusChartContent,
@@ -43,6 +36,13 @@ import {
   formatPercentage,
 } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+import {
+  Status,
+  StatusContent,
+  StatusDescription,
+  StatusHeader,
+  StatusTitle,
+} from "@openstatus/ui/components/blocks/status-layout";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp } from "lucide-react";
