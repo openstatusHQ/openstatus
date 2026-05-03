@@ -11,9 +11,11 @@ import { createMonitor } from "../create";
 import { streamMonitorPreview } from "../stream-monitor-preview";
 
 const originalFetch = globalThis.fetch;
+const originalCronSecret = process.env.CRON_SECRET;
 
 describe("streamMonitorPreview", () => {
   beforeAll(() => {
+    process.env.CRON_SECRET = "test-cron-secret";
     // Stub the Go-checker fetch to a fast in-memory response so the test
     // doesn't hit the real network. Each call returns a minimal success
     // payload that the service generator parses into a CheckResult.
@@ -46,6 +48,11 @@ describe("streamMonitorPreview", () => {
 
   afterAll(() => {
     globalThis.fetch = originalFetch;
+    if (originalCronSecret === undefined) {
+      process.env.CRON_SECRET = undefined;
+    } else {
+      process.env.CRON_SECRET = originalCronSecret;
+    }
   });
 
   test("throws NotFoundError when monitor belongs to a different workspace", async () => {
