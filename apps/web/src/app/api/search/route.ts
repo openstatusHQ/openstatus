@@ -68,6 +68,7 @@ function search(params: SearchParams) {
       ...getPages("blog"),
       ...getPages("changelog"),
       ...getPages("tools").filter((tool) => tool.slug !== "checker-slug"),
+      ...getPages("tooling"),
       ...getPages("compare"),
       ...getPages("product"),
       ...getPages("guides"),

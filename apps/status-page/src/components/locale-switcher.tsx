@@ -5,26 +5,24 @@ import {
   localeTranslations,
   locales,
 } from "@/i18n/config";
-import { cn } from "@/lib/utils";
-import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@openstatus/ui/components/ui/dropdown-menu";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+  StatusLocaleSwitcher as BlockLocaleSwitcher,
+  type StatusLocaleOption,
+  StatusLocaleSwitcherSkeleton,
+} from "@openstatus/ui/components/blocks/status-locale-switcher";
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 export function LocaleSwitcher({
   className,
   pageLocales,
   pageDefaultLocale,
   ...props
-}: React.ComponentProps<typeof DropdownMenuTrigger> & {
+}: Omit<
+  React.ComponentProps<typeof BlockLocaleSwitcher>,
+  "value" | "onValueChange" | "locales" | "disabled"
+> & {
   pageLocales?: string[] | null;
   pageDefaultLocale?: string;
 }) {
@@ -38,6 +36,14 @@ export function LocaleSwitcher({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const localeOptions = useMemo<StatusLocaleOption[]>(
+    () =>
+      Object.entries(localeTranslations)
+        .filter(([key]) => pageLocales?.includes(key))
+        .map(([value, { name }]) => ({ value, label: name })),
+    [pageLocales],
+  );
 
   function onSelectLocale(nextLocale: string) {
     startTransition(() => {
@@ -73,48 +79,22 @@ export function LocaleSwitcher({
     });
   }
 
-  // Don't render if the page has no multi-locale config or only one locale
   if (!pageLocales || pageLocales.length <= 1) {
     return null;
   }
 
   if (!mounted) {
-    return <Skeleton className={cn("size-9", className)} />;
+    return <StatusLocaleSwitcherSkeleton className={className} />;
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className={cn(className)} asChild {...props}>
-        <Button
-          variant="ghost"
-          size="icon"
-          disabled={isPending}
-          className="font-mono uppercase"
-        >
-          {locale}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" alignOffset={-4}>
-        <DropdownMenuGroup>
-          {Object.entries(localeTranslations)
-            .filter(([key]) => pageLocales?.includes(key))
-            .map(([key, { name }]) => (
-              <DropdownMenuItem key={key} onClick={() => onSelectLocale(key)}>
-                {name}{" "}
-                <span
-                  className={cn(
-                    "ml-auto font-mono uppercase",
-                    key === locale
-                      ? "text-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {key}
-                </span>
-              </DropdownMenuItem>
-            ))}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <BlockLocaleSwitcher
+      value={locale}
+      onValueChange={onSelectLocale}
+      locales={localeOptions}
+      disabled={isPending}
+      className={className}
+      {...props}
+    />
   );
 }

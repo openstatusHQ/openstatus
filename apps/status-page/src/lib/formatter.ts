@@ -70,6 +70,36 @@ export function formatTime(date: Date, locale?: string) {
   });
 }
 
+/**
+ * Returns the start/end of a closed range as separate strings, collapsing the
+ * `to` side to a time-only render when `from` and `to` fall on the same day.
+ * Use `formatDateRange` for open-ended cases (`Until …` / `Since …`).
+ */
+export function formatDateRangeParts(
+  from: Date,
+  to: Date,
+  locale?: string,
+): { from: string; to: string } {
+  if (isSameDay(from, to)) {
+    return {
+      from: formatDateTime(from, locale),
+      to: formatTime(to, locale),
+    };
+  }
+  const isFromStartDay = startOfDay(from).getTime() === from.getTime();
+  const isToEndDay = endOfDay(to).getTime() === to.getTime();
+  if (isFromStartDay && isToEndDay) {
+    return {
+      from: formatDate(from, { locale }),
+      to: formatDate(to, { locale }),
+    };
+  }
+  return {
+    from: formatDateTime(from, locale),
+    to: formatDateTime(to, locale),
+  };
+}
+
 export function formatDateRange(from?: Date, to?: Date, locale?: string) {
   const sameDay = from && to && isSameDay(from, to);
   const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();

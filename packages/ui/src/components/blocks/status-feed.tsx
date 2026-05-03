@@ -1,12 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import {
-  StatusBlankContainer,
-  StatusBlankContent,
-  StatusBlankDescription,
-  StatusBlankReport,
-  StatusBlankTitle,
-} from "@openstatus/ui/components/blocks/status-blank";
+import { StatusBlankEvents } from "@openstatus/ui/components/blocks/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -19,6 +13,7 @@ import {
   StatusEventTimelineReport,
   StatusEventTitle,
 } from "@openstatus/ui/components/blocks/status-events";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import type {
   StatusReport,
   Maintenance,
@@ -169,11 +164,27 @@ function isMaintenance(
 export function StatusFeed({
   statusReports = [],
   maintenances = [],
+  footer,
+  emptyAction,
+  renderReportMessage,
+  renderMaintenanceMessage,
+  renderEvent,
   ...props
 }: React.ComponentProps<"div"> & {
   statusReports?: StatusReport[];
   maintenances?: Maintenance[];
+  footer?: React.ReactNode;
+  emptyAction?: React.ReactNode;
+  renderReportMessage?: (message: string) => React.ReactNode;
+  renderMaintenanceMessage?: (message: string) => React.ReactNode;
+  renderEvent?: (
+    event:
+      | { type: "report"; data: StatusReport }
+      | { type: "maintenance"; data: Maintenance },
+    children: React.ReactNode,
+  ) => React.ReactNode;
 }) {
+  const labels = useStatusBlocksLabels();
   // Memoize the unified events array to prevent flicker on re-renders
   const unifiedEvents = useMemo<UnifiedEvent[]>(() => {
     return [
@@ -201,35 +212,24 @@ export function StatusFeed({
 
   if (unifiedEvents.length === 0) {
     return (
-      <StatusBlankContainer>
-        <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-          <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-          <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
-          <StatusBlankReport />
-        </div>
-        <StatusBlankContent>
-          <StatusBlankTitle>No recent notifications</StatusBlankTitle>
-          <StatusBlankDescription>
-            There have been no reports within the last 7 days.
-          </StatusBlankDescription>
-        </StatusBlankContent>
-      </StatusBlankContainer>
+      <StatusBlankEvents
+        title={labels.noRecentNotifications}
+        description={labels.noRecentNotificationsDescription}
+        action={emptyAction}
+      />
     );
   }
 
   return (
-    <StatusEventGroup data-slot="status-feed" {...props}>
-      {unifiedEvents.map((event) => {
-        // Use stable key to prevent flicker
-        const key = `${event.type}-${event.id}`;
+    <>
+      <StatusEventGroup data-slot="status-feed" {...props}>
+        {unifiedEvents.map((event) => {
+          // Use stable key to prevent flicker
+          const key = `${event.type}-${event.id}`;
 
-        if (isStatusReport(event)) {
-          const report = event.data;
-          return (
-            <StatusEvent key={key}>
-              <StatusEventAside>
-                <StatusEventDate date={event.startDate} />
-              </StatusEventAside>
+          if (isStatusReport(event)) {
+            const report = event.data;
+            const node = (
               <StatusEventContent>
                 <StatusEventTitle>{report.title}</StatusEventTitle>
                 {report.affected.length > 0 && (
@@ -241,19 +241,27 @@ export function StatusFeed({
                     ))}
                   </StatusEventAffected>
                 )}
-                <StatusEventTimelineReport updates={report.updates} />
+                <StatusEventTimelineReport
+                  updates={report.updates}
+                  renderMessage={renderReportMessage}
+                />
               </StatusEventContent>
-            </StatusEvent>
-          );
-        }
+            );
+            return (
+              <StatusEvent key={key}>
+                <StatusEventAside>
+                  <StatusEventDate date={event.startDate} />
+                </StatusEventAside>
+                {renderEvent
+                  ? renderEvent({ type: "report", data: report }, node)
+                  : node}
+              </StatusEvent>
+            );
+          }
 
-        if (isMaintenance(event)) {
-          const maintenance = event.data;
-          return (
-            <StatusEvent key={key}>
-              <StatusEventAside>
-                <StatusEventDate date={event.startDate} />
-              </StatusEventAside>
+          if (isMaintenance(event)) {
+            const maintenance = event.data;
+            const node = (
               <StatusEventContent>
                 <StatusEventTitle>{maintenance.title}</StatusEventTitle>
                 {maintenance.affected.length > 0 && (
@@ -272,14 +280,26 @@ export function StatusFeed({
                     from: maintenance.from,
                     to: maintenance.to,
                   }}
+                  renderMessage={renderMaintenanceMessage}
                 />
               </StatusEventContent>
-            </StatusEvent>
-          );
-        }
-        return null;
-      })}
-    </StatusEventGroup>
+            );
+            return (
+              <StatusEvent key={key}>
+                <StatusEventAside>
+                  <StatusEventDate date={event.startDate} />
+                </StatusEventAside>
+                {renderEvent
+                  ? renderEvent({ type: "maintenance", data: maintenance }, node)
+                  : node}
+              </StatusEvent>
+            );
+          }
+          return null;
+        })}
+      </StatusEventGroup>
+      {footer}
+    </>
   );
 }
 StatusFeed.displayName = "StatusFeed";

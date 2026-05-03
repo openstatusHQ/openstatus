@@ -1,3 +1,6 @@
+"use client";
+
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import { cn } from "@openstatus/ui/lib/utils";
 
 // ============================================================================
@@ -432,8 +435,8 @@ export function StatusBlankOverlay({
  * effect with the front card at full opacity and back cards progressively
  * faded and scaled down.
  *
- * @param title - The empty state heading (default: "No reports found")
- * @param description - The empty state description (default: "No reports found for this status page.")
+ * @param title - The empty state heading (defaults to `labels.noReports` from the i18n provider)
+ * @param description - The empty state description (defaults to `labels.noReportsDescription` from the i18n provider)
  *
  * @example
  * ```tsx
@@ -446,13 +449,16 @@ export function StatusBlankOverlay({
  * @see StatusBlankReport - For the underlying report visualization
  */
 export function StatusBlankEvents({
-  title = "No reports found",
-  description = "No reports found for this status page.",
+  title,
+  description,
+  action,
   ...props
 }: React.ComponentProps<typeof StatusBlankContainer> & {
   title?: string;
   description?: string;
+  action?: React.ReactNode;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <StatusBlankContainer {...props}>
       <div className="relative mt-8 flex w-full flex-col items-center justify-center">
@@ -461,9 +467,12 @@ export function StatusBlankEvents({
         <StatusBlankReport />
       </div>
       <StatusBlankContent>
-        <StatusBlankTitle>{title}</StatusBlankTitle>
-        <StatusBlankDescription>{description}</StatusBlankDescription>
+        <StatusBlankTitle>{title ?? labels.noReports}</StatusBlankTitle>
+        <StatusBlankDescription>
+          {description ?? labels.noReportsDescription}
+        </StatusBlankDescription>
       </StatusBlankContent>
+      {action}
     </StatusBlankContainer>
   );
 }
@@ -480,8 +489,8 @@ export function StatusBlankEvents({
  * effect with the front card at full opacity and back cards progressively
  * faded and scaled down.
  *
- * @param title - The empty state heading (default: "No public monitors")
- * @param description - The empty state description (default: "No public monitors have been added to this page.")
+ * @param title - The empty state heading (defaults to `labels.noPublicMonitors` from the i18n provider)
+ * @param description - The empty state description (defaults to `labels.noPublicMonitorsDescription` from the i18n provider)
  *
  * @example
  * ```tsx
@@ -494,13 +503,16 @@ export function StatusBlankEvents({
  * @see StatusBlankMonitor - For the underlying monitor visualization
  */
 export function StatusBlankMonitors({
-  title = "No public monitors",
-  description = "No public monitors have been added to this page.",
+  title,
+  description,
+  action,
   ...props
 }: React.ComponentProps<typeof StatusBlankContainer> & {
   title?: string;
   description?: string;
+  action?: React.ReactNode;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <StatusBlankContainer {...props}>
       <div className="relative mt-8 flex w-full flex-col items-center justify-center">
@@ -509,9 +521,40 @@ export function StatusBlankMonitors({
         <StatusBlankMonitor />
       </div>
       <StatusBlankContent>
-        <StatusBlankTitle>{title}</StatusBlankTitle>
-        <StatusBlankDescription>{description}</StatusBlankDescription>
+        <StatusBlankTitle>{title ?? labels.noPublicMonitors}</StatusBlankTitle>
+        <StatusBlankDescription>
+          {description ?? labels.noPublicMonitorsDescription}
+        </StatusBlankDescription>
       </StatusBlankContent>
+      {action}
     </StatusBlankContainer>
+  );
+}
+
+/**
+ * StatusBlankAction - Styled wrapper for empty-state CTAs.
+ *
+ * Applies border + hover chrome around any actionable child (link, button).
+ * Pass a bare `<Link>` or `<button>` — this component owns the look. Consumers
+ * of `StatusBlankEvents`/`StatusBlankMonitors`/`StatusFeed.emptyAction` must
+ * wrap their action in this themselves; the parents render the action raw to
+ * avoid doubling chrome on already-styled controls.
+ */
+export function StatusBlankAction({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="status-blank-action"
+      className={cn(
+        "mt-2 inline-flex items-center justify-center rounded-md border border-border/70 px-3 py-1.5 font-mono text-muted-foreground text-sm hover:border-border hover:text-foreground [&>a]:no-underline [&>a]:text-inherit",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
   );
 }

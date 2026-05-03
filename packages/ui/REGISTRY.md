@@ -38,6 +38,15 @@ Or configure it as their registry in `components.json`:
 }
 ```
 
+## Localization (i18n)
+
+The status blocks ship with English (`en-US`) defaults and an optional context provider for translation. When a consumer installs `status-banner`, `status-bar`, `status-component`, `status-events`, or `status-feed`, the registry automatically pulls in `status-i18n` (declared as a `registryDependencies` entry on each consumer).
+
+- **Default behavior**: blocks render English with no setup — `useStatusBlocksLabels()` falls back to `defaultStatusBlocksLabels` when no provider is mounted.
+- **Localizing**: consumers mount `<StatusBlocksI18nProvider>` near their app root and supply a `StatusBlocksLabels` value (translated strings + locale-aware date formatters built from their own i18n library).
+
+Blocks intentionally do **not** import `next-intl`, `react-intl`, or any i18n library directly — that contract keeps them shadcn-shippable. See [`src/components/blocks/README.md`](./src/components/blocks/README.md#internationalization-i18n) for the full provider example.
+
 ## Adding Components to the Registry
 
 To add a new component to the registry, update `packages/ui/registry.json`:

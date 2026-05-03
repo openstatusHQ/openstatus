@@ -2,6 +2,9 @@ export type StatusType = "success" | "degraded" | "error" | "info" | "empty";
 export type StatusEventType = "incident" | "report" | "maintenance";
 export type StatusReportUpdateType = "investigating" | "identified" | "monitoring" | "resolved"
 
+export const THEME_VALUES = ["light", "dark", "system"] as const;
+export type ThemeValue = (typeof THEME_VALUES)[number];
+
 export interface StatusReportUpdate {
   date: Date;
   message: string;
@@ -46,5 +49,6 @@ export type StatusBarData = {
         type: StatusEventType;
         from: Date | null;
         to: Date | null;
+        isAggregated?: boolean;
     }[];
 }

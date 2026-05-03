@@ -1,4 +1,5 @@
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
+import type { StatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 /**
  * Formats a date range in a human-readable format.
@@ -71,6 +72,21 @@ export function formatDate(
 		month: "long",
 		day: "numeric",
 		...options,
+	});
+}
+
+/**
+ * Formats a date with abbreviated month (e.g. "Jan 15, 2024").
+ *
+ * @param date - The date to format
+ * @param locale - Locale string for formatting (default: "en-US")
+ * @returns A formatted date string with abbreviated month
+ */
+export function formatDateShort(date: Date, locale = "en-US") {
+	return date.toLocaleDateString(locale, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
 	});
 }
 
@@ -212,3 +228,69 @@ export const statusColors: Record<StatusType, string> = {
  * @deprecated Use statusColors instead
  */
 export const colors = statusColors;
+
+/**
+ * Default labels consumed by blocks when no StatusBlocksI18nProvider is mounted.
+ * Registry/web preview render with this set; the status-page app overrides via the provider.
+ */
+export const defaultStatusBlocksLabels = {
+	systemStatus: systemStatusLabels,
+	incidentStatus: incidentStatusLabels,
+	requestStatus: requestStatusLabels,
+
+	today: "Today",
+	ongoing: "Ongoing",
+	reportResolved: "Report resolved",
+	noRecentNotifications: "No recent notifications",
+	noRecentNotificationsDescription:
+		"There have been no reports within the last 7 days.",
+	noReports: "No reports",
+	noReportsDescription: "There are no reports to display.",
+	noPublicMonitors: "No public monitors",
+	noPublicMonitorsDescription: "There are no public monitors to display.",
+
+	themeNames: {
+		light: "Light",
+		dark: "Dark",
+		system: "System",
+	},
+	ariaToggleTheme: "Toggle theme",
+
+	subscribe: "Get updates",
+	subscribeRssDescription: "Get the RSS feed",
+	subscribeAtomDescription: "Get the Atom feed",
+	subscribeJsonDescription: "Get the JSON updates",
+	subscribeSlackDescription:
+		"For status updates in Slack, paste the text below into any channel.",
+	subscribeSshDescription: "Get status via SSH",
+	linkCopiedToClipboard: "Link copied to clipboard",
+	ariaCopyLink: "Copy Link",
+
+	poweredBy: "powered by",
+	getInTouch: "Get in touch",
+
+	ariaStatusTracker: "Status tracker",
+	ariaDayStatus: (n: number) => `Day ${n} status`,
+	clickAgainToUnpin: "Click again to unpin",
+
+	durationIn: (s: string) => `(in ${s})`,
+	durationEarlier: (s: string) => `(${s} earlier)`,
+	durationFor: (s: string) => `(for ${s})`,
+	durationAcross: (s: string) => `across ${s}`,
+
+	formatDate: (d: Date) => formatDate(d),
+	formatDateShort: (d: Date) => formatDateShort(d),
+	formatDateTime: (d: Date) => formatDateTime(d),
+	formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
+	formatDateRangeParts: (from: Date, to: Date) => {
+		if (isSameDay(from, to)) {
+			return { from: formatDateTime(from), to: formatTime(to) };
+		}
+		const isFromStartDay = startOfDay(from).getTime() === from.getTime();
+		const isToEndDay = endOfDay(to).getTime() === to.getTime();
+		if (isFromStartDay && isToEndDay) {
+			return { from: formatDate(from), to: formatDate(to) };
+		}
+		return { from: formatDateTime(from), to: formatDateTime(to) };
+	},
+} as const satisfies StatusBlocksLabels;

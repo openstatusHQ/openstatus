@@ -7,22 +7,13 @@ import {
 import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import {
-  THEME_KEYS,
-  type ThemeKey,
-  generateThemeStyles,
-} from "@openstatus/theme-store";
+import { pageConfigurationSchema } from "@openstatus/db/src/schema";
+import { generateThemeStyles } from "@openstatus/theme-store";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { z } from "zod";
 
-const schema = z.object({
-  value: z.enum(["duration", "requests", "manual"]).prefault("duration"),
-  type: z.enum(["absolute", "manual"]).prefault("absolute"),
-  uptime: z.coerce.boolean().prefault(true),
-  theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]).prefault("default"),
-});
+// Canonical schema — guarantees concrete enum output (never null/undefined).
 
 export default async function Layout({
   children,
@@ -39,8 +30,14 @@ export default async function Layout({
 
   if (!page) return notFound();
 
-  const validation = schema.safeParse(page?.configuration);
-  const communityTheme = validation.data?.theme;
+  // safeParse + fallback so a stale enum value in stored config (e.g. removed
+  // theme key) doesn't crash the layout.
+  const cfgResult = pageConfigurationSchema.safeParse(
+    page?.configuration ?? {},
+  );
+  const cfg = cfgResult.success
+    ? cfgResult.data
+    : pageConfigurationSchema.parse({});
 
   return (
     <HydrateClient>
@@ -48,7 +45,7 @@ export default async function Layout({
         id="theme-styles"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
-          __html: generateThemeStyles(communityTheme),
+          __html: generateThemeStyles(cfg.theme),
         }}
       />
       <ThemeProvider
@@ -58,10 +55,10 @@ export default async function Layout({
         disableTransitionOnChange
       >
         <StatusPageProvider
-          defaultBarType={validation.data?.type}
-          defaultCardType={validation.data?.value}
-          defaultShowUptime={validation.data?.uptime}
-          defaultCommunityTheme={validation.data?.theme}
+          defaultBarType={cfg.type}
+          defaultCardType={cfg.value}
+          defaultShowUptime={cfg.uptime}
+          defaultCommunityTheme={cfg.theme}
         >
           {children}
           <FloatingButton

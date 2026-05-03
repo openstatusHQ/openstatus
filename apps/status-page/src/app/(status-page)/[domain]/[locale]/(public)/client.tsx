@@ -3,13 +3,6 @@
 import { Link } from "@/components/common/link";
 import { useStatusPage } from "@/components/status-page/floating-button";
 import {
-  Status,
-  StatusContent,
-  StatusDescription,
-  StatusHeader,
-  StatusTitle,
-} from "@/components/status-page/status";
-import {
   StatusBanner,
   StatusBannerContainer,
   StatusBannerContent,
@@ -19,17 +12,41 @@ import {
   StatusBannerTabsTrigger,
 } from "@/components/status-page/status-banner";
 import {
+  StatusBar,
+  StatusBarSkeleton,
+} from "@/components/status-page/status-bar";
+import { StatusComponentGroup } from "@/components/status-page/status-component-group";
+import {
   StatusEventAffected,
   StatusEventAffectedBadge,
   StatusEventTimelineMaintenance,
   StatusEventTimelineReportUpdate,
 } from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
-import { StatusMonitor } from "@/components/status-page/status-monitor";
-import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 import { useEmbed } from "@/hooks/use-embed";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
+import {
+  StatusComponent,
+  StatusComponentBody,
+  StatusComponentDescription,
+  StatusComponentFooter,
+  StatusComponentHeader,
+  StatusComponentHeaderLeft,
+  StatusComponentHeaderRight,
+  StatusComponentIcon,
+  StatusComponentStatus,
+  StatusComponentTitle,
+  StatusComponentUptime,
+  StatusComponentUptimeSkeleton,
+} from "@openstatus/ui/components/blocks/status-component";
+import {
+  Status,
+  StatusContent,
+  StatusDescription,
+  StatusHeader,
+  StatusTitle,
+} from "@openstatus/ui/components/blocks/status-layout";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { skipToken, useQuery } from "@tanstack/react-query";
@@ -259,21 +276,17 @@ export function Client() {
             {page.trackers.map((tracker) => {
               if (tracker.type === "component") {
                 const component = tracker.component;
-
-                // Fetch uptime data by component ID
                 const { data, uptime } =
                   uptimeData?.find((u) => u.pageComponentId === component.id) ??
                   {};
 
                 return (
-                  <StatusMonitor
+                  <ComponentCard
                     key={`component-${component.id}`}
+                    name={component.name}
+                    description={component.description}
                     status={component.status}
                     data={data}
-                    monitor={{
-                      name: component.name,
-                      description: component.description,
-                    }}
                     uptime={uptime}
                     showUptime={showUptime}
                     isLoading={isLoading}
@@ -282,7 +295,7 @@ export function Client() {
               }
 
               return (
-                <StatusTrackerGroup
+                <StatusComponentGroup
                   key={`group-${tracker.groupId}`}
                   title={tracker.groupName}
                   status={tracker.status}
@@ -295,21 +308,19 @@ export function Client() {
                       ) ?? {};
 
                     return (
-                      <StatusMonitor
+                      <ComponentCard
                         key={`component-${component.id}`}
+                        name={component.name}
+                        description={component.description}
                         status={component.status}
                         data={data}
-                        monitor={{
-                          name: component.name,
-                          description: component.description,
-                        }}
                         uptime={uptime}
                         showUptime={showUptime}
                         isLoading={isLoading}
                       />
                     );
                   })}
-                </StatusTrackerGroup>
+                </StatusComponentGroup>
               );
             })}
           </StatusContent>
@@ -318,10 +329,13 @@ export function Client() {
         <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
           <StatusFeed
             statusReports={page.statusReports
-              .filter((report) =>
-                page.lastEvents.some(
-                  (event) => event.id === report.id && event.type === "report",
-                ),
+              .filter(
+                (report) =>
+                  report.statusReportUpdates.length > 0 &&
+                  page.lastEvents.some(
+                    (event) =>
+                      event.id === report.id && event.type === "report",
+                  ),
               )
               .map((report) => ({
                 ...report,
@@ -347,5 +361,54 @@ export function Client() {
         </StatusContent>
       </Status>
     </div>
+  );
+}
+
+type ComponentCardData = NonNullable<Parameters<typeof StatusBar>[0]["data"]>;
+
+function ComponentCard({
+  name,
+  description,
+  status,
+  data,
+  uptime,
+  showUptime,
+  isLoading,
+}: {
+  name: string;
+  description?: string | null;
+  status: "success" | "degraded" | "error" | "info";
+  data?: ComponentCardData;
+  uptime?: string;
+  showUptime?: boolean;
+  isLoading?: boolean;
+}) {
+  return (
+    <StatusComponent variant={status}>
+      <StatusComponentHeader>
+        <StatusComponentHeaderLeft>
+          <StatusComponentTitle>{name}</StatusComponentTitle>
+          <StatusComponentDescription>{description}</StatusComponentDescription>
+        </StatusComponentHeaderLeft>
+        <StatusComponentHeaderRight>
+          {showUptime ? (
+            <>
+              {isLoading ? (
+                <StatusComponentUptimeSkeleton />
+              ) : (
+                <StatusComponentUptime>{uptime}</StatusComponentUptime>
+              )}
+              <StatusComponentIcon />
+            </>
+          ) : (
+            <StatusComponentStatus />
+          )}
+        </StatusComponentHeaderRight>
+      </StatusComponentHeader>
+      <StatusComponentBody>
+        {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data ?? []} />}
+        <StatusComponentFooter data={data ?? []} isLoading={isLoading} />
+      </StatusComponentBody>
+    </StatusComponent>
   );
 }

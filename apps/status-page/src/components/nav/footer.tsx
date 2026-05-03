@@ -3,14 +3,19 @@
 import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { ThemeDropdown } from "@/components/themes/theme-dropdown";
+import { ThemeSwitcher } from "@/components/themes/theme-switcher";
 import { useEmbed } from "@/hooks/use-embed";
 import { useTRPC } from "@/lib/trpc/client";
+import {
+  StatusPageFooter,
+  StatusPageFooterActions,
+  StatusPageFooterContent,
+  StatusPagePoweredBy,
+} from "@openstatus/ui/components/blocks/status-page-footer";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
-import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -18,7 +23,6 @@ export function Footer({
   className,
   ...props
 }: React.ComponentProps<"footer">) {
-  const t = useExtracted();
   const { domain } = useParams<{ domain: string }>();
   const [isMounted, setIsMounted] = useState(false);
   const trpc = useTRPC();
@@ -39,15 +43,14 @@ export function Footer({
   if (embed.mode && page.whiteLabel) return null;
 
   return (
-    <footer
+    <StatusPageFooter
       className={cn("group-data-[embed=true]/embed:border-t-0", className)}
       {...props}
     >
-      <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2 group-data-[embed=true]/embed:justify-center">
+      <StatusPageFooterContent className="group-data-[embed=true]/embed:justify-center">
         <div>
           {!page.whiteLabel ? (
-            <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
-              {t("powered by")}{" "}
+            <StatusPagePoweredBy>
               <Link
                 href={`https://openstatus.dev?utm_medium=status-page&utm_source=${page.slug}`}
                 target="_blank"
@@ -55,10 +58,10 @@ export function Footer({
               >
                 openstatus.dev
               </Link>
-            </p>
+            </StatusPagePoweredBy>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 group-data-[embed=true]/embed:hidden">
+        <StatusPageFooterActions className="group-data-[embed=true]/embed:hidden">
           <TimestampHoverCard
             date={new Date(dataUpdatedAt)}
             side="top"
@@ -78,9 +81,9 @@ export function Footer({
             pageLocales={page.locales}
             pageDefaultLocale={page.defaultLocale}
           />
-          <ThemeDropdown />
-        </div>
-      </div>
-    </footer>
+          <ThemeSwitcher />
+        </StatusPageFooterActions>
+      </StatusPageFooterContent>
+    </StatusPageFooter>
   );
 }

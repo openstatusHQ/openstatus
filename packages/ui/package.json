@@ -31,7 +31,7 @@
   },
   "scripts": {
     "build": "echo '@openstatus/ui has no build step (registry builds separately)'",
-    "registry:build": "node scripts/transform-imports.mjs && cd dist && shadcn build && cd .. && node scripts/copy-to-web.mjs",
+    "registry:build": "node scripts/transform-imports.mjs && shadcn build --cwd dist --output public/r registry.json && node scripts/copy-to-web.mjs",
     "lint": "biome lint \"**/*.ts*\"",
     "tsc": "tsc --noEmit"
   },

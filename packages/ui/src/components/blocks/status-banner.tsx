@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Tabs,
   TabsContent,
@@ -5,10 +7,10 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
-import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
 import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
 import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
 import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 /**
  * StatusBanner - Complete banner component with integrated icon, message, and timestamp
@@ -153,19 +155,20 @@ export function StatusBannerMessage({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const labels = useStatusBlocksLabels();
   return (
     <div className={cn(className)} {...props}>
       <span className="hidden group-data-[status=success]/status-banner:block">
-        {systemStatusLabels.success.long}
+        {labels.systemStatus.success.long}
       </span>
       <span className="hidden group-data-[status=degraded]/status-banner:block">
-        {systemStatusLabels.degraded.long}
+        {labels.systemStatus.degraded.long}
       </span>
       <span className="hidden group-data-[status=error]/status-banner:block">
-        {systemStatusLabels.error.long}
+        {labels.systemStatus.error.long}
       </span>
       <span className="hidden group-data-[status=info]/status-banner:block">
-        {systemStatusLabels.info.long}
+        {labels.systemStatus.info.long}
       </span>
     </div>
   );

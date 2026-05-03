@@ -16,6 +16,7 @@ All components are:
 - **Accessible** - Built with ARIA patterns and keyboard navigation
 - **Customizable** - Fully themeable with Tailwind CSS
 - **Type-safe** - Written in TypeScript with complete type definitions
+- **Localizable** - Optional i18n provider for translated labels and locale-aware date formatters; English defaults out of the box
 - **Production-ready** - Battle-tested in production at openstatus
 
 ## Example
@@ -60,10 +61,18 @@ pnpm dlx shadcn@latest add @openstatus/status-complete
 
 Components are organized by functionality:
 
-- **Collections:** `status-complete`, `status-essentials` - Full status page bundles
-- **Building Blocks:** `status-banner`, `status-bar`, `status-feed`, `status-events`, `status-component`, `status-icon`, `status-layout`, `status-timestamp` - Individual components
+- **Collections:** `status-complete` (everything — body + chrome), `status-essentials` (body subset), `status-chrome` (header + footer + switchers + status-updates) - Full status page bundles
+- **Body Blocks:** `status-banner`, `status-bar`, `status-feed`, `status-events`, `status-component`, `status-component-group`, `status-blank`, `status-icon`, `status-layout`, `status-timestamp` - Individual components for the page body
+- **Chrome Blocks:** `status-page-shell`, `status-page-header`, `status-page-footer`, `status-page-get-in-touch`, `status-updates`, `status-theme-switcher`, `status-locale-switcher` - Header, footer, and surrounding chrome for a full status page
+- **i18n:** `status-i18n` - Optional context provider + hook for translated labels and locale-aware date formatters (auto-installed as a dependency of the blocks above)
 
 Explore the full registry at [openstatus.dev/r/registry.json](https://openstatus.dev/r/registry.json)
+
+### Localization
+
+Blocks ship with English (`en-US`) defaults and require zero setup. To localize, mount `<StatusBlocksI18nProvider>` near your app root and pass a `StatusBlocksLabels` value (translated strings + locale-aware date formatters built from your own i18n library — `next-intl`, `react-intl`, or whatever you use). Blocks read labels via `useStatusBlocksLabels()`; if no provider is mounted, they fall back to `defaultStatusBlocksLabels`.
+
+This contract keeps the registry library-agnostic — `@openstatus/ui` does not depend on `next-intl` or any other i18n package directly.
 
 ---
 

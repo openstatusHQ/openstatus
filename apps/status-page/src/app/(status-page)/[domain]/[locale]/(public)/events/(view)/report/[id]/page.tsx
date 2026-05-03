@@ -72,10 +72,7 @@ export default function ReportPage() {
               ))}
             </StatusEventAffected>
           ) : null}
-          <StatusEventTimelineReport
-            updates={report.statusReportUpdates}
-            reportId={report.id}
-          />
+          <StatusEventTimelineReport updates={report.statusReportUpdates} />
         </StatusEventContent>
       </StatusEvent>
     </div>

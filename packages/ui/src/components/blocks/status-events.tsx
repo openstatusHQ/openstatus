@@ -1,3 +1,6 @@
+"use client";
+
+import { Slot } from "@radix-ui/react-slot";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
@@ -9,14 +12,9 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
-import {
-  formatDateRange,
-  incidentStatusLabels,
-  formatDate,
-  formatDateTime,
-} from "@openstatus/ui/components/blocks/status.utils";
 import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
 import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 // ============================================================================
 // Container Components
@@ -186,6 +184,7 @@ export function StatusEventTitleCheck({
   children,
   ...props
 }: React.ComponentProps<"div">) {
+  const labels = useStatusBlocksLabels();
   return (
     <div
       data-slot="status-event-title-check"
@@ -194,13 +193,13 @@ export function StatusEventTitleCheck({
     >
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger aria-label="Report resolved">
+          <TooltipTrigger aria-label={labels.reportResolved}>
             <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
               <Check className="size-3 shrink-0" aria-hidden="true" />
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Report resolved</p>
+            <p>{labels.reportResolved}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -297,6 +296,7 @@ export function StatusEventDate({
 }: React.ComponentProps<"div"> & {
   date: Date;
 }) {
+  const labels = useStatusBlocksLabels();
   const isFuture = date > new Date();
   const distance = formatDistanceStrict(date, new Date(), { addSuffix: true });
   return (
@@ -306,7 +306,7 @@ export function StatusEventDate({
       {...props}
     >
       <div className="font-medium text-foreground">
-        {formatDate(date, { month: "short" })}
+        {labels.formatDateShort(date)}
       </div>{" "}
       <Badge
         data-slot="status-event-date-badge"
@@ -419,12 +419,15 @@ export function StatusEventTimelineReport({
   updates,
   withDot = true,
   maxUpdates,
+  renderMessage,
   ...props
 }: React.ComponentProps<"div"> & {
   updates: StatusReportUpdate[];
   withDot?: boolean;
   maxUpdates?: number;
+  renderMessage?: (message: string) => React.ReactNode;
 }) {
+  const labels = useStatusBlocksLabels();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
@@ -450,12 +453,12 @@ export function StatusEventTimelineReport({
           const duration = formatDistanceStrict(startedAt, updateDate);
 
           if (duration !== "0 seconds" && update.status === "resolved") {
-            durationText = `(in ${duration})`;
+            durationText = labels.durationIn(duration);
           }
         } else {
           const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
           const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
-          durationText = `(${timeFromLast} earlier)`;
+          durationText = labels.durationEarlier(timeFromLast);
         }
 
         return (
@@ -466,6 +469,7 @@ export function StatusEventTimelineReport({
             withSeparator={index !== displayedUpdates.length - 1}
             withDot={withDot}
             isLast={index === displayedUpdates.length - 1}
+            renderMessage={renderMessage}
           />
         );
       })}
@@ -512,13 +516,16 @@ export function StatusEventTimelineReportUpdate({
   withSeparator = true,
   withDot = true,
   isLast = false,
+  renderMessage,
 }: {
   report: StatusReportUpdate;
   withSeparator?: boolean;
   duration?: string;
   withDot?: boolean;
   isLast?: boolean;
+  renderMessage?: (message: string) => React.ReactNode;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <div
       data-slot="status-event-timeline-report-update"
@@ -537,11 +544,11 @@ export function StatusEventTimelineReportUpdate({
           ) : null}
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
-              <span>{incidentStatusLabels[report.status]}</span>{" "}
+              <span>{labels.incidentStatus[report.status]}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <StatusTimestamp date={report.date} variant="rich" asChild>
-                  <span>{formatDateTime(report.date)}</span>
+                  <span>{labels.formatDateTime(report.date)}</span>
                 </StatusTimestamp>
               </span>{" "}
               {duration ? (
@@ -553,8 +560,9 @@ export function StatusEventTimelineReportUpdate({
             <StatusEventTimelineMessage>
               {report.message.trim() === "" ? (
                 <span className="text-muted-foreground/70">-</span>
+              ) : renderMessage ? (
+                renderMessage(report.message)
               ) : (
-                // NOTE: App should wrap this with ProcessMessage if needed
                 <span>{report.message}</span>
               )}
             </StatusEventTimelineMessage>
@@ -604,14 +612,18 @@ interface StatusMaintenanceUpdate {
 export function StatusEventTimelineMaintenance({
   maintenance,
   withDot = true,
+  renderMessage,
 }: {
   maintenance: StatusMaintenanceUpdate;
   withDot?: boolean;
+  renderMessage?: (message: string) => React.ReactNode;
 }) {
+  const labels = useStatusBlocksLabels();
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
-  const range = formatDateRange(maintenance.from, maintenance.to);
-  // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
-  const [from, to] = range.split(" - ");
+  const { from, to } = labels.formatDateRangeParts(
+    maintenance.from,
+    maintenance.to,
+  );
   return (
     <div
       data-slot="status-event-timeline-maintenance"
@@ -643,13 +655,15 @@ export function StatusEventTimelineMaintenance({
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
-                  (for {duration})
+                  {labels.durationFor(duration)}
                 </span>
               ) : null}
             </StatusEventTimelineTitle>
             <StatusEventTimelineMessage>
               {maintenance.message.trim() === "" ? (
                 <span className="text-muted-foreground/70">-</span>
+              ) : renderMessage ? (
+                renderMessage(maintenance.message)
               ) : (
                 maintenance.message
               )}
@@ -677,16 +691,18 @@ export function StatusEventTimelineMaintenance({
 export function StatusEventTimelineTitle({
   className,
   children,
+  asChild,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : "div";
   return (
-    <div
+    <Comp
       data-slot="status-event-timeline-title"
       className={cn("font-medium text-foreground text-sm", className)}
       {...props}
     >
       {children}
-    </div>
+    </Comp>
   );
 }
 
