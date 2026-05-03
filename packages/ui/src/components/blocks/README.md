@@ -215,6 +215,51 @@ Specialized functionality components.
 - **useStatusBlocksLabels**: Hook blocks read from; falls back to `defaultStatusBlocksLabels` when no provider is mounted
 - **defaultStatusBlocksLabels**: English (`en-US`) defaults exported from `status.utils.ts`
 
+### 9. Page Chrome (Header / Footer / Switchers)
+
+Presentation-only chrome blocks for assembling a complete status page around the body components above. All routing-, theme-, and locale-agnostic — caller wires their own `next/link`, `next-themes`, `next-intl`, etc.
+
+#### Shell
+- **StatusPageShell**: Outer `<div>` wrapper (full-height column with gap)
+- **StatusPageMain**: Inner `<main>` content column with embed-aware Tailwind classes that activate only when an ancestor sets `data-embed=true` on a `group/embed` element
+
+#### Header
+- **StatusPageHeader**: `<header>` wrapper
+- **StatusPageHeaderContent**: Inner `<nav>` row with default centering and padding
+- **StatusPageHeaderBrand**: Left-side fixed-width slot for the brand button
+- **StatusPageHeaderBrandButton**: Outlined size-8 icon button (uses `asChild` for the link)
+- **StatusPageHeaderBrandFallback**: Letter-from-title typography for when no page icon is present
+- **StatusPageHeaderNav**: Desktop nav `<ul>`
+- **StatusPageHeaderNavItem**: Single nav entry with active styling (`asChild` for the link)
+- **StatusPageHeaderActions**: Right-side fixed-width cluster (subscribe, contact, mobile-menu trigger)
+
+#### Footer
+- **StatusPageFooter**: `<footer>` wrapper
+- **StatusPageFooterContent**: Inner row with default centering and padding
+- **StatusPagePoweredBy**: "powered by …" line — pass the link element as children
+- **StatusPageFooterActions**: Right-side cluster (last-updated, locale, theme)
+
+#### Get-in-Touch
+- **StatusPageGetInTouchIcon**: Ghost icon button with tooltip chrome (uses `asChild` for the link)
+- **StatusPageGetInTouchButton**: Outlined text-label button (uses `asChild` for the link)
+
+#### Status Updates (subscription channels)
+- **StatusUpdates**: Popover root for "Get updates" controls
+- **StatusUpdatesTrigger**: Trigger button (default label from `labels.subscribe`)
+- **StatusUpdatesContent**: Popover content wrapper
+- **StatusUpdatesSection**: Per-channel description + content slot
+- **StatusUpdatesCopyInput**: Copyable URL input with toast feedback
+- **StatusUpdatesRss**: RSS + optional Atom copy boxes
+- **StatusUpdatesJson**: JSON feed copy box
+- **StatusUpdatesSlack**: Slack `/feed subscribe` snippet
+- **StatusUpdatesSsh**: SSH command copy box
+
+#### Switchers
+- **StatusThemeSwitcher**: Agnostic light/dark/system switcher — caller owns `value` + `onValueChange`
+- **StatusThemeSwitcherSkeleton**: Same footprint as the trigger; render before the active theme is known
+- **StatusLocaleSwitcher**: Agnostic locale picker — caller owns `value` + `onValueChange` + `locales` list
+- **StatusLocaleSwitcherSkeleton**: Same footprint; render before the active locale is known
+
 ## Composition Patterns
 
 ### Pattern 1: Basic Monitor Display
@@ -601,6 +646,13 @@ For detailed API documentation, see the JSDoc comments in each component file:
 - [status-icon.tsx](./status-icon.tsx) - Icon component
 - [status-i18n.tsx](./status-i18n.tsx) - i18n provider, hook, and `StatusBlocksLabels` type
 - [status.utils.ts](./status.utils.ts) - Utility functions and `defaultStatusBlocksLabels`
+- [status-page-shell.tsx](./status-page-shell.tsx) - Outer page-shell wrappers (`StatusPageShell`, `StatusPageMain`)
+- [status-page-header.tsx](./status-page-header.tsx) - Header chrome (brand, nav, actions slots)
+- [status-page-footer.tsx](./status-page-footer.tsx) - Footer chrome (powered-by, action cluster)
+- [status-page-get-in-touch.tsx](./status-page-get-in-touch.tsx) - Contact-link button variants (icon + text)
+- [status-updates.tsx](./status-updates.tsx) - Subscription channel primitives (RSS / Atom / JSON / Slack / SSH)
+- [status-theme-switcher.tsx](./status-theme-switcher.tsx) - Agnostic light/dark/system switcher
+- [status-locale-switcher.tsx](./status-locale-switcher.tsx) - Agnostic locale picker
 
 ---
 

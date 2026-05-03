@@ -8,6 +8,17 @@ import {
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
+import { StatusPageGetInTouchIcon } from "@openstatus/ui/components/blocks/status-page-get-in-touch";
+import {
+  StatusPageHeader,
+  StatusPageHeaderActions,
+  StatusPageHeaderBrand,
+  StatusPageHeaderBrandButton,
+  StatusPageHeaderBrandFallback,
+  StatusPageHeaderContent,
+  StatusPageHeaderNav,
+  StatusPageHeaderNavItem,
+} from "@openstatus/ui/components/blocks/status-page-header";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sheet,
@@ -16,12 +27,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@openstatus/ui/components/ui/sheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
@@ -113,20 +118,15 @@ export function Header({
   );
 
   return (
-    <header
+    <StatusPageHeader
       className={cn("group-data-[embed=true]/embed:hidden", className)}
       {...props}
     >
-      <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
+      <StatusPageHeaderContent>
         {/* NOTE: same width as the `StatusUpdates` button */}
-        <div className="flex w-[150px] shrink-0">
+        <StatusPageHeaderBrand>
           <div className="flex items-center justify-center">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8 overflow-hidden"
-              asChild
-            >
+            <StatusPageHeaderBrandButton>
               <Link
                 href={page?.homepageUrl || `/${prefix}`}
                 target={page?.homepageUrl ? "_blank" : undefined}
@@ -139,24 +139,22 @@ export function Header({
                     className="size-8"
                   />
                 ) : (
-                  <div className="flex size-8 items-center justify-center font-mono">
-                    {/* NOTE: show the first two letters of the title and if its multiple words, show the first letter of the first two words */}
-                    {page?.title
-                      ?.split(" ")
-                      .map((word) => word.charAt(0))
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()}
-                  </div>
+                  // NOTE: show the first two letters of the title and if its multiple words, show the first letter of the first two words
+                  <StatusPageHeaderBrandFallback title={page?.title} />
                 )}
               </Link>
-            </Button>
+            </StatusPageHeaderBrandButton>
           </div>
-        </div>
+        </StatusPageHeaderBrand>
         <NavDesktop className="hidden md:flex" />
-        <div className="flex min-w-[150px] items-center justify-end gap-2">
+        <StatusPageHeaderActions>
           {page?.contactUrl ? (
-            <GetInTouch buttonType="icon" link={page.contactUrl} />
+            <StatusPageGetInTouchIcon>
+              <a href={page.contactUrl} target="_blank" rel="noreferrer">
+                <MessageCircleMore />
+                <span className="sr-only">{t("Get in touch")}</span>
+              </a>
+            </StatusPageGetInTouchIcon>
           ) : null}
           <StatusUpdates
             types={getStatusUpdateTypes(page)}
@@ -166,34 +164,25 @@ export function Header({
             page={page}
           />
           <NavMobile className="md:hidden" />
-        </div>
-      </nav>
-    </header>
+        </StatusPageHeaderActions>
+      </StatusPageHeaderContent>
+    </StatusPageHeader>
   );
 }
 
-function NavDesktop({ className, ...props }: React.ComponentProps<"ul">) {
+function NavDesktop({
+  className,
+  ...props
+}: React.ComponentProps<typeof StatusPageHeaderNav>) {
   const nav = useNav();
   return (
-    <ul className={cn("flex flex-row gap-0.5", className)} {...props}>
-      {nav.map((item) => {
-        return (
-          <li key={item.key}>
-            <Button
-              variant={item.isActive ? "secondary" : "ghost"}
-              className={cn(
-                "border",
-                item.isActive ? "border-input" : "border-transparent",
-              )}
-              size="sm"
-              asChild
-            >
-              <NextLink href={item.href}>{item.label}</NextLink>
-            </Button>
-          </li>
-        );
-      })}
-    </ul>
+    <StatusPageHeaderNav className={className} {...props}>
+      {nav.map((item) => (
+        <StatusPageHeaderNavItem key={item.key} isActive={item.isActive}>
+          <NextLink href={item.href}>{item.label}</NextLink>
+        </StatusPageHeaderNavItem>
+      ))}
+    </StatusPageHeaderNav>
   );
 }
 
@@ -241,56 +230,5 @@ function NavMobile({
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function GetInTouch({
-  buttonType,
-  className,
-  link,
-  ...props
-}: React.ComponentProps<typeof Button> & {
-  buttonType: "icon" | "text";
-  link: string;
-}) {
-  const t = useExtracted();
-  if (buttonType === "text") {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        type="button"
-        className={className}
-        asChild
-        {...props}
-      >
-        <a href={link} target="_blank" rel="noreferrer">
-          {t("Get in touch")}
-        </a>
-      </Button>
-    );
-  }
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className={cn("size-8", className)}
-            asChild
-            {...props}
-          >
-            <a href={link} target="_blank" rel="noreferrer">
-              <MessageCircleMore />
-            </a>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{t("Get in touch")}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 }

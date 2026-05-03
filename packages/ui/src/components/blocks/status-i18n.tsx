@@ -5,6 +5,7 @@ import { defaultStatusBlocksLabels } from "@openstatus/ui/components/blocks/stat
 import type {
 	StatusReportUpdateType,
 	StatusType,
+	ThemeValue,
 } from "@openstatus/ui/components/blocks/status.types";
 
 /**
@@ -29,6 +30,21 @@ export type StatusBlocksLabels = {
 	noReportsDescription: string;
 	noPublicMonitors: string;
 	noPublicMonitorsDescription: string;
+
+	themeNames: Record<ThemeValue, string>;
+	ariaToggleTheme: string;
+
+	subscribe: string;
+	subscribeRssDescription: string;
+	subscribeAtomDescription: string;
+	subscribeJsonDescription: string;
+	subscribeSlackDescription: string;
+	subscribeSshDescription: string;
+	linkCopiedToClipboard: string;
+	ariaCopyLink: string;
+
+	poweredBy: string;
+	getInTouch: string;
 
 	ariaStatusTracker: string;
 	ariaDayStatus: (n: number) => string;

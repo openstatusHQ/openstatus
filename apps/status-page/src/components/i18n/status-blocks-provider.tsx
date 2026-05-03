@@ -72,6 +72,27 @@ export function StatusBlocksProvider({
         "No public monitors have been added to this page.",
       ),
 
+      themeNames: {
+        light: t("Light"),
+        dark: t("Dark"),
+        system: t("System"),
+      },
+      ariaToggleTheme: t("Toggle theme"),
+
+      subscribe: t("Get updates"),
+      subscribeRssDescription: t("Get the RSS feed"),
+      subscribeAtomDescription: t("Get the Atom feed"),
+      subscribeJsonDescription: t("Get the JSON updates"),
+      subscribeSlackDescription: t(
+        "For status updates in Slack, paste the text below into any channel.",
+      ),
+      subscribeSshDescription: t("Get status via SSH"),
+      linkCopiedToClipboard: t("Link copied to clipboard"),
+      ariaCopyLink: t("Copy Link"),
+
+      poweredBy: t("powered by"),
+      getInTouch: t("Get in touch"),
+
       ariaStatusTracker: t("Status tracker"),
       ariaDayStatus: (n: number) => t("Day {n} status", { n: String(n) }),
       clickAgainToUnpin: t("Click again to unpin"),

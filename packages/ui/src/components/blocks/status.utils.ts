@@ -249,6 +249,26 @@ export const defaultStatusBlocksLabels = {
 	noPublicMonitors: "No public monitors",
 	noPublicMonitorsDescription: "There are no public monitors to display.",
 
+	themeNames: {
+		light: "Light",
+		dark: "Dark",
+		system: "System",
+	},
+	ariaToggleTheme: "Toggle theme",
+
+	subscribe: "Get updates",
+	subscribeRssDescription: "Get the RSS feed",
+	subscribeAtomDescription: "Get the Atom feed",
+	subscribeJsonDescription: "Get the JSON updates",
+	subscribeSlackDescription:
+		"For status updates in Slack, paste the text below into any channel.",
+	subscribeSshDescription: "Get status via SSH",
+	linkCopiedToClipboard: "Link copied to clipboard",
+	ariaCopyLink: "Copy Link",
+
+	poweredBy: "powered by",
+	getInTouch: "Get in touch",
+
 	ariaStatusTracker: "Status tracker",
 	ariaDayStatus: (n: number) => `Day ${n} status`,
 	clickAgainToUnpin: "Click again to unpin",
