@@ -33,6 +33,13 @@ interface StatusBarProps {
     data: StatusBarData["events"][number],
     index: number,
   ) => React.ReactNode;
+  /**
+   * Optional Radix Portal container for the day hover-card. Defaults to
+   * `document.body`. Pass a ref when the bar is rendered inside a scoped
+   * subtree (e.g. a status-page preview that overrides `--radius` and other
+   * CSS vars on a wrapper) so the portaled card inherits the same context.
+   */
+  container?: HTMLElement | null;
 }
 
 interface UseStatusBarProps {
@@ -419,6 +426,7 @@ export function StatusBar({
   renderCard,
   renderBar,
   renderEvent,
+  container,
 }: StatusBarProps) {
   const labels = useStatusBlocksLabels();
   const isTouch = useMediaQuery("(hover: none)");
@@ -454,6 +462,7 @@ export function StatusBar({
             renderCard={renderCard}
             renderBar={renderBar}
             renderEvent={renderEvent}
+            container={container}
           />
         );
       })}
@@ -473,6 +482,7 @@ interface StatusBarItemProps {
   renderCard?: StatusBarProps["renderCard"];
   renderBar?: StatusBarProps["renderBar"];
   renderEvent?: StatusBarProps["renderEvent"];
+  container?: StatusBarProps["container"];
 }
 
 const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
@@ -488,6 +498,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
       renderCard,
       renderBar,
       renderEvent,
+      container,
     },
     ref,
   ) => {
@@ -538,6 +549,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
           side="top"
           align="center"
           className="w-auto min-w-40 p-0"
+          container={container}
           onMouseEnter={handlers.onHoverCardEnter}
           onMouseLeave={handlers.onHoverCardLeave}
           onPointerDownOutside={(e) => {

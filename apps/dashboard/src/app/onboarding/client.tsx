@@ -1,63 +1,21 @@
 "use client";
 
-import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
-import { CreatePageForm } from "@/components/forms/onboarding/create-page";
 import {
-  OnboardingActions,
-  OnboardingFormColumn,
   OnboardingLayout,
-  OnboardingLockedSummary,
-  OnboardingPreviewPlaceholder,
-  OnboardingPreviewPlaceholderContent,
-  OnboardingPreviewPlaceholderOverlay,
-  OnboardingPreviewPlaceholderText,
-  OnboardingResultColumn,
-  OnboardingResultHeading,
   OnboardingShell,
-  type OnboardingStep,
-  OnboardingStepDescription,
-  OnboardingStepHeader,
-  OnboardingStepTitle,
-  OnboardingStepper,
 } from "@/components/layout/onboarding-layout";
-import {
-  type OnboardingChecksRow,
-  OnboardingChecksTable,
-} from "@/components/onboarding/checks-table";
-import { checkResultToResponseLog } from "@/components/onboarding/checks-table-adapter";
-import {
-  FeatureBadgeWall,
-  QuestionPanel,
-} from "@/components/onboarding/feature-badges";
-import {
-  DEMO_PREVIEW_SLUG,
-  StatusPageIframePreview,
-} from "@/components/onboarding/iframe-preview";
 import { useStreamChecks } from "@/components/onboarding/use-stream-checks";
-import { exampleChecks } from "@/data/onboarding-checks";
 import { getCompanyDomainFromEmail } from "@/lib/onboarding/email-domain";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Activity,
-  ArrowRight,
-  Bell,
-  Calendar,
-  Cog,
-  LayoutGrid,
-  PanelTop,
-  Rocket,
-  UserPlus,
-} from "lucide-react";
-import { useTheme } from "next-themes";
-import Link from "next/link";
+import { Activity, PanelTop, Rocket } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Step1 } from "./_steps/step-1";
+import { Step2 } from "./_steps/step-2";
+import { Step3 } from "./_steps/step-3";
 import { searchParamsParsers } from "./search-params";
 
 const STEPS = [
@@ -65,8 +23,6 @@ const STEPS = [
   { id: "2", label: "Status page", icon: <PanelTop /> },
   { id: "3", label: "Launch", icon: <Rocket /> },
 ] as const;
-
-const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
 
 // Fallback URL used when the user's email domain is generic (gmail, yahoo, …).
 // Keeps the magic-moment frictionless: hit submit on an empty form and a real
@@ -99,19 +55,23 @@ export function Client() {
   const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { theme: dashboardTheme } = useTheme();
 
-  const { data: workspace, refetch: refetchWorkspace } = useQuery(
-    trpc.workspace.get.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
 
+  // Invalidate (not refetch) so any mounted subscriber to `workspace.get`
+  // (sidebar quota chip, plan-gate selectors, etc.) gets fresh data on the
+  // next read. The workspace shape carries derived state like monitor /
+  // page counts — letting it go stale after onboarding creates would show
+  // wrong numbers when the user lands on /overview.
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: async () => {
         await setSearchParams({ monitor: "completed" });
         await Promise.all([
-          refetchWorkspace(),
+          queryClient.invalidateQueries({
+            queryKey: trpc.workspace.get.queryKey(),
+          }),
           queryClient.invalidateQueries({
             queryKey: trpc.monitor.list.queryKey(),
           }),
@@ -124,7 +84,9 @@ export function Client() {
       onSuccess: async () => {
         await setSearchParams({ page: "completed" });
         await Promise.all([
-          refetchWorkspace(),
+          queryClient.invalidateQueries({
+            queryKey: trpc.workspace.get.queryKey(),
+          }),
           queryClient.invalidateQueries({
             queryKey: trpc.page.list.queryKey(),
           }),
@@ -174,13 +136,18 @@ export function Client() {
     return generateSlug(2, { format: "kebab" });
   }, [monitorData?.url, companyDomain]);
 
-  // Trigger streaming preview when the monitor was just created.
+  // Trigger streaming preview when the monitor was just created. Cleanup
+  // calls `stopChecks()` so navigating away mid-stream (Continue, refresh,
+  // unmount) doesn't leak the in-flight fetch.
   useEffect(() => {
     if (!monitorData?.id || step !== "1") return;
     if (checksStartedRef.current) return;
     checksStartedRef.current = true;
     startChecks(monitorData.id);
-  }, [monitorData?.id, step, startChecks]);
+    return () => {
+      stopChecks();
+    };
+  }, [monitorData?.id, step, startChecks, stopChecks]);
 
   // Optional callbackUrl redirect after sign-in flows that bounce through onboarding.
   useEffect(() => {
@@ -224,14 +191,18 @@ export function Client() {
     }
   }, [createFeedbackMutation.mutate, monitor, page, pathname]);
 
-  const stepperSteps = STEPS.map((s) => ({
+  // Compare by index, not `Number(step)`, so `STEPS` can adopt non-numeric
+  // ids later (e.g. "done", "review") without silently regressing the
+  // completed/upcoming derivation.
+  const currentStepIndex = STEPS.findIndex((s) => s.id === step);
+  const stepperSteps = STEPS.map((s, i) => ({
     id: s.id,
     label: s.label,
     icon: s.icon,
     status:
       step === s.id
         ? ("current" as const)
-        : Number(step) > Number(s.id)
+        : currentStepIndex > i
           ? ("completed" as const)
           : ("upcoming" as const),
   }));
@@ -249,9 +220,13 @@ export function Client() {
             checkResults={checkResults}
             isStreaming={isStreaming}
             onSubmit={async (values) => {
+              // Form schema validates URL shape, but `safeHostname` is a
+              // belt-and-suspenders fallback so a sneaky-but-parseable form
+              // value (e.g. relative URL slipping through) doesn't throw
+              // synchronously inside `mutateAsync`.
               await createMonitorMutation.mutateAsync({
                 url: values.url,
-                name: new URL(values.url).hostname,
+                name: safeHostname(values.url) ?? values.url,
                 method: "GET",
                 headers: [],
                 assertions: [],
@@ -273,20 +248,15 @@ export function Client() {
           <Step2
             stepperSteps={stepperSteps}
             pageStatus={page}
+            createdPageData={pageData}
             slugFallback={slugFallback}
             monitorSkipped={monitor === "skipped"}
-            createdPageData={
-              pageData ? { id: pageData.id, slug: pageData.slug } : undefined
+            monitorName={
+              monitorData?.url ? safeHostname(monitorData.url) : null
             }
             isSubmitting={createPageMutation.isPending}
             onSubmit={async (values) => {
               if (!workspace?.id) return;
-              // Match the user's current dashboard theme so the freshly
-              // published page renders consistent with what they're seeing.
-              const forceTheme =
-                dashboardTheme === "dark" || dashboardTheme === "light"
-                  ? dashboardTheme
-                  : "system";
               const newPage = await createPageMutation.mutateAsync({
                 slug: values.slug,
                 title: values.slug.replace(/-/g, " "),
@@ -296,7 +266,8 @@ export function Client() {
                   : [],
                 workspaceId: workspace.id,
                 legacyPage: false,
-                forceTheme,
+                forceTheme: values.forceTheme,
+                configuration: { theme: values.theme },
               });
               const staticComponents = values.components?.filter(
                 (c) => c.name.trim() !== "",
@@ -316,9 +287,7 @@ export function Client() {
               }
             }}
             onSkip={() => setSearchParams({ page: "skipped", step: "3" })}
-            onContinue={() => {
-              setSearchParams({ step: "3" });
-            }}
+            onContinue={() => setSearchParams({ step: "3" })}
           />
         ) : null}
         {step === "3" ? (
@@ -343,361 +312,10 @@ export function Client() {
   );
 }
 
-// =============================================================================
-// Step 1 — Monitor
-// =============================================================================
-
-function Step1({
-  stepperSteps,
-  monitorStatus,
-  defaultUrl,
-  isSubmitting,
-  monitorData,
-  checkResults,
-  isStreaming,
-  onSubmit,
-  onSkip,
-  onContinue,
-  onRetryChecks,
-}: {
-  stepperSteps: OnboardingStep[];
-  monitorStatus: "skipped" | "completed" | null;
-  defaultUrl: string | undefined;
-  isSubmitting: boolean;
-  monitorData: { id: number; url: string } | undefined;
-  checkResults: ReturnType<typeof useStreamChecks>["results"];
-  isStreaming: boolean;
-  onSubmit: (values: { url: string }) => Promise<void>;
-  onSkip: () => void;
-  onContinue: () => void;
-  onRetryChecks: () => void;
-}) {
-  const isLocked = monitorStatus === "completed" && !!monitorData;
-  // Drop error-state probes and zero-status successes — those rows are
-  // noise (timeouts, auth misses, regions our checker can't currently
-  // reach) and clutter the table without telling the user anything.
-  const successfulResults = useMemo(
-    () =>
-      checkResults.filter((r) => r.state === "success" && (r.status ?? 0) > 0),
-    [checkResults],
-  );
-  const checksRows: OnboardingChecksRow[] = useMemo(
-    () =>
-      successfulResults.map((r) =>
-        checkResultToResponseLog(
-          r,
-          monitorData?.id ?? 0,
-          monitorData?.url ?? "",
-        ),
-      ),
-    [successfulResults, monitorData?.id, monitorData?.url],
-  );
-  const allFailed =
-    !isStreaming && checkResults.length > 0 && successfulResults.length === 0;
-
-  return (
-    <>
-      <OnboardingFormColumn>
-        <OnboardingStepper steps={stepperSteps} />
-        <OnboardingStepHeader>
-          <OnboardingStepTitle>
-            Check your URL from {TOTAL_REGIONS} regions
-          </OnboardingStepTitle>
-          <OnboardingStepDescription>
-            Drop in your API or website. We&apos;ll run a real check from every
-            openstatus region — first results land in under a second.
-          </OnboardingStepDescription>
-        </OnboardingStepHeader>
-        {isLocked ? (
-          <OnboardingLockedSummary
-            value={monitorData?.url ?? ""}
-            href={monitorData?.url}
-            helper="Rename, retarget, or tune this monitor later from its settings page."
-          />
-        ) : (
-          <CreateMonitorForm
-            id="onboarding-monitor-form"
-            defaultValues={defaultUrl ? { url: defaultUrl } : undefined}
-            onSubmit={onSubmit}
-          />
-        )}
-        <OnboardingActions>
-          {isLocked ? (
-            <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
-            </Button>
-          ) : (
-            <>
-              <Button
-                form="onboarding-monitor-form"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {isSubmitting ? "Running…" : "Run first check"}
-              </Button>
-              <Button variant="ghost" onClick={onSkip} type="button">
-                I don&apos;t have a URL
-              </Button>
-            </>
-          )}
-        </OnboardingActions>
-      </OnboardingFormColumn>
-      <OnboardingResultColumn>
-        <OnboardingResultHeading>Live checks</OnboardingResultHeading>
-        {!isLocked ? (
-          <ChecksPreviewPlaceholder />
-        ) : (
-          <OnboardingChecksTable
-            rows={checksRows}
-            totalRegions={TOTAL_REGIONS}
-            isStreaming={isStreaming}
-            allFailed={allFailed}
-            url={monitorData?.url}
-            onRetry={onRetryChecks}
-          />
-        )}
-      </OnboardingResultColumn>
-    </>
-  );
-}
-
-function ChecksPreviewPlaceholder(
-  props: Omit<
-    React.ComponentProps<typeof OnboardingPreviewPlaceholder>,
-    "children"
-  >,
-) {
-  return (
-    <OnboardingPreviewPlaceholder
-      className={cn("flex flex-col", props.className)}
-      {...props}
-    >
-      <OnboardingPreviewPlaceholderContent className="flex-col md:flex-1 md:[&>div]:flex-1">
-        <OnboardingChecksTable
-          rows={exampleChecks}
-          totalRegions={exampleChecks.length}
-          isStreaming={false}
-          allFailed={false}
-          onRetry={() => {}}
-        />
-      </OnboardingPreviewPlaceholderContent>
-      <OnboardingPreviewPlaceholderOverlay>
-        <OnboardingPreviewPlaceholderText>
-          Hit run to watch results land here from every region as they finish.
-        </OnboardingPreviewPlaceholderText>
-      </OnboardingPreviewPlaceholderOverlay>
-    </OnboardingPreviewPlaceholder>
-  );
-}
-
-// =============================================================================
-// Step 2 — Status page
-// =============================================================================
-
-function Step2({
-  stepperSteps,
-  pageStatus,
-  slugFallback,
-  monitorSkipped,
-  createdPageData,
-  isSubmitting,
-  onSubmit,
-  onSkip,
-  onContinue,
-}: {
-  stepperSteps: OnboardingStep[];
-  pageStatus: "skipped" | "completed" | null;
-  slugFallback: string;
-  monitorSkipped: boolean;
-  createdPageData: { id: number; slug: string } | undefined;
-  isSubmitting: boolean;
-  onSubmit: (values: {
-    slug: string;
-    components?: { name: string }[];
-  }) => Promise<void>;
-  onSkip: () => void;
-  onContinue: () => void;
-}) {
-  const isLocked = pageStatus === "completed" && !!createdPageData;
-
-  return (
-    <>
-      <OnboardingFormColumn>
-        <OnboardingStepper steps={stepperSteps} />
-        <OnboardingStepHeader>
-          <OnboardingStepTitle>Publish a status page</OnboardingStepTitle>
-          <OnboardingStepDescription>
-            Pick a subdomain. Your page goes live the moment you publish — share
-            the link, embed a badge, or hand it to support.
-          </OnboardingStepDescription>
-        </OnboardingStepHeader>
-        {isLocked ? (
-          <OnboardingLockedSummary
-            value={`${createdPageData?.slug}.openstatus.dev`}
-            href={`https://${createdPageData?.slug}.openstatus.dev`}
-            helper="Theme, components, and visibility are editable later from page settings."
-          />
-        ) : (
-          <CreatePageForm
-            id="onboarding-page-form"
-            showComponents={monitorSkipped}
-            defaultValues={{ slug: slugFallback }}
-            onSubmit={onSubmit}
-          />
-        )}
-        <OnboardingActions>
-          {isLocked ? (
-            <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
-            </Button>
-          ) : (
-            <>
-              <Button
-                form="onboarding-page-form"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {isSubmitting ? "Publishing…" : "Publish my page"}
-              </Button>
-              <Button variant="ghost" onClick={onSkip} type="button">
-                Do this later
-              </Button>
-            </>
-          )}
-        </OnboardingActions>
-      </OnboardingFormColumn>
-      <OnboardingResultColumn>
-        <OnboardingResultHeading>Live preview</OnboardingResultHeading>
-        {!isLocked ? (
-          <StatusPagePreviewPlaceholder />
-        ) : (
-          <StatusPageIframePreview slug={createdPageData?.slug ?? ""} />
-        )}
-      </OnboardingResultColumn>
-    </>
-  );
-}
-
-function StatusPagePreviewPlaceholder(
-  props: Omit<
-    React.ComponentProps<typeof OnboardingPreviewPlaceholder>,
-    "children"
-  >,
-) {
-  return (
-    <OnboardingPreviewPlaceholder
-      className={cn("flex h-[calc(100dvh-13rem)] md:h-auto", props.className)}
-      {...props}
-    >
-      <OnboardingPreviewPlaceholderContent className="flex-1 [&>div]:h-full [&_iframe]:h-full [&_iframe]:max-h-none">
-        <StatusPageIframePreview slug={DEMO_PREVIEW_SLUG} />
-      </OnboardingPreviewPlaceholderContent>
-      <OnboardingPreviewPlaceholderOverlay>
-        <OnboardingPreviewPlaceholderText>
-          Pick a subdomain to see your live status page render here.
-        </OnboardingPreviewPlaceholderText>
-      </OnboardingPreviewPlaceholderOverlay>
-    </OnboardingPreviewPlaceholder>
-  );
-}
-
-// =============================================================================
-// Step 3 — Done
-// =============================================================================
-
-function Step3({
-  stepperSteps,
-  monitorStatus,
-  pageStatus,
-  onContinue,
-  onQuestionnaireSubmit,
-}: {
-  stepperSteps: OnboardingStep[];
-  monitorStatus: "skipped" | "completed" | null;
-  pageStatus: "skipped" | "completed" | null;
-  onContinue: () => void;
-  onQuestionnaireSubmit: (values: {
-    source: string;
-    other?: string;
-  }) => Promise<void>;
-}) {
-  const monitorSkipped = monitorStatus === "skipped";
-  const pageSkipped = pageStatus === "skipped";
-
-  const quickLinks = useMemo(() => {
-    const links: {
-      name: string;
-      href: string;
-      icon: React.ComponentType<{ className?: string }>;
-    }[] = [];
-    if (monitorSkipped) {
-      links.push({ name: "Monitors", href: "/monitors", icon: Activity });
-    }
-    if (pageSkipped) {
-      links.push({
-        name: "Status Pages",
-        href: "/status-pages",
-        icon: PanelTop,
-      });
-    }
-    links.push(
-      { name: "Invite team", href: "/settings/general", icon: UserPlus },
-      { name: "Notifiers", href: "/notifications", icon: Bell },
-      { name: "Overview", href: "/overview", icon: LayoutGrid },
-      { name: "Settings", href: "/settings/general", icon: Cog },
-    );
-    return links.slice(0, 4);
-  }, [monitorSkipped, pageSkipped]);
-
-  return (
-    <>
-      <OnboardingFormColumn>
-        <OnboardingStepper steps={stepperSteps} />
-        <OnboardingStepHeader>
-          <OnboardingStepTitle>You&apos;re live</OnboardingStepTitle>
-          <OnboardingStepDescription>
-            Jump into the product and explore what openstatus can do.
-          </OnboardingStepDescription>
-        </OnboardingStepHeader>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {quickLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-commit-mono text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <link.icon className="h-4 w-4" />
-              {link.name}
-            </Link>
-          ))}
-        </div>
-        <div className="flex flex-col gap-2">
-          <OnboardingActions className="flex-wrap">
-            <Button asChild>
-              <Link href="/overview" onClick={onContinue}>
-                Continue <ArrowRight className="size-3" />
-              </Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <a
-                href="https://cal.com/team/openstatus/15min"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Calendar className="size-3" />
-                Talk to a founder
-              </a>
-            </Button>
-          </OnboardingActions>
-          <p className="text-muted-foreground text-xs">
-            SOC2 audit incoming? Ping us for a 14-day free trial.
-          </p>
-        </div>
-      </OnboardingFormColumn>
-      <OnboardingResultColumn>
-        <QuestionPanel onSubmit={onQuestionnaireSubmit} />
-        <FeatureBadgeWall />
-      </OnboardingResultColumn>
-    </>
-  );
+function safeHostname(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
 }

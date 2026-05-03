@@ -38,6 +38,14 @@ import { z } from "zod";
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";
 
+// Keep in sync with `slugSchema` in
+// `packages/db/src/schema/pages/validation.ts`. We can't import that on the
+// client because `@openstatus/db` is server-only. Slugs are stored lowercase
+// (subdomains are case-insensitive), so we restrict input client-side too.
+const SLUG_PATTERN = /^[a-z0-9-]+$/;
+const SLUG_PATTERN_MESSAGE =
+  "Only use digits (0-9), hyphen (-) or lowercase characters (a-z).";
+
 function formatSlug(title: string) {
   return title
     .toLowerCase()
@@ -47,7 +55,10 @@ function formatSlug(title: string) {
 
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
-  slug: z.string().min(3, "Slug is required"),
+  slug: z
+    .string()
+    .min(3, "Slug is required")
+    .regex(SLUG_PATTERN, SLUG_PATTERN_MESSAGE),
   icon: z.string().optional(),
   description: z.string().optional(),
 });

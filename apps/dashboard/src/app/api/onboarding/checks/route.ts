@@ -75,10 +75,15 @@ export async function POST(req: Request) {
       for await (const result of generator) {
         yield encoder.encode(`${JSON.stringify(result)}\n`);
       }
-    } catch {
+    } catch (err) {
       // The fan-out is `Promise.race`-based and individual region failures
       // are returned as error-shaped CheckResults, so we don't expect to
-      // land here. Swallow to close the stream cleanly.
+      // land here. Log so an unexpected failure isn't silent — the stream
+      // still closes cleanly so the client doesn't hang.
+      console.warn(
+        "[onboarding/checks] unexpected generator error post-prime",
+        err,
+      );
     }
   })();
 

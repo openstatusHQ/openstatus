@@ -2,8 +2,10 @@
 
 // FIXME: use input-group instead
 import { InputWithAddons } from "@/components/common/input-with-addons";
+import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -15,10 +17,18 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Plus, X } from "lucide-react";
+import { Laptop, Moon, Plus, Sun, X } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useEffect, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,8 +37,24 @@ import { z } from "zod";
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";
 
+// Keep in sync with `slugSchema` in
+// `packages/db/src/schema/pages/validation.ts`. We can't import that on the
+// client because `@openstatus/db` is server-only. Slugs are stored lowercase
+// (subdomains are case-insensitive), so we restrict input client-side too.
+const SLUG_PATTERN = /^[a-z0-9-]+$/;
+const SLUG_PATTERN_MESSAGE =
+  "Only use digits (0-9), hyphen (-) or lowercase characters (a-z).";
+
+const FORCE_THEME_OPTIONS = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Laptop },
+] as const;
+
 const schema = z.object({
-  slug: z.string().min(3),
+  slug: z.string().min(3).regex(SLUG_PATTERN, SLUG_PATTERN_MESSAGE),
+  theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]),
+  forceTheme: z.enum(["light", "dark", "system"]),
   components: z
     .array(
       z.object({
@@ -43,18 +69,27 @@ export type FormValues = z.infer<typeof schema>;
 export function CreatePageForm({
   defaultValues,
   onSubmit,
+  onValuesChange,
   showComponents = false,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
+  /** Mirror live form values to a parent that needs them (e.g. a preview). */
+  onValuesChange?: (values: FormValues) => void;
   showComponents?: boolean;
 }) {
   const trpc = useTRPC();
+  const { theme: dashboardTheme, setTheme: setDashboardTheme } = useTheme();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       slug: "",
+      theme: "default-rounded",
+      forceTheme:
+        dashboardTheme === "dark" || dashboardTheme === "light"
+          ? dashboardTheme
+          : "system",
       components: showComponents ? [{ name: "Website" }] : undefined,
       ...defaultValues,
     },
@@ -81,6 +116,15 @@ export function CreatePageForm({
       form.clearErrors("slug");
     }
   }, [isUnique, form]);
+
+  useEffect(() => {
+    if (!onValuesChange) return;
+    onValuesChange(form.getValues());
+    const sub = form.watch((values) => {
+      onValuesChange(values as FormValues);
+    });
+    return () => sub.unsubscribe();
+  }, [form, onValuesChange]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -140,6 +184,57 @@ export function CreatePageForm({
             </FormItem>
           )}
         />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="theme"
+            render={({ field }) => (
+              <FormItem className="min-w-0">
+                <FormLabel>Style</FormLabel>
+                <ThemePickerPopover
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="forceTheme"
+            render={({ field }) => (
+              <FormItem className="min-w-0">
+                <FormLabel>Mode</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    // Mirror to the dashboard so the user previews exactly
+                    // what they'll publish. The whole shell flips with them.
+                    setDashboardTheme(v);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Mode" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {FORCE_THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+                      <SelectItem key={value} value={value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="size-4" />
+                          <span>{label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         {showComponents && (
           <div className="space-y-3">
             <FormLabel>Components</FormLabel>

@@ -11,19 +11,10 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { THEME_KEYS } from "@openstatus/theme-store";
-import { THEMES } from "@openstatus/theme-store";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@openstatus/ui/components/ui/command";
 import {
   Form,
   FormControl,
@@ -34,21 +25,14 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@openstatus/ui/components/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -157,66 +141,12 @@ export function FormAppearance({
               control={form.control}
               name="configuration.theme"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="min-w-0">
                   <FormLabel>Style</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          id="community-theme"
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          <span className="truncate">
-                            {THEMES[field.value as ThemeKey]?.name ||
-                              "Select a theme"}
-                          </span>
-                          <ChevronsUpDown className="opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0" align="start">
-                      <Command>
-                        <CommandInput
-                          placeholder="Search themes..."
-                          className="h-9"
-                        />
-                        <CommandList>
-                          <CommandEmpty>No themes found.</CommandEmpty>
-                          <CommandGroup>
-                            {THEME_KEYS.map((theme) => {
-                              const { name, author } = THEMES[theme];
-                              return (
-                                <CommandItem
-                                  value={theme}
-                                  key={theme}
-                                  keywords={[theme, name, author.name]}
-                                  onSelect={(v) => field.onChange(v)}
-                                >
-                                  <span className="truncate">{name}</span>
-                                  <span className="truncate font-commit-mono text-muted-foreground text-xs">
-                                    by {author.name}
-                                  </span>
-                                  <Check
-                                    className={cn(
-                                      "ml-auto",
-                                      theme === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
-                                  />
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <ThemePickerPopover
+                    value={field.value as ThemeKey}
+                    onChange={field.onChange}
+                  />
                   <FormMessage />
                   <FormDescription>Choose a theme to apply.</FormDescription>
                 </FormItem>

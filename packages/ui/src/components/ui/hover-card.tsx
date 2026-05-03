@@ -23,10 +23,22 @@ function HoverCardContent({
   className,
   align = "center",
   sideOffset = 4,
+  container,
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Content>) {
+}: React.ComponentProps<typeof HoverCardPrimitive.Content> & {
+  /**
+   * Optional Radix Portal container. Defaults to `document.body`. Pass an
+   * element ref when the hover-card needs to render inside a scoped subtree
+   * (e.g. a status-page preview that overrides `--radius` and other CSS vars
+   * on a wrapper) so portaled content inherits the same context.
+   */
+  container?: React.ComponentProps<typeof HoverCardPrimitive.Portal>["container"];
+}) {
   return (
-    <HoverCardPrimitive.Portal data-slot="hover-card-portal">
+    <HoverCardPrimitive.Portal
+      data-slot="hover-card-portal"
+      container={container}
+    >
       <HoverCardPrimitive.Content
         data-slot="hover-card-content"
         align={align}
