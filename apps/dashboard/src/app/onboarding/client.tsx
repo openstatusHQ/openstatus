@@ -68,6 +68,11 @@ const STEPS = [
 
 const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
 
+// Fallback URL used when the user's email domain is generic (gmail, yahoo, …).
+// Keeps the magic-moment frictionless: hit submit on an empty form and a real
+// probe runs against an openstatus-owned demo target.
+const DEMO_FALLBACK_URL = "https://openstat.us";
+
 // Convert a hostname to a slug that satisfies the page schema
 // (`[A-Za-z0-9-]`, min length 3). Caller must pass a hostname — strip URL
 // scheme/`www` upstream.
@@ -150,7 +155,9 @@ export function Client() {
     [user?.email],
   );
 
-  const defaultUrl = companyDomain ? `https://${companyDomain}` : undefined;
+  const defaultUrl = companyDomain
+    ? `https://${companyDomain}`
+    : DEMO_FALLBACK_URL;
 
   const slugFallback = useMemo(() => {
     const candidates: string[] = [];
@@ -476,8 +483,7 @@ function ChecksPreviewPlaceholder(
       </OnboardingPreviewPlaceholderContent>
       <OnboardingPreviewPlaceholderOverlay>
         <OnboardingPreviewPlaceholderText>
-          Hit run to watch results land here from every region as they finish —
-          usually under 3 seconds total.
+          Hit run to watch results land here from every region as they finish.
         </OnboardingPreviewPlaceholderText>
       </OnboardingPreviewPlaceholderOverlay>
     </OnboardingPreviewPlaceholder>
