@@ -83,7 +83,7 @@ export function StatusUpdatesSection({
       className={cn("flex flex-col gap-2 px-2 py-2", className)}
       {...props}
     >
-      {description ? <p className="text-sm">{description}</p> : null}
+      {description ? <div className="text-sm">{description}</div> : null}
       {children}
     </div>
   );

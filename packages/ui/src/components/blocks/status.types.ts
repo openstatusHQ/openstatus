@@ -49,5 +49,6 @@ export type StatusBarData = {
         type: StatusEventType;
         from: Date | null;
         to: Date | null;
+        isAggregated?: boolean;
     }[];
 }

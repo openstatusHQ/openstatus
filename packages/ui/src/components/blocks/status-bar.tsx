@@ -497,7 +497,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
         <HoverCardTrigger asChild>
           <div
             ref={ref}
-            className="group relative flex h-full flex-1 cursor-pointer flex-col outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80 rounded-full"
+            className="group relative flex h-full flex-1 cursor-pointer flex-col outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 aria-pressed:opacity-80 rounded-full"
             onClick={() => handlers.onClick(index)}
             onFocus={() => handlers.onFocus(index)}
             onBlur={handlers.onBlur}
@@ -630,6 +630,7 @@ function StatusBarCard({
                   name={event.name}
                   from={event.from}
                   to={event.to}
+                  isAggregated={event.isAggregated}
                 />
               );
             })}
@@ -779,11 +780,13 @@ export function StatusBarEvent({
   from,
   to,
   type,
+  isAggregated,
 }: {
   name: string;
   from?: Date | null;
   to?: Date | null;
   type: StatusEventType;
+  isAggregated?: boolean;
 }) {
   const labels = useStatusBlocksLabels();
   if (!from) return null;
@@ -810,7 +813,7 @@ export function StatusBarEvent({
       <div className="mt-1 text-muted-foreground text-xs">
         {labels.formatDateRange(from, to ?? undefined)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {formatDuration({ from, to, name, type, labels })}
+          {formatDuration({ from, to, name, type, isAggregated, labels })}
         </span>
       </div>
     </div>
@@ -821,22 +824,19 @@ StatusBarEvent.displayName = "StatusBarEvent";
 /**
  * formatDuration - Internal helper for formatting event durations
  *
- * Formats the duration of an event based on start/end dates and event name:
+ * Formats the duration of an event based on start/end dates:
  * - No start date: returns null
  * - No end date: returns "ongoing"
- * - Multiple incidents (detected by "Downtime (" in name): returns "across {duration}"
+ * - Aggregated incidents (isAggregated): returns "across {duration}"
  * - Zero seconds duration: returns null (hides duration)
  * - Otherwise: returns formatted duration (e.g., "2 hours", "3 days")
  *
- * @param from - Event start date
- * @param to - Event end date
- * @param name - Event name (used to detect multiple incident aggregations)
  * @returns Formatted duration string or null
  */
 const formatDuration = ({
   from,
   to,
-  name,
+  isAggregated,
   labels,
 }: React.ComponentProps<typeof StatusBarEvent> & {
   labels: ReturnType<typeof useStatusBlocksLabels>;
@@ -844,8 +844,7 @@ const formatDuration = ({
   if (!from) return null;
   if (!to) return labels.ongoing;
   const duration = formatDistanceStrict(from, to);
-  const isMultipleIncidents = name.includes("Downtime (");
-  if (isMultipleIncidents) return labels.durationAcross(duration);
+  if (isAggregated) return labels.durationAcross(duration);
   if (duration === "0 seconds") return null;
   return duration;
 };

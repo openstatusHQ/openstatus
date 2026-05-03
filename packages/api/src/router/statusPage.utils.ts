@@ -822,6 +822,7 @@ export function setDataByType({
               ),
               type: "incident" as const,
               status: "error" as const,
+              isAggregated: true,
             },
           ]
         : incidents;

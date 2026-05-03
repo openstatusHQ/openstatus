@@ -282,8 +282,15 @@ export const defaultStatusBlocksLabels = {
 	formatDateShort: (d: Date) => formatDateShort(d),
 	formatDateTime: (d: Date) => formatDateTime(d),
 	formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
-	formatDateRangeParts: (from: Date, to: Date) => ({
-		from: formatDateTime(from),
-		to: isSameDay(from, to) ? formatTime(to) : formatDateTime(to),
-	}),
+	formatDateRangeParts: (from: Date, to: Date) => {
+		if (isSameDay(from, to)) {
+			return { from: formatDateTime(from), to: formatTime(to) };
+		}
+		const isFromStartDay = startOfDay(from).getTime() === from.getTime();
+		const isToEndDay = endOfDay(to).getTime() === to.getTime();
+		if (isFromStartDay && isToEndDay) {
+			return { from: formatDate(from), to: formatDate(to) };
+		}
+		return { from: formatDateTime(from), to: formatDateTime(to) };
+	},
 } as const satisfies StatusBlocksLabels;

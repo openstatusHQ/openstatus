@@ -28,6 +28,7 @@ export function StatusBar(
             name={event.name}
             from={event.from}
             to={event.to}
+            isAggregated={event.isAggregated}
           />
         );
         if (event.type === "report" || event.type === "maintenance") {
