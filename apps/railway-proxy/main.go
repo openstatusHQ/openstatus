@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -16,6 +18,67 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
+
+// retryTransport retries a request when the underlying dial fails.
+// Safe because a dial failure means the request never reached the upstream,
+// so there's no risk of duplicating side effects.
+type retryTransport struct {
+	base       http.RoundTripper
+	maxRetries int
+	backoff    time.Duration
+}
+
+func (rt *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	var body []byte
+	if req.Body != nil && req.Body != http.NoBody {
+		b, err := io.ReadAll(req.Body)
+		req.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+		body = b
+	}
+
+	var lastErr error
+	for attempt := 0; attempt <= rt.maxRetries; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-req.Context().Done():
+				return nil, req.Context().Err()
+			case <-time.After(rt.backoff):
+			}
+		}
+
+		if body != nil {
+			req.Body = io.NopCloser(bytes.NewReader(body))
+		}
+
+		resp, err := rt.base.RoundTrip(req)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+
+		if !isDialError(err) {
+			return nil, err
+		}
+
+		log.Warn().
+			Err(err).
+			Int("attempt", attempt+1).
+			Str("url", req.URL.String()).
+			Msg("retrying after dial failure")
+	}
+	return nil, lastErr
+}
+
+func isDialError(err error) bool {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return opErr.Op == "dial"
+	}
+	return false
+}
 
 // Tuned for Railway internal networking: short dial timeout so a dead pod
 // fails fast instead of stalling for the default 30s, plus aggressive idle
@@ -147,7 +210,12 @@ func main() {
 	cloudProvider := env("CLOUD_PROVIDER", "railway")
 	region := env("RAILWAY_REPLICA_REGION", env("REGION", "local"))
 
-	proxies, err := buildProxies(newTransport())
+	transport := &retryTransport{
+		base:       newTransport(),
+		maxRetries: 2,
+		backoff:    200 * time.Millisecond,
+	}
+	proxies, err := buildProxies(transport)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to build reverse proxies")
 	}
