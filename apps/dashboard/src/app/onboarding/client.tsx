@@ -48,7 +48,6 @@ import {
   Calendar,
   Cog,
   LayoutGrid,
-  Mail,
   PanelTop,
   Rocket,
   UserPlus,
@@ -636,8 +635,8 @@ function Step3({
       });
     }
     links.push(
-      { name: "Notifiers", href: "/notifications", icon: Bell },
       { name: "Invite team", href: "/settings/general", icon: UserPlus },
+      { name: "Notifiers", href: "/notifications", icon: Bell },
       { name: "Overview", href: "/overview", icon: LayoutGrid },
       { name: "Settings", href: "/settings/general", icon: Cog },
     );
@@ -666,33 +665,32 @@ function Step3({
             </Link>
           ))}
         </div>
-        <OnboardingActions className="flex-wrap">
-          <Button asChild>
-            <Link href="/overview" onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <a
-              href="https://cal.com/team/openstatus/15min"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Calendar className="size-3" />
-              Talk to a founder
-            </a>
-          </Button>
-          <Button variant="ghost" asChild>
-            <a href="mailto:ping@openstatus.dev">
-              <Mail className="size-3" />
-              Contact us
-            </a>
-          </Button>
-        </OnboardingActions>
+        <div className="flex flex-col gap-2">
+          <OnboardingActions className="flex-wrap">
+            <Button asChild>
+              <Link href="/overview" onClick={onContinue}>
+                Continue <ArrowRight className="size-3" />
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <a
+                href="https://cal.com/team/openstatus/15min"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Calendar className="size-3" />
+                Talk to a founder
+              </a>
+            </Button>
+          </OnboardingActions>
+          <p className="text-muted-foreground text-xs">
+            SOC2 audit incoming? Ping us for a 14-day free trial.
+          </p>
+        </div>
       </OnboardingFormColumn>
       <OnboardingResultColumn>
-        <FeatureBadgeWall />
         <QuestionPanel onSubmit={onQuestionnaireSubmit} />
+        <FeatureBadgeWall />
       </OnboardingResultColumn>
     </>
   );

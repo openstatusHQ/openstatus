@@ -176,7 +176,12 @@ export function QuestionForm({
               )}
             />
           )}
-          <Button size="sm" type="submit" disabled={isPending || !watchSource}>
+          <Button
+            size="sm"
+            type="submit"
+            disabled={isPending || !watchSource}
+            variant="secondary"
+          >
             {isPending ? "Submitting..." : "Submit"}
           </Button>
         </div>
