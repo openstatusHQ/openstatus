@@ -1,4 +1,5 @@
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
+import type { StatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 /**
  * Formats a date range in a human-readable format.
@@ -261,4 +262,8 @@ export const defaultStatusBlocksLabels = {
 	formatDateShort: (d: Date) => formatDateShort(d),
 	formatDateTime: (d: Date) => formatDateTime(d),
 	formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
-} as const;
+	formatDateRangeParts: (from: Date, to: Date) => ({
+		from: formatDateTime(from),
+		to: isSameDay(from, to) ? formatTime(to) : formatDateTime(to),
+	}),
+} as const satisfies StatusBlocksLabels;

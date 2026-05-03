@@ -43,6 +43,18 @@ export type StatusBlocksLabels = {
 	formatDateShort: (d: Date) => string;
 	formatDateTime: (d: Date) => string;
 	formatDateRange: (from?: Date, to?: Date) => string;
+	/**
+	 * Returns the start/end of a closed range as separate strings, so callers
+	 * can render each side independently (e.g. wrap each in a hovercard)
+	 * without re-parsing the joined output of `formatDateRange`.
+	 *
+	 * Implementations should collapse same-day ranges (date on `from`, time
+	 * only on `to`) the same way `formatDateRange` does.
+	 *
+	 * Closed ranges only — both `from` and `to` are required. For open-ended
+	 * cases (`Since …` / `Until …` / `All time`) use `formatDateRange`.
+	 */
+	formatDateRangeParts: (from: Date, to: Date) => { from: string; to: string };
 };
 
 const StatusBlocksLabelsContext = createContext<StatusBlocksLabels | null>(null);

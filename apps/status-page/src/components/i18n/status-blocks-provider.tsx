@@ -1,6 +1,11 @@
 "use client";
 
-import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
+import {
+  formatDate,
+  formatDateRange,
+  formatDateRangeParts,
+  formatDateTime,
+} from "@/lib/formatter";
 import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
@@ -83,6 +88,8 @@ export function StatusBlocksProvider({
       formatDateTime: (d: Date) => formatDateTime(d, locale),
       formatDateRange: (from?: Date, to?: Date) =>
         formatDateRange(from, to, locale),
+      formatDateRangeParts: (from: Date, to: Date) =>
+        formatDateRangeParts(from, to, locale),
     }),
     [t, locale],
   );

@@ -1,12 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import {
-  StatusBlankContainer,
-  StatusBlankContent,
-  StatusBlankDescription,
-  StatusBlankReport,
-  StatusBlankTitle,
-} from "@openstatus/ui/components/blocks/status-blank";
+import { StatusBlankEvents } from "@openstatus/ui/components/blocks/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -218,20 +212,11 @@ export function StatusFeed({
 
   if (unifiedEvents.length === 0) {
     return (
-      <StatusBlankContainer>
-        <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-          <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-          <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
-          <StatusBlankReport />
-        </div>
-        <StatusBlankContent>
-          <StatusBlankTitle>{labels.noRecentNotifications}</StatusBlankTitle>
-          <StatusBlankDescription>
-            {labels.noRecentNotificationsDescription}
-          </StatusBlankDescription>
-        </StatusBlankContent>
-        {emptyAction}
-      </StatusBlankContainer>
+      <StatusBlankEvents
+        title={labels.noRecentNotifications}
+        description={labels.noRecentNotificationsDescription}
+        action={emptyAction}
+      />
     );
   }
 

@@ -620,9 +620,10 @@ export function StatusEventTimelineMaintenance({
 }) {
   const labels = useStatusBlocksLabels();
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
-  const range = labels.formatDateRange(maintenance.from, maintenance.to);
-  // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
-  const [from, to] = range.split(" - ");
+  const { from, to } = labels.formatDateRangeParts(
+    maintenance.from,
+    maintenance.to,
+  );
   return (
     <div
       data-slot="status-event-timeline-maintenance"
