@@ -180,7 +180,7 @@ export function QuestionForm({
             size="sm"
             type="submit"
             disabled={isPending || !watchSource}
-            variant="secondary"
+            variant="default"
           >
             {isPending ? "Submitting..." : "Submit"}
           </Button>

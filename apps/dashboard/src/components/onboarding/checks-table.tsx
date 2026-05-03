@@ -156,7 +156,7 @@ export function OnboardingChecksTable({
             {isStreaming && rows.length < totalRegions ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={COLUMNS.length}
+                  colSpan={table.getVisibleLeafColumns().length}
                   className="text-center text-muted-foreground text-xs"
                 >
                   Streaming results from {totalRegions - rows.length} more

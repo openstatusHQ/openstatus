@@ -15,12 +15,6 @@ function calculatePhases(timing: CheckResultSuccess["timing"]) {
   };
 }
 
-function sumPhases(phases: ReturnType<typeof calculatePhases>): number {
-  return (
-    phases.dns + phases.connect + phases.tls + phases.ttfb + phases.transfer
-  );
-}
-
 /**
  * Adapt a Go-checker preview result into the `ResponseLog` shape
  * `getColumns` and `<Sheet>` expect. The synthesized row is "rich enough"
@@ -68,19 +62,12 @@ export function checkResultToResponseLog(
   const requestStatus =
     result.status >= 400 ? "error" : result.status >= 200 ? "success" : "error";
 
-  // The HoverCardTiming column renders each phase as `phase / latency *
-  // 100%` of the bar width. If phase deltas don't sum to latency (idle
-  // gaps between phases on the Go-checker side), the bar reads short
-  // and the column looks broken. Use the phase sum as the denominator
-  // so the bar always fills the cell.
   const phases = result.timing ? calculatePhases(result.timing) : null;
-  const phaseLatency = phases ? sumPhases(phases) : 0;
-  const latency = phaseLatency > 0 ? phaseLatency : result.latency;
 
   return {
     type: "http",
     id: result.region,
-    latency,
+    latency: result.latency,
     statusCode: result.status,
     requestStatus,
     region: result.region,

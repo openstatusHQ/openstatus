@@ -35,7 +35,9 @@ const SAMPLE: Array<{ region: string; status: number; latency: number }> = [
   { region: "eze", status: 200, latency: 245 },
 ];
 
-const now = Date.now();
+// Fixed seed timestamp keeps SSR/CSR HTML identical (no hydration mismatch).
+// Exact value is irrelevant — the placeholder sits behind a hint overlay.
+const now = new Date("2026-01-01T00:00:00.000Z").getTime();
 
 // Deterministic pseudo-random in [0, 1) seeded by string — keeps SSR/CSR stable.
 function seeded(seed: string) {
