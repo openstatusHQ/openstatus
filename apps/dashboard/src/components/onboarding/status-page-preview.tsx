@@ -59,10 +59,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // 45 days of all-green placeholder data so the bars render solid instead of
 // loading-skeleton on first paint. The user has no real history yet — this is
 // "what the page will look like once data flows in," matching what every demo
-// status page looks like the day it ships.
-const PLACEHOLDER_BAR_DATA: StatusBarData[] = Array.from(
-  { length: 45 },
-  (_, i) => {
+// status page looks like the day it ships. Built per-mount (via useState
+// initializer below) so the window stays current across long-lived sessions.
+function buildPlaceholderBarData(): StatusBarData[] {
+  return Array.from({ length: 45 }, (_, i) => {
     const day = new Date();
     day.setDate(day.getDate() - (44 - i));
     const iso = day.toISOString().slice(0, 10);
@@ -72,8 +72,8 @@ const PLACEHOLDER_BAR_DATA: StatusBarData[] = Array.from(
       card: [{ status: "success", value: "100%" }],
       events: [],
     };
-  },
-);
+  });
+}
 
 export type OnboardingStatusPagePreviewProps = {
   slug: string;
@@ -109,6 +109,7 @@ export function OnboardingStatusPagePreview({
   useEffect(() => setMounted(true), []);
 
   const themeStyle = useThemeVars(themeKey, mode, mounted);
+  const [placeholderBarData] = useState(buildPlaceholderBarData);
 
   const displayTitle = title?.trim() || slug || "My Status Page";
   const allComponents: { key: string; name: string }[] = [
@@ -162,7 +163,7 @@ export function OnboardingStatusPagePreview({
                   </StatusComponentHeader>
                   <StatusComponentBody>
                     <StatusBar
-                      data={PLACEHOLDER_BAR_DATA}
+                      data={placeholderBarData}
                       container={mounted ? previewRef.current : null}
                     />
                   </StatusComponentBody>

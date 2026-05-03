@@ -19,7 +19,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Color swatches shown next to each theme option. Mirrors the playground
 // convention at `apps/status-page/.../public/client.tsx`.
@@ -33,11 +33,15 @@ const SWATCH_VARS = [
 
 export function ThemeSwatches({ themeKey }: { themeKey: ThemeKey }) {
   const { resolvedTheme } = useTheme();
+  // next-themes resolves `system` only on the client, so SSR has no
+  // resolvedTheme. Render the light palette until mount to keep the
+  // server HTML and the first client render in agreement, then settle to
+  // the resolved mode.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const theme = THEMES[themeKey] ?? THEMES.default;
-  // Match the active dashboard mode so swatches stay legible against the
-  // dropdown background and accurately reflect what the user will see on the
-  // published page.
-  const palette = resolvedTheme === "dark" ? theme.dark : theme.light;
+  const palette =
+    mounted && resolvedTheme === "dark" ? theme.dark : theme.light;
   return (
     <div className="-space-x-1 flex shrink-0 items-center">
       {SWATCH_VARS.map((cssVar) => (

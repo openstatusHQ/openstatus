@@ -48,6 +48,14 @@ function slugifyHostname(hostname: string): string {
     .slice(0, 32);
 }
 
+function safeHostname(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
 export function Client() {
   const [{ step, monitor, page, callbackUrl }, setSearchParams] =
     useQueryStates(searchParamsParsers, { history: "push" });
@@ -310,12 +318,4 @@ export function Client() {
       </OnboardingShell>
     </OnboardingLayout>
   );
-}
-
-function safeHostname(url: string): string | null {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return null;
-  }
 }

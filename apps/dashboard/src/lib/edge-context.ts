@@ -43,11 +43,13 @@ export async function getServiceContextFromRequest(
     return raw ? raw.slice(raw.indexOf("=") + 1) : undefined;
   })();
 
-  const activeWorkspace =
-    userAndWorkspace.usersToWorkspaces?.find(({ workspace }) => {
-      if (workspaceSlugCookie) return workspace.slug === workspaceSlugCookie;
-      return true;
-    })?.workspace ?? userAndWorkspace.usersToWorkspaces?.[0]?.workspace;
+  // When the cookie is set we look it up; otherwise pick the first workspace
+  // (matches the dashboard's "active workspace" default ordering).
+  const activeWorkspace = workspaceSlugCookie
+    ? userAndWorkspace.usersToWorkspaces?.find(
+        ({ workspace }) => workspace.slug === workspaceSlugCookie,
+      )?.workspace
+    : userAndWorkspace.usersToWorkspaces?.[0]?.workspace;
 
   if (!activeWorkspace) return null;
 

@@ -19,7 +19,12 @@ export async function* yieldMany<T>(promises: Promise<T>[]) {
         wake?.();
       },
       (error) => {
-        rejection = { error };
+        // First rejection wins. Subsequent rejections in the same microtask
+        // batch must not silently overwrite — the consumer throws on the
+        // first one and any later ones would be lost. Probes are expected
+        // to convert per-region failures into result objects upstream, so
+        // landing here at all is exceptional.
+        if (!rejection) rejection = { error };
         pending--;
         wake?.();
       },

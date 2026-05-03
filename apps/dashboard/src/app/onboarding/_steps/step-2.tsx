@@ -59,6 +59,11 @@ export function Step2({
     forceTheme: "system",
     components: monitorSkipped ? [{ name: "Website" }] : undefined,
   });
+  // Frozen at submit time so the locked preview shows what the user
+  // actually published, not whatever they last typed before clicking submit.
+  const [submittedValues, setSubmittedValues] =
+    useState<CreatePageFormValues | null>(null);
+  const lockedPreviewValues = submittedValues ?? previewValues;
 
   return (
     <>
@@ -82,7 +87,10 @@ export function Step2({
             id="onboarding-page-form"
             showComponents={monitorSkipped}
             defaultValues={{ slug: slugFallback }}
-            onSubmit={onSubmit}
+            onSubmit={async (values) => {
+              await onSubmit(values);
+              setSubmittedValues(values);
+            }}
             onValuesChange={setPreviewValues}
           />
         )}
@@ -111,14 +119,16 @@ export function Step2({
         <OnboardingResultHeading>Status Page Preview</OnboardingResultHeading>
         <div className="flex h-[calc(100dvh-13rem)] flex-1 overflow-hidden md:h-auto md:min-h-0">
           <OnboardingStatusPagePreview
-            slug={isLocked ? createdPageData?.slug ?? "" : previewValues.slug}
+            slug={
+              isLocked ? createdPageData?.slug ?? "" : lockedPreviewValues.slug
+            }
             title={(isLocked
               ? createdPageData?.title ?? ""
-              : previewValues.slug
+              : lockedPreviewValues.slug
             ).replace(/-/g, " ")}
-            components={previewValues.components ?? []}
+            components={lockedPreviewValues.components ?? []}
             monitorName={monitorName}
-            themeKey={previewValues.theme as ThemeKey}
+            themeKey={lockedPreviewValues.theme as ThemeKey}
             className="h-full w-full"
           />
         </div>
