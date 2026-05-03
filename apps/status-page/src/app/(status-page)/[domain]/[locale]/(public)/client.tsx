@@ -329,10 +329,13 @@ export function Client() {
         <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
           <StatusFeed
             statusReports={page.statusReports
-              .filter((report) =>
-                page.lastEvents.some(
-                  (event) => event.id === report.id && event.type === "report",
-                ),
+              .filter(
+                (report) =>
+                  report.statusReportUpdates.length > 0 &&
+                  page.lastEvents.some(
+                    (event) =>
+                      event.id === report.id && event.type === "report",
+                  ),
               )
               .map((report) => ({
                 ...report,
