@@ -80,11 +80,23 @@ export function formatDateRangeParts(
   to: Date,
   locale?: string,
 ): { from: string; to: string } {
+  if (isSameDay(from, to)) {
+    return {
+      from: formatDateTime(from, locale),
+      to: formatTime(to, locale),
+    };
+  }
+  const isFromStartDay = startOfDay(from).getTime() === from.getTime();
+  const isToEndDay = endOfDay(to).getTime() === to.getTime();
+  if (isFromStartDay && isToEndDay) {
+    return {
+      from: formatDate(from, { locale }),
+      to: formatDate(to, { locale }),
+    };
+  }
   return {
     from: formatDateTime(from, locale),
-    to: isSameDay(from, to)
-      ? formatTime(to, locale)
-      : formatDateTime(to, locale),
+    to: formatDateTime(to, locale),
   };
 }
 

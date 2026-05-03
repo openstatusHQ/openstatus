@@ -87,12 +87,15 @@ export function StatusPageHeaderBrandFallback({
   className,
   ...props
 }: Omit<React.ComponentProps<"div">, "children"> & { title?: string }) {
-  const initials = (title ?? "")
-    .split(" ")
-    .map((word) => word.charAt(0))
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  const initials =
+    (title ?? "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0))
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
   return (
     <div
       data-slot="status-page-header-brand-fallback"

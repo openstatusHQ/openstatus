@@ -104,7 +104,7 @@ export function StatusUpdatesCopyInput({
     >
       <Input
         data-slot="status-updates-copy-input-field"
-        placeholder={value}
+        value={value}
         readOnly
         onClick={(e) => {
           copy(value, {
@@ -117,10 +117,14 @@ export function StatusUpdatesCopyInput({
       />
       <Button
         data-slot="status-updates-copy-input-button"
+        type="button"
         variant="outline"
         size="icon"
         onClick={() =>
-          copy(value, { successMessage: labels.linkCopiedToClipboard })
+          copy(value, {
+            successMessage: labels.linkCopiedToClipboard,
+            withToast: true,
+          })
         }
         className="-translate-y-1/2 absolute top-1/2 right-2 size-6"
       >

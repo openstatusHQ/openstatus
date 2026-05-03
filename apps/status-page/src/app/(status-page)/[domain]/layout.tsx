@@ -30,7 +30,14 @@ export default async function Layout({
 
   if (!page) return notFound();
 
-  const cfg = pageConfigurationSchema.parse(page?.configuration ?? {});
+  // safeParse + fallback so a stale enum value in stored config (e.g. removed
+  // theme key) doesn't crash the layout.
+  const cfgResult = pageConfigurationSchema.safeParse(
+    page?.configuration ?? {},
+  );
+  const cfg = cfgResult.success
+    ? cfgResult.data
+    : pageConfigurationSchema.parse({});
 
   return (
     <HydrateClient>
