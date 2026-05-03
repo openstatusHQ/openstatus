@@ -325,7 +325,7 @@ export function FloatingButton({
               <a
                 href={
                   pageId
-                    ? `https://app.openstatus.dev/status-pages/${pageId}/edit?type=${barType}&value=${cardType}&uptime=${showUptime}&theme=${communityTheme}`
+                    ? `https://app.openstatus.dev/status-pages/${pageId}/components?type=${barType}&value=${cardType}&uptime=${showUptime}&theme=${communityTheme}`
                     : "https://app.openstatus.dev/status-pages"
                 }
                 target="_blank"
