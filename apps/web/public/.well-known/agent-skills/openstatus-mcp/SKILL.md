@@ -15,6 +15,7 @@ Add this to your MCP client config (Claude Desktop, Cursor, ChatGPT custom conne
 {
   "mcpServers": {
     "openstatus": {
+      "type": "http",
       "url": "https://api.openstatus.dev/mcp",
       "headers": {
         "x-openstatus-key": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
