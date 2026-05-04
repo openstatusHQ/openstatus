@@ -2461,7 +2461,7 @@ describe("MonitorService.GetMonitorSummary", () => {
   });
 });
 
-describe("MonitorService.ListMonitorResponseLogs", () => {
+describe("MonitorService.ListMonitorHTTPResponseLogs", () => {
   test("returns paginated response logs for an HTTP monitor", async () => {
     const { data: mockData, calls } = getTinybirdMocks();
     mockData.httpListBiweekly = [
@@ -2471,7 +2471,7 @@ describe("MonitorService.ListMonitorResponseLogs", () => {
     ];
 
     const res = await connectRequest(
-      "ListMonitorResponseLogs",
+      "ListMonitorHTTPResponseLogs",
       {
         id: String(testHttpMonitorId),
         limit: 2,
@@ -2488,9 +2488,9 @@ describe("MonitorService.ListMonitorResponseLogs", () => {
       id: "log_1",
       statusCode: 200,
       monitorId: String(testHttpMonitorId),
-      requestStatus: "RESPONSE_LOG_REQUEST_STATUS_SUCCESS",
+      requestStatus: "HTTP_RESPONSE_LOG_REQUEST_STATUS_SUCCESS",
       region: "iad",
-      trigger: "RESPONSE_LOG_TRIGGER_API",
+      trigger: "HTTP_RESPONSE_LOG_TRIGGER_API",
       timestamp: "1777667323740",
       timing: { dns: 1, connect: 2, tls: 3, ttfb: 4, transfer: 5 },
     });
@@ -2527,7 +2527,7 @@ describe("MonitorService.ListMonitorResponseLogs", () => {
 
     try {
       const res = await connectRequest(
-        "ListMonitorResponseLogs",
+        "ListMonitorHTTPResponseLogs",
         { id: String(otherWorkspaceMon.id) },
         { "x-openstatus-key": "1" },
       );
@@ -2541,7 +2541,7 @@ describe("MonitorService.ListMonitorResponseLogs", () => {
 
   test("rejects non-HTTP monitors", async () => {
     const res = await connectRequest(
-      "ListMonitorResponseLogs",
+      "ListMonitorHTTPResponseLogs",
       { id: String(testTcpMonitorId) },
       { "x-openstatus-key": "1" },
     );
@@ -2550,7 +2550,7 @@ describe("MonitorService.ListMonitorResponseLogs", () => {
   });
 });
 
-describe("MonitorService.GetMonitorResponseLog", () => {
+describe("MonitorService.GetMonitorHTTPResponseLog", () => {
   test("returns response log details without exposing the response body", async () => {
     const { data } = getTinybirdMocks();
     data.httpGetBiweekly = [
@@ -2571,7 +2571,7 @@ describe("MonitorService.GetMonitorResponseLog", () => {
     ];
 
     const res = await connectRequest(
-      "GetMonitorResponseLog",
+      "GetMonitorHTTPResponseLog",
       { id: String(testHttpMonitorId), logId: "log_error" },
       { "x-openstatus-key": "1" },
     );
@@ -2596,7 +2596,7 @@ describe("MonitorService.GetMonitorResponseLog", () => {
 
   test("returns not found when the response log does not exist", async () => {
     const res = await connectRequest(
-      "GetMonitorResponseLog",
+      "GetMonitorHTTPResponseLog",
       { id: String(testHttpMonitorId), logId: "missing-log-id" },
       { "x-openstatus-key": "1" },
     );
@@ -2606,7 +2606,7 @@ describe("MonitorService.GetMonitorResponseLog", () => {
 
   test("requires a log id", async () => {
     const res = await connectRequest(
-      "GetMonitorResponseLog",
+      "GetMonitorHTTPResponseLog",
       { id: String(testHttpMonitorId) },
       { "x-openstatus-key": "1" },
     );

@@ -81,13 +81,13 @@ service MonitorService {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // ListMonitorResponseLogs returns paginated response logs for an HTTP monitor.
-  rpc ListMonitorResponseLogs(ListMonitorResponseLogsRequest) returns (ListMonitorResponseLogsResponse) {
+  // ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor.
+  rpc ListMonitorHTTPResponseLogs(ListMonitorHTTPResponseLogsRequest) returns (ListMonitorHTTPResponseLogsResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // GetMonitorResponseLog returns one response log for an HTTP monitor.
-  rpc GetMonitorResponseLog(GetMonitorResponseLogRequest) returns (GetMonitorResponseLogResponse) {
+  // GetMonitorHTTPResponseLog returns one response log for an HTTP monitor.
+  rpc GetMonitorHTTPResponseLog(GetMonitorHTTPResponseLogRequest) returns (GetMonitorHTTPResponseLogResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 }
@@ -323,30 +323,30 @@ message GetMonitorResponse {
   MonitorConfig monitor = 1;
 }
 
-// ResponseLogRequestStatus is the result classification for an HTTP response log.
-enum ResponseLogRequestStatus {
+// HTTPResponseLogRequestStatus is the result classification for an HTTP response log.
+enum HTTPResponseLogRequestStatus {
   // Unspecified request status.
-  RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED = 0;
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED = 0;
   // The monitor response satisfied its assertions.
-  RESPONSE_LOG_REQUEST_STATUS_SUCCESS = 1;
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_SUCCESS = 1;
   // The monitor response failed its assertions or request.
-  RESPONSE_LOG_REQUEST_STATUS_ERROR = 2;
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_ERROR = 2;
   // The monitor response was slower than the degraded threshold.
-  RESPONSE_LOG_REQUEST_STATUS_DEGRADED = 3;
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_DEGRADED = 3;
 }
 
-// ResponseLogTrigger describes what started the monitor check.
-enum ResponseLogTrigger {
+// HTTPResponseLogTrigger describes what started the monitor check.
+enum HTTPResponseLogTrigger {
   // Unspecified trigger.
-  RESPONSE_LOG_TRIGGER_UNSPECIFIED = 0;
+  HTTP_RESPONSE_LOG_TRIGGER_UNSPECIFIED = 0;
   // Scheduled monitor run.
-  RESPONSE_LOG_TRIGGER_CRON = 1;
+  HTTP_RESPONSE_LOG_TRIGGER_CRON = 1;
   // API-triggered monitor run.
-  RESPONSE_LOG_TRIGGER_API = 2;
+  HTTP_RESPONSE_LOG_TRIGGER_API = 2;
 }
 
-// ResponseLogTiming contains calculated timing phases in milliseconds.
-message ResponseLogTiming {
+// HTTPResponseLogTiming contains calculated timing phases in milliseconds.
+message HTTPResponseLogTiming {
   // DNS lookup duration.
   int32 dns = 1;
   // TCP connection duration.
@@ -359,8 +359,8 @@ message ResponseLogTiming {
   int32 transfer = 5;
 }
 
-// ResponseLogListItem is a compact response log entry.
-message ResponseLogListItem {
+// HTTPResponseLogListItem is a compact response log entry.
+message HTTPResponseLogListItem {
   // Response log ID.
   optional string id = 1;
   // Latency in milliseconds.
@@ -370,23 +370,23 @@ message ResponseLogListItem {
   // Monitor ID.
   string monitor_id = 4;
   // Request status classification.
-  ResponseLogRequestStatus request_status = 5;
+  HTTPResponseLogRequestStatus request_status = 5;
   // Region identifier. This can be a public region code or private location ID.
   string region = 6;
   // Cron bucket timestamp in Unix milliseconds.
   int64 cron_timestamp = 7;
   // Check trigger.
-  ResponseLogTrigger trigger = 8;
+  HTTPResponseLogTrigger trigger = 8;
   // Response timestamp in Unix milliseconds.
   int64 timestamp = 9;
   // Timing phases.
-  optional ResponseLogTiming timing = 10;
+  optional HTTPResponseLogTiming timing = 10;
 }
 
-// ResponseLogDetail contains full response log debugging data.
-message ResponseLogDetail {
+// HTTPResponseLogDetail contains full response log debugging data.
+message HTTPResponseLogDetail {
   // Compact response log fields.
-  ResponseLogListItem log = 1;
+  HTTPResponseLogListItem log = 1;
   // Checked URL.
   string url = 2;
   // Whether the check errored.
@@ -399,8 +399,8 @@ message ResponseLogDetail {
   optional string assertions = 6;
 }
 
-// ListMonitorResponseLogsRequest is the request to list response logs.
-message ListMonitorResponseLogsRequest {
+// ListMonitorHTTPResponseLogsRequest is the request to list response logs.
+message ListMonitorHTTPResponseLogsRequest {
   // Monitor ID to list response logs for (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 
@@ -420,8 +420,8 @@ message ListMonitorResponseLogsRequest {
   optional int32 offset = 5 [(buf.validate.field).int32.gte = 0];
 }
 
-// ResponseLogPagination contains offset pagination metadata.
-message ResponseLogPagination {
+// HTTPResponseLogPagination contains offset pagination metadata.
+message HTTPResponseLogPagination {
   // Requested page size.
   int32 limit = 1;
   // Requested offset.
@@ -432,24 +432,24 @@ message ResponseLogPagination {
   optional int32 next_offset = 4;
 }
 
-// ListMonitorResponseLogsResponse is the response containing response logs.
-message ListMonitorResponseLogsResponse {
+// ListMonitorHTTPResponseLogsResponse is the response containing response logs.
+message ListMonitorHTTPResponseLogsResponse {
   // Response logs.
-  repeated ResponseLogListItem logs = 1;
+  repeated HTTPResponseLogListItem logs = 1;
   // Pagination metadata.
-  ResponseLogPagination pagination = 2;
+  HTTPResponseLogPagination pagination = 2;
 }
 
-// GetMonitorResponseLogRequest is the request to get one response log.
-message GetMonitorResponseLogRequest {
+// GetMonitorHTTPResponseLogRequest is the request to get one response log.
+message GetMonitorHTTPResponseLogRequest {
   // Monitor ID to get a response log for (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
   // Response log ID to retrieve (required).
   string log_id = 2 [(buf.validate.field).string.min_len = 1];
 }
 
-// GetMonitorResponseLogResponse is the response containing one response log.
-message GetMonitorResponseLogResponse {
+// GetMonitorHTTPResponseLogResponse is the response containing one response log.
+message GetMonitorHTTPResponseLogResponse {
   // Response log details.
-  ResponseLogDetail log = 1;
+  HTTPResponseLogDetail log = 1;
 }

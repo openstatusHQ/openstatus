@@ -1,9 +1,9 @@
 import {
-  type ResponseLogDetail,
-  type ResponseLogListItem,
-  ResponseLogRequestStatus,
-  type ResponseLogTiming,
-  ResponseLogTrigger,
+  type HTTPResponseLogDetail,
+  type HTTPResponseLogListItem,
+  type HTTPResponseLogTiming,
+  HTTPResponseLogRequestStatus,
+  HTTPResponseLogTrigger,
 } from "@openstatus/proto/monitor/v1";
 
 const REDACTED = "[redacted]";
@@ -33,7 +33,7 @@ type TinybirdTiming = {
   transfer: number;
 } | null;
 
-type TinybirdResponseLogListItem = {
+type TinybirdHTTPResponseLogListItem = {
   id: string | null;
   latency: number;
   statusCode: number | null;
@@ -46,7 +46,7 @@ type TinybirdResponseLogListItem = {
   timing: TinybirdTiming;
 };
 
-type TinybirdResponseLogDetail = TinybirdResponseLogListItem & {
+type TinybirdHTTPResponseLogDetail = TinybirdHTTPResponseLogListItem & {
   url: string;
   error: boolean;
   message: string | null;
@@ -73,39 +73,41 @@ export function redactSensitiveHeaders(headers: Record<string, string> | null) {
   );
 }
 
-function toResponseLogRequestStatus(
-  status: TinybirdResponseLogListItem["requestStatus"],
+function toHTTPResponseLogRequestStatus(
+  status: TinybirdHTTPResponseLogListItem["requestStatus"],
 ) {
   switch (status) {
     case "success":
-      return ResponseLogRequestStatus.SUCCESS;
+      return HTTPResponseLogRequestStatus.SUCCESS;
     case "error":
-      return ResponseLogRequestStatus.ERROR;
+      return HTTPResponseLogRequestStatus.ERROR;
     case "degraded":
-      return ResponseLogRequestStatus.DEGRADED;
+      return HTTPResponseLogRequestStatus.DEGRADED;
     default:
-      return ResponseLogRequestStatus.UNSPECIFIED;
+      return HTTPResponseLogRequestStatus.UNSPECIFIED;
   }
 }
 
-function toResponseLogTrigger(trigger: TinybirdResponseLogListItem["trigger"]) {
+function toHTTPResponseLogTrigger(
+  trigger: TinybirdHTTPResponseLogListItem["trigger"],
+) {
   switch (trigger) {
     case "cron":
-      return ResponseLogTrigger.CRON;
+      return HTTPResponseLogTrigger.CRON;
     case "api":
-      return ResponseLogTrigger.API;
+      return HTTPResponseLogTrigger.API;
     default:
-      return ResponseLogTrigger.UNSPECIFIED;
+      return HTTPResponseLogTrigger.UNSPECIFIED;
   }
 }
 
-function toResponseLogTiming(
+function toHTTPResponseLogTiming(
   timing: TinybirdTiming,
-): ResponseLogTiming | undefined {
+): HTTPResponseLogTiming | undefined {
   if (!timing) return undefined;
 
   return {
-    $typeName: "openstatus.monitor.v1.ResponseLogTiming",
+    $typeName: "openstatus.monitor.v1.HTTPResponseLogTiming",
     dns: timing.dns,
     connect: timing.connect,
     tls: timing.tls,
@@ -114,30 +116,30 @@ function toResponseLogTiming(
   };
 }
 
-export function toResponseLogListItem(
-  log: TinybirdResponseLogListItem,
-): ResponseLogListItem {
+export function toHTTPResponseLogListItem(
+  log: TinybirdHTTPResponseLogListItem,
+): HTTPResponseLogListItem {
   return {
-    $typeName: "openstatus.monitor.v1.ResponseLogListItem",
+    $typeName: "openstatus.monitor.v1.HTTPResponseLogListItem",
     id: log.id ?? undefined,
     latency: log.latency,
     statusCode: log.statusCode ?? undefined,
     monitorId: log.monitorId,
-    requestStatus: toResponseLogRequestStatus(log.requestStatus),
+    requestStatus: toHTTPResponseLogRequestStatus(log.requestStatus),
     region: log.region,
     cronTimestamp: BigInt(log.cronTimestamp),
-    trigger: toResponseLogTrigger(log.trigger),
+    trigger: toHTTPResponseLogTrigger(log.trigger),
     timestamp: BigInt(log.timestamp),
-    timing: toResponseLogTiming(log.timing),
+    timing: toHTTPResponseLogTiming(log.timing),
   };
 }
 
-export function toResponseLogDetail(
-  log: TinybirdResponseLogDetail,
-): ResponseLogDetail {
+export function toHTTPResponseLogDetail(
+  log: TinybirdHTTPResponseLogDetail,
+): HTTPResponseLogDetail {
   return {
-    $typeName: "openstatus.monitor.v1.ResponseLogDetail",
-    log: toResponseLogListItem(log),
+    $typeName: "openstatus.monitor.v1.HTTPResponseLogDetail",
+    log: toHTTPResponseLogListItem(log),
     url: log.url,
     error: log.error,
     message: log.message ?? undefined,

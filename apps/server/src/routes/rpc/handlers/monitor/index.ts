@@ -11,11 +11,11 @@ import type {
   GetMonitorResponse,
   GetMonitorSummaryResponse,
   HTTPMonitor,
-  ListMonitorResponseLogsResponse,
+  ListMonitorHTTPResponseLogsResponse,
   MonitorConfig,
   MonitorService,
   RegionStatus,
-  ResponseLogPagination,
+  HTTPResponseLogPagination,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
@@ -55,7 +55,10 @@ import {
   responseLogsNotEnabledError,
 } from "./errors";
 import { checkMonitorLimits } from "./limits";
-import { toResponseLogDetail, toResponseLogListItem } from "./response-logs";
+import {
+  toHTTPResponseLogDetail,
+  toHTTPResponseLogListItem,
+} from "./response-logs";
 import {
   getCommonDbValues,
   getCommonDbValuesForUpdate,
@@ -825,7 +828,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     } satisfies GetMonitorSummaryResponse;
   },
 
-  async listMonitorResponseLogs(req, ctx) {
+  async listMonitorHTTPResponseLogs(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
 
@@ -853,11 +856,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       limit: limit + 1,
       offset,
     });
-    const logs = result.data.slice(0, limit).map(toResponseLogListItem);
+    const logs = result.data.slice(0, limit).map(toHTTPResponseLogListItem);
     const hasMore = result.data.length > limit;
 
-    const pagination: ResponseLogPagination = {
-      $typeName: "openstatus.monitor.v1.ResponseLogPagination",
+    const pagination: HTTPResponseLogPagination = {
+      $typeName: "openstatus.monitor.v1.HTTPResponseLogPagination",
       limit,
       offset,
       hasMore,
@@ -866,13 +869,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     return {
       $typeName:
-        "openstatus.monitor.v1.ListMonitorResponseLogsResponse" as const,
+        "openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse" as const,
       logs,
       pagination,
-    } satisfies ListMonitorResponseLogsResponse;
+    } satisfies ListMonitorHTTPResponseLogsResponse;
   },
 
-  async getMonitorResponseLog(req, ctx) {
+  async getMonitorHTTPResponseLog(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
 
@@ -900,8 +903,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     }
 
     return {
-      $typeName: "openstatus.monitor.v1.GetMonitorResponseLogResponse" as const,
-      log: toResponseLogDetail(log),
+      $typeName:
+        "openstatus.monitor.v1.GetMonitorHTTPResponseLogResponse" as const,
+      log: toHTTPResponseLogDetail(log),
     };
   },
 };
