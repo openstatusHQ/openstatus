@@ -146,7 +146,7 @@ export function responseLogNotFoundError(
 export function responseLogsNotEnabledError(): ConnectError {
   return createError(
     "Upgrade for response logs",
-    Code.ResourceExhausted,
+    Code.PermissionDenied,
     ErrorReason.RESPONSE_LOGS_NOT_ENABLED,
   );
 }

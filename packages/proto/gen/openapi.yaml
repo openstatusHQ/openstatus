@@ -1176,7 +1176,7 @@ components:
             - "null"
           title: from_timestamp
           format: int64
-          description: Start of the response log window as Unix milliseconds.
+          description: Start of the response log window as Unix milliseconds within the 14-day retention window.
         toTimestamp:
           type:
             - integer
@@ -1184,7 +1184,7 @@ components:
             - "null"
           title: to_timestamp
           format: int64
-          description: End of the response log window as Unix milliseconds.
+          description: End of the response log window as Unix milliseconds within the 14-day retention window.
         limit:
           type:
             - integer
@@ -1204,7 +1204,7 @@ components:
           description: Number of logs to skip for pagination (defaults to 0).
       title: ListMonitorHTTPResponseLogsRequest
       additionalProperties: false
-      description: ListMonitorHTTPResponseLogsRequest is the request to list response logs.
+      description: ListMonitorHTTPResponseLogsRequest is the request to list response logs within the 14-day HTTP response-log window.
     openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse:
       type: object
       properties:
@@ -4468,7 +4468,7 @@ paths:
       tags:
         - MonitorService
       summary: ListMonitorHTTPResponseLogs
-      description: ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor.
+      description: ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
       operationId: MonitorService_ListMonitorHTTPResponseLogs.get
       parameters:
         - name: message
@@ -4494,7 +4494,7 @@ paths:
       tags:
         - MonitorService
       summary: ListMonitorHTTPResponseLogs
-      description: ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor.
+      description: ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
       operationId: MonitorService_ListMonitorHTTPResponseLogs
       requestBody:
         content:

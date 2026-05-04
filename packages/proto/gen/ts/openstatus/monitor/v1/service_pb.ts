@@ -934,7 +934,7 @@ export const HTTPResponseLogDetailSchema: GenMessage<HTTPResponseLogDetail> = /*
   messageDesc(file_openstatus_monitor_v1_service, 28);
 
 /**
- * ListMonitorHTTPResponseLogsRequest is the request to list response logs.
+ * ListMonitorHTTPResponseLogsRequest is the request to list response logs within the 14-day HTTP response-log window.
  *
  * @generated from message openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest
  */
@@ -947,14 +947,14 @@ export type ListMonitorHTTPResponseLogsRequest = Message<"openstatus.monitor.v1.
   id: string;
 
   /**
-   * Start of the response log window as Unix milliseconds.
+   * Start of the response log window as Unix milliseconds within the 14-day retention window.
    *
    * @generated from field: optional int64 from_timestamp = 2;
    */
   fromTimestamp?: bigint;
 
   /**
-   * End of the response log window as Unix milliseconds.
+   * End of the response log window as Unix milliseconds within the 14-day retention window.
    *
    * @generated from field: optional int64 to_timestamp = 3;
    */
@@ -1345,7 +1345,7 @@ export const MonitorService: GenService<{
     output: typeof GetMonitorResponseSchema;
   },
   /**
-   * ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor.
+   * ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
    *
    * @generated from rpc openstatus.monitor.v1.MonitorService.ListMonitorHTTPResponseLogs
    */

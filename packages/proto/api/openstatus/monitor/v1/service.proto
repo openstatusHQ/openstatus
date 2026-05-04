@@ -81,7 +81,7 @@ service MonitorService {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor.
+  // ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
   rpc ListMonitorHTTPResponseLogs(ListMonitorHTTPResponseLogsRequest) returns (ListMonitorHTTPResponseLogsResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
@@ -399,15 +399,15 @@ message HTTPResponseLogDetail {
   optional string assertions = 6;
 }
 
-// ListMonitorHTTPResponseLogsRequest is the request to list response logs.
+// ListMonitorHTTPResponseLogsRequest is the request to list response logs within the 14-day HTTP response-log window.
 message ListMonitorHTTPResponseLogsRequest {
   // Monitor ID to list response logs for (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 
-  // Start of the response log window as Unix milliseconds.
+  // Start of the response log window as Unix milliseconds within the 14-day retention window.
   optional int64 from_timestamp = 2;
 
-  // End of the response log window as Unix milliseconds.
+  // End of the response log window as Unix milliseconds within the 14-day retention window.
   optional int64 to_timestamp = 3;
 
   // Maximum number of logs to return (1-100, defaults to 25).

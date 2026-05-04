@@ -38,6 +38,7 @@ async function connectRequest(
 }
 
 const TEST_PREFIX = "rpc-monitor-test";
+const FREE_PLAN_KEY = "2";
 let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
@@ -1663,8 +1664,6 @@ describe("MonitorService - Default Values", () => {
 
 describe("MonitorService - Limits", () => {
   // Workspace 2 has free plan with limited periodicity (10m, 30m, 1h) and max 6 regions
-  const FREE_PLAN_KEY = "2";
-
   test("returns error when periodicity is not allowed by plan", async () => {
     // Free plan only allows 10m, 30m, 1h - PERIODICITY_30S is not allowed
     const res = await connectRequest(
@@ -2539,6 +2538,18 @@ describe("MonitorService.ListMonitorHTTPResponseLogs", () => {
     }
   });
 
+  test("requires the response logs entitlement", async () => {
+    const { calls } = getTinybirdMocks();
+    const res = await connectRequest(
+      "ListMonitorHTTPResponseLogs",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    expect(res.status).toBe(403);
+    expect(calls.httpListBiweekly).toEqual([]);
+  });
+
   test("rejects non-HTTP monitors", async () => {
     const res = await connectRequest(
       "ListMonitorHTTPResponseLogs",
@@ -2592,6 +2603,48 @@ describe("MonitorService.GetMonitorHTTPResponseLog", () => {
       assertions: '[{"type":"status","compare":"eq","target":200}]',
     });
     expect(result.log.body).toBeUndefined();
+  });
+
+  test("requires the response logs entitlement", async () => {
+    const { calls } = getTinybirdMocks();
+    const res = await connectRequest(
+      "GetMonitorHTTPResponseLog",
+      { id: String(testHttpMonitorId), logId: "log_error" },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    expect(res.status).toBe(403);
+    expect(calls.httpGetBiweekly).toEqual([]);
+  });
+
+  test("returns not found for a monitor in another workspace", async () => {
+    const { calls } = getTinybirdMocks();
+    const otherWorkspaceMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-response-log-detail-other-ws`,
+        url: "https://other-ws-response-log-detail.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetMonitorHTTPResponseLog",
+        { id: String(otherWorkspaceMon.id), logId: "log_error" },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+      expect(calls.httpGetBiweekly).toEqual([]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
+    }
   });
 
   test("returns not found when the response log does not exist", async () => {
