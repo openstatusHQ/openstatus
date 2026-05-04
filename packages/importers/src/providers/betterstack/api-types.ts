@@ -23,11 +23,20 @@ export const BetterstackMonitorSchema = z.object({
         }),
       )
       .default([]),
-    request_body: z.string().default(""),
-    expected_status_codes: z.array(z.number()).default([]),
+    request_body: z
+      .string()
+      .nullish()
+      .transform((v) => v ?? ""),
+    expected_status_codes: z
+      .array(z.number())
+      .nullish()
+      .transform((v) => v ?? []),
     required_keyword: z.string().nullable().default(null),
     verify_ssl: z.boolean().default(true),
-    regions: z.array(z.string()).default([]),
+    regions: z
+      .array(z.string())
+      .nullish()
+      .transform((v) => v ?? []),
     status: z.string(),
     paused_at: z.string().nullable(),
     created_at: z.string(),
