@@ -53,6 +53,7 @@ import {
 } from "@openstatus/ui/components/blocks/status-page-shell";
 import type { StatusBarData } from "@openstatus/ui/components/blocks/status.types";
 import { Separator } from "@openstatus/ui/components/ui/separator";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -118,6 +119,12 @@ export function OnboardingStatusPagePreview({
       .filter((c) => c.name.trim().length > 0)
       .map((c, i) => ({ key: `c-${i}`, name: c.name })),
   ];
+
+  if (!mounted) {
+    return (
+      <Skeleton className={cn("rounded-md border border-border", className)} />
+    );
+  }
 
   return (
     <div

@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import { THEMES, THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -90,7 +91,12 @@ export function ThemePickerPopover({
         <Command>
           <CommandInput placeholder="Search themes..." className="h-9" />
           <CommandList>
-            <CommandEmpty>No themes found.</CommandEmpty>
+            <CommandEmpty>
+              No themes found. Browse{" "}
+              <Link href="https://themes.openstatus.dev">
+                themes.openstatus.dev
+              </Link>
+            </CommandEmpty>
             <CommandGroup>
               {THEME_KEYS.map((key) => {
                 const { name } = THEMES[key];

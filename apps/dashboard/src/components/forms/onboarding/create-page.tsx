@@ -29,7 +29,7 @@ import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Laptop, Moon, Plus, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -81,17 +81,6 @@ export function CreatePageForm({
 }) {
   const trpc = useTRPC();
   const { theme: dashboardTheme, setTheme: setDashboardTheme } = useTheme();
-
-  // Restore the user's dashboard theme on unmount. The Mode select mirrors
-  // its value to next-themes so the preview reflects what they'll publish,
-  // but that's only meant to last while they're on this step.
-  const originalDashboardTheme = useRef(dashboardTheme);
-  useEffect(() => {
-    const original = originalDashboardTheme.current;
-    return () => {
-      if (original) setDashboardTheme(original);
-    };
-  }, [setDashboardTheme]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
