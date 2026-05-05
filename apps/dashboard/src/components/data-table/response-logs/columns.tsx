@@ -176,6 +176,8 @@ function HoverCardTiming({
   timing: NonNullable<Extract<ResponseLog, { type: "http" }>["timing"]>;
   latency: number;
 }) {
+  const phasesTotal =
+    Object.values(timing).reduce((acc, v) => acc + v, 0) || latency;
   return (
     <HoverCard openDelay={50} closeDelay={50}>
       <HoverCardTrigger
@@ -188,7 +190,7 @@ function HoverCardTiming({
               key={key}
               className={cn("h-4")}
               style={{
-                width: `${(value / latency) * 100}%`,
+                width: `${(value / phasesTotal) * 100}%`,
                 backgroundColor: `var(--chart-${index + 1})`,
               }}
             />

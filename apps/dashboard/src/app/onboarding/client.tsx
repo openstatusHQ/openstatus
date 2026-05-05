@@ -10,7 +10,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, PanelTop, Rocket } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";
 import { useEffect, useMemo, useRef } from "react";
@@ -67,29 +67,21 @@ function safeHostname(url: string): string | null {
 }
 
 export function Client() {
-  const [{ step, monitor, page, callbackUrl }, setSearchParams] =
-    useQueryStates(searchParamsParsers, { history: "push" });
-  const router = useRouter();
+  const [{ step, monitor, page }, setSearchParams] = useQueryStates(
+    searchParamsParsers,
+    { history: "push" },
+  );
   const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
-  // Server lists are the ground truth for "did this user already do step X."
-  // Mutation state alone dies on refresh and ignores returning users who
-  // already have monitors / pages from a previous session or workspace
-  // invite. Both are prefetched in `(dashboard)/layout.tsx` so the queries
-  // are usually hot — but this route lives outside `(dashboard)`, so cold
-  // starts fetch them now.
+  // Ground truth for refresh + returning-user state.
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
 
-  // Invalidate (not refetch) so any mounted subscriber to `workspace.get`
-  // (sidebar quota chip, plan-gate selectors, etc.) gets fresh data on the
-  // next read. The workspace shape carries derived state like monitor /
-  // page counts — letting it go stale after onboarding creates would show
-  // wrong numbers when the user lands on /overview.
+  // Invalidate so workspace counts (sidebar quota, plan gates) stay fresh.
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: async () => {
@@ -135,12 +127,7 @@ export function Client() {
   } = useStreamChecks();
   const checksStartedRef = useRef(false);
 
-  // Prefer fresh mutation data (this session's submit) so the locked summary
-  // reflects exactly what the user just typed. Fall back to the most recent
-  // server-side row — covers refresh mid-flow and returning users with
-  // pre-existing data. `monitor.list` orders by `(active desc, createdAt
-  // desc)`; `page.list` by `createdAt desc` — index 0 is "most recent" in
-  // both, which is the right pick for onboarding.
+  // Fresh mutation data wins; fall back to the most recent server row.
   const monitorData: OnboardingMonitor | undefined =
     createMonitorMutation.data ??
     (monitors?.[0] ? { id: monitors[0].id, url: monitors[0].url } : undefined);
@@ -178,11 +165,8 @@ export function Client() {
     return generateSlug(2, { format: "kebab" });
   }, [monitorData?.url, companyDomain]);
 
-  // Trigger streaming preview whenever step 1 is locked and we know the
-  // monitor — covers fresh creation AND post-refresh hydration so the
-  // results panel isn't an empty table. Gated on `monitor === "completed"`
-  // so a returning user who manually navs back to step 1 with a stale URL
-  // doesn't auto-fire (they'd need an explicit retry).
+  // Auto-fire on step-1 fresh-create + refresh-of-locked. Skip on stale
+  // hydration so returning users don't accidentally re-probe.
   useEffect(() => {
     if (!monitorData?.id || step !== "1" || monitor !== "completed") return;
     if (checksStartedRef.current) return;
@@ -193,61 +177,6 @@ export function Client() {
     };
   }, [monitorData?.id, step, monitor, startChecks, stopChecks]);
 
-  // Hydrate URL params from server lists once both queries resolve.
-  // Returning user with existing data lands on the first unfinished step
-  // instead of an empty form. Runs once per mount; respects any explicit
-  // params already in the URL so deep links keep working.
-  const didHydrateRef = useRef(false);
-  useEffect(() => {
-    if (didHydrateRef.current) return;
-    if (monitors === undefined || pages === undefined) return;
-    didHydrateRef.current = true;
-
-    const updates: Partial<{
-      monitor: "completed" | "skipped";
-      page: "completed" | "skipped";
-      step: "1" | "2" | "3";
-    }> = {};
-
-    let monitorDone = monitor !== null;
-    let pageDone = page !== null;
-    if (!monitorDone && monitors.length > 0) {
-      updates.monitor = "completed";
-      monitorDone = true;
-    }
-    if (!pageDone && pages.length > 0) {
-      updates.page = "completed";
-      pageDone = true;
-    }
-
-    // Bump past steps that are already settled. Only forward — never undo a
-    // step the user navigated to manually.
-    if (step === "1" && monitorDone && pageDone) updates.step = "3";
-    else if (step === "1" && monitorDone) updates.step = "2";
-    else if (step === "2" && pageDone) updates.step = "3";
-
-    if (Object.keys(updates).length > 0) {
-      setSearchParams(updates);
-    }
-  }, [monitors, pages, monitor, page, step, setSearchParams]);
-
-  // Optional callbackUrl redirect after sign-in flows that bounce through onboarding.
-  useEffect(() => {
-    if (!callbackUrl) return;
-    try {
-      const url = new URL(callbackUrl, window.location.origin);
-      if (url.pathname === "/" || url.pathname === "") return;
-      if (url.origin !== window.location.origin) return;
-      if (url.protocol !== "http:" && url.protocol !== "https:") return;
-      router.push(`${url.pathname}${url.search}${url.hash}`);
-    } catch {
-      // Malformed URLs are not safe to navigate to
-    }
-  }, [callbackUrl, router]);
-
-  // Compare by index, not `Number(step)`, so `STEPS` can adopt non-numeric
-  // ids later (e.g. "done", "review") without silently regressing the
-  // completed/upcoming derivation.
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
   const stepperSteps = STEPS.map((s, i) => ({
     id: s.id,
@@ -274,10 +203,6 @@ export function Client() {
             checkResults={checkResults}
             isStreaming={isStreaming}
             onSubmit={async (values) => {
-              // Form schema validates URL shape, but `safeHostname` is a
-              // belt-and-suspenders fallback so a sneaky-but-parseable form
-              // value (e.g. relative URL slipping through) doesn't throw
-              // synchronously inside `mutateAsync`.
               await createMonitorMutation.mutateAsync({
                 url: values.url,
                 name: safeHostname(values.url) ?? values.url,
