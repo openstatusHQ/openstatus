@@ -47,12 +47,12 @@ export async function getServiceContextFromRequest(
     return raw ? raw.slice(raw.indexOf("=") + 1) : undefined;
   })();
 
-  // When the cookie is set we look it up; otherwise pick the first workspace
-  // (matches the dashboard's "active workspace" default ordering).
+  // Fall back to first workspace when the cookie is stale (slug renamed,
+  // user removed) — matches `enforceUserIsAuthed` in tRPC.
   const activeWorkspace = workspaceSlugCookie
     ? userAndWorkspace.usersToWorkspaces?.find(
         ({ workspace }) => workspace.slug === workspaceSlugCookie,
-      )?.workspace
+      )?.workspace ?? userAndWorkspace.usersToWorkspaces?.[0]?.workspace
     : userAndWorkspace.usersToWorkspaces?.[0]?.workspace;
 
   if (!activeWorkspace) return null;
