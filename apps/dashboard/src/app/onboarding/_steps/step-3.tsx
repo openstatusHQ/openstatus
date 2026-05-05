@@ -32,13 +32,11 @@ export function Step3({
   stepperSteps,
   monitorStatus,
   pageStatus,
-  onContinue,
   onQuestionnaireSubmit,
 }: {
   stepperSteps: OnboardingStep[];
   monitorStatus: "skipped" | "completed" | null;
   pageStatus: "skipped" | "completed" | null;
-  onContinue: () => void;
   onQuestionnaireSubmit: (values: {
     source: string;
     other?: string;
@@ -53,11 +51,7 @@ export function Step3({
       href: string;
       icon: React.ComponentType<{ className?: string }>;
     };
-    // Build a priority-ordered list and cap at 4. The skipped-step CTAs win
-    // first because the user explicitly bypassed them; the always-on CTAs
-    // (Invite, Notifiers, Overview, Settings) fill the rest. The previous
-    // shape pushed all six and truncated, which silently dropped Overview
-    // and Settings whenever both steps were skipped.
+
     const priority: Link[] = [];
     if (monitorSkipped) {
       priority.push({ name: "Monitors", href: "/monitors", icon: Activity });
@@ -69,10 +63,6 @@ export function Step3({
         icon: PanelTop,
       });
     }
-    // No two filler entries should resolve to the same href — earlier we had
-    // "Invite team" and "Settings" both linking to `/settings/general`, which
-    // looked redundant in the bottom-of-funnel grid. "Billing" is a more
-    // actionable next step for users on the free plan and dedupes the list.
     const filler: Link[] = [
       { name: "Invite team", href: "/settings/general", icon: UserPlus },
       { name: "Notifiers", href: "/notifications", icon: Bell },
@@ -107,7 +97,7 @@ export function Step3({
         <div className="flex flex-col gap-2">
           <OnboardingActions className="flex-wrap">
             <Button asChild>
-              <Link href="/overview" onClick={onContinue}>
+              <Link href="/overview">
                 Continue <ArrowRight className="size-3" />
               </Link>
             </Button>

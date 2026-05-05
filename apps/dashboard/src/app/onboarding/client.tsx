@@ -13,7 +13,7 @@ import { Activity, PanelTop, Rocket } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Step1 } from "./_steps/step-1";
 import { Step2 } from "./_steps/step-2";
 import { Step3 } from "./_steps/step-3";
@@ -245,34 +245,6 @@ export function Client() {
     }
   }, [callbackUrl, router]);
 
-  // Fire telemetry when the user clicks Continue on step 3.
-  // Was previously two `useEffect`s gated on a ref — moved to an explicit
-  // user action so the side-effect only fires when the user actually
-  // commits to "I'm done", not whenever they land on the route.
-  const emitOnboardingTelemetry = useCallback(() => {
-    createFeedbackMutation.mutate({
-      source: "onboarding-completed",
-      message: `monitor=${monitor ?? "untouched"} page=${page ?? "untouched"}`,
-      path: pathname,
-    });
-    // Strong-intent: user followed at least one of the steps to completion.
-    let intentMessage = "";
-    if (monitor === "completed" && page === "completed") {
-      intentMessage = "Status Page & Monitoring";
-    } else if (monitor === "completed") {
-      intentMessage = "Monitoring";
-    } else if (page === "completed") {
-      intentMessage = "Status Page";
-    }
-    if (intentMessage) {
-      createFeedbackMutation.mutate({
-        source: "onboarding-intent",
-        message: intentMessage,
-        path: pathname,
-      });
-    }
-  }, [createFeedbackMutation.mutate, monitor, page, pathname]);
-
   // Compare by index, not `Number(step)`, so `STEPS` can adopt non-numeric
   // ids later (e.g. "done", "review") without silently regressing the
   // completed/upcoming derivation.
@@ -377,7 +349,6 @@ export function Client() {
             stepperSteps={stepperSteps}
             monitorStatus={monitor}
             pageStatus={page}
-            onContinue={emitOnboardingTelemetry}
             onQuestionnaireSubmit={async (values) => {
               await createFeedbackMutation.mutateAsync({
                 source: "onboarding-source",
