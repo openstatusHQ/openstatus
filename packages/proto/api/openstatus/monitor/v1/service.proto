@@ -371,8 +371,8 @@ message HTTPResponseLogListItem {
   string monitor_id = 4;
   // Request status classification.
   HTTPResponseLogRequestStatus request_status = 5;
-  // Region identifier. This can be a public region code or private location ID.
-  string region = 6;
+  // Region where the check ran.
+  Region region = 6;
   // Cron bucket timestamp in Unix milliseconds.
   int64 cron_timestamp = 7;
   // Check trigger.

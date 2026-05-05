@@ -1015,9 +1015,9 @@ components:
           description: Request status classification.
           $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogRequestStatus'
         region:
-          type: string
           title: region
-          description: Region identifier. This can be a public region code or private location ID.
+          description: Region where the check ran.
+          $ref: '#/components/schemas/openstatus.monitor.v1.Region'
         cronTimestamp:
           type:
             - integer

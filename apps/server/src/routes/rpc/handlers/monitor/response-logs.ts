@@ -5,6 +5,7 @@ import {
   type HTTPResponseLogTiming,
   HTTPResponseLogTrigger,
 } from "@openstatus/proto/monitor/v1";
+import { stringToRegion } from "./converters";
 
 const REDACTED = "[redacted]";
 const SENSITIVE_HEADER_NAMES = new Set([
@@ -78,13 +79,13 @@ function toHTTPResponseLogRequestStatus(
 ) {
   switch (status) {
     case "success":
-      return HTTPResponseLogRequestStatus.SUCCESS;
+      return HTTPResponseLogRequestStatus.HTTP_RESPONSE_LOG_REQUEST_STATUS_SUCCESS;
     case "error":
-      return HTTPResponseLogRequestStatus.ERROR;
+      return HTTPResponseLogRequestStatus.HTTP_RESPONSE_LOG_REQUEST_STATUS_ERROR;
     case "degraded":
-      return HTTPResponseLogRequestStatus.DEGRADED;
+      return HTTPResponseLogRequestStatus.HTTP_RESPONSE_LOG_REQUEST_STATUS_DEGRADED;
     default:
-      return HTTPResponseLogRequestStatus.UNSPECIFIED;
+      return HTTPResponseLogRequestStatus.HTTP_RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED;
   }
 }
 
@@ -93,11 +94,11 @@ function toHTTPResponseLogTrigger(
 ) {
   switch (trigger) {
     case "cron":
-      return HTTPResponseLogTrigger.CRON;
+      return HTTPResponseLogTrigger.HTTP_RESPONSE_LOG_TRIGGER_CRON;
     case "api":
-      return HTTPResponseLogTrigger.API;
+      return HTTPResponseLogTrigger.HTTP_RESPONSE_LOG_TRIGGER_API;
     default:
-      return HTTPResponseLogTrigger.UNSPECIFIED;
+      return HTTPResponseLogTrigger.HTTP_RESPONSE_LOG_TRIGGER_UNSPECIFIED;
   }
 }
 
@@ -126,7 +127,7 @@ export function toHTTPResponseLogListItem(
     statusCode: log.statusCode ?? undefined,
     monitorId: log.monitorId,
     requestStatus: toHTTPResponseLogRequestStatus(log.requestStatus),
-    region: log.region,
+    region: stringToRegion(log.region),
     cronTimestamp: BigInt(log.cronTimestamp),
     trigger: toHTTPResponseLogTrigger(log.trigger),
     timestamp: BigInt(log.timestamp),

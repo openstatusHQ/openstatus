@@ -2488,7 +2488,7 @@ describe("MonitorService.ListMonitorHTTPResponseLogs", () => {
       statusCode: 200,
       monitorId: String(testHttpMonitorId),
       requestStatus: "HTTP_RESPONSE_LOG_REQUEST_STATUS_SUCCESS",
-      region: "iad",
+      region: "REGION_FLY_IAD",
       trigger: "HTTP_RESPONSE_LOG_TRIGGER_API",
       timestamp: "1777667323740",
       timing: { dns: 1, connect: 2, tls: 3, ttfb: 4, transfer: 5 },
