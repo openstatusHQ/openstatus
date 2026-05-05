@@ -8,6 +8,8 @@ export default async function Layout({
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery(trpc.workspace.get.queryOptions());
   await queryClient.prefetchQuery(trpc.user.get.queryOptions());
+  await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.page.list.queryOptions());
 
   return <HydrateClient>{children}</HydrateClient>;
 }

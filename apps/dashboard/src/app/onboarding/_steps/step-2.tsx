@@ -17,13 +17,11 @@ import {
   OnboardingStepper,
 } from "@/components/layout/onboarding-layout";
 import { OnboardingStatusPagePreview } from "@/components/onboarding/status-page-preview";
-import type { RouterOutputs } from "@openstatus/api";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
-
-type Page = RouterOutputs["page"]["create"];
+import type { OnboardingPage } from "../client";
 
 export function Step2({
   stepperSteps,
@@ -39,7 +37,7 @@ export function Step2({
 }: {
   stepperSteps: OnboardingStep[];
   pageStatus: "skipped" | "completed" | null;
-  createdPageData: Page | undefined;
+  createdPageData: OnboardingPage | undefined;
   slugFallback: string;
   monitorSkipped: boolean;
   monitorName: string | null;

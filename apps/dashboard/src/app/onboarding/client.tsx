@@ -7,6 +7,7 @@ import {
 import { useStreamChecks } from "@/components/onboarding/use-stream-checks";
 import { getCompanyDomainFromEmail } from "@/lib/onboarding/email-domain";
 import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, PanelTop, Rocket } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,6 +18,15 @@ import { Step1 } from "./_steps/step-1";
 import { Step2 } from "./_steps/step-2";
 import { Step3 } from "./_steps/step-3";
 import { searchParamsParsers } from "./search-params";
+
+export type OnboardingMonitor = Pick<
+  RouterOutputs["monitor"]["list"][number],
+  "id" | "url"
+>;
+export type OnboardingPage = Pick<
+  RouterOutputs["page"]["list"][number],
+  "id" | "slug" | "title"
+>;
 
 const STEPS = [
   { id: "1", label: "Monitor", icon: <Activity /> },
@@ -66,6 +76,14 @@ export function Client() {
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
+  // Server lists are the ground truth for "did this user already do step X."
+  // Mutation state alone dies on refresh and ignores returning users who
+  // already have monitors / pages from a previous session or workspace
+  // invite. Both are prefetched in `(dashboard)/layout.tsx` so the queries
+  // are usually hot — but this route lives outside `(dashboard)`, so cold
+  // starts fetch them now.
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: pages } = useQuery(trpc.page.list.queryOptions());
 
   // Invalidate (not refetch) so any mounted subscriber to `workspace.get`
   // (sidebar quota chip, plan-gate selectors, etc.) gets fresh data on the
@@ -117,8 +135,24 @@ export function Client() {
   } = useStreamChecks();
   const checksStartedRef = useRef(false);
 
-  const monitorData = createMonitorMutation.data;
-  const pageData = createPageMutation.data;
+  // Prefer fresh mutation data (this session's submit) so the locked summary
+  // reflects exactly what the user just typed. Fall back to the most recent
+  // server-side row — covers refresh mid-flow and returning users with
+  // pre-existing data. `monitor.list` orders by `(active desc, createdAt
+  // desc)`; `page.list` by `createdAt desc` — index 0 is "most recent" in
+  // both, which is the right pick for onboarding.
+  const monitorData: OnboardingMonitor | undefined =
+    createMonitorMutation.data ??
+    (monitors?.[0] ? { id: monitors[0].id, url: monitors[0].url } : undefined);
+  const pageData: OnboardingPage | undefined =
+    createPageMutation.data ??
+    (pages?.[0]
+      ? {
+          id: pages[0].id,
+          slug: pages[0].slug,
+          title: pages[0].title,
+        }
+      : undefined);
 
   const companyDomain = useMemo(
     () => getCompanyDomainFromEmail(user?.email),
@@ -144,18 +178,58 @@ export function Client() {
     return generateSlug(2, { format: "kebab" });
   }, [monitorData?.url, companyDomain]);
 
-  // Trigger streaming preview when the monitor was just created. Cleanup
-  // calls `stopChecks()` so navigating away mid-stream (Continue, refresh,
-  // unmount) doesn't leak the in-flight fetch.
+  // Trigger streaming preview whenever step 1 is locked and we know the
+  // monitor — covers fresh creation AND post-refresh hydration so the
+  // results panel isn't an empty table. Gated on `monitor === "completed"`
+  // so a returning user who manually navs back to step 1 with a stale URL
+  // doesn't auto-fire (they'd need an explicit retry).
   useEffect(() => {
-    if (!monitorData?.id || step !== "1") return;
+    if (!monitorData?.id || step !== "1" || monitor !== "completed") return;
     if (checksStartedRef.current) return;
     checksStartedRef.current = true;
     startChecks(monitorData.id);
     return () => {
       stopChecks();
     };
-  }, [monitorData?.id, step, startChecks, stopChecks]);
+  }, [monitorData?.id, step, monitor, startChecks, stopChecks]);
+
+  // Hydrate URL params from server lists once both queries resolve.
+  // Returning user with existing data lands on the first unfinished step
+  // instead of an empty form. Runs once per mount; respects any explicit
+  // params already in the URL so deep links keep working.
+  const didHydrateRef = useRef(false);
+  useEffect(() => {
+    if (didHydrateRef.current) return;
+    if (monitors === undefined || pages === undefined) return;
+    didHydrateRef.current = true;
+
+    const updates: Partial<{
+      monitor: "completed" | "skipped";
+      page: "completed" | "skipped";
+      step: "1" | "2" | "3";
+    }> = {};
+
+    let monitorDone = monitor !== null;
+    let pageDone = page !== null;
+    if (!monitorDone && monitors.length > 0) {
+      updates.monitor = "completed";
+      monitorDone = true;
+    }
+    if (!pageDone && pages.length > 0) {
+      updates.page = "completed";
+      pageDone = true;
+    }
+
+    // Bump past steps that are already settled. Only forward — never undo a
+    // step the user navigated to manually.
+    if (step === "1" && monitorDone && pageDone) updates.step = "3";
+    else if (step === "1" && monitorDone) updates.step = "2";
+    else if (step === "2" && pageDone) updates.step = "3";
+
+    if (Object.keys(updates).length > 0) {
+      setSearchParams(updates);
+    }
+  }, [monitors, pages, monitor, page, step, setSearchParams]);
 
   // Optional callbackUrl redirect after sign-in flows that bounce through onboarding.
   useEffect(() => {

@@ -25,13 +25,11 @@ import { checkResultToResponseLog } from "@/components/onboarding/checks-table-a
 import type { useStreamChecks } from "@/components/onboarding/use-stream-checks";
 import { exampleChecks } from "@/data/onboarding-checks";
 import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
-
-type Monitor = RouterOutputs["monitor"]["new"];
+import type { OnboardingMonitor } from "../client";
 
 const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
 
@@ -52,7 +50,7 @@ export function Step1({
   monitorStatus: "skipped" | "completed" | null;
   defaultUrl: string | undefined;
   isSubmitting: boolean;
-  monitorData: Monitor | undefined;
+  monitorData: OnboardingMonitor | undefined;
   checkResults: ReturnType<typeof useStreamChecks>["results"];
   isStreaming: boolean;
   onSubmit: (values: { url: string }) => Promise<void>;
