@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db, eq, schema } from "@openstatus/db";
+import { asc, db, eq, schema } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
 
 /**
@@ -19,10 +19,14 @@ export async function getServiceContextFromRequest(
   const userId = Number(session.user.id);
   if (Number.isNaN(userId)) return null;
 
+  // `orderBy` on the join makes the no-cookie fallback below deterministic:
+  // `usersToWorkspaces[0]` is the user's earliest membership instead of
+  // whatever order Turso happens to return.
   const userAndWorkspace = await db.query.user.findFirst({
     where: eq(schema.user.id, userId),
     with: {
       usersToWorkspaces: {
+        orderBy: (t) => asc(t.createdAt),
         with: {
           workspace: true,
         },

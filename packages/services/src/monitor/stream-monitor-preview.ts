@@ -3,6 +3,7 @@ import { yieldMany } from "@openstatus/utils";
 import { z } from "zod";
 
 import { type ServiceContext, getReadDb } from "../context";
+import { InternalServiceError } from "../errors";
 import { getMonitorInWorkspace } from "./internal";
 
 export const StreamMonitorPreviewInput = z.object({
@@ -195,7 +196,7 @@ export async function* streamMonitorPreview(args: {
 
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    throw new Error("CRON_SECRET is not set");
+    throw new InternalServiceError("CRON_SECRET is not set");
   }
 
   // Skip deprecated regions — fly (and other providers) no longer run

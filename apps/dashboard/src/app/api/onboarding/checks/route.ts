@@ -1,5 +1,5 @@
 import { getServiceContextFromRequest } from "@/lib/edge-context";
-import { ServiceError } from "@openstatus/services";
+import { ServiceError, type ServiceErrorCode } from "@openstatus/services";
 import {
   type CheckResult,
   streamMonitorPreview,
@@ -8,6 +8,17 @@ import { iteratorToStream } from "@openstatus/utils";
 import { z } from "zod";
 
 export const runtime = "edge";
+
+const SERVICE_ERROR_STATUS: Record<ServiceErrorCode, number> = {
+  NOT_FOUND: 404,
+  FORBIDDEN: 403,
+  UNAUTHORIZED: 401,
+  CONFLICT: 409,
+  VALIDATION: 400,
+  LIMIT_EXCEEDED: 429,
+  PRECONDITION_FAILED: 412,
+  INTERNAL: 500,
+};
 
 const requestSchema = z.object({
   monitorId: z.number(),
@@ -55,9 +66,14 @@ export async function POST(req: Request) {
   try {
     primed = await generator.next();
   } catch (err: unknown) {
-    if (err instanceof ServiceError && err.code === "NOT_FOUND") {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 404,
+    if (err instanceof ServiceError) {
+      const status = SERVICE_ERROR_STATUS[err.code] ?? 500;
+      // Don't leak `INTERNAL` messages — they may include env-var names or
+      // stack details. Other codes are already user-facing strings.
+      const message =
+        err.code === "INTERNAL" ? "Internal server error" : err.message;
+      return new Response(JSON.stringify({ error: message }), {
+        status,
         headers: { "Content-Type": "application/json" },
       });
     }
