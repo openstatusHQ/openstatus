@@ -529,7 +529,7 @@ export function FormComponents({
                             onClick={() => {
                               if (!validateLimit()) return;
                               form.setValue("components", [
-                                ...field.value,
+                                ...form.getValues("components"),
                                 {
                                   id: Date.now(),
                                   monitorId: null,
@@ -576,15 +576,18 @@ export function FormComponents({
                                             if (isSelected) {
                                               form.setValue(
                                                 "components",
-                                                field.value.filter(
-                                                  (c) =>
-                                                    c.monitorId !== monitor.id,
-                                                ),
+                                                form
+                                                  .getValues("components")
+                                                  .filter(
+                                                    (c) =>
+                                                      c.monitorId !==
+                                                      monitor.id,
+                                                  ),
                                               );
                                             } else {
                                               if (!validateLimit()) return;
                                               form.setValue("components", [
-                                                ...field.value,
+                                                ...form.getValues("components"),
                                                 {
                                                   id: Date.now(),
                                                   monitorId: monitor.id,
@@ -1037,7 +1040,9 @@ function ComponentGroupRow({
                     <DropdownMenuItem
                       onClick={() => {
                         if (!validateLimit()) return;
-                        const current = field.value ?? [];
+                        const current =
+                          form.getValues(`groups.${groupIndex}.components`) ??
+                          [];
                         form.setValue(`groups.${groupIndex}.components`, [
                           ...current,
                           {
@@ -1080,10 +1085,14 @@ function ComponentGroupRow({
                                     key={monitor.id}
                                     disabled={isTaken || isSelected}
                                     onSelect={() => {
+                                      const live =
+                                        form.getValues(
+                                          `groups.${groupIndex}.components`,
+                                        ) ?? [];
                                       if (isSelected) {
                                         form.setValue(
                                           `groups.${groupIndex}.components`,
-                                          current.filter(
+                                          live.filter(
                                             (c) => c.monitorId !== monitor.id,
                                           ),
                                         );
@@ -1092,11 +1101,11 @@ function ComponentGroupRow({
                                         form.setValue(
                                           `groups.${groupIndex}.components`,
                                           [
-                                            ...current,
+                                            ...live,
                                             {
                                               id: Date.now(),
                                               monitorId: monitor.id,
-                                              order: current.length,
+                                              order: live.length,
                                               name: monitor.name,
                                               description: monitor.description,
                                               type: "monitor" as const,
