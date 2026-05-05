@@ -1,8 +1,8 @@
 import {
   type HTTPResponseLogDetail,
   type HTTPResponseLogListItem,
-  type HTTPResponseLogTiming,
   HTTPResponseLogRequestStatus,
+  type HTTPResponseLogTiming,
   HTTPResponseLogTrigger,
 } from "@openstatus/proto/monitor/v1";
 

@@ -11,11 +11,11 @@ import type {
   GetMonitorResponse,
   GetMonitorSummaryResponse,
   HTTPMonitor,
+  HTTPResponseLogPagination,
   ListMonitorHTTPResponseLogsResponse,
   MonitorConfig,
   MonitorService,
   RegionStatus,
-  HTTPResponseLogPagination,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
