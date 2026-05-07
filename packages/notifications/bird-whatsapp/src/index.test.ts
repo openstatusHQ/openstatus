@@ -34,7 +34,9 @@ function createNotification() {
 
 function parseRequestBody(call: ReturnType<typeof spyOn>): {
   messageRequests: Array<{
-    receiver: { contacts: Array<{ identifierKey: string; identifierValue: string }> };
+    receiver: {
+      contacts: Array<{ identifierKey: string; identifierValue: string }>;
+    };
     template: {
       projectId: string;
       version: string;

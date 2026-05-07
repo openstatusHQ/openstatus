@@ -25,6 +25,7 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
+import { sendTest as sendWhatsAppTest } from "@openstatus/notification-bird-whatsapp";
 import { sendTestDiscordMessage as sendDiscordTest } from "@openstatus/notification-discord";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
@@ -36,7 +37,6 @@ import {
 } from "@openstatus/notification-pagerduty";
 import { sendTestSlackMessage as sendSlackTest } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
-import { sendTest as sendWhatsAppTest } from "@openstatus/notification-bird-whatsapp";
 import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
 import { redis } from "@openstatus/upstash";
 import { nanoid } from "nanoid";
