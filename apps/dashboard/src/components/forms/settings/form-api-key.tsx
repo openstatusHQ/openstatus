@@ -60,7 +60,7 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { CalendarIcon, Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -201,6 +201,7 @@ export function FormApiKey() {
             <Button size="sm">Create</Button>
           </DialogTrigger>
           <DialogContent
+            className="max-h-[80vh] overflow-y-auto"
             onCloseAutoFocus={(event) => {
               event.preventDefault();
               document.body.style.pointerEvents = "";
@@ -249,13 +250,13 @@ export function FormApiKey() {
                     control={form.control}
                     name="scope"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
+                      <FormItem>
                         <FormLabel>Access</FormLabel>
                         <FormControl>
                           <RadioGroup
                             value={field.value}
                             onValueChange={field.onChange}
-                            className="gap-3"
+                            className="gap-3 sm:grid-cols-2"
                           >
                             <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/40 has-[[aria-checked=true]]:border-primary">
                               <RadioGroupItem value="read" className="mt-1" />
@@ -292,7 +293,7 @@ export function FormApiKey() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Expiration Date</FormLabel>
-                        <Popover>
+                        <Popover modal>
                           <FormControl>
                             <PopoverTrigger asChild>
                               <Button
@@ -300,7 +301,7 @@ export function FormApiKey() {
                                 variant="outline"
                                 size="sm"
                                 className={cn(
-                                  "w-[240px] pl-3 text-left font-normal",
+                                  "w-full pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground",
                                 )}
                               >
@@ -320,18 +321,16 @@ export function FormApiKey() {
                             <Calendar
                               mode="single"
                               selected={
-                                field.value ? new Date(field.value) : undefined
+                                field.value
+                                  ? parse(field.value, "yyyy-MM-dd", new Date())
+                                  : undefined
                               }
                               onSelect={(date) => {
                                 if (!date) {
                                   field.onChange("");
                                   return;
                                 }
-                                // Convert to ISO string and take only the date part (YYYY-MM-DD)
-                                const dateString = date
-                                  .toISOString()
-                                  .split("T")[0];
-                                field.onChange(dateString);
+                                field.onChange(format(date, "yyyy-MM-dd"));
                               }}
                               disabled={(date) => {
                                 const today = new Date();
