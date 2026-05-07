@@ -24,9 +24,10 @@ export const apiKey = sqliteTable(
     expiresAt: integer("expires_at", { mode: "timestamp" }),
     lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
   },
-  (table) => ({
-    prefixIdx: index("api_key_prefix_idx").on(table.prefix),
-  }),
+  (table) => [
+    index("api_key_prefix_idx").on(table.prefix),
+    index("api_key_workspace_id_idx").on(table.workspaceId),
+  ],
 );
 
 export const apiKeyRelations = relations(apiKey, ({ one }) => ({

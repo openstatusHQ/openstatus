@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -9,22 +10,26 @@ import {
 import { monitor } from "../monitors";
 import { workspace } from "../workspaces";
 
-export const monitorTag = sqliteTable("monitor_tag", {
-  id: integer("id").primaryKey(),
-  workspaceId: integer("workspace_id")
-    .references(() => workspace.id, { onDelete: "cascade" })
-    .notNull(),
+export const monitorTag = sqliteTable(
+  "monitor_tag",
+  {
+    id: integer("id").primaryKey(),
+    workspaceId: integer("workspace_id")
+      .references(() => workspace.id, { onDelete: "cascade" })
+      .notNull(),
 
-  name: text("name").notNull(),
-  color: text("color").notNull(),
+    name: text("name").notNull(),
+    color: text("color").notNull(),
 
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-});
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [index("monitor_tag_workspace_id_idx").on(t.workspaceId)],
+);
 
 export const monitorTagsToMonitors = sqliteTable(
   "monitor_tag_to_monitor",
@@ -39,9 +44,10 @@ export const monitorTagsToMonitors = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.monitorId, t.monitorTagId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.monitorId, t.monitorTagId] }),
+    index("monitor_tag_to_monitor_monitor_tag_id_idx").on(t.monitorTagId),
+  ],
 );
 
 export const monitorTagsToMonitorsRelation = relations(

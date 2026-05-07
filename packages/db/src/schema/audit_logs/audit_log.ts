@@ -33,18 +33,15 @@ export const auditLog = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (t) => ({
-    workspaceCreatedIdx: index("audit_log_workspace_created_idx").on(
-      t.workspaceId,
-      t.createdAt,
-    ),
-    entityIdx: index("audit_log_entity_idx").on(
+  (t) => [
+    index("audit_log_workspace_created_idx").on(t.workspaceId, t.createdAt),
+    index("audit_log_entity_idx").on(
       t.workspaceId,
       t.entityType,
       t.entityId,
       t.createdAt,
     ),
-  }),
+  ],
 );
 
 export type AuditLog = typeof auditLog.$inferSelect;
