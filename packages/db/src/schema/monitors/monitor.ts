@@ -65,12 +65,6 @@ export const monitor = sqliteTable(
 
     deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
-  // Partial index: every monitor read path in `@openstatus/services/monitor`
-  // filters `deleted_at IS NULL`, so the index excludes soft-deleted rows.
-  // Smaller index, no index maintenance on soft-delete (a row drops out of
-  // the index when `deleted_at` is set), and the planner uses it directly
-  // for the dominant `workspace_id = ? AND deleted_at IS NULL` filter
-  // without a residual predicate.
   (t) => [
     index("monitor_workspace_id_active_idx")
       .on(t.workspaceId)
