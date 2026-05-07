@@ -41,6 +41,32 @@ await openstatus.monitor.v1.MonitorService.listMonitors({}, { headers });
 
 Get your API key from the [openstatus dashboard](https://www.openstatus.dev/app).
 
+## Scopes
+
+Each API key carries a scope that controls what it can do:
+
+- **Read-only** (`['read']`) — list/get endpoints only. Mutations return `403 Forbidden`. Recommended for AI agents and read-only dashboards.
+- **Read & write** (`['write']`) — full workspace access. Required for CI/CD and automation.
+
+Scope is set when the key is created and is **immutable** — to change it, revoke the key and issue a new one. Existing keys created before this feature shipped continue to work as Read & write.
+
+`GET /v1/whoami` echoes the resolved actor's scopes back so a client can introspect what it's allowed to do without probe-and-fail:
+
+```json
+{
+  "name": "Acme",
+  "slug": "acme",
+  "plan": "team",
+  "actor": {
+    "type": "apiKey",
+    "keyId": "42",
+    "scopes": ["read"]
+  }
+}
+```
+
+A read-only key can revoke itself via `DELETE /v1/api-key/{id}` (the only carve-out — without it, a leaked read-only key would have no rotation path other than the dashboard). Revoking a *different* key from a read-only actor returns `403 Forbidden`.
+
 ## Custom Base URL
 
 For self-hosted instances or staging environments:

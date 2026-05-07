@@ -2,6 +2,7 @@ import { and, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import type { Monitor } from "../types";
 import {
@@ -30,6 +31,7 @@ export async function updateMonitorGeneral(args: {
   input: UpdateMonitorGeneralInput;
 }): Promise<Monitor> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorGeneralInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -73,6 +75,7 @@ export async function updateMonitorRetry(args: {
   input: UpdateMonitorRetryInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorRetryInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -101,6 +104,7 @@ export async function updateMonitorFollowRedirects(args: {
   input: UpdateMonitorFollowRedirectsInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorFollowRedirectsInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -129,6 +133,7 @@ export async function updateMonitorOtel(args: {
   input: UpdateMonitorOtelInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorOtelInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -161,6 +166,7 @@ export async function updateMonitorPublic(args: {
   input: UpdateMonitorPublicInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorPublicInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -189,6 +195,7 @@ export async function updateMonitorResponseTime(args: {
   input: UpdateMonitorResponseTimeInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMonitorResponseTimeInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -227,6 +234,7 @@ export async function bulkUpdateMonitors(args: {
   input: BulkUpdateMonitorsInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = BulkUpdateMonitorsInput.parse(args.input);
   if (input.public === undefined && input.active === undefined) return;
 

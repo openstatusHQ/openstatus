@@ -2,6 +2,7 @@ import { and, eq, inArray } from "@openstatus/db";
 import { monitorTag, selectMonitorTagSchema } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ForbiddenError } from "../errors";
 import type { MonitorTag } from "../types";
@@ -25,6 +26,7 @@ export async function syncMonitorTags(args: {
   input: SyncMonitorTagsInput;
 }): Promise<MonitorTag[]> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const { tags } = SyncMonitorTagsInput.parse(args.input);
   const workspaceId = ctx.workspace.id;
 

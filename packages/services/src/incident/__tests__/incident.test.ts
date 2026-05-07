@@ -9,11 +9,12 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DrizzleTx, ServiceContext } from "../../context";
-import { ConflictError, NotFoundError } from "../../errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "../../errors";
 import { acknowledgeIncident } from "../acknowledge";
 import { deleteIncident } from "../delete";
 import { getIncident, listIncidents } from "../list";
@@ -136,6 +137,26 @@ describe("acknowledgeIncident", () => {
           input: { id: incident.id },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const incident = await insertIncident(tx, {
+        workspaceId: teamCtx.workspace.id,
+        monitorId: testMonitorId,
+      });
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        acknowledgeIncident({ ctx, input: { id: incident.id } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

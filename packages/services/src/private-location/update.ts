@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
 import type { PrivateLocation } from "../types";
@@ -25,6 +26,7 @@ export async function updatePrivateLocation(args: {
   input: UpdatePrivateLocationInput;
 }): Promise<PrivateLocation> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdatePrivateLocationInput.parse(args.input);
 
   // The pivot table has no UNIQUE (private_location_id, monitor_id)

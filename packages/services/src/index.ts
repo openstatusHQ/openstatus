@@ -34,6 +34,8 @@ export {
   emitAudit,
 } from "./audit";
 
+export { matchesScope, requireScope } from "./auth";
+
 export {
   assertWithinLimit,
   getPlanLimits,

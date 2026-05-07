@@ -1,6 +1,6 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { Workspace } from "@openstatus/db/src/schema";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { ZodError } from "zod";
 
@@ -19,7 +19,7 @@ import { ZodError } from "zod";
  */
 export function toServiceCtx(args: {
   workspace: Workspace;
-  apiKey: { id: string; createdById?: number };
+  apiKey: { id: string; createdById?: number; scopes: Scope[] };
   requestId?: string;
 }): ServiceContext {
   return {
@@ -28,6 +28,7 @@ export function toServiceCtx(args: {
       type: "mcp",
       keyId: args.apiKey.id,
       userId: args.apiKey.createdById,
+      scopes: args.apiKey.scopes,
     },
     requestId: args.requestId,
   };

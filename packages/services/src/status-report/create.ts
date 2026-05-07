@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
@@ -25,6 +26,7 @@ export async function createStatusReport(args: {
   input: CreateStatusReportInput;
 }): Promise<CreateStatusReportResult> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreateStatusReportInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

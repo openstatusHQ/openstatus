@@ -15,6 +15,7 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -147,6 +148,33 @@ describe("createMonitor", () => {
         },
       });
       expect(row.jobType).toBe("dns");
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createMonitor({
+          ctx,
+          input: {
+            name: `${TEST_PREFIX}-read-only`,
+            jobType: "http",
+            url: "https://example.com",
+            method: "GET",
+            headers: [],
+            assertions: [],
+            active: false,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

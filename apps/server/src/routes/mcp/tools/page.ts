@@ -7,6 +7,7 @@ import { listPages } from "@openstatus/services/page";
 import { z } from "zod";
 
 import { runTool } from "../adapter";
+import { registerScopedTool } from "./register-scoped";
 
 // Pages carry secrets (`password`, `customDomain` access controls) that
 // must never reach an LLM client. Output is a deliberately slim shape
@@ -23,42 +24,43 @@ export function registerPageTools(
 ): Map<string, RegisteredTool> {
   const registered = new Map<string, RegisteredTool>();
 
-  registered.set(
+  const t_listStatusPages = registerScopedTool(
+    server,
+    ctx,
     "list_status_pages",
-    server.registerTool(
-      "list_status_pages",
-      {
-        description:
-          "List status pages in this workspace with their slug and ids. Use to discover the pageId required by create_status_report and create_maintenance.",
-        annotations: { readOnlyHint: true, openWorldHint: false },
-        inputSchema: {},
-        outputSchema: {
-          items: z.array(
-            z.object({
-              id: z.number().int(),
-              title: z.string(),
-              slug: z.string(),
-            }),
-          ),
-        },
-      },
-      async () =>
-        runTool(
-          () => listPages({ ctx, input: { order: "desc" } }),
-          (pages) => {
-            const items = pages.map((p) => ({
-              id: p.id,
-              title: p.title,
-              slug: p.slug,
-            }));
-            return {
-              content: [{ type: "text", text: JSON.stringify({ items }) }],
-              structuredContent: { items },
-            };
-          },
+    {
+      scope: "read",
+      description:
+        "List status pages in this workspace with their slug and ids. Use to discover the pageId required by create_status_report and create_maintenance.",
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {},
+      outputSchema: {
+        items: z.array(
+          z.object({
+            id: z.number().int(),
+            title: z.string(),
+            slug: z.string(),
+          }),
         ),
-    ),
+      },
+    },
+    async () =>
+      runTool(
+        () => listPages({ ctx, input: { order: "desc" } }),
+        (pages) => {
+          const items = pages.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+          }));
+          return {
+            content: [{ type: "text", text: JSON.stringify({ items }) }],
+            structuredContent: { items },
+          };
+        },
+      ),
   );
+  if (t_listStatusPages) registered.set("list_status_pages", t_listStatusPages);
 
   return registered;
 }

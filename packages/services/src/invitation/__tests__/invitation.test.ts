@@ -16,11 +16,16 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { LimitExceededError, NotFoundError } from "../../errors";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+} from "../../errors";
 
 const TEST_PREFIX = "svc-inv-test";
 
@@ -106,6 +111,25 @@ describe("createInvitation", () => {
         entityId: row.id,
         db: tx,
       });
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createInvitation({
+          ctx: readOnlyCtx,
+          input: { email: "rejects-read@test.dev" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 

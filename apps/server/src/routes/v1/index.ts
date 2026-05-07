@@ -4,8 +4,8 @@ import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
 import { handleZodError } from "@/libs/errors";
-import { authMiddleware } from "@/libs/middlewares";
-import type { Workspace } from "@openstatus/db/src/schema";
+import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";
@@ -19,6 +19,7 @@ import { whoamiApi } from "./whoami";
 
 export type Variables = RequestIdVariables & {
   workspace: Workspace;
+  apiKey: { id: string; createdById?: number; scopes: Scope[] };
 };
 
 export const api = new OpenAPIHono<{ Variables: Variables }>({
@@ -139,6 +140,11 @@ api.get(
  * Middlewares
  */
 api.use("/*", authMiddleware);
+// Primary scope enforcement for V1: routes here use inline Drizzle
+// queries instead of `@openstatus/services`, so the service-level
+// `requireScope` won't run. After per-route migration to services,
+// this stays as defense-in-depth.
+api.use("/*", requireWriteScope());
 
 /**
  * Routes

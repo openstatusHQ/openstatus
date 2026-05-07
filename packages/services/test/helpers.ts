@@ -1,6 +1,7 @@
 import { expect } from "bun:test";
 import { and, db, desc, eq, inArray } from "@openstatus/db";
 import {
+  type Scope,
   auditLog,
   notification,
   page,
@@ -130,7 +131,12 @@ export function makeUserCtx(
 
 export function makeApiKeyCtx(
   workspace: Workspace,
-  opts: { keyId: string; userId?: number; requestId?: string },
+  opts: {
+    keyId: string;
+    userId?: number;
+    requestId?: string;
+    scopes?: Scope[];
+  },
 ): ServiceContext {
   return {
     workspace,
@@ -138,6 +144,7 @@ export function makeApiKeyCtx(
       type: "apiKey",
       keyId: opts.keyId,
       userId: opts.userId,
+      scopes: opts.scopes ?? ["write"],
     },
     requestId: opts.requestId,
   };
@@ -145,7 +152,12 @@ export function makeApiKeyCtx(
 
 export function makeMcpCtx(
   workspace: Workspace,
-  opts: { keyId: string; userId?: number; requestId?: string },
+  opts: {
+    keyId: string;
+    userId?: number;
+    requestId?: string;
+    scopes?: Scope[];
+  },
 ): ServiceContext {
   return {
     workspace,
@@ -153,6 +165,7 @@ export function makeMcpCtx(
       type: "mcp",
       keyId: opts.keyId,
       userId: opts.userId,
+      scopes: opts.scopes ?? ["write"],
     },
     requestId: opts.requestId,
   };

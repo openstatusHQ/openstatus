@@ -6,11 +6,13 @@ import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeSlackCtx,
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
+import { ForbiddenError } from "../../errors";
 import { installSlackAgent } from "../install-slack-agent";
 
 const TEAM_ID = "T_FIXTURE";
@@ -238,6 +240,22 @@ describe("installSlackAgent", () => {
         (deleteRow?.before as Record<string, unknown> | null)
           ?.credentialFingerprint,
       ).toBeTypeOf("string");
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(ctx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        installSlackAgent({ ctx: readOnlyCtx, input: baseInput }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 

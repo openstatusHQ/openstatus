@@ -23,6 +23,7 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeSlackCtx,
   makeUserCtx,
   withTestTransaction,
@@ -176,6 +177,32 @@ describe("createStatusReport", () => {
           },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createStatusReport({
+          ctx,
+          input: {
+            title: `${TEST_PREFIX}-read-only`,
+            status: "investigating",
+            message: "blocked",
+            date: new Date(),
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

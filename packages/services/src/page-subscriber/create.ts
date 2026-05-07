@@ -9,6 +9,7 @@ import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { assertSafeUrl } from "@openstatus/utils";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, ValidationError } from "../errors";
 import {
@@ -54,6 +55,7 @@ export async function createPageSubscriber(args: {
   input: CreatePageSubscriberInput;
 }): Promise<CreatePageSubscriberResult> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreatePageSubscriberInput.parse(args.input);
   const componentIds = input.componentIds ?? [];
 

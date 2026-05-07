@@ -57,6 +57,7 @@ export async function listApiKeys(args: {
       description: apiKey.description,
       prefix: apiKey.prefix,
       createdById: apiKey.createdById,
+      scopes: apiKey.scopes,
       expiresAt: apiKey.expiresAt,
       lastUsedAt: apiKey.lastUsedAt,
       createdAt: apiKey.createdAt,

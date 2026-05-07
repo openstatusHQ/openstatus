@@ -2,6 +2,7 @@ import { and, eq, isNull } from "@openstatus/db";
 import { invitation } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { DeleteInvitationInput } from "./schemas";
 
@@ -25,6 +26,7 @@ export async function deleteInvitation(args: {
   input: DeleteInvitationInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteInvitationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

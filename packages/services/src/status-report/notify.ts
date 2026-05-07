@@ -2,6 +2,7 @@ import { db as defaultDb, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { NotifyStatusReportInput } from "./schemas";
@@ -21,6 +22,7 @@ export async function notifyStatusReport(args: {
   input: NotifyStatusReportInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = NotifyStatusReportInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

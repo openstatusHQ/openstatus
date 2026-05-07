@@ -61,6 +61,10 @@
       "import": "./src/audit/index.ts",
       "types": "./src/audit/index.ts"
     },
+    "./auth": {
+      "import": "./src/auth/index.ts",
+      "types": "./src/auth/index.ts"
+    },
     "./member": {
       "import": "./src/member/index.ts",
       "types": "./src/member/index.ts"

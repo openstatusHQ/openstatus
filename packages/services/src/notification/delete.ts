@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { getNotificationInWorkspace } from "./internal";
 import { DeleteNotificationInput } from "./schemas";
@@ -15,6 +16,7 @@ export async function deleteNotification(args: {
   input: DeleteNotificationInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteNotificationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

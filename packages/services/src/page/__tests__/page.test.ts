@@ -10,6 +10,7 @@ import {
   cleanQuotaGatedTables,
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -201,6 +202,33 @@ describe("updatePageGeneral", () => {
           input: { id: p.id, title: "Hacked", slug: uniqueSlug("hack") },
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await newPage({
+        ctx: { ...teamCtx, db: tx },
+        input: { title: "Team", slug: uniqueSlug("read-only") },
+      });
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updatePageGeneral({
+          ctx: readOnlyCtx,
+          input: {
+            id: p.id,
+            title: "Read-only Update",
+            slug: uniqueSlug("read-only-update"),
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

@@ -3,6 +3,7 @@ import { usersToWorkspaces } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError, PreconditionFailedError } from "../errors";
 import { DeleteMemberInput } from "./schemas";
@@ -42,6 +43,7 @@ export async function deleteMember(args: {
   input: DeleteMemberInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteMemberInput.parse(args.input);
 
   if (ctx.actor.type !== "user") {

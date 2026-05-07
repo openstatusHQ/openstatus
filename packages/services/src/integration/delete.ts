@@ -2,6 +2,7 @@ import { and, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { DeleteIntegrationInput } from "./schemas";
 import { snapshotIntegration } from "./snapshot";
@@ -49,6 +50,7 @@ export async function deleteIntegration(args: {
   input: DeleteIntegrationInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteIntegrationInput.parse(args.input);
 
   let revokeBotToken: string | undefined;

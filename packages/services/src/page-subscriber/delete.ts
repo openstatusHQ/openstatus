@@ -5,6 +5,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
 import { loadPageForWorkspace } from "./internal";
@@ -20,6 +21,7 @@ export async function deletePageSubscriber(args: {
   input: DeletePageSubscriberInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeletePageSubscriberInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

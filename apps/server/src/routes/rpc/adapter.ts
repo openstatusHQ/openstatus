@@ -16,6 +16,7 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
       type: "apiKey",
       keyId: rpcCtx.apiKey.id,
       userId: rpcCtx.apiKey.createdById,
+      scopes: rpcCtx.apiKey.scopes,
     },
     requestId: rpcCtx.requestId,
   };

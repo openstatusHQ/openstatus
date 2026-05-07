@@ -1,5 +1,5 @@
 import { SQLiteTransaction, db as defaultDb, is } from "@openstatus/db";
-import type { Workspace } from "@openstatus/db/src/schema";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 
 // `@openstatus/db` does not export named DrizzleClient / DrizzleTx types today,
 // so we derive them from the db export and re-export from here.
@@ -11,8 +11,8 @@ export type DB = DrizzleClient | DrizzleTx;
 
 export type Actor =
   | { type: "user"; userId: number }
-  | { type: "apiKey"; keyId: string; userId?: number }
-  | { type: "mcp"; keyId: string; userId?: number }
+  | { type: "apiKey"; keyId: string; userId?: number; scopes: Scope[] }
+  | { type: "mcp"; keyId: string; userId?: number; scopes: Scope[] }
   | { type: "slack"; teamId: string; slackUserId: string; userId?: number }
   | { type: "system"; job: string }
   | { type: "webhook"; source: string; externalId?: string }

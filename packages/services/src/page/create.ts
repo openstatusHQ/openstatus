@@ -5,6 +5,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import type { Page } from "../types";
 import {
@@ -21,6 +22,7 @@ export async function createPage(args: {
   input: CreatePageInput;
 }): Promise<Page> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreatePageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -109,6 +111,7 @@ export async function newPage(args: {
   input: NewPageInput;
 }): Promise<Page> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = NewPageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
