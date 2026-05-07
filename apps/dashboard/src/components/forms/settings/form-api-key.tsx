@@ -207,14 +207,14 @@ export function FormApiKey() {
               document.body.style.pointerEvents = "";
             }}
           >
+            <DialogHeader>
+              <DialogTitle>Create API Key</DialogTitle>
+              <DialogDescription>
+                Create a new API key to access your workspace data.
+              </DialogDescription>
+            </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(createAction)}>
-                <DialogHeader>
-                  <DialogTitle>Create API Key</DialogTitle>
-                  <DialogDescription>
-                    Create a new API key to access your workspace data.
-                  </DialogDescription>
-                </DialogHeader>
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
