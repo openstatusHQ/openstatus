@@ -37,7 +37,7 @@ RUN \
     --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
     --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
     --mount=type=bind,target=packages/notifications/telegram/package.json,source=packages/notifications/telegram/package.json \
-    --mount=type=bind,target=packages/notifications/twillio-whatsapp/package.json,source=packages/notifications/twillio-whatsapp/package.json \
+    --mount=type=bind,target=packages/notifications/bird-whatsapp/package.json,source=packages/notifications/bird-whatsapp/package.json \
     --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
     --mount=type=bind,target=packages/notifications/webhook/package.json,source=packages/notifications/webhook/package.json \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \

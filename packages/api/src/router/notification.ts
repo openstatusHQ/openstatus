@@ -36,7 +36,7 @@ import {
 } from "@openstatus/notification-pagerduty";
 import { sendTestSlackMessage as sendSlackTest } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
-import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
+import { sendTest as sendWhatsAppTest } from "@openstatus/notification-bird-whatsapp";
 import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
 import { redis } from "@openstatus/upstash";
 import { nanoid } from "nanoid";

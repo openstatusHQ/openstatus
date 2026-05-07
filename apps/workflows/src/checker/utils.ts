@@ -54,7 +54,7 @@ import {
   sendAlert as sendWhatsappAlert,
   sendDegraded as sendWhatsappDegraded,
   sendRecovery as sendWhatsappRecovery,
-} from "@openstatus/notification-twillio-whatsapp";
+} from "@openstatus/notification-bird-whatsapp";
 import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,
