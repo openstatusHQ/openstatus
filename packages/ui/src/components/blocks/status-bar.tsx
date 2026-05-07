@@ -147,11 +147,16 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
     }
   }, []);
 
+  const interactionTypeRef = useRef<InteractionType>(null);
+  useEffect(() => {
+    interactionTypeRef.current = interactionType;
+  }, [interactionType]);
+
   const handleClick = useCallback(
     (index: number) => {
       clearHoverTimeout();
       setActiveIndex((prev) => {
-        if (prev === index) {
+        if (prev === index && interactionTypeRef.current === "pin") {
           setInteractionType(null);
           return null;
         }

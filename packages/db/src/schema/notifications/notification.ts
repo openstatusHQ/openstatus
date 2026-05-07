@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -11,19 +12,23 @@ import { monitor } from "../monitors";
 import { workspace } from "../workspaces";
 import { notificationProvider } from "./constants";
 
-export const notification = sqliteTable("notification", {
-  id: integer("id").primaryKey(),
-  name: text("name").notNull(),
-  provider: text("provider", { enum: notificationProvider }).notNull(),
-  data: text("data").default("{}"),
-  workspaceId: integer("workspace_id").references(() => workspace.id),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-});
+export const notification = sqliteTable(
+  "notification",
+  {
+    id: integer("id").primaryKey(),
+    name: text("name").notNull(),
+    provider: text("provider", { enum: notificationProvider }).notNull(),
+    data: text("data").default("{}"),
+    workspaceId: integer("workspace_id").references(() => workspace.id),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [index("notification_workspace_id_idx").on(t.workspaceId)],
+);
 
 export const notificationTrigger = sqliteTable(
   "notification_trigger",
@@ -38,13 +43,13 @@ export const notificationTrigger = sqliteTable(
     ),
     cronTimestamp: integer("cron_timestamp").notNull(),
   },
-  (table) => ({
-    unique: uniqueIndex("notification_id_monitor_id_crontimestampe").on(
+  (table) => [
+    uniqueIndex("notification_id_monitor_id_crontimestampe").on(
       table.notificationId,
       table.monitorId,
       table.cronTimestamp,
     ),
-  }),
+  ],
 );
 
 export const notificationsToMonitors = sqliteTable(
@@ -60,9 +65,10 @@ export const notificationsToMonitors = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.monitorId, t.notificationId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.monitorId, t.notificationId] }),
+    index("notifications_to_monitors_notification_id_idx").on(t.notificationId),
+  ],
 );
 
 export const notificationsToMonitorsRelation = relations(

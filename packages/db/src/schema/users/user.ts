@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -50,9 +51,10 @@ export const usersToWorkspaces = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.userId, t.workspaceId] }),
+    index("users_to_workspaces_workspace_id_idx").on(t.workspaceId),
+  ],
 );
 
 export const usersToWorkspaceRelations = relations(
@@ -88,11 +90,11 @@ export const account = sqliteTable(
     id_token: text("id_token"),
     session_state: text("session_state"),
   },
-  (account) => ({
-    compoundKey: primaryKey({
+  (account) => [
+    primaryKey({
       columns: [account.provider, account.providerAccountId],
     }),
-  }),
+  ],
 );
 
 export const session = sqliteTable("session", {
@@ -110,7 +112,5 @@ export const verificationToken = sqliteTable(
     token: text("token").notNull(),
     expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
   },
-  (vt) => ({
-    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  }),
+  (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })],
 );

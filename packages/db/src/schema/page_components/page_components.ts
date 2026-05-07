@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -52,6 +53,7 @@ export const pageComponent = sqliteTable(
       t.pageId,
       t.monitorId,
     ),
+    index("page_component_workspace_id_idx").on(t.workspaceId),
     check(
       "page_component_type_check",
       //   NOTE: This check ensures that either the component is a monitor or a static component, but not both.
@@ -97,9 +99,12 @@ export const maintenancesToPageComponents = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.maintenanceId, t.pageComponentId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.maintenanceId, t.pageComponentId] }),
+    index("maintenance_to_page_component_page_component_id_idx").on(
+      t.pageComponentId,
+    ),
+  ],
 );
 
 export const maintenancesToPageComponentsRelations = relations(
@@ -129,9 +134,12 @@ export const statusReportsToPageComponents = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.statusReportId, t.pageComponentId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.statusReportId, t.pageComponentId] }),
+    index("status_report_to_page_component_page_component_id_idx").on(
+      t.pageComponentId,
+    ),
+  ],
 );
 
 export const statusReportsToPageComponentsRelations = relations(
