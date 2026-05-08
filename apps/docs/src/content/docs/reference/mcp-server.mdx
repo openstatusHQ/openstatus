@@ -84,23 +84,32 @@ The tool's response includes a `notified: boolean` field so the assistant can co
 
 ## Configure Claude Desktop
 
+Claude Desktop launches MCP servers as local stdio processes, so the remote HTTP server is bridged through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) — a small open-source proxy that translates Claude Desktop's stdio calls into HTTP requests against `https://api.openstatus.dev/mcp`. You'll need Node.js 18+ on your PATH so Claude Desktop can run `npx`.
+
 Add the server to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\\Claude\\claude_desktop_config.json` (Windows):
 
 ```json
 {
   "mcpServers": {
     "openstatus": {
-      "type": "http",
-      "url": "https://api.openstatus.dev/mcp",
-      "headers": {
-        "x-openstatus-key": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://api.openstatus.dev/mcp",
+        "--header",
+        "x-openstatus-key: ${API_KEY}"
+      ],
+      "env": {
+        "API_KEY": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
       }
     }
   }
 }
 ```
 
-Restart Claude Desktop. The 8 openstatus tools appear in the tool picker.
+The API key is held in `env` and referenced via `${API_KEY}` in the `--header` value because `mcp-remote` parses header args before shell expansion — inlining the key after the colon breaks parsing.
+
+Fully quit and relaunch Claude Desktop (`Cmd+Q` on macOS, **File → Quit** on Windows). The openstatus tools appear in the tool picker after restart.
 
 ## Configure Cursor
 

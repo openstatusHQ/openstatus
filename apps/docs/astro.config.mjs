@@ -118,6 +118,10 @@ export default defineConfig({
               slug: "tutorial/how-to-setup-slack-agent",
             },
             {
+              label: "Connect openstatus to Claude Code",
+              slug: "tutorial/how-to-connect-openstatus-to-claude-code",
+            },
+            {
               label: "Manage Your Stack with Terraform and CLI",
               slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
             },
