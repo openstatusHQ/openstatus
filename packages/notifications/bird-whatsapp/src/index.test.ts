@@ -90,10 +90,10 @@ describe("WhatsApp Notifications (Bird)", () => {
       "+33623456789",
     );
     expect(body.messageRequests[0].template.projectId).toBe(
-      "446fc1ad-3ff4-40fb-8b11-ebfd02513c5d",
+      "20cd47e2-70e9-4e06-97be-21eee5e4de33",
     );
     expect(body.messageRequests[0].template.version).toBe(
-      "679aa339-4037-4aa6-8063-ab290249fd14",
+      "9a86655b-9e5a-4e8a-80f3-33f232bb7e63",
     );
     expect(body.messageRequests[0].template.locale).toBe("en");
     expect(body.messageRequests[0].template.parameters[0].key).toBe(
@@ -116,10 +116,10 @@ describe("WhatsApp Notifications (Bird)", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = parseRequestBody(fetchMock);
     expect(body.messageRequests[0].template.projectId).toBe(
-      "61d6052d-2abf-422a-ab61-a918ab638a83",
+      "2068001e-330d-4093-8d06-7071e9d34aa1",
     );
     expect(body.messageRequests[0].template.version).toBe(
-      "dc8cd91a-f44a-4df8-af0c-f62fcd90df61",
+      "af66e5de-015b-4822-a34e-fb6dfd538bb6",
     );
     expect(body.messageRequests[0].template.parameters[0].value).toBe(
       "https://api.example.com/health",
@@ -138,10 +138,10 @@ describe("WhatsApp Notifications (Bird)", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = parseRequestBody(fetchMock);
     expect(body.messageRequests[0].template.projectId).toBe(
-      "6ef3a922-1960-444a-b385-2716f157e10b",
+      "c9a842d9-cf9e-4a13-8cde-024d57e29143",
     );
     expect(body.messageRequests[0].template.version).toBe(
-      "1f1a133c-ab83-477b-b104-3d4a9db6ec7b",
+      "dcbfac35-db0e-4e07-9390-e53dda2fda0b",
     );
     expect(body.messageRequests[0].template.parameters[0].value).toBe(
       "https://api.example.com/health",
@@ -157,10 +157,10 @@ describe("WhatsApp Notifications (Bird)", () => {
       "+33623456789",
     );
     expect(body.messageRequests[0].template.projectId).toBe(
-      "43f04cfa-b400-4e70-9389-76fee497f250",
+      "3315bcd8-2fde-411c-83c5-009ac4b4b8ff",
     );
     expect(body.messageRequests[0].template.version).toBe(
-      "9478e278-d319-4f26-8682-c689970e1803",
+      "a3e55807-ff35-4dbc-a16b-670c7eeaae85",
     );
     expect(body.messageRequests[0].template.parameters[0].value).toBe(
       "https://openstat.us",

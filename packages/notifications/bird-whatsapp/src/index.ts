@@ -4,20 +4,20 @@ import { env } from "./env";
 
 const TEMPLATES = {
   alert: {
-    projectId: "446fc1ad-3ff4-40fb-8b11-ebfd02513c5d",
-    version: "679aa339-4037-4aa6-8063-ab290249fd14",
+    projectId: "20cd47e2-70e9-4e06-97be-21eee5e4de33",
+    version: "9a86655b-9e5a-4e8a-80f3-33f232bb7e63",
   },
   recovery: {
-    projectId: "61d6052d-2abf-422a-ab61-a918ab638a83",
-    version: "dc8cd91a-f44a-4df8-af0c-f62fcd90df61",
+    projectId: "2068001e-330d-4093-8d06-7071e9d34aa1",
+    version: "af66e5de-015b-4822-a34e-fb6dfd538bb6",
   },
   degraded: {
-    projectId: "6ef3a922-1960-444a-b385-2716f157e10b",
-    version: "1f1a133c-ab83-477b-b104-3d4a9db6ec7b",
+    projectId: "c9a842d9-cf9e-4a13-8cde-024d57e29143",
+    version: "dcbfac35-db0e-4e07-9390-e53dda2fda0b",
   },
   test: {
-    projectId: "43f04cfa-b400-4e70-9389-76fee497f250",
-    version: "9478e278-d319-4f26-8682-c689970e1803",
+    projectId: "3315bcd8-2fde-411c-83c5-009ac4b4b8ff",
+    version: "a3e55807-ff35-4dbc-a16b-670c7eeaae85",
   },
 } as const;
 
