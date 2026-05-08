@@ -10,6 +10,7 @@ import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { assertSafeUrl } from "@openstatus/utils";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import { UpdatePageSubscriberChannelInput } from "./schemas";
@@ -34,6 +35,7 @@ export async function updatePageSubscriberChannel(args: {
   input: UpdatePageSubscriberChannelInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdatePageSubscriberChannelInput.parse(args.input);
 
   // `assertSafeUrl` does a DNS lookup to block private/internal targets;

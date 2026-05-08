@@ -20,6 +20,7 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeSlackCtx,
   makeUserCtx,
   withTestTransaction,
@@ -233,6 +234,31 @@ describe("createMaintenance", () => {
         .all();
       expect(assoc).toHaveLength(1);
       expect(assoc[0].pageComponentId).toBe(testPageComponentId);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createMaintenance({
+          ctx: readOnlyCtx,
+          input: {
+            title: `${TEST_PREFIX}-read-only`,
+            message: "m",
+            ...futureRange(),
+            pageId: testPageId,
+            pageComponentIds: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 

@@ -14,6 +14,7 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -310,6 +311,25 @@ describe("listPageComponents", () => {
 });
 
 describe("deletePageComponent", () => {
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        deletePageComponent({
+          ctx: readOnlyCtx,
+          input: { id: 999_999_999 },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("throws NotFoundError for cross-workspace id", async () => {
     await withTestTransaction(async (tx) => {
       const teamCtxTx = { ...teamCtx, db: tx };

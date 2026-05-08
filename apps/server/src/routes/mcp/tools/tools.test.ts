@@ -9,7 +9,7 @@ import {
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
-import type { Workspace } from "@openstatus/db/src/schema";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
 import {
   SEEDED_WORKSPACE_FREE_ID,
@@ -39,12 +39,17 @@ function makeMcpToolCtx(
   opts: {
     db?: ServiceContext["db"];
     createdById?: number;
+    scopes?: Scope[];
   } = {},
 ): ServiceContext {
   return {
     ...toServiceCtx({
       workspace,
-      apiKey: { id: "test-key", createdById: opts.createdById },
+      apiKey: {
+        id: "test-key",
+        createdById: opts.createdById,
+        scopes: opts.scopes ?? ["write"],
+      },
       requestId: "test-req",
     }),
     db: opts.db,
@@ -575,5 +580,42 @@ describe("create_maintenance", () => {
       });
       expect(result.isError).toBe(true);
     });
+  });
+});
+
+describe("scope filter", () => {
+  test("read-only key sees read tools, no write tools", async () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["read"] });
+    const pageTools = registered("page", ctx);
+    const reportTools = registered("status-report", ctx);
+    const maintenanceTools = registered("maintenance", ctx);
+
+    // Read-only is allowed:
+    expect(pageTools.has("list_status_pages")).toBe(true);
+    expect(reportTools.has("list_status_reports")).toBe(true);
+    expect(maintenanceTools.has("list_maintenances")).toBe(true);
+
+    // Write tools must be filtered out — registry doesn't carry them
+    // and `tools/list` will see only the read tools.
+    expect(reportTools.has("create_status_report")).toBe(false);
+    expect(reportTools.has("add_status_report_update")).toBe(false);
+    expect(reportTools.has("update_status_report")).toBe(false);
+    expect(reportTools.has("resolve_status_report")).toBe(false);
+    expect(maintenanceTools.has("create_maintenance")).toBe(false);
+  });
+
+  test("write key sees both read and write tools", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["write"] });
+    const reportTools = registered("status-report", ctx);
+    expect(reportTools.has("list_status_reports")).toBe(true);
+    expect(reportTools.has("create_status_report")).toBe(true);
+  });
+
+  test("'*' (super-admin) key sees every tool", () => {
+    const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["*"] });
+    const reportTools = registered("status-report", ctx);
+    expect(reportTools.has("list_status_reports")).toBe(true);
+    expect(reportTools.has("create_status_report")).toBe(true);
+    expect(reportTools.has("resolve_status_report")).toBe(true);
   });
 });

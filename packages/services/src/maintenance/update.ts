@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { Maintenance } from "../types";
@@ -17,6 +18,7 @@ export async function updateMaintenance(args: {
   input: UpdateMaintenanceInput;
 }): Promise<Maintenance> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateMaintenanceInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

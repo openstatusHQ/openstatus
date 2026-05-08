@@ -1,6 +1,7 @@
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError } from "../errors";
 import type { Monitor } from "../types";
@@ -17,6 +18,7 @@ export async function createMonitor(args: {
   input: CreateMonitorInput;
 }): Promise<Monitor> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreateMonitorInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

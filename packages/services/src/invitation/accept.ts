@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -37,6 +38,7 @@ export async function acceptInvitation(args: {
   input: AcceptInvitationInput;
 }): Promise<Workspace> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = AcceptInvitationInput.parse(args.input);
 
   const userId = tryGetActorUserId(ctx.actor);

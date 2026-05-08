@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
 import { UpdateWorkspaceNameInput } from "./schemas";
@@ -15,6 +16,7 @@ export async function updateWorkspaceName(args: {
   input: UpdateWorkspaceNameInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdateWorkspaceNameInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

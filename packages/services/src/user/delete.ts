@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -46,6 +47,7 @@ export async function deleteAccount(args: {
   input?: DeleteAccountInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   if (args.input !== undefined) DeleteAccountInput.parse(args.input);
 
   // `userId` is derived from `ctx.actor`, not input — account deletion

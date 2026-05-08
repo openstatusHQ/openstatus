@@ -12,10 +12,12 @@ import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
+import { ForbiddenError } from "../../errors";
 
 let teamCtx: ServiceContext;
 
@@ -91,6 +93,25 @@ describe("listWorkspaces", () => {
 });
 
 describe("updateWorkspaceName", () => {
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updateWorkspaceName({
+          ctx: readOnlyCtx,
+          input: { name: "blocked" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   test("renames the workspace and emits an audit row", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };

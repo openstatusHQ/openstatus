@@ -2,6 +2,7 @@ import { and, desc, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { InternalServiceError, NotFoundError } from "../errors";
 import {
@@ -24,6 +25,7 @@ export async function installSlackAgent(args: {
   input: InstallSlackAgentInput;
 }) {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = InstallSlackAgentInputSchema.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

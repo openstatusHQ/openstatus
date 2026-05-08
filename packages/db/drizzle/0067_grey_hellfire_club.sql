@@ -1,0 +1,1 @@
+ALTER TABLE `api_key` ADD `scopes` text DEFAULT '["write"]' NOT NULL;

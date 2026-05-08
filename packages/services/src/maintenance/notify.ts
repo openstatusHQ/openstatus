@@ -2,6 +2,7 @@ import { db as defaultDb, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { ForbiddenError, NotFoundError } from "../errors";
 import { NotifyMaintenanceInput } from "./schemas";
@@ -20,6 +21,7 @@ export async function notifyMaintenance(args: {
   input: NotifyMaintenanceInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = NotifyMaintenanceInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 

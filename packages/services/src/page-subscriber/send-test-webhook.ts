@@ -5,6 +5,7 @@ import {
   sendTestWebhookRequest,
 } from "@openstatus/subscriptions";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { loadPageForWorkspace } from "./internal";
@@ -21,6 +22,7 @@ export async function sendPageSubscriberTestWebhook(args: {
   input: SendPageSubscriberTestWebhookInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = SendPageSubscriberTestWebhookInput.parse(args.input);
 
   const existing = await withTransaction(ctx, async (tx) => {

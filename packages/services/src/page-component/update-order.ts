@@ -2,6 +2,7 @@ import { and, eq, inArray, ne, sql } from "@openstatus/db";
 import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
 import { assertPageInWorkspace, validateMonitorIds } from "./internal";
@@ -27,6 +28,7 @@ export async function updatePageComponentOrder(args: {
   input: UpdatePageComponentOrderInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = UpdatePageComponentOrderInput.parse(args.input);
 
   // Reject duplicate group ids up front — otherwise the diff loop

@@ -10,13 +10,18 @@ import {
 import {
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeSystemCtx,
   makeUserCtx,
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { NotFoundError, PreconditionFailedError } from "../../errors";
+import {
+  ForbiddenError,
+  NotFoundError,
+  PreconditionFailedError,
+} from "../../errors";
 
 const OWNER_USER_ID = 1;
 const VICTIM_USER_ID = 4242;
@@ -192,6 +197,25 @@ describe("deleteMember", () => {
         entityId: VICTIM_USER_ID,
         db: tx,
       });
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        deleteMember({
+          ctx: readOnlyCtx,
+          input: { userId: 999_999_999 },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 

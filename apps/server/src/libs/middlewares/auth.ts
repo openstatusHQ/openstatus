@@ -7,7 +7,11 @@ import { OpenStatusApiError } from "@/libs/errors";
 import type { Variables } from "@/types";
 import { getLogger } from "@logtape/logtape";
 import { db, eq } from "@openstatus/db";
-import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
+import {
+  type Scope,
+  selectWorkspaceSchema,
+  workspace,
+} from "@openstatus/db/src/schema";
 import { apiKey } from "@openstatus/db/src/schema/api-keys";
 import {
   shouldUpdateLastUsed,
@@ -111,6 +115,7 @@ export async function authMiddleware(
   c.set("apiKey", {
     id: result.keyId ?? `ws:${workspaceData.id}`,
     createdById: result.createdById,
+    scopes: result.scopes ?? ["write"],
   });
 
   await next();
@@ -135,6 +140,14 @@ export async function validateKey(key: string): Promise<{
      * `actor_user_id = NULL`.
      */
     createdById?: number;
+    /**
+     * Access-control scopes for the resolved key. Custom keys: row
+     * scopes. Unkey fallback: `['write']` (legacy posture — keys
+     * minted before scopes existed kept full workspace access).
+     * Super-admin / dev fallback: `['*']` so the matcher treats them
+     * uniformly without a hardcoded bypass.
+     */
+    scopes?: Scope[];
   };
   error?: { message: string };
 }> {
@@ -182,11 +195,15 @@ export async function validateKey(key: string): Promise<{
             authMethod: "custom_key",
             keyId: String(customKey.id),
             createdById: customKey.createdById,
+            scopes: customKey.scopes,
           },
         };
       }
 
-      // 2. Fall back to Unkey (transition period)
+      // 2. Fall back to Unkey (transition period). Unkey-validated
+      // keys predate the scopes column, so they carry the legacy
+      // posture (`write`). When/if Unkey gets RBAC metadata, plumb
+      // it in here.
       const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
       const res = await keysVerifyKey(unkey, { key });
       if (!res.ok) {
@@ -202,11 +219,13 @@ export async function validateKey(key: string): Promise<{
           ownerId: res.value.data.identity?.externalId,
           authMethod: "unkey",
           keyId: res.value.data.keyId,
+          scopes: ["write"],
         },
         error: undefined,
       };
     }
-    // Special bypass for our workspace
+    // Special bypass for our workspace. `'*'` is internal-only — never
+    // settable via any public API.
     if (key.startsWith("sa_") && key === env.SUPER_ADMIN_TOKEN) {
       return {
         result: {
@@ -214,6 +233,7 @@ export async function validateKey(key: string): Promise<{
           ownerId: "1",
           authMethod: "super_admin",
           keyId: "super_admin",
+          scopes: ["*"],
         },
       };
     }
@@ -226,8 +246,16 @@ export async function validateKey(key: string): Promise<{
 
   // In dev / test mode we can use the key as the ownerId. The same
   // string also stands in for the keyId — there is no separate
-  // identity record to reference.
+  // identity record to reference. Dev keys get `'*'` so local testing
+  // mirrors super-admin and isn't accidentally locked out by scope
+  // checks.
   return {
-    result: { valid: true, ownerId: key, authMethod: "dev", keyId: key },
+    result: {
+      valid: true,
+      ownerId: key,
+      authMethod: "dev",
+      keyId: key,
+      scopes: ["*"],
+    },
   };
 }

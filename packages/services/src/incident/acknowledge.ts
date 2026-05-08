@@ -2,6 +2,7 @@ import { and, eq, isNull } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -17,6 +18,7 @@ export async function acknowledgeIncident(args: {
   input: AcknowledgeIncidentInput;
 }): Promise<Incident> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = AcknowledgeIncidentInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

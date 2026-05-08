@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { getMaintenanceInWorkspace } from "./internal";
 import { DeleteMaintenanceInput } from "./schemas";
@@ -12,6 +13,7 @@ export async function deleteMaintenance(args: {
   input: DeleteMaintenanceInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteMaintenanceInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError } from "../errors";
 import type { Invitation } from "../types";
@@ -31,6 +32,7 @@ export async function createInvitation(args: {
   input: CreateInvitationInput;
 }): Promise<Invitation> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreateInvitationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

@@ -2,6 +2,7 @@ import { and, eq } from "@openstatus/db";
 import { pageComponent } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
 import { DeletePageComponentInput } from "./schemas";
@@ -16,6 +17,7 @@ export async function deletePageComponent(args: {
   input: DeletePageComponentInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeletePageComponentInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

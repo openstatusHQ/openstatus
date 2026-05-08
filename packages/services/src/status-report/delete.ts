@@ -2,6 +2,7 @@ import { eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { getReportInWorkspace, getReportUpdateInWorkspace } from "./internal";
 import {
@@ -18,6 +19,7 @@ export async function deleteStatusReport(args: {
   input: DeleteStatusReportInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteStatusReportInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -44,6 +46,7 @@ export async function deleteStatusReportUpdate(args: {
   input: DeleteStatusReportUpdateInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeleteStatusReportUpdateInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

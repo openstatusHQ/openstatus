@@ -124,3 +124,15 @@ Conventions for any new mutation:
 -   **Tests live in `packages/services/src/<entity>/__tests__/`** and use `expectAuditRow({ workspaceId, action, entityId, ... })` from `packages/services/test/helpers.ts` to assert the audit side-effect. Each suite scopes to its own workspace and clears `audit_log` between cases.
 
 When adding a router endpoint, the default answer is "write the service verb first, then call it from the router." Inline DB access in routers is a smell — it bypasses the audit log and the Edge-safety guarantee.
+
+## Scope Enforcement (API key RBAC)
+
+API keys carry **scopes** (`'read'` / `'write'`) that gate write access. See `packages/services/src/auth/`.
+
+-   **Call `requireScope(ctx, "write")` as the first line** of every write verb — before `Input.parse(...)` and `withTransaction`. Import from `../auth`.
+-   **"Write"** = any DB mutation **or** side-effecting external call (probes, webhooks, notifications). Everything else is read.
+-   No-op for `user` / `system` / `slack` / `webhook` / `subscriber` actors; active for `apiKey` and `mcp`. Throws `ForbiddenError` on denial.
+-   **Tests:** every entity's `__tests__/` includes a `'rejects read-only actor'` case via `makeApiKeyCtx(workspace, { keyId: "k", userId: 1, scopes: ["read"] })`. `requireScope` fires before DB lookup, so fake ids work for delete/update verbs.
+-   **MCP tools** declare `scope: 'read' | 'write'` and register via `registerScopedTool` — read-only keys never see write tools.
+
+Treat a missing `requireScope` the same as a missing `emitAudit` — mandatory for every mutation.

@@ -2,6 +2,7 @@ import { apiKey } from "@openstatus/db/src/schema";
 import { generateApiKey } from "@openstatus/db/src/utils/api-key";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -28,6 +29,7 @@ export async function createApiKey(args: {
   input: CreateApiKeyInput;
 }): Promise<{ token: string; key: PublicApiKey }> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreateApiKeyInput.parse(args.input);
 
   const createdById = tryGetActorUserId(ctx.actor);
@@ -50,6 +52,7 @@ export async function createApiKey(args: {
         workspaceId: ctx.workspace.id,
         createdById,
         expiresAt: input.expiresAt,
+        scopes: input.scopes,
       })
       .returning();
 
@@ -71,6 +74,7 @@ export async function createApiKey(args: {
         description: key.description,
         prefix: key.prefix,
         expiresAt: key.expiresAt,
+        scopes: key.scopes,
       },
     });
 

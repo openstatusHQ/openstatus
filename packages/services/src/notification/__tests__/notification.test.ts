@@ -14,6 +14,7 @@ import {
   cleanQuotaGatedTables,
   expectAuditRow,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -176,6 +177,30 @@ describe("createNotification", () => {
           },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createNotification({
+          ctx: readOnlyCtx,
+          input: {
+            name: `${TEST_PREFIX}-read-only`,
+            provider: "discord",
+            data: { discord: "https://discord.com/api/webhooks/1/abc" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 

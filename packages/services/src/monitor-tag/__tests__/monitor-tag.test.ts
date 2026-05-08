@@ -7,11 +7,13 @@ import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,
   loadSeededWorkspace,
+  makeApiKeyCtx,
   makeUserCtx,
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
+import { ForbiddenError } from "../../errors";
 
 let teamCtx: ServiceContext;
 
@@ -162,6 +164,25 @@ describe("syncMonitorTags", () => {
         (r) => r.action === "monitor_tag.delete",
       );
       expect(deletes).toHaveLength(1);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        syncMonitorTags({
+          ctx: readOnlyCtx,
+          input: { tags: [{ name: "alpha", color: "red" }] },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 

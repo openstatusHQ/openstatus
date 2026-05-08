@@ -15,6 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import {
+  createPageSubscriber,
   getSubscriberByToken,
   hasPendingSubscriber,
   unsubscribeSubscriber,
@@ -26,8 +27,12 @@ import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,
   expectAuditRow,
+  loadSeededWorkspace,
+  makeApiKeyCtx,
   readAuditLog,
+  withTestTransaction,
 } from "../../../test/helpers";
+import { ForbiddenError } from "../../errors";
 
 // Seeded data we lean on (see packages/db/src/seed.mts):
 //   workspace 1 = team plan, has status-subscribers=true
@@ -734,5 +739,33 @@ describe("hasPendingSubscriber", () => {
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
+  });
+});
+
+// ─── createPageSubscriber ────────────────────────────────────────────────────
+
+describe("createPageSubscriber", () => {
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(team, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createPageSubscriber({
+          ctx: readOnlyCtx,
+          input: {
+            pageId: PAGE_ID,
+            channelType: "email",
+            email: "rejects-read@test.dev",
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
   });
 });

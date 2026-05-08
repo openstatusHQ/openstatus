@@ -4,7 +4,7 @@ import {
   type Interceptor,
   createContextKey,
 } from "@connectrpc/connect";
-import type { Workspace } from "@openstatus/db/src/schema";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { nanoid } from "nanoid";
 
 import { lookupWorkspace, validateKey } from "@/libs/middlewares/auth";
@@ -20,8 +20,10 @@ export interface RpcContext {
    * Resolved API key identity. `id` is the stable key identifier (audit
    * `actor_id`); `createdById` is the openstatus user who created the
    * key (`api_key.created_by_id`, audit `actor_user_id`).
+   * `scopes` carries the access-control scopes for the resolved key —
+   * `requireScope` reads them inside service write verbs.
    */
-  apiKey: { id: string; createdById?: number };
+  apiKey: { id: string; createdById?: number; scopes: Scope[] };
 }
 
 /**
@@ -85,6 +87,7 @@ export function authInterceptor(): Interceptor {
       apiKey: {
         id: result.keyId ?? `ws:${workspace.id}`,
         createdById: result.createdById,
+        scopes: result.scopes ?? ["write"],
       },
     };
 

@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError } from "../errors";
 import type { Notification } from "../types";
@@ -21,6 +22,7 @@ export async function createNotification(args: {
   input: CreateNotificationInput;
 }): Promise<Notification> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = CreateNotificationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {

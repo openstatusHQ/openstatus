@@ -23,6 +23,17 @@ x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 Get a key from the dashboard's **Settings → API Tokens**.
 
+### Scopes
+
+Each API key carries a scope that controls what tools the MCP server exposes:
+
+- **Read-only** — the server only registers `list_*` tools. Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
+- **Read & write** — every tool is available.
+
+Scope is set at key creation time and is **immutable**. To change a key's scope, revoke it and issue a new one.
+
+For AI agents that should only observe state — health summaries, paging on-call, drafting communication — issue a **Read-only** key. The server gates writes at two layers (the `tools/list` filter is the visible UX; the service-layer scope check is the boundary), so a misconfigured client can't accidentally mutate.
+
 ## Tools
 
 The server exposes 8 tools, scoped to the workspace tied to your API key. Mutations write to the audit log with `metadata.transport = "mcp"`.

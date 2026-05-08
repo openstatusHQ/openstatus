@@ -5,6 +5,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
+import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { DeletePrivateLocationInput } from "./schemas";
 
@@ -21,6 +22,7 @@ export async function deletePrivateLocation(args: {
   input: DeletePrivateLocationInput;
 }): Promise<void> {
   const { ctx } = args;
+  requireScope(ctx, "write");
   const input = DeletePrivateLocationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
