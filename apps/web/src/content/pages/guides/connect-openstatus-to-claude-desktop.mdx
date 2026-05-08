@@ -1,0 +1,151 @@
+---
+title: "Connect Openstatus to Claude Desktop (MCP Setup Guide)"
+author: "openstatus"
+description: "Add the openstatus MCP server to Claude Desktop so the assistant can list status pages, draft incidents, and schedule maintenance from chat — with audit-logged mutations and explicit notify semantics."
+publishedAt: "2026-05-08"
+category: "education"
+howto:
+  totalTime: "PT3M"
+  steps:
+    - name: "Create an openstatus API key"
+      text: "Open Settings → API Tokens in the openstatus dashboard, click Create Token, and pick read-only or read & write scope."
+      url: "#step-1-create-an-api-key"
+    - name: "Edit claude_desktop_config.json"
+      text: "Add the openstatus MCP server under `mcpServers` in `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\\Claude\\claude_desktop_config.json` (Windows). Claude Desktop launches MCP servers as local processes, so the remote HTTP server is bridged through `npx mcp-remote`."
+      url: "#step-2-edit-claude-desktop-config"
+    - name: "Restart Claude Desktop"
+      text: "Quit Claude Desktop fully and relaunch it so the new MCP server is registered. Reloading the window is not enough."
+      url: "#step-3-restart-claude-desktop"
+    - name: "Verify and run your first prompt"
+      text: "Open the tool picker, confirm the openstatus tools are listed, then ask Claude to list your status pages or draft an incident."
+      url: "#step-4-verify-and-run-your-first-prompt"
+faq:
+  - question: "Does Claude Desktop support remote MCP servers like openstatus?"
+    answer: "Yes, but indirectly. Claude Desktop launches MCP servers as local stdio processes, so a remote HTTP server like openstatus has to be bridged through `npx mcp-remote` — a small open-source proxy that translates Claude Desktop's stdio calls into HTTP requests. You configure `mcp-remote` once in `claude_desktop_config.json` and Claude Desktop treats openstatus like any other local server."
+  - question: "Where is claude_desktop_config.json on macOS and Windows?"
+    answer: "On macOS, the file lives at `~/Library/Application Support/Claude/claude_desktop_config.json`. On Windows, it lives at `%APPDATA%\\Claude\\claude_desktop_config.json`. Create the file if it does not exist."
+  - question: "Do I need a separate MCP credential for Claude Desktop?"
+    answer: "No. Authentication is the standard `x-openstatus-key` header — the same API key the openstatus CLI, REST API, and Terraform provider use. There is no MCP-specific OAuth flow."
+  - question: "Why don't I see the openstatus tools after editing the config?"
+    answer: "The two most common causes are not fully quitting Claude Desktop (it only loads MCP servers at launch — close the window is not enough, you have to Cmd+Q on macOS or File → Quit on Windows) and `npx` not being on the PATH that Claude Desktop sees. Install Node.js 18+ from nodejs.org if `node --version` is missing in your shell."
+  - question: "Can Claude Desktop accidentally notify subscribers when posting an incident?"
+    answer: "No. Every mutation tool requires an explicit `notify: true | false` field. Claude must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag."
+  - question: "How do I give Claude Desktop read-only access to my workspace?"
+    answer: "Create an API key with `read` scope. The MCP server filters mutation tools out of the `tools/list` response for read-only keys, so Claude Desktop only sees `list_status_pages`, `list_status_reports`, and `list_maintenances`."
+  - question: "Where do MCP-driven changes appear in the audit log?"
+    answer: "Every mutation routed through Claude Desktop lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
+---
+
+**TL;DR** — Drop a small `mcp-remote` block into `claude_desktop_config.json`, restart Claude Desktop, and the assistant can drive your status pages: list incidents, draft updates, and schedule maintenance from the chat window. Every mutation is audit-logged under `actor_type = 'mcp'` and notifications never fire unless you explicitly approve.
+
+---
+
+[Claude Desktop](https://claude.com/download) speaks the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) — the open standard for letting AI assistants reach external services with explicit approval on every call. This guide wires the [openstatus MCP server](/tooling/mcp-server) into Claude Desktop so you can list status pages, post incident updates, resolve reports, and schedule maintenance windows without leaving the chat window.
+
+## Why connect Openstatus to Claude Desktop?
+
+If your incident workflow already runs through chat, Claude Desktop is the right drafting surface. Concrete scenarios:
+
+- **Drafting customer-facing copy** — turn engineer shorthand ("payment-api spiking p99 to 6s") into the calm, structured update your subscribers expect, then approve and post it without leaving the chat.
+- **On-call summaries** — "Summarize the last 7 days of incidents on my API page" in seconds, useful for weekly reviews and handoffs.
+- **Read-only audits** — issue a read-scoped key to a teammate; their Claude Desktop sees only the `list_*` tools and cannot mutate anything.
+
+The same key works with [Claude Code](/guides/connect-openstatus-to-claude-code), Cursor, ChatGPT, and any other MCP-compatible client.
+
+## Prerequisites
+
+- An [openstatus account](https://www.openstatus.dev) with at least one status page.
+- [Claude Desktop](https://claude.com/download) installed and signed in.
+- **Node.js 18+** on your PATH — Claude Desktop uses `npx` to launch the `mcp-remote` bridge. Confirm with `node --version`; install from [nodejs.org](https://nodejs.org) if missing.
+
+## Step 1: Create an API key
+
+In the openstatus dashboard, go to **Settings → API Tokens** → **Create Token**. Pick a scope:
+
+- **Read-only** — Claude Desktop can only list status pages, reports, and maintenance windows.
+- **Read & write** — Claude Desktop can also create reports, append updates, resolve incidents, and schedule maintenance.
+
+Scopes are immutable on a key. Copy the value (starts with `os_`); you'll only see it once.
+
+## Step 2: Edit `claude_desktop_config.json`
+
+Claude Desktop reads its MCP servers from a single JSON file:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+The fastest way to open it is from inside Claude Desktop: **Settings → Developer → Edit Config**. Create the file if it doesn't exist.
+
+Add the openstatus server under `mcpServers`:
+
+```json
+{
+  "mcpServers": {
+    "openstatus": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://api.openstatus.dev/mcp",
+        "--header",
+        "x-openstatus-key: ${API_KEY}"
+      ],
+      "env": {
+        "API_KEY": "os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+Two things worth knowing:
+
+- **Claude Desktop launches MCP servers as local processes**, so it can't talk to a remote HTTP endpoint directly. [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) is an open-source proxy that exposes a local stdio MCP server and forwards calls to the remote URL. `npx` runs it on demand — no global install.
+- **The API key lives in `env`, not inlined in `args`.** `mcp-remote` parses `--header` arguments before shell expansion, so a literal key after the colon breaks parsing. Holding it in `env.API_KEY` and referencing `${API_KEY}` in the header value is the documented workaround.
+
+## Step 3: Restart Claude Desktop
+
+Claude Desktop only loads MCP servers at launch. Quit fully (`Cmd+Q` on macOS, **File → Quit** on Windows) and reopen — reloading the window is not enough.
+
+## Step 4: Verify and run your first prompt
+
+Open a new chat and click the tool picker. With a read-only key you'll see `list_status_pages`, `list_status_reports`, `list_maintenances`. With a read & write key you'll also see `create_status_report`, `add_status_report_update`, `update_status_report`, `resolve_status_report`, and `create_maintenance`.
+
+Try a read tool first:
+
+```
+List my openstatus status pages
+```
+
+Claude calls `list_status_pages`, asks for approval, and returns the slugs and ids in your workspace. With a write-scoped key, draft an incident — Claude shows you the title, status, message, and notify choice **before** firing:
+
+```
+Draft a status report on my "api" page: investigating elevated latency on the payment endpoint, do not notify subscribers yet
+```
+
+## Built-in safeguards
+
+Three properties make this safe enough for a real incident:
+
+- **Required `notify: boolean`** on every mutation tool — the schema rejects calls that omit it, so the LLM has to ask before firing. `notify: false` is a hard guarantee that no subscriber alert goes out.
+- **Lookup-before-mutate** — `create_status_report` and `create_maintenance` require a `pageId` resolved via `list_status_pages` rather than guessed.
+- **Audit log attribution** — every mutation lands in the audit log under `actor_type = 'mcp'`, with `actor_id` (key) and `actor_user_id` (the user who created the key), so AI-driven actions are traceable as a separate slice.
+
+## Troubleshooting
+
+- **Tools don't appear after restart.** Validate the JSON (a trailing comma silently disables the whole `mcpServers` block) and confirm `npx` is on the PATH that Claude Desktop sees — `nvm`-managed Node sometimes isn't. Use the official nodejs.org installer if `node --version` is missing in your shell. Check **Settings → Developer → Open Logs Folder** for `mcp-remote` stderr.
+- **401 errors when calling a tool.** Verify the `x-openstatus-key` value matches a key in **Settings → API Tokens**. Sanity-check with `curl -i -H "x-openstatus-key: os_..." https://api.openstatus.dev/mcp`.
+
+## What's next?
+
+- **[MCP Server Reference](https://docs.openstatus.dev/reference/mcp-server)** — full tool schema, error codes, and scope mechanics.
+- **[Connect to Claude Code](/guides/connect-openstatus-to-claude-code)** — terminal-shaped variant of this guide.
+- **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
+- **[Slack Agent](/status-page#slack-agent)** — for teams that live in Slack.
+
+---
+
+Start free. No credit card required. Configure Claude Desktop to drive your status pages in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
