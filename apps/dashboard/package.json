@@ -41,7 +41,7 @@
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-telegram": "workspace:*",
-    "@openstatus/notification-twillio-whatsapp": "workspace:*",
+    "@openstatus/notification-bird-whatsapp": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/regions": "workspace:*",

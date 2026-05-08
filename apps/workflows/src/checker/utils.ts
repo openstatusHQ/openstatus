@@ -1,6 +1,11 @@
 import type { NotificationProvider } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
 import {
+  sendAlert as sendWhatsappAlert,
+  sendDegraded as sendWhatsappDegraded,
+  sendRecovery as sendWhatsappRecovery,
+} from "@openstatus/notification-bird-whatsapp";
+import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,
   sendRecovery as sendDiscordRecovery,
@@ -50,11 +55,6 @@ import {
   sendDegraded as sendSmsDegraded,
   sendRecovery as sendSmsRecovery,
 } from "@openstatus/notification-twillio-sms";
-import {
-  sendAlert as sendWhatsappAlert,
-  sendDegraded as sendWhatsappDegraded,
-  sendRecovery as sendWhatsappRecovery,
-} from "@openstatus/notification-twillio-whatsapp";
 import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,
