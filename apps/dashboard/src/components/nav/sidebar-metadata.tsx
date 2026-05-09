@@ -1,10 +1,8 @@
+import type { LucideIcon } from "lucide-react";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-} from "@/components/content/empty-state";
 import {
   Collapsible,
   CollapsibleContent,
@@ -14,6 +12,10 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import {
   Table,
@@ -32,16 +34,55 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 
-export type SidebarMetadataProps = {
+export type SidebarMetadataItem = {
   label: string;
-  items?: {
-    label: string;
-    value: React.ReactNode;
-    isNested?: boolean;
-  }[];
+  value: React.ReactNode;
+  isNested?: boolean;
 };
 
-export function SidebarMetadata({ label, items }: SidebarMetadataProps) {
+export type SidebarMetadataListItem = {
+  /** Stable React key + handle for `active` matching. */
+  id: string | number;
+  label: React.ReactNode;
+  /** Trailing meta on the row (e.g. "2m ago"). */
+  meta?: React.ReactNode;
+  /** Optional small leading icon. */
+  icon?: LucideIcon;
+  /** Click target — renders as `next/link` when set. */
+  href?: string;
+  /** Marks this row as the current selection. */
+  active?: boolean;
+  /** Hover-revealed trailing button (delete / pin / …). */
+  action?: {
+    icon: LucideIcon;
+    label: string;
+    onClick: (e: React.MouseEvent) => void;
+  };
+};
+
+/**
+ * Metadata section in `SidebarRight`. Two shapes:
+ *
+ *  - `type: "table"` (default) — label/value rows, copy-on-tap. Used for
+ *    "Configuration", "Notifications", etc. on the monitor sidebar.
+ *  - `type: "list"` — clickable rows with optional active state, leading
+ *    icon, trailing meta and a hover-revealed action. Used for
+ *    list-style sidebars like the chat conversations picker.
+ */
+export type SidebarMetadataProps =
+  | {
+      label: string;
+      type?: "table";
+      items?: SidebarMetadataItem[];
+    }
+  | {
+      label: string;
+      type: "list";
+      items?: SidebarMetadataListItem[];
+    };
+
+export function SidebarMetadata(props: SidebarMetadataProps) {
+  const { label } = props;
   return (
     <SidebarGroup className="p-0">
       <Collapsible defaultOpen className="group/collapsible border-b">
@@ -56,12 +97,10 @@ export function SidebarMetadata({ label, items }: SidebarMetadataProps) {
         </SidebarGroupLabel>
         <CollapsibleContent>
           <SidebarGroupContent className="border-t">
-            {items && items.length > 0 ? (
-              <SidebarMetadataTable items={items} />
+            {props.type === "list" ? (
+              <SidebarMetadataList items={props.items ?? []} />
             ) : (
-              <EmptyStateContainer className="m-2">
-                <EmptyStateDescription>No {label}</EmptyStateDescription>
-              </EmptyStateContainer>
+              <SidebarMetadataTable items={props.items ?? []} />
             )}
           </SidebarGroupContent>
         </CollapsibleContent>
@@ -104,6 +143,52 @@ function SidebarMetadataTable({
         ))}
       </TableBody>
     </Table>
+  );
+}
+
+function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
+  return (
+    <SidebarMenu className="gap-0 p-1">
+      {items.map((item) => {
+        const inner = (
+          <>
+            {item.icon ? <item.icon className="size-3.5 shrink-0" /> : null}
+            <span className="flex-1 truncate">{item.label}</span>
+            {item.meta != null ? (
+              <span className="ml-auto shrink-0 text-muted-foreground text-xs">
+                {item.meta}
+              </span>
+            ) : null}
+          </>
+        );
+        return (
+          <SidebarMenuItem key={item.id}>
+            <SidebarMenuButton asChild isActive={item.active} size="sm">
+              {item.href ? (
+                <Link href={item.href}>{inner}</Link>
+              ) : (
+                <button type="button">{inner}</button>
+              )}
+            </SidebarMenuButton>
+            {item.action ? (
+              <SidebarMenuAction
+                showOnHover
+                title={item.action.label}
+                onClick={(e) => {
+                  // Don't let the click bubble to the row's link.
+                  e.preventDefault();
+                  e.stopPropagation();
+                  item.action?.onClick(e);
+                }}
+              >
+                <item.action.icon />
+                <span className="sr-only">{item.action.label}</span>
+              </SidebarMenuAction>
+            ) : null}
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenu>
   );
 }
 

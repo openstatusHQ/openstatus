@@ -5,6 +5,8 @@ import { Bot } from "lucide-react";
 
 export function Breadcrumb() {
   return (
-    <NavBreadcrumb items={[{ type: "page", label: "Agents", icon: Bot }]} />
+    <NavBreadcrumb
+      items={[{ type: "page", label: "Slack agent", icon: Bot }]}
+    />
   );
 }

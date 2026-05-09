@@ -23,3 +23,4 @@ export * from "./page_components";
 export * from "./page_component_groups";
 export * from "./feedbacks";
 export * from "./audit_logs";
+export * from "./chat_sessions";

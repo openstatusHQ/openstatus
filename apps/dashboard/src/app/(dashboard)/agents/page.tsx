@@ -44,7 +44,7 @@ export default function Page() {
     <SectionGroup>
       <Section>
         <SectionHeader>
-          <SectionTitle>Agents</SectionTitle>
+          <SectionTitle>Slack agent</SectionTitle>
           <SectionDescription>
             Use our Slack agent to manage your status pages and incidents.{" "}
             <Link

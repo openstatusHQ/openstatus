@@ -37,12 +37,21 @@ type SidebarRightProps = React.ComponentProps<typeof Sidebar> & {
   header: string;
   metadata: SidebarMetadataProps[];
   footerButton?: React.ComponentProps<typeof SidebarMenuButton>;
+  /**
+   * Initial open state when no cookie is set. Defaults to `false` so
+   * the right sidebar stays out of the way on detail pages (monitor /
+   * status page) where it shows secondary metadata. Surfaces where
+   * the right sidebar IS the primary navigation (chat conversations
+   * picker) opt in by passing `true`.
+   */
+  defaultOpen?: boolean;
 };
 
 export function SidebarRight({
   header,
   metadata,
   footerButton,
+  defaultOpen = false,
   ...props
 }: SidebarRightProps) {
   const isMobile = useIsMobile();
@@ -58,7 +67,7 @@ export function SidebarRight({
               : SIDEBAR_WIDTH,
         } as React.CSSProperties
       }
-      defaultOpen={false}
+      defaultOpen={defaultOpen}
       cookieName="sidebar_state_right"
     >
       <Sidebar
