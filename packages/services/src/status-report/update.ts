@@ -25,10 +25,7 @@ import {
  *
  * A non-empty set moves the report to whatever page those components live
  * on. Mixed-page inputs are rejected upstream by `validatePageComponentIds`
- * (all ids must share a page). An empty set deliberately does not null
- * `pageId` — a report with no components on a page is still a report on
- * that page, and silently orphaning it on save makes the dashboard's "edit
- * report" sheet look like a delete on pages with no components.
+ * (all ids must share a page).
  */
 export async function updateStatusReport(args: {
   ctx: ServiceContext;
@@ -56,9 +53,6 @@ export async function updateStatusReport(args: {
         pageComponentIds: input.pageComponentIds,
       });
 
-      // A non-empty set moves the report to that page; an empty set leaves
-      // pageId untouched (clearing associations should not orphan the
-      // report from its page).
       if (validated.pageId !== null) {
         updateValues.pageId = validated.pageId;
       }

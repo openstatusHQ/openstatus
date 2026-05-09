@@ -1164,8 +1164,6 @@ describe("StatusReportService.UpdateStatusReport", () => {
         .from(statusReport)
         .where(eq(statusReport.id, tempReport.id))
         .get();
-      // pageId stays — clearing components no longer orphans the report
-      // from its page (would otherwise hide it from the dashboard list).
       expect(afterReport?.pageId).toBe(1);
 
       const afterAssoc = await db

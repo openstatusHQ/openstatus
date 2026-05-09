@@ -140,8 +140,6 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             (page?.pageComponentGroups?.length ?? 0) > 0;
           await updateStatusReportMutation.mutateAsync({
             id: row.original.id,
-            // Skip the field on pages with no components — sending [] would
-            // otherwise clear associations the user never saw a UI for.
             pageComponents: hasComponents ? values.pageComponents : undefined,
             title: values.title,
             status: values.status,
