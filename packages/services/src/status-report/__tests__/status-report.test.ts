@@ -332,6 +332,7 @@ describe("updateStatusReport", () => {
         .where(eq(statusReportsToPageComponents.statusReportId, report.id))
         .all();
       expect(assoc).toHaveLength(0);
+      expect(updated.pageId).toBe(testPageId);
     });
   });
 });

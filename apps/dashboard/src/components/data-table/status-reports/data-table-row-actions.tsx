@@ -135,9 +135,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           pageComponents: row.original.pageComponents?.map((c) => c.id) ?? [],
         }}
         onSubmit={async (values) => {
+          const hasComponents =
+            (page?.pageComponents?.length ?? 0) > 0 ||
+            (page?.pageComponentGroups?.length ?? 0) > 0;
           await updateStatusReportMutation.mutateAsync({
             id: row.original.id,
-            pageComponents: values.pageComponents,
+            pageComponents: hasComponents ? values.pageComponents : undefined,
             title: values.title,
             status: values.status,
           });

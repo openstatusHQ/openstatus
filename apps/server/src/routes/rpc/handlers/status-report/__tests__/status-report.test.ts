@@ -1127,7 +1127,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
     );
   });
 
-  test("clears pageId when removing all components", async () => {
+  test("clears component associations but preserves pageId when removing all components", async () => {
     // Create a temporary status report for this test
     const tempReport = await db
       .insert(statusReport)
@@ -1159,13 +1159,19 @@ describe("StatusReportService.UpdateStatusReport", () => {
 
       expect(res.status).toBe(200);
 
-      // Verify the pageId is now null
       const afterReport = await db
         .select()
         .from(statusReport)
         .where(eq(statusReport.id, tempReport.id))
         .get();
-      expect(afterReport?.pageId).toBeNull();
+      expect(afterReport?.pageId).toBe(1);
+
+      const afterAssoc = await db
+        .select()
+        .from(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, tempReport.id))
+        .all();
+      expect(afterAssoc).toHaveLength(0);
     } finally {
       // Clean up
       await db

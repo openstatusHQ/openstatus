@@ -50,7 +50,7 @@ const updateStatusReportUpdateTRPCInput = z.object({
 
 const updateStatusTRPCInput = z.object({
   id: z.number(),
-  pageComponents: z.array(z.number()),
+  pageComponents: z.array(z.number()).optional(),
   title: z.string(),
   status: CreateStatusReportInput.shape.status,
 });
