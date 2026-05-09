@@ -20,14 +20,15 @@ import {
 /**
  * Update status-report metadata (title / status) and optionally replace the
  * full set of page-component associations. Passing
- * `pageComponentIds: []` clears the associations (and nulls `pageId`);
- * omitting the field leaves both untouched.
+ * `pageComponentIds: []` clears the associations but leaves `pageId`
+ * untouched; omitting the field leaves both untouched.
  *
- * The report's `pageId` follows its components: when the caller supplies
- * a new set of associations the report moves to whatever page those
- * components live on. Mixed-page inputs are rejected upstream by
- * `validatePageComponentIds` (all ids must share a page), so the only
- * states here are "one page" or "no components".
+ * A non-empty set moves the report to whatever page those components live
+ * on. Mixed-page inputs are rejected upstream by `validatePageComponentIds`
+ * (all ids must share a page). An empty set deliberately does not null
+ * `pageId` — a report with no components on a page is still a report on
+ * that page, and silently orphaning it on save makes the dashboard's "edit
+ * report" sheet look like a delete on pages with no components.
  */
 export async function updateStatusReport(args: {
   ctx: ServiceContext;
@@ -55,12 +56,12 @@ export async function updateStatusReport(args: {
         pageComponentIds: input.pageComponentIds,
       });
 
-      // `pageId` follows the association set: a new non-empty set moves
-      // the report to that page; an empty set nulls it. This is the
-      // behavior the Connect `UpdateStatusReport` tests have encoded
-      // since the original handler — no caller today wants a "report
-      // pinned to page X regardless of its components" guarantee.
-      updateValues.pageId = validated.pageId;
+      // A non-empty set moves the report to that page; an empty set leaves
+      // pageId untouched (clearing associations should not orphan the
+      // report from its page).
+      if (validated.pageId !== null) {
+        updateValues.pageId = validated.pageId;
+      }
 
       await updatePageComponentAssociations({
         tx,

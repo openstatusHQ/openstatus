@@ -332,6 +332,10 @@ describe("updateStatusReport", () => {
         .where(eq(statusReportsToPageComponents.statusReportId, report.id))
         .all();
       expect(assoc).toHaveLength(0);
+      // Clearing components must not orphan the report from its page —
+      // the dashboard list filters by pageId, so nulling it would make
+      // the report disappear (looking like a delete to the user).
+      expect(updated.pageId).toBe(testPageId);
     });
   });
 });
