@@ -5,74 +5,41 @@ import {
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
 import { cn } from "@openstatus/ui/lib/utils";
+import {
+  type DynamicToolUIPart,
+  type ToolUIPart,
+  type UITools,
+  getToolName,
+} from "ai";
 import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
-import { toolRenderers } from "./tool-renderers";
 
-/**
- * Render a tool-related UIMessage part.
- *
- * Shapes we care about (from AI SDK v6 `UIToolInvocation`):
- *
- *   { type: "tool-<name>", toolCallId, state, input?, output?, errorText?,
- *     approval?: { id, approved?, reason? } }
- *
- * State machine:
- *   - `input-streaming` / `input-available` → in-flight tool call (read
- *     tools auto-execute; destructive tools never sit here because
- *     they're approval-gated below).
- *   - `approval-requested` → destructive tool paused for HITL. Render a
- *     Confirm/Cancel card; resolve via `addToolApprovalResponse` upstream.
- *   - `approval-responded` → user approved, server about to run execute.
- *     Treated as a brief loading state.
- *   - `output-available` → done, render the result.
- *   - `output-error` → server execute threw. Show error.
- *   - `output-denied` → user cancelled. Show a muted "denied" card.
- */
+import { useChatTool } from "./chat-tool-context";
+import {
+  renderToolDraft,
+  renderToolResult,
+  summarizeToolOutput,
+} from "./tool-renderers";
 
-type ToolState =
-  | "input-streaming"
-  | "input-available"
-  | "approval-requested"
-  | "approval-responded"
-  | "output-available"
-  | "output-error"
-  | "output-denied";
+// SDK tool-part state machine: input-streaming/-available → in-flight;
+// approval-requested → HITL gate; approval-responded → about to execute;
+// output-available/-error/-denied → terminal.
 
-type ToolPart = {
-  type: string;
-  state?: ToolState;
-  toolCallId?: string;
-  input?: unknown;
-  output?: unknown;
-  errorText?: string;
-  approval?: { id: string; approved?: boolean; reason?: string };
-};
+type ToolState = NonNullable<ToolUIPart["state"]>;
 
 type Props = {
-  part: ToolPart;
-  onConfirm: (args: {
-    approvalId: string;
-    toolName: string;
-    input: unknown;
-  }) => void;
-  onCancel: (args: { approvalId: string; toolName: string }) => void;
+  part: ToolUIPart<UITools> | DynamicToolUIPart;
 };
 
-export function ChatToolPart({ part, onConfirm, onCancel }: Props) {
-  const toolName = part.type.startsWith("tool-")
-    ? part.type.slice("tool-".length)
-    : part.type;
+export function ChatToolPart({ part }: Props) {
+  const toolName = getToolName(part);
+  const { confirmTool, cancelTool } = useChatTool();
 
-  // Approval-requested: render Confirm/Cancel. The approval id (NOT
-  // the toolCallId) is what `addToolApprovalResponse` consumes —
-  // pass it up via the handlers.
   if (part.state === "approval-requested" && part.approval?.id) {
     const approvalId = part.approval.id;
-    const renderDraft =
-      toolRenderers[toolName as keyof typeof toolRenderers]?.renderDraft;
+    const draft = renderToolDraft(toolName, part.input);
     return (
       <div className="not-prose w-full overflow-hidden rounded-xl border bg-background">
         <div className="flex items-center gap-2 p-3 text-sm">
@@ -80,8 +47,8 @@ export function ChatToolPart({ part, onConfirm, onCancel }: Props) {
           <span className="font-commit-mono font-medium">{toolName}</span>
         </div>
         <div className="border-t p-3">
-          {renderDraft ? (
-            <ChangesTable changes={renderDraft(part.input as never)} />
+          {draft ? (
+            <ChangesTable changes={draft} />
           ) : (
             <pre className="max-h-64 overflow-auto rounded bg-muted/50 p-2 text-xs">
               {JSON.stringify(part.input, null, 2)}
@@ -92,16 +59,11 @@ export function ChatToolPart({ part, onConfirm, onCancel }: Props) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onCancel({ approvalId, toolName })}
+            onClick={() => cancelTool(approvalId)}
           >
             Cancel
           </Button>
-          <Button
-            size="sm"
-            onClick={() =>
-              onConfirm({ approvalId, toolName, input: part.input })
-            }
-          >
+          <Button size="sm" onClick={() => confirmTool(approvalId)}>
             Apply
           </Button>
         </div>
@@ -116,22 +78,16 @@ function ToolDisclosure({
   part,
   toolName,
 }: {
-  part: ToolPart;
+  part: ToolUIPart<UITools> | DynamicToolUIPart;
   toolName: string;
 }) {
-  const state = part.state ?? "output-available";
-  const renderer = toolRenderers[toolName as keyof typeof toolRenderers];
-  const renderResult = renderer?.renderResult;
-  const hasRichResult = renderResult !== undefined && part.output !== undefined;
+  const state: ToolState = part.state ?? "output-available";
+  const rich = renderToolResult(toolName, part.input, part.output);
   const summary =
-    part.output !== undefined && renderer?.summary
-      ? renderer.summary(part.output as never)
-      : state === "output-denied"
-        ? "Cancelled"
-        : undefined;
-  // Open by default when there's a rich result so the user sees it
-  // without an extra click; raw JSON view stays collapsed.
-  const [open, setOpen] = useState(hasRichResult);
+    summarizeToolOutput(toolName, part.output) ??
+    (state === "output-denied" ? "Cancelled" : undefined);
+  // Open by default when there's a rich result; raw JSON stays collapsed.
+  const [open, setOpen] = useState(rich !== undefined);
 
   return (
     <Collapsible
@@ -155,12 +111,7 @@ function ToolDisclosure({
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-3 p-3 pt-0">
-        {hasRichResult ? (
-          renderResult({
-            input: part.input as never,
-            output: part.output as never,
-          })
-        ) : (
+        {rich ?? (
           <>
             {part.input !== undefined ? (
               <ToolPanel label="Parameters" body={part.input} />
@@ -170,7 +121,7 @@ function ToolDisclosure({
             ) : null}
           </>
         )}
-        {part.errorText ? (
+        {part.state === "output-error" && part.errorText ? (
           <div className="rounded-md bg-destructive/10 p-2 text-destructive text-xs">
             {part.errorText}
           </div>

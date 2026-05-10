@@ -1,50 +1,41 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
-import { WrenchIcon } from "lucide-react";
+import { formatDistanceStrict } from "date-fns";
 
-import { EntityCard } from "./entity-card";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { TableCellText } from "@/components/data-table/table-cell-text";
+
+import type { ResultTableData } from "./result-table";
 
 type Output = AgentToolOutput<"list_maintenances">;
 
-export function ListMaintenancesResult({ output }: { output: Output }) {
+export function listMaintenancesTable(
+  output: Output,
+): ResultTableData<"title" | "from" | "duration" | "page" | "id"> {
   const items = output?.items ?? [];
-  if (items.length === 0) {
-    return (
-      <div className="rounded-md border bg-background p-3 text-muted-foreground text-sm">
-        No maintenance windows.
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      {items.map((m) => (
-        <EntityCard
-          key={m.id}
-          icon={WrenchIcon}
-          title={m.title}
-          meta={
-            <>
-              <span>ID {m.id}</span>
-              <span className="mx-1.5">·</span>
-              <span>{formatRange(m.from, m.to)}</span>
-              {m.pageId !== null ? (
-                <>
-                  <span className="mx-1.5">·</span>
-                  <span>page #{m.pageId}</span>
-                </>
-              ) : null}
-            </>
-          }
-        />
-      ))}
-    </div>
-  );
-}
-
-function formatRange(from: string, to: string): string {
-  const f = new Date(from);
-  const t = new Date(to);
-  if (Number.isNaN(f.getTime()) || Number.isNaN(t.getTime())) {
-    return `${from} → ${to}`;
-  }
-  return `${f.toLocaleString()} → ${t.toLocaleString()}`;
+  return {
+    empty: "No maintenance windows.",
+    columns: [
+      { key: "title", header: "Title" },
+      { key: "from", header: "Start" },
+      { key: "duration", header: "Duration" },
+      { key: "page", header: "Page" },
+      { key: "id", header: "ID" },
+    ],
+    rows: items.map((m) => {
+      const from = new Date(m.from);
+      const to = new Date(m.to);
+      const [amount, unit] = formatDistanceStrict(from, to).split(" ");
+      return {
+        id: m.id,
+        cells: {
+          title: <TableCellText value={m.title} />,
+          from: <TableCellDate value={from} />,
+          duration: <TableCellNumber value={amount} unit={unit} />,
+          page: <TableCellNumber value={m.pageId} />,
+          id: <TableCellNumber value={m.id} />,
+        },
+      };
+    }),
+  };
 }

@@ -1,4 +1,4 @@
-import { ChatClient } from "@/components/chat/chat-client";
+import { ChatSessionClient } from "@/components/chat/chat-session-client";
 
 export default async function Page({
   params,
@@ -8,5 +8,5 @@ export default async function Page({
   const { id } = await params;
   const sessionId = Number.parseInt(id, 10);
   if (Number.isNaN(sessionId)) return null;
-  return <ChatClient sessionId={sessionId} />;
+  return <ChatSessionClient sessionId={sessionId} />;
 }

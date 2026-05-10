@@ -13,29 +13,16 @@ import {
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
 import { createMaintenanceChanges } from "./create-maintenance";
 import { createStatusReportChanges } from "./create-status-report";
-import { ListMaintenancesResult } from "./list-maintenances";
-import { ListStatusPagesResult } from "./list-status-pages";
-import { ListStatusReportsResult } from "./list-status-reports";
+import { listMaintenancesTable } from "./list-maintenances";
+import { listStatusPagesTable } from "./list-status-pages";
+import { listStatusReportsTable } from "./list-status-reports";
 import { resolveStatusReportChanges } from "./resolve-status-report";
+import { ResultTable } from "./result-table";
 import { updateStatusReportChanges } from "./update-status-report";
 
 /**
- * Per-tool client renderer keyed on the registry's literal tool names.
- * `N extends AgentToolName` lets each entry carry the concrete
- * `AgentToolInput<N>` / `AgentToolOutput<N>` for that tool — the
- * compiler enforces that the renderer handles the schema's actual
- * shape. A renamed or removed field upstream becomes a type error here
- * instead of a silent runtime miss.
- *
- *   - `renderDraft(input)` — `ChangeRow[]` rendered as a `ChangesTable`
- *     in the HITL confirm card while the tool is `input-available`.
- *   - `renderResult({ input, output })` — free-form React for
- *     `output-available` results. Destructive tools render a
- *     `ChangesTable` from the same builder so result + draft views
- *     share a single source of truth.
- *   - `summary(output)` — optional one-line tail for the collapsible
- *     trigger ("1 result", "ID 4", etc.).
- *
+ * Per-tool renderer keyed by `AgentToolName` so each entry's input/output
+ * carry the tool's concrete schema — schema drift becomes a type error here.
  * Tools without an entry fall back to the raw JSON disclosure.
  */
 export type ToolRenderer<N extends AgentToolName> = {
@@ -54,15 +41,21 @@ export type ToolRendererRegistry = {
 export const toolRenderers: ToolRendererRegistry = {
   // ── Read tools ───────────────────────────────────────────────
   list_status_pages: {
-    renderResult: ({ output }) => <ListStatusPagesResult output={output} />,
+    renderResult: ({ output }) => (
+      <ResultTable {...listStatusPagesTable(output)} />
+    ),
     summary: (o) => itemsCountSummary(o.items),
   },
   list_status_reports: {
-    renderResult: ({ output }) => <ListStatusReportsResult output={output} />,
+    renderResult: ({ output }) => (
+      <ResultTable {...listStatusReportsTable(output)} />
+    ),
     summary: (o) => itemsCountSummary(o.items),
   },
   list_maintenances: {
-    renderResult: ({ output }) => <ListMaintenancesResult output={output} />,
+    renderResult: ({ output }) => (
+      <ResultTable {...listMaintenancesTable(output)} />
+    ),
     summary: (o) => itemsCountSummary(o.items),
   },
 
@@ -128,4 +121,40 @@ export const toolRenderers: ToolRendererRegistry = {
 function itemsCountSummary(items: unknown[] | undefined): string | undefined {
   if (!items) return undefined;
   return `${items.length} result${items.length === 1 ? "" : "s"}`;
+}
+
+// String-keyed dispatch — these helpers own the `as never` cast that
+// bridges runtime `string` to the registry's per-tool literal types.
+// Safe because the registry is authored against the same `AgentToolName`
+// union the server emits.
+
+function findRenderer(toolName: string) {
+  return toolRenderers[toolName as AgentToolName];
+}
+
+export function renderToolDraft(
+  toolName: string,
+  input: unknown,
+): ChangeRow[] | undefined {
+  return findRenderer(toolName)?.renderDraft?.(input as never);
+}
+
+export function renderToolResult(
+  toolName: string,
+  input: unknown,
+  output: unknown,
+): ReactNode | undefined {
+  if (output === undefined) return undefined;
+  return findRenderer(toolName)?.renderResult?.({
+    input: input as never,
+    output: output as never,
+  });
+}
+
+export function summarizeToolOutput(
+  toolName: string,
+  output: unknown,
+): string | undefined {
+  if (output === undefined) return undefined;
+  return findRenderer(toolName)?.summary?.(output as never);
 }

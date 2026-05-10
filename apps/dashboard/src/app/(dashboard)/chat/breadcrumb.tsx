@@ -2,15 +2,14 @@
 
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { MessageSquare } from "lucide-react";
-import { useParams } from "next/navigation";
 
+import { useChatSessionContext } from "@/components/chat/chat-session-context";
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Breadcrumb() {
-  const params = useParams<{ id?: string | string[] }>();
-  const sessionId =
-    typeof params.id === "string" ? Number.parseInt(params.id, 10) : undefined;
+  // Context (not `useParams`) so we follow runtime `replaceState` URL swaps.
+  const { sessionId } = useChatSessionContext();
 
   const trpc = useTRPC();
   const { data: session } = useQuery(
@@ -19,9 +18,6 @@ export function Breadcrumb() {
     ),
   );
 
-  // On `/chat`: just the page label. On `/chat/[id]`: link back to
-  // `/chat` + the active conversation title (falling back to a literal
-  // when the session row hasn't loaded yet, e.g. mid-`replaceState`).
   if (sessionId === undefined) {
     return (
       <NavBreadcrumb

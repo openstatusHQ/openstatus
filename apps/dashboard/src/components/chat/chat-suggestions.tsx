@@ -5,6 +5,7 @@ const SUGGESTIONS = [
   "What status reports are open?",
   "Draft a status report",
   "Schedule a maintenance window",
+  "List all the openstatus tools to be used",
 ];
 
 type Props = {

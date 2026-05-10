@@ -3,16 +3,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Plus, Trash2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
+import { useChatSessionContext } from "@/components/chat/chat-session-context";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Sidebar() {
   const router = useRouter();
-  const params = useParams<{ id?: string | string[] }>();
-  const activeId =
-    typeof params.id === "string" ? Number.parseInt(params.id, 10) : undefined;
+  // Context (not `useParams`) so we follow runtime `replaceState` URL swaps.
+  const { sessionId: activeId } = useChatSessionContext();
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -24,8 +24,7 @@ export function Sidebar() {
         queryClient.invalidateQueries({
           queryKey: trpc.chatSession.list.queryKey(),
         });
-        // If the deleted session was the one we were on, drop back to
-        // the empty-state landing page.
+        // Real navigation (not `replaceState`) — we want `useChat` to remount fresh.
         if (variables.sessionId === activeId) router.push("/chat");
       },
     }),

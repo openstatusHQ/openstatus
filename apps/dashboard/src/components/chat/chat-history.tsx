@@ -8,11 +8,6 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const MAX_VISIBLE = 5;
 
-/**
- * Recent chat sessions list shown on the empty `/chat` landing page.
- * Reads from the same `chatSession.list` query the sidebar already uses,
- * so nav and landing-page data stay in sync via React-Query cache.
- */
 export function ChatHistory() {
   const trpc = useTRPC();
   const { data } = useQuery(trpc.chatSession.list.queryOptions());

@@ -21,17 +21,6 @@ type Props = {
   status?: ChatStatus;
 };
 
-/**
- * Minimal chat prompt input. Owns the textarea + submit/stop button —
- * replaces the AI Elements `PromptInput` family which dragged in
- * file-attachment / voice / action-menu code we don't use, plus
- * `nanoid` for ids.
- *
- * Submit semantics:
- *  - Enter submits (composition-safe; Shift+Enter inserts a newline).
- *  - While the model is streaming/submitted the button becomes a stop
- *    square and clicking it calls `onStop` rather than submitting.
- */
 export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
   const [value, setValue] = useState("");
   const isGenerating = status === "submitted" || status === "streaming";
@@ -53,8 +42,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      // Composition-safe: IMEs (CJK input) finalize a candidate via
-      // Enter; we don't want to submit mid-composition.
+      // IMEs (CJK input) finalize a candidate with Enter; don't submit mid-composition.
       if (e.nativeEvent.isComposing) return;
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -79,8 +67,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            // Drop the workspace `min-h-16` so an empty input is one row
-            // tall; `field-sizing-content` keeps autosize for multi-line.
+            // Override the workspace `min-h-16` so an empty input is one row tall.
             className="min-h-0"
           />
           <InputGroupAddon align="block-end" className="justify-end py-1">
