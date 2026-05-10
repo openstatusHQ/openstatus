@@ -63,18 +63,30 @@ function mergeById(
   existing: ChatStoredMessage[],
   incoming: ChatStoredMessage[],
 ): ChatStoredMessage[] {
+  // Last-write-wins when the same id appears more than once in
+  // `incoming` (defensive — the SDK shouldn't, but a buggy retry that
+  // accidentally re-includes a turn shouldn't double-write the row).
   const incomingById = new Map<string, ChatStoredMessage>();
   for (const m of incoming) incomingById.set(m.id, m);
 
+  // `emitted` is the dedup gate. Without it, ids that repeat in
+  // `incoming` would be pushed once per occurrence in the append loop.
+  const emitted = new Set<string>();
   const merged: ChatStoredMessage[] = existing.map((prior) => {
+    emitted.add(prior.id);
     const next = incomingById.get(prior.id);
     if (!next) return prior;
-    incomingById.delete(prior.id);
     return { ...next, createdAt: prior.createdAt };
   });
 
   for (const m of incoming) {
-    if (incomingById.has(m.id)) merged.push(m);
+    if (emitted.has(m.id)) continue;
+    emitted.add(m.id);
+    // Use the last-wins entry from the map, not the loop variable, so
+    // the canonical version is the same whether the id was new or a
+    // collision with an existing row.
+    const canonical = incomingById.get(m.id);
+    if (canonical) merged.push(canonical);
   }
   return merged;
 }

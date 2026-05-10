@@ -6,7 +6,7 @@ import type {
   ComponentProps,
   HTMLAttributes,
 } from "react";
-import { Fragment, createElement } from "react";
+import { Fragment, createElement, useMemo } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import rehypeReact from "rehype-react";
 import remarkGfm from "remark-gfm";
@@ -91,8 +91,11 @@ const processor = unified()
     } as { [key: string]: React.ComponentType<unknown> },
   });
 
-/** Streaming-safe: `processSync` re-runs each render so partial markdown renders progressively. */
 export function MessageMarkdown({ children }: { children: string }) {
+  const rendered = useMemo(
+    () => processor.processSync(children).result,
+    [children],
+  );
   return (
     <div
       className={cn(
@@ -104,7 +107,7 @@ export function MessageMarkdown({ children }: { children: string }) {
         "[&_td]:border [&_td]:px-2 [&_td]:py-1",
       )}
     >
-      {processor.processSync(children).result}
+      {rendered}
     </div>
   );
 }
