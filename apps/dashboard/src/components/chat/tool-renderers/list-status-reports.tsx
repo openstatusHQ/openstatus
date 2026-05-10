@@ -44,7 +44,12 @@ export function listStatusReportsTable(
             {r.status}
           </div>
         ),
-        page: <TableCellNumber value={r.pageId} />,
+        page:
+          r.pageId !== null ? (
+            <TableCellNumber value={r.pageId} />
+          ) : (
+            <TableCellText value={null} />
+          ),
         id: <TableCellNumber value={r.id} />,
       },
     })),

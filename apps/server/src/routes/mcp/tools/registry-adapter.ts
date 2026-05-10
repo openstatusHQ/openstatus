@@ -40,7 +40,11 @@ export function registerRegistryTool(
         readOnlyHint: tool.scope === "read",
         destructiveHint: tool.destructive,
         idempotentHint: !tool.destructive,
-        openWorldHint: tool.destructive,
+        // Closed-world: every registry tool only touches resources in
+        // the caller's workspace (status pages, reports, maintenances) —
+        // none reach out to an unbounded set of external entities the
+        // way web search or arbitrary URL fetch would.
+        openWorldHint: false,
       },
       inputSchema: inputShape,
       outputSchema: outputShape,

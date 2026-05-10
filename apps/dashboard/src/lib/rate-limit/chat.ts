@@ -19,6 +19,21 @@ export type ChatRateLimitResult = {
   reset: number; // ms epoch when the window resets
 };
 
+// INCR + conditional EXPIRE in a single round-trip. A separate
+// `incr` then `expire` is not atomic: if the process dies (or the
+// upstream call fails) between the two, the key keeps incrementing
+// forever with no TTL, locking the user out. Lua scripts run
+// atomically on the Redis server, so the TTL is guaranteed to be
+// set the same logical step that creates the key.
+const INCR_WITH_TTL = `
+  local count = redis.call('INCR', KEYS[1])
+  if count == 1 then
+    redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1]))
+  end
+  local ttl = redis.call('TTL', KEYS[1])
+  return {count, ttl}
+`;
+
 export async function chatRateLimit(args: {
   ctx: ServiceContext;
 }): Promise<ChatRateLimitResult> {
@@ -28,13 +43,17 @@ export async function chatRateLimit(args: {
   }
   const plan = args.ctx.workspace.plan ?? "free";
   const limit = DAILY_LIMIT_BY_PLAN[plan];
-  const key = `ratelimit:chat:user:${userId}`;
+  // Bucket per (workspace, user): the limit is plan-specific, so a
+  // user-only key would leak quota across workspaces (e.g. a `team`
+  // workspace's higher cap would carry over into the same user's
+  // `free` workspace).
+  const key = `ratelimit:chat:ws:${args.ctx.workspace.id}:user:${userId}`;
   const now = Date.now();
-  const count = await redis.incr(key);
-  if (count === 1) {
-    await redis.expire(key, WINDOW_SECONDS);
-  }
-  const ttl = await redis.ttl(key);
+  const [count, ttl] = await redis.eval<[number], [number, number]>(
+    INCR_WITH_TTL,
+    [key],
+    [WINDOW_SECONDS],
+  );
   const reset = now + (ttl > 0 ? ttl * 1000 : WINDOW_SECONDS * 1000);
   return {
     success: count <= limit,

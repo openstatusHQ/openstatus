@@ -36,10 +36,7 @@ export async function appendChatSessionMessages(args: {
       userId,
     });
 
-    const merged: ChatStoredMessage[] = [
-      ...session.messages,
-      ...input.messages,
-    ];
+    const merged = mergeById(session.messages, input.messages);
     const compacted = compactMessages(merged);
 
     const updated = await tx
@@ -51,4 +48,33 @@ export async function appendChatSessionMessages(args: {
 
     return updated;
   });
+}
+
+/**
+ * Upsert-by-id merge. The AI SDK assigns a stable `id` to every
+ * UIMessage, so retries (network blip, double-fire of onFinish) hand us
+ * the same id we already persisted. Naively concatenating duplicates
+ * those rows. Instead: incoming messages with a known id replace the
+ * existing entry in place (preserving original position), and only
+ * truly-new ids append at the tail. The existing-row `createdAt` wins
+ * on replace so older messages don't drift forward on every turn.
+ */
+function mergeById(
+  existing: ChatStoredMessage[],
+  incoming: ChatStoredMessage[],
+): ChatStoredMessage[] {
+  const incomingById = new Map<string, ChatStoredMessage>();
+  for (const m of incoming) incomingById.set(m.id, m);
+
+  const merged: ChatStoredMessage[] = existing.map((prior) => {
+    const next = incomingById.get(prior.id);
+    if (!next) return prior;
+    incomingById.delete(prior.id);
+    return { ...next, createdAt: prior.createdAt };
+  });
+
+  for (const m of incoming) {
+    if (incomingById.has(m.id)) merged.push(m);
+  }
+  return merged;
 }

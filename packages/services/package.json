@@ -103,7 +103,8 @@
     }
   },
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@openstatus/assertions": "workspace:*",

@@ -32,7 +32,12 @@ export function listMaintenancesTable(
           title: <TableCellText value={m.title} />,
           from: <TableCellDate value={from} />,
           duration: <TableCellNumber value={amount} unit={unit} />,
-          page: <TableCellNumber value={m.pageId} />,
+          page:
+            m.pageId !== null ? (
+              <TableCellNumber value={m.pageId} />
+            ) : (
+              <TableCellText value={null} />
+            ),
           id: <TableCellNumber value={m.id} />,
         },
       };
