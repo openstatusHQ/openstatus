@@ -66,7 +66,7 @@ export type SidebarMetadataListItem = {
   }[];
   /** Destructive item in the same `…` dropdown, with confirmation dialog. */
   deleteAction?: {
-    confirmationValue: string;
+    confirmationValue?: string;
     submitAction: () => Promise<void>;
   };
 };
