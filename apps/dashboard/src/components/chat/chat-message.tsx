@@ -1,5 +1,6 @@
 import { cn } from "@openstatus/ui/lib/utils";
 import type { UIMessage } from "ai";
+import NextLink from "next/link";
 import type {
   AnchorHTMLAttributes,
   ComponentProps,
@@ -61,9 +62,20 @@ const processor = unified()
     jsx,
     jsxs,
     components: {
-      a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => (
-        <a target="_blank" rel="noreferrer" className="underline" {...props} />
-      ),
+      a: ({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
+        if (href?.startsWith("/")) {
+          return <NextLink href={href} className="underline" {...props} />;
+        }
+        return (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+            {...props}
+          />
+        );
+      },
       code: (props: HTMLAttributes<HTMLElement>) => (
         <code
           className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]"

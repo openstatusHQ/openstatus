@@ -34,8 +34,13 @@ export type ToolRenderer<N extends AgentToolName> = {
   summary?: (output: AgentToolOutput<N>) => string | undefined;
 };
 
+/**
+ * Required map (no `?`) so adding a tool to `agentTools` without a
+ * renderer entry is a TS error here. Tools that don't need a custom
+ * renderer can opt in with `{}` — explicit, not silent.
+ */
 export type ToolRendererRegistry = {
-  [N in AgentToolName]?: ToolRenderer<N>;
+  [N in AgentToolName]: ToolRenderer<N>;
 };
 
 export const toolRenderers: ToolRendererRegistry = {

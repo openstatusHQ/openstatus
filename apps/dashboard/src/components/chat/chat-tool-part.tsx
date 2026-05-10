@@ -12,7 +12,7 @@ import {
   getToolName,
 } from "ai";
 import { ChevronDownIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
 
@@ -38,24 +38,74 @@ export function ChatToolPart({ part }: Props) {
   const { confirmTool, cancelTool } = useChatTool();
 
   if (part.state === "approval-requested" && part.approval?.id) {
-    const approvalId = part.approval.id;
-    const draft = renderToolDraft(toolName, part.input);
     return (
-      <div className="not-prose w-full overflow-hidden rounded-xl border bg-background">
-        <div className="flex items-center gap-2 p-3 text-sm">
-          <ToolStateDot state="approval-requested" />
-          <span className="font-commit-mono font-medium">{toolName}</span>
-        </div>
-        <div className="border-t p-3">
-          {draft ? (
-            <ChangesTable changes={draft} />
-          ) : (
-            <pre className="max-h-64 overflow-auto rounded bg-muted/50 p-2 text-xs">
-              {JSON.stringify(part.input, null, 2)}
-            </pre>
-          )}
-        </div>
-        <div className="flex justify-end gap-2 border-t bg-muted/30 p-3">
+      <ApprovalCard
+        approvalId={part.approval.id}
+        toolName={toolName}
+        input={part.input}
+        confirmTool={confirmTool}
+        cancelTool={cancelTool}
+      />
+    );
+  }
+
+  return <ToolDisclosure part={part} toolName={toolName} />;
+}
+
+function ApprovalCard({
+  approvalId,
+  toolName,
+  input,
+  confirmTool,
+  cancelTool,
+}: {
+  approvalId: string;
+  toolName: string;
+  input: unknown;
+  confirmTool: (id: string) => void;
+  cancelTool: (id: string, reason?: string) => void;
+}) {
+  // Keyboard shortcuts while this HITL card is mounted. The chat surface
+  // assumes one approval pending at a time (SDK semantics), so a window
+  // listener is fine. Cmd/Ctrl+Enter applies, Esc cancels.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        confirmTool(approvalId);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancelTool(approvalId);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [approvalId, confirmTool, cancelTool]);
+
+  const draft = renderToolDraft(toolName, input);
+  return (
+    <div className="not-prose w-full overflow-hidden rounded-xl border bg-background">
+      <div className="flex items-center gap-2 p-3 text-sm">
+        <ToolStateDot state="approval-requested" />
+        <span className="font-commit-mono font-medium">{toolName}</span>
+      </div>
+      <div className="border-t p-3">
+        {draft ? (
+          <ChangesTable changes={draft} />
+        ) : (
+          <pre className="max-h-64 overflow-auto rounded bg-muted/50 p-2 text-xs">
+            {JSON.stringify(input, null, 2)}
+          </pre>
+        )}
+      </div>
+      <div className="flex items-center justify-end gap-3 border-t bg-muted/30 p-3">
+        <span className="text-muted-foreground text-xs">
+          <kbd className="rounded border bg-background px-1 font-mono">Esc</kbd>{" "}
+          to cancel ·{" "}
+          <kbd className="rounded border bg-background px-1 font-mono">⌘ ↵</kbd>{" "}
+          to apply
+        </span>
+        <div className="flex gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -68,10 +118,8 @@ export function ChatToolPart({ part }: Props) {
           </Button>
         </div>
       </div>
-    );
-  }
-
-  return <ToolDisclosure part={part} toolName={toolName} />;
+    </div>
+  );
 }
 
 function ToolDisclosure({

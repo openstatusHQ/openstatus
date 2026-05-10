@@ -32,13 +32,16 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
       ? "You are running inside Slack. Keep replies concise and use Slack mrkdwn (*bold*, _italic_)."
       : "You are running inside the openstatus dashboard. Keep replies concise; the surface renders Markdown.";
 
-  // Dashboard-only: the chat UI renders a diff card after every write
-  // tool, so a verbose recap from the model is duplicate noise. Slack
-  // doesn't render a structured card, so this rule is intentionally
-  // omitted on that surface.
+  // Dashboard-only: the chat UI renders structured cards/tables after
+  // every tool call, so a verbose recap from the model is duplicate
+  // noise. Slack doesn't render a structured card, so this rule is
+  // intentionally omitted on that surface.
   const dashboardPostToolRule =
     opts.surface === "dashboard"
-      ? `\n\nAfter a write tool returns, the dashboard already renders a diff card with every input/output field (id, status, message, dates, notify outcome). DO NOT repeat that data in your reply. A one-line confirmation ("Incident resolved." / "Maintenance window scheduled.") plus an optional next step is enough — no bullet lists, no field recaps.`
+      ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
+- Write tools (create_*, update_*, resolve_*, add_*) render a diff card with every input/output field (id, status, message, dates, notify outcome).
+- List tools (list_status_pages, list_status_reports, list_maintenances) render a table with one row per result, showing title, slug/status/window, page id, and id.
+DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Incident resolved." / "Maintenance window scheduled.") plus an optional next step is enough.`
       : "";
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";

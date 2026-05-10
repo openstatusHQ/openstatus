@@ -59,7 +59,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
   }, [isGenerating, onStop]);
 
   return (
-    <div className="sticky bottom-0 z-10 border-t bg-background px-4 py-3">
+    <div className="sticky bottom-0 z-10 border-t bg-background p-2">
       <form className="mx-auto max-w-3xl" onSubmit={handleSubmit}>
         <InputGroup>
           <InputGroupTextarea
@@ -70,7 +70,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
             // Override the workspace `min-h-16` so an empty input is one row tall.
             className="min-h-0"
           />
-          <InputGroupAddon align="block-end" className="justify-end py-1">
+          <InputGroupAddon align="block-end" className="justify-end px-2 py-2">
             <Button
               type={isGenerating && onStop ? "button" : "submit"}
               size="icon-sm"
