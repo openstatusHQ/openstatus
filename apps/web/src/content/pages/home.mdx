@@ -85,16 +85,14 @@ Monitor your endpoints from 28 regions across multiple clouds. Get alerted on Sl
 
 Read more about [uptime monitoring](/uptime-monitoring).
 
-## Manage openstatus from your terminal, code, or AI agent
+## Managing openstatus — for humans and agents
 
-Every action in the dashboard is reachable programmatically. **One API key** works across an API, CLI, Node SDK, Terraform provider, and MCP server — and every mutation lands in the same audit log.
+Every action in the dashboard is reachable programmatically. One API key, four ways in:
 
-- **JSON-over-HTTP API** powered by ConnectRPC, with a published [OpenAPI spec](https://api.openstatus.dev/openapi)
-- **CLI** with `--json` output, YAML config, and a GitHub Action for CI/CD
-- **Node SDK** on [JSR](https://jsr.io/@openstatus/sdk-node) for TypeScript and Deno
-- **Terraform provider** to version monitors as HCL — `openstatus terraform generate` bootstraps from your existing workspace
-- **MCP server** so Claude, ChatGPT, Cursor, and other [Model Context Protocol](https://modelcontextprotocol.io) clients run your monitoring — every mutation requires an explicit `notify` flag
-- **Agent skills** that wrap the CLI for Claude Code and other terminal-shaped agents
+- **[CLI](/tooling/cli)** — manage from your terminal
+- **[API](/tooling/api)** — typed HTTP endpoints with an [OpenAPI spec](https://api.openstatus.dev/openapi)
+- **[MCP server](/tooling/mcp-server)** — let Claude, ChatGPT, or Cursor run your monitoring
+- **[Terraform provider](/tooling/terraform)** — version monitors as HCL
 
 Read more about our [tooling](/tooling).
 
