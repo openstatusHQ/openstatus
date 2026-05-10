@@ -1,34 +1,50 @@
-import type { ComponentProps, ElementType } from "react";
+"use client";
+
+import type { ComponentProps, ElementType, ReactNode } from "react";
 
 import { cn } from "@openstatus/ui/lib/utils";
 
 /**
- * CSS-only animated text shimmer — gradient slides under a `bg-clip:text`
- * mask. Used as a "Thinking…" indicator while awaiting model output.
- *
- * Pure CSS keeps the runtime cost trivial (no motion / framer-motion
+ * CSS-only animated text shimmer — a gradient slides under a `bg-clip:text`
+ * mask. Pure CSS keeps the runtime cost trivial (no motion / framer-motion
  * payload) and avoids hydration of a client-only animation library.
- * Kept here so any app in the monorepo can use it.
+ *
+ * Ported from openstatusHQ/data-table-filters. `spread` controls the width
+ * of the highlight band (clamped to 5–45%); `duration` controls how long
+ * one sweep takes. The keyframe `shimmer` is defined in `globals.css`.
  */
 export type TextShimmerProps<E extends ElementType = "span"> = {
   as?: E;
-} & Omit<ComponentProps<E>, "as">;
+  duration?: number;
+  spread?: number;
+  children: ReactNode;
+} & Omit<ComponentProps<E>, "as" | "children">;
 
 export function TextShimmer<E extends ElementType = "span">({
   as,
   className,
+  duration = 3,
+  spread = 20,
+  children,
   ...props
 }: TextShimmerProps<E>) {
   const Component = (as ?? "span") as ElementType;
+  const dynamicSpread = Math.min(Math.max(spread, 5), 45);
+
   return (
     <Component
       className={cn(
-        "inline-block bg-clip-text text-transparent",
-        "bg-[linear-gradient(90deg,var(--color-muted-foreground)_0%,var(--color-muted-foreground)_40%,var(--color-foreground)_50%,var(--color-muted-foreground)_60%,var(--color-muted-foreground)_100%)]",
-        "bg-[length:200%_100%] animate-text-shimmer",
+        "bg-size-[200%_auto] bg-clip-text font-medium text-transparent",
+        "animate-[shimmer_4s_infinite_linear]",
         className,
       )}
+      style={{
+        backgroundImage: `linear-gradient(to right, var(--muted-foreground) ${50 - dynamicSpread}%, var(--foreground) 50%, var(--muted-foreground) ${50 + dynamicSpread}%)`,
+        animationDuration: `${duration}s`,
+      }}
       {...props}
-    />
+    >
+      {children}
+    </Component>
   );
 }

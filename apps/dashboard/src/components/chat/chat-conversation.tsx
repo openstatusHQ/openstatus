@@ -65,7 +65,11 @@ export function ChatConversation({ messages, status }: Props) {
             </Message>
           );
         })}
-        {showThinking ? <TextShimmer>Thinking…</TextShimmer> : null}
+        {showThinking ? (
+          <p>
+            <TextShimmer>Thinking…</TextShimmer>
+          </p>
+        ) : null}
       </div>
     </div>
   );

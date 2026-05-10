@@ -45,14 +45,12 @@
   --color-warning: var(--warning);
   --color-info: var(--info);
 
-  --animate-text-shimmer: text-shimmer 2s linear infinite;
-
-  @keyframes text-shimmer {
-    from {
-      background-position: 200% 0;
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 50%;
     }
-    to {
-      background-position: -200% 0;
+    100% {
+      background-position: -200% 50%;
     }
   }
 }
