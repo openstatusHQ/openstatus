@@ -8,12 +8,15 @@ import { ChatToolPart } from "./chat-tool-part";
 type Props = {
   messages: UIMessage[];
   status: "submitted" | "streaming" | "ready" | "error";
+  // Keyed on `approvalId` (not `toolCallId`) since the SDK approval
+  // flow resolves via `addToolApprovalResponse({ id: approvalId, … })`.
+  // See `chat-tool-part.tsx` for where this id is read off the part.
   onConfirmTool: (args: {
-    toolCallId: string;
+    approvalId: string;
     toolName: string;
     input: unknown;
   }) => void;
-  onCancelTool: (args: { toolCallId: string; toolName: string }) => void;
+  onCancelTool: (args: { approvalId: string; toolName: string }) => void;
 };
 
 export function ChatConversation({
@@ -25,6 +28,7 @@ export function ChatConversation({
   // Pin the WINDOW (not an inner container) to the bottom on every
   // change. With the chat surface flowing in normal block layout there
   // is no inner overflow container; the window is the scroll target.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are change triggers, not reads
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.scrollTo({ top: document.body.scrollHeight });

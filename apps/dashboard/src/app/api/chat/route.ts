@@ -62,12 +62,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
-  const limit = await chatRateLimit({ userId: ctx.actor.userId });
-  if (!limit.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded", reset: limit.reset },
-      { status: 429 },
-    );
+  // Skip the LLM-cost cap entirely in non-prod so testing doesn't
+  // burn through the 50/day allowance. The Redis counter still
+  // increments in prod where it matters.
+  if (process.env.NODE_ENV === "production") {
+    const limit = await chatRateLimit({ userId: ctx.actor.userId });
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded", reset: limit.reset },
+        { status: 429 },
+      );
+    }
   }
 
   const originalMessages = body.messages as UIMessage[];
@@ -105,28 +110,29 @@ export async function POST(req: NextRequest) {
     sessionId = created.id;
   }
 
-  const tools = toAiSdkTools(agentTools, ctx, { destructiveAsHitl: true });
-  // Belt-and-braces filter: `ignoreIncompleteToolCalls` only drops parts
-  // with state `input-streaming`/`input-available`. Stored messages can
-  // carry tool parts with other (or missing) state — a legacy `tool-
-  // summary`, a half-written part from an earlier streaming hiccup, an
-  // SDK shape that pre-dates this field. Anything that isn't a finished
-  // `output-available` tool part with an output, or a text part, gets
-  // stripped so `convertToModelMessages` can't emit an orphan
-  // `tool_use` block to Anthropic.
+  const tools = toAiSdkTools(agentTools, ctx);
+  // Belt-and-braces filter: drop tool parts that have no result the
+  // SDK can convert into a tool_result block. The SDK's
+  // `ignoreIncompleteToolCalls` only handles `input-streaming` /
+  // `input-available`; we additionally drop `approval-requested`
+  // (no result yet) so a reload mid-confirmation doesn't replay an
+  // orphan `tool_use` to Anthropic. `approval-responded` IS kept —
+  // the SDK uses it to resume execute on the next step.
+  const KEEP_TOOL_STATES = new Set([
+    "output-available",
+    "output-error",
+    "output-denied",
+    "approval-responded",
+  ]);
   const safeMessages = originalMessages.map((m) => ({
     ...m,
     parts: (m.parts ?? []).filter((p) => {
       if (!p || typeof (p as { type?: unknown }).type !== "string")
         return false;
-      const part = p as {
-        type: string;
-        state?: string;
-        output?: unknown;
-      };
+      const part = p as { type: string; state?: string };
       if (part.type === "text" || part.type === "step-start") return true;
       if (!part.type.startsWith("tool-")) return false;
-      return part.state === "output-available" && part.output !== undefined;
+      return KEEP_TOOL_STATES.has(part.state ?? "");
     }),
   }));
   const modelMessages = await convertToModelMessages(

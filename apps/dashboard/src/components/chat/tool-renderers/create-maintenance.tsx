@@ -1,14 +1,8 @@
+import type { AgentToolInput } from "@openstatus/services/agent-tools";
+
 import type { ChangeRow } from "@/components/common/changes-table";
 
-type Input = {
-  title?: string;
-  message?: string;
-  from?: string;
-  to?: string;
-  pageId?: number;
-  pageComponentIds?: number[];
-  notify?: boolean;
-};
+type Input = AgentToolInput<"create_maintenance">;
 
 type Applied = {
   id: number;

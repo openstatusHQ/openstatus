@@ -39,6 +39,14 @@ export type InferAgentToolOutput<T> = T extends AgentTool<unknown, infer O>
   ? O
   : never;
 
+// `any` (not `unknown`) is load-bearing here: the registry stores
+// tools with diverse I/O types and adapters call `run({ input })`
+// with values whose type isn't known at the registry boundary.
+// `AgentTool<unknown, unknown>` would forbid storing a concrete
+// `AgentTool<{ title: string }, …>` because function inputs are
+// contravariant; `any` is the standard escape hatch for this
+// covariance gap.
+// biome-ignore lint/suspicious/noExplicitAny: registry-level variance escape hatch
 export type AnyAgentTool = AgentTool<any, any>;
 
 export type AgentToolRegistry = Record<string, AnyAgentTool>;

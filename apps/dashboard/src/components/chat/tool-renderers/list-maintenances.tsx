@@ -1,20 +1,9 @@
+import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { WrenchIcon } from "lucide-react";
 
 import { EntityCard } from "./entity-card";
 
-type Item = {
-  id: number;
-  title: string;
-  message: string;
-  from: string;
-  to: string;
-  pageId: number | null;
-  pageComponentIds: number[];
-};
-
-type Output = {
-  items?: Item[];
-};
+type Output = AgentToolOutput<"list_maintenances">;
 
 export function ListMaintenancesResult({ output }: { output: Output }) {
   const items = output?.items ?? [];

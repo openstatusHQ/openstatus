@@ -5,13 +5,14 @@ import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DefaultChatTransport,
   type UIMessage,
-  lastAssistantMessageIsCompleteWithToolCalls,
+  lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
 import { ChatConversation } from "./chat-conversation";
+import { ChatHistory } from "./chat-history";
 import { ChatPromptInput } from "./chat-prompt-input";
 import { ChatSuggestions } from "./chat-suggestions";
 
@@ -74,7 +75,7 @@ export function ChatClient({ sessionId }: Props) {
     setMessages,
     status,
     error,
-    addToolOutput,
+    addToolApprovalResponse,
     stop,
   } = useChat({
     transport,
@@ -88,7 +89,14 @@ export function ChatClient({ sessionId }: Props) {
       sessionId !== undefined
         ? (activeSession.data?.messages as unknown as UIMessage[] | undefined)
         : undefined,
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    // Approval flow: the SDK pauses with `state: "approval-requested"`
+    // for destructive tools. Once the user resolves every pending
+    // approval (`approval-responded`), `lastAssistantMessageIsCompleteWithApprovalResponses`
+    // returns true and we resubmit so the server can run `execute`
+    // (approve) or just emit the denied result (deny). Cancellation
+    // is a first-class state — no custom predicate needed, no retry
+    // loop possible.
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: () => {
       queryClient.invalidateQueries({
         queryKey: trpc.chatSession.list.queryKey(),
@@ -149,50 +157,34 @@ export function ChatClient({ sessionId }: Props) {
     [sendMessage],
   );
 
+  // The SDK approval flow handles execute server-side once we resolve
+  // the approval. There is no client-side tool POST anymore — the next
+  // stream (auto-fired by `lastAssistantMessageIsCompleteWithApprovalResponses`)
+  // delivers the tool result.
   const onConfirmTool = useCallback(
-    async (args: { toolCallId: string; toolName: string; input: unknown }) => {
-      const res = await fetch("/api/chat/confirm", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          toolName: args.toolName,
-          input: args.input,
-        }),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.ok) {
-        addToolOutput({
-          toolCallId: args.toolCallId,
-          tool: args.toolName,
-          output: { error: body?.error ?? "Confirmation failed" },
-        });
-        return;
-      }
-      addToolOutput({
-        toolCallId: args.toolCallId,
-        tool: args.toolName,
-        output: body.output,
-      });
+    (args: { approvalId: string; toolName: string; input: unknown }) => {
+      addToolApprovalResponse({ id: args.approvalId, approved: true });
     },
-    [addToolOutput],
+    [addToolApprovalResponse],
   );
 
   const onCancelTool = useCallback(
-    (args: { toolCallId: string; toolName: string }) => {
-      addToolOutput({
-        toolCallId: args.toolCallId,
-        tool: args.toolName,
-        output: { cancelled: true },
+    (args: { approvalId: string; toolName: string }) => {
+      addToolApprovalResponse({
+        id: args.approvalId,
+        approved: false,
+        reason: "Cancelled by user.",
       });
     },
-    [addToolOutput],
+    [addToolApprovalResponse],
   );
 
   return (
     <div className="flex h-[calc(100svh-3.5rem)] min-h-0 flex-col">
       {messages.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-6">
+        <div className="flex flex-1 flex-col items-center justify-center gap-10 p-6">
           <ChatSuggestions onSelect={onSubmit} />
+          <ChatHistory />
         </div>
       ) : (
         <ChatConversation
@@ -204,7 +196,13 @@ export function ChatClient({ sessionId }: Props) {
       )}
       {error ? (
         <div className="border-t bg-destructive/10 px-4 py-2 text-destructive text-sm">
-          The assistant encountered an error. Try again.
+          {/* `error.message` carries the server's body when the SDK
+              decoded a JSON error response. Pattern-match for "Rate
+              limit" so the user sees something actionable instead of
+              the generic fallback. */}
+          {/Rate limit/i.test(error.message ?? "")
+            ? "You've hit the daily message cap — try again tomorrow."
+            : "The assistant encountered an error. Try again."}
         </div>
       ) : null}
       <ChatPromptInput onSubmit={onSubmit} status={status} onStop={stop} />

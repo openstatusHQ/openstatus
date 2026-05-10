@@ -1,11 +1,8 @@
+import type { AgentToolInput } from "@openstatus/services/agent-tools";
+
 import type { ChangeRow } from "@/components/common/changes-table";
 
-type Input = {
-  statusReportId?: number;
-  title?: string;
-  status?: string;
-  pageComponentIds?: number[];
-};
+type Input = AgentToolInput<"update_status_report">;
 
 /**
  * Metadata edit on an existing status report. Only fields the model

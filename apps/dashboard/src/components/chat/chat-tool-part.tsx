@@ -14,25 +14,32 @@ import { toolRenderers } from "./tool-renderers";
 /**
  * Render a tool-related UIMessage part.
  *
- * Shapes we care about (from AI SDK):
- *   { type: "tool-<name>", state: "input-streaming" | "input-available"
- *     | "output-available" | "output-error", toolCallId, input, output? }
+ * Shapes we care about (from AI SDK v6 `UIToolInvocation`):
  *
- * Branches:
- *   - destructive + still pending input  → custom Confirm/Cancel card.
- *     The AI SDK omits `execute` server-side, so the part stays in
- *     `input-available` until the client posts to `/api/chat/confirm`
- *     and resumes via `addToolOutput`.
- *   - everything else (read tools, post-confirm output)  → minimal
- *     collapsible with raw JSON (no `shiki` syntax highlighting — the
- *     dev cost of one extra dep wasn't worth the polish).
+ *   { type: "tool-<name>", toolCallId, state, input?, output?, errorText?,
+ *     approval?: { id, approved?, reason? } }
+ *
+ * State machine:
+ *   - `input-streaming` / `input-available` → in-flight tool call (read
+ *     tools auto-execute; destructive tools never sit here because
+ *     they're approval-gated below).
+ *   - `approval-requested` → destructive tool paused for HITL. Render a
+ *     Confirm/Cancel card; resolve via `addToolApprovalResponse` upstream.
+ *   - `approval-responded` → user approved, server about to run execute.
+ *     Treated as a brief loading state.
+ *   - `output-available` → done, render the result.
+ *   - `output-error` → server execute threw. Show error.
+ *   - `output-denied` → user cancelled. Show a muted "denied" card.
  */
 
 type ToolState =
   | "input-streaming"
   | "input-available"
+  | "approval-requested"
+  | "approval-responded"
   | "output-available"
-  | "output-error";
+  | "output-error"
+  | "output-denied";
 
 type ToolPart = {
   type: string;
@@ -41,52 +48,40 @@ type ToolPart = {
   input?: unknown;
   output?: unknown;
   errorText?: string;
+  approval?: { id: string; approved?: boolean; reason?: string };
 };
 
 type Props = {
   part: ToolPart;
   onConfirm: (args: {
-    toolCallId: string;
+    approvalId: string;
     toolName: string;
     input: unknown;
   }) => void;
-  onCancel: (args: { toolCallId: string; toolName: string }) => void;
+  onCancel: (args: { approvalId: string; toolName: string }) => void;
 };
-
-// Whitelist sourced from the registry's `destructive: true` tools — keeps
-// the HITL UI in sync with what the server actually pauses on. If a new
-// destructive tool ships, add it here in the same PR that adds it to the
-// registry.
-const DESTRUCTIVE_TOOL_NAMES = new Set([
-  "create_status_report",
-  "add_status_report_update",
-  "update_status_report",
-  "resolve_status_report",
-  "create_maintenance",
-]);
 
 export function ChatToolPart({ part, onConfirm, onCancel }: Props) {
   const toolName = part.type.startsWith("tool-")
     ? part.type.slice("tool-".length)
     : part.type;
-  const toolCallId = part.toolCallId ?? "";
-  const isDestructive = DESTRUCTIVE_TOOL_NAMES.has(toolName);
-  const isPendingConfirm =
-    part.state === "input-available" &&
-    part.output === undefined &&
-    isDestructive;
 
-  if (isPendingConfirm) {
-    const renderDraft = toolRenderers[toolName]?.renderDraft;
+  // Approval-requested: render Confirm/Cancel. The approval id (NOT
+  // the toolCallId) is what `addToolApprovalResponse` consumes —
+  // pass it up via the handlers.
+  if (part.state === "approval-requested" && part.approval?.id) {
+    const approvalId = part.approval.id;
+    const renderDraft =
+      toolRenderers[toolName as keyof typeof toolRenderers]?.renderDraft;
     return (
       <div className="not-prose w-full overflow-hidden rounded-xl border bg-background">
         <div className="flex items-center gap-2 p-3 text-sm">
-          <ToolStateDot state={part.state ?? "input-available"} />
+          <ToolStateDot state="approval-requested" />
           <span className="font-commit-mono font-medium">{toolName}</span>
         </div>
         <div className="border-t p-3">
           {renderDraft ? (
-            <ChangesTable changes={renderDraft(part.input)} />
+            <ChangesTable changes={renderDraft(part.input as never)} />
           ) : (
             <pre className="max-h-64 overflow-auto rounded bg-muted/50 p-2 text-xs">
               {JSON.stringify(part.input, null, 2)}
@@ -97,14 +92,14 @@ export function ChatToolPart({ part, onConfirm, onCancel }: Props) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onCancel({ toolCallId, toolName })}
+            onClick={() => onCancel({ approvalId, toolName })}
           >
             Cancel
           </Button>
           <Button
             size="sm"
             onClick={() =>
-              onConfirm({ toolCallId, toolName, input: part.input })
+              onConfirm({ approvalId, toolName, input: part.input })
             }
           >
             Apply
@@ -125,13 +120,15 @@ function ToolDisclosure({
   toolName: string;
 }) {
   const state = part.state ?? "output-available";
-  const renderer = toolRenderers[toolName];
+  const renderer = toolRenderers[toolName as keyof typeof toolRenderers];
   const renderResult = renderer?.renderResult;
   const hasRichResult = renderResult !== undefined && part.output !== undefined;
   const summary =
     part.output !== undefined && renderer?.summary
-      ? renderer.summary(part.output)
-      : undefined;
+      ? renderer.summary(part.output as never)
+      : state === "output-denied"
+        ? "Cancelled"
+        : undefined;
   // Open by default when there's a rich result so the user sees it
   // without an extra click; raw JSON view stays collapsed.
   const [open, setOpen] = useState(hasRichResult);
@@ -159,7 +156,10 @@ function ToolDisclosure({
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-3 p-3 pt-0">
         {hasRichResult ? (
-          renderResult({ input: part.input, output: part.output })
+          renderResult({
+            input: part.input as never,
+            output: part.output as never,
+          })
         ) : (
           <>
             {part.input !== undefined ? (
@@ -173,6 +173,11 @@ function ToolDisclosure({
         {part.errorText ? (
           <div className="rounded-md bg-destructive/10 p-2 text-destructive text-xs">
             {part.errorText}
+          </div>
+        ) : null}
+        {state === "output-denied" && part.approval?.reason ? (
+          <div className="rounded-md bg-muted/50 p-2 text-muted-foreground text-xs">
+            {part.approval.reason}
           </div>
         ) : null}
       </CollapsibleContent>
@@ -194,13 +199,20 @@ function ToolPanel({ label, body }: { label: string; body: unknown }) {
 }
 
 function ToolStateDot({ state }: { state: ToolState }) {
-  const isLoading = state === "input-streaming" || state === "input-available";
+  const isLoading =
+    state === "input-streaming" ||
+    state === "input-available" ||
+    state === "approval-responded";
   const color =
     state === "output-error"
       ? "bg-destructive"
-      : state === "output-available"
-        ? "bg-success"
-        : "bg-muted-foreground";
+      : state === "output-denied"
+        ? "bg-muted-foreground"
+        : state === "output-available"
+          ? "bg-success"
+          : state === "approval-requested"
+            ? "bg-warning"
+            : "bg-muted-foreground";
   return (
     <span className="relative inline-flex size-2 shrink-0">
       {isLoading ? (

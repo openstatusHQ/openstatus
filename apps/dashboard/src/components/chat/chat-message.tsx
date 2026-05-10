@@ -107,7 +107,7 @@ export function MessageMarkdown({ children }: { children: string }) {
         // styling. Cell padding + a 1px border makes the structure
         // visible without pulling in `prose`.
         "[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs",
-        "[&_th]:border [&_th]:bg-muted/50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-medium",
+        "[&_th]:border [&_th]:bg-muted/50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-normal",
         "[&_td]:border [&_td]:px-2 [&_td]:py-1",
       ].join("")}
     >

@@ -1,11 +1,8 @@
+import type { AgentToolInput } from "@openstatus/services/agent-tools";
+
 import type { ChangeRow } from "@/components/common/changes-table";
 
-type Input = {
-  statusReportId?: number;
-  message?: string;
-  date?: string;
-  notify?: boolean;
-};
+type Input = AgentToolInput<"resolve_status_report">;
 
 type Applied = {
   statusReportUpdateId: number;

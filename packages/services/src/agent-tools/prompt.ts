@@ -32,6 +32,15 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
       ? "You are running inside Slack. Keep replies concise and use Slack mrkdwn (*bold*, _italic_)."
       : "You are running inside the openstatus dashboard. Keep replies concise; the surface renders Markdown.";
 
+  // Dashboard-only: the chat UI renders a diff card after every write
+  // tool, so a verbose recap from the model is duplicate noise. Slack
+  // doesn't render a structured card, so this rule is intentionally
+  // omitted on that surface.
+  const dashboardPostToolRule =
+    opts.surface === "dashboard"
+      ? `\n\nAfter a write tool returns, the dashboard already renders a diff card with every input/output field (id, status, message, dates, notify outcome). DO NOT repeat that data in your reply. A one-line confirmation ("Incident resolved." / "Maintenance window scheduled.") plus an optional next step is enough — no bullet lists, no field recaps.`
+      : "";
+
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
 
   // The notify rubric step varies based on whether the workspace plan
@@ -47,7 +56,7 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
 
   return `${preamble}You are the openstatus assistant for workspace "${opts.workspaceName}".
 The current date and time is ${now} (UTC). Default timezone for any date you produce is UTC unless the user specifies otherwise — mention that you defaulted to UTC when relevant.
-${surfaceLine}
+${surfaceLine}${dashboardPostToolRule}
 
 You help teams manage status pages, status reports, and maintenance windows.
 
@@ -81,5 +90,9 @@ Other guidance:
 - If multiple status pages exist, ask which one to use. If only one, use it automatically.
 - Draft professional public-facing messages. Don't repeat the user verbatim.
 - For maintenance windows, parse natural language dates into ISO 8601. The "from" must be strictly before "to".
-- Be concise. Don't restate everything the user said.`;
+- Be concise. Don't restate everything the user said.
+
+Tool result handling:
+- If a tool returns an error or denied result (e.g. the user denied a destructive call with "Cancelled by user."), acknowledge the outcome plainly. NEVER claim success when the tool didn't run. Example replies: "Cancelled — nothing was created. Let me know if you want to adjust and try again." or "The status report couldn't be created (<reason>). Want me to retry with different inputs?"
+- After a denied/errored call, do not re-issue the same tool unless the user explicitly asks.`;
 }

@@ -1,10 +1,9 @@
+import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { GlobeIcon } from "lucide-react";
 
 import { EntityCard } from "./entity-card";
 
-type Output = {
-  items?: Array<{ id: number; title: string; slug: string }>;
-};
+type Output = AgentToolOutput<"list_status_pages">;
 
 export function ListStatusPagesResult({ output }: { output: Output }) {
   const items = output?.items ?? [];

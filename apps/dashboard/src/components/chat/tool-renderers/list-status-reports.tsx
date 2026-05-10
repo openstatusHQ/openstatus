@@ -1,26 +1,11 @@
+import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { SirenIcon } from "lucide-react";
 
 import { Badge } from "@openstatus/ui/components/ui/badge";
 
 import { EntityCard } from "./entity-card";
 
-type Item = {
-  id: number;
-  title: string;
-  status: string;
-  pageId: number | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-  latestUpdate: {
-    message: string;
-    status: string;
-    date: string | null;
-  } | null;
-};
-
-type Output = {
-  items?: Item[];
-};
+type Output = AgentToolOutput<"list_status_reports">;
 
 const STATUS_TONE: Record<string, string> = {
   investigating: "border-destructive/30 bg-destructive/10 text-destructive",
