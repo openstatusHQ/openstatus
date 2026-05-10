@@ -20,7 +20,7 @@ export default async function Layout({
 
   return (
     <HydrateClient>
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider defaultOpen={false} className="min-h-0 flex-1">
         <div className="w-full flex-1">{children}</div>
         <div className="hidden lg:block">
           <Sidebar />

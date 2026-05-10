@@ -20,14 +20,21 @@ export function ChatConversation({ messages, status }: Props) {
 
   // Shimmer until the assistant emits its first token of the current turn.
   const last = messages[messages.length - 1];
+  const lastIsEmptyAssistant =
+    last != null && last.role === "assistant" && !hasAssistantContent(last);
   const showThinking =
     (status === "submitted" || status === "streaming") &&
-    (last == null || last.role === "user" || !hasAssistantContent(last));
+    (last == null || last.role === "user" || lastIsEmptyAssistant);
+  // Skip the empty assistant placeholder so the shimmer stays anchored under
+  // the user message instead of jumping down when the SDK appends an empty row.
+  const visibleMessages = lastIsEmptyAssistant
+    ? messages.slice(0, -1)
+    : messages;
 
   return (
     <div className="flex-1">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-4">
-        {messages.map((m, mIdx) => {
+        {visibleMessages.map((m, mIdx) => {
           const createdAt = (m as { createdAt?: number }).createdAt;
           const tooltip =
             createdAt != null

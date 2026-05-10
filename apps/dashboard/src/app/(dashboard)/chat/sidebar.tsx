@@ -44,7 +44,6 @@ export function Sidebar() {
             active: s.id === activeId,
             actions: [],
             deleteAction: {
-              confirmationValue: s.title || "conversation",
               submitAction: async () => {
                 await deleteMutation.mutateAsync({ sessionId: s.id });
               },

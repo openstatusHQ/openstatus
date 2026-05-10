@@ -69,6 +69,11 @@ export function SidebarRight({
       }
       defaultOpen={defaultOpen}
       cookieName="sidebar_state_right"
+      // The shadcn SidebarProvider wraps in `min-h-svh`, but here it only
+      // hosts a fixed-positioned right rail — the in-flow wrapper would
+      // otherwise add a phantom 100svh of layout height to whatever route
+      // mounts this component. Collapse it.
+      className="min-h-0 flex-1"
     >
       <Sidebar
         collapsible="offcanvas"

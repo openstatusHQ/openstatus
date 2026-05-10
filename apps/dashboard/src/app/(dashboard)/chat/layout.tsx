@@ -34,7 +34,13 @@ export default async function Layout({
             <NavActions />
           </AppHeaderActions>
         </AppHeader>
-        <SidebarProvider defaultOpen={false}>
+        {/*
+          The shadcn SidebarProvider wraps children in `min-h-svh`. Inside the
+          dashboard's flex-col SidebarInset (which already sits below the
+          AppHeader), that pushes the page past the viewport and adds spurious
+          scroll. Override to flex-fit the remaining space.
+        */}
+        <SidebarProvider defaultOpen={false} className="min-h-0 flex-1">
           <main className="w-full flex-1">{children}</main>
           <div className="hidden lg:block">
             <Sidebar />
