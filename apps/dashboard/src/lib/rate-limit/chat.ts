@@ -1,16 +1,16 @@
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import { type ServiceContext, tryGetActorUserId } from "@openstatus/services";
 import { redis } from "@openstatus/upstash";
 
-/**
- * Per-user fixed-window rate limit for the dashboard chat surface.
- * Naive `INCR + EXPIRE` rather than `@upstash/ratelimit` to keep the
- * dashboard's dep tree slim — the chat protects LLM cost, not a request
- * tier, and the precision of a sliding window is overkill for a 50-per-
- * day cap. Mirrors `apps/web/src/lib/ratelimit.ts`.
- */
-export const CHAT_RATE_LIMIT = {
-  window: 60 * 60 * 24, // 24h in seconds
-  limit: 50,
-} as const;
+const WINDOW_SECONDS = 60 * 60 * 24; // 24h
+
+// Free is throttled hard to keep LLM spend bounded; paid plans get a
+// looser cap that's still cheaper than the worst-case unbounded loop.
+const DAILY_LIMIT_BY_PLAN: Record<WorkspacePlan, number> = {
+  free: 20,
+  starter: 50,
+  team: 50,
+};
 
 export type ChatRateLimitResult = {
   success: boolean;
@@ -20,20 +20,26 @@ export type ChatRateLimitResult = {
 };
 
 export async function chatRateLimit(args: {
-  userId: number;
+  ctx: ServiceContext;
 }): Promise<ChatRateLimitResult> {
-  const key = `ratelimit:chat:user:${args.userId}`;
+  const userId = tryGetActorUserId(args.ctx.actor);
+  if (userId == null) {
+    throw new Error("chatRateLimit requires a user actor");
+  }
+  const plan = args.ctx.workspace.plan ?? "free";
+  const limit = DAILY_LIMIT_BY_PLAN[plan];
+  const key = `ratelimit:chat:user:${userId}`;
   const now = Date.now();
   const count = await redis.incr(key);
   if (count === 1) {
-    await redis.expire(key, CHAT_RATE_LIMIT.window);
+    await redis.expire(key, WINDOW_SECONDS);
   }
   const ttl = await redis.ttl(key);
-  const reset = now + (ttl > 0 ? ttl * 1000 : CHAT_RATE_LIMIT.window * 1000);
+  const reset = now + (ttl > 0 ? ttl * 1000 : WINDOW_SECONDS * 1000);
   return {
-    success: count <= CHAT_RATE_LIMIT.limit,
-    limit: CHAT_RATE_LIMIT.limit,
-    remaining: Math.max(0, CHAT_RATE_LIMIT.limit - count),
+    success: count <= limit,
+    limit,
+    remaining: Math.max(0, limit - count),
     reset,
   };
 }

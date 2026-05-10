@@ -62,11 +62,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
 
+  const plan = ctx.workspace.plan ?? "free";
+
   // Skip the LLM-cost cap entirely in non-prod so testing doesn't
-  // burn through the 50/day allowance. The Redis counter still
+  // burn through the daily allowance. The Redis counter still
   // increments in prod where it matters.
   if (process.env.NODE_ENV === "production") {
-    const limit = await chatRateLimit({ userId: ctx.actor.userId });
+    const limit = await chatRateLimit({ ctx });
     if (!limit.success) {
       return NextResponse.json(
         { error: "Rate limit exceeded", reset: limit.reset },
@@ -141,7 +143,10 @@ export async function POST(req: NextRequest) {
   );
 
   const result = streamText({
-    model: "anthropic/claude-sonnet-4.5",
+    model:
+      plan === "free"
+        ? "anthropic/claude-haiku-4.5"
+        : "anthropic/claude-sonnet-4.5",
     system: buildAgentSystemPrompt({
       workspaceName: ctx.workspace.name ?? "Unknown",
       surface: "dashboard",

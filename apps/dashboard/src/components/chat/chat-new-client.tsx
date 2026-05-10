@@ -12,7 +12,6 @@ import {
 } from "./chat-tool-context";
 import { useChatSession } from "./use-chat-session";
 
-/** `/chat`: landing UI until the first turn; conversation thereafter (no remount). */
 export function ChatNewClient() {
   const {
     messages,

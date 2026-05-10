@@ -8,10 +8,10 @@ import {
   type UIMessage,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
-import { useChatSessionContext } from "./chat-session-context";
 
 // `storedMessageSchema` validates writes, so persisted rows are already SDK-shaped.
 function asUIMessages(
@@ -20,16 +20,10 @@ function asUIMessages(
   return rows as unknown as UIMessage[] | undefined;
 }
 
-/**
- * Owns the `useChat` instance plus session-id lifecycle: prop drives the
- * route-bound id (resets state on real navigation); a server-issued id
- * mid-stream is announced via `attachSession` so breadcrumb/sidebar
- * follow without a navigation that would unmount `useChat`.
- */
 export function useChatSession({ sessionId }: { sessionId?: number }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { attachSession } = useChatSessionContext();
+  const router = useRouter();
 
   const activeSession = useQuery(
     trpc.chatSession.get.queryOptions(
@@ -65,18 +59,18 @@ export function useChatSession({ sessionId }: { sessionId?: number }) {
       sessionId !== undefined
         ? asUIMessages(activeSession.data?.messages)
         : undefined,
-    // Resubmit once every approval has a response so the server runs `execute`
-    // (approve) or emits `output-denied` (deny).
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: () => {
       queryClient.invalidateQueries({
         queryKey: trpc.chatSession.list.queryKey(),
       });
       const id = sessionIdRef.current;
-      if (id !== undefined) {
-        queryClient.invalidateQueries({
-          queryKey: trpc.chatSession.get.queryKey({ sessionId: id }),
-        });
+      if (id == null) return;
+      queryClient.invalidateQueries({
+        queryKey: trpc.chatSession.get.queryKey({ sessionId: id }),
+      });
+      if (sessionId === undefined) {
+        router.replace(`/chat/${id}`);
       }
     },
   });
@@ -92,8 +86,8 @@ export function useChatSession({ sessionId }: { sessionId?: number }) {
     if (next) setMessages(next);
   }, [sessionId, activeSession.data, messages.length, setMessages]);
 
-  // The server stamps the new id onto the first message's metadata; pluck it
-  // for the transport ref and broadcast via the context (replaceState, no remount).
+  // Server stamps the new id on the first message's metadata; mirror it so a
+  // follow-up message sent before `onFinish` navigates still carries the id.
   useEffect(() => {
     if (sessionId !== undefined) return;
     if (sessionIdRef.current !== undefined) return;
@@ -101,11 +95,10 @@ export function useChatSession({ sessionId }: { sessionId?: number }) {
       const meta = (m as { metadata?: { sessionId?: number } }).metadata;
       if (meta?.sessionId != null) {
         sessionIdRef.current = meta.sessionId;
-        attachSession(meta.sessionId);
         return;
       }
     }
-  }, [messages, sessionId, attachSession]);
+  }, [messages, sessionId]);
 
   return chat;
 }

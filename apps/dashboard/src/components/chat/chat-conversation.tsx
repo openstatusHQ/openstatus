@@ -11,22 +11,21 @@ type Props = {
 };
 
 export function ChatConversation({ messages, status }: Props) {
-  // The chat surface has no inner overflow container — pin the window itself.
+  // No inner overflow container — pin the window itself.
   // biome-ignore lint/correctness/useExhaustiveDependencies: deps are change triggers, not reads
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.scrollTo({ top: document.body.scrollHeight });
   }, [messages, status]);
 
-  // Shimmer until the assistant emits its first token of the current turn.
   const last = messages[messages.length - 1];
   const lastIsEmptyAssistant =
     last != null && last.role === "assistant" && !hasAssistantContent(last);
   const showThinking =
     (status === "submitted" || status === "streaming") &&
     (last == null || last.role === "user" || lastIsEmptyAssistant);
-  // Skip the empty assistant placeholder so the shimmer stays anchored under
-  // the user message instead of jumping down when the SDK appends an empty row.
+  // Hide the empty assistant placeholder so the shimmer doesn't jump down when
+  // the SDK appends the empty row before the first token arrives.
   const visibleMessages = lastIsEmptyAssistant
     ? messages.slice(0, -1)
     : messages;
