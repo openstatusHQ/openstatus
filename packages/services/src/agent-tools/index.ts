@@ -36,14 +36,14 @@ export {
 } from "./prompt";
 
 /**
- * Aggregate registry — order matches the v1 MCP parity surface in the plan.
- * Adding a tool here surfaces it on every adapter (MCP + dashboard chat).
+ * Aggregate registry. Adding a tool here surfaces it on every adapter
+ * (MCP + dashboard chat).
  *
  * `satisfies` (not a typed assignment) keeps the literal-keyed object
  * type intact, so `keyof typeof agentTools` is the union of tool names
  * and `(typeof agentTools)[N]["inputSchema"]` carries through to the
- * concrete schema for that specific tool. Consumers (dashboard
- * renderers) can then `z.infer` per tool name without any casts.
+ * concrete schema for that specific tool. Consumers can then `z.infer`
+ * per tool name without any casts.
  */
 export const agentTools = {
   list_status_pages: listStatusPagesTool,
@@ -57,10 +57,8 @@ export const agentTools = {
 } satisfies Record<string, AnyAgentTool>;
 
 /**
- * Iteration view used by adapters that don't care about the literal
- * key (MCP `registerRegistryTools`, AI SDK `toAiSdkTools`). Equivalent
- * to `Object.values(agentTools)`; the explicit array preserves the
- * v1 order.
+ * Iteration view used by adapters that don't care about the literal key.
+ * Equivalent to `Object.values(agentTools)`.
  */
 export const agentToolList: AnyAgentTool[] = Object.values(agentTools);
 

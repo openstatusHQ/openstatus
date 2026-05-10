@@ -38,11 +38,9 @@ type SidebarRightProps = React.ComponentProps<typeof Sidebar> & {
   metadata: SidebarMetadataProps[];
   footerButton?: React.ComponentProps<typeof SidebarMenuButton>;
   /**
-   * Initial open state when no cookie is set. Defaults to `false` so
-   * the right sidebar stays out of the way on detail pages (monitor /
-   * status page) where it shows secondary metadata. Surfaces where
-   * the right sidebar IS the primary navigation (chat conversations
-   * picker) opt in by passing `true`.
+   * Initial open state when no cookie is set. Defaults to `false` so the
+   * right sidebar stays collapsed when it shows secondary metadata; opt
+   * in by passing `true` when the sidebar IS the primary navigation.
    */
   defaultOpen?: boolean;
 };
@@ -131,7 +129,6 @@ export function SidebarTrigger({
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar } = useSidebar();
 
-  // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (

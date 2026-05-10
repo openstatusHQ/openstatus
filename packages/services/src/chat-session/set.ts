@@ -16,16 +16,9 @@ import { SetChatSessionMessagesInput } from "./schemas";
 
 /**
  * Replace the chat session's full message list. Idempotent across
- * onFinish retries — HITL flows can fire onFinish multiple times for
- * the same logical turn (paused → resumed-after-confirm), and an
- * append-based persistence drifts duplicates / orphans into the row.
- * Replace lets each onFinish be the canonical snapshot.
- *
- * Timestamps: server-stamps `createdAt` on any incoming message that
- * doesn't already have one, while preserving the timestamp from the
- * existing row for any message id we've seen before. Without this
- * merge, full-replace persistence would re-stamp every message on
- * every turn and lose the "when did this happen" signal.
+ * onFinish retries — HITL turns can fire onFinish multiple times, and
+ * full-replace lets each fire be the canonical snapshot. Existing-row
+ * `createdAt` wins on overlap so older messages don't drift forward.
  */
 export async function setChatSessionMessages(args: {
   ctx: ServiceContext;
@@ -67,10 +60,6 @@ function mergeTimestamps(
   existing: ChatStoredMessage[],
   incoming: ChatStoredMessage[],
 ): ChatStoredMessage[] {
-  // Existing-row stamp wins. The route stamps `Date.now()` on every
-  // incoming message to satisfy the schema, but for messages we've
-  // already persisted we prefer the original first-seen timestamp so
-  // older messages don't drift forward on every turn.
   const existingStamps = new Map<string, number>();
   for (const m of existing) existingStamps.set(m.id, m.createdAt);
   return incoming.map((m) => {

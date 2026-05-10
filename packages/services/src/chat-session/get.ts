@@ -1,7 +1,6 @@
-import { db as defaultDb } from "@openstatus/db";
 import type { ChatSessionRow } from "@openstatus/db/src/schema";
 
-import { type ServiceContext, tryGetActorUserId } from "../context";
+import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { UnauthorizedError } from "../errors";
 import { getChatSessionInWorkspace } from "./internal";
 import { GetChatSessionInput } from "./schemas";
@@ -20,9 +19,8 @@ export async function getChatSession(args: {
     );
   }
 
-  const db = ctx.db ?? defaultDb;
   return getChatSessionInWorkspace({
-    tx: db,
+    tx: getReadDb(ctx),
     sessionId: input.sessionId,
     workspaceId: ctx.workspace.id,
     userId,

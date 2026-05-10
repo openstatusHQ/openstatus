@@ -10,7 +10,6 @@ import {
 } from "./chat-tool-context";
 import { useChatSession } from "./use-chat-session";
 
-/** `/chat/[id]`: always conversation, never the landing UI (no flash on cache miss). */
 export function ChatSessionClient({ sessionId }: { sessionId: number }) {
   const {
     messages,

@@ -29,8 +29,6 @@ export async function createChatSession(args: {
   }
 
   return withTransaction(ctx, async (tx) => {
-    // Drop overflow rows first so the resulting count is at most
-    // MAX_CHAT_SESSIONS_PER_USER after the new insert.
     await enforceSessionCap({
       tx,
       workspaceId: ctx.workspace.id,

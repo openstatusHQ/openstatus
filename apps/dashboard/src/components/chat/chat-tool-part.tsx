@@ -148,8 +148,6 @@ function ToolDisclosure({
       setOpen(true);
     }
   }, [richDefined]);
-  // When `rich` exists, users can flip to the raw `Parameters`/`Result` JSON
-  // panels; without it, the raw view is the only view.
   const [view, setView] = useState<"rich" | "raw">("rich");
   const showRich = rich !== undefined && view === "rich";
 

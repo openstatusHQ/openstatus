@@ -9,14 +9,6 @@ export const CreateChatSessionInput = z.object({
 });
 export type CreateChatSessionInput = z.infer<typeof CreateChatSessionInput>;
 
-export const AppendChatSessionMessagesInput = z.object({
-  sessionId: z.number().int(),
-  messages: z.array(storedMessageSchema).min(1),
-});
-export type AppendChatSessionMessagesInput = z.infer<
-  typeof AppendChatSessionMessagesInput
->;
-
 export const SetChatSessionMessagesInput = z.object({
   sessionId: z.number().int(),
   // No `.min(1)` — replacing a session with an empty list is valid

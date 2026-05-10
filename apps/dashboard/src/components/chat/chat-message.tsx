@@ -41,7 +41,6 @@ export function MessageContent({
     <div
       className={cn(
         "flex w-full max-w-full flex-col gap-2 overflow-hidden text-sm",
-        // User-only bubble; assistant Markdown renders inline against the page.
         "group-data-[from=user]:rounded-xl group-data-[from=user]:bg-secondary group-data-[from=user]:px-4 group-data-[from=user]:py-3",
         className,
       )}

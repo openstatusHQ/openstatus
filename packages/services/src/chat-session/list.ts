@@ -1,7 +1,7 @@
-import { and, db as defaultDb, desc, eq } from "@openstatus/db";
+import { and, desc, eq } from "@openstatus/db";
 import { chatSession } from "@openstatus/db/src/schema";
 
-import { type ServiceContext, tryGetActorUserId } from "../context";
+import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { UnauthorizedError } from "../errors";
 
 export type ChatSessionSummary = {
@@ -22,7 +22,7 @@ export async function listChatSessions(args: {
     );
   }
 
-  const db = ctx.db ?? defaultDb;
+  const db = getReadDb(ctx);
   const rows = await db
     .select({
       id: chatSession.id,

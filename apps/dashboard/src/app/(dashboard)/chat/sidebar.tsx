@@ -31,7 +31,6 @@ export function Sidebar() {
   return (
     <SidebarRight
       header="Conversations"
-      // defaultOpen
       metadata={[
         {
           label: "Recent",

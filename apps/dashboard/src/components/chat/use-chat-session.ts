@@ -13,7 +13,8 @@ import { useEffect, useMemo, useRef } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-// `storedMessageSchema` validates writes, so persisted rows are already SDK-shaped.
+// Safe: `storedMessageSchema` is a structural subset of `UIMessage`
+// — the SDK reads `.id`, `.role`, `.parts` only.
 function asUIMessages(
   rows: ChatStoredMessage[] | undefined,
 ): UIMessage[] | undefined {

@@ -11,12 +11,8 @@ type Props = {
 
 /**
  * Two-part chip: muted label cell + mono value cell, separated by a
- * vertical border. Originally inlined in `data-table/audit-logs/columns`;
- * extracted so the chat tool renderers (and any future surface that wants
- * the same look) can reuse it.
- *
- * Returns `null` when `value` is empty so callers can map over a
- * heterogeneous metadata bag without filtering first.
+ * vertical border. Returns `null` when `value` is empty so callers can map
+ * over a heterogeneous metadata bag without filtering first.
  */
 export function Pill({ label, value, className, variant = "default" }: Props) {
   if (value === undefined || value === null || value === "") return null;

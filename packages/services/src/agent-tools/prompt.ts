@@ -1,12 +1,7 @@
 /**
- * Shared system-prompt core used by both the Slack agent and the
- * dashboard chat surface. Per-surface flavor (formatting hints, channel-
- * specific examples) is layered on top by the caller.
- *
- * The "draft → ask → confirm" rubric lives here rather than in tool
- * descriptions so descriptions stay factual and per-surface confirmation
- * mechanisms (Slack confirmation buttons vs. dashboard HITL pause card)
- * can use the same conceptual workflow without forking the tool registry.
+ * Shared system-prompt core for every agent surface. Per-surface flavor
+ * is layered on top via `preamble`; the "draft → ask → confirm" rubric
+ * lives here so tool descriptions stay factual.
  */
 export type AgentSystemPromptOptions = {
   workspaceName: string;
@@ -17,10 +12,8 @@ export type AgentSystemPromptOptions = {
   /** Optional preamble injected before the shared core. */
   preamble?: string;
   /**
-   * Whether the workspace plan supports status-page subscribers
-   * (`workspace.limits["status-subscribers"]`). When false the
-   * model is told to always pass `notify: false` and not bother the
-   * user with a yes/no — there's nothing to notify.
+   * Whether the workspace plan supports status-page subscribers. When
+   * false the model passes `notify: false` and skips the yes/no prompt.
    */
   canNotifySubscribers: boolean;
 };
@@ -32,10 +25,8 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
       ? "You are running inside Slack. Keep replies concise and use Slack mrkdwn (*bold*, _italic_)."
       : "You are running inside the openstatus dashboard. Keep replies concise; the surface renders Markdown.";
 
-  // Dashboard-only: the chat UI renders structured cards/tables after
-  // every tool call, so a verbose recap from the model is duplicate
-  // noise. Slack doesn't render a structured card, so this rule is
-  // intentionally omitted on that surface.
+  // Dashboard renders structured cards after every tool call; tell the
+  // model not to duplicate them. Slack has no card, so the rule is skipped.
   const dashboardPostToolRule =
     opts.surface === "dashboard"
       ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
@@ -46,11 +37,8 @@ DO NOT restate that data in your reply — no markdown tables, no bullet recaps 
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
 
-  // The notify rubric step varies based on whether the workspace plan
-  // can dispatch subscriber notifications. Without that capability the
-  // notify field is a no-op server-side, so asking the user is wasted
-  // friction — tell the model to always pass `false` and skip the
-  // question.
+  // Workspaces without subscriber notify get a different rubric — asking
+  // is wasted friction when the field is a server-side no-op anyway.
   const notifyStep = opts.canNotifySubscribers
     ? `3. For tools with a notify flag (create_status_report, add_status_report_update, resolve_status_report, create_maintenance) ALWAYS ask explicitly: "Should I notify subscribers? yes/no" — never infer the answer.
 4. Only call the tool once the user has confirmed BOTH the content AND the notify decision.`

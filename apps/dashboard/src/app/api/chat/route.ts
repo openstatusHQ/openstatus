@@ -28,6 +28,17 @@ import { chatRateLimit } from "@/lib/rate-limit/chat";
 
 export const runtime = "edge";
 
+// Drop tool parts that have no result the SDK can turn into a tool_result
+// block. `ignoreIncompleteToolCalls` doesn't cover `approval-requested`, so
+// a mid-confirmation reload would otherwise replay an orphan `tool_use` to
+// Anthropic. `approval-responded` IS kept — the SDK resumes execute on it.
+const KEEP_TOOL_STATES = new Set([
+  "output-available",
+  "output-error",
+  "output-denied",
+  "approval-responded",
+]);
+
 const requestSchema = z.object({
   messages: z
     .array(
@@ -113,19 +124,6 @@ export async function POST(req: NextRequest) {
   }
 
   const tools = toAiSdkTools(agentTools, ctx);
-  // Belt-and-braces filter: drop tool parts that have no result the
-  // SDK can convert into a tool_result block. The SDK's
-  // `ignoreIncompleteToolCalls` only handles `input-streaming` /
-  // `input-available`; we additionally drop `approval-requested`
-  // (no result yet) so a reload mid-confirmation doesn't replay an
-  // orphan `tool_use` to Anthropic. `approval-responded` IS kept —
-  // the SDK uses it to resume execute on the next step.
-  const KEEP_TOOL_STATES = new Set([
-    "output-available",
-    "output-error",
-    "output-denied",
-    "approval-responded",
-  ]);
   const safeMessages = originalMessages.map((m) => ({
     ...m,
     parts: (m.parts ?? []).filter((p) => {

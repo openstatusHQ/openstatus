@@ -9,9 +9,9 @@ import { cn } from "@openstatus/ui/lib/utils";
  * mask. Pure CSS keeps the runtime cost trivial (no motion / framer-motion
  * payload) and avoids hydration of a client-only animation library.
  *
- * Ported from openstatusHQ/data-table-filters. `spread` controls the width
- * of the highlight band (clamped to 5–45%); `duration` controls how long
- * one sweep takes. The keyframe `shimmer` is defined in `globals.css`.
+ * `spread` controls the width of the highlight band (clamped to 5–45%);
+ * `duration` controls how long one sweep takes. The `shimmer` keyframe is
+ * defined in `globals.css`.
  */
 export type TextShimmerProps<E extends ElementType = "span"> = {
   as?: E;

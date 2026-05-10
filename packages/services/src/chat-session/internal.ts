@@ -24,9 +24,6 @@ export async function getChatSessionInWorkspace(args: {
   if (row.workspaceId !== workspaceId) {
     throw new ForbiddenError("Chat session does not belong to this workspace.");
   }
-  // Per-user scoping: a workspace member should never see another
-  // member's conversations. Deny rather than 404 to make the failure
-  // distinguishable in tests.
   if (row.userId !== userId) {
     throw new ForbiddenError("Chat session does not belong to this user.");
   }
@@ -34,19 +31,10 @@ export async function getChatSessionInWorkspace(args: {
 }
 
 /**
- * Bound message storage. Drops oldest entries if the array is over
- * `MAX_CHAT_MESSAGES`; otherwise leaves the parts untouched.
- *
- * Earlier versions also rewrote older tool parts into a summary
- * placeholder to keep the row small, but: (a) our tool outputs are
- * tiny ids/titles, the row size is not the constraint; (b) any
- * rewrite of a `tool-*` part to a different shape risks tripping the
- * AI SDK's `isToolUIPart` predicate and producing an Anthropic
- * `tool_use` block with no matching `tool_result`. Pending HITL tool
- * parts (state `input-available`, no output) are tolerated in
- * storage — `convertToModelMessages({ ignoreIncompleteToolCalls
- * : true })` filters them at conversion time so they never reach the
- * provider.
+ * Bound message storage by dropping oldest entries if the array is over
+ * `MAX_CHAT_MESSAGES`. Pending HITL tool parts are left intact — the
+ * route filters them at `convertToModelMessages` time before they reach
+ * the provider.
  */
 export function compactMessages(
   messages: ChatStoredMessage[],
@@ -56,10 +44,8 @@ export function compactMessages(
 }
 
 /**
- * Enforce the per-user session cap. Drops the oldest sessions for this
- * (workspace, user) pair so that after the caller inserts a new row the
- * total is at most `cap`. Caller passes `cap - 1` to make room for the
- * incoming insert.
+ * Drop the oldest sessions for `(workspace, user)` so the row count
+ * stays at `capAfterInsert` once the caller inserts a new one.
  */
 export async function enforceSessionCap(args: {
   tx: DB;

@@ -19,14 +19,9 @@ export type ResolveActiveWorkspaceResult =
   | { ok: false; error: ResolveActiveWorkspaceFailure };
 
 /**
- * Canonical workspace-from-cookie resolver. Used by the tRPC
- * `enforceUserIsAuthed` middleware and by the dashboard's `/api/chat`
- * route — both surfaces look up the same `workspace-slug` cookie set by
- * the dashboard's middleware / `WorkspaceClientCookie`.
- *
- * Falls back to the user's first workspace when the cookie is missing
- * or stale (cookie manipulation, deleted slug). Mirrors the historic
- * behavior in tRPC so extracting it is a pure refactor.
+ * Canonical workspace-from-cookie resolver — looks up the
+ * `workspace-slug` cookie and falls back to the user's first workspace
+ * when the cookie is missing or stale (cookie manipulation, deleted slug).
  */
 export async function resolveActiveWorkspace(args: {
   userId: number;

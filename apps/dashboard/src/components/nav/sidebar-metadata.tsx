@@ -53,10 +53,7 @@ export type SidebarMetadataListItem = {
   href?: string;
   /** Marks this row as the current selection. */
   active?: boolean;
-  /**
-   * Hover-revealed `…` button that opens a `QuickActions` dropdown.
-   * Mirrors the nav-monitors pattern for visual consistency.
-   */
+  /** Hover-revealed `…` button that opens a `QuickActions` dropdown. */
   actions?: {
     id: string;
     label: string;
@@ -73,12 +70,9 @@ export type SidebarMetadataListItem = {
 
 /**
  * Metadata section in `SidebarRight`. Two shapes:
- *
- *  - `type: "table"` (default) — label/value rows, copy-on-tap. Used for
- *    "Configuration", "Notifications", etc. on the monitor sidebar.
+ *  - `type: "table"` (default) — label/value rows with copy-on-tap.
  *  - `type: "list"` — clickable rows with optional active state, leading
- *    icon, trailing meta and a hover-revealed action. Used for
- *    list-style sidebars like the chat conversations picker.
+ *    icon, trailing meta and a hover-revealed action.
  */
 export type SidebarMetadataProps =
   | {
