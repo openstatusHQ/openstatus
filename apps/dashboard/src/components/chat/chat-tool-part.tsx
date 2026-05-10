@@ -4,6 +4,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
+import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import {
   type DynamicToolUIPart,
@@ -11,8 +12,8 @@ import {
   type UITools,
   getToolName,
 } from "ai";
-import { ChevronDownIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BracesIcon, ChevronDownIcon, TableIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
 
@@ -134,8 +135,23 @@ function ToolDisclosure({
   const summary =
     summarizeToolOutput(toolName, part.output) ??
     (state === "output-denied" ? "Cancelled" : undefined);
-  // Open by default when there's a rich result; raw JSON stays collapsed.
-  const [open, setOpen] = useState(rich !== undefined);
+  // Open by default when a rich renderer has data. During streaming the tool
+  // mounts with `output === undefined` (so `rich` is undefined) — auto-open
+  // on the first transition to defined, but only once, so a user-driven close
+  // afterwards isn't reverted by subsequent output chunks.
+  const richDefined = rich !== undefined;
+  const [open, setOpen] = useState(richDefined);
+  const hasAutoOpened = useRef(richDefined);
+  useEffect(() => {
+    if (!hasAutoOpened.current && richDefined) {
+      hasAutoOpened.current = true;
+      setOpen(true);
+    }
+  }, [richDefined]);
+  // When `rich` exists, users can flip to the raw `Parameters`/`Result` JSON
+  // panels; without it, the raw view is the only view.
+  const [view, setView] = useState<"rich" | "raw">("rich");
+  const showRich = rich !== undefined && view === "rich";
 
   return (
     <Collapsible
@@ -143,23 +159,50 @@ function ToolDisclosure({
       onOpenChange={setOpen}
       className="not-prose group w-full rounded-xl border"
     >
-      <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 p-3 text-sm">
-        <span className="flex flex-1 items-center gap-2">
+      <div className="flex items-center gap-2 p-3 text-sm">
+        <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded text-left">
           <ToolStateDot state={state} />
           <span className="font-commit-mono font-medium">{toolName}</span>
           {summary ? (
             <span className="text-muted-foreground">· {summary}</span>
           ) : null}
-        </span>
-        <ChevronDownIcon
-          className={cn(
-            "size-4 text-muted-foreground transition-transform",
-            open && "rotate-180",
-          )}
-        />
-      </CollapsibleTrigger>
+        </CollapsibleTrigger>
+        {open && rich !== undefined ? (
+          <Tabs
+            value={view}
+            onValueChange={(v) => setView(v as "rich" | "raw")}
+          >
+            <TabsList className="h-6 p-[2px]">
+              <TabsTrigger
+                value="rich"
+                aria-label="Rich view"
+                className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
+              >
+                <TableIcon />
+              </TabsTrigger>
+              <TabsTrigger
+                value="raw"
+                aria-label="Raw view"
+                className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
+              >
+                <BracesIcon />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        ) : null}
+        <CollapsibleTrigger
+          aria-label={open ? "Collapse" : "Expand"}
+          className="inline-flex size-6 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDownIcon
+            className={cn("size-4 transition-transform", open && "rotate-180")}
+          />
+        </CollapsibleTrigger>
+      </div>
       <CollapsibleContent className="space-y-3 p-3 pt-0">
-        {rich ?? (
+        {showRich ? (
+          rich
+        ) : (
           <>
             {part.input !== undefined ? (
               <ToolPanel label="Parameters" body={part.input} />

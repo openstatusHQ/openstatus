@@ -1,8 +1,9 @@
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -52,11 +53,21 @@ export type SidebarMetadataListItem = {
   href?: string;
   /** Marks this row as the current selection. */
   active?: boolean;
-  /** Hover-revealed trailing button (delete / pin / …). */
-  action?: {
-    icon: LucideIcon;
+  /**
+   * Hover-revealed `…` button that opens a `QuickActions` dropdown.
+   * Mirrors the nav-monitors pattern for visual consistency.
+   */
+  actions?: {
+    id: string;
     label: string;
-    onClick: (e: React.MouseEvent) => void;
+    icon: LucideIcon;
+    variant: "default" | "destructive";
+    onClick?: () => Promise<void> | void;
+  }[];
+  /** Destructive item in the same `…` dropdown, with confirmation dialog. */
+  deleteAction?: {
+    confirmationValue: string;
+    submitAction: () => Promise<void>;
   };
 };
 
@@ -148,47 +159,63 @@ function SidebarMetadataTable({
 
 function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
   return (
-    <SidebarMenu className="gap-0 p-1">
-      {items.map((item) => {
-        const inner = (
-          <>
-            {item.icon ? <item.icon className="size-3.5 shrink-0" /> : null}
-            <span className="flex-1 truncate">{item.label}</span>
-            {item.meta != null ? (
-              <span className="ml-auto shrink-0 text-muted-foreground text-xs">
-                {item.meta}
-              </span>
-            ) : null}
-          </>
-        );
-        return (
-          <SidebarMenuItem key={item.id}>
-            <SidebarMenuButton asChild isActive={item.active} size="sm">
-              {item.href ? (
-                <Link href={item.href}>{inner}</Link>
-              ) : (
-                <button type="button">{inner}</button>
-              )}
-            </SidebarMenuButton>
-            {item.action ? (
-              <SidebarMenuAction
-                showOnHover
-                title={item.action.label}
-                onClick={(e) => {
-                  // Don't let the click bubble to the row's link.
-                  e.preventDefault();
-                  e.stopPropagation();
-                  item.action?.onClick(e);
-                }}
+    <SidebarGroup className="p-1">
+      <SidebarMenu>
+        {items.map((item) => {
+          const inner = (
+            <>
+              {item.icon ? <item.icon className="size-3.5 shrink-0" /> : null}
+              <span className="flex-1 truncate">{item.label}</span>
+              {item.meta != null ? (
+                <span className="ml-auto shrink-0 font-mono text-muted-foreground text-xs">
+                  {item.meta}
+                </span>
+              ) : null}
+            </>
+          );
+          const hasMenu =
+            (item.actions?.length ?? 0) > 0 || !!item.deleteAction;
+          return (
+            <SidebarMenuItem key={item.id}>
+              <SidebarMenuButton
+                asChild
+                isActive={item.active}
+                size="sm"
+                // Default reserves `pr-8` for the action; we let the meta use
+                // the full row width and overlay the action with a backdrop.
+                className="px-1 group-has-data-[sidebar=menu-action]/menu-item:pr-2"
               >
-                <item.action.icon />
-                <span className="sr-only">{item.action.label}</span>
-              </SidebarMenuAction>
-            ) : null}
-          </SidebarMenuItem>
-        );
-      })}
-    </SidebarMenu>
+                {item.href ? (
+                  <Link href={item.href}>{inner}</Link>
+                ) : (
+                  <button type="button">{inner}</button>
+                )}
+              </SidebarMenuButton>
+              {hasMenu ? (
+                <QuickActions
+                  actions={item.actions}
+                  deleteAction={item.deleteAction}
+                  side="right"
+                  align="start"
+                >
+                  <SidebarMenuAction
+                    showOnHover
+                    // Solid backdrop + left-side gradient so the dots cover
+                    // the meta timestamp underneath when revealed.
+                    // `ring-inset` keeps the focus ring within the button so
+                    // it doesn't bleed past the sidebar's right edge.
+                    className="before:-left-6 bg-sidebar-accent before:absolute before:inset-y-0 before:right-full before:bg-gradient-to-l before:from-sidebar-accent before:to-transparent focus-visible:ring-inset"
+                  >
+                    <MoreHorizontal />
+                    <span className="sr-only">More</span>
+                  </SidebarMenuAction>
+                </QuickActions>
+              ) : null}
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }
 
