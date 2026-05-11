@@ -1,5 +1,8 @@
 import { and, desc, eq } from "@openstatus/db";
-import { chatSession } from "@openstatus/db/src/schema";
+import {
+  MAX_CHAT_SESSIONS_PER_USER,
+  chatSession,
+} from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { UnauthorizedError } from "../errors";
@@ -38,6 +41,7 @@ export async function listChatSessions(args: {
       ),
     )
     .orderBy(desc(chatSession.updatedAt))
+    .limit(MAX_CHAT_SESSIONS_PER_USER)
     .all();
   return rows;
 }

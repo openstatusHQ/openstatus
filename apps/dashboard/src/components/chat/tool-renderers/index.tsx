@@ -133,8 +133,18 @@ function itemsCountSummary(items: unknown[] | undefined): string | undefined {
 // Safe because the registry is authored against the same `AgentToolName`
 // union the server emits.
 
+// Dedup so streaming doesn't re-warn for the same unknown tool on every render.
+const warnedToolNames = new Set<string>();
+
 function findRenderer(toolName: string) {
-  return toolRenderers[toolName as AgentToolName];
+  const renderer = toolRenderers[toolName as AgentToolName];
+  if (!renderer && !warnedToolNames.has(toolName)) {
+    warnedToolNames.add(toolName);
+    console.warn(
+      `chat: no renderer for tool "${toolName}" — falling back to raw JSON. Add an entry to toolRenderers.`,
+    );
+  }
+  return renderer;
 }
 
 export function renderToolDraft(

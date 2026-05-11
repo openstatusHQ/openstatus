@@ -13,7 +13,7 @@ import {
   getToolName,
 } from "ai";
 import { BracesIcon, ChevronDownIcon, TableIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";
 
@@ -66,26 +66,30 @@ function ApprovalCard({
   confirmTool: (id: string) => void;
   cancelTool: (id: string, reason?: string) => void;
 }) {
-  // Keyboard shortcuts while this HITL card is mounted. The chat surface
-  // assumes one approval pending at a time (SDK semantics), so a window
-  // listener is fine. Cmd/Ctrl+Enter applies, Esc cancels.
+  // Scope key handling to the card so batched approvals / popovers don't share a window listener.
+  const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        confirmTool(approvalId);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        cancelTool(approvalId);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [approvalId, confirmTool, cancelTool]);
+    cardRef.current?.focus();
+  }, []);
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      confirmTool(approvalId);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelTool(approvalId);
+    }
+  };
 
   const draft = renderToolDraft(toolName, input);
   return (
-    <div className="not-prose w-full overflow-hidden rounded-xl border bg-background">
+    <div
+      ref={cardRef}
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
+      className="not-prose w-full overflow-hidden rounded-xl border bg-background outline-none"
+    >
       <div className="flex items-center gap-2 p-3 text-sm">
         <ToolStateDot state="approval-requested" />
         <span className="font-commit-mono font-medium">{toolName}</span>
@@ -148,6 +152,12 @@ function ToolDisclosure({
       setOpen(true);
     }
   }, [richDefined]);
+  // Gate the height animation behind a post-mount flag so a tool that mounts
+  // already-open doesn't play the open animation on first paint.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [view, setView] = useState<"rich" | "raw">("rich");
   const showRich = rich !== undefined && view === "rich";
 
@@ -197,29 +207,37 @@ function ToolDisclosure({
           />
         </CollapsibleTrigger>
       </div>
-      <CollapsibleContent className="space-y-3 p-3 pt-0">
-        {showRich ? (
-          rich
-        ) : (
-          <>
-            {part.input !== undefined ? (
-              <ToolPanel label="Parameters" body={part.input} />
-            ) : null}
-            {part.output !== undefined ? (
-              <ToolPanel label="Result" body={part.output} />
-            ) : null}
-          </>
+      <CollapsibleContent
+        data-animate={mounted}
+        className={cn(
+          "overflow-hidden",
+          "data-[animate=true]:data-[state=closed]:animate-collapsible-up data-[animate=true]:data-[state=open]:animate-collapsible-down",
         )}
-        {part.state === "output-error" && part.errorText ? (
-          <div className="rounded-md bg-destructive/10 p-2 text-destructive text-xs">
-            {part.errorText}
-          </div>
-        ) : null}
-        {state === "output-denied" && part.approval?.reason ? (
-          <div className="rounded-md bg-muted/50 p-2 text-muted-foreground text-xs">
-            {part.approval.reason}
-          </div>
-        ) : null}
+      >
+        <div className="space-y-3 p-3 pt-0">
+          {showRich ? (
+            rich
+          ) : (
+            <>
+              {part.input !== undefined ? (
+                <ToolPanel label="Parameters" body={part.input} />
+              ) : null}
+              {part.output !== undefined ? (
+                <ToolPanel label="Result" body={part.output} />
+              ) : null}
+            </>
+          )}
+          {part.state === "output-error" && part.errorText ? (
+            <div className="rounded-md bg-destructive/10 p-2 text-destructive text-xs">
+              {part.errorText}
+            </div>
+          ) : null}
+          {state === "output-denied" && part.approval?.reason ? (
+            <div className="rounded-md bg-muted/50 p-2 text-muted-foreground text-xs">
+              {part.approval.reason}
+            </div>
+          ) : null}
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );

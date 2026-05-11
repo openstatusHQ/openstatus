@@ -84,8 +84,13 @@ export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production") {
     const limit = await chatRateLimit({ ctx });
     if (!limit.success) {
+      // AI SDK surfaces `error` as Error.message and drops sibling keys, so embed `reset` in the string.
+      const resetIso = new Date(limit.reset).toISOString();
       return NextResponse.json(
-        { error: "Rate limit exceeded", reset: limit.reset },
+        {
+          error: `Rate limit exceeded. Reset at ${resetIso}`,
+          reset: limit.reset,
+        },
         { status: 429 },
       );
     }

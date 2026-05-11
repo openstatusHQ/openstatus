@@ -1,7 +1,10 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import type { ChatStoredMessage } from "@openstatus/db/src/schema";
+import {
+  type ChatStoredMessage,
+  chatStoredMessagesSchema,
+} from "@openstatus/db/src/schema";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DefaultChatTransport,
@@ -13,12 +16,20 @@ import { useEffect, useMemo, useRef } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";
 
-// Safe: `storedMessageSchema` is a structural subset of `UIMessage`
-// — the SDK reads `.id`, `.role`, `.parts` only.
+// `storedMessageSchema` is a structural subset of `UIMessage` — the SDK reads `.id`, `.role`, `.parts`.
+// `safeParse` surfaces drift as a console warning instead of a silent render failure.
 function asUIMessages(
   rows: ChatStoredMessage[] | undefined,
 ): UIMessage[] | undefined {
-  return rows as unknown as UIMessage[] | undefined;
+  if (rows === undefined) return undefined;
+  const parsed = chatStoredMessagesSchema.safeParse(rows);
+  if (!parsed.success) {
+    console.warn(
+      "chat: stored messages failed schema validation",
+      parsed.error.issues,
+    );
+  }
+  return rows as unknown as UIMessage[];
 }
 
 export function useChatSession({ sessionId }: { sessionId?: number }) {
@@ -76,7 +87,7 @@ export function useChatSession({ sessionId }: { sessionId?: number }) {
     },
   });
 
-  const { messages, setMessages } = chat;
+  const { messages, setMessages, stop } = chat;
 
   // Cache-miss fallback for soft nav (no prefetch). No-op when the seed above hit.
   useEffect(() => {
@@ -86,6 +97,14 @@ export function useChatSession({ sessionId }: { sessionId?: number }) {
     const next = asUIMessages(activeSession.data.messages);
     if (next) setMessages(next);
   }, [sessionId, activeSession.data, messages.length, setMessages]);
+
+  // Abort in-flight stream on unmount — otherwise `onFinish` still writes to the DB after navigation.
+  useEffect(
+    () => () => {
+      void stop();
+    },
+    [stop],
+  );
 
   // Server stamps the new id on the first message's metadata; mirror it so a
   // follow-up message sent before `onFinish` navigates still carries the id.

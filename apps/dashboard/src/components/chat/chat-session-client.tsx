@@ -3,6 +3,8 @@
 import { useCallback, useMemo } from "react";
 
 import { ChatConversation } from "./chat-conversation";
+import { ChatErrorBanner } from "./chat-error-banner";
+import { ChatErrorBoundary } from "./chat-error-boundary";
 import { ChatPromptInput } from "./chat-prompt-input";
 import {
   type ChatToolContextValue,
@@ -45,14 +47,10 @@ export function ChatSessionClient({ sessionId }: { sessionId: number }) {
   return (
     <ChatToolProvider value={tool}>
       <div className="flex min-h-[calc(100svh-3.5rem)] flex-col">
-        <ChatConversation messages={messages} status={status} />
-        {error ? (
-          <div className="border-t bg-destructive/10 px-4 py-2 text-destructive text-sm">
-            {/Rate limit/i.test(error.message ?? "")
-              ? "You've hit the daily message cap — try again tomorrow."
-              : "The assistant encountered an error. Try again."}
-          </div>
-        ) : null}
+        <ChatErrorBoundary>
+          <ChatConversation messages={messages} status={status} />
+        </ChatErrorBoundary>
+        {error ? <ChatErrorBanner error={error} /> : null}
         <ChatPromptInput onSubmit={onSubmit} status={status} onStop={stop} />
       </div>
     </ChatToolProvider>

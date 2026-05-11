@@ -3,6 +3,8 @@
 import { useCallback, useMemo } from "react";
 
 import { ChatConversation } from "./chat-conversation";
+import { ChatErrorBanner } from "./chat-error-banner";
+import { ChatErrorBoundary } from "./chat-error-boundary";
 import { ChatHistory } from "./chat-history";
 import { ChatPromptInput } from "./chat-prompt-input";
 import { ChatSuggestions } from "./chat-suggestions";
@@ -53,15 +55,11 @@ export function ChatNewClient() {
             <ChatHistory />
           </div>
         ) : (
-          <ChatConversation messages={messages} status={status} />
+          <ChatErrorBoundary>
+            <ChatConversation messages={messages} status={status} />
+          </ChatErrorBoundary>
         )}
-        {error ? (
-          <div className="border-t bg-destructive/10 px-4 py-2 text-destructive text-sm">
-            {/Rate limit/i.test(error.message ?? "")
-              ? "You've hit the daily message cap — try again tomorrow."
-              : "The assistant encountered an error. Try again."}
-          </div>
-        ) : null}
+        {error ? <ChatErrorBanner error={error} /> : null}
         <ChatPromptInput onSubmit={onSubmit} status={status} onStop={stop} />
       </div>
     </ChatToolProvider>
