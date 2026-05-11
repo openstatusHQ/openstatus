@@ -5,6 +5,7 @@ import {
   discordDataSchema,
   googleChatDataSchema,
   grafanaOncallDataSchema,
+  msTeamsDataSchema,
   notificationProvider,
   ntfyDataSchema,
   opsgenieDataSchema,
@@ -29,6 +30,7 @@ import { sendTest as sendWhatsAppTest } from "@openstatus/notification-bird-what
 import { sendTestDiscordMessage as sendDiscordTest } from "@openstatus/notification-discord";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
+import { sendTest as sendMsTeamsTest } from "@openstatus/notification-ms-teams";
 import { sendTest as sendNtfyTest } from "@openstatus/notification-ntfy";
 import { sendTest as sendOpsGenieTest } from "@openstatus/notification-opsgenie";
 import {
@@ -193,6 +195,20 @@ export const notificationRouter = createTRPCRouter({
         }
 
         await sendGrafanaTest(_data.data["grafana-oncall"]);
+        return;
+      }
+      if (opts.input.provider === "ms-teams") {
+        const _data = msTeamsDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendMsTeamsTest({
+          webhookUrl: _data.data["ms-teams"].webhookUrl,
+        });
         return;
       }
       if (opts.input.provider === "discord") {

@@ -35,6 +35,7 @@ export function dbProviderToProto(
     email: NotificationProvider.EMAIL,
     "google-chat": NotificationProvider.GOOGLE_CHAT,
     "grafana-oncall": NotificationProvider.GRAFANA_ONCALL,
+    "ms-teams": NotificationProvider.MS_TEAMS,
     ntfy: NotificationProvider.NTFY,
     pagerduty: NotificationProvider.PAGERDUTY,
     opsgenie: NotificationProvider.OPSGENIE,
@@ -58,6 +59,7 @@ export function getExpectedDataCase(
     [NotificationProvider.EMAIL]: "email",
     [NotificationProvider.GOOGLE_CHAT]: "googleChat",
     [NotificationProvider.GRAFANA_ONCALL]: "grafanaOncall",
+    [NotificationProvider.MS_TEAMS]: "msTeams",
     [NotificationProvider.NTFY]: "ntfy",
     [NotificationProvider.PAGERDUTY]: "pagerduty",
     [NotificationProvider.OPSGENIE]: "opsgenie",
@@ -114,6 +116,7 @@ export function protoProviderToDb(
     [NotificationProvider.EMAIL]: "email",
     [NotificationProvider.GOOGLE_CHAT]: "google-chat",
     [NotificationProvider.GRAFANA_ONCALL]: "grafana-oncall",
+    [NotificationProvider.MS_TEAMS]: "ms-teams",
     [NotificationProvider.NTFY]: "ntfy",
     [NotificationProvider.PAGERDUTY]: "pagerduty",
     [NotificationProvider.OPSGENIE]: "opsgenie",
@@ -189,6 +192,17 @@ export function dbDataToProto(
             value: {
               $typeName: "openstatus.notification.v1.GrafanaOncallData",
               webhookUrl: data["grafana-oncall"].webhookUrl,
+            },
+          };
+        }
+        break;
+      case "ms-teams":
+        if (data["ms-teams"]) {
+          protoData.data = {
+            case: "msTeams",
+            value: {
+              $typeName: "openstatus.notification.v1.MsTeamsData",
+              webhookUrl: data["ms-teams"].webhookUrl,
             },
           };
         }
@@ -328,6 +342,10 @@ export function protoDataToDb(
     case "grafanaOncall":
       return JSON.stringify({
         "grafana-oncall": { webhookUrl: data.data.value.webhookUrl },
+      });
+    case "msTeams":
+      return JSON.stringify({
+        "ms-teams": { webhookUrl: data.data.value.webhookUrl },
       });
     case "ntfy":
       return JSON.stringify({

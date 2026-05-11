@@ -967,6 +967,7 @@
               "email",
               "google-chat",
               "grafana-oncall",
+              "ms-teams",
               "ntfy",
               "pagerduty",
               "opsgenie",
@@ -1016,6 +1017,22 @@
                   }
                 },
                 "required": ["grafana-oncall"]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ms-teams": {
+                    "type": "object",
+                    "properties": {
+                      "webhookUrl": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    },
+                    "required": ["webhookUrl"]
+                  }
+                },
+                "required": ["ms-teams"]
               },
               {
                 "type": "object",
@@ -7482,6 +7499,22 @@
                           }
                         },
                         "required": ["grafana-oncall"]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "ms-teams": {
+                            "type": "object",
+                            "properties": {
+                              "webhookUrl": {
+                                "type": "string",
+                                "format": "uri"
+                              }
+                            },
+                            "required": ["webhookUrl"]
+                          }
+                        },
+                        "required": ["ms-teams"]
                       },
                       {
                         "type": "object",

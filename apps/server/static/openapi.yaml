@@ -1877,6 +1877,19 @@ components:
       title: ListNotificationsResponse
       additionalProperties: false
       description: ListNotificationsResponse is the response containing notification channels.
+    openstatus.notification.v1.MsTeamsData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          examples:
+            - https://prod-00.westeurope.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke
+          title: webhook_url
+          format: uri
+          description: Microsoft Teams webhook URL (Power Automate Workflows).
+      title: MsTeamsData
+      additionalProperties: false
+      description: MsTeamsData contains configuration for Microsoft Teams notifications.
     openstatus.notification.v1.Notification:
       type: object
       properties:
@@ -1952,6 +1965,15 @@ components:
           title: grafana_oncall
           required:
             - grafanaOncall
+        - type: object
+          properties:
+            msTeams:
+              title: ms_teams
+              description: Microsoft Teams configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.MsTeamsData'
+          title: ms_teams
+          required:
+            - msTeams
         - type: object
           properties:
             ntfy:
@@ -2044,6 +2066,7 @@ components:
         - NOTIFICATION_PROVIDER_TELEGRAM
         - NOTIFICATION_PROVIDER_WEBHOOK
         - NOTIFICATION_PROVIDER_WHATSAPP
+        - NOTIFICATION_PROVIDER_MS_TEAMS
       description: NotificationProvider represents the supported notification channel types.
     openstatus.notification.v1.NotificationSummary:
       type: object

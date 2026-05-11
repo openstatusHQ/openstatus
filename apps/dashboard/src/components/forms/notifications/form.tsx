@@ -23,6 +23,7 @@ const schema = z.object({
   name: z.string(),
   provider: z.enum([
     "slack",
+    "ms-teams",
     "discord",
     "email",
     "sms",

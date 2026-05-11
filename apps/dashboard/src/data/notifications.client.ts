@@ -2,6 +2,7 @@ import { FormDiscord } from "@/components/forms/notifications/form-discord";
 import { FormEmail } from "@/components/forms/notifications/form-email";
 import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
 import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
+import { FormMsTeams } from "@/components/forms/notifications/form-ms-teams";
 import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
 import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
@@ -14,6 +15,7 @@ import {
   DiscordIcon,
   GoogleIcon,
   GrafanaIcon,
+  MicrosoftTeamsIcon,
   TelegramIcon,
   WhatsappIcon,
 } from "@openstatus/icons";
@@ -62,6 +64,11 @@ export const config = {
     icon: SlackIcon,
     label: "Slack",
     form: FormSlack,
+  },
+  "ms-teams": {
+    icon: MicrosoftTeamsIcon,
+    label: "Microsoft Teams",
+    form: FormMsTeams,
   },
   discord: {
     icon: DiscordIcon,

@@ -53,6 +53,8 @@ function providerToDisplayName(provider: NotificationProvider): string {
       return "Google Chat";
     case NotificationProvider.GRAFANA_ONCALL:
       return "Grafana OnCall";
+    case NotificationProvider.MS_TEAMS:
+      return "Microsoft Teams";
     case NotificationProvider.NTFY:
       return "Ntfy";
     case NotificationProvider.PAGERDUTY:
