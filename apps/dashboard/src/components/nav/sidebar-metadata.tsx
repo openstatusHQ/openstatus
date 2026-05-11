@@ -153,8 +153,8 @@ function SidebarMetadataTable({
 
 function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
   return (
-    <SidebarGroup className="p-1">
-      <SidebarMenu>
+    <SidebarGroup className="p-0">
+      <SidebarMenu className="gap-0">
         {items.map((item) => {
           const inner = (
             <>
@@ -170,14 +170,13 @@ function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
           const hasMenu =
             (item.actions?.length ?? 0) > 0 || !!item.deleteAction;
           return (
-            <SidebarMenuItem key={item.id}>
+            <SidebarMenuItem key={item.id} className="border-b last:border-b-0">
               <SidebarMenuButton
                 asChild
                 isActive={item.active}
-                size="sm"
-                // Default reserves `pr-8` for the action; we let the meta use
-                // the full row width and overlay the action with a backdrop.
-                className="px-1 group-has-data-[sidebar=menu-action]/menu-item:pr-2"
+                // Flat row treatment to match `SidebarMetadataTable`: no
+                // rounded corners, edge-to-edge, table-cell padding.
+                className="h-9 rounded-none px-2 group-has-data-[sidebar=menu-action]/menu-item:pr-2"
               >
                 {item.href ? (
                   <Link href={item.href}>{inner}</Link>
@@ -198,7 +197,11 @@ function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
                     // the meta timestamp underneath when revealed.
                     // `ring-inset` keeps the focus ring within the button so
                     // it doesn't bleed past the sidebar's right edge.
-                    className="before:-left-6 bg-sidebar-accent before:absolute before:inset-y-0 before:right-full before:bg-gradient-to-l before:from-sidebar-accent before:to-transparent focus-visible:ring-inset"
+                    // V-center: the default action `top` is driven by a
+                    // `peer-data-[size=...]/menu-button` variant tuned for
+                    // the shorter button sizes; we use a taller `h-9` row,
+                    // so override the variant directly and re-anchor at 50%.
+                    className="before:-left-6 -translate-y-1/2 bg-sidebar-accent before:absolute before:inset-y-0 before:right-full before:bg-gradient-to-l before:from-sidebar-accent before:to-transparent focus-visible:ring-inset peer-data-[size=default]/menu-button:top-1/2"
                   >
                     <MoreHorizontal />
                     <span className="sr-only">More</span>
