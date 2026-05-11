@@ -1,4 +1,4 @@
-import { and, eq } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
   type ChatStoredMessage,
   MAX_CHAT_MESSAGES,
@@ -6,7 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
-import { ForbiddenError, NotFoundError } from "../errors";
+import { NotFoundError } from "../errors";
 
 export async function getChatSessionInWorkspace(args: {
   tx: DB;
@@ -15,18 +15,20 @@ export async function getChatSessionInWorkspace(args: {
   userId: number;
 }) {
   const { tx, sessionId, workspaceId, userId } = args;
+  // Single combined WHERE — collapses ownership checks into NotFoundError
+  // so callers can't distinguish "exists but forbidden" from "missing".
   const row = await tx
     .select()
     .from(chatSession)
-    .where(eq(chatSession.id, sessionId))
+    .where(
+      and(
+        eq(chatSession.id, sessionId),
+        eq(chatSession.workspaceId, workspaceId),
+        eq(chatSession.userId, userId),
+      ),
+    )
     .get();
   if (!row) throw new NotFoundError("chat_session", sessionId);
-  if (row.workspaceId !== workspaceId) {
-    throw new ForbiddenError("Chat session does not belong to this workspace.");
-  }
-  if (row.userId !== userId) {
-    throw new ForbiddenError("Chat session does not belong to this user.");
-  }
   return row;
 }
 
@@ -68,8 +70,8 @@ export async function enforceSessionCap(args: {
   const sorted = rows.sort(
     (a, b) => a.updatedAt.getTime() - b.updatedAt.getTime(),
   );
-  const toDelete = sorted.slice(0, rows.length - capAfterInsert);
-  for (const row of toDelete) {
-    await tx.delete(chatSession).where(eq(chatSession.id, row.id));
-  }
+  const idsToDelete = sorted
+    .slice(0, rows.length - capAfterInsert)
+    .map((r) => r.id);
+  await tx.delete(chatSession).where(inArray(chatSession.id, idsToDelete));
 }

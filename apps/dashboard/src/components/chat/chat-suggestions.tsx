@@ -1,11 +1,17 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 
+import {
+  Section,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "@/components/content/section";
+
 const SUGGESTIONS = [
   "Show me my status pages",
   "What status reports are open?",
   "Draft a status report",
   "Schedule a maintenance window",
-  "List all the openstatus tools to be used",
 ];
 
 type Props = {
@@ -14,16 +20,14 @@ type Props = {
 
 export function ChatSuggestions({ onSelect }: Props) {
   return (
-    <div className="flex w-full max-w-3xl flex-col items-center gap-6">
-      <div className="text-center">
-        <h2 className="font-medium text-foreground text-lg">
-          openstatus assistant
-        </h2>
-        <p className="font-commit-mono text-muted-foreground text-sm">
+    <Section className="flex w-full max-w-3xl flex-col items-center">
+      <SectionHeader className="text-center">
+        <SectionTitle>openstatus assistant</SectionTitle>
+        <SectionDescription>
           Ask about your workspace, draft status reports, or schedule
           maintenance windows.
-        </p>
-      </div>
+        </SectionDescription>
+      </SectionHeader>
       <div className="flex flex-wrap items-center justify-center gap-2">
         {SUGGESTIONS.map((s) => (
           <Button
@@ -37,6 +41,6 @@ export function ChatSuggestions({ onSelect }: Props) {
           </Button>
         ))}
       </div>
-    </div>
+    </Section>
   );
 }

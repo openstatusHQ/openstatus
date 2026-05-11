@@ -44,7 +44,7 @@ export function ChatSessionClient({ sessionId }: { sessionId: number }) {
 
   return (
     <ChatToolProvider value={tool}>
-      <div className="flex h-[calc(100svh-3.5rem)] min-h-0 flex-col">
+      <div className="flex min-h-[calc(100svh-3.5rem)] flex-col">
         <ChatConversation messages={messages} status={status} />
         {error ? (
           <div className="border-t bg-destructive/10 px-4 py-2 text-destructive text-sm">

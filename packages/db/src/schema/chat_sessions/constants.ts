@@ -3,7 +3,7 @@
  * threshold, the oldest entries are dropped on the next `append` so the
  * stored payload stays bounded.
  */
-export const MAX_CHAT_MESSAGES = 30;
+export const MAX_CHAT_MESSAGES = 20;
 
 /**
  * Per (workspace, user) cap on chat sessions. Inserting a 21st row drops

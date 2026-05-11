@@ -4,7 +4,7 @@ import type {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
-import type { ZodObject, ZodRawShape } from "zod";
+import { ZodObject, type ZodRawShape, type ZodType } from "zod";
 
 import { runTool } from "../adapter";
 import { registerScopedTool } from "./register-scoped";
@@ -24,10 +24,8 @@ export function registerRegistryTool(
   ctx: ServiceContext,
   tool: AnyAgentTool,
 ): RegisteredTool | undefined {
-  const inputShape = (tool.inputSchema as unknown as ZodObject<ZodRawShape>)
-    .shape;
-  const outputShape = (tool.outputSchema as unknown as ZodObject<ZodRawShape>)
-    .shape;
+  const inputShape = assertShape(tool.inputSchema, tool.name, "input");
+  const outputShape = assertShape(tool.outputSchema, tool.name, "output");
 
   return registerScopedTool(
     server,
@@ -79,4 +77,21 @@ export function registerRegistryTools(
     if (handle) registered.set(tool.name, handle);
   }
   return registered;
+}
+
+// The MCP SDK requires a `ZodRawShape` (flat key→ZodType map), so the
+// registry contract is "schemas are ZodObject". A union/intersection at
+// the root would silently produce `shape: undefined` and an unusable
+// MCP tool — fail loudly at registration instead.
+function assertShape(
+  schema: ZodType,
+  toolName: string,
+  kind: "input" | "output",
+): ZodRawShape {
+  if (!(schema instanceof ZodObject)) {
+    throw new Error(
+      `MCP tool "${toolName}" has non-ZodObject ${kind} schema; the registry adapter requires a flat ZodObject root.`,
+    );
+  }
+  return schema.shape as ZodRawShape;
 }

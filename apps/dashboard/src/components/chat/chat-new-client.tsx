@@ -46,7 +46,7 @@ export function ChatNewClient() {
 
   return (
     <ChatToolProvider value={tool}>
-      <div className="flex h-[calc(100svh-3.5rem)] min-h-0 flex-col">
+      <div className="flex min-h-[calc(100svh-3.5rem)] flex-col">
         {messages.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-10 p-6">
             <ChatSuggestions onSelect={onSubmit} />

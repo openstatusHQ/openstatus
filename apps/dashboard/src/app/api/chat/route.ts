@@ -28,6 +28,9 @@ import { chatRateLimit } from "@/lib/rate-limit/chat";
 
 export const runtime = "edge";
 
+const CHAT_MODEL_FREE = "anthropic/claude-haiku-4.5";
+const CHAT_MODEL_PAID = "anthropic/claude-sonnet-4.5";
+
 // Drop tool parts that have no result the SDK can turn into a tool_result
 // block. `ignoreIncompleteToolCalls` doesn't cover `approval-requested`, so
 // a mid-confirmation reload would otherwise replay an orphan `tool_use` to
@@ -141,10 +144,7 @@ export async function POST(req: NextRequest) {
   );
 
   const result = streamText({
-    model:
-      plan === "free"
-        ? "anthropic/claude-haiku-4.5"
-        : "anthropic/claude-sonnet-4.5",
+    model: plan === "free" ? CHAT_MODEL_FREE : CHAT_MODEL_PAID,
     system: buildAgentSystemPrompt({
       workspaceName: ctx.workspace.name ?? "Unknown",
       surface: "dashboard",

@@ -6,7 +6,7 @@ import type {
   ComponentProps,
   HTMLAttributes,
 } from "react";
-import { Fragment, createElement, useMemo } from "react";
+import { Fragment, createElement, useDeferredValue, useMemo } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import rehypeReact from "rehype-react";
 import remarkGfm from "remark-gfm";
@@ -91,9 +91,13 @@ const processor = unified()
   });
 
 export function MessageMarkdown({ children }: { children: string }) {
+  // Defer the parse so streaming token updates don't block the main thread.
+  // Each chunk-driven re-render runs at high priority with the stale value;
+  // the parse re-runs in a low-priority pass that React can interrupt.
+  const deferred = useDeferredValue(children);
   const rendered = useMemo(
-    () => processor.processSync(children).result,
-    [children],
+    () => processor.processSync(deferred).result,
+    [deferred],
   );
   return (
     <div

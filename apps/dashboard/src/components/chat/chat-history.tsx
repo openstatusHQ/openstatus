@@ -11,13 +11,15 @@ const MAX_VISIBLE = 5;
 export function ChatHistory() {
   const trpc = useTRPC();
   const { data } = useQuery(trpc.chatSession.list.queryOptions());
-  const recent = (data ?? []).slice(0, MAX_VISIBLE);
+  const sessions = data ?? [];
+  const recent = sessions.slice(0, MAX_VISIBLE);
+  const extra = Math.max(sessions.length - MAX_VISIBLE, 0);
 
   if (recent.length === 0) return null;
 
   return (
-    <div className="w-full max-w-xl">
-      <div className="mb-2 flex items-center justify-between">
+    <div className="flex w-full max-w-xl flex-col gap-2">
+      <div className="flex items-center justify-between">
         <span className="font-mono text-muted-foreground text-xs uppercase tracking-wide">
           Recent
         </span>
@@ -39,6 +41,11 @@ export function ChatHistory() {
           </li>
         ))}
       </ul>
+      {extra > 0 ? (
+        <span className="font-mono text-muted-foreground text-xs">
+          {extra} more {extra === 1 ? "conversation" : "conversations"}
+        </span>
+      ) : null}
     </div>
   );
 }
