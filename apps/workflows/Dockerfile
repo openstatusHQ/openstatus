@@ -32,6 +32,7 @@ RUN \
     --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
     --mount=type=bind,target=packages/notifications/grafana-oncall/package.json,source=packages/notifications/grafana-oncall/package.json \
     --mount=type=bind,target=packages/notifications/google-chat/package.json,source=packages/notifications/google-chat/package.json \
+    --mount=type=bind,target=packages/notifications/ms-teams/package.json,source=packages/notifications/ms-teams/package.json \
     --mount=type=bind,target=packages/notifications/ntfy/package.json,source=packages/notifications/ntfy/package.json \
     --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
     --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
