@@ -59,7 +59,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
   }, [isGenerating, onStop]);
 
   return (
-    <div className="sticky bottom-0 z-10 border-t bg-background p-2">
+    <div className="sticky bottom-0 z-10 border-t bg-background px-3 pt-3 pb-2">
       <div className="mx-auto flex max-w-3xl flex-col gap-1">
         <form onSubmit={handleSubmit}>
           <InputGroup>
