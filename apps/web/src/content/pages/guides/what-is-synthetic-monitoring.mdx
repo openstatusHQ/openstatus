@@ -1,0 +1,186 @@
+---
+title: "What Is Synthetic Monitoring?"
+description: "Synthetic monitoring uses scripted, automated checks to simulate user behavior against your service from external locations. Here's how it differs from real user monitoring, the types of synthetic checks, and when each is worth running."
+author: "openstatus"
+publishedAt: "2026-05-07"
+category: "fundamentals"
+faq:
+  - question: "What is synthetic monitoring?"
+    answer: "Synthetic monitoring uses scripted, automated checks to simulate user actions against your service - hitting an API endpoint, loading a page, completing a checkout - from external locations on a fixed schedule. It catches problems before real users hit them, and it works even when you have zero traffic."
+  - question: "How is synthetic monitoring different from real user monitoring (RUM)?"
+    answer: "Synthetic monitoring runs scripted, fake traffic on a schedule from your monitoring provider's infrastructure. RUM captures data from actual user sessions in real time. Synthetic is proactive and deterministic; RUM is reactive and reflects real-world conditions. Most mature teams use both: synthetic for catching regressions early, RUM for understanding what real users experience."
+  - question: "What can you check with synthetic monitoring?"
+    answer: "API availability and response time, full page loads (with JavaScript execution), multi-step user flows (login, signup, checkout), SSL certificate validity, DNS resolution, third-party integrations, and end-to-end transactions that span multiple services. Anything you can script can be monitored."
+  - question: "When should I use synthetic monitoring instead of just uptime monitoring?"
+    answer: "Use synthetic monitoring (beyond simple uptime checks) when failure modes can't be detected by a single HTTP request. If your login flow depends on three services and any one of them being broken makes signups fail, a synthetic browser check that completes the full login is the only way to know it works end-to-end."
+  - question: "Does synthetic monitoring work without real traffic?"
+    answer: "Yes - that's one of its main advantages. Synthetic checks run on a schedule regardless of whether real users are hitting your service. This makes it ideal for pre-launch validation, low-traffic services, off-hours coverage, and detecting regressions in features that aren't used often."
+  - question: "What's a browser synthetic check?"
+    answer: "A browser check loads your page in a real headless browser (typically Chromium), executes JavaScript, and can click buttons, fill forms, and navigate multiple steps. It catches problems pure HTTP checks miss - broken JavaScript, third-party script failures, layout breaks, slow rendering - at the cost of running slower and using more resources."
+  - question: "How often should synthetic checks run?"
+    answer: "Simple HTTP checks: every 30 seconds to 1 minute. Browser checks: every 5-15 minutes (they're slow and expensive). Multi-step transaction checks: every 5-15 minutes. The more complex the check, the less frequent it makes sense to run - and the higher the value of each successful run."
+  - question: "What's a transaction monitor?"
+    answer: "A transaction monitor (also called a multi-step API check) runs a sequence of requests that depend on each other - log in, capture a token, use that token to make an authenticated request, validate the response, log out. It tests the whole flow as a unit, the way real users actually interact with your service."
+  - question: "Can synthetic monitoring replace real user monitoring?"
+    answer: "No. Synthetic monitoring tells you whether a controlled, scripted scenario works. RUM tells you what your actual users experience - including problems specific to their devices, browsers, regions, and ISPs. They answer different questions and complement each other."
+---
+
+# What Is Synthetic Monitoring?
+
+Synthetic monitoring is the practice of running scripted, automated checks against your service from external locations on a schedule. Fake users, real signal.
+
+It catches problems before real users hit them. It runs even when you have no traffic. It tests what you actually care about - the login flow, the checkout, the API endpoint your largest customer depends on - rather than waiting for someone to complain.
+
+---
+
+## How Synthetic Monitoring Works
+
+A synthetic monitor is a script that runs on a schedule from your monitoring provider's infrastructure. The basic shape:
+
+1. Probe servers (in different regions) wake up on a schedule
+2. Each runs the configured check - hit a URL, drive a browser, run a sequence of API calls
+3. The result (success/failure, latency, response body) gets recorded
+4. If checks fail across multiple regions, alerts fire
+
+The check itself can range from "GET /healthz, expect 200" to "load the homepage, fill in the signup form, complete payment, verify the receipt email" - all driven by a script.
+
+---
+
+## Types of Synthetic Checks
+
+### 1. HTTP / API Checks
+
+The simplest and most common. Make a request to a URL, validate the response.
+
+```
+GET https://api.example.com/v1/health
+Expect: 200, "ok" in body, response time < 500ms
+```
+
+Fast, cheap, easy to set up. The bread and butter of [uptime monitoring](/guides/what-is-uptime-monitoring). Doesn't catch frontend or JavaScript problems.
+
+### 2. Browser Checks
+
+A real headless browser (typically Chromium) loads your page, executes JavaScript, and can interact with the DOM. You can script clicks, form fills, and assertions.
+
+```
+Visit /login
+Type "test@example.com" in #email
+Type "..." in #password
+Click button[type="submit"]
+Assert URL is /dashboard within 5s
+```
+
+Catches problems that pure HTTP checks miss: broken JavaScript, third-party script failures, layout breaks, slow client-side rendering, cookie/auth bugs. Slower and more expensive to run, so used for critical user paths rather than blanket coverage.
+
+### 3. Multi-Step Transaction Checks
+
+A sequence of API calls that depend on each other, executed as one logical unit.
+
+```
+1. POST /auth/login -> capture token
+2. GET /api/me with token -> assert user_id
+3. POST /api/orders with token -> capture order_id
+4. GET /api/orders/{order_id} -> assert status="pending"
+```
+
+Tests the actual paths your customers integrate against. Catches problems where each individual endpoint works fine but the chain is broken (token format change, race condition, downstream dependency).
+
+### 4. Specialty Checks
+
+- **DNS** - confirm records resolve correctly and to the expected IP
+- **SSL** - validate certificate, check expiration date
+- **TCP/UDP** - confirm ports are listening
+- **gRPC** - check gRPC service health
+- **Ping** - basic network reachability
+
+Each fills a specific gap. Most teams use them sparingly.
+
+---
+
+## Synthetic vs Real User Monitoring (RUM)
+
+Two complementary approaches to understanding service health:
+
+|                         | Synthetic Monitoring        | Real User Monitoring (RUM)     |
+|-------------------------|-----------------------------|--------------------------------|
+| **Source of data**      | Scripted probes             | Actual user sessions           |
+| **When it runs**        | Fixed schedule              | On every real user interaction |
+| **Works without traffic?** | Yes                      | No                             |
+| **Deterministic?**      | Yes - same script each time | No - depends on user behavior  |
+| **Catches what?**       | Regressions, outages, third-party failures | Real-world conditions: devices, networks, geographies |
+| **Cost model**          | Per-check                   | Per-session or per-event       |
+
+Synthetic answers "does this scenario work?" RUM answers "what are users actually experiencing?"
+
+They complement each other. Use synthetic to catch issues before users do; use RUM to understand the long tail of problems specific to particular devices, browsers, or regions.
+
+---
+
+## When to Use Synthetic Monitoring
+
+**Use it when:**
+
+- You need to detect regressions before users do
+- Critical user paths must keep working (login, checkout, payment)
+- You have low or unpredictable traffic
+- You depend on third-party services and want to know when they break
+- You need pre-launch validation before a real-user rollout
+- Off-hours coverage matters (when no real users are around)
+
+**Skip it when:**
+
+- The endpoint is purely internal and only used by other monitored services
+- The check would be a duplicate of an existing one
+- The cost (time + money) exceeds the value of the signal
+
+The thing to optimize: signal per monitor. Fewer well-chosen synthetic checks beat a dashboard full of redundant ones.
+
+---
+
+## A Practical Setup
+
+A reasonable starting point for a mid-stage SaaS:
+
+- **HTTP checks** every 1 minute on: homepage, public API health endpoint, login endpoint, main authenticated API endpoints
+- **Browser check** every 10 minutes on: full login flow ending on the dashboard
+- **Transaction check** every 5 minutes on: API authentication sequence (token issue + authenticated call)
+- **Specialty checks**: SSL expiration warnings 30 days before, DNS validation hourly
+
+That's roughly 10-15 monitors. Enough to catch real problems. Not so many that alert fatigue sets in.
+
+For multi-region coverage, run each from at least 3 geographically distributed locations and require majority failure before alerting.
+
+---
+
+## Common Mistakes
+
+**Monitoring too many things.** Every monitor is an alert source. Every alert is an interruption. Be ruthless about pruning monitors that don't represent real customer impact.
+
+**No browser coverage on critical paths.** If signup or checkout depends on JavaScript, an HTTP check on the page returning 200 means nothing. Use a browser check on the actual flow.
+
+**Single-region monitoring.** A check that runs from one location lies to you when that location has network problems. Always require multi-region majority.
+
+**Treating synthetic results as ground truth.** Synthetic tells you whether your scripted scenario works. It doesn't tell you whether the user in Indonesia on a flaky 4G connection is having a good time. Pair with RUM for that.
+
+**Not updating scripts when the app changes.** Synthetic checks rot. A login flow check that's still using a deprecated form selector silently passes for weeks while users are actually broken. Treat synthetic scripts like code - review them, version them, update them when the underlying app changes.
+
+---
+
+## The Bottom Line
+
+Synthetic monitoring is how you find out something is broken before your customers tell you. The investment pays off the first time a synthetic browser check catches a failed deploy that an HTTP check would have shown as healthy.
+
+Start with HTTP checks on critical endpoints. Add browser checks for user flows that matter. Run from multiple regions. Push results to your [status page](/guides/what-is-a-status-page) so users have an authoritative source when things break.
+
+---
+
+**OpenStatus runs synthetic monitors - HTTP, TCP, DNS, and full browser checks - from multiple regions worldwide.** Open-source, with built-in status page integration.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
+
+Start free. No credit card required.
+
+---

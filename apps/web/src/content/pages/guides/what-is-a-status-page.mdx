@@ -1,0 +1,152 @@
+---
+title: "What Is a Status Page?"
+description: "A status page is a public web page that communicates the real-time health of your service - uptime, ongoing incidents, scheduled maintenance, and historical reliability. Here's what they include, why they matter, and how to build one that actually helps users."
+author: "openstatus"
+publishedAt: "2026-05-05"
+category: "fundamentals"
+faq:
+  - question: "What is a status page?"
+    answer: "A status page is a public-facing web page that displays the real-time operational health of a service. It shows current uptime, active incidents, scheduled maintenance, and historical reliability metrics. The point is to give users a single, trustworthy place to check whether a problem is on your end or theirs."
+  - question: "Why do companies need a status page?"
+    answer: "Without a status page, every outage floods your support inbox with the same question: 'is it down?' A status page deflects that load, builds trust by being transparent during incidents, and signals operational maturity to enterprise buyers who often require one before signing a contract."
+  - question: "What's the difference between a public and private status page?"
+    answer: "A public status page is visible to anyone and shows curated, user-facing reliability data. A private status page is gated behind authentication and shows real-time operational metrics to internal teams or specific customers - typically more granular and used for SLO tracking, not customer communication."
+  - question: "What should a status page include?"
+    answer: "At minimum: current component statuses (API, dashboard, auth, etc.), active incidents with timestamps and updates, scheduled maintenance windows, and historical uptime for the last 30-90 days. Optional but valuable: subscription options (email, SMS, Slack, RSS), incident postmortems, and per-region status."
+  - question: "Should my status page be on a separate domain?"
+    answer: "Yes. Host it on a separate domain or subdomain (e.g., status.yourcompany.com) on independent infrastructure. If your main service is down and your status page is on the same servers, users see nothing - exactly when they need information most."
+  - question: "How often should I update a status page during an incident?"
+    answer: "Every 15-30 minutes during an active incident, even if there's nothing new to report. 'Still investigating, next update at 14:30' is more useful than silence. Silence makes users assume you've abandoned them."
+  - question: "Do small companies need a status page?"
+    answer: "If you have paying customers, yes. It's not about scale - it's about trust. A simple status page with uptime history and an incident feed signals you take reliability seriously. It takes less than an hour to set up and pays for itself the first time something breaks."
+  - question: "What's the difference between a status page and a monitoring tool?"
+    answer: "A monitoring tool checks whether your service is up and alerts your team. A status page communicates that information to users. They're connected - monitoring data often drives status page updates - but they serve different audiences. Monitoring is for engineers; status pages are for customers."
+---
+
+# What Is a Status Page?
+
+A status page is a public web page that tells your users whether your service is working right now. Uptime, ongoing incidents, scheduled maintenance, and historical reliability - all in one place.
+
+It exists for one reason: when something breaks, users need to know if the problem is on your end or theirs. Without a status page, you find out by reading your support inbox the next morning.
+
+---
+
+## What a Status Page Actually Shows
+
+A useful status page has four things:
+
+### 1. Component Status
+
+A list of the major parts of your service - API, dashboard, authentication, billing, integrations - each with a current state (operational, degraded, partial outage, major outage).
+
+This is the headline. Users scan it in two seconds to answer: "is the part I care about broken?"
+
+### 2. Active Incidents
+
+When something is wrong, you post an incident with a timestamp, affected components, severity, and a running timeline of updates.
+
+The format matters. Each update should answer: what happened, what we know, what we're doing, when we'll update next. "Investigating" with no follow-up for two hours is worse than no status page at all.
+
+### 3. Scheduled Maintenance
+
+Planned downtime, announced in advance with a window, affected components, and expected impact. This is how you preserve trust during necessary disruptions - users tolerate maintenance they knew about.
+
+### 4. Historical Uptime
+
+A rolling view of the last 30, 60, or 90 days showing uptime percentages and past incidents. This is your reliability proof. Enterprise buyers will scroll through it before signing a contract.
+
+---
+
+## Why Companies Use Status Pages
+
+### Deflect Support Load
+
+Every outage generates a wave of identical support tickets: "is it down for everyone?" A public status page answers that question without a human in the loop. Big incidents that would have taken a team hours to triage become a single status page update.
+
+### Build Trust Through Transparency
+
+Counterintuitively, admitting failures publicly builds trust. Companies that hide outages get caught - users notice, screenshot, and post on social. Companies that own incidents publicly with clear updates and honest postmortems come out stronger. Reliability isn't never failing. It's failing well.
+
+### Meet Enterprise Requirements
+
+Enterprise buyers often require a public status page before signing. It's table stakes for B2B SaaS above a certain deal size. No status page, no contract.
+
+### Coordinate Internal Response
+
+A status page is also a forcing function for incident response. The act of writing a public update clarifies what you actually know, what you're doing, and what's still uncertain. It's a discipline as much as a communication channel.
+
+---
+
+## Public vs Private Status Pages
+
+**Public** pages are for customers. They're curated, lag slightly behind real-time, and focus on user-impacting events. The audience is non-technical. Updates are written in plain language.
+
+**Private** pages are for internal teams or specific partners. They're real-time, granular, and often include metrics that would confuse public users (per-region latency, error budget burn rate, SLO compliance). The audience is engineers and operations.
+
+Most mature SaaS companies run both. Public for trust, private for operations. See our guide on [public vs private status pages](/guides/public-vs-private-status-pages) for the deeper tradeoffs.
+
+---
+
+## What Makes a Good Status Page
+
+### Hosted Independently
+
+Put it on a separate domain (status.yourcompany.com) on infrastructure that doesn't share fate with your main service. If your status page goes down with your service, it's worse than not having one - users assume the whole company is offline.
+
+### Honest in Real Time
+
+A status page that shows "all systems operational" during an obvious outage destroys trust faster than no status page at all. Better to say nothing than to lie. Better to say "investigating reports of issues" than to wait for full diagnosis.
+
+### Subscribable
+
+Users should be able to subscribe to updates via email, SMS, Slack, RSS, or webhook. Polling the page is not a workflow. The whole point is that updates push to users.
+
+### Searchable Historical Record
+
+Past incidents stay accessible. Postmortems get linked from incident pages. Uptime metrics are computable and visible. This is how the status page doubles as a long-term reliability signal.
+
+---
+
+## Common Mistakes
+
+**Only updating once an incident is resolved.** Users want updates *during* the incident. Resolved-after-the-fact is documentation, not communication.
+
+**Vague status definitions.** What's the difference between "degraded" and "partial outage" on your page? If your team doesn't know, neither do your users. Define them and stick to it.
+
+**Painting things green.** A status page that's always 100% green when users are experiencing problems isn't a status page - it's a marketing brochure. Tune your monitoring to actually surface user impact.
+
+**No subscription options.** Forcing users to refresh manually means they don't get updates. They get frustrated and tweet at you instead.
+
+---
+
+## How Status Pages Connect to Monitoring
+
+A status page is a communication layer. The data behind it comes from your [uptime monitoring](/guides/what-is-uptime-monitoring) and [synthetic monitoring](/guides/what-is-synthetic-monitoring) systems.
+
+The pipeline:
+1. Monitors detect a problem
+2. Alerts wake up on-call engineers
+3. Engineers triage and update the status page
+4. Users see the update and stop filing duplicate tickets
+
+Some teams automate step 3 for low-severity events. Most keep a human in the loop for anything customer-visible - automated status updates that fire on flaky monitors create more noise than they prevent.
+
+---
+
+## The Bottom Line
+
+A status page is the simplest, highest-leverage trust-building tool you have during incidents. It deflects support load, signals maturity, and forces you to communicate clearly when things break.
+
+If you don't have one, you're either too small to need one (rare) or losing trust during every outage without realizing it (common).
+
+---
+
+**OpenStatus is an open-source status page and monitoring platform.** Set up a public status page, configure monitors, and start communicating reliably during incidents - all from one place.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
+
+Start free. No credit card required. Set up your first status page in under 5 minutes.
+
+---

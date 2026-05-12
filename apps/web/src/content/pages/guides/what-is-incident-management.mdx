@@ -1,0 +1,194 @@
+---
+title: "What Is Incident Management?"
+description: "Incident management is the process teams use to detect, respond to, resolve, and learn from service disruptions. Here's the lifecycle, the roles, the severity model, and what separates teams that handle incidents well from those who don't."
+author: "openstatus"
+publishedAt: "2026-05-08"
+category: "fundamentals"
+faq:
+  - question: "What is incident management?"
+    answer: "Incident management is the process a team uses to detect, respond to, resolve, and learn from unplanned service disruptions. It covers the technical work of fixing the problem, the communication work of keeping customers informed, and the organizational work of running a postmortem so the same problem doesn't recur."
+  - question: "What are the stages of an incident lifecycle?"
+    answer: "Detection (something is wrong), declaration (someone calls it an incident), response (assemble a team and start mitigating), communication (update customers via the status page), resolution (the immediate problem is fixed), and postmortem (learn what happened and prevent recurrence). Each stage has a different cadence and a different audience."
+  - question: "What's an incident commander?"
+    answer: "The incident commander is the single person responsible for coordinating the response - making decisions, assigning tasks, and keeping the team focused. They are not necessarily the most technical person on the call. Their job is leadership during the incident: who's doing what, what we know, when we'll update customers, when to escalate."
+  - question: "How do you define incident severity?"
+    answer: "Most teams use a 4-tier scale: SEV1 (critical, customer-facing, all hands), SEV2 (major impact, urgent), SEV3 (partial impact, business hours), SEV4 (minor, planned work). The exact thresholds depend on your product, but the key is having clear criteria so the team doesn't argue about severity in the middle of an outage."
+  - question: "What's the difference between an incident and an outage?"
+    answer: "An outage is one type of incident - your service is fully unreachable. An incident is any unplanned disruption: outages, degraded performance, data correctness issues, security events, third-party failures. All outages are incidents; not all incidents are outages."
+  - question: "What goes in an incident postmortem?"
+    answer: "A clear timeline of what happened, root cause analysis, customer impact (how many users, how long, what they experienced), what went well, what didn't, and action items with owners and due dates. The point is to learn - blameless framing, focus on systems and processes rather than individuals."
+  - question: "How quickly should you update customers during an incident?"
+    answer: "Initial acknowledgment within 5-15 minutes of detection. Updates every 15-30 minutes during active incidents, even if there's nothing new to report - silence is worse than 'still investigating, next update at 14:30'. Resolution message when the immediate problem is fixed. Follow-up postmortem within a week."
+  - question: "What's MTTR and why does it matter?"
+    answer: "MTTR (Mean Time To Recovery) is the average time from incident detection to resolution. It's the headline metric for incident response maturity. Lower MTTR means faster recovery, less customer impact, and usually better tooling and process. See our guide on MTTR for the full breakdown."
+  - question: "What's a blameless postmortem?"
+    answer: "A postmortem that focuses on systems, processes, and contributing factors rather than individual mistakes. The premise: people don't show up wanting to cause incidents - if a system allowed a human error to cause customer impact, the system is the problem. Blameless framing produces honest postmortems; blame-heavy framing produces defensive ones."
+---
+
+# What Is Incident Management?
+
+Incident management is the process teams use to deal with unplanned service disruptions - from the moment something goes wrong to the moment you've learned enough to prevent the next one.
+
+It covers three things in parallel: fixing the technical problem, communicating with affected users, and learning from what happened. Teams that handle incidents well do all three deliberately. Teams that don't typically focus on the first and neglect the other two.
+
+---
+
+## The Incident Lifecycle
+
+A well-run incident moves through six stages:
+
+### 1. Detection
+
+Something is wrong. The signal might come from automated monitoring, a customer support ticket, an internal user, or social media. The faster you detect, the lower the customer impact - this is what [synthetic monitoring](/guides/what-is-synthetic-monitoring) and [uptime monitoring](/guides/what-is-uptime-monitoring) buy you.
+
+### 2. Declaration
+
+Someone formally calls it an incident. This matters because declaration triggers process - paging on-call, opening a war room channel, posting an initial [status page](/guides/what-is-a-status-page) update. Without declaration, you have a vague "something seems off" feeling that nobody owns.
+
+Lower the bar to declare. False positives are cheap. Real incidents that nobody declared for an hour are expensive.
+
+### 3. Response
+
+The team assembles and starts mitigating. An incident commander takes coordination duty. Engineers investigate, propose fixes, and act. Communication lead drafts status page updates.
+
+The goal in this phase is mitigation, not root cause. Restore service first. Understand why later.
+
+### 4. Communication
+
+Updates flow to customers through the status page and any subscribed channels (email, Slack, SMS). Cadence matters: initial acknowledgment fast, updates every 15-30 minutes during the incident, resolution message when fixed.
+
+Communication is not separate from response - it's part of it. Customer trust is being burned in real time during an incident, and communication is how you slow the burn.
+
+### 5. Resolution
+
+The immediate problem is mitigated. Service is restored, even if the underlying cause isn't fully understood. The status page goes back to operational. The incident commander stands down the response team.
+
+This is not the end - it's the start of the next phase.
+
+### 6. Postmortem
+
+Within a week, write up what happened. Timeline, root cause, customer impact, contributing factors, action items. Share it broadly inside the company. Consider sharing externally if customers were significantly affected - public postmortems are [underrated marketing](/guides/public-postmortem-underrated-marketing).
+
+The point is to learn. If your postmortems aren't producing action items that actually get done, you're doing them wrong.
+
+---
+
+## Roles During an Incident
+
+Small teams may have one person filling multiple roles. Larger teams split them explicitly.
+
+### Incident Commander (IC)
+
+The single person responsible for coordinating the response. Makes decisions, assigns tasks, decides when to escalate, calls the resolution.
+
+The IC is not necessarily the most senior or most technical person. Their job is leadership during the incident: who's doing what, what we know, what we don't, when we'll communicate next. A good IC keeps the response organized when everyone else is in heads-down debugging mode.
+
+### Communications Lead
+
+Drafts and posts status page updates. Coordinates with customer support and PR. Keeps internal stakeholders informed.
+
+Critical role because the technical responders are deep in problem-solving and shouldn't context-switch to draft customer-facing copy every 20 minutes.
+
+### Subject Matter Experts (SMEs)
+
+Engineers who actually fix the problem. They report to the IC. They focus on technical work. They don't run the incident - they execute under the IC's coordination.
+
+### Scribe (optional)
+
+Captures the timeline as the incident unfolds. Hugely valuable for the postmortem because human memory is unreliable two hours later. Often the IC takes notes themselves on smaller incidents.
+
+---
+
+## Severity Levels
+
+A working severity model:
+
+| Severity | Criteria                                                                  | Response                          |
+|----------|---------------------------------------------------------------------------|-----------------------------------|
+| **SEV1** | Full outage or critical data loss affecting many customers                | All-hands, page on-call immediately, public status update within 15m |
+| **SEV2** | Major feature broken, significant customer impact, or revenue at risk     | Page on-call, public status update within 30m |
+| **SEV3** | Partial impact, workaround exists, no immediate revenue risk              | Business hours response, status update if customer-facing |
+| **SEV4** | Minor issue, internal-only, or planned/expected impact                    | Handle in normal work queue |
+
+The exact thresholds depend on your business. The important thing is that they're defined ahead of time so the team isn't arguing about severity in the middle of an outage.
+
+A common pitfall: severity inflation. If everything is SEV1, nothing is. Be honest. Reserve SEV1 for genuine "drop everything" events.
+
+See our [incident severity matrix](/guides/incident-severity-matrix) for a more detailed framework.
+
+---
+
+## Communication During an Incident
+
+The cadence:
+
+- **Initial acknowledgment** within 5-15 minutes of detection: "We're investigating reports of issues affecting X. Next update at HH:MM."
+- **Status updates** every 15-30 minutes: what we know, what we're doing, what's next.
+- **Resolution** when the immediate problem is mitigated: "Service is restored. We are continuing to investigate root cause and will publish a postmortem."
+- **Postmortem** within a week: what happened, why, what we're changing.
+
+Silence is the enemy. "Still investigating, next update at 14:30" is more useful than nothing. Users tolerate problems they're being told about; they don't tolerate problems they're being ignored about.
+
+---
+
+## Postmortems
+
+A good postmortem has:
+
+1. **Summary** - one paragraph: what broke, how long, who was affected
+2. **Timeline** - what happened, minute by minute, with timestamps
+3. **Root cause** - the technical and process factors that allowed this to happen
+4. **Impact** - quantified: customers affected, requests failed, revenue lost, SLO budget burned
+5. **What went well** - the response worked X way, the runbook helped, the customer comms were on point
+6. **What didn't** - detection took too long, the runbook was out of date, the on-call rotation was wrong
+7. **Action items** - specific, owned, with due dates
+
+**Blameless framing.** People don't show up wanting to cause incidents. If a system allowed a human mistake to cause customer impact, the system is the actual problem. Postmortems that blame individuals produce defensive responses and dishonest writeups. Postmortems that focus on systems produce real improvements.
+
+---
+
+## Common Mistakes
+
+**No formal declaration.** Engineers debug for an hour before someone says "wait, should we call this an incident?" By then, customers have been on Twitter for 45 minutes.
+
+**Severity inflation.** Everything is SEV1, so on-call burns out and nothing is actually prioritized.
+
+**Fixing root cause during the incident.** Restore service first. The instinct to "really fix it" during an active incident usually extends the outage. Mitigate now, root-cause later.
+
+**Postmortem theater.** Writing the document, filing it, and never doing the action items. If the postmortem doesn't change anything, the incident will recur.
+
+**Blame-heavy postmortems.** Producing defensive engineers, dishonest timelines, and a culture where people hide problems instead of escalating them.
+
+**Communication as an afterthought.** Engineers focus on the fix and forget to update the status page for 90 minutes. Customers fill the void with assumptions, all of them worse than reality.
+
+---
+
+## How Monitoring Fits In
+
+Incident management starts the moment you detect a problem. Detection comes from monitoring - external [uptime](/guides/what-is-uptime-monitoring) and [synthetic](/guides/what-is-synthetic-monitoring) checks for service availability, internal metrics for performance and errors.
+
+Better monitoring shortens detection time. Shorter detection time means lower [MTTR](/guides/what-is-mttr). Lower MTTR means less customer impact per incident.
+
+Then communication happens through your [status page](/guides/what-is-a-status-page), which becomes the single source of truth for customers during the incident.
+
+The pipeline: monitor → detect → declare → respond → communicate → resolve → learn. Every part has to work.
+
+---
+
+## The Bottom Line
+
+Incident management isn't about preventing incidents - they happen to everyone. It's about handling them well when they do. Fast detection, organized response, honest communication, blameless learning.
+
+Teams that get this right preserve customer trust through outages. Teams that don't lose it during the second one.
+
+---
+
+**OpenStatus combines monitoring and status pages so detection and communication live in one place.** Open-source, with on-call alerting and incident management built in.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
+
+Start free. No credit card required.
+
+---
