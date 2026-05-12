@@ -25,11 +25,9 @@ faq:
     answer: "Uptime percentage is (total time minus downtime) divided by total time, expressed as a percent. The catch is defining 'downtime'. Some teams count only full outages; others include degraded performance. Be explicit: '99.9% uptime measured as HTTP 200 response in under 2 seconds from 3 of 5 regions' is meaningful. '99.9% uptime' alone is marketing."
 ---
 
-# What Is Uptime Monitoring?
+Your internal dashboards say everything is fine. Your CPU graphs are flat. Your error rate is zero. But users in three countries cannot reach your API.
 
-Uptime monitoring is the practice of continuously checking, from outside your own infrastructure, whether your service is reachable and responding correctly. It's how you find out about outages before your customers do.
-
-The premise is simple: send a request to your endpoint every minute, check the response, alert if something's wrong. The interesting parts are in the details - what you check, how often, from where, and what counts as "wrong."
+This is the gap uptime monitoring exists to close. Send a request to your endpoint every minute from outside your own network, check the response, alert if something is wrong. The premise is simple. The interesting parts are in the details - what you check, how often, from where, and what counts as wrong.
 
 ---
 
