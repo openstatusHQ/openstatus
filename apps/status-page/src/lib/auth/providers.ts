@@ -1,5 +1,6 @@
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { EmailClient } from "@openstatus/emails";
+import { isTRPCClientError } from "@trpc/client";
 import Resend from "next-auth/providers/resend";
 import { getValidCustomDomain } from "../domain";
 
@@ -18,9 +19,22 @@ export const ResendProvider = Resend({
     if (!prefix) return;
 
     const queryClient = getQueryClient();
-    const query = await queryClient.fetchQuery(
-      trpc.statusPage.validateEmailDomain.queryOptions({ slug: prefix, email }),
-    );
+    const query = await (async () => {
+      try {
+        return await queryClient.fetchQuery(
+          trpc.statusPage.validateEmailDomain.queryOptions({
+            slug: prefix,
+            email,
+          }),
+        );
+      } catch (error) {
+        if (!isTRPCClientError(error)) throw error;
+        console.error(
+          `[ResendProvider] validateEmailDomain rejected for slug="${prefix}" email="${email}": ${error.message}`,
+        );
+        return undefined;
+      }
+    })();
 
     if (!query) return;
 
