@@ -12,13 +12,34 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      label:
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
         digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
         org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
         org.opencontainers.image.stage: install
       workdir: /app/
       run:
@@ -48,6 +69,8 @@ effective: |
         source: packages/notifications/grafana-oncall/package.json
       - target: packages/notifications/google-chat/package.json
         source: packages/notifications/google-chat/package.json
+      - target: packages/notifications/ms-teams/package.json
+        source: packages/notifications/ms-teams/package.json
       - target: packages/notifications/ntfy/package.json
         source: packages/notifications/ntfy/package.json
       - target: packages/notifications/opsgenie/package.json
@@ -78,34 +101,13 @@ effective: |
         source: packages/theme-store/package.json
       - target: packages/locales/package.json
         source: packages/locales/package.json
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
     docker:
       fromImage:
         path: oven/bun
         digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       workdir: /app/apps/workflows
       copy:
       - paths:
@@ -132,13 +134,13 @@ effective: |
     path: debian
     digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
   label:
+    io.dofigen.version: 2.6.0
+    org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
     org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
-    io.dofigen.version: 2.6.0
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
   workdir: /app/
   copy:
@@ -164,17 +166,17 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
     oven:
       bun:
         1.3.11:
           digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
 resources:
   dofigen.yml:
-    hash: fab9bc8c5c598a92c10a5d711facde7620fb57db581ebc3e2bfe673468c8ec33
+    hash: 10439e147699d20daeed279e4a6da44b8e6952face79a200c47bf466f1ae5e49
     content: |
       ignore:
         - node_modules
@@ -206,6 +208,7 @@ resources:
             - packages/notifications/email/package.json
             - packages/notifications/grafana-oncall/package.json
             - packages/notifications/google-chat/package.json
+            - packages/notifications/ms-teams/package.json
             - packages/notifications/ntfy/package.json
             - packages/notifications/opsgenie/package.json
             - packages/notifications/pagerduty/package.json
