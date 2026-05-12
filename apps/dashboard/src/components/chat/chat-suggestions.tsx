@@ -21,11 +21,14 @@ type Props = {
 export function ChatSuggestions({ onSelect }: Props) {
   return (
     <Section className="flex w-full max-w-3xl flex-col items-center">
-      <SectionHeader className="text-center">
+      <SectionHeader className="max-w-2xl text-center">
         <SectionTitle>openstatus assistant</SectionTitle>
         <SectionDescription>
           Ask about your workspace, draft status reports, or schedule
-          maintenance windows.
+          maintenance windows.{" "}
+          <span className="text-muted-foreground">
+            Status pages only · more tools soon.
+          </span>
         </SectionDescription>
       </SectionHeader>
       <div className="flex flex-wrap items-center justify-center gap-2">

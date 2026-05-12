@@ -60,37 +60,46 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
 
   return (
     <div className="sticky bottom-0 z-10 border-t bg-background p-2">
-      <form className="mx-auto max-w-3xl" onSubmit={handleSubmit}>
-        <InputGroup>
-          <InputGroupTextarea
-            placeholder="Ask about your workspace…"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            // Override the workspace `min-h-16` so an empty input is one row tall.
-            className="min-h-0"
-          />
-          <InputGroupAddon align="block-end" className="justify-end px-2 py-2">
-            <Button
-              type={isGenerating && onStop ? "button" : "submit"}
-              size="icon-sm"
-              onClick={handleClick}
-              disabled={!isGenerating && !value.trim()}
-              aria-label={isGenerating ? "Stop" : "Send"}
+      <div className="mx-auto flex max-w-3xl flex-col gap-1">
+        <form onSubmit={handleSubmit}>
+          <InputGroup>
+            <InputGroupTextarea
+              placeholder="Ask openstatus…"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              // Override the workspace `min-h-16` so an empty input is one row tall.
+              className="min-h-0"
+            />
+            <InputGroupAddon
+              align="block-end"
+              className="justify-end px-2 py-2"
             >
-              {status === "submitted" ? (
-                <Spinner />
-              ) : status === "streaming" ? (
-                <SquareIcon className="size-4" />
-              ) : status === "error" ? (
-                <XIcon className="size-4" />
-              ) : (
-                <CornerDownLeftIcon className="size-4" />
-              )}
-            </Button>
-          </InputGroupAddon>
-        </InputGroup>
-      </form>
+              <Button
+                type={isGenerating && onStop ? "button" : "submit"}
+                size="icon-sm"
+                onClick={handleClick}
+                disabled={!isGenerating && !value.trim()}
+                aria-label={isGenerating ? "Stop" : "Send"}
+              >
+                {status === "submitted" ? (
+                  <Spinner />
+                ) : status === "streaming" ? (
+                  <SquareIcon className="size-4" />
+                ) : status === "error" ? (
+                  <XIcon className="size-4" />
+                ) : (
+                  <CornerDownLeftIcon className="size-4" />
+                )}
+              </Button>
+            </InputGroupAddon>
+          </InputGroup>
+        </form>
+        <p className="text-center text-muted-foreground text-xs">
+          Powered by Claude. AI responses may contain errors, double-check
+          results.
+        </p>
+      </div>
     </div>
   );
 }

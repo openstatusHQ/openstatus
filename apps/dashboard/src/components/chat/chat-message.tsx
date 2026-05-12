@@ -23,8 +23,8 @@ export function Message({ className, from, ...props }: MessageProps) {
     <div
       data-from={from}
       className={cn(
-        "group flex w-full max-w-[95%] flex-col gap-2",
-        from === "user" ? "ml-auto items-end" : "items-start",
+        "group flex max-w-[95%] flex-col gap-2",
+        from === "user" ? "ml-auto items-end" : "w-full items-start",
         className,
       )}
       {...props}
@@ -40,8 +40,9 @@ export function MessageContent({
   return (
     <div
       className={cn(
-        "flex w-full max-w-full flex-col gap-2 overflow-hidden text-sm",
+        "flex max-w-full flex-col gap-2 overflow-hidden text-sm",
         "group-data-[from=user]:rounded-xl group-data-[from=user]:bg-secondary group-data-[from=user]:px-4 group-data-[from=user]:py-3",
+        "group-data-[from=assistant]:w-full",
         className,
       )}
       {...props}

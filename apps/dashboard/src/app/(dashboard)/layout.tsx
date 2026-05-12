@@ -1,25 +1,27 @@
 import { AppSidebar } from "@/components/nav/app-sidebar";
+import {
+  LEFT_SIDEBAR_COOKIE,
+  getSidebarDefaultOpen,
+} from "@/lib/sidebar-cookie";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import {
   SidebarInset,
   SidebarProvider,
 } from "@openstatus/ui/components/ui/sidebar";
-import { cookies } from "next/headers";
 
 export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const hasState = cookieStore.has("sidebar_state");
-  const defaultOpen = hasState
-    ? cookieStore.get("sidebar_state")?.value === "true"
-    : true;
+  const defaultOpen = await getSidebarDefaultOpen(LEFT_SIDEBAR_COOKIE, true);
 
   return (
     <HydrateSidebar>
-      <SidebarProvider defaultOpen={defaultOpen}>
+      <SidebarProvider
+        defaultOpen={defaultOpen}
+        cookieName={LEFT_SIDEBAR_COOKIE}
+      >
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>

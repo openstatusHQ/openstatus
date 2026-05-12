@@ -11,7 +11,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
   SidebarSeparator,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
@@ -21,104 +20,71 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
-import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { cn } from "@openstatus/ui/lib/utils";
 import { PanelRight } from "lucide-react";
 import { Kbd } from "../common/kbd";
 import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "]";
-const SIDEBAR_WIDTH = "18rem";
-const SIDEBAR_WIDTH_2XL = "24rem";
-const SIDEBAR_WIDTH_MOBILE = "18rem";
 
 type SidebarRightProps = React.ComponentProps<typeof Sidebar> & {
   header: string;
   metadata: SidebarMetadataProps[];
   footerButton?: React.ComponentProps<typeof SidebarMenuButton>;
-  /**
-   * Initial open state when no cookie is set. Defaults to `false` so the
-   * right sidebar stays collapsed when it shows secondary metadata; opt
-   * in by passing `true` when the sidebar IS the primary navigation.
-   */
-  defaultOpen?: boolean;
 };
 
 export function SidebarRight({
   header,
   metadata,
   footerButton,
-  defaultOpen = false,
   ...props
 }: SidebarRightProps) {
-  const isMobile = useIsMobile();
-  const is2XL = useMediaQuery("(min-width: 1536px)");
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": isMobile
-            ? SIDEBAR_WIDTH_MOBILE
-            : is2XL
-              ? SIDEBAR_WIDTH_2XL
-              : SIDEBAR_WIDTH,
-        } as React.CSSProperties
-      }
-      defaultOpen={defaultOpen}
-      cookieName="sidebar_state_right"
-      // The shadcn SidebarProvider wraps in `min-h-svh`, but here it only
-      // hosts a fixed-positioned right rail — the in-flow wrapper would
-      // otherwise add a phantom 100svh of layout height to whatever route
-      // mounts this component. Collapse it.
-      className="min-h-0 flex-1"
+    <Sidebar
+      collapsible="offcanvas"
+      side="right"
+      className="top-14 flex h-[calc(100svh_-_56px)]"
+      {...props}
     >
-      <Sidebar
-        collapsible="offcanvas"
-        side="right"
-        className="top-14 flex h-[calc(100svh_-_56px)]"
-        {...props}
-      >
-        <SidebarHeader className="relative border-sidebar-border border-b">
-          {header}
-          <div className="-left-9 absolute inset-y-0 z-10 flex items-center justify-center">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarTrigger />
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p className="mr-px inline-flex items-center">
-                    Toggle Sidebar{" "}
-                    <Kbd className="border-muted-foreground bg-primary font-mono text-background">
-                      ⌘
-                    </Kbd>
-                    <Kbd className="border-muted-foreground bg-primary font-mono text-background">
-                      {SIDEBAR_KEYBOARD_SHORTCUT}
-                    </Kbd>
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </SidebarHeader>
-        <SidebarContent className="flex flex-col gap-0">
-          {metadata.map((item) => (
-            <SidebarMetadata key={item.label} {...item} />
-          ))}
-        </SidebarContent>
-        <SidebarSeparator className="mx-0" />
-        {footerButton ? (
-          <SidebarFooter>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton {...footerButton} />
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-        ) : null}
-      </Sidebar>
-    </SidebarProvider>
+      <SidebarHeader className="relative border-sidebar-border border-b">
+        {header}
+        <div className="-left-9 absolute inset-y-0 z-10 flex items-center justify-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarTrigger />
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p className="mr-px inline-flex items-center">
+                  Toggle Sidebar{" "}
+                  <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+                    ⌘
+                  </Kbd>
+                  <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+                    {SIDEBAR_KEYBOARD_SHORTCUT}
+                  </Kbd>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="flex flex-col gap-0">
+        {metadata.map((item) => (
+          <SidebarMetadata key={item.label} {...item} />
+        ))}
+      </SidebarContent>
+      <SidebarSeparator className="mx-0" />
+      {footerButton ? (
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton {...footerButton} />
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      ) : null}
+    </Sidebar>
   );
 }
 

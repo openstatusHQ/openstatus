@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/components/common/link";
+import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 
@@ -11,6 +12,7 @@ const MAX_VISIBLE = 5;
 export function ChatHistory() {
   const trpc = useTRPC();
   const { data } = useQuery(trpc.chatSession.list.queryOptions());
+  const { setOpen } = useSidebar();
   const sessions = data ?? [];
   const recent = sessions.slice(0, MAX_VISIBLE);
   const extra = Math.max(sessions.length - MAX_VISIBLE, 0);
@@ -42,9 +44,13 @@ export function ChatHistory() {
         ))}
       </ul>
       {extra > 0 ? (
-        <span className="font-mono text-muted-foreground text-xs">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="self-start font-mono text-muted-foreground text-xs hover:text-foreground"
+        >
           {extra} more {extra === 1 ? "conversation" : "conversations"}
-        </span>
+        </button>
       ) : null}
     </div>
   );
