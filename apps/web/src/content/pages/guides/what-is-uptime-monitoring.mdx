@@ -1,0 +1,171 @@
+---
+title: "What Is Uptime Monitoring?"
+description: "Uptime monitoring is the practice of continuously checking whether your service is reachable and responding correctly from outside your own network. Here's how it works, how uptime percentages are actually calculated, and what to monitor."
+author: "openstatus"
+publishedAt: "2026-05-06"
+category: "fundamentals"
+faq:
+  - question: "What is uptime monitoring?"
+    answer: "Uptime monitoring is the practice of regularly checking - usually every 30 seconds to 5 minutes - whether your service is reachable and returning the expected response. The checks run from external locations so they catch problems your internal infrastructure can't see, like DNS failures, certificate expirations, or regional outages."
+  - question: "How does uptime monitoring actually work?"
+    answer: "A monitoring service sends synthetic requests (HTTP, TCP, ping, or full browser sessions) to your endpoints from probe locations around the world on a fixed interval. If a request fails or times out, the monitor flags it. Most systems require multiple consecutive failures from different regions before alerting, to avoid noise from transient network blips."
+  - question: "What does 99.9% uptime mean in practice?"
+    answer: "99.9% uptime means roughly 8.76 hours of allowed downtime per year, or about 43 minutes per month. 99.99% drops that to 52 minutes per year. 99.999% ('five nines') is about 5 minutes per year - a target that's expensive to hit and usually only meaningful for infrastructure providers."
+  - question: "How often should I check my endpoints?"
+    answer: "For customer-facing services, every 30-60 seconds is standard. Less frequent (5-15 minutes) is fine for internal tools or batch systems. More frequent than 30 seconds rarely helps - you start measuring network jitter rather than real availability, and your costs climb fast."
+  - question: "Why monitor from multiple regions?"
+    answer: "An outage that only affects one region is invisible to a single-region monitor. CDN issues, DNS propagation failures, and regional ISP problems are common. Running checks from at least 3 geographically distributed locations and requiring a majority to fail before alerting catches real outages while ignoring isolated network blips."
+  - question: "What's the difference between uptime monitoring and synthetic monitoring?"
+    answer: "Uptime monitoring is the simplest form of synthetic monitoring - a periodic check that an endpoint responds. Synthetic monitoring is the broader category that includes multi-step browser flows, transaction monitoring, and API sequences. All uptime monitoring is synthetic monitoring; not all synthetic monitoring is uptime monitoring."
+  - question: "Should I monitor my homepage or my API?"
+    answer: "Both, separately. A working homepage doesn't mean your API is up - they often run on different infrastructure. Monitor the critical user paths: login, the main API endpoints your customers integrate with, payment processing. Each gets its own monitor so you know precisely what's failing."
+  - question: "What's a false positive in uptime monitoring?"
+    answer: "An alert that fires when nothing was actually wrong - usually because the probe location had a transient network problem, hit a rate limit, or got caught by a bot detection rule. Good monitoring tools reduce false positives by requiring multi-region confirmation and ignoring single-probe failures."
+  - question: "How is uptime percentage calculated?"
+    answer: "Uptime percentage is (total time minus downtime) divided by total time, expressed as a percent. The catch is defining 'downtime'. Some teams count only full outages; others include degraded performance. Be explicit: '99.9% uptime measured as HTTP 200 response in under 2 seconds from 3 of 5 regions' is meaningful. '99.9% uptime' alone is marketing."
+---
+
+Your internal dashboards say everything is fine. Your CPU graphs are flat. Your error rate is zero. But users in three countries cannot reach your API.
+
+This is the gap uptime monitoring exists to close. Send a request to your endpoint every minute from outside your own network, check the response, alert if something is wrong. The premise is simple. The interesting parts are in the details - what you check, how often, from where, and what counts as wrong.
+
+---
+
+## How Uptime Monitoring Works
+
+A monitoring service sits outside your infrastructure and makes synthetic requests to your endpoints on a schedule. The basic loop:
+
+1. **Probe** - send a request (HTTP GET, TCP connect, ICMP ping, DNS lookup)
+2. **Validate** - check the response (status code, latency, body content, headers, SSL validity)
+3. **Decide** - is this a failure? If yes, is it the second/third consecutive one?
+4. **Alert** - notify the on-call team via the channels they've configured
+
+The whole cycle repeats every 30 seconds to 5 minutes per monitor, from probe locations spread around the world.
+
+### Check Types
+
+- **HTTP/HTTPS** - the most common. Hit a URL, expect a status code, optionally validate the body.
+- **TCP** - confirm a port is accepting connections. Used for databases, message queues, custom protocols.
+- **Ping (ICMP)** - basic network reachability. Cheap, but doesn't tell you the application is healthy.
+- **DNS** - confirm a domain resolves correctly and to the right IP.
+- **Browser** - load the page in a real browser, run JavaScript, click through a flow. Slower and more expensive, but catches problems pure HTTP checks miss.
+
+Most teams use HTTP for the bulk of monitors and add browser checks for critical user paths like login or checkout.
+
+---
+
+## Why External Monitoring Matters
+
+Your internal monitoring tells you when servers are unhealthy. It cannot tell you when your service is unreachable from your customers' networks.
+
+Common problems that only external monitoring catches:
+
+- **DNS misconfiguration** - your records are wrong, but your servers are fine
+- **Expired SSL certificates** - the server responds, but browsers reject it
+- **CDN failures** - origin is healthy, edge is broken
+- **Regional ISP outages** - users in one country can't reach you
+- **Firewall rules gone wrong** - you blocked yourself from your own customers
+- **DDoS protection misbehaving** - legitimate traffic is being challenged
+
+A server with green internal metrics can still be completely unreachable for users. External probes catch that gap.
+
+---
+
+## What "99.9% Uptime" Actually Means
+
+The math, in case anyone asks:
+
+| Uptime    | Downtime per month | Downtime per year |
+|-----------|--------------------|--------------------|
+| 99%       | 7h 18m             | 87h 36m            |
+| 99.9%     | 43m 49s            | 8h 45m             |
+| 99.95%    | 21m 54s            | 4h 22m             |
+| 99.99%    | 4m 22s             | 52m 35s            |
+| 99.999%   | 26s                | 5m 15s             |
+
+A "three nines" SLA gives you about 43 minutes per month of allowed downtime. Four nines drops that to 4 minutes. Five nines is essentially "we cannot afford for this to ever go down" territory - very expensive to engineer and usually only meaningful for infrastructure providers like cloud regions or DNS.
+
+For most SaaS, 99.9% is realistic and defensible. 99.99% requires real investment - multi-region failover, automated recovery, careful deployment gates.
+
+For the gory details on what these numbers actually buy you, see [why uptime percentage is misleading](/guides/why-uptime-percentage-is-misleading).
+
+Want to compute the maximum downtime your SLA permits? Use our [uptime SLA calculator](/play/uptime-sla).
+
+---
+
+## Choosing a Monitoring Frequency
+
+| Frequency       | Use case                                          |
+|-----------------|---------------------------------------------------|
+| Every 30s       | Customer-facing critical paths, payment APIs      |
+| Every 1m        | Most production APIs and dashboards               |
+| Every 5m        | Internal tools, background jobs                   |
+| Every 15m+      | Low-priority systems, cost-sensitive monitoring   |
+
+Faster isn't always better. At 10-second intervals you start measuring network noise more than service health. Your false positive rate climbs and your cost goes up. Default to 1 minute unless you have a specific reason to go faster.
+
+---
+
+## Multi-Region Monitoring
+
+A single probe location lies to you. Networks fail. Probe servers have bad days. Bot detection rules sometimes catch monitoring traffic.
+
+The fix: run the same check from at least 3 regions on different continents, and require a majority to fail before alerting. This eliminates almost all false positives from transient probe-side issues while still catching real outages within seconds.
+
+If two of three regions in different continents can't reach your service, something is genuinely wrong. If one of three can't, it's almost always a network issue on the probe side - not your problem.
+
+---
+
+## What to Monitor
+
+Don't monitor everything. Monitor the things customers actually use.
+
+**Yes:**
+- Login and authentication endpoints
+- The main API endpoints your customers integrate with
+- Payment processing
+- The homepage (it's what people screenshot when complaining)
+- Critical multi-step flows (signup, checkout)
+
+**Maybe:**
+- Admin panels (only if your team relies on them constantly)
+- Internal tools used in customer support flows
+
+**No (or rarely):**
+- Marketing site pages beyond the homepage
+- Documentation
+- Anything that doesn't directly impact a paying customer if it's down for 30 minutes
+
+Each monitor costs money and generates alerts. Keep the list lean and the signal high.
+
+---
+
+## Uptime Monitoring vs Synthetic Monitoring
+
+Uptime monitoring is the simplest form of [synthetic monitoring](/guides/what-is-synthetic-monitoring) - one request, one response, did it work. Synthetic monitoring is the broader category that includes:
+
+- Multi-step browser flows ("can a user actually sign up?")
+- Transaction monitoring ("does payment processing complete end-to-end?")
+- API sequence monitoring ("does the OAuth dance work?")
+
+If you only need to know whether your endpoints respond, uptime monitoring is enough. If you need to know whether complex user journeys work, you need full synthetic monitoring.
+
+---
+
+## The Bottom Line
+
+Uptime monitoring exists because you cannot trust your own infrastructure to tell you when it's unreachable. The whole point is the external perspective - what does this look like to a user in São Paulo right now?
+
+Set it up. Monitor the things customers actually depend on. Use multiple regions. Tune the check frequency for the criticality. Push results into a [status page](/guides/what-is-a-status-page) so users can self-serve when things break.
+
+---
+
+**OpenStatus runs uptime monitors from multiple regions worldwide** and pushes results directly to your status page. Open-source, with sub-minute check frequency and no vendor lock-in.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
+
+Start free. No credit card required.
+
+---

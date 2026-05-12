@@ -3,7 +3,7 @@ title: "SLA vs SLO vs SLI Explained"
 description: "Learn the critical differences between SLAs, SLOs, and SLIs. Understand how to measure service reliability, set internal targets, and make customer promises without over-committing or under-delivering."
 author: "openstatus"
 publishedAt: "2026-02-09"
-category: "education"
+category: "fundamentals"
 faq:
   - question: "What's the difference between SLI, SLO, and SLA?"
     answer: "An SLI is a specific metric you measure (like API response time). An SLO is your internal target for that metric (stricter than customer promises). An SLA is your public promise to customers with consequences if you fail. They stack: SLI → SLO → SLA."
@@ -16,8 +16,6 @@ faq:
   - question: "Do startups need SLAs?"
     answer: "No. Early-stage startups should skip SLAs entirely until they have the infrastructure to measure and maintain them. Focus on tracking 2-3 SLIs, being transparent about uptime, and communicating clearly during incidents. Formalize SLAs when enterprise customers start requesting them."
 ---
-
-# SLA vs SLO vs SLI Explained
 
 Everyone throws these acronyms around at architecture reviews and planning meetings, but most teams confuse them. You'll hear "our SLA is 99.9%" when they mean SLO. Or "we need better SLIs" when they haven't defined what they're actually measuring.
 
