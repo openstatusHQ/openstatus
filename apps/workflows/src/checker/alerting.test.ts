@@ -61,6 +61,11 @@ mock.module("./utils", () => ({
       sendRecovery: mock(),
       sendDegraded: mock(),
     },
+    "ms-teams": {
+      sendAlert: mock(),
+      sendRecovery: mock(),
+      sendDegraded: mock(),
+    },
     whatsapp: { sendAlert: mock(), sendRecovery: mock(), sendDegraded: mock() },
   },
 }));

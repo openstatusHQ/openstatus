@@ -26,6 +26,11 @@ import {
   sendRecovery as sendGrafanaOncallRecovery,
 } from "@openstatus/notification-grafana-oncall";
 import {
+  sendAlert as sendMsTeamsAlert,
+  sendDegraded as sendMsTeamsDegraded,
+  sendRecovery as sendMsTeamsRecovery,
+} from "@openstatus/notification-ms-teams";
+import {
   sendAlert as sendNtfyAlert,
   sendDegraded as sendNtfyDegraded,
   sendRecovery as sendNtfyRecovery,
@@ -89,6 +94,11 @@ export const providerToFunction: Record<NotificationProvider, Notif> = {
     sendAlert: sendGrafanaOncallAlert,
     sendRecovery: sendGrafanaOncallRecovery,
     sendDegraded: sendGrafanaOncallDegraded,
+  },
+  "ms-teams": {
+    sendAlert: sendMsTeamsAlert,
+    sendRecovery: sendMsTeamsRecovery,
+    sendDegraded: sendMsTeamsDegraded,
   },
   ntfy: {
     sendAlert: sendNtfyAlert,

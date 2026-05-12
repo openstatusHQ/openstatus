@@ -30,6 +30,7 @@ builders:
       - packages/notifications/email/package.json
       - packages/notifications/grafana-oncall/package.json
       - packages/notifications/google-chat/package.json
+      - packages/notifications/ms-teams/package.json
       - packages/notifications/ntfy/package.json
       - packages/notifications/opsgenie/package.json
       - packages/notifications/pagerduty/package.json

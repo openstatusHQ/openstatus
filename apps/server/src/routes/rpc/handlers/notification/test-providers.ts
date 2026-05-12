@@ -2,6 +2,7 @@ import { sendTest as sendWhatsAppTest } from "@openstatus/notification-bird-what
 import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
+import { sendTest as sendMsTeamsTest } from "@openstatus/notification-ms-teams";
 import { sendTest as sendNtfyTest } from "@openstatus/notification-ntfy";
 import { sendTest as sendOpsgenieTest } from "@openstatus/notification-opsgenie";
 import { sendTest as sendPagerDutyTest } from "@openstatus/notification-pagerduty";
@@ -70,6 +71,16 @@ export async function sendTestNotification(
           );
         }
         await sendGrafanaTest({ webhookUrl: data.data.value.webhookUrl });
+        return { success: true };
+      }
+
+      case NotificationProvider.MS_TEAMS: {
+        if (data.data.case !== "msTeams") {
+          throw invalidNotificationDataError(
+            "Expected ms_teams data for Microsoft Teams provider",
+          );
+        }
+        await sendMsTeamsTest({ webhookUrl: data.data.value.webhookUrl });
         return { success: true };
       }
 
