@@ -12,12 +12,20 @@ import { externalService } from "@openstatus/db/src/schema";
 const env = z
   .object({
     DATABASE_URL: z.string().min(1),
-    DATABASE_AUTH_TOKEN: z.string().min(1),
+    DATABASE_AUTH_TOKEN: z.string().prefault(""),
     TINY_BIRD_API_KEY: z.string().min(1),
     TINYBIRD_URL: z.string().optional(),
-    EXTERNAL_STATUS_V0_PIPE: z.string().prefault("endpoint_external_status"),
+    V0_DATASOURCE: z.string().prefault("external_status"),
+    V1_DATASOURCE: z.string().prefault("external_status__v1"),
+    PAGE_SIZE: z.coerce.number().int().positive().prefault(10000),
+    FORCE: z
+      .string()
+      .optional()
+      .transform((v) => v === "1" || v === "true"),
   })
   .parse(process.env);
+
+const SAFETY_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 const v0RowSchema = z.object({
   name: z.string(),
@@ -30,8 +38,9 @@ const v0RowSchema = z.object({
 });
 type V0Row = z.infer<typeof v0RowSchema>;
 
-const v0ResponseSchema = z.object({
+const v0SqlResponseSchema = z.object({
   data: z.array(v0RowSchema),
+  rows: z.number(),
 });
 
 type Snapshot = {
@@ -65,29 +74,35 @@ async function fetchAllV0Rows(): Promise<V0Row[]> {
   const baseUrl = env.TINYBIRD_URL ?? "https://api.tinybird.co";
   const out: V0Row[] = [];
   const seenNames = new Set<string>();
-  const knownNames: string[] = [];
 
-  const listUrl = `${baseUrl}/v0/pipes/${env.EXTERNAL_STATUS_V0_PIPE}.json?limit=10000`;
-  const res = await fetch(listUrl, {
-    headers: { Authorization: `Bearer ${env.TINY_BIRD_API_KEY}` },
-  });
-  if (!res.ok) {
-    throw new Error(`v0 pipe fetch failed: ${res.status} ${res.statusText}`);
-  }
-  const json = await res.json();
-  const parsed = v0ResponseSchema.safeParse(json);
-  if (!parsed.success) {
-    throw new Error(`v0 pipe payload invalid: ${parsed.error.message}`);
-  }
-  for (const row of parsed.data.data) {
-    out.push(row);
-    if (!seenNames.has(row.name)) {
-      seenNames.add(row.name);
-      knownNames.push(row.name);
+  let offset = 0;
+  while (true) {
+    const sql = `SELECT description, fetched_at, indicator, name, time_zone, updated_at, url FROM ${env.V0_DATASOURCE} ORDER BY fetched_at LIMIT ${env.PAGE_SIZE} OFFSET ${offset} FORMAT JSON`;
+    const url = `${baseUrl}/v0/sql?q=${encodeURIComponent(sql)}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${env.TINY_BIRD_API_KEY}` },
+    });
+    if (!res.ok) {
+      throw new Error(
+        `v0 SQL fetch failed at offset=${offset}: ${res.status} ${res.statusText}`,
+      );
     }
+    const json = await res.json();
+    const parsed = v0SqlResponseSchema.safeParse(json);
+    if (!parsed.success) {
+      throw new Error(`v0 SQL payload invalid: ${parsed.error.message}`);
+    }
+    for (const row of parsed.data.data) {
+      out.push(row);
+      seenNames.add(row.name);
+    }
+    if (parsed.data.rows < env.PAGE_SIZE) break;
+    offset += env.PAGE_SIZE;
+    console.log(`[backfill] paged ${out.length} rows so far...`);
   }
+
   console.log(
-    `[backfill] fetched ${out.length} v0 rows covering ${knownNames.length} unique names`,
+    `[backfill] fetched ${out.length} v0 rows covering ${seenNames.size} unique names`,
   );
   return out;
 }
@@ -163,7 +178,36 @@ async function publishSnapshots(snapshots: Snapshot[]): Promise<void> {
   }
 }
 
+async function assertV1Empty(): Promise<void> {
+  const baseUrl = env.TINYBIRD_URL ?? "https://api.tinybird.co";
+  const cutoffMs = Date.now() - SAFETY_WINDOW_MS;
+  const sql = `SELECT count() AS n FROM ${env.V1_DATASOURCE} WHERE fetched_at < ${cutoffMs} FORMAT JSON`;
+  const url = `${baseUrl}/v0/sql?q=${encodeURIComponent(sql)}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${env.TINY_BIRD_API_KEY}` },
+  });
+  if (!res.ok) {
+    throw new Error(
+      `v1 safety check failed: ${res.status} ${res.statusText}`,
+    );
+  }
+  const json = (await res.json()) as { data?: Array<{ n: number }> };
+  const existing = json.data?.[0]?.n ?? 0;
+  if (existing === 0) return;
+  if (env.FORCE) {
+    console.warn(
+      `[backfill] FORCE=1 set, proceeding despite ${existing} existing rows older than 1h in ${env.V1_DATASOURCE}`,
+    );
+    return;
+  }
+  console.error(
+    `[backfill] aborting: ${env.V1_DATASOURCE} has ${existing} rows older than 1h — backfill appears already done.\nRe-running would duplicate rows.\nIf you really want to re-publish, set FORCE=1 and pre-truncate ${env.V1_DATASOURCE} OR accept duplicates.`,
+  );
+  process.exit(2);
+}
+
 async function main() {
+  await assertV1Empty();
   const [rows, nameToSlug] = await Promise.all([
     fetchAllV0Rows(),
     loadNameToSlugMap(),
