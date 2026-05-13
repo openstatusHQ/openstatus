@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
+import { handleExternalStatusCron } from "./external-status";
 import {
   LaunchMonitorWorkflow,
   Step3Days,
@@ -69,6 +70,10 @@ app.get("/checker/:period", async (c) => {
     ),
   );
   return c.json({ success: schema.data }, 200);
+});
+
+app.get("/external-status", async (c) => {
+  return handleExternalStatusCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {

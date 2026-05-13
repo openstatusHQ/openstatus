@@ -8,9 +8,12 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
+    "@libsql/client": "0.15.15",
+    "@openstatus/db": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@types/node": "22.10.2",
+    "drizzle-orm": "0.44.4",
     "typescript": "5.9.3"
   }
 }

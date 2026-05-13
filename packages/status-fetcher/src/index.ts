@@ -1,10 +1,3 @@
-import { directory } from "./data/directory";
-import type { StatusPageEntry } from "./types";
-
-export function getStatusDirectory(): StatusPageEntry[] {
-  return directory;
-}
-
 export * from "./types";
 export * from "./utils";
 export {
@@ -15,4 +8,5 @@ export {
   type FetchWithTimeoutOptions,
   type RetryOptions,
 } from "./fetch-utils";
+export { fetchers } from "./fetchers";
 export type { DirectoryEntry } from "./data/index";

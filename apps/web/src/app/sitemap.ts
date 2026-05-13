@@ -10,7 +10,10 @@ import {
   getUnrelatedPages,
   getUseCasePages,
 } from "@/content/utils";
+import { cachedListExternalServices } from "@/lib/external-service-cache";
 import type { MetadataRoute } from "next";
+
+export const revalidate = 3600;
 
 const allPosts = getBlogPosts();
 const allChangelogs = getChangelogPosts();
@@ -26,7 +29,26 @@ const allGuides = getGuides();
 const allUseCases = getUseCasePages();
 const allTooling = getToolingPages();
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const externalServices = await cachedListExternalServices();
+  const externalServiceEntries: MetadataRoute.Sitemap = externalServices
+    .filter((s) => s.deletedAt == null)
+    .map((s) => ({
+      url: `https://www.openstatus.dev/status/${s.slug}`,
+      lastModified: new Date().toISOString().slice(0, 10),
+      changeFrequency: "hourly" as const,
+      priority: 0.7,
+    }));
+
+  const externalServicesIndex: MetadataRoute.Sitemap = [
+    {
+      url: "https://www.openstatus.dev/status",
+      lastModified: new Date().toISOString().slice(0, 10),
+      changeFrequency: "hourly" as const,
+      priority: 0.8,
+    },
+  ];
+
   const blogs = allPosts.map((post) => ({
     url: `https://www.openstatus.dev/blog/${post.slug}`,
     lastModified: post.metadata.publishedAt, // date format should be YYYY-MM-DD
@@ -180,5 +202,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...useCaseIndex,
     ...toolings,
     ...toolingIndex,
+    ...externalServicesIndex,
+    ...externalServiceEntries,
   ];
 }
