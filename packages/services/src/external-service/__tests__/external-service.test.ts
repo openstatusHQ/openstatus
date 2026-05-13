@@ -68,7 +68,9 @@ describe("listExternalServices", () => {
                     json_object('type', 'nonsense'))`,
       );
       const rows = await listExternalServices({});
-      expect(rows.find((r) => r.slug === `${TEST_PREFIX}-badcfg`)).toBeUndefined();
+      expect(
+        rows.find((r) => r.slug === `${TEST_PREFIX}-badcfg`),
+      ).toBeUndefined();
       expect(warned).toBe(true);
     } finally {
       console.warn = originalWarn;
@@ -141,9 +143,7 @@ describe("listExternalServiceSlugs", () => {
       .run();
     const map = await listExternalServiceSlugs({});
     expect(map.canonical).toContain(`${TEST_PREFIX}-x`);
-    const xAliases = map.aliases.filter(
-      (a) => a.to === `${TEST_PREFIX}-x`,
-    );
+    const xAliases = map.aliases.filter((a) => a.to === `${TEST_PREFIX}-x`);
     expect(xAliases.map((a) => a.from).sort()).toEqual(
       [`${TEST_PREFIX}-old-twitter`, `${TEST_PREFIX}-twitter`].sort(),
     );

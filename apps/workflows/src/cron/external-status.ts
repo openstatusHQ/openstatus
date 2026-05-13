@@ -1,15 +1,15 @@
 import { getSentry } from "@hono/sentry";
 import { getLogger } from "@logtape/logtape";
-import { fetchers } from "@openstatus/status-fetcher";
-import type { StatusPageEntry, StatusResult } from "@openstatus/status-fetcher";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
+import { fetchers } from "@openstatus/status-fetcher";
+import type { StatusPageEntry, StatusResult } from "@openstatus/status-fetcher";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Effect, Schedule } from "effect";
 import type { Context } from "hono";
 
-import { db } from "../lib/db";
 import { env } from "../env";
+import { db } from "../lib/db";
 
 const logger = getLogger(["workflow", "external-status"]);
 
@@ -85,7 +85,11 @@ export async function runExternalStatusTick(): Promise<{
       const slug = entries[i]?.id ?? "<unknown>";
       logger.warn(
         "external-status tick: fetcher failed for slug={slug}: {reason}",
-        { slug, reason: r.reason instanceof Error ? r.reason.message : String(r.reason) },
+        {
+          slug,
+          reason:
+            r.reason instanceof Error ? r.reason.message : String(r.reason),
+        },
       );
     }
   }
@@ -124,7 +128,11 @@ export async function handleExternalStatusCron(c: Context) {
         Effect.sync(() => {
           logger.info(
             "external-status tick complete: {success}/{total} ({failures} failures)",
-            { success: res.successCount, total: res.total, failures: res.failureCount },
+            {
+              success: res.successCount,
+              total: res.total,
+              failures: res.failureCount,
+            },
           );
           sentry.captureCheckIn({
             checkInId,

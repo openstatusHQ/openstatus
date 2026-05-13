@@ -1,10 +1,10 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
 import { Tinybird } from "@chronark/zod-bird";
+import { createClient } from "@libsql/client";
 import { isNotNull } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/libsql";
 import { z } from "zod";
 
 import { externalService } from "@openstatus/db/src/schema";
@@ -53,7 +53,10 @@ type Snapshot = {
   time_zone: string;
 };
 
-function inferStatusFromIndicator(indicator: string, description: string): string {
+function inferStatusFromIndicator(
+  indicator: string,
+  description: string,
+): string {
   const lower = description.toLowerCase();
   if (lower.includes("maintenance")) return "under_maintenance";
   switch (indicator) {
@@ -187,9 +190,7 @@ async function assertV1Empty(): Promise<void> {
     headers: { Authorization: `Bearer ${env.TINY_BIRD_API_KEY}` },
   });
   if (!res.ok) {
-    throw new Error(
-      `v1 safety check failed: ${res.status} ${res.statusText}`,
-    );
+    throw new Error(`v1 safety check failed: ${res.status} ${res.statusText}`);
   }
   const json = (await res.json()) as { data?: Array<{ n: number }> };
   const existing = json.data?.[0]?.n ?? 0;

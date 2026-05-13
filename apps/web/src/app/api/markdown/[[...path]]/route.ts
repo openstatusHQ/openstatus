@@ -27,7 +27,8 @@ export async function GET(
         status: 200,
         headers: {
           "Content-Type": "text/markdown; charset=utf-8",
-          "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+          "Cache-Control":
+            "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
           "X-Content-Source": "status",
         },
       });

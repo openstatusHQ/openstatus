@@ -1,5 +1,5 @@
 import type { InferInsertModel } from "drizzle-orm";
-import { externalService } from "../schema";
+import type { externalService } from "../schema";
 
 type ExternalServiceSeedEntry = InferInsertModel<typeof externalService>;
 
@@ -55,7 +55,8 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     statusPageUrl: "https://status.anthropic.com",
     provider: "atlassian-statuspage",
     industry: ["ai-ml"],
-    description: "AI safety company building reliable, interpretable AI systems",
+    description:
+      "AI safety company building reliable, interpretable AI systems",
     apiConfig: { type: "atlassian" },
   },
   {

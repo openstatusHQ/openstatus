@@ -7,8 +7,8 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 import { OSTinybird } from "@openstatus/tinybird";
+import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 
 import { env } from "@/env";
 import { ContentBoxLink, ContentBoxUrl } from "../content-box";

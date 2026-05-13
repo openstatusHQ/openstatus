@@ -13,8 +13,8 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 import { OSTinybird } from "@openstatus/tinybird";
+import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 
 import { formatRelative, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
@@ -65,7 +65,9 @@ export async function generateMetadata(args: {
       ...twitterMetadata,
       title,
       description,
-      images: [`/api/og/status?title=${encodeURIComponent(`${service.name} Status`)}`],
+      images: [
+        `/api/og/status?title=${encodeURIComponent(`${service.name} Status`)}`,
+      ],
     },
   };
 }
@@ -148,12 +150,11 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      {/* biome-ignore-start lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON */}
       <script
         type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
       />
-      {/* biome-ignore-end lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON */}
       <h1>{service.name} Status</h1>
       <div className="not-prose flex flex-wrap items-center gap-6">
         <ExternalServicePill
@@ -165,7 +166,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           <span className="text-muted-foreground text-sm">
             Last updated {formatRelative(fetchedAt)}
             {stale ? (
-              <span className="ml-1 inline-flex  px-2 py-0.5 text-warning text-xs">
+              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
                 (stale)
               </span>
             ) : null}

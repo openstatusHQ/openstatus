@@ -1,4 +1,4 @@
-import { db as defaultDb, asc, eq, or, sql } from "@openstatus/db";
+import { asc, db as defaultDb, eq, or, sql } from "@openstatus/db";
 import {
   type ExternalService,
   apiConfigSchema,
@@ -34,7 +34,7 @@ function validateRows(rows: ReadonlyArray<unknown>): ExternalServiceRow[] {
     const select = selectExternalServiceSchema.safeParse(row);
     if (!select.success) {
       console.warn(
-        `[external-service] dropping row: failed select schema`,
+        "[external-service] dropping row: failed select schema",
         select.error.issues,
       );
       continue;

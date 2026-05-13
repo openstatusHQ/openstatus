@@ -129,7 +129,7 @@ export async function generateStatusDetailMarkdown(
       md += `**Provider message:** ${latest.status_message}\n`;
     }
   } else {
-    md += `**Status:** Unknown (no data yet)\n`;
+    md += "**Status:** Unknown (no data yet)\n";
   }
   md += "\n";
 

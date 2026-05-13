@@ -20,9 +20,7 @@ export const externalService = sqliteTable(
     url: text("url").notNull(),
     statusPageUrl: text("status_page_url").notNull(),
     provider: text("provider", { enum: STATUS_PAGE_PROVIDERS }).notNull(),
-    industry: text("industry", { mode: "json" })
-      .$type<Industry[]>()
-      .notNull(),
+    industry: text("industry", { mode: "json" }).$type<Industry[]>().notNull(),
     description: text("description"),
     apiConfig: text("api_config", { mode: "json" }).$type<ApiConfig>(),
     deletedAt: integer("deleted_at", { mode: "timestamp" }),
@@ -35,4 +33,3 @@ export const externalService = sqliteTable(
   },
   (t) => [index("external_service_deleted_at_idx").on(t.deletedAt)],
 );
-

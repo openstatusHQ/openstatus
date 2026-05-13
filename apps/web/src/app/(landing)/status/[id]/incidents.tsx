@@ -45,7 +45,9 @@ function formatTimestamp(value: string | null | undefined): string | null {
   });
 }
 
-async function fetchIncidents(statusPageUrl: string): Promise<Incident[] | null> {
+async function fetchIncidents(
+  statusPageUrl: string,
+): Promise<Incident[] | null> {
   const url = `${statusPageUrl}/api/v2/incidents.json`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -86,7 +88,10 @@ export type IncidentsProps = {
   apiConfigType?: string;
 };
 
-export async function Incidents({ statusPageUrl, apiConfigType }: IncidentsProps) {
+export async function Incidents({
+  statusPageUrl,
+  apiConfigType,
+}: IncidentsProps) {
   if (apiConfigType !== "atlassian") return null;
   const incidents = await fetchIncidents(statusPageUrl);
   if (!incidents) return null;
@@ -122,7 +127,9 @@ export async function Incidents({ statusPageUrl, apiConfigType }: IncidentsProps
                 <span
                   className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
                 >
-                  {inc.impact === "none" ? "incident" : inc.impact ?? "incident"}
+                  {inc.impact === "none"
+                    ? "incident"
+                    : inc.impact ?? "incident"}
                 </span>
               </div>
               <div className="mt-1 text-muted-foreground text-sm">
