@@ -6,6 +6,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 
 const SUGGESTIONS = [
   "Show me my status pages",
@@ -26,9 +27,12 @@ export function ChatSuggestions({ onSelect }: Props) {
         <SectionDescription>
           Ask about your workspace, draft status reports, or schedule
           maintenance windows.{" "}
-          <span className="text-muted-foreground">
-            Status pages only · more tools soon.
-          </span>
+          <span className="text-muted-foreground/80">
+            Status pages only - more tools soon.
+          </span>{" "}
+          <Badge variant="secondary" className="bg-info/10 text-info">
+            BETA
+          </Badge>
         </SectionDescription>
       </SectionHeader>
       <div className="flex flex-wrap items-center justify-center gap-2">
