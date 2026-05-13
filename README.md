@@ -92,13 +92,37 @@ ghcr.io/openstatushq/openstatus-checker:latest
 
 ### Manual Setup
 
-Shared prerequisites: [Node.js](https://nodejs.org/en/) >= 20.0.0, [pnpm](https://pnpm.io/) >= 10.26.0, [Bun](https://bun.sh/), [Turso CLI](https://docs.turso.tech/quickstart).
+#### Requirements
 
-- **Dashboard** — see [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db, login, troubleshooting).
-- **Web (marketing site)** — `pnpm install`, then `pnpm -w dev:web`.
-- **Status page** — `pnpm install`, then `pnpm -w dev:status-page`.
+- [Node.js](https://nodejs.org/en/) >= 20.0.0
+- [pnpm](https://pnpm.io/) >= 10.26.0
+- [Bun](https://bun.sh/)
+- [Turso CLI](https://docs.turso.tech/quickstart).
 
-The dashboard README is the canonical local-dev guide; per-app READMEs for `web` and `status-page` will follow.
+#### Dashboard
+
+See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db, login, troubleshooting).
+
+#### Status page
+
+1. Install dependencies
+
+`pnpm install`
+
+2. Run the server
+
+`pnpm -w dev:status-page`.
+
+#### Web (marketing site)
+
+1. Install dependencies
+
+`pnpm install`
+
+2. Run the server
+
+`pnpm -w dev:web`.
+
 
 ## Tech Stack
 
