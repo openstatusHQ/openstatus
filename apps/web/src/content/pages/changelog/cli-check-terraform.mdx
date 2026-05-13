@@ -1,0 +1,43 @@
+---
+title: "CLI update: global check command and richer Terraform export"
+description: "Run one-shot global speed checks with `openstatus check` and export more of your workspace to Terraform."
+image: "/assets/changelog/cli-check.png"
+publishedAt: "2026-05-13"
+author: "openstatus"
+category: "cli"
+---
+
+We've shipped **v1.1.0** and **v1.2.0** of the openstatus CLI.
+
+Upgrade with:
+
+```bash
+brew upgrade openstatus
+```
+
+## New: `openstatus check`
+
+A new top-level command runs a one-shot HTTP check against any URL from **28 global regions** — no account or API key required.
+
+```bash
+openstatus check https://openstat.us
+```
+
+Highlights:
+
+- **Live per-region streaming** — results stream in as each region responds, followed by a fastest/slowest/mean summary and a share URL.
+- **`--timing`** — break down DNS, Connection, TLS, TTFB, and Transfer for every region.
+- **`--json`** — structured output with full per-region timing, ready for `jq` pipelines.
+- **curl-style flags** — `-X`, `-H`, `-d` (with `@file` and `@-` stdin support).
+
+## Terraform generate improvements
+
+`openstatus terraform generate` now syncs with **v0.2** of the Terraform provider and covers more of your workspace:
+
+- **Status pages** — emit `access_type`, `auth_email_domains`, `allowed_ip_ranges`, `theme`, `locale`, and `allow_index`.
+- **Component groups** — emit `default_open` on status page component groups.
+- **OpenTelemetry** — emit the `open_telemetry` block on HTTP, TCP, and DNS monitors.
+- **Notifications** — fixes for Microsoft Teams, webhook headers, and `monitor_ids` references.
+- **`--force` flag** plus a `terraform init -upgrade` hint to make re-running easier.
+
+Check out the [CLI documentation](https://docs.openstatus.dev/reference/cli-reference/) for more.
