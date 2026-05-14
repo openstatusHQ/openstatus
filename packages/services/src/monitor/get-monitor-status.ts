@@ -34,6 +34,10 @@ export async function getMonitorStatus(args: {
   });
   const parsed = selectMonitorSchema.parse(record);
 
+  if (parsed.regions.length === 0) {
+    return { id: record.id, regions: [] };
+  }
+
   const rows = await db
     .select()
     .from(monitorStatusTable)

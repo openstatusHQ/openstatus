@@ -21,7 +21,7 @@ export function HoverCardTiming({
   latency: number;
 }) {
   const phasesTotal =
-    Object.values(timing).reduce((acc, v) => acc + v, 0) || latency;
+    Object.values(timing).reduce((acc, v) => acc + v, 0) || latency || 1;
   return (
     <HoverCard openDelay={50} closeDelay={50}>
       <HoverCardTrigger
@@ -73,7 +73,7 @@ export function HoverCardTimingContent({
               <div className="font-mono text-muted-foreground">
                 {`${new Intl.NumberFormat("en-US", {
                   maximumFractionDigits: 2,
-                }).format((value / latency) * 100)}%`}
+                }).format((value / (latency || 1)) * 100)}%`}
               </div>
               <div className="font-mono">
                 {new Intl.NumberFormat("en-US", {

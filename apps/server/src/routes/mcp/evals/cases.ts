@@ -133,7 +133,7 @@ export const cases: EvalCase[] = [
     requiredArgs: ["monitorId"],
   },
   {
-    id: "default.summary_1h",
+    id: "default.summary_1d",
     prompt: "What's the p95 latency on monitor 17 right now?",
     expectedTool: "get_monitor_summary",
     requiredArgs: ["monitorId"],

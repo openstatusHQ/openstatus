@@ -17,7 +17,7 @@ const LIST_PER_PAGE_DEFAULT = 25;
 const LIST_PER_PAGE_MAX = 50;
 
 const LIST_RESPONSE_LOGS_LIMIT_DEFAULT = 25;
-const LIST_RESPONSE_LOGS_LIMIT_MAX = 25;
+const LIST_RESPONSE_LOGS_LIMIT_MAX = 100;
 
 const ListMonitorsInputShape = z.object({
   page: z
@@ -254,7 +254,7 @@ export const getMonitorSummaryTool: AgentTool<
 > = {
   name: "get_monitor_summary",
   description:
-    "Aggregate health metrics for a monitor over a time window: success/degraded/error counts and p50–p99 latency. Default 1h. Pair with get_monitor_status for per-region detail.",
+    "Aggregate health metrics for a monitor over a time window: success/degraded/error counts and p50–p99 latency. Default 1d. Pair with get_monitor_status for per-region detail.",
   scope: "read",
   destructive: false,
   inputSchema: GetMonitorSummaryInputShape,
