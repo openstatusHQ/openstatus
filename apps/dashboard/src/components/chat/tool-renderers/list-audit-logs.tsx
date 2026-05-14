@@ -21,7 +21,7 @@ function getActionBadgeColor(action: string) {
 export function listAuditLogsTable(
   output: Output,
 ): ResultTableData<"action" | "entity" | "actor" | "createdAt"> {
-  const items = output?.items ?? [];
+  const items = output.items;
   return {
     empty: "No audit log entries.",
     columns: [
