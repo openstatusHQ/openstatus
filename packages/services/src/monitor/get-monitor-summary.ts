@@ -62,10 +62,6 @@ function fetchMetrics(
   return pipe(params);
 }
 
-/**
- * Aggregate latency + success/degraded/error counts over a time window.
- * Reads from Tinybird metrics pipes. Workspace-scoped.
- */
 export async function getMonitorSummary(args: {
   ctx: ServiceContext;
   input: GetMonitorSummaryInput;

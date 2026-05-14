@@ -5,10 +5,6 @@ import {
 } from "@openstatus/ui/components/ui/hover-card";
 import { cn } from "@openstatus/ui/lib/utils";
 
-/**
- * Per-phase timings (ms). Same shape used by the response-logs data-table
- * cell, the sheet, and the chat tool renderers.
- */
 export type Timing = {
   dns: number;
   connect: number;

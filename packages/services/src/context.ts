@@ -28,7 +28,6 @@ export type ServiceContext = {
   tb?: OSTinybird;
 };
 
-/** Default Tinybird client — empty token → noop. */
 export const defaultTb = new OSTinybird(process.env.TINY_BIRD_API_KEY ?? "");
 
 // drizzle's `is()` helper is identity-safe across module copies (uses a

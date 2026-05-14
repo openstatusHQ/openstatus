@@ -7,14 +7,6 @@ import {
 } from "@openstatus/ui/components/ui/table";
 import { Fragment, type ReactNode } from "react";
 
-/**
- * Two-column key/value view for chat `get_*` tool results — the
- * descriptive single-record counterpart to `ResultTable` (lists) and
- * `ChangesTable` (diffs). Per-tool descriptors map output to rows whose
- * value side is rendered with `TableCell*` primitives so timestamps,
- * numbers, and booleans get type-aware formatting. Sections render a
- * colspan-2 title row above their rows (mirrors the response-logs sheet).
- */
 export type DetailsRow = {
   label: string;
   value: ReactNode;

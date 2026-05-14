@@ -27,7 +27,6 @@ function isSensitiveHeader(name: string) {
   );
 }
 
-/** Replace values for headers that look like auth/credentials. */
 export function redactSensitiveHeaders(
   headers: Record<string, string> | null,
 ): Record<string, string> {

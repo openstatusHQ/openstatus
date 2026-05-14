@@ -19,10 +19,6 @@ export type GetMonitorStatusResult = {
   regions: MonitorRegionStatus[];
 };
 
-/**
- * Per-region health snapshot for a monitor. Reads from `monitor_status` (DB),
- * filtered to the monitor's currently configured regions. Workspace-scoped.
- */
 export async function getMonitorStatus(args: {
   ctx: ServiceContext;
   input: GetMonitorStatusInput;

@@ -109,20 +109,16 @@ export const cases: EvalCase[] = [
     expectedTool: "update_status_report",
   },
 
-  // SRE-persona: anti-guess for monitor IDs — the LLM must call list_monitors
-  // before referencing "the API monitor" / "our checkout monitor" by name.
   {
     id: "antiguess.monitor_by_name",
     prompt: "How healthy is our checkout monitor?",
     expectedTool: "list_monitors",
   },
-  // Anti-guess for notification IDs.
   {
     id: "antiguess.notification_by_name",
     prompt: "Is the PagerDuty channel still wired up?",
     expectedTool: "list_notifications",
   },
-  // Read-before-write composition: confirm per-region state before drafting.
   {
     id: "compose.status_before_report",
     prompt:
@@ -130,28 +126,24 @@ export const cases: EvalCase[] = [
     expectedTool: "get_monitor_status",
     requiredArgs: ["monitorId"],
   },
-  // Per-region detail call.
   {
     id: "select.monitor_status_by_id",
     prompt: "Which regions is monitor 17 failing in right now?",
     expectedTool: "get_monitor_status",
     requiredArgs: ["monitorId"],
   },
-  // Default time-window: 1h for diagnostic latency lookups.
   {
     id: "default.summary_1h",
     prompt: "What's the p95 latency on monitor 17 right now?",
     expectedTool: "get_monitor_summary",
     requiredArgs: ["monitorId"],
   },
-  // Recent-failures via response logs.
   {
     id: "select.response_logs",
     prompt: "Show me the failing checks for monitor 17 in the last hour.",
     expectedTool: "list_response_logs",
     requiredArgs: ["monitorId"],
   },
-  // List notifications as visibility (not for sending).
   {
     id: "select.list_notifications",
     prompt:

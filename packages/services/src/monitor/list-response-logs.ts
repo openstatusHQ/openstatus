@@ -32,7 +32,6 @@ export type ListResponseLogsResult = {
   nextOffset?: number;
 };
 
-/** Recent HTTP response logs from Tinybird; workspace-scoped, HTTP-only. */
 export async function listResponseLogs(args: {
   ctx: ServiceContext;
   input: ListResponseLogsInput;

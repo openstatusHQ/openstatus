@@ -1,4 +1,3 @@
-// Every descriptor's outputSchema must safeParse what run() returns.
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";

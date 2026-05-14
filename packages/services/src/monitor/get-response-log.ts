@@ -16,11 +16,6 @@ export type ResponseLogDetail = ResponseLogListItem & {
   assertions: string | null;
 };
 
-/**
- * Detail for a single HTTP response log. Reads from Tinybird. Redacts
- * sensitive headers at the service boundary so every caller (RPC, agent,
- * future Slack) inherits the same redaction.
- */
 export async function getResponseLog(args: {
   ctx: ServiceContext;
   input: GetResponseLogInput;

@@ -129,8 +129,6 @@ export const toolRenderers: ToolRendererRegistry = {
     ),
     summary: (o) => `ID ${o.id}`,
   },
-
-  // ── SRE reads ────────────────────────────────────────────────
   list_monitors: {
     renderResult: ({ output }) => (
       <ResultTable {...listMonitorsTable(output)} />
