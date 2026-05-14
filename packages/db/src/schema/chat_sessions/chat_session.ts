@@ -2,7 +2,7 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "../users";
 import { workspace } from "../workspaces";
-import type { ChatStoredMessage } from "./validation";
+import type { ChatStoredMessage } from "./messages";
 
 /**
  * Surrogate-PK row per dashboard chat conversation. Many rows per

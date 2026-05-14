@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import {
   type ChatStoredMessage,
   chatStoredMessagesSchema,
-} from "@openstatus/db/src/schema";
+} from "@openstatus/db/src/schema/chat_sessions/messages";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DefaultChatTransport,
