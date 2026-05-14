@@ -1,0 +1,175 @@
+---
+title: "From Clickops to Chatops"
+description: "Stop clicking. Start chatting. The new openstatus AI chat turns the dashboard into a conversation — with pretty tool cards and an MCP server for your own agents."
+author: "Maximilian Kaske"
+publishedAt: "2026-05-15"
+category: "engineering"
+image: "/assets/posts/from-clickops-to-chatops/chatops.png"
+---
+
+Dashboards are great until you've clicked the same four buttons thirty times this week. The job was always _"tell me which monitors are flaky"_ — not _"navigate three nested tabs to find out"_. So we did the obvious-in-2026 thing: we glued an LLM to our existing service layer and called it Assistant.
+
+It lives at `/chat` in the dashboard. Type. Hit enter. Watch openstatus assistant do the clicking.
+
+Or anywhere else you already chat — the same tools are exposed over [MCP](/tooling/mcp-server), so you can drive openstatus from [Claude Desktop](/guides/connect-openstatus-to-claude-desktop), [Claude Code](/guides/connect-openstatus-to-claude-code), Cursor, ChatGPT, or any other MCP-compatible client. One tool registry, two front doors.
+
+> **PS:** if you're allergic to clicking _and_ chatting, we also have [Terraform](/tooling/terraform) for full GitOps. Clickops · Chatops · GitOps — the trifecta is complete.
+
+## The pitch, in one paragraph
+
+Assistant sits on top of the same service verbs that already power the dashboard, the [API](/tooling/api), and the [MCP server](/tooling/mcp-server). Same workspace scoping. Same [audit log](/blog/audit-humans-and-agents). Same read/write scopes. Just… a chat box. You're not bypassing the product — you're driving it from the passenger seat.
+
+<Image
+  alt="openstatus assistant at /chat showing a conversation with tool calls"
+  src="/assets/posts/from-clickops-to-chatops/chat-assistant.png"
+  width={1600}
+  height={900}
+/>
+
+## What you can ask it
+
+Type the question, watch the tool calls roll in.
+
+- _"Which monitors degraded in the last hour?"_
+- _"Show me the recent response logs for the checkout monitor."_
+- _"Create an incident on the public status page — checkout API is throwing 502s."_
+- _"Resolve it."_
+- _"Schedule maintenance Sunday 02:00–04:00 UTC for the API monitor."_
+
+<Image
+  alt="list_response_logs rendered as a table in chat, with timestamps, regions, status codes, and latencies"
+  src="/assets/posts/from-clickops-to-chatops/chat-tool-list-response-logs.png"
+  width={1200}
+  height={700}
+/>
+
+The model has context for your workspace — your monitors, your status pages, your notifications — so you don't have to feed it IDs. Speak in nouns; the agent figures out the verbs.
+
+## The toolbox
+
+There are seventeen tools today, split into two camps.
+
+**Read tools** fire immediately. No approval needed — they only ever query.
+
+- `list_status_pages` · `list_status_reports` · `list_maintenances`
+- `list_monitors` · `list_notifications` · `list_response_logs` · `list_audit_logs`
+- `get_monitor` · `get_monitor_status` · `get_monitor_summary` · `get_response_log` · `get_audit_log`
+
+**Write tools** always pause on a human-in-the-loop approval card before touching the database.
+
+- `create_status_report` · `add_status_report_update` · `update_status_report` · `resolve_status_report`
+- `create_maintenance`
+
+All seventeen are declared once in `@openstatus/services/agent-tools`. The same registry powers the chat UI **and** the MCP server — shape-equivalence tests keep them honest. We'll add more (notification CRUD, monitor mutations, status-page editing) as we go.
+
+## The pretty part — how a tool call renders
+
+This is the bit we obsessed over.
+
+Every tool call is a collapsible card with three things happening at once.
+
+### 1. A status dot
+
+It pulses while the model is thinking, turns green on success, amber while waiting on your approval, red on error, grey when you've cancelled it.
+
+### 2. A one-line summary
+
+So you skim the conversation instead of reading JSON.
+
+<Image
+  alt="Collapsed list_monitors tool card with a green pulse dot and a one-line summary"
+  src="/assets/posts/from-clickops-to-chatops/chat-tool-part-collapsed.png"
+  width={900}
+  height={120}
+/>
+
+`list_monitors · 12 results`. `get_monitor_summary · 4322 checks · p95 184ms`. `create_status_report · ID 4711`. The summary is per-tool, hand-tuned, optimised for "what would I want to see if I were scrolling past this".
+
+### 3. A rich-vs-raw view toggle
+
+Click the card open and you get two tabs.
+
+The **Rich** tab renders the result as a real React table — the same `ResultTable`, `DetailsTable`, and `ChangesTable` primitives the dashboard uses everywhere else. A monitor row in chat looks similar to a monitor row on the monitors page.
+
+The **Raw** tab shows you the JSON `Parameters` (what the model sent) and `Result` (what it got back). For when you don't trust the pretty version. Or when you're debugging the tool itself. Or when you just want to see what's really under there.
+
+<Grid cols={2}>
+<div>
+
+<Image
+  alt="Expanded list_monitors card in Rich view, rendering monitor rows in a ResultTable"
+  src="/assets/posts/from-clickops-to-chatops/chat-tool-part-rich.png"
+  width={1200}
+  height={600}
+/>
+
+</div>
+<div>
+
+<Image
+  alt="Same list_monitors card in Raw view, showing JSON Parameters and Result blocks"
+  src="/assets/posts/from-clickops-to-chatops/chat-tool-part-raw.png"
+  width={1200}
+  height={600}
+/>
+
+</div>
+</Grid>
+
+We default to Rich. The toggle remembers itself for the next card.
+
+## Human-in-the-loop, but make it keyboard
+
+Every write tool pauses on an **approval card** before committing anything.
+
+The card shows you the change as a _diff_ — not a wall of JSON. Title, status, target page, message: each one a row, each one auditable in your head before you commit. ⌘↵ to apply. Esc to cancel. Or click the buttons if you're a mouse person, we won't judge.
+
+If you cancel, the card writes an `output-denied` part into the transcript with your reason. The model sees it, apologises (sometimes), tries again.
+
+If you approve, the same diff stays in the conversation as the receipt — except now with the new `id` and `createdAt` filled in.
+
+The AI cannot publish anything without explicit human approval. Same pattern as our [Slack agent](/blog/openstatus-slack-agent) — it's earned its keep there, and we're glad to lean on it again.
+
+<Image
+  alt="Approval card for create_status_report with a diff of fields and ⌘↵ / Esc keyboard hints"
+  src="/assets/posts/from-clickops-to-chatops/chat-confirm-box.png"
+  width={1100}
+  height={700}
+/>
+
+## Under the hood
+
+For the engineers in the room — here's the stack.
+
+**Vercel AI SDK** runs the agent loop. We use Claude Sonnet by default; tool parts stream into the UI as they go, so you see the status dot pulse and the summary fill in live.
+
+**One tool registry, two frontends.** Every tool lives in `packages/services/src/agent-tools/`. Each entry has a Zod schema, a service-verb call, and a `scope: 'read' | 'write'` flag. The chat UI consumes the registry over Next.js Edge tRPC. The MCP server consumes the same registry over HTTP. A shape-equivalence test suite asserts that both surfaces see the same inputs and outputs.
+
+**Edge-safe by construction.** All service code avoids `node:*` imports, because the same verbs run on Next.js Edge and on our Hono backend. No "works locally, breaks in production" surprises.
+
+**RBAC scopes.** Read-only API keys see only read tools. Write tools refuse to register for them — not "they see them and 403", they _don't exist in `tools/list`_. Same `requireScope('write')` guard that already gates the V1 API.
+
+**Audit log.** Every successful mutation emits an `audit_log` row inside the same transaction as the write. Your AI sidekick leaves footprints. So do you.
+
+**Per-tool renderers are typed.** The renderer registry in `tool-renderers/index.tsx` is keyed by the `AgentToolName` union — adding a tool to the agent without a matching renderer is a TypeScript error. No silent JSON fallbacks ship to prod by accident.
+
+## Bring your own agent
+
+Don't like our chat UI? That's fine. The exact same tools are exposed over [MCP](/tooling/mcp-server) at `https://api.openstatus.dev/mcp`. Same scope rules. Same audit log. Same shape-equivalence tests keeping it honest.
+
+Step-by-step setup guides:
+
+- [Connect openstatus to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)
+- [Connect openstatus to Claude Code](/guides/connect-openstatus-to-claude-code)
+
+Anything else that speaks MCP — Cursor, ChatGPT custom connectors, Zed, LangChain, your own rig — works the same way.
+
+The chat UI is the reference frontend. The agent layer is the product.
+
+## Try it
+
+Open the dashboard → **Assistant** in the sidebar. Ask it something obvious first (_"list my monitors"_). Then ask it something you'd normally have to click for.
+
+The dashboard you already pay for, now with a mouth. We think you'll like it.
+
+_Try the assistant from your [openstatus dashboard](https://app.openstatus.dev?ref=blog-clickops-to-chatops) — and tell us what you broke._
