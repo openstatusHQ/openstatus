@@ -31,8 +31,8 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
     opts.surface === "dashboard"
       ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
 - Write tools (create_*, update_*, resolve_*, add_*) render a diff card with every input/output field (id, status, message, dates, notify outcome).
-- List tools (list_status_pages, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs) render a table with one row per result.
-- Detail tools (get_monitor, get_monitor_status, get_monitor_summary, get_response_log) render a structured detail card.
+- List tools (list_status_pages, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs) render a table with one row per result.
+- Detail tools (get_monitor, get_monitor_status, get_monitor_summary, get_response_log, get_audit_log) render a structured detail card.
 DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Monitor 12 is healthy in 5/7 regions; failing in gru, fra." / "Incident resolved.") plus an optional next step is enough.`
       : "";
 

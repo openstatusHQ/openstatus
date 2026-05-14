@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 
 import packageJson from "../../../package.json" with { type: "json" };
+import { registerAuditTools } from "./tools/audit";
 import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
 import { registerNotificationTools } from "./tools/notification";
@@ -28,5 +29,6 @@ export function createMcpServer(ctx: ServiceContext): McpServer {
   registerMaintenanceTools(server, ctx);
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);
+  registerAuditTools(server, ctx);
   return server;
 }

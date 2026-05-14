@@ -70,6 +70,47 @@ function DiffLine({
   );
 }
 
+const HIDDEN_FIELDS = new Set([
+  "workspaceId",
+  "createdAt",
+  "updatedAt",
+  "deletedAt",
+]);
+
+/** Update: rows from `changedFields`. Create: keys of `after`. Delete: keys of `before`. */
+export function buildAuditLogChangeRows(input: {
+  before: Record<string, unknown> | null | undefined;
+  after: Record<string, unknown> | null | undefined;
+  changedFields: string[] | null | undefined;
+}): ChangeRow[] {
+  const { before, after, changedFields } = input;
+
+  if (before && after) {
+    if (!changedFields?.length) return [];
+    return changedFields
+      .filter((field) => !HIDDEN_FIELDS.has(field))
+      .map((field) => ({
+        field,
+        before: before[field],
+        after: after[field],
+      }));
+  }
+
+  if (after) {
+    return Object.keys(after)
+      .filter((field) => !HIDDEN_FIELDS.has(field))
+      .map((field) => ({ field, after: after[field] }));
+  }
+
+  if (before) {
+    return Object.keys(before)
+      .filter((field) => !HIDDEN_FIELDS.has(field))
+      .map((field) => ({ field, before: before[field] }));
+  }
+
+  return [];
+}
+
 export function formatValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
   if (value instanceof Date) return value.toISOString();
