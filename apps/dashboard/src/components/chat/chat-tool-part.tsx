@@ -168,11 +168,11 @@ function ToolDisclosure({
       className="not-prose group w-full rounded-xl border"
     >
       <div className="flex items-center gap-2 p-3 text-sm">
-        <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded text-left">
+        <CollapsibleTrigger className="flex flex-1 items-center gap-2 truncate rounded text-left">
           <ToolStateDot state={state} />
           <span className="font-commit-mono font-medium">{toolName}</span>
           {summary ? (
-            <span className="text-muted-foreground">· {summary}</span>
+            <span className="truncate text-muted-foreground">· {summary}</span>
           ) : null}
         </CollapsibleTrigger>
         {open && rich !== undefined ? (

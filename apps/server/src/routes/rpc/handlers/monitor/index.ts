@@ -1,8 +1,7 @@
 import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
-import { tb } from "@/libs/clients";
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
+import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
@@ -19,14 +18,24 @@ import type {
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
-import { NotFoundError } from "@openstatus/services";
-import { deleteMonitor } from "@openstatus/services/monitor";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "@openstatus/services";
+import {
+  type MonitorTimeRange,
+  deleteMonitor,
+  getMonitorStatus,
+  getMonitorSummary,
+  getResponseLog,
+  listResponseLogs,
+} from "@openstatus/services/monitor";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
   MONITOR_DEFAULTS,
-  type TimeRangeKey,
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
@@ -648,43 +657,23 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async getMonitorStatus(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Get the monitor
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-    if (!dbMon) {
-      throw monitorNotFoundError(req.id);
+    try {
+      const result = await getMonitorStatus({
+        ctx: toServiceCtx(rpcCtx),
+        input: { monitorId: Number(req.id) },
+      });
+      const regions: RegionStatus[] = result.regions.map((s) => ({
+        $typeName: "openstatus.monitor.v1.RegionStatus" as const,
+        region: stringToRegion(s.region),
+        status: stringToMonitorStatus(s.status),
+      }));
+      return { id: String(result.id), regions };
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      toConnectError(err);
     }
-
-    // Parse monitor to get configured regions
-    const parsed = selectMonitorSchema.safeParse(dbMon);
-    if (!parsed.success) {
-      throw monitorParseFailedError(req.id);
-    }
-
-    // Get monitor status only for configured regions
-    const monitorStatuses = await db
-      .select()
-      .from(monitorStatusTable)
-      .where(
-        and(
-          eq(monitorStatusTable.monitorId, dbMon.id),
-          inArray(monitorStatusTable.region, parsed.data.regions),
-        ),
-      )
-      .all();
-
-    // Map to proto format
-    const regions: RegionStatus[] = monitorStatuses.map((s) => ({
-      $typeName: "openstatus.monitor.v1.RegionStatus" as const,
-      region: stringToRegion(s.region),
-      status: stringToMonitorStatus(s.status),
-    }));
-
-    return {
-      id: String(dbMon.id),
-      regions,
-    };
   },
 
   async getMonitor(req, ctx) {
@@ -727,14 +716,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           config: { case: "dns", value: dbMonitorToDnsProto(monitorData) },
         };
         break;
-      default: {
-        const _exhaustive: never = monitorData.jobType;
+      default:
         throw monitorTypeMismatchError(
           req.id,
           "http, tcp, or dns",
           monitorData.jobType,
         );
-      }
     }
 
     return {
@@ -745,210 +732,126 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async getMonitorSummary(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Get the monitor
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-    if (!dbMon) {
-      throw monitorNotFoundError(req.id);
-    }
-
-    // Parse monitor data
-    const parsed = selectMonitorSchema.safeParse(dbMon);
-    if (!parsed.success) {
-      throw monitorParseFailedError(req.id);
-    }
-
-    const monitorData = parsed.data;
-    const timeRangeKey = timeRangeToKey(req.timeRange);
     const effectiveTimeRange =
       req.timeRange === TimeRange.TIME_RANGE_UNSPECIFIED
         ? TimeRange.TIME_RANGE_1D
         : req.timeRange;
+    const timeRangeKey: MonitorTimeRange = timeRangeToKey(req.timeRange);
+    const requestedRegions = regionsToStrings(req.regions);
 
-    // Get regions to filter by (use request regions or monitor's configured regions)
-    const regionStrings =
-      req.regions.length > 0
-        ? regionsToStrings(req.regions)
-        : monitorData.regions;
-
-    // Build Tinybird query parameters
-    const queryParams = {
-      monitorId: req.id,
-      regions: regionStrings.length > 0 ? regionStrings : undefined,
-    };
-
-    // Call appropriate Tinybird method based on monitor type and time range
-    const metricsResult = await getMetricsByTypeAndRange(
-      monitorData.jobType,
-      timeRangeKey,
-      queryParams,
-    );
-
-    if (!metricsResult || metricsResult.data.length === 0) {
-      // Return empty response if no data
+    try {
+      const result = await getMonitorSummary({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          monitorId: Number(req.id),
+          timeRange: timeRangeKey,
+          regions: requestedRegions.length > 0 ? requestedRegions : undefined,
+        },
+      });
       return {
         $typeName: "openstatus.monitor.v1.GetMonitorSummaryResponse" as const,
         id: req.id,
-        lastPingAt: "",
-        totalSuccessful: BigInt(0),
-        totalDegraded: BigInt(0),
-        totalFailed: BigInt(0),
-        p50: BigInt(0),
-        p75: BigInt(0),
-        p90: BigInt(0),
-        p95: BigInt(0),
-        p99: BigInt(0),
+        lastPingAt: result.lastPingAt,
+        totalSuccessful: BigInt(result.totalSuccessful),
+        totalDegraded: BigInt(result.totalDegraded),
+        totalFailed: BigInt(result.totalFailed),
+        p50: BigInt(result.p50),
+        p75: BigInt(result.p75),
+        p90: BigInt(result.p90),
+        p95: BigInt(result.p95),
+        p99: BigInt(result.p99),
         timeRange: effectiveTimeRange,
-        regions: stringsToRegions(regionStrings),
+        regions: stringsToRegions(result.regions),
       } satisfies GetMonitorSummaryResponse;
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      if (err instanceof ValidationError) {
+        throw monitorTypeMismatchError(req.id, "http, tcp, or dns", "other");
+      }
+      toConnectError(err);
     }
-
-    const metrics = metricsResult.data[0];
-
-    // Format last timestamp to RFC 3339
-    const lastPingAt = metrics.lastTimestamp
-      ? new Date(metrics.lastTimestamp).toISOString()
-      : "";
-
-    return {
-      $typeName: "openstatus.monitor.v1.GetMonitorSummaryResponse" as const,
-      id: req.id,
-      lastPingAt,
-      totalSuccessful: BigInt(metrics.success ?? 0),
-      totalDegraded: BigInt(metrics.degraded ?? 0),
-      totalFailed: BigInt(metrics.error ?? 0),
-      p50: BigInt(Math.round(metrics.p50Latency ?? 0)),
-      p75: BigInt(Math.round(metrics.p75Latency ?? 0)),
-      p90: BigInt(Math.round(metrics.p90Latency ?? 0)),
-      p95: BigInt(Math.round(metrics.p95Latency ?? 0)),
-      p99: BigInt(Math.round(metrics.p99Latency ?? 0)),
-      timeRange: effectiveTimeRange,
-      regions: stringsToRegions(regionStrings),
-    } satisfies GetMonitorSummaryResponse;
   },
 
   async listMonitorHTTPResponseLogs(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    if (!rpcCtx.workspace.limits["response-logs"]) {
-      throw responseLogsNotEnabledError();
-    }
-
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-    if (!dbMon) {
-      throw monitorNotFoundError(req.id);
-    }
-
-    if (dbMon.jobType !== "http") {
-      throw monitorTypeMismatchError(req.id, "http", dbMon.jobType);
-    }
-
     const limit = Math.min(Math.max(req.limit ?? 25, 1), 100);
     const offset = Math.max(req.offset ?? 0, 0);
 
-    // Fetch one extra row so the response can report whether another page exists.
-    const result = await tb.httpListBiweekly({
-      monitorId: req.id,
-      fromDate: req.fromTimestamp ? Number(req.fromTimestamp) : undefined,
-      toDate: req.toTimestamp ? Number(req.toTimestamp) : undefined,
-      limit: limit + 1,
-      offset,
-    });
-    const logs = result.data.slice(0, limit).map(toHTTPResponseLogListItem);
-    const hasMore = result.data.length > limit;
-
-    const pagination: HTTPResponseLogPagination = {
-      $typeName: "openstatus.monitor.v1.HTTPResponseLogPagination",
-      limit,
-      offset,
-      hasMore,
-      nextOffset: hasMore ? offset + limit : undefined,
-    };
-
-    return {
-      $typeName:
-        "openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse" as const,
-      logs,
-      pagination,
-    } satisfies ListMonitorHTTPResponseLogsResponse;
+    try {
+      const result = await listResponseLogs({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          monitorId: Number(req.id),
+          fromTimestamp: req.fromTimestamp
+            ? Number(req.fromTimestamp)
+            : undefined,
+          toTimestamp: req.toTimestamp ? Number(req.toTimestamp) : undefined,
+          limit,
+          offset,
+        },
+      });
+      const logs = result.logs.map(toHTTPResponseLogListItem);
+      const pagination: HTTPResponseLogPagination = {
+        $typeName: "openstatus.monitor.v1.HTTPResponseLogPagination",
+        limit: result.limit,
+        offset: result.offset,
+        hasMore: result.hasMore,
+        nextOffset: result.nextOffset,
+      };
+      return {
+        $typeName:
+          "openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse" as const,
+        logs,
+        pagination,
+      } satisfies ListMonitorHTTPResponseLogsResponse;
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw monitorNotFoundError(req.id);
+      }
+      if (err instanceof ForbiddenError) {
+        throw responseLogsNotEnabledError();
+      }
+      if (err instanceof ValidationError) {
+        const jobType =
+          (await getMonitorById(Number(req.id), rpcCtx.workspace.id))
+            ?.jobType ?? "unknown";
+        throw monitorTypeMismatchError(req.id, "http", jobType);
+      }
+      toConnectError(err);
+    }
   },
 
   async getMonitorHTTPResponseLog(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    if (!rpcCtx.workspace.limits["response-logs"]) {
-      throw responseLogsNotEnabledError();
+    try {
+      const log = await getResponseLog({
+        ctx: toServiceCtx(rpcCtx),
+        input: { monitorId: Number(req.id), logId: req.logId },
+      });
+      return {
+        $typeName:
+          "openstatus.monitor.v1.GetMonitorHTTPResponseLogResponse" as const,
+        log: toHTTPResponseLogDetail(log),
+      };
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        if (err.entity === "response_log") {
+          throw responseLogNotFoundError(req.id, req.logId);
+        }
+        throw monitorNotFoundError(req.id);
+      }
+      if (err instanceof ForbiddenError) {
+        throw responseLogsNotEnabledError();
+      }
+      if (err instanceof ValidationError) {
+        const jobType =
+          (await getMonitorById(Number(req.id), rpcCtx.workspace.id))
+            ?.jobType ?? "unknown";
+        throw monitorTypeMismatchError(req.id, "http", jobType);
+      }
+      toConnectError(err);
     }
-
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-    if (!dbMon) {
-      throw monitorNotFoundError(req.id);
-    }
-
-    if (dbMon.jobType !== "http") {
-      throw monitorTypeMismatchError(req.id, "http", dbMon.jobType);
-    }
-
-    const result = await tb.httpGetBiweekly({
-      id: req.logId,
-      monitorId: req.id,
-    });
-    const log = result.data[0];
-
-    if (!log) {
-      throw responseLogNotFoundError(req.id, req.logId);
-    }
-
-    return {
-      $typeName:
-        "openstatus.monitor.v1.GetMonitorHTTPResponseLogResponse" as const,
-      log: toHTTPResponseLogDetail(log),
-    };
   },
 };
-
-/**
- * Get metrics from Tinybird based on monitor type and time range.
- */
-async function getMetricsByTypeAndRange(
-  jobType: string,
-  timeRange: TimeRangeKey,
-  params: { monitorId: string; regions?: string[] },
-) {
-  switch (jobType) {
-    case "http":
-      switch (timeRange) {
-        case "1d":
-          return tb.httpMetricsDaily(params);
-        case "7d":
-          return tb.httpMetricsWeekly(params);
-        case "14d":
-          return tb.httpMetricsBiweekly(params);
-      }
-      break;
-    case "tcp":
-      switch (timeRange) {
-        case "1d":
-          return tb.tcpMetricsDaily(params);
-        case "7d":
-          return tb.tcpMetricsWeekly(params);
-        case "14d":
-          return tb.tcpMetricsBiweekly(params);
-      }
-      break;
-    case "dns":
-      switch (timeRange) {
-        case "1d":
-          return tb.dnsMetricsDaily(params);
-        case "7d":
-          return tb.dnsMetricsWeekly(params);
-        case "14d":
-          return tb.dnsMetricsBiweekly(params);
-      }
-      break;
-  }
-  return null;
-}

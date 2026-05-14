@@ -7,25 +7,6 @@ import {
 } from "@openstatus/proto/monitor/v1";
 import { stringToRegion } from "./converters";
 
-const REDACTED = "[redacted]";
-const SENSITIVE_HEADER_NAMES = new Set([
-  "authorization",
-  "cookie",
-  "set-cookie",
-  "proxy-authorization",
-  "x-api-key",
-  "x-auth-token",
-]);
-const SENSITIVE_HEADER_PARTS = [
-  "auth",
-  "cookie",
-  "credential",
-  "key",
-  "secret",
-  "session",
-  "token",
-];
-
 type TinybirdTiming = {
   dns: number;
   connect: number;
@@ -51,28 +32,10 @@ type TinybirdHTTPResponseLogDetail = TinybirdHTTPResponseLogListItem & {
   url: string;
   error: boolean;
   message: string | null;
-  headers: Record<string, string> | null;
+  /** Already redacted by the service layer. */
+  headers: Record<string, string>;
   assertions: string | null;
 };
-
-function isSensitiveHeader(name: string) {
-  const normalized = name.toLowerCase();
-  return (
-    SENSITIVE_HEADER_NAMES.has(normalized) ||
-    SENSITIVE_HEADER_PARTS.some((part) => normalized.includes(part))
-  );
-}
-
-export function redactSensitiveHeaders(headers: Record<string, string> | null) {
-  if (!headers) return {};
-
-  return Object.fromEntries(
-    Object.entries(headers).map(([name, value]) => [
-      name,
-      isSensitiveHeader(name) ? REDACTED : value,
-    ]),
-  );
-}
 
 function toHTTPResponseLogRequestStatus(
   status: TinybirdHTTPResponseLogListItem["requestStatus"],
@@ -144,7 +107,7 @@ export function toHTTPResponseLogDetail(
     url: log.url,
     error: log.error,
     message: log.message ?? undefined,
-    headers: redactSensitiveHeaders(log.headers),
+    headers: log.headers,
     assertions: log.assertions ?? undefined,
   };
 }

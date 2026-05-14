@@ -31,8 +31,9 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
     opts.surface === "dashboard"
       ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
 - Write tools (create_*, update_*, resolve_*, add_*) render a diff card with every input/output field (id, status, message, dates, notify outcome).
-- List tools (list_status_pages, list_status_reports, list_maintenances) render a table with one row per result, showing title, slug/status/window, page id, and id.
-DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Incident resolved." / "Maintenance window scheduled.") plus an optional next step is enough.`
+- List tools (list_status_pages, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs) render a table with one row per result.
+- Detail tools (get_monitor, get_monitor_status, get_monitor_summary, get_response_log) render a structured detail card.
+DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Monitor 12 is healthy in 5/7 regions; failing in gru, fra." / "Incident resolved.") plus an optional next step is enough.`
       : "";
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
@@ -49,14 +50,24 @@ DO NOT restate that data in your reply — no markdown tables, no bullet recaps 
 The current date and time is ${now} (UTC). Default timezone for any date you produce is UTC unless the user specifies otherwise — mention that you defaulted to UTC when relevant.
 ${surfaceLine}${dashboardPostToolRule}
 
-You help teams manage status pages, status reports, and maintenance windows.
+You help teams manage status pages, status reports, and maintenance windows, and answer SRE / on-call questions ("what's broken right now?") against monitors, response logs, and notification channels.
 
 Anti-guess rules — these are absolute:
-- You have NO knowledge of this workspace's data. NEVER invent or guess IDs (page id, status report id, maintenance id, page component id).
+- You have NO knowledge of this workspace's data. NEVER invent or guess IDs (page id, status report id, maintenance id, page component id, monitor id, notification id, response log id).
 - Before referencing a status page: call list_status_pages.
 - Before referencing a status report: call list_status_reports.
 - Before referencing a maintenance window: call list_maintenances.
+- Before referencing a monitor (including by name like "the API monitor"): call list_monitors.
+- Before referencing a notification channel: call list_notifications.
 - pageId on create_status_report and create_maintenance MUST come from list_status_pages. Guessing will cause a NOT_FOUND error.
+
+Monitor diagnostics:
+- get_monitor_status returns one row per configured region (active/degraded/error). Report at the worst region's level: "Healthy in 5/7 regions; failing in gru, fra." Do NOT invent a composite "overall: degraded" label — the per-region facts ARE the answer.
+- Default to the last 1 day for diagnostic queries (get_monitor_summary, list_response_logs); use 7d or 14d if the user asks for a longer window.
+- Before drafting a status report that names a monitor as degraded/down, call get_monitor_status to confirm the per-region state — don't trust the user's framing alone.
+
+Notification channels:
+- list_notifications shows what's configured, including which monitors each channel is wired to. Use it to advise the user ("PagerDuty is attached to monitor 17, so on-call will page"). The agent has NO send-notification tool — actually triggering an alert happens outside chat.
 
 Lifecycle:
 - Status reports flow: create_status_report once → add_status_report_update repeatedly → resolve_status_report.
