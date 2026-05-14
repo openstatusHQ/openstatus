@@ -53,6 +53,14 @@
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
     },
+    "./chat-session": {
+      "import": "./src/chat-session/index.ts",
+      "types": "./src/chat-session/index.ts"
+    },
+    "./agent-tools": {
+      "import": "./src/agent-tools/index.ts",
+      "types": "./src/agent-tools/index.ts"
+    },
     "./import": {
       "import": "./src/import/index.ts",
       "types": "./src/import/index.ts"
@@ -95,7 +103,8 @@
     }
   },
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@openstatus/assertions": "workspace:*",

@@ -105,6 +105,16 @@ pnpm test
 -   **Code Generation:** The project uses `drizzle-kit` for database schema migrations.
 -   **API:** The backend API is built using Hono and tRPC. The API is documented using OpenAPI.
 
+## Type Cast Discipline
+
+`as unknown as X`, `as never`, and `as any` are sometimes unavoidable — usually at boundaries with external SDKs (AI SDK, third-party libs) or at registry-style dispatch where TypeScript can't link a runtime string to a literal-keyed map. When you need one:
+
+-   **Centralize the cast in a named helper.** Don't scatter the same cast across call sites. Wrap it in a small function whose name describes the intent (`asUIMessages`, `findRenderer`, `renderToolDraft`).
+-   **Comment the runtime guarantee.** Above the helper, write one or two lines explaining *why the cast is safe at runtime* (e.g. "the persisted shape is validated on write by `storedMessageSchema`, so reads return SDK-conforming rows"). Future readers can verify the invariant or notice when it breaks.
+-   **Examples:** `apps/dashboard/src/components/chat/use-chat-session.ts` (`asUIMessages`); `apps/dashboard/src/components/chat/tool-renderers/index.tsx` (`renderToolDraft` / `renderToolResult` / `summarizeToolOutput`). Both eliminate scattered casts in the consuming components.
+
+A scattered `as never` is usually a missing helper.
+
 ## Services & Audit Log Pattern
 
 All workspace-scoped business logic lives in `packages/services` — **not** in tRPC routers. Routers stay thin: validate input, call a service verb, map errors. This keeps logic reusable across tRPC, Hono, and background jobs, and keeps it Edge-safe (the dashboard runs tRPC on Next.js Edge, so service code must avoid `node:*` imports).

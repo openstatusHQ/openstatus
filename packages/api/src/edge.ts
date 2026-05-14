@@ -1,4 +1,5 @@
 import { auditLogRouter } from "./router/auditLog";
+import { chatSessionRouter } from "./router/chatSession";
 import { checkerRouter } from "./router/checker";
 import { domainRouter } from "./router/domain";
 import { feedbackRouter } from "./router/feedback";
@@ -44,4 +45,5 @@ export const edgeRouter = createTRPCRouter({
   privateLocation: privateLocationRouter,
   import: importRouter,
   auditLog: auditLogRouter,
+  chatSession: chatSessionRouter,
 });

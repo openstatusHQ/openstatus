@@ -477,6 +477,13 @@
       "when": 1778179053701,
       "tag": "0067_grey_hellfire_club",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "6",
+      "when": 1778310822215,
+      "tag": "0068_smooth_spacker_dave",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,12 @@ faq:
     answer: "Yes. All paid plans are available with monthly or annual billing. Choose annual billing to get 2 months free — that's Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo). You can switch between billing cycles at any time."
   - question: "Can I self-host openstatus?"
     answer: "Yes. Openstatus is fully open source and can be self-hosted using its 8.5MB Docker image. You can also deploy private monitoring locations behind your firewall for internal services. The source code is available on GitHub."
+  - question: "Does openstatus have an API?"
+    answer: "Yes. Openstatus exposes a typed JSON-over-HTTP API powered by ConnectRPC, with a published OpenAPI spec at api.openstatus.dev/openapi. Every action in the dashboard — managing monitors, status pages, status reports, maintenance windows, and notification channels — is reachable from the API. The same API key works across the API, CLI, Node SDK, Terraform provider, and MCP server, and every mutation lands in the audit log."
+  - question: "Can I manage openstatus from Claude or ChatGPT?"
+    answer: "Yes. Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp that connects Claude Desktop, ChatGPT, Cursor, and any MCP-compatible client to your workspace. The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every mutation tool requires the assistant to explicitly choose whether to notify subscribers, and every call is recorded in the audit log."
+  - question: "Can I manage monitors as code?"
+    answer: "Yes. Openstatus offers two ways to treat monitoring as code: a CLI with YAML config that lives in your repo (`openstatus monitors apply`), and a Terraform provider for HCL-managed infrastructure. Run `openstatus terraform generate` from the CLI to bootstrap an HCL file from an existing workspace."
 ---
 
 <div className="space-x-2">
@@ -78,6 +84,17 @@ Monitor your endpoints from 28 regions across multiple clouds. Get alerted on Sl
 - Alerts on **Slack**, **Discord**, **PagerDuty**, email, webhooks, ...
 
 Read more about [uptime monitoring](/uptime-monitoring).
+
+## Managing openstatus — for humans and agents
+
+Every action in the dashboard is reachable programmatically. One API key, four ways in:
+
+- **[CLI](/tooling/cli)** — manage from your terminal
+- **[API](/tooling/api)** — typed HTTP endpoints with an [OpenAPI spec](https://api.openstatus.dev/openapi)
+- **[MCP server](/tooling/mcp-server)** — let Claude, ChatGPT, or Cursor run your monitoring
+- **[Terraform provider](/tooling/terraform)** — version monitors as HCL
+
+Read more about our [tooling](/tooling).
 
 ---
 
@@ -213,5 +230,32 @@ Yes. Openstatus is fully open source and can be self-hosted using its **8.5MB Do
 - [Self-hosting the status page only](https://docs.openstatus.dev/guides/self-host-status-page-only/)
 
 The source code is available on [GitHub](https://openstatus.dev/github).
+
+</Details>
+
+<Details summary="Does openstatus have an API?">
+
+Yes. Openstatus exposes a typed **JSON-over-HTTP API** powered by [ConnectRPC](/blog/migrating-from-zod-openapi-to-connectrpc), with a published [OpenAPI spec](https://api.openstatus.dev/openapi).
+
+Every action in the dashboard — managing monitors, status pages, status reports, maintenance windows, and notification channels — is reachable from the API. The same API key works across the [API](/tooling/api), [CLI](/tooling/cli), Node SDK, [Terraform provider](/tooling/terraform), and [MCP server](/tooling/mcp-server), and every mutation lands in the audit log.
+
+</Details>
+
+<Details summary="Can I manage openstatus from Claude or ChatGPT?">
+
+Yes. Openstatus ships a remote [MCP server](/tooling/mcp-server) at `api.openstatus.dev/mcp` that connects **Claude Desktop**, **ChatGPT**, **Cursor**, and any [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace.
+
+The assistant can list status pages, create and resolve status reports, and schedule maintenance windows. Every mutation tool requires the assistant to explicitly choose whether to notify subscribers — models can't quietly fan out an alert — and every call is recorded in the audit log under `actor_type = 'mcp'`.
+
+</Details>
+
+<Details summary="Can I manage monitors as code?">
+
+Yes. Openstatus offers two ways to treat monitoring as code:
+
+- **YAML + [CLI](/tooling/cli)** — keep your monitor configuration in your repo and sync with `openstatus monitors apply`. Lighter to adopt, ships with a GitHub Action for CI/CD.
+- **[Terraform provider](/tooling/terraform)** — for teams already managing infrastructure in HCL. Same plan-and-apply lifecycle as the rest of your stack.
+
+Already have monitors in the dashboard? Run `openstatus terraform generate` from the CLI to bootstrap an HCL file with cross-references and import blocks — no hand-writing required.
 
 </Details>
