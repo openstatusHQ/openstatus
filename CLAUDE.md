@@ -105,6 +105,17 @@ pnpm test
 -   **Code Generation:** The project uses `drizzle-kit` for database schema migrations.
 -   **API:** The backend API is built using Hono and tRPC. The API is documented using OpenAPI.
 
+## Comment Discipline
+
+Default to writing no comments. The code and identifiers should explain *what* — the reader can see that. Only write a comment when the *why* would not be obvious from reading the code: a non-obvious invariant, a workaround for a specific bug, a runtime guarantee that justifies a cast, a constraint imposed from outside this file.
+
+-   **Keep them to 1 short line where possible**, 3 lines max. Never write multi-paragraph JSDoc blocks.
+-   **Strip these every time:** restating what the code does, naming the caller / surface that uses the helper, history ("added for X", "used by the Y flow"), and PR/task context. That belongs in commit messages, not source.
+-   **Keep these:** the WHY behind a non-obvious choice, an invariant that callers must uphold, a `// safe because …` line above an unavoidable cast, a `// workaround: <bug>` for a known issue.
+-   **JSDoc:** allowed on exported symbols when the type signature alone is ambiguous — but one sentence, not a tutorial. Don't enumerate every branch of a function in prose.
+
+If you find yourself writing a comment that explains *what just changed* or *what you did*, delete it.
+
 ## Type Cast Discipline
 
 `as unknown as X`, `as never`, and `as any` are sometimes unavoidable — usually at boundaries with external SDKs (AI SDK, third-party libs) or at registry-style dispatch where TypeScript can't link a runtime string to a literal-keyed map. When you need one:

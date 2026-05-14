@@ -14,10 +14,12 @@ import { addStatusReportUpdateChanges } from "./add-status-report-update";
 import { createMaintenanceChanges } from "./create-maintenance";
 import { createStatusReportChanges } from "./create-status-report";
 import { DetailsTable } from "./details-table";
+import { getAuditLogChanges } from "./get-audit-log";
 import { getMonitorDetails } from "./get-monitor";
 import { getMonitorStatusTable } from "./get-monitor-status";
 import { getMonitorSummaryDetails } from "./get-monitor-summary";
 import { getResponseLogDetails } from "./get-response-log";
+import { listAuditLogsTable } from "./list-audit-logs";
 import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
 import { listNotificationsTable } from "./list-notifications";
@@ -173,6 +175,18 @@ export const toolRenderers: ToolRendererRegistry = {
       <DetailsTable {...getResponseLogDetails(input, output)} />
     ),
     summary: (o) => (o.id ? `log ${o.id}` : undefined),
+  },
+  list_audit_logs: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listAuditLogsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  get_audit_log: {
+    renderResult: ({ output }) => (
+      <ChangesTable changes={getAuditLogChanges(output)} />
+    ),
+    summary: (o) => `${o.action} · #${o.id}`,
   },
 };
 

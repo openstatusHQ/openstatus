@@ -76,7 +76,7 @@ describe("MCP transport", () => {
     expect(res.status).toBe(401);
   });
 
-  test("tools/list returns the 15 registered tools", async () => {
+  test("tools/list returns the 17 registered tools", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "tools/list" }));
     expect(res.status).toBe(200);
@@ -87,10 +87,12 @@ describe("MCP transport", () => {
       "add_status_report_update",
       "create_maintenance",
       "create_status_report",
+      "get_audit_log",
       "get_monitor",
       "get_monitor_status",
       "get_monitor_summary",
       "get_response_log",
+      "list_audit_logs",
       "list_maintenances",
       "list_monitors",
       "list_notifications",
@@ -183,7 +185,7 @@ describe("MCP transport", () => {
         }[];
       }
     ).tools;
-    expect(tools).toHaveLength(15);
+    expect(tools).toHaveLength(17);
     for (const tool of tools) {
       expect(tool.description?.length ?? 0).toBeGreaterThan(40);
       expect(tool.inputSchema).toBeDefined();

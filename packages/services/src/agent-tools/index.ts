@@ -1,5 +1,6 @@
 import type { z } from "zod";
 
+import { getAuditLogTool, listAuditLogsTool } from "./audit";
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 import {
   getMonitorStatusTool,
@@ -20,6 +21,7 @@ import {
 } from "./status-report";
 import type { AnyAgentTool } from "./types";
 
+export { getAuditLogTool, listAuditLogsTool } from "./audit";
 export {
   createMaintenanceTool,
   listMaintenancesTool,
@@ -79,6 +81,8 @@ export const agentTools = {
   list_response_logs: listResponseLogsTool,
   get_response_log: getResponseLogTool,
   list_notifications: listNotificationsTool,
+  list_audit_logs: listAuditLogsTool,
+  get_audit_log: getAuditLogTool,
 } satisfies Record<string, AnyAgentTool>;
 
 /**
