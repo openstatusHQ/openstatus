@@ -139,19 +139,7 @@ function ToolDisclosure({
   const summary =
     summarizeToolOutput(toolName, part.output) ??
     (state === "output-denied" ? "Cancelled" : undefined);
-  // Open by default when a rich renderer has data. During streaming the tool
-  // mounts with `output === undefined` (so `rich` is undefined) — auto-open
-  // on the first transition to defined, but only once, so a user-driven close
-  // afterwards isn't reverted by subsequent output chunks.
-  const richDefined = rich !== undefined;
-  const [open, setOpen] = useState(richDefined);
-  const hasAutoOpened = useRef(richDefined);
-  useEffect(() => {
-    if (!hasAutoOpened.current && richDefined) {
-      hasAutoOpened.current = true;
-      setOpen(true);
-    }
-  }, [richDefined]);
+  const [open, setOpen] = useState(false);
   // Gate the height animation behind a post-mount flag so a tool that mounts
   // already-open doesn't play the open animation on first paint.
   const [mounted, setMounted] = useState(false);
