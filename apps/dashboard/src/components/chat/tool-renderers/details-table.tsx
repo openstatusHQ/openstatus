@@ -1,0 +1,64 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@openstatus/ui/components/ui/table";
+import { Fragment, type ReactNode } from "react";
+
+export type DetailsRow = {
+  label: string;
+  value: ReactNode;
+};
+
+export type DetailsSection = {
+  title?: string;
+  rows: DetailsRow[];
+};
+
+export type DetailsTableData = {
+  sections: DetailsSection[];
+  empty?: string;
+};
+
+export function DetailsTable({ sections, empty }: DetailsTableData) {
+  const total = sections.reduce((acc, s) => acc + s.rows.length, 0);
+  if (total === 0) {
+    return (
+      <div className="rounded-md border bg-background p-3 text-muted-foreground text-sm">
+        {empty ?? "No details to show."}
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-md border bg-background">
+      <Table>
+        <TableBody>
+          {sections.map((section, sIdx) => (
+            <Fragment key={section.title ?? sIdx}>
+              {section.title ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableHead colSpan={2}>{section.title}</TableHead>
+                </TableRow>
+              ) : null}
+              {section.rows.map((row) => (
+                <TableRow
+                  key={`${sIdx}-${row.label}`}
+                  className="hover:bg-transparent"
+                >
+                  <TableHead className="w-1/3 border-r bg-muted/40 font-mono text-muted-foreground">
+                    {row.label}
+                  </TableHead>
+                  <TableCell className="whitespace-normal break-words font-mono">
+                    {row.value}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

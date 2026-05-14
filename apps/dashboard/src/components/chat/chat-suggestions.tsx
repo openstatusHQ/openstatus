@@ -9,8 +9,8 @@ import {
 import { Badge } from "@openstatus/ui/components/ui/badge";
 
 const SUGGESTIONS = [
-  "Show me my status pages",
-  "What status reports are open?",
+  "List all my monitors",
+  "Are any status reports unresolved?",
   "Draft a status report",
   "Schedule a maintenance window",
 ];
@@ -25,10 +25,10 @@ export function ChatSuggestions({ onSelect }: Props) {
       <SectionHeader className="max-w-2xl text-center">
         <SectionTitle>openstatus assistant</SectionTitle>
         <SectionDescription>
-          Ask about your workspace, draft status reports, or schedule
-          maintenance windows.{" "}
+          Ask about your workspace, draft status reports, or debug your failing
+          monitors.{" "}
           <span className="text-muted-foreground/80">
-            Status pages only - more tools soon.
+            Test it out and share your feedback.
           </span>{" "}
           <Badge variant="secondary" className="bg-info/10 text-info">
             BETA

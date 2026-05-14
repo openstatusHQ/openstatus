@@ -13,7 +13,15 @@ import {
 import { addStatusReportUpdateChanges } from "./add-status-report-update";
 import { createMaintenanceChanges } from "./create-maintenance";
 import { createStatusReportChanges } from "./create-status-report";
+import { DetailsTable } from "./details-table";
+import { getMonitorDetails } from "./get-monitor";
+import { getMonitorStatusTable } from "./get-monitor-status";
+import { getMonitorSummaryDetails } from "./get-monitor-summary";
+import { getResponseLogDetails } from "./get-response-log";
 import { listMaintenancesTable } from "./list-maintenances";
+import { listMonitorsTable } from "./list-monitors";
+import { listNotificationsTable } from "./list-notifications";
+import { listResponseLogsTable } from "./list-response-logs";
 import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
 import { resolveStatusReportChanges } from "./resolve-status-report";
@@ -120,6 +128,51 @@ export const toolRenderers: ToolRendererRegistry = {
       />
     ),
     summary: (o) => `ID ${o.id}`,
+  },
+  list_monitors: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listMonitorsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  list_notifications: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listNotificationsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  list_response_logs: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listResponseLogsTable(output)} />
+    ),
+    summary: (o) =>
+      `${o.logs.length} log${o.logs.length === 1 ? "" : "s"}${o.hasMore ? " (more available)" : ""}`,
+  },
+  get_monitor: {
+    renderResult: ({ input, output }) => (
+      <DetailsTable {...getMonitorDetails(input, output)} />
+    ),
+    summary: (o) => `ID ${o.id}`,
+  },
+  get_monitor_status: {
+    renderResult: ({ output }) => (
+      <ResultTable {...getMonitorStatusTable(output)} />
+    ),
+    summary: (o) =>
+      `${o.regions.length} region${o.regions.length === 1 ? "" : "s"}`,
+  },
+  get_monitor_summary: {
+    renderResult: ({ input, output }) => (
+      <DetailsTable {...getMonitorSummaryDetails(input, output)} />
+    ),
+    summary: (o) =>
+      `${o.totalSuccessful + o.totalDegraded + o.totalFailed} checks · p95 ${o.p95}ms`,
+  },
+  get_response_log: {
+    renderResult: ({ input, output }) => (
+      <DetailsTable {...getResponseLogDetails(input, output)} />
+    ),
+    summary: (o) => (o.id ? `log ${o.id}` : undefined),
   },
 };
 

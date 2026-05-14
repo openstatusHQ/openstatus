@@ -167,46 +167,64 @@ function ToolDisclosure({
       onOpenChange={setOpen}
       className="not-prose group w-full rounded-xl border"
     >
-      <div className="flex items-center gap-2 p-3 text-sm">
-        <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded text-left">
+      <CollapsibleTrigger asChild>
+        <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen((o) => !o);
+            }
+          }}
+          className="flex w-full cursor-pointer items-center gap-2 rounded-xl p-3 text-left text-sm"
+        >
           <ToolStateDot state={state} />
           <span className="font-commit-mono font-medium">{toolName}</span>
-          {summary ? (
-            <span className="text-muted-foreground">· {summary}</span>
+          <span className="flex-1 truncate text-muted-foreground">
+            {summary ? `· ${summary}` : null}
+          </span>
+          {rich !== undefined ? (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              className={cn(!open && "invisible")}
+              aria-hidden={!open}
+            >
+              <Tabs
+                value={view}
+                onValueChange={(v) => setView(v as "rich" | "raw")}
+              >
+                <TabsList className="h-6 p-[2px]">
+                  <TabsTrigger
+                    value="rich"
+                    aria-label="Rich view"
+                    tabIndex={open ? 0 : -1}
+                    className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
+                  >
+                    <TableIcon />
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="raw"
+                    aria-label="Raw view"
+                    tabIndex={open ? 0 : -1}
+                    className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
+                  >
+                    <BracesIcon />
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           ) : null}
-        </CollapsibleTrigger>
-        {open && rich !== undefined ? (
-          <Tabs
-            value={view}
-            onValueChange={(v) => setView(v as "rich" | "raw")}
-          >
-            <TabsList className="h-6 p-[2px]">
-              <TabsTrigger
-                value="rich"
-                aria-label="Rich view"
-                className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
-              >
-                <TableIcon />
-              </TabsTrigger>
-              <TabsTrigger
-                value="raw"
-                aria-label="Raw view"
-                className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
-              >
-                <BracesIcon />
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        ) : null}
-        <CollapsibleTrigger
-          aria-label={open ? "Collapse" : "Expand"}
-          className="inline-flex size-6 items-center justify-center rounded text-muted-foreground hover:text-foreground"
-        >
           <ChevronDownIcon
-            className={cn("size-4 transition-transform", open && "rotate-180")}
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              open && "rotate-180",
+            )}
           />
-        </CollapsibleTrigger>
-      </div>
+        </div>
+      </CollapsibleTrigger>
       <CollapsibleContent
         data-animate={mounted}
         className={cn(

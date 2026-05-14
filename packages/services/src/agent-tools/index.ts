@@ -1,6 +1,15 @@
 import type { z } from "zod";
 
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
+import {
+  getMonitorStatusTool,
+  getMonitorSummaryTool,
+  getMonitorTool,
+  getResponseLogTool,
+  listMonitorsTool,
+  listResponseLogsTool,
+} from "./monitor";
+import { listNotificationsTool } from "./notification";
 import { listStatusPagesTool } from "./page";
 import {
   addStatusReportUpdateTool,
@@ -15,6 +24,15 @@ export {
   createMaintenanceTool,
   listMaintenancesTool,
 } from "./maintenance";
+export {
+  getMonitorStatusTool,
+  getMonitorSummaryTool,
+  getMonitorTool,
+  getResponseLogTool,
+  listMonitorsTool,
+  listResponseLogsTool,
+} from "./monitor";
+export { listNotificationsTool } from "./notification";
 export { listStatusPagesTool } from "./page";
 export {
   addStatusReportUpdateTool,
@@ -54,6 +72,13 @@ export const agentTools = {
   resolve_status_report: resolveStatusReportTool,
   list_maintenances: listMaintenancesTool,
   create_maintenance: createMaintenanceTool,
+  list_monitors: listMonitorsTool,
+  get_monitor: getMonitorTool,
+  get_monitor_status: getMonitorStatusTool,
+  get_monitor_summary: getMonitorSummaryTool,
+  list_response_logs: listResponseLogsTool,
+  get_response_log: getResponseLogTool,
+  list_notifications: listNotificationsTool,
 } satisfies Record<string, AnyAgentTool>;
 
 /**
