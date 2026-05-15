@@ -33,9 +33,9 @@ const DB_TO_REGION: Record<string, Region> = {
   koyeb_was: Region.KOYEB_WAS,
   // Railway regions
   "railway_us-west2": Region.RAILWAY_US_WEST2,
-  "railway_us-east4": Region.RAILWAY_US_EAST4,
-  "railway_europe-west4": Region.RAILWAY_EUROPE_WEST4,
-  "railway_asia-southeast1": Region.RAILWAY_ASIA_SOUTHEAST1,
+  "railway_us-east4-eqdc4a": Region.RAILWAY_US_EAST4,
+  "railway_europe-west4-drams3a": Region.RAILWAY_EUROPE_WEST4,
+  "railway_asia-southeast1-eqsg3a": Region.RAILWAY_ASIA_SOUTHEAST1,
 };
 
 /**
@@ -70,9 +70,9 @@ const REGION_TO_DB: Record<Region, string> = {
   [Region.KOYEB_WAS]: "koyeb_was",
   // Railway regions
   [Region.RAILWAY_US_WEST2]: "railway_us-west2",
-  [Region.RAILWAY_US_EAST4]: "railway_us-east4",
-  [Region.RAILWAY_EUROPE_WEST4]: "railway_europe-west4",
-  [Region.RAILWAY_ASIA_SOUTHEAST1]: "railway_asia-southeast1",
+  [Region.RAILWAY_US_EAST4]: "railway_us-east4-eqdc4a",
+  [Region.RAILWAY_EUROPE_WEST4]: "railway_europe-west4-drams3a",
+  [Region.RAILWAY_ASIA_SOUTHEAST1]: "railway_asia-southeast1-eqsg3a",
   // Unspecified
   [Region.UNSPECIFIED]: "",
 };
