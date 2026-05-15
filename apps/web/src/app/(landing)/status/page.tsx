@@ -8,7 +8,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import { OSTinybird } from "@openstatus/tinybird";
+import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 import { env } from "@/env";
 import { ContentBoxLink, ContentBoxUrl } from "../content-box";
@@ -57,7 +57,10 @@ const UNKNOWN_SNAPSHOT: Omit<LatestSnapshot, "id"> = {
 export default async function Page() {
   const services = await cachedListExternalServices();
   const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-  const latestRes = await tb.externalStatusLatest({});
+  const latestRes = await safePipeData(
+    tb.externalStatusLatest({}),
+    "externalStatusLatest (list)",
+  );
   const latestRows = Array.isArray(latestRes.data) ? latestRes.data : [];
   const latestById = new Map<string, LatestSnapshot>();
   for (const row of latestRows) {

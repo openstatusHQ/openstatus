@@ -14,7 +14,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import { OSTinybird } from "@openstatus/tinybird";
+import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 import { formatRelative, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
@@ -125,8 +125,14 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
   const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const [latestRes, historyRes] = await Promise.all([
-    tb.externalStatusLatest({ ids: slugChain }),
-    tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
+    safePipeData(
+      tb.externalStatusLatest({ ids: slugChain }),
+      "externalStatusLatest",
+    ),
+    safePipeData(
+      tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
+      "externalStatusHistory",
+    ),
   ]);
 
   const latestRows = Array.isArray(latestRes.data) ? latestRes.data : [];

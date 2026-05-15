@@ -3,7 +3,7 @@ import {
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
 } from "@/lib/external-service-cache";
-import { OSTinybird } from "@openstatus/tinybird";
+import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 type LatestRow = {
   id: string;
@@ -63,7 +63,10 @@ function formatIso(ms: number): string {
 export async function generateStatusIndexMarkdown(): Promise<string> {
   const services = await cachedListExternalServices();
   const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-  const latestRes = await tb.externalStatusLatest({});
+  const latestRes = await safePipeData(
+    tb.externalStatusLatest({}),
+    "externalStatusLatest (markdown index)",
+  );
   const latestRows: LatestRow[] = Array.isArray(latestRes.data)
     ? latestRes.data
     : [];
@@ -102,8 +105,14 @@ export async function generateStatusDetailMarkdown(
 
   const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const [latestRes, historyRes] = await Promise.all([
-    tb.externalStatusLatest({ ids: slugChain }),
-    tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
+    safePipeData(
+      tb.externalStatusLatest({ ids: slugChain }),
+      "externalStatusLatest (markdown detail)",
+    ),
+    safePipeData(
+      tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
+      "externalStatusHistory (markdown detail)",
+    ),
   ]);
 
   const latestRows: LatestRow[] = Array.isArray(latestRes.data)
