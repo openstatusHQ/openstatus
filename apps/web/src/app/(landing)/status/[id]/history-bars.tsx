@@ -80,7 +80,10 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
         severityOf(r.worst_indicator) > severityOf(prev.worst_indicator)
           ? r.worst_indicator
           : prev.worst_indicator,
-      had_maintenance: Math.max(prev.had_maintenance, r.had_maintenance),
+      had_maintenance:
+        severityOf(r.worst_indicator) > severityOf(prev.worst_indicator)
+          ? r.had_maintenance
+          : prev.had_maintenance,
       snapshot_count: prev.snapshot_count + r.snapshot_count,
     });
   }
