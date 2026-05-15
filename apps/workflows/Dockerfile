@@ -41,8 +41,10 @@ RUN \
     --mount=type=bind,target=packages/notifications/bird-whatsapp/package.json,source=packages/notifications/bird-whatsapp/package.json \
     --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
     --mount=type=bind,target=packages/notifications/webhook/package.json,source=packages/notifications/webhook/package.json \
+    --mount=type=bind,target=packages/importers/package.json,source=packages/importers/package.json \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
     --mount=type=bind,target=packages/services/package.json,source=packages/services/package.json \
+    --mount=type=bind,target=packages/subscriptions/package.json,source=packages/subscriptions/package.json \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
     --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \

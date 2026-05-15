@@ -37,8 +37,10 @@ builders:
       - packages/notifications/bird-whatsapp/package.json
       - packages/notifications/twillio-sms/package.json
       - packages/notifications/webhook/package.json
+      - packages/importers/package.json
       - packages/regions/package.json
       - packages/services/package.json
+      - packages/subscriptions/package.json
       - packages/utils/package.json
       - packages/tsconfig/package.json
       - packages/tinybird/package.json
