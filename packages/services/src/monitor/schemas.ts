@@ -148,3 +148,33 @@ export const ListMonitorsInput = z.object({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 export type ListMonitorsInput = z.infer<typeof ListMonitorsInput>;
+
+export const monitorTimeRange = ["1d", "7d", "14d"] as const;
+export type MonitorTimeRange = (typeof monitorTimeRange)[number];
+
+export const GetMonitorStatusInput = z.object({
+  monitorId: z.number().int(),
+});
+export type GetMonitorStatusInput = z.infer<typeof GetMonitorStatusInput>;
+
+export const GetMonitorSummaryInput = z.object({
+  monitorId: z.number().int(),
+  timeRange: z.enum(monitorTimeRange).default("1d"),
+  regions: z.array(z.string()).optional(),
+});
+export type GetMonitorSummaryInput = z.infer<typeof GetMonitorSummaryInput>;
+
+export const ListResponseLogsInput = z.object({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  limit: z.number().int().min(1).max(100).default(25),
+  offset: z.number().int().min(0).default(0),
+});
+export type ListResponseLogsInput = z.infer<typeof ListResponseLogsInput>;
+
+export const GetResponseLogInput = z.object({
+  monitorId: z.number().int(),
+  logId: z.string().min(1),
+});
+export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;

@@ -210,7 +210,11 @@ export const statusReportRouter = createTRPCRouter({
             statuses: [],
           },
         });
-        return items.map(narrowPage);
+        // Legacy data (pre-pageId-required) can have `pageId = null`, so the
+        // list endpoint silently filters those rows rather than 500-ing the
+        // whole response. `get` still throws — a direct fetch of an orphan
+        // is a real data-integrity signal.
+        return items.filter(hasPage);
       } catch (err) {
         toTRPCError(err);
       }
@@ -232,4 +236,10 @@ function narrowPage<T extends { id: number; page: unknown }>(
     );
   }
   return report as T & { page: NonNullable<T["page"]> };
+}
+
+function hasPage<T extends { page: unknown }>(
+  report: T,
+): report is T & { page: NonNullable<T["page"]> } {
+  return report.page != null;
 }

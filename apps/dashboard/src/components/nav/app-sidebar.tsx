@@ -7,6 +7,7 @@ import {
   Cog,
   Globe,
   LayoutGrid,
+  MessageSquare,
   PanelTop,
   ScanEye,
   Terminal,
@@ -83,7 +84,12 @@ const data = {
       icon: ScanEye,
     },
     {
-      name: "Agents",
+      name: "Assistant",
+      url: "/chat",
+      icon: MessageSquare,
+    },
+    {
+      name: "Slack agent",
       url: "/agents",
       icon: Bot,
     },

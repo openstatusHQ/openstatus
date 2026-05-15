@@ -13,6 +13,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+function topSegment(url: string) {
+  return url.split("/")[1] ?? "";
+}
+
 export function NavOverview({
   items,
 }: {
@@ -24,6 +28,7 @@ export function NavOverview({
 }) {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
+  const currentTop = topSegment(pathname);
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Workspace</SidebarGroupLabel>
@@ -31,8 +36,9 @@ export function NavOverview({
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton
-              // FIXME: check with settings as exception (as it includes subpages)
-              isActive={pathname === item.url}
+              isActive={
+                currentTop !== "" && currentTop === topSegment(item.url)
+              }
               asChild
               tooltip={item.name}
             >

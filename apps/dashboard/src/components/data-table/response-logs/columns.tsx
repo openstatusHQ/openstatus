@@ -1,24 +1,19 @@
 "use client";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { HoverCardTiming } from "@/components/common/hover-card-timing";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { TableCellRegion } from "@/components/data-table/table-cell-region";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { getRegionInfo } from "@openstatus/regions";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@openstatus/ui/components/ui/hover-card";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";
 
@@ -94,28 +89,12 @@ export function getColumns(
     {
       accessorKey: "region",
       header: "Region",
-      cell: ({ row }) => {
-        const value = row.getValue("region");
-
-        if (typeof value !== "string") {
-          return <div className="text-muted-foreground">-</div>;
-        }
-
-        const regionConfig = getRegionInfo(value, {
-          location: privateLocations.find(
-            (location) => String(location.id) === String(value),
-          )?.name,
-        });
-
-        return (
-          <div>
-            {regionConfig.location}{" "}
-            <span className="text-muted-foreground/70 text-xs">
-              ({regionConfig.provider})
-            </span>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <TableCellRegion
+          value={row.getValue("region")}
+          privateLocations={privateLocations}
+        />
+      ),
       enableSorting: false,
       enableHiding: false,
       filterFn: "arrIncludesSome",
@@ -167,80 +146,4 @@ export function getColumns(
       },
     },
   ];
-}
-
-function HoverCardTiming({
-  timing,
-  latency,
-}: {
-  timing: NonNullable<Extract<ResponseLog, { type: "http" }>["timing"]>;
-  latency: number;
-}) {
-  const phasesTotal =
-    Object.values(timing).reduce((acc, v) => acc + v, 0) || latency;
-  return (
-    <HoverCard openDelay={50} closeDelay={50}>
-      <HoverCardTrigger
-        className="opacity-70 hover:opacity-100 data-[state=open]:opacity-100"
-        asChild
-      >
-        <div className="flex">
-          {Object.entries(timing).map(([key, value], index) => (
-            <div
-              key={key}
-              className={cn("h-4")}
-              style={{
-                width: `${(value / phasesTotal) * 100}%`,
-                backgroundColor: `var(--chart-${index + 1})`,
-              }}
-            />
-          ))}
-        </div>
-      </HoverCardTrigger>
-      <HoverCardContent side="bottom" align="end" className="z-10 w-auto p-2">
-        <HoverCardTimingContent {...{ latency, timing }} />
-      </HoverCardContent>
-    </HoverCard>
-  );
-}
-
-function HoverCardTimingContent({
-  timing,
-  latency,
-}: {
-  timing: NonNullable<Extract<ResponseLog, { type: "http" }>["timing"]>;
-  latency: number;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      {Object.entries(timing).map(([key, value], index) => {
-        return (
-          <div key={key} className="grid grid-cols-2 gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div
-                className={cn("h-2 w-2 rounded-full")}
-                style={{ backgroundColor: `var(--chart-${index + 1})` }}
-              />
-              <div className="font-mono text-accent-foreground uppercase">
-                {key}
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <div className="font-mono text-muted-foreground">
-                {`${new Intl.NumberFormat("en-US", {
-                  maximumFractionDigits: 2,
-                }).format((value / latency) * 100)}%`}
-              </div>
-              <div className="font-mono">
-                {new Intl.NumberFormat("en-US", {
-                  maximumFractionDigits: 3,
-                }).format(value)}
-                <span className="text-muted-foreground">ms</span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
 }

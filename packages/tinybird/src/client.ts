@@ -17,15 +17,16 @@ export class OSTinybird {
 
   constructor(token: string) {
     const tinybirdUrl = process.env.TINYBIRD_URL;
+    // Empty token → noop unconditionally; pipes resolve empty rather than
+    // failing authn. Dev/test without a TINYBIRD_URL also gets a noop.
     if (
-      (process.env.NODE_ENV === "development" ||
+      !token ||
+      ((process.env.NODE_ENV === "development" ||
         process.env.NODE_ENV === "test") &&
-      !tinybirdUrl
+        !tinybirdUrl)
     ) {
       this.tb = new NoopTinybird();
     } else {
-      // Use local Tinybird container if available (Docker/self-hosted)
-      // https://www.tinybird.co/docs/api-reference
       this.tb = new Client({
         token,
         baseUrl: tinybirdUrl || "https://api.tinybird.co",

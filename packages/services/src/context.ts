@@ -1,5 +1,6 @@
 import { SQLiteTransaction, db as defaultDb, is } from "@openstatus/db";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
+import { OSTinybird } from "@openstatus/tinybird";
 
 // `@openstatus/db` does not export named DrizzleClient / DrizzleTx types today,
 // so we derive them from the db export and re-export from here.
@@ -24,7 +25,10 @@ export type ServiceContext = {
   requestId?: string;
   span?: unknown;
   db?: DB;
+  tb?: OSTinybird;
 };
+
+export const defaultTb = new OSTinybird(process.env.TINY_BIRD_API_KEY ?? "");
 
 // drizzle's `is()` helper is identity-safe across module copies (uses a
 // symbol-based entityKind), which `instanceof` is not under pnpm when multiple

@@ -20,7 +20,10 @@ export class ServiceError extends Error {
 }
 
 export class NotFoundError extends ServiceError {
-  constructor(entity: string, id?: string | number) {
+  constructor(
+    public entity: string,
+    id?: string | number,
+  ) {
     super(
       "NOT_FOUND",
       id !== undefined ? `${entity} ${id} not found` : `${entity} not found`,

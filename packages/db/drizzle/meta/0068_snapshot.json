@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "eec21a86-ff06-478c-807f-3b397bf82143",
+  "id": "ea8f3dea-b840-4c50-bf13-fdf040455196",
   "prevId": "0fb8640e-5483-4343-bef6-2982c5cbe88b",
   "tables": {
     "workspace": {
@@ -3870,121 +3870,98 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "external_service": {
-      "name": "external_service",
+    "chat_session": {
+      "name": "chat_session",
       "columns": {
         "id": {
           "name": "id",
           "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": true
         },
-        "slug": {
-          "name": "slug",
-          "type": "text(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "aliases": {
-          "name": "aliases",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(json_array())"
-        },
-        "name": {
-          "name": "name",
-          "type": "text(256)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "url": {
-          "name": "url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status_page_url": {
-          "name": "status_page_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "provider": {
-          "name": "provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "industry": {
-          "name": "industry",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "api_config": {
-          "name": "api_config",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
+        "workspace_id": {
+          "name": "workspace_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "messages": {
+          "name": "messages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
+          "notNull": true,
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {
-        "external_service_slug_unique": {
-          "name": "external_service_slug_unique",
+        "chat_session_workspace_user_updated_idx": {
+          "name": "chat_session_workspace_user_updated_idx",
           "columns": [
-            "slug"
-          ],
-          "isUnique": true
-        },
-        "external_service_deleted_at_idx": {
-          "name": "external_service_deleted_at_idx",
-          "columns": [
-            "deleted_at"
+            "workspace_id",
+            "user_id",
+            "updated_at"
           ],
           "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "chat_session_workspace_id_workspace_id_fk": {
+          "name": "chat_session_workspace_id_workspace_id_fk",
+          "tableFrom": "chat_session",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "chat_session_user_id_user_id_fk": {
+          "name": "chat_session_user_id_user_id_fk",
+          "tableFrom": "chat_session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

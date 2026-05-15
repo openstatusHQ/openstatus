@@ -19,6 +19,10 @@
       "types": "./src/components/blocks/*.tsx",
       "default": "./src/components/blocks/*.tsx"
     },
+    "./components/custom/*": {
+      "types": "./src/components/custom/*.tsx",
+      "default": "./src/components/custom/*.tsx"
+    },
     "./lib/*": {
       "types": "./src/lib/*.ts",
       "default": "./src/lib/*.ts"
@@ -68,6 +72,7 @@
     "@radix-ui/react-popover": "1.1.14",
     "@radix-ui/react-progress": "1.1.7",
     "@radix-ui/react-radio-group": "1.3.7",
+    "@radix-ui/react-scroll-area": "1.2.10",
     "@radix-ui/react-select": "2.2.5",
     "@radix-ui/react-separator": "1.1.7",
     "@radix-ui/react-slider": "1.3.5",

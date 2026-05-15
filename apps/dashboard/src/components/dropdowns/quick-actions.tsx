@@ -51,8 +51,9 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   deleteAction?: {
     /**
      * The value that must be typed to confirm deletion. Also used in the dialog title.
+     * If omitted, no type-to-confirm step is shown.
      */
-    confirmationValue: string;
+    confirmationValue?: string;
     submitAction?: () => Promise<void>;
   };
 }
@@ -154,14 +155,16 @@ export function QuickActions({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you sure about deleting `{deleteAction?.confirmationValue}`?
+            {deleteAction?.confirmationValue
+              ? `Are you sure about deleting \`${deleteAction.confirmationValue}\`?`
+              : "Are you sure?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently remove the entry
             from the database.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {deleteAction?.confirmationValue && (
+        {deleteAction?.confirmationValue ? (
           <form id="form-alert-dialog" className="space-y-1.5">
             <p className="text-muted-foreground text-sm">
               Type{" "}
@@ -183,7 +186,7 @@ export function QuickActions({
             </p>
             <Input value={value} onChange={(e) => setValue(e.target.value)} />
           </form>
-        )}
+        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
             Cancel

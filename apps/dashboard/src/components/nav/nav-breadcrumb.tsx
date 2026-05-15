@@ -57,8 +57,8 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
-                <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono tracking-tight md:block lg:max-w-[200px] ">
-                  <span className="flex items-center gap-1.5">
+                <BreadcrumbPage className=" hidden max-w-[120px] font-commit-mono tracking-tight md:block lg:max-w-[200px] ">
+                  <span className="flex min-w-0 items-center gap-1.5">
                     {item.icon && (
                       <item.icon
                         size={16}
@@ -66,8 +66,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                         className="shrink-0"
                       />
                     )}
-
-                    {item.label}
+                    <span className="truncate">{item.label}</span>
                   </span>
                 </BreadcrumbPage>
               ) : null}

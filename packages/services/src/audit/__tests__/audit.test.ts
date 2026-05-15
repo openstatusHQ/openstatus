@@ -1,9 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
-import { auditLog } from "@openstatus/db/src/schema";
+import { auditLog, user } from "@openstatus/db/src/schema";
 
 import type { AuditEntry } from "@openstatus/db/src/schema";
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
+import {
+  SEEDED_WORKSPACE_FREE_ID,
+  SEEDED_WORKSPACE_TEAM_ID,
+} from "../../../test/fixtures";
 import {
   clearAuditLog,
   loadSeededWorkspace,
@@ -15,8 +18,10 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
+import { NotFoundError } from "../../errors";
 
 import { diffTopLevel, emitAudit } from "../emit";
+import { getAuditLog } from "../get";
 
 /**
  * Test-only escape hatch around `emitAudit`'s compile-time snapshot
@@ -568,6 +573,109 @@ describe("emitAudit — runtime Zod validation", () => {
         threw = true;
       }
       expect(threw).toBe(true);
+    });
+  });
+});
+
+describe("getAuditLog", () => {
+  test("returns the row when scoped to the same workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      await emitAudit(tx, teamCtx, {
+        action: "monitor.update",
+        entityType: "monitor",
+        entityId: 9800,
+        before: { name: "old" },
+        after: { name: "new" },
+      });
+      const [inserted] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9800,
+        db: tx,
+      });
+      if (!inserted) throw new Error("unreachable");
+
+      const row = await getAuditLog({
+        ctx: { ...teamCtx, db: tx },
+        input: { id: inserted.id },
+      });
+      expect(row.id).toBe(inserted.id);
+      expect(row.action).toBe("monitor.update");
+      expect(row.entityType).toBe("monitor");
+      expect(row.entityId).toBe("9800");
+      expect(row.changedFields).toEqual(["name"]);
+      expect(row.user?.id).toBe(1);
+    });
+  });
+
+  test("throws NotFoundError when the id belongs to another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      await emitAudit(tx, teamCtx, {
+        action: "monitor.create",
+        entityType: "monitor",
+        entityId: 9801,
+        after: { name: "in-team" },
+      });
+      const [inserted] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9801,
+        db: tx,
+      });
+      if (!inserted) throw new Error("unreachable");
+
+      const otherWorkspace = await loadSeededWorkspace(
+        SEEDED_WORKSPACE_FREE_ID,
+      );
+      const otherCtx = makeUserCtx(otherWorkspace, { userId: 1 });
+
+      let caught: unknown;
+      try {
+        await getAuditLog({
+          ctx: { ...otherCtx, db: tx },
+          input: { id: inserted.id },
+        });
+      } catch (e) {
+        caught = e;
+      }
+      expect(caught).toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("soft-deleted actor resolves to user: null", async () => {
+    await withTestTransaction(async (tx) => {
+      const ghostUserId = 9_999_001;
+      await tx
+        .insert(user)
+        .values({
+          id: ghostUserId,
+          tenantId: `ghost-${ghostUserId}`,
+          email: `ghost-${ghostUserId}@example.test`,
+          deletedAt: new Date("2025-01-01"),
+        })
+        .run();
+
+      const ghostCtx = makeUserCtx(teamCtx.workspace, { userId: ghostUserId });
+      await emitAudit(tx, ghostCtx, {
+        action: "monitor.create",
+        entityType: "monitor",
+        entityId: 9802,
+        after: { name: "by-ghost" },
+      });
+      const [inserted] = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "monitor",
+        entityId: 9802,
+        db: tx,
+      });
+      if (!inserted) throw new Error("unreachable");
+      expect(inserted.actorUserId).toBe(ghostUserId);
+
+      const row = await getAuditLog({
+        ctx: { ...teamCtx, db: tx },
+        input: { id: inserted.id },
+      });
+      expect(row.user).toBeNull();
     });
   });
 });

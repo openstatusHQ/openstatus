@@ -44,6 +44,15 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 50%;
+    }
+    100% {
+      background-position: -200% 50%;
+    }
+  }
 }
 
 :root {

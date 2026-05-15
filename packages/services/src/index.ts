@@ -4,6 +4,7 @@ export {
   type DrizzleClient,
   type DrizzleTx,
   type ServiceContext,
+  defaultTb,
   extractActorId,
   isTx,
   tryGetActorUserId,

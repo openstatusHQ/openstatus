@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import { SEEDED_WORKSPACE_FREE_ID } from "../../../test/fixtures";
+import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   loadSeededWorkspace,
   makeUserCtx,
@@ -57,7 +57,7 @@ describe("streamMonitorPreview", () => {
 
   test("throws NotFoundError when monitor belongs to a different workspace", async () => {
     await withTestTransaction(async (tx) => {
-      const ws = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
+      const ws = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const ctx = { ...makeUserCtx(ws), db: tx };
 
       // Use a monitor id that does not exist for this workspace.
@@ -76,7 +76,7 @@ describe("streamMonitorPreview", () => {
 
   test("yields one result per region for an owned monitor", async () => {
     await withTestTransaction(async (tx) => {
-      const ws = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
+      const ws = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const ctx = { ...makeUserCtx(ws), db: tx };
       const created = await createMonitor({
         ctx,
