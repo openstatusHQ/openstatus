@@ -1,0 +1,21 @@
+TAGS "external_status"
+
+NODE latest
+SQL >
+
+    %
+    SELECT
+        id,
+        argMax(indicator, fetched_at) AS indicator,
+        argMax(status, fetched_at) AS status,
+        argMax(status_message, fetched_at) AS status_message,
+        argMax(time_zone, fetched_at) AS time_zone,
+        argMax(updated_at, fetched_at) AS updated_at,
+        max(fetched_at) AS last_fetched_at
+    FROM external_status__v1
+    {% if defined(ids) %}
+    WHERE id IN {{ Array(ids, 'String') }}
+    {% end %}
+    GROUP BY id
+
+TYPE ENDPOINT

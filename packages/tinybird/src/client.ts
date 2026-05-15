@@ -1765,4 +1765,58 @@ export class OSTinybird {
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
+
+  public get publishExternalStatus() {
+    return this.tb.buildIngestEndpoint({
+      datasource: "external_status__v1",
+      event: z.object({
+        id: z.string(),
+        indicator: z.string(),
+        status: z.string(),
+        status_message: z.string(),
+        fetched_at: z.int(),
+        updated_at: z.int(),
+        time_zone: z.string(),
+      }),
+    });
+  }
+
+  public get externalStatusLatest() {
+    return this.tb.buildPipe({
+      pipe: "endpoint_external_status_latest__v1",
+      parameters: z.object({
+        ids: z.array(z.string()).optional(),
+      }),
+      data: z.object({
+        id: z.string(),
+        indicator: z.string(),
+        status: z.string(),
+        status_message: z.string(),
+        time_zone: z.string(),
+        updated_at: z.int(),
+        last_fetched_at: z.int(),
+      }),
+      opts: { next: { revalidate: PUBLIC_CACHE } },
+    });
+  }
+
+  public get externalStatusHistory() {
+    return this.tb.buildPipe({
+      pipe: "endpoint_external_status_history__v0",
+      parameters: z.object({
+        ids: z.array(z.string()).min(1),
+        days: z.int().min(1).max(90).optional(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        id: z.string(),
+        worst_indicator: z.string(),
+        had_maintenance: z.int(),
+        snapshot_count: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
 }

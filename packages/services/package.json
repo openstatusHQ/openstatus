@@ -93,6 +93,10 @@
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
     },
+    "./external-service": {
+      "import": "./src/external-service/index.ts",
+      "types": "./src/external-service/index.ts"
+    },
     "./test/helpers": {
       "import": "./test/helpers.ts",
       "types": "./test/helpers.ts"

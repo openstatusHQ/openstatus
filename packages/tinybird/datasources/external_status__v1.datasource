@@ -1,0 +1,12 @@
+SCHEMA >
+    `id` String `json:$.id`,
+    `indicator` String `json:$.indicator`,
+    `status` String `json:$.status`,
+    `status_message` String `json:$.status_message`,
+    `fetched_at` Int64 `json:$.fetched_at`,
+    `updated_at` Int64 `json:$.updated_at`,
+    `time_zone` String `json:$.time_zone`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "id, fetched_at"
+ENGINE_TTL "toDateTime(fromUnixTimestamp64Milli(fetched_at)) + INTERVAL 60 DAY"
