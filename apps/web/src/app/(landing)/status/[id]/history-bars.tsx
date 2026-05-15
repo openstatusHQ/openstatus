@@ -51,10 +51,38 @@ export type HistoryBarsProps = {
   days: number;
 };
 
+const INDICATOR_SEVERITY: Record<string, number> = {
+  none: 0,
+  minor: 1,
+  major: 2,
+  critical: 3,
+};
+
+function severityOf(indicator: string): number {
+  return INDICATOR_SEVERITY[indicator] ?? -1;
+}
+
 function buildSeries(props: HistoryBarsProps): StatusBarData[] {
+  // The history pipe groups by (day, id); when querying canonical + aliases
+  // we get one row per slug per day. Merge them so the worst observed status
+  // wins instead of letting iteration order pick the survivor.
   const byDay = new Map<string, DailyRow>();
   for (const r of props.daily) {
-    byDay.set(r.day.slice(0, 10), r);
+    const key = r.day.slice(0, 10);
+    const prev = byDay.get(key);
+    if (!prev) {
+      byDay.set(key, r);
+      continue;
+    }
+    byDay.set(key, {
+      day: prev.day,
+      worst_indicator:
+        severityOf(r.worst_indicator) > severityOf(prev.worst_indicator)
+          ? r.worst_indicator
+          : prev.worst_indicator,
+      had_maintenance: Math.max(prev.had_maintenance, r.had_maintenance),
+      snapshot_count: prev.snapshot_count + r.snapshot_count,
+    });
   }
   const out: StatusBarData[] = [];
   const today = new Date();
