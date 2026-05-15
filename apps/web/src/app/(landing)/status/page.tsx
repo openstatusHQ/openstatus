@@ -4,6 +4,7 @@ import { ExternalServicePill } from "@/app/(landing)/status/external-service-pil
 import { components } from "@/content/mdx";
 import { cachedListExternalServices } from "@/lib/external-service-cache";
 import {
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
@@ -30,12 +31,13 @@ export const metadata: Metadata = {
     ...ogMetadata,
     title: TITLE,
     description: DESCRIPTION,
+    images: [`${BASE_URL}/api/og/external-service`],
   },
   twitter: {
     ...twitterMetadata,
     title: TITLE,
     description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
+    images: [`${BASE_URL}/api/og/external-service`],
   },
 };
 

@@ -92,59 +92,92 @@ async function fetchIncidents(
 
 export type IncidentsProps = {
   statusPageUrl: string;
+  serviceName: string;
   apiConfigType?: string;
 };
 
+function UpstreamFallback({
+  serviceName,
+  statusPageUrl,
+}: {
+  serviceName: string;
+  statusPageUrl: string;
+}) {
+  return (
+    <p className="text-muted-foreground">
+      Recent {serviceName} incident history isn't available here. Check the{" "}
+      <a
+        className="underline"
+        href={statusPageUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        official {serviceName} status page
+      </a>{" "}
+      for the latest {serviceName} incidents.
+    </p>
+  );
+}
+
 export async function Incidents({
   statusPageUrl,
+  serviceName,
   apiConfigType,
 }: IncidentsProps) {
-  if (apiConfigType !== "atlassian") return null;
+  if (apiConfigType !== "atlassian") {
+    return (
+      <UpstreamFallback
+        serviceName={serviceName}
+        statusPageUrl={statusPageUrl}
+      />
+    );
+  }
   const incidents = await fetchIncidents(statusPageUrl);
-  if (!incidents) return null;
+  if (!incidents) {
+    return (
+      <UpstreamFallback
+        serviceName={serviceName}
+        statusPageUrl={statusPageUrl}
+      />
+    );
+  }
 
   if (incidents.length === 0) {
     return (
-      <section>
-        <h2>Recent incidents</h2>
-        <p className="text-muted-foreground">No incidents reported.</p>
-      </section>
+      <p className="text-muted-foreground">
+        No {serviceName} incidents reported in the recent period.
+      </p>
     );
   }
 
   return (
-    <section>
-      <h2>Recent incidents</h2>
-      <components.Grid cols={1} className="not-prose">
-        {incidents.map((inc) => {
-          const started = formatTimestamp(inc.started_at ?? inc.created_at);
-          const resolved = formatTimestamp(inc.resolved_at ?? null);
-          const link = inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`;
-          return (
-            <ContentBoxLink
-              key={inc.id}
-              href={link}
-              className="flex flex-col gap-1"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <ContentBoxTitle className="m-0!">{inc.name}</ContentBoxTitle>
-                <span
-                  className={`inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
-                >
-                  {inc.impact === "none"
-                    ? "incident"
-                    : inc.impact ?? "incident"}
-                </span>
-              </div>
-              <ContentBoxDescription className="m-0! text-sm">
-                {started ? <>Started {started}</> : null}
-                {started && resolved ? " · " : null}
-                {resolved ? <>Resolved {resolved}</> : null}
-              </ContentBoxDescription>
-            </ContentBoxLink>
-          );
-        })}
-      </components.Grid>
-    </section>
+    <components.Grid cols={1} className="not-prose">
+      {incidents.map((inc) => {
+        const started = formatTimestamp(inc.started_at ?? inc.created_at);
+        const resolved = formatTimestamp(inc.resolved_at ?? null);
+        const link = inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`;
+        return (
+          <ContentBoxLink
+            key={inc.id}
+            href={link}
+            className="flex flex-col gap-1"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <ContentBoxTitle className="m-0!">{inc.name}</ContentBoxTitle>
+              <span
+                className={`inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
+              >
+                {inc.impact === "none" ? "incident" : inc.impact ?? "incident"}
+              </span>
+            </div>
+            <ContentBoxDescription className="m-0! text-sm">
+              {started ? <>Started {started}</> : null}
+              {started && resolved ? " · " : null}
+              {resolved ? <>Resolved {resolved}</> : null}
+            </ContentBoxDescription>
+          </ContentBoxLink>
+        );
+      })}
+    </components.Grid>
   );
 }
