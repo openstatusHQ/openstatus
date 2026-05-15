@@ -159,7 +159,9 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       <script
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
+        }}
       />
       <h1>{service.name} Status</h1>
       <div className="not-prose flex flex-wrap items-center gap-6">
