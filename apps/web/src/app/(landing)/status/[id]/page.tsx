@@ -16,7 +16,7 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
-import { formatRelative, isStale } from "../utils";
+import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
 
@@ -32,16 +32,15 @@ export async function generateStaticParams() {
 
 type RouteParams = { id: string };
 
-export async function generateMetadata(args: {
-  params: Promise<RouteParams>;
-}): Promise<Metadata> {
+export async function generateMetadata(args: { params: Promise<RouteParams> }): Promise<Metadata> {
   const { id } = await args.params;
   const service = await cachedGetExternalServiceBySlug(id);
   if (!service) return { ...defaultMetadata, title: "Not Found" };
 
-  const title = `${service.name} Status — Is ${service.name} Down?`;
-  const description = `Current status of ${service.name}. ${service.name} uptime history and recent incidents tracked by OpenStatus.`;
+  const title = `Is ${service.name} Down? ${service.name} Status & Incidents`;
+  const description = `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
   const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
+  const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
   const indexable = service.deletedAt == null;
 
   return {
@@ -60,14 +59,13 @@ export async function generateMetadata(args: {
       title,
       description,
       url: canonicalUrl,
+      images: [ogImage],
     },
     twitter: {
       ...twitterMetadata,
       title,
       description,
-      images: [
-        `/api/og/status?title=${encodeURIComponent(`${service.name} Status`)}`,
-      ],
+      images: [ogImage],
     },
   };
 }
@@ -76,6 +74,7 @@ function jsonLd(args: {
   serviceName: string;
   serviceUrl: string;
   canonicalUrl: string;
+  answer: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -89,6 +88,19 @@ function jsonLd(args: {
         "@type": "WebPage",
         url: args.canonicalUrl,
         name: `${args.serviceName} Status`,
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: `Is ${args.serviceName} down?`,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: args.answer,
+            },
+          },
+        ],
       },
       {
         "@type": "BreadcrumbList",
@@ -125,10 +137,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
   const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const [latestRes, historyRes] = await Promise.all([
-    safePipeData(
-      tb.externalStatusLatest({ ids: slugChain }),
-      "externalStatusLatest",
-    ),
+    safePipeData(tb.externalStatusLatest({ ids: slugChain }), "externalStatusLatest"),
     safePipeData(
       tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
       "externalStatusHistory",
@@ -146,12 +155,20 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
   const statusMessage = latest?.status_message ?? undefined;
   const fetchedAt = latest?.last_fetched_at ?? 0;
   const stale = fetchedAt > 0 && isStale(fetchedAt);
+  const hasLiveData = fetchedAt > 0 && !stale;
+  const answer = getStatusAnswer({
+    name: service.name,
+    indicator,
+    status,
+    hasLiveData,
+  });
 
   const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
   const ld = jsonLd({
     serviceName: service.name,
     serviceUrl: service.url,
     canonicalUrl,
+    answer,
   });
 
   return (
@@ -163,20 +180,18 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
         }}
       />
-      <h1>{service.name} Status</h1>
+      <h1>Is {service.name} down?</h1>
+      <p>
+        {answer} Below you'll find the live {service.name} status, uptime over the last{" "}
+        {HISTORY_DAYS} days, and recent {service.name} incidents.
+      </p>
       <div className="not-prose flex flex-wrap items-center gap-6">
-        <ExternalServicePill
-          indicator={indicator}
-          status={status}
-          statusMessage={statusMessage}
-        />
+        <ExternalServicePill indicator={indicator} status={status} statusMessage={statusMessage} />
         {fetchedAt > 0 ? (
           <span className="text-muted-foreground text-sm">
             Last updated {formatRelative(fetchedAt)}
             {stale ? (
-              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
-                (stale)
-              </span>
+              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">(stale)</span>
             ) : null}
           </span>
         ) : (
@@ -194,14 +209,20 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         </a>
       </div>
 
-      <h2>Last {HISTORY_DAYS} days</h2>
+      <h2>
+        {service.name} uptime — last {HISTORY_DAYS} days
+      </h2>
       <div className="not-prose">
         <HistoryBars daily={historyRows} days={HISTORY_DAYS} />
       </div>
 
-      <Suspense fallback={null}>
+      <h2>{service.name} recent incidents</h2>
+      <Suspense
+        fallback={<p className="text-muted-foreground">Loading recent {service.name} incidents…</p>}
+      >
         <Incidents
           statusPageUrl={service.statusPageUrl}
+          serviceName={service.name}
           apiConfigType={service.apiConfig?.type}
         />
       </Suspense>
