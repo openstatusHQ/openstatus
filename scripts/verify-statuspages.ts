@@ -17,7 +17,10 @@ const CANDIDATES: Candidate[] = [
   { name: "MongoDB", statusPageUrl: "https://status.mongodb.com/" },
   { name: "Sentry", statusPageUrl: "https://status.sentry.io/" },
   { name: "CircleCI", statusPageUrl: "https://status.circleci.com/" },
-  { name: "Bitbucket", statusPageUrl: "https://bitbucket.status.atlassian.com/" },
+  {
+    name: "Bitbucket",
+    statusPageUrl: "https://bitbucket.status.atlassian.com/",
+  },
   { name: "Algolia", statusPageUrl: "https://status.algolia.com/" },
   { name: "Snyk", statusPageUrl: "https://status.snyk.io/" },
   { name: "Looker", statusPageUrl: "https://status.looker.com/" },
@@ -42,7 +45,10 @@ const CANDIDATES: Candidate[] = [
   { name: "Figma", statusPageUrl: "https://status.figma.com/" },
   { name: "Vimeo", statusPageUrl: "https://status.vimeo.com/" },
   { name: "LastPass", statusPageUrl: "https://status.lastpass.com/" },
-  { name: "Apollo GraphQL", statusPageUrl: "https://status.apollographql.com/" },
+  {
+    name: "Apollo GraphQL",
+    statusPageUrl: "https://status.apollographql.com/",
+  },
   { name: "Render", statusPageUrl: "https://status.render.com/" },
   { name: "Cloudinary", statusPageUrl: "https://status.cloudinary.com/" },
   { name: "Coursera", statusPageUrl: "https://status.coursera.org/" },
@@ -73,7 +79,10 @@ const CANDIDATES: Candidate[] = [
   { name: "Netlify", statusPageUrl: "https://www.netlifystatus.com/" },
   { name: "Fastly", statusPageUrl: "https://status.fastly.com/" },
   { name: "Epic Games", statusPageUrl: "https://status.epicgames.com/" },
-  { name: "Sony PlayStation", statusPageUrl: "https://status.playstation.com/" },
+  {
+    name: "Sony PlayStation",
+    statusPageUrl: "https://status.playstation.com/",
+  },
   { name: "Zendesk", statusPageUrl: "https://status.zendesk.com/" },
   { name: "HubSpot", statusPageUrl: "https://status.hubspot.com/" },
   { name: "Hetzner", statusPageUrl: "https://status.hetzner.com/" },
@@ -140,7 +149,11 @@ async function probe(c: Candidate): Promise<Result> {
     if (!res.ok) {
       return {
         candidate: c,
-        verdict: { kind: "not-atlassian", reason: `HTTP ${res.status}`, httpStatus: res.status },
+        verdict: {
+          kind: "not-atlassian",
+          reason: `HTTP ${res.status}`,
+          httpStatus: res.status,
+        },
       };
     }
 
@@ -148,25 +161,40 @@ async function probe(c: Candidate): Promise<Result> {
     if (!ctype.includes("application/json")) {
       return {
         candidate: c,
-        verdict: { kind: "not-atlassian", reason: `non-json content-type: ${ctype}` },
+        verdict: {
+          kind: "not-atlassian",
+          reason: `non-json content-type: ${ctype}`,
+        },
       };
     }
 
     const body: unknown = await res.json();
     if (!isAtlassianSummary(body)) {
-      return { candidate: c, verdict: { kind: "not-atlassian", reason: "no page field" } };
+      return {
+        candidate: c,
+        verdict: { kind: "not-atlassian", reason: "no page field" },
+      };
     }
 
     const pageId = body.page?.id;
     const pageUrl = body.page?.url;
     if (typeof pageId !== "string" || typeof pageUrl !== "string") {
-      return { candidate: c, verdict: { kind: "not-atlassian", reason: "page.id / page.url missing" } };
+      return {
+        candidate: c,
+        verdict: {
+          kind: "not-atlassian",
+          reason: "page.id / page.url missing",
+        },
+      };
     }
 
     return { candidate: c, verdict: { kind: "atlassian", pageId, pageUrl } };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { candidate: c, verdict: { kind: "not-atlassian", reason: `error: ${msg}` } };
+    return {
+      candidate: c,
+      verdict: { kind: "not-atlassian", reason: `error: ${msg}` },
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -190,7 +218,9 @@ async function runPool<T, R>(
     }
   }
 
-  const workers = Array.from({ length: Math.min(limit, items.length) }, () => run());
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () =>
+    run(),
+  );
   await Promise.all(workers);
   return results;
 }
@@ -209,7 +239,12 @@ async function main(): Promise<void> {
   for (const r of atlassian) {
     if (r.verdict.kind !== "atlassian") continue;
     console.log(
-      [r.candidate.name, r.candidate.statusPageUrl, r.verdict.pageId, r.verdict.pageUrl].join(","),
+      [
+        r.candidate.name,
+        r.candidate.statusPageUrl,
+        r.verdict.pageId,
+        r.verdict.pageUrl,
+      ].join(","),
     );
   }
 
@@ -229,7 +264,9 @@ async function main(): Promise<void> {
   }
 
   console.log("");
-  console.log(`# totals: atlassian=${atlassian.length} other=${notAtlassian.length}`);
+  console.log(
+    `# totals: atlassian=${atlassian.length} other=${notAtlassian.length}`,
+  );
 }
 
 await main();

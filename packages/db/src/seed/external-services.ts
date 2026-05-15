@@ -55,7 +55,8 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     statusPageUrl: "https://status.anthropic.com",
     provider: "atlassian-statuspage",
     industry: ["ai-ml"],
-    description: "AI safety company building reliable, interpretable AI systems",
+    description:
+      "AI safety company building reliable, interpretable AI systems",
     apiConfig: { type: "atlassian" },
   },
   {
@@ -205,7 +206,8 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     statusPageUrl: "https://status.airtable.com",
     provider: "atlassian-statuspage",
     industry: ["saas"],
-    description: "Cloud-based collaboration platform combining databases and spreadsheets",
+    description:
+      "Cloud-based collaboration platform combining databases and spreadsheets",
     apiConfig: { type: "atlassian" },
   },
   {
@@ -305,7 +307,8 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     statusPageUrl: "https://status.coursera.org",
     provider: "atlassian-statuspage",
     industry: ["saas"],
-    description: "Online learning platform with courses from universities and companies",
+    description:
+      "Online learning platform with courses from universities and companies",
     apiConfig: { type: "atlassian" },
   },
   {
@@ -335,7 +338,8 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     statusPageUrl: "https://status.epicgames.com",
     provider: "atlassian-statuspage",
     industry: ["saas"],
-    description: "Game developer and publisher, maker of Fortnite and Unreal Engine",
+    description:
+      "Game developer and publisher, maker of Fortnite and Unreal Engine",
     apiConfig: { type: "atlassian" },
   },
   {
@@ -586,7 +590,8 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     statusPageUrl: "https://status.snyk.io",
     provider: "atlassian-statuspage",
     industry: ["security", "development-tools"],
-    description: "Developer security platform for code, dependencies, and containers",
+    description:
+      "Developer security platform for code, dependencies, and containers",
     apiConfig: { type: "atlassian" },
   },
   {
