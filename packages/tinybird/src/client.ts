@@ -1783,7 +1783,7 @@ export class OSTinybird {
 
   public get externalStatusLatest() {
     return this.tb.buildPipe({
-      pipe: "endpoint_external_status_latest__v1",
+      pipe: "endpoint__external_status_latest__v1",
       parameters: z.object({
         ids: z.array(z.string()).optional(),
       }),
@@ -1802,7 +1802,7 @@ export class OSTinybird {
 
   public get externalStatusHistory() {
     return this.tb.buildPipe({
-      pipe: "endpoint_external_status_history__v0",
+      pipe: "endpoint__external_status_history__v0",
       parameters: z.object({
         ids: z.array(z.string()).min(1),
         days: z.int().min(1).max(90).optional(),
