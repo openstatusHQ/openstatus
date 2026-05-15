@@ -34,9 +34,7 @@ export class AtlassianFetcher implements StatusFetcher {
   async fetch(entry: StatusPageEntry): Promise<StatusResult> {
     // Construct API URL
     // Format: https://[id].statuspage.io/api/v2/summary.json
-    const apiUrl =
-      entry.api_config?.endpoint ||
-      `${entry.status_page_url}/api/v2/summary.json`;
+    const apiUrl = entry.api_config?.endpoint || `${entry.status_page_url}/api/v2/summary.json`;
 
     try {
       const response = await fetchWithRetry(apiUrl, {
