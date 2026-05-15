@@ -27,49 +27,14 @@ effective: |
         target: /app/package.json
       run:
       - bun install
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-        org.opencontainers.image.stage: build
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
-    docker:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-      workdir: /app/apps/workflows
-      copy:
-      - paths:
-        - .
-        target: /app/
-      run:
-      - bun run src/build-docker.ts
     install:
       fromImage:
         path: oven/bun
         digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
         org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - bun install --production  --frozen-lockfile --verbose
@@ -118,6 +83,8 @@ effective: |
         source: packages/notifications/webhook/package.json
       - target: packages/regions/package.json
         source: packages/regions/package.json
+      - target: packages/services/package.json
+        source: packages/services/package.json
       - target: packages/utils/package.json
         source: packages/utils/package.json
       - target: packages/tsconfig/package.json
@@ -132,17 +99,52 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      label:
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.stage: build
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
+    docker:
+      fromImage:
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      label:
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
   fromImage:
     path: debian
     digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
   label:
-    io.dofigen.version: 2.6.0
+    org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    io.dofigen.version: 2.6.0
     org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
   workdir: /app/
   copy:
@@ -168,17 +170,17 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    oven:
-      bun:
-        1.3.11:
-          digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
     library:
       debian:
         bullseye-slim:
           digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
+    oven:
+      bun:
+        1.3.11:
+          digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
 resources:
   dofigen.yml:
-    hash: 6e80b506d30d3721089252ecf86435dab4a70d7e28f6b60712a7d7cc843ba0c1
+    hash: 407ffaa8213bebee1da67b468e581c100941ac58953329ed9e1820bd50fa94be
     content: |
       ignore:
         - node_modules
@@ -220,6 +222,7 @@ resources:
             - packages/notifications/twillio-sms/package.json
             - packages/notifications/webhook/package.json
             - packages/regions/package.json
+            - packages/services/package.json
             - packages/utils/package.json
             - packages/tsconfig/package.json
             - packages/tinybird/package.json
