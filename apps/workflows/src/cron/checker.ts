@@ -1,6 +1,7 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { Effect, Either, Schedule } from "effect";
+import pLimit from "p-limit";
 import { z } from "zod";
 
 import {
@@ -33,7 +34,9 @@ import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type DNSPayloadSchema,
+  getCheckerBaseUrl,
   type httpPayloadSchema,
+  isSelfHost,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
@@ -53,19 +56,41 @@ export const isAuthorizedDomain = (url: string) => {
 
 const logger = getLogger("workflow");
 
-const client = new CloudTasksClient({
-  fallback: "rest",
-  projectId: env().GCP_PROJECT_ID,
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+function hasCloudTaskConfig() {
+  return Boolean(
+    env().GCP_PROJECT_ID.trim() &&
+      env().GCP_CLIENT_EMAIL.trim() &&
+      env().GCP_PRIVATE_KEY.trim() &&
+      env().GCP_LOCATION.trim(),
+  );
+}
+
+// Lazy-init: self-host mode has no GCP creds, so we can't create the client at module level
+let _client: CloudTasksClient | null = null;
+function getCloudTasksClient() {
+  if (!_client) {
+    _client = new CloudTasksClient({
+      fallback: "rest",
+      projectId: env().GCP_PROJECT_ID,
+      credentials: {
+        client_email: env().GCP_CLIENT_EMAIL,
+        private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+      },
+    });
+  }
+  return _client;
+}
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
   c: Context,
 ) {
+  if (isSelfHost() || !hasCloudTaskConfig()) {
+    await sendCheckerTasksDirect(periodicity, c);
+    return;
+  }
+
+  const client = getCloudTasksClient();
   const parent = client.queuePath(
     env().GCP_PROJECT_ID,
     env().GCP_LOCATION,
@@ -164,8 +189,6 @@ export async function sendCheckerTasks(
         continue;
       }
       if (r.deprecated) {
-        // Let's uncomment this when we are ready to remove deprecated regions
-        // We should not use deprecated regions anymore
         logger.error(`Deprecated region ${region}`);
         continue;
       }
@@ -241,20 +264,152 @@ export async function sendCheckerTasks(
     );
   }
 }
-// timestamp needs to be in ms
-const createCronTask = async (
-  { row, timestamp, status, region }: TaskInput,
-  parent: string,
-) => {
-  let payload:
-    | z.infer<typeof httpPayloadSchema>
-    | z.infer<typeof tpcPayloadSchema>
-    | z.infer<typeof DNSPayloadSchema>
-    | null = null;
 
-  //
+async function sendCheckerTasksDirect(
+  periodicity: z.infer<typeof monitorPeriodicitySchema>,
+  c: Context,
+) {
+  const timestamp = Date.now();
+  const selfHostRegion = env().CHECKER_REGION;
+
+  const currentMaintenance = db
+    .select({ id: maintenance.id })
+    .from(maintenance)
+    .where(
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+    )
+    .as("currentMaintenance");
+
+  const currentMaintenanceMonitors = db
+    .select({ id: pageComponent.monitorId })
+    .from(maintenancesToPageComponents)
+    .innerJoin(
+      currentMaintenance,
+      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
+    )
+    .innerJoin(
+      pageComponent,
+      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
+    )
+    .where(isNotNull(pageComponent.monitorId));
+
+  const result = await db
+    .select()
+    .from(monitor)
+    .where(
+      and(
+        eq(monitor.periodicity, periodicity),
+        eq(monitor.active, true),
+        notInArray(monitor.id, currentMaintenanceMonitors),
+      ),
+    )
+    .all();
+
+  logger.info("Starting direct self-host checker run", {
+    periodicity,
+    monitor_count: result.length,
+  });
+
+  const monitors = z.array(selectMonitorSchema).safeParse(result);
+  const allResult = [];
+  const limit = pLimit(10);
+  if (!monitors.success) {
+    logger.error(`Error while fetching the monitors ${monitors.error}`);
+    throw new Error("Error while fetching the monitors");
+  }
+
+  // Batch-fetch all monitor statuses in one query instead of N+1
+  const monitorIds = monitors.data.map((m) => m.id);
+  const allStatuses =
+    monitorIds.length > 0
+      ? await db
+          .select()
+          .from(monitorStatusTable)
+          .where(inArray(monitorStatusTable.monitorId, monitorIds))
+          .all()
+      : [];
+
+  // Parse each row individually so one bad row doesn't poison the batch
+  const statusByMonitor = new Map<
+    number,
+    z.infer<typeof selectMonitorStatusSchema>[]
+  >();
+  for (const raw of allStatuses) {
+    const parsed = selectMonitorStatusSchema.safeParse(raw);
+    if (!parsed.success) {
+      logger.error("Failed to parse monitor status row", {
+        monitor_id: raw.monitorId,
+        error_message: parsed.error.message,
+      });
+      continue;
+    }
+    const list = statusByMonitor.get(parsed.data.monitorId) ?? [];
+    list.push(parsed.data);
+    statusByMonitor.set(parsed.data.monitorId, list);
+  }
+
+  for (const row of monitors.data) {
+    const statuses = statusByMonitor.get(row.id);
+    if (!statuses) {
+      allResult.push(
+        limit(() =>
+          dispatchCheckerTaskDirect({ row, timestamp, status: "active" }),
+        ),
+      );
+      continue;
+    }
+    const status =
+      statuses.find((m) => selfHostRegion === m.region)?.status || "active";
+    allResult.push(
+      limit(() =>
+        dispatchCheckerTaskDirect({
+          row,
+          timestamp,
+          status,
+        }),
+      ),
+    );
+  }
+
+  if (periodicity === "30s") {
+    logger.warn(
+      "Self-host direct checker mode does not schedule the delayed second 30s task. Use 1m+ periodicities for reliable self-host operation.",
+    );
+  }
+
+  const allRequests = await Promise.allSettled(allResult);
+
+  const success = allRequests.filter((r) => r.status === "fulfilled").length;
+  const failed = allRequests.filter((r) => r.status === "rejected").length;
+
+  logger.info("Completed direct self-host checker run", {
+    periodicity,
+    total_tasks: allResult.length,
+    success_count: success,
+    failed_count: failed,
+  });
+  if (failed > 0) {
+    getSentry(c).captureMessage(
+      `direct sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
+      "error",
+    );
+  }
+}
+
+function buildCheckerPayload({
+  row,
+  timestamp,
+  status,
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  timestamp: number;
+  status: MonitorStatus;
+}):
+  | z.infer<typeof httpPayloadSchema>
+  | z.infer<typeof tpcPayloadSchema>
+  | z.infer<typeof DNSPayloadSchema> {
   if (row.jobType === "http") {
-    payload = {
+    return {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
       url: row.url,
@@ -279,7 +434,7 @@ const createCronTask = async (
     };
   }
   if (row.jobType === "tcp") {
-    payload = {
+    return {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
       uri: row.url,
@@ -299,7 +454,7 @@ const createCronTask = async (
     };
   }
   if (row.jobType === "dns") {
-    payload = {
+    return {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
       uri: row.url,
@@ -318,10 +473,49 @@ const createCronTask = async (
       retry: row.retry || 3,
     };
   }
+  throw new Error(`Unsupported jobType: ${row.jobType}`);
+}
 
-  if (!payload) {
-    throw new Error("Invalid jobType");
+async function dispatchCheckerTaskDirect({
+  row,
+  timestamp,
+  status,
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  timestamp: number;
+  status: MonitorStatus;
+}) {
+  const payload = buildCheckerPayload({ row, timestamp, status });
+
+  const response = await fetch(
+    `${getCheckerBaseUrl()}/checker/${row.jobType}?monitor_id=${row.id}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env().CRON_SECRET}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `direct checker request failed for monitor ${row.id} (${row.jobType}) with status ${response.status}: ${body}`,
+    );
   }
+
+  return response;
+}
+
+// timestamp needs to be in ms
+const createCronTask = async (
+  { row, timestamp, status, region }: TaskInput,
+  parent: string,
+) => {
+  const payload = buildCheckerPayload({ row, timestamp, status });
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {
@@ -338,7 +532,7 @@ const createCronTask = async (
     name: taskName,
     httpRequest: {
       headers: {
-        "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+        "Content-Type": "application/json",
         ...regionHeader,
         Authorization: `Basic ${env().CRON_SECRET}`,
       },
@@ -352,7 +546,7 @@ const createCronTask = async (
   };
 
   const request = { parent: parent, task: newTask };
-  return client.createTask(request);
+  return getCloudTasksClient().createTask(request);
 };
 
 function generateUrl({

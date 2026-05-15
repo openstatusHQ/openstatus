@@ -6,6 +6,8 @@ networks:
 volumes:
     libsql-data:
         name: openstatus-libsql-data
+    redis-data:
+        name: openstatus-redis-data
     workflows-data:
         name: openstatus-workflows-data
 
@@ -53,6 +55,39 @@ services:
             start_period: 20s
         restart: unless-stopped
 
+    redis:
+        container_name: openstatus-redis
+        image: redis/redis-stack-server:6.2.6-v6
+        networks:
+            - openstatus
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        restart: unless-stopped
+
+    redis-http:
+        container_name: openstatus-redis-http
+        image: hiett/serverless-redis-http:latest
+        networks:
+            - openstatus
+        ports:
+            - "8079:80"
+        environment:
+            - SRH_MODE=env
+            - SRH_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-replace-with-a-long-random-secret}
+            - SRH_CONNECTION_STRING=redis://redis:6379
+        depends_on:
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
+
     # Internal Services - Using GitHub Packages
     workflows:
         container_name: openstatus-workflows
@@ -68,9 +103,18 @@ services:
         environment:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
+            - SELF_HOST=true
+            - SITE_URL=${NEXT_PUBLIC_URL:-http://localhost:3002}
+            - CHECKER_BASE_URL=${CHECKER_BASE_URL:-http://checker:8080}
+            - CHECKER_REGION=${CHECKER_REGION:-ams}
+            - WORKFLOWS_BASE_URL=${WORKFLOWS_BASE_URL:-http://workflows:3000}
+            - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL:-http://redis-http:80}
+            - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-replace-with-a-long-random-secret}
         depends_on:
             libsql:
                 condition: service_healthy
+            redis-http:
+                condition: service_started
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
             interval: 15s
@@ -91,10 +135,16 @@ services:
         environment:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
+            - SELF_HOST=true
+            - CHECKER_BASE_URL=${CHECKER_BASE_URL:-http://checker:8080}
+            - CHECKER_REGION=${CHECKER_REGION:-ams}
+            - CRON_SECRET=${CRON_SECRET}
         depends_on:
             workflows:
                 condition: service_healthy
             libsql:
+                condition: service_healthy
+            checker:
                 condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
@@ -116,6 +166,7 @@ services:
         environment:
             - DB_URL=http://libsql:8080
             - TINYBIRD_URL=http://tinybird-local:7181
+            - OPENSTATUS_INGEST_URL=${OPENSTATUS_INGEST_URL:-http://server:3000}
             - GIN_MODE=release
             - PORT=8080
         depends_on:
@@ -146,10 +197,17 @@ services:
         env_file:
             - .env.docker
         environment:
-            - DATABASE_URL=http://libsql:8080
             - PORT=8080
+            - SELF_HOST=true
+            - CRON_SECRET=${CRON_SECRET}
+            - OPENSTATUS_WORKFLOWS_URL=${OPENSTATUS_WORKFLOWS_URL:-http://workflows:3000}
+            - TINYBIRD_TOKEN=${TINY_BIRD_API_KEY}
+            - CLOUD_PROVIDER=fly
+            - FLY_REGION=${CHECKER_REGION:-ams}
         depends_on:
-            server:
+            workflows:
+                condition: service_healthy
+            tinybird-local:
                 condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
@@ -173,12 +231,19 @@ services:
             - PORT=3000
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
+            - SELF_HOST=true
+            - CHECKER_BASE_URL=${CHECKER_BASE_URL:-http://checker:8080}
+            - CHECKER_REGION=${CHECKER_REGION:-ams}
+            - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL:-http://redis-http:80}
+            - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-replace-with-a-long-random-secret}
         depends_on:
             workflows:
                 condition: service_healthy
             libsql:
                 condition: service_healthy
             server:
+                condition: service_healthy
+            checker:
                 condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
@@ -202,6 +267,9 @@ services:
             - PORT=3000
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
+            - SELF_HOST=true
+            - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL:-http://redis-http:80}
+            - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN:-replace-with-a-long-random-secret}
         depends_on:
             workflows:
                 condition: service_healthy
