@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+import {
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+} from "@/app/(landing)/content-box";
+import { components } from "@/content/mdx";
+
 const atlassianIncidentSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -108,39 +115,36 @@ export async function Incidents({
   return (
     <section>
       <h2>Recent incidents</h2>
-      <div className="not-prose space-y-3 p-0">
+      <components.Grid cols={1} className="not-prose">
         {incidents.map((inc) => {
           const started = formatTimestamp(inc.started_at ?? inc.created_at);
           const resolved = formatTimestamp(inc.resolved_at ?? null);
           const link = inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`;
           return (
-            <div key={inc.id} className="rounded-md border p-3">
+            <ContentBoxLink
+              key={inc.id}
+              href={link}
+              className="flex flex-col gap-1"
+            >
               <div className="flex items-center justify-between gap-3">
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium hover:underline"
-                >
-                  {inc.name}
-                </a>
+                <ContentBoxTitle className="m-0!">{inc.name}</ContentBoxTitle>
                 <span
-                  className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
+                  className={`inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
                 >
                   {inc.impact === "none"
                     ? "incident"
                     : inc.impact ?? "incident"}
                 </span>
               </div>
-              <div className="mt-1 text-muted-foreground text-sm">
+              <ContentBoxDescription className="m-0! text-sm">
                 {started ? <>Started {started}</> : null}
                 {started && resolved ? " · " : null}
                 {resolved ? <>Resolved {resolved}</> : null}
-              </div>
-            </div>
+              </ContentBoxDescription>
+            </ContentBoxLink>
           );
         })}
-      </div>
+      </components.Grid>
     </section>
   );
 }
