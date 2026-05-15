@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "bun test",
+    "e2e": "playwright test",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -77,6 +78,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@playwright/test": "1.60.0",
     "@tailwindcss/postcss": "4.1.11",
     "@tailwindcss/typography": "0.5.10",
     "@types/dom-speech-recognition": "0.0.6",

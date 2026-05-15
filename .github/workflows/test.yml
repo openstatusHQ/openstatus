@@ -58,3 +58,11 @@ jobs:
 
       - name: 🧪 Tests
         run: pnpm test
+
+      - name: 🎭 Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: ./apps/status-page
+
+      - name: 🎭 Run E2E tests
+        run: pnpm e2e
+        working-directory: ./apps/status-page
