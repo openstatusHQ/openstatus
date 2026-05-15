@@ -64,7 +64,7 @@ export function ExternalServicePill({
   const body = (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 font-medium text-xs",
+        "inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs",
         pill.className,
         className,
       )}
@@ -78,7 +78,7 @@ export function ExternalServicePill({
   return (
     <Tooltip>
       <TooltipTrigger asChild>{body}</TooltipTrigger>
-      <TooltipContent>{statusMessage}</TooltipContent>
+      <TooltipContent className="rounded-none">{statusMessage}</TooltipContent>
     </Tooltip>
   );
 }

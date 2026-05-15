@@ -82,5 +82,13 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
 
 export function HistoryBars(props: HistoryBarsProps) {
   const data = buildSeries(props);
-  return <StatusBar data={data} />;
+  // Square the bars: the shared StatusBar block hard-codes rounded-full on the
+  // item root, an overflow-hidden clip wrapper, and each segment. Override the
+  // radius for this page only (descendant selectors outrank the block's
+  // single-class utilities) without forking the shared component.
+  return (
+    <div className="[&_[data-slot=status-bar-item]>div>div]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]]:rounded-none">
+      <StatusBar data={data} />
+    </div>
+  );
 }
