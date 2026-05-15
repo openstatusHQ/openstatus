@@ -32,7 +32,9 @@ export async function generateStaticParams() {
 
 type RouteParams = { id: string };
 
-export async function generateMetadata(args: { params: Promise<RouteParams> }): Promise<Metadata> {
+export async function generateMetadata(args: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
   const { id } = await args.params;
   const service = await cachedGetExternalServiceBySlug(id);
   if (!service) return { ...defaultMetadata, title: "Not Found" };
@@ -137,7 +139,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
   const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const [latestRes, historyRes] = await Promise.all([
-    safePipeData(tb.externalStatusLatest({ ids: slugChain }), "externalStatusLatest"),
+    safePipeData(
+      tb.externalStatusLatest({ ids: slugChain }),
+      "externalStatusLatest",
+    ),
     safePipeData(
       tb.externalStatusHistory({ ids: slugChain, days: HISTORY_DAYS }),
       "externalStatusHistory",
@@ -182,16 +187,22 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       />
       <h1>Is {service.name} down?</h1>
       <p>
-        {answer} Below you'll find the live {service.name} status, uptime over the last{" "}
-        {HISTORY_DAYS} days, and recent {service.name} incidents.
+        {answer} Below you'll find the live {service.name} status, uptime over
+        the last {HISTORY_DAYS} days, and recent {service.name} incidents.
       </p>
       <div className="not-prose flex flex-wrap items-center gap-6">
-        <ExternalServicePill indicator={indicator} status={status} statusMessage={statusMessage} />
+        <ExternalServicePill
+          indicator={indicator}
+          status={status}
+          statusMessage={statusMessage}
+        />
         {fetchedAt > 0 ? (
           <span className="text-muted-foreground text-sm">
             Last updated {formatRelative(fetchedAt)}
             {stale ? (
-              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">(stale)</span>
+              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
+                (stale)
+              </span>
             ) : null}
           </span>
         ) : (
@@ -218,7 +229,11 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
 
       <h2>{service.name} recent incidents</h2>
       <Suspense
-        fallback={<p className="text-muted-foreground">Loading recent {service.name} incidents…</p>}
+        fallback={
+          <p className="text-muted-foreground">
+            Loading recent {service.name} incidents…
+          </p>
+        }
       >
         <Incidents
           statusPageUrl={service.statusPageUrl}
