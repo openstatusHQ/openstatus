@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
 import { env } from "@/env";
 import {
   cachedGetExternalServiceBySlug,
@@ -14,7 +15,6 @@ import {
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird } from "@openstatus/tinybird";
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 
 import { formatRelative, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";

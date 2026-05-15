@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
 import { components } from "@/content/mdx";
 import { cachedListExternalServices } from "@/lib/external-service-cache";
 import {
@@ -8,7 +9,6 @@ import {
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird } from "@openstatus/tinybird";
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 
 import { env } from "@/env";
 import { ContentBoxLink, ContentBoxUrl } from "../content-box";

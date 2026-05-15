@@ -33,13 +33,11 @@ const INDICATOR_PILLS: Record<string, PillStyle> = {
   },
   major: {
     label: "Partial Outage",
-    className:
-      "bg-destructive/15 text-destructive border-destructive/30",
+    className: "bg-destructive/15 text-destructive border-destructive/30",
   },
   critical: {
     label: "Major Outage",
-    className:
-      "bg-destructive/20 text-destructive border-destructive/40",
+    className: "bg-destructive/20 text-destructive border-destructive/40",
   },
 };
 
