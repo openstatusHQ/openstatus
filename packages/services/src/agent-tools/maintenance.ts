@@ -117,7 +117,7 @@ const CreateMaintenanceInputShape = z.object({
     .array(z.number().int())
     .default([])
     .describe(
-      "Optional component ids affected by the maintenance. Must belong to pageId.",
+      "Optional component ids affected by the maintenance. Resolve via list_page_components({ pageId }) — never guess. Must belong to pageId.",
     ),
   notify: z
     .boolean()
@@ -141,7 +141,7 @@ export const createMaintenanceTool: AgentTool<
 > = {
   name: "create_maintenance",
   description:
-    "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The maintenance row persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess.",
+    "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The maintenance row persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
   scope: "write",
   destructive: true,
   inputSchema: CreateMaintenanceInputShape,

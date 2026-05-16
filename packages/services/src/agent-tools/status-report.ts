@@ -147,7 +147,7 @@ const CreateStatusReportInputShape = z.object({
     .array(z.number().int())
     .default([])
     .describe(
-      "Optional component ids affected by the incident. Must belong to pageId.",
+      "Optional component ids affected by the incident. Resolve via list_page_components({ pageId }) — never guess. Must belong to pageId.",
     ),
   date: z.iso
     .datetime()
@@ -178,7 +178,7 @@ export const createStatusReportTool: AgentTool<
 > = {
   name: "create_status_report",
   description:
-    "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST belong to the same page.",
+    "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
   scope: "write",
   destructive: true,
   inputSchema: CreateStatusReportInputShape,
@@ -314,7 +314,7 @@ const UpdateStatusReportInputShape = z.object({
     .array(z.number().int())
     .optional()
     .describe(
-      "Replace the full set of associated component ids. Empty array clears the association.",
+      "Replace the full set of associated component ids. Resolve via list_page_components — never guess. Empty array clears the association.",
     ),
 });
 

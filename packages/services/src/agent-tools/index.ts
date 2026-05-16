@@ -12,6 +12,7 @@ import {
 } from "./monitor";
 import { listNotificationsTool } from "./notification";
 import { listStatusPagesTool } from "./page";
+import { listPageComponentsTool } from "./page-component";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -36,6 +37,7 @@ export {
 } from "./monitor";
 export { listNotificationsTool } from "./notification";
 export { listStatusPagesTool } from "./page";
+export { listPageComponentsTool } from "./page-component";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -67,6 +69,7 @@ export {
  */
 export const agentTools = {
   list_status_pages: listStatusPagesTool,
+  list_page_components: listPageComponentsTool,
   list_status_reports: listStatusReportsTool,
   create_status_report: createStatusReportTool,
   add_status_report_update: addStatusReportUpdateTool,

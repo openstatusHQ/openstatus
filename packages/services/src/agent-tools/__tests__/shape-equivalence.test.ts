@@ -20,6 +20,13 @@ describe("agent-tool shape equivalence", () => {
     expect(parsed.success, parsed.error?.message).toBe(true);
   });
 
+  test("list_page_components output matches schema", async () => {
+    const tool = agentTools.list_page_components;
+    const result = await tool.run({ ctx: teamCtx, input: {} });
+    const parsed = tool.outputSchema.safeParse(result);
+    expect(parsed.success, parsed.error?.message).toBe(true);
+  });
+
   test("list_status_reports output matches schema", async () => {
     const tool = agentTools.list_status_reports;
     const result = await tool.run({
