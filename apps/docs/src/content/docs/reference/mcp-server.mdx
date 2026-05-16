@@ -36,11 +36,12 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 8 tools, scoped to the workspace tied to your API key. Mutations write to the audit log with `metadata.transport = "mcp"`.
+The server exposes 9 tools, scoped to the workspace tied to your API key. Mutations write to the audit log with `metadata.transport = "mcp"`.
 
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
 | `list_status_pages`        | read     | List public status pages with their slug and id. Used to discover the `pageId` required by mutation tools. |
+| `list_page_components`     | read     | List components on a status page with their id, name, type (`monitor` / `static`), and linked monitor. Used to discover the `pageComponentIds` accepted by `create_status_report`, `update_status_report`, and `create_maintenance`. |
 | `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `list_maintenances`        | read     | List maintenance windows newest-first. Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
@@ -80,7 +81,7 @@ The tool's response includes a `notified: boolean` field so the assistant can co
 
 ### Lookup-before-mutate
 
-`create_status_report` and `create_maintenance` require a `pageId`. The tool descriptions instruct the model to call `list_status_pages` first; **never** type a numeric id you don't know — make the assistant resolve it.
+`create_status_report` and `create_maintenance` require a `pageId`, and they (plus `update_status_report`) accept an optional `pageComponentIds`. The tool descriptions instruct the model to call `list_status_pages` for the `pageId` and `list_page_components` for component ids first; **never** type a numeric id you don't know — make the assistant resolve it. Ids that don't belong to the workspace (or, for components, to the supplied page) come back as `NOT_FOUND`.
 
 ## Configure Claude Desktop
 

@@ -47,11 +47,11 @@ The model has context for your workspace — your monitors, your status pages, y
 
 ## The toolbox
 
-There are seventeen tools today, split into two camps.
+There are eighteen tools today, split into two camps.
 
 **Read tools** fire immediately. No approval needed — they only ever query.
 
-- `list_status_pages` · `list_status_reports` · `list_maintenances`
+- `list_status_pages` · `list_page_components` · `list_status_reports` · `list_maintenances`
 - `list_monitors` · `list_notifications` · `list_response_logs` · `list_audit_logs`
 - `get_monitor` · `get_monitor_status` · `get_monitor_summary` · `get_response_log` · `get_audit_log`
 
@@ -60,7 +60,7 @@ There are seventeen tools today, split into two camps.
 - `create_status_report` · `add_status_report_update` · `update_status_report` · `resolve_status_report`
 - `create_maintenance`
 
-All seventeen are declared once in `@openstatus/services/agent-tools`. The same registry powers the chat UI **and** the MCP server — shape-equivalence tests keep them honest. We'll add more (notification CRUD, monitor mutations, status-page editing) as we go.
+All eighteen are declared once in `@openstatus/services/agent-tools`. The same registry powers the chat UI **and** the MCP server — shape-equivalence tests keep them honest. We'll add more (notification CRUD, monitor mutations, status-page editing) as we go.
 
 ## The pretty part — how a tool call renders
 

@@ -31,7 +31,7 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
     opts.surface === "dashboard"
       ? `\n\nAfter a tool returns, the dashboard already renders a structured view of the result:
 - Write tools (create_*, update_*, resolve_*, add_*) render a diff card with every input/output field (id, status, message, dates, notify outcome).
-- List tools (list_status_pages, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs) render a table with one row per result.
+- List tools (list_status_pages, list_page_components, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs) render a table with one row per result.
 - Detail tools (get_monitor, get_monitor_status, get_monitor_summary, get_response_log, get_audit_log) render a structured detail card.
 DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Monitor 12 is healthy in 5/7 regions; failing in gru, fra." / "Incident resolved.") plus an optional next step is enough.`
       : "";
@@ -57,9 +57,11 @@ Anti-guess rules — these are absolute:
 - Before referencing a status page: call list_status_pages.
 - Before referencing a status report: call list_status_reports.
 - Before referencing a maintenance window: call list_maintenances.
+- Before referencing a page component (including by name like "the laser pointer"): call list_page_components({ pageId }).
 - Before referencing a monitor (including by name like "the API monitor"): call list_monitors.
 - Before referencing a notification channel: call list_notifications.
 - pageId on create_status_report and create_maintenance MUST come from list_status_pages. Guessing will cause a NOT_FOUND error.
+- pageComponentIds on create_status_report, create_maintenance, and update_status_report MUST come from list_page_components for that page. Guessing will cause a NOT_FOUND error.
 
 Monitor diagnostics:
 - get_monitor_status returns one row per configured region (active/degraded/error). Report at the worst region's level: "Healthy in 5/7 regions; failing in gru, fra." Do NOT invent a composite "overall: degraded" label — the per-region facts ARE the answer.

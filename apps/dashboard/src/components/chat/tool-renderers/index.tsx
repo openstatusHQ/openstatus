@@ -23,6 +23,7 @@ import { listAuditLogsTable } from "./list-audit-logs";
 import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
 import { listNotificationsTable } from "./list-notifications";
+import { listPageComponentsTable } from "./list-page-components";
 import { listResponseLogsTable } from "./list-response-logs";
 import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
@@ -58,6 +59,12 @@ export const toolRenderers: ToolRendererRegistry = {
   list_status_pages: {
     renderResult: ({ output }) => (
       <ResultTable {...listStatusPagesTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  list_page_components: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listPageComponentsTable(output)} />
     ),
     summary: (o) => itemsCountSummary(o.items),
   },
