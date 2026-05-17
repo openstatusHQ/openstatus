@@ -81,6 +81,49 @@ describe("buildConfirmationBlocks", () => {
     expect(actions.elements).toHaveLength(3);
   });
 
+  test("update_status_report distinguishes 'clear all' from 'no change' for components", () => {
+    const tool = agentTools.update_status_report;
+
+    // pageComponentIds undefined → no Components line at all
+    const noChange = buildConfirmationBlocks({
+      actionId: "u1",
+      tool,
+      input: { statusReportId: 10, title: "X" },
+    });
+    const noChangeText = (
+      noChange.find((b) => b.type === "section") as {
+        text: { text: string };
+      }
+    ).text.text;
+    expect(noChangeText).not.toContain("Components");
+
+    // pageComponentIds: [] → "(clear all)"
+    const clearAll = buildConfirmationBlocks({
+      actionId: "u2",
+      tool,
+      input: { statusReportId: 10, pageComponentIds: [] },
+    });
+    const clearAllText = (
+      clearAll.find((b) => b.type === "section") as {
+        text: { text: string };
+      }
+    ).text.text;
+    expect(clearAllText).toContain("(clear all)");
+
+    // pageComponentIds: [1,2] → list
+    const withIds = buildConfirmationBlocks({
+      actionId: "u3",
+      tool,
+      input: { statusReportId: 10, pageComponentIds: [1, 2] },
+    });
+    const withIdsText = (
+      withIds.find((b) => b.type === "section") as {
+        text: { text: string };
+      }
+    ).text.text;
+    expect(withIdsText).toContain("1, 2");
+  });
+
   test("update_status_report has 2 buttons (no notify flag)", () => {
     const tool = agentTools.update_status_report;
     const blocks = buildConfirmationBlocks({

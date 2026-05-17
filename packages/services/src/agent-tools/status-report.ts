@@ -390,10 +390,15 @@ export const updateStatusReportTool: AgentTool<
       if (input.title) lines.push({ label: "New Title", value: input.title });
       if (input.status)
         lines.push({ label: "New Status", value: input.status });
-      if (input.pageComponentIds?.length) {
+      // Distinguish "don't touch components" (undefined) from
+      // "clear all associations" ([]). The latter is destructive and
+      // MUST be visible on the approval card.
+      if (input.pageComponentIds !== undefined) {
         lines.push({
           label: "Components",
-          value: input.pageComponentIds.join(", "),
+          value: input.pageComponentIds.length
+            ? input.pageComponentIds.join(", ")
+            : "(clear all)",
         });
       }
       return {

@@ -50,6 +50,16 @@ describe("isSlackToolDraft", () => {
       }),
     ).toBe(false);
   });
+
+  test("rejects non-string toolName", () => {
+    expect(
+      isSlackToolDraft({
+        needsConfirmation: true,
+        toolName: 42,
+        input: {},
+      }),
+    ).toBe(false);
+  });
 });
 
 describe("getRegistryTool", () => {

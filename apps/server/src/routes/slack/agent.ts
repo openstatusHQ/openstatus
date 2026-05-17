@@ -5,6 +5,12 @@ import type { ModelMessage } from "ai";
 
 import { buildSlackTools } from "./registry-runner";
 
+// Vercel AI Gateway model id. Override via SLACK_AGENT_MODEL when rolling
+// out a new Sonnet version. Dotted format (`4.6`, not `4-6`) is what the
+// gateway accepts — see `apps/dashboard/src/app/api/chat/route.ts`.
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4.6";
+const MODEL = process.env.SLACK_AGENT_MODEL ?? DEFAULT_MODEL;
+
 interface SlackThreadMessage {
   user?: string;
   bot_id?: string;
@@ -116,7 +122,7 @@ export async function runAgent(
   }
 
   const result = await generateText({
-    model: "anthropic/claude-sonnet-4-6",
+    model: MODEL,
     system: buildSystemPrompt(workspace.name ?? "Unknown"),
     messages,
     tools,

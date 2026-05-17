@@ -19,13 +19,9 @@ export type SlackToolDraft = {
 };
 
 export function isSlackToolDraft(value: unknown): value is SlackToolDraft {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "needsConfirmation" in value &&
-    (value as { needsConfirmation: unknown }).needsConfirmation === true &&
-    "toolName" in value
-  );
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return v.needsConfirmation === true && typeof v.toolName === "string";
 }
 
 /**
