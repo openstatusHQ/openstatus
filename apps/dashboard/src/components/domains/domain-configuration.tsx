@@ -18,6 +18,7 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
 import { DomainStatusIcon } from "./domain-status-icon";
+import { DomainTroubleshooting } from "./domain-troubleshooting";
 import { useDomainStatus } from "./use-domain-status";
 
 export const InlineSnippet = ({
@@ -202,6 +203,10 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
           )}
         </StepCardContent>
       </StepCard>
+
+      {status !== "Valid Configuration" ? (
+        <DomainTroubleshooting domain={domain} />
+      ) : null}
     </div>
   );
 }
