@@ -331,6 +331,12 @@ async function handleConfirmation(
   };
   const text = getConfirmationText({ tool, input: draft.input });
 
+  // findByThread + replace isn't atomic on its own — two concurrent
+  // events on the same thread could both see `existing` and race on
+  // replace. Atomicity here relies on the `dedup` map at the top of this
+  // file suppressing duplicate event_ids, plus Slack's own per-thread
+  // event throttling. Cross-process dedup is *not* covered; see note in
+  // processedEvents.
   const existing = await findByThread(threadTs);
   if (existing) {
     await replace(existing.id, payload);

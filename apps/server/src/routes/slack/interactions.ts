@@ -132,10 +132,12 @@ async function runAndPresent(args: {
     flags,
   });
 
-  // Use the tool's actual `notified` outcome — services swallow notify
-  // failures and report `notified: false` even when the user clicked
-  // "Approve & Notify". Falling back to the button flag would tell users
-  // subscribers were notified when they weren't.
+  // Soft contract: tools that declare `extraFlags: [{ id: "notify" }]`
+  // SHOULD return `notified: boolean` in their output (see ExtraFlag
+  // JSDoc). We read it here because services swallow dispatch failures —
+  // falling back to the user's button flag would say "subscribers
+  // notified" when dispatch actually failed. The `?? false` keeps us
+  // honest if a future tool breaks the convention.
   const notified =
     flagId === "notify"
       ? (output as { notified?: boolean }).notified ?? false

@@ -31,7 +31,15 @@ export type AgentTool<TInput = unknown, TOutput = unknown> = {
 };
 
 export type ExtraFlag = {
-  /** Schema field name injected back into input by `applyFlags`. */
+  /**
+   * Schema field name injected back into input by `applyFlags`.
+   *
+   * Convention: when `id === "notify"`, the tool's `outputSchema` SHOULD
+   * include `notified: boolean` reporting the actual dispatch outcome
+   * (notify failures are typically swallowed, so the input flag and the
+   * realized outcome can differ). Surfaces use that field to render
+   * "subscribers notified" honestly.
+   */
   id: string;
   /** Human-readable button label. */
   label: string;

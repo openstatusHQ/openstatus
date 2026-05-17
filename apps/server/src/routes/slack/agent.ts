@@ -25,6 +25,12 @@ interface AgentResult {
 }
 
 export function buildSystemPrompt(workspaceName: string): string {
+  // Intentional: a per-call ISO timestamp defeats Anthropic/Gateway
+  // prompt caching, but the agent needs minute-level precision to parse
+  // relative times like "next Friday from 2-3 PM". Slack agent volume is
+  // low; the latency/cost trade is acceptable. If this ever becomes hot,
+  // move the timestamp to the first user message so the rest of the
+  // system prompt can cache.
   const now = new Date().toISOString();
   return `You are the OpenStatus assistant for workspace "${workspaceName}".
 The current date and time is: ${now} (UTC).
