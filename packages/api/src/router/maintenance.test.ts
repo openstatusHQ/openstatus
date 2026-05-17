@@ -4,6 +4,7 @@ import {
   maintenance,
   maintenancesToPageComponents,
   page,
+  pageComponent,
 } from "@openstatus/db/src/schema";
 import { TRPCError } from "@trpc/server";
 
@@ -12,6 +13,7 @@ import { createInnerTRPCContext } from "../trpc";
 
 let otherWorkspaceMaintenanceId: number;
 let otherWorkspacePageId: number;
+let otherWorkspaceComponentId: number;
 
 beforeAll(async () => {
   const p = await db
@@ -26,6 +28,18 @@ beforeAll(async () => {
     .returning()
     .get();
   otherWorkspacePageId = p.id;
+
+  const component = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: 2,
+      pageId: otherWorkspacePageId,
+      name: "Other workspace component",
+      type: "static",
+    })
+    .returning()
+    .get();
+  otherWorkspaceComponentId = component.id;
 
   // Maintenance for workspace 2, referencing page 1 (page ownership is not
   // enforced at DB level, only at API level, so this insert works for testing)
@@ -47,7 +61,7 @@ beforeAll(async () => {
     .insert(maintenancesToPageComponents)
     .values({
       maintenanceId: otherWorkspaceMaintenanceId,
-      pageComponentId: 1,
+      pageComponentId: otherWorkspaceComponentId,
     })
     .run();
 });
@@ -64,6 +78,9 @@ afterAll(async () => {
   await db
     .delete(maintenance)
     .where(eq(maintenance.id, otherWorkspaceMaintenanceId));
+  await db
+    .delete(pageComponent)
+    .where(eq(pageComponent.id, otherWorkspaceComponentId));
   await db.delete(page).where(eq(page.id, otherWorkspacePageId));
 });
 
