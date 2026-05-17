@@ -40,21 +40,27 @@ app.get("/checker/:period", async (c) => {
 
   void Effect.runPromise(
     Effect.tryPromise({
-      try: () => sendCheckerTasks(schema.data, c),
+      try: () => sendCheckerTasks(schema.data),
       catch: (e) => new Error(`Error in /checker/${period} cron: ${e}`),
     }).pipe(
       Effect.retry({
         times: 3,
         schedule: Schedule.exponential("1000 millis"),
       }),
-      Effect.tap(() =>
-        Effect.sync(() =>
+      Effect.tap((result) =>
+        Effect.sync(() => {
+          if (result.failed > 0) {
+            sentry.captureMessage(
+              `sendCheckerTasks for ${period} ended with ${result.failed} failed tasks`,
+              "error",
+            );
+          }
           sentry.captureCheckIn({
             checkInId,
             monitorSlug: period,
             status: "ok",
-          }),
-        ),
+          });
+        }),
       ),
       Effect.catchAll((e) =>
         Effect.sync(() => {

@@ -47,7 +47,7 @@ function shouldSample(event: Record<string, unknown>): boolean {
   if (statusCode && statusCode >= 500) return true;
 
   // Always capture: explicit errors
-  if (event.error) return true;
+  if (event.outcome === "error") return true;
 
   // Always capture: slow requests (above p99 - 2s threshold)
   if (durationMs && durationMs > 2000) return true;
@@ -138,16 +138,7 @@ app.use("*", async (c, next) => {
       const duration = Date.now() - startTime;
 
       event.status_code = c.res.status;
-      if (c.error) {
-        event.outcome = "error";
-        event.error = {
-          type: c.error.name,
-          message: c.error.message,
-          stack: c.error.stack,
-        };
-      } else {
-        event.outcome = "success";
-      }
+      event.outcome = c.error ? "error" : "success";
       event.duration_ms = duration;
       // Emit canonical log line with all context (wide event pattern)
       if (shouldSample(event)) {
