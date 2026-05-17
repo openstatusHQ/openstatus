@@ -237,6 +237,11 @@ async function processEvent(body: SlackEvent) {
       toolCalls: result.toolResults.map((tr) => tr.toolName),
     });
 
+    // One pending action per thread (see findByThread/replace below).
+    // If the model emits multiple destructive drafts in a single step we
+    // only honour the first; the carrier's thread index can't represent
+    // a queue, and forcing the user to confirm twice in a row is worse
+    // UX than asking them to re-issue the second request.
     const confirmationResult = result.toolResults.find((tr) =>
       isSlackToolDraft(tr.result),
     );

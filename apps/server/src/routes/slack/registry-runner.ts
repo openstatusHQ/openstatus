@@ -5,7 +5,7 @@ import {
   agentTools,
 } from "@openstatus/services/agent-tools";
 import { type Tool, tool } from "ai";
-import type { ZodObject, ZodType, z } from "zod";
+import { ZodObject, type ZodType, type z } from "zod";
 
 /**
  * Marker shape returned by destructive tool wrappers. The agent handler
@@ -44,7 +44,10 @@ export function buildSlackTools(ctx: ServiceContext): Record<string, Tool> {
 }
 
 function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
-  if (t.scope === "read") {
+  // HITL is gated on `destructive`, not on scope: a non-destructive
+  // write (none today, but conceivable — e.g. an idempotent reconcile)
+  // should run inline like reads do.
+  if (!t.destructive) {
     return tool({
       description: t.description,
       inputSchema: t.inputSchema,
@@ -79,13 +82,18 @@ function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
  * approval metadata. Used only for the Slack LLM-facing schema; the
  * registry's strict schema is the source of truth at execute time.
  *
- * Safe because `agentTools` rejects non-ZodObject schemas (see MCP
- * registry-adapter's `assertShape`) — every registered tool's input is a
- * ZodObject and supports `.omit`.
+ * Throws if `inputSchema` isn't a ZodObject — `.omit` only exists there,
+ * and a union/intersection at the root would otherwise produce a
+ * confusing runtime error several frames deep.
  */
-function deriveDraftSchema(t: AnyAgentTool): ZodType {
+export function deriveDraftSchema(t: AnyAgentTool): ZodType {
   const flagIds = t.approval?.extraFlags?.map((f) => f.id) ?? [];
   if (flagIds.length === 0) return t.inputSchema;
+  if (!(t.inputSchema instanceof ZodObject)) {
+    throw new Error(
+      `slack registry: tool "${t.name}" declares extraFlags but inputSchema is not a ZodObject; .omit() is unavailable.`,
+    );
+  }
   const obj = t.inputSchema as unknown as ZodObject<z.ZodRawShape>;
   const mask: Record<string, true> = {};
   for (const id of flagIds) mask[id] = true;

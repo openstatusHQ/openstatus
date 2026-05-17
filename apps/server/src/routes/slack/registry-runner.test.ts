@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import {
   buildSlackTools,
+  deriveDraftSchema,
   executeRegistryAction,
   getRegistryTool,
   isSlackToolDraft,
@@ -93,6 +94,33 @@ describe("buildSlackTools", () => {
     // update_status_report has no notify field at all in the registry, so
     // we just check the schema is intact.
     expect("title" in shape).toBe(true);
+  });
+
+  test("deriveDraftSchema throws clearly when inputSchema isn't a ZodObject", () => {
+    const badTool: AnyAgentTool = {
+      name: "bad_tool",
+      description: "x",
+      scope: "write",
+      destructive: true,
+      // ZodUnion has no `.omit()`.
+      inputSchema: z.union([
+        z.object({ a: z.string() }),
+        z.object({ b: z.string() }),
+      ]),
+      outputSchema: z.object({}),
+      run: async () => ({}),
+      approval: {
+        extraFlags: [{ id: "notify", label: "Notify" }],
+        applyFlags: (i, f) => ({ ...(i as object), notify: f.notify }),
+        summarize: () => ({ title: "x", lines: [] }),
+      },
+    };
+    expect(() => deriveDraftSchema(badTool)).toThrow(/not a ZodObject/);
+  });
+
+  test("deriveDraftSchema is a no-op for tools without extraFlags", () => {
+    const t = agentTools.update_status_report;
+    expect(deriveDraftSchema(t)).toBe(t.inputSchema);
   });
 
   test("read tools expose the full registry schema", () => {
@@ -190,6 +218,33 @@ describe("executeRegistryAction", () => {
         flags: { notify: false },
       }),
     ).rejects.toThrow("kaboom");
+  });
+
+  test("non-destructive tools run inline (no HITL gate)", async () => {
+    const ran: unknown[] = [];
+    const t: AnyAgentTool = {
+      name: "no_op",
+      description: "x",
+      scope: "write",
+      destructive: false,
+      inputSchema: z.object({ value: z.number() }),
+      outputSchema: z.object({ echo: z.number() }),
+      run: async ({ input }) => {
+        ran.push(input);
+        return { echo: (input as { value: number }).value };
+      },
+    };
+    // buildSlackTools spreads `agentTools`, so we test the per-tool
+    // helper indirectly: a non-destructive tool's AI SDK execute() runs
+    // inline and returns the registry output, not a draft.
+    const out = await executeRegistryAction({
+      tool: t,
+      ctx: fakeCtx,
+      draftInput: { value: 7 },
+      flags: {},
+    });
+    expect(out.output).toEqual({ echo: 7 });
+    expect(ran).toEqual([{ value: 7 }]);
   });
 
   test("tools without approval pass draftInput through unchanged", async () => {

@@ -132,8 +132,21 @@ async function runAndPresent(args: {
     flags,
   });
 
-  const notify = flagId === "notify" ? flag : false;
-  const text = await renderToolResult({ tool, ctx, input, output, notify });
+  // Use the tool's actual `notified` outcome — services swallow notify
+  // failures and report `notified: false` even when the user clicked
+  // "Approve & Notify". Falling back to the button flag would tell users
+  // subscribers were notified when they weren't.
+  const notified =
+    flagId === "notify"
+      ? (output as { notified?: boolean }).notified ?? false
+      : false;
+  const text = await renderToolResult({
+    tool,
+    ctx,
+    input,
+    output,
+    notify: notified,
+  });
 
   await slack.chat.update({
     channel: channelId,

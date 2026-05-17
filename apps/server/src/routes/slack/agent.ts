@@ -1,8 +1,3 @@
-import { db, eq } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  workspace as workspaceTable,
-} from "@openstatus/db/src/schema";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
 import type { ServiceContext } from "@openstatus/services";
 import { generateText, stepCountIs } from "ai";
@@ -91,28 +86,6 @@ function convertThreadToMessages(
   return messages;
 }
 
-async function buildReadCtx(
-  workspaceId: number,
-  slackUserId: string,
-  teamId: string | undefined,
-): Promise<ServiceContext> {
-  const row = await db
-    .select()
-    .from(workspaceTable)
-    .where(eq(workspaceTable.id, workspaceId))
-    .get();
-  if (!row) throw new Error(`slack: workspace ${workspaceId} not found`);
-  const workspace = selectWorkspaceSchema.parse(row);
-  return {
-    workspace,
-    actor: {
-      type: "slack",
-      teamId: teamId ?? "",
-      slackUserId,
-    },
-  };
-}
-
 export async function runAgent(
   workspace: Workspace,
   thread: SlackThreadMessage[],
@@ -120,11 +93,14 @@ export async function runAgent(
   userText?: string,
   origin?: { slackUserId: string; teamId: string | undefined },
 ): Promise<AgentResult> {
-  const ctx = await buildReadCtx(
-    workspace.id,
-    origin?.slackUserId ?? "",
-    origin?.teamId,
-  );
+  const ctx: ServiceContext = {
+    workspace,
+    actor: {
+      type: "slack",
+      teamId: origin?.teamId ?? "",
+      slackUserId: origin?.slackUserId ?? "",
+    },
+  };
   const tools = buildSlackTools(ctx);
   let messages = convertThreadToMessages(thread, botUserId);
 
@@ -140,7 +116,7 @@ export async function runAgent(
   }
 
   const result = await generateText({
-    model: "anthropic/claude-sonnet-4.5",
+    model: "anthropic/claude-sonnet-4-6",
     system: buildSystemPrompt(workspace.name ?? "Unknown"),
     messages,
     tools,

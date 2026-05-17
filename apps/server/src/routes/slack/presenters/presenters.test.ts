@@ -250,6 +250,39 @@ describe("renderToolResult (per-tool override)", () => {
     );
   });
 
+  test("create_status_report omits 'subscribers notified' when notify=false (e.g. dispatch failed)", async () => {
+    const tool = agentTools.create_status_report;
+    const text = await renderToolResult({
+      tool,
+      ctx: fakeCtx,
+      input: {
+        title: "API Outage",
+        status: "investigating",
+        message: "Investigating",
+        pageId: 1,
+        pageComponentIds: [],
+        notify: true,
+      },
+      output: {
+        statusReport: {
+          id: 42,
+          title: "API Outage",
+          status: "investigating",
+          pageId: 1,
+          createdAt: null,
+        },
+        initialUpdateId: 100,
+        // User clicked "Approve & Notify" but the dispatch failed —
+        // the service caught it and set notified=false. Call site
+        // (interactions.ts) passes notify=false through accordingly.
+        notified: false,
+      },
+      notify: false,
+    });
+    expect(text).toContain("Status report *API Outage* created");
+    expect(text).not.toContain("subscribers notified");
+  });
+
   test("falls back to the default presenter when no override is registered", async () => {
     const t: AnyAgentTool = {
       name: "create_something_new",
