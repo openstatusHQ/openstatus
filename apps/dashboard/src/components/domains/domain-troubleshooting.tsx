@@ -49,19 +49,9 @@ export function DomainTroubleshooting({ domain }: { domain: string }) {
   const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <Card
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen((prev) => !prev);
-            }
-          }}
-          className="cursor-pointer gap-0 border-dashed py-0 text-left shadow-none"
-        >
-          <CardHeader className="px-4 py-3 select-none">
+      <CollapsibleTrigger className="w-full cursor-pointer rounded-xl">
+        <Card className="gap-0 border-dashed py-0 text-left shadow-none">
+          <CardHeader className="select-none px-4 py-3">
             <CardTitle className="text-sm">Troubleshooting</CardTitle>
             <CardDescription>
               If the configuration stays pending or invalid for more than a few
