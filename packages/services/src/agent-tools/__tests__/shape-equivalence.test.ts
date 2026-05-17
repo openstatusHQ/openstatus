@@ -4,6 +4,7 @@ import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { loadSeededWorkspace, makeUserCtx } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { agentTools } from "../index";
+import type { AnyAgentTool } from "../types";
 
 let teamCtx: ServiceContext;
 
@@ -117,4 +118,73 @@ describe("agent-tool shape equivalence", () => {
   });
 
   // get_response_log requires a Tinybird row; covered by RPC handler tests.
+});
+
+describe("approval metadata contract", () => {
+  const destructiveTools = Object.values(agentTools).filter(
+    (t): t is AnyAgentTool => t.destructive,
+  );
+
+  test("every destructive tool declares approval", () => {
+    for (const t of destructiveTools) {
+      expect(t.approval, `${t.name} missing approval`).toBeDefined();
+    }
+  });
+
+  test("extraFlags is capped at one entry", () => {
+    for (const t of destructiveTools) {
+      const flags = t.approval?.extraFlags ?? [];
+      expect(flags.length, `${t.name} extraFlags.length`).toBeLessThanOrEqual(
+        1,
+      );
+    }
+  });
+
+  test("extraFlags requires applyFlags", () => {
+    for (const t of destructiveTools) {
+      if (t.approval?.extraFlags?.length) {
+        expect(
+          t.approval.applyFlags,
+          `${t.name} extraFlags but no applyFlags`,
+        ).toBeDefined();
+      }
+    }
+  });
+
+  test("applyFlags injects the declared flag id", () => {
+    for (const t of destructiveTools) {
+      const flag = t.approval?.extraFlags?.[0];
+      if (!flag || !t.approval?.applyFlags) continue;
+      const draft = {} as Record<string, unknown>;
+      const merged = t.approval.applyFlags(draft, {
+        [flag.id]: true,
+      }) as Record<string, unknown>;
+      expect(merged[flag.id], `${t.name} applyFlags(true)`).toBe(true);
+      const merged2 = t.approval.applyFlags(draft, {
+        [flag.id]: false,
+      }) as Record<string, unknown>;
+      expect(merged2[flag.id], `${t.name} applyFlags(false)`).toBe(false);
+    }
+  });
+
+  test("summarize returns a non-empty title", () => {
+    for (const t of destructiveTools) {
+      if (!t.approval) continue;
+      // Smoke-call with a synthetic input so we just check shape.
+      // Real inputs are tool-specific; we use minimal placeholders.
+      const placeholder: Record<string, unknown> = {
+        title: "t",
+        message: "m",
+        status: "investigating",
+        pageId: 1,
+        statusReportId: 1,
+        from: new Date().toISOString(),
+        to: new Date(Date.now() + 60000).toISOString(),
+        pageComponentIds: [],
+      };
+      const summary = t.approval.summarize(placeholder);
+      expect(summary.title.length, `${t.name} title empty`).toBeGreaterThan(0);
+      expect(Array.isArray(summary.lines)).toBe(true);
+    }
+  });
 });

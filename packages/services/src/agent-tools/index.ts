@@ -49,8 +49,11 @@ export type {
   AgentTool,
   AgentToolRegistry,
   AnyAgentTool,
+  ApprovalMeta,
+  ExtraFlag,
   InferAgentToolInput,
   InferAgentToolOutput,
+  SummaryLine,
 } from "./types";
 export {
   type AgentSystemPromptOptions,
@@ -87,6 +90,22 @@ export const agentTools = {
   list_audit_logs: listAuditLogsTool,
   get_audit_log: getAuditLogTool,
 } satisfies Record<string, AnyAgentTool>;
+
+// Multi-flag confirmation UX should be a modal, not 2^N buttons. Fail
+// loudly at module load if anything sneaks in past the tuple type.
+for (const tool of Object.values(agentTools) as AnyAgentTool[]) {
+  const flags = tool.approval?.extraFlags;
+  if (flags && flags.length > 1) {
+    throw new Error(
+      `agent-tools: "${tool.name}" declares ${flags.length} extraFlags; cap is 1.`,
+    );
+  }
+  if (flags?.length && !tool.approval?.applyFlags) {
+    throw new Error(
+      `agent-tools: "${tool.name}" declares extraFlags but no applyFlags.`,
+    );
+  }
+}
 
 /**
  * Iteration view used by adapters that don't care about the literal key.

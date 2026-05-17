@@ -1,20 +1,13 @@
-import {
-  createMaintenance,
-  notifyMaintenance,
-} from "@openstatus/services/maintenance";
-import {
-  addStatusReportUpdate,
-  createStatusReport,
-  notifyStatusReport,
-  resolveStatusReport,
-  updateStatusReport,
-} from "@openstatus/services/status-report";
+import { ServiceError } from "@openstatus/services";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
+
+import { parseActionId } from "./blocks";
 import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
-import { getPageUrl, getReportUrl } from "./page-urls";
-import { toServiceCtx, toSlackMessage } from "./service-adapter";
+import { renderToolResult } from "./presenters";
+import { executeRegistryAction, getRegistryTool } from "./registry-runner";
+import { toServiceCtx } from "./service-adapter";
 import { resolveWorkspace } from "./workspace-resolver";
 
 interface SlackInteractionPayload {
@@ -33,40 +26,23 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  const actionId = payload.actions[0].action_id;
+  const parsed = parseActionId(payload.actions[0].action_id);
+  if (!parsed) return c.json({ ok: true });
+
   const channelId = payload.channel.id;
   const messageTs = payload.message.ts;
   const userId = payload.user.id;
   const teamId = payload.team?.id;
 
-  let type: "approve" | "approve_notify" | "cancel";
-  let pendingId: string;
-
-  if (actionId.startsWith("approve_notify_")) {
-    type = "approve_notify";
-    pendingId = actionId.replace("approve_notify_", "");
-  } else if (actionId.startsWith("approve_")) {
-    type = "approve";
-    pendingId = actionId.replace("approve_", "");
-  } else if (actionId.startsWith("cancel_")) {
-    type = "cancel";
-    pendingId = actionId.replace("cancel_", "");
-  } else {
-    return c.json({ ok: true });
-  }
-
   // Non-atomic read for botToken resolution and authorization checks
-  const pending = await get(pendingId);
+  const pending = await get(parsed.pendingId);
 
   let botToken: string | undefined = pending?.botToken;
   if (!botToken && teamId) {
     const resolved = await resolveWorkspace(teamId);
     botToken = resolved?.botToken;
   }
-
-  if (!botToken) {
-    return c.json({ ok: true });
-  }
+  if (!botToken) return c.json({ ok: true });
 
   const slack = new WebClient(botToken);
 
@@ -89,14 +65,12 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  // Atomic consume — prevents double execution from concurrent requests (e.g. double-click).
-  // If another request already consumed this action, consume() returns undefined.
-  const consumed = await consume(pendingId);
-  if (!consumed) {
-    return c.json({ ok: true });
-  }
+  // Atomic consume — prevents double execution from concurrent requests
+  // (e.g. double-click). If another request already won, return.
+  const consumed = await consume(parsed.pendingId);
+  if (!consumed) return c.json({ ok: true });
 
-  if (type === "cancel") {
+  if (parsed.kind === "cancel") {
     await slack.chat.update({
       channel: channelId,
       ts: messageTs,
@@ -106,10 +80,13 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  const notify = type === "approve_notify";
-
   try {
-    await executeAction(consumed, notify, slack, channelId, messageTs, {
+    await runAndPresent({
+      pending: consumed,
+      flag: parsed.flag,
+      slack,
+      channelId,
+      messageTs,
       slackUserId: userId,
       teamId,
     });
@@ -118,7 +95,7 @@ export async function handleSlackInteraction(c: Context) {
     await slack.chat.update({
       channel: channelId,
       ts: messageTs,
-      text: toSlackMessage(err),
+      text: errorMessage(err),
       blocks: [],
     });
   }
@@ -126,184 +103,49 @@ export async function handleSlackInteraction(c: Context) {
   return c.json({ ok: true });
 }
 
-async function executeAction(
-  pending: PendingAction,
-  notify: boolean,
-  slack: WebClient,
-  channelId: string,
-  messageTs: string,
-  origin: { slackUserId: string; teamId: string | undefined },
-) {
-  const { action } = pending;
+async function runAndPresent(args: {
+  pending: PendingAction;
+  flag: boolean;
+  slack: WebClient;
+  channelId: string;
+  messageTs: string;
+  slackUserId: string;
+  teamId: string | undefined;
+}) {
+  const { pending, flag, slack, channelId, messageTs, slackUserId, teamId } =
+    args;
+  const tool = getRegistryTool(pending.payload.toolName);
+  if (!tool) {
+    throw new Error(
+      `slack: unknown tool "${pending.payload.toolName}" in pending payload`,
+    );
+  }
 
-  // Hoisted out of the switch: every service-backed branch below uses
-  // the same ctx, and `toServiceCtx` loads the workspace row from the
-  // db. Computing it once halves the per-action db traffic.
-  const ctx = await toServiceCtx({
-    pending,
-    slackUserId: origin.slackUserId,
-    teamId: origin.teamId,
+  const ctx = await toServiceCtx({ pending, slackUserId, teamId });
+  const flagId = tool.approval?.extraFlags?.[0]?.id;
+  const flags: Record<string, boolean> = flagId ? { [flagId]: flag } : {};
+
+  const { input, output } = await executeRegistryAction({
+    tool,
+    ctx,
+    draftInput: pending.payload.input,
+    flags,
   });
 
-  switch (action.type) {
-    case "createStatusReport": {
-      const { title, status, message, pageId, pageComponentIds } =
-        action.params;
-      if (pageId == null) {
-        throw new Error("pageId is required to create a status report");
-      }
+  const notify = flagId === "notify" ? flag : false;
+  const text = await renderToolResult({ tool, ctx, input, output, notify });
 
-      const { statusReport: report, initialUpdate } = await createStatusReport({
-        ctx,
-        input: {
-          title,
-          status,
-          message,
-          date: new Date(),
-          pageId,
-          pageComponentIds: pageComponentIds?.map((id) => Number(id)) ?? [],
-        },
-      });
+  await slack.chat.update({
+    channel: channelId,
+    ts: messageTs,
+    text,
+    blocks: [],
+  });
+}
 
-      if (notify) {
-        await notifyStatusReport({
-          ctx,
-          input: { statusReportUpdateId: initialUpdate.id },
-        });
-      }
-
-      const reportUrl = report.pageId
-        ? await getReportUrl(report.pageId, report.id)
-        : null;
-
-      await slack.chat.update({
-        channel: channelId,
-        ts: messageTs,
-        text: `:white_check_mark: Status report *${title}* created${notify ? " and subscribers notified" : ""}.${reportUrl ? `\n<${reportUrl}|View on status page>` : ""}`,
-        blocks: [],
-      });
-      break;
-    }
-
-    case "addStatusReportUpdate": {
-      const { statusReportId, status, message } = action.params;
-      const { statusReport: report, statusReportUpdate: update } =
-        await addStatusReportUpdate({
-          ctx,
-          input: { statusReportId, status, message },
-        });
-
-      if (notify && report.pageId) {
-        await notifyStatusReport({
-          ctx,
-          input: { statusReportUpdateId: update.id },
-        });
-      }
-
-      const reportUrl = report.pageId
-        ? await getReportUrl(report.pageId, report.id)
-        : null;
-
-      await slack.chat.update({
-        channel: channelId,
-        ts: messageTs,
-        text: `:white_check_mark: Update added to *${report.title}* (${status})${notify ? " and subscribers notified" : ""}.\n>${message}${reportUrl ? `\n<${reportUrl}|View on status page>` : ""}`,
-        blocks: [],
-      });
-      break;
-    }
-
-    case "updateStatusReport": {
-      const { statusReportId, title, pageComponentIds } = action.params;
-      const report = await updateStatusReport({
-        ctx,
-        input: {
-          id: statusReportId,
-          title: title ?? undefined,
-          pageComponentIds: pageComponentIds
-            ? pageComponentIds.map((id) => Number(id))
-            : undefined,
-        },
-      });
-
-      await slack.chat.update({
-        channel: channelId,
-        ts: messageTs,
-        text: `:white_check_mark: Status report *${title ?? report.title}* updated.`,
-        blocks: [],
-      });
-      break;
-    }
-
-    case "resolveStatusReport": {
-      const { statusReportId, message } = action.params;
-      const { statusReport: report, statusReportUpdate: update } =
-        await resolveStatusReport({
-          ctx,
-          input: { statusReportId, message },
-        });
-
-      if (notify && report.pageId) {
-        await notifyStatusReport({
-          ctx,
-          input: { statusReportUpdateId: update.id },
-        });
-      }
-
-      const reportUrl = report.pageId
-        ? await getReportUrl(report.pageId, report.id)
-        : null;
-
-      await slack.chat.update({
-        channel: channelId,
-        ts: messageTs,
-        text: `:white_check_mark: *${report.title}* resolved${notify ? " and subscribers notified" : ""}.${message ? `\n>${message}` : ""}${reportUrl ? `\n<${reportUrl}|View on status page>` : ""}`,
-        blocks: [],
-      });
-      break;
-    }
-
-    case "createMaintenance": {
-      const {
-        title,
-        message,
-        from,
-        to,
-        pageId: maintenancePageId,
-        pageComponentIds: maintenanceComponentIds,
-      } = action.params;
-
-      const newMaintenance = await createMaintenance({
-        ctx,
-        input: {
-          title,
-          message,
-          from: new Date(from),
-          to: new Date(to),
-          pageId: maintenancePageId,
-          pageComponentIds:
-            maintenanceComponentIds?.map((id) => Number(id)) ?? [],
-        },
-      });
-
-      if (notify) {
-        await notifyMaintenance({
-          ctx,
-          input: { maintenanceId: newMaintenance.id },
-        });
-      }
-
-      const maintenancePageUrl = newMaintenance.pageId
-        ? await getPageUrl(newMaintenance.pageId)
-        : null;
-
-      await slack.chat.update({
-        channel: channelId,
-        ts: messageTs,
-        text: `:white_check_mark: Maintenance *${title}* scheduled${notify ? " and subscribers notified" : ""}.${maintenancePageUrl ? `\n<${maintenancePageUrl}|View status page>` : ""}`,
-        blocks: [],
-      });
-      break;
-    }
+function errorMessage(err: unknown): string {
+  if (err instanceof ServiceError) {
+    return `:x: ${err.message}`;
   }
+  return ":x: Something went wrong. Please try again.";
 }

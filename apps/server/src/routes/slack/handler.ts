@@ -5,9 +5,10 @@ import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 import { runAgent } from "./agent";
-import { buildConfirmationBlocks } from "./blocks";
+import { buildConfirmationBlocks, getConfirmationText } from "./blocks";
 import { findByThread, replace, store } from "./confirmation-store";
-import type { PendingAction } from "./confirmation-store";
+import type { PendingPayload } from "./confirmation-store";
+import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
 import { resolveWorkspace } from "./workspace-resolver";
 
 const logger = getLogger("api-server");
@@ -226,6 +227,7 @@ async function processEvent(body: SlackEvent) {
       thread,
       botUserId,
       event.text,
+      { slackUserId: event.user ?? "", teamId },
     );
 
     logger.info("slack agent completed", {
@@ -235,12 +237,8 @@ async function processEvent(body: SlackEvent) {
       toolCalls: result.toolResults.map((tr) => tr.toolName),
     });
 
-    const confirmationResult = result.toolResults.find(
-      (tr) =>
-        tr.result &&
-        typeof tr.result === "object" &&
-        "needsConfirmation" in tr.result &&
-        (tr.result as { needsConfirmation: boolean }).needsConfirmation,
+    const confirmationResult = result.toolResults.find((tr) =>
+      isSlackToolDraft(tr.result),
     );
 
     if (confirmationResult) {
@@ -256,7 +254,7 @@ async function processEvent(body: SlackEvent) {
         threadTs,
         thinkingTs,
         event.user ?? "",
-        resolved.workspace,
+        resolved.workspace.id,
         resolved.botToken,
         confirmationResult,
       );
@@ -303,69 +301,63 @@ async function handleConfirmation(
   threadTs: string,
   thinkingTs: string,
   userId: string,
-  workspace: { id: number; limits: PendingAction["limits"] },
+  workspaceId: number,
   botToken: string,
   confirmationResult: { toolName: string; result: unknown },
 ) {
-  const { params } = confirmationResult.result as {
-    needsConfirmation: boolean;
-    params: Record<string, unknown>;
-  };
-
-  const actionType =
-    confirmationResult.toolName as PendingAction["action"]["type"];
-  const action = { type: actionType, params } as PendingAction["action"];
-
-  const existing = await findByThread(threadTs);
-  if (existing) {
-    await replace(existing.id, action);
-
-    const blocks = buildConfirmationBlocks(existing.id, action);
-    await slack.chat.update({
-      channel,
-      ts: thinkingTs,
-      text: getConfirmationText(action),
-      blocks,
+  if (!isSlackToolDraft(confirmationResult.result)) return;
+  const draft = confirmationResult.result;
+  const tool = getRegistryTool(draft.toolName);
+  if (!tool) {
+    logger.error("slack: registry tool not found", {
+      toolName: draft.toolName,
     });
     await slack.chat.update({
       channel,
+      ts: thinkingTs,
+      text: ":x: Something went wrong. Please try again.",
+    });
+    return;
+  }
+
+  const payload: PendingPayload = {
+    toolName: draft.toolName,
+    input: draft.input,
+  };
+  const text = getConfirmationText({ tool, input: draft.input });
+
+  const existing = await findByThread(threadTs);
+  if (existing) {
+    await replace(existing.id, payload);
+
+    const blocks = buildConfirmationBlocks({
+      actionId: existing.id,
+      tool,
+      input: draft.input,
+    });
+    await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
+    await slack.chat.update({
+      channel,
       ts: existing.messageTs,
-      text: getConfirmationText(action),
+      text,
       blocks,
     });
   } else {
     const actionId = await store({
-      workspaceId: workspace.id,
-      limits: workspace.limits,
+      workspaceId,
       botToken,
       channelId: channel,
       threadTs,
       messageTs: thinkingTs,
       userId,
-      action,
+      payload,
     });
 
-    const blocks = buildConfirmationBlocks(actionId, action);
-    await slack.chat.update({
-      channel,
-      ts: thinkingTs,
-      text: getConfirmationText(action),
-      blocks,
+    const blocks = buildConfirmationBlocks({
+      actionId,
+      tool,
+      input: draft.input,
     });
-  }
-}
-
-function getConfirmationText(action: PendingAction["action"]): string {
-  switch (action.type) {
-    case "createStatusReport":
-      return `Create Status Report: ${action.params.title}`;
-    case "addStatusReportUpdate":
-      return `Add Status Report Update (${action.params.status})`;
-    case "updateStatusReport":
-      return `Update Status Report${action.params.title ? `: ${action.params.title}` : ""}`;
-    case "resolveStatusReport":
-      return "Resolve Status Report";
-    case "createMaintenance":
-      return `Schedule Maintenance: ${action.params.title}`;
+    await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
   }
 }

@@ -1,0 +1,214 @@
+import { describe, expect, test } from "bun:test";
+import type { ServiceContext } from "@openstatus/services";
+import { agentTools } from "@openstatus/services/agent-tools";
+import type { AnyAgentTool } from "@openstatus/services/agent-tools";
+import { z } from "zod";
+
+import {
+  buildSlackTools,
+  executeRegistryAction,
+  getRegistryTool,
+  isSlackToolDraft,
+} from "./registry-runner";
+
+const fakeCtx = {
+  workspace: { id: 1 },
+  actor: { type: "slack", teamId: "T", slackUserId: "U" },
+} as unknown as ServiceContext;
+
+describe("isSlackToolDraft", () => {
+  test("accepts a draft with needsConfirmation + toolName", () => {
+    expect(
+      isSlackToolDraft({
+        needsConfirmation: true,
+        toolName: "create_status_report",
+        input: {},
+      }),
+    ).toBe(true);
+  });
+
+  test("rejects plain tool output", () => {
+    expect(isSlackToolDraft({ items: [] })).toBe(false);
+  });
+
+  test("rejects null / non-object values", () => {
+    expect(isSlackToolDraft(null)).toBe(false);
+    expect(isSlackToolDraft("draft")).toBe(false);
+    expect(isSlackToolDraft(undefined)).toBe(false);
+  });
+
+  test("rejects missing needsConfirmation", () => {
+    expect(isSlackToolDraft({ toolName: "x", input: {} })).toBe(false);
+  });
+
+  test("rejects needsConfirmation === false", () => {
+    expect(
+      isSlackToolDraft({
+        needsConfirmation: false,
+        toolName: "x",
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("getRegistryTool", () => {
+  test("returns a tool for a registered name", () => {
+    const t = getRegistryTool("create_status_report");
+    expect(t?.name).toBe("create_status_report");
+  });
+
+  test("returns undefined for an unknown name", () => {
+    expect(getRegistryTool("not_a_tool")).toBeUndefined();
+  });
+});
+
+describe("buildSlackTools", () => {
+  const tools = buildSlackTools(fakeCtx);
+
+  test("emits an entry for every registry tool", () => {
+    for (const name of Object.keys(agentTools)) {
+      expect(tools[name], `${name} missing`).toBeDefined();
+    }
+  });
+
+  test("destructive tools omit extraFlag fields from the LLM-facing schema", () => {
+    // Each destructive tool that declares `extraFlags: [{id:"notify"}]`
+    // must reject `notify` from its LLM-facing schema, because the user
+    // owns that value via Block Kit buttons.
+    const t = tools.create_status_report as {
+      inputSchema: z.ZodObject<z.ZodRawShape>;
+    };
+    const shape = t.inputSchema.shape;
+    expect("notify" in shape).toBe(false);
+    expect("title" in shape).toBe(true);
+    expect("pageId" in shape).toBe(true);
+  });
+
+  test("destructive tools without extraFlags keep their full schema", () => {
+    const t = tools.update_status_report as {
+      inputSchema: z.ZodObject<z.ZodRawShape>;
+    };
+    const shape = t.inputSchema.shape;
+    expect("statusReportId" in shape).toBe(true);
+    // update_status_report has no notify field at all in the registry, so
+    // we just check the schema is intact.
+    expect("title" in shape).toBe(true);
+  });
+
+  test("read tools expose the full registry schema", () => {
+    const t = tools.list_status_pages;
+    // list_status_pages takes an empty object; the schema is unchanged.
+    expect(t.inputSchema).toBe(agentTools.list_status_pages.inputSchema);
+  });
+});
+
+describe("executeRegistryAction", () => {
+  function fakeTool(
+    opts: Partial<AnyAgentTool> & {
+      run?: AnyAgentTool["run"];
+    } = {},
+  ): AnyAgentTool {
+    return {
+      name: "fake_tool",
+      description: "fake",
+      scope: "write",
+      destructive: true,
+      inputSchema: z.object({
+        message: z.string(),
+        notify: z.boolean(),
+      }),
+      outputSchema: z.object({ ok: z.boolean() }),
+      run: async ({ input }) => ({ ok: (input as { notify: boolean }).notify }),
+      approval: {
+        extraFlags: [{ id: "notify", label: "Notify subscribers" }],
+        applyFlags: (input, flags) => ({
+          ...(input as object),
+          notify: flags.notify ?? false,
+        }),
+        summarize: () => ({ title: "fake", lines: [] }),
+      },
+      ...opts,
+    } as AnyAgentTool;
+  }
+
+  test("injects flag values via applyFlags", async () => {
+    const t = fakeTool();
+    const { input, output } = await executeRegistryAction({
+      tool: t,
+      ctx: fakeCtx,
+      draftInput: { message: "hi" },
+      flags: { notify: true },
+    });
+    expect((input as { notify: boolean }).notify).toBe(true);
+    expect((output as { ok: boolean }).ok).toBe(true);
+  });
+
+  test("flag=false also flows through", async () => {
+    const t = fakeTool();
+    const { input } = await executeRegistryAction({
+      tool: t,
+      ctx: fakeCtx,
+      draftInput: { message: "hi" },
+      flags: { notify: false },
+    });
+    expect((input as { notify: boolean }).notify).toBe(false);
+  });
+
+  test("the full registry schema gates missing flag values", async () => {
+    // If applyFlags is missing or returns input without the flag, the
+    // registry's strict schema must reject — protecting against silent
+    // omissions of `notify`.
+    const t = fakeTool({
+      approval: {
+        // No-op applyFlags that drops `notify`.
+        extraFlags: [{ id: "notify", label: "Notify" }],
+        applyFlags: (input) => input,
+        summarize: () => ({ title: "fake", lines: [] }),
+      },
+    });
+    expect(
+      executeRegistryAction({
+        tool: t,
+        ctx: fakeCtx,
+        draftInput: { message: "hi" },
+        flags: { notify: true },
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("propagates errors from tool.run", async () => {
+    const t = fakeTool({
+      run: async () => {
+        throw new Error("kaboom");
+      },
+    });
+    expect(
+      executeRegistryAction({
+        tool: t,
+        ctx: fakeCtx,
+        draftInput: { message: "hi" },
+        flags: { notify: false },
+      }),
+    ).rejects.toThrow("kaboom");
+  });
+
+  test("tools without approval pass draftInput through unchanged", async () => {
+    const t: AnyAgentTool = {
+      name: "no_approval",
+      description: "x",
+      scope: "write",
+      destructive: true,
+      inputSchema: z.object({ value: z.number() }),
+      outputSchema: z.object({ value: z.number() }),
+      run: async ({ input }) => input as { value: number },
+    };
+    const { input, output } = await executeRegistryAction({
+      tool: t,
+      ctx: fakeCtx,
+      draftInput: { value: 42 },
+      flags: {},
+    });
+    expect(input).toEqual({ value: 42 });
+    expect(output).toEqual({ value: 42 });
+  });
+});

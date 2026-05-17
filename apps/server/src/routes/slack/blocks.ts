@@ -1,4 +1,4 @@
-import type { PendingAction } from "./confirmation-store";
+import type { AnyAgentTool, ExtraFlag } from "@openstatus/services/agent-tools";
 
 interface TextObject {
   type: "plain_text" | "mrkdwn";
@@ -28,226 +28,114 @@ interface ButtonElement {
   style?: "primary" | "danger";
 }
 
-type Block = SectionBlock | ActionsBlock | DividerBlock;
+export type Block = SectionBlock | ActionsBlock | DividerBlock;
 
-export function buildConfirmationBlocks(
-  actionId: string,
-  action: PendingAction["action"],
-): Block[] {
-  const blocks: Block[] = [];
+/**
+ * Action-id encoding. We need to round-trip both the pending action's id
+ * and (when the tool declares one) the user's extraFlag choice. The
+ * scheme is `<action>_<actionId>` with two affirmative actions when an
+ * extraFlag exists: `approve` (flag off) and `approve_flag` (flag on).
+ */
+export function approveActionId(actionId: string): string {
+  return `approve_${actionId}`;
+}
+export function approveWithFlagActionId(actionId: string): string {
+  return `approve_flag_${actionId}`;
+}
+export function cancelActionId(actionId: string): string {
+  return `cancel_${actionId}`;
+}
 
-  switch (action.type) {
-    case "createStatusReport": {
-      const { title, status, message, pageId, pageComponentIds } =
-        action.params;
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Create Status Report*\n\n*Title:* ${title}\n*Status:* ${capitalize(status)}\n*Page ID:* ${pageId}${
-            pageComponentIds?.length
-              ? `\n*Components:* ${pageComponentIds.join(", ")}`
-              : ""
-          }\n*Message:* ${message}`,
-        },
-      });
-      blocks.push({ type: "divider" });
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Approve", emoji: true },
-            action_id: `approve_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Approve & Notify",
-              emoji: true,
-            },
-            action_id: `approve_notify_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Cancel", emoji: true },
-            action_id: `cancel_${actionId}`,
-            style: "danger",
-          },
-        ],
-      });
-      break;
-    }
-    case "addStatusReportUpdate": {
-      const { statusReportId, status, message } = action.params;
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Add Status Report Update*\n\n*Report ID:* ${statusReportId}\n*New Status:* ${capitalize(status)}\n*Message:* ${message}`,
-        },
-      });
-      blocks.push({ type: "divider" });
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Approve", emoji: true },
-            action_id: `approve_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Approve & Notify",
-              emoji: true,
-            },
-            action_id: `approve_notify_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Cancel", emoji: true },
-            action_id: `cancel_${actionId}`,
-            style: "danger",
-          },
-        ],
-      });
-      break;
-    }
-    case "updateStatusReport": {
-      const { statusReportId, title, pageComponentIds } = action.params;
-      let text = `*Update Status Report*\n\n*Report ID:* ${statusReportId}`;
-      if (title) text += `\n*New Title:* ${title}`;
-      if (pageComponentIds?.length)
-        text += `\n*Components:* ${pageComponentIds.join(", ")}`;
-      blocks.push({ type: "section", text: { type: "mrkdwn", text } });
-      blocks.push({ type: "divider" });
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Approve", emoji: true },
-            action_id: `approve_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Cancel", emoji: true },
-            action_id: `cancel_${actionId}`,
-            style: "danger",
-          },
-        ],
-      });
-      break;
-    }
-    case "resolveStatusReport": {
-      const { statusReportId, message } = action.params;
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Resolve Status Report*\n\n*Report ID:* ${statusReportId}\n*Message:* ${message}`,
-        },
-      });
-      blocks.push({ type: "divider" });
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Approve", emoji: true },
-            action_id: `approve_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Approve & Notify",
-              emoji: true,
-            },
-            action_id: `approve_notify_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Cancel", emoji: true },
-            action_id: `cancel_${actionId}`,
-            style: "danger",
-          },
-        ],
-      });
-      break;
-    }
-    case "createMaintenance": {
-      const { title, message, from, to, pageComponentIds } = action.params;
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Schedule Maintenance*\n\n*Title:* ${title}\n*From:* ${formatDate(from)}\n*To:* ${formatDate(to)}${
-            pageComponentIds?.length
-              ? `\n*Components:* ${pageComponentIds.join(", ")}`
-              : ""
-          }\n*Message:* ${message}`,
-        },
-      });
-      blocks.push({ type: "divider" });
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Approve", emoji: true },
-            action_id: `approve_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Approve & Notify",
-              emoji: true,
-            },
-            action_id: `approve_notify_${actionId}`,
-            style: "primary",
-          },
-          {
-            type: "button",
-            text: { type: "plain_text", text: "Cancel", emoji: true },
-            action_id: `cancel_${actionId}`,
-            style: "danger",
-          },
-        ],
-      });
-      break;
-    }
+export type ParsedActionId =
+  | { kind: "approve"; flag: false; pendingId: string }
+  | { kind: "approve"; flag: true; pendingId: string }
+  | { kind: "cancel"; pendingId: string };
+
+export function parseActionId(actionId: string): ParsedActionId | undefined {
+  if (actionId.startsWith("approve_flag_")) {
+    return {
+      kind: "approve",
+      flag: true,
+      pendingId: actionId.slice("approve_flag_".length),
+    };
   }
-
-  return blocks;
+  if (actionId.startsWith("approve_")) {
+    return {
+      kind: "approve",
+      flag: false,
+      pendingId: actionId.slice("approve_".length),
+    };
+  }
+  if (actionId.startsWith("cancel_")) {
+    return {
+      kind: "cancel",
+      pendingId: actionId.slice("cancel_".length),
+    };
+  }
+  return undefined;
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
+/**
+ * Build the Block Kit confirmation card from a tool's `approval.summarize()`.
+ * Two affirmative buttons when an extraFlag exists; one otherwise.
+ */
+export function buildConfirmationBlocks(args: {
+  actionId: string;
+  tool: AnyAgentTool;
+  input: unknown;
+}): Block[] {
+  const { actionId, tool, input } = args;
+  if (!tool.approval) {
+    throw new Error(
+      `slack blocks: tool "${tool.name}" has no approval metadata`,
+    );
+  }
+  const summary = tool.approval.summarize(input);
+  const flag: ExtraFlag | undefined = tool.approval.extraFlags?.[0];
+
+  const lines = summary.lines.map((l) => `*${l.label}:* ${l.value}`).join("\n");
+
+  const buttons: ButtonElement[] = [
+    {
+      type: "button",
+      text: { type: "plain_text", text: "Approve", emoji: true },
+      action_id: approveActionId(actionId),
+      style: "primary",
+    },
+  ];
+  if (flag) {
+    buttons.push({
+      type: "button",
+      text: {
+        type: "plain_text",
+        text: `Approve & ${flag.label}`,
+        emoji: true,
+      },
+      action_id: approveWithFlagActionId(actionId),
+      style: "primary",
+    });
+  }
+  buttons.push({
+    type: "button",
+    text: { type: "plain_text", text: "Cancel", emoji: true },
+    action_id: cancelActionId(actionId),
+    style: "danger",
   });
+
+  return [
+    {
+      type: "section",
+      text: { type: "mrkdwn", text: `*${summary.title}*\n\n${lines}` },
+    },
+    { type: "divider" },
+    { type: "actions", elements: buttons },
+  ];
 }
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+export function getConfirmationText(args: {
+  tool: AnyAgentTool;
+  input: unknown;
+}): string {
+  if (!args.tool.approval) return `Confirm ${args.tool.name}`;
+  return args.tool.approval.summarize(args.input).title;
 }

@@ -1,7 +1,14 @@
+import { db, eq } from "@openstatus/db";
+import {
+  selectWorkspaceSchema,
+  workspace as workspaceTable,
+} from "@openstatus/db/src/schema";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import type { ServiceContext } from "@openstatus/services";
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
-import { createTools } from "./tools";
+
+import { buildSlackTools } from "./registry-runner";
 
 interface SlackThreadMessage {
   user?: string;
@@ -21,24 +28,27 @@ The current date and time is: ${now} (UTC).
 You help teams create and manage status reports and maintenance windows through Slack.
 
 IMPORTANT: You have NO knowledge of this workspace's data. NEVER guess or make up IDs (page IDs, component IDs, report IDs). You MUST call the appropriate tool first to get real data.
-- Questions about pages or components -> call listStatusPages FIRST
-- Questions about reports -> call listStatusReports FIRST
-- Questions about maintenances -> call listMaintenances FIRST
-- Creating a report -> you MUST call listStatusPages first to get the real pageId, then call createStatusReport with that pageId
-- Scheduling maintenance -> you MUST call listStatusPages first to get the real pageId, then call createMaintenance with that pageId
-- NEVER pass a pageId you did not receive from listStatusPages. Guessing a pageId WILL cause an error.
+- Questions about pages or components -> call list_status_pages FIRST
+- Questions about reports -> call list_status_reports FIRST
+- Questions about maintenances -> call list_maintenances FIRST
+- Creating a report -> you MUST call list_status_pages first to get the real pageId, then call create_status_report with that pageId
+- Scheduling maintenance -> you MUST call list_status_pages first to get the real pageId, then call create_maintenance with that pageId
+- Components live on a specific page — call list_page_components({ pageId }) to discover pageComponentIds.
+- NEVER pass a pageId you did not receive from list_status_pages. Guessing a pageId WILL cause an error.
 
 Capabilities:
-- Create status reports on status pages (createStatusReport)
-- Publish progress updates to existing reports (addStatusReportUpdate)
-- Edit report metadata like title or components (updateStatusReport)
+- Create status reports on status pages (create_status_report)
+- Publish progress updates to existing reports (add_status_report_update)
+- Edit report metadata like title or components (update_status_report)
+- Resolve active reports (resolve_status_report)
 - List active status reports and status pages
-- Schedule maintenance windows (createMaintenance)
-- List upcoming maintenance windows (listMaintenances)
+- Schedule maintenance windows (create_maintenance)
+- List upcoming maintenance windows (list_maintenances)
 
-Lifecycle: createStatusReport once -> addStatusReportUpdate repeatedly -> resolved.
-- "provide an update", "we found the cause", "resolve it" -> addStatusReportUpdate
-- "rename the report", "add a component" -> updateStatusReport (metadata only)
+Lifecycle: create_status_report once -> add_status_report_update repeatedly -> resolve_status_report.
+- "provide an update", "we found the cause" -> add_status_report_update
+- "it's fixed", "resolve it" -> resolve_status_report
+- "rename the report", "add a component" -> update_status_report (metadata only)
 
 Guidelines:
 - If multiple status pages exist, ask which one to use. If only one, use it automatically.
@@ -81,13 +91,41 @@ function convertThreadToMessages(
   return messages;
 }
 
+async function buildReadCtx(
+  workspaceId: number,
+  slackUserId: string,
+  teamId: string | undefined,
+): Promise<ServiceContext> {
+  const row = await db
+    .select()
+    .from(workspaceTable)
+    .where(eq(workspaceTable.id, workspaceId))
+    .get();
+  if (!row) throw new Error(`slack: workspace ${workspaceId} not found`);
+  const workspace = selectWorkspaceSchema.parse(row);
+  return {
+    workspace,
+    actor: {
+      type: "slack",
+      teamId: teamId ?? "",
+      slackUserId,
+    },
+  };
+}
+
 export async function runAgent(
   workspace: Workspace,
   thread: SlackThreadMessage[],
   botUserId: string,
   userText?: string,
+  origin?: { slackUserId: string; teamId: string | undefined },
 ): Promise<AgentResult> {
-  const tools = createTools(workspace);
+  const ctx = await buildReadCtx(
+    workspace.id,
+    origin?.slackUserId ?? "",
+    origin?.teamId,
+  );
+  const tools = buildSlackTools(ctx);
   let messages = convertThreadToMessages(thread, botUserId);
 
   if (messages.length === 0 && userText) {
