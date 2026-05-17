@@ -13,6 +13,8 @@ import { db } from "../lib/db";
 
 const logger = getLogger(["workflow", "external-status"]);
 
+const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
+
 function toStatusPageEntry(row: ExternalServiceRow): StatusPageEntry {
   return {
     id: row.slug,
@@ -58,7 +60,6 @@ export async function runExternalStatusTick(): Promise<{
   failureCount: number;
   total: number;
 }> {
-  const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
   const services = await listExternalServices({ ctx: { db } });
 
   const entries = services.map(toStatusPageEntry);
