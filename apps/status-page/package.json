@@ -54,7 +54,7 @@
     "feed": "4.2.2",
     "ip-cidr": "4.0.2",
     "lucide-react": "0.525.0",
-    "next": "16.1.6",
+    "next": "16.2.6",
     "next-auth": "5.0.0-beta.29",
     "next-intl": "^4.8.3",
     "next-plausible": "3.12.5",
