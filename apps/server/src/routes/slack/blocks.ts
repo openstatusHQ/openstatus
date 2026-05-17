@@ -52,6 +52,18 @@ export type ParsedActionId =
   | { kind: "cancel"; pendingId: string };
 
 export function parseActionId(actionId: string): ParsedActionId | undefined {
+  // Legacy: cards rendered before the registry-runner deploy used
+  // `approve_notify_<id>`. Map to flag=true so the carrier lookup at
+  // least surfaces ":x: This action has expired" — without this branch
+  // the click would be silently dropped, leaving the card stale-but-
+  // interactive. Bounded by the 5-min TTL; safe to remove afterwards.
+  if (actionId.startsWith("approve_notify_")) {
+    return {
+      kind: "approve",
+      flag: true,
+      pendingId: actionId.slice("approve_notify_".length),
+    };
+  }
   if (actionId.startsWith("approve_flag_")) {
     return {
       kind: "approve",

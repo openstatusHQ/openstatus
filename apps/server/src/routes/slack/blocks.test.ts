@@ -145,6 +145,29 @@ describe("buildConfirmationBlocks", () => {
     expect(actions.elements[1].action_id).toBe("cancel_xyz");
   });
 
+  test("create_maintenance card shows pageId", () => {
+    const tool = agentTools.create_maintenance;
+    const blocks = buildConfirmationBlocks({
+      actionId: "m1",
+      tool,
+      input: {
+        title: "DB Upgrade",
+        message: "Restarting replicas",
+        from: "2026-06-01T00:00:00Z",
+        to: "2026-06-01T01:00:00Z",
+        pageId: 7,
+        pageComponentIds: [],
+      },
+    });
+    const text = (
+      blocks.find((b) => b.type === "section") as {
+        text: { text: string };
+      }
+    ).text.text;
+    expect(text).toContain("Page ID");
+    expect(text).toContain("7");
+  });
+
   test("resolve_status_report has 3 buttons", () => {
     const tool = agentTools.resolve_status_report;
     const blocks = buildConfirmationBlocks({
@@ -236,6 +259,13 @@ describe("parseActionId", () => {
   });
   test("approve_flag_<id>", () => {
     expect(parseActionId("approve_flag_abc")).toEqual({
+      kind: "approve",
+      flag: true,
+      pendingId: "abc",
+    });
+  });
+  test("legacy approve_notify_<id> maps to flag=true (in-flight deploy compat)", () => {
+    expect(parseActionId("approve_notify_abc")).toEqual({
       kind: "approve",
       flag: true,
       pendingId: "abc",

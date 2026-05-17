@@ -167,6 +167,7 @@ export const createMaintenanceTool: AgentTool<
       title: `Schedule Maintenance: ${input.title}`,
       lines: [
         { label: "Title", value: input.title },
+        { label: "Page ID", value: String(input.pageId) },
         { label: "From", value: formatMaintenanceDate(input.from) },
         { label: "To", value: formatMaintenanceDate(input.to) },
         ...(input.pageComponentIds?.length
