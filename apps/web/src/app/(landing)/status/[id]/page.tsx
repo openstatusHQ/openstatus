@@ -258,10 +258,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         />
       </Suspense>
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
-        <ContentBoxTitle className="text-lg">
+        <ContentBoxTitle className="m-0! text-lg">
           Run a status page for your own service
         </ContentBoxTitle>
-        <ContentBoxDescription className="text-sm">
+        <ContentBoxDescription className="m-0! text-sm">
           Track uptime, get instant downtime alerts, and share a public status
           page with your users.
         </ContentBoxDescription>

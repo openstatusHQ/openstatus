@@ -109,10 +109,10 @@ export default async function Page() {
         })}
       </components.Grid>
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
-        <ContentBoxTitle className="text-lg">
+        <ContentBoxTitle className="m-0! text-lg">
           Build your own status page
         </ContentBoxTitle>
-        <ContentBoxDescription className="text-sm">
+        <ContentBoxDescription className="m-0! text-sm">
           Global uptime monitoring, instant alerts, and a public status page —
           free to start.
         </ContentBoxDescription>
