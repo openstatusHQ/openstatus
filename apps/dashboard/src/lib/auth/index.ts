@@ -20,6 +20,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       ? [GitHubProvider, GoogleProvider, ResendProvider]
       : [GitHubProvider, GoogleProvider],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // For new users being redirected to onboarding, ensure the original
+      // callback URL is preserved so invite links work properly
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Allow relative URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      return baseUrl;
+    },
     async signIn(params) {
       // We keep updating the user info when we loggin in
 

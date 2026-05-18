@@ -30,7 +30,20 @@ export default auth(async (req) => {
       newURL.searchParams.append("redirectTo", encodedSearchParams);
     }
 
-    return NextResponse.redirect(newURL);
+    const response = NextResponse.redirect(newURL);
+    // Store the redirect URL in a cookie for new users who go through onboarding.
+    // Auth.js may not reliably pass callbackUrl to pages.newUser, so we use a
+    // cookie as a fallback to ensure invite links work correctly.
+    if (encodedSearchParams) {
+      response.cookies.set("auth-redirect", encodedSearchParams, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 10, // 10 minutes
+      });
+    }
+    return response;
   }
 
   if (req.auth && url.pathname === "/login") {
