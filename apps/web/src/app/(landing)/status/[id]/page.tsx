@@ -3,6 +3,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
 import { env } from "@/env";
 import {
   cachedGetExternalServiceBySlug,
@@ -16,7 +18,11 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
-import { SignupCtaCard, SignupCtaStrip } from "../signup-cta";
+import {
+  ContentBoxContainer,
+  ContentBoxDescription,
+  ContentBoxTitle,
+} from "../../content-box";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
@@ -186,10 +192,15 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
         }}
       />
-      <SignupCtaStrip
-        text="Get uptime alerts and a status page for your own service with OpenStatus →"
-        href="https://app.openstatus.dev?ref=status-service-top"
-      />
+      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+        <CustomLink
+          href="https://app.openstatus.dev?ref=status-service-top"
+          className="font-medium underline-offset-4 hover:underline"
+        >
+          Get uptime alerts and a status page for your own service with
+          OpenStatus →
+        </CustomLink>
+      </ContentBoxContainer>
       <h1>Is {service.name} down?</h1>
       <p>
         {answer} Below you'll find the live {service.name} status, uptime over
@@ -246,12 +257,18 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           apiConfigType={service.apiConfig?.type}
         />
       </Suspense>
-      <SignupCtaCard
-        title="Run a status page for your own service"
-        description="Track uptime, get instant downtime alerts, and share a public status page with your users."
-        ctaLabel="Create your status page"
-        href="https://app.openstatus.dev?ref=status-service-bottom"
-      />
+      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+        <ContentBoxTitle className="text-lg">
+          Run a status page for your own service
+        </ContentBoxTitle>
+        <ContentBoxDescription className="text-sm">
+          Track uptime, get instant downtime alerts, and share a public status
+          page with your users.
+        </ContentBoxDescription>
+        <ButtonLink href="https://app.openstatus.dev?ref=status-service-bottom">
+          Create your status page
+        </ButtonLink>
+      </ContentBoxContainer>
     </section>
   );
 }

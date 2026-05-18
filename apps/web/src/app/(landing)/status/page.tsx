@@ -11,9 +11,15 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
 import { env } from "@/env";
-import { ContentBoxLink } from "../content-box";
-import { SignupCtaCard, SignupCtaStrip } from "./signup-cta";
+import {
+  ContentBoxContainer,
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+} from "../content-box";
 
 export const dynamic = "force-dynamic";
 
@@ -72,10 +78,15 @@ export default async function Page() {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      <SignupCtaStrip
-        text="Track your own service's uptime — get a free status page with OpenStatus →"
-        href="https://app.openstatus.dev?ref=status-index-top"
-      />
+      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+        <CustomLink
+          href="https://app.openstatus.dev?ref=status-index-top"
+          className="font-medium underline-offset-4 hover:underline"
+        >
+          Track your own service's uptime — get a free status page with
+          OpenStatus →
+        </CustomLink>
+      </ContentBoxContainer>
       <h1>External Status</h1>
       <components.Grid cols={2}>
         {services.map((service) => {
@@ -97,12 +108,18 @@ export default async function Page() {
           );
         })}
       </components.Grid>
-      <SignupCtaCard
-        title="Build your own status page"
-        description="Global uptime monitoring, instant alerts, and a public status page — free to start."
-        ctaLabel="Get started free"
-        href="https://app.openstatus.dev?ref=status-index-bottom"
-      />
+      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+        <ContentBoxTitle className="text-lg">
+          Build your own status page
+        </ContentBoxTitle>
+        <ContentBoxDescription className="text-sm">
+          Global uptime monitoring, instant alerts, and a public status page —
+          free to start.
+        </ContentBoxDescription>
+        <ButtonLink href="https://app.openstatus.dev?ref=status-index-bottom">
+          Get started free
+        </ButtonLink>
+      </ContentBoxContainer>
     </section>
   );
 }
