@@ -13,6 +13,7 @@ import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 import { env } from "@/env";
 import { ContentBoxLink, ContentBoxUrl } from "../content-box";
+import { SignupCtaCard, SignupCtaStrip } from "./signup-cta";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,10 @@ export default async function Page() {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
+      <SignupCtaStrip
+        text="Track your own service's uptime — get a free status page with OpenStatus →"
+        href="https://app.openstatus.dev?ref=status-index-top"
+      />
       <h1>External Status</h1>
       <components.Grid cols={2}>
         {services.map((service) => {
@@ -96,6 +101,12 @@ export default async function Page() {
           );
         })}
       </components.Grid>
+      <SignupCtaCard
+        title="Build your own status page"
+        description="Global uptime monitoring, instant alerts, and a public status page — free to start."
+        ctaLabel="Get started free"
+        href="https://app.openstatus.dev?ref=status-index-bottom"
+      />
     </section>
   );
 }

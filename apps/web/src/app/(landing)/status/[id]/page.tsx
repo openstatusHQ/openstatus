@@ -16,6 +16,7 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
+import { SignupCtaCard, SignupCtaStrip } from "../signup-cta";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
@@ -185,6 +186,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
         }}
       />
+      <SignupCtaStrip
+        text="Get uptime alerts and a status page for your own service with OpenStatus →"
+        href="https://app.openstatus.dev?ref=status-service-top"
+      />
       <h1>Is {service.name} down?</h1>
       <p>
         {answer} Below you'll find the live {service.name} status, uptime over
@@ -241,6 +246,12 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           apiConfigType={service.apiConfig?.type}
         />
       </Suspense>
+      <SignupCtaCard
+        title="Run a status page for your own service"
+        description="Track uptime, get instant downtime alerts, and share a public status page with your users."
+        ctaLabel="Create your status page"
+        href="https://app.openstatus.dev?ref=status-service-bottom"
+      />
     </section>
   );
 }
