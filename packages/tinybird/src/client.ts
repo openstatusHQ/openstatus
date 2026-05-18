@@ -1796,7 +1796,7 @@ export class OSTinybird {
         updated_at: z.int(),
         last_fetched_at: z.int(),
       }),
-      opts: { next: { revalidate: PUBLIC_CACHE } },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 

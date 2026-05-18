@@ -5,7 +5,7 @@ import {
 } from "@openstatus/services/external-service";
 import { unstable_cache } from "next/cache";
 
-const REVALIDATE_SECONDS = 3600; // 1 hour
+const REVALIDATE_SECONDS = 60;
 const TAG = "external-services";
 
 export const cachedListExternalServices = unstable_cache(

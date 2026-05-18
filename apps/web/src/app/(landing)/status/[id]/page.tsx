@@ -4,10 +4,7 @@ import { Suspense } from "react";
 
 import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
 import { env } from "@/env";
-import {
-  cachedGetExternalServiceBySlug,
-  cachedListExternalServiceSlugs,
-} from "@/lib/external-service-cache";
+import { cachedGetExternalServiceBySlug } from "@/lib/external-service-cache";
 import {
   BASE_URL,
   defaultMetadata,
@@ -20,15 +17,9 @@ import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
 
-export const revalidate = 60;
-export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
-
-export async function generateStaticParams() {
-  const { canonical } = await cachedListExternalServiceSlugs();
-  return canonical.map((id) => ({ id }));
-}
 
 type RouteParams = { id: string };
 

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { SIZE } from "../utils";
 
 export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 const FOOTER = "openstatus.dev/status";
 const INDEX_TITLE = "External Status";
