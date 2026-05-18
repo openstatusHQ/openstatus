@@ -101,10 +101,7 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    Sentry.captureMessage(
-      "userId is missing in /monitors/:step cron",
-      "error",
-    );
+    Sentry.captureMessage("userId is missing in /monitors/:step cron", "error");
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {
