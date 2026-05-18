@@ -12,7 +12,7 @@ import {
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 import { env } from "@/env";
-import { ContentBoxLink, ContentBoxUrl } from "../content-box";
+import { ContentBoxLink } from "../content-box";
 import { SignupCtaCard, SignupCtaStrip } from "./signup-cta";
 
 export const dynamic = "force-dynamic";
@@ -92,10 +92,6 @@ export default async function Page() {
                 status={snap.status}
                 statusMessage={snap.status_message || undefined}
                 className="self-start"
-              />
-              <ContentBoxUrl
-                url={service.url}
-                className="m-0! text-muted-foreground text-sm"
               />
             </ContentBoxLink>
           );
