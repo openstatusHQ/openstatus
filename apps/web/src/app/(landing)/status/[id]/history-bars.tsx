@@ -8,17 +8,17 @@ import type {
 
 type DailyRow = {
   day: string;
-  worst_indicator: string;
-  had_maintenance: number;
-  snapshot_count: number;
+  worstIndicator: string;
+  hadMaintenance: number;
+  snapshotCount: number;
 };
 
 function indicatorToStatusType(args: {
-  worst_indicator: string;
-  had_maintenance: number;
+  worstIndicator: string;
+  hadMaintenance: number;
 }): StatusType {
-  if (args.had_maintenance) return "info";
-  switch (args.worst_indicator) {
+  if (args.hadMaintenance) return "info";
+  switch (args.worstIndicator) {
     case "none":
       return "success";
     case "minor":
@@ -76,15 +76,15 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
     }
     byDay.set(key, {
       day: prev.day,
-      worst_indicator:
-        severityOf(r.worst_indicator) > severityOf(prev.worst_indicator)
-          ? r.worst_indicator
-          : prev.worst_indicator,
-      had_maintenance:
-        severityOf(r.worst_indicator) > severityOf(prev.worst_indicator)
-          ? r.had_maintenance
-          : prev.had_maintenance,
-      snapshot_count: prev.snapshot_count + r.snapshot_count,
+      worstIndicator:
+        severityOf(r.worstIndicator) > severityOf(prev.worstIndicator)
+          ? r.worstIndicator
+          : prev.worstIndicator,
+      hadMaintenance:
+        severityOf(r.worstIndicator) > severityOf(prev.worstIndicator)
+          ? r.hadMaintenance
+          : prev.hadMaintenance,
+      snapshotCount: prev.snapshotCount + r.snapshotCount,
     });
   }
   const out: StatusBarData[] = [];
@@ -97,8 +97,8 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
     const row = byDay.get(iso);
     const status: StatusType = row
       ? indicatorToStatusType({
-          worst_indicator: row.worst_indicator,
-          had_maintenance: row.had_maintenance,
+          worstIndicator: row.worstIndicator,
+          hadMaintenance: row.hadMaintenance,
         })
       : "empty";
     out.push({
