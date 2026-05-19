@@ -21,14 +21,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       : [GitHubProvider, GoogleProvider],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // For new users being redirected to onboarding, ensure the original
-      // callback URL is preserved so invite links work properly
-      if (url.startsWith(baseUrl)) {
-        return url;
-      }
       // Allow relative URLs
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
+      }
+      // Same-origin absolute URLs only — compare parsed origins, not a string
+      // prefix, so `https://<baseUrl>.evil.com` cannot pass as trusted.
+      // Preserves the original callback URL so invite links keep working.
+      try {
+        if (new URL(url).origin === new URL(baseUrl).origin) {
+          return url;
+        }
+      } catch {
+        // malformed url — fall through to baseUrl
       }
       return baseUrl;
     },
