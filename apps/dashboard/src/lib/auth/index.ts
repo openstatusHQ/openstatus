@@ -21,8 +21,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       : [GitHubProvider, GoogleProvider],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Allow relative URLs
-      if (url.startsWith("/")) {
+      // Allow relative URLs, but not protocol-relative `//evil.com` which the
+      // browser would resolve off-origin.
+      if (url.startsWith("/") && !url.startsWith("//")) {
         return `${baseUrl}${url}`;
       }
       // Same-origin absolute URLs only — compare parsed origins, not a string

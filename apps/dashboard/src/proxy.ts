@@ -26,7 +26,10 @@ export default auth(async (req) => {
       console.log("User not authenticated, redirecting to login");
     }
     const newURL = new URL("/login", req.url);
-    const encodedSearchParams = `${url.pathname}${url.search}`;
+    // Only worth preserving a non-root destination; tryRedirectToCallback
+    // rejects "/" anyway, so storing it would be a no-op redirect.
+    const encodedSearchParams =
+      url.pathname === "/" ? null : `${url.pathname}${url.search}`;
 
     if (encodedSearchParams) {
       newURL.searchParams.append("redirectTo", encodedSearchParams);
