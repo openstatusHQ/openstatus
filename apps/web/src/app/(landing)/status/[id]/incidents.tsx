@@ -1,31 +1,12 @@
-import { z } from "zod";
+"use client";
 
 import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
 } from "@/app/(landing)/content-box";
-import { components } from "@/content/mdx";
-
-const atlassianIncidentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  status: z.string(),
-  impact: z.string().optional(),
-  shortlink: z.string().optional(),
-  started_at: z.string().optional(),
-  created_at: z.string(),
-  resolved_at: z.string().nullable().optional(),
-});
-
-const atlassianIncidentsResponseSchema = z.object({
-  incidents: z.array(atlassianIncidentSchema),
-});
-
-type Incident = z.infer<typeof atlassianIncidentSchema>;
-
-const TIMEOUT_MS = 5000;
-const MAX_INCIDENTS = 5;
+import { Grid } from "@/content/mdx-components/grid";
+import { api } from "@/trpc/rq-client";
 
 function impactClass(impact: string | undefined): string {
   switch (impact) {
@@ -52,48 +33,10 @@ function formatTimestamp(value: string | null | undefined): string | null {
   });
 }
 
-async function fetchIncidents(
-  statusPageUrl: string,
-): Promise<Incident[] | null> {
-  const url = `${statusPageUrl}/api/v2/incidents.json`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) {
-      console.warn(
-        `[external-status incidents] non-200 from ${url}: ${res.status}`,
-      );
-      return null;
-    }
-    const json = await res.json();
-    const parsed = atlassianIncidentsResponseSchema.safeParse(json);
-    if (!parsed.success) {
-      console.warn(
-        `[external-status incidents] invalid payload from ${url}`,
-        parsed.error.issues,
-      );
-      return null;
-    }
-    return parsed.data.incidents.slice(0, MAX_INCIDENTS);
-  } catch (err) {
-    console.warn(
-      `[external-status incidents] fetch failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
-    );
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export type IncidentsProps = {
-  statusPageUrl: string;
+  slug: string;
   serviceName: string;
-  apiConfigType?: string;
+  statusPageUrl: string;
 };
 
 function UpstreamFallback({
@@ -119,21 +62,14 @@ function UpstreamFallback({
   );
 }
 
-export async function Incidents({
-  statusPageUrl,
+export function Incidents({
+  slug,
   serviceName,
-  apiConfigType,
+  statusPageUrl,
 }: IncidentsProps) {
-  if (apiConfigType !== "atlassian") {
-    return (
-      <UpstreamFallback
-        serviceName={serviceName}
-        statusPageUrl={statusPageUrl}
-      />
-    );
-  }
-  const incidents = await fetchIncidents(statusPageUrl);
-  if (!incidents) {
+  const [data] = api.externalService.incidents.useSuspenseQuery({ slug });
+
+  if (!data.supported) {
     return (
       <UpstreamFallback
         serviceName={serviceName}
@@ -142,7 +78,7 @@ export async function Incidents({
     );
   }
 
-  if (incidents.length === 0) {
+  if (data.incidents.length === 0) {
     return (
       <p className="text-muted-foreground">
         No {serviceName} incidents reported in the recent period.
@@ -151,10 +87,10 @@ export async function Incidents({
   }
 
   return (
-    <components.Grid cols={1} className="not-prose">
-      {incidents.map((inc) => {
-        const started = formatTimestamp(inc.started_at ?? inc.created_at);
-        const resolved = formatTimestamp(inc.resolved_at ?? null);
+    <Grid cols={1} className="not-prose">
+      {data.incidents.map((inc) => {
+        const started = formatTimestamp(inc.startedAt ?? inc.createdAt);
+        const resolved = formatTimestamp(inc.resolvedAt ?? null);
         const link = inc.shortlink ?? `${statusPageUrl}/incidents/${inc.id}`;
         return (
           <ContentBoxLink
@@ -178,6 +114,6 @@ export async function Incidents({
           </ContentBoxLink>
         );
       })}
-    </components.Grid>
+    </Grid>
   );
 }
