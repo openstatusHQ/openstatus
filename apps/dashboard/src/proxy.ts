@@ -94,10 +94,17 @@ export default auth(async (req) => {
     response.cookies.delete("workspace-slug");
   }
 
-  // auth-redirect is single-use; the onboarding Server Component reads it but
-  // can't mutate cookies, so clear it here once authenticated. Prevents a
-  // stale back-button hit on /onboarding redirecting again.
-  if (req.auth && req.cookies.has("auth-redirect")) {
+  // auth-redirect is single-use and consumed by the /onboarding Server
+  // Component. Middleware response-cookie writes are reflected into the same
+  // request's cookies(), so deleting it on the /onboarding request itself
+  // would race (and lose) that read. Clear it on the next authenticated
+  // request instead: by then onboarding has redirected to the target, the
+  // cookie's job is done, and the stale back-button re-redirect is killed.
+  if (
+    req.auth &&
+    url.pathname !== "/onboarding" &&
+    req.cookies.has("auth-redirect")
+  ) {
     response.cookies.delete("auth-redirect");
   }
 
