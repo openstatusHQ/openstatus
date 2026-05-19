@@ -36,7 +36,6 @@ const gridItemSchema = z.object({
   indicator: z.string(),
   status: z.string(),
   statusMessage: z.string(),
-  lastFetchedAt: z.number(),
 });
 
 const detailServiceSchema = z.object({
@@ -46,7 +45,6 @@ const detailServiceSchema = z.object({
   statusPageUrl: z.string(),
   aliases: z.array(z.string()),
   apiConfigType: z.string().optional(),
-  deletedAt: z.date().nullable(),
 });
 
 const latestSchema = z.object({
@@ -110,7 +108,6 @@ export const externalServiceRouter = createTRPCRouter({
         indicator: snap?.indicator ?? "",
         status: snap?.status ?? "",
         statusMessage: snap?.status_message ?? "Status unavailable",
-        lastFetchedAt: snap?.last_fetched_at ?? 0,
       };
     });
   }),
@@ -175,7 +172,6 @@ export const externalServiceRouter = createTRPCRouter({
           statusPageUrl: service.statusPageUrl,
           aliases: aliasSlugs,
           apiConfigType: service.apiConfig?.type,
-          deletedAt: service.deletedAt,
         },
         latest,
         history: historyRows.map((r) => ({
