@@ -1,8 +1,32 @@
 import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
+
+function tryRedirectToCallback(callbackUrl: string | null): void {
+  if (!callbackUrl) return;
+  let safePath: string | null = null;
+  try {
+    const target = new URL(callbackUrl, "http://_");
+    const safe =
+      (target.protocol === "http:" || target.protocol === "https:") &&
+      target.pathname.startsWith("/") &&
+      !target.pathname.startsWith("//") &&
+      target.pathname !== "/" &&
+      target.pathname !== "/login";
+    if (safe) {
+      safePath = `${target.pathname}${target.search}${target.hash}`;
+    }
+  } catch {
+    // malformed — fall through
+  }
+  // redirect() throws NEXT_REDIRECT; must be outside the try/catch above.
+  if (safePath) {
+    redirect(safePath);
+  }
+}
 
 export default async function Page({
   searchParams,
@@ -13,21 +37,16 @@ export default async function Page({
 
   // Same-origin-only redirect: strip host, reject non-HTTP and `//…`
   // (protocol-relative). `/` and `/login` are app-specific UX skips.
-  if (params.callbackUrl) {
-    try {
-      const target = new URL(params.callbackUrl, "http://_");
-      const safe =
-        (target.protocol === "http:" || target.protocol === "https:") &&
-        target.pathname.startsWith("/") &&
-        !target.pathname.startsWith("//") &&
-        target.pathname !== "/" &&
-        target.pathname !== "/login";
-      if (safe) {
-        redirect(`${target.pathname}${target.search}${target.hash}`);
-      }
-    } catch {
-      // malformed — fall through
-    }
+  // First check query params, then fallback to cookie set by middleware.
+  tryRedirectToCallback(params.callbackUrl);
+
+  // Fallback: check auth-redirect cookie for invite flows where Auth.js
+  // didn't pass the callbackUrl properly. The cookie has a 10-minute TTL
+  // and will expire naturally.
+  const cookieStore = await cookies();
+  const authRedirect = cookieStore.get("auth-redirect")?.value;
+  if (authRedirect) {
+    tryRedirectToCallback(authRedirect);
   }
 
   const queryClient = getQueryClient();
