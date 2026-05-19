@@ -24,10 +24,6 @@ export function ExternalStatusGrid() {
             statusMessage={service.statusMessage || undefined}
             className="self-start"
           />
-          <ContentBoxUrl
-            url={service.url}
-            className="m-0! text-muted-foreground text-sm"
-          />
         </ContentBoxLink>
       ))}
     </Grid>
