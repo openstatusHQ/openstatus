@@ -1,6 +1,4 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-// import * as Sentry from "@sentry/node";
-import { sentry } from "@hono/sentry";
 import {
   configure,
   getConsoleSink,
@@ -9,15 +7,15 @@ import {
   withContext,
 } from "@logtape/logtape";
 import { getOpenTelemetrySink } from "@logtape/otel";
+import * as Sentry from "@sentry/bun";
 
-// import { getSentrySink } from "@logtape/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
-// import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import "./lib/sentry";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
@@ -103,8 +101,6 @@ const app = new Hono<Env>({ strict: false });
 
 app.use("*", requestId());
 
-app.use("*", sentry({ dsn: env().SENTRY_DSN }));
-
 app.use("*", async (c, next) => {
   const requestId = c.get("requestId");
   const startTime = Date.now();
@@ -163,7 +159,7 @@ app.onError((err, c) => {
     url: c.req.url,
     request_id: c.get("requestId"),
   });
-  c.get("sentry").captureException(err);
+  Sentry.captureException(err);
 
   return c.json({ error: "Internal server error" }, 500);
 });

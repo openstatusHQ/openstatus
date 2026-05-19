@@ -1,4 +1,3 @@
-import { getSentry } from "@hono/sentry";
 import { getLogger } from "@logtape/logtape";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
@@ -10,6 +9,7 @@ import type { Context } from "hono";
 
 import { env } from "../env";
 import { db } from "../lib/db";
+import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 
 const logger = getLogger(["workflow", "external-status"]);
 
@@ -107,12 +107,12 @@ export async function runExternalStatusTick(): Promise<{
 }
 
 export async function handleExternalStatusCron(c: Context) {
-  const sentry = getSentry(c);
-  const checkInId = sentry.captureCheckIn({
-    monitorSlug: "external-status",
-    status: "in_progress",
-  });
+  const { cronCompleted, cronFailed } = runSentryCron("external-status");
 
+  // Background chain: must not capture `c` or anything derived from it
+  // (e.g. via getSentry(c)). The handler returns 200 before this resolves, and
+  // a captured per-request Sentry hub stays pinned across retries — see
+  // apps/workflows/plan.md.
   void Effect.runPromise(
     Effect.tryPromise({
       try: () => runExternalStatusTick(),
@@ -135,11 +135,7 @@ export async function handleExternalStatusCron(c: Context) {
               failures: res.failureCount,
             },
           );
-          sentry.captureCheckIn({
-            checkInId,
-            monitorSlug: "external-status",
-            status: "ok",
-          });
+          void cronCompleted();
         }),
       ),
       Effect.catchAll((e) =>
@@ -147,12 +143,8 @@ export async function handleExternalStatusCron(c: Context) {
           logger.error("external-status tick errored: {message}", {
             message: e.message,
           });
-          sentry.captureMessage(e.message, "error");
-          sentry.captureCheckIn({
-            checkInId,
-            monitorSlug: "external-status",
-            status: "error",
-          });
+          void reportBackgroundError(e.message);
+          void cronFailed();
         }),
       ),
     ),
