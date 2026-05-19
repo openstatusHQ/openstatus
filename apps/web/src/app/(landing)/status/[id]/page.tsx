@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { ButtonLink } from "@/content/mdx-components/button-link";
 import { CustomLink } from "@/content/mdx-components/custom-link";
@@ -89,7 +90,15 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       </ContentBoxContainer>
 
       <HydrateClient>
-        <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
+        <Suspense
+          fallback={
+            <section className="prose dark:prose-invert mb-12 max-w-none">
+              <p className="text-muted-foreground">Loading {service.name} status…</p>
+            </section>
+          }
+        >
+          <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
+        </Suspense>
       </HydrateClient>
 
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">

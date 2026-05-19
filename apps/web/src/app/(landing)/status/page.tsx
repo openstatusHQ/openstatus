@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { ButtonLink } from "@/content/mdx-components/button-link";
 import { CustomLink } from "@/content/mdx-components/custom-link";
@@ -55,7 +56,13 @@ export default async function Page() {
       </ContentBoxContainer>
 
       <HydrateClient>
-        <ExternalStatusGrid />
+        <Suspense
+          fallback={
+            <p className="text-muted-foreground">Loading external status…</p>
+          }
+        >
+          <ExternalStatusGrid />
+        </Suspense>
       </HydrateClient>
 
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
