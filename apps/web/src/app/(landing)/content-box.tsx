@@ -26,6 +26,25 @@ export function ContentBoxLink({
   );
 }
 
+export function ContentBoxContainer({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "border border-border p-4",
+        "[&>*:first-child]:!mt-0 [&>*:last-child]:!mb-0",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function ContentBoxTitle({
   children,
   className,

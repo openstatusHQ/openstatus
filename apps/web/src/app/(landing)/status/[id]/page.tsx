@@ -3,9 +3,12 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
 import { env } from "@/env";
 import { cachedGetExternalServiceBySlug } from "@/lib/external-service-cache";
 import {
+  APP_URL,
   BASE_URL,
   defaultMetadata,
   ogMetadata,
@@ -13,6 +16,11 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
+import {
+  ContentBoxContainer,
+  ContentBoxDescription,
+  ContentBoxTitle,
+} from "../../content-box";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
@@ -176,6 +184,15 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
         }}
       />
+      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+        <CustomLink
+          href={`${APP_URL}?ref=status-service-top`}
+          className="font-medium underline-offset-4 hover:underline"
+        >
+          Catch downtime instantly and keep your users in the loop with
+          OpenStatus →
+        </CustomLink>
+      </ContentBoxContainer>
       <h1>Is {service.name} down?</h1>
       <p>
         {answer} Below you'll find the live {service.name} status, uptime over
@@ -232,6 +249,17 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           apiConfigType={service.apiConfig?.type}
         />
       </Suspense>
+      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+        <ContentBoxTitle className="m-0! text-lg">
+          Looking for a status page?
+        </ContentBoxTitle>
+        <ContentBoxDescription className="m-0! text-sm">
+          Every service needs a status page. Run yours with OpenStatus.
+        </ContentBoxDescription>
+        <ButtonLink href={`${APP_URL}?ref=status-service-bottom`}>
+          Create your status page
+        </ButtonLink>
+      </ContentBoxContainer>
     </section>
   );
 }

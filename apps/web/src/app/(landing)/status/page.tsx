@@ -2,17 +2,24 @@ import type { Metadata } from "next";
 
 import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
 import { components } from "@/content/mdx";
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
+import { env } from "@/env";
 import { cachedListExternalServices } from "@/lib/external-service-cache";
 import {
+  APP_URL,
   BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
-
-import { env } from "@/env";
-import { ContentBoxLink, ContentBoxUrl } from "../content-box";
+import {
+  ContentBoxContainer,
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+} from "../content-box";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +78,15 @@ export default async function Page() {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
+      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+        <CustomLink
+          href={`${APP_URL}?ref=status-index-top`}
+          className="font-medium underline-offset-4 hover:underline"
+        >
+          Catch downtime instantly and keep your users in the loop with
+          OpenStatus →
+        </CustomLink>
+      </ContentBoxContainer>
       <h1>External Status</h1>
       <components.Grid cols={2}>
         {services.map((service) => {
@@ -88,14 +104,21 @@ export default async function Page() {
                 statusMessage={snap.status_message || undefined}
                 className="self-start"
               />
-              <ContentBoxUrl
-                url={service.url}
-                className="m-0! text-muted-foreground text-sm"
-              />
             </ContentBoxLink>
           );
         })}
       </components.Grid>
+      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+        <ContentBoxTitle className="m-0! text-lg">
+          Looking for a status page?
+        </ContentBoxTitle>
+        <ContentBoxDescription className="m-0! text-sm">
+          Every service needs a status page. Run yours with OpenStatus.
+        </ContentBoxDescription>
+        <ButtonLink href={`${APP_URL}?ref=status-index-bottom`}>
+          Create your status page
+        </ButtonLink>
+      </ContentBoxContainer>
     </section>
   );
 }
