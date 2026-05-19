@@ -109,7 +109,7 @@ export const externalServiceRouter = createTRPCRouter({
         url: s.url,
         indicator: snap?.indicator ?? "",
         status: snap?.status ?? "",
-        statusMessage: snap?.status_message ?? "",
+        statusMessage: snap?.status_message ?? "Status unavailable",
         lastFetchedAt: snap?.last_fetched_at ?? 0,
       };
     });
