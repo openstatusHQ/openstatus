@@ -7,6 +7,7 @@ import { searchParamsCache } from "./search-params";
 
 function tryRedirectToCallback(callbackUrl: string | null): void {
   if (!callbackUrl) return;
+  let safePath: string | null = null;
   try {
     const target = new URL(callbackUrl, "http://_");
     const safe =
@@ -16,10 +17,14 @@ function tryRedirectToCallback(callbackUrl: string | null): void {
       target.pathname !== "/" &&
       target.pathname !== "/login";
     if (safe) {
-      redirect(`${target.pathname}${target.search}${target.hash}`);
+      safePath = `${target.pathname}${target.search}${target.hash}`;
     }
   } catch {
     // malformed — fall through
+  }
+  // redirect() throws NEXT_REDIRECT; must be outside the try/catch above.
+  if (safePath) {
+    redirect(safePath);
   }
 }
 
