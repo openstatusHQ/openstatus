@@ -48,10 +48,21 @@ export default auth(async (req) => {
 
   if (req.auth && url.pathname === "/login") {
     const redirectTo = url.searchParams.get("redirectTo");
-    console.log("User authenticated, redirecting to", redirectTo);
     if (redirectTo) {
-      const redirectToUrl = new URL(redirectTo, req.url);
-      return NextResponse.redirect(redirectToUrl);
+      // Same-origin only: rebuild from path/search/hash so an absolute
+      // redirectTo (e.g. https://evil.com) can't become an open redirect.
+      const target = new URL(redirectTo, req.nextUrl.origin);
+      if (
+        (target.protocol === "http:" || target.protocol === "https:") &&
+        !target.pathname.startsWith("//")
+      ) {
+        const safe = new URL(
+          `${target.pathname}${target.search}${target.hash}`,
+          req.nextUrl.origin,
+        );
+        console.log("User authenticated, redirecting to", safe);
+        return NextResponse.redirect(safe);
+      }
     }
   }
 
@@ -81,7 +92,5 @@ export default auth(async (req) => {
 });
 
 export const config = {
-  matcher: [
-    "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-  ],
+  matcher: ["/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)"],
 };
