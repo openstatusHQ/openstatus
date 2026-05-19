@@ -192,6 +192,7 @@ export const externalServiceRouter = createTRPCRouter({
     .output(
       z.object({
         supported: z.boolean(),
+        unavailable: z.boolean().optional(),
         incidents: z.array(incidentSchema),
       }),
     )
@@ -217,7 +218,7 @@ export const externalServiceRouter = createTRPCRouter({
           console.warn(
             `[external-service incidents] non-200 from ${url}: ${res.status}`,
           );
-          return { supported: false, incidents: [] };
+          return { supported: true, unavailable: true, incidents: [] };
         }
         const json = await res.json();
         const parsed = atlassianIncidentsResponseSchema.safeParse(json);
@@ -226,7 +227,7 @@ export const externalServiceRouter = createTRPCRouter({
             `[external-service incidents] invalid payload from ${url}`,
             parsed.error.issues,
           );
-          return { supported: false, incidents: [] };
+          return { supported: true, unavailable: true, incidents: [] };
         }
         const incidents = parsed.data.incidents
           .slice(0, MAX_INCIDENTS)
@@ -245,7 +246,7 @@ export const externalServiceRouter = createTRPCRouter({
         console.warn(
           `[external-service incidents] fetch failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
         );
-        return { supported: false, incidents: [] };
+        return { supported: true, unavailable: true, incidents: [] };
       } finally {
         clearTimeout(timer);
       }
