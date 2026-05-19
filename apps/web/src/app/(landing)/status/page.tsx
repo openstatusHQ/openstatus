@@ -4,6 +4,7 @@ import { ExternalServicePill } from "@/app/(landing)/status/external-service-pil
 import { components } from "@/content/mdx";
 import { cachedListExternalServices } from "@/lib/external-service-cache";
 import {
+  APP_URL,
   BASE_URL,
   defaultMetadata,
   ogMetadata,
@@ -80,7 +81,7 @@ export default async function Page() {
     <section className="prose dark:prose-invert mb-12 max-w-none">
       <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
         <CustomLink
-          href="https://app.openstatus.dev?ref=status-index-top"
+          href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"
         >
           Track your own service's uptime — get a free status page with
@@ -116,7 +117,7 @@ export default async function Page() {
           Global uptime monitoring, instant alerts, and a public status page —
           free to start.
         </ContentBoxDescription>
-        <ButtonLink href="https://app.openstatus.dev?ref=status-index-bottom">
+        <ButtonLink href={`${APP_URL}?ref=status-index-bottom`}>
           Get started free
         </ButtonLink>
       </ContentBoxContainer>

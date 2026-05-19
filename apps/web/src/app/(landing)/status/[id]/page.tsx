@@ -11,6 +11,7 @@ import {
   cachedListExternalServiceSlugs,
 } from "@/lib/external-service-cache";
 import {
+  APP_URL,
   BASE_URL,
   defaultMetadata,
   ogMetadata,
@@ -194,7 +195,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       />
       <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
         <CustomLink
-          href="https://app.openstatus.dev?ref=status-service-top"
+          href={`${APP_URL}?ref=status-service-top`}
           className="font-medium underline-offset-4 hover:underline"
         >
           Catch downtime instantly and keep your users in the loop with
@@ -264,7 +265,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         <ContentBoxDescription className="m-0! text-sm">
           Every service needs a status page. Run yours with OpenStatus
         </ContentBoxDescription>
-        <ButtonLink href="https://app.openstatus.dev?ref=status-service-bottom">
+        <ButtonLink href={`${APP_URL}?ref=status-service-bottom`}>
           Create your status page
         </ButtonLink>
       </ContentBoxContainer>

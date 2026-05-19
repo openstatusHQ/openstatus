@@ -15,6 +15,8 @@ export const BASE_URL =
     ? "https://www.openstatus.dev"
     : "http://localhost:3000";
 
+export const APP_URL = "https://app.openstatus.dev";
+
 export const twitterMetadata: Metadata["twitter"] = {
   title: TITLE,
   description: DESCRIPTION,
