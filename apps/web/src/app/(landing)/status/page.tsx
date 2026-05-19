@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 
 import { ExternalServicePill } from "@/app/(landing)/status/external-service-pill";
 import { components } from "@/content/mdx";
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
+import { env } from "@/env";
 import { cachedListExternalServices } from "@/lib/external-service-cache";
 import {
   APP_URL,
@@ -11,10 +14,6 @@ import {
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
-
-import { ButtonLink } from "@/content/mdx-components/button-link";
-import { CustomLink } from "@/content/mdx-components/custom-link";
-import { env } from "@/env";
 import {
   ContentBoxContainer,
   ContentBoxDescription,
