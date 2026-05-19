@@ -260,10 +260,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       </Suspense>
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
         <ContentBoxTitle className="m-0! text-lg">
-          Looking for a status page
+          Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Every service needs a status page. Run yours with OpenStatus
+          Every service needs a status page. Run yours with OpenStatus.
         </ContentBoxDescription>
         <ButtonLink href={`${APP_URL}?ref=status-service-bottom`}>
           Create your status page

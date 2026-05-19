@@ -83,7 +83,7 @@ export default async function Page() {
           href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"
         >
-          Track your own service's uptime — get a free status page with
+          Catch downtime instantly and keep your users in the loop with
           OpenStatus →
         </CustomLink>
       </ContentBoxContainer>
@@ -110,14 +110,13 @@ export default async function Page() {
       </components.Grid>
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
         <ContentBoxTitle className="m-0! text-lg">
-          Build your own status page
+          Looking for a status page?
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Global uptime monitoring, instant alerts, and a public status page —
-          free to start.
+          Every service needs a status page. Run yours with OpenStatus.
         </ContentBoxDescription>
         <ButtonLink href={`${APP_URL}?ref=status-index-bottom`}>
-          Get started free
+          Create your status page
         </ButtonLink>
       </ContentBoxContainer>
     </section>
