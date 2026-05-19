@@ -36,6 +36,7 @@ const gridItemSchema = z.object({
   indicator: z.string(),
   status: z.string(),
   statusMessage: z.string(),
+  lastFetchedAt: z.number(),
 });
 
 const detailServiceSchema = z.object({
@@ -45,6 +46,7 @@ const detailServiceSchema = z.object({
   statusPageUrl: z.string(),
   aliases: z.array(z.string()),
   apiConfigType: z.string().optional(),
+  deletedAt: z.date().nullable(),
 });
 
 const latestSchema = z.object({
@@ -55,11 +57,12 @@ const latestSchema = z.object({
   lastFetchedAt: z.number(),
 });
 
+// snake_case kept so the output feeds the shared HistoryBars block unchanged.
 const historyRowSchema = z.object({
   day: z.string(),
-  worstIndicator: z.string(),
-  hadMaintenance: z.number(),
-  snapshotCount: z.number(),
+  worst_indicator: z.string(),
+  had_maintenance: z.number(),
+  snapshot_count: z.number(),
 });
 
 const incidentSchema = z.object({
@@ -106,7 +109,8 @@ export const externalServiceRouter = createTRPCRouter({
         url: s.url,
         indicator: snap?.indicator ?? "",
         status: snap?.status ?? "",
-        statusMessage: snap?.status_message ?? "Status unavailable",
+        statusMessage: snap?.status_message ?? "",
+        lastFetchedAt: snap?.last_fetched_at ?? 0,
       };
     });
   }),
@@ -171,13 +175,14 @@ export const externalServiceRouter = createTRPCRouter({
           statusPageUrl: service.statusPageUrl,
           aliases: aliasSlugs,
           apiConfigType: service.apiConfig?.type,
+          deletedAt: service.deletedAt,
         },
         latest,
         history: historyRows.map((r) => ({
           day: r.day,
-          worstIndicator: r.worst_indicator,
-          hadMaintenance: r.had_maintenance,
-          snapshotCount: r.snapshot_count,
+          worst_indicator: r.worst_indicator,
+          had_maintenance: r.had_maintenance,
+          snapshot_count: r.snapshot_count,
         })),
       };
     }),
@@ -187,7 +192,6 @@ export const externalServiceRouter = createTRPCRouter({
     .output(
       z.object({
         supported: z.boolean(),
-        unavailable: z.boolean().optional(),
         incidents: z.array(incidentSchema),
       }),
     )
@@ -213,7 +217,7 @@ export const externalServiceRouter = createTRPCRouter({
           console.warn(
             `[external-service incidents] non-200 from ${url}: ${res.status}`,
           );
-          return { supported: true, unavailable: true, incidents: [] };
+          return { supported: false, incidents: [] };
         }
         const json = await res.json();
         const parsed = atlassianIncidentsResponseSchema.safeParse(json);
@@ -222,7 +226,7 @@ export const externalServiceRouter = createTRPCRouter({
             `[external-service incidents] invalid payload from ${url}`,
             parsed.error.issues,
           );
-          return { supported: true, unavailable: true, incidents: [] };
+          return { supported: false, incidents: [] };
         }
         const incidents = parsed.data.incidents
           .slice(0, MAX_INCIDENTS)
@@ -241,7 +245,7 @@ export const externalServiceRouter = createTRPCRouter({
         console.warn(
           `[external-service incidents] fetch failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
         );
-        return { supported: true, unavailable: true, incidents: [] };
+        return { supported: false, incidents: [] };
       } finally {
         clearTimeout(timer);
       }

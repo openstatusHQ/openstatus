@@ -14,11 +14,7 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import { HydrateClient, api } from "@/trpc/rq-server";
 
-import {
-  ContentBoxContainer,
-  ContentBoxDescription,
-  ContentBoxTitle,
-} from "../../content-box";
+import { ContentBoxContainer, ContentBoxDescription, ContentBoxTitle } from "../../content-box";
 import { ServiceDetail } from "./service-detail";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +23,7 @@ const HISTORY_DAYS = 45;
 
 type RouteParams = { id: string };
 
-export async function generateMetadata(args: {
-  params: Promise<RouteParams>;
-}): Promise<Metadata> {
+export async function generateMetadata(args: { params: Promise<RouteParams> }): Promise<Metadata> {
   const { id } = await args.params;
   const service = await cachedGetExternalServiceBySlug(id);
   if (!service) return { ...defaultMetadata, title: "Not Found" };
@@ -91,8 +85,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           href={`${APP_URL}?ref=status-service-top`}
           className="font-medium underline-offset-4 hover:underline"
         >
-          Catch downtime instantly and keep your users in the loop with
-          OpenStatus →
+          Catch downtime instantly and keep your users in the loop with OpenStatus →
         </CustomLink>
       </ContentBoxContainer>
 
@@ -100,9 +93,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         <Suspense
           fallback={
             <section className="prose dark:prose-invert mb-12 max-w-none">
-              <p className="text-muted-foreground">
-                Loading {service.name} status…
-              </p>
+              <p className="text-muted-foreground">Loading {service.name} status…</p>
             </section>
           }
         >
@@ -111,9 +102,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       </HydrateClient>
 
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
-        <ContentBoxTitle className="m-0! text-lg">
-          Looking for a status page?
-        </ContentBoxTitle>
+        <ContentBoxTitle className="m-0! text-lg">Looking for a status page?</ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
           Every service needs a status page. Run yours with OpenStatus.
         </ContentBoxDescription>
