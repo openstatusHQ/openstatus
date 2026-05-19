@@ -3,7 +3,7 @@
 import { Grid } from "@/content/mdx-components/grid";
 import { api } from "@/trpc/rq-client";
 
-import { ContentBoxLink, ContentBoxUrl } from "../content-box";
+import { ContentBoxLink } from "../content-box";
 import { ExternalServicePill } from "./external-service-pill";
 
 export function ExternalStatusGrid() {
