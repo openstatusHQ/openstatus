@@ -22,7 +22,9 @@ export default auth(async (req) => {
   }
 
   if (!req.auth && url.pathname !== "/login") {
-    console.log("User not authenticated, redirecting to login");
+    if (process.env.NODE_ENV === "development") {
+      console.log("User not authenticated, redirecting to login");
+    }
     const newURL = new URL("/login", req.url);
     const encodedSearchParams = `${url.pathname}${url.search}`;
 
@@ -60,8 +62,12 @@ export default auth(async (req) => {
           `${target.pathname}${target.search}${target.hash}`,
           req.nextUrl.origin,
         );
-        console.log("User authenticated, redirecting to", safe);
-        return NextResponse.redirect(safe);
+        if (process.env.NODE_ENV === "development") {
+          console.log("User authenticated, redirecting to", safe);
+        }
+        const res = NextResponse.redirect(safe);
+        res.cookies.delete("auth-redirect");
+        return res;
       }
     }
   }
@@ -86,6 +92,13 @@ export default auth(async (req) => {
 
   if (!req.auth && hasWorkspaceSlug) {
     response.cookies.delete("workspace-slug");
+  }
+
+  // auth-redirect is single-use; the onboarding Server Component reads it but
+  // can't mutate cookies, so clear it here once authenticated. Prevents a
+  // stale back-button hit on /onboarding redirecting again.
+  if (req.auth && req.cookies.has("auth-redirect")) {
+    response.cookies.delete("auth-redirect");
   }
 
   return response;
