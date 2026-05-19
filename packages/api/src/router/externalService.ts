@@ -55,12 +55,11 @@ const latestSchema = z.object({
   lastFetchedAt: z.number(),
 });
 
-// snake_case kept so the output feeds the shared HistoryBars block unchanged.
 const historyRowSchema = z.object({
   day: z.string(),
-  worst_indicator: z.string(),
-  had_maintenance: z.number(),
-  snapshot_count: z.number(),
+  worstIndicator: z.string(),
+  hadMaintenance: z.number(),
+  snapshotCount: z.number(),
 });
 
 const incidentSchema = z.object({
@@ -176,9 +175,9 @@ export const externalServiceRouter = createTRPCRouter({
         latest,
         history: historyRows.map((r) => ({
           day: r.day,
-          worst_indicator: r.worst_indicator,
-          had_maintenance: r.had_maintenance,
-          snapshot_count: r.snapshot_count,
+          worstIndicator: r.worst_indicator,
+          hadMaintenance: r.had_maintenance,
+          snapshotCount: r.snapshot_count,
         })),
       };
     }),
