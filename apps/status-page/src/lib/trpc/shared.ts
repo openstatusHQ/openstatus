@@ -29,10 +29,23 @@ export function guardTRPCSource(req: Request): Response | null {
   return null;
 }
 
+/**
+ * Vercel populates VERCEL_URL with a bare host (e.g. "my-app.vercel.app"). If
+ * a developer wrote a full URL into `.env` by mistake, this strips the scheme
+ * so `https://${host}` doesn't yield `https://https://…` and crash fetch with
+ * `getaddrinfo EAI_AGAIN https`. Works whether or not the prefix is present.
+ */
+function stripScheme(url: string): string {
+  if (url.startsWith("https://")) return url.slice("https://".length);
+  if (url.startsWith("http://")) return url.slice("http://".length);
+  return url;
+}
+
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
   // Note: status-page has its own tRPC API routes
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // Vercel
+  if (process.env.VERCEL_URL)
+    return `https://${stripScheme(process.env.VERCEL_URL)}`;
   return "http://localhost:3000"; // Local dev and Docker (internal calls)
 };
 
