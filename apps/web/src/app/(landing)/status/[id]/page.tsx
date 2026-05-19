@@ -197,7 +197,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           href="https://app.openstatus.dev?ref=status-service-top"
           className="font-medium underline-offset-4 hover:underline"
         >
-          Get uptime alerts and a status page for your own service with
+          Catch downtime instantly and keep your users in the loop with
           OpenStatus →
         </CustomLink>
       </ContentBoxContainer>
@@ -259,11 +259,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       </Suspense>
       <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
         <ContentBoxTitle className="m-0! text-lg">
-          Run a status page for your own service
+          Looking for a status page
         </ContentBoxTitle>
         <ContentBoxDescription className="m-0! text-sm">
-          Track uptime, get instant downtime alerts, and share a public status
-          page with your users.
+          Every service needs a status page. Run yours with OpenStatus
         </ContentBoxDescription>
         <ButtonLink href="https://app.openstatus.dev?ref=status-service-bottom">
           Create your status page
