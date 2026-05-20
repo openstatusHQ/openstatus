@@ -17,7 +17,7 @@ export function ExternalStatusGrid() {
 
   const filtered = useMemo(() => filterServices(services, q), [services, q]);
 
-  if (filtered.length === 0) {
+  if (filtered.length === 0 && q.trim() !== "") {
     return (
       <p className="not-prose text-muted-foreground text-sm">
         No services match &ldquo;{q}&rdquo;.
