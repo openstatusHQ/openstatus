@@ -16,32 +16,48 @@ export function ExternalStatusGrid() {
   const [q] = useQueryState("q", qParser);
 
   const filtered = useMemo(() => filterServices(services, q), [services, q]);
+  const hasQuery = q.trim() !== "";
 
-  if (filtered.length === 0 && q.trim() !== "") {
+  if (filtered.length === 0 && hasQuery) {
     return (
-      <p className="not-prose text-muted-foreground text-sm">
-        No services match &ldquo;{q}&rdquo;.
-      </p>
+      <div className="not-prose flex flex-col gap-2">
+        <p className="text-muted-foreground text-xs" role="status">
+          Showing 0 of {services.length} services
+        </p>
+        <p className="text-muted-foreground text-sm">
+          No services match &ldquo;{q}&rdquo;.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Grid cols={2}>
-      {filtered.map((service) => (
-        <ContentBoxLink
-          key={service.slug}
-          href={`/status/${service.slug}`}
-          className="flex flex-col gap-2"
+    <>
+      {hasQuery && (
+        <p
+          className="not-prose mb-2 text-muted-foreground text-xs"
+          role="status"
         >
-          <p className="m-0! font-semibold">{service.name}</p>
-          <ExternalServicePill
-            indicator={service.indicator}
-            status={service.status}
-            statusMessage={service.statusMessage || undefined}
-            className="self-start"
-          />
-        </ContentBoxLink>
-      ))}
-    </Grid>
+          Showing {filtered.length} of {services.length} services
+        </p>
+      )}
+      <Grid cols={2}>
+        {filtered.map((service) => (
+          <ContentBoxLink
+            key={service.slug}
+            href={`/status/${service.slug}`}
+            className="flex flex-col gap-2"
+          >
+            <p className="m-0! font-semibold">{service.name}</p>
+            <ExternalServicePill
+              indicator={service.indicator}
+              status={service.status}
+              statusMessage={service.statusMessage || undefined}
+              className="self-start"
+            />
+          </ContentBoxLink>
+        ))}
+      </Grid>
+    </>
   );
 }

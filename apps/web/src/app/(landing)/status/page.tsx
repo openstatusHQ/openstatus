@@ -18,6 +18,7 @@ import {
 } from "../content-box";
 
 import { ExternalStatusGrid } from "./external-status-grid";
+import { searchParamsCache } from "./search-params";
 import { ServiceSearch } from "./service-search";
 
 export const dynamic = "force-dynamic";
@@ -26,13 +27,11 @@ const TITLE = "External Status";
 const DESCRIPTION =
   "Easily check if your external providers is working properly";
 
-type SearchParams = Promise<{ q?: string }>;
-
 export async function generateMetadata(props: {
-  searchParams: SearchParams;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const { q } = await props.searchParams;
-  const hasQuery = (q ?? "").trim() !== "";
+  const { q } = await searchParamsCache.parse(props.searchParams);
+  const hasQuery = q.trim() !== "";
 
   return {
     ...defaultMetadata,

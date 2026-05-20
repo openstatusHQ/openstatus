@@ -10,14 +10,11 @@ import {
   InputGroupInput,
 } from "@openstatus/ui/components/ui/input-group";
 
-import { api } from "@/trpc/rq-client";
-import { filterServices } from "./filter-services";
 import { qParser } from "./search-params";
 
 export function ServiceSearch() {
   const [q, setQ] = useQueryState("q", qParser);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { data: services } = api.externalService.grid.useQuery();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -39,12 +36,8 @@ export function ServiceSearch() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const total = services?.length ?? 0;
-  const matched = services ? filterServices(services, q).length : 0;
-  const showCount = q.trim() !== "" && services !== undefined;
-
   return (
-    <div className="not-prose mb-4 flex flex-col gap-1">
+    <div className="not-prose mb-4">
       <InputGroup className="rounded-none">
         <InputGroupAddon align="inline-start">
           <SearchIcon />
@@ -60,15 +53,16 @@ export function ServiceSearch() {
             if (e.key === "Escape" && q !== "") {
               e.preventDefault();
               setQ("");
+              inputRef.current?.blur();
             }
           }}
         />
+        <InputGroupAddon align="inline-end">
+          <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">
+            /
+          </kbd>
+        </InputGroupAddon>
       </InputGroup>
-      {showCount && (
-        <p className="text-muted-foreground text-xs" role="status">
-          Showing {matched} of {total} services
-        </p>
-      )}
     </div>
   );
 }
