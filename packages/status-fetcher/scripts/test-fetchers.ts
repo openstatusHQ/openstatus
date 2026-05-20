@@ -33,6 +33,18 @@ const fixtures: StatusPageEntry[] = [
       parser: "slack",
     },
   },
+  {
+    id: "bluesky",
+    name: "Bluesky",
+    url: "https://bsky.app",
+    status_page_url: "https://status.bsky.app",
+    provider: "uptime-robot",
+    industry: ["communication"],
+    api_config: {
+      type: "uptimerobot",
+      endpoint: "https://status.bsky.app/api/getMonitorList/2102707-357837",
+    },
+  },
 ];
 
 async function testFetchers() {

@@ -189,4 +189,17 @@ export const externalServicesSeed: ExternalServiceSeedEntry[] = [
     description: "E-commerce platform for online stores",
     apiConfig: { type: "atlassian" },
   },
+  {
+    slug: "bluesky",
+    name: "Bluesky",
+    url: "https://bsky.app",
+    statusPageUrl: "https://status.bsky.app",
+    provider: "uptime-robot",
+    industry: ["communication"],
+    description: "Decentralized social network built on the AT Protocol",
+    apiConfig: {
+      type: "uptimerobot",
+      endpoint: "https://status.bsky.app/api/getMonitorList/2102707-357837",
+    },
+  },
 ];

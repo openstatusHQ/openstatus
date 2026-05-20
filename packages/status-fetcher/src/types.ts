@@ -6,6 +6,7 @@ export const API_CONFIG_TYPES = [
   "instatus",
   "betterstack",
   "incidentio",
+  "uptimerobot",
   "custom",
   "html-scraper",
 ] as const;
@@ -18,6 +19,7 @@ export const STATUS_PAGE_PROVIDERS = [
   "status.io",
   "custom",
   "better-uptime",
+  "uptime-robot",
   "unknown",
 ] as const;
 
