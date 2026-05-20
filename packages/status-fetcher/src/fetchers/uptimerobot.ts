@@ -148,21 +148,24 @@ export class UptimeRobotFetcher implements StatusFetcher {
       }
     }
 
-    const down = danger + warning;
-
     if (danger === total) {
       return {
         severity: "major",
         status: "major_outage",
-        description: `${total} monitors down (${total} total)`,
+        description:
+          total === 1 ? "1 monitor down (1 total)" : `All ${total} monitors down`,
       };
     }
 
     if (danger > 0) {
+      const desc =
+        warning > 0
+          ? `${danger} down, ${warning} degraded (${total} total)`
+          : `${pluralMonitor(danger)} down (${total} total)`;
       return {
         severity: "major",
         status: "partial_outage",
-        description: `${down} monitors down (${total} total)`,
+        description: desc,
       };
     }
 
@@ -170,7 +173,7 @@ export class UptimeRobotFetcher implements StatusFetcher {
       return {
         severity: "minor",
         status: "degraded",
-        description: `${down} monitors down (${total} total)`,
+        description: `${pluralMonitor(warning)} degraded (${total} total)`,
       };
     }
 
@@ -178,7 +181,7 @@ export class UptimeRobotFetcher implements StatusFetcher {
       return {
         severity: "none",
         status: "under_maintenance",
-        description: `${maintenance} monitors in maintenance (${total} total)`,
+        description: `${pluralMonitor(maintenance)} in maintenance (${total} total)`,
       };
     }
 
@@ -188,4 +191,8 @@ export class UptimeRobotFetcher implements StatusFetcher {
       description: `0 monitors down (${total} total)`,
     };
   }
+}
+
+function pluralMonitor(n: number): string {
+  return `${n} ${n === 1 ? "monitor" : "monitors"}`;
 }

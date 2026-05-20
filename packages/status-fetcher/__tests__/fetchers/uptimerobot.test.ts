@@ -1,4 +1,11 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+} from "bun:test";
 import { UptimeRobotFetcher } from "../../src/fetchers/uptimerobot";
 import type { StatusPageEntry } from "../../src/types";
 
@@ -26,12 +33,14 @@ function mockResponse(monitors: Array<Record<string, unknown>>) {
   );
 }
 
+let monitorIdCounter = 0;
 function monitor(
   statusClass: string,
   name = `monitor-${statusClass}`,
 ): Record<string, unknown> {
+  monitorIdCounter++;
   return {
-    monitorId: Math.floor(Math.random() * 1_000_000),
+    monitorId: monitorIdCounter,
     name,
     statusClass,
     url: null,
@@ -46,9 +55,15 @@ function monitor(
 
 describe("UptimeRobotFetcher", () => {
   let fetcher: UptimeRobotFetcher;
+  const originalFetch = global.fetch;
 
   beforeEach(() => {
     fetcher = new UptimeRobotFetcher();
+    monitorIdCounter = 0;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   describe("canHandle", () => {
@@ -131,7 +146,21 @@ describe("UptimeRobotFetcher", () => {
 
       expect(result.severity).toBe("minor");
       expect(result.status).toBe("degraded");
-      expect(result.description).toBe("1 monitors down (3 total)");
+      expect(result.description).toBe("1 monitor degraded (3 total)");
+    });
+
+    it("aggregates two warnings among success → degraded (plural)", async () => {
+      mockResponse([
+        monitor("success"),
+        monitor("warning"),
+        monitor("warning"),
+        monitor("success"),
+      ]);
+
+      const result = await fetcher.fetch(makeEntry());
+
+      expect(result.status).toBe("degraded");
+      expect(result.description).toBe("2 monitors degraded (4 total)");
     });
 
     it("aggregates one danger among success → partial_outage", async () => {
@@ -141,10 +170,10 @@ describe("UptimeRobotFetcher", () => {
 
       expect(result.severity).toBe("major");
       expect(result.status).toBe("partial_outage");
-      expect(result.description).toBe("1 monitors down (3 total)");
+      expect(result.description).toBe("1 monitor down (3 total)");
     });
 
-    it("aggregates danger + warning mix → partial_outage with both counted", async () => {
+    it("aggregates danger + warning mix → partial_outage with separated counts", async () => {
       mockResponse([
         monitor("success"),
         monitor("danger"),
@@ -156,7 +185,7 @@ describe("UptimeRobotFetcher", () => {
 
       expect(result.severity).toBe("major");
       expect(result.status).toBe("partial_outage");
-      expect(result.description).toBe("2 monitors down (4 total)");
+      expect(result.description).toBe("1 down, 1 degraded (4 total)");
     });
 
     it("aggregates all danger → major_outage", async () => {
@@ -166,7 +195,16 @@ describe("UptimeRobotFetcher", () => {
 
       expect(result.severity).toBe("major");
       expect(result.status).toBe("major_outage");
-      expect(result.description).toBe("3 monitors down (3 total)");
+      expect(result.description).toBe("All 3 monitors down");
+    });
+
+    it("single monitor all down → major_outage with singular wording", async () => {
+      mockResponse([monitor("danger")]);
+
+      const result = await fetcher.fetch(makeEntry());
+
+      expect(result.status).toBe("major_outage");
+      expect(result.description).toBe("1 monitor down (1 total)");
     });
 
     it("single paused alongside healthy stays operational", async () => {
