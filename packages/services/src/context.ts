@@ -1,6 +1,7 @@
 import { SQLiteTransaction, db as defaultDb, is } from "@openstatus/db";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
+import { withBusyRetry } from "./retry";
 
 // `@openstatus/db` does not export named DrizzleClient / DrizzleTx types today,
 // so we derive them from the db export and re-export from here.
@@ -43,7 +44,7 @@ export async function withTransaction<T>(
 ): Promise<T> {
   const db = ctx.db ?? defaultDb;
   if (isTx(db)) return fn(db);
-  return (db as DrizzleClient).transaction(fn);
+  return withBusyRetry(() => (db as DrizzleClient).transaction(fn));
 }
 
 /**

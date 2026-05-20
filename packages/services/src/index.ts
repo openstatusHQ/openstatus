@@ -11,6 +11,8 @@ export {
   withTransaction,
 } from "./context";
 
+export { isRetryableDbError, withBusyRetry } from "./retry";
+
 export {
   ConflictError,
   ForbiddenError,
