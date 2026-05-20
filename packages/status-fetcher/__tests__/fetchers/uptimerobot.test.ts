@@ -2,12 +2,9 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { UptimeRobotFetcher } from "../../src/fetchers/uptimerobot";
 import type { StatusPageEntry } from "../../src/types";
 
-const ENDPOINT =
-  "https://status.example.com/api/getMonitorList/1234567-789012";
+const ENDPOINT = "https://status.example.com/api/getMonitorList/1234567-789012";
 
-function makeEntry(
-  overrides: Partial<StatusPageEntry> = {},
-): StatusPageEntry {
+function makeEntry(overrides: Partial<StatusPageEntry> = {}): StatusPageEntry {
   return {
     id: "test",
     name: "Test Service",
@@ -100,7 +97,11 @@ describe("UptimeRobotFetcher", () => {
 
   describe("fetch", () => {
     it("aggregates all success → operational", async () => {
-      mockResponse([monitor("success"), monitor("success"), monitor("success")]);
+      mockResponse([
+        monitor("success"),
+        monitor("success"),
+        monitor("success"),
+      ]);
 
       const result = await fetcher.fetch(makeEntry());
 
@@ -120,7 +121,11 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("aggregates one warning among success → degraded", async () => {
-      mockResponse([monitor("success"), monitor("warning"), monitor("success")]);
+      mockResponse([
+        monitor("success"),
+        monitor("warning"),
+        monitor("success"),
+      ]);
 
       const result = await fetcher.fetch(makeEntry());
 
@@ -208,7 +213,11 @@ describe("UptimeRobotFetcher", () => {
       const originalWarn = console.warn;
       console.warn = warnSpy;
 
-      mockResponse([monitor("success"), monitor("frobnicate"), monitor("success")]);
+      mockResponse([
+        monitor("success"),
+        monitor("frobnicate"),
+        monitor("success"),
+      ]);
 
       try {
         const result = await fetcher.fetch(makeEntry());
