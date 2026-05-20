@@ -153,7 +153,9 @@ export class UptimeRobotFetcher implements StatusFetcher {
         severity: "major",
         status: "major_outage",
         description:
-          total === 1 ? "1 monitor down (1 total)" : `All ${total} monitors down`,
+          total === 1
+            ? "1 monitor down (1 total)"
+            : `All ${total} monitors down`,
       };
     }
 
