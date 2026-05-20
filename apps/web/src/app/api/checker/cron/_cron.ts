@@ -1,6 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
-import type { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
@@ -41,9 +40,7 @@ export const isAuthorizedDomain = (url: string) => {
 
 export const cron = async ({
   periodicity,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  req,
-}: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
+}: z.infer<typeof periodicityAvailable>) => {
   const client = new CloudTasksClient({
     projectId: env.GCP_PROJECT_ID,
     credentials: {
