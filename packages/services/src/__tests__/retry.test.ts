@@ -19,9 +19,9 @@ describe("isRetryableDbError", () => {
   });
 
   test("true for message-only match without a code", () => {
-    expect(isRetryableDbError(new Error("SQLite error: database is locked"))).toBe(
-      true,
-    );
+    expect(
+      isRetryableDbError(new Error("SQLite error: database is locked")),
+    ).toBe(true);
   });
 
   test("false for an unrelated error", () => {

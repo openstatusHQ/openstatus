@@ -98,10 +98,7 @@ afterAll(async () => {
     await db
       .delete(statusReportsToPageComponents)
       .where(
-        inArray(
-          statusReportsToPageComponents.statusReportId,
-          createdReportIds,
-        ),
+        inArray(statusReportsToPageComponents.statusReportId, createdReportIds),
       );
     await db
       .delete(statusReportUpdate)
