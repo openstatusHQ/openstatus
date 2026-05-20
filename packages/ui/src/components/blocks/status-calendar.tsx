@@ -35,6 +35,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@openstatus/ui/components/ui/hover-card";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 
@@ -146,6 +147,18 @@ export function StatusCalendar({
     return map;
   }, [markers]);
 
+  // Cap forward navigation at the latest month that has a marker (or the
+  // current month, whichever is later). Prevents browsing into empty future
+  // months when no maintenance/event is scheduled.
+  const maxMonth = useMemo(() => {
+    const today = startOfMonth(new Date());
+    return markers.reduce((acc, m) => {
+      const mm = startOfMonth(m.date);
+      return mm.getTime() > acc.getTime() ? mm : acc;
+    }, today);
+  }, [markers]);
+  const canGoNext = currentMonth.getTime() < maxMonth.getTime();
+
   // Open state lives at the parent level: a per-day controlled HoverCard would
   // be lost if DayPicker decided to remount its day cells (e.g. during refetch-
   // driven parent re-renders). Tracking `activeDayKey` here keeps the popover
@@ -211,7 +224,7 @@ export function StatusCalendar({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="text-center font-medium text-foreground tabular-nums">
+          <span className="text-center font-medium font-mono text-foreground tabular-nums">
             {formatMonthYear(currentMonth)}
           </span>
           <Button
@@ -219,6 +232,7 @@ export function StatusCalendar({
             size="icon"
             className="size-7"
             aria-label="Next month"
+            disabled={!canGoNext}
             onClick={() => setMonth(addMonths(currentMonth, 1))}
           >
             <ChevronRight className="size-4" />
@@ -240,9 +254,9 @@ export function StatusCalendar({
             table: "w-full border-collapse",
             head_row: "flex w-full border-b",
             head_cell:
-              "flex-1 text-muted-foreground font-normal text-[0.7rem] uppercase tracking-wide py-1.5",
-            row: "flex w-full",
-            cell: "flex-1 relative p-0 text-center text-sm border-r border-b last:border-r-0 focus-within:relative focus-within:z-20",
+              "flex-1 text-muted-foreground font-mono font-normal text-[0.7rem] uppercase tracking-wide py-1.5 border-r last:border-r-0",
+            row: "flex w-full border-b last:border-b-0",
+            cell: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
             day: cn(
               "inline-flex h-12 w-full items-center justify-center text-sm font-normal text-foreground/80 transition-colors",
               "hover:bg-accent hover:text-accent-foreground",
@@ -309,7 +323,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     // Severity ring is inset so it sits inside the cell, not bleeding into
     // neighboring borders.
     const dayClass = cn(
-      "inline-flex h-12 w-full items-center justify-center text-sm font-normal text-foreground/80 transition-colors",
+      "inline-flex h-12 w-full items-center justify-center font-mono text-sm font-normal text-foreground/80 transition-colors",
       "hover:bg-accent hover:text-accent-foreground",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
       isToday && "text-foreground font-semibold",
@@ -381,12 +395,13 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
         >
           <StatusBarCard
             item={barItem}
-            renderEvent={(event) => {
+            renderEvent={(event, eventIndex) => {
               const fn = renderMarkerRowRef.current;
               if (!fn) return undefined;
               const idx = indexByEventId.get(event.id) ?? 0;
               return (
                 <div key={`${event.id}-${event.type}`}>
+                  {eventIndex > 0 && <Separator className="-mx-2 my-2" />}
                   {fn(dayMarkers[idx])}
                 </div>
               );
@@ -448,18 +463,21 @@ export function StatusCalendarSkeleton({
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={`weekday-${i}`}
-              className="flex flex-1 justify-center py-1.5"
+              className="flex flex-1 justify-center border-r py-1.5 last:border-r-0"
             >
               <Skeleton className="h-3 w-4" />
             </div>
           ))}
         </div>
         {Array.from({ length: 6 }).map((_, row) => (
-          <div key={`row-${row}`} className="flex w-full">
+          <div
+            key={`row-${row}`}
+            className="flex w-full border-b last:border-b-0"
+          >
             {Array.from({ length: 7 }).map((_, col) => (
               <div
                 key={`cell-${row}-${col}`}
-                className="flex h-12 flex-1 items-center justify-center border-r border-b last:border-r-0"
+                className="flex h-12 flex-1 items-center justify-center border-r last:border-r-0"
               >
                 <Skeleton className="h-4 w-6" />
               </div>
