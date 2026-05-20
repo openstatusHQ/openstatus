@@ -1,6 +1,10 @@
 export type StatusType = "success" | "degraded" | "error" | "info" | "empty";
 export type StatusEventType = "incident" | "report" | "maintenance";
-export type StatusReportUpdateType = "investigating" | "identified" | "monitoring" | "resolved"
+export type StatusReportUpdateType =
+  | "investigating"
+  | "identified"
+  | "monitoring"
+  | "resolved";
 
 export const THEME_VALUES = ["light", "dark", "system"] as const;
 export type ThemeValue = (typeof THEME_VALUES)[number];
@@ -33,22 +37,22 @@ export type StatusEventData =
   | { type: "maintenance"; data: Maintenance };
 
 export type StatusBarData = {
-    day: string;
-    bar: {
-        status: StatusType;
-        // NOTE: is in percentage! should sum up to 100%
-        height: number;
-    }[];
-    card: {
-        status: StatusType;
-        value: string;
-    }[];
-    events: {
-        id: number;
-        name: string;
-        type: StatusEventType;
-        from: Date | null;
-        to: Date | null;
-        isAggregated?: boolean;
-    }[];
-}
+  day: string;
+  bar: {
+    status: StatusType;
+    // NOTE: is in percentage! should sum up to 100%
+    height: number;
+  }[];
+  card: {
+    status: StatusType;
+    value: string;
+  }[];
+  events: {
+    id: number | string;
+    name: string;
+    type: StatusEventType;
+    from: Date | null;
+    to: Date | null;
+    isAggregated?: boolean;
+  }[];
+};
