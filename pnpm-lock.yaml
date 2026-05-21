@@ -49,8 +49,8 @@ catalogs:
       specifier: 2.10.2
       version: 2.10.2
     '@bufbuild/protovalidate':
-      specifier: 1.1.1
-      version: 1.1.1
+      specifier: 1.2.0
+      version: 1.2.0
     '@chronark/zod-bird':
       specifier: 1.0.0
       version: 1.0.0
@@ -1021,7 +1021,7 @@ importers:
         version: 2.10.2
       '@bufbuild/protovalidate':
         specifier: 'catalog:'
-        version: 1.1.1(@bufbuild/protobuf@2.10.2)
+        version: 1.2.0(@bufbuild/protobuf@2.10.2)
       '@connectrpc/connect':
         specifier: 'catalog:'
         version: 2.1.1(@bufbuild/protobuf@2.10.2)
@@ -1030,7 +1030,7 @@ importers:
         version: 2.1.1(@bufbuild/protobuf@2.10.2)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
       '@connectrpc/validate':
         specifier: 'catalog:'
-        version: 0.2.0(@bufbuild/protobuf@2.10.2)(@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.10.2))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
+        version: 0.2.0(@bufbuild/protobuf@2.10.2)(@bufbuild/protovalidate@1.2.0(@bufbuild/protobuf@2.10.2))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
       '@hono/mcp':
         specifier: 'catalog:'
         version: 0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.12.21))(hono@4.12.21)(zod@4.1.13)
@@ -2608,7 +2608,7 @@ importers:
         version: 2.10.2
       '@bufbuild/protovalidate':
         specifier: 'catalog:'
-        version: 1.1.1(@bufbuild/protobuf@2.10.2)
+        version: 1.2.0(@bufbuild/protobuf@2.10.2)
       '@connectrpc/connect':
         specifier: ^2.1.1
         version: 2.1.1(@bufbuild/protobuf@2.10.2)
@@ -3622,8 +3622,8 @@ packages:
   '@bufbuild/protoplugin@2.10.2':
     resolution: {integrity: sha512-RAWVs9tCzRqSS3tUtaFhOcauOAazCrm7tlGh0WHFq/44n5Fj6YgefdlZEPIaAK6VAA+FdOoFgtOJK2Ji5U24pw==}
 
-  '@bufbuild/protovalidate@1.1.1':
-    resolution: {integrity: sha512-sE6CojU25nfeb1w88Sm+jRnmk4GvQTeEZvLDHHDPvIHbj2NsDJWFAUJdJr+RcuMnjdWmbur+rAS38VuEK/XviQ==}
+  '@bufbuild/protovalidate@1.2.0':
+    resolution: {integrity: sha512-tD08DwGrHIV88khLz1Kdz9DYUwEo1TsoepaIg7/B/zd//AymaTx67kvCS1jlkcG/+vgQaSOl6f0HCE3sL8vI7w==}
     peerDependencies:
       '@bufbuild/protobuf': ^2.8.0
 
@@ -14207,7 +14207,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.10.2)':
+  '@bufbuild/protovalidate@1.2.0(@bufbuild/protobuf@2.10.2)':
     dependencies:
       '@bufbuild/cel': 0.4.0(@bufbuild/protobuf@2.10.2)
       '@bufbuild/protobuf': 2.10.2
@@ -14229,10 +14229,10 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 2.10.2
 
-  '@connectrpc/validate@0.2.0(@bufbuild/protobuf@2.10.2)(@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.10.2))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))':
+  '@connectrpc/validate@0.2.0(@bufbuild/protobuf@2.10.2)(@bufbuild/protovalidate@1.2.0(@bufbuild/protobuf@2.10.2))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))':
     dependencies:
       '@bufbuild/protobuf': 2.10.2
-      '@bufbuild/protovalidate': 1.1.1(@bufbuild/protobuf@2.10.2)
+      '@bufbuild/protovalidate': 1.2.0(@bufbuild/protobuf@2.10.2)
       '@connectrpc/connect': 2.1.1(@bufbuild/protobuf@2.10.2)
 
   '@cspotcode/source-map-support@0.8.1':
