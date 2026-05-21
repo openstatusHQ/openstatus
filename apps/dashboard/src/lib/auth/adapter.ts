@@ -12,7 +12,7 @@ import {
 import { createUser, getUser } from "./helpers";
 
 export const adapter: Adapter = {
-  ...DrizzleAdapter(db, {
+  ...(DrizzleAdapter(db, {
     // @ts-expect-error: problem with type
     usersTable: user,
     // @ts-expect-error: problem with type
@@ -20,7 +20,7 @@ export const adapter: Adapter = {
     // @ts-expect-error: problem with type
     sessionsTable: session,
     verificationTokensTable: verificationToken,
-  }),
+  }) as Adapter),
   createUser: async (data) => {
     const user = await createUser(data);
     return {
