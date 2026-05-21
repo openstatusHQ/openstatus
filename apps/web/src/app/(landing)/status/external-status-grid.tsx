@@ -24,7 +24,9 @@ export function ExternalStatusGrid() {
         Showing {filtered.length} of {services.length} services
       </p>
       {filtered.length === 0 && hasQuery && (
-        <p className="text-muted-foreground text-sm">No services match &ldquo;{q}&rdquo;.</p>
+        <p className="text-muted-foreground text-sm">
+          No services match &ldquo;{q}&rdquo;.
+        </p>
       )}
       <Grid cols={2}>
         {filtered.map((service) => (
