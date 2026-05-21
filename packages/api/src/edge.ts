@@ -2,6 +2,7 @@ import { auditLogRouter } from "./router/auditLog";
 import { chatSessionRouter } from "./router/chatSession";
 import { checkerRouter } from "./router/checker";
 import { domainRouter } from "./router/domain";
+import { externalServiceRouter } from "./router/externalService";
 import { feedbackRouter } from "./router/feedback";
 import { importRouter } from "./router/import";
 import { incidentRouter } from "./router/incident";
@@ -30,6 +31,7 @@ export const edgeRouter = createTRPCRouter({
   pageComponent: pageComponentRouter,
   statusReport: statusReportRouter,
   domain: domainRouter,
+  externalService: externalServiceRouter,
   user: userRouter,
   notification: notificationRouter,
   invitation: invitationRouter,
