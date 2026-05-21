@@ -20,7 +20,7 @@ catalog:
   "@bufbuild/buf": 1.57.2
   "@bufbuild/protobuf": 2.10.2
   "@bufbuild/protoc-gen-es": 2.10.2
-  "@bufbuild/protovalidate": ^1.1.1
+  "@bufbuild/protovalidate": ^1.2.0
   "@chronark/zod-bird": 1.0.0
   "@connectrpc/connect": 2.1.1
   "@connectrpc/connect-node": 2.1.1
@@ -122,7 +122,7 @@ catalog:
   date-fns-tz: 2.0.0
   dotenv: 16.3.1
   drizzle-kit: 0.31.4
-  drizzle-orm: 0.44.4
+  drizzle-orm: 0.45.2
   drizzle-zod: 0.8.3
   effect: 3.19.12
   feed: 4.2.2
@@ -140,8 +140,8 @@ catalog:
   nanoid: 5.0.7
   nanoid-dictionary: 5.0.0-beta.1
   next: 16.2.6
-  next-auth: 5.0.0-beta.29
-  next-intl: ^4.8.3
+  next-auth: 5.0.0-beta.31
+  next-intl: ^4.12.0
   next-mdx-remote: 6.0.0
   next-plausible: 3.12.5
   next-themes: 0.4.6
