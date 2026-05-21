@@ -63,9 +63,7 @@ export async function setupAnalytics(props: IdentifyProps) {
  */
 async function noop() {
   return {
-    track: (
-      opts: EventProps & TrackProperties,
-    ): Promise<unknown> => {
+    track: (opts: EventProps & TrackProperties): Promise<unknown> => {
       return new Promise((resolve) => {
         console.log(`>>> Track Noop Event: ${opts.name}`);
         resolve(null);

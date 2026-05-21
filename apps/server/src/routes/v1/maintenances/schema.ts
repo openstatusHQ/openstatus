@@ -46,9 +46,8 @@ export const MaintenanceObjectSchema = z.object({
 
 // zod 4.4 forbids .omit() on schemas with refinements, so the date-range
 // invariant is applied as a reusable refinement on derived schemas.
-export const refineDateRange = <T extends { from?: Date; to?: Date }>(
-  v: T,
-) => !v.from || !v.to || v.from <= v.to;
+export const refineDateRange = <T extends { from?: Date; to?: Date }>(v: T) =>
+  !v.from || !v.to || v.from <= v.to;
 export const dateRangeError = {
   error: "'from' date must be before 'to' date",
 } as const;

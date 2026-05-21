@@ -24,7 +24,10 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@openstatus/ui/components/ui/radio-group";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/components/ui/radio-group";
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
@@ -34,7 +37,12 @@ import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const accessTypeSchema = z.enum(["public", "password", "email-domain", "ip-restriction"]);
+const accessTypeSchema = z.enum([
+  "public",
+  "password",
+  "email-domain",
+  "ip-restriction",
+]);
 
 const schema = z.object({
   accessType: accessTypeSchema,
@@ -59,7 +67,9 @@ const schema = z.object({
               .split(",")
               .map((range) => {
                 const trimmed = range.trim();
-                return trimmed && !trimmed.includes("/") ? `${trimmed}/32` : trimmed;
+                return trimmed && !trimmed.includes("/")
+                  ? `${trimmed}/32`
+                  : trimmed;
               })
               .filter((range) => range.length > 0)
           : [],
@@ -127,8 +137,9 @@ export function FormPageAccess({
           <FormCardHeader>
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
-              Enable protection for your status page. Choose between simple password, email domain
-              authentication via magic link, or IP restriction.
+              Enable protection for your status page. Choose between simple
+              password, email domain authentication via magic link, or IP
+              restriction.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>
@@ -166,7 +177,10 @@ export function FormPageAccess({
                             )}
                           >
                             <FormControl>
-                              <RadioGroupItem value={type.value} className="sr-only" />
+                              <RadioGroupItem
+                                value={type.value}
+                                className="sr-only"
+                              />
                             </FormControl>
                             <type.icon
                               className="shrink-0 text-muted-foreground"
@@ -186,7 +200,9 @@ export function FormPageAccess({
               )}
             />
           </FormCardContent>
-          {watchAccessType && watchAccessType !== "public" ? <FormCardSeparator /> : null}
+          {watchAccessType && watchAccessType !== "public" ? (
+            <FormCardSeparator />
+          ) : null}
           {watchAccessType === "password" ? (
             <FormCardContent className="grid gap-4">
               {locked ? <FormCardContentUpgrade /> : null}
@@ -202,7 +218,8 @@ export function FormPageAccess({
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Set a password to your status page to have a very basic protection.
+                      Set a password to your status page to have a very basic
+                      protection.
                     </FormDescription>
                   </FormItem>
                 )}
@@ -224,8 +241,9 @@ export function FormPageAccess({
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Comma-separated list of email domains. Only emails from these domains will be
-                      authenticated to access the status page.
+                      Comma-separated list of email domains. Only emails from
+                      these domains will be authenticated to access the status
+                      page.
                     </FormDescription>
                   </FormItem>
                 )}
@@ -243,12 +261,16 @@ export function FormPageAccess({
                   <FormItem>
                     <FormLabel>Allowed IP Ranges</FormLabel>
                     <FormControl>
-                      <Input placeholder="192.168.1.0/24, 10.0.0.1" {...field} />
+                      <Input
+                        placeholder="192.168.1.0/24, 10.0.0.1"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
-                      Comma-separated list of IPv4 CIDR ranges (we automatically append /32 to
-                      single IPs). Single IPs are also accepted (e.g. 203.0.113.5).
+                      Comma-separated list of IPv4 CIDR ranges (we automatically
+                      append /32 to single IPs). Single IPs are also accepted
+                      (e.g. 203.0.113.5).
                     </FormDescription>
                   </FormItem>
                 )}
