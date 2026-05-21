@@ -123,8 +123,8 @@ catalog:
   "@types/sanitize-html": 2.16.1
   "@types/validator": 13.15.10
   "@unkey/api": 2.3.4
-  "@upstash/qstash": 2.6.2
-  "@upstash/redis": 1.22.1
+  "@upstash/qstash": 2.11.0
+  "@upstash/redis": 1.38.0
   "@vercel/blob": 0.23.4
   ai: 6.0.185
   astro: 5.18.1
