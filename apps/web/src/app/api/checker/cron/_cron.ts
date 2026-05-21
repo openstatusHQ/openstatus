@@ -1,4 +1,4 @@
-import { CloudTasksClient, protos } from "@google-cloud/tasks";
+import { CloudTasksClient, type protos } from "@google-cloud/tasks";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
