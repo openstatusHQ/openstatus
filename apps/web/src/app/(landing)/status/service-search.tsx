@@ -58,7 +58,7 @@ export function ServiceSearch() {
           }}
         />
         <InputGroupAddon align="inline-end">
-          <kbd className="hidden rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">
+          <kbd className="hidden rounded-none! border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">
             /
           </kbd>
         </InputGroupAddon>

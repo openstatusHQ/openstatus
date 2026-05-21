@@ -18,28 +18,13 @@ export function ExternalStatusGrid() {
   const filtered = useMemo(() => filterServices(services, q), [services, q]);
   const hasQuery = q.trim() !== "";
 
-  if (filtered.length === 0 && hasQuery) {
-    return (
-      <div className="not-prose flex flex-col gap-2">
-        <p className="text-muted-foreground text-xs" role="status">
-          Showing 0 of {services.length} services
-        </p>
-        <p className="text-muted-foreground text-sm">
-          No services match &ldquo;{q}&rdquo;.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
-      {hasQuery && (
-        <p
-          className="not-prose mb-2 text-muted-foreground text-xs"
-          role="status"
-        >
-          Showing {filtered.length} of {services.length} services
-        </p>
+      <p className="not-prose mb-2 text-muted-foreground text-xs" role="status">
+        Showing {filtered.length} of {services.length} services
+      </p>
+      {filtered.length === 0 && hasQuery && (
+        <p className="text-muted-foreground text-sm">No services match &ldquo;{q}&rdquo;.</p>
       )}
       <Grid cols={2}>
         {filtered.map((service) => (
