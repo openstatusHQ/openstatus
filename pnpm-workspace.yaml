@@ -5,6 +5,21 @@ packages:
 
 trustPolicy: off
 
+allowBuilds:
+  '@biomejs/biome': true
+  '@bufbuild/buf': true
+  '@parcel/watcher': true
+  '@sentry/cli': true
+  '@swc/core': true
+  '@tailwindcss/oxide': true
+  core-js-pure: true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  sharp: true
+
+autoInstallPeers: true
+
 catalog:
   "@ai-sdk/anthropic": 1.2.0
   "@ai-sdk/react": 3.0.96
