@@ -55,7 +55,10 @@ beforeAll(async () => {
 
   await db
     .insert(statusReportsToPageComponents)
-    .values({ statusReportId: otherWorkspaceReportId, pageComponentId: 1 })
+    .values({
+      statusReportId: otherWorkspaceReportId,
+      pageComponentId: otherWorkspaceComponentId,
+    })
     .run();
 });
 
