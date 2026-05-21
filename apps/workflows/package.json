@@ -6,11 +6,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@google-cloud/tasks": "4.0.1",
-    "@libsql/client": "0.15.15",
-    "@logtape/logtape": "2.0.1",
-    "@logtape/otel": "2.0.1",
-    "@logtape/sentry": "2.0.1",
+    "@google-cloud/tasks": "catalog:",
+    "@libsql/client": "catalog:",
+    "@logtape/logtape": "catalog:",
+    "@logtape/otel": "catalog:",
+    "@logtape/sentry": "catalog:",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-base": "workspace:*",
@@ -33,19 +33,19 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@opentelemetry/resources": "2.2.0",
-    "@opentelemetry/semantic-conventions": "1.38.0",
-    "@sentry/bun": "10.31.0",
-    "@upstash/qstash": "2.6.2",
-    "drizzle-orm": "0.44.4",
-    "effect": "3.19.12",
-    "hono": "4.5.3",
-    "limiter": "^3.0.0",
-    "zod": "4.1.13"
+    "@opentelemetry/resources": "catalog:",
+    "@opentelemetry/semantic-conventions": "catalog:",
+    "@sentry/bun": "catalog:",
+    "@upstash/qstash": "catalog:",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
+    "hono": "catalog:",
+    "limiter": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/bun": "latest",
-    "typescript": "5.9.3"
+    "typescript": "catalog:"
   }
 }

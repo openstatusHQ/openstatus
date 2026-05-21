@@ -4,13 +4,13 @@
   "license": "MIT",
   "main": "./src/index.ts",
   "dependencies": {
-    "@upstash/qstash": "2.6.2",
-    "@upstash/redis": "1.22.1"
+    "@upstash/qstash": "catalog:",
+    "@upstash/redis": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/node": "22.10.2",
-    "tsup": "7.2.0",
-    "typescript": "5.9.3"
+    "@types/node": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }

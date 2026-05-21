@@ -4,79 +4,658 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@ai-sdk/anthropic':
+      specifier: 1.2.0
+      version: 1.2.0
+    '@ai-sdk/react':
+      specifier: 3.0.96
+      version: 3.0.96
+    '@astrojs/check':
+      specifier: 0.9.6
+      version: 0.9.6
+    '@astrojs/react':
+      specifier: 4.4.2
+      version: 4.4.2
+    '@astrojs/sitemap':
+      specifier: 3.6.0
+      version: 3.6.0
+    '@astrojs/starlight':
+      specifier: 0.37.1
+      version: 0.37.1
+    '@astrojs/starlight-tailwind':
+      specifier: 4.0.2
+      version: 4.0.2
+    '@auth/core':
+      specifier: 0.40.0
+      version: 0.40.0
+    '@auth/drizzle-adapter':
+      specifier: 1.10.0
+      version: 1.10.0
+    '@aws-sdk/client-s3':
+      specifier: 3.550.0
+      version: 3.550.0
+    '@biomejs/biome':
+      specifier: 1.8.3
+      version: 1.8.3
+    '@bufbuild/buf':
+      specifier: 1.57.2
+      version: 1.57.2
+    '@bufbuild/protobuf':
+      specifier: 2.10.2
+      version: 2.10.2
+    '@bufbuild/protoc-gen-es':
+      specifier: 2.10.2
+      version: 2.10.2
+    '@bufbuild/protovalidate':
+      specifier: ^1.1.1
+      version: 1.1.1
+    '@chronark/zod-bird':
+      specifier: 1.0.0
+      version: 1.0.0
+    '@connectrpc/connect':
+      specifier: 2.1.1
+      version: 2.1.1
+    '@connectrpc/connect-node':
+      specifier: 2.1.1
+      version: 2.1.1
+    '@connectrpc/validate':
+      specifier: ^0.2.0
+      version: 0.2.0
+    '@date-fns/tz':
+      specifier: 1.2.0
+      version: 1.2.0
+    '@date-fns/utc':
+      specifier: 2.1.0
+      version: 2.1.0
+    '@dnd-kit/core':
+      specifier: 6.3.1
+      version: 6.3.1
+    '@dnd-kit/modifiers':
+      specifier: 9.0.0
+      version: 9.0.0
+    '@dnd-kit/sortable':
+      specifier: 10.0.0
+      version: 10.0.0
+    '@dnd-kit/utilities':
+      specifier: 3.2.2
+      version: 3.2.2
+    '@fontsource-variable/inter':
+      specifier: 5.2.8
+      version: 5.2.8
+    '@google-cloud/tasks':
+      specifier: 4.0.1
+      version: 4.0.1
+    '@hono/mcp':
+      specifier: 0.2.5
+      version: 0.2.5
+    '@hono/sentry':
+      specifier: 1.2.2
+      version: 1.2.2
+    '@hono/zod-openapi':
+      specifier: 1.1.5
+      version: 1.1.5
+    '@hono/zod-validator':
+      specifier: 0.2.2
+      version: 0.2.2
+    '@hookform/devtools':
+      specifier: 4.4.0
+      version: 4.4.0
+    '@hookform/resolvers':
+      specifier: 5.1.0
+      version: 5.1.0
+    '@iconify-json/lucide':
+      specifier: 1.2.26
+      version: 1.2.26
+    '@libsql/client':
+      specifier: 0.15.15
+      version: 0.15.15
+    '@logtape/logtape':
+      specifier: 2.0.1
+      version: 2.0.1
+    '@logtape/otel':
+      specifier: 2.0.1
+      version: 2.0.1
+    '@logtape/sentry':
+      specifier: 2.0.1
+      version: 2.0.1
+    '@modelcontextprotocol/sdk':
+      specifier: 1.29.0
+      version: 1.29.0
+    '@openpanel/astro':
+      specifier: 1.0.1
+      version: 1.0.1
+    '@openpanel/nextjs':
+      specifier: 1.2.0
+      version: 1.2.0
+    '@openpanel/sdk':
+      specifier: 1.0.3
+      version: 1.0.3
+    '@opentelemetry/resources':
+      specifier: 2.2.0
+      version: 2.2.0
+    '@opentelemetry/semantic-conventions':
+      specifier: 1.38.0
+      version: 1.38.0
+    '@radix-ui/react-accordion':
+      specifier: 1.2.2
+      version: 1.2.2
+    '@radix-ui/react-alert-dialog':
+      specifier: 1.1.4
+      version: 1.1.4
+    '@radix-ui/react-avatar':
+      specifier: 1.1.10
+      version: 1.1.10
+    '@radix-ui/react-checkbox':
+      specifier: 1.3.2
+      version: 1.3.2
+    '@radix-ui/react-collapsible':
+      specifier: 1.1.11
+      version: 1.1.11
+    '@radix-ui/react-context-menu':
+      specifier: 2.2.4
+      version: 2.2.4
+    '@radix-ui/react-dialog':
+      specifier: 1.1.14
+      version: 1.1.14
+    '@radix-ui/react-dropdown-menu':
+      specifier: 2.1.15
+      version: 2.1.15
+    '@radix-ui/react-hover-card':
+      specifier: 1.1.14
+      version: 1.1.14
+    '@radix-ui/react-label':
+      specifier: 2.1.7
+      version: 2.1.7
+    '@radix-ui/react-navigation-menu':
+      specifier: 1.2.3
+      version: 1.2.3
+    '@radix-ui/react-popover':
+      specifier: 1.1.14
+      version: 1.1.14
+    '@radix-ui/react-portal':
+      specifier: 1.1.9
+      version: 1.1.9
+    '@radix-ui/react-progress':
+      specifier: 1.1.7
+      version: 1.1.7
+    '@radix-ui/react-radio-group':
+      specifier: 1.3.7
+      version: 1.3.7
+    '@radix-ui/react-scroll-area':
+      specifier: 1.2.10
+      version: 1.2.10
+    '@radix-ui/react-select':
+      specifier: 2.2.5
+      version: 2.2.5
+    '@radix-ui/react-separator':
+      specifier: 1.1.7
+      version: 1.1.7
+    '@radix-ui/react-slider':
+      specifier: 1.3.5
+      version: 1.3.5
+    '@radix-ui/react-slot':
+      specifier: 1.2.3
+      version: 1.2.3
+    '@radix-ui/react-switch':
+      specifier: 1.2.5
+      version: 1.2.5
+    '@radix-ui/react-tabs':
+      specifier: 1.1.12
+      version: 1.1.12
+    '@radix-ui/react-toggle':
+      specifier: 1.1.10
+      version: 1.1.10
+    '@radix-ui/react-tooltip':
+      specifier: 1.2.7
+      version: 1.2.7
+    '@react-email/components':
+      specifier: 1.0.3
+      version: 1.0.3
+    '@react-email/preview-server':
+      specifier: 5.1.1
+      version: 5.1.1
+    '@react-email/render':
+      specifier: 2.0.1
+      version: 2.0.1
+    '@scalar/hono-api-reference':
+      specifier: 0.8.5
+      version: 0.8.5
+    '@sentry/bun':
+      specifier: 10.31.0
+      version: 10.31.0
+    '@sentry/nextjs':
+      specifier: 10.31.0
+      version: 10.31.0
+    '@slack/web-api':
+      specifier: 7.15.0
+      version: 7.15.0
+    '@stripe/stripe-js':
+      specifier: 2.1.6
+      version: 2.1.6
+    '@t3-oss/env-core':
+      specifier: 0.13.10
+      version: 0.13.10
+    '@t3-oss/env-nextjs':
+      specifier: 0.7.0
+      version: 0.7.0
+    '@tailwindcss/cli':
+      specifier: 4.1.8
+      version: 4.1.8
+    '@tailwindcss/container-queries':
+      specifier: 0.1.1
+      version: 0.1.1
+    '@tailwindcss/postcss':
+      specifier: 4.1.11
+      version: 4.1.11
+    '@tailwindcss/typography':
+      specifier: 0.5.10
+      version: 0.5.10
+    '@tailwindcss/vite':
+      specifier: 4.1.8
+      version: 4.1.8
+    '@tanstack/react-query':
+      specifier: 5.81.5
+      version: 5.81.5
+    '@tanstack/react-query-devtools':
+      specifier: 5.80.7
+      version: 5.80.7
+    '@tanstack/react-table':
+      specifier: 8.21.3
+      version: 8.21.3
+    '@trpc/client':
+      specifier: 11.4.4
+      version: 11.4.4
+    '@trpc/next':
+      specifier: 11.4.4
+      version: 11.4.4
+    '@trpc/react-query':
+      specifier: 11.4.4
+      version: 11.4.4
+    '@trpc/server':
+      specifier: 11.4.4
+      version: 11.4.4
+    '@trpc/tanstack-react-query':
+      specifier: 11.4.4
+      version: 11.4.4
+    '@turbo/gen':
+      specifier: 1.13.3
+      version: 1.13.3
+    '@types/bcryptjs':
+      specifier: 3.0.0
+      version: 3.0.0
+    '@types/dom-speech-recognition':
+      specifier: 0.0.6
+      version: 0.0.6
+    '@types/luxon':
+      specifier: 3.4.2
+      version: 3.4.2
+    '@types/node':
+      specifier: 24.0.8
+      version: 24.0.8
+    '@types/react':
+      specifier: 19.2.2
+      version: 19.2.2
+    '@types/react-dom':
+      specifier: 19.2.2
+      version: 19.2.2
+    '@types/sanitize-html':
+      specifier: 2.16.0
+      version: 2.16.0
+    '@types/validator':
+      specifier: 13.12.0
+      version: 13.12.0
+    '@unkey/api':
+      specifier: 2.2.0
+      version: 2.2.0
+    '@upstash/qstash':
+      specifier: 2.6.2
+      version: 2.6.2
+    '@upstash/redis':
+      specifier: 1.22.1
+      version: 1.22.1
+    '@vercel/blob':
+      specifier: 0.23.3
+      version: 0.23.3
+    ai:
+      specifier: 6.0.94
+      version: 6.0.94
+    astro:
+      specifier: 5.16.6
+      version: 5.16.6
+    bcryptjs:
+      specifier: 3.0.3
+      version: 3.0.3
+    bun-types:
+      specifier: 1.3.1
+      version: 1.3.1
+    class-variance-authority:
+      specifier: 0.7.1
+      version: 0.7.1
+    clsx:
+      specifier: 2.1.1
+      version: 2.1.1
+    cmdk:
+      specifier: 1.1.1
+      version: 1.1.1
+    cobe:
+      specifier: 0.6.3
+      version: 0.6.3
+    date-fns:
+      specifier: 3.6.0
+      version: 3.6.0
+    date-fns-tz:
+      specifier: 2.0.0
+      version: 2.0.0
+    dotenv:
+      specifier: 16.3.1
+      version: 16.3.1
+    drizzle-kit:
+      specifier: 0.31.4
+      version: 0.31.4
+    drizzle-orm:
+      specifier: 0.44.4
+      version: 0.44.4
+    drizzle-zod:
+      specifier: 0.8.3
+      version: 0.8.3
+    effect:
+      specifier: 3.19.12
+      version: 3.19.12
+    feed:
+      specifier: 4.2.2
+      version: 4.2.2
+    glob:
+      specifier: 11.0.0
+      version: 11.0.0
+    gray-matter:
+      specifier: 4.0.3
+      version: 4.0.3
+    hono:
+      specifier: 4.5.3
+      version: 4.5.3
+    hono-rate-limiter:
+      specifier: 0.4.2
+      version: 0.4.2
+    ip-cidr:
+      specifier: 4.0.2
+      version: 4.0.2
+    isomorphic-dompurify:
+      specifier: 3.7.1
+      version: 3.7.1
+    jsonpath-plus:
+      specifier: 7.2.0
+      version: 7.2.0
+    knip:
+      specifier: 5.75.1
+      version: 5.75.1
+    limiter:
+      specifier: ^3.0.0
+      version: 3.0.0
+    lucide-react:
+      specifier: 0.525.0
+      version: 0.525.0
+    luxon:
+      specifier: 3.5.0
+      version: 3.5.0
+    nanoid:
+      specifier: 5.0.7
+      version: 5.0.7
+    nanoid-dictionary:
+      specifier: 5.0.0-beta.1
+      version: 5.0.0-beta.1
+    next:
+      specifier: 16.2.6
+      version: 16.2.6
+    next-auth:
+      specifier: 5.0.0-beta.29
+      version: 5.0.0-beta.29
+    next-intl:
+      specifier: ^4.8.3
+      version: 4.8.3
+    next-mdx-remote:
+      specifier: 6.0.0
+      version: 6.0.0
+    next-plausible:
+      specifier: 3.12.5
+      version: 3.12.5
+    next-themes:
+      specifier: 0.4.6
+      version: 0.4.6
+    node-html-parser:
+      specifier: 6.1.12
+      version: 6.1.12
+    nuqs:
+      specifier: 2.8.5
+      version: 2.8.5
+    oxfmt:
+      specifier: 0.20.0
+      version: 0.20.0
+    oxlint:
+      specifier: 1.36.0
+      version: 1.36.0
+    oxlint-tsgolint:
+      specifier: 0.10.1
+      version: 0.10.1
+    percentile:
+      specifier: 1.6.0
+      version: 1.6.0
+    playwright:
+      specifier: 1.46.0
+      version: 1.46.0
+    postcss:
+      specifier: 8.4.38
+      version: 8.4.38
+    qr-code-styling:
+      specifier: 1.9.2
+      version: 1.9.2
+    radix-ui:
+      specifier: 1.4.3
+      version: 1.4.3
+    random-word-slugs:
+      specifier: 0.1.7
+      version: 0.1.7
+    react:
+      specifier: 19.2.3
+      version: 19.2.3
+    react-day-picker:
+      specifier: 8.10.1
+      version: 8.10.1
+    react-dom:
+      specifier: 19.2.3
+      version: 19.2.3
+    react-email:
+      specifier: 5.1.1
+      version: 5.1.1
+    react-hook-form:
+      specifier: 7.68.0
+      version: 7.68.0
+    react-medium-image-zoom:
+      specifier: 5.4.0
+      version: 5.4.0
+    react-tweet:
+      specifier: 3.2.1
+      version: 3.2.1
+    reading-time:
+      specifier: 1.5.0
+      version: 1.5.0
+    recharts:
+      specifier: 2.15.0
+      version: 2.15.0
+    rehype-autolink-headings:
+      specifier: 7.1.0
+      version: 7.1.0
+    rehype-react:
+      specifier: 8.0.0
+      version: 8.0.0
+    rehype-slug:
+      specifier: 5.1.0
+      version: 5.1.0
+    remark-gfm:
+      specifier: 4.0.1
+      version: 4.0.1
+    remark-parse:
+      specifier: 11.0.0
+      version: 11.0.0
+    remark-rehype:
+      specifier: 11.1.2
+      version: 11.1.2
+    resend:
+      specifier: 6.6.0
+      version: 6.6.0
+    sanitize-html:
+      specifier: 2.17.0
+      version: 2.17.0
+    schema-dts:
+      specifier: 1.1.5
+      version: 1.1.5
+    shadcn:
+      specifier: 3.8.4
+      version: 3.8.4
+    sharp:
+      specifier: 0.33.5
+      version: 0.33.5
+    shiki:
+      specifier: 3.23.0
+      version: 3.23.0
+    slugify:
+      specifier: 1.6.6
+      version: 1.6.6
+    sonner:
+      specifier: 2.0.5
+      version: 2.0.5
+    starlight-image-zoom:
+      specifier: 0.13.2
+      version: 0.13.2
+    starlight-links-validator:
+      specifier: 0.19.2
+      version: 0.19.2
+    starlight-llms-txt:
+      specifier: 0.7.0
+      version: 0.7.0
+    starlight-showcases:
+      specifier: 0.3.1
+      version: 0.3.1
+    starlight-sidebar-topics:
+      specifier: 0.6.2
+      version: 0.6.2
+    stripe:
+      specifier: 13.8.0
+      version: 13.8.0
+    sugar-high:
+      specifier: 0.9.5
+      version: 0.9.5
+    superjson:
+      specifier: 2.2.2
+      version: 2.2.2
+    tailwind-merge:
+      specifier: 3.3.1
+      version: 3.3.1
+    tailwindcss:
+      specifier: 4.1.11
+      version: 4.1.11
+    tailwindcss-animate:
+      specifier: 1.0.7
+      version: 1.0.7
+    tsup:
+      specifier: 7.2.0
+      version: 7.2.0
+    turbo:
+      specifier: 2.6.3
+      version: 2.6.3
+    tw-animate-css:
+      specifier: 1.3.4
+      version: 1.3.4
+    typescript:
+      specifier: 5.9.3
+      version: 5.9.3
+    unified:
+      specifier: 11.0.5
+      version: 11.0.5
+    unplugin-icons:
+      specifier: 22.1.0
+      version: 22.1.0
+    validator:
+      specifier: 13.12.0
+      version: 13.12.0
+    zod:
+      specifier: 4.1.13
+      version: 4.1.13
+
 importers:
 
   .:
     devDependencies:
       '@biomejs/biome':
-        specifier: 1.8.3
+        specifier: 'catalog:'
         version: 1.8.3
       '@turbo/gen':
-        specifier: 1.13.3
+        specifier: 'catalog:'
         version: 1.13.3(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3)
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       knip:
-        specifier: 5.75.1
+        specifier: 'catalog:'
         version: 5.75.1(@types/node@24.0.8)(typescript@5.9.3)
       oxfmt:
-        specifier: 0.20.0
+        specifier: 'catalog:'
         version: 0.20.0
       oxlint:
-        specifier: 1.36.0
+        specifier: 'catalog:'
         version: 1.36.0(oxlint-tsgolint@0.10.1)
       oxlint-tsgolint:
-        specifier: 0.10.1
+        specifier: 'catalog:'
         version: 0.10.1
       turbo:
-        specifier: 2.6.3
+        specifier: 'catalog:'
         version: 2.6.3
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   apps/dashboard:
     dependencies:
       '@ai-sdk/react':
-        specifier: 3.0.96
+        specifier: 'catalog:'
         version: 3.0.96(react@19.2.3)(zod@4.1.13)
       '@auth/core':
-        specifier: 0.40.0
+        specifier: 'catalog:'
         version: 0.40.0
       '@auth/drizzle-adapter':
-        specifier: 1.10.0
+        specifier: 'catalog:'
         version: 1.10.0
       '@date-fns/tz':
-        specifier: 1.2.0
+        specifier: 'catalog:'
         version: 1.2.0
       '@date-fns/utc':
-        specifier: 2.1.0
+        specifier: 'catalog:'
         version: 2.1.0
       '@dnd-kit/core':
-        specifier: 6.3.1
+        specifier: 'catalog:'
         version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@dnd-kit/modifiers':
-        specifier: 9.0.0
+        specifier: 'catalog:'
         version: 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/sortable':
-        specifier: 10.0.0
+        specifier: 'catalog:'
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/utilities':
-        specifier: 3.2.2
+        specifier: 'catalog:'
         version: 3.2.2(react@19.2.3)
       '@hookform/devtools':
-        specifier: 4.4.0
+        specifier: 'catalog:'
         version: 4.4.0(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@hookform/resolvers':
-        specifier: 5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(react-hook-form@7.68.0(react@19.2.3))
       '@libsql/client':
-        specifier: 0.15.15
+        specifier: 'catalog:'
         version: 0.15.15
       '@openpanel/nextjs':
-        specifier: 1.2.0
-        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -171,237 +750,237 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       '@radix-ui/react-checkbox':
-        specifier: 1.3.2
+        specifier: 'catalog:'
         version: 1.3.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-dialog':
-        specifier: 1.1.14
+        specifier: 'catalog:'
         version: 1.1.14(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-dropdown-menu':
-        specifier: 2.1.15
+        specifier: 'catalog:'
         version: 2.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-portal':
-        specifier: 1.1.9
+        specifier: 'catalog:'
         version: 1.1.9(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-select':
-        specifier: 2.2.5
+        specifier: 'catalog:'
         version: 2.2.5(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-slot':
-        specifier: 1.2.3
+        specifier: 'catalog:'
         version: 1.2.3(@types/react@19.2.2)(react@19.2.3)
       '@radix-ui/react-tooltip':
-        specifier: 1.2.7
+        specifier: 'catalog:'
         version: 1.2.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@sentry/nextjs':
-        specifier: 10.31.0
-        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))
+        specifier: 'catalog:'
+        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))
       '@stripe/stripe-js':
-        specifier: 2.1.6
+        specifier: 'catalog:'
         version: 2.1.6
       '@tanstack/react-query':
-        specifier: 5.81.5
+        specifier: 'catalog:'
         version: 5.81.5(react@19.2.3)
       '@tanstack/react-table':
-        specifier: 8.21.3
+        specifier: 'catalog:'
         version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@trpc/client':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
-        specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        specifier: 'catalog:'
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/react-query':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/server':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(typescript@5.9.3)
       '@trpc/tanstack-react-query':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@unkey/api':
-        specifier: 2.2.0
+        specifier: 'catalog:'
         version: 2.2.0
       ai:
-        specifier: 6.0.94
+        specifier: 'catalog:'
         version: 6.0.94(zod@4.1.13)
       class-variance-authority:
-        specifier: 0.7.1
+        specifier: 'catalog:'
         version: 0.7.1
       clsx:
-        specifier: 2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       cmdk:
-        specifier: 1.1.1
+        specifier: 'catalog:'
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       date-fns:
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       lucide-react:
-        specifier: 0.525.0
+        specifier: 'catalog:'
         version: 0.525.0(react@19.2.3)
       next:
-        specifier: 16.2.6
+        specifier: 'catalog:'
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
-        specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-themes:
-        specifier: 0.4.6
+        specifier: 'catalog:'
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
-        specifier: 2.8.5
-        version: 2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       random-word-slugs:
-        specifier: 0.1.7
+        specifier: 'catalog:'
         version: 0.1.7
       react:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3
       react-day-picker:
-        specifier: 8.10.1
+        specifier: 'catalog:'
         version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-dom:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
       react-hook-form:
-        specifier: 7.68.0
+        specifier: 'catalog:'
         version: 7.68.0(react@19.2.3)
       recharts:
-        specifier: 2.15.0
+        specifier: 'catalog:'
         version: 2.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       rehype-react:
-        specifier: 8.0.0
+        specifier: 'catalog:'
         version: 8.0.0
       remark-gfm:
-        specifier: 4.0.1
+        specifier: 'catalog:'
         version: 4.0.1
       remark-parse:
-        specifier: 11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       remark-rehype:
-        specifier: 11.1.2
+        specifier: 'catalog:'
         version: 11.1.2
       sonner:
-        specifier: 2.0.5
+        specifier: 'catalog:'
         version: 2.0.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       stripe:
-        specifier: 13.8.0
+        specifier: 'catalog:'
         version: 13.8.0
       superjson:
-        specifier: 2.2.2
+        specifier: 'catalog:'
         version: 2.2.2
       tailwind-merge:
-        specifier: 3.3.1
+        specifier: 'catalog:'
         version: 3.3.1
       unified:
-        specifier: 11.0.5
+        specifier: 'catalog:'
         version: 11.0.5
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@tailwindcss/postcss':
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       '@tailwindcss/typography':
-        specifier: 0.5.10
+        specifier: 'catalog:'
         version: 0.5.10(tailwindcss@4.1.11)
       '@types/dom-speech-recognition':
-        specifier: 0.0.6
+        specifier: 'catalog:'
         version: 0.0.6
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       shadcn:
-        specifier: 3.8.4
+        specifier: 'catalog:'
         version: 3.8.4(@types/node@24.0.8)(babel-plugin-macros@3.1.0)(typescript@5.9.3)
       tailwindcss:
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       tw-animate-css:
-        specifier: 1.3.4
+        specifier: 'catalog:'
         version: 1.3.4
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   apps/docs:
     dependencies:
       '@astrojs/check':
-        specifier: 0.9.6
+        specifier: 'catalog:'
         version: 0.9.6(prettier@3.6.2)(typescript@5.9.3)
       '@astrojs/react':
-        specifier: 4.4.2
+        specifier: 'catalog:'
         version: 4.4.2(@types/node@24.10.1)(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(jiti@2.6.1)(lightningcss@1.30.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(terser@5.44.1)(yaml@2.8.1)
       '@astrojs/sitemap':
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       '@astrojs/starlight':
-        specifier: 0.37.1
+        specifier: 'catalog:'
         version: 0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1))
       '@astrojs/starlight-tailwind':
-        specifier: 4.0.2
+        specifier: 'catalog:'
         version: 4.0.2(@astrojs/starlight@0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)))(tailwindcss@4.1.11)
       '@fontsource-variable/inter':
-        specifier: 5.2.8
+        specifier: 'catalog:'
         version: 5.2.8
       '@openpanel/astro':
-        specifier: 1.0.1
+        specifier: 'catalog:'
         version: 1.0.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1))
       '@tailwindcss/vite':
-        specifier: 4.1.8
+        specifier: 'catalog:'
         version: 4.1.8(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.1)(yaml@2.8.1))
       astro:
-        specifier: 5.16.6
+        specifier: 'catalog:'
         version: 5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)
       sharp:
-        specifier: 0.33.5
+        specifier: 'catalog:'
         version: 0.33.5
       shiki:
-        specifier: 3.23.0
+        specifier: 'catalog:'
         version: 3.23.0
       starlight-image-zoom:
-        specifier: 0.13.2
+        specifier: 'catalog:'
         version: 0.13.2(@astrojs/starlight@0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)))
       starlight-links-validator:
-        specifier: 0.19.2
+        specifier: 'catalog:'
         version: 0.19.2(@astrojs/starlight@0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)))(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1))
       starlight-llms-txt:
-        specifier: 0.7.0
+        specifier: 'catalog:'
         version: 0.7.0(@astrojs/starlight@0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)))(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1))
       starlight-showcases:
-        specifier: 0.3.1
+        specifier: 'catalog:'
         version: 0.3.1(@astrojs/starlight@0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)))(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1))
       starlight-sidebar-topics:
-        specifier: 0.6.2
+        specifier: 'catalog:'
         version: 0.6.2(@astrojs/starlight@0.37.1(astro@5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)))
       tailwindcss:
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       unplugin-icons:
-        specifier: 22.1.0
+        specifier: 'catalog:'
         version: 22.1.0
     devDependencies:
       '@iconify-json/lucide':
-        specifier: 1.2.26
+        specifier: 'catalog:'
         version: 1.2.26
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   apps/screenshot-service:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: 3.550.0
+        specifier: 'catalog:'
         version: 3.550.0
       '@hono/zod-validator':
-        specifier: 0.2.2
+        specifier: 'catalog:'
         version: 0.2.2(hono@4.5.3)(zod@4.1.13)
       '@openstatus/db':
         specifier: workspace:*
@@ -410,71 +989,71 @@ importers:
         specifier: workspace:^
         version: link:../../packages/utils
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       '@upstash/qstash':
-        specifier: 2.6.2
+        specifier: 'catalog:'
         version: 2.6.2
       hono:
-        specifier: 4.5.3
+        specifier: 'catalog:'
         version: 4.5.3
       playwright:
-        specifier: 1.46.0
+        specifier: 'catalog:'
         version: 1.46.0
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   apps/server:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: 1.2.0
+        specifier: 'catalog:'
         version: 1.2.0(zod@4.1.13)
       '@bufbuild/protobuf':
-        specifier: 2.10.2
+        specifier: 'catalog:'
         version: 2.10.2
       '@bufbuild/protovalidate':
-        specifier: ^1.1.1
+        specifier: 'catalog:'
         version: 1.1.1(@bufbuild/protobuf@2.10.2)
       '@connectrpc/connect':
-        specifier: 2.1.1
+        specifier: 'catalog:'
         version: 2.1.1(@bufbuild/protobuf@2.10.2)
       '@connectrpc/connect-node':
-        specifier: 2.1.1
+        specifier: 'catalog:'
         version: 2.1.1(@bufbuild/protobuf@2.10.2)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
       '@connectrpc/validate':
-        specifier: ^0.2.0
+        specifier: 'catalog:'
         version: 0.2.0(@bufbuild/protobuf@2.10.2)(@bufbuild/protovalidate@1.1.1(@bufbuild/protobuf@2.10.2))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.10.2))
       '@hono/mcp':
-        specifier: 0.2.5
-        version: 0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.11.3))(hono@4.11.3)(zod@4.1.13)
+        specifier: 'catalog:'
+        version: 0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.5.3))(hono@4.5.3)(zod@4.1.13)
       '@hono/sentry':
-        specifier: 1.2.2
-        version: 1.2.2(hono@4.11.3)
+        specifier: 'catalog:'
+        version: 1.2.2(hono@4.5.3)
       '@hono/zod-openapi':
-        specifier: 1.1.5
-        version: 1.1.5(hono@4.11.3)(zod@4.1.13)
+        specifier: 'catalog:'
+        version: 1.1.5(hono@4.5.3)(zod@4.1.13)
       '@hono/zod-validator':
-        specifier: 0.7.6
-        version: 0.7.6(hono@4.11.3)(zod@4.1.13)
+        specifier: 'catalog:'
+        version: 0.2.2(hono@4.5.3)(zod@4.1.13)
       '@logtape/logtape':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1
       '@logtape/otel':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(@logtape/logtape@2.0.1)
       '@logtape/sentry':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(@logtape/logtape@2.0.1)(@sentry/core@10.53.1)
       '@modelcontextprotocol/sdk':
-        specifier: 1.29.0
+        specifier: 'catalog:'
         version: 1.29.0(zod@4.1.13)
       '@openstatus/analytics':
         specifier: workspace:*
@@ -552,46 +1131,46 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       '@opentelemetry/resources':
-        specifier: 2.2.0
+        specifier: 'catalog:'
         version: 2.2.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions':
-        specifier: 1.38.0
+        specifier: 'catalog:'
         version: 1.38.0
       '@scalar/hono-api-reference':
-        specifier: 0.8.5
-        version: 0.8.5(hono@4.11.3)
+        specifier: 'catalog:'
+        version: 0.8.5(hono@4.5.3)
       '@slack/web-api':
-        specifier: 7.15.0
+        specifier: 'catalog:'
         version: 7.15.0
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       '@unkey/api':
-        specifier: 2.2.0
+        specifier: 'catalog:'
         version: 2.2.0
       '@upstash/qstash':
-        specifier: 2.6.2
+        specifier: 'catalog:'
         version: 2.6.2
       ai:
-        specifier: 6.0.94
+        specifier: 'catalog:'
         version: 6.0.94(zod@4.1.13)
       hono:
-        specifier: 4.11.3
-        version: 4.11.3
+        specifier: 'catalog:'
+        version: 4.5.3
       hono-rate-limiter:
-        specifier: 0.4.2
-        version: 0.4.2(hono@4.11.3)
+        specifier: 'catalog:'
+        version: 0.4.2(hono@4.5.3)
       nanoid:
-        specifier: 5.0.7
+        specifier: 'catalog:'
         version: 5.0.7
       percentile:
-        specifier: 1.6.0
+        specifier: 'catalog:'
         version: 1.6.0
       validator:
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/locales':
@@ -601,53 +1180,53 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@types/validator':
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       dotenv:
-        specifier: 16.3.1
+        specifier: 'catalog:'
         version: 16.3.1
 
   apps/status-page:
     dependencies:
       '@auth/core':
-        specifier: 0.40.0
+        specifier: 'catalog:'
         version: 0.40.0
       '@auth/drizzle-adapter':
-        specifier: 1.10.0
+        specifier: 'catalog:'
         version: 1.10.0
       '@date-fns/tz':
-        specifier: 1.2.0
+        specifier: 'catalog:'
         version: 1.2.0
       '@date-fns/utc':
-        specifier: 2.1.0
+        specifier: 'catalog:'
         version: 2.1.0
       '@dnd-kit/core':
-        specifier: 6.3.1
+        specifier: 'catalog:'
         version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@dnd-kit/modifiers':
-        specifier: 9.0.0
+        specifier: 'catalog:'
         version: 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/sortable':
-        specifier: 10.0.0
+        specifier: 'catalog:'
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/utilities':
-        specifier: 3.2.2
+        specifier: 'catalog:'
         version: 3.2.2(react@19.2.3)
       '@hookform/devtools':
-        specifier: 4.4.0
+        specifier: 'catalog:'
         version: 4.4.0(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@hookform/resolvers':
-        specifier: 5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(react-hook-form@7.68.0(react@19.2.3))
       '@libsql/client':
-        specifier: 0.15.15
+        specifier: 'catalog:'
         version: 0.15.15
       '@openpanel/nextjs':
-        specifier: 1.2.0
-        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -685,174 +1264,174 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       '@radix-ui/react-dropdown-menu':
-        specifier: 2.1.15
+        specifier: 'catalog:'
         version: 2.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-hover-card':
-        specifier: 1.1.14
+        specifier: 'catalog:'
         version: 1.1.14(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@sentry/nextjs':
-        specifier: 10.31.0
-        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))
+        specifier: 'catalog:'
+        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))
       '@stripe/stripe-js':
-        specifier: 2.1.6
+        specifier: 'catalog:'
         version: 2.1.6
       '@tanstack/react-query':
-        specifier: 5.81.5
+        specifier: 'catalog:'
         version: 5.81.5(react@19.2.3)
       '@tanstack/react-table':
-        specifier: 8.21.3
+        specifier: 'catalog:'
         version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@trpc/client':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
-        specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        specifier: 'catalog:'
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/react-query':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/server':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(typescript@5.9.3)
       '@trpc/tanstack-react-query':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       class-variance-authority:
-        specifier: 0.7.1
+        specifier: 'catalog:'
         version: 0.7.1
       clsx:
-        specifier: 2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       cmdk:
-        specifier: 1.1.1
+        specifier: 'catalog:'
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       date-fns:
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       feed:
-        specifier: 4.2.2
+        specifier: 'catalog:'
         version: 4.2.2
       ip-cidr:
-        specifier: 4.0.2
+        specifier: 'catalog:'
         version: 4.0.2
       lucide-react:
-        specifier: 0.525.0
+        specifier: 'catalog:'
         version: 0.525.0(react@19.2.3)
       next:
-        specifier: 16.2.6
+        specifier: 'catalog:'
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
-        specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-intl:
-        specifier: ^4.8.3
+        specifier: 'catalog:'
         version: 4.8.3(@swc/helpers@0.5.17)(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       next-plausible:
-        specifier: 3.12.5
-        version: 3.12.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 3.12.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-themes:
-        specifier: 0.4.6
+        specifier: 'catalog:'
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
-        specifier: 2.8.5
-        version: 2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       react:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3
       react-day-picker:
-        specifier: 8.10.1
+        specifier: 'catalog:'
         version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-dom:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
       react-hook-form:
-        specifier: 7.68.0
+        specifier: 'catalog:'
         version: 7.68.0(react@19.2.3)
       recharts:
-        specifier: 2.15.0
+        specifier: 'catalog:'
         version: 2.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       rehype-react:
-        specifier: 8.0.0
+        specifier: 'catalog:'
         version: 8.0.0
       remark-gfm:
-        specifier: 4.0.1
+        specifier: 'catalog:'
         version: 4.0.1
       remark-parse:
-        specifier: 11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       remark-rehype:
-        specifier: 11.1.2
+        specifier: 'catalog:'
         version: 11.1.2
       sonner:
-        specifier: 2.0.5
+        specifier: 'catalog:'
         version: 2.0.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       superjson:
-        specifier: 2.2.2
+        specifier: 'catalog:'
         version: 2.2.2
       tailwind-merge:
-        specifier: 3.3.1
+        specifier: 'catalog:'
         version: 3.3.1
       unified:
-        specifier: 11.0.5
+        specifier: 'catalog:'
         version: 11.0.5
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@tailwindcss/postcss':
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       '@tailwindcss/typography':
-        specifier: 0.5.10
+        specifier: 'catalog:'
         version: 0.5.10(tailwindcss@4.1.11)
       '@types/dom-speech-recognition':
-        specifier: 0.0.6
+        specifier: 'catalog:'
         version: 0.0.6
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       shadcn:
-        specifier: 3.8.4
+        specifier: 'catalog:'
         version: 3.8.4(@types/node@24.0.8)(babel-plugin-macros@3.1.0)(typescript@5.9.3)
       tailwindcss:
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       tw-animate-css:
-        specifier: 1.3.4
+        specifier: 'catalog:'
         version: 1.3.4
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   apps/web:
     dependencies:
       '@auth/core':
-        specifier: 0.40.0
+        specifier: 'catalog:'
         version: 0.40.0
       '@auth/drizzle-adapter':
-        specifier: 1.10.0
+        specifier: 'catalog:'
         version: 1.10.0
       '@google-cloud/tasks':
-        specifier: 4.0.1
+        specifier: 'catalog:'
         version: 4.0.1
       '@hookform/resolvers':
-        specifier: 5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(react-hook-form@7.68.0(react@19.2.3))
       '@libsql/client':
-        specifier: 0.15.15
+        specifier: 'catalog:'
         version: 0.15.15
       '@openpanel/nextjs':
-        specifier: 1.2.0
-        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -926,218 +1505,218 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       '@sentry/nextjs':
-        specifier: 10.31.0
-        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))
+        specifier: 'catalog:'
+        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))
       '@stripe/stripe-js':
-        specifier: 2.1.6
+        specifier: 'catalog:'
         version: 2.1.6
       '@t3-oss/env-nextjs':
-        specifier: 0.7.0
+        specifier: 'catalog:'
         version: 0.7.0(typescript@5.9.3)(zod@4.1.13)
       '@tailwindcss/container-queries':
-        specifier: 0.1.1
+        specifier: 'catalog:'
         version: 0.1.1(tailwindcss@4.1.11)
       '@tailwindcss/typography':
-        specifier: 0.5.10
+        specifier: 'catalog:'
         version: 0.5.10(tailwindcss@4.1.11)
       '@tanstack/react-query':
-        specifier: 5.81.5
+        specifier: 'catalog:'
         version: 5.81.5(react@19.2.3)
       '@tanstack/react-query-devtools':
-        specifier: 5.80.7
+        specifier: 'catalog:'
         version: 5.80.7(@tanstack/react-query@5.81.5(react@19.2.3))(react@19.2.3)
       '@tanstack/react-table':
-        specifier: 8.21.3
+        specifier: 'catalog:'
         version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@trpc/client':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
-        specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        specifier: 'catalog:'
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/react-query':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/server':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(typescript@5.9.3)
       '@upstash/qstash':
-        specifier: 2.6.2
+        specifier: 'catalog:'
         version: 2.6.2
       '@upstash/redis':
-        specifier: 1.22.1
+        specifier: 'catalog:'
         version: 1.22.1
       '@vercel/blob':
-        specifier: 0.23.3
+        specifier: 'catalog:'
         version: 0.23.3
       class-variance-authority:
-        specifier: 0.7.1
+        specifier: 'catalog:'
         version: 0.7.1
       clsx:
-        specifier: 2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       cmdk:
-        specifier: 1.1.1
+        specifier: 'catalog:'
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       cobe:
-        specifier: 0.6.3
+        specifier: 'catalog:'
         version: 0.6.3
       date-fns:
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       date-fns-tz:
-        specifier: 2.0.0
+        specifier: 'catalog:'
         version: 2.0.0(date-fns@3.6.0)
       feed:
-        specifier: 4.2.2
+        specifier: 'catalog:'
         version: 4.2.2
       gray-matter:
-        specifier: 4.0.3
+        specifier: 'catalog:'
         version: 4.0.3
       lucide-react:
-        specifier: 0.525.0
+        specifier: 'catalog:'
         version: 0.525.0(react@19.2.3)
       nanoid:
-        specifier: 5.0.7
+        specifier: 'catalog:'
         version: 5.0.7
       next:
-        specifier: 16.2.6
+        specifier: 'catalog:'
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
-        specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-mdx-remote:
-        specifier: 6.0.0
+        specifier: 'catalog:'
         version: 6.0.0(@types/react@19.2.2)(react@19.2.3)
       next-plausible:
-        specifier: 3.12.5
-        version: 3.12.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 3.12.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-themes:
-        specifier: 0.4.6
+        specifier: 'catalog:'
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
-        specifier: 2.8.5
-        version: 2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       random-word-slugs:
-        specifier: 0.1.7
+        specifier: 'catalog:'
         version: 0.1.7
       react:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3
       react-day-picker:
-        specifier: 8.10.1
+        specifier: 'catalog:'
         version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-dom:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
       react-hook-form:
-        specifier: 7.68.0
+        specifier: 'catalog:'
         version: 7.68.0(react@19.2.3)
       react-medium-image-zoom:
-        specifier: 5.4.0
+        specifier: 'catalog:'
         version: 5.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-tweet:
-        specifier: 3.2.1
+        specifier: 'catalog:'
         version: 3.2.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       reading-time:
-        specifier: 1.5.0
+        specifier: 'catalog:'
         version: 1.5.0
       recharts:
-        specifier: 2.15.0
+        specifier: 'catalog:'
         version: 2.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       remark-gfm:
-        specifier: 4.0.1
+        specifier: 'catalog:'
         version: 4.0.1
       resend:
-        specifier: 6.6.0
+        specifier: 'catalog:'
         version: 6.6.0(@react-email/render@2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
       sanitize-html:
-        specifier: 2.17.0
+        specifier: 'catalog:'
         version: 2.17.0
       schema-dts:
-        specifier: 1.1.5
+        specifier: 'catalog:'
         version: 1.1.5
       shiki:
-        specifier: 3.23.0
+        specifier: 'catalog:'
         version: 3.23.0
       slugify:
-        specifier: 1.6.6
+        specifier: 'catalog:'
         version: 1.6.6
       sonner:
-        specifier: 2.0.5
+        specifier: 'catalog:'
         version: 2.0.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       stripe:
-        specifier: 13.8.0
+        specifier: 'catalog:'
         version: 13.8.0
       sugar-high:
-        specifier: 0.9.5
+        specifier: 'catalog:'
         version: 0.9.5
       superjson:
-        specifier: 2.2.2
+        specifier: 'catalog:'
         version: 2.2.2
       tailwind-merge:
-        specifier: 3.3.1
+        specifier: 'catalog:'
         version: 3.3.1
       tailwindcss-animate:
-        specifier: 1.0.7
+        specifier: 'catalog:'
         version: 1.0.7(tailwindcss@4.1.11)
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@tailwindcss/postcss':
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       '@types/sanitize-html':
-        specifier: 2.16.0
+        specifier: 'catalog:'
         version: 2.16.0
       postcss:
-        specifier: 8.4.38
+        specifier: 'catalog:'
         version: 8.4.38
       rehype-autolink-headings:
-        specifier: 7.1.0
+        specifier: 'catalog:'
         version: 7.1.0
       rehype-slug:
-        specifier: 5.1.0
+        specifier: 'catalog:'
         version: 5.1.0
       tailwindcss:
-        specifier: 4.1.11
+        specifier: 'catalog:'
         version: 4.1.11
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
       unified:
-        specifier: 11.0.5
+        specifier: 'catalog:'
         version: 11.0.5
 
   apps/workflows:
     dependencies:
       '@google-cloud/tasks':
-        specifier: 4.0.1
+        specifier: 'catalog:'
         version: 4.0.1
       '@libsql/client':
-        specifier: 0.15.15
+        specifier: 'catalog:'
         version: 0.15.15
       '@logtape/logtape':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1
       '@logtape/otel':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(@logtape/logtape@2.0.1)
       '@logtape/sentry':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(@logtape/logtape@2.0.1)(@sentry/core@10.53.1)
       '@openstatus/db':
         specifier: workspace:*
@@ -1206,31 +1785,31 @@ importers:
         specifier: workspace:*
         version: link:../../packages/utils
       '@opentelemetry/resources':
-        specifier: 2.2.0
+        specifier: 'catalog:'
         version: 2.2.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions':
-        specifier: 1.38.0
+        specifier: 'catalog:'
         version: 1.38.0
       '@sentry/bun':
-        specifier: 10.31.0
+        specifier: 'catalog:'
         version: 10.31.0
       '@upstash/qstash':
-        specifier: 2.6.2
+        specifier: 'catalog:'
         version: 2.6.2
       drizzle-orm:
-        specifier: 0.44.4
+        specifier: 'catalog:'
         version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       effect:
-        specifier: 3.19.12
+        specifier: 'catalog:'
         version: 3.19.12
       hono:
-        specifier: 4.5.3
+        specifier: 'catalog:'
         version: 4.5.3
       limiter:
-        specifier: ^3.0.0
+        specifier: 'catalog:'
         version: 3.0.0
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
@@ -1240,29 +1819,29 @@ importers:
         specifier: latest
         version: 1.3.14
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/analytics:
     dependencies:
       '@openpanel/sdk':
-        specifier: 1.0.3
+        specifier: 'catalog:'
         version: 1.0.3
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
-        specifier: 22.10.2
-        version: 22.10.2
+        specifier: 'catalog:'
+        version: 24.0.8
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/api:
@@ -1340,84 +1919,84 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       '@trpc/client':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server':
-        specifier: 11.4.4
+        specifier: 'catalog:'
         version: 11.4.4(typescript@5.9.3)
       '@unkey/api':
-        specifier: 2.2.0
+        specifier: 'catalog:'
         version: 2.2.0
       '@vercel/blob':
-        specifier: 0.23.3
+        specifier: 'catalog:'
         version: 0.23.3
       date-fns:
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       isomorphic-dompurify:
-        specifier: 3.7.1
+        specifier: 'catalog:'
         version: 3.7.1(@noble/hashes@1.8.0)
       nanoid:
-        specifier: 5.0.7
+        specifier: 'catalog:'
         version: 5.0.7
       nanoid-dictionary:
-        specifier: 5.0.0-beta.1
+        specifier: 'catalog:'
         version: 5.0.0-beta.1
       next:
-        specifier: 16.2.6
+        specifier: 'catalog:'
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       random-word-slugs:
-        specifier: 0.1.7
+        specifier: 'catalog:'
         version: 0.1.7
       stripe:
-        specifier: 13.8.0
+        specifier: 'catalog:'
         version: 13.8.0
       superjson:
-        specifier: 2.2.2
+        specifier: 'catalog:'
         version: 2.2.2
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       bun-types:
-        specifier: 1.0.8
-        version: 1.0.8
+        specifier: 'catalog:'
+        version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/assertions:
     dependencies:
       jsonpath-plus:
-        specifier: 7.2.0
+        specifier: 'catalog:'
         version: 7.2.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
 
   packages/db:
     dependencies:
       '@libsql/client':
-        specifier: 0.15.15
+        specifier: 'catalog:'
         version: 0.15.15
       '@openstatus/assertions':
         specifier: workspace:*
@@ -1435,94 +2014,94 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       bcryptjs:
-        specifier: 3.0.3
+        specifier: 'catalog:'
         version: 3.0.3
       drizzle-orm:
-        specifier: 0.44.4
+        specifier: 'catalog:'
         version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       drizzle-zod:
-        specifier: 0.8.3
+        specifier: 'catalog:'
         version: 0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14))(zod@4.1.13)
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/bcryptjs':
-        specifier: 3.0.0
+        specifier: 'catalog:'
         version: 3.0.0
       '@types/node':
-        specifier: 22.10.2
-        version: 22.10.2
+        specifier: 'catalog:'
+        version: 24.0.8
       drizzle-kit:
-        specifier: 0.31.4
+        specifier: 'catalog:'
         version: 0.31.4
       next-auth:
-        specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/emails:
     dependencies:
       '@react-email/components':
-        specifier: 1.0.3
+        specifier: 'catalog:'
         version: 1.0.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-email/render':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       effect:
-        specifier: 3.19.12
+        specifier: 'catalog:'
         version: 3.19.12
       react-email:
-        specifier: 5.1.1
+        specifier: 'catalog:'
         version: 5.1.1
       resend:
-        specifier: 6.6.0
+        specifier: 'catalog:'
         version: 6.6.0(@react-email/render@2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@react-email/preview-server':
-        specifier: 5.1.1
+        specifier: 'catalog:'
         version: 5.1.1(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@types/node':
-        specifier: 22.10.2
-        version: 22.10.2
+        specifier: 'catalog:'
+        version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       react:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/error:
     dependencies:
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/header-analysis:
@@ -1531,55 +2110,55 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/icons:
     dependencies:
       react:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3
     devDependencies:
       '@biomejs/biome':
-        specifier: 1.9.4
-        version: 1.9.4
+        specifier: 'catalog:'
+        version: 1.8.3
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/importers:
     dependencies:
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/locales:
     dependencies:
       date-fns:
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/base:
@@ -1595,13 +2174,13 @@ importers:
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/bird-whatsapp:
@@ -1613,23 +2192,23 @@ importers:
         specifier: workspace:*
         version: link:../base
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/discord:
@@ -1644,20 +2223,20 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/email:
@@ -1681,38 +2260,38 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       '@react-email/components':
-        specifier: 1.0.3
+        specifier: 'catalog:'
         version: 1.0.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@react-email/render':
-        specifier: 2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       react-dom:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
       resend:
-        specifier: 6.6.0
+        specifier: 'catalog:'
         version: 6.6.0(@react-email/render@2.0.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/google-chat:
@@ -1727,20 +2306,20 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/grafana-oncall:
@@ -1755,20 +2334,20 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/ms-teams:
@@ -1783,20 +2362,20 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/ntfy:
@@ -1811,20 +2390,20 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/opsgenie:
@@ -1836,35 +2415,35 @@ importers:
         specifier: workspace:*
         version: link:../base
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       '@types/validator':
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       validator:
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/pagerduty:
@@ -1876,35 +2455,35 @@ importers:
         specifier: workspace:*
         version: link:../base
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       '@types/validator':
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       validator:
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/slack:
@@ -1919,20 +2498,20 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/telegram:
@@ -1944,20 +2523,20 @@ importers:
         specifier: workspace:*
         version: link:../base
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/twillio-sms:
@@ -1969,29 +2548,29 @@ importers:
         specifier: workspace:*
         version: link:../base
       '@t3-oss/env-core':
-        specifier: 0.13.10
+        specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
       validator:
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       '@types/validator':
-        specifier: 13.12.0
+        specifier: 'catalog:'
         version: 13.12.0
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/notifications/webhook:
@@ -2006,45 +2585,45 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../tsconfig
       '@types/node':
-        specifier: 24.0.8
+        specifier: 'catalog:'
         version: 24.0.8
       bun-types:
-        specifier: 1.3.1
+        specifier: 'catalog:'
         version: 1.3.1(@types/react@19.2.2)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/proto:
     dependencies:
       '@bufbuild/protobuf':
-        specifier: 2.10.2
+        specifier: 'catalog:'
         version: 2.10.2
       '@bufbuild/protovalidate':
-        specifier: ^1.1.1
+        specifier: 'catalog:'
         version: 1.1.1(@bufbuild/protobuf@2.10.2)
       '@connectrpc/connect':
         specifier: ^2.1.1
         version: 2.1.1(@bufbuild/protobuf@2.10.2)
     devDependencies:
       '@bufbuild/buf':
-        specifier: 1.57.2
+        specifier: 'catalog:'
         version: 1.57.2
       '@bufbuild/protoc-gen-es':
-        specifier: 2.10.2
+        specifier: 'catalog:'
         version: 2.10.2(@bufbuild/protobuf@2.10.2)
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/react:
@@ -2057,35 +2636,35 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
       '@tailwindcss/cli':
-        specifier: 4.1.8
+        specifier: 'catalog:'
         version: 4.1.8
       '@types/node':
-        specifier: 20.8.0
-        version: 20.8.0
+        specifier: 'catalog:'
+        version: 24.0.8
       '@types/react':
-        specifier: 18.3.3
-        version: 18.3.3
+        specifier: 'catalog:'
+        version: 19.2.2
       tailwindcss:
-        specifier: 4.1.8
-        version: 4.1.8
+        specifier: 'catalog:'
+        version: 4.1.11
       tsup:
-        specifier: 7.2.0
-        version: 7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@20.8.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: 'catalog:'
+        version: 7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3))(typescript@5.9.3)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/regions:
     dependencies:
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/services:
@@ -2118,7 +2697,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
@@ -2128,19 +2707,19 @@ importers:
         specifier: latest
         version: 1.3.14
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/status-fetcher:
     dependencies:
       effect:
-        specifier: 3.19.12
+        specifier: 'catalog:'
         version: 3.19.12
       node-html-parser:
-        specifier: 6.1.12
+        specifier: 'catalog:'
         version: 6.1.12
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@types/bun':
@@ -2162,7 +2741,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
@@ -2172,7 +2751,7 @@ importers:
         specifier: latest
         version: 1.3.14
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/theme-store:
@@ -2181,20 +2760,20 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/tinybird:
     dependencies:
       '@chronark/zod-bird':
-        specifier: 1.0.0
+        specifier: 'catalog:'
         version: 1.0.0(zod@4.1.13)
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@libsql/client':
-        specifier: 0.15.15
+        specifier: 'catalog:'
         version: 0.15.15
       '@openstatus/db':
         specifier: workspace:*
@@ -2206,13 +2785,13 @@ importers:
         specifier: workspace:*
         version: link:../utils
       '@types/node':
-        specifier: 22.10.2
-        version: 22.10.2
+        specifier: 'catalog:'
+        version: 24.0.8
       drizzle-orm:
-        specifier: 0.44.4
+        specifier: 'catalog:'
         version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/tracker:
@@ -2224,14 +2803,14 @@ importers:
         specifier: workspace:*
         version: link:../tinybird
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/tsconfig: {}
@@ -2239,198 +2818,198 @@ importers:
   packages/ui:
     dependencies:
       '@date-fns/utc':
-        specifier: 2.1.0
+        specifier: 'catalog:'
         version: 2.1.0
       '@dnd-kit/core':
-        specifier: 6.3.1
+        specifier: 'catalog:'
         version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@dnd-kit/modifiers':
-        specifier: 9.0.0
+        specifier: 'catalog:'
         version: 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/sortable':
-        specifier: 10.0.0
+        specifier: 'catalog:'
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/utilities':
-        specifier: 3.2.2
+        specifier: 'catalog:'
         version: 3.2.2(react@19.2.3)
       '@hookform/resolvers':
-        specifier: 5.1.0
+        specifier: 'catalog:'
         version: 5.1.0(react-hook-form@7.68.0(react@19.2.3))
       '@radix-ui/react-accordion':
-        specifier: 1.2.2
+        specifier: 'catalog:'
         version: 1.2.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-alert-dialog':
-        specifier: 1.1.4
+        specifier: 'catalog:'
         version: 1.1.4(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-avatar':
-        specifier: 1.1.10
+        specifier: 'catalog:'
         version: 1.1.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-checkbox':
-        specifier: 1.3.2
+        specifier: 'catalog:'
         version: 1.3.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-collapsible':
-        specifier: 1.1.11
+        specifier: 'catalog:'
         version: 1.1.11(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-context-menu':
-        specifier: 2.2.4
+        specifier: 'catalog:'
         version: 2.2.4(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-dialog':
-        specifier: 1.1.14
+        specifier: 'catalog:'
         version: 1.1.14(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-dropdown-menu':
-        specifier: 2.1.15
+        specifier: 'catalog:'
         version: 2.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-hover-card':
-        specifier: 1.1.14
+        specifier: 'catalog:'
         version: 1.1.14(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-label':
-        specifier: 2.1.7
+        specifier: 'catalog:'
         version: 2.1.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-navigation-menu':
-        specifier: 1.2.3
+        specifier: 'catalog:'
         version: 1.2.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-popover':
-        specifier: 1.1.14
+        specifier: 'catalog:'
         version: 1.1.14(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-progress':
-        specifier: 1.1.7
+        specifier: 'catalog:'
         version: 1.1.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-radio-group':
-        specifier: 1.3.7
+        specifier: 'catalog:'
         version: 1.3.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-scroll-area':
-        specifier: 1.2.10
+        specifier: 'catalog:'
         version: 1.2.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-select':
-        specifier: 2.2.5
+        specifier: 'catalog:'
         version: 2.2.5(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-separator':
-        specifier: 1.1.7
+        specifier: 'catalog:'
         version: 1.1.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-slider':
-        specifier: 1.3.5
+        specifier: 'catalog:'
         version: 1.3.5(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-slot':
-        specifier: 1.2.3
+        specifier: 'catalog:'
         version: 1.2.3(@types/react@19.2.2)(react@19.2.3)
       '@radix-ui/react-switch':
-        specifier: 1.2.5
+        specifier: 'catalog:'
         version: 1.2.5(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-tabs':
-        specifier: 1.1.12
+        specifier: 'catalog:'
         version: 1.1.12(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-toggle':
-        specifier: 1.1.10
+        specifier: 'catalog:'
         version: 1.1.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-tooltip':
-        specifier: 1.2.7
+        specifier: 'catalog:'
         version: 1.2.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       class-variance-authority:
-        specifier: 0.7.1
+        specifier: 'catalog:'
         version: 0.7.1
       clsx:
-        specifier: 2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       cmdk:
-        specifier: 1.1.1
+        specifier: 'catalog:'
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       date-fns:
-        specifier: 3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       lucide-react:
-        specifier: 0.525.0
+        specifier: 'catalog:'
         version: 0.525.0(react@19.2.3)
       luxon:
-        specifier: 3.5.0
+        specifier: 'catalog:'
         version: 3.5.0
       next:
-        specifier: 16.2.6
+        specifier: 'catalog:'
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       qr-code-styling:
-        specifier: 1.9.2
+        specifier: 'catalog:'
         version: 1.9.2
       radix-ui:
-        specifier: 1.4.3
+        specifier: 'catalog:'
         version: 1.4.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react:
-        specifier: 19.2.3
+        specifier: 'catalog:'
         version: 19.2.3
       react-day-picker:
-        specifier: 8.10.1
+        specifier: 'catalog:'
         version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-hook-form:
-        specifier: 7.68.0
+        specifier: 'catalog:'
         version: 7.68.0(react@19.2.3)
       recharts:
-        specifier: 2.15.4
-        version: 2.15.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 'catalog:'
+        version: 2.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       sonner:
         specifier: 2.0.5
         version: 2.0.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       tailwind-merge:
-        specifier: 2.5.5
-        version: 2.5.5
+        specifier: 'catalog:'
+        version: 3.3.1
       tailwindcss-animate:
-        specifier: 1.0.7
-        version: 1.0.7(tailwindcss@4.1.8)
+        specifier: 'catalog:'
+        version: 1.0.7(tailwindcss@4.1.11)
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@biomejs/biome':
-        specifier: 1.9.4
-        version: 1.9.4
+        specifier: 'catalog:'
+        version: 1.8.3
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/luxon':
-        specifier: 3.4.2
+        specifier: 'catalog:'
         version: 3.4.2
       '@types/node':
-        specifier: 22.10.2
-        version: 22.10.2
+        specifier: 'catalog:'
+        version: 24.0.8
       '@types/react':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2
       '@types/react-dom':
-        specifier: 19.2.2
+        specifier: 'catalog:'
         version: 19.2.2(@types/react@19.2.2)
       glob:
-        specifier: 11.0.0
+        specifier: 'catalog:'
         version: 11.0.0
       shadcn:
-        specifier: 3.8.4
-        version: 3.8.4(@types/node@22.10.2)(babel-plugin-macros@3.1.0)(typescript@5.9.3)
+        specifier: 'catalog:'
+        version: 3.8.4(@types/node@24.0.8)(babel-plugin-macros@3.1.0)(typescript@5.9.3)
       tailwindcss:
-        specifier: 4.1.8
-        version: 4.1.8
+        specifier: 'catalog:'
+        version: 4.1.11
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/upstash:
     dependencies:
       '@upstash/qstash':
-        specifier: 2.6.2
+        specifier: 'catalog:'
         version: 2.6.2
       '@upstash/redis':
-        specifier: 1.22.1
+        specifier: 'catalog:'
         version: 1.22.1
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@types/node':
-        specifier: 22.10.2
-        version: 22.10.2
+        specifier: 'catalog:'
+        version: 24.0.8
       tsup:
-        specifier: 7.2.0
-        version: 7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@22.10.2)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: 'catalog:'
+        version: 7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3))(typescript@5.9.3)
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   packages/utils:
@@ -2442,14 +3021,14 @@ importers:
         specifier: workspace:*
         version: link:../regions
       zod:
-        specifier: 4.1.13
+        specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       typescript:
-        specifier: 5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
 packages:
@@ -2950,19 +3529,8 @@ packages:
     engines: {node: '>=14.21.3'}
     hasBin: true
 
-  '@biomejs/biome@1.9.4':
-    resolution: {integrity: sha512-1rkd7G70+o9KkTn5KLmDYXihGoTaIGO9PIIN2ZB7UJxFrWw04CZHPYiMRjYsaDvVV7hP1dYNRLxSANLaBFGpog==}
-    engines: {node: '>=14.21.3'}
-    hasBin: true
-
   '@biomejs/cli-darwin-arm64@1.8.3':
     resolution: {integrity: sha512-9DYOjclFpKrH/m1Oz75SSExR8VKvNSSsLnVIqdnKexj6NwmiMlKk94Wa1kZEdv6MCOHGHgyyoV57Cw8WzL5n3A==}
-    engines: {node: '>=14.21.3'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@biomejs/cli-darwin-arm64@1.9.4':
-    resolution: {integrity: sha512-bFBsPWrNvkdKrNCYeAp+xo2HecOGPAy9WyNyB/jKnnedgzl4W4Hb9ZMzYNbf8dMCGmUdSavlYHiR01QaYR58cw==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [darwin]
@@ -2973,59 +3541,33 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@biomejs/cli-darwin-x64@1.9.4':
-    resolution: {integrity: sha512-ngYBh/+bEedqkSevPVhLP4QfVPCpb+4BBe2p7Xs32dBgs7rh9nY2AIYUL6BgLw1JVXV8GlpKmb/hNiuIxfPfZg==}
-    engines: {node: '>=14.21.3'}
-    cpu: [x64]
-    os: [darwin]
-
   '@biomejs/cli-linux-arm64-musl@1.8.3':
     resolution: {integrity: sha512-9yjUfOFN7wrYsXt/T/gEWfvVxKlnh3yBpnScw98IF+oOeCYb5/b/+K7YNqKROV2i1DlMjg9g/EcN9wvj+NkMuQ==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
-
-  '@biomejs/cli-linux-arm64-musl@1.9.4':
-    resolution: {integrity: sha512-v665Ct9WCRjGa8+kTr0CzApU0+XXtRgwmzIf1SeKSGAv+2scAlW6JR5PMFo6FzqqZ64Po79cKODKf3/AAmECqA==}
-    engines: {node: '>=14.21.3'}
-    cpu: [arm64]
-    os: [linux]
+    libc: [musl]
 
   '@biomejs/cli-linux-arm64@1.8.3':
     resolution: {integrity: sha512-fed2ji8s+I/m8upWpTJGanqiJ0rnlHOK3DdxsyVLZQ8ClY6qLuPc9uehCREBifRJLl/iJyQpHIRufLDeotsPtw==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
-
-  '@biomejs/cli-linux-arm64@1.9.4':
-    resolution: {integrity: sha512-fJIW0+LYujdjUgJJuwesP4EjIBl/N/TcOX3IvIHJQNsAqvV2CHIogsmA94BPG6jZATS4Hi+xv4SkBBQSt1N4/g==}
-    engines: {node: '>=14.21.3'}
-    cpu: [arm64]
-    os: [linux]
+    libc: [glibc]
 
   '@biomejs/cli-linux-x64-musl@1.8.3':
     resolution: {integrity: sha512-UHrGJX7PrKMKzPGoEsooKC9jXJMa28TUSMjcIlbDnIO4EAavCoVmNQaIuUSH0Ls2mpGMwUIf+aZJv657zfWWjA==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
-
-  '@biomejs/cli-linux-x64-musl@1.9.4':
-    resolution: {integrity: sha512-gEhi/jSBhZ2m6wjV530Yy8+fNqG8PAinM3oV7CyO+6c3CEh16Eizm21uHVsyVBEB6RIM8JHIl6AGYCv6Q6Q9Tg==}
-    engines: {node: '>=14.21.3'}
-    cpu: [x64]
-    os: [linux]
+    libc: [musl]
 
   '@biomejs/cli-linux-x64@1.8.3':
     resolution: {integrity: sha512-I8G2QmuE1teISyT8ie1HXsjFRz9L1m5n83U1O6m30Kw+kPMPSKjag6QGUn+sXT8V+XWIZxFFBoTDEDZW2KPDDw==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
-
-  '@biomejs/cli-linux-x64@1.9.4':
-    resolution: {integrity: sha512-lRCJv/Vi3Vlwmbd6K+oQ0KhLHMAysN8lXoCI7XeHlxaajk06u7G+UsFSO01NAs5iYuWKmVZjmiOzJ0OJmGsMwg==}
-    engines: {node: '>=14.21.3'}
-    cpu: [x64]
-    os: [linux]
+    libc: [glibc]
 
   '@biomejs/cli-win32-arm64@1.8.3':
     resolution: {integrity: sha512-J+Hu9WvrBevfy06eU1Na0lpc7uR9tibm9maHynLIoAjLZpQU3IW+OKHUtyL8p6/3pT2Ju5t5emReeIS2SAxhkQ==}
@@ -3033,20 +3575,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@biomejs/cli-win32-arm64@1.9.4':
-    resolution: {integrity: sha512-tlbhLk+WXZmgwoIKwHIHEBZUwxml7bRJgk0X2sPyNR3S93cdRq6XulAZRQJ17FYGGzWne0fgrXBKpl7l4M87Hg==}
-    engines: {node: '>=14.21.3'}
-    cpu: [arm64]
-    os: [win32]
-
   '@biomejs/cli-win32-x64@1.8.3':
     resolution: {integrity: sha512-/PJ59vA1pnQeKahemaQf4Nyj7IKUvGQSc3Ze1uIGi+Wvr1xF7rGobSrAAG01T/gUDG21vkDsZYM03NAmPiVkqg==}
-    engines: {node: '>=14.21.3'}
-    cpu: [x64]
-    os: [win32]
-
-  '@biomejs/cli-win32-x64@1.9.4':
-    resolution: {integrity: sha512-8Y5wMhVIPaWe6jw2H+KlEm4wP/f7EW3810ZLmDlrEEy5KvBsb9ECEfu/kMWD484ijfQ8+nIi0giMgu9g1UAuuA==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
@@ -3818,155 +4348,183 @@ packages:
     resolution: {integrity: sha512-9B+taZ8DlyyqzZQnoeIvDVR/2F4EbMepXMc/NdVbkzsJbzkUjhXv/70GQJ7tdLA4YJgNP25zukcxpX2/SueNrA==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-arm64@1.2.4':
     resolution: {integrity: sha512-excjX8DfsIcJ10x1Kzr4RcWe1edC9PquDRRPx3YVCvQv+U5p7Yin2s32ftzikXojb1PIFc/9Mt28/y+iRklkrw==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-arm@1.0.5':
     resolution: {integrity: sha512-gvcC4ACAOPRNATg/ov8/MnbxFDJqf/pDePbBnuBDcjsI8PssmjoKMAz4LtLaVi+OnSb5FK/yIOamqDwGmXW32g==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-arm@1.2.4':
     resolution: {integrity: sha512-bFI7xcKFELdiNCVov8e44Ia4u2byA+l3XtsAj+Q8tfCwO6BQ8iDojYdvoPMqsKDkuoOo+X6HZA0s0q11ANMQ8A==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-ppc64@1.2.4':
     resolution: {integrity: sha512-FMuvGijLDYG6lW+b/UvyilUWu5Ayu+3r2d1S8notiGCIyYU/76eig1UfMmkZ7vwgOrzKzlQbFSuQfgm7GYUPpA==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-riscv64@1.2.4':
     resolution: {integrity: sha512-oVDbcR4zUC0ce82teubSm+x6ETixtKZBh/qbREIOcI3cULzDyb18Sr/Wcyx7NRQeQzOiHTNbZFF1UwPS2scyGA==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-s390x@1.0.4':
     resolution: {integrity: sha512-u7Wz6ntiSSgGSGcjZ55im6uvTrOxSIS8/dgoVMoiGE9I6JAfU50yH5BoDlYA1tcuGS7g/QNtetJnxA6QEsCVTA==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-s390x@1.2.4':
     resolution: {integrity: sha512-qmp9VrzgPgMoGZyPvrQHqk02uyjA0/QrTO26Tqk6l4ZV0MPWIW6LTkqOIov+J1yEu7MbFQaDpwdwJKhbJvuRxQ==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-x64@1.0.4':
     resolution: {integrity: sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linux-x64@1.2.4':
     resolution: {integrity: sha512-tJxiiLsmHc9Ax1bz3oaOYBURTXGIRDODBqhveVHonrHJ9/+k89qbLl0bcJns+e4t4rvaNBxaEZsFtSfAdquPrw==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-libvips-linuxmusl-arm64@1.0.4':
     resolution: {integrity: sha512-9Ti+BbTYDcsbp4wfYib8Ctm1ilkugkA/uscUn6UXK1ldpC1JjiXbLfFZtRlBhjPZ5o1NCLiDbg8fhUPKStHoTA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-libvips-linuxmusl-arm64@1.2.4':
     resolution: {integrity: sha512-FVQHuwx1IIuNow9QAbYUzJ+En8KcVm9Lk5+uGUQJHaZmMECZmOlix9HnH7n1TRkXMS0pGxIJokIVB9SuqZGGXw==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-libvips-linuxmusl-x64@1.0.4':
     resolution: {integrity: sha512-viYN1KX9m+/hGkJtvYYp+CCLgnJXwiQB39damAO7WMdKWlIhmYTfHjwSbQeUK/20vY154mwezd9HflVFM1wVSw==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-libvips-linuxmusl-x64@1.2.4':
     resolution: {integrity: sha512-+LpyBk7L44ZIXwz/VYfglaX/okxezESc6UxDSoyo2Ks6Jxc4Y7sGjpgU9s4PMgqgjj1gZCylTieNamqA1MF7Dg==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-linux-arm64@0.33.5':
     resolution: {integrity: sha512-JMVv+AMRyGOHtO1RFBiJy/MBsgz0x4AWrT6QoEVVTyh1E39TrCUpTRI7mx9VksGX4awWASxqCYLCV4wBZHAYxA==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-arm64@0.34.5':
     resolution: {integrity: sha512-bKQzaJRY/bkPOXyKx5EVup7qkaojECG6NLYswgktOZjaXecSAeCWiZwwiFf3/Y+O1HrauiE3FVsGxFg8c24rZg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-arm@0.33.5':
     resolution: {integrity: sha512-JTS1eldqZbJxjvKaAkxhZmBqPRGmxgu+qFKSInv8moZ2AmT5Yib3EQ1c6gp493HvrvV8QgdOXdyaIBrhvFhBMQ==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-arm@0.34.5':
     resolution: {integrity: sha512-9dLqsvwtg1uuXBGZKsxem9595+ujv0sJ6Vi8wcTANSFpwV/GONat5eCkzQo/1O6zRIkh0m/8+5BjrRr7jDUSZw==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-ppc64@0.34.5':
     resolution: {integrity: sha512-7zznwNaqW6YtsfrGGDA6BRkISKAAE1Jo0QdpNYXNMHu2+0dTrPflTLNkpc8l7MUP5M16ZJcUvysVWWrMefZquA==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-riscv64@0.34.5':
     resolution: {integrity: sha512-51gJuLPTKa7piYPaVs8GmByo7/U7/7TZOq+cnXJIHZKavIRHAP77e3N2HEl3dgiqdD/w0yUfiJnII77PuDDFdw==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-s390x@0.33.5':
     resolution: {integrity: sha512-y/5PCd+mP4CA/sPDKl2961b+C9d+vPAveS33s6Z3zfASk2j5upL6fXVPZi7ztePZ5CuH+1kW8JtvxgbuXHRa4Q==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-s390x@0.34.5':
     resolution: {integrity: sha512-nQtCk0PdKfho3eC5MrbQoigJ2gd1CgddUMkabUj+rBevs8tZ2cULOx46E7oyX+04WGfABgIwmMC0VqieTiR4jg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-x64@0.33.5':
     resolution: {integrity: sha512-opC+Ok5pRNAzuvq1AG0ar+1owsu842/Ab+4qvU879ippJBHvyY5n2mxF1izXqkPYlGuP/M556uh53jRLJmzTWA==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linux-x64@0.34.5':
     resolution: {integrity: sha512-MEzd8HPKxVxVenwAa+JRPwEC7QFjoPWuS5NZnBt6B3pu7EG2Ge0id1oLHZpPJdn3OQK+BQDiw9zStiHBTJQQQQ==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@img/sharp-linuxmusl-arm64@0.33.5':
     resolution: {integrity: sha512-XrHMZwGQGvJg2V/oRSUfSAfjfPxO+4DkiRh6p2AFjLQztWUuY/o8Mq0eMQVIY7HJ1CDQUJlxGGZRw1a5bqmd1g==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-linuxmusl-arm64@0.34.5':
     resolution: {integrity: sha512-fprJR6GtRsMt6Kyfq44IsChVZeGN97gTD331weR1ex1c1rypDEABN6Tm2xa1wE6lYb5DdEnk03NZPqA7Id21yg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-linuxmusl-x64@0.33.5':
     resolution: {integrity: sha512-WT+d/cgqKkkKySYmqoZ8y3pxx7lx9vVejxW/W4DOFMYVSkErR+w7mf2u8m/y4+xHe7yY9DAXQMWQhpnMuFfScw==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-linuxmusl-x64@0.34.5':
     resolution: {integrity: sha512-Jg8wNT1MUzIvhBFxViqrEhWDGzqymo3sV7z7ZsaWbZNDLXRJZoRGrjulp60YYtV4wfY8VIKcWidjojlLcWrd8Q==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@img/sharp-wasm32@0.33.5':
     resolution: {integrity: sha512-ykUW4LVGaMcU9lu9thv85CbRMAwfeadCJHRsg2GmeRa/cJxsVY9Rbd57JcMxBkKHag5U/x7TSBpScF4U8ElVzg==}
@@ -4224,48 +4782,56 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@next/swc-linux-arm64-gnu@16.2.6':
     resolution: {integrity: sha512-RPOvqlYBbcQjkz9VQQDZ2T2bARIjXZV1KFlt+V2Mr6SW/e4I9fcKsaA0hdyf2FHoTlsV2xnBd5Y912rP/1Ce6w==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@next/swc-linux-arm64-musl@16.0.10':
     resolution: {integrity: sha512-llA+hiDTrYvyWI21Z0L1GiXwjQaanPVQQwru5peOgtooeJ8qx3tlqRV2P7uH2pKQaUfHxI/WVarvI5oYgGxaTw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@next/swc-linux-arm64-musl@16.2.6':
     resolution: {integrity: sha512-URUTu1+dMkxJsPFgm+OeEvq9wf5sujw0EvgYy80TDGHTSLTnIHeqb0Eu8A3sC95IRgjejQL+kC4mw+4yPxiAXA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@next/swc-linux-x64-gnu@16.0.10':
     resolution: {integrity: sha512-AK2q5H0+a9nsXbeZ3FZdMtbtu9jxW4R/NgzZ6+lrTm3d6Zb7jYrWcgjcpM1k8uuqlSy4xIyPR2YiuUr+wXsavA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@next/swc-linux-x64-gnu@16.2.6':
     resolution: {integrity: sha512-DOj182mPV8G3UkrayLoREM5YEYI+Dk5wv7Ox9xl1fFibAELEsFD0lDPfHIeILlutMMfdyhlzYPELG3peuKaurw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@next/swc-linux-x64-musl@16.0.10':
     resolution: {integrity: sha512-1TDG9PDKivNw5550S111gsO4RGennLVl9cipPhtkXIFVwo31YZ73nEbLjNC8qG3SgTz/QZyYyaFYMeY4BKZR/g==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@next/swc-linux-x64-musl@16.2.6':
     resolution: {integrity: sha512-HKQ5SP/V/ub73UvF7n/zeJlxk2kLmtL7Wzrg4WfmkjmNos5onJ2tKu7yZOPdL18A6Svfn3max29ym+ry7NkK4g==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@next/swc-win32-arm64-msvc@16.0.10':
     resolution: {integrity: sha512-aEZIS4Hh32xdJQbHz121pyuVZniSNoqDVx1yIr2hy+ZwJGipeqnMZBJHyMxv2tiuAXGx6/xpTcQJ6btIiBjgmg==}
@@ -4657,41 +5223,49 @@ packages:
     resolution: {integrity: sha512-xlMh4gNtplNQEwuF5icm69udC7un0WyzT5ywOeHrPMEsghKnLjXok2wZgAA7ocTm9+JsI+nVXIQa5XO1x+HPQg==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@oxc-resolver/binding-linux-arm64-musl@11.16.2':
     resolution: {integrity: sha512-OZs33QTMi0xmHv/4P0+RAKXJTBk7UcMH5tpTaCytWRXls/DGaJ48jOHmriQGK2YwUqXl+oneuNyPOUO0obJ+Hg==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@oxc-resolver/binding-linux-ppc64-gnu@11.16.2':
     resolution: {integrity: sha512-UVyuhaV32dJGtF6fDofOcBstg9JwB2Jfnjfb8jGlu3xcG+TsubHRhuTwQ6JZ1sColNT1nMxBiu7zdKUEZi1kwg==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@oxc-resolver/binding-linux-riscv64-gnu@11.16.2':
     resolution: {integrity: sha512-YZZS0yv2q5nE1uL/Fk4Y7m9018DSEmDNSG8oJzy1TJjA1jx5HL52hEPxi98XhU6OYhSO/vC1jdkJeE8TIHugug==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@oxc-resolver/binding-linux-riscv64-musl@11.16.2':
     resolution: {integrity: sha512-9VYuypwtx4kt1lUcwJAH4dPmgJySh4/KxtAPdRoX2BTaZxVm/yEXHq0mnl/8SEarjzMvXKbf7Cm6UBgptm3DZw==}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@oxc-resolver/binding-linux-s390x-gnu@11.16.2':
     resolution: {integrity: sha512-3gbwQ+xlL5gpyzgSDdC8B4qIM4mZaPDLaFOi3c/GV7CqIdVJc5EZXW4V3T6xwtPBOpXPXfqQLbhTnUD4SqwJtA==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@oxc-resolver/binding-linux-x64-gnu@11.16.2':
     resolution: {integrity: sha512-m0WcK0j54tSwWa+hQaJMScZdWneqE7xixp/vpFqlkbhuKW9dRHykPAFvSYg1YJ3MJgu9ZzVNpYHhPKJiEQq57Q==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@oxc-resolver/binding-linux-x64-musl@11.16.2':
     resolution: {integrity: sha512-ZjUm3w96P2t47nWywGwj1A2mAVBI/8IoS7XHhcogWCfXnEI3M6NPIRQPYAZW4s5/u3u6w1uPtgOwffj2XIOb/g==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@oxc-resolver/binding-openharmony-arm64@11.16.2':
     resolution: {integrity: sha512-OFVQ2x3VenTp13nIl6HcQ/7dmhFmM9dg2EjKfHcOtYfrVLQdNR6THFU7GkMdmc8DdY1zLUeilHwBIsyxv5hkwQ==}
@@ -4732,21 +5306,25 @@ packages:
     resolution: {integrity: sha512-irE0RO9B0R6ziQE6kUVZtZ6IuTdRyuumn1cPWhDfpa0XUa5sE0ly8pjVsvJbj/J9qerVtidU05txeXBB5CirQg==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@oxfmt/linux-arm64-musl@0.20.0':
     resolution: {integrity: sha512-eXPBLwYJm26DCmwMwhelEwQMRwuGNaYhYZOhd+CYYsmVoF+h6L6dtjwj0Ovuu0Gqh18EL8vfsaoUvb+jr3vEBg==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@oxfmt/linux-x64-gnu@0.20.0':
     resolution: {integrity: sha512-dTPW38Hjgb7LoD2mNgyQGBaJ1hu5YgPrxImhl5Eb04eiws+ETCM0wrb2TWGduA+Nv3rHKn3vZEkMTEjklZXgRw==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@oxfmt/linux-x64-musl@0.20.0':
     resolution: {integrity: sha512-b4duw9JGDK/kZoqrPNU9tBOOZQdUW8KJPZ7gW7z54X1eGSqCJ1PT0XLNmZ7SOA1BzQwQ0a3qmQWfFVOsH3a5bw==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@oxfmt/win32-arm64@0.20.0':
     resolution: {integrity: sha512-XAzvBhw4K+Fe16dBaFgYAdob9WaM8RYEXl0ibbm5NlNaQEq+5bH9xwc0oaYlHFnLfcgXWmn9ceTAYqNlONQRNA==}
@@ -4802,21 +5380,25 @@ packages:
     resolution: {integrity: sha512-EMx92X5q+hHc3olTuj/kgkx9+yP0p/AVs4yvHbUfzZhBekXNpUWxWvg4hIKmQWn+Ee2j4o80/0ACGO0hDYJ9mg==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/linux-arm64-musl@1.36.0':
     resolution: {integrity: sha512-7YCxtrPIctVYLqWrWkk8pahdCxch6PtsaucfMLC7TOlDt4nODhnQd4yzEscKqJ8Gjrw1bF4g+Ngob1gB+Qr9Fw==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@oxlint/linux-x64-gnu@1.36.0':
     resolution: {integrity: sha512-lnaJVlx5r3NWmoOMesfQXJSf78jHTn8Z+sdAf795Kgteo72+qGC1Uax2SToCJVN2J8PNG3oRV5bLriiCNR2i6Q==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/linux-x64-musl@1.36.0':
     resolution: {integrity: sha512-AhuEU2Qdl66lSfTGu/Htirq8r/8q2YnZoG3yEXLMQWnPMn7efy8spD/N1NA7kH0Hll+cdfwgQkQqC2G4MS2lPQ==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@oxlint/win32-arm64@1.36.0':
     resolution: {integrity: sha512-GlWCBjUJY2QgvBFuNRkiRJu7K/djLmM0UQKfZV8IN+UXbP/JbjZHWKRdd4LXlQmzoz7M5Hd6p+ElCej8/90FCg==}
@@ -4893,36 +5475,42 @@ packages:
     engines: {node: '>= 10.0.0'}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@parcel/watcher-linux-arm-musl@2.5.1':
     resolution: {integrity: sha512-6E+m/Mm1t1yhB8X412stiKFG3XykmgdIOqhjWj+VL8oHkKABfu/gjFj8DvLrYVHSBNC+/u5PeNrujiSQ1zwd1Q==}
     engines: {node: '>= 10.0.0'}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@parcel/watcher-linux-arm64-glibc@2.5.1':
     resolution: {integrity: sha512-LrGp+f02yU3BN9A+DGuY3v3bmnFUggAITBGriZHUREfNEzZh/GO06FF5u2kx8x+GBEUYfyTGamol4j3m9ANe8w==}
     engines: {node: '>= 10.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@parcel/watcher-linux-arm64-musl@2.5.1':
     resolution: {integrity: sha512-cFOjABi92pMYRXS7AcQv9/M1YuKRw8SZniCDw0ssQb/noPkRzA+HBDkwmyOJYp5wXcsTrhxO0zq1U11cK9jsFg==}
     engines: {node: '>= 10.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@parcel/watcher-linux-x64-glibc@2.5.1':
     resolution: {integrity: sha512-GcESn8NZySmfwlTsIur+49yDqSny2IhPeZfXunQi48DMugKeZ7uy1FX83pO0X22sHntJ4Ub+9k34XQCX+oHt2A==}
     engines: {node: '>= 10.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@parcel/watcher-linux-x64-musl@2.5.1':
     resolution: {integrity: sha512-n0E2EQbatQ3bXhcH2D1XIAANAcTZkQICBPVaxMeaCVBtOpBZpWJuf7LwyWPSBDITb7In8mqQgJ7gH8CILCURXg==}
     engines: {node: '>= 10.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@parcel/watcher-win32-arm64@2.5.1':
     resolution: {integrity: sha512-RFzklRvmc3PkjKjry3hLF9wD7ppR4AKcWNzH7kXR7GUe0Igb3Nz8fyPwtZCSquGrhU5HhUNDr/mKBqj7tqA2Vw==}
@@ -6512,56 +7100,67 @@ packages:
     resolution: {integrity: sha512-k9oD15soC/Ln6d2Wv/JOFPzZXIAIFLp6B+i14KhxAfnq76ajt0EhYc5YPeX6W1xJkAdItcVT+JhKl1QZh44/qw==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.53.3':
     resolution: {integrity: sha512-vTNlKq+N6CK/8UktsrFuc+/7NlEYVxgaEgRXVUVK258Z5ymho29skzW1sutgYjqNnquGwVUObAaxae8rZ6YMhg==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.53.3':
     resolution: {integrity: sha512-RGrFLWgMhSxRs/EWJMIFM1O5Mzuz3Xy3/mnxJp/5cVhZ2XoCAxJnmNsEyeMJtpK+wu0FJFWz+QF4mjCA7AUQ3w==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.53.3':
     resolution: {integrity: sha512-kASyvfBEWYPEwe0Qv4nfu6pNkITLTb32p4yTgzFCocHnJLAHs+9LjUu9ONIhvfT/5lv4YS5muBHyuV84epBo/A==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.53.3':
     resolution: {integrity: sha512-JiuKcp2teLJwQ7vkJ95EwESWkNRFJD7TQgYmCnrPtlu50b4XvT5MOmurWNrCj3IFdyjBQ5p9vnrX4JM6I8OE7g==}
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-gnu@4.53.3':
     resolution: {integrity: sha512-EoGSa8nd6d3T7zLuqdojxC20oBfNT8nexBbB/rkxgKj5T5vhpAQKKnD+h3UkoMuTyXkP5jTjK/ccNRmQrPNDuw==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-gnu@4.53.3':
     resolution: {integrity: sha512-4s+Wped2IHXHPnAEbIB0YWBv7SDohqxobiiPA1FIWZpX+w9o2i4LezzH/NkFUl8LRci/8udci6cLq+jJQlh+0g==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.53.3':
     resolution: {integrity: sha512-68k2g7+0vs2u9CxDt5ktXTngsxOQkSEV/xBbwlqYcUrAVh6P9EgMZvFsnHy4SEiUl46Xf0IObWVbMvPrr2gw8A==}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.53.3':
     resolution: {integrity: sha512-VYsFMpULAz87ZW6BVYw3I6sWesGpsP9OPcyKe8ofdg9LHxSbRMd7zrVrr5xi/3kMZtpWL/wC+UIJWJYVX5uTKg==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.53.3':
     resolution: {integrity: sha512-3EhFi1FU6YL8HTUJZ51imGJWEX//ajQPfqWLI3BQq4TlvHy4X0MOr5q3D2Zof/ka0d5FNdPwZXm3Yyib/UEd+w==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.53.3':
     resolution: {integrity: sha512-eoROhjcc6HbZCJr+tvVT8X4fW3/5g/WkGvvmwz/88sDtSJzO7r/blvoBDgISDiCjDRZmHpwud7h+6Q9JxFwq1Q==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-openharmony-arm64@4.53.3':
     resolution: {integrity: sha512-OueLAWgrNSPGAdUdIjSWXw+u/02BRTcnfw9PN41D2vq/JSEPnJnVuBgw18VkN8wcd4fjUs+jFHVM4t9+kBSNLw==}
@@ -7042,24 +7641,28 @@ packages:
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@swc/core-linux-arm64-musl@1.15.18':
     resolution: {integrity: sha512-0a+Lix+FSSHBSBOA0XznCcHo5/1nA6oLLjcnocvzXeqtdjnPb+SvchItHI+lfeiuj1sClYPDvPMLSLyXFaiIKw==}
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@swc/core-linux-x64-gnu@1.15.18':
     resolution: {integrity: sha512-wG9J8vReUlpaHz4KOD/5UE1AUgirimU4UFT9oZmupUDEofxJKYb1mTA/DrMj0s78bkBiNI+7Fo2EgPuvOJfuAA==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@swc/core-linux-x64-musl@1.15.18':
     resolution: {integrity: sha512-4nwbVvCphKzicwNWRmvD5iBaZj8JYsRGa4xOxJmOyHlMDpsvvJ2OR2cODlvWyGFH6BYL1MfIAK3qph3hp0Az6g==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@swc/core-win32-arm64-msvc@1.15.18':
     resolution: {integrity: sha512-zk0RYO+LjiBCat2RTMHzAWaMky0cra9loH4oRrLKLLNuL+jarxKLFDA8xTZWEkCPLjUTwlRN7d28eDLLMgtUcQ==}
@@ -7215,48 +7818,56 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@tailwindcss/oxide-linux-arm64-gnu@4.1.8':
     resolution: {integrity: sha512-qq7jXtO1+UEtCmCeBBIRDrPFIVI4ilEQ97qgBGdwXAARrUqSn/L9fUrkb1XP/mvVtoVeR2bt/0L77xx53bPZ/Q==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@tailwindcss/oxide-linux-arm64-musl@4.1.11':
     resolution: {integrity: sha512-m/NVRFNGlEHJrNVk3O6I9ggVuNjXHIPoD6bqay/pubtYC9QIdAMpS+cswZQPBLvVvEF6GtSNONbDkZrjWZXYNQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@tailwindcss/oxide-linux-arm64-musl@4.1.8':
     resolution: {integrity: sha512-O6b8QesPbJCRshsNApsOIpzKt3ztG35gfX9tEf4arD7mwNinsoCKxkj8TgEE0YRjmjtO3r9FlJnT/ENd9EVefQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@tailwindcss/oxide-linux-x64-gnu@4.1.11':
     resolution: {integrity: sha512-YW6sblI7xukSD2TdbbaeQVDysIm/UPJtObHJHKxDEcW2exAtY47j52f8jZXkqE1krdnkhCMGqP3dbniu1Te2Fg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@tailwindcss/oxide-linux-x64-gnu@4.1.8':
     resolution: {integrity: sha512-32iEXX/pXwikshNOGnERAFwFSfiltmijMIAbUhnNyjFr3tmWmMJWQKU2vNcFX0DACSXJ3ZWcSkzNbaKTdngH6g==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@tailwindcss/oxide-linux-x64-musl@4.1.11':
     resolution: {integrity: sha512-e3C/RRhGunWYNC3aSF7exsQkdXzQ/M+aYuZHKnw4U7KQwTJotnWsGOIVih0s2qQzmEzOFIJ3+xt7iq67K/p56Q==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@tailwindcss/oxide-linux-x64-musl@4.1.8':
     resolution: {integrity: sha512-s+VSSD+TfZeMEsCaFaHTaY5YNj3Dri8rST09gMvYQKwPphacRG7wbuQ5ZJMIJXN/puxPcg/nU+ucvWguPpvBDg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@tailwindcss/oxide-wasm32-wasi@4.1.11':
     resolution: {integrity: sha512-Xo1+/GU0JEN/C/dvcammKHzeM6NqKovG+6921MR6oadee5XPBaKOumrJCXvopJ/Qb5TH7LX/UAywbqrP4lax0g==}
@@ -7570,9 +8181,6 @@ packages:
   '@types/node@17.0.45':
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
 
-  '@types/node@20.8.0':
-    resolution: {integrity: sha512-LzcWltT83s1bthcvjBmiBvGJiiUe84NWRHkw+ZV6Fr41z2FbIzvc815dk2nQ3RAKMuN2fkenM/z3Xv2QzEpYxQ==}
-
   '@types/node@22.10.2':
     resolution: {integrity: sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==}
 
@@ -7594,16 +8202,10 @@ packages:
   '@types/picomatch@3.0.2':
     resolution: {integrity: sha512-n0i8TD3UDB7paoMMxA3Y65vUncFJXjcUf7lQY7YyKGl6031FNjfsLs6pdLFCy2GNFxItPJG8GvvpbZc2skH7WA==}
 
-  '@types/prop-types@15.7.15':
-    resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
-
   '@types/react-dom@19.2.2':
     resolution: {integrity: sha512-9KQPoO6mZCi7jcIStSnlOWn2nEF3mNmyr3rIAsGnAbQKYbRLyqmeSc39EVgtxXVia+LMT8j3knZLAZAh+xLmrw==}
     peerDependencies:
       '@types/react': ^19.2.0
-
-  '@types/react@18.3.3':
-    resolution: {integrity: sha512-hti/R0pS0q1/xx+TsI73XIqk26eBsISZ2R0wUijXIngRK9R/e7Xw/cXVxQK7R5JjW+SV4zGcn5hXjudkN/pLIw==}
 
   '@types/react@19.2.2':
     resolution: {integrity: sha512-6mDvHUFSjyT2B2yeNx2nUgMxh9LtOWvkhIU3uePn2I2oyNymUAX1NIsdgviM4CH+JSrp2D2hsMvJOkxY+0wNRA==}
@@ -8067,9 +8669,6 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
-
-  bun-types@1.0.8:
-    resolution: {integrity: sha512-2dNB+dBwAcFW7RSd4y5vKycRjouKVklSwPk4EjBKWvcMYUBOqZGGNzV7+b2tfKBG3BeRXnozbnegVKR1azuATg==}
 
   bun-types@1.3.1:
     resolution: {integrity: sha512-NMrcy7smratanWJ2mMXdpatalovtxVggkj11bScuWuiOoXTiKIu2eVS1/7qbyI/4yHedtsn175n4Sm4JcdHLXw==}
@@ -9430,10 +10029,6 @@ packages:
     peerDependencies:
       hono: ^4.1.1
 
-  hono@4.11.3:
-    resolution: {integrity: sha512-PmQi306+M/ct/m5s66Hrg+adPnkD5jiO6IjA7WhWw0gSBSo1EcRegwuI1deZ+wd5pzCGynCcn2DprnE4/yEV4w==}
-    engines: {node: '>=16.9.0'}
-
   hono@4.11.8:
     resolution: {integrity: sha512-eVkB/CYCCei7K2WElZW9yYQFWssG0DhaDhVvr7wy5jJ22K+ck8fWW0EsLpB0sITUTvPnc97+rrbQqIr5iqiy9Q==}
     engines: {node: '>=16.9.0'}
@@ -9919,24 +10514,28 @@ packages:
     engines: {node: '>= 12.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-arm64-musl@1.30.1:
     resolution: {integrity: sha512-jmUQVx4331m6LIX+0wUhBbmMX7TCfjF5FoOH6SD1CttzuYlGNVpA7QnrmLxrsub43ClTINfGSYyHe2HWeLl5CQ==}
     engines: {node: '>= 12.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-linux-x64-gnu@1.30.1:
     resolution: {integrity: sha512-piWx3z4wN8J8z3+O5kO74+yr6ze/dKmPnI7vLqfSqI8bccaTGY5xiSGVIJBDd5K5BHlvVLpUB3S2YCfelyJ1bw==}
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-x64-musl@1.30.1:
     resolution: {integrity: sha512-rRomAK7eIkL+tHY0YPxbc5Dra2gXlI63HL+v1Pdi1a3sC+tJTcFrHX+E86sulgAXeI7rSzDYhPSeHHjqFhqfeQ==}
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-win32-arm64-msvc@1.30.1:
     resolution: {integrity: sha512-mSL4rqPi4iXq5YVqzSsJgMVFENoa4nGTT/GjO2c0Yl9OuQfPsIfncvLrEW6RbbB24WtZ3xP/2CCmI3tNkNV4oA==}
@@ -11207,13 +11806,6 @@ packages:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  recharts@2.15.4:
-    resolution: {integrity: sha512-UT/q6fwS3c1dHbXv2uFgYJ9BMFHu3fwnd7AYZaEQhXuYQ4hgsxLvsUXzGdKeZrW5xopzDCvuA2N41WJ88I7zIw==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   recma-build-jsx@1.0.0:
     resolution: {integrity: sha512-8GtdyqaBcDfva+GUKDr3nev3VpKAhup1+RvkMvUxURHpW7QyIvk9F5wz7Vzo06CEMSilw6uArgRqhpiUcWp8ew==}
 
@@ -11838,9 +12430,6 @@ packages:
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
-
-  tailwind-merge@2.5.5:
-    resolution: {integrity: sha512-0LXunzzAZzo0tEPxV3I297ffKZPlKDrjj7NXphC8V5ak9yHC5zRmxnOe2m/Rd/7ivsOMJe3JZ2JVocoDdQTRBA==}
 
   tailwind-merge@3.3.1:
     resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
@@ -13842,63 +14431,28 @@ snapshots:
       '@biomejs/cli-win32-arm64': 1.8.3
       '@biomejs/cli-win32-x64': 1.8.3
 
-  '@biomejs/biome@1.9.4':
-    optionalDependencies:
-      '@biomejs/cli-darwin-arm64': 1.9.4
-      '@biomejs/cli-darwin-x64': 1.9.4
-      '@biomejs/cli-linux-arm64': 1.9.4
-      '@biomejs/cli-linux-arm64-musl': 1.9.4
-      '@biomejs/cli-linux-x64': 1.9.4
-      '@biomejs/cli-linux-x64-musl': 1.9.4
-      '@biomejs/cli-win32-arm64': 1.9.4
-      '@biomejs/cli-win32-x64': 1.9.4
-
   '@biomejs/cli-darwin-arm64@1.8.3':
-    optional: true
-
-  '@biomejs/cli-darwin-arm64@1.9.4':
     optional: true
 
   '@biomejs/cli-darwin-x64@1.8.3':
     optional: true
 
-  '@biomejs/cli-darwin-x64@1.9.4':
-    optional: true
-
   '@biomejs/cli-linux-arm64-musl@1.8.3':
-    optional: true
-
-  '@biomejs/cli-linux-arm64-musl@1.9.4':
     optional: true
 
   '@biomejs/cli-linux-arm64@1.8.3':
     optional: true
 
-  '@biomejs/cli-linux-arm64@1.9.4':
-    optional: true
-
   '@biomejs/cli-linux-x64-musl@1.8.3':
-    optional: true
-
-  '@biomejs/cli-linux-x64-musl@1.9.4':
     optional: true
 
   '@biomejs/cli-linux-x64@1.8.3':
     optional: true
 
-  '@biomejs/cli-linux-x64@1.9.4':
-    optional: true
-
   '@biomejs/cli-win32-arm64@1.8.3':
     optional: true
 
-  '@biomejs/cli-win32-arm64@1.9.4':
-    optional: true
-
   '@biomejs/cli-win32-x64@1.8.3':
-    optional: true
-
-  '@biomejs/cli-win32-x64@1.9.4':
     optional: true
 
   '@bramus/specificity@2.4.2':
@@ -14362,8 +14916,8 @@ snapshots:
       hast-util-to-html: 9.0.5
       hast-util-to-text: 4.0.2
       hastscript: 9.0.1
-      postcss: 8.4.38
-      postcss-nested: 6.2.0(postcss@8.4.38)
+      postcss: 8.5.6
+      postcss-nested: 6.2.0(postcss@8.5.6)
       unist-util-visit: 5.1.0
       unist-util-visit-parents: 6.0.2
 
@@ -14454,11 +15008,11 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@hono/mcp@0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.11.3))(hono@4.11.3)(zod@4.1.13)':
+  '@hono/mcp@0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.5.3))(hono@4.5.3)(zod@4.1.13)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.1.13)
-      hono: 4.11.3
-      hono-rate-limiter: 0.4.2(hono@4.11.3)
+      hono: 4.5.3
+      hono-rate-limiter: 0.4.2(hono@4.5.3)
       pkce-challenge: 5.0.1
       zod: 4.1.13
 
@@ -14466,16 +15020,16 @@ snapshots:
     dependencies:
       hono: 4.11.8
 
-  '@hono/sentry@1.2.2(hono@4.11.3)':
+  '@hono/sentry@1.2.2(hono@4.5.3)':
     dependencies:
-      hono: 4.11.3
+      hono: 4.5.3
       toucan-js: 4.1.1
 
-  '@hono/zod-openapi@1.1.5(hono@4.11.3)(zod@4.1.13)':
+  '@hono/zod-openapi@1.1.5(hono@4.5.3)(zod@4.1.13)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.2.0(zod@4.1.13)
-      '@hono/zod-validator': 0.7.6(hono@4.11.3)(zod@4.1.13)
-      hono: 4.11.3
+      '@hono/zod-validator': 0.7.6(hono@4.5.3)(zod@4.1.13)
+      hono: 4.5.3
       openapi3-ts: 4.5.0
       zod: 4.1.13
 
@@ -14484,9 +15038,9 @@ snapshots:
       hono: 4.5.3
       zod: 4.1.13
 
-  '@hono/zod-validator@0.7.6(hono@4.11.3)(zod@4.1.13)':
+  '@hono/zod-validator@0.7.6(hono@4.5.3)(zod@4.1.13)':
     dependencies:
-      hono: 4.11.3
+      hono: 4.5.3
       zod: 4.1.13
 
   '@hookform/devtools@4.4.0(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
@@ -14703,32 +15257,12 @@ snapshots:
 
   '@inquirer/ansi@1.0.2': {}
 
-  '@inquirer/confirm@5.1.21(@types/node@22.10.2)':
-    dependencies:
-      '@inquirer/core': 10.3.2(@types/node@22.10.2)
-      '@inquirer/type': 3.0.10(@types/node@22.10.2)
-    optionalDependencies:
-      '@types/node': 22.10.2
-
   '@inquirer/confirm@5.1.21(@types/node@24.0.8)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@24.0.8)
       '@inquirer/type': 3.0.10(@types/node@24.0.8)
     optionalDependencies:
       '@types/node': 24.0.8
-
-  '@inquirer/core@10.3.2(@types/node@22.10.2)':
-    dependencies:
-      '@inquirer/ansi': 1.0.2
-      '@inquirer/figures': 1.0.15
-      '@inquirer/type': 3.0.10(@types/node@22.10.2)
-      cli-width: 4.1.0
-      mute-stream: 2.0.0
-      signal-exit: 4.1.0
-      wrap-ansi: 6.2.0
-      yoctocolors-cjs: 2.1.3
-    optionalDependencies:
-      '@types/node': 22.10.2
 
   '@inquirer/core@10.3.2(@types/node@24.0.8)':
     dependencies:
@@ -14751,10 +15285,6 @@ snapshots:
       '@types/node': 24.0.8
 
   '@inquirer/figures@1.0.15': {}
-
-  '@inquirer/type@3.0.10(@types/node@22.10.2)':
-    optionalDependencies:
-      '@types/node': 22.10.2
 
   '@inquirer/type@3.0.10(@types/node@24.0.8)':
     optionalDependencies:
@@ -14877,7 +15407,7 @@ snapshots:
       '@opentelemetry/exporter-logs-otlp-http': 0.208.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/exporter-logs-otlp-proto': 0.208.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-exporter-base': 0.208.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.2.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-logs': 0.208.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.38.0
 
@@ -15070,7 +15600,7 @@ snapshots:
       '@openpanel/web': 1.0.1
       astro: 5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)
 
-  '@openpanel/nextjs@1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@openpanel/nextjs@1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@openpanel/web': 1.1.0
       next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -17321,10 +17851,10 @@ snapshots:
     dependencies:
       '@scalar/types': 0.1.11
 
-  '@scalar/hono-api-reference@0.8.5(hono@4.11.3)':
+  '@scalar/hono-api-reference@0.8.5(hono@4.5.3)':
     dependencies:
       '@scalar/core': 0.2.11
-      hono: 4.11.3
+      hono: 4.5.3
 
   '@scalar/openapi-types@0.2.1':
     dependencies:
@@ -17449,7 +17979,7 @@ snapshots:
       '@sentry/types': 8.9.2
       '@sentry/utils': 8.9.2
 
-  '@sentry/nextjs@10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))':
+  '@sentry/nextjs@10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.38.0
@@ -17475,14 +18005,14 @@ snapshots:
       - supports-color
       - webpack
 
-  '@sentry/node-core@10.31.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.208.0(@opentelemetry/api@1.9.1))(@opentelemetry/resources@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.38.0)':
+  '@sentry/node-core@10.31.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.208.0(@opentelemetry/api@1.9.1))(@opentelemetry/resources@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.38.0)':
     dependencies:
       '@apm-js-collab/tracing-hooks': 0.3.1
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/context-async-hooks': 2.2.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation': 0.208.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.2.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.38.0
       '@sentry/core': 10.31.0
@@ -17519,12 +18049,12 @@ snapshots:
       '@opentelemetry/instrumentation-redis': 0.57.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation-tedious': 0.27.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation-undici': 0.19.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.2.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.38.0
       '@prisma/instrumentation': 6.19.0(@opentelemetry/api@1.9.1)
       '@sentry/core': 10.31.0
-      '@sentry/node-core': 10.31.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.208.0(@opentelemetry/api@1.9.1))(@opentelemetry/resources@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.38.0)
+      '@sentry/node-core': 10.31.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.208.0(@opentelemetry/api@1.9.1))(@opentelemetry/resources@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.38.0)
       '@sentry/opentelemetry': 10.31.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.38.0)
       import-in-the-middle: 2.0.6
       minimatch: 9.0.5
@@ -17556,7 +18086,7 @@ snapshots:
   '@sentry/vercel-edge@10.31.0':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/resources': 2.2.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@sentry/core': 10.31.0
 
   '@sentry/webpack-plugin@4.6.1(webpack@5.103.0(@swc/core@1.15.18(@swc/helpers@0.5.17)))':
@@ -17606,7 +18136,7 @@ snapshots:
 
   '@slack/logger@4.0.1':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@slack/types@2.20.1': {}
 
@@ -17614,7 +18144,7 @@ snapshots:
     dependencies:
       '@slack/logger': 4.0.1
       '@slack/types': 2.20.1
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       '@types/retry': 0.12.0
       axios: 1.13.5
       eventemitter3: 5.0.1
@@ -18229,7 +18759,7 @@ snapshots:
       '@trpc/server': 11.4.4(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@trpc/next@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
+  '@trpc/next@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
     dependencies:
       '@trpc/client': 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server': 11.4.4(typescript@5.9.3)
@@ -18354,11 +18884,11 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/css-font-loading-module@0.0.7': {}
 
@@ -18410,12 +18940,12 @@ snapshots:
 
   '@types/fontkit@2.0.8':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 6.0.0
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/hast@2.3.10':
     dependencies:
@@ -18458,15 +18988,13 @@ snapshots:
 
   '@types/mysql@2.15.27':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/nlcst@2.0.3':
     dependencies:
       '@types/unist': 3.0.3
 
   '@types/node@17.0.45': {}
-
-  '@types/node@20.8.0': {}
 
   '@types/node@22.10.2':
     dependencies:
@@ -18479,7 +19007,6 @@ snapshots:
   '@types/node@24.10.1':
     dependencies:
       undici-types: 7.16.0
-    optional: true
 
   '@types/parse-json@4.0.2': {}
 
@@ -18489,22 +19016,15 @@ snapshots:
 
   '@types/pg@8.15.6':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
   '@types/picomatch@3.0.2': {}
 
-  '@types/prop-types@15.7.15': {}
-
   '@types/react-dom@19.2.2(@types/react@19.2.2)':
     dependencies:
       '@types/react': 19.2.2
-
-  '@types/react@18.3.3':
-    dependencies:
-      '@types/prop-types': 15.7.15
-      csstype: 3.2.3
 
   '@types/react@19.2.2':
     dependencies:
@@ -18513,7 +19033,7 @@ snapshots:
   '@types/request@2.48.13':
     dependencies:
       '@types/caseless': 0.12.5
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.5
 
@@ -18525,17 +19045,17 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/statuses@2.0.6': {}
 
   '@types/tedious@4.0.14':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@types/tinycolor2@1.4.6': {}
 
@@ -18554,7 +19074,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   '@typescript/vfs@1.6.2(typescript@5.4.5)':
     dependencies:
@@ -19123,16 +19643,14 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bun-types@1.0.8: {}
-
   bun-types@1.3.1(@types/react@19.2.2):
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       '@types/react': 19.2.2
 
   bun-types@1.3.14:
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
 
   bundle-name@4.1.0:
     dependencies:
@@ -19288,7 +19806,7 @@ snapshots:
   cmdk@1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.2)(react@19.2.3)
-      '@radix-ui/react-dialog': 1.1.14(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-id': 1.1.1(@types/react@19.2.2)(react@19.2.3)
       '@radix-ui/react-primitive': 2.1.4(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
@@ -19742,7 +20260,7 @@ snapshots:
   engine.io@6.6.4:
     dependencies:
       '@types/cors': 2.8.19
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.7.2
@@ -20650,11 +21168,9 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono-rate-limiter@0.4.2(hono@4.11.3):
+  hono-rate-limiter@0.4.2(hono@4.5.3):
     dependencies:
-      hono: 4.11.3
-
-  hono@4.11.3: {}
+      hono: 4.5.3
 
   hono@4.11.8: {}
 
@@ -20987,7 +21503,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -21822,31 +22338,6 @@ snapshots:
 
   ms@2.1.3: {}
 
-  msw@2.12.3(@types/node@22.10.2)(typescript@5.9.3):
-    dependencies:
-      '@inquirer/confirm': 5.1.21(@types/node@22.10.2)
-      '@mswjs/interceptors': 0.40.0
-      '@open-draft/deferred-promise': 2.2.0
-      '@types/statuses': 2.0.6
-      cookie: 1.1.1
-      graphql: 16.12.0
-      headers-polyfill: 4.0.3
-      is-node-process: 1.2.0
-      outvariant: 1.4.3
-      path-to-regexp: 6.3.0
-      picocolors: 1.1.1
-      rettime: 0.7.0
-      statuses: 2.0.2
-      strict-event-emitter: 0.5.1
-      tough-cookie: 6.0.1
-      type-fest: 5.2.0
-      until-async: 3.0.2
-      yargs: 17.7.2
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - '@types/node'
-
   msw@2.12.3(@types/node@24.0.8)(typescript@5.9.3):
     dependencies:
       '@inquirer/confirm': 5.1.21(@types/node@24.0.8)
@@ -21902,7 +22393,7 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next-auth@5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
+  next-auth@5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
     dependencies:
       '@auth/core': 0.40.0
       next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -21941,7 +22432,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  next-plausible@3.12.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  next-plausible@3.12.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
@@ -22063,7 +22554,7 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuqs@2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
+  nuqs@2.8.5(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
     dependencies:
       '@standard-schema/spec': 1.0.0
       react: 19.2.3
@@ -22445,25 +22936,17 @@ snapshots:
 
   po-parser@2.1.1: {}
 
-  postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@20.8.0)(typescript@5.9.3)):
+  postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3)):
     dependencies:
       lilconfig: 3.1.3
       yaml: 2.8.1
     optionalDependencies:
       postcss: 8.5.6
-      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@20.8.0)(typescript@5.9.3)
+      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3)
 
-  postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@22.10.2)(typescript@5.9.3)):
+  postcss-nested@6.2.0(postcss@8.5.6):
     dependencies:
-      lilconfig: 3.1.3
-      yaml: 2.8.1
-    optionalDependencies:
       postcss: 8.5.6
-      ts-node: 10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@22.10.2)(typescript@5.9.3)
-
-  postcss-nested@6.2.0(postcss@8.4.38):
-    dependencies:
-      postcss: 8.4.38
       postcss-selector-parser: 6.1.2
 
   postcss-selector-parser@6.0.10:
@@ -22560,7 +23043,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       long: 5.3.2
 
   proxy-addr@2.0.7:
@@ -22828,19 +23311,6 @@ snapshots:
       decimal.js-light: 2.5.1
 
   recharts@2.15.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
-    dependencies:
-      clsx: 2.1.1
-      eventemitter3: 4.0.7
-      lodash: 4.17.21
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-      react-is: 18.3.1
-      react-smooth: 4.0.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      recharts-scale: 0.4.5
-      tiny-invariant: 1.3.3
-      victory-vendor: 36.9.2
-
-  recharts@2.15.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       clsx: 2.1.1
       eventemitter3: 4.0.7
@@ -23185,7 +23655,7 @@ snapshots:
 
   rrweb-snapshot@2.0.0-alpha.20:
     dependencies:
-      postcss: 8.4.38
+      postcss: 8.5.6
 
   rrweb@2.0.0-alpha.20:
     dependencies:
@@ -23225,7 +23695,7 @@ snapshots:
       htmlparser2: 8.0.2
       is-plain-object: 5.0.0
       parse-srcset: 1.0.2
-      postcss: 8.4.38
+      postcss: 8.5.6
 
   sax@1.4.3: {}
 
@@ -23294,50 +23764,6 @@ snapshots:
       - supports-color
 
   setprototypeof@1.2.0: {}
-
-  shadcn@3.8.4(@types/node@22.10.2)(babel-plugin-macros@3.1.0)(typescript@5.9.3):
-    dependencies:
-      '@antfu/ni': 25.0.0
-      '@babel/core': 7.28.5
-      '@babel/parser': 7.29.0
-      '@babel/plugin-transform-typescript': 7.28.5(@babel/core@7.28.5)
-      '@babel/preset-typescript': 7.28.5(@babel/core@7.28.5)
-      '@dotenvx/dotenvx': 1.52.0
-      '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
-      '@types/validate-npm-package-name': 4.0.2
-      browserslist: 4.28.1
-      commander: 14.0.3
-      cosmiconfig: 9.0.0(typescript@5.9.3)
-      dedent: 1.7.1(babel-plugin-macros@3.1.0)
-      deepmerge: 4.3.1
-      diff: 8.0.3
-      execa: 9.6.1
-      fast-glob: 3.3.3
-      fs-extra: 11.3.2
-      fuzzysort: 3.1.0
-      https-proxy-agent: 7.0.6
-      kleur: 4.1.5
-      msw: 2.12.3(@types/node@22.10.2)(typescript@5.9.3)
-      node-fetch: 3.3.2
-      open: 11.0.0
-      ora: 8.2.0
-      postcss: 8.5.6
-      postcss-selector-parser: 7.1.1
-      prompts: 2.4.2
-      recast: 0.23.11
-      stringify-object: 5.0.0
-      tailwind-merge: 3.3.1
-      ts-morph: 26.0.0
-      tsconfig-paths: 4.2.0
-      validate-npm-package-name: 7.0.2
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.1(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - '@types/node'
-      - babel-plugin-macros
-      - supports-color
-      - typescript
 
   shadcn@3.8.4(@types/node@24.0.8)(babel-plugin-macros@3.1.0)(typescript@5.9.3):
     dependencies:
@@ -23720,7 +24146,7 @@ snapshots:
 
   stripe@13.8.0:
     dependencies:
-      '@types/node': 24.0.8
+      '@types/node': 24.10.1
       qs: 6.14.0
 
   strnum@1.1.2: {}
@@ -23822,17 +24248,11 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tailwind-merge@2.5.5: {}
-
   tailwind-merge@3.3.1: {}
 
   tailwindcss-animate@1.0.7(tailwindcss@4.1.11):
     dependencies:
       tailwindcss: 4.1.11
-
-  tailwindcss-animate@1.0.7(tailwindcss@4.1.8):
-    dependencies:
-      tailwindcss: 4.1.8
 
   tailwindcss@4.1.11: {}
 
@@ -23972,48 +24392,6 @@ snapshots:
       '@ts-morph/common': 0.27.0
       code-block-writer: 13.0.3
 
-  ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@20.8.0)(typescript@5.9.3):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.12
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 20.8.0
-      acorn: 8.15.0
-      acorn-walk: 8.3.4
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.9.3
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-    optionalDependencies:
-      '@swc/core': 1.15.18(@swc/helpers@0.5.17)
-    optional: true
-
-  ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@22.10.2)(typescript@5.9.3):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.12
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 22.10.2
-      acorn: 8.15.0
-      acorn-walk: 8.3.4
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.9.3
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-    optionalDependencies:
-      '@swc/core': 1.15.18(@swc/helpers@0.5.17)
-    optional: true
-
   ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -24048,7 +24426,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsup@7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@20.8.0)(typescript@5.9.3))(typescript@5.9.3):
+  tsup@7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3))(typescript@5.9.3):
     dependencies:
       bundle-require: 4.2.1(esbuild@0.18.20)
       cac: 6.7.14
@@ -24058,31 +24436,7 @@ snapshots:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@20.8.0)(typescript@5.9.3))
-      resolve-from: 5.0.0
-      rollup: 3.29.5
-      source-map: 0.8.0-beta.0
-      sucrase: 3.35.1
-      tree-kill: 1.2.2
-    optionalDependencies:
-      '@swc/core': 1.15.18(@swc/helpers@0.5.17)
-      postcss: 8.5.6
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-
-  tsup@7.2.0(@swc/core@1.15.18(@swc/helpers@0.5.17))(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@22.10.2)(typescript@5.9.3))(typescript@5.9.3):
-    dependencies:
-      bundle-require: 4.2.1(esbuild@0.18.20)
-      cac: 6.7.14
-      chokidar: 3.6.0
-      debug: 4.4.3
-      esbuild: 0.18.20
-      execa: 5.1.1
-      globby: 11.1.0
-      joycon: 3.1.1
-      postcss-load-config: 4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@22.10.2)(typescript@5.9.3))
+      postcss-load-config: 4.0.2(postcss@8.5.6)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.17))(@types/node@24.0.8)(typescript@5.9.3))
       resolve-from: 5.0.0
       rollup: 3.29.5
       source-map: 0.8.0-beta.0
@@ -24166,8 +24520,7 @@ snapshots:
 
   undici-types@6.20.0: {}
 
-  undici-types@7.16.0:
-    optional: true
+  undici-types@7.16.0: {}
 
   undici-types@7.8.0: {}
 
