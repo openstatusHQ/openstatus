@@ -18,6 +18,8 @@ import {
 } from "../content-box";
 
 import { ExternalStatusGrid } from "./external-status-grid";
+import { searchParamsCache } from "./search-params";
+import { ServiceSearch } from "./service-search";
 
 export const dynamic = "force-dynamic";
 
@@ -25,33 +27,41 @@ const TITLE = "External Status";
 const DESCRIPTION =
   "Easily check if your external providers is working properly";
 
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/status",
-  },
-  openGraph: {
-    ...ogMetadata,
+export async function generateMetadata(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const { q } = await searchParamsCache.parse(props.searchParams);
+  const hasQuery = q.trim() !== "";
+
+  return {
+    ...defaultMetadata,
     title: TITLE,
     description: DESCRIPTION,
-    images: [`${BASE_URL}/api/og/external-service`],
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`${BASE_URL}/api/og/external-service`],
-  },
-};
+    alternates: {
+      canonical: "/status",
+    },
+    robots: hasQuery ? { index: false, follow: true } : defaultMetadata.robots,
+    openGraph: {
+      ...ogMetadata,
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [`${BASE_URL}/api/og/external-service`],
+    },
+    twitter: {
+      ...twitterMetadata,
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [`${BASE_URL}/api/og/external-service`],
+    },
+  };
+}
 
 export default async function Page() {
   await api.externalService.grid.prefetch();
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+    <section className="prose dark:prose-invert flex flex-col gap-4 mb-12 max-w-none">
+      <ContentBoxContainer className="not-prose mb-2 px-4 py-2 text-sm">
         <CustomLink
           href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"
@@ -62,6 +72,7 @@ export default async function Page() {
       </ContentBoxContainer>
 
       <HydrateClient>
+        <ServiceSearch />
         <Suspense
           fallback={
             <p className="text-muted-foreground">Loading external status…</p>
