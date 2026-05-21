@@ -34,6 +34,6 @@
   "name": "openstatus",
   "workspaces": ["apps/*", "packages/**/*", "packages/config/*"],
   "overrides": {
-    "@react-email/preview-server": "npm:next@16.0.10"
+    "@react-email/preview-server": "npm:next@16.2.6"
   }
 }
