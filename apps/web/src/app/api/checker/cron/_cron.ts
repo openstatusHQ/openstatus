@@ -1,5 +1,4 @@
-import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
+import { CloudTasksClient, protos } from "@google-cloud/tasks";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -250,7 +249,7 @@ const createCronTask = async ({
   if (regionInfo.provider === "railway") {
     regionHeader = { "railway-region": region.replace("railway_", "") };
   }
-  const newTask: google.cloud.tasks.v2beta3.ITask = {
+  const newTask: protos.google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
       headers: {
         "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing

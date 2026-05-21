@@ -48,7 +48,7 @@ catalog:
   "@dnd-kit/sortable": 10.0.0
   "@dnd-kit/utilities": 3.2.2
   "@fontsource-variable/inter": 5.2.8
-  "@google-cloud/tasks": 4.0.1
+  "@google-cloud/tasks": 4.1.0
   "@hono/mcp": 0.2.5
   "@hono/sentry": 1.2.2
   "@hono/zod-openapi": 1.4.0
