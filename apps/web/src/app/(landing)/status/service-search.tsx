@@ -38,7 +38,7 @@ export function ServiceSearch() {
 
   return (
     <div className="not-prose mb-4">
-      <InputGroup className="rounded-none">
+      <InputGroup className="h-auto! rounded-none py-4 ps-1 pe-2 text-base md:text-base">
         <InputGroupAddon align="inline-start">
           <SearchIcon />
         </InputGroupAddon>
