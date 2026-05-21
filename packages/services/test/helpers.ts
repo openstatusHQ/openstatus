@@ -100,6 +100,37 @@ export async function clearAuditLog(
 }
 
 /**
+ * Delete audit_log rows for specific (entityType, entityId) pairs.
+ *
+ * Tests that create entities through services on the committed db and
+ * then delete those entities in cleanup must also call this — otherwise
+ * the audit row outlives the entity, and because SQLite recycles
+ * INTEGER PRIMARY KEY ids after deletes, a later test's freshly-inserted
+ * entity can land on the orphan's id and inherit its actor attribution.
+ * See docs/adr/test-audit-cleanup.md.
+ */
+export async function clearAuditLogFor(args: {
+  entityType: string;
+  entityIds: ReadonlyArray<string | number>;
+  db?: DB;
+}): Promise<void> {
+  if (args.entityIds.length === 0) return;
+  const conn = args.db ?? db;
+  await conn
+    .delete(auditLog)
+    .where(
+      and(
+        eq(auditLog.entityType, args.entityType),
+        inArray(
+          auditLog.entityId,
+          args.entityIds.map((id) => String(id)),
+        ),
+      ),
+    )
+    .catch(() => undefined);
+}
+
+/**
  * Load a seeded workspace by id (defaults to id=1, the `team` plan fixture).
  * Tests that need a fresh workspace should insert one explicitly and clean up;
  * isolating every test with its own workspace is the prevailing convention.
@@ -257,8 +288,10 @@ export async function expectAuditRow(match: {
       row.action === match.action &&
       (match.actorType === undefined || row.actorType === match.actorType),
   );
-  expect(
-    hit,
-    `expected audit row for ${match.action} on ${match.entityType}#${expectedEntityId}`,
-  ).toBeDefined();
+  if (hit === undefined) {
+    throw new Error(
+      `expected audit row for ${match.action} on ${match.entityType}#${expectedEntityId}`,
+    );
+  }
+  expect(hit).toBeDefined();
 }
