@@ -108,12 +108,12 @@ catalog:
   "@tanstack/react-query": 5.100.11
   "@tanstack/react-query-devtools": 5.100.11
   "@tanstack/react-table": 8.21.3
-  "@trpc/client": 11.17.0
-  "@trpc/next": 11.17.0
+  "@trpc/client": 11.4.4
+  "@trpc/next": 11.4.4
   "@types/react": 19.2.15
-  "@trpc/react-query": 11.17.0
-  "@trpc/server": 11.17.0
-  "@trpc/tanstack-react-query": 11.17.0
+  "@trpc/react-query": 11.4.4
+  "@trpc/server": 11.4.4
+  "@trpc/tanstack-react-query": 11.4.4
   "@turbo/gen": 1.13.4
   "@types/bcryptjs": 3.0.0
   "@types/dom-speech-recognition": 0.0.6
@@ -123,8 +123,8 @@ catalog:
   "@types/sanitize-html": 2.16.1
   "@types/validator": 13.15.10
   "@unkey/api": 2.3.4
-  "@upstash/qstash": 2.11.0
-  "@upstash/redis": 1.38.0
+  "@upstash/qstash": 2.6.2
+  "@upstash/redis": 1.22.1
   "@vercel/blob": 0.23.4
   ai: 6.0.185
   astro: 5.18.1

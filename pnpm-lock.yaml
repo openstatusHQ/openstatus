@@ -265,20 +265,20 @@ catalogs:
       specifier: 8.21.3
       version: 8.21.3
     '@trpc/client':
-      specifier: 11.17.0
-      version: 11.17.0
+      specifier: 11.4.4
+      version: 11.4.4
     '@trpc/next':
-      specifier: 11.17.0
-      version: 11.17.0
+      specifier: 11.4.4
+      version: 11.4.4
     '@trpc/react-query':
-      specifier: 11.17.0
-      version: 11.17.0
+      specifier: 11.4.4
+      version: 11.4.4
     '@trpc/server':
-      specifier: 11.17.0
-      version: 11.17.0
+      specifier: 11.4.4
+      version: 11.4.4
     '@trpc/tanstack-react-query':
-      specifier: 11.17.0
-      version: 11.17.0
+      specifier: 11.4.4
+      version: 11.4.4
     '@turbo/gen':
       specifier: 1.13.4
       version: 1.13.4
@@ -310,11 +310,11 @@ catalogs:
       specifier: 2.3.4
       version: 2.3.4
     '@upstash/qstash':
-      specifier: 2.11.0
-      version: 2.11.0
+      specifier: 2.6.2
+      version: 2.6.2
     '@upstash/redis':
-      specifier: 1.38.0
-      version: 1.38.0
+      specifier: 1.22.1
+      version: 1.22.1
     '@vercel/blob':
       specifier: 0.23.4
       version: 0.23.4
@@ -784,19 +784,19 @@ importers:
         version: 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
+        version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@trpc/react-query':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.17.0(typescript@5.9.3)
+        version: 11.4.4(typescript@5.9.3)
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@unkey/api':
         specifier: 'catalog:'
         version: 2.3.4
@@ -923,22 +923,22 @@ importers:
         version: 3.7.2
       '@astrojs/starlight':
         specifier: 'catalog:'
-        version: 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+        version: 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       '@astrojs/starlight-tailwind':
         specifier: 'catalog:'
-        version: 4.0.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(tailwindcss@4.3.0)
+        version: 4.0.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(tailwindcss@4.3.0)
       '@fontsource-variable/inter':
         specifier: 'catalog:'
         version: 5.2.8
       '@openpanel/astro':
         specifier: 'catalog:'
-        version: 1.0.1(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+        version: 1.0.1(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.0(vite@6.4.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.3)(yaml@2.9.0))
       astro:
         specifier: 'catalog:'
-        version: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+        version: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       sharp:
         specifier: 'catalog:'
         version: 0.33.5
@@ -947,19 +947,19 @@ importers:
         version: 3.23.0
       starlight-image-zoom:
         specifier: 'catalog:'
-        version: 0.13.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))
+        version: 0.13.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))
       starlight-links-validator:
         specifier: 'catalog:'
-        version: 0.19.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+        version: 0.19.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       starlight-llms-txt:
         specifier: 'catalog:'
-        version: 0.7.0(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+        version: 0.7.0(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       starlight-showcases:
         specifier: 'catalog:'
-        version: 0.3.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))
+        version: 0.3.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))
       starlight-sidebar-topics:
         specifier: 'catalog:'
-        version: 0.6.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))
+        version: 0.6.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.0
@@ -993,7 +993,7 @@ importers:
         version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@upstash/qstash':
         specifier: 'catalog:'
-        version: 2.11.0
+        version: 2.6.2
       hono:
         specifier: 'catalog:'
         version: 4.12.21
@@ -1150,7 +1150,7 @@ importers:
         version: 2.3.4
       '@upstash/qstash':
         specifier: 'catalog:'
-        version: 2.11.0
+        version: 2.6.2
       ai:
         specifier: 'catalog:'
         version: 6.0.185(zod@4.1.13)
@@ -1283,19 +1283,19 @@ importers:
         version: 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
+        version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@trpc/react-query':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.17.0(typescript@5.9.3)
+        version: 11.4.4(typescript@5.9.3)
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -1530,22 +1530,22 @@ importers:
         version: 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
+        version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@trpc/react-query':
         specifier: 'catalog:'
-        version: 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.17.0(typescript@5.9.3)
+        version: 11.4.4(typescript@5.9.3)
       '@upstash/qstash':
         specifier: 'catalog:'
-        version: 2.11.0
+        version: 2.6.2
       '@upstash/redis':
         specifier: 'catalog:'
-        version: 1.38.0
+        version: 1.22.1
       '@vercel/blob':
         specifier: 'catalog:'
         version: 0.23.4
@@ -1795,10 +1795,10 @@ importers:
         version: 10.53.1
       '@upstash/qstash':
         specifier: 'catalog:'
-        version: 2.11.0
+        version: 2.6.2
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14)
+        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       effect:
         specifier: 'catalog:'
         version: 3.21.2
@@ -1923,10 +1923,10 @@ importers:
         version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
+        version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.17.0(typescript@5.9.3)
+        version: 11.4.4(typescript@5.9.3)
       '@unkey/api':
         specifier: 'catalog:'
         version: 2.3.4
@@ -2021,10 +2021,10 @@ importers:
         version: 3.0.3
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14)
+        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14))(zod@4.1.13)
+        version: 0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14))(zod@4.1.13)
       zod:
         specifier: 'catalog:'
         version: 4.1.13
@@ -2789,7 +2789,7 @@ importers:
         version: 24.12.4
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14)
+        version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -2994,10 +2994,10 @@ importers:
     dependencies:
       '@upstash/qstash':
         specifier: 'catalog:'
-        version: 2.11.0
+        version: 2.6.2
       '@upstash/redis':
         specifier: 'catalog:'
-        version: 1.38.0
+        version: 1.22.1
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -7877,21 +7877,19 @@ packages:
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
 
-  '@trpc/client@11.17.0':
-    resolution: {integrity: sha512-KpJBFrbKTDeVCFv/3ckL1XBBH5Yssn8hethI/rUy7GIpTj+VzjtPjykDqJpzobuVOz+d26cXCSu1t4I6MYI5Zg==}
-    hasBin: true
+  '@trpc/client@11.4.4':
+    resolution: {integrity: sha512-86OZl+Y+Xlt9ITGlhCMImERcsWCOrVzpNuzg3XBlsDSmSs9NGsghKjeCpJQlE36XaG3aze+o9pRukiYYvBqxgQ==}
     peerDependencies:
-      '@trpc/server': 11.17.0
+      '@trpc/server': 11.4.4
       typescript: '>=5.7.2'
 
-  '@trpc/next@11.17.0':
-    resolution: {integrity: sha512-EjwMkyamGjf5aslgfYB70hMKs4cgmsjSJbMinmuXktkGvbmdW54VbV04Sk4o4QTY5b//Rns9dz+ku8DN6lVhvw==}
-    hasBin: true
+  '@trpc/next@11.4.4':
+    resolution: {integrity: sha512-BTmMHv7whqSf6oE7qAKPCHWNZY9kqEi0inWW690bbs8FJ12A7S5nwIAbzyILfA0S5IJfMFTPJ/ueX2lCMYK67A==}
     peerDependencies:
       '@tanstack/react-query': ^5.59.15
-      '@trpc/client': 11.17.0
-      '@trpc/react-query': 11.17.0
-      '@trpc/server': 11.17.0
+      '@trpc/client': 11.4.4
+      '@trpc/react-query': 11.4.4
+      '@trpc/server': 11.4.4
       next: '*'
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -7902,29 +7900,29 @@ packages:
       '@trpc/react-query':
         optional: true
 
-  '@trpc/react-query@11.17.0':
-    resolution: {integrity: sha512-AGcl5YAF8NnhBmyJ6PqJqKb1M5VTGSoNRNqJ3orct4o4epdcg0GWhW+qT9q6gPzs/2ImIwYCdfFpgNGdZ9yLHA==}
+  '@trpc/react-query@11.4.4':
+    resolution: {integrity: sha512-syXx1JLSERAHWh8BtBZsbv2PIt2nfvO1Sd6C6vHzNO8wAHxpcmq9HyEdrfi+5SfeRfPCJc/ZPCN2wVv98T+big==}
     peerDependencies:
       '@tanstack/react-query': ^5.80.3
-      '@trpc/client': 11.17.0
-      '@trpc/server': 11.17.0
+      '@trpc/client': 11.4.4
+      '@trpc/server': 11.4.4
       react: '>=18.2.0'
+      react-dom: '>=18.2.0'
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.17.0':
-    resolution: {integrity: sha512-jbAOUe0PpUTCYqziyu+8vYXZdDXPudZgnEhWCQ2NjKnVEjfE93RqHTt1oycZJv/HNf51YlRXfEEwSIAbb161rw==}
-    hasBin: true
+  '@trpc/server@11.4.4':
+    resolution: {integrity: sha512-VkJb2xnb4rCynuwlCvgPBh5aM+Dco6fBBIo6lWAdJJRYVwtyE5bxNZBgUvRRz/cFSEAy0vmzLxF7aABDJfK5Rg==}
     peerDependencies:
       typescript: '>=5.7.2'
 
-  '@trpc/tanstack-react-query@11.17.0':
-    resolution: {integrity: sha512-OFxjvCgisP0yaCj7lgP6qPaFwJvJDgnrAUxH3cNIPPR89TpYbndn5vsdKNkc7EnvER9b6wq9Yz8aCcPcOBpDXg==}
-    hasBin: true
+  '@trpc/tanstack-react-query@11.4.4':
+    resolution: {integrity: sha512-Rf7jhPfwAHqmQdQlxTiMolNRon85bPEsBNa5JGpjSvhrTmiaFu5UEhEwHDF2myL7IRYxuYHLc4H0bQ+19qjdHQ==}
     peerDependencies:
       '@tanstack/react-query': ^5.80.3
-      '@trpc/client': 11.17.0
-      '@trpc/server': 11.17.0
+      '@trpc/client': 11.4.4
+      '@trpc/server': 11.4.4
       react: '>=18.2.0'
+      react-dom: '>=18.2.0'
       typescript: '>=5.7.2'
 
   '@ts-morph/common@0.27.0':
@@ -8197,11 +8195,11 @@ packages:
   '@unkey/api@2.3.4':
     resolution: {integrity: sha512-irQCkLIlGedXU0cON4zbfNjGjxWaBr0XdW7JxHl9Hi4M0kAthQ8ZOLX+EYyKO4SS6kmFkfIlq96nDhaMziqtSw==}
 
-  '@upstash/qstash@2.11.0':
-    resolution: {integrity: sha512-AfPPxsUeOJCrxMQ9dkh1RZL40wgxCsUNFkxrbBSomC3U4j4qKFRawU8sDK+dqqH+sZFUS1biVM4GK46d5Tg2Vg==}
+  '@upstash/qstash@2.6.2':
+    resolution: {integrity: sha512-aB/1yqMJTRyOt7Go2Db1ZIVnmTPpsc2KGY5jpLVcegNtjksaPTJF6fmITxos5HVvsQhS8IB3gvF/+gQfRQlPLQ==}
 
-  '@upstash/redis@1.38.0':
-    resolution: {integrity: sha512-wu+dZBptlLy0+MCUEoHmzrY/TnmgDey3+c7EbIGwrLqAvkP8yi5MWZHYGIFtAygmL4Bkz2TdFu+eU0vFPncIcg==}
+  '@upstash/redis@1.22.1':
+    resolution: {integrity: sha512-7ec2eCMkVxZzuHNb+hPKonX4b/Pu0BdDeSBsEy+jKIqiweXzCs5Dpu9642vJgf57YnEsfwgXnQMVEataarvyeQ==}
 
   '@vercel/blob@0.23.4':
     resolution: {integrity: sha512-cOU2e01RWZXFyc/OVRq+zZg38m34bcxpQk5insKp3Td9akNWThrXiF2URFHpRlm4fbaQ/l7pPSOB5nkLq+t6pw==}
@@ -10275,6 +10273,9 @@ packages:
     resolution: {integrity: sha512-64W8/lsfqgaDWfEkvrIVk8FdIk29Mya0Fp39excQEdlcLUPg1Cn7CtCYe6CtPbFW90JpEKTXG0QQtIUNENJ7sw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24.0.0}
 
+  isomorphic-fetch@3.0.0:
+    resolution: {integrity: sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==}
+
   jackspeak@4.1.1:
     resolution: {integrity: sha512-zptv57P3GpL+O0I7VdMJNBZCu+BPHVQUk55Ft8/QCJjTVxrnJHuVuX/0Bl2A6/+2oyR/ZMEuFKwmzqqZ/U5nPQ==}
     engines: {node: 20 || >=22}
@@ -10929,10 +10930,6 @@ packages:
   netmask@2.0.2:
     resolution: {integrity: sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==}
     engines: {node: '>= 0.4.0'}
-
-  neverthrow@7.2.0:
-    resolution: {integrity: sha512-iGBUfFB7yPczHHtA8dksKTJ9E8TESNTAx1UQWW6TzMF280vo9jdPYpLUXrMN1BCkPdHFdNG3fxOt2CUad8KhAw==}
-    engines: {node: '>=18'}
 
   next-auth@5.0.0-beta.29:
     resolution: {integrity: sha512-Ukpnuk3NMc/LiOl32njZPySk7pABEzbjhMUFd5/n10I0ZNC7NCuVv8IY2JgbDek2t/PUOifQEoUiOOTLy4os5A==}
@@ -13106,6 +13103,9 @@ packages:
       webpack-cli:
         optional: true
 
+  whatwg-fetch@3.6.20:
+    resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
+
   whatwg-mimetype@5.0.0:
     resolution: {integrity: sha512-sXcNcHOC51uPGF0P/D4NVtrkjSU2fNsm9iog4ZvZJsL3rjoDAzXZhkm2MWt1y+PUdggKAYVoMAIYcs78wJ51Cw==}
     engines: {node: '>=20'}
@@ -13493,12 +13493,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/mdx@4.3.13(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
+  '@astrojs/mdx@4.3.13(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
     dependencies:
       '@astrojs/markdown-remark': 6.3.10
       '@mdx-js/mdx': 3.1.1
       acorn: 8.15.0
-      astro: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       es-module-lexer: 1.7.0
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -13551,22 +13551,22 @@ snapshots:
       stream-replace-string: 2.0.0
       zod: 4.4.3
 
-  '@astrojs/starlight-tailwind@4.0.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(tailwindcss@4.3.0)':
+  '@astrojs/starlight-tailwind@4.0.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(tailwindcss@4.3.0)':
     dependencies:
-      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       tailwindcss: 4.3.0
 
-  '@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
+  '@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
     dependencies:
       '@astrojs/markdown-remark': 6.3.10
-      '@astrojs/mdx': 4.3.13(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/mdx': 4.3.13(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       '@astrojs/sitemap': 3.6.0
       '@pagefind/default-ui': 1.4.0
       '@types/hast': 3.0.4
       '@types/js-yaml': 4.0.9
       '@types/mdast': 4.0.4
-      astro: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
-      astro-expressive-code: 0.41.3(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      astro-expressive-code: 0.41.3(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       bcp-47: 2.1.0
       hast-util-from-html: 2.0.3
       hast-util-select: 6.0.4
@@ -15520,10 +15520,10 @@ snapshots:
 
   '@open-draft/until@2.1.0': {}
 
-  '@openpanel/astro@1.0.1(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
+  '@openpanel/astro@1.0.1(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
     dependencies:
       '@openpanel/web': 1.0.1
-      astro: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
 
   '@openpanel/nextjs@1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
@@ -17824,41 +17824,43 @@ snapshots:
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
-  '@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)':
+  '@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@trpc/server': 11.17.0(typescript@5.9.3)
+      '@trpc/server': 11.4.4(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@trpc/next@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)':
+  '@trpc/next@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)':
     dependencies:
-      '@trpc/client': 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
-      '@trpc/server': 11.17.0(typescript@5.9.3)
+      '@trpc/client': 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server': 11.4.4(typescript@5.9.3)
       next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       typescript: 5.9.3
     optionalDependencies:
       '@tanstack/react-query': 5.100.11(react@19.2.6)
-      '@trpc/react-query': 11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+      '@trpc/react-query': 11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
 
-  '@trpc/react-query@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)':
+  '@trpc/react-query@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)':
     dependencies:
       '@tanstack/react-query': 5.100.11(react@19.2.6)
-      '@trpc/client': 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
-      '@trpc/server': 11.17.0(typescript@5.9.3)
+      '@trpc/client': 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server': 11.4.4(typescript@5.9.3)
       react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
       typescript: 5.9.3
 
-  '@trpc/server@11.17.0(typescript@5.9.3)':
+  '@trpc/server@11.4.4(typescript@5.9.3)':
     dependencies:
       typescript: 5.9.3
 
-  '@trpc/tanstack-react-query@11.17.0(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.17.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)':
+  '@trpc/tanstack-react-query@11.4.4(@tanstack/react-query@5.100.11(react@19.2.6))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)':
     dependencies:
       '@tanstack/react-query': 5.100.11(react@19.2.6)
-      '@trpc/client': 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
-      '@trpc/server': 11.17.0(typescript@5.9.3)
+      '@trpc/client': 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server': 11.4.4(typescript@5.9.3)
       react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
       typescript: 5.9.3
 
   '@ts-morph/common@0.27.0':
@@ -18167,15 +18169,16 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  '@upstash/qstash@2.11.0':
+  '@upstash/qstash@2.6.2':
     dependencies:
       crypto-js: 4.2.0
       jose: 5.10.0
-      neverthrow: 7.2.0
 
-  '@upstash/redis@1.38.0':
+  '@upstash/redis@1.22.1':
     dependencies:
-      uncrypto: 0.1.3
+      isomorphic-fetch: 3.0.0
+    transitivePeerDependencies:
+      - encoding
 
   '@vercel/blob@0.23.4':
     dependencies:
@@ -18473,12 +18476,12 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro-expressive-code@0.41.3(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)):
+  astro-expressive-code@0.41.3(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)):
     dependencies:
-      astro: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       rehype-expressive-code: 0.41.3
 
-  astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0):
+  astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0):
     dependencies:
       '@astrojs/compiler': 2.13.0
       '@astrojs/internal-helpers': 0.7.6
@@ -18533,7 +18536,7 @@ snapshots:
       ultrahtml: 1.6.0
       unifont: 0.7.4
       unist-util-visit: 5.1.0
-      unstorage: 1.17.5(@upstash/redis@1.38.0)
+      unstorage: 1.17.5
       vfile: 6.0.3
       vite: 6.4.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.3)(yaml@2.9.0)
       vitefu: 1.1.1(vite@6.4.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.3)(yaml@2.9.0))
@@ -19247,17 +19250,16 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.22.3
 
-  drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14):
+  drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14):
     optionalDependencies:
       '@libsql/client': 0.15.15
       '@opentelemetry/api': 1.9.1
       '@types/pg': 8.15.6
-      '@upstash/redis': 1.38.0
       bun-types: 1.3.14
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14))(zod@4.1.13):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14))(zod@4.1.13):
     dependencies:
-      drizzle-orm: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14)
+      drizzle-orm: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(bun-types@1.3.14)
       zod: 4.1.13
 
   dset@3.1.4: {}
@@ -20625,6 +20627,13 @@ snapshots:
       - '@noble/hashes'
       - canvas
 
+  isomorphic-fetch@3.0.0:
+    dependencies:
+      node-fetch: 2.7.0
+      whatwg-fetch: 3.6.20
+    transitivePeerDependencies:
+      - encoding
+
   jackspeak@4.1.1:
     dependencies:
       '@isaacs/cliui': 8.0.2
@@ -21509,8 +21518,6 @@ snapshots:
   neotraverse@0.6.18: {}
 
   netmask@2.0.2: {}
-
-  neverthrow@7.2.0: {}
 
   next-auth@5.0.0-beta.29(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6):
     dependencies:
@@ -23190,9 +23197,9 @@ snapshots:
       '@stablelib/base64': 1.0.1
       fast-sha256: 1.3.0
 
-  starlight-image-zoom@0.13.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))):
+  starlight-image-zoom@0.13.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))):
     dependencies:
-      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       mdast-util-mdx-jsx: 3.2.0
       rehype-raw: 7.0.0
       unist-util-visit: 5.1.0
@@ -23200,11 +23207,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  starlight-links-validator@0.19.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)):
+  starlight-links-validator@0.19.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)):
     dependencies:
-      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       '@types/picomatch': 3.0.2
-      astro: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       github-slugger: 2.0.0
       hast-util-from-html: 2.0.3
       hast-util-has-property: 3.0.0
@@ -23218,13 +23225,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  starlight-llms-txt@0.7.0(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)):
+  starlight-llms-txt@0.7.0(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)))(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)):
     dependencies:
-      '@astrojs/mdx': 4.3.13(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
-      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/mdx': 4.3.13(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       '@types/hast': 3.0.4
       '@types/micromatch': 4.0.10
-      astro: 5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
       github-slugger: 2.0.0
       hast-util-select: 6.0.4
       micromatch: 4.0.8
@@ -23237,15 +23244,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  starlight-showcases@0.3.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))):
+  starlight-showcases@0.3.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))):
     dependencies:
       '@astro-community/astro-embed-twitter': 0.5.11
       '@astro-community/astro-embed-youtube': 0.5.10
-      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
 
-  starlight-sidebar-topics@0.6.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))):
+  starlight-sidebar-topics@0.6.2(@astrojs/starlight@0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))):
     dependencies:
-      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(@upstash/redis@1.38.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+      '@astrojs/starlight': 0.37.7(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       picomatch: 4.0.3
 
   statuses@2.0.2: {}
@@ -23799,7 +23806,7 @@ snapshots:
       picomatch: 4.0.3
       webpack-virtual-modules: 0.6.2
 
-  unstorage@1.17.5(@upstash/redis@1.38.0):
+  unstorage@1.17.5:
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -23809,8 +23816,6 @@ snapshots:
       node-fetch-native: 1.6.7
       ofetch: 1.5.1
       ufo: 1.6.4
-    optionalDependencies:
-      '@upstash/redis': 1.38.0
 
   until-async@3.0.2: {}
 
@@ -24114,6 +24119,8 @@ snapshots:
       - '@swc/core'
       - esbuild
       - uglify-js
+
+  whatwg-fetch@3.6.20: {}
 
   whatwg-mimetype@5.0.0: {}
 
