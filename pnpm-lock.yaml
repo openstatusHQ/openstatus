@@ -124,14 +124,14 @@ catalogs:
       specifier: 1.29.0
       version: 1.29.0
     '@openpanel/astro':
-      specifier: 1.0.1
-      version: 1.0.1
+      specifier: 1.4.1
+      version: 1.4.1
     '@openpanel/nextjs':
-      specifier: 1.2.0
-      version: 1.2.0
+      specifier: 1.5.1
+      version: 1.5.1
     '@openpanel/sdk':
-      specifier: 1.0.3
-      version: 1.0.3
+      specifier: 1.3.1
+      version: 1.3.1
     '@opentelemetry/resources':
       specifier: 2.7.1
       version: 2.7.1
@@ -655,7 +655,7 @@ importers:
         version: 0.15.15
       '@openpanel/nextjs':
         specifier: 'catalog:'
-        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 1.5.1(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -932,7 +932,7 @@ importers:
         version: 5.2.8
       '@openpanel/astro':
         specifier: 'catalog:'
-        version: 1.0.1(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
+        version: 1.4.1(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.0(vite@6.4.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.1)(tsx@4.22.3)(yaml@2.9.0))
@@ -1226,7 +1226,7 @@ importers:
         version: 0.15.15
       '@openpanel/nextjs':
         specifier: 'catalog:'
-        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 1.5.1(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -1431,7 +1431,7 @@ importers:
         version: 0.15.15
       '@openpanel/nextjs':
         specifier: 'catalog:'
-        version: 1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 1.5.1(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -1826,7 +1826,7 @@ importers:
     dependencies:
       '@openpanel/sdk':
         specifier: 'catalog:'
-        version: 1.0.3
+        version: 1.3.1
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
@@ -5340,32 +5340,23 @@ packages:
   '@open-draft/until@2.1.0':
     resolution: {integrity: sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==}
 
-  '@openpanel/astro@1.0.1':
-    resolution: {integrity: sha512-PLSOJFj4RoFbQPZXBwJNsaqprnrjq5Hj1x6oY1a1IJpWSqFqO3Wa1OSMsLh2G2QXAowsg+cfiu7Mp6h/kK1tow==}
+  '@openpanel/astro@1.4.1':
+    resolution: {integrity: sha512-Pv1SKm4KV3bxDj+2omaakW5+WUDX0ILw33wV0pnsaV4bxnjG+3lUAvhEaSBYfq8Nf6141PdEBL1Kyy+5rQc3Kw==}
     peerDependencies:
       astro: ^4.0.0 || ^5.0.0
 
-  '@openpanel/nextjs@1.2.0':
-    resolution: {integrity: sha512-APHnOj34aeOM0JZMqSPWPV1oMDiY9I21MBEm+ne3G00H/fNkE2RyG4F0yxoxripn1EqiZK65a07HZH8qfLgXdQ==}
+  '@openpanel/nextjs@1.5.1':
+    resolution: {integrity: sha512-60vhKw29weFWmwntx/cSIYU1TcwNzRykeg8P70onr3jzeyMGsEd78d/wgF5Mp/NIxQDN0IT4LneS6hIDIyrTpw==}
     peerDependencies:
       next: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@openpanel/sdk@1.0.0':
-    resolution: {integrity: sha512-FNmmfjdXoC/VHEjA+WkrQ4lyM5lxEmV7xDd57uj4E+lIS0sU3DLG2mV/dpS8AscnZbUvuMn3kPhiLCqYzuv/gg==}
+  '@openpanel/sdk@1.3.1':
+    resolution: {integrity: sha512-mQ5xaBUGXnyRg3qYxwnbVaUYyW7w8u+munrWk/ClnqxEeR2j+FYPiA6noHbHMCFC2aZutYD5OoRzEvw3FBNFxw==}
 
-  '@openpanel/sdk@1.0.3':
-    resolution: {integrity: sha512-VzxHN4wfMd6iP7Amq572plQKvj6bnsp+KgVK/7sbqEvzJ2N505a3Sn/wCwectBYiJ0QPRi2djeqU5tdacm6hhg==}
-
-  '@openpanel/sdk@1.1.0':
-    resolution: {integrity: sha512-KxFEbY+s0wP5I+su1+j1AOVn6Uvw0QMO+iXbEcmW2MkFAaIuIIPYkHFELxiLPuePLI54gYfbmTr2ZMlz9GJtZw==}
-
-  '@openpanel/web@1.0.1':
-    resolution: {integrity: sha512-cVZ7Kr9SicczJ/RDIfEtZs8+1iGDzwkabVA/j3NqSl8VSucsC8m1+LVbjmCDzCJNnK4yVn6tEcc9PJRi2rtllw==}
-
-  '@openpanel/web@1.1.0':
-    resolution: {integrity: sha512-5AUG/uBZZaeMKFNsp5l21D3Lj0ddPLK4NS/XIol7Q0jp2n6Za2wO5UlJ9MUatMoSLyLHc4a1BK9t+gbBlN7cMg==}
+  '@openpanel/web@1.4.1':
+    resolution: {integrity: sha512-DgUWeocZw+b57YiJjefZPg+6sceR7TdOF8x7Ut75lu3CwcwqGi5jZNPXjikNemGL37aNWXCB4buhcoNan2j7RA==}
 
   '@opentelemetry/api-logs@0.207.0':
     resolution: {integrity: sha512-lAb0jQRVyleQQGiuuvCOTDVspc14nx6XJjP4FspJ1sNARo3Regq4ZZbrc3rN4b1TYSuUCvgH+UXUPug4SLOqEQ==}
@@ -15542,31 +15533,23 @@ snapshots:
 
   '@open-draft/until@2.1.0': {}
 
-  '@openpanel/astro@1.0.1(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
+  '@openpanel/astro@1.4.1(astro@5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0))':
     dependencies:
-      '@openpanel/web': 1.0.1
+      '@openpanel/web': 1.4.1
       astro: 5.18.1(@types/node@24.12.4)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)(terser@5.44.1)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
 
-  '@openpanel/nextjs@1.2.0(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@openpanel/nextjs@1.5.1(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@openpanel/web': 1.1.0
+      '@openpanel/web': 1.4.1
       next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@openpanel/sdk@1.0.0': {}
+  '@openpanel/sdk@1.3.1': {}
 
-  '@openpanel/sdk@1.0.3': {}
-
-  '@openpanel/sdk@1.1.0': {}
-
-  '@openpanel/web@1.0.1':
+  '@openpanel/web@1.4.1':
     dependencies:
-      '@openpanel/sdk': 1.0.0
-
-  '@openpanel/web@1.1.0':
-    dependencies:
-      '@openpanel/sdk': 1.1.0
+      '@openpanel/sdk': 1.3.1
       '@rrweb/types': 2.0.0-alpha.20
       rrweb: 2.0.0-alpha.20
 
