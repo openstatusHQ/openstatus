@@ -60,8 +60,8 @@ export default async function Page() {
   await api.externalService.grid.prefetch();
 
   return (
-    <section className="prose dark:prose-invert mb-12 max-w-none">
-      <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
+    <section className="prose dark:prose-invert flex flex-col gap-4 mb-12 max-w-none">
+      <ContentBoxContainer className="not-prose mb-2 px-4 py-2 text-sm">
         <CustomLink
           href={`${APP_URL}?ref=status-index-top`}
           className="font-medium underline-offset-4 hover:underline"

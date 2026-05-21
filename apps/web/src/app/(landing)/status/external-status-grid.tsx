@@ -20,15 +20,18 @@ export function ExternalStatusGrid() {
 
   return (
     <>
-      <p className="not-prose mb-2 text-muted-foreground text-xs" role="status">
+      <p
+        className="not-prose my-0! text-muted-foreground text-xs"
+        role="status"
+      >
         Showing {filtered.length} of {services.length} services
       </p>
       {filtered.length === 0 && hasQuery && (
-        <p className="text-muted-foreground text-sm">
+        <p className="my-0! text-muted-foreground text-sm">
           No services match &ldquo;{q}&rdquo;.
         </p>
       )}
-      <Grid cols={2}>
+      <Grid cols={2} className="my-0!">
         {filtered.map((service) => (
           <ContentBoxLink
             key={service.slug}
