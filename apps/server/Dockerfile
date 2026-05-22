@@ -3,15 +3,17 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a AS install
+FROM node:24-slim AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.6" \
+    org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
+RUN corepack enable pnpm
 RUN \
-    --mount=type=bind,target=bunfig.toml,source=bunfig.toml \
+    --mount=type=bind,target=pnpm-workspace.yaml,source=pnpm-workspace.yaml \
+    --mount=type=bind,target=pnpm-lock.yaml,source=pnpm-lock.yaml \
     --mount=type=bind,target=package.json,source=package.json \
+    --mount=type=bind,target=patches,source=patches \
     --mount=type=bind,target=apps/server/package.json,source=apps/server/package.json \
     --mount=type=bind,target=packages/analytics/package.json,source=packages/analytics/package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
@@ -44,8 +46,8 @@ RUN \
     --mount=type=bind,target=packages/locales/package.json,source=packages/locales/package.json \
     --mount=type=bind,target=packages/services/package.json,source=packages/services/package.json \
     --mount=type=bind,target=packages/importers/package.json,source=packages/importers/package.json \
-    --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
-    bun install --production --frozen-lockfile --verbose
+    --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
+    pnpm install --frozen-lockfile --verbose
 
 # build
 FROM oven/bun@sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a AS build
@@ -62,6 +64,14 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
+COPY \
+    --from=install \
+    --link \
+    "/app/apps/server/node_modules" "/app/apps/server/node_modules"
+COPY \
+    --from=install \
+    --link \
+    "/app/packages" "/app/packages"
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
