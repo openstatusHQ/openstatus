@@ -1976,6 +1976,9 @@ importers:
       jsonpath-plus:
         specifier: 'catalog:'
         version: 7.2.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1983,9 +1986,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.13
 
   packages/db:
     dependencies:
@@ -2050,6 +2050,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 3.21.2
+      react:
+        specifier: 'catalog:'
+        version: 19.2.6
       react-email:
         specifier: 'catalog:'
         version: 6.1.5(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -2072,9 +2075,6 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.15
-      react:
-        specifier: 'catalog:'
-        version: 19.2.6
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
