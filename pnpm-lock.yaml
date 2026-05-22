@@ -574,6 +574,9 @@ catalogs:
       specifier: 4.1.13
       version: 4.1.13
 
+patchedDependencies:
+  react-tweet@3.3.0: 92eafba289fc37e9c3b6ed1a7ca995f5aed82f43e0303fa9ae3b1a6a525bbe63
+
 importers:
 
   .:
@@ -1608,7 +1611,7 @@ importers:
         version: 5.4.5(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react-tweet:
         specifier: 'catalog:'
-        version: 3.3.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 3.3.0(patch_hash=92eafba289fc37e9c3b6ed1a7ca995f5aed82f43e0303fa9ae3b1a6a525bbe63)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       reading-time:
         specifier: 'catalog:'
         version: 1.5.0
@@ -21706,7 +21709,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  react-tweet@3.3.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  react-tweet@3.3.0(patch_hash=92eafba289fc37e9c3b6ed1a7ca995f5aed82f43e0303fa9ae3b1a6a525bbe63)(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
       '@swc/helpers': 0.5.17
       clsx: 2.1.1

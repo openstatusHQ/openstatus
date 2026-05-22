@@ -21,6 +21,9 @@ allowBuilds:
 
 autoInstallPeers: true
 
+patchedDependencies:
+  "react-tweet@3.3.0": patches/react-tweet@3.3.0.patch
+
 catalog:
   "@ai-sdk/anthropic": 1.2.12
   "@ai-sdk/react": 3.0.187
