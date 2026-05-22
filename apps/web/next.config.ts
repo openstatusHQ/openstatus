@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    // turbopackScopeHoisting: false,
+    turbopackScopeHoisting: false,
     // serverMinification:false,
   },
   serverExternalPackages: ["@google-cloud/tasks"],
