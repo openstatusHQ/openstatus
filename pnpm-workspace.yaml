@@ -55,7 +55,7 @@ catalog:
   "@hono/mcp": 0.2.5
   "@hono/sentry": 1.2.2
   "@hono/zod-openapi": 1.4.0
-  "@hono/zod-validator": 0.2.2
+  "@hono/zod-validator": 0.8.0
   "@hookform/devtools": 4.4.0
   "@hookform/resolvers": 5.2.2
   "@iconify-json/lucide": 1.2.109

@@ -97,8 +97,8 @@ catalogs:
       specifier: 1.4.0
       version: 1.4.0
     '@hono/zod-validator':
-      specifier: 0.2.2
-      version: 0.2.2
+      specifier: 0.8.0
+      version: 0.8.0
     '@hookform/devtools':
       specifier: 4.4.0
       version: 4.4.0
@@ -975,7 +975,7 @@ importers:
         version: 3.1051.0
       '@hono/zod-validator':
         specifier: 'catalog:'
-        version: 0.2.2(hono@4.12.21)(zod@4.1.13)
+        version: 0.8.0(hono@4.12.21)(zod@4.1.13)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -1036,7 +1036,7 @@ importers:
         version: 1.4.0(hono@4.12.21)(zod@4.1.13)
       '@hono/zod-validator':
         specifier: 'catalog:'
-        version: 0.2.2(hono@4.12.21)(zod@4.1.13)
+        version: 0.8.0(hono@4.12.21)(zod@4.1.13)
       '@logtape/logtape':
         specifier: 'catalog:'
         version: 2.1.1
@@ -4536,12 +4536,6 @@ packages:
     peerDependencies:
       hono: '>=4.10.0'
       zod: ^4.0.0
-
-  '@hono/zod-validator@0.2.2':
-    resolution: {integrity: sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==}
-    peerDependencies:
-      hono: '>=3.9.0'
-      zod: ^3.19.1
 
   '@hono/zod-validator@0.8.0':
     resolution: {integrity: sha512-5uS4S1/LKtZQYvD4BtpPUFkOv8d1wNxHHrChm26buMiEYc1FrHWvDUaKVBwkiVtvSExHSpLGDvcnpI2Copyj9w==}
@@ -14460,11 +14454,6 @@ snapshots:
       '@hono/zod-validator': 0.8.0(hono@4.12.21)(zod@4.1.13)
       hono: 4.12.21
       openapi3-ts: 4.5.0
-      zod: 4.1.13
-
-  '@hono/zod-validator@0.2.2(hono@4.12.21)(zod@4.1.13)':
-    dependencies:
-      hono: 4.12.21
       zod: 4.1.13
 
   '@hono/zod-validator@0.8.0(hono@4.12.21)(zod@4.1.13)':
