@@ -555,9 +555,6 @@ catalogs:
     tsup:
       specifier: 7.2.0
       version: 7.2.0
-    turbo:
-      specifier: 2.9.14
-      version: 2.9.14
     tw-animate-css:
       specifier: 1.4.0
       version: 1.4.0
@@ -603,7 +600,7 @@ importers:
         specifier: 'catalog:'
         version: 0.10.1
       turbo:
-        specifier: 'catalog:'
+        specifier: 2.9.14
         version: 2.9.14
       typescript:
         specifier: 'catalog:'

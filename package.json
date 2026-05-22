@@ -27,7 +27,7 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "turbo": "catalog:",
+    "turbo": "2.9.14",
     "typescript": "catalog:"
   },
   "packageManager": "pnpm@11.2.1",
