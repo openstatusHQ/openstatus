@@ -8,7 +8,9 @@ const packageJson: PackageJson = await Bun.file(
 ).json();
 
 const extractDependenciesNames = ["@libsql/client"];
-const workspaceConfig = await Bun.file(path.join(__dirname, "../../../pnpm-workspace.yaml")).text();
+const workspaceConfig = await Bun.file(
+  path.join(__dirname, "../../../pnpm-workspace.yaml"),
+).text();
 
 const catalog = (() => {
   const lines = workspaceConfig.split(/\r?\n/);
@@ -73,4 +75,7 @@ const packageJsonBuild = {
   dependencies: extractedDependencies,
 };
 
-await Bun.write("../build-docker/package.json", JSON.stringify(packageJsonBuild, null, 2));
+await Bun.write(
+  "../build-docker/package.json",
+  JSON.stringify(packageJsonBuild, null, 2),
+);
