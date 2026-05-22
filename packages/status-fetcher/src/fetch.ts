@@ -108,8 +108,8 @@ const fetchBody = <T>(
   read: (response: Response) => Effect.Effect<T, FetchError>,
 ): Effect.Effect<T, FetchError> =>
   doFetch(opts, defaultHeaders).pipe(
-    Effect.flatMap(read),
     Effect.retry(retryPolicy),
+    Effect.flatMap(read),
   );
 
 const JSON_HEADERS = {

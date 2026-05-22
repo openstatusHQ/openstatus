@@ -106,14 +106,17 @@ describe("fetchJson", () => {
     expect(fetchMock.mock.calls.length).toBe(4);
   });
 
-  it("fails with FetchError on schema mismatch (cause is Zod error)", async () => {
-    installMockFetch(() => Promise.resolve(okJson({ unexpected: "shape" })));
+  it("fails with FetchError on schema mismatch without retrying", async () => {
+    const fetchMock = installMockFetch(() =>
+      Promise.resolve(okJson({ unexpected: "shape" })),
+    );
     const schema = z.object({ name: z.string() });
     const exit = await Effect.runPromiseExit(
       fetchJson({ url: TEST_URL, schema }),
     );
     const err = expectFailure(exit);
     expect(err.cause).toBeInstanceOf(Error);
+    expect(fetchMock.mock.calls.length).toBe(1);
   });
 
   it("applies default User-Agent and Accept headers", async () => {
