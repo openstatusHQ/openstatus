@@ -86,7 +86,7 @@ export async function runExternalStatusTick(): Promise<{
           Effect.either,
         );
       },
-      { concurrency: "unbounded" },
+      { concurrency: 25 },
     ),
   );
 
@@ -98,10 +98,10 @@ export async function runExternalStatusTick(): Promise<{
     } else {
       failureCount++;
       const slug = entries[i]?.id ?? "<unknown>";
-      logger.warn(
-        "external-status tick: fetcher failed for slug={slug}: {reason}",
-        { slug, reason: r.left.message },
-      );
+      logger.warn("external-status tick: fetcher failed for slug={slug}: {reason}", {
+        slug,
+        reason: r.left.message,
+      });
     }
   }
 
@@ -127,20 +127,15 @@ export async function handleExternalStatusCron(c: Context) {
     Effect.tryPromise({
       try: () => runExternalStatusTick(),
       catch: (e) =>
-        new Error(
-          `external-status tick failed: ${e instanceof Error ? e.message : String(e)}`,
-        ),
+        new Error(`external-status tick failed: ${e instanceof Error ? e.message : String(e)}`),
     }).pipe(
       Effect.tap((res) =>
         Effect.sync(() => {
-          logger.info(
-            "external-status tick complete: {success}/{total} ({failures} failures)",
-            {
-              success: res.successCount,
-              total: res.total,
-              failures: res.failureCount,
-            },
-          );
+          logger.info("external-status tick complete: {success}/{total} ({failures} failures)", {
+            success: res.successCount,
+            total: res.total,
+            failures: res.failureCount,
+          });
           void cronCompleted();
         }),
       ),
