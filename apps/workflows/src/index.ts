@@ -17,7 +17,10 @@ import { cronRouter } from "./cron";
 import { env } from "./env";
 import "./lib/sentry";
 
-import { resourceFromAttributes } from "@opentelemetry/resources";
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
+import { defaultResource, resourceFromAttributes } from "@opentelemetry/resources";
+import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import { incidentRoute } from "./incident";
 
@@ -59,19 +62,28 @@ function shouldSample(event: Record<string, unknown>): boolean {
   return Math.random() < 0.2;
 }
 
-const defaultLogger = getOpenTelemetrySink({
-  serviceName: "openstatus-workflows",
-  otlpExporterConfig: {
-    url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-    headers: {
-      Authorization: `Bearer ${env().AXIOM_TOKEN}`,
-      "X-Axiom-Dataset": env().AXIOM_DATASET,
-    },
-  },
-  additionalResource: resourceFromAttributes({
-    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env().NODE_ENV,
-  }),
+const loggerProvider = new LoggerProvider({
+  resource: defaultResource().merge(
+    resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: "openstatus-workflows",
+      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env().NODE_ENV,
+    }),
+  ),
+  processors: [
+    new BatchLogRecordProcessor(
+      new OTLPLogExporter({
+        url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+        headers: {
+          Authorization: `Bearer ${env().AXIOM_TOKEN}`,
+          "X-Axiom-Dataset": env().AXIOM_DATASET,
+        },
+      }),
+      { maxQueueSize: 2048, maxExportBatchSize: 512, scheduledDelayMillis: 5000 },
+    ),
+  ],
 });
+
+const defaultLogger = getOpenTelemetrySink({ loggerProvider });
 
 await configure({
   sinks: {
@@ -159,7 +171,16 @@ app.onError((err, c) => {
     url: c.req.url,
     request_id: c.get("requestId"),
   });
-  Sentry.captureException(err);
+  Sentry.captureException(err, {
+    contexts: {
+      request: {
+        method: c.req.method,
+        path: c.req.path,
+        url: c.req.url,
+      },
+    },
+    tags: { request_id: c.get("requestId") },
+  });
 
   return c.json({ error: "Internal server error" }, 500);
 });
@@ -186,5 +207,22 @@ if (NODE_ENV === "development") {
 logger.info("Starting server", { port: PORT, environment: NODE_ENV });
 
 const server = { port: PORT, fetch: app.fetch };
+
+let shuttingDown = false;
+async function shutdownTelemetry() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  try {
+    await Promise.race([
+      Promise.allSettled([loggerProvider.shutdown(), Sentry.close(2000)]),
+      new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+    ]);
+  } catch (e) {
+    console.error("telemetry shutdown failed", e);
+  }
+  process.exit(0);
+}
+process.on("SIGTERM", shutdownTelemetry);
+process.on("SIGINT", shutdownTelemetry);
 
 export default server;

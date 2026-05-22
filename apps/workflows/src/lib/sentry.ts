@@ -5,7 +5,7 @@ import { env } from "../env";
 Sentry.init({
   dsn: env().SENTRY_DSN,
   environment: env().NODE_ENV,
-  tracesSampleRate: 0,
+  integrations: (defaults) => defaults.filter((i) => i.name !== "BunServer"),
 });
 
 export function runSentryCron(monitorSlug: string): {
