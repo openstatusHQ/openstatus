@@ -56,7 +56,7 @@ builders:
       - packages/importers/package.json
     run:
       - corepack enable pnpm
-      - pnpm install --frozen-lockfile --verbose
+      - pnpm install --prod --frozen-lockfile --verbose
     cache:
       - /root/.local/share/pnpm/store
 

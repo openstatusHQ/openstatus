@@ -49,7 +49,7 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --frozen-lockfile --verbose
+pnpm install --prod --frozen-lockfile --verbose
 EOF
 
 # build
@@ -78,11 +78,11 @@ COPY \
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f AS runtime
+FROM debian@sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f" \
+    org.opencontainers.image.base.digest="sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \

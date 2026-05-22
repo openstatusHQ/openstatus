@@ -54,7 +54,7 @@ builders:
     # Install dependencies
     run:
       - corepack enable pnpm
-      - pnpm install --frozen-lockfile --verbose
+      - pnpm install --prod --frozen-lockfile --verbose
     cache:
       - /root/.local/share/pnpm/store
 
@@ -92,15 +92,13 @@ builders:
     fromImage: node:24-slim
     workdir: /app/
     copy:
-      - pnpm-workspace.yaml /app/pnpm-workspace.yaml
-      - pnpm-lock.yaml /app/pnpm-lock.yaml
       - fromBuilder: docker
         source: /app/apps/build-docker/package.json
         target: /app/package.json
     run:
       - corepack enable pnpm
-      - "awk 'BEGIN{skip=0} /^patchedDependencies:/ {skip=1; next} skip && /^[^ ]/ {skip=0} !skip {print}' pnpm-workspace.yaml > /tmp/pnpm-workspace.yaml && mv /tmp/pnpm-workspace.yaml pnpm-workspace.yaml"
-      - pnpm install
+      - pnpm install --prod --lockfile-only
+      - pnpm install --prod --frozen-lockfile
 
 fromImage: debian:bullseye-slim
 workdir: /app/

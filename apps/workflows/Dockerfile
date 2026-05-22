@@ -57,7 +57,7 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --frozen-lockfile --verbose
+pnpm install --prod --frozen-lockfile --verbose
 EOF
 
 # build
@@ -92,27 +92,21 @@ LABEL \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 WORKDIR /app/
 COPY \
-    --link \
-    "pnpm-workspace.yaml" "/app/pnpm-workspace.yaml"
-COPY \
-    --link \
-    "pnpm-lock.yaml" "/app/pnpm-lock.yaml"
-COPY \
     --from=docker \
     --link \
     "/app/apps/build-docker/package.json" "/app/package.json"
 RUN <<EOF
 corepack enable pnpm
-awk 'BEGIN{skip=0} /^patchedDependencies:/ {skip=1; next} skip && /^[^ ]/ {skip=0} !skip {print}' pnpm-workspace.yaml > /tmp/pnpm-workspace.yaml && mv /tmp/pnpm-workspace.yaml pnpm-workspace.yaml
-pnpm install
+pnpm install --prod --lockfile-only
+pnpm install --prod --frozen-lockfile
 EOF
 
 # runtime
-FROM debian@sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734 AS runtime
+FROM debian@sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734" \
+    org.opencontainers.image.base.digest="sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="Background job processing and probe scheduling for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \

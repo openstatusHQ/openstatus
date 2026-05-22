@@ -13,6 +13,7 @@
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "effect": "catalog:",
+    "react": "catalog:",
     "react-email": "catalog:",
     "resend": "catalog:",
     "zod": "catalog:"
@@ -22,7 +23,6 @@
     "@react-email/ui": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "react": "catalog:",
     "typescript": "catalog:"
   }
 }

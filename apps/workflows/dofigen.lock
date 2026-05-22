@@ -12,36 +12,13 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    libsql:
-      fromImage:
-        path: node
-        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
-      label:
-        org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
-      workdir: /app/
-      copy:
-      - paths:
-        - pnpm-workspace.yaml
-        target: /app/pnpm-workspace.yaml
-      - paths:
-        - pnpm-lock.yaml
-        target: /app/pnpm-lock.yaml
-      - fromBuilder: docker
-        paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
-      run:
-      - corepack enable pnpm
-      - awk 'BEGIN{skip=0} /^patchedDependencies:/ {skip=1; next} skip && /^[^ ]/ {skip=0} !skip {print}' pnpm-workspace.yaml > /tmp/pnpm-workspace.yaml && mv /tmp/pnpm-workspace.yaml pnpm-workspace.yaml
-      - pnpm install
     build:
       fromImage:
         path: oven/bun
         digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.stage: build
         org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.stage: build
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
       workdir: /app/apps/workflows
       env:
@@ -69,8 +46,8 @@ effective: |
         path: oven/bun
         digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
         org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
       workdir: /app/apps/workflows
       copy:
       - paths:
@@ -83,13 +60,13 @@ effective: |
         path: node
         digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - corepack enable pnpm
-      - pnpm install --frozen-lockfile --verbose
+      - pnpm install --prod --frozen-lockfile --verbose
       cache:
       - target: /root/.local/share/pnpm/store
       bind:
@@ -159,18 +136,35 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
+    libsql:
+      fromImage:
+        path: node
+        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+      label:
+        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+      workdir: /app/
+      copy:
+      - fromBuilder: docker
+        paths:
+        - /app/apps/build-docker/package.json
+        target: /app/package.json
+      run:
+      - corepack enable pnpm
+      - pnpm install --prod --lockfile-only
+      - pnpm install --prod --frozen-lockfile
   fromImage:
     path: debian
-    digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
+    digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.title: OpenStatus Workflows
+    org.opencontainers.image.vendor: OpenStatus
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    org.opencontainers.image.authors: OpenStatus Team
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -195,20 +189,20 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
-      node:
-        24-slim:
-          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
     oven:
       bun:
         1.3.11:
           digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+    library:
+      node:
+        24-slim:
+          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+      debian:
+        bullseye-slim:
+          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
 resources:
   dofigen.yml:
-    hash: 95b2b6b10f2c4f590d5a131b714fd3732bab9c6e61ff81702f680ef59112ae86
+    hash: b0556b6e2f3d45cd5103337d8a9679dea843f71ee60f35ee7e350275d6749933
     content: |
       ignore:
         - node_modules
@@ -266,7 +260,7 @@ resources:
           # Install dependencies
           run:
             - corepack enable pnpm
-            - pnpm install --frozen-lockfile --verbose
+            - pnpm install --prod --frozen-lockfile --verbose
           cache:
             - /root/.local/share/pnpm/store
 
@@ -304,15 +298,13 @@ resources:
           fromImage: node:24-slim
           workdir: /app/
           copy:
-            - pnpm-workspace.yaml /app/pnpm-workspace.yaml
-            - pnpm-lock.yaml /app/pnpm-lock.yaml
             - fromBuilder: docker
               source: /app/apps/build-docker/package.json
               target: /app/package.json
           run:
             - corepack enable pnpm
-            - "awk 'BEGIN{skip=0} /^patchedDependencies:/ {skip=1; next} skip && /^[^ ]/ {skip=0} !skip {print}' pnpm-workspace.yaml > /tmp/pnpm-workspace.yaml && mv /tmp/pnpm-workspace.yaml pnpm-workspace.yaml"
-            - pnpm install
+            - pnpm install --prod --lockfile-only
+            - pnpm install --prod --frozen-lockfile
 
       fromImage: debian:bullseye-slim
       workdir: /app/

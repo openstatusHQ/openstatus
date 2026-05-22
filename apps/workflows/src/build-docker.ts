@@ -8,10 +8,56 @@ const packageJson: PackageJson = await Bun.file(
 ).json();
 
 const extractDependenciesNames = ["@libsql/client"];
+const workspaceConfig = await Bun.file(path.join(__dirname, "../../../pnpm-workspace.yaml")).text();
+
+const catalog = (() => {
+  const lines = workspaceConfig.split(/\r?\n/);
+  let inCatalog = false;
+  const entries: Record<string, string> = {};
+
+  for (const line of lines) {
+    if (!inCatalog) {
+      if (line.trim() === "catalog:") {
+        inCatalog = true;
+      }
+      continue;
+    }
+
+    if (!line.startsWith("  ")) {
+      break;
+    }
+
+    const match = line.match(/^\s{2}("[^"]+"|[^:]+):\s*(.+)$/);
+    if (!match) {
+      continue;
+    }
+
+    const key = match[1].replace(/^"|"$/g, "").trim();
+    const value = match[2].replace(/^"|"$/g, "").trim();
+    entries[key] = value;
+  }
+
+  return entries;
+})();
+
+const resolveVersion = (name: string, spec: string) => {
+  if (!spec.startsWith("catalog:")) {
+    return spec;
+  }
+
+  const resolved = catalog[name];
+  if (!resolved) {
+    throw new Error(`Missing catalog entry for ${name}`);
+  }
+
+  return resolved;
+};
+
 const extractedDependencies = extractDependenciesNames.reduce(
   (acc, cur) => {
-    if (packageJson.dependencies[cur]) {
-      acc[cur] = packageJson.dependencies[cur];
+    const spec = packageJson.dependencies[cur];
+    if (spec) {
+      acc[cur] = resolveVersion(cur, spec);
     }
 
     return acc;
@@ -27,7 +73,4 @@ const packageJsonBuild = {
   dependencies: extractedDependencies,
 };
 
-await Bun.write(
-  "../build-docker/package.json",
-  JSON.stringify(packageJsonBuild, null, 2),
-);
+await Bun.write("../build-docker/package.json", JSON.stringify(packageJsonBuild, null, 2));
