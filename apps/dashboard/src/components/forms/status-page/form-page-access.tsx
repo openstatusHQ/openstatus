@@ -33,7 +33,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { Key, Lock, LockOpen, ShieldAlert, ShieldUser } from "lucide-react";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -95,7 +95,8 @@ export function FormPageAccess({
 }) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    // zod v4 preprocess types input as `unknown`; runtime-validated by schema.
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: defaultValues ?? {
       accessType: "public",
       password: "",

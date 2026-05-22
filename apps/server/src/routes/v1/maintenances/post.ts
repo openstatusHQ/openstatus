@@ -11,7 +11,12 @@ import {
 } from "@openstatus/db/src/schema/page_components";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 import type { maintenancesApi } from "./index";
-import { MaintenanceSchema } from "./schema";
+import {
+  MaintenanceObjectSchema,
+  MaintenanceSchema,
+  dateRangeError,
+  refineDateRange,
+} from "./schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -23,7 +28,10 @@ const postRoute = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: MaintenanceSchema.omit({ id: true }),
+          schema: MaintenanceObjectSchema.omit({ id: true }).refine(
+            refineDateRange,
+            dateRangeError,
+          ),
         },
       },
     },

@@ -5,12 +5,12 @@
   "main": "src/index.ts",
   "scripts": {},
   "dependencies": {
-    "jsonpath-plus": "7.2.0"
+    "jsonpath-plus": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3",
-    "zod": "4.1.13"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "keywords": [],
   "author": "",
