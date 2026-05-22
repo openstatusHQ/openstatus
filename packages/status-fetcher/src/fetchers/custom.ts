@@ -48,7 +48,9 @@ export class CustomApiFetcher implements StatusFetcher {
           url: entry.status_page_url,
           fetcherName: this.name,
           entryId: entry.id,
-          cause: new Error("Custom API requires explicit endpoint configuration"),
+          cause: new Error(
+            "Custom API requires explicit endpoint configuration",
+          ),
         }),
       );
     }

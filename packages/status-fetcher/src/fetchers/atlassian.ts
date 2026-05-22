@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { z } from "zod";
-import { FetchError, fetchJson } from "../fetch";
+import { type FetchError, fetchJson } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { SEVERITY_LEVELS } from "../types";
 import { inferStatus, urlHostnameEndsWith } from "../utils";

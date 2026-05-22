@@ -1,4 +1,4 @@
-import { Duration, Effect, Schedule } from "effect";
+import { type Duration, Effect, Schedule } from "effect";
 import type { z } from "zod";
 
 type FetchErrorInit = {
@@ -74,7 +74,9 @@ const isRetryable = (err: FetchError): boolean =>
     err.httpStatus < 500
   );
 
-const retrySchedule = Schedule.exponential("100 millis").pipe(Schedule.jittered);
+const retrySchedule = Schedule.exponential("100 millis").pipe(
+  Schedule.jittered,
+);
 
 const buildFetchError = (
   opts: FetchBaseOptions,

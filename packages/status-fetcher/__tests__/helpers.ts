@@ -1,7 +1,11 @@
 import { mock } from "bun:test";
 import { Cause, Effect, Exit, Option } from "effect";
-import { FetchError } from "../src/fetch";
-import type { StatusFetcher, StatusPageEntry, StatusResult } from "../src/types";
+import type { FetchError } from "../src/fetch";
+import type {
+  StatusFetcher,
+  StatusPageEntry,
+  StatusResult,
+} from "../src/types";
 
 type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
