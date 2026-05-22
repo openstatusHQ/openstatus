@@ -12,42 +12,30 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    build:
+    libsql:
       fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        path: node
+        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+      workdir: /app/
       copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
+      - fromBuilder: docker
         paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
+        - /app/apps/build-docker/package.json
+        target: /app/package.json
       run:
-      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
+      - corepack enable pnpm
+      - pnpm install --prod --lockfile-only
+      - pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
     docker:
       fromImage:
         path: oven/bun
         digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       workdir: /app/apps/workflows
       copy:
       - paths:
@@ -60,9 +48,9 @@ effective: |
         path: node
         digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
-        org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
         org.opencontainers.image.stage: install
+        org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -136,35 +124,47 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
-    libsql:
+    build:
       fromImage:
-        path: node
-        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
-        org.opencontainers.image.base.name: docker.io/node:24-slim
-      workdir: /app/
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
       copy:
-      - fromBuilder: docker
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
         paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
       run:
-      - corepack enable pnpm
-      - pnpm install --prod --lockfile-only
-      - pnpm install --prod --frozen-lockfile
+      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.vendor: OpenStatus
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.title: OpenStatus Workflows
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -202,7 +202,7 @@ images:
           digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
 resources:
   dofigen.yml:
-    hash: b0556b6e2f3d45cd5103337d8a9679dea843f71ee60f35ee7e350275d6749933
+    hash: 161a5052158ff11762c4fb9836f2009cd9af258462d1f56f62579de78c634f9c
     content: |
       ignore:
         - node_modules
@@ -304,7 +304,9 @@ resources:
           run:
             - corepack enable pnpm
             - pnpm install --prod --lockfile-only
-            - pnpm install --prod --frozen-lockfile
+            # node-linker=hoisted gives a flat node_modules (like npm/bun) so the compiled bun
+            # binary can resolve the libsql native addon (@libsql/<platform>) from disk at runtime.
+            - pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
 
       fromImage: debian:bullseye-slim
       workdir: /app/

@@ -98,7 +98,9 @@ builders:
     run:
       - corepack enable pnpm
       - pnpm install --prod --lockfile-only
-      - pnpm install --prod --frozen-lockfile
+      # node-linker=hoisted gives a flat node_modules (like npm/bun) so the compiled bun
+      # binary can resolve the libsql native addon (@libsql/<platform>) from disk at runtime.
+      - pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
 
 fromImage: debian:bullseye-slim
 workdir: /app/

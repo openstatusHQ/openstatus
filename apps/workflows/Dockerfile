@@ -98,7 +98,7 @@ COPY \
 RUN <<EOF
 corepack enable pnpm
 pnpm install --prod --lockfile-only
-pnpm install --prod --frozen-lockfile
+pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
 EOF
 
 # runtime
