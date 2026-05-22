@@ -213,4 +213,4 @@ catalog:
   unified: 11.0.5
   unplugin-icons: 22.5.0
   validator: 13.15.35
-  zod: 4.4.3
+  zod: 4.1.13

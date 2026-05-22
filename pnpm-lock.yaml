@@ -580,8 +580,8 @@ catalogs:
       specifier: 13.15.35
       version: 13.15.35
     zod:
-      specifier: 4.4.3
-      version: 4.4.3
+      specifier: 4.1.13
+      version: 4.1.13
 
 importers:
 
@@ -619,7 +619,7 @@ importers:
     dependencies:
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 3.0.187(react@19.2.6)(zod@4.4.3)
+        version: 3.0.187(react@19.2.6)(zod@4.1.13)
       '@auth/core':
         specifier: 'catalog:'
         version: 0.40.0
@@ -802,7 +802,7 @@ importers:
         version: 2.3.4
       ai:
         specifier: 'catalog:'
-        version: 6.0.185(zod@4.4.3)
+        version: 6.0.185(zod@4.1.13)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -877,7 +877,7 @@ importers:
         version: 11.0.5
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 'catalog:'
@@ -981,7 +981,7 @@ importers:
         version: 3.1050.0
       '@hono/zod-validator':
         specifier: 'catalog:'
-        version: 0.2.2(hono@4.12.21)(zod@4.4.3)
+        version: 0.2.2(hono@4.12.21)(zod@4.1.13)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -990,7 +990,7 @@ importers:
         version: link:../../packages/utils
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@upstash/qstash':
         specifier: 'catalog:'
         version: 2.11.0
@@ -1002,7 +1002,7 @@ importers:
         version: 1.60.0
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1015,7 +1015,7 @@ importers:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: 'catalog:'
-        version: 1.2.12(zod@4.4.3)
+        version: 1.2.12(zod@4.1.13)
       '@bufbuild/protobuf':
         specifier: 'catalog:'
         version: 2.12.0
@@ -1033,16 +1033,16 @@ importers:
         version: 0.2.0(@bufbuild/protobuf@2.12.0)(@bufbuild/protovalidate@1.2.0(@bufbuild/protobuf@2.12.0))(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.12.0))
       '@hono/mcp':
         specifier: 'catalog:'
-        version: 0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(hono-rate-limiter@0.4.2(hono@4.12.21))(hono@4.12.21)(zod@4.4.3)
+        version: 0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.12.21))(hono@4.12.21)(zod@4.1.13)
       '@hono/sentry':
         specifier: 'catalog:'
         version: 1.2.2(hono@4.12.21)
       '@hono/zod-openapi':
         specifier: 'catalog:'
-        version: 1.4.0(hono@4.12.21)(zod@4.4.3)
+        version: 1.4.0(hono@4.12.21)(zod@4.1.13)
       '@hono/zod-validator':
         specifier: 'catalog:'
-        version: 0.2.2(hono@4.12.21)(zod@4.4.3)
+        version: 0.2.2(hono@4.12.21)(zod@4.1.13)
       '@logtape/logtape':
         specifier: 'catalog:'
         version: 2.1.1
@@ -1054,7 +1054,7 @@ importers:
         version: 2.1.1(@logtape/logtape@2.1.1)(@sentry/core@10.53.1)
       '@modelcontextprotocol/sdk':
         specifier: 'catalog:'
-        version: 1.29.0(zod@4.4.3)
+        version: 1.29.0(zod@4.1.13)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -1144,7 +1144,7 @@ importers:
         version: 7.16.0
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@unkey/api':
         specifier: 'catalog:'
         version: 2.3.4
@@ -1153,7 +1153,7 @@ importers:
         version: 2.11.0
       ai:
         specifier: 'catalog:'
-        version: 6.0.185(zod@4.4.3)
+        version: 6.0.185(zod@4.1.13)
       hono:
         specifier: 'catalog:'
         version: 4.12.21
@@ -1171,7 +1171,7 @@ importers:
         version: 13.15.35
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/locales':
         specifier: workspace:*
@@ -1376,7 +1376,7 @@ importers:
         version: 11.0.5
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1512,7 +1512,7 @@ importers:
         version: 2.4.0
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@tailwindcss/container-queries':
         specifier: 'catalog:'
         version: 0.1.1(tailwindcss@4.3.0)
@@ -1662,7 +1662,7 @@ importers:
         version: 1.0.7(tailwindcss@4.3.0)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1810,7 +1810,7 @@ importers:
         version: 3.0.0
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1829,10 +1829,10 @@ importers:
         version: 1.3.1
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1920,7 +1920,7 @@ importers:
         version: link:../utils
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@trpc/client':
         specifier: 'catalog:'
         version: 11.17.0(@trpc/server@11.17.0(typescript@5.9.3))(typescript@5.9.3)
@@ -1959,7 +1959,7 @@ importers:
         version: 2.2.6
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1991,7 +1991,7 @@ importers:
         version: 5.9.3
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
 
   packages/db:
     dependencies:
@@ -2015,7 +2015,7 @@ importers:
         version: link:../utils
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       bcryptjs:
         specifier: 'catalog:'
         version: 3.0.3
@@ -2024,10 +2024,10 @@ importers:
         version: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14))(zod@4.4.3)
+        version: 0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14))(zod@4.1.13)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2058,7 +2058,7 @@ importers:
         version: 2.0.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       effect:
         specifier: 'catalog:'
         version: 3.21.2
@@ -2070,7 +2070,7 @@ importers:
         version: 6.12.3(@react-email/render@2.0.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2095,7 +2095,7 @@ importers:
     dependencies:
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2139,7 +2139,7 @@ importers:
     dependencies:
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2193,10 +2193,10 @@ importers:
         version: link:../base
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2224,7 +2224,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2267,7 +2267,7 @@ importers:
         version: 2.0.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       react-dom:
         specifier: 'catalog:'
         version: 19.2.6(react@19.2.6)
@@ -2276,7 +2276,7 @@ importers:
         version: 6.12.3(@react-email/render@2.0.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2307,7 +2307,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2335,7 +2335,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2363,7 +2363,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2391,7 +2391,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2416,7 +2416,7 @@ importers:
         version: link:../base
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@types/validator':
         specifier: 'catalog:'
         version: 13.15.10
@@ -2425,7 +2425,7 @@ importers:
         version: 13.15.35
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2456,7 +2456,7 @@ importers:
         version: link:../base
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       '@types/validator':
         specifier: 'catalog:'
         version: 13.15.10
@@ -2465,7 +2465,7 @@ importers:
         version: 13.15.35
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2499,7 +2499,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2524,7 +2524,7 @@ importers:
         version: link:../base
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2549,13 +2549,13 @@ importers:
         version: link:../base
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
+        version: 0.13.11(typescript@5.9.3)(zod@4.1.13)
       validator:
         specifier: 'catalog:'
         version: 13.15.35
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2586,7 +2586,7 @@ importers:
         version: link:../../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2658,7 +2658,7 @@ importers:
     dependencies:
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2698,7 +2698,7 @@ importers:
         version: link:../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2720,7 +2720,7 @@ importers:
         version: 6.1.13
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@types/bun':
         specifier: latest
@@ -2742,7 +2742,7 @@ importers:
         version: link:../utils
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2767,10 +2767,10 @@ importers:
     dependencies:
       '@chronark/zod-bird':
         specifier: 'catalog:'
-        version: 1.0.0(zod@4.4.3)
+        version: 1.0.0(zod@4.1.13)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@libsql/client':
         specifier: 'catalog:'
@@ -2804,7 +2804,7 @@ importers:
         version: link:../tinybird
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2957,7 +2957,7 @@ importers:
         version: 1.0.7(tailwindcss@4.3.0)
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@biomejs/biome':
         specifier: 'catalog:'
@@ -3022,7 +3022,7 @@ importers:
         version: link:../regions
       zod:
         specifier: 'catalog:'
-        version: 4.4.3
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -13308,32 +13308,32 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@1.2.12(zod@4.4.3)':
+  '@ai-sdk/anthropic@1.2.12(zod@4.1.13)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
-      '@ai-sdk/provider-utils': 2.2.8(zod@4.4.3)
-      zod: 4.4.3
+      '@ai-sdk/provider-utils': 2.2.8(zod@4.1.13)
+      zod: 4.1.13
 
-  '@ai-sdk/gateway@3.0.116(zod@4.4.3)':
+  '@ai-sdk/gateway@3.0.116(zod@4.1.13)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.27(zod@4.1.13)
       '@vercel/oidc': 3.2.0
-      zod: 4.4.3
+      zod: 4.1.13
 
-  '@ai-sdk/provider-utils@2.2.8(zod@4.4.3)':
+  '@ai-sdk/provider-utils@2.2.8(zod@4.1.13)':
     dependencies:
       '@ai-sdk/provider': 1.1.3
       nanoid: 3.3.11
       secure-json-parse: 2.7.0
-      zod: 4.4.3
+      zod: 4.1.13
 
-  '@ai-sdk/provider-utils@4.0.27(zod@4.4.3)':
+  '@ai-sdk/provider-utils@4.0.27(zod@4.1.13)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.0.8
-      zod: 4.4.3
+      zod: 4.1.13
 
   '@ai-sdk/provider@1.1.3':
     dependencies:
@@ -13343,10 +13343,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@3.0.187(react@19.2.6)(zod@4.4.3)':
+  '@ai-sdk/react@3.0.187(react@19.2.6)(zod@4.1.13)':
     dependencies:
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.4.3)
-      ai: 6.0.185(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.27(zod@4.1.13)
+      ai: 6.0.185(zod@4.1.13)
       react: 19.2.6
       swr: 2.3.6(react@19.2.6)
       throttleit: 2.1.0
@@ -13387,10 +13387,10 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@asteasolutions/zod-to-openapi@8.5.0(zod@4.4.3)':
+  '@asteasolutions/zod-to-openapi@8.5.0(zod@4.1.13)':
     dependencies:
       openapi3-ts: 4.5.0
-      zod: 4.4.3
+      zod: 4.1.13
 
   '@astro-community/astro-embed-twitter@0.5.11':
     dependencies:
@@ -14229,9 +14229,9 @@ snapshots:
     dependencies:
       fontkitten: 1.0.3
 
-  '@chronark/zod-bird@1.0.0(zod@4.4.3)':
+  '@chronark/zod-bird@1.0.0(zod@4.1.13)':
     dependencies:
-      zod: 4.4.3
+      zod: 4.1.13
 
   '@connectrpc/connect-node@2.1.1(@bufbuild/protobuf@2.12.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.12.0))':
     dependencies:
@@ -14955,13 +14955,13 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@hono/mcp@0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(hono-rate-limiter@0.4.2(hono@4.12.21))(hono@4.12.21)(zod@4.4.3)':
+  '@hono/mcp@0.2.5(@modelcontextprotocol/sdk@1.29.0(zod@4.1.13))(hono-rate-limiter@0.4.2(hono@4.12.21))(hono@4.12.21)(zod@4.1.13)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.29.0(zod@4.1.13)
       hono: 4.12.21
       hono-rate-limiter: 0.4.2(hono@4.12.21)
       pkce-challenge: 5.0.1
-      zod: 4.4.3
+      zod: 4.1.13
 
   '@hono/node-server@1.19.9(hono@4.11.8)':
     dependencies:
@@ -14972,23 +14972,23 @@ snapshots:
       hono: 4.12.21
       toucan-js: 4.1.1
 
-  '@hono/zod-openapi@1.4.0(hono@4.12.21)(zod@4.4.3)':
+  '@hono/zod-openapi@1.4.0(hono@4.12.21)(zod@4.1.13)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 8.5.0(zod@4.4.3)
-      '@hono/zod-validator': 0.8.0(hono@4.12.21)(zod@4.4.3)
+      '@asteasolutions/zod-to-openapi': 8.5.0(zod@4.1.13)
+      '@hono/zod-validator': 0.8.0(hono@4.12.21)(zod@4.1.13)
       hono: 4.12.21
       openapi3-ts: 4.5.0
-      zod: 4.4.3
+      zod: 4.1.13
 
-  '@hono/zod-validator@0.2.2(hono@4.12.21)(zod@4.4.3)':
+  '@hono/zod-validator@0.2.2(hono@4.12.21)(zod@4.1.13)':
     dependencies:
       hono: 4.12.21
-      zod: 4.4.3
+      zod: 4.1.13
 
-  '@hono/zod-validator@0.8.0(hono@4.12.21)(zod@4.4.3)':
+  '@hono/zod-validator@0.8.0(hono@4.12.21)(zod@4.1.13)':
     dependencies:
       hono: 4.12.21
-      zod: 4.4.3
+      zod: 4.1.13
 
   '@hookform/devtools@4.4.0(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
@@ -15410,7 +15410,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@modelcontextprotocol/sdk@1.29.0(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.29.0(zod@4.1.13)':
     dependencies:
       '@hono/node-server': 1.19.9(hono@4.11.8)
       ajv: 8.17.1
@@ -15427,8 +15427,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.4.3
-      zod-to-json-schema: 3.25.1(zod@4.4.3)
+      zod: 4.1.13
+      zod-to-json-schema: 3.25.1(zod@4.1.13)
     transitivePeerDependencies:
       - supports-color
 
@@ -17695,17 +17695,17 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@t3-oss/env-core@0.13.11(typescript@5.9.3)(zod@4.4.3)':
+  '@t3-oss/env-core@0.13.11(typescript@5.9.3)(zod@4.1.13)':
     optionalDependencies:
       typescript: 5.9.3
-      zod: 4.4.3
+      zod: 4.1.13
 
-  '@t3-oss/env-nextjs@0.13.11(typescript@5.9.3)(zod@4.4.3)':
+  '@t3-oss/env-nextjs@0.13.11(typescript@5.9.3)(zod@4.1.13)':
     dependencies:
-      '@t3-oss/env-core': 0.13.11(typescript@5.9.3)(zod@4.4.3)
+      '@t3-oss/env-core': 0.13.11(typescript@5.9.3)(zod@4.1.13)
     optionalDependencies:
       typescript: 5.9.3
-      zod: 4.4.3
+      zod: 4.1.13
 
   '@tailwindcss/cli@4.3.0':
     dependencies:
@@ -18381,13 +18381,13 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@6.0.185(zod@4.4.3):
+  ai@6.0.185(zod@4.1.13):
     dependencies:
-      '@ai-sdk/gateway': 3.0.116(zod@4.4.3)
+      '@ai-sdk/gateway': 3.0.116(zod@4.1.13)
       '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.27(zod@4.1.13)
       '@opentelemetry/api': 1.9.1
-      zod: 4.4.3
+      zod: 4.1.13
 
   ajv-draft-04@1.0.0(ajv@8.17.1):
     optionalDependencies:
@@ -19260,10 +19260,10 @@ snapshots:
       '@upstash/redis': 1.38.0
       bun-types: 1.3.14
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14))(zod@4.4.3):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14))(zod@4.1.13):
     dependencies:
       drizzle-orm: 0.45.2(@libsql/client@0.15.15)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.3.14)
-      zod: 4.4.3
+      zod: 4.1.13
 
   dset@3.1.4: {}
 
@@ -24264,9 +24264,9 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-to-json-schema@3.25.1(zod@4.4.3):
+  zod-to-json-schema@3.25.1(zod@4.1.13):
     dependencies:
-      zod: 4.4.3
+      zod: 4.1.13
 
   zod-to-ts@1.2.0(typescript@5.9.3)(zod@3.25.76):
     dependencies:

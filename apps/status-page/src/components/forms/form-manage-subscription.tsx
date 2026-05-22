@@ -20,7 +20,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useExtracted } from "next-intl";
 import { useTransition } from "react";
-import { type Resolver, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -47,7 +47,7 @@ export function FormManageSubscription({
 }) {
   const t = useExtracted();
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema) as Resolver<FormValues>,
+    resolver: zodResolver(schema),
     defaultValues: {
       pageComponents: defaultValues?.pageComponents ?? [],
       subscribeComponents: defaultValues?.subscribeComponents ?? true,

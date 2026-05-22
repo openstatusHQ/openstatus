@@ -12,7 +12,7 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { isTRPCClientError } from "@trpc/client";
 import { useExtracted } from "next-intl";
 import { useTransition } from "react";
-import { type Resolver, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -30,7 +30,7 @@ export function FormEmail({
 }) {
   const t = useExtracted();
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema) as Resolver<FormValues>,
+    resolver: zodResolver(schema),
     defaultValues: {
       email: "",
     },
