@@ -36,7 +36,6 @@
     "@openstatus/react": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/services": "workspace:*",
-    "@openstatus/status-fetcher": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",

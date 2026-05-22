@@ -1,10 +1,10 @@
 import { getLogger } from "@logtape/logtape";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
-import { fetchers } from "@openstatus/status-fetcher";
+import { FetchError, fetchers } from "@openstatus/status-fetcher";
 import type { StatusPageEntry, StatusResult } from "@openstatus/status-fetcher";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Effect, Schedule } from "effect";
+import { Effect, Either } from "effect";
 import type { Context } from "hono";
 
 import { env } from "../env";
@@ -65,32 +65,42 @@ export async function runExternalStatusTick(): Promise<{
   const entries = services.map(toStatusPageEntry);
   const fetchedAt = Date.now();
 
-  const settled = await Promise.allSettled(
-    entries.map(async (entry) => {
-      const fetcher = fetchers.find((f) => f.canHandle(entry));
-      if (!fetcher) {
-        throw new Error(`no fetcher matches entry slug=${entry.id}`);
-      }
-      const result = await fetcher.fetch(entry);
-      return buildSnapshot({ entry, result, fetchedAt });
-    }),
+  const results = await Effect.runPromise(
+    Effect.forEach(
+      entries,
+      (entry) => {
+        const fetcher = fetchers.find((f) => f.canHandle(entry));
+        if (!fetcher) {
+          return Effect.either(
+            Effect.fail(
+              new FetchError({
+                url: entry.status_page_url,
+                entryId: entry.id,
+                cause: new Error(`no fetcher matches entry slug=${entry.id}`),
+              }),
+            ),
+          );
+        }
+        return fetcher.fetch(entry).pipe(
+          Effect.map((result) => buildSnapshot({ entry, result, fetchedAt })),
+          Effect.either,
+        );
+      },
+      { concurrency: "unbounded" },
+    ),
   );
 
   const snapshots: Snapshot[] = [];
   let failureCount = 0;
-  for (const [i, r] of settled.entries()) {
-    if (r.status === "fulfilled") {
-      snapshots.push(r.value);
+  for (const [i, r] of results.entries()) {
+    if (Either.isRight(r)) {
+      snapshots.push(r.right);
     } else {
       failureCount++;
       const slug = entries[i]?.id ?? "<unknown>";
       logger.warn(
         "external-status tick: fetcher failed for slug={slug}: {reason}",
-        {
-          slug,
-          reason:
-            r.reason instanceof Error ? r.reason.message : String(r.reason),
-        },
+        { slug, reason: r.left.message },
       );
     }
   }
@@ -121,10 +131,6 @@ export async function handleExternalStatusCron(c: Context) {
           `external-status tick failed: ${e instanceof Error ? e.message : String(e)}`,
         ),
     }).pipe(
-      Effect.retry({
-        times: 3,
-        schedule: Schedule.exponential("1000 millis"),
-      }),
       Effect.tap((res) =>
         Effect.sync(() => {
           logger.info(

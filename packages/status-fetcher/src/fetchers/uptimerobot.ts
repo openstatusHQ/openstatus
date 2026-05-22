@@ -1,5 +1,6 @@
+import { Effect } from "effect";
 import { z } from "zod";
-import { FetchError, fetchWithRetry } from "../fetch-utils";
+import { FetchError, fetchJson } from "../fetch";
 import type {
   SeverityLevel,
   StatusFetcher,
@@ -7,10 +8,6 @@ import type {
   StatusResult,
   StatusType,
 } from "../types";
-
-// UptimeRobot public status pages: no official docs.
-// Endpoint observed in the wild: `<status_page_url>/api/getMonitorList/<userId>-<pspId>`.
-// The page-id is unguessable, so operators must set it via api_config.endpoint.
 
 const monitorRatioSchema = z.object({
   ratio: z.string(),
@@ -43,6 +40,8 @@ const uptimeRobotResponseSchema = z.object({
   data: z.array(monitorSchema),
 });
 
+type Monitor = z.infer<typeof monitorSchema>;
+
 export class UptimeRobotFetcher implements StatusFetcher {
   name = "uptimerobot";
 
@@ -53,59 +52,41 @@ export class UptimeRobotFetcher implements StatusFetcher {
     );
   }
 
-  async fetch(entry: StatusPageEntry): Promise<StatusResult> {
+  fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError> {
     const apiUrl = entry.api_config?.endpoint;
     if (!apiUrl) {
-      throw new FetchError(
-        "UptimeRobot fetcher requires api_config.endpoint pointing at /api/getMonitorList/<userId>-<pspId>",
-        entry.status_page_url,
-        this.name,
-        entry.id,
+      return Effect.fail(
+        new FetchError({
+          url: entry.status_page_url,
+          fetcherName: this.name,
+          entryId: entry.id,
+          cause: new Error(
+            "UptimeRobot fetcher requires api_config.endpoint pointing at /api/getMonitorList/<userId>-<pspId>",
+          ),
+        }),
       );
     }
 
-    try {
-      const response = await fetchWithRetry(apiUrl, {
-        headers: { "User-Agent": "OpenStatus-Directory/1.0" },
-        timeout: 30000,
-      });
-
-      if (!response.ok) {
-        throw new FetchError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          apiUrl,
-          this.name,
-          entry.id,
-        );
-      }
-
-      const json = await response.json();
-      const data = uptimeRobotResponseSchema.parse(json);
-
-      const { severity, status, description } = this.aggregate(data.data);
-
-      return {
-        severity,
-        status,
-        description,
-        updated_at: Date.now(),
-        timezone: "UTC",
-      };
-    } catch (error) {
-      if (error instanceof FetchError) {
-        throw error;
-      }
-      throw new FetchError(
-        error instanceof Error ? error.message : "Unknown error",
-        apiUrl,
-        this.name,
-        entry.id,
-        error instanceof Error ? error : undefined,
-      );
-    }
+    return fetchJson({
+      url: apiUrl,
+      schema: uptimeRobotResponseSchema,
+      fetcherName: this.name,
+      entryId: entry.id,
+    }).pipe(
+      Effect.map((data) => {
+        const { severity, status, description } = this.aggregate(data.data);
+        return {
+          severity,
+          status,
+          description,
+          updated_at: Date.now(),
+          timezone: "UTC",
+        };
+      }),
+    );
   }
 
-  private aggregate(monitors: z.infer<typeof monitorSchema>[]): {
+  private aggregate(monitors: Monitor[]): {
     severity: SeverityLevel;
     status: StatusType;
     description: string;

@@ -1,10 +1,8 @@
+import { Effect } from "effect";
 import { z } from "zod";
-import { FetchError, fetchWithRetry } from "../fetch-utils";
+import { FetchError, fetchJson } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { urlHostnameEndsWith } from "../utils";
-
-// DOCS: https://help.incident.io/articles/7434055319-embed-your-status-page%27s-data-into-your-own-product
-// NOTE: this only works if Widget API is enabled
 
 const incidentSchema = z.object({
   id: z.string(),
@@ -25,6 +23,8 @@ const incidentioResponseSchema = z.object({
   scheduled_maintenances: z.array(incidentSchema),
 });
 
+type IncidentioData = z.infer<typeof incidentioResponseSchema>;
+
 export class IncidentioFetcher implements StatusFetcher {
   name = "incidentio";
 
@@ -37,52 +37,26 @@ export class IncidentioFetcher implements StatusFetcher {
     );
   }
 
-  async fetch(entry: StatusPageEntry): Promise<StatusResult> {
+  fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError> {
     const apiUrl = entry.api_config?.endpoint || this.constructApiUrl(entry);
 
-    try {
-      const response = await fetchWithRetry(apiUrl, {
-        headers: {
-          "User-Agent": "OpenStatus-Directory/1.0",
-          Accept: "application/json",
-        },
-        timeout: 30000,
-      });
-
-      if (!response.ok) {
-        throw new FetchError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          apiUrl,
-          this.name,
-          entry.id,
-        );
-      }
-
-      const json = await response.json();
-      const data = incidentioResponseSchema.parse(json);
-
-      const { severity, status, description } = this.analyzeIncidents(data);
-      const latestUpdate = this.getLatestUpdateTime(data);
-
-      return {
-        severity,
-        status,
-        description,
-        updated_at: latestUpdate,
-        timezone: "UTC",
-      };
-    } catch (error) {
-      if (error instanceof FetchError) {
-        throw error;
-      }
-      throw new FetchError(
-        error instanceof Error ? error.message : "Unknown error",
-        apiUrl,
-        this.name,
-        entry.id,
-        error instanceof Error ? error : undefined,
-      );
-    }
+    return fetchJson({
+      url: apiUrl,
+      schema: incidentioResponseSchema,
+      fetcherName: this.name,
+      entryId: entry.id,
+    }).pipe(
+      Effect.map((data) => {
+        const { severity, status, description } = this.analyzeIncidents(data);
+        return {
+          severity,
+          status,
+          description,
+          updated_at: this.getLatestUpdateTime(data),
+          timezone: "UTC",
+        };
+      }),
+    );
   }
 
   private constructApiUrl(entry: StatusPageEntry): string {
@@ -90,7 +64,7 @@ export class IncidentioFetcher implements StatusFetcher {
     return `${url.origin}/api/widget`;
   }
 
-  private analyzeIncidents(data: z.infer<typeof incidentioResponseSchema>): {
+  private analyzeIncidents(data: IncidentioData): {
     severity: "none" | "minor" | "major";
     status:
       | "operational"
@@ -164,20 +138,20 @@ export class IncidentioFetcher implements StatusFetcher {
     };
   }
 
-  private getLatestUpdateTime(
-    data: z.infer<typeof incidentioResponseSchema>,
-  ): number {
+  private getLatestUpdateTime(data: IncidentioData): number {
     const allItems = [
       ...data.ongoing_incidents,
       ...data.in_progress_maintenances,
       ...data.scheduled_maintenances,
     ];
 
-    if (allItems.length === 0) return Date.now();
-
-    const timestamps = allItems
-      .filter((item) => item.last_update?.updated_at)
-      .map((item) => new Date(item.last_update?.updated_at).getTime());
+    const timestamps: number[] = [];
+    for (const item of allItems) {
+      const updatedAt = item.last_update?.updated_at;
+      if (updatedAt) {
+        timestamps.push(new Date(updatedAt).getTime());
+      }
+    }
 
     return timestamps.length > 0 ? Math.max(...timestamps) : Date.now();
   }

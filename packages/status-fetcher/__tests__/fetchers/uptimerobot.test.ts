@@ -1,8 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { UptimeRobotFetcher } from "../../src/fetchers/uptimerobot";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 const ENDPOINT = "https://status.example.com/api/getMonitorList/1234567-789012";
+
+type MonitorFixture = {
+  monitorId: number;
+  name: string;
+  statusClass: string;
+  url: string | null;
+  type: string;
+  ratio: { ratio: string; label: string; color: string };
+  "30dRatio": { ratio: string; label: string; color: string };
+  "90dRatio": { ratio: string; label: string; color: string };
+  hasIncidentComments: boolean;
+  lastDowntime: null;
+};
 
 function makeEntry(overrides: Partial<StatusPageEntry> = {}): StatusPageEntry {
   return {
@@ -17,8 +36,8 @@ function makeEntry(overrides: Partial<StatusPageEntry> = {}): StatusPageEntry {
   };
 }
 
-function mockResponse(monitors: Array<Record<string, unknown>>) {
-  global.fetch = mock(() =>
+function mockResponseWith(monitors: MonitorFixture[]) {
+  return installMockFetch(() =>
     Promise.resolve({
       ok: true,
       json: async () => ({ status: "ok", data: monitors }),
@@ -30,7 +49,7 @@ let monitorIdCounter = 0;
 function monitor(
   statusClass: string,
   name = `monitor-${statusClass}`,
-): Record<string, unknown> {
+): MonitorFixture {
   monitorIdCounter++;
   return {
     monitorId: monitorIdCounter,
@@ -105,20 +124,20 @@ describe("UptimeRobotFetcher", () => {
 
   describe("fetch", () => {
     it("aggregates all success → operational", async () => {
-      mockResponse([
+      const fetchMock = mockResponseWith([
         monitor("success"),
         monitor("success"),
         monitor("success"),
       ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("none");
       expect(result.status).toBe("operational");
       expect(result.description).toBe("0 monitors down (3 total)");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         ENDPOINT,
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -129,13 +148,13 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("aggregates one warning among success → degraded", async () => {
-      mockResponse([
+      mockResponseWith([
         monitor("success"),
         monitor("warning"),
         monitor("success"),
       ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("minor");
       expect(result.status).toBe("degraded");
@@ -143,23 +162,27 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("aggregates two warnings among success → degraded (plural)", async () => {
-      mockResponse([
+      mockResponseWith([
         monitor("success"),
         monitor("warning"),
         monitor("warning"),
         monitor("success"),
       ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.status).toBe("degraded");
       expect(result.description).toBe("2 monitors degraded (4 total)");
     });
 
     it("aggregates one danger among success → partial_outage", async () => {
-      mockResponse([monitor("success"), monitor("danger"), monitor("success")]);
+      mockResponseWith([
+        monitor("success"),
+        monitor("danger"),
+        monitor("success"),
+      ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("major");
       expect(result.status).toBe("partial_outage");
@@ -167,14 +190,14 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("aggregates danger + warning mix → partial_outage with separated counts", async () => {
-      mockResponse([
+      mockResponseWith([
         monitor("success"),
         monitor("danger"),
         monitor("warning"),
         monitor("success"),
       ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("major");
       expect(result.status).toBe("partial_outage");
@@ -182,9 +205,13 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("aggregates all danger → major_outage", async () => {
-      mockResponse([monitor("danger"), monitor("danger"), monitor("danger")]);
+      mockResponseWith([
+        monitor("danger"),
+        monitor("danger"),
+        monitor("danger"),
+      ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("major");
       expect(result.status).toBe("major_outage");
@@ -192,18 +219,22 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("single monitor all down → major_outage with singular wording", async () => {
-      mockResponse([monitor("danger")]);
+      mockResponseWith([monitor("danger")]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.status).toBe("major_outage");
       expect(result.description).toBe("1 monitor down (1 total)");
     });
 
     it("single paused alongside healthy stays operational", async () => {
-      mockResponse([monitor("success"), monitor("paused"), monitor("success")]);
+      mockResponseWith([
+        monitor("success"),
+        monitor("paused"),
+        monitor("success"),
+      ]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("none");
       expect(result.status).toBe("operational");
@@ -211,9 +242,9 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("all paused → under_maintenance", async () => {
-      mockResponse([monitor("paused"), monitor("paused")]);
+      mockResponseWith([monitor("paused"), monitor("paused")]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("none");
       expect(result.status).toBe("under_maintenance");
@@ -221,18 +252,18 @@ describe("UptimeRobotFetcher", () => {
     });
 
     it("info treated as maintenance", async () => {
-      mockResponse([monitor("info"), monitor("info")]);
+      mockResponseWith([monitor("info"), monitor("info")]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("none");
       expect(result.status).toBe("under_maintenance");
     });
 
     it("empty data array → operational", async () => {
-      mockResponse([]);
+      mockResponseWith([]);
 
-      const result = await fetcher.fetch(makeEntry());
+      const result = await runFetcher(fetcher, makeEntry());
 
       expect(result.severity).toBe("none");
       expect(result.status).toBe("operational");
@@ -244,14 +275,14 @@ describe("UptimeRobotFetcher", () => {
       const originalWarn = console.warn;
       console.warn = warnSpy;
 
-      mockResponse([
+      mockResponseWith([
         monitor("success"),
         monitor("frobnicate"),
         monitor("success"),
       ]);
 
       try {
-        const result = await fetcher.fetch(makeEntry());
+        const result = await runFetcher(fetcher, makeEntry());
 
         expect(result.severity).toBe("none");
         expect(result.status).toBe("operational");
@@ -261,18 +292,23 @@ describe("UptimeRobotFetcher", () => {
       }
     });
 
-    it("throws when api_config.endpoint is missing", async () => {
+    it("fails with FetchError when api_config.endpoint is missing", async () => {
       const entry = makeEntry({
         api_config: { type: "uptimerobot" },
       });
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      if (!(err.cause instanceof Error)) {
+        throw new Error("expected Error cause");
+      }
+      expect(err.cause.message).toContain(
         "UptimeRobot fetcher requires api_config.endpoint",
       );
     });
 
-    it("throws on HTTP 500", async () => {
-      global.fetch = mock(() =>
+    it("fails with FetchError on HTTP 500", async () => {
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 500,
@@ -280,31 +316,35 @@ describe("UptimeRobotFetcher", () => {
         } as Response),
       );
 
-      await expect(fetcher.fetch(makeEntry())).rejects.toThrow(
-        "HTTP 500: Internal Server Error",
-      );
+      const exit = await runFetcherExit(fetcher, makeEntry());
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(500);
     });
 
-    it("throws on malformed JSON (missing data array)", async () => {
-      global.fetch = mock(() =>
+    it("fails with FetchError on malformed JSON (missing data array)", async () => {
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({ status: "ok" }),
         } as Response),
       );
 
-      await expect(fetcher.fetch(makeEntry())).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, makeEntry());
+      const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
     });
 
-    it("throws on wrong status field", async () => {
-      global.fetch = mock(() =>
+    it("fails with FetchError on wrong status field", async () => {
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({ status: "error", data: [] }),
         } as Response),
       );
 
-      await expect(fetcher.fetch(makeEntry())).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, makeEntry());
+      const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
     });
   });
 });

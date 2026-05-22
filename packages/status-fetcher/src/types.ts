@@ -1,4 +1,6 @@
+import type { Effect } from "effect";
 import { z } from "zod";
+import type { FetchError } from "./fetch";
 
 // Define arrays as source of truth
 export const API_CONFIG_TYPES = [
@@ -108,5 +110,5 @@ export interface StatusResult {
 export interface StatusFetcher {
   name: string;
   canHandle(entry: StatusPageEntry): boolean;
-  fetch(entry: StatusPageEntry): Promise<StatusResult>;
+  fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError>;
 }
