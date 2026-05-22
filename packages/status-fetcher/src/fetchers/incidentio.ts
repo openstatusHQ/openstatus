@@ -2,28 +2,24 @@ import { Effect } from "effect";
 import { z } from "zod";
 import { type FetchError, fetchJson } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
-import { urlHostnameEndsWith } from "../utils";
+import { SEVERITY_LEVELS } from "../types";
+import { inferStatus, urlHostnameEndsWith } from "../utils";
 
-const incidentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  status: z.string(),
-  last_update: z
-    .object({
-      message: z.string(),
-      updated_at: z.string(),
-    })
-    .optional(),
-  affected_components: z.array(z.string()).optional(),
-});
-
+// incident.io status pages expose an Atlassian Statuspage-compatible API, so the
+// summary endpoint returns the same shape AtlassianFetcher consumes.
 const incidentioResponseSchema = z.object({
-  ongoing_incidents: z.array(incidentSchema),
-  in_progress_maintenances: z.array(incidentSchema),
-  scheduled_maintenances: z.array(incidentSchema),
+  page: z.object({
+    id: z.string(),
+    name: z.string(),
+    url: z.string().url(),
+    timezone: z.string().optional(),
+    updated_at: z.string().datetime({ offset: true }),
+  }),
+  status: z.object({
+    indicator: z.enum(SEVERITY_LEVELS),
+    description: z.string(),
+  }),
 });
-
-type IncidentioData = z.infer<typeof incidentioResponseSchema>;
 
 export class IncidentioFetcher implements StatusFetcher {
   name = "incidentio";
@@ -38,7 +34,9 @@ export class IncidentioFetcher implements StatusFetcher {
   }
 
   fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError> {
-    const apiUrl = entry.api_config?.endpoint || this.constructApiUrl(entry);
+    const apiUrl =
+      entry.api_config?.endpoint ||
+      `${entry.status_page_url}/api/v2/summary.json`;
 
     return fetchJson({
       url: apiUrl,
@@ -47,112 +45,16 @@ export class IncidentioFetcher implements StatusFetcher {
       entryId: entry.id,
     }).pipe(
       Effect.map((data) => {
-        const { severity, status, description } = this.analyzeIncidents(data);
+        const severity = data.status.indicator;
+        const description = data.status.description;
         return {
           severity,
-          status,
+          status: inferStatus(description, severity),
           description,
-          updated_at: this.getLatestUpdateTime(data),
-          timezone: "UTC",
+          updated_at: new Date(data.page.updated_at).getTime(),
+          timezone: data.page.timezone,
         };
       }),
     );
-  }
-
-  private constructApiUrl(entry: StatusPageEntry): string {
-    const url = new URL(entry.status_page_url);
-    return `${url.origin}/api/widget`;
-  }
-
-  private analyzeIncidents(data: IncidentioData): {
-    severity: "none" | "minor" | "major";
-    status:
-      | "operational"
-      | "investigating"
-      | "identified"
-      | "monitoring"
-      | "under_maintenance";
-    description: string;
-  } {
-    const {
-      ongoing_incidents,
-      in_progress_maintenances,
-      scheduled_maintenances,
-    } = data;
-
-    if (ongoing_incidents.length > 0) {
-      const incident = ongoing_incidents[0];
-      const incidentStatus = incident.status.toLowerCase();
-
-      if (incidentStatus.includes("investigating")) {
-        return {
-          severity: "major",
-          status: "investigating",
-          description: `Incident: ${incident.name}`,
-        };
-      }
-      if (incidentStatus.includes("identified")) {
-        return {
-          severity: "major",
-          status: "identified",
-          description: `Incident: ${incident.name}`,
-        };
-      }
-      if (incidentStatus.includes("monitoring")) {
-        return {
-          severity: "minor",
-          status: "monitoring",
-          description: `Monitoring: ${incident.name}`,
-        };
-      }
-
-      return {
-        severity: "major",
-        status: "investigating",
-        description: incident.name,
-      };
-    }
-
-    if (in_progress_maintenances.length > 0) {
-      const maintenance = in_progress_maintenances[0];
-      return {
-        severity: "none",
-        status: "under_maintenance",
-        description: `Maintenance: ${maintenance.name}`,
-      };
-    }
-
-    if (scheduled_maintenances.length > 0) {
-      const maintenance = scheduled_maintenances[0];
-      return {
-        severity: "none",
-        status: "operational",
-        description: `All Systems Operational (Scheduled: ${maintenance.name})`,
-      };
-    }
-
-    return {
-      severity: "none",
-      status: "operational",
-      description: "All Systems Operational",
-    };
-  }
-
-  private getLatestUpdateTime(data: IncidentioData): number {
-    const allItems = [
-      ...data.ongoing_incidents,
-      ...data.in_progress_maintenances,
-      ...data.scheduled_maintenances,
-    ];
-
-    const timestamps: number[] = [];
-    for (const item of allItems) {
-      const updatedAt = item.last_update?.updated_at;
-      if (updatedAt) {
-        timestamps.push(new Date(updatedAt).getTime());
-      }
-    }
-
-    return timestamps.length > 0 ? Math.max(...timestamps) : Date.now();
   }
 }

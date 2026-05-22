@@ -71,7 +71,7 @@ describe("IncidentioFetcher", () => {
   });
 
   describe("fetch", () => {
-    it("should fetch and parse operational status (no incidents)", async () => {
+    it("should fetch and parse operational status", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test Service",
@@ -82,9 +82,16 @@ describe("IncidentioFetcher", () => {
       };
 
       const mockResponse = {
-        ongoing_incidents: [],
-        in_progress_maintenances: [],
-        scheduled_maintenances: [],
+        page: {
+          id: "01GX91T1T0RXR54F1EKBQMAYCJ",
+          name: "Test Service",
+          url: "https://status.test.com",
+          updated_at: "2024-02-16T12:00:00Z",
+        },
+        status: {
+          indicator: "none",
+          description: "All Systems Operational",
+        },
       };
 
       const fetchMock = installMockFetch(() =>
@@ -97,10 +104,11 @@ describe("IncidentioFetcher", () => {
       const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
+      expect(result.status).toBe("operational");
       expect(result.description).toBe("All Systems Operational");
-      expect(result.timezone).toBe("UTC");
+      expect(typeof result.updated_at).toBe("number");
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://status.test.com/api/widget",
+        "https://status.test.com/api/v2/summary.json",
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -110,7 +118,7 @@ describe("IncidentioFetcher", () => {
       );
     });
 
-    it("should handle ongoing incidents with investigating status", async () => {
+    it("should handle a response without timezone", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -121,58 +129,16 @@ describe("IncidentioFetcher", () => {
       };
 
       const mockResponse = {
-        ongoing_incidents: [
-          {
-            id: "123",
-            name: "API Errors",
-            status: "investigating",
-            last_update: {
-              message: "We are investigating",
-              updated_at: "2024-02-16T12:00:00.000Z",
-            },
-          },
-        ],
-        in_progress_maintenances: [],
-        scheduled_maintenances: [],
-      };
-
-      installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
-
-      const result = await runFetcher(fetcher, entry);
-
-      expect(result.severity).toBe("major");
-      expect(result.description).toBe("Incident: API Errors");
-    });
-
-    it("should handle ongoing incidents with monitoring status", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://status.test.com",
-        provider: "incidentio",
-        industry: ["saas"],
-      };
-
-      const mockResponse = {
-        ongoing_incidents: [
-          {
-            id: "123",
-            name: "Database Slowness",
-            status: "monitoring",
-            last_update: {
-              message: "Monitoring the fix",
-              updated_at: "2024-02-16T12:00:00.000Z",
-            },
-          },
-        ],
-        in_progress_maintenances: [],
-        scheduled_maintenances: [],
+        page: {
+          id: "01GX91T1T0RXR54F1EKBQMAYCJ",
+          name: "Test",
+          url: "https://status.test.com",
+          updated_at: "2024-02-16T12:00:00Z",
+        },
+        status: {
+          indicator: "minor",
+          description: "Elevated Error Rates",
+        },
       };
 
       installMockFetch(() =>
@@ -185,10 +151,11 @@ describe("IncidentioFetcher", () => {
       const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("minor");
-      expect(result.description).toBe("Monitoring: Database Slowness");
+      expect(result.description).toBe("Elevated Error Rates");
+      expect(result.timezone).toBeUndefined();
     });
 
-    it("should handle in-progress maintenance", async () => {
+    it("should handle major incidents", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -199,109 +166,17 @@ describe("IncidentioFetcher", () => {
       };
 
       const mockResponse = {
-        ongoing_incidents: [],
-        in_progress_maintenances: [
-          {
-            id: "456",
-            name: "Database Upgrade",
-            status: "in_progress",
-            last_update: {
-              message: "Maintenance in progress",
-              updated_at: "2024-02-16T12:00:00.000Z",
-            },
-          },
-        ],
-        scheduled_maintenances: [],
-      };
-
-      installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
-
-      const result = await runFetcher(fetcher, entry);
-
-      expect(result.severity).toBe("none");
-      expect(result.description).toBe("Maintenance: Database Upgrade");
-    });
-
-    it("should handle scheduled maintenance", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://status.test.com",
-        provider: "incidentio",
-        industry: ["saas"],
-      };
-
-      const mockResponse = {
-        ongoing_incidents: [],
-        in_progress_maintenances: [],
-        scheduled_maintenances: [
-          {
-            id: "789",
-            name: "Server Maintenance",
-            status: "scheduled",
-            last_update: {
-              message: "Scheduled for tomorrow",
-              updated_at: "2024-02-16T12:00:00.000Z",
-            },
-          },
-        ],
-      };
-
-      installMockFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: async () => mockResponse,
-        } as Response),
-      );
-
-      const result = await runFetcher(fetcher, entry);
-
-      expect(result.severity).toBe("none");
-      expect(result.description).toBe(
-        "All Systems Operational (Scheduled: Server Maintenance)",
-      );
-    });
-
-    it("should prioritize ongoing incidents over maintenance", async () => {
-      const entry: StatusPageEntry = {
-        id: "test",
-        name: "Test",
-        url: "https://test.com",
-        status_page_url: "https://status.test.com",
-        provider: "incidentio",
-        industry: ["saas"],
-      };
-
-      const mockResponse = {
-        ongoing_incidents: [
-          {
-            id: "123",
-            name: "Critical Issue",
-            status: "investigating",
-            last_update: {
-              message: "Investigating",
-              updated_at: "2024-02-16T12:00:00.000Z",
-            },
-          },
-        ],
-        in_progress_maintenances: [
-          {
-            id: "456",
-            name: "Maintenance",
-            status: "in_progress",
-            last_update: {
-              message: "In progress",
-              updated_at: "2024-02-16T12:00:00.000Z",
-            },
-          },
-        ],
-        scheduled_maintenances: [],
+        page: {
+          id: "01GX91T1T0RXR54F1EKBQMAYCJ",
+          name: "Test",
+          url: "https://status.test.com",
+          timezone: "America/New_York",
+          updated_at: "2024-02-16T12:00:00Z",
+        },
+        status: {
+          indicator: "major",
+          description: "Investigating API Errors",
+        },
       };
 
       installMockFetch(() =>
@@ -314,7 +189,9 @@ describe("IncidentioFetcher", () => {
       const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
-      expect(result.description).toBe("Incident: Critical Issue");
+      expect(result.status).toBe("investigating");
+      expect(result.description).toBe("Investigating API Errors");
+      expect(result.timezone).toBe("America/New_York");
     });
 
     it("should use custom endpoint if provided", async () => {
@@ -327,14 +204,21 @@ describe("IncidentioFetcher", () => {
         industry: ["saas"],
         api_config: {
           type: "incidentio",
-          endpoint: "https://custom.endpoint.com/widget",
+          endpoint: "https://custom.endpoint.com/summary.json",
         },
       };
 
       const mockResponse = {
-        ongoing_incidents: [],
-        in_progress_maintenances: [],
-        scheduled_maintenances: [],
+        page: {
+          id: "01GX91T1T0RXR54F1EKBQMAYCJ",
+          name: "Test",
+          url: "https://status.test.com",
+          updated_at: "2024-02-16T12:00:00Z",
+        },
+        status: {
+          indicator: "none",
+          description: "All Systems Operational",
+        },
       };
 
       const fetchMock = installMockFetch(() =>
@@ -347,7 +231,7 @@ describe("IncidentioFetcher", () => {
       await runFetcher(fetcher, entry);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "https://custom.endpoint.com/widget",
+        "https://custom.endpoint.com/summary.json",
         expect.any(Object),
       );
     });
@@ -373,6 +257,29 @@ describe("IncidentioFetcher", () => {
       const exit = await runFetcherExit(fetcher, entry);
       const err = expectFetchError(exit);
       expect(err.httpStatus).toBe(503);
+      expect(err.fetcherName).toBe("incidentio");
+    });
+
+    it("should fail with FetchError on invalid JSON schema", async () => {
+      const entry: StatusPageEntry = {
+        id: "test",
+        name: "Test",
+        url: "https://test.com",
+        status_page_url: "https://status.test.com",
+        provider: "incidentio",
+        industry: ["saas"],
+      };
+
+      installMockFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({ invalid: "data" }),
+        } as Response),
+      );
+
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
     });
   });
 });
