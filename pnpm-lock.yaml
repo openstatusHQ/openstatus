@@ -85,8 +85,8 @@ catalogs:
       specifier: 5.2.8
       version: 5.2.8
     '@google-cloud/tasks':
-      specifier: 4.1.0
-      version: 4.1.0
+      specifier: 4.0.1
+      version: 4.0.1
     '@hono/mcp':
       specifier: 0.2.5
       version: 0.2.5
@@ -1416,7 +1416,7 @@ importers:
         version: 1.11.2
       '@google-cloud/tasks':
         specifier: 'catalog:'
-        version: 4.1.0
+        version: 4.0.1
       '@hookform/resolvers':
         specifier: 'catalog:'
         version: 5.2.2(react-hook-form@7.76.0(react@19.2.6))
@@ -1699,7 +1699,7 @@ importers:
     dependencies:
       '@google-cloud/tasks':
         specifier: 'catalog:'
-        version: 4.1.0
+        version: 4.0.1
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.15.15
@@ -4493,9 +4493,9 @@ packages:
   '@formatjs/intl-localematcher@0.8.1':
     resolution: {integrity: sha512-xwEuwQFdtSq1UKtQnyTZWC+eHdv7Uygoa+H2k/9uzBVQjDyp9r20LNDNKedWXll7FssT3GRHvqsdJGYSUWqYFA==}
 
-  '@google-cloud/tasks@4.1.0':
-    resolution: {integrity: sha512-9n6Aw0JZS/c6dqP1wmK9tmzwqayS/E62BM1rOtzDhwYeWhtAhFsdXjCDZZ9+H+kGOrpsLf+4NPIs5lu5mQvapg==}
-    engines: {node: '>=v14'}
+  '@google-cloud/tasks@4.0.1':
+    resolution: {integrity: sha512-cluHSN52WgaNoDPVguxCeXZq4rTBHqJntXFB9aI9zG8n8MJukf6V0H7yoAXpKXQxyeXv4LRy108kAgLPgXP3yA==}
+    engines: {node: '>=14.0.0'}
 
   '@grpc/grpc-js@1.14.1':
     resolution: {integrity: sha512-sPxgEWtPUR3EnRJCEtbGZG2iX8LQDUls2wUS3o27jg07KqJFMq6YDeWvMo1wfpmy3rqRdS0rivpLwhqQtEyCuQ==}
@@ -14405,7 +14405,7 @@ snapshots:
       '@formatjs/fast-memoize': 3.1.0
       tslib: 2.8.1
 
-  '@google-cloud/tasks@4.1.0':
+  '@google-cloud/tasks@4.0.1':
     dependencies:
       google-gax: 4.6.1
     transitivePeerDependencies:
