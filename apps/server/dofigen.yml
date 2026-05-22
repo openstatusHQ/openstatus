@@ -13,12 +13,14 @@ ignore:
 builders:
   # Stage 1: Install production dependencies
   install:
-    fromImage: oven/bun:1.3.6
+    fromImage: node:24-slim
     workdir: /app/
     labels:
       org.opencontainers.image.stage: install
     bind:
-      - bunfig.toml
+      - pnpm-workspace.yaml
+      - pnpm-lock.yaml
+      - patches
       - package.json
       - apps/server/package.json
       - packages/analytics/package.json
@@ -52,9 +54,11 @@ builders:
       - packages/locales/package.json
       - packages/services/package.json
       - packages/importers/package.json
-    run: bun install --production --frozen-lockfile --verbose
+    run:
+      - corepack enable pnpm
+      - pnpm install --frozen-lockfile --verbose
     cache:
-      - /root/.bun/install/cache
+      - /root/.local/share/pnpm/store
 
   # Stage 2: Build application (compile to binary)
   build:
@@ -69,6 +73,12 @@ builders:
       - fromBuilder: install
         source: /app/node_modules
         target: /app/node_modules
+      - fromBuilder: install
+        source: /app/apps/server/node_modules
+        target: /app/apps/server/node_modules
+      - fromBuilder: install
+        source: /app/packages
+        target: /app/packages
     run: bun build --compile --sourcemap src/index.ts --outfile=app
 
 # Runtime stage
