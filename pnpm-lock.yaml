@@ -10,8 +10,8 @@ catalogs:
       specifier: 1.2.12
       version: 1.2.12
     '@ai-sdk/react':
-      specifier: 3.0.187
-      version: 3.0.187
+      specifier: 3.0.190
+      version: 3.0.190
     '@astrojs/check':
       specifier: 0.9.9
       version: 0.9.9
@@ -34,8 +34,8 @@ catalogs:
       specifier: 1.11.2
       version: 1.11.2
     '@aws-sdk/client-s3':
-      specifier: 3.1050.0
-      version: 3.1050.0
+      specifier: 3.1051.0
+      version: 3.1051.0
     '@biomejs/biome':
       specifier: 1.8.3
       version: 1.8.3
@@ -64,8 +64,8 @@ catalogs:
       specifier: ^0.2.0
       version: 0.2.0
     '@date-fns/tz':
-      specifier: 1.4.1
-      version: 1.4.1
+      specifier: 1.5.0
+      version: 1.5.0
     '@date-fns/utc':
       specifier: 2.1.1
       version: 2.1.1
@@ -106,8 +106,8 @@ catalogs:
       specifier: 5.2.2
       version: 5.2.2
     '@iconify-json/lucide':
-      specifier: 1.2.108
-      version: 1.2.108
+      specifier: 1.2.109
+      version: 1.2.109
     '@libsql/client':
       specifier: 0.15.15
       version: 0.15.15
@@ -313,8 +313,8 @@ catalogs:
       specifier: 0.23.4
       version: 0.23.4
     ai:
-      specifier: 6.0.185
-      version: 6.0.185
+      specifier: 6.0.188
+      version: 6.0.188
     astro:
       specifier: 5.18.1
       version: 5.18.1
@@ -613,7 +613,7 @@ importers:
     dependencies:
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 3.0.187(react@19.2.6)(zod@4.1.13)
+        version: 3.0.190(react@19.2.6)(zod@4.1.13)
       '@auth/core':
         specifier: 'catalog:'
         version: 0.40.0
@@ -622,7 +622,7 @@ importers:
         version: 1.11.2
       '@date-fns/tz':
         specifier: 'catalog:'
-        version: 1.4.1
+        version: 1.5.0
       '@date-fns/utc':
         specifier: 'catalog:'
         version: 2.1.1
@@ -796,7 +796,7 @@ importers:
         version: 2.3.4
       ai:
         specifier: 'catalog:'
-        version: 6.0.185(zod@4.1.13)
+        version: 6.0.188(zod@4.1.13)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -963,7 +963,7 @@ importers:
     devDependencies:
       '@iconify-json/lucide':
         specifier: 'catalog:'
-        version: 1.2.108
+        version: 1.2.109
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -972,7 +972,7 @@ importers:
     dependencies:
       '@aws-sdk/client-s3':
         specifier: 'catalog:'
-        version: 3.1050.0
+        version: 3.1051.0
       '@hono/zod-validator':
         specifier: 'catalog:'
         version: 0.2.2(hono@4.12.21)(zod@4.1.13)
@@ -1147,7 +1147,7 @@ importers:
         version: 2.11.0
       ai:
         specifier: 'catalog:'
-        version: 6.0.185(zod@4.1.13)
+        version: 6.0.188(zod@4.1.13)
       hono:
         specifier: 'catalog:'
         version: 4.12.21
@@ -1193,7 +1193,7 @@ importers:
         version: 1.11.2
       '@date-fns/tz':
         specifier: 'catalog:'
-        version: 1.4.1
+        version: 1.5.0
       '@date-fns/utc':
         specifier: 'catalog:'
         version: 2.1.1
@@ -3021,8 +3021,8 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
-  '@ai-sdk/gateway@3.0.116':
-    resolution: {integrity: sha512-k8P17w7Eho5Y4l3tZrYxqQdffkI4xwtl8GCxkZs+JdMWZhyrLLlozqWkKLaWrCSlEYQOeIhEnQLhqQgYYU86Rw==}
+  '@ai-sdk/gateway@3.0.118':
+    resolution: {integrity: sha512-XYPbVoDo1TDMVLe5Eg42gIjdOyxaizh9H0kiSSnTXr+AdrqZvutk/ypLOiqBXPV3D1K3+BSm/sbFeomZJlM64A==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -3047,8 +3047,8 @@ packages:
     resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@3.0.187':
-    resolution: {integrity: sha512-TJBhR18F7BOLj/mBLYoZNZVkQgDc7DBVz2ZyQEecpKnO+EAhdx3QA2q8BnEVqwNlDfOKOa6dr7ka4hU0wy/wDw==}
+  '@ai-sdk/react@3.0.190':
+    resolution: {integrity: sha512-ee8bZ3ZCC/PZDfCIX0LNvoPezo1v+jHp85pW6ct6B3qddsSp4SoFvapGuhK1gHRMLR6rKq0D5Gjii/+rgLzb9g==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
@@ -3226,8 +3226,8 @@ packages:
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
 
-  '@aws-sdk/client-s3@3.1050.0':
-    resolution: {integrity: sha512-9kgtv+bXZQrOIJT2INPPBCezrJu1FlgGrzEat/ut4A4V53IT00LynsBZgp12eFKbjJuNCeTo7iPSKjPsX8ub+A==}
+  '@aws-sdk/client-s3@3.1051.0':
+    resolution: {integrity: sha512-0Yhq7AMw2te5YtxDHkm2KKpXF8IccOO4nmCsp12EzYB/e3IKQ73NHH4jA2ki8mQwvAQzFGB+1GoycT00U8sZCg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.974.12':
@@ -3305,10 +3305,6 @@ packages:
   '@aws-sdk/token-providers@3.1049.0':
     resolution: {integrity: sha512-r7+d0lQMTHKypkmaF5jRTBYLYHCUHzt3gaVoN9SidLhQeWhCmHk3AKrboDTpPF5b7Pt7vKu3+oeMjznM2Eu1ow==}
     engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/types@3.535.0':
-    resolution: {integrity: sha512-aY4MYfduNj+sRR37U7XxYR8wemfbKP6lx00ze2M2uubn7mZotuVrWYAafbMSXrdEMSToE5JDhr28vArSOoLcSg==}
-    engines: {node: '>=14.0.0'}
 
   '@aws-sdk/types@3.973.8':
     resolution: {integrity: sha512-gjlAdtHMbtR9X5iIhVUvbVcy55KnznpC6bkDUWW9z915bi0ckdUr5cjf16Kp6xq0bP5HBD2xzgbL9F9Quv5vUw==}
@@ -3695,8 +3691,8 @@ packages:
     resolution: {integrity: sha512-kzyuwOAQnXJNLS9PSyrk0CWk35nWJW/zl/6KvnTBMFK65gm7U1/Z5BqjxeapjZCIhQcM/DsrEmcbRwDyXyXK4A==}
     engines: {node: '>=14'}
 
-  '@date-fns/tz@1.4.1':
-    resolution: {integrity: sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA==}
+  '@date-fns/tz@1.5.0':
+    resolution: {integrity: sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==}
 
   '@date-fns/utc@2.1.1':
     resolution: {integrity: sha512-SlJDfG6RPeEX8wEVv6ZB3kak4MmbtyiI2qX/5zuKdordbrhB/iaJ58GVMZgJ6P1sJaM1gMgENFYYeg1JWrCFrA==}
@@ -4564,8 +4560,8 @@ packages:
     peerDependencies:
       react-hook-form: ^7.55.0
 
-  '@iconify-json/lucide@1.2.108':
-    resolution: {integrity: sha512-jnmMx7xxShfsKeNNJhn47IKj3gD/AbRz+poKLIPn4rSIXw+yVbXCfUBXza/Jo9YIEEFajBk6Zayet8DqGCvX6w==}
+  '@iconify-json/lucide@1.2.109':
+    resolution: {integrity: sha512-O5arvTVcu95soP3dGWJp/Nl5L5FYmFu2z75sSrQmGzrgrnsCU49t8+ZB7HPq//GRNXpWUoNfDRcs5yR7XMa+zw==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -7174,10 +7170,6 @@ packages:
     resolution: {integrity: sha512-53+75QuPl6DL+ct6vVEB51FDO5oulXr20TPV46VvJZg76lIlXNWfxi8j+G2V/t0I2qxCBOa3vX/8bmjrpFVo9g==}
     engines: {node: '>=18.0.0'}
 
-  '@smithy/types@2.12.0':
-    resolution: {integrity: sha512-QwYgloJ0sVNBeBuBs65cIkTbfzV/Q6ZNPCJ99EICFEdJYG50nGIY/uYXp+TbsdJReIuPr0a0kXmCvren3MbRRw==}
-    engines: {node: '>=14.0.0'}
-
   '@smithy/types@4.14.2':
     resolution: {integrity: sha512-P+otAxbV4CqBybp7EkcJCrig63yE2E7PuNVOmilVMRcx/O+QDzGULTrKsq4DV13gSfak9ObPrWaHl/9bL5YcWw==}
     engines: {node: '>=18.0.0'}
@@ -7942,8 +7934,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@6.0.185:
-    resolution: {integrity: sha512-oGsqscREaTlo75KHZLtwZxRyI+ZBwHV2wRX9B8smHjgOs13WwoCvUyr5aPUWpIBRz406wmIKy1RzoUEq0/WKJw==}
+  ai@6.0.188:
+    resolution: {integrity: sha512-kNwIl1MM4ESzeOPDYuN+FidJ2QY5kGWHLtTMru6HHPW/JJ6nPuvHRhJ8tMX/Y2Tijx9DCiv2W7y5IBouuB712g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -12887,7 +12879,7 @@ snapshots:
       '@ai-sdk/provider-utils': 2.2.8(zod@4.1.13)
       zod: 4.1.13
 
-  '@ai-sdk/gateway@3.0.116(zod@4.1.13)':
+  '@ai-sdk/gateway@3.0.118(zod@4.1.13)':
     dependencies:
       '@ai-sdk/provider': 3.0.10
       '@ai-sdk/provider-utils': 4.0.27(zod@4.1.13)
@@ -12916,10 +12908,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@3.0.187(react@19.2.6)(zod@4.1.13)':
+  '@ai-sdk/react@3.0.190(react@19.2.6)(zod@4.1.13)':
     dependencies:
       '@ai-sdk/provider-utils': 4.0.27(zod@4.1.13)
-      ai: 6.0.185(zod@4.1.13)
+      ai: 6.0.188(zod@4.1.13)
       react: 19.2.6
       swr: 2.3.6(react@19.2.6)
       throttleit: 2.1.0
@@ -13211,20 +13203,20 @@ snapshots:
   '@aws-crypto/crc32@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.973.8
       tslib: 2.8.1
 
   '@aws-crypto/crc32c@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.973.8
       tslib: 2.8.1
 
   '@aws-crypto/sha1-browser@5.2.0':
     dependencies:
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.973.8
       '@aws-sdk/util-locate-window': 3.893.0
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -13234,7 +13226,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.973.8
       '@aws-sdk/util-locate-window': 3.893.0
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -13242,7 +13234,7 @@ snapshots:
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.973.8
       tslib: 2.8.1
 
   '@aws-crypto/supports-web-crypto@5.2.0':
@@ -13251,11 +13243,11 @@ snapshots:
 
   '@aws-crypto/util@5.2.0':
     dependencies:
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.973.8
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
-  '@aws-sdk/client-s3@3.1050.0':
+  '@aws-sdk/client-s3@3.1051.0':
     dependencies:
       '@aws-crypto/sha1-browser': 5.2.0
       '@aws-crypto/sha256-browser': 5.2.0
@@ -13453,11 +13445,6 @@ snapshots:
       '@aws-sdk/types': 3.973.8
       '@smithy/core': 3.24.3
       '@smithy/types': 4.14.2
-      tslib: 2.8.1
-
-  '@aws-sdk/types@3.535.0':
-    dependencies:
-      '@smithy/types': 2.12.0
       tslib: 2.8.1
 
   '@aws-sdk/types@3.973.8':
@@ -13851,7 +13838,7 @@ snapshots:
 
   '@ctrl/tinycolor@4.2.0': {}
 
-  '@date-fns/tz@1.4.1': {}
+  '@date-fns/tz@1.5.0': {}
 
   '@date-fns/utc@2.1.1': {}
 
@@ -14506,7 +14493,7 @@ snapshots:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.76.0(react@19.2.6)
 
-  '@iconify-json/lucide@1.2.108':
+  '@iconify-json/lucide@1.2.109':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -16950,10 +16937,6 @@ snapshots:
       '@smithy/types': 4.14.2
       tslib: 2.8.1
 
-  '@smithy/types@2.12.0':
-    dependencies:
-      tslib: 2.8.1
-
   '@smithy/types@4.14.2':
     dependencies:
       tslib: 2.8.1
@@ -17727,9 +17710,9 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@6.0.185(zod@4.1.13):
+  ai@6.0.188(zod@4.1.13):
     dependencies:
-      '@ai-sdk/gateway': 3.0.116(zod@4.1.13)
+      '@ai-sdk/gateway': 3.0.118(zod@4.1.13)
       '@ai-sdk/provider': 3.0.10
       '@ai-sdk/provider-utils': 4.0.27(zod@4.1.13)
       '@opentelemetry/api': 1.9.1
