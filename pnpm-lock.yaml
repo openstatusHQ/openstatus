@@ -2693,7 +2693,7 @@ importers:
     dependencies:
       effect:
         specifier: 'catalog:'
-        version: 3.19.12
+        version: 3.21.2
       node-html-parser:
         specifier: 'catalog:'
         version: 6.1.13
