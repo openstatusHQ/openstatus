@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { fetchers } from "../src/fetchers";
 import type { SeverityLevel, StatusPageEntry } from "../src/types";
 
@@ -73,7 +74,7 @@ async function testFetchers() {
 
     try {
       const startTime = Date.now();
-      const status = await fetcher.fetch(entry);
+      const status = await Effect.runPromise(fetcher.fetch(entry));
       const duration = Date.now() - startTime;
 
       const statusEmoji = getStatusEmoji(status.severity);

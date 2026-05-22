@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("AtlassianFetcher", () => {
   let fetcher: AtlassianFetcher;
@@ -90,20 +96,20 @@ describe("AtlassianFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("Etc/UTC");
       expect(typeof result.updated_at).toBe("number");
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://www.githubstatus.com/api/v2/summary.json",
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -136,14 +142,14 @@ describe("AtlassianFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("minor");
       expect(result.description).toBe("Elevated Error Rates");
@@ -174,14 +180,14 @@ describe("AtlassianFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("Major Service Outage");
@@ -215,22 +221,22 @@ describe("AtlassianFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await fetcher.fetch(entry);
+      await runFetcher(fetcher, entry);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://custom.endpoint.com/status.json",
         expect.any(Object),
       );
     });
 
-    it("should throw error on non-200 response", async () => {
+    it("should fail with FetchError on non-200 response", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -240,7 +246,7 @@ describe("AtlassianFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 404,
@@ -248,10 +254,14 @@ describe("AtlassianFetcher", () => {
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow("HTTP 404: Not Found");
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(404);
+      expect(err.fetcherName).toBe("atlassian");
+      expect(err.entryId).toBe("test");
     });
 
-    it("should throw error on invalid JSON schema", async () => {
+    it("should fail with FetchError on invalid JSON schema", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -261,14 +271,16 @@ describe("AtlassianFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({ invalid: "data" }),
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
     });
   });
 });

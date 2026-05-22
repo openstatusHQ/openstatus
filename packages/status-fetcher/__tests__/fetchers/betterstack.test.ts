@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("BetterStackFetcher", () => {
   let fetcher: BetterStackFetcher;
@@ -101,20 +107,20 @@ describe("BetterStackFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("America/New_York");
       expect(typeof result.updated_at).toBe("number");
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://status.test.com/index.json",
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -148,14 +154,14 @@ describe("BetterStackFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("minor");
       expect(result.description).toBe("Degraded Service");
@@ -184,14 +190,14 @@ describe("BetterStackFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("Service Outage");
@@ -224,22 +230,22 @@ describe("BetterStackFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await fetcher.fetch(entry);
+      await runFetcher(fetcher, entry);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://custom.endpoint.com/status.json",
         expect.any(Object),
       );
     });
 
-    it("should throw error on non-200 response", async () => {
+    it("should fail with FetchError on 4xx response", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -249,7 +255,7 @@ describe("BetterStackFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 403,
@@ -257,10 +263,12 @@ describe("BetterStackFetcher", () => {
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow("HTTP 403: Forbidden");
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(403);
     });
 
-    it("should throw error on invalid JSON schema", async () => {
+    it("should fail with FetchError on invalid JSON schema", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -270,14 +278,16 @@ describe("BetterStackFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({ invalid: "data" }),
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
     });
   });
 });

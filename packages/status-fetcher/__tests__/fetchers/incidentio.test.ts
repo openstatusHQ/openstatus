@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { IncidentioFetcher } from "../../src/fetchers/incidentio";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("IncidentioFetcher", () => {
   let fetcher: IncidentioFetcher;
@@ -81,19 +87,19 @@ describe("IncidentioFetcher", () => {
         scheduled_maintenances: [],
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("UTC");
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://status.test.com/api/widget",
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -130,14 +136,14 @@ describe("IncidentioFetcher", () => {
         scheduled_maintenances: [],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("Incident: API Errors");
@@ -169,14 +175,14 @@ describe("IncidentioFetcher", () => {
         scheduled_maintenances: [],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("minor");
       expect(result.description).toBe("Monitoring: Database Slowness");
@@ -208,14 +214,14 @@ describe("IncidentioFetcher", () => {
         scheduled_maintenances: [],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("Maintenance: Database Upgrade");
@@ -247,14 +253,14 @@ describe("IncidentioFetcher", () => {
         ],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe(
@@ -298,14 +304,14 @@ describe("IncidentioFetcher", () => {
         scheduled_maintenances: [],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("Incident: Critical Issue");
@@ -331,22 +337,22 @@ describe("IncidentioFetcher", () => {
         scheduled_maintenances: [],
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await fetcher.fetch(entry);
+      await runFetcher(fetcher, entry);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://custom.endpoint.com/widget",
         expect.any(Object),
       );
     });
 
-    it("should throw error on non-200 response", async () => {
+    it("should fail with FetchError on 5xx response", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -356,7 +362,7 @@ describe("IncidentioFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 503,
@@ -364,9 +370,9 @@ describe("IncidentioFetcher", () => {
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
-        "HTTP 503: Service Unavailable",
-      );
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(503);
     });
   });
 });
