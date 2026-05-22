@@ -11,8 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@react-email/components": "catalog:",
-    "@react-email/render": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "effect": "catalog:",
     "react-email": "catalog:",
@@ -21,7 +19,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@react-email/preview-server": "catalog:",
+    "@react-email/ui": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "react": "catalog:",

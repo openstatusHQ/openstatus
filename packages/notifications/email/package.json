@@ -14,8 +14,6 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@react-email/components": "catalog:",
-    "@react-email/render": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "react-dom": "catalog:",
     "resend": "catalog:",

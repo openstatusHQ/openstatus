@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 
-import { render } from "@react-email/render";
+import { render } from "react-email";
 import { Effect, Schedule } from "effect";
 import { Resend } from "resend";
 import FollowUpEmail from "../emails/followup";

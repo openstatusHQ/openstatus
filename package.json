@@ -32,8 +32,5 @@
   },
   "packageManager": "pnpm@11.2.1",
   "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"],
-  "overrides": {
-    "@react-email/preview-server": "npm:next@16.2.6"
-  }
+  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
 }

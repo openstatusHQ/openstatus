@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { describe, expect, test } from "bun:test";
-import { render } from "@react-email/render";
+import { render } from "react-email";
 import StatusReportEmail from "../emails/status-report";
 
 describe("Status Report Email - Unsubscribe Link in Body", () => {

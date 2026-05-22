@@ -90,9 +90,7 @@ catalog:
   "@radix-ui/react-tabs": 1.1.13
   "@radix-ui/react-toggle": 1.1.10
   "@radix-ui/react-tooltip": 1.2.8
-  "@react-email/components": 1.0.3
-  "@react-email/preview-server": 5.1.1
-  "@react-email/render": 2.0.8
+  "@react-email/ui": 6.1.5
   "@scalar/hono-api-reference": 0.8.10
   "@sentry/bun": 10.53.1
   "@sentry/nextjs": 10.53.1
@@ -175,7 +173,7 @@ catalog:
   react: 19.2.6
   react-day-picker: 8.10.2
   react-dom: 19.2.6
-  react-email: 5.2.11
+  react-email: 6.1.5
   react-hook-form: 7.76.0
   react-medium-image-zoom: 5.4.5
   react-tweet: 3.3.0
