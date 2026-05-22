@@ -131,7 +131,10 @@ export const fetchJson = <T>(
       catch: failWith(opts),
     }).pipe(
       Effect.flatMap((json) =>
-        Effect.try({ try: () => opts.schema.parse(json), catch: failWith(opts) }),
+        Effect.try({
+          try: () => opts.schema.parse(json),
+          catch: failWith(opts),
+        }),
       ),
     ),
   );
