@@ -92,11 +92,18 @@ LABEL \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 WORKDIR /app/
 COPY \
+    --link \
+    "pnpm-workspace.yaml" "/app/pnpm-workspace.yaml"
+COPY \
+    --link \
+    "pnpm-lock.yaml" "/app/pnpm-lock.yaml"
+COPY \
     --from=docker \
     --link \
     "/app/apps/build-docker/package.json" "/app/package.json"
 RUN <<EOF
 corepack enable pnpm
+awk 'BEGIN{skip=0} /^patchedDependencies:/ {skip=1; next} skip && /^[^ ]/ {skip=0} !skip {print}' pnpm-workspace.yaml > /tmp/pnpm-workspace.yaml && mv /tmp/pnpm-workspace.yaml pnpm-workspace.yaml
 pnpm install
 EOF
 
