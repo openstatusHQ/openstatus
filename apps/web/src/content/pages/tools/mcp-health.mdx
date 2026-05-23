@@ -1,0 +1,166 @@
+---
+title: "MCP Server Health Check"
+publishedAt: "2026-05-21"
+author: "Maximilian Kaske"
+description: "Free online MCP server health check. Test JSON-RPC initialize, ping, and tools/list handshake from your browser — no install, no signup."
+category: "Product"
+howto:
+  totalTime: "PT30S"
+  steps:
+    - name: "Paste your MCP server URL"
+      text: "Enter the URL of your Model Context Protocol endpoint (for example https://hf.co/mcp). Both application/json and text/event-stream transports are supported."
+      url: "#how-to-test-your-mcp-server"
+    - name: "Add an authorization header if needed"
+      text: "If the server requires authentication, click Add Header and set Authorization to Bearer <token>. Public MCP servers can be tested without any headers."
+      url: "#how-to-test-your-mcp-server"
+    - name: "Run the JSON-RPC handshake"
+      text: "openstatus sends the three calls every MCP client makes on connect: initialize, ping, and tools/list. The session id is captured automatically."
+      url: "#how-to-test-your-mcp-server"
+    - name: "Inspect each step"
+      text: "Click any row in the result table to open the exact JSON-RPC request and response, the per-step latency, and metadata captured from the handshake (protocol version, server info, session id)."
+      url: "#how-to-test-your-mcp-server"
+faq:
+  - question: "What is an MCP health check?"
+    answer: "An MCP health check verifies that a Model Context Protocol server is reachable, speaks the JSON-RPC handshake correctly, and exposes the tools it claims to. Unlike a plain HTTP ping, it sends the three calls every MCP client makes on connect — initialize, notifications/initialized, and tools/list — and validates the responses, so a server returning 200 OK with an HTML body still fails the check."
+  - question: "How do I test if my MCP server is working?"
+    answer: "Paste your server URL into the openstatus MCP Server Health Check and run it. The tool performs the full MCP 2025-06-18 handshake from your browser, returns a verdict (Healthy, Partial, Auth Required, or Unreachable), and shows the JSON-RPC request and response for each step so you can see exactly where the handshake failed."
+  - question: "What's the difference between an MCP ping and an HTTP ping?"
+    answer: "An HTTP ping only checks that the URL responds — a 200 from a misconfigured load balancer or a CDN error page would pass. An MCP ping runs the JSON-RPC initialize handshake, captures the Mcp-Session-Id, and validates that the server echoes the expected request id. A protocol-level ping is the difference between 'the box is up' and 'the box speaks the protocol my AI client expects.'"
+  - question: "Do I need authentication to ping an MCP server?"
+    answer: "Only if the server requires it. Public MCP servers like hf.co/mcp work without any headers. Servers that require auth respond with 401 and a WWW-Authenticate header — our tool detects this, parses the OAuth resource metadata when present, and tells you exactly which authorization server to grab a token from. You then paste the token as an Authorization header and re-run."
+  - question: "Why does my MCP server return text/event-stream?"
+    answer: "MCP's Streamable HTTP transport allows a server to respond with either application/json or text/event-stream — both are spec-compliant. Servers built on the official SDKs default to SSE because it supports server-initiated notifications. Our tool reads the SSE stream, finds the first event whose JSON payload's id matches the request, and treats it identically to a JSON response."
+  - question: "How do I debug a 401 from my MCP server?"
+    answer: "A 401 means the server requires authentication. Check the WWW-Authenticate header in the response — if it points to an OAuth resource_metadata URL, the tool surfaces the authorization server so you can fetch a token. Then click Add Header, set Authorization to Bearer <your-token>, and re-run the check."
+  - question: "How does OAuth work for MCP servers?"
+    answer: "MCP follows RFC 9728 (OAuth 2.0 Protected Resource Metadata). The server returns 401 with a WWW-Authenticate: Bearer resource_metadata=\"…\" header pointing at a JSON document that lists the trusted authorization servers. Clients fetch that document, complete an OAuth flow against the listed authorization server, and resend the JSON-RPC request with an Authorization: Bearer header. The health checker parses the resource metadata for you and surfaces the authorization server URL in the auth-challenge callout."
+  - question: "Is the openstatus MCP Server Health Check free?"
+    answer: "Yes — it is free to use, requires no account, and runs entirely in your browser. Reports you choose to share via the URL expire after 7 days. The tool is open-source, like the rest of openstatus."
+  - question: "Can I monitor my MCP server continuously?"
+    answer: "Yes — this tool runs a one-off check from your browser. For continuous monitoring with alerts when the handshake breaks, see the [openstatus guide to monitoring MCP servers](/docs/guides/how-to-monitor-mcp-server)."
+---
+
+> Monitor MCP servers continuously? [Read the monitoring guide](/docs/guides/how-to-monitor-mcp-server).
+
+## What is an MCP server health check?
+
+An MCP server health check verifies that a [Model Context Protocol](https://modelcontextprotocol.io) endpoint behaves the way an AI client expects when it first connects. It is not a plain HTTP ping — it speaks JSON-RPC, runs the spec-defined handshake, and confirms the server actually exposes the tools it promises.
+
+A failing MCP health check tells you the server is unreachable, returning the wrong content type, missing required JSON-RPC methods, or expecting an auth header you haven't provided. A passing check tells you the server is ready to serve AI clients like Claude Desktop, Claude Code, Cursor, Continue, or your own agent.
+
+## How to test your MCP server
+
+1. **Paste your MCP server URL.** Any Streamable HTTP endpoint works — for example `https://hf.co/mcp` or your own deployment.
+2. **Add an `Authorization` header if the server requires it.** Public servers can be tested with no headers.
+3. **Run the check.** Openstatus sends the JSON-RPC `initialize`, `ping`, and `tools/list` calls in the same order an MCP client would.
+4. **Inspect each step.** Click any row in the result table to open the exact JSON-RPC request and response that openstatus sent and received — along with the per-step latency, negotiated protocol version, server info, and session id.
+
+The whole flow takes about 30 seconds and never leaves your browser session — the only data persisted is the report you explicitly choose to share.
+
+## What this tool does
+
+The tool runs the three calls every MCP client makes on connect:
+
+- **`initialize`** — declares protocol version `2025-06-18`, captures the server's `serverInfo`, `capabilities`, and `Mcp-Session-Id`.
+- **`notifications/initialized`** — fire-and-forget notification telling the server the client is ready.
+- **`ping`** + **`tools/list`** — runs in parallel using the captured session id, reports latency and the tools the server advertises.
+
+The verdict is one of **Healthy** (`GOOD`), **Partial** (`WARN` — server speaks MCP but exposes no tools), **Authentication Required** (`AUTH` — server returned 401 with a Bearer challenge), or **Unreachable** (`DOWN` — DNS / connection / parse failure).
+
+## Why a JSON-RPC ping isn't a plain HTTP check
+
+A status-code pinger checks one thing: did the URL return 200? An MCP server can return 200 and still be broken — the body might be HTML from a misconfigured proxy, the JSON-RPC `id` might not echo, the server might not implement `ping`, or `tools/list` might come back empty. AI clients fail in every one of those cases.
+
+The handshake also captures the negotiated protocol version, which is the only reliable signal that an MCP server upgrade hasn't silently changed behaviour. If your server claims `2025-06-18` today and `2025-09-01` next week, you want to know before your users do.
+
+## Common failure modes
+
+- **Connection refused / DNS** — the URL is wrong, the server is down, or your firewall is in the way.
+- **200 with an HTML body** — the URL points at a marketing page or load balancer, not the JSON-RPC endpoint. The most common MCP misconfiguration.
+- **401 / 403** — auth header missing or rotated. The token your AI client uses is the same one you need here.
+- **401 with `WWW-Authenticate: Bearer …`** — the server uses OAuth. We parse the `resource_metadata` URL and surface the authorization server so you can grab a token in one click.
+- **406 Not Acceptable** — the server requires `text/event-stream` in `Accept`. We always send `application/json, text/event-stream`, so this usually means the server's Accept negotiation is broken.
+- **JSON-RPC `-32601 Method not found`** — the server doesn't implement `ping`. Some MCP implementations skip optional methods; the tool still passes if `initialize` + `tools/list` succeed.
+- **Session id missing** — many servers don't enforce sessions, and we proceed without one. If your server requires it, ensure `initialize` returns `Mcp-Session-Id`.
+
+## Authentication and OAuth
+
+MCP servers that require auth follow [RFC 9728 (OAuth 2.0 Protected Resource Metadata)](https://datatracker.ietf.org/doc/html/rfc9728). When the server rejects an unauthenticated `initialize`, it returns `401 Unauthorized` with a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at a JSON document that lists the authorization servers it trusts.
+
+The health checker handles that flow for you:
+
+- On `401`, openstatus parses the `WWW-Authenticate` header and fetches the linked `resource_metadata` document.
+- The **authorization server URL** is surfaced in the auth-challenge callout so you know exactly where to obtain a token — no guessing which IdP the server delegates to.
+- Once you have a token (from a `client_credentials` flow, a personal access token, or your AI client's OAuth callback), click **Add Header**, set `Authorization` to `Bearer <token>`, and re-run.
+
+If the server returns `401` *without* a `WWW-Authenticate` header, it is non-compliant — most clients (including Claude Desktop and Claude Code) will fail to authenticate, and the tool will report `AUTH` with no resource metadata.
+
+## Headers
+
+The handshake always sends `Content-Type: application/json` and `Accept: application/json, text/event-stream`. Add any extra headers (most commonly `Authorization: Bearer <token>`) with the **Add Header** button.
+
+> **Heads up.** Any token you paste here transits openstatus's edge to reach the target MCP server. Don't paste production tokens you can't rotate. Shared `?id=` reports never include the headers you sent.
+
+## Frequently asked questions
+
+<Details summary="What is an MCP health check?">
+
+An MCP health check verifies that a Model Context Protocol server is reachable, speaks the JSON-RPC handshake correctly, and exposes the tools it claims to. Unlike a plain HTTP ping, it sends the three calls every MCP client makes on connect — `initialize`, `notifications/initialized`, and `tools/list` — and validates the responses, so a server returning `200 OK` with an HTML body still fails the check.
+
+</Details>
+
+<Details summary="How do I test if my MCP server is working?">
+
+Paste your server URL into the openstatus MCP Server Health Check and run it. The tool performs the full MCP `2025-06-18` handshake from your browser, returns a verdict (Healthy, Partial, Auth Required, or Unreachable), and shows the JSON-RPC request and response for each step so you can see exactly where the handshake failed.
+
+</Details>
+
+<Details summary="What's the difference between an MCP ping and an HTTP ping?">
+
+An HTTP ping only checks that the URL responds — a `200` from a misconfigured load balancer or a CDN error page would pass. An MCP ping runs the JSON-RPC `initialize` handshake, captures the `Mcp-Session-Id`, and validates that the server echoes the expected request id. A protocol-level ping is the difference between "the box is up" and "the box speaks the protocol my AI client expects."
+
+</Details>
+
+<Details summary="Do I need authentication to ping an MCP server?">
+
+Only if the server requires it. Public MCP servers like `hf.co/mcp` work without any headers. Servers that require auth respond with `401` and a `WWW-Authenticate` header — our tool detects this, parses the OAuth resource metadata when present, and tells you exactly which authorization server to grab a token from. You then paste the token as an `Authorization` header and re-run.
+
+</Details>
+
+<Details summary="Why does my MCP server return text/event-stream?">
+
+MCP's Streamable HTTP transport allows a server to respond with either `application/json` or `text/event-stream` — both are spec-compliant. Servers built on the official SDKs default to SSE because it supports server-initiated notifications. Our tool reads the SSE stream, finds the first event whose JSON payload's `id` matches the request, and treats it identically to a JSON response.
+
+</Details>
+
+<Details summary="How do I debug a 401 from my MCP server?">
+
+A `401` means the server requires authentication. Check the `WWW-Authenticate` header in the response — if it points to an OAuth `resource_metadata` URL, the tool surfaces the authorization server so you can fetch a token. Then click **Add Header**, set `Authorization` to `Bearer <your-token>`, and re-run the check.
+
+</Details>
+
+<Details summary="How does OAuth work for MCP servers?">
+
+MCP follows [RFC 9728 (OAuth 2.0 Protected Resource Metadata)](https://datatracker.ietf.org/doc/html/rfc9728). The server returns `401` with a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at a JSON document that lists the trusted authorization servers. Clients fetch that document, complete an OAuth flow against the listed authorization server, and resend the JSON-RPC request with an `Authorization: Bearer` header. The health checker parses the resource metadata for you and surfaces the authorization server URL in the auth-challenge callout.
+
+</Details>
+
+<Details summary="Is the openstatus MCP Server Health Check free?">
+
+Yes — it is free to use, requires no account, and runs entirely in your browser. Reports you choose to share via the URL expire after 7 days. The tool is open-source, like the rest of openstatus.
+
+</Details>
+
+<Details summary="Can I monitor my MCP server continuously?">
+
+Yes — this tool runs a one-off check from your browser. For continuous monitoring with alerts when the handshake breaks, see the [openstatus guide to monitoring MCP servers](/docs/guides/how-to-monitor-mcp-server).
+
+</Details>
+
+---
+
+Need help to monitor your MCP server?
+
+<ButtonLink href="https://app.openstatus.dev">Start monitoring your MCP server</ButtonLink>
+
+---

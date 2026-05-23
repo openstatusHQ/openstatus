@@ -9,6 +9,7 @@
     "build": "pnpm build:registry && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "bun test",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {

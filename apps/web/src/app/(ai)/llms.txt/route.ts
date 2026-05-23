@@ -72,9 +72,7 @@ export function GET() {
     ),
     renderSection(
       "Playground",
-      getToolsPages()
-        .filter((t) => t.slug !== "checker-slug")
-        .map((p) => toItem(p, true)),
+      getToolsPages().map((p) => toItem(p, true)),
     ),
     renderSection(
       "Pages",

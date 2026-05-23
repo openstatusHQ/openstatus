@@ -22,9 +22,7 @@ const allUnrelated = getUnrelatedPages().filter(
   (page) => page.slug !== "not-found",
 );
 const allProducts = getProductPages();
-const allPlaygrounds = getToolsPages().filter(
-  (tool) => tool.slug !== "checker-slug",
-);
+const allPlaygrounds = getToolsPages();
 const allGuides = getGuides();
 const allUseCases = getUseCasePages();
 const allTooling = getToolingPages();
