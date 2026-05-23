@@ -96,18 +96,22 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    const blacklistPatterns = (process.env.BLACKLIST_URL ?? "")
-      .split(",")
-      .map((p) => p.trim())
-      .filter(Boolean);
-    if (
-      blacklistPatterns.some((pattern) => new RegExp(pattern).test(parsed.url))
-    ) {
+  const blacklistPatterns = (process.env.BLACKLIST_URL ?? "")
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  for (const pattern of blacklistPatterns) {
+    let matches = false;
+    try {
+      matches = new RegExp(pattern).test(parsed.url);
+    } catch (error) {
+      // skip the bad pattern so it can't silently disable the whole guard
+      console.error("Invalid blacklist pattern", pattern, error);
+      continue;
+    }
+    if (matches) {
       return errorResponse("INVALID_REQUEST", "This URL is not allowed", 403);
     }
-  } catch (error) {
-    console.error("Error checking blacklist", error);
   }
 
   const clientIP = getClientIP(request.headers);

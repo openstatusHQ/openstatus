@@ -4,9 +4,14 @@
 import { redis } from "@openstatus/upstash";
 import { assertSafeUrlSync } from "@openstatus/utils";
 import { z } from "zod";
+import {
+  PROTOCOL_VERSION,
+  REQ_ID_INIT,
+  REQ_ID_PING,
+  REQ_ID_TOOLS,
+  STEP_REQUEST_BODIES,
+} from "./protocol";
 
-const PROTOCOL_VERSION = "2025-06-18";
-const CLIENT_INFO = { name: "openstatus-health-check", version: "1.0.0" };
 const STEP_TIMEOUT_MS = 8_000;
 const METADATA_FETCH_TIMEOUT_MS = 3_000;
 // How much body we keep around (in memory + persisted-with-cap downstream).
@@ -87,10 +92,6 @@ export type HealthCheckInput = {
   url: string;
   headers?: Array<{ key: string; value: string }>;
 };
-
-const REQ_ID_INIT = "openstatus-init";
-const REQ_ID_PING = "openstatus-ping";
-const REQ_ID_TOOLS = "openstatus-tools";
 
 type JsonRpcResponse = {
   jsonrpc?: string;
@@ -588,16 +589,7 @@ export async function runMcpHealthCheck(
     initOutcome = await sendRpc({
       url,
       headers: buildHeaders(input.headers),
-      body: {
-        jsonrpc: "2.0",
-        id: REQ_ID_INIT,
-        method: "initialize",
-        params: {
-          protocolVersion: PROTOCOL_VERSION,
-          clientInfo: CLIENT_INFO,
-          capabilities: {},
-        },
-      },
+      body: STEP_REQUEST_BODIES.initialize,
       expectedId: REQ_ID_INIT,
       signal: init.signal,
     });
@@ -710,7 +702,7 @@ export async function runMcpHealthCheck(
   const pingPromise: Promise<SettledRpc> = sendRpc({
     url,
     headers: followUpHeaders(),
-    body: { jsonrpc: "2.0", id: REQ_ID_PING, method: "ping" },
+    body: STEP_REQUEST_BODIES.ping,
     expectedId: REQ_ID_PING,
     signal: pingCtrl.signal,
   })
@@ -721,7 +713,7 @@ export async function runMcpHealthCheck(
   const toolsPromise: Promise<SettledRpc> = sendRpc({
     url,
     headers: followUpHeaders(),
-    body: { jsonrpc: "2.0", id: REQ_ID_TOOLS, method: "tools/list" },
+    body: STEP_REQUEST_BODIES.toolsList,
     expectedId: REQ_ID_TOOLS,
     signal: toolsCtrl.signal,
   })
@@ -812,7 +804,7 @@ export async function runMcpHealthCheck(
           .filter((t): t is ToolInfo => t !== null);
         report.toolsList.toolCount = raw.length;
         report.toolsList.tools = parsed.slice(0, TOOLS_CAP);
-        report.toolsList.truncated = parsed.length > TOOLS_CAP;
+        report.toolsList.truncated = raw.length > TOOLS_CAP;
       }
     }
   }
@@ -830,8 +822,7 @@ export async function runMcpHealthCheck(
   }
 
   if (report.ping.ok && report.toolsList.ok) {
-    const empty = (report.toolsList.toolCount ?? 0) === 0;
-    report.verdict = empty ? "partial" : "healthy";
+    report.verdict = "healthy";
   } else if (report.ping.ok) {
     report.verdict = "partial";
   } else {

@@ -60,12 +60,7 @@ type McpHealthContextType = {
   setId: (next: string | null) => void;
 };
 
-const McpHealthContext = createContext<McpHealthContextType>({
-  report: null,
-  setReport: () => {},
-  id: null,
-  setId: () => {},
-});
+const McpHealthContext = createContext<McpHealthContextType | null>(null);
 
 export function McpHealthProvider({
   children,

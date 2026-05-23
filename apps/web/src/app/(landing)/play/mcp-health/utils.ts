@@ -1,5 +1,7 @@
 import type { HealthCheckReport, StepResult } from "@/lib/mcp/health-check";
 
+export { STEP_REQUEST_BODIES, type StepKey } from "@/lib/mcp/protocol";
+
 export const VERDICT_LABEL: Record<HealthCheckReport["verdict"], string> = {
   healthy: "GOOD",
   partial: "WARN",
@@ -13,25 +15,6 @@ export const VERDICT_DOT: Record<HealthCheckReport["verdict"], string> = {
   "auth-required": "bg-info",
   unreachable: "bg-destructive",
 };
-
-// The exact JSON-RPC payloads runMcpHealthCheck sends. Mirrored here so the
-// detail dialog can render the request that produced each captured response.
-export const STEP_REQUEST_BODIES = {
-  initialize: {
-    jsonrpc: "2.0",
-    id: "openstatus-init",
-    method: "initialize",
-    params: {
-      protocolVersion: "2025-06-18",
-      clientInfo: { name: "openstatus-health-check", version: "1.0.0" },
-      capabilities: {},
-    },
-  },
-  ping: { jsonrpc: "2.0", id: "openstatus-ping", method: "ping" },
-  toolsList: { jsonrpc: "2.0", id: "openstatus-tools", method: "tools/list" },
-} as const;
-
-export type StepKey = keyof typeof STEP_REQUEST_BODIES;
 
 export function statusDotClass(input: boolean | null | StepResult): string {
   if (input === null) return "bg-muted-foreground/30";
