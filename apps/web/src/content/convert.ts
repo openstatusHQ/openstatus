@@ -75,10 +75,6 @@ export function convertMdxToMarkdown(data: MDXData): string {
 
   // Step 6: Replace interactive components with HTML comments
   markdown = markdown.replace(
-    /<Tweet[^>]*(?:\/>|>[\s\S]*?<\/Tweet>)/g,
-    "<!-- Tweet omitted -->",
-  );
-  markdown = markdown.replace(
     /<StatusPageExample[^>]*(?:\/>|>[\s\S]*?<\/StatusPageExample>)/g,
     "<!-- StatusPageExample omitted -->",
   );

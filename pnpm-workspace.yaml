@@ -21,9 +21,6 @@ allowBuilds:
 
 autoInstallPeers: true
 
-patchedDependencies:
-  "react-tweet@3.3.0": patches/react-tweet@3.3.0.patch
-
 catalog:
   "@ai-sdk/anthropic": 1.2.12
   "@ai-sdk/react": 3.0.190
@@ -180,7 +177,6 @@ catalog:
   react-email: 6.1.5
   react-hook-form: 7.76.0
   react-medium-image-zoom: 5.4.5
-  react-tweet: 3.3.0
   reading-time: 1.5.0
   recharts: 2.15.4
   rehype-autolink-headings: 7.1.0
