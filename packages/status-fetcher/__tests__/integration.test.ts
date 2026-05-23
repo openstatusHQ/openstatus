@@ -1,6 +1,8 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it } from "bun:test";
+import { Effect } from "effect";
 import { fetchers as allFetchers } from "../src/fetchers";
 import type { StatusPageEntry, StatusPageProvider } from "../src/types";
+import { installMockFetch } from "./helpers";
 
 describe("Integration Tests", () => {
   describe("Fetcher Selection", () => {
@@ -14,7 +16,6 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("atlassian");
@@ -30,7 +31,6 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("instatus");
@@ -46,7 +46,6 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("betterstack");
@@ -62,7 +61,6 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("incidentio");
@@ -82,7 +80,6 @@ describe("Integration Tests", () => {
         },
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("custom");
@@ -99,7 +96,6 @@ describe("Integration Tests", () => {
         api_config: { type: "html-scraper" },
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("html-scraper");
@@ -110,13 +106,12 @@ describe("Integration Tests", () => {
         id: "test",
         name: "Test",
         url: "https://test.com",
-        status_page_url: "https://customstatus.com", // Generic URL
+        status_page_url: "https://customstatus.com",
         provider: "unknown",
         industry: ["saas"],
-        api_config: { type: "html-scraper" }, // Explicit HTML scraper config
+        api_config: { type: "html-scraper" },
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("html-scraper");
@@ -128,11 +123,10 @@ describe("Integration Tests", () => {
         name: "Test",
         url: "https://test.com",
         status_page_url: "https://customdomain.com",
-        provider: "instatus", // Explicitly set provider
+        provider: "instatus",
         industry: ["saas"],
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
       expect(selectedFetcher?.name).toBe("instatus");
@@ -151,10 +145,8 @@ describe("Integration Tests", () => {
         api_config: { type: "atlassian" },
       };
 
-      // Use allFetchers imported above
       const matchingFetchers = allFetchers.filter((f) => f.canHandle(entry));
 
-      // Atlassian fetcher should match via provider, api_config, and URL
       expect(matchingFetchers.length).toBeGreaterThanOrEqual(1);
       expect(matchingFetchers[0].name).toBe("atlassian");
     });
@@ -171,11 +163,8 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      // Use allFetchers imported above
       const selectedFetcher = allFetchers.find((f) => f.canHandle(entry));
 
-      // Should find no matching fetcher (html-scraper would match if it has no restrictions)
-      // Actually, html-scraper only matches if api_config.type === "html-scraper"
       expect(selectedFetcher).toBeUndefined();
     });
   });
@@ -191,7 +180,7 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({
@@ -210,21 +199,17 @@ describe("Integration Tests", () => {
         } as Response),
       );
 
-      // Use allFetchers imported above
       const atlassianFetcher = allFetchers.find((f) => f.name === "atlassian");
-      const result = await atlassianFetcher?.fetch(atlassianEntry);
+      if (!atlassianFetcher) throw new Error("atlassian fetcher missing");
+      const result = await Effect.runPromise(
+        atlassianFetcher.fetch(atlassianEntry),
+      );
 
-      // Verify all required fields exist
       expect(result).toHaveProperty("severity");
       expect(result).toHaveProperty("status");
       expect(result).toHaveProperty("description");
       expect(result).toHaveProperty("updated_at");
 
-      if (!result) {
-        throw new Error("Result is undefined");
-      }
-
-      // Verify types
       expect(typeof result.severity).toBe("string");
       expect(typeof result.status).toBe("string");
       expect(typeof result.description).toBe("string");
@@ -251,15 +236,15 @@ describe("Integration Tests", () => {
       ];
 
       for (const testCase of testCases) {
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => testCase.mockResponse,
           } as Response),
         );
 
-        // Use allFetchers imported above
         const fetcher = allFetchers.find((f) => f.name === testCase.fetcher);
+        if (!fetcher) throw new Error(`${testCase.fetcher} fetcher missing`);
 
         const entry: StatusPageEntry = {
           id: "test",
@@ -270,11 +255,7 @@ describe("Integration Tests", () => {
           industry: ["saas"],
         };
 
-        const result = await fetcher?.fetch(entry);
-
-        if (!result) {
-          throw new Error("Result is undefined");
-        }
+        const result = await Effect.runPromise(fetcher.fetch(entry));
 
         expect(result.severity).toBe("none");
         expect(result.status).toBe("operational");
@@ -282,7 +263,7 @@ describe("Integration Tests", () => {
     });
 
     it("should map degraded states to severity 'minor'", async () => {
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({
@@ -300,8 +281,8 @@ describe("Integration Tests", () => {
         } as Response),
       );
 
-      // Use allFetchers imported above
       const fetcher = allFetchers.find((f) => f.name === "betterstack");
+      if (!fetcher) throw new Error("betterstack fetcher missing");
 
       const entry: StatusPageEntry = {
         id: "test",
@@ -312,11 +293,7 @@ describe("Integration Tests", () => {
         industry: ["saas"],
       };
 
-      const result = await fetcher?.fetch(entry);
-
-      if (!result) {
-        throw new Error("Result is undefined");
-      }
+      const result = await Effect.runPromise(fetcher.fetch(entry));
 
       expect(result.severity).toBe("minor");
       expect(result.status).toBe("degraded");
@@ -341,7 +318,7 @@ describe("Integration Tests", () => {
       };
 
       let fetchedUrl = "";
-      global.fetch = mock((url) => {
+      installMockFetch((url) => {
         fetchedUrl = url;
         return Promise.resolve({
           ok: true,
@@ -361,9 +338,9 @@ describe("Integration Tests", () => {
         } as Response);
       });
 
-      // Use allFetchers imported above
       const fetcher = allFetchers.find((f) => f.name === "atlassian");
-      await fetcher?.fetch(entry);
+      if (!fetcher) throw new Error("atlassian fetcher missing");
+      await Effect.runPromise(fetcher.fetch(entry));
 
       expect(fetchedUrl).toBe(customEndpoint);
     });

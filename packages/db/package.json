@@ -13,25 +13,25 @@
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
-    "@libsql/client": "0.15.15",
+    "@libsql/client": "catalog:",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/locales": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@t3-oss/env-core": "0.13.10",
-    "bcryptjs": "3.0.3",
-    "drizzle-orm": "0.44.4",
-    "drizzle-zod": "0.8.3",
-    "zod": "4.1.13"
+    "@t3-oss/env-core": "catalog:",
+    "bcryptjs": "catalog:",
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/bcryptjs": "3.0.0",
-    "@types/node": "22.10.2",
-    "drizzle-kit": "0.31.4",
-    "next-auth": "5.0.0-beta.29",
-    "typescript": "5.9.3"
+    "@types/bcryptjs": "catalog:",
+    "@types/node": "catalog:",
+    "drizzle-kit": "catalog:",
+    "next-auth": "catalog:",
+    "typescript": "catalog:"
   },
   "author": "OpenStatus"
 }

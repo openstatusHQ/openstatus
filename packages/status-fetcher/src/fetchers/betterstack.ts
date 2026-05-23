@@ -1,9 +1,8 @@
+import { Effect } from "effect";
 import { z } from "zod";
-import { FetchError, fetchWithRetry } from "../fetch-utils";
+import { type FetchError, fetchJson } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { urlHostnameEndsWith } from "../utils";
-
-// DOCS: https://betterstack.com/docs/uptime/status-pages/subscribing-to-status-updates/subscribing-to-api/#access-the-json-endpoint
 
 const betterStackResponseSchema = z.object({
   data: z.object({
@@ -36,54 +35,29 @@ export class BetterStackFetcher implements StatusFetcher {
     );
   }
 
-  async fetch(entry: StatusPageEntry): Promise<StatusResult> {
+  fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError> {
     const apiUrl =
       entry.api_config?.endpoint || `${entry.status_page_url}/index.json`;
 
-    try {
-      const response = await fetchWithRetry(apiUrl, {
-        headers: {
-          "User-Agent": "OpenStatus-Directory/1.0",
-          Accept: "application/json",
-        },
-        timeout: 30000,
-      });
-
-      if (!response.ok) {
-        throw new FetchError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          apiUrl,
-          this.name,
-          entry.id,
-        );
-      }
-
-      const json = await response.json();
-      const data = betterStackResponseSchema.parse(json);
-
-      const { aggregate_state, updated_at, timezone } = data.data.attributes;
-      const { severity, status, description } =
-        this.mapAggregateState(aggregate_state);
-
-      return {
-        severity,
-        status,
-        description,
-        updated_at: new Date(updated_at).getTime(),
-        timezone: timezone,
-      };
-    } catch (error) {
-      if (error instanceof FetchError) {
-        throw error;
-      }
-      throw new FetchError(
-        error instanceof Error ? error.message : "Unknown error",
-        apiUrl,
-        this.name,
-        entry.id,
-        error instanceof Error ? error : undefined,
-      );
-    }
+    return fetchJson({
+      url: apiUrl,
+      schema: betterStackResponseSchema,
+      fetcherName: this.name,
+      entryId: entry.id,
+    }).pipe(
+      Effect.map((data) => {
+        const { aggregate_state, updated_at, timezone } = data.data.attributes;
+        const { severity, status, description } =
+          this.mapAggregateState(aggregate_state);
+        return {
+          severity,
+          status,
+          description,
+          updated_at: new Date(updated_at).getTime(),
+          timezone,
+        };
+      }),
+    );
   }
 
   private mapAggregateState(

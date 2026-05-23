@@ -16,8 +16,9 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "4.1.13",
-    "node-html-parser": "6.1.12"
+    "effect": "catalog:",
+    "zod": "catalog:",
+    "node-html-parser": "catalog:"
   },
   "devDependencies": {
     "@types/bun": "latest"

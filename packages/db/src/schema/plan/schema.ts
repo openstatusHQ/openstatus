@@ -6,7 +6,7 @@ import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 // default values are set to the free plan limits
 
 export const limitsSchema = z.object({
-  version: z.undefined(),
+  version: z.undefined().optional(),
   /**
    * Monitor limits
    */

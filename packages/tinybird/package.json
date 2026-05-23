@@ -4,16 +4,16 @@
   "main": "src/index.ts",
   "license": "MIT",
   "dependencies": {
-    "@chronark/zod-bird": "1.0.0",
-    "zod": "4.1.13"
+    "@chronark/zod-bird": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@libsql/client": "0.15.15",
+    "@libsql/client": "catalog:",
     "@openstatus/db": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@types/node": "22.10.2",
-    "drizzle-orm": "0.44.4",
-    "typescript": "5.9.3"
+    "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
+    "typescript": "catalog:"
   }
 }

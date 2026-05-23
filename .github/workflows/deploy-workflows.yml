@@ -10,6 +10,8 @@ on:
       - "packages/utils/**"
       - "packages/tsconfig/**"
       - "packages/notifications/**"
+      - "packages/status-fetcher/**"
+      - "pnpm-workspace.yaml"
 jobs:
   deploy-workflows:
     name: Deploy Workflows
