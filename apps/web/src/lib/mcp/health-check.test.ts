@@ -1,10 +1,27 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
   normalizeUrlForStorage,
   parseBearerChallenge,
+  safeFetch,
+  stepFromOutcome,
   toPersistedReport,
 } from "./health-check";
 import type { HealthCheckReport } from "./health-check";
+
+function makeOutcome(o: {
+  ok: boolean;
+  status: number;
+  rawBody?: string;
+  json?: {
+    jsonrpc?: string;
+    id?: string | number | null;
+    result?: unknown;
+    error?: { code: number; message: string };
+  };
+  parseError?: string;
+}) {
+  return { headers: new Headers(), rawBody: "", ...o };
+}
 
 describe("parseBearerChallenge", () => {
   test("returns null for null/empty/non-Bearer", () => {
@@ -120,5 +137,137 @@ describe("toPersistedReport", () => {
       ping: { ...baseReport.ping, rawBody: body },
     });
     expect(out.ping.rawBody).toBe(body);
+  });
+});
+
+describe("stepFromOutcome", () => {
+  const base = { startedAt: Date.now(), expectedId: "id-1" };
+
+  test("200 with a parse failure classifies as PARSE, not HTTP_STATUS", () => {
+    const step = stepFromOutcome({
+      ...base,
+      outcome: makeOutcome({
+        ok: true,
+        status: 200,
+        parseError: "unexpected content-type: text/html",
+      }),
+    });
+    expect(step.ok).toBe(false);
+    expect(step.error?.code).toBe("PARSE");
+  });
+
+  test("HTTP 500 classifies as HTTP_STATUS", () => {
+    const step = stepFromOutcome({
+      ...base,
+      outcome: makeOutcome({ ok: false, status: 500 }),
+    });
+    expect(step.error?.code).toBe("HTTP_STATUS");
+    expect(step.error?.message).toBe("HTTP 500");
+  });
+
+  test("401 classifies as UNAUTHORIZED", () => {
+    const step = stepFromOutcome({
+      ...base,
+      outcome: makeOutcome({ ok: false, status: 401 }),
+    });
+    expect(step.error?.code).toBe("UNAUTHORIZED");
+  });
+
+  test("JSON-RPC error payload classifies as JSON_RPC_ERROR", () => {
+    const step = stepFromOutcome({
+      ...base,
+      outcome: makeOutcome({
+        ok: true,
+        status: 200,
+        json: { id: "id-1", error: { code: -32601, message: "no method" } },
+      }),
+    });
+    expect(step.error?.code).toBe("JSON_RPC_ERROR");
+  });
+
+  test("mismatched id classifies as ID_MISMATCH", () => {
+    const step = stepFromOutcome({
+      ...base,
+      outcome: makeOutcome({
+        ok: true,
+        status: 200,
+        json: { id: "other", result: {} },
+      }),
+    });
+    expect(step.error?.code).toBe("ID_MISMATCH");
+  });
+
+  test("matching id with a result is ok", () => {
+    const step = stepFromOutcome({
+      ...base,
+      outcome: makeOutcome({
+        ok: true,
+        status: 200,
+        json: { id: "id-1", result: {} },
+      }),
+    });
+    expect(step.ok).toBe(true);
+  });
+});
+
+describe("safeFetch", () => {
+  const realFetch = globalThis.fetch;
+  const signal = () => new AbortController().signal;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  test("returns a non-redirect response unchanged", async () => {
+    globalThis.fetch = (async () =>
+      new Response("ok", { status: 200 })) as typeof fetch;
+    const res = await safeFetch(
+      "https://example.com/mcp",
+      { method: "GET" },
+      signal(),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("ok");
+  });
+
+  test("follows a redirect to a public URL", async () => {
+    let call = 0;
+    globalThis.fetch = (async () => {
+      call++;
+      return call === 1
+        ? new Response(null, {
+            status: 302,
+            headers: { location: "https://example.com/final" },
+          })
+        : new Response("done", { status: 200 });
+    }) as typeof fetch;
+    const res = await safeFetch(
+      "https://example.com/mcp",
+      { method: "GET" },
+      signal(),
+    );
+    expect(call).toBe(2);
+    expect(res.status).toBe(200);
+  });
+
+  test("blocks a redirect to a private address", async () => {
+    globalThis.fetch = (async () =>
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://169.254.169.254/latest/meta-data/" },
+      })) as typeof fetch;
+    await expect(
+      safeFetch("https://example.com/mcp", { method: "GET" }, signal()),
+    ).rejects.toThrow("not allowed");
+  });
+
+  test("throws after too many redirects", async () => {
+    globalThis.fetch = (async () =>
+      new Response(null, {
+        status: 302,
+        headers: { location: "https://example.com/loop" },
+      })) as typeof fetch;
+    await expect(
+      safeFetch("https://example.com/mcp", { method: "GET" }, signal()),
+    ).rejects.toThrow("too many redirects");
   });
 });

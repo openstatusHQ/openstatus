@@ -21,7 +21,7 @@ const MAX_REQUESTS_PER_WINDOW = 3;
 const requestSchema = z.object({
   url: z.url("Invalid URL format"),
   headers: z
-    .array(z.object({ key: z.string(), value: z.string() }))
+    .array(z.object({ key: z.string().max(256), value: z.string().max(2048) }))
     .max(20)
     .optional(),
 });

@@ -101,6 +101,8 @@ type JsonRpcResponse = {
 };
 
 type RpcOutcome = {
+  // mirrors res.ok (HTTP 2xx); parse success lives in json/parseError so a 200
+  // with an unparseable body classifies as PARSE, not HTTP_STATUS.
   ok: boolean;
   status: number;
   headers: Headers;
@@ -115,6 +117,15 @@ type HeaderOpts = {
   // notification mode: server must not open an SSE stream (we'd stall).
   notification?: boolean;
 };
+
+// User headers must not clobber the handshake-critical headers set below;
+// overriding Content-Type/Accept silently breaks the MCP transport negotiation.
+const RESERVED_HEADERS = new Set([
+  "content-type",
+  "accept",
+  "mcp-session-id",
+  "mcp-protocol-version",
+]);
 
 function buildHeaders(
   extra?: HealthCheckInput["headers"],
@@ -133,7 +144,7 @@ function buildHeaders(
     headers.set("MCP-Protocol-Version", opts.protocolVersion);
   }
   for (const { key, value } of extra ?? []) {
-    if (!key) continue;
+    if (!key || RESERVED_HEADERS.has(key.toLowerCase())) continue;
     headers.set(key, value);
   }
   return headers;
@@ -223,6 +234,32 @@ async function readSseUntilId(
   }
 }
 
+const MAX_REDIRECTS = 3;
+
+// redirect:"follow" would let a public host 3xx us into a private/internal
+// address, past the pre-flight assertSafeUrlSync. Follow manually instead and
+// re-validate every hop. Server runtimes surface the 3xx + Location under
+// redirect:"manual"; an opaqueredirect (no readable Location) is rejected.
+export async function safeFetch(
+  url: string,
+  init: RequestInit,
+  signal: AbortSignal,
+): Promise<Response> {
+  let target = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const res = await fetch(target, { ...init, signal, redirect: "manual" });
+    if (res.type === "opaqueredirect") {
+      throw new Error("refusing to follow opaque redirect");
+    }
+    if (res.status < 300 || res.status >= 400) return res;
+    const location = res.headers.get("location");
+    if (!location) return res;
+    target = new URL(location, target).toString();
+    assertSafeUrlSync(target);
+  }
+  throw new Error("too many redirects");
+}
+
 async function sendRpc({
   url,
   headers,
@@ -236,13 +273,11 @@ async function sendRpc({
   expectedId?: string;
   signal: AbortSignal;
 }): Promise<RpcOutcome> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
+  const res = await safeFetch(
+    url,
+    { method: "POST", headers, body: JSON.stringify(body) },
     signal,
-    redirect: "follow",
-  });
+  );
 
   const contentType = res.headers.get("content-type")?.toLowerCase() ?? "";
 
@@ -282,7 +317,7 @@ async function sendRpc({
     rawText = await res.text();
   } catch (err) {
     return {
-      ok: false,
+      ok: res.ok,
       status: res.status,
       headers: res.headers,
       rawBody: "",
@@ -301,7 +336,7 @@ async function sendRpc({
       };
     } catch (err) {
       return {
-        ok: false,
+        ok: res.ok,
         status: res.status,
         headers: res.headers,
         rawBody: capRaw(rawText),
@@ -311,7 +346,7 @@ async function sendRpc({
   }
 
   return {
-    ok: false,
+    ok: res.ok,
     status: res.status,
     headers: res.headers,
     rawBody: capRaw(rawText),
@@ -448,12 +483,11 @@ async function resolveAuthChallenge(
     parentSignal,
   );
   try {
-    const res = await fetch(resourceMetadata, {
-      method: "GET",
-      headers: { Accept: "application/json" },
+    const res = await safeFetch(
+      resourceMetadata,
+      { method: "GET", headers: { Accept: "application/json" } },
       signal,
-      redirect: "follow",
-    });
+    );
     if (!res.ok) return challenge;
     const ct = res.headers.get("content-type")?.toLowerCase() ?? "";
     if (!ct.includes("json")) return challenge;
@@ -480,7 +514,7 @@ async function resolveAuthChallenge(
   return challenge;
 }
 
-function stepFromOutcome({
+export function stepFromOutcome({
   outcome,
   startedAt,
   expectedId,

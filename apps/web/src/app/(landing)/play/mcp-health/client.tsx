@@ -674,8 +674,23 @@ const EMPTY_STEPS: StepRow[] = [
   },
 ];
 
+function statusDotLabel(input: boolean | null | StepResult): string {
+  if (input === null) return "not run";
+  if (typeof input === "boolean") return input ? "ok" : "failed";
+  if (input.ok) return "ok";
+  return input.error?.code ?? "failed";
+}
+
 function StatusDot({ input }: { input: boolean | null | StepResult }) {
-  return <div className={cn("size-4", statusDotClass(input))} />;
+  const label = statusDotLabel(input);
+  return (
+    <div
+      role="img"
+      aria-label={label}
+      title={label}
+      className={cn("size-4", statusDotClass(input))}
+    />
+  );
 }
 
 export function VerdictBar() {
