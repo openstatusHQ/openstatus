@@ -9,7 +9,7 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict, subDays } from "date-fns";
 import { InfoIcon } from "lucide-react";
 import { useState } from "react";
 import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
@@ -420,7 +420,7 @@ export function StatusComponentFooter({
         {isLoading ? (
           <Skeleton className="h-3 w-18" />
         ) : data.length > 0 ? (
-          formatDistanceToNowStrict(new Date(data[0].day), {
+          formatDistanceToNowStrict(subDays(new Date(), data.length), {
             unit: "day",
             addSuffix: true,
           })
