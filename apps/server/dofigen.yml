@@ -20,7 +20,6 @@ builders:
     bind:
       - pnpm-workspace.yaml
       - pnpm-lock.yaml
-      - patches
       - package.json
       - apps/server/package.json
       - packages/analytics/package.json
