@@ -162,7 +162,7 @@ const toolsSection = {
   label: "Tools",
   items: [
     ...getToolsPages()
-      .filter((page) => !["severity-matrix", "mcp-health"].includes(page.slug))
+      .filter((page) => !["severity-matrix", "uptime-sla"].includes(page.slug))
       .map((page) => ({
         label: page.metadata.title,
         href: `/play/${page.slug}`,
