@@ -19,7 +19,6 @@ builders:
     bind:
       - pnpm-workspace.yaml
       - pnpm-lock.yaml
-      - patches
       - package.json
       - apps/workflows/package.json
       - packages/assertions/package.json
