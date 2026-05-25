@@ -52,7 +52,7 @@ function search(params: SearchParams) {
   let results: MDXData[] = [];
 
   if (p === "tools") {
-    results = getPages("tools").filter((tool) => tool.slug !== "checker-slug");
+    results = getPages("tools");
   } else if (p === "product") {
     const home = getHomePage();
     // NOTE: we override /home with / for the home.mdx file
@@ -67,7 +67,7 @@ function search(params: SearchParams) {
     results = [
       ...getPages("blog"),
       ...getPages("changelog"),
-      ...getPages("tools").filter((tool) => tool.slug !== "checker-slug"),
+      ...getPages("tools"),
       ...getPages("tooling"),
       ...getPages("compare"),
       ...getPages("product"),

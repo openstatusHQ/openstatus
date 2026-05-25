@@ -450,7 +450,8 @@ function SearchResults({
 
         return (
           <CommandItem
-            key={item.slug}
+            key={item.href}
+            value={item.href}
             keywords={[item.metadata.title, item.content, search]}
             onSelect={() => {
               router.push(item.href);

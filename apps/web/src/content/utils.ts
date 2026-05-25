@@ -157,11 +157,14 @@ export function getHomePage(): MDXData {
   );
 }
 
+// `*-slug.mdx` files back dynamic routes (e.g. /play/checker/[slug],
+// /play/mcp-health/[id]) and aren't standalone pages — exclude them from
+// listings, sitemaps, and search. Use `getToolsPage("foo-slug")` to fetch one.
 export function getToolsPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "tools"),
     "/play",
-  );
+  ).filter((page) => !page.slug.endsWith("-slug"));
 }
 
 export function getToolsPage(slug: string): MDXData {

@@ -162,9 +162,7 @@ const toolsSection = {
   label: "Tools",
   items: [
     ...getToolsPages()
-      .filter(
-        (page) => !["checker-slug", "severity-matrix"].includes(page.slug),
-      )
+      .filter((page) => !["severity-matrix", "uptime-sla"].includes(page.slug))
       .map((page) => ({
         label: page.metadata.title,
         href: `/play/${page.slug}`,
@@ -217,12 +215,10 @@ const communitySection = {
 export const playSection = {
   label: "Play",
   items: [
-    ...getToolsPages()
-      .filter((page) => page.slug !== "checker-slug")
-      .map((page) => ({
-        label: page.metadata.title,
-        href: `/play/${page.slug}`,
-      })),
+    ...getToolsPages().map((page) => ({
+      label: page.metadata.title,
+      href: `/play/${page.slug}`,
+    })),
     {
       label: "Theme Explorer",
       href: "https://themes.openstatus.dev",
