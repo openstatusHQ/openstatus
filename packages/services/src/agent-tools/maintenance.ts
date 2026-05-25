@@ -10,6 +10,20 @@ import type { AgentTool } from "./types";
 const PER_PAGE_DEFAULT = 50;
 const PER_PAGE_MAX = 200;
 
+function formatMaintenanceDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-US", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
 const ListMaintenancesInputShape = z.object({
   pageId: z
     .number()
@@ -146,6 +160,29 @@ export const createMaintenanceTool: AgentTool<
   destructive: true,
   inputSchema: CreateMaintenanceInputShape,
   outputSchema: CreateMaintenanceOutput,
+  approval: {
+    extraFlags: [{ id: "notify", label: "Notify subscribers" }],
+    applyFlags: (input, flags) => ({ ...input, notify: flags.notify ?? false }),
+    summarize: (input) => ({
+      title: `Schedule Maintenance: ${input.title}`,
+      lines: [
+        { label: "Title", value: input.title },
+        { label: "Page ID", value: String(input.pageId) },
+        { label: "From", value: formatMaintenanceDate(input.from) },
+        { label: "To", value: formatMaintenanceDate(input.to) },
+        ...(input.pageComponentIds?.length
+          ? [
+              {
+                label: "Components",
+                value: input.pageComponentIds.join(", "),
+              },
+            ]
+          : []),
+        { label: "Message", value: input.message },
+      ],
+    }),
+    verb: "scheduled",
+  },
   async run({ ctx, input }) {
     const record = await createMaintenance({
       ctx,

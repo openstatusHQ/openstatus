@@ -183,6 +183,28 @@ export const createStatusReportTool: AgentTool<
   destructive: true,
   inputSchema: CreateStatusReportInputShape,
   outputSchema: CreateStatusReportOutput,
+  approval: {
+    extraFlags: [{ id: "notify", label: "Notify subscribers" }],
+    applyFlags: (input, flags) => ({ ...input, notify: flags.notify ?? false }),
+    summarize: (input) => ({
+      title: `Create Status Report: ${input.title}`,
+      lines: [
+        { label: "Title", value: input.title },
+        { label: "Status", value: input.status },
+        { label: "Page ID", value: String(input.pageId) },
+        ...(input.pageComponentIds?.length
+          ? [
+              {
+                label: "Components",
+                value: input.pageComponentIds.join(", "),
+              },
+            ]
+          : []),
+        { label: "Message", value: input.message },
+      ],
+    }),
+    verb: "created",
+  },
   async run({ ctx, input }) {
     const result = await createStatusReport({
       ctx,
@@ -250,6 +272,12 @@ const AddStatusReportUpdateInputShape = z.object({
 const AddStatusReportUpdateOutput = z.object({
   statusReportUpdateId: z.number().int(),
   notified: z.boolean(),
+  statusReport: z.object({
+    id: z.number().int(),
+    title: z.string(),
+    status: statusReportStatusSchema,
+    pageId: z.number().int().nullable(),
+  }),
 });
 
 export const addStatusReportUpdateTool: AgentTool<
@@ -263,6 +291,19 @@ export const addStatusReportUpdateTool: AgentTool<
   destructive: true,
   inputSchema: AddStatusReportUpdateInputShape,
   outputSchema: AddStatusReportUpdateOutput,
+  approval: {
+    extraFlags: [{ id: "notify", label: "Notify subscribers" }],
+    applyFlags: (input, flags) => ({ ...input, notify: flags.notify ?? false }),
+    summarize: (input) => ({
+      title: `Add Status Report Update (${input.status})`,
+      lines: [
+        { label: "Report ID", value: String(input.statusReportId) },
+        { label: "New Status", value: input.status },
+        { label: "Message", value: input.message },
+      ],
+    }),
+    verb: "added",
+  },
   async run({ ctx, input }) {
     const result = await addStatusReportUpdate({
       ctx,
@@ -291,6 +332,12 @@ export const addStatusReportUpdateTool: AgentTool<
     return {
       statusReportUpdateId: result.statusReportUpdate.id,
       notified,
+      statusReport: {
+        id: result.statusReport.id,
+        title: result.statusReport.title,
+        status: result.statusReport.status,
+        pageId: result.statusReport.pageId,
+      },
     };
   },
 };
@@ -335,6 +382,32 @@ export const updateStatusReportTool: AgentTool<
   destructive: true,
   inputSchema: UpdateStatusReportInputShape,
   outputSchema: UpdateStatusReportOutput,
+  approval: {
+    summarize: (input) => {
+      const lines: { label: string; value: string }[] = [
+        { label: "Report ID", value: String(input.statusReportId) },
+      ];
+      if (input.title) lines.push({ label: "New Title", value: input.title });
+      if (input.status)
+        lines.push({ label: "New Status", value: input.status });
+      // Distinguish "don't touch components" (undefined) from
+      // "clear all associations" ([]). The latter is destructive and
+      // MUST be visible on the approval card.
+      if (input.pageComponentIds !== undefined) {
+        lines.push({
+          label: "Components",
+          value: input.pageComponentIds.length
+            ? input.pageComponentIds.join(", ")
+            : "(clear all)",
+        });
+      }
+      return {
+        title: `Update Status Report${input.title ? `: ${input.title}` : ""}`,
+        lines,
+      };
+    },
+    verb: "updated",
+  },
   async run({ ctx, input }) {
     const report = await updateStatusReport({
       ctx,
@@ -374,6 +447,11 @@ const ResolveStatusReportInputShape = z.object({
 const ResolveStatusReportOutput = z.object({
   statusReportUpdateId: z.number().int(),
   notified: z.boolean(),
+  statusReport: z.object({
+    id: z.number().int(),
+    title: z.string(),
+    pageId: z.number().int().nullable(),
+  }),
 });
 
 export const resolveStatusReportTool: AgentTool<
@@ -387,6 +465,18 @@ export const resolveStatusReportTool: AgentTool<
   destructive: true,
   inputSchema: ResolveStatusReportInputShape,
   outputSchema: ResolveStatusReportOutput,
+  approval: {
+    extraFlags: [{ id: "notify", label: "Notify subscribers" }],
+    applyFlags: (input, flags) => ({ ...input, notify: flags.notify ?? false }),
+    summarize: (input) => ({
+      title: "Resolve Status Report",
+      lines: [
+        { label: "Report ID", value: String(input.statusReportId) },
+        { label: "Message", value: input.message },
+      ],
+    }),
+    verb: "resolved",
+  },
   async run({ ctx, input }) {
     const result = await resolveStatusReport({
       ctx,
@@ -414,6 +504,11 @@ export const resolveStatusReportTool: AgentTool<
     return {
       statusReportUpdateId: result.statusReportUpdate.id,
       notified,
+      statusReport: {
+        id: result.statusReport.id,
+        title: result.statusReport.title,
+        pageId: result.statusReport.pageId,
+      },
     };
   },
 };

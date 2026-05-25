@@ -39,24 +39,3 @@ export async function toServiceCtx(args: {
     requestId: args.requestId,
   };
 }
-
-/**
- * Convert a service (or unknown) error into a Slack-friendly message.
- *
- * **Always returns the same generic string: `"Something went wrong.
- * Please try again."`** Slack users aren't developers — they don't need
- * (and shouldn't see) the specific error detail. The constraint is
- * codified by the `does not leak internal error details` test case and
- * was the existing pre-services behaviour we need to preserve. Full
- * error text still flows to logtape / Sentry via the catch site.
- *
- * Notable things this intentionally suppresses:
- *   - `NotFoundError` formats as `"<entity> <id> not found"` — internal
- *     row IDs have no meaning to Slack users.
- *   - `ConflictError` / `ValidationError` often carry SQL-ish phrasing
- *     or internal column names.
- *   - `ZodError` emits a raw JSON issue list.
- */
-export function toSlackMessage(_err: unknown): string {
-  return ":x: Something went wrong. Please try again.";
-}
