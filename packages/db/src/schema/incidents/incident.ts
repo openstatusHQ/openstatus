@@ -60,7 +60,6 @@ export const incidentTable = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
-    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (table) => [
     unique().on(table.monitorId, table.startedAt),

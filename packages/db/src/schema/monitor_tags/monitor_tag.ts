@@ -27,7 +27,6 @@ export const monitorTag = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
-    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [index("monitor_tag_workspace_id_idx").on(t.workspaceId)],
 );

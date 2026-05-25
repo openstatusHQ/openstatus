@@ -24,7 +24,6 @@ export const integration = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
-    deletedAt: integer("deleted_at", { mode: "timestamp" }),
 
     data: text("data", { mode: "json" }).notNull(),
   },

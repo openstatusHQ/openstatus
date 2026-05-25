@@ -32,7 +32,6 @@ export const apiKey = sqliteTable(
     ),
     expiresAt: integer("expires_at", { mode: "timestamp" }),
     lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
-    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (table) => [
     index("api_key_prefix_idx").on(table.prefix),

@@ -50,7 +50,6 @@ export const usersToWorkspaces = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
-    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [
     primaryKey({ columns: [t.userId, t.workspaceId] }),

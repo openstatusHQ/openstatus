@@ -75,7 +75,6 @@ export const page = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
-    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [
     index("page_lower_slug_idx").on(sql`LOWER(${t.slug})`),
