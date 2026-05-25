@@ -18,6 +18,7 @@ export const privateLocation = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [index("private_location_workspace_id_idx").on(t.workspaceId)],
 );

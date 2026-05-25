@@ -31,6 +31,7 @@ export const statusReport = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [
     index("status_report_workspace_created_idx").on(t.workspaceId, t.createdAt),

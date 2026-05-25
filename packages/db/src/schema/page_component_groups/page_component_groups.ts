@@ -27,6 +27,7 @@ export const pageComponentGroup = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [
     index("page_component_groups_page_id_idx").on(t.pageId),

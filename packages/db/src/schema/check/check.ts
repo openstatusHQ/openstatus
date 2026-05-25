@@ -20,6 +20,7 @@ export const check = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [index("check_workspace_id_idx").on(t.workspaceId)],
 );

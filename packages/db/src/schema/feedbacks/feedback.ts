@@ -27,6 +27,7 @@ export const feedback = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" })
       .default(sql`(strftime('%s', 'now'))`)
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [index("feedback_workspace_id_idx").on(t.workspaceId)],
 );

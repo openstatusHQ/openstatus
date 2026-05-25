@@ -16,6 +16,7 @@ export const invitation = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
     acceptedAt: integer("accepted_at", { mode: "timestamp" }),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [index("invitation_workspace_id_idx").on(t.workspaceId)],
 );

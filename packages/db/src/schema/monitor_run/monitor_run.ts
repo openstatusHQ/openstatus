@@ -16,6 +16,7 @@ export const monitorRun = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [
     index("monitor_run_workspace_id_idx").on(t.workspaceId),

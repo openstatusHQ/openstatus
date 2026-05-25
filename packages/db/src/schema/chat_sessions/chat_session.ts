@@ -31,6 +31,7 @@ export const chatSession = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => new Date()),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
   (t) => [
     // Sidebar / picker query: list a user's conversations newest first.

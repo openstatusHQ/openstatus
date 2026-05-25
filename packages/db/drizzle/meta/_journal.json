@@ -491,6 +491,13 @@
       "when": 1778835553337,
       "tag": "0069_ambitious_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "6",
+      "when": 1779705483390,
+      "tag": "0070_workspace_soft_delete",
+      "breakpoints": true
     }
   ]
 }

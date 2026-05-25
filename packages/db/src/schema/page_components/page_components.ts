@@ -47,6 +47,7 @@ export const pageComponent = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
   (t) => [
     unique("page_component_page_id_monitor_id_unique").on(
