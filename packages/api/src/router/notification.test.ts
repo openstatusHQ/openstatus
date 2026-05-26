@@ -18,7 +18,7 @@ beforeAll(async () => {
       provider: "email",
       name: "workspace 2 idor test notification",
       data: '{"email":"test@openstatus.dev"}',
-      workspaceId: 2,
+      workspaceId: 3,
     })
     .returning()
     .get();
