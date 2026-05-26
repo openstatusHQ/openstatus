@@ -101,10 +101,12 @@ export async function deleteAccount(args: {
       const others = await tx
         .select({ c: count() })
         .from(usersToWorkspaces)
+        .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
         .where(
           and(
             eq(usersToWorkspaces.workspaceId, rawWorkspace.id),
             ne(usersToWorkspaces.userId, userId),
+            isNull(user.deletedAt),
           ),
         )
         .get();
