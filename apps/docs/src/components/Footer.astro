@@ -20,6 +20,11 @@ import Pagination from "@astrojs/starlight/components/Pagination.astro";
 		<img src='https://status.openstatus.dev/badge/v2?variant=outline'>
 		</a>
 	</div>
+	<div class="legal">
+		<a href="https://www.openstatus.dev/terms" target="_blank">Terms</a>
+		<span aria-hidden="true">·</span>
+		<a href="https://www.openstatus.dev/privacy" target="_blank">Privacy</a>
+	</div>
 </footer>
 
 <style>
@@ -53,4 +58,19 @@ import Pagination from "@astrojs/starlight/components/Pagination.astro";
         font-size: var(--sl-text-sm);
         cursor: default;
     }
+	.legal {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+	.legal a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.legal a:hover {
+		text-decoration: underline;
+	}
 </style>
