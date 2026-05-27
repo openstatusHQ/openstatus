@@ -128,10 +128,12 @@ function runStatusPhase(
         });
       }
       return fetcher.fetch(entry).pipe(
-        Effect.map((result): StatusPhaseOutcome => ({
-          kind: "ok",
-          snapshot: buildSnapshot({ entry, result, fetchedAt }),
-        })),
+        Effect.map(
+          (result): StatusPhaseOutcome => ({
+            kind: "ok",
+            snapshot: buildSnapshot({ entry, result, fetchedAt }),
+          }),
+        ),
         Effect.catchAll((err: FetchError) =>
           Effect.succeed<StatusPhaseOutcome>({
             kind: "fail",
@@ -176,11 +178,13 @@ function runIncidentPhase(
                 cause: e instanceof Error ? e : new Error(String(e)),
               }),
           }).pipe(
-            Effect.map((result): IncidentPhaseOutcome => ({
-              kind: "ok",
-              slug: entry.id,
-              count: result.upserted,
-            })),
+            Effect.map(
+              (result): IncidentPhaseOutcome => ({
+                kind: "ok",
+                slug: entry.id,
+                count: result.upserted,
+              }),
+            ),
           ),
         ),
         Effect.catchAll((err: FetchError) =>
