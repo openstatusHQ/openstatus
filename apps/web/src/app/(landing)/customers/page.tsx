@@ -1,6 +1,10 @@
 import { components } from "@/content/mdx";
 import { getCustomerPages } from "@/content/utils";
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 import Image from "next/image";
 import {
@@ -62,7 +66,9 @@ export default function CustomersListPage() {
               </div>
             ) : null}
             <ContentBoxTitle>{page.metadata.title}</ContentBoxTitle>
-            <ContentBoxDescription>{page.metadata.description}</ContentBoxDescription>
+            <ContentBoxDescription>
+              {page.metadata.description}
+            </ContentBoxDescription>
             <ContentBoxUrl url="Read the story" />
           </ContentBoxLink>
         ))}
