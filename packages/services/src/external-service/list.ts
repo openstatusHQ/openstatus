@@ -55,7 +55,7 @@ export async function listExternalServices(args: {
   const query = db
     .select()
     .from(externalService)
-    .orderBy(asc(externalService.name));
+    .orderBy(asc(sql`lower(${externalService.name})`));
 
   const rows = input?.includeDeleted
     ? await query.all()
