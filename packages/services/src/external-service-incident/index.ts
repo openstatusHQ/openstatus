@@ -5,8 +5,11 @@ export {
 } from "./upsert";
 export {
   type ExternalIncidentListItem,
+  type ListBySlugResult,
+  INCIDENT_SUPPORTED_API_CONFIG_TYPES,
   listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
+  supportsIncidents,
 } from "./list";
 export {
   type PruneRawPayloadsResult,

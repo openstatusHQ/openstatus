@@ -1,4 +1,5 @@
-import { and, db as defaultDb, desc, eq, sql } from "@openstatus/db";
+import { db as defaultDb, desc, eq, sql } from "@openstatus/db";
+import type { ApiConfigType } from "@openstatus/db/src/schema";
 import { externalServiceIncident } from "@openstatus/db/src/schema";
 
 import { getExternalServiceBySlug } from "../external-service";
@@ -20,6 +21,15 @@ export type ExternalIncidentListItem = {
 };
 
 const DEFAULT_LIMIT = 5;
+
+export const INCIDENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
+  "atlassian",
+  "incidentio",
+]);
+
+export function supportsIncidents(type: ApiConfigType | undefined): boolean {
+  return type !== undefined && INCIDENT_SUPPORTED_API_CONFIG_TYPES.has(type);
+}
 
 export async function listExternalIncidentsByServiceId(args: {
   ctx?: GlobalReadContext;
@@ -46,7 +56,7 @@ export async function listExternalIncidentsByServiceId(args: {
       lastSeenAt: externalServiceIncident.lastSeenAt,
     })
     .from(externalServiceIncident)
-    .where(and(eq(externalServiceIncident.externalServiceId, externalServiceId)))
+    .where(eq(externalServiceIncident.externalServiceId, externalServiceId))
     .orderBy(
       desc(
         sql`COALESCE(${externalServiceIncident.startedAt}, ${externalServiceIncident.createdAt})`,
@@ -59,18 +69,30 @@ export async function listExternalIncidentsByServiceId(args: {
   return rows;
 }
 
+export type ListBySlugResult = {
+  service: { id: number; apiConfigType?: ApiConfigType } | null;
+  supported: boolean;
+  incidents: ExternalIncidentListItem[];
+};
+
 export async function listExternalIncidentsBySlug(args: {
   ctx?: GlobalReadContext;
   slug: string;
   limit?: number;
-}): Promise<{
-  service: { id: number; apiConfigType?: string } | null;
-  incidents: ExternalIncidentListItem[];
-}> {
+}): Promise<ListBySlugResult> {
   const { ctx, slug } = args;
   const service = await getExternalServiceBySlug({ ctx, slug });
   if (!service) {
-    return { service: null, incidents: [] };
+    return { service: null, supported: false, incidents: [] };
+  }
+
+  const apiConfigType = service.apiConfig?.type;
+  if (!supportsIncidents(apiConfigType)) {
+    return {
+      service: { id: service.id, apiConfigType },
+      supported: false,
+      incidents: [],
+    };
   }
 
   const incidents = await listExternalIncidentsByServiceId({
@@ -80,7 +102,8 @@ export async function listExternalIncidentsBySlug(args: {
   });
 
   return {
-    service: { id: service.id, apiConfigType: service.apiConfig?.type },
+    service: { id: service.id, apiConfigType },
+    supported: true,
     incidents,
   };
 }

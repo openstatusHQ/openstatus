@@ -1,4 +1,4 @@
-import { db as defaultDb } from "@openstatus/db";
+import { db as defaultDb, sql } from "@openstatus/db";
 import {
   type IncidentRawPayload,
   externalServiceIncident,
@@ -35,47 +35,47 @@ export async function upsertExternalIncidentsForService(args: {
   const now = args.now ?? new Date();
   const db = ctx?.db ?? defaultDb;
 
+  const values = incidents.map((incident) => ({
+    externalServiceId,
+    providerIncidentId: incident.providerIncidentId,
+    name: incident.name,
+    status: incident.status,
+    impact: incident.impact,
+    shortlink: incident.shortlink,
+    startedAt: incident.startedAt,
+    createdAt: incident.createdAt,
+    resolvedAt: incident.resolvedAt,
+    rawPayload: incident.raw,
+    rawPayloadPurgedAt: null,
+    firstSeenAt: now,
+    lastSeenAt: now,
+    updatedAt: now,
+  }));
+
   return withBusyRetry(() =>
     db.transaction(async (tx) => {
-      for (const incident of incidents) {
-        await tx
-          .insert(externalServiceIncident)
-          .values({
-            externalServiceId,
-            providerIncidentId: incident.providerIncidentId,
-            name: incident.name,
-            status: incident.status,
-            impact: incident.impact,
-            shortlink: incident.shortlink,
-            startedAt: incident.startedAt,
-            createdAt: incident.createdAt,
-            resolvedAt: incident.resolvedAt,
-            rawPayload: incident.raw,
+      await tx
+        .insert(externalServiceIncident)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [
+            externalServiceIncident.externalServiceId,
+            externalServiceIncident.providerIncidentId,
+          ],
+          set: {
+            name: sql`excluded.name`,
+            status: sql`excluded.status`,
+            impact: sql`excluded.impact`,
+            shortlink: sql`excluded.shortlink`,
+            resolvedAt: sql`excluded.resolved_at`,
+            rawPayload: sql`excluded.raw_payload`,
             rawPayloadPurgedAt: null,
-            firstSeenAt: now,
             lastSeenAt: now,
             updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [
-              externalServiceIncident.externalServiceId,
-              externalServiceIncident.providerIncidentId,
-            ],
-            set: {
-              name: incident.name,
-              status: incident.status,
-              impact: incident.impact,
-              shortlink: incident.shortlink,
-              resolvedAt: incident.resolvedAt,
-              rawPayload: incident.raw,
-              rawPayloadPurgedAt: null,
-              lastSeenAt: now,
-              updatedAt: now,
-            },
-          })
-          .run();
-      }
-      return { upserted: incidents.length };
+          },
+        })
+        .run();
+      return { upserted: values.length };
     }),
   );
 }

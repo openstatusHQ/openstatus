@@ -10,6 +10,7 @@ import { FetchError, fetchers } from "@openstatus/status-fetcher";
 import type {
   JsonValue,
   NormalizedIncident,
+  StatusFetcher,
   StatusPageEntry,
   StatusResult,
 } from "@openstatus/status-fetcher";
@@ -24,6 +25,10 @@ import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 const logger = getLogger(["workflow", "external-status"]);
 
 const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
+
+// 10 per phase × 2 phases = peak 20 concurrent HTTP requests upstream; keeps
+// Atlassian/Incident.io CDNs comfortable while still parallelising heavily.
+const PHASE_CONCURRENCY = 10;
 
 function toStatusPageEntry(row: ExternalServiceRow): StatusPageEntry {
   return {
@@ -103,14 +108,19 @@ type IncidentPhaseOutcome =
   | { kind: "skip"; slug: string }
   | { kind: "fail"; slug: string; reason: string };
 
+type Triplet = {
+  row: ExternalServiceRow;
+  entry: StatusPageEntry;
+  fetcher: StatusFetcher | null;
+};
+
 function runStatusPhase(
-  pairs: { row: ExternalServiceRow; entry: StatusPageEntry }[],
+  triplets: Triplet[],
   fetchedAt: number,
 ): Effect.Effect<StatusPhaseOutcome[]> {
   return Effect.forEach(
-    pairs,
-    ({ entry }) => {
-      const fetcher = fetchers.find((f) => f.canHandle(entry));
+    triplets,
+    ({ entry, fetcher }) => {
       if (!fetcher) {
         return Effect.succeed<StatusPhaseOutcome>({
           kind: "no-fetcher",
@@ -131,17 +141,17 @@ function runStatusPhase(
         ),
       );
     },
-    { concurrency: 25 },
+    { concurrency: PHASE_CONCURRENCY },
   );
 }
 
 function runIncidentPhase(
-  pairs: { row: ExternalServiceRow; entry: StatusPageEntry }[],
+  triplets: Triplet[],
+  tickStartedAt: Date,
 ): Effect.Effect<IncidentPhaseOutcome[]> {
   return Effect.forEach(
-    pairs,
-    ({ row, entry }) => {
-      const fetcher = fetchers.find((f) => f.canHandle(entry));
+    triplets,
+    ({ row, entry, fetcher }) => {
       if (!fetcher || !fetcher.fetchIncidents) {
         return Effect.succeed<IncidentPhaseOutcome>({
           kind: "skip",
@@ -156,7 +166,7 @@ function runIncidentPhase(
                 ctx: { db },
                 externalServiceId: row.id,
                 incidents: incidents.map(toUpsertInput),
-                now: new Date(),
+                now: tickStartedAt,
               }),
             catch: (e) =>
               new FetchError({
@@ -182,7 +192,7 @@ function runIncidentPhase(
         ),
       );
     },
-    { concurrency: 25 },
+    { concurrency: PHASE_CONCURRENCY },
   );
 }
 
@@ -200,10 +210,9 @@ function summarizeStatus(outcomes: StatusPhaseOutcome[]): {
       successCount++;
     } else if (o.kind === "no-fetcher") {
       skippedCount++;
-      logger.warn(
-        "external-status status: no fetcher matches slug={slug}",
-        { slug: o.slug },
-      );
+      logger.warn("external-status status: no fetcher matches slug={slug}", {
+        slug: o.slug,
+      });
     } else {
       failureCount++;
       logger.warn(
@@ -248,21 +257,29 @@ function summarizeIncidents(outcomes: IncidentPhaseOutcome[]): PhaseCounts {
   };
 }
 
+function buildTriplets(services: ExternalServiceRow[]): Triplet[] {
+  return services.map((row) => {
+    const entry = toStatusPageEntry(row);
+    const fetcher = fetchers.find((f) => f.canHandle(entry)) ?? null;
+    return { row, entry, fetcher };
+  });
+}
+
 export async function runExternalStatusTick(): Promise<{
   status: PhaseCounts;
   incidents: PhaseCounts;
 }> {
   const services = await listExternalServices({ ctx: { db } });
 
-  const pairs = services.map((row) => ({
-    row,
-    entry: toStatusPageEntry(row),
-  }));
-  const fetchedAt = Date.now();
+  const triplets = buildTriplets(services);
+  const tickStartedAt = new Date();
 
   const [statusOutcomes, incidentOutcomes] = await Effect.runPromise(
     Effect.all(
-      [runStatusPhase(pairs, fetchedAt), runIncidentPhase(pairs)],
+      [
+        runStatusPhase(triplets, tickStartedAt.getTime()),
+        runIncidentPhase(triplets, tickStartedAt),
+      ],
       { concurrency: "unbounded" },
     ),
   );

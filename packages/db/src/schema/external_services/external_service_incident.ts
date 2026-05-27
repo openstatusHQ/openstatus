@@ -53,5 +53,6 @@ export const externalServiceIncident = sqliteTable(
       t.externalServiceId,
       t.startedAt,
     ),
+    index("external_service_incident_resolved_at_idx").on(t.resolvedAt),
   ],
 );

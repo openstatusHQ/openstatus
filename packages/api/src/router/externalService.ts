@@ -15,7 +15,6 @@ const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const DEFAULT_HISTORY_DAYS = 45;
 const INCIDENTS_LIMIT = 5;
-const INCIDENT_SUPPORTED_API_CONFIG_TYPES = new Set(["atlassian", "incidentio"]);
 
 async function safeData<T>(
   promise: Promise<{ data: T[] }>,
@@ -179,13 +178,10 @@ export const externalServiceRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { service, incidents } = await listExternalIncidentsBySlug({
+      const { supported, incidents } = await listExternalIncidentsBySlug({
         slug: input.slug,
         limit: INCIDENTS_LIMIT,
       });
-      const supported =
-        service?.apiConfigType !== undefined &&
-        INCIDENT_SUPPORTED_API_CONFIG_TYPES.has(service.apiConfigType);
       if (!supported) {
         return { supported: false, incidents: [] };
       }
