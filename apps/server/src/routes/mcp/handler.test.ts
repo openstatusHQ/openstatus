@@ -210,6 +210,7 @@ describe("MCP transport", () => {
  */
 describe("MCP transport — audit stamping", () => {
   const E2E_PREFIX = "mcp-handler-test";
+  const E2E_SLUG_SUFFIX = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   let e2ePageId: number | null = null;
   const createdReports: number[] = [];
 
@@ -220,7 +221,7 @@ describe("MCP transport — audit stamping", () => {
         workspaceId: SEEDED_WORKSPACE_TEAM_ID,
         title: `${E2E_PREFIX}-page`,
         description: "e2e page",
-        slug: `${E2E_PREFIX}-page-slug`,
+        slug: `${E2E_PREFIX}-page-slug-${E2E_SLUG_SUFFIX}`,
         customDomain: "",
       })
       .returning()

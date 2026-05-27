@@ -31,7 +31,7 @@ beforeAll(async () => {
   const p = await db
     .insert(page)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       title: "IDOR Test Page",
       description: "Page for IDOR testing",
       slug: "idor-test-page",
@@ -44,7 +44,7 @@ beforeAll(async () => {
   const component = await db
     .insert(pageComponent)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       pageId: otherWorkspacePageId,
       name: "Other workspace component",
       type: "static",
@@ -56,7 +56,7 @@ beforeAll(async () => {
   const report = await db
     .insert(statusReport)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       title: "Other workspace report",
       status: "investigating",
       pageId: otherWorkspacePageId,
