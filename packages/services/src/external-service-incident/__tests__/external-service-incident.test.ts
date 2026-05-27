@@ -131,6 +131,54 @@ describe("upsertExternalIncidentsForService", () => {
     expect(updated[0]?.lastSeenAt.getTime()).toBe(laterDate.getTime());
   });
 
+  test("backfills startedAt when upstream populates it after first sight", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-backfill` });
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      incidents: [
+        {
+          providerIncidentId: "late-start",
+          name: "triaging",
+          status: "investigating",
+          createdAt: new Date("2024-07-01T00:00:00.000Z"),
+          startedAt: undefined,
+          resolvedAt: null,
+          raw: {},
+        },
+      ],
+    });
+
+    const populatedStartedAt = new Date("2024-07-01T00:05:00.000Z");
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      incidents: [
+        {
+          providerIncidentId: "late-start",
+          name: "triaging",
+          status: "identified",
+          createdAt: new Date("2024-07-01T00:00:00.000Z"),
+          startedAt: populatedStartedAt,
+          resolvedAt: null,
+          raw: {},
+        },
+      ],
+    });
+
+    const rows = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "late-start"),
+        ),
+      )
+      .all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.startedAt?.getTime()).toBe(populatedStartedAt.getTime());
+  });
+
   test("no-op when given an empty list", async () => {
     const serviceId = await seedService({ slug: `${TEST_PREFIX}-empty` });
     const res = await upsertExternalIncidentsForService({

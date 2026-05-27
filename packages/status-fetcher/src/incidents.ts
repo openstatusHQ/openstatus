@@ -51,6 +51,8 @@ export const fetchAtlassianCompatibleIncidents = (args: {
   fetcherName: string;
 }): Effect.Effect<NormalizedIncident[], FetchError> => {
   const { entry, fetcherName } = args;
+  // `api_config.endpoint` overrides the summary URL only; incidents always
+  // come from the standard `/api/v2/incidents.json` path under status_page_url.
   const url = `${entry.status_page_url}/api/v2/incidents.json`;
   return fetchJsonWithRaw({
     url,
