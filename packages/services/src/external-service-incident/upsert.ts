@@ -67,6 +67,7 @@ export async function upsertExternalIncidentsForService(args: {
             status: sql`excluded.status`,
             impact: sql`excluded.impact`,
             shortlink: sql`excluded.shortlink`,
+            startedAt: sql`excluded.started_at`,
             resolvedAt: sql`excluded.resolved_at`,
             rawPayload: sql`excluded.raw_payload`,
             rawPayloadPurgedAt: null,

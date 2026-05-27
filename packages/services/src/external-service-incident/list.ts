@@ -22,6 +22,7 @@ export type ExternalIncidentListItem = {
 
 const DEFAULT_LIMIT = 5;
 
+// must stay in sync with fetchers that implement `fetchIncidents` in @openstatus/status-fetcher
 export const INCIDENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
   "atlassian",
   "incidentio",
