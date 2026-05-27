@@ -28,6 +28,10 @@ const resourcesFooterSection = {
       href: "/blog",
     },
     {
+      label: "Customers",
+      href: "/customers",
+    },
+    {
       label: "Pricing",
       href: "/pricing",
     },
@@ -69,6 +73,10 @@ const useCasesSection = {
 const resourcesHeaderSection = {
   label: "Resources",
   items: [
+    {
+      label: "Customers",
+      href: "/customers",
+    },
     {
       label: "Use Cases",
       href: "/use-case",

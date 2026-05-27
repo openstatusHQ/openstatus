@@ -2,6 +2,7 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getCustomerPages,
   getGuides,
   getHomePage,
   getProductPages,
@@ -26,6 +27,7 @@ const allPlaygrounds = getToolsPages();
 const allGuides = getGuides();
 const allUseCases = getUseCasePages();
 const allTooling = getToolingPages();
+const allCustomers = getCustomerPages();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const externalServices = await cachedListExternalServices();
@@ -182,6 +184,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const customersIndex = [
+    {
+      url: "https://www.openstatus.dev/customers",
+      lastModified: new Date().toISOString().slice(0, 10),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+  ];
+
+  const customers = allCustomers.map((page) => ({
+    url: `https://www.openstatus.dev/customers/${page.slug}`,
+    lastModified: page.metadata.publishedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
   return [
     ...home,
     ...blogs,
@@ -200,6 +218,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...useCaseIndex,
     ...toolings,
     ...toolingIndex,
+    ...customers,
+    ...customersIndex,
     ...externalServicesIndex,
     ...externalServiceEntries,
   ];

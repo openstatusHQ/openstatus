@@ -1,0 +1,17 @@
+---
+title: "How Traefik Labs runs their status page as code with openstatus"
+publishedAt: "2026-05-27"
+author: "openstatus"
+description: "Traefik Labs manages status.traefik.io entirely from Terraform — every component reviewed in the same PR workflow as the rest of their infra."
+category: "Customer"
+image: "/assets/customers/traefik/logo.png"
+imageDark: "/assets/customers/traefik/logo.dark.png"
+---
+
+At Traefik Labs, everything we ship is configuration-first. Our users define routing and middleware in YAML or labels, never in a UI. So when we went looking for a status page, the bar was simple: it had to feel like the rest of our stack.
+
+Most status page tools are dashboards first, with an API bolted on as an afterthought. openstatus flipped that. Every component on [status.traefik.io](https://status.traefik.io) — Traefik Hub, Traefik Plugins, Community forum & Docs, Updates & Releases — lives in our Terraform repo, reviewed in the same pull requests workflow as the rest of our infra.
+
+Status page and monitoring live alongside infrastructure. We were looking for an easy to use and straightforward solution, focused on great User Experience. As an open-source company ourselves, picking another open-source vendor was a values check, not just a feature check.
+
+We picked openstatus because the workflow matched ours. We stayed because it keeps matching.
