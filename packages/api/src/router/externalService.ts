@@ -178,25 +178,36 @@ export const externalServiceRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { supported, incidents } = await listExternalIncidentsBySlug({
-        slug: input.slug,
-        limit: INCIDENTS_LIMIT,
-      });
-      if (!supported) {
+      try {
+        const { supported, incidents } = await listExternalIncidentsBySlug({
+          slug: input.slug,
+          limit: INCIDENTS_LIMIT,
+        });
+        if (!supported) {
+          return { supported: false, incidents: [] };
+        }
+        return {
+          supported: true,
+          incidents: incidents.map((i) => ({
+            id: i.providerIncidentId,
+            name: i.name,
+            status: i.status,
+            impact: i.impact ?? undefined,
+            shortlink: i.shortlink ?? undefined,
+            startedAt: i.startedAt?.toISOString(),
+            createdAt: i.createdAt.toISOString(),
+            resolvedAt: i.resolvedAt?.toISOString() ?? null,
+          })),
+        };
+      } catch (err) {
+        // matches the graceful-degrade pattern used by `grid` / `detail`:
+        // a DB hiccup on a public page shouldn't 500, it should fall back to
+        // the upstream-link UI via supported=false.
+        console.warn(
+          `[external-service incidents] DB read failed for slug=${input.slug}:`,
+          err,
+        );
         return { supported: false, incidents: [] };
       }
-      return {
-        supported: true,
-        incidents: incidents.map((i) => ({
-          id: i.providerIncidentId,
-          name: i.name,
-          status: i.status,
-          impact: i.impact ?? undefined,
-          shortlink: i.shortlink ?? undefined,
-          startedAt: i.startedAt?.toISOString(),
-          createdAt: i.createdAt.toISOString(),
-          resolvedAt: i.resolvedAt?.toISOString() ?? null,
-        })),
-      };
     }),
 });

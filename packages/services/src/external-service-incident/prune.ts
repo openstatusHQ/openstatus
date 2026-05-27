@@ -17,6 +17,12 @@ export async function pruneStaleRawPayloads(args: {
 }): Promise<PruneRawPayloadsResult> {
   const { ctx } = args;
   const olderThanDays = args.olderThanDays ?? DEFAULT_RAW_PAYLOAD_TTL_DAYS;
+  // guard: a negative/zero cutoff would purge recent or not-yet-resolved rows
+  if (!Number.isFinite(olderThanDays) || olderThanDays < 1) {
+    throw new Error(
+      `pruneStaleRawPayloads: olderThanDays must be >= 1, got ${olderThanDays}`,
+    );
+  }
   const now = args.now ?? new Date();
   const cutoff = new Date(now.getTime() - olderThanDays * 24 * 60 * 60 * 1000);
   const db = ctx?.db ?? defaultDb;
