@@ -1,10 +1,20 @@
 import { getLogger } from "@logtape/logtape";
+import type { IncidentRawPayload } from "@openstatus/db/src/schema";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
+import {
+  type UpsertExternalIncidentInput,
+  upsertExternalIncidentsForService,
+} from "@openstatus/services/external-service-incident";
 import { FetchError, fetchers } from "@openstatus/status-fetcher";
-import type { StatusPageEntry, StatusResult } from "@openstatus/status-fetcher";
+import type {
+  JsonValue,
+  NormalizedIncident,
+  StatusPageEntry,
+  StatusResult,
+} from "@openstatus/status-fetcher";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Effect, Either } from "effect";
+import { Effect } from "effect";
 import type { Context } from "hono";
 
 import { env } from "../env";
@@ -55,68 +65,216 @@ function buildSnapshot(args: {
   };
 }
 
-export async function runExternalStatusTick(): Promise<{
+// safe because IncidentRawPayload and JsonValue are structurally identical recursive JSON types
+function toIncidentRawPayload(raw: JsonValue): IncidentRawPayload {
+  return raw as IncidentRawPayload;
+}
+
+function toUpsertInput(
+  incident: NormalizedIncident,
+): UpsertExternalIncidentInput {
+  return {
+    providerIncidentId: incident.providerIncidentId,
+    name: incident.name,
+    status: incident.status,
+    impact: incident.impact,
+    shortlink: incident.shortlink,
+    startedAt: incident.startedAt,
+    createdAt: incident.createdAt,
+    resolvedAt: incident.resolvedAt,
+    raw: toIncidentRawPayload(incident.raw),
+  };
+}
+
+type PhaseCounts = {
   successCount: number;
   failureCount: number;
+  skippedCount: number;
   total: number;
-}> {
-  const services = await listExternalServices({ ctx: { db } });
+};
 
-  const entries = services.map(toStatusPageEntry);
-  const fetchedAt = Date.now();
+type StatusPhaseOutcome =
+  | { kind: "ok"; snapshot: Snapshot }
+  | { kind: "no-fetcher"; slug: string }
+  | { kind: "fail"; slug: string; reason: string };
 
-  const results = await Effect.runPromise(
-    Effect.forEach(
-      entries,
-      (entry) => {
-        const fetcher = fetchers.find((f) => f.canHandle(entry));
-        if (!fetcher) {
-          return Effect.either(
-            Effect.fail(
+type IncidentPhaseOutcome =
+  | { kind: "ok"; slug: string; count: number }
+  | { kind: "skip"; slug: string }
+  | { kind: "fail"; slug: string; reason: string };
+
+function runStatusPhase(
+  pairs: { row: ExternalServiceRow; entry: StatusPageEntry }[],
+  fetchedAt: number,
+): Effect.Effect<StatusPhaseOutcome[]> {
+  return Effect.forEach(
+    pairs,
+    ({ entry }) => {
+      const fetcher = fetchers.find((f) => f.canHandle(entry));
+      if (!fetcher) {
+        return Effect.succeed<StatusPhaseOutcome>({
+          kind: "no-fetcher",
+          slug: entry.id,
+        });
+      }
+      return fetcher.fetch(entry).pipe(
+        Effect.map((result): StatusPhaseOutcome => ({
+          kind: "ok",
+          snapshot: buildSnapshot({ entry, result, fetchedAt }),
+        })),
+        Effect.catchAll((err: FetchError) =>
+          Effect.succeed<StatusPhaseOutcome>({
+            kind: "fail",
+            slug: entry.id,
+            reason: err.message,
+          }),
+        ),
+      );
+    },
+    { concurrency: 25 },
+  );
+}
+
+function runIncidentPhase(
+  pairs: { row: ExternalServiceRow; entry: StatusPageEntry }[],
+): Effect.Effect<IncidentPhaseOutcome[]> {
+  return Effect.forEach(
+    pairs,
+    ({ row, entry }) => {
+      const fetcher = fetchers.find((f) => f.canHandle(entry));
+      if (!fetcher || !fetcher.fetchIncidents) {
+        return Effect.succeed<IncidentPhaseOutcome>({
+          kind: "skip",
+          slug: entry.id,
+        });
+      }
+      return fetcher.fetchIncidents(entry).pipe(
+        Effect.flatMap((incidents) =>
+          Effect.tryPromise({
+            try: () =>
+              upsertExternalIncidentsForService({
+                ctx: { db },
+                externalServiceId: row.id,
+                incidents: incidents.map(toUpsertInput),
+                now: new Date(),
+              }),
+            catch: (e) =>
               new FetchError({
                 url: entry.status_page_url,
+                fetcherName: fetcher.name,
                 entryId: entry.id,
-                cause: new Error(`no fetcher matches entry slug=${entry.id}`),
+                cause: e instanceof Error ? e : new Error(String(e)),
               }),
-            ),
-          );
-        }
-        return fetcher.fetch(entry).pipe(
-          Effect.map((result) => buildSnapshot({ entry, result, fetchedAt })),
-          Effect.either,
-        );
-      },
-      { concurrency: 25 },
-    ),
+          }).pipe(
+            Effect.map((result): IncidentPhaseOutcome => ({
+              kind: "ok",
+              slug: entry.id,
+              count: result.upserted,
+            })),
+          ),
+        ),
+        Effect.catchAll((err: FetchError) =>
+          Effect.succeed<IncidentPhaseOutcome>({
+            kind: "fail",
+            slug: entry.id,
+            reason: err.message,
+          }),
+        ),
+      );
+    },
+    { concurrency: 25 },
   );
+}
 
+function summarizeStatus(outcomes: StatusPhaseOutcome[]): {
+  counts: PhaseCounts;
+  snapshots: Snapshot[];
+} {
   const snapshots: Snapshot[] = [];
+  let successCount = 0;
   let failureCount = 0;
-  for (const [i, r] of results.entries()) {
-    if (Either.isRight(r)) {
-      snapshots.push(r.right);
+  let skippedCount = 0;
+  for (const o of outcomes) {
+    if (o.kind === "ok") {
+      snapshots.push(o.snapshot);
+      successCount++;
+    } else if (o.kind === "no-fetcher") {
+      skippedCount++;
+      logger.warn(
+        "external-status status: no fetcher matches slug={slug}",
+        { slug: o.slug },
+      );
     } else {
       failureCount++;
-      const slug = entries[i]?.id ?? "<unknown>";
       logger.warn(
-        "external-status tick: fetcher failed for slug={slug}: {reason}",
-        {
-          slug,
-          reason: r.left.message,
-        },
+        "external-status status: fetch failed for slug={slug}: {reason}",
+        { slug: o.slug, reason: o.reason },
       );
     }
   }
+  return {
+    counts: {
+      successCount,
+      failureCount,
+      skippedCount,
+      total: outcomes.length,
+    },
+    snapshots,
+  };
+}
 
-  if (snapshots.length > 0) {
-    await tb.publishExternalStatus(snapshots);
+function summarizeIncidents(outcomes: IncidentPhaseOutcome[]): PhaseCounts {
+  let successCount = 0;
+  let failureCount = 0;
+  let skippedCount = 0;
+  for (const o of outcomes) {
+    if (o.kind === "ok") {
+      successCount++;
+    } else if (o.kind === "skip") {
+      skippedCount++;
+    } else {
+      failureCount++;
+      logger.warn(
+        "external-status incidents: failed for slug={slug}: {reason}",
+        { slug: o.slug, reason: o.reason },
+      );
+    }
+  }
+  return {
+    successCount,
+    failureCount,
+    skippedCount,
+    total: outcomes.length,
+  };
+}
+
+export async function runExternalStatusTick(): Promise<{
+  status: PhaseCounts;
+  incidents: PhaseCounts;
+}> {
+  const services = await listExternalServices({ ctx: { db } });
+
+  const pairs = services.map((row) => ({
+    row,
+    entry: toStatusPageEntry(row),
+  }));
+  const fetchedAt = Date.now();
+
+  const [statusOutcomes, incidentOutcomes] = await Effect.runPromise(
+    Effect.all(
+      [runStatusPhase(pairs, fetchedAt), runIncidentPhase(pairs)],
+      { concurrency: "unbounded" },
+    ),
+  );
+
+  const status = summarizeStatus(statusOutcomes);
+  const incidents = summarizeIncidents(incidentOutcomes);
+
+  if (status.snapshots.length > 0) {
+    await tb.publishExternalStatus(status.snapshots);
   }
 
-  return {
-    successCount: snapshots.length,
-    failureCount,
-    total: entries.length,
-  };
+  return { status: status.counts, incidents };
 }
 
 export async function handleExternalStatusCron(c: Context) {
@@ -137,11 +295,16 @@ export async function handleExternalStatusCron(c: Context) {
       Effect.tap((res) =>
         Effect.sync(() => {
           logger.info(
-            "external-status tick complete: {success}/{total} ({failures} failures)",
+            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped)",
             {
-              success: res.successCount,
-              total: res.total,
-              failures: res.failureCount,
+              statusOk: res.status.successCount,
+              statusTotal: res.status.total,
+              statusFail: res.status.failureCount,
+              statusSkip: res.status.skippedCount,
+              incOk: res.incidents.successCount,
+              incTotal: res.incidents.total,
+              incFail: res.incidents.failureCount,
+              incSkip: res.incidents.skippedCount,
             },
           );
           void cronCompleted();

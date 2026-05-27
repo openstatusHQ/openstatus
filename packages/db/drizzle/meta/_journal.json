@@ -505,6 +505,13 @@
       "when": 1779706543817,
       "tag": "0071_breezy_trish_tilby",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "6",
+      "when": 1779799443520,
+      "tag": "0072_exotic_xorn",
+      "breakpoints": true
     }
   ]
 }

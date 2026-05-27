@@ -107,8 +107,31 @@ export interface StatusResult {
   timezone?: string;
 }
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+export interface NormalizedIncident {
+  providerIncidentId: string;
+  name: string;
+  status: string;
+  impact?: string;
+  shortlink?: string;
+  startedAt?: Date;
+  createdAt: Date;
+  resolvedAt: Date | null;
+  raw: JsonValue;
+}
+
 export interface StatusFetcher {
   name: string;
   canHandle(entry: StatusPageEntry): boolean;
   fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError>;
+  fetchIncidents?(
+    entry: StatusPageEntry,
+  ): Effect.Effect<NormalizedIncident[], FetchError>;
 }
