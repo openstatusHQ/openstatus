@@ -512,6 +512,13 @@
       "when": 1779967971625,
       "tag": "0072_curvy_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "6",
+      "when": 1779978219305,
+      "tag": "0073_ambitious_raza",
+      "breakpoints": true
     }
   ]
 }

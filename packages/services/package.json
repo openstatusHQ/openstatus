@@ -101,6 +101,10 @@
       "import": "./src/external-service-incident/index.ts",
       "types": "./src/external-service-incident/index.ts"
     },
+    "./external-service-component": {
+      "import": "./src/external-service-component/index.ts",
+      "types": "./src/external-service-component/index.ts"
+    },
     "./test/helpers": {
       "import": "./test/helpers.ts",
       "types": "./test/helpers.ts"

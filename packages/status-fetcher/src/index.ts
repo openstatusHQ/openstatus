@@ -8,4 +8,10 @@ export {
   fetchAtlassianCompatibleIncidents,
 } from "./incidents";
 export type { AtlassianIncident } from "./incidents";
+export {
+  atlassianComponentSchema,
+  atlassianComponentsResponseSchema,
+  fetchAtlassianCompatibleComponents,
+} from "./components";
+export type { AtlassianComponent } from "./components";
 export type { DirectoryEntry } from "./data/index";

@@ -5,6 +5,7 @@ import {
   getExternalServiceBySlug,
   listExternalServices,
 } from "@openstatus/services/external-service";
+import { listExternalComponentsBySlug } from "@openstatus/services/external-service-component";
 import { listExternalIncidentsBySlug } from "@openstatus/services/external-service-incident";
 import { OSTinybird } from "@openstatus/tinybird";
 
@@ -72,6 +73,17 @@ const incidentSchema = z.object({
   startedAt: z.string().optional(),
   createdAt: z.string(),
   resolvedAt: z.string().nullable().optional(),
+});
+
+const componentItemSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string().nullable(),
+  groupName: z.string().nullable(),
+  position: z.number(),
+  indicator: z.string(),
+  status: z.string(),
+  history: z.array(historyRowSchema),
 });
 
 export const externalServiceRouter = createTRPCRouter({
@@ -208,6 +220,72 @@ export const externalServiceRouter = createTRPCRouter({
           err,
         );
         return { supported: false, incidents: [] };
+      }
+    }),
+
+  components: publicProcedure
+    .input(
+      z.object({
+        slug: z.string(),
+        days: z.number().int().min(1).max(90).optional(),
+      }),
+    )
+    .output(
+      z.object({
+        supported: z.boolean(),
+        components: z.array(componentItemSchema),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const { supported, components } = await listExternalComponentsBySlug({
+          slug: input.slug,
+        });
+        if (!supported || components.length === 0) {
+          return { supported, components: [] };
+        }
+
+        const days = input.days ?? DEFAULT_HISTORY_DAYS;
+        const componentIds = components.map((c) => String(c.id));
+        const historyRows = await safeData(
+          tb.externalStatusComponentHistory({
+            component_ids: componentIds,
+            days,
+          }),
+          "externalStatusComponentHistory",
+        );
+
+        const historyByComponent = new Map<string, typeof historyRows>();
+        for (const row of historyRows) {
+          const list = historyByComponent.get(row.component_id);
+          if (list) list.push(row);
+          else historyByComponent.set(row.component_id, [row]);
+        }
+
+        return {
+          supported: true,
+          components: components.map((c) => ({
+            id: c.id,
+            name: c.name,
+            description: c.description,
+            groupName: c.groupName,
+            position: c.position,
+            indicator: c.indicator,
+            status: c.status,
+            history: (historyByComponent.get(String(c.id)) ?? []).map((r) => ({
+              day: r.day,
+              worstIndicator: r.worst_indicator,
+              hadMaintenance: r.had_maintenance,
+              snapshotCount: r.snapshot_count,
+            })),
+          })),
+        };
+      } catch (err) {
+        console.warn(
+          `[external-service components] read failed for slug=${input.slug}:`,
+          err,
+        );
+        return { supported: false, components: [] };
       }
     }),
 });

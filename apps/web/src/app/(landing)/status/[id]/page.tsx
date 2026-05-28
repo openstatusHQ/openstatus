@@ -82,6 +82,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       days: HISTORY_DAYS,
     }),
     api.externalService.incidents.prefetch({ slug: service.slug }),
+    api.externalService.components.prefetch({
+      slug: service.slug,
+      days: HISTORY_DAYS,
+    }),
   ]);
 
   return (
