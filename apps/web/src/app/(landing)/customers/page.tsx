@@ -8,11 +8,11 @@ import {
 import type { Metadata } from "next";
 import {
   ContentBoxDescription,
-  ContentBoxImage,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
+import { ContentBoxImage } from "../content-box-image";
 
 const TITLE = "Meet our customers";
 const DESCRIPTION =
