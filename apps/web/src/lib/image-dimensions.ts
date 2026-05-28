@@ -54,8 +54,12 @@ function getSvgDimensions(content: string): ImageDimensions | null {
   const svgTag = content.match(/<svg\b[^>]*>/i)?.[0];
   if (!svgTag) return null;
 
-  const widthAttr = svgTag.match(/\bwidth\s*=\s*["']?(\d+(?:\.\d+)?)/i)?.[1];
-  const heightAttr = svgTag.match(/\bheight\s*=\s*["']?(\d+(?:\.\d+)?)/i)?.[1];
+  const widthAttr = svgTag.match(
+    /\bwidth\s*=\s*["']?(\d+(?:\.\d+)?)(?:px)?["'\s/>]/i,
+  )?.[1];
+  const heightAttr = svgTag.match(
+    /\bheight\s*=\s*["']?(\d+(?:\.\d+)?)(?:px)?["'\s/>]/i,
+  )?.[1];
   if (widthAttr && heightAttr) {
     return { width: Number(widthAttr), height: Number(heightAttr) };
   }
