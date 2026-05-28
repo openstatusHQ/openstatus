@@ -1,14 +1,15 @@
 "use client";
 
+import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 import { Suspense } from "react";
 
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
 import { api } from "@/trpc/rq-client";
 
-import { ExternalServicePill } from "../external-service-pill";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
+import { ServiceComponents } from "./service-components";
 
 function jsonLd(args: {
   serviceName: string;
@@ -138,6 +139,14 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
       <div className="not-prose">
         <HistoryBars daily={history} days={days} />
       </div>
+
+      <Suspense fallback={null}>
+        <ServiceComponents
+          slug={service.slug}
+          serviceName={service.name}
+          days={days}
+        />
+      </Suspense>
 
       <h2>{service.name} recent incidents</h2>
       <Suspense

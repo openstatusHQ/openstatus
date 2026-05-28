@@ -1,0 +1,10 @@
+SCHEMA >
+    `component_id` String `json:$.component_id`,
+    `external_service_id` Int64 `json:$.external_service_id`,
+    `indicator` String `json:$.indicator`,
+    `status` String `json:$.status`,
+    `fetched_at` Int64 `json:$.fetched_at`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "component_id, fetched_at"
+ENGINE_TTL "toDateTime(fromUnixTimestamp64Milli(fetched_at)) + INTERVAL 60 DAY"
