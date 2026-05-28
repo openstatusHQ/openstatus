@@ -29,7 +29,6 @@ const metadataSchema = z.object({
   category: z.string(),
   author: z.string(),
   image: z.string().optional(),
-  imageDark: z.string().optional(),
   // Structured data fields
   howto: howtoSchema.optional(),
   faq: z.array(faqItemSchema).optional(),

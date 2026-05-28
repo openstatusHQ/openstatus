@@ -6,9 +6,9 @@ import {
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
-import Image from "next/image";
 import {
   ContentBoxDescription,
+  ContentBoxImage,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
@@ -48,22 +48,10 @@ export default function CustomersListPage() {
         {pages.map((page) => (
           <ContentBoxLink key={page.slug} href={`/customers/${page.slug}`}>
             {page.metadata.image ? (
-              <div className="relative mb-3 h-8 w-full">
-                <Image
-                  src={page.metadata.image}
-                  alt={page.metadata.title}
-                  fill
-                  className="object-contain object-left dark:hidden"
-                />
-                {page.metadata.imageDark ? (
-                  <Image
-                    src={page.metadata.imageDark}
-                    alt={page.metadata.title}
-                    fill
-                    className="hidden object-contain object-left dark:block"
-                  />
-                ) : null}
-              </div>
+              <ContentBoxImage
+                src={page.metadata.image}
+                alt={page.metadata.title}
+              />
             ) : null}
             <ContentBoxTitle>{page.metadata.title}</ContentBoxTitle>
             <ContentBoxDescription>

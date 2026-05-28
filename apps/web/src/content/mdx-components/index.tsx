@@ -10,6 +10,7 @@ import { createHeading } from "./heading";
 import { Pre } from "./pre";
 import { PricingTabs } from "./pricing-tabs";
 import { MDXStatusPageExample } from "./status-page-example";
+import { Subtle } from "./subtle";
 import { Table } from "./table";
 
 export { slugify } from "./heading";
@@ -33,5 +34,6 @@ export const components = {
   SimpleChart: LatencyChartTable,
   StatusPageExample: MDXStatusPageExample,
   PricingTabs,
+  Subtle,
   Suspense: Suspense,
 };

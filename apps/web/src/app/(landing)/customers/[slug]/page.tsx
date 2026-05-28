@@ -1,4 +1,5 @@
 import { CustomMDX } from "@/content/mdx";
+import { CustomImage } from "@/content/mdx-components/custom-image";
 import { getCustomerPages } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
@@ -9,7 +10,6 @@ import {
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
@@ -70,22 +70,12 @@ export default async function CustomerPage({
         }}
       />
       {page.metadata.image ? (
-        <div className="relative mb-6 h-12 w-full">
-          <Image
-            src={page.metadata.image}
-            alt={page.metadata.title}
-            fill
-            className="object-contain object-left dark:hidden"
-          />
-          {page.metadata.imageDark ? (
-            <Image
-              src={page.metadata.imageDark}
-              alt={page.metadata.title}
-              fill
-              className="hidden object-contain object-left dark:block"
-            />
-          ) : null}
-        </div>
+        <CustomImage
+          src={page.metadata.image}
+          alt={page.metadata.title}
+          disableZoom
+          className="mb-6 h-12 w-auto"
+        />
       ) : null}
       <h1>{page.metadata.title}</h1>
       <CustomMDX source={page.content} />
