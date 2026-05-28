@@ -196,6 +196,27 @@ export function getToolingPage(slug: string): MDXData {
   );
 }
 
+export function getCustomerPages(): MDXData[] {
+  return getMDXDataFromDir(
+    path.join(process.cwd(), "src", "content", "pages", "customers"),
+    "/customers",
+  );
+}
+
+export function getCustomerPage(slug: string): MDXData {
+  return getMDXDataFromFile(
+    path.join(
+      process.cwd(),
+      "src",
+      "content",
+      "pages",
+      "customers",
+      `${slug}.mdx`,
+    ),
+    "/customers",
+  );
+}
+
 export const PAGE_TYPES = [
   "blog",
   "changelog",
@@ -204,6 +225,7 @@ export const PAGE_TYPES = [
   "compare",
   "tools",
   "tooling",
+  "customers",
   "guides",
   "use-case",
   "all",
@@ -227,6 +249,8 @@ export function getPages(type: PageType) {
       return getToolsPages();
     case "tooling":
       return getToolingPages();
+    case "customers":
+      return getCustomerPages();
     case "guides":
       return getGuides();
     case "use-case":
@@ -240,6 +264,7 @@ export function getPages(type: PageType) {
         ...getComparePages(),
         ...getToolsPages(),
         ...getToolingPages(),
+        ...getCustomerPages(),
         ...getGuides(),
         ...getUseCasePages(),
       ];
@@ -258,6 +283,7 @@ export function getCategories() {
       ...getComparePages().map((post) => post.metadata.category),
       ...getToolsPages().map((post) => post.metadata.category),
       ...getToolingPages().map((post) => post.metadata.category),
+      ...getCustomerPages().map((post) => post.metadata.category),
     ]),
   ] as const;
 }

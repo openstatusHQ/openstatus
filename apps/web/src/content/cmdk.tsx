@@ -127,6 +127,12 @@ const CONFIG: ConfigSection[] = [
         page: "use-case",
       },
       {
+        type: "group",
+        label: "Search in Customers...",
+        heading: "Customers",
+        page: "customers",
+      },
+      {
         type: "item",
         label: "Go to About",
         href: "/about",

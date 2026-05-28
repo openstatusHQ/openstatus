@@ -4,6 +4,7 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getCustomerPages,
   getGuides,
   getHomePage,
   getProductPages,
@@ -72,6 +73,8 @@ function resolveMdxContent(pathname: string): MDXData | null {
         return getChangelogPosts().find((p) => p.slug === slug) ?? null;
       case "compare":
         return getComparePages().find((p) => p.slug === slug) ?? null;
+      case "customers":
+        return getCustomerPages().find((p) => p.slug === slug) ?? null;
       case "guides":
         return getGuides().find((p) => p.slug === slug) ?? null;
       case "play":

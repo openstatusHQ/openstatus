@@ -5,10 +5,15 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { ImageZoom, ZoomableImage } from "../image-zoom";
 
+type CustomImageProps = React.ComponentProps<typeof Image> & {
+  disableZoom?: boolean;
+};
+
 export function CustomImage({
   className,
+  disableZoom,
   ...props
-}: React.ComponentProps<typeof Image>) {
+}: CustomImageProps) {
   const { src, alt, width, height, ...rest } = props;
 
   if (!src || typeof src !== "string") {
@@ -63,6 +68,31 @@ export function CustomImage({
 
   const darkSrc = getDarkImagePath(src);
   const useDarkImage = checkDarkImageExists(darkSrc);
+
+  if (disableZoom) {
+    return (
+      <>
+        <Image
+          {...rest}
+          src={src}
+          alt={alt ?? ""}
+          width={imageWidth as number}
+          height={imageHeight as number}
+          className={cn(className, useDarkImage && "dark:hidden")}
+        />
+        {useDarkImage ? (
+          <Image
+            {...rest}
+            src={darkSrc}
+            alt={alt ?? ""}
+            width={imageWidth as number}
+            height={imageHeight as number}
+            className={cn(className, "hidden dark:block")}
+          />
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <ZoomableImage
