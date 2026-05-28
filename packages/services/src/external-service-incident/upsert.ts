@@ -1,8 +1,5 @@
 import { db as defaultDb, sql } from "@openstatus/db";
-import {
-  type IncidentRawPayload,
-  externalServiceIncident,
-} from "@openstatus/db/src/schema";
+import { externalServiceIncident } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
@@ -16,7 +13,7 @@ export type UpsertExternalIncidentInput = {
   startedAt?: Date;
   createdAt: Date;
   resolvedAt: Date | null;
-  raw: IncidentRawPayload;
+  raw: unknown;
 };
 
 export type UpsertExternalIncidentsResult = {

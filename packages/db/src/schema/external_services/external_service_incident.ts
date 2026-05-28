@@ -9,14 +9,6 @@ import {
 
 import { externalService } from "./external_service";
 
-export type IncidentRawPayload =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: IncidentRawPayload }
-  | IncidentRawPayload[];
-
 export const externalServiceIncident = sqliteTable(
   "external_service_incident",
   {
@@ -32,9 +24,7 @@ export const externalServiceIncident = sqliteTable(
     startedAt: integer("started_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
-    rawPayload: text("raw_payload", {
-      mode: "json",
-    }).$type<IncidentRawPayload>(),
+    rawPayload: text("raw_payload", { mode: "json" }),
     rawPayloadPurgedAt: integer("raw_payload_purged_at", { mode: "timestamp" }),
     firstSeenAt: integer("first_seen_at", { mode: "timestamp" })
       .notNull()

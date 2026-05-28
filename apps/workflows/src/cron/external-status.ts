@@ -1,5 +1,4 @@
 import { getLogger } from "@logtape/logtape";
-import type { IncidentRawPayload } from "@openstatus/db/src/schema";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
 import {
@@ -8,7 +7,6 @@ import {
 } from "@openstatus/services/external-service-incident";
 import { FetchError, fetchers } from "@openstatus/status-fetcher";
 import type {
-  JsonValue,
   NormalizedIncident,
   StatusFetcher,
   StatusPageEntry,
@@ -70,11 +68,6 @@ function buildSnapshot(args: {
   };
 }
 
-// safe because IncidentRawPayload and JsonValue are structurally identical recursive JSON types
-function toIncidentRawPayload(raw: JsonValue): IncidentRawPayload {
-  return raw as IncidentRawPayload;
-}
-
 function toUpsertInput(
   incident: NormalizedIncident,
 ): UpsertExternalIncidentInput {
@@ -87,7 +80,7 @@ function toUpsertInput(
     startedAt: incident.startedAt,
     createdAt: incident.createdAt,
     resolvedAt: incident.resolvedAt,
-    raw: toIncidentRawPayload(incident.raw),
+    raw: incident.raw,
   };
 }
 
