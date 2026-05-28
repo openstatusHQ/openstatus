@@ -112,6 +112,10 @@ const companySection = {
       href: "/about",
     },
     {
+      label: "Customers",
+      href: "/customers",
+    },
+    {
       label: "Changelog",
       href: "/changelog",
     },
@@ -170,7 +174,7 @@ const toolsSection = {
   label: "Tools",
   items: [
     ...getToolsPages()
-      .filter((page) => !["severity-matrix", "uptime-sla"].includes(page.slug))
+      .filter((page) => !["severity-matrix"].includes(page.slug))
       .map((page) => ({
         label: page.metadata.title,
         href: `/play/${page.slug}`,

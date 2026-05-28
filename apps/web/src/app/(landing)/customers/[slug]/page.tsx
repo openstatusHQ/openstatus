@@ -40,7 +40,9 @@ export async function generateMetadata({
 
 export default async function CustomerPage({
   params,
-}: { params: Promise<{ slug: string }> }) {
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const page = getCustomerPages().find((page) => page.slug === slug);
 
@@ -74,7 +76,7 @@ export default async function CustomerPage({
           src={page.metadata.image}
           alt={page.metadata.title}
           disableZoom
-          className="mb-6 h-12 w-auto"
+          className="h-8 w-auto"
         />
       ) : null}
       <h1>{page.metadata.title}</h1>
