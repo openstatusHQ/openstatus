@@ -1,1 +1,0 @@
-CREATE INDEX `external_service_incident_resolved_at_idx` ON `external_service_incident` (`resolved_at`);

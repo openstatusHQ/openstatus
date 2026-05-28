@@ -18,4 +18,5 @@ CREATE TABLE `external_service_incident` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `external_service_incident_unique_idx` ON `external_service_incident` (`external_service_id`,`provider_incident_id`);--> statement-breakpoint
-CREATE INDEX `external_service_incident_started_at_idx` ON `external_service_incident` (`external_service_id`,`started_at`);
+CREATE INDEX `external_service_incident_started_at_idx` ON `external_service_incident` (`external_service_id`,`started_at`);--> statement-breakpoint
+CREATE INDEX `external_service_incident_resolved_at_idx` ON `external_service_incident` (`resolved_at`);

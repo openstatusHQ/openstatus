@@ -509,15 +509,8 @@
     {
       "idx": 72,
       "version": "6",
-      "when": 1779799443520,
-      "tag": "0072_exotic_xorn",
-      "breakpoints": true
-    },
-    {
-      "idx": 73,
-      "version": "6",
-      "when": 1779889272508,
-      "tag": "0073_abnormal_sugar_man",
+      "when": 1779967971625,
+      "tag": "0072_curvy_vulcan",
       "breakpoints": true
     }
   ]
