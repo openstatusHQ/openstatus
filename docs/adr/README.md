@@ -17,6 +17,7 @@ today; ADRs explain how those conventions came to be.
 | [0003](0003-shared-ui-comes-from-openstatus-ui.md) | All shared UI comes from `@openstatus/ui` | accepted |
 | [0004](0004-go-for-the-probing-tier.md) | Go for the probing tier | accepted |
 | [0005](0005-turso-for-app-data-tinybird-for-time-series.md) | Turso for application data, Tinybird for time-series | accepted |
+| [0006](0006-persist-external-incidents-in-turso.md) | Persist external-service incidents in Turso, not Tinybird | accepted |
 
 ## When to write an ADR
 

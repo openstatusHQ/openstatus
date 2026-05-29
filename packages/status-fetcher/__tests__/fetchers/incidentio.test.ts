@@ -3,9 +3,12 @@ import { IncidentioFetcher } from "../../src/fetchers/incidentio";
 import type { StatusPageEntry } from "../../src/types";
 import {
   expectFetchError,
+  expectIncidentsFetchError,
   installMockFetch,
   runFetcher,
   runFetcherExit,
+  runIncidents,
+  runIncidentsExit,
 } from "../helpers";
 
 describe("IncidentioFetcher", () => {
@@ -280,6 +283,86 @@ describe("IncidentioFetcher", () => {
       const exit = await runFetcherExit(fetcher, entry);
       const err = expectFetchError(exit);
       expect(err.cause).toBeInstanceOf(Error);
+    });
+  });
+
+  describe("fetchIncidents", () => {
+    const entry: StatusPageEntry = {
+      id: "linear",
+      name: "Linear",
+      url: "https://linear.app",
+      status_page_url: "https://status.linear.app",
+      provider: "incidentio",
+      industry: ["development-tools"],
+      api_config: { type: "incidentio" },
+    };
+
+    it("normalizes incident.io payloads", async () => {
+      const mockResponse = {
+        incidents: [
+          {
+            id: "INC-1",
+            name: "Login degraded",
+            status: "monitoring",
+            impact: "minor",
+            created_at: "2024-05-01T10:00:00.000Z",
+            started_at: "2024-05-01T09:55:00.000Z",
+            resolved_at: null,
+            severity: "low",
+          },
+        ],
+      };
+
+      const fetchMock = installMockFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: async () => mockResponse,
+        } as Response),
+      );
+
+      const incidents = await runIncidents(fetcher, entry);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://status.linear.app/api/v2/incidents.json",
+        expect.any(Object),
+      );
+      expect(incidents).toHaveLength(1);
+      expect(incidents[0]).toMatchObject({
+        providerIncidentId: "INC-1",
+        name: "Login degraded",
+        status: "monitoring",
+        impact: "minor",
+        resolvedAt: null,
+      });
+      expect(incidents[0]?.raw).toMatchObject({
+        id: "INC-1",
+        severity: "low",
+      });
+    });
+
+    it("returns an empty list when upstream sends no incidents", async () => {
+      installMockFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({ incidents: [] }),
+        } as Response),
+      );
+      const incidents = await runIncidents(fetcher, entry);
+      expect(incidents).toEqual([]);
+    });
+
+    it("fails with FetchError on non-200", async () => {
+      installMockFetch(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          statusText: "Server Error",
+        } as Response),
+      );
+      const exit = await runIncidentsExit(fetcher, entry);
+      const err = expectIncidentsFetchError(exit);
+      expect(err.httpStatus).toBe(500);
+      expect(err.fetcherName).toBe("incidentio");
     });
   });
 });

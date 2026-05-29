@@ -6,6 +6,7 @@ import { env } from "../env";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
+import { handleExternalIncidentsPruneCron } from "./external-incidents-prune";
 import { handleExternalStatusCron } from "./external-status";
 import {
   LaunchMonitorWorkflow,
@@ -73,6 +74,10 @@ app.get("/checker/:period", async (c) => {
 
 app.get("/external-status", async (c) => {
   return handleExternalStatusCron(c);
+});
+
+app.get("/external-incidents-prune", async (c) => {
+  return handleExternalIncidentsPruneCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {

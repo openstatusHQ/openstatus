@@ -2,6 +2,7 @@ import { mock } from "bun:test";
 import { Cause, Effect, Exit, Option } from "effect";
 import type { FetchError } from "../src/fetch";
 import type {
+  NormalizedIncident,
   StatusFetcher,
   StatusPageEntry,
   StatusResult,
@@ -27,6 +28,39 @@ export const runFetcherExit = (
 
 export const expectFetchError = (
   exit: Exit.Exit<StatusResult, FetchError>,
+): FetchError => {
+  if (!Exit.isFailure(exit)) {
+    throw new Error("expected Exit.Failure, got Success");
+  }
+  const failure = Cause.failureOption(exit.cause);
+  if (Option.isNone(failure)) {
+    throw new Error("expected Cause.Fail, got defect");
+  }
+  return failure.value;
+};
+
+export const runIncidents = (
+  fetcher: StatusFetcher,
+  entry: StatusPageEntry,
+): Promise<NormalizedIncident[]> => {
+  if (!fetcher.fetchIncidents) {
+    throw new Error(`fetcher ${fetcher.name} has no fetchIncidents`);
+  }
+  return Effect.runPromise(fetcher.fetchIncidents(entry));
+};
+
+export const runIncidentsExit = (
+  fetcher: StatusFetcher,
+  entry: StatusPageEntry,
+) => {
+  if (!fetcher.fetchIncidents) {
+    throw new Error(`fetcher ${fetcher.name} has no fetchIncidents`);
+  }
+  return Effect.runPromiseExit(fetcher.fetchIncidents(entry));
+};
+
+export const expectIncidentsFetchError = (
+  exit: Exit.Exit<NormalizedIncident[], FetchError>,
 ): FetchError => {
   if (!Exit.isFailure(exit)) {
     throw new Error("expected Exit.Failure, got Success");

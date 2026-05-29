@@ -3,9 +3,12 @@ import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import type { StatusPageEntry } from "../../src/types";
 import {
   expectFetchError,
+  expectIncidentsFetchError,
   installMockFetch,
   runFetcher,
   runFetcherExit,
+  runIncidents,
+  runIncidentsExit,
 } from "../helpers";
 
 describe("AtlassianFetcher", () => {
@@ -280,6 +283,105 @@ describe("AtlassianFetcher", () => {
 
       const exit = await runFetcherExit(fetcher, entry);
       const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
+    });
+  });
+
+  describe("fetchIncidents", () => {
+    const entry: StatusPageEntry = {
+      id: "github",
+      name: "GitHub",
+      url: "https://github.com",
+      status_page_url: "https://www.githubstatus.com",
+      provider: "atlassian-statuspage",
+      industry: ["development-tools"],
+      api_config: { type: "atlassian" },
+    };
+
+    it("normalizes incidents and preserves the raw payload", async () => {
+      const mockResponse = {
+        incidents: [
+          {
+            id: "abc",
+            name: "API errors",
+            status: "investigating",
+            impact: "major",
+            shortlink: "https://stspg.io/abc",
+            started_at: "2024-02-16T11:00:00.000Z",
+            created_at: "2024-02-16T12:00:00.000Z",
+            resolved_at: null,
+            extra_provider_field: { foo: 1, bar: ["x"] },
+          },
+          {
+            id: "def",
+            name: "Resolved blip",
+            status: "resolved",
+            created_at: "2024-02-15T08:00:00.000Z",
+            resolved_at: "2024-02-15T08:30:00.000Z",
+          },
+        ],
+      };
+
+      const fetchMock = installMockFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: async () => mockResponse,
+        } as Response),
+      );
+
+      const incidents = await runIncidents(fetcher, entry);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://www.githubstatus.com/api/v2/incidents.json",
+        expect.any(Object),
+      );
+      expect(incidents).toHaveLength(2);
+      expect(incidents[0]).toMatchObject({
+        providerIncidentId: "abc",
+        name: "API errors",
+        status: "investigating",
+        impact: "major",
+        shortlink: "https://stspg.io/abc",
+        resolvedAt: null,
+      });
+      expect(incidents[0]?.startedAt).toBeInstanceOf(Date);
+      expect(incidents[0]?.createdAt).toBeInstanceOf(Date);
+      expect(incidents[0]?.raw).toMatchObject({
+        id: "abc",
+        extra_provider_field: { foo: 1, bar: ["x"] },
+      });
+      expect(incidents[1]).toMatchObject({
+        providerIncidentId: "def",
+        status: "resolved",
+      });
+      expect(incidents[1]?.resolvedAt).toBeInstanceOf(Date);
+    });
+
+    it("fails with FetchError on non-200", async () => {
+      installMockFetch(() =>
+        Promise.resolve({
+          ok: false,
+          status: 503,
+          statusText: "Service Unavailable",
+        } as Response),
+      );
+
+      const exit = await runIncidentsExit(fetcher, entry);
+      const err = expectIncidentsFetchError(exit);
+      expect(err.httpStatus).toBe(503);
+      expect(err.fetcherName).toBe("atlassian");
+    });
+
+    it("fails with FetchError on malformed payload", async () => {
+      installMockFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: async () => ({ incidents: [{ no_id: true }] }),
+        } as Response),
+      );
+
+      const exit = await runIncidentsExit(fetcher, entry);
+      const err = expectIncidentsFetchError(exit);
       expect(err.cause).toBeInstanceOf(Error);
     });
   });

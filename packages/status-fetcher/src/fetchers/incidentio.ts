@@ -1,7 +1,13 @@
 import { Effect } from "effect";
 import { z } from "zod";
 import { type FetchError, fetchJson } from "../fetch";
-import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
+import { fetchAtlassianCompatibleIncidents } from "../incidents";
+import type {
+  NormalizedIncident,
+  StatusFetcher,
+  StatusPageEntry,
+  StatusResult,
+} from "../types";
 import { SEVERITY_LEVELS } from "../types";
 import { inferStatus, urlHostnameEndsWith } from "../utils";
 
@@ -56,5 +62,11 @@ export class IncidentioFetcher implements StatusFetcher {
         };
       }),
     );
+  }
+
+  fetchIncidents(
+    entry: StatusPageEntry,
+  ): Effect.Effect<NormalizedIncident[], FetchError> {
+    return fetchAtlassianCompatibleIncidents({ entry, fetcherName: this.name });
   }
 }

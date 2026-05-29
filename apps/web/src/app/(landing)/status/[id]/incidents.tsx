@@ -69,7 +69,7 @@ export function Incidents({
 }: IncidentsProps) {
   const [data] = api.externalService.incidents.useSuspenseQuery({ slug });
 
-  if (!data.supported || data.unavailable) {
+  if (!data.supported) {
     return (
       <UpstreamFallback
         serviceName={serviceName}

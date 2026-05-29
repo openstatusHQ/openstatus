@@ -1,5 +1,6 @@
 import { type Duration, Effect, Schedule } from "effect";
 import type { z } from "zod";
+import type { JsonValue } from "./types";
 
 type FetchErrorInit = {
   url: string;
@@ -133,6 +134,25 @@ export const fetchJson = <T>(
       Effect.flatMap((json) =>
         Effect.try({
           try: () => opts.schema.parse(json),
+          catch: failWith(opts),
+        }),
+      ),
+    ),
+  );
+
+// `response.json()` is typed `Promise<any>` by the platform lib; the cast pins
+// the boundary to a concrete JsonValue so callers never touch `any`/`unknown`.
+export const fetchJsonWithRaw = <T>(
+  opts: FetchBaseOptions & { schema: z.ZodType<T> },
+): Effect.Effect<{ parsed: T; raw: JsonValue }, FetchError> =>
+  fetchBody(opts, JSON_HEADERS, (response) =>
+    Effect.tryPromise({
+      try: () => response.json() as Promise<JsonValue>,
+      catch: failWith(opts),
+    }).pipe(
+      Effect.flatMap((raw) =>
+        Effect.try({
+          try: () => ({ parsed: opts.schema.parse(raw), raw }),
           catch: failWith(opts),
         }),
       ),
