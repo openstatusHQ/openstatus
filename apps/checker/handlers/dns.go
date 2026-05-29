@@ -38,6 +38,23 @@ type DNSResponse struct {
 	Error uint8 `json:"error"`
 }
 
+// dnsTinybirdEvent re-types Records as a JSON string so Tinybird stores it in
+// the single `records` String column instead of auto-flattening the nested
+// object into quarantined records_* columns. The outer Records shadows the
+// embedded map in JSON output.
+type dnsTinybirdEvent struct {
+	DNSResponse
+	Records string `json:"records"`
+}
+
+func (d DNSResponse) tinybirdEvent() (dnsTinybirdEvent, error) {
+	j, err := json.Marshal(d.Records)
+	if err != nil {
+		return dnsTinybirdEvent{}, err
+	}
+	return dnsTinybirdEvent{DNSResponse: d, Records: string(j)}, nil
+}
+
 func (h Handler) DNSHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	const defaultRetry = 3
@@ -199,7 +216,9 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		data.RequestStatus = "success"
 	}
 
-	if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
+	if tbEvent, err := data.tinybirdEvent(); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to marshal dns records")
+	} else if err := h.TbClient.SendEvent(ctx, tbEvent, dataSourceName); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 	}
 
@@ -207,11 +226,11 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	if f {
 		t := event.(map[string]any)
 		t["checker"] = map[string]string{
-			"uri": req.URI,
+			"uri":          req.URI,
 			"workspace_id": req.WorkspaceID,
-			"monitor_id":req.MonitorID,
-			"trigger": trigger,
-			"type": "dns",
+			"monitor_id":   req.MonitorID,
+			"trigger":      trigger,
+			"type":         "dns",
 		}
 		c.Set("event", t)
 	}
@@ -330,7 +349,9 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 
 	data.Records = FormatDNSResult(result)
 	if req.RequestId != 0 {
-		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
+		if tbEvent, err := data.tinybirdEvent(); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal dns records")
+		} else if err := h.TbClient.SendEvent(ctx, tbEvent, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 	}
