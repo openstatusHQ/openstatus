@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 
-import { checkRegion } from "@/lib/checker/utils";
+import { TargetUnreachableError, checkRegion } from "@/lib/checker/utils";
 import { httpPayloadSchema } from "@openstatus/utils";
 import { isAnInvalidTestUrl } from "../../utils";
 
@@ -38,7 +38,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(res);
   } catch (e) {
-    console.error(e);
+    // Unreachable/timeout targets are expected; only real bugs should reach Sentry.
+    if (!(e instanceof TargetUnreachableError)) {
+      console.error(e);
+    }
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }

@@ -182,6 +182,10 @@ type CheckRegionRequest = {
 // API Functions
 // ============================================================================
 
+// A timeout / unreachable target is an expected outcome, not a bug. Callers
+// throw this so a route catch can return 400 while keeping it out of Sentry.
+export class TargetUnreachableError extends Error {}
+
 export async function checkRegion(
   props: CheckRegionRequest,
 ): Promise<RegionCheckerResponse> {
@@ -235,10 +239,8 @@ export async function checkRegion(
 
   const data = checkerSchema.or(errorRequest).safeParse(json);
 
-  // A timeout / unreachable target is an expected outcome, not a bug — throw so
-  // the caller drops the region, but don't console.error (Sentry captures those).
   if (!data.success) {
-    throw new Error(data.error.message);
+    throw new TargetUnreachableError(data.error.message);
   }
 
   return {

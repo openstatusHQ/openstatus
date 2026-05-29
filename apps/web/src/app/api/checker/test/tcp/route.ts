@@ -6,6 +6,7 @@ import {
   monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 
+import { TargetUnreachableError } from "@/lib/checker/utils";
 import { TCPResponse, tcpPayload } from "./schema";
 
 export const runtime = "edge";
@@ -42,8 +43,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
-
-class TargetUnreachableError extends Error {}
 async function checkTCP(url: string, region: Region) {
   //
   const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
