@@ -260,7 +260,7 @@ export function Form({
             toast.error("Request timeout", {
               id: toastId,
               description:
-                "The request took too long and was aborted after 7 seconds.",
+                "The request took too long and was aborted after 10 seconds.",
               className: "text-destructive!",
             });
           }

@@ -35,10 +35,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json(res);
   } catch (e) {
-    console.log(e);
+    // Unreachable/timeout targets are expected; only real bugs should reach Sentry.
+    if (!(e instanceof TargetUnreachableError)) {
+      console.error(e);
+    }
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
+
+class TargetUnreachableError extends Error {}
 async function checkTCP(url: string, region: Region) {
   //
   const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
@@ -59,9 +64,9 @@ async function checkTCP(url: string, region: Region) {
   const data = TCPResponse.safeParse(json);
 
   // A timeout / unreachable target is an expected outcome, not a bug — throw so
-  // the caller returns 400, but don't console.error (Sentry captures those).
+  // the caller returns 400, but the catch keeps it out of Sentry.
   if (!data.success) {
-    throw new Error(data.error.message);
+    throw new TargetUnreachableError(data.error.message);
   }
 
   return data.data;
