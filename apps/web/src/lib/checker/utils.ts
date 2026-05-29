@@ -235,12 +235,9 @@ export async function checkRegion(
 
   const data = checkerSchema.or(errorRequest).safeParse(json);
 
+  // A timeout / unreachable target is an expected outcome, not a bug — throw so
+  // the caller drops the region, but don't console.error (Sentry captures those).
   if (!data.success) {
-    console.error(JSON.stringify(res));
-    console.error(JSON.stringify(json));
-    console.error(
-      `something went wrong with request to ${url} error ${data.error.message}`,
-    );
     throw new Error(data.error.message);
   }
 

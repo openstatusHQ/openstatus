@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(res);
   } catch (e) {
-    console.error(e);
+    console.log(e);
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
@@ -58,12 +58,9 @@ async function checkTCP(url: string, region: Region) {
 
   const data = TCPResponse.safeParse(json);
 
+  // A timeout / unreachable target is an expected outcome, not a bug — throw so
+  // the caller returns 400, but don't console.error (Sentry captures those).
   if (!data.success) {
-    console.error(res);
-    console.error(JSON.stringify(json));
-    console.error(
-      `something went wrong with request to ${url} error ${data.error.message}`,
-    );
     throw new Error(data.error.message);
   }
 
