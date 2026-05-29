@@ -19,20 +19,18 @@ Spoiler from the original Reality Check still applies: *it's been hard, really h
 
 ## The story in one paragraph
 
-12 months ago we partnered with [Emily Omier](https://www.emilyomier.com) to grill us on positioning. ~7k GitHub stars, no clear answer on what to charge for, marketing "open source" while self-hosting was barely possible. We killed the *ideas* of RUM, on-call, and incident management (we never actually shipped them, they just took up space in our heads), dropped synthetic-monitoring-as-headline, partnered with [Alex](https://x.com/aliszu) on design, [rebuilt the dashboard](/blog/new-dashboard-we-are-so-back), [rebuilt the status page](/blog/introducing-status-page-theme-explorer), doubled down on MDX-driven SEO, decoupled our monorepo, [migrated our entire API to ConnectRPC](/blog/migrating-from-zod-openapi-to-connectrpc), and went deep on AI ([skills repo](https://github.com/openstatusHQ/skills), MCP server, [CLI](/blog/building-cli-for-human-and-agents), [chat assistant](/blog/from-clickops-to-chatops), [Slack agent](/blog/openstatus-slack-agent)). In March 2026 we brought in [Shane O'Connor](https://www.linkedin.com/in/devtoolgtm/) to help us on distribution. We started posting on LinkedIn for real, stood up a subreddit, automated LinkedIn connections to widen our network reach, rechecked our ICP, and updated the homepage hero around compliance. We also welcomed Colin, our first intern, finally not a two-person team. And the community on Slack and Discord became one of our favourite parts of the work. Today: focused product, ~1M Google impressions in the last 3 months, a real distribution motion, a defensible wedge. This is the honest version of how we got here, including what didn't work.
+12 months ago we partnered with [Emily Omier](https://www.emilyomier.com) to grill us on positioning. We killed the *ideas* of RUM, on-call, and incident management (we never actually shipped them, they just took up space in our heads), dropped synthetic-monitoring-as-headline, partnered with [Alex](https://x.com/aliszu) on design, [rebuilt the dashboard](/blog/new-dashboard-we-are-so-back), [rebuilt the status page](/blog/introducing-status-page-theme-explorer), doubled down on MDX-driven SEO, decoupled our monorepo, [migrated our entire API to ConnectRPC](/blog/migrating-from-zod-openapi-to-connectrpc), and went deep on AI ([skills repo](https://github.com/openstatusHQ/skills), MCP server, [CLI](/blog/building-cli-for-human-and-agents), [chat assistant](/blog/from-clickops-to-chatops), [Slack agent](/blog/openstatus-slack-agent)). In March 2026 we brought in [Shane O'Connor](https://www.linkedin.com/in/devtoolgtm/) to help us on distribution. We started posting on LinkedIn for real, stood up a subreddit, automated LinkedIn connections to widen our network reach, rechecked our ICP, and updated the homepage hero around compliance. We also welcomed Colin, our first intern, finally not a two-person team. And the community on Slack and Discord became one of our favourite parts of the work. Today: focused product, ~1M Google impressions in the last 3 months, a real distribution motion, a defensible wedge. This is the honest version of how we got here, including what didn't work.
 
 
 ---
 
 ## Section 1: Where we were
 
-March 2025: ~7,000 GitHub stars. We didn't feel particularly unique. We weren't sure what to charge for. We were marketing "open source" even though our own product was hard to self-host. We were chasing stars. We were not talking to our users. We were lost.
+March 2025. We didn't feel particularly unique. We were chasing stars instead of talking to the people actually using the product. We were lost.
 
 For a visual receipt: [v1.openstatus.dev](https://v1.openstatus.dev). The old site is still live, frozen, as a snapshot of where we were (dated from early Dec. 2025). Useful both as a before/after and as a reminder of how easy it is to drift if you're not paying attention.
 
 Today, May 2026: same product category, same two founders, plus [Colin](https://www.linkedin.com/in/colin-ozanne/), our first intern. Different company underneath. There's one chart that frames the whole year, but we've saved it for the numbers section, where it belongs.
-
-**Tone of the retrospective:** honest, slightly self-deprecating, dev-to-dev. The register of the [Reality Check post](/blog/product-strategy-a-reality-check): *"Spoiler alert: it's been hard, really hard."* If a sentence wouldn't feel uncomfortable to read out loud, it's not honest enough yet.
 
 ---
 
@@ -56,7 +54,7 @@ The mental-model change, in two parts.
 - **Partnered with [Alex (@aliszu)](https://x.com/aliszu):** a design partner who shared the nerdy obsession with details. Gave us Figma mocks that became the new dashboard and the new status page. The opinionated choices (monospace type, dense, deliberate layouts) made the product stand out, and they land precisely because our main users are devs who recognize the references. *(Outside voice #2: design.)*
 - **Started collaborating with [Shane O'Connor](https://www.linkedin.com/in/devtoolgtm/) in March 2026** on distribution. Got us actually posting on LinkedIn, set up automated connection requests so we could reach founders and like-minded people in the space, rechecked our ICP from scratch, pushed us to update the homepage hero around compliance, and stood up [`r/openstatus`](https://www.reddit.com/r/openstatus/) where we post and comment on adjacent threads. We also recorded our very first podcast in this stretch, talking publicly about the work, not just shipping it. *(Outside voice #3: distribution.)*
 - **Welcomed Colin as our first intern.** Three is a very different team than two. Things we'd been postponing because nobody had the time finally moved.
-- **Showed up in the community.** Slack and Discord stopped being a ticket queue and became the room. We reply fast. We ship fast. Users tell us, repeatedly and unprompted, that this is the thing they appreciate most. It also happens to be the part of the week we enjoy the most. Power contributors like [Moulik](https://www.linkedin.com/in/agg-moulik/) took it a step further than feedback: he's been hugely supportive and shipped features like status-page i18n or importers.
+- **Showed up in the community.** Slack and Discord stopped being a ticket queue and became the room. We reply fast, we ship fast, and users tell us, repeatedly and unprompted, that this is the thing they appreciate most. Power contributors like [Moulik](https://www.linkedin.com/in/agg-moulik/) took it a step further than feedback: he's been hugely supportive and shipped features like status-page i18n or importers.
 - **Released a self-hosted version** (so the OSS story stops being a half-truth, unblocked partly by Tinybird shipping their own Docker release).
 - **Decoupled the monorepo:** split web, dashboard, status-page, and a shared `@openstatus/services` package. A Linear issue we'd been staring at for a year, finally done.
 - **Migrated the API to ConnectRPC:** one schema, type-safe internally, curl-able publicly, with generated clients that actually work in Go and Rust.
@@ -151,7 +149,7 @@ The boring one. The one that worked.
 
 The half-truth we fixed.
 
-**Before:** We marketed "open source" but couldn't really be self-hosted. [The Reality Check post](/blog/product-strategy-a-reality-check) said it out loud: *"We're not great at maintaining our self-hosted product."*
+**Before:** [The Reality Check post](/blog/product-strategy-a-reality-check) put it bluntly: *"We're not great at maintaining our self-hosted product."* The badge said open source; the experience said otherwise.
 
 **Shipped:**
 
@@ -162,7 +160,7 @@ The half-truth we fixed.
 - Terraform provider: full GitOps for monitors, pages, notifications
 - [The Reality Check post](/blog/product-strategy-a-reality-check) itself: writing down what was broken, in public
 
-**The community side of OSS:** We've also stopped treating Slack and Discord as overflow. The channels are where we hang out. Feature requests turn into PRs. Bug reports turn into same-day fixes. People drop into the Discord to ask a setup question and stick around to help the next person. We're not a big team (two founders, one intern, and Alex on design), so being responsive is one of the few real advantages we have. We use it.
+**The community side of OSS:** Feature requests turn into PRs. Bug reports turn into same-day fixes. People drop into Discord to ask a setup question and stick around to answer the next one. For an open-source project that's the whole point: the code is open, and so is the room around it.
 
 **Why this pillar matters for the funnel:** without a real self-hosted option, users find us → see "OSS" → spot the half-truth → leave. With it, they trust the project and decide they want the hosted version anyway.
 
