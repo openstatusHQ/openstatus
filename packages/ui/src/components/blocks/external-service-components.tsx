@@ -58,6 +58,12 @@ function isIssue(component: ExternalServiceComponentItem): boolean {
   return severityOf(component.indicator) > 0;
 }
 
+// Maintenance maps to indicator "none" (severity 0), so it is not an issue —
+// count it separately or a maintenance-only section reads "All operational".
+function isMaintenance(component: ExternalServiceComponentItem): boolean {
+  return component.status === "under_maintenance";
+}
+
 function indicatorToStatusType(args: {
   worstIndicator: string;
   hadMaintenance: number;
@@ -194,6 +200,7 @@ function SectionBlock({
   days: number;
 }) {
   const issues = section.components.filter(isIssue).length;
+  const maintenance = section.components.filter(isMaintenance).length;
   const [open, setOpen] = useState(
     soleSection && section.components.length <= AUTO_EXPAND_MAX_COMPONENTS,
   );
@@ -220,12 +227,18 @@ function SectionBlock({
         <span
           className={cn(
             "shrink-0 text-xs",
-            issues > 0 ? "text-destructive" : "text-muted-foreground",
+            issues > 0
+              ? "text-destructive"
+              : maintenance > 0
+                ? "text-info"
+                : "text-muted-foreground",
           )}
         >
           {issues > 0
             ? `${issues} issue${issues === 1 ? "" : "s"}`
-            : "All operational"}
+            : maintenance > 0
+              ? `${maintenance} under maintenance`
+              : "All operational"}
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="px-3 pb-2">
