@@ -17,12 +17,6 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
-type statusCode int
-
-func (s statusCode) IsSuccessful() bool {
-	return s >= 200 && s < 300
-}
-
 type PingData struct {
 	ID            string `json:"id"`
 	WorkspaceID   string `json:"workspaceId"`
@@ -48,23 +42,6 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	const defaultRetry = 3
 	dataSourceName := "ping_response__v8"
-
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
-		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
-	}
 
 	var req request.HttpCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -94,13 +71,12 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 	defer requestClient.CloseIdleConnections()
 
-	// Might be a more efficient way to do it
-	var i interface{} = req.RawAssertions
-	jsonBytes, _ := json.Marshal(i)
-	assertionAsString := string(jsonBytes)
-
-	if assertionAsString == "null" {
-		assertionAsString = ""
+	var assertionAsString string
+	if req.RawAssertions != nil {
+		jsonBytes, _ := json.Marshal(req.RawAssertions)
+		if s := string(jsonBytes); s != "null" {
+			assertionAsString = s
+		}
 	}
 
 	trigger := "cron"
@@ -141,15 +117,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			return fmt.Errorf("error while generating uuid %w", err)
 		}
 
-		var requestStatus = ""
-		switch req.Status {
-		case "active":
-			requestStatus = "success"
-		case "error":
-			requestStatus = "error"
-		case "degraded":
-			requestStatus = "degraded"
-		}
+		requestStatus := mapMonitorStatus(req.Status)
 
 		data := PingData{
 			ID:            id.String(),
@@ -189,10 +157,8 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			data.Error = 0
 			if req.DegradedAfter != 0 && res.Latency > req.DegradedAfter {
 				data.Body = res.Body
-
 			} else {
 				data.Body = ""
-
 			}
 			// Small trick to avoid sending the body at the moment to TB
 		} else {
@@ -202,70 +168,24 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		data.Assertions = assertionAsString
 
-		if !isSuccessfull && req.Status != "error" {
-			// Q: Why here we do not check if the status was previously active?
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "error",
-				StatusCode:    res.Status,
-				Region:        h.Region,
-				Message:       res.Error,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       res.Latency,
-			})
-			data.RequestStatus = "error"
-		}
-		// it's degraded
-		if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter && req.Status != "degraded" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "degraded",
-				Region:        h.Region,
-				StatusCode:    res.Status,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       res.Latency,
-			})
-			data.RequestStatus = "degraded"
-		}
-		// it's active
-		if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "active",
-				Region:        h.Region,
-				StatusCode:    res.Status,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       res.Latency,
-			})
-			data.RequestStatus = "success"
-		}
-		// it's active
-		if isSuccessfull && res.Latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "active",
-				Region:        h.Region,
-				StatusCode:    res.Status,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       res.Latency,
-			})
-			data.RequestStatus = "success"
+		if newStatus := updateMonitorStatus(ctx, isSuccessfull, res.Latency, req.DegradedAfter, req.CronTimestamp,
+			req.Status, req.MonitorID, h.Region, res.Status, res.Error); newStatus != "" {
+			data.RequestStatus = newStatus
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
-
 		e, f := c.Get("event")
 		if f {
 			t := e.(map[string]any)
 			t["checker"] = map[string]string{
-				"uri": req.URL,
+				"uri":          req.URL,
 				"workspace_id": req.WorkspaceID,
-				"monitor_id":req.MonitorID,
-				"trigger": trigger,
-				"type": "http",
+				"monitor_id":   req.MonitorID,
+				"trigger":      trigger,
+				"type":         "http",
 			}
 			c.Set("event", t)
 		}
@@ -332,9 +252,8 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 }
 
 func EvaluateHTTPAssertions(raw []json.RawMessage, data PingData, res checker.Response) (bool, error) {
-	statusCode := statusCode(res.Status)
 	if len(raw) == 0 {
-		return statusCode.IsSuccessful(), nil
+		return res.Status >= 200 && res.Status < 300, nil
 	}
 	isSuccessful := true
 	for _, a := range raw {
@@ -364,8 +283,7 @@ func EvaluateHTTPAssertions(raw []json.RawMessage, data PingData, res checker.Re
 		case request.AssertionJsonBody:
 			// TODO: Implement JSON body assertion
 		default:
-			fmt.Println("unknown assertion type: ", assert.AssertionType)
-			// TODO: Handle unknown assertion type
+			log.Warn().Str("type", string(assert.AssertionType)).Msg("unknown assertion type")
 		}
 	}
 	return isSuccessful, nil
