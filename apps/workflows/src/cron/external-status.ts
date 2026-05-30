@@ -17,7 +17,7 @@ import { Effect } from "effect";
 import type { Context } from "hono";
 
 import { env } from "../env";
-import { db } from "../lib/db";
+import { db } from "@openstatus/db";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 
 const logger = getLogger(["workflow", "external-status"]);

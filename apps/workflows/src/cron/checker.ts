@@ -26,7 +26,7 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
-import { db } from "../lib/db";
+import { db } from "@openstatus/db";
 
 import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";

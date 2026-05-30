@@ -44,7 +44,19 @@ app.get("/checker/:period", async (c) => {
   void Effect.runPromise(
     Effect.tryPromise({
       try: () => sendCheckerTasks(periodicity),
-      catch: (e) => new Error(`Error in /checker/${periodicity} cron: ${e}`),
+      // Surface `cause` — DrizzleQueryError stringifies to "Failed query: …"
+      // without the underlying libSQL reason, so callers see no hint of *why*
+      // the query failed unless we flatten the cause into the message.
+      catch: (e) => {
+        const causeMessage =
+          e instanceof Error && e.cause instanceof Error
+            ? `\nCause: ${e.cause.message}`
+            : "";
+        return new Error(
+          `Error in /checker/${periodicity} cron: ${e}${causeMessage}`,
+          { cause: e },
+        );
+      },
     }).pipe(
       Effect.retry({
         times: 3,
