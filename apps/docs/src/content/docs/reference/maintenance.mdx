@@ -7,19 +7,19 @@ description: Technical specification for scheduled maintenance windows in openst
 
 A maintenance window is a scheduled period during which you expect planned disruption to one or more services — a database upgrade, a deployment, or infrastructure work. Announcing it ahead of time lets you communicate the disruption to your users instead of letting your status page register it as an unexpected outage.
 
-A maintenance belongs to a single status page and targets one or more of that page's monitors.
+A maintenance belongs to a single status page and targets one or more of that page's components — monitor-linked or static.
 
 ## Behavior
 
 While a maintenance window is active (the current time is between `from` and `to`):
 
-- The affected monitors display the **Under Maintenance** status on the status page.
-- This status takes **precedence** over incidents and degraded performance — a monitor in an active maintenance window shows as under maintenance regardless of its actual check results.
+- The affected components display the **Under Maintenance** (info) status on the status page.
+- A higher-priority event overrides it: an active incident (error) or an unresolved status report (degraded) takes precedence, so the component shows that status instead. Maintenance only outranks the default operational status.
 - The maintenance is reflected in the historical status bars for the days it overlaps.
 
 Maintenance windows **do not** exclude downtime from uptime calculations. The uptime percentage is computed from raw check results and is unaffected by maintenance windows; only the displayed status changes.
 
-If `notify` is enabled when the maintenance is created, status page subscribers are notified.
+When a maintenance is created, status page subscribers can be notified that it has been scheduled (see [Notify](#notify)). Updating a maintenance never re-notifies.
 
 ## Configuration and Properties
 
@@ -60,24 +60,28 @@ When the maintenance window ends. Must be later than `from`.
 
 The id of the status page this maintenance belongs to. A maintenance is scoped to exactly one status page.
 
-### Affected Monitors
+### Affected Components
 
 **Type:** Array of integers (optional)
 **Default:** `[]`
 
-The ids of the monitors that should display the Under Maintenance status during the window. Each monitor must be attached to the status page referenced above.
+The ids of the page components that should display the Under Maintenance status during the window. Each component must belong to the status page referenced above, and can be either a monitor-linked or a static component.
+
+In the v1 REST API these are passed as `monitorIds`, which accepts monitor components only and is retained for backward compatibility. Static components can be targeted through the dashboard.
 
 ### Notify
 
 **Type:** Boolean (optional)
 **Default:** `false`
 
-When `true`, status page subscribers are notified that the maintenance has been scheduled.
+A one-time flag evaluated at creation time — it is **not** stored on the maintenance record and cannot be read back. When set, status page subscribers are notified that the maintenance has been scheduled.
+
+The v1 REST API does not expose this flag; it notifies subscribers automatically when a maintenance is created on a page whose workspace has subscribers enabled.
 
 ## Relationships
 
 - **Status page** — a maintenance is tied to a single page. Deleting the page deletes its maintenance windows.
-- **Monitors** — a maintenance can affect multiple monitors, and a monitor can be covered by multiple (including overlapping) maintenance windows.
+- **Page components** — a maintenance can affect multiple components (monitor-linked or static), and a component can be covered by multiple (including overlapping) maintenance windows.
 
 ## Related resources
 
