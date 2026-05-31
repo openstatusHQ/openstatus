@@ -4,9 +4,9 @@ import Default from "@astrojs/starlight/components/Head.astro";
 import { OpenPanelComponent } from "@openpanel/astro";
 
 const title = Astro.locals.starlightRoute.entry.data.title;
-const { siteTitle } = Astro.locals.starlightRoute;
+const description = Astro.locals.starlightRoute.entry.data.description;
 
-const url = `https://openstatus.dev/api/og?title=${encodeURIComponent(siteTitle)}&description=${encodeURIComponent(title)}`;
+const url = `https://openstatus.dev/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&category=documentation&footer=docs.openstatus.dev`;
 ---
 <Default><slot /></Default>
 
