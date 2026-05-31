@@ -24,6 +24,7 @@ export const sendAlert = async ({
   await assertSafeUrl(notificationData.webhook.endpoint);
   const res = await fetch(notificationData.webhook.endpoint, {
     method: "post",
+    redirect: "error",
     body: JSON.stringify(body),
     headers: {
       "Content-Type": "application/json",
@@ -57,6 +58,7 @@ export const sendRecovery = async ({
   await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
+    redirect: "error",
     body: JSON.stringify(body),
     headers: {
       "Content-Type": "application/json",
@@ -90,6 +92,7 @@ export const sendDegraded = async ({
   await assertSafeUrl(notificationData.webhook.endpoint);
   const res = await fetch(notificationData.webhook.endpoint, {
     method: "post",
+    redirect: "error",
     body: JSON.stringify(body),
     headers: {
       "Content-Type": "application/json",
@@ -123,6 +126,7 @@ export const sendTest = async ({
   try {
     const response = await fetch(url, {
       method: "post",
+      redirect: "error",
       body: JSON.stringify(body),
       headers: {
         "Content-Type": "application/json",

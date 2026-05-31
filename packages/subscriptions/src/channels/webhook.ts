@@ -92,6 +92,7 @@ export async function sendWebhookVerification(
   await assertSafeUrl(subscription.webhookUrl);
   const response = await fetch(subscription.webhookUrl, {
     method: "POST",
+    redirect: "error",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       type: "verification",
@@ -372,6 +373,7 @@ export async function sendWebhookNotifications(
         await assertSafeUrl(subscription.webhookUrl);
         const response = await fetch(subscription.webhookUrl, {
           method: "POST",
+          redirect: "error",
           headers,
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(10000),
@@ -465,6 +467,7 @@ export async function sendTestWebhookRequest(input: {
 
   const response = await fetch(url, {
     method: "POST",
+    redirect: "error",
     headers,
     body: JSON.stringify(buildTestPayload(flavor)),
     signal: AbortSignal.timeout(10000),
