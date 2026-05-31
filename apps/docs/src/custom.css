@@ -1,9 +1,9 @@
 @layer my-reset, starlight;
 
 .page > header.header {
-  background-color: hsl(var(--card));
-  border-bottom: 1px solid hsl(var(--border));
-  color: hsl(var(--card-foreground));
+  background-color: var(--card);
+  border-bottom: 1px solid var(--border);
+  color: var(--card-foreground);
 }
 
 .page > header.header .title-wrapper > a {

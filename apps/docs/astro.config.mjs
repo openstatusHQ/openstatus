@@ -50,8 +50,6 @@ export default defineConfig({
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
         Head: "./src/components/Head.astro",
-        Hero: "./src/components/Hero.astro",
-        Footer: "./src/components/Footer.astro",
         Header: "./src/components/Header.astro",
       },
       editLink: {
@@ -68,6 +66,10 @@ export default defineConfig({
         {
           label: "Concepts",
           items: [
+            {
+              label: "Overview",
+              slug: "concept/getting-started",
+            },
             {
               label: "About Uptime monitoring",
               slug: "concept/uptime-monitoring",
@@ -93,6 +95,10 @@ export default defineConfig({
         {
           label: "Tutorials",
           items: [
+            {
+              label: "Overview",
+              slug: "tutorial/getting-started",
+            },
             {
               label: "How to create a monitor",
               slug: "tutorial/how-to-create-monitor",
@@ -136,6 +142,10 @@ export default defineConfig({
           label: "Guides",
           items: [
             {
+              label: "Overview",
+              slug: "guides/getting-started",
+            },
+            {
               label: "Monitor your MCP Server",
               slug: "guides/how-to-monitor-mcp-server",
             },
@@ -168,6 +178,10 @@ export default defineConfig({
               slug: "guides/self-host-status-page-only",
             },
             {
+              label: "Deploy a status page on Cloudflare Pages",
+              slug: "guides/how-deploy-status-page-cf-pages",
+            },
+            {
               label: "How to translate your status page",
               slug: "guides/how-to-translate-status-page",
             },
@@ -189,6 +203,7 @@ export default defineConfig({
         },
         {
           label: "Reference",
+          collapsed: true,
           items: [
             {
               label: "API Reference V1 - Deprecated",
@@ -255,12 +270,26 @@ export default defineConfig({
               slug: "reference/status-report",
             },
             {
+              label: "Maintenance",
+              slug: "reference/maintenance",
+            },
+            {
               label: "Subscriber",
               slug: "reference/subscriber",
             },
             {
               label: "Terraform Provider",
               slug: "reference/terraform",
+            },
+          ],
+        },
+        {
+          label: "Help",
+          collapsed: true,
+          items: [
+            {
+              label: "Need help?",
+              slug: "help/support",
             },
           ],
         },
