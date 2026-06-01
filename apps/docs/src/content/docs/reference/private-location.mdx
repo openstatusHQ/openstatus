@@ -31,6 +31,17 @@ Detailed steps for setting up a private location involve:
 3.  **Authentication:** Configuring the probe with necessary API keys or tokens to securely authenticate with your openstatus workspace.
 4.  **Network Access:** Ensuring the deployed probe has network access to the internal services it needs to monitor, as well as outbound access to the openstatus platform.
 
+## Current API surface
+
+Private locations can currently be created, listed, updated, and deleted from the authenticated dashboard API. The supported private location fields are:
+
+- `name`: the display name shown in the dashboard.
+- `token`: the probe authentication token.
+- `monitors`: the monitor IDs attached to the private location.
+- `lastSeenAt`: the last time the private location probe connected.
+
+Additional display metadata such as country, city, or hosting provider is not currently part of the private location model. If you need that information today, include it in the location name, for example `Frankfurt - Hetzner`.
+
 **Example Use Cases:**
 -   Monitoring an internal REST API that is only accessible from within your corporate network.
 -   Checking the health of a database server running on a private subnet.
