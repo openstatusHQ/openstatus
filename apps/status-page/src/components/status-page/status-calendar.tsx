@@ -136,17 +136,6 @@ export function StatusCalendar({
     return out;
   }, [statusReports, maintenances, pageComponents, downtimeLabel, base]);
 
-  const defaultMonth = useMemo(() => {
-    if (markers.length === 0) return undefined;
-    const today = startOfMonth(new Date());
-    const hasEventsThisMonth = markers.some(
-      (m) => startOfMonth(m.date).getTime() === today.getTime(),
-    );
-    if (hasEventsThisMonth) return today;
-    const latest = maxDate(markers.map((m) => m.date));
-    return startOfMonth(latest);
-  }, [markers]);
-
   const renderMarkerRow = useCallback((marker: StatusCalendarMarker) => {
     const event = (
       <StatusBarEvent
@@ -180,8 +169,8 @@ export function StatusCalendar({
       title={calendarTitle}
       locale={dateFnsLocale}
       markers={markers}
-      defaultMonth={defaultMonth}
       renderMarkerRow={renderMarkerRow}
+      disableFuture
       {...rest}
     />
   );

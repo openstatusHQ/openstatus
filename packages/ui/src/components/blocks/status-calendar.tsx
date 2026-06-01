@@ -45,7 +45,7 @@ export interface StatusCalendarMarker {
   id: string | number;
   /** Day this marker belongs to, in the viewer's local timezone. */
   date: Date;
-  /** Drives the day cell's ring color (worst-severity wins per day). */
+  /** Drives the day cell's tinted-fill color (worst-severity wins per day). */
   status: Exclude<StatusType, "empty">;
   /** Event shape mirrors StatusBarEvent so the popover can render the same row. */
   type: StatusEventType;
@@ -65,6 +65,13 @@ export interface StatusCalendarProps {
   onMonthChange?: (month: Date) => void;
   /** 0 = Sunday, 1 = Monday. Mockup shows Monday. */
   weekStartsOn?: 0 | 1;
+  /**
+   * Treat the calendar as status history: render days after the latest event
+   * (or today, whichever is later) as disabled. Days up to and including that
+   * boundary — including scheduled future events — stay interactive. Forward
+   * navigation is still capped at the latest event's month. Defaults to false.
+   */
+  disableFuture?: boolean;
   className?: string;
   /** Calendar header label on the left side of the chrome. */
   title?: ReactNode;
@@ -84,11 +91,14 @@ const SEVERITY_RANK: Record<StatusCalendarMarker["status"], number> = {
   success: 0,
 };
 
-const SEVERITY_RING: Record<StatusCalendarMarker["status"], string> = {
-  error: "ring-2 ring-destructive text-destructive",
-  degraded: "ring-2 ring-warning text-warning",
-  info: "ring-2 ring-info text-info",
-  success: "ring-2 ring-success text-success",
+// Tinted-field treatment: the cell itself carries the status via a soft fill
+// at ~15% opacity. Hover deepens the same tint instead of swapping to the
+// neutral accent color, so the severity signal survives the hover state.
+const SEVERITY_FILL: Record<StatusCalendarMarker["status"], string> = {
+  error: "bg-destructive/15 hover:bg-destructive/25",
+  degraded: "bg-warning/15 hover:bg-warning/25",
+  info: "bg-info/15 hover:bg-info/25",
+  success: "bg-success/15 hover:bg-success/25",
 };
 
 function dayKey(date: Date): string {
@@ -109,6 +119,7 @@ export function StatusCalendar({
   defaultMonth,
   onMonthChange,
   weekStartsOn = 1,
+  disableFuture = false,
   className,
   title,
   locale,
@@ -159,6 +170,18 @@ export function StatusCalendar({
   }, [markers]);
   const canGoNext = currentMonth.getTime() < maxMonth.getTime();
 
+  // Status-history cutoff: disable days strictly after the latest event (or
+  // today, whichever is later) so the empty trailing future is blocked while
+  // scheduled future events stay reachable. Null = no blocking.
+  const maxDay = useMemo(() => {
+    if (!disableFuture) return null;
+    const today = startOfDay(new Date());
+    return markers.reduce((acc, m) => {
+      const d = startOfDay(m.date);
+      return d.getTime() > acc.getTime() ? d : acc;
+    }, today);
+  }, [markers, disableFuture]);
+
   // Open state lives at the parent level: a per-day controlled HoverCard would
   // be lost if DayPicker decided to remount its day cells (e.g. during refetch-
   // driven parent re-renders). Tracking `activeDayKey` here keeps the popover
@@ -197,9 +220,10 @@ export function StatusCalendar({
         onRequestOpen={requestOpen}
         onRequestClose={requestClose}
         renderMarkerRowRef={renderMarkerRowRef}
+        maxDay={maxDay}
       />
     ),
-    [markersByDay, activeDayKey, requestOpen, requestClose],
+    [markersByDay, activeDayKey, requestOpen, requestClose, maxDay],
   );
 
   const dayPickerComponents = useMemo(() => ({ Day }), [Day]);
@@ -214,7 +238,7 @@ export function StatusCalendar({
     >
       <header className="flex items-center gap-3 px-4 py-3">
         <div className="font-medium text-sm">{resolvedTitle}</div>
-        <div className="flex items-center gap-1 text-muted-foreground text-sm">
+        <div className="ml-auto flex items-center gap-1 text-muted-foreground text-sm">
           <Button
             variant="ghost"
             size="icon"
@@ -282,6 +306,8 @@ interface CalendarDayProps extends DayProps {
   renderMarkerRowRef: RefObject<
     ((marker: StatusCalendarMarker) => ReactNode) | undefined
   >;
+  /** Days strictly after this are disabled; null disables blocking entirely. */
+  maxDay: Date | null;
 }
 
 const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
@@ -294,6 +320,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       onRequestOpen,
       onRequestClose,
       renderMarkerRowRef,
+      maxDay,
     },
     forwardedRef,
   ) {
@@ -312,6 +339,24 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       return <div data-day-state="outside" />;
     }
 
+    // Past the status-history cutoff: render a dimmed, non-interactive cell.
+    const isBlocked =
+      maxDay !== null && startOfDay(date).getTime() > maxDay.getTime();
+    if (isBlocked) {
+      return (
+        <div
+          ref={forwardedRef as RefObject<HTMLDivElement>}
+          data-day={thisDayKey}
+          data-day-state="disabled"
+          aria-disabled
+          tabIndex={-1}
+          className="inline-flex h-12 w-full items-center justify-center font-mono text-muted-foreground/40 text-sm"
+        >
+          {format(date, "d")}
+        </div>
+      );
+    }
+
     const isToday = isSameDay(date, new Date());
     const dayMarkers = markersByDay.get(thisDayKey) ?? [];
     const severity =
@@ -319,15 +364,15 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     const open = activeDayKey === thisDayKey;
 
     const hasMarkers = dayMarkers.length > 0;
-    // Each cell is a full-width rectangle so adjacent borders form a grid.
-    // Severity ring is inset so it sits inside the cell, not bleeding into
-    // neighboring borders.
+    // Tinted-field: severity days get a soft fill that owns the hover state,
+    // empty days fall back to the neutral accent hover.
     const dayClass = cn(
       "inline-flex h-12 w-full items-center justify-center font-mono text-sm font-normal text-foreground/80 transition-colors",
-      "hover:bg-accent hover:text-accent-foreground",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
       isToday && "text-foreground font-semibold",
-      severity && cn("font-medium ring-inset", SEVERITY_RING[severity]),
+      severity
+        ? SEVERITY_FILL[severity]
+        : "hover:bg-accent hover:text-accent-foreground",
       hasMarkers && "cursor-pointer",
     );
 
@@ -452,7 +497,7 @@ export function StatusCalendarSkeleton({
         <div className="font-medium text-sm">
           {title ?? labels.calendarTitle}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1">
           <Skeleton className="size-7 rounded-md" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="size-7 rounded-md" />

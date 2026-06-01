@@ -284,6 +284,29 @@
       ]
     },
     {
+      "name": "status-calendar",
+      "type": "registry:block",
+      "title": "Status Calendar",
+      "description": "Monthly calendar view of status history with per-day markers and event hover cards",
+      "registryDependencies": [
+        "status-types",
+        "status-i18n",
+        "status-bar",
+        "button",
+        "hover-card",
+        "separator",
+        "skeleton"
+      ],
+      "dependencies": ["date-fns", "lucide-react", "react-day-picker"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-calendar.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-calendar.tsx"
+        }
+      ]
+    },
+    {
       "name": "status-feed",
       "type": "registry:block",
       "title": "Status Feed",
@@ -447,6 +470,7 @@
         "status-component-group",
         "status-events",
         "status-bar",
+        "status-calendar",
         "status-feed",
         "status-page-shell",
         "status-page-header",
