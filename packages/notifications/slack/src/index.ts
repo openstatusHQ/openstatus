@@ -22,6 +22,7 @@ const postToWebhook = async (
   await assertSafeUrl(webhookUrl);
   const res = await fetch(webhookUrl, {
     method: "POST",
+    redirect: "error",
     body: JSON.stringify(body),
   });
   if (!res.ok) {

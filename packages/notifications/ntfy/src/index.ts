@@ -26,6 +26,7 @@ export const sendAlert = async ({
   await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
+    redirect: "error",
     body,
     headers: {
       ...authorization,
@@ -55,6 +56,7 @@ export const sendRecovery = async ({
   await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
+    redirect: "error",
     body,
     headers: {
       ...authorization,
@@ -85,6 +87,7 @@ export const sendDegraded = async ({
   await assertSafeUrl(url);
   const res = await fetch(url, {
     method: "post",
+    redirect: "error",
     body,
     headers: {
       ...authorization,
@@ -112,6 +115,7 @@ export const sendTest = async ({
   try {
     await fetch(url, {
       method: "post",
+      redirect: "error",
       body: "This is a test message from OpenStatus",
       headers: {
         ...authorization,

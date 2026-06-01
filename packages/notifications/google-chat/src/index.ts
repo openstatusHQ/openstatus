@@ -6,6 +6,7 @@ const postToWebhook = async (content: string, webhookUrl: string) => {
   await assertSafeUrl(webhookUrl);
   const res = await fetch(webhookUrl, {
     method: "POST",
+    redirect: "error",
     headers: {
       "Content-Type": "application/json",
     },
