@@ -18,6 +18,7 @@ today; ADRs explain how those conventions came to be.
 | [0004](0004-go-for-the-probing-tier.md) | Go for the probing tier | accepted |
 | [0005](0005-turso-for-app-data-tinybird-for-time-series.md) | Turso for application data, Tinybird for time-series | accepted |
 | [0006](0006-persist-external-incidents-in-turso.md) | Persist external-service incidents in Turso, not Tinybird | accepted |
+| [0007](0007-store-external-service-components.md) | Store external-service components in Turso, their status history in Tinybird | accepted |
 
 ## When to write an ADR
 

@@ -19,8 +19,8 @@ const INDEX_TITLE = "External Status";
 const INDEX_DESCRIPTION =
   "Check if your external providers are working properly";
 
-// Mirrors getPillStyle in (landing)/status/external-service-pill.tsx so the OG
-// label matches the on-page pill.
+// Mirrors getPillStyle in @openstatus/ui external-service-pill so the OG label
+// matches the on-page pill.
 function getStatus(args: { indicator: string; status: string }): {
   label: string;
   bg: string;

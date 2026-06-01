@@ -1,8 +1,10 @@
 import { Effect } from "effect";
 import { z } from "zod";
+import { fetchAtlassianCompatibleComponents } from "../components";
 import { type FetchError, fetchJson } from "../fetch";
 import { fetchAtlassianCompatibleIncidents } from "../incidents";
 import type {
+  NormalizedComponent,
   NormalizedIncident,
   StatusFetcher,
   StatusPageEntry,
@@ -68,5 +70,14 @@ export class IncidentioFetcher implements StatusFetcher {
     entry: StatusPageEntry,
   ): Effect.Effect<NormalizedIncident[], FetchError> {
     return fetchAtlassianCompatibleIncidents({ entry, fetcherName: this.name });
+  }
+
+  fetchComponents(
+    entry: StatusPageEntry,
+  ): Effect.Effect<NormalizedComponent[], FetchError> {
+    return fetchAtlassianCompatibleComponents({
+      entry,
+      fetcherName: this.name,
+    });
   }
 }
