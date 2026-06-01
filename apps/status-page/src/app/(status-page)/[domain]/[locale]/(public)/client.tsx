@@ -15,10 +15,6 @@ import {
   StatusBar,
   StatusBarSkeleton,
 } from "@/components/status-page/status-bar";
-import {
-  StatusCalendar,
-  StatusCalendarSkeleton,
-} from "@/components/status-page/status-calendar";
 import { StatusComponentGroup } from "@/components/status-page/status-component-group";
 import {
   StatusEventAffected,
@@ -132,13 +128,7 @@ export function Client() {
     );
   }, [pageInitial]);
 
-  if (!pageInitial) {
-    return (
-      <div className="flex flex-col gap-6">
-        <StatusCalendarSkeleton />
-      </div>
-    );
-  }
+  if (!pageInitial) return null;
 
   // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
   const page = pageWithCustomConfiguration ?? pageInitial;
@@ -336,14 +326,6 @@ export function Client() {
           </StatusContent>
         ) : null}
         <Separator className="group-data-[hide-components=true]/embed:hidden group-data-[hide-feed=true]/embed:hidden" />
-        <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
-          <StatusCalendar
-            statusReports={page.statusReports}
-            maintenances={page.maintenances}
-            pageComponents={page.pageComponents}
-            isLoading={isLoading}
-          />
-        </StatusContent>
         <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
           <StatusFeed
             statusReports={page.statusReports
