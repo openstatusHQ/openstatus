@@ -1,0 +1,167 @@
+---
+title: "Status Page for AI Agent"
+publishedAt: "2026-06-01"
+author: "openstatus"
+description: "Let an AI agent run your status page. It receives openstatus webhooks, uses the openstatus MCP to investigate the failing monitor, files the status report, posts updates as it learns more, and resolves the report once the monitor recovers — all without waking anyone up."
+category: "AI Agents"
+faq:
+  - question: "What is the openstatus MCP server?"
+    answer: "Openstatus ships a remote MCP (Model Context Protocol) server at api.openstatus.dev/mcp. It exposes typed tools for every workspace entity — monitors, response logs, status pages, page components, status reports, maintenance windows, notification channels, and audit logs. Any MCP-compatible client (Claude Desktop, ChatGPT, Cursor) or any agent built with the MCP SDK can connect with an openstatus API key."
+  - question: "How does an agent know a monitor failed?"
+    answer: "Configure a webhook notification channel on the monitor. When openstatus detects a failure, it posts a payload to your endpoint. Your agent runtime receives it, opens an MCP session against api.openstatus.dev/mcp using your workspace API key, and starts investigating with the tools below."
+  - question: "Which MCP tools matter for incident response?"
+    answer: "The diagnostic loop uses get_monitor, get_monitor_status, get_monitor_summary, list_response_logs, and get_response_log. The communication loop uses list_status_pages, list_page_components, create_status_report, add_status_report_update, and resolve_status_report. The agent can also call list_audit_logs to see what humans or other agents already did."
+  - question: "Can the agent post a status report without a human in the loop?"
+    answer: "Yes — but every mutation tool requires the agent to explicitly decide whether to notify subscribers, and every call is recorded in the audit log with the agent's API key as the actor. Read-only keys can investigate but cannot publish. Most teams start with notify_subscribers set to false and a human approving the first version, then graduate to fully autonomous reports once the agent has a track record."
+  - question: "How do I scope what the agent can do?"
+    answer: "Openstatus API keys carry scopes — read for investigation-only, write for mutations. Issue a read-only key for an agent that only diagnoses, or a write-scoped key for an agent that also files status reports. Scope enforcement happens before any DB lookup, so a read-only key never sees the write tools."
+---
+
+## Your status page, run by an AI agent
+
+A status page is mostly mechanical work: notice a monitor failed, look at what broke, write a sentence about it, post updates, mark it resolved. Every one of those steps has a tool behind it in the openstatus MCP server — which means an agent can do them.
+
+The job your team used to do during every incident:
+
+1. Notice the monitor is failing
+2. Open the dashboard, find which regions, scroll through ping logs
+3. Open the status page, find the right component, write a report, hit publish
+4. Keep posting updates as the situation evolves
+5. Mark the report resolved when the monitor recovers
+
+All of it is reachable through `api.openstatus.dev/mcp`. Plug it into an agent, and your status page starts running itself — opening reports, posting updates, and resolving them — while your team stays focused on the actual fix.
+
+## The workflow
+
+```
+   ┌──────────────────────┐
+   │  openstatus monitor  │
+   │  fails (28 regions)  │
+   └──────────┬───────────┘
+              │ webhook
+              ▼
+   ┌──────────────────────┐
+   │   your agent runtime │
+   └──────────┬───────────┘
+              │ MCP
+              ▼
+   ┌──────────────────────────────────────────────┐
+   │  api.openstatus.dev/mcp                      │
+   │                                              │
+   │  get_monitor          → config + tags        │
+   │  get_monitor_status   → which regions fail   │
+   │  list_response_logs   → recent pings         │
+   │  get_response_log     → headers + body       │
+   │                                              │
+   │  list_status_pages    → find the right page  │
+   │  list_page_components → match component      │
+   │  create_status_report → publish              │
+   │  add_status_report_update → progress         │
+   │  resolve_status_report → close it out        │
+   └──────────────────────────────────────────────┘
+```
+
+A run takes seconds. By the time anyone on the team looks at the alert, the status page already reflects what's broken — with a real diagnosis attached, not a generic "we're looking into it."
+
+## What the agent actually does
+
+### 1. Receive the webhook
+
+Configure a webhook notification channel on the monitor and point it at your agent runtime — a Cloudflare Worker, an Inngest function, a Vercel route, an internal queue consumer, anything that can hold an MCP session for a few seconds.
+
+The payload tells you which monitor, which regions, and when. That's the input to the agent.
+
+### 2. Connect to the openstatus MCP
+
+```ts
+import { experimental_createMCPClient as createMCPClient } from "ai";
+
+const mcp = await createMCPClient({
+  transport: {
+    type: "sse",
+    url: "https://api.openstatus.dev/mcp",
+    headers: { Authorization: `Bearer ${process.env.OPENSTATUS_API_KEY}` },
+  },
+});
+
+const tools = await mcp.tools();
+```
+
+Use the API key's scope to decide what the agent is allowed to do — `read` for an investigation-only agent, `write` for one that publishes reports.
+
+### 3. Diagnose
+
+The agent's tool loop runs against your workspace:
+
+- **`get_monitor`** — pull the monitor's config, assertions, and tags
+- **`get_monitor_status`** — see which regions are failing right now
+- **`get_monitor_summary`** — was this a one-off blip or sustained?
+- **`list_response_logs`** — pull the last N pings for the failing regions
+- **`get_response_log`** — fetch the exact request, response headers, body, and latency of the failing ping
+
+The model reads the failing response body, compares it to the assertions, and writes a short diagnosis: *"3 of 28 regions returning 503 from `iad`, `cle`, `bos` since 14:02 UTC. Response body matches Cloudflare origin-down page. Likely upstream issue, not application code."*
+
+### 4. Communicate
+
+Once the agent has a diagnosis, it switches to the status-page tools:
+
+- **`list_status_pages`** — find the right page for this workspace
+- **`list_page_components`** — match the failing monitor to the right component
+- **`create_status_report`** — file the report, attaching the affected component and the right severity
+
+```ts
+await tools.create_status_report.execute({
+  page_id: 42,
+  title: "API errors in US East",
+  status: "investigating",
+  message: "We're seeing 503 responses from our US East region. Investigating now.",
+  affected_components: [{ id: 17, status: "degraded_performance" }],
+  notify_subscribers: false,
+});
+```
+
+`notify_subscribers` is **always an explicit choice**. The agent has to decide; it can't accidentally email 10,000 people. Most teams default to `false` for the first run and graduate to `true` once they trust the agent.
+
+### 5. Follow up and resolve
+
+The agent keeps watching. When `get_monitor_status` flips green:
+
+- **`add_status_report_update`** — post a "monitoring" or "identified" update with the latest diagnosis
+- **`resolve_status_report`** — close the report when the monitor recovers
+
+Every call lands in the openstatus audit log with the API key as the actor. You can replay exactly what the agent did, when, and to what.
+
+## Why this works on openstatus specifically
+
+### The MCP server is first-class, not an afterthought
+
+`api.openstatus.dev/mcp` exposes every workspace verb the dashboard uses — the same service layer, the same validation, the same audit log. The agent isn't poking at a thin REST wrapper; it's calling the same code paths a human would.
+
+### Scoped API keys keep blast radius small
+
+API keys carry `read` or `write` scopes. A read-only key sees only diagnostic tools — `list_response_logs`, `get_monitor_status`, etc. A write key adds the mutation tools. Scope enforcement runs **before** any DB lookup, so a read-only agent literally cannot file a report even if the model tries.
+
+### Every mutation is audited
+
+`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance` — all land in `audit_log` with the actor, timestamp, and diff. Call `list_audit_logs` to give the agent context on what already happened, or to give a human a clean trail when reviewing.
+
+### Subscriber notifications are explicit
+
+Every status-report mutation requires the agent to choose whether to notify subscribers. There is no implicit default. An agent cannot silently spam your users.
+
+## Where to start
+
+1. **Issue a scoped API key** for the agent — read-only for the first pass
+2. **Wire a webhook channel** on one non-critical monitor to your agent runtime
+3. **Connect to `api.openstatus.dev/mcp`** with the MCP SDK of your choice (Vercel AI SDK, Anthropic SDK, OpenAI Agents SDK — all work)
+4. **Let the agent diagnose only** — log its proposed status report instead of publishing
+5. **Review a week of proposed reports.** If they're good, upgrade the key to `write` and let it publish — starting with `notify_subscribers: false`
+6. **Graduate to subscriber notifications** once you trust the diagnosis quality
+
+---
+
+Stop writing status reports by hand. Let an agent run your status page.
+
+<ButtonLink href="https://app.openstatus.dev">Get an openstatus API key</ButtonLink>
+
+---
