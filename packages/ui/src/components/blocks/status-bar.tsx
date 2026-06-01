@@ -1,5 +1,12 @@
 "use client";
 
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import type {
+  StatusBarData,
+  StatusEventType,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
+import { statusColors } from "@openstatus/ui/components/blocks/status.utils";
 import {
   HoverCard,
   HoverCardContent,
@@ -10,14 +17,7 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import { useCallback, useEffect, useRef, useState, forwardRef } from "react";
-import { statusColors } from "@openstatus/ui/components/blocks/status.utils";
-import type {
-  StatusBarData,
-  StatusEventType,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
-import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 
 interface StatusBarProps {
   data: StatusBarData[];
@@ -578,10 +578,10 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
 );
 StatusBarItem.displayName = "StatusBarItem";
 
-interface StatusBarCardProps {
+export interface StatusBarCardProps {
   item: StatusBarData;
-  isPinned: boolean;
-  isTouch: boolean;
+  isPinned?: boolean;
+  isTouch?: boolean;
   renderCard?: StatusBarProps["renderCard"];
   renderEvent?: StatusBarProps["renderEvent"];
 }
@@ -604,10 +604,10 @@ interface StatusBarCardProps {
  * @param renderCard - Optional custom renderer for status items
  * @param renderEvent - Optional custom renderer for events
  */
-function StatusBarCard({
+export function StatusBarCard({
   item,
-  isPinned,
-  isTouch,
+  isPinned = false,
+  isTouch = false,
   renderCard,
   renderEvent,
 }: StatusBarCardProps) {
@@ -617,21 +617,25 @@ function StatusBarCard({
       <div className="p-2 text-xs">
         {labels.formatDateShort(new Date(item.day))}
       </div>
-      <Separator />
-      <div className="space-y-1 p-2 text-sm">
-        {item.card.map((cardItem, cardIndex) => {
-          if (renderCard) {
-            return renderCard(cardItem, cardIndex);
-          }
-          return (
-            <StatusBarContent
-              key={`${item.day}-card-${cardIndex}`}
-              status={cardItem.status}
-              value={cardItem.value}
-            />
-          );
-        })}
-      </div>
+      {item.card.length > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-1 p-2 text-sm">
+            {item.card.map((cardItem, cardIndex) => {
+              if (renderCard) {
+                return renderCard(cardItem, cardIndex);
+              }
+              return (
+                <StatusBarContent
+                  key={`${item.day}-card-${cardIndex}`}
+                  status={cardItem.status}
+                  value={cardItem.value}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
       {item.events.length > 0 && (
         <>
           <Separator />

@@ -97,6 +97,8 @@ export function StatusBlocksProvider({
       ariaDayStatus: (n: number) => t("Day {n} status", { n: String(n) }),
       clickAgainToUnpin: t("Click again to unpin"),
 
+      calendarTitle: t("Calendar"),
+
       durationIn: (duration: string) => t("(in {duration})", { duration }),
       durationEarlier: (timeFromLast: string) =>
         t("({timeFromLast} earlier)", { timeFromLast }),
