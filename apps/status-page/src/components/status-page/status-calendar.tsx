@@ -5,7 +5,6 @@ import {
   max as maxDate,
   min as minDate,
   startOfDay,
-  startOfMonth,
 } from "date-fns";
 import { useLocale } from "next-intl";
 import { useCallback, useMemo } from "react";
