@@ -98,9 +98,15 @@ export default async function UseCase({
       ) : null}
       <CustomMDX source={post.content} />
       <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/use-case"
+        prev={
+          previousPost && {
+            href: previousPost.href,
+            title: previousPost.metadata.title,
+          }
+        }
+        next={
+          nextPost && { href: nextPost.href, title: nextPost.metadata.title }
+        }
       />
     </section>
   );

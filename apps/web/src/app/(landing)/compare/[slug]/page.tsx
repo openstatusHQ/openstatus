@@ -87,9 +87,15 @@ export default async function Blog({
       <p className="text-lg">{post.metadata.description}</p>
       <CustomMDX source={post.content} />
       <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/compare"
+        prev={
+          previousPost && {
+            href: previousPost.href,
+            title: previousPost.metadata.title,
+          }
+        }
+        next={
+          nextPost && { href: nextPost.href, title: nextPost.metadata.title }
+        }
       />
     </section>
   );

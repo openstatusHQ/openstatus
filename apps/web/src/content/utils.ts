@@ -3,6 +3,7 @@ import path from "node:path";
 import matter from "gray-matter";
 import slugify from "slugify";
 import { z } from "zod";
+import { type DocsData, getDocs } from "./docs";
 
 // Structured data schemas
 const howtoStepSchema = z.object({
@@ -217,6 +218,27 @@ export function getCustomerPage(slug: string): MDXData {
   );
 }
 
+// Adapt a doc (relaxed schema) to the MDXData shape the search/sitemap/llms
+// surfaces expect: publishedAt falls back to the file mtime, author to "openstatus".
+export function docToMDXData(doc: DocsData): MDXData {
+  return {
+    metadata: {
+      title: doc.metadata.title,
+      description: doc.metadata.description,
+      category: doc.metadata.category,
+      author: doc.metadata.author ?? "openstatus",
+      publishedAt: doc.metadata.publishedAt ?? fs.statSync(doc.filePath).mtime,
+    },
+    slug: doc.slug,
+    content: doc.content,
+    href: doc.href,
+  };
+}
+
+export function getDocPages(): MDXData[] {
+  return getDocs().map(docToMDXData);
+}
+
 export const PAGE_TYPES = [
   "blog",
   "changelog",
@@ -228,6 +250,7 @@ export const PAGE_TYPES = [
   "customers",
   "guides",
   "use-case",
+  "docs",
   "all",
 ] as const;
 
@@ -255,6 +278,8 @@ export function getPages(type: PageType) {
       return getGuides();
     case "use-case":
       return getUseCasePages();
+    case "docs":
+      return getDocPages();
     case "all":
       return [
         ...getBlogPosts(),

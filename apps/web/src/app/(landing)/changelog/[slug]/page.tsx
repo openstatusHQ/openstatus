@@ -98,9 +98,15 @@ export default async function Changelog({
       ) : null}
       <CustomMDX source={post.content} />
       <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/changelog"
+        prev={
+          previousPost && {
+            href: previousPost.href,
+            title: previousPost.metadata.title,
+          }
+        }
+        next={
+          nextPost && { href: nextPost.href, title: nextPost.metadata.title }
+        }
       />
     </section>
   );

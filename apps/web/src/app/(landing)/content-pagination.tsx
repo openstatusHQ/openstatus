@@ -1,37 +1,33 @@
-import { Link } from "@/content/link";
-import type { MDXData } from "@/content/utils";
+import Link from "next/link";
+
+export type PaginationLink = { href: string; title: string };
 
 export function ContentPagination({
-  previousPost,
-  nextPost,
-  prefix,
+  prev,
+  next,
 }: {
-  previousPost?: MDXData;
-  nextPost?: MDXData;
-  prefix: string;
+  prev?: PaginationLink;
+  next?: PaginationLink;
 }) {
+  if (!prev && !next) return null;
   return (
-    <div className="flex items-center justify-between gap-8">
-      <p className="flex-1 truncate">
-        {previousPost ? (
-          <Link
-            href={`${prefix}/${previousPost.slug}`}
-            className="max-w-40 truncate"
-          >
-            {previousPost.metadata.title}
-          </Link>
-        ) : null}
-      </p>
-      <p className="flex-1 truncate text-right">
-        {nextPost ? (
-          <Link
-            href={`${prefix}/${nextPost.slug}`}
-            className="max-w-40 truncate"
-          >
-            {nextPost.metadata.title}
-          </Link>
-        ) : null}
-      </p>
+    <div className="grid grid-cols-2 gap-px border border-border bg-border [&>*]:bg-background [&>a]:p-4 [&>a]:hover:bg-muted">
+      {prev ? (
+        <Link href={prev.href} className="no-underline! ">
+          <span className="block text-muted-foreground">Previous</span>
+          <span className="font-medium text-foreground">{prev.title}</span>
+        </Link>
+      ) : (
+        <span />
+      )}
+      {next ? (
+        <Link href={next.href} className="no-underline! text-right">
+          <span className="block text-muted-foreground">Next</span>
+          <span className="font-medium text-foreground">{next.title}</span>
+        </Link>
+      ) : (
+        <span />
+      )}
     </div>
   );
 }

@@ -1,6 +1,8 @@
+import { getDocsPage } from "./docs";
 import { generateListingForPath } from "./listing";
 import type { MDXData } from "./utils";
 import {
+  docToMDXData,
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
@@ -59,6 +61,12 @@ function resolveMdxContent(pathname: string): MDXData | null {
       // home.mdx doesn't exist, will fallback to listing
       return null;
     }
+  }
+
+  // Docs use nested slugs (concept/x, sdk/nodejs/x) — resolve the full tail.
+  if (segments[0] === "docs" && segments.length >= 2) {
+    const doc = getDocsPage(segments.slice(1).join("/"));
+    return doc ? docToMDXData(doc) : null;
   }
 
   // Prefixed paths (category/slug format)

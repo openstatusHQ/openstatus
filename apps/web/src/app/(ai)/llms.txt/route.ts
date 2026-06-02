@@ -7,6 +7,7 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getDocPages,
   getGuides,
   getProductPages,
   getToolingPages,
@@ -59,6 +60,10 @@ export function GET() {
       getToolingPages().map((p) => toItem(p, true)),
     ),
     renderSection(
+      "Documentation",
+      getDocPages().map((p) => toItem(p, true)),
+    ),
+    renderSection(
       "Guides",
       getGuides().map((p) => toItem(p, true)),
     ),
@@ -91,9 +96,6 @@ export function GET() {
     "## Optional",
     "",
     "- [API OpenAPI](https://api.openstatus.dev/openapi)",
-    "- [Documentation](https://docs.openstatus.dev/)",
-    "- [Documentation llms.txt](https://docs.openstatus.dev/llms.txt)",
-    "- [Documentation llms-full.txt](https://docs.openstatus.dev/llms-full.txt)",
     "- [GitHub](https://github.com/openstatushq/openstatus)",
     "- [SDK (JSR)](https://jsr.io/@openstatus/sdk-node)",
     "- [Theme Store](https://themes.openstatus.dev)",

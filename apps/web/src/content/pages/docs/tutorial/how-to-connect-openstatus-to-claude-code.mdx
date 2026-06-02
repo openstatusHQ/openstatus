@@ -1,0 +1,139 @@
+---
+category: Tutorials
+title: Connect openstatus to Claude Code
+description: "Step-by-step tutorial to add the openstatus MCP server to Claude Code so the agent can read and manage your status pages from the terminal"
+---
+
+
+## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~3 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | openstatus account, [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) installed |
+
+In this tutorial, you'll connect the openstatus MCP server to Claude Code so the agent can list your status pages, draft incidents, and schedule maintenance windows directly from your terminal.
+
+### Prerequisites
+
+- An openstatus account ([openstatus.dev](https://www.openstatus.dev))
+- Claude Code installed and signed in (`claude --version`)
+
+### What you'll get
+
+By the end of this tutorial, you'll have:
+- An openstatus API key dedicated to Claude Code
+- The openstatus MCP server registered as a Claude Code tool
+- A working first prompt that lists your status pages
+
+## 1. Create an API key
+
+Open the openstatus dashboard, go to **Settings → API Tokens**, and click **Create Token**.
+
+Pick a scope:
+
+- **Read-only** — Claude Code can list status pages, reports, and maintenance windows but cannot create or modify anything. Best for exploration and on-call summaries.
+- **Read & write** — Claude Code can also create status reports, append updates, resolve incidents, and schedule maintenance.
+
+<Aside type="tip">Start with a read-only key while you get familiar with the tools. You can issue a write key later — scopes are immutable on a given key, so you'll create a new one rather than upgrading.</Aside>
+
+Copy the key (it starts with `os_`). You'll only see it once.
+
+## 2. Add the MCP server to Claude Code
+
+Claude Code talks to the openstatus MCP server over Streamable HTTP. Register it with the `claude mcp add` command:
+
+```bash
+claude mcp add \
+  --transport http \
+  --scope user \
+  --header "x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  openstatus \
+  https://api.openstatus.dev/mcp
+```
+
+The flags:
+
+- `--transport http` — the openstatus MCP server is a stateless HTTP endpoint, not a local stdio process.
+- `--scope user` — registers the server for every Claude Code session on your machine. Use `--scope project` if you want to commit a project-local `.mcp.json` so your team picks it up automatically (omit the header from the committed file and rely on `${OPENSTATUS_API_KEY}` expansion).
+- `--header "x-openstatus-key: …"` — the same API key the openstatus CLI, REST API, and Terraform provider use.
+
+### Project-scoped alternative
+
+If you'd rather commit the configuration to your repo, create a `.mcp.json` at the project root:
+
+```json
+{
+  "mcpServers": {
+    "openstatus": {
+      "type": "http",
+      "url": "https://api.openstatus.dev/mcp",
+      "headers": {
+        "x-openstatus-key": "${OPENSTATUS_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+Then export `OPENSTATUS_API_KEY` in your shell. Claude Code expands the variable at connection time, so the key never lands in version control.
+
+## 3. Verify the connection
+
+Open Claude Code and run:
+
+```
+/mcp
+```
+
+You should see `openstatus` listed as **connected**, with the registered tools (`list_status_pages`, `list_page_components`, `list_status_reports`, `list_maintenances`, and — if your key has write scope — `create_status_report`, `add_status_report_update`, `update_status_report`, `resolve_status_report`, `create_maintenance`).
+
+If the server shows as disconnected, see [Troubleshooting](#troubleshooting) below.
+
+## 4. Try your first prompt
+
+Ask Claude Code something that exercises a read tool:
+
+```
+> list my openstatus status pages
+```
+
+Claude Code will call `list_status_pages`, prompt you to approve the call, and return the page slugs and ids in your workspace.
+
+If you have a write-scoped key, try drafting an incident — Claude Code will show you the title, status, message, and notify choice **before** firing the tool, so nothing reaches subscribers without an explicit approval:
+
+```
+> draft a status report on my "api" page: investigating elevated latency on the payment endpoint
+```
+
+<Aside>Every mutation tool requires an explicit `notify: true | false`. Claude Code will ask whether to notify subscribers — answer before approving the tool call.</Aside>
+
+## What you've accomplished
+
+- ✅ Created an openstatus API key scoped for Claude Code
+- ✅ Registered the openstatus MCP server with `claude mcp add`
+- ✅ Verified the connection with `/mcp`
+- ✅ Ran your first read and (optionally) write tool calls
+
+## Troubleshooting
+
+### `/mcp` shows openstatus as disconnected
+
+1. **Re-check the header:** run `claude mcp list` and confirm the `x-openstatus-key` value matches a key visible in **Settings → API Tokens**. Whitespace and trailing newlines are common copy-paste failures.
+2. **Reachability:** `curl -i -H "x-openstatus-key: os_..." https://api.openstatus.dev/mcp` should return a `200` with a `mcp-session-id` header. A `401` means the key is wrong or revoked; a network error means a proxy or firewall is blocking the connection.
+3. **Re-add the server:** `claude mcp remove openstatus` then re-run the `claude mcp add` command from step 2.
+
+### "Tool not available" when asking Claude Code to create an incident
+
+Your API key is read-only. Claude Code only sees the `list_*` tools — the server filters mutation tools out of `tools/list` for read-only keys. Issue a new key with **Read & write** scope and re-add the server.
+
+### Audit log shows `actor_type = 'mcp'` for changes I made manually
+
+That's expected — every mutation routed through Claude Code (or any other MCP client) is attributed to `mcp` in the audit log, with `actor_id` set to the API key id and `actor_user_id` set to the user who created the key. This is how openstatus separates AI-driven actions from CLI, dashboard, and API mutations.
+
+## What's next?
+
+- **[MCP Server Reference](/docs/reference/mcp-server)** — full tool schema, error codes, and the contract behind the required `notify` flag
+- **[Connect to other MCP clients](/docs/reference/mcp-server#configure-claude-desktop)** — the same API key works for Claude Desktop, Cursor, and any other MCP-compatible client
+- **[Get started with the openstatus CLI](/docs/tutorial/get-started-with-openstatus-cli)** — for terminal workflows that don't need an LLM in the loop
