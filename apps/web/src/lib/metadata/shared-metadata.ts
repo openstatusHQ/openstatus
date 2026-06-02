@@ -9,7 +9,9 @@ export const DESCRIPTION =
 export const OG_DESCRIPTION = "The status page for compliance-ready teams";
 
 export const BASE_URL =
-  process.env.NODE_ENV === "production" ? "https://www.openstatus.dev" : "http://localhost:3000";
+  process.env.NODE_ENV === "production"
+    ? "https://www.openstatus.dev"
+    : "http://localhost:3000";
 
 export const APP_URL = "https://app.openstatus.dev";
 
@@ -49,7 +51,9 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
     title,
   )}&description=${encodeURIComponent(description)}&category=${encodeURIComponent(category)}`;
 
-  const url = basePath ? `${BASE_URL}/${basePath}/${slug}` : `${BASE_URL}/${slug}`;
+  const url = basePath
+    ? `${BASE_URL}/${basePath}/${slug}`
+    : `${BASE_URL}/${slug}`;
 
   return {
     title,
