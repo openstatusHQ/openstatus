@@ -10,7 +10,7 @@ export function DocsHeader() {
         aria-hidden
         className="pointer-events-none hidden md:col-span-3 md:block"
       />
-      <CmdK />
+      <CmdK defaultPage="docs" />
       <Link
         href="https://app.openstatus.dev/login"
         className="truncate text-blue-700 dark:text-blue-400"

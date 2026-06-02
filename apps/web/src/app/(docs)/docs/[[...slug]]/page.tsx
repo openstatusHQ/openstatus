@@ -11,6 +11,7 @@ import {
   gitLastModified,
   validateDocsNav,
 } from "@/content/docs";
+import { DocsSubNav } from "@/content/docs-sub-nav";
 import { TableOfContents } from "@/content/docs-toc";
 import {
   type DocsNavSection,
@@ -22,7 +23,6 @@ import {
 } from "@/content/docs.config";
 import { CustomMDX } from "@/content/mdx";
 import { Grid } from "@/content/mdx-components/grid";
-import { SubNav } from "@/content/sub-nav";
 import { extractHeadings } from "@/content/toc";
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
@@ -176,7 +176,7 @@ export default async function DocsPage({
   return (
     <div className="flex gap-8">
       <div className="min-w-0 flex-1 space-y-8">
-        <SubNav />
+        <DocsSubNav />
         <article className="prose dark:prose-invert max-w-none font-sans">
           <h1>{doc.metadata.title}</h1>
           <CustomMDX source={doc.content} />
