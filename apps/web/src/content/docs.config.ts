@@ -1,6 +1,6 @@
 // Single source of truth for docs section order, page order, and sidebar labels.
-// Labels live here because they intentionally differ from page titles
-// (e.g. title "Foundational Concepts" → sidebar label "Overview"). Page→section
+// Labels mirror each page's `title`, except section-landing pages which keep a
+// short label (e.g. title "Foundational Concepts" → label "Overview"). Page→section
 // membership is mirrored by each doc's `category` frontmatter and cross-checked
 // at build time (see `validateDocsNav`).
 
@@ -30,44 +30,48 @@ export const docsNav: DocsNavSection[] = [
     label: "Concepts",
     items: [
       { slug: "concept/getting-started", label: "Overview" },
-      { slug: "concept/uptime-monitoring", label: "About Uptime monitoring" },
+      {
+        slug: "concept/uptime-monitoring",
+        label: "Understanding Uptime Monitoring",
+      },
       {
         slug: "concept/best-practices-status-page",
-        label: "Best Practices for Status Pages",
+        label: "Building Trust with Status Pages",
       },
       {
         slug: "concept/uptime-calculation-and-values",
-        label: "Uptime Calculation and Values",
+        label: "Uptime Calculation and Shared Values",
       },
       {
         slug: "concept/uptime-monitoring-as-code",
-        label: "Uptime Monitoring as Code",
+        label: "Understanding Monitoring as Code",
       },
       {
         slug: "concept/latency-vs-response-time",
-        label: "Latency vs Response Time",
+        label: "Understanding Latency vs Response Time",
       },
     ],
   },
   {
     label: "Tutorials",
+    collapsed: true,
     items: [
       { slug: "tutorial/getting-started", label: "Overview" },
       {
         slug: "tutorial/how-to-create-monitor",
-        label: "How to create a monitor",
+        label: "Create an Uptime Monitor in 5 Minutes",
       },
       {
         slug: "tutorial/how-to-create-status-page",
-        label: "How to create a status page",
+        label: "Create a Status Page",
       },
       {
         slug: "tutorial/how-to-configure-status-page",
-        label: "How to configure a status page",
+        label: "Configure Your Status Page",
       },
       {
         slug: "tutorial/how-to-create-private-location",
-        label: "How to create a private location (beta)",
+        label: "Create a Private Location",
       },
       {
         slug: "tutorial/get-started-with-openstatus-cli",
@@ -75,7 +79,7 @@ export const docsNav: DocsNavSection[] = [
       },
       {
         slug: "tutorial/how-to-setup-slack-agent",
-        label: "How to set up the Slack Agent",
+        label: "Set Up the openstatus Slack Agent",
       },
       {
         slug: "tutorial/how-to-connect-openstatus-to-claude-code",
@@ -83,7 +87,7 @@ export const docsNav: DocsNavSection[] = [
       },
       {
         slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
-        label: "Manage Your Stack with Terraform and CLI",
+        label: "Manage Your openstatus Stack with Terraform and the CLI",
       },
       {
         slug: "tutorial/how-to-import-status-page",
@@ -93,43 +97,44 @@ export const docsNav: DocsNavSection[] = [
   },
   {
     label: "Guides",
+    collapsed: true,
     items: [
       { slug: "guides/getting-started", label: "Overview" },
       {
         slug: "guides/how-to-monitor-mcp-server",
-        label: "Monitor your MCP Server",
+        label: "How to Monitor Your Model Context Provider (MCP) Server",
       },
       {
         slug: "guides/how-to-run-synthetic-test-github-action",
-        label: "Run check in GitHub Actions",
+        label: "How to Run Synthetic Tests in GitHub Actions",
       },
       {
         slug: "guides/how-to-export-metrics-to-otlp-endpoint",
-        label: "Export Metrics to your OTLP Endpoint",
+        label: "How to Export Metrics to an OTLP Endpoint",
       },
       {
         slug: "guides/how-to-add-svg-status-badge",
-        label: "How to Add an SVG Status Badge to your GitHub README",
+        label: "How to Add a Status Badge to a GitHub README",
       },
       {
         slug: "guides/how-to-use-react-widget",
-        label: "How to use React Status Widget",
+        label: "How to Use openstatus React Widget",
       },
       {
         slug: "guides/how-to-deploy-probes-cloudflare-containers",
-        label: "How to deploy probes on Cloudflare Containers",
+        label: "How to Deploy a Private Probe on Cloudflare Containers",
       },
       {
         slug: "guides/self-hosting-openstatus",
-        label: "How to self-host openstatus",
+        label: "How to Self-Host openstatus",
       },
       {
         slug: "guides/self-host-status-page-only",
-        label: "Self host Status Page only",
+        label: "Self-Host the openstatus Status Page (Lightweight)",
       },
       {
         slug: "guides/how-deploy-status-page-cf-pages",
-        label: "Deploy a status page on Cloudflare Pages",
+        label: "How to Deploy a Status Page to Cloudflare Pages",
       },
       {
         slug: "guides/how-to-translate-status-page",
@@ -137,7 +142,7 @@ export const docsNav: DocsNavSection[] = [
       },
       {
         slug: "guides/how-to-embed-status-page-iframe",
-        label: "How to embed a status page in an iframe",
+        label: "How to Embed a Status Page in an Iframe",
       },
     ],
   },
@@ -184,19 +189,25 @@ export const docsNav: DocsNavSection[] = [
       },
       { slug: "reference/cli-reference", label: "CLI Reference" },
       { slug: "reference/mcp-server", label: "MCP Server" },
-      { slug: "reference/dns-monitor", label: "DNS Monitor" },
-      { slug: "reference/http-monitor", label: "HTTP Monitor" },
-      { slug: "reference/incident", label: "Incident" },
-      { slug: "reference/tcp-monitor", label: "TCP Monitor" },
-      { slug: "reference/notification", label: "Notification" },
-      { slug: "reference/location", label: "Location" },
-      { slug: "reference/private-location", label: "Private location" },
-      { slug: "reference/status-page", label: "Status Page" },
-      { slug: "reference/page-components", label: "Page Components" },
-      { slug: "reference/status-report", label: "Status Report" },
-      { slug: "reference/maintenance", label: "Maintenance" },
-      { slug: "reference/subscriber", label: "Subscriber" },
-      { slug: "reference/terraform", label: "Terraform Provider" },
+      { slug: "reference/dns-monitor", label: "DNS Monitor Reference" },
+      { slug: "reference/http-monitor", label: "HTTP Monitor Reference" },
+      { slug: "reference/incident", label: "Incident Reference" },
+      { slug: "reference/tcp-monitor", label: "TCP Monitor Reference" },
+      {
+        slug: "reference/notification",
+        label: "Notification Channels Reference",
+      },
+      { slug: "reference/location", label: "Location Reference" },
+      {
+        slug: "reference/private-location",
+        label: "Private Location Reference",
+      },
+      { slug: "reference/status-page", label: "Status Page Reference" },
+      { slug: "reference/page-components", label: "Page Components Reference" },
+      { slug: "reference/status-report", label: "Status Report Reference" },
+      { slug: "reference/maintenance", label: "Maintenance Reference" },
+      { slug: "reference/subscriber", label: "Subscriber Reference" },
+      { slug: "reference/terraform", label: "Terraform Provider Reference" },
     ],
   },
   {
