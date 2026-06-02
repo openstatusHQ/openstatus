@@ -155,6 +155,31 @@ describe("setDataByType", () => {
       expect(statuses).toContain("info");
     });
 
+    it("should keep downtime proportional to the day when maintenance is present", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [
+        createMaintenance(1, 0, 2), // 2h maintenance
+        createIncident(2, 0, 1), // 1h downtime
+      ];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      const error = bar.find((b) => b.status === "error");
+      const info = bar.find((b) => b.status === "info");
+
+      // downtime is a small slice of the full day, not half the bar
+      expect(error?.height ?? 0).toBeLessThan(10);
+      // maintenance fills the remaining space, no green uptime
+      expect(bar.some((b) => b.status === "success")).toBe(false);
+      expect((error?.height ?? 0) + (info?.height ?? 0)).toBeCloseTo(100, 5);
+    });
+
     it("should show empty bar when no data available", () => {
       const data = [createStatusData(0, 0, 0, 0)];
       const events: Event[] = [];

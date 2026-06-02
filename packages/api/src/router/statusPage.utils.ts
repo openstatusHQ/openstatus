@@ -484,16 +484,32 @@ export function setDataByType({
   function createProportionalBarData(
     segments: Array<{ status: "info" | "degraded" | "error"; count: number }>,
   ): UptimeData["bar"] {
-    const totalDuration = segments.reduce(
-      (sum, segment) => sum + segment.count,
-      0,
-    );
+    // Downtime keeps its true proportion of the day; maintenance/reports are
+    // highlight events that fill the remaining space (no uptime shown).
+    const errorMs = segments
+      .filter((segment) => segment.status === "error")
+      .reduce((sum, segment) => sum + segment.count, 0);
+    const errorHeight =
+      (Math.min(errorMs, MILLISECONDS_PER_DAY) / MILLISECONDS_PER_DAY) * 100;
+    const remainingHeight = Math.max(0, 100 - errorHeight);
 
-    return segments.map((segment) => ({
-      status: segment.status,
-      // NOTE: if totalDuration is 0 (single event without duration), we want to show 100% for the segment
-      height: totalDuration > 0 ? (segment.count / totalDuration) * 100 : 100,
-    }));
+    const highlightTotal = segments
+      .filter((segment) => segment.status !== "error")
+      .reduce((sum, segment) => sum + segment.count, 0);
+
+    return segments.map((segment) => {
+      if (segment.status === "error") {
+        return { status: segment.status, height: errorHeight };
+      }
+      // instant highlight events (no duration) still fill the remaining space
+      return {
+        status: segment.status,
+        height:
+          highlightTotal > 0
+            ? (segment.count / highlightTotal) * remainingHeight
+            : remainingHeight,
+      };
+    });
   }
 
   function createStatusSegments(
