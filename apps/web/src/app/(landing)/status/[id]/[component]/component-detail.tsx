@@ -127,7 +127,11 @@ function OtherComponents({
   serviceName: string;
   currentSlug: string;
 }) {
-  const { data } = api.externalService.components.useQuery({ slug: serviceSlug });
+  // days:1 — this sibling nav only uses slug/name, so fetch the minimum history.
+  const { data } = api.externalService.components.useQuery({
+    slug: serviceSlug,
+    days: 1,
+  });
   const others =
     data?.components.filter((c) => c.slug !== currentSlug).slice(0, 12) ?? [];
   if (others.length === 0) return null;

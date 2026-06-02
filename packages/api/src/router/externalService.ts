@@ -24,6 +24,10 @@ const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 const DEFAULT_HISTORY_DAYS = 45;
 const INCIDENTS_LIMIT = 5;
 
+// Logging here uses `console.*`, not `@logtape/logtape`: this router runs on the
+// Next.js Edge runtime and `@openstatus/api` (like the edge-safe `services`
+// package) deliberately takes no logtape dependency. The logtape-based logger is
+// for Node contexts such as the `apps/workflows` cron. Matches every sibling router.
 async function safeData<T>(
   promise: Promise<{ data: T[] }>,
   label: string,
