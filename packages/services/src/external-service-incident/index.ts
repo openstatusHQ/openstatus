@@ -7,6 +7,7 @@ export {
   type ExternalIncidentListItem,
   type ListBySlugResult,
   INCIDENT_SUPPORTED_API_CONFIG_TYPES,
+  listExternalIncidentsByComponent,
   listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
   supportsIncidents,

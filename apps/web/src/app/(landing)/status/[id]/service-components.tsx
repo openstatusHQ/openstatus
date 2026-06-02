@@ -24,7 +24,11 @@ export function ServiceComponents({
     <>
       <h2>{serviceName} components</h2>
       <div className="not-prose">
-        <ExternalServiceComponents components={data.components} days={days} />
+        <ExternalServiceComponents
+          components={data.components}
+          days={days}
+          hrefBase={`/status/${slug}`}
+        />
       </div>
     </>
   );

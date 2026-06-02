@@ -7,6 +7,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import {
+  getExternalComponentBySlug,
   listExternalComponentsBySlug,
   upsertExternalComponentsForService,
 } from "../index";
@@ -240,5 +241,98 @@ describe("listExternalComponentsBySlug", () => {
     });
     expect(service).toBeNull();
     expect(components).toEqual([]);
+  });
+});
+
+describe("getExternalComponentBySlug", () => {
+  test("resolves by current slug and by past alias after a rename", async () => {
+    const serviceSlug = `${TEST_PREFIX}-getcomp`;
+    const serviceId = await seedService({ slug: serviceSlug });
+
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-06-01T00:00:00.000Z"),
+      components: [
+        {
+          upstreamComponentId: "r1",
+          name: "Frankfurt",
+          position: 0,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const byOriginal = await getExternalComponentBySlug({
+      serviceSlug,
+      componentSlug: "frankfurt",
+      now: new Date("2024-06-01T00:05:00.000Z"),
+    });
+    expect(byOriginal.component?.slug).toBe("frankfurt");
+    expect(byOriginal.component?.stale).toBe(false);
+
+    // rename → slug becomes eu-central, "frankfurt" preserved as alias
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-06-01T00:10:00.000Z"),
+      components: [
+        {
+          upstreamComponentId: "r1",
+          name: "EU Central",
+          position: 0,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const byCurrent = await getExternalComponentBySlug({
+      serviceSlug,
+      componentSlug: "eu-central",
+    });
+    expect(byCurrent.component?.slug).toBe("eu-central");
+
+    const byAlias = await getExternalComponentBySlug({
+      serviceSlug,
+      componentSlug: "frankfurt",
+    });
+    expect(byAlias.component?.slug).toBe("eu-central");
+  });
+
+  test("flags a component stale when last seen beyond the 24h window", async () => {
+    const serviceSlug = `${TEST_PREFIX}-getstale`;
+    const serviceId = await seedService({ slug: serviceSlug });
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-01-01T00:00:00.000Z"),
+      components: [
+        {
+          upstreamComponentId: "r1",
+          name: "Frankfurt",
+          position: 0,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const res = await getExternalComponentBySlug({
+      serviceSlug,
+      componentSlug: "frankfurt",
+      now: new Date("2024-06-01T00:00:00.000Z"),
+    });
+    expect(res.component?.slug).toBe("frankfurt");
+    expect(res.component?.stale).toBe(true);
+  });
+
+  test("returns null component for an unknown component slug", async () => {
+    const serviceSlug = `${TEST_PREFIX}-getmissing`;
+    await seedService({ slug: serviceSlug });
+    const res = await getExternalComponentBySlug({
+      serviceSlug,
+      componentSlug: "nope",
+    });
+    expect(res.service).not.toBeNull();
+    expect(res.component).toBeNull();
   });
 });

@@ -5,8 +5,15 @@ import {
   getExternalServiceBySlug,
   listExternalServices,
 } from "@openstatus/services/external-service";
-import { listExternalComponentsBySlug } from "@openstatus/services/external-service-component";
-import { listExternalIncidentsBySlug } from "@openstatus/services/external-service-incident";
+import {
+  getExternalComponentBySlug,
+  listExternalComponentsBySlug,
+} from "@openstatus/services/external-service-component";
+import {
+  type ExternalIncidentListItem,
+  listExternalIncidentsByComponent,
+  listExternalIncidentsBySlug,
+} from "@openstatus/services/external-service-incident";
 import { OSTinybird } from "@openstatus/tinybird";
 
 import { env } from "../env";
@@ -77,6 +84,7 @@ const incidentSchema = z.object({
 
 const componentItemSchema = z.object({
   id: z.number(),
+  slug: z.string(),
   name: z.string(),
   description: z.string().nullable(),
   groupName: z.string().nullable(),
@@ -85,6 +93,57 @@ const componentItemSchema = z.object({
   status: z.string(),
   history: z.array(historyRowSchema),
 });
+
+const componentDetailSchema = z.object({
+  found: z.boolean(),
+  service: z
+    .object({ slug: z.string(), name: z.string(), statusPageUrl: z.string() })
+    .nullable(),
+  component: z
+    .object({
+      id: z.number(),
+      slug: z.string(),
+      name: z.string(),
+      description: z.string().nullable(),
+      groupName: z.string().nullable(),
+      indicator: z.string(),
+      status: z.string(),
+      lastSeenAt: z.number(),
+      stale: z.boolean(),
+    })
+    .nullable(),
+  history: z.array(historyRowSchema),
+  incidents: z.array(incidentSchema),
+});
+
+type HistoryTbRow = {
+  day: string;
+  worst_indicator: string;
+  had_maintenance: number;
+  snapshot_count: number;
+};
+
+function toHistoryRow(r: HistoryTbRow) {
+  return {
+    day: r.day,
+    worstIndicator: r.worst_indicator,
+    hadMaintenance: r.had_maintenance,
+    snapshotCount: r.snapshot_count,
+  };
+}
+
+function toIncidentDTO(i: ExternalIncidentListItem) {
+  return {
+    id: i.providerIncidentId,
+    name: i.name,
+    status: i.status,
+    impact: i.impact ?? undefined,
+    shortlink: i.shortlink ?? undefined,
+    startedAt: i.startedAt?.toISOString(),
+    createdAt: i.createdAt.toISOString(),
+    resolvedAt: i.resolvedAt?.toISOString() ?? null,
+  };
+}
 
 export const externalServiceRouter = createTRPCRouter({
   grid: publicProcedure.output(z.array(gridItemSchema)).query(async () => {
@@ -172,12 +231,7 @@ export const externalServiceRouter = createTRPCRouter({
           apiConfigType: service.apiConfig?.type,
         },
         latest,
-        history: historyRows.map((r) => ({
-          day: r.day,
-          worstIndicator: r.worst_indicator,
-          hadMaintenance: r.had_maintenance,
-          snapshotCount: r.snapshot_count,
-        })),
+        history: historyRows.map(toHistoryRow),
       };
     }),
 
@@ -200,16 +254,7 @@ export const externalServiceRouter = createTRPCRouter({
         }
         return {
           supported: true,
-          incidents: incidents.map((i) => ({
-            id: i.providerIncidentId,
-            name: i.name,
-            status: i.status,
-            impact: i.impact ?? undefined,
-            shortlink: i.shortlink ?? undefined,
-            startedAt: i.startedAt?.toISOString(),
-            createdAt: i.createdAt.toISOString(),
-            resolvedAt: i.resolvedAt?.toISOString() ?? null,
-          })),
+          incidents: incidents.map(toIncidentDTO),
         };
       } catch (err) {
         // matches the graceful-degrade pattern used by `grid` / `detail`:
@@ -266,18 +311,16 @@ export const externalServiceRouter = createTRPCRouter({
           supported: true,
           components: components.map((c) => ({
             id: c.id,
+            slug: c.slug,
             name: c.name,
             description: c.description,
             groupName: c.groupName,
             position: c.position,
             indicator: c.indicator,
             status: c.status,
-            history: (historyByComponent.get(String(c.id)) ?? []).map((r) => ({
-              day: r.day,
-              worstIndicator: r.worst_indicator,
-              hadMaintenance: r.had_maintenance,
-              snapshotCount: r.snapshot_count,
-            })),
+            history: (historyByComponent.get(String(c.id)) ?? []).map(
+              toHistoryRow,
+            ),
           })),
         };
       } catch (err) {
@@ -286,6 +329,76 @@ export const externalServiceRouter = createTRPCRouter({
           err,
         );
         return { supported: false, components: [] };
+      }
+    }),
+
+  component: publicProcedure
+    .input(
+      z.object({
+        serviceSlug: z.string(),
+        componentSlug: z.string(),
+        days: z.number().int().min(1).max(90).optional(),
+      }),
+    )
+    .output(componentDetailSchema)
+    .query(async ({ input }) => {
+      const empty = {
+        found: false as const,
+        service: null,
+        component: null,
+        history: [],
+        incidents: [],
+      };
+      try {
+        const { service, component } = await getExternalComponentBySlug({
+          serviceSlug: input.serviceSlug,
+          componentSlug: input.componentSlug,
+        });
+        if (!service || !component) return empty;
+
+        const days = input.days ?? DEFAULT_HISTORY_DAYS;
+        const [historyRows, incidents] = await Promise.all([
+          safeData(
+            tb.externalStatusComponentHistory({
+              component_ids: [String(component.id)],
+              days,
+            }),
+            "externalStatusComponentHistory (component)",
+          ),
+          listExternalIncidentsByComponent({
+            externalServiceId: service.id,
+            upstreamComponentId: component.upstreamComponentId,
+            limit: INCIDENTS_LIMIT,
+          }),
+        ]);
+
+        return {
+          found: true,
+          service: {
+            slug: service.slug,
+            name: service.name,
+            statusPageUrl: service.statusPageUrl,
+          },
+          component: {
+            id: component.id,
+            slug: component.slug,
+            name: component.name,
+            description: component.description,
+            groupName: component.groupName,
+            indicator: component.indicator,
+            status: component.status,
+            lastSeenAt: component.lastSeenAt.getTime(),
+            stale: component.stale,
+          },
+          history: historyRows.map(toHistoryRow),
+          incidents: incidents.map(toIncidentDTO),
+        };
+      } catch (err) {
+        console.warn(
+          `[external-service component] read failed for ${input.serviceSlug}/${input.componentSlug}:`,
+          err,
+        );
+        return empty;
       }
     }),
 });

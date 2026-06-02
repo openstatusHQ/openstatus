@@ -17,6 +17,11 @@ export const externalServiceComponent = sqliteTable(
       .notNull()
       .references(() => externalService.id),
     upstreamComponentId: text("upstream_component_id").notNull(),
+    slug: text("slug").notNull(),
+    aliases: text("aliases", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`(json_array())`)
+      .notNull(),
     name: text("name").notNull(),
     description: text("description"),
     groupName: text("group_name"),
@@ -37,6 +42,10 @@ export const externalServiceComponent = sqliteTable(
     uniqueIndex("external_service_component_unique_idx").on(
       t.externalServiceId,
       t.upstreamComponentId,
+    ),
+    uniqueIndex("external_service_component_slug_unique_idx").on(
+      t.externalServiceId,
+      t.slug,
     ),
     index("external_service_component_last_seen_at_idx").on(
       t.externalServiceId,

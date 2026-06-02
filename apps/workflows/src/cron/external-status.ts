@@ -85,6 +85,7 @@ function toUpsertInput(
     startedAt: incident.startedAt,
     createdAt: incident.createdAt,
     resolvedAt: incident.resolvedAt,
+    affectedComponentIds: incident.affectedComponentIds,
     raw: incident.raw,
   };
 }
@@ -404,6 +405,10 @@ export async function runExternalStatusTick(): Promise<{
   const triplets = buildTriplets(services);
   const tickStartedAt = new Date();
 
+  // The three phases are intentionally independent: each hits a different
+  // upstream endpoint and store, so a failed status fetch must not suppress a
+  // service's components (or vice versa). A tick can therefore persist
+  // component history for a service whose status snapshot failed that tick.
   const [statusOutcomes, incidentOutcomes, componentOutcomes] =
     await Effect.runPromise(
       Effect.all(

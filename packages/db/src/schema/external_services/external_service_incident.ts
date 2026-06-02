@@ -24,6 +24,10 @@ export const externalServiceIncident = sqliteTable(
     startedAt: integer("started_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
+    affectedComponentIds: text("affected_component_ids", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`(json_array())`)
+      .notNull(),
     rawPayload: text("raw_payload", { mode: "json" }),
     rawPayloadPurgedAt: integer("raw_payload_purged_at", { mode: "timestamp" }),
     firstSeenAt: integer("first_seen_at", { mode: "timestamp" })

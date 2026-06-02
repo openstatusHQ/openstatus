@@ -5,6 +5,7 @@ import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 import { isStale } from "@/app/(landing)/status/utils";
 import { env } from "@/env";
 import {
+  cachedGetExternalComponentBySlug,
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
 } from "@/lib/external-service-cache";
@@ -93,48 +94,74 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug") || undefined;
-
-  const service = slug ? await cachedGetExternalServiceBySlug(slug) : undefined;
+  const componentParam = searchParams.get("component") || undefined;
 
   let category: string;
   let categoryDot: string | undefined;
   let title: string;
   let description: string;
   let footer: string;
+  let isDetail = false;
 
-  if (!service) {
-    const services = await cachedListExternalServices();
-    category = "external status";
-    title = INDEX_TITLE;
-    description = `${services.length} providers monitored — ${INDEX_DESCRIPTION}`;
-    footer = FOOTER;
-  } else {
-    const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
-    const slugChain = [service.slug, ...aliasSlugs];
+  const componentResult =
+    slug && componentParam
+      ? await cachedGetExternalComponentBySlug(slug, componentParam)
+      : null;
 
-    const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-    const latestRes = await safePipeData(
-      tb.externalStatusLatest({ ids: slugChain }),
-      "externalStatusLatest (og)",
-    );
-    const latestRows = Array.isArray(latestRes.data) ? latestRes.data : [];
-    latestRows.sort((a, b) => b.last_fetched_at - a.last_fetched_at);
-    const latest = latestRows[0];
-
-    const fetchedAt = latest?.last_fetched_at ?? 0;
-    const stale = fetchedAt === 0 || isStale(fetchedAt);
-    const content = stale
+  if (componentResult?.service && componentResult.component) {
+    const { service, component } = componentResult;
+    isDetail = true;
+    const content = component.stale
       ? UNKNOWN
       : getStatus({
-          indicator: latest?.indicator ?? "",
-          status: latest?.status ?? "",
+          indicator: component.indicator,
+          status: component.status,
         });
-
     category = content.label;
     categoryDot = content.bg;
-    title = `Is ${service.name} down?`;
+    title = `Is ${service.name} ${component.name} down?`;
     description = "";
-    footer = `${FOOTER}/${service.slug}`;
+    footer = `${FOOTER}/${service.slug}/${component.slug}`;
+  } else {
+    const service = slug
+      ? await cachedGetExternalServiceBySlug(slug)
+      : undefined;
+
+    if (!service) {
+      const services = await cachedListExternalServices();
+      category = "external status";
+      title = INDEX_TITLE;
+      description = `${services.length} providers monitored — ${INDEX_DESCRIPTION}`;
+      footer = FOOTER;
+    } else {
+      isDetail = true;
+      const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
+      const slugChain = [service.slug, ...aliasSlugs];
+
+      const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
+      const latestRes = await safePipeData(
+        tb.externalStatusLatest({ ids: slugChain }),
+        "externalStatusLatest (og)",
+      );
+      const latestRows = Array.isArray(latestRes.data) ? latestRes.data : [];
+      latestRows.sort((a, b) => b.last_fetched_at - a.last_fetched_at);
+      const latest = latestRows[0];
+
+      const fetchedAt = latest?.last_fetched_at ?? 0;
+      const stale = fetchedAt === 0 || isStale(fetchedAt);
+      const content = stale
+        ? UNKNOWN
+        : getStatus({
+            indicator: latest?.indicator ?? "",
+            status: latest?.status ?? "",
+          });
+
+      category = content.label;
+      categoryDot = content.bg;
+      title = `Is ${service.name} down?`;
+      description = "";
+      footer = `${FOOTER}/${service.slug}`;
+    }
   }
 
   return new ImageResponse(
@@ -150,7 +177,7 @@ export async function GET(req: Request) {
               <div tw={cn("rounded-full h-5 w-5 mr-2", categoryDot)} />
             ) : null}
             <p>{category}</p>]
-            {service
+            {isDetail
               ? ` | ${new Date().toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "long",

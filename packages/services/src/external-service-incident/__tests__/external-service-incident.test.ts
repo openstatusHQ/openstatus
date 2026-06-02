@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import {
+  listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
   pruneStaleRawPayloads,
   upsertExternalIncidentsForService,
@@ -271,6 +272,57 @@ describe("listExternalIncidentsBySlug", () => {
     });
     expect(service).toBeNull();
     expect(incidents).toEqual([]);
+  });
+});
+
+describe("listExternalIncidentsByComponent", () => {
+  test("returns only incidents tagged with the upstream component id", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-bycomp` });
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      incidents: [
+        {
+          providerIncidentId: "i-fra",
+          name: "Frankfurt outage",
+          status: "resolved",
+          createdAt: new Date("2024-06-01T00:00:00.000Z"),
+          startedAt: new Date("2024-06-01T00:00:00.000Z"),
+          resolvedAt: new Date("2024-06-01T01:00:00.000Z"),
+          affectedComponentIds: ["cmp-fra", "cmp-shared"],
+          raw: {},
+        },
+        {
+          providerIncidentId: "i-other",
+          name: "Stockholm only",
+          status: "resolved",
+          createdAt: new Date("2024-06-02T00:00:00.000Z"),
+          startedAt: new Date("2024-06-02T00:00:00.000Z"),
+          resolvedAt: new Date("2024-06-02T01:00:00.000Z"),
+          affectedComponentIds: ["cmp-arn"],
+          raw: {},
+        },
+      ],
+    });
+
+    const fra = await listExternalIncidentsByComponent({
+      externalServiceId: serviceId,
+      upstreamComponentId: "cmp-fra",
+    });
+    expect(fra).toHaveLength(1);
+    expect(fra[0]?.providerIncidentId).toBe("i-fra");
+
+    const shared = await listExternalIncidentsByComponent({
+      externalServiceId: serviceId,
+      upstreamComponentId: "cmp-shared",
+    });
+    expect(shared).toHaveLength(1);
+
+    const none = await listExternalIncidentsByComponent({
+      externalServiceId: serviceId,
+      upstreamComponentId: "cmp-unknown",
+    });
+    expect(none).toHaveLength(0);
   });
 });
 

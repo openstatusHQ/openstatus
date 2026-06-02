@@ -25,6 +25,7 @@ export type ComponentHistoryDay = {
 
 export type ExternalServiceComponentItem = {
   id: number;
+  slug: string;
   name: string;
   description?: string | null;
   groupName?: string | null;
@@ -37,6 +38,9 @@ export type ExternalServiceComponentItem = {
 export type ExternalServiceComponentsProps = {
   components: ExternalServiceComponentItem[];
   days: number;
+  // When set, each component name links to `${hrefBase}/${slug}`. Plain anchor so
+  // this block stays framework-agnostic (ADR-0003). Omit to render static rows.
+  hrefBase?: string;
 };
 
 // A lone, short section is worth showing open by default; multi-group or long
@@ -168,15 +172,26 @@ function sectionLabel(section: Section, soleSection: boolean): string {
 function ComponentRow({
   component,
   days,
+  hrefBase,
 }: {
   component: ExternalServiceComponentItem;
   days: number;
+  hrefBase?: string;
 }) {
   const series = buildSeries(component.history, days);
   return (
     <div className="flex flex-col gap-1 border-border/50 border-b py-2 last:border-b-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-medium text-sm">{component.name}</span>
+        {hrefBase ? (
+          <a
+            className="font-medium text-sm hover:underline"
+            href={`${hrefBase}/${component.slug}`}
+          >
+            {component.name}
+          </a>
+        ) : (
+          <span className="font-medium text-sm">{component.name}</span>
+        )}
         <ExternalServicePill
           indicator={component.indicator}
           status={component.status}
@@ -194,10 +209,12 @@ function SectionBlock({
   section,
   soleSection,
   days,
+  hrefBase,
 }: {
   section: Section;
   soleSection: boolean;
   days: number;
+  hrefBase?: string;
 }) {
   const issues = section.components.filter(isIssue).length;
   const maintenance = section.components.filter(isMaintenance).length;
@@ -243,7 +260,12 @@ function SectionBlock({
       </CollapsibleTrigger>
       <CollapsibleContent className="px-3 pb-2">
         {section.components.map((c) => (
-          <ComponentRow key={c.id} component={c} days={days} />
+          <ComponentRow
+            key={c.id}
+            component={c}
+            days={days}
+            hrefBase={hrefBase}
+          />
         ))}
       </CollapsibleContent>
     </Collapsible>
@@ -253,6 +275,7 @@ function SectionBlock({
 export function ExternalServiceComponents({
   components,
   days,
+  hrefBase,
 }: ExternalServiceComponentsProps) {
   if (components.length === 0) return null;
   const sections = buildSections(components);
@@ -266,6 +289,7 @@ export function ExternalServiceComponents({
           section={section}
           soleSection={soleSection}
           days={days}
+          hrefBase={hrefBase}
         />
       ))}
     </div>

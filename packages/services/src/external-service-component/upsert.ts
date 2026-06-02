@@ -1,8 +1,9 @@
-import { db as defaultDb, sql } from "@openstatus/db";
+import { db as defaultDb, eq, sql } from "@openstatus/db";
 import { externalServiceComponent } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
 import { withBusyRetry } from "../retry";
+import { assignComponentSlugs } from "./internal";
 
 export type UpsertExternalComponentInput = {
   upstreamComponentId: string;
@@ -35,22 +36,50 @@ export async function upsertExternalComponentsForService(args: {
   const now = args.now ?? new Date();
   const db = ctx?.db ?? defaultDb;
 
-  const values = components.map((c) => ({
-    externalServiceId,
-    upstreamComponentId: c.upstreamComponentId,
-    name: c.name,
-    description: c.description,
-    groupName: c.groupName,
-    position: c.position,
-    indicator: c.indicator,
-    status: c.status,
-    firstSeenAt: now,
-    lastSeenAt: now,
-    updatedAt: now,
-  }));
-
+  // No `withTransaction`/`emitAudit`: external services are a global, public,
+  // cron-driven catalogue with no workspace scope or audit log (ADR-0006/0007),
+  // mirroring `upsertExternalIncidentsForService`. `withBusyRetry` wraps the raw
+  // transaction since the audit-aware helper expects a workspace ServiceContext.
   return withBusyRetry(() =>
     db.transaction(async (tx) => {
+      const existing = await tx
+        .select({
+          upstreamComponentId: externalServiceComponent.upstreamComponentId,
+          name: externalServiceComponent.name,
+          slug: externalServiceComponent.slug,
+          aliases: externalServiceComponent.aliases,
+        })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
+        .all();
+
+      const slugs = assignComponentSlugs({
+        existing,
+        incoming: components.map((c) => ({
+          upstreamComponentId: c.upstreamComponentId,
+          name: c.name,
+        })),
+      });
+
+      const values = components.map((c) => {
+        const assigned = slugs.get(c.upstreamComponentId);
+        return {
+          externalServiceId,
+          upstreamComponentId: c.upstreamComponentId,
+          slug: assigned?.slug ?? c.upstreamComponentId,
+          aliases: assigned?.aliases ?? [],
+          name: c.name,
+          description: c.description,
+          groupName: c.groupName,
+          position: c.position,
+          indicator: c.indicator,
+          status: c.status,
+          firstSeenAt: now,
+          lastSeenAt: now,
+          updatedAt: now,
+        };
+      });
+
       const rows = await tx
         .insert(externalServiceComponent)
         .values(values)
@@ -60,6 +89,8 @@ export async function upsertExternalComponentsForService(args: {
             externalServiceComponent.upstreamComponentId,
           ],
           set: {
+            slug: sql`excluded.slug`,
+            aliases: sql`excluded.aliases`,
             name: sql`excluded.name`,
             description: sql`excluded.description`,
             groupName: sql`excluded.group_name`,

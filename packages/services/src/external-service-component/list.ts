@@ -1,5 +1,5 @@
-import { and, asc, db as defaultDb, eq, gte } from "@openstatus/db";
-import type { ApiConfigType } from "@openstatus/db/src/schema";
+import { and, asc, db as defaultDb, eq, gte, or, sql } from "@openstatus/db";
+import type { ApiConfigType, ExternalService } from "@openstatus/db/src/schema";
 import { externalServiceComponent } from "@openstatus/db/src/schema";
 
 import { getExternalServiceBySlug } from "../external-service";
@@ -9,6 +9,7 @@ export type ExternalComponentListItem = {
   id: number;
   externalServiceId: number;
   upstreamComponentId: string;
+  slug: string;
   name: string;
   description: string | null;
   groupName: string | null;
@@ -49,6 +50,7 @@ export async function listExternalComponentsByServiceId(args: {
       id: externalServiceComponent.id,
       externalServiceId: externalServiceComponent.externalServiceId,
       upstreamComponentId: externalServiceComponent.upstreamComponentId,
+      slug: externalServiceComponent.slug,
       name: externalServiceComponent.name,
       description: externalServiceComponent.description,
       groupName: externalServiceComponent.groupName,
@@ -110,5 +112,72 @@ export async function listExternalComponentsBySlug(args: {
     service: { id: service.id, apiConfigType },
     supported: true,
     components,
+  };
+}
+
+export type ExternalComponentDetail = ExternalComponentListItem & {
+  aliases: string[];
+  stale: boolean;
+};
+
+export type GetComponentBySlugResult = {
+  service: ExternalService | null;
+  component: ExternalComponentDetail | null;
+};
+
+// Resolves a component within a service by its current slug OR a past alias,
+// WITHOUT the staleness filter — old/renamed URLs still resolve (the page renders
+// last-known + noindex when `stale`). Returns the service so the page can do the
+// canonical-slug 308 checks for both segments.
+export async function getExternalComponentBySlug(args: {
+  ctx?: GlobalReadContext;
+  serviceSlug: string;
+  componentSlug: string;
+  now?: Date;
+}): Promise<GetComponentBySlugResult> {
+  const { ctx, serviceSlug, componentSlug } = args;
+  const db = ctx?.db ?? defaultDb;
+
+  const service = await getExternalServiceBySlug({ ctx, slug: serviceSlug });
+  if (!service) return { service: null, component: null };
+
+  const rows = await db
+    .select({
+      id: externalServiceComponent.id,
+      externalServiceId: externalServiceComponent.externalServiceId,
+      upstreamComponentId: externalServiceComponent.upstreamComponentId,
+      slug: externalServiceComponent.slug,
+      aliases: externalServiceComponent.aliases,
+      name: externalServiceComponent.name,
+      description: externalServiceComponent.description,
+      groupName: externalServiceComponent.groupName,
+      position: externalServiceComponent.position,
+      indicator: externalServiceComponent.indicator,
+      status: externalServiceComponent.status,
+      firstSeenAt: externalServiceComponent.firstSeenAt,
+      lastSeenAt: externalServiceComponent.lastSeenAt,
+    })
+    .from(externalServiceComponent)
+    .where(
+      and(
+        eq(externalServiceComponent.externalServiceId, service.id),
+        or(
+          eq(externalServiceComponent.slug, componentSlug),
+          sql`EXISTS (SELECT 1 FROM json_each(${externalServiceComponent.aliases}) WHERE value = ${componentSlug})`,
+        ),
+      ),
+    )
+    .limit(1)
+    .all();
+
+  const row = rows[0];
+  if (!row) return { service, component: null };
+
+  const cutoff = new Date(
+    (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS,
+  );
+  return {
+    service,
+    component: { ...row, stale: row.lastSeenAt < cutoff },
   };
 }

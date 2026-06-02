@@ -11,7 +11,10 @@ import {
   getUnrelatedPages,
   getUseCasePages,
 } from "@/content/utils";
-import { cachedListExternalServices } from "@/lib/external-service-cache";
+import {
+  cachedListExternalComponentsBySlug,
+  cachedListExternalServices,
+} from "@/lib/external-service-cache";
 import type { MetadataRoute } from "next";
 
 export const revalidate = 3600;
@@ -48,6 +51,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
   ];
+
+  const componentEntriesByService = await Promise.all(
+    externalServices
+      .filter((s) => s.deletedAt == null)
+      .map(async (s) => {
+        const { components } = await cachedListExternalComponentsBySlug(s.slug);
+        return components.map((c) => ({
+          url: `https://www.openstatus.dev/status/${s.slug}/${c.slug}`,
+          lastModified: c.lastSeenAt.toISOString().slice(0, 10),
+          changeFrequency: "hourly" as const,
+          priority: 0.6,
+        }));
+      }),
+  );
+  const externalServiceComponentEntries: MetadataRoute.Sitemap =
+    componentEntriesByService.flat();
 
   const blogs = allPosts.map((post) => ({
     url: `https://www.openstatus.dev/blog/${post.slug}`,
@@ -222,5 +241,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...customersIndex,
     ...externalServicesIndex,
     ...externalServiceEntries,
+    ...externalServiceComponentEntries,
   ];
 }

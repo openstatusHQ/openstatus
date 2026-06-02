@@ -124,6 +124,7 @@ export interface NormalizedIncident {
   startedAt?: Date;
   createdAt: Date;
   resolvedAt: Date | null;
+  affectedComponentIds: string[];
   raw: JsonValue;
 }
 
