@@ -2,7 +2,7 @@ import type { MDXData } from "@/content/utils";
 import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
-export const HOMEPAGE_TITLE = "openstatus - The Compliance-First Status Page";
+export const HOMEPAGE_TITLE = "The Compliance-First Status Page";
 export const DESCRIPTION =
   "Ship your status page before your SOC 2 auditor asks for it. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions. Open source and free to start.";
 
