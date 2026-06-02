@@ -175,12 +175,13 @@ export default async function DocsPage({
 
   return (
     <div className="flex gap-8">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 space-y-8">
         <SubNav />
-        <article className="prose dark:prose-invert max-w-none space-y-8">
+        <article className="prose dark:prose-invert max-w-none font-sans">
           <h1>{doc.metadata.title}</h1>
           <CustomMDX source={doc.content} />
-
+        </article>
+        <div className="space-y-4">
           <div className="flex items-center justify-between text-muted-foreground text-sm">
             <a
               href={`${EDIT_BASE}/${joined}.mdx`}
@@ -206,7 +207,7 @@ export default async function DocsPage({
             prev={prev && { href: `/docs/${prev.slug}`, title: prev.label }}
             next={next && { href: `/docs/${next.slug}`, title: next.label }}
           />
-        </article>
+        </div>
       </div>
 
       <aside className="hidden w-48 shrink-0 xl:block">

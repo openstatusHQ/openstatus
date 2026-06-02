@@ -18,7 +18,7 @@ import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import PlausibleProvider from "next-plausible";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const calSans = LocalFont({
   src: "../public/fonts/CalSans-SemiBold.ttf",
@@ -46,7 +46,7 @@ export default function RootLayout({
         className={`${
           inter.className
           // biome-ignore lint/nursery/useSortedClasses: <explanation>
-        } ${calSans.variable}`}
+        } ${inter.variable} ${calSans.variable}`}
       >
         <PlausibleProvider domain="openstatus.dev">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
