@@ -493,21 +493,25 @@ export function setDataByType({
       (Math.min(errorMs, MILLISECONDS_PER_DAY) / MILLISECONDS_PER_DAY) * 100;
     const remainingHeight = Math.max(0, 100 - errorHeight);
 
-    const highlightTotal = segments
-      .filter((segment) => segment.status !== "error")
-      .reduce((sum, segment) => sum + segment.count, 0);
+    const highlightSegments = segments.filter(
+      (segment) => segment.status !== "error",
+    );
+    const highlightTotal = highlightSegments.reduce(
+      (sum, segment) => sum + segment.count,
+      0,
+    );
 
     return segments.map((segment) => {
       if (segment.status === "error") {
         return { status: segment.status, height: errorHeight };
       }
-      // instant highlight events (no duration) still fill the remaining space
+      // instant highlight events (no duration) split the remaining space evenly
       return {
         status: segment.status,
         height:
           highlightTotal > 0
             ? (segment.count / highlightTotal) * remainingHeight
-            : remainingHeight,
+            : remainingHeight / highlightSegments.length,
       };
     });
   }

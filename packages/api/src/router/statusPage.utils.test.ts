@@ -170,14 +170,48 @@ describe("setDataByType", () => {
       });
 
       const bar = result[0].bar;
-      const error = bar.find((b) => b.status === "error");
-      const info = bar.find((b) => b.status === "info");
+      const errorHeight = bar.find((b) => b.status === "error")?.height ?? 0;
+      const infoHeight = bar.find((b) => b.status === "info")?.height ?? 0;
 
-      // downtime is a small slice of the full day, not half the bar
-      expect(error?.height ?? 0).toBeLessThan(10);
+      // 1h downtime is at most 1/24 of the day (~4.17%), never the old ~33%
+      expect(errorHeight).toBeGreaterThan(0);
+      expect(errorHeight).toBeLessThan(5);
+      expect(errorHeight).toBeLessThan(infoHeight);
       // maintenance fills the remaining space, no green uptime
       expect(bar.some((b) => b.status === "success")).toBe(false);
-      expect((error?.height ?? 0) + (info?.height ?? 0)).toBeCloseTo(100, 5);
+      expect(errorHeight + infoHeight).toBeCloseTo(100, 5);
+    });
+
+    it("should fill the whole day for a maintenance-only day", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [createMaintenance(1, 0, 2)];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      expect(result[0].bar).toHaveLength(1);
+      expect(result[0].bar[0].status).toBe("info");
+      expect(result[0].bar[0].height).toBe(100);
+    });
+
+    it("should fill the whole day for a report-only day", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [createReport(1, 0, 2)];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      expect(result[0].bar).toHaveLength(1);
+      expect(result[0].bar[0].status).toBe("degraded");
+      expect(result[0].bar[0].height).toBe(100);
     });
 
     it("should show empty bar when no data available", () => {
