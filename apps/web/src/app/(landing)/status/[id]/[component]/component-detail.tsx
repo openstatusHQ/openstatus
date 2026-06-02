@@ -281,7 +281,9 @@ export function ComponentDetail({
                   <span
                     className={`inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
                   >
-                    {inc.impact === "none" ? "incident" : (inc.impact ?? "incident")}
+                    {inc.impact === "none"
+                      ? "incident"
+                      : inc.impact ?? "incident"}
                   </span>
                 </div>
                 <ContentBoxDescription className="m-0! text-sm">

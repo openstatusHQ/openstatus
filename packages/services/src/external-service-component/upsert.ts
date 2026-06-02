@@ -50,7 +50,9 @@ export async function upsertExternalComponentsForService(args: {
           aliases: externalServiceComponent.aliases,
         })
         .from(externalServiceComponent)
-        .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
+        .where(
+          eq(externalServiceComponent.externalServiceId, externalServiceId),
+        )
         .all();
 
       const slugs = assignComponentSlugs({
