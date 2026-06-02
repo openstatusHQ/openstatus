@@ -2,13 +2,11 @@ import type { MDXData } from "@/content/utils";
 import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
-export const HOMEPAGE_TITLE =
-  "openstatus - The open-source status page trusted by growing teams";
+export const HOMEPAGE_TITLE = "openstatus - The Compliance-First Status Page";
 export const DESCRIPTION =
   "Ship your status page before your SOC 2 auditor asks for it. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions. Open source and free to start.";
 
-export const OG_DESCRIPTION =
-  "The open-source status page for compliance-ready teams";
+export const OG_DESCRIPTION = "The status page for compliance-ready teams";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -51,9 +49,7 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
 
   const ogImage = `${BASE_URL}/api/og?title=${encodeURIComponent(
     title,
-  )}&description=${encodeURIComponent(
-    description,
-  )}&category=${encodeURIComponent(category)}`;
+  )}&description=${encodeURIComponent(description)}&category=${encodeURIComponent(category)}`;
 
   const url = basePath
     ? `${BASE_URL}/${basePath}/${slug}`
