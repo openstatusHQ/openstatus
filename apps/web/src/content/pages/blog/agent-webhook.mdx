@@ -35,7 +35,7 @@ What if the system could write its own status report when things go sour?
 
 On-call engineers are immediately busy when woken up in the middle of the night.
 They don't want to bother manually updating a status page to inform users of what's going on.
-This manual step can already be done with the [Slack agent](/blog/openstatus-slack-agent), directly telling an agent what to add right from where you communicate with your team.
+This manual step can already be done with the [Slack agent](/blog/openstatus-slack-agent), directly telling an agent what to add right from where they communicate with their team.
 
 But we can go one step further.
 
@@ -70,16 +70,20 @@ Letting an AI write on your public status page, unsupervised, sounds reckless.
 The Slack agent never had to worry about it: a human reads every draft before it goes out.
 Take that human away and the safety net goes with it.
 
-So we put the safety somewhere else, into the architecture instead of the approval.
-The agent never holds the pen.
-It only ever sees read-only tools, and all it hands back is a decision: what to publish, where, and what to say.
-The writing itself happens in our own code, always with subscriber notifications turned off.
-Even if the model completely makes something up, it physically can't notify your users or post the same incident twice.
-The worst it can do is draft something a human deletes in seconds.
+So we moved the safety somewhere else, into the architecture instead of the approval step.
+The agent still writes the words.
+It decides what the report says, what to title it, and which page it belongs on, and that is exactly the job we want it doing.
+What it never gets is the ability to act.
+It has no write tools and no way to publish anything; all it can do is hand back a decision.
+Our own code is what actually creates the report, always with subscriber notifications turned off.
+So even when the model gets something wrong, the blast radius stays small: it can publish a shaky report, but it can't page anyone, email your subscribers, or post the same incident twice, and a human can fix or delete it in seconds.
 
-And before it writes anything at all, you get to watch it think.
-`DRY_RUN` is on by default: the agent investigates, reasons, and logs exactly what it would publish, without touching your status page.
-You only flip the switch once the drafts look right.
+That leaves one question: how do you trust it before letting it loose?
+That is what `DRY_RUN` is for, and it is on by default.
+In dry-run the agent does everything for real, investigating live events and writing the report it would publish, then logs that instead of posting it.
+You watch it handle real incidents until you are happy with how it behaves.
+Turning dry-run off doesn't sign off on the drafts you saw; it just hands the agent the keys.
+From then on it works on its own, and every new event gets a fresh investigation and freshly written wording, with no human in the loop.
 
 {/* <Image src="/assets/posts/agent-webhook/dry-run.png" alt="The agent's dry-run decision logged before any write" width={1600} height={500} /> */}
 
@@ -199,7 +203,6 @@ Your OpenStatus status page becomes the place you explain things to customers, w
 
 To be honest about what that is and isn't: it is an extension point, not a one-click connector.
 You still have to tell the agent which monitor and status page an incoming alert maps to, so it knows where to post and what to investigate.
-But the seam is there on purpose, and it is the part we are most excited to grow: more event types, ready-made adapters for the tools you already run, and a little control over the tone it writes in.
 
 ## Try it
 
