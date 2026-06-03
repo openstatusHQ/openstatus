@@ -20,9 +20,10 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
 
 const PLANS = {
-  free: ["starter", "team"],
-  starter: ["team"],
-  team: [],
+  free: ["starter", "team", "scale"],
+  starter: ["team", "scale"],
+  team: ["scale"],
+  scale: [],
 } satisfies Record<WorkspacePlan, WorkspacePlan[]>;
 
 export function UpgradeDialog(

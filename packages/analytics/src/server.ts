@@ -17,7 +17,7 @@ export type IdentifyProps = {
   fullName?: string | null;
   email?: string;
   workspaceId?: string;
-  plan?: "free" | "starter" | "team";
+  plan?: "free" | "starter" | "team" | "scale";
   // headers from the request
   location?: string;
   userAgent?: string;
