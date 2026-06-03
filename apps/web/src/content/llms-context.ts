@@ -18,8 +18,9 @@ export const PRODUCT_CONTEXT_MARKDOWN = `## Who it's for
 - **Hobby** — $0/month: 1 monitor, 6 regions, 10m check interval, 1 status page, 3 page components, 14-day data retention
 - **Starter** — $30/month: 20 monitors, 28 regions, 1m check interval, 1 status page, 20 components, 3-month retention, subscribers, custom domain, WhatsApp/SMS/PagerDuty alerts
 - **Pro** — $100/month: 50 monitors, 28 regions, 30s check interval, 5 status pages, 50 components, 12-month retention, private locations, OTel exporter, 20 notification channels
+- **Scale** — $500/month: everything in Pro plus 10 status pages, 500 page components, and White Label, Magic Link auth, and IP Restriction included at no extra cost
 
-Annual billing gives 2 months free (Starter $300/yr, Pro $1,000/yr). Pricing is available in USD, EUR, and INR.
+Annual billing gives 2 months free (Starter $300/yr, Pro $1,000/yr, Scale $5,000/yr). Pricing is available in USD and EUR.
 
 ## Key Features
 

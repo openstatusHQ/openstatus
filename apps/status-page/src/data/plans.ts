@@ -53,4 +53,22 @@ export const plans = [
       "audit-log": true,
     },
   },
+  {
+    title: "Scale",
+    id: "scale",
+    description: "For teams running serious infrastructure at scale",
+    price: 500,
+    limits: {
+      monitors: 100,
+      regions: 35,
+      periodicity: "30s",
+      "status-pages": 10,
+      members: Number.POSITIVE_INFINITY,
+      "notification-channels": 20,
+      "custom-domain": true,
+      "password-protection": true,
+      "status-subscribers": true,
+      "audit-log": true,
+    },
+  },
 ];

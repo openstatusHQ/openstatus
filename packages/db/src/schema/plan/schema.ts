@@ -70,7 +70,6 @@ export type Limits = z.infer<typeof limitsSchema>;
 const priceSchema = z.object({
   USD: z.number(),
   EUR: z.number(),
-  INR: z.number(),
 });
 
 export type Price = z.infer<typeof priceSchema>;
