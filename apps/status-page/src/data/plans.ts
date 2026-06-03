@@ -23,7 +23,7 @@ export const plans = [
     description: "Perfect for uptime monitoring",
     price: 30,
     limits: {
-      monitors: 10,
+      monitors: 20,
       regions: 35,
       periodicity: "1m",
       "status-pages": 1,
@@ -41,7 +41,7 @@ export const plans = [
     description: "Perfect for global synthetic monitoring",
     price: 100,
     limits: {
-      monitors: 100,
+      monitors: 50,
       regions: 35,
       periodicity: "30s",
       "status-pages": 5,
@@ -59,7 +59,7 @@ export const plans = [
     description: "For teams running serious infrastructure at scale",
     price: 500,
     limits: {
-      monitors: 100,
+      monitors: 50,
       regions: 35,
       periodicity: "30s",
       "status-pages": 10,

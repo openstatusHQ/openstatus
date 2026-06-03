@@ -100,14 +100,7 @@ export const addonsSchema = z.partialRecord(
 
 export type Addons = z.infer<typeof addonsSchema>;
 
-/**
- * Enforces that addon keys in Limits must be set to false in plan configs
- * (since addons can only be enabled by purchasing them)
- */
-export type PlanLimits = {
-  [K in keyof Limits]: K extends keyof Addons
-    ? Limits[K] extends boolean
-      ? false // Force addon boolean fields to false
-      : Limits[K] // Non-boolean fields stay as-is
-    : Limits[K]; // Non-addon fields stay as-is
-};
+// Addon flags can be true at the plan level when the plan bundles the addon
+// by default (e.g. Scale includes white-label / magic-link / IP restriction).
+// Otherwise they default to false and are flipped on via the addon purchase flow.
+export type PlanLimits = Limits;

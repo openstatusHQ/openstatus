@@ -241,33 +241,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       yearly: { USD: 5_000, EUR: 5_000 },
     },
     addons: {
-      "email-domain-protection": {
-        title: "Magic Link (Auth)",
-        description:
-          "Only allow user with a given email domain to access the status page.",
-        price: {
-          USD: 0,
-          EUR: 0,
-        },
-      },
-      "ip-restriction": {
-        title: "IP Restriction",
-        description:
-          "Restrict status page access to specific IPv4 CIDR ranges.",
-        price: {
-          USD: 0,
-          EUR: 0,
-        },
-      },
-      "white-label": {
-        title: "White Label",
-        description:
-          "Remove the 'powered by openstatus.dev' footer from your status pages.",
-        price: {
-          USD: 0,
-          EUR: 0,
-        },
-      },
       "status-pages": {
         title: "Status Pages",
         description: "Create and manage status pages for your workspace.",
@@ -296,9 +269,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "custom-domain": true,
       i18n: true,
       "password-protection": true,
-      "email-domain-protection": false,
-      "ip-restriction": false,
-      "white-label": false,
+      "email-domain-protection": true,
+      "ip-restriction": true,
+      "white-label": true,
       "no-index": true,
       notifications: true,
       sms: true,
