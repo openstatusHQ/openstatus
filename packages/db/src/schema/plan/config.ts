@@ -257,7 +257,7 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": AVAILABLE_REGIONS.length,
-      "data-retention": "12 months",
+      "data-retention": "24 months",
       "status-pages": 10,
       "page-components": 500,
       maintenance: true,
