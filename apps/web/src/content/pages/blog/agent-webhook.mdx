@@ -1,0 +1,210 @@
+---
+title: "From Alert to Status Page, Automatically"
+description: "Closing the gap between detecting an incident and telling your customers: an AI agent that writes the report for you."
+author: "Colin Ozanne"
+publishedAt: "2026-06-03"
+category: "engineering"
+image: "/assets/posts/agent-webhook/hero.png"
+---
+
+{/* Lede / hook — no heading, opens the post (like the Slack post's "It's 2 AM…").
+- Scene: dashboard red, alerts firing — but the public status page still says "All systems operational". The one thing customers actually look at is wrong.
+- The gap in one line: detection reaches your team, communication never reaches your users.
+- Tease: what if the status report wrote itself?
+ */}
+
+It's the middle of the night, alerts are firing, the on-call engineer is waking up. The status page has already flipped to red on its own, but that's all it says: a red bar and silence, while real users across the globe in another timezone hit real issues.
+The one thing customers turn to for checking whether the error is "them or us" shows a red bar and leaves them guessing.
+A red bar with no explanation loses customers just the same.
+
+There's a gap in communication here.
+The alerts fired as intended, the team got woken up, but the users are kept out of the loop while engineers fix it.
+The engineer is focused on getting the service back up instead of letting users know to sit tight.
+
+What if the alert could offer users a real explainer on what's going on?
+What if the system could write its own status report when things go sour?
+
+{/* <Image src="/assets/posts/agent-webhook/hero.png" alt="A red status page with no report, beside the same page after the agent publishes an explanation" width={2400} height={1350} /> */}
+
+## A red bar isn't an explanation
+
+{/*- Status pages need manual authoring at the worst possible moment.
+- What we already shipped: the [Slack agent](/blog/openstatus-slack-agent) — author incidents by chat, but a human still approves in-thread. Great when someone's around; useless at 3am.
+- The missing piece: the autonomous version. Alert → draft → published, no human required.
+*/}
+
+On-call engineers are immediately busy when woken up in the middle of the night.
+They don't want to bother manually updating a status page to inform users of what's going on.
+This manual step can already be done with the [Slack agent](/blog/openstatus-slack-agent), directly telling an agent what to add right from where you communicate with your team.
+
+But we can go one step further.
+
+Since everything else alerting the engineering team is automatic, let's let the users know automatically too!
+
+## A webhook that thinks
+
+{/*
+- OpenStatus already fires webhooks on monitor state change. What if the receiver were an agent, not a script?
+- Flow: monitor changes state → webhook → agent investigates → create / update / resolve a report.
+- Lifecycle mapping: `error`/`degraded` → create (or update an active report); `recovered` → resolve.
+- The entry point is just a validated payload — one arktype schema (`src/webhook/schema.ts`) checks the body, then the agent takes over. The shape is a contract, not a hard dependency (§"Where it fits" turns that into a feature).
+*/}
+
+OpenStatus already has everything to fire webhooks when downtime is detected. 
+These are traditionally used to fire off scripts.
+
+But it's 2026, what if the receiver were an agent, not a script?
+It could then ingest all the data we want to give it, and have it update our users via the status page fully autonomously.
+
+{/* <Image src="/assets/posts/agent-webhook/flow.png" alt="Flow: webhook → agent → status report" width={1600} height={900} /> */}
+
+## Trusting an agent to write, unsupervised
+
+{/* Centerpiece — the engineering story and the trust pitch.
+- The Slack agent's safety model was human approval. Remove the human and that model is gone.
+- New model = architecture, not approval: the LLM only ever sees read-only tools and returns a *decision*; code does the writes, always `notify: false`. Even a hallucination can't notify subscribers or double-post.
+- `DRY_RUN` is on by default — you watch it reason before it's allowed to write a word.
+*/}
+
+Letting an AI write on your public status page, unsupervised, sounds reckless.
+The Slack agent never had to worry about it: a human reads every draft before it goes out.
+Take that human away and the safety net goes with it.
+
+So we put the safety somewhere else, into the architecture instead of the approval.
+The agent never holds the pen.
+It only ever sees read-only tools, and all it hands back is a decision: what to publish, where, and what to say.
+The writing itself happens in our own code, always with subscriber notifications turned off.
+Even if the model completely makes something up, it physically can't notify your users or post the same incident twice.
+The worst it can do is draft something a human deletes in seconds.
+
+And before it writes anything at all, you get to watch it think.
+`DRY_RUN` is on by default: the agent investigates, reasons, and logs exactly what it would publish, without touching your status page.
+You only flip the switch once the drafts look right.
+
+{/* <Image src="/assets/posts/agent-webhook/dry-run.png" alt="The agent's dry-run decision logged before any write" width={1600} height={500} /> */}
+
+## Sounding like a service, not a monitor
+
+{/*
+- The prompt is where most of the work went. Beats:
+  - Don't restate the alert — anyone can echo an HTTP code; the story is in the diagnostics.
+  - Investigate first: baseline (`get_monitor_summary`), blast radius (`get_monitor_status`), symptom (`list_response_logs`).
+  - Quantify the deviation ("~17x slower than usual, ~25s vs a typical 1.5s").
+  - Write from the service's perspective, never the monitoring system's (no "probes", "checks", "regions").
+  - Default to publishing: silence during a real incident is the worst outcome; a false positive is cheap (silent + a human can edit/delete in seconds).
+- Quote the prompt's weak-vs-strong example here (verbatim, truncate the rest).
+*/}
+
+Getting the agent to publish safely was the engineering.
+Getting it to write something worth reading was the hard part.
+
+A report that just echoes the alert is worthless.
+"The health check returned a 429" is something anyone could write without an AI, and it tells a customer nothing.
+So most of the prompt is spent pushing the agent away from that.
+
+Before it writes a single line, it has to investigate.
+It pulls the normal baseline to see how far from normal things really are.
+It checks every region to work out the blast radius: one corner of the world, or everyone.
+It reads the recent failing checks to name the actual symptom, a timeout, a slow response, or an error code.
+Then it has to put numbers to it: not "the API is slow", but "around 17x slower than usual, roughly 25 seconds against a typical 1.5".
+
+The other half is voice.
+The reader is a customer, not an engineer on your team.
+They don't know or care that OpenStatus runs synthetic checks from probes around the world, so the agent is told never to mention any of it.
+It writes about the service, from the service's point of view, and frames affected regions as where your users are, not where our probes sit.
+
+Here is the difference that makes, taken straight from the prompt:
+
+> **Weak:** "Checks from the health endpoint are responding with HTTP 429 and connection timeouts. All 6 monitored regions report healthy status."
+>
+> **Strong:** "The ACME Production Site is rejecting some requests with rate-limit (HTTP 429) errors, and connections are timing out for users in several regions. Requests that do complete are returning about 17x slower than usual (~25 s vs a typical 1.5 s). Impact appears widespread and is currently stable."
+
+There is one last rule, and it might be the most important: when in doubt, publish.
+Silence during a real incident is the worst outcome there is.
+A false positive costs almost nothing, since it goes out without notifying anyone and a human can edit or delete it in seconds.
+So the agent is told to lean towards a careful, measured report rather than saying nothing at all.
+
+{/* <Image src="/assets/posts/agent-webhook/report.png" alt="A status report the agent drafted automatically" width={806} height={598} /> */}
+
+## The tech behind it
+
+{/*
+- Stack: Hono + srvx, the Vercel AI SDK, an MCP client to OpenStatus, arktype everywhere (env via arkenv, webhook payload, tool schemas, the decision), Claude Haiku 4.5 via the Vercel AI Gateway.
+- MCP as the integration layer: it talks to OpenStatus the same way any AI client would — reusing the existing [MCP server](/blog/building-cli-for-human-and-agents).
+- Structured output: an arktype schema → AI SDK `Output.object` → the decision is *validated*, not parsed.
+- Reliability beats: HMAC `x-webhook-secret` + timing-safe compare, ack-fast/process-in-background (`202`), in-memory dedup.
+*/}
+
+None of this takes much code.
+The whole service is a small [Hono](https://hono.dev) app, and the agent itself is a single call to the Vercel AI SDK running Claude Haiku 4.5 through the AI Gateway.
+
+The choice we like most is how it talks to OpenStatus: over MCP, exactly the way any other AI client would.
+We didn't build a private back door for it.
+The agent connects to OpenStatus's existing [MCP server](/blog/building-cli-for-human-and-agents), gets the read-only tools, investigates, and hands back its decision, and then our code calls the write tools.
+The agent-webhook is just one more consumer of the same surface we already give every other agent.
+
+A small thing we're quietly proud of: the decision the model returns is validated, not parsed.
+We describe the shape we expect with arktype and let the AI SDK enforce it, so a malformed decision never reaches our write code.
+arktype does the same job everywhere else, checking the environment on boot, the incoming webhook body, and every tool's inputs.
+
+The rest is the unglamorous plumbing every webhook receiver needs.
+Each request carries a shared secret in a header, which we compare in constant time so a wrong guess leaks nothing.
+We acknowledge the webhook straight away and run the slow agent work in the background, so OpenStatus is never left waiting on us.
+And we dedupe events in memory, because the same alert arriving twice should never turn into two reports.
+
+## Building on our own platform
+
+{/* Honest dogfooding beat.
+- Writing a real consumer against our own MCP/API surfaced mismatches between the docs and the actual behaviour.
+- Dogfooding works: what we found, what we fixed.
+*/}
+
+Building this turned out to be the best documentation review we have ever done.
+
+Writing a real consumer against our own MCP server meant actually depending on the docs, and that is where the cracks showed.
+The biggest one was a happy surprise: the server already exposed a whole set of monitor and response-log read tools that the reference page never mentioned.
+That gap is the reason this project works at all.
+Without those tools the agent would have nothing to investigate and nothing worth writing; with them it can pull baselines, per-region status, and individual failing checks.
+
+The other gaps were smaller but real.
+The docs undercounted the tools and left a couple of groups out entirely.
+The webhook payload was written up as a split between failure and recovery shapes, when the code actually sends one flat schema for every status, so our first version of the payload type was wrong until we matched the source.
+Our favourite one cut the other way: the docs undersold the safety.
+They described the notify flag as having no default, but the platform itself injects it and defaults it to off, so OpenStatus can hold notifications back no matter what the model asks for.
+Part of the guarantee we were carefully engineering was already baked into the platform.
+
+We kept a running list as we went, and we are working through the doc fixes.
+If you take one thing from this section: go build something real against your own product. It finds what nothing else will.
+
+## Where it fits
+
+{/*
+- Two ends of a spectrum: the Slack agent (assisted) and the webhook agent (autonomous). Pick what matches your team.
+- **Any signal → an OpenStatus report.** Because the receiver is just a validated payload + an agent, the trigger doesn't have to be an OpenStatus monitor. Today it speaks OpenStatus's webhook format, but the schema is the seam: put an adapter in front (or extend the schema) and Sentry, Grafana, PagerDuty, Datadog — whatever already alerts you — can drive the same agent. Your status page becomes the public comms layer for your whole stack; the agent folds the incoming data in and doesn't care where it came from.
+  - Honest caveat (keep it): it's an extension point, not a built-in connector. The external source still has to map to a monitor / status page / component so the agent knows where to post and what telemetry to pull.
+- Light forward look (don't overpromise): more event types, first-class source adapters, configurable tone.
+*/}
+
+We now have two agents doing the same job from opposite ends.
+The Slack agent is hands-on: you tell it what is happening and approve what it writes.
+The webhook agent is hands-off: it watches, decides, and publishes on its own.
+Most teams will want both, and reach for whichever fits the moment.
+
+There is a bigger idea hiding in the webhook one, though.
+The receiver doesn't really care that the alert came from OpenStatus.
+All it needs is a valid payload and an agent to read it.
+Today it speaks OpenStatus's webhook format, but that format is just a schema, and a schema is easy to swap.
+Put a small adapter in front of it, or extend the schema, and the same agent will happily turn a Sentry issue, a Grafana alert, or a PagerDuty incident into a status report.
+Your OpenStatus status page becomes the place you explain things to customers, whatever set the alarm off.
+
+To be honest about what that is and isn't: it is an extension point, not a one-click connector.
+You still have to tell the agent which monitor and status page an incoming alert maps to, so it knows where to post and what to investigate.
+But the seam is there on purpose, and it is the part we are most excited to grow: more event types, ready-made adapters for the tools you already run, and a little control over the tone it writes in.
+
+## Try it
+
+The whole thing is open source. [`agent-webhook`](https://github.com/openstatusHQ/agent-webhook) is a small service you can run anywhere: clone it, point an OpenStatus webhook at its `/webhook` endpoint, and wire it to the monitors you care about. It ships with `DRY_RUN` on, so you can watch the agent investigate and read its drafts before it's ever allowed to publish. Flip the flag once the logs look right.
+
+You don't need any of this to get the pieces, though. Webhook notifications and status pages are part of OpenStatus today, and the agent just sits between them and does the writing for you.
+
+<ButtonLink href="https://app.openstatus.dev?ref=blog-agent-webhook">Start monitoring with OpenStatus</ButtonLink>
