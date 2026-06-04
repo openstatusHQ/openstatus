@@ -18,7 +18,7 @@ jobs:
     name: Run OpenStatus Synthetics CI
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Run OpenStatus Synthetics CI
         uses: openstatushq/openstatus-github-action@v1
         with:
