@@ -13,6 +13,7 @@ export type UpsertExternalIncidentInput = {
   startedAt?: Date;
   createdAt: Date;
   resolvedAt: Date | null;
+  affectedComponentIds?: string[];
   raw: unknown;
 };
 
@@ -42,6 +43,7 @@ export async function upsertExternalIncidentsForService(args: {
     startedAt: incident.startedAt,
     createdAt: incident.createdAt,
     resolvedAt: incident.resolvedAt,
+    affectedComponentIds: incident.affectedComponentIds ?? [],
     rawPayload: incident.raw,
     rawPayloadPurgedAt: null,
     firstSeenAt: now,
@@ -66,6 +68,7 @@ export async function upsertExternalIncidentsForService(args: {
             shortlink: sql`excluded.shortlink`,
             startedAt: sql`excluded.started_at`,
             resolvedAt: sql`excluded.resolved_at`,
+            affectedComponentIds: sql`excluded.affected_component_ids`,
             rawPayload: sql`excluded.raw_payload`,
             rawPayloadPurgedAt: null,
             lastSeenAt: now,

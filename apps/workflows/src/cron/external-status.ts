@@ -2,11 +2,16 @@ import { getLogger } from "@logtape/logtape";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
 import {
+  type UpsertExternalComponentInput,
+  upsertExternalComponentsForService,
+} from "@openstatus/services/external-service-component";
+import {
   type UpsertExternalIncidentInput,
   upsertExternalIncidentsForService,
 } from "@openstatus/services/external-service-incident";
 import { FetchError, fetchers } from "@openstatus/status-fetcher";
 import type {
+  NormalizedComponent,
   NormalizedIncident,
   StatusFetcher,
   StatusPageEntry,
@@ -24,7 +29,7 @@ const logger = getLogger(["workflow", "external-status"]);
 
 const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
 
-// 10 per phase × 2 phases = peak 20 concurrent HTTP requests upstream; keeps
+// 10 per phase × 3 phases = peak 30 concurrent HTTP requests upstream; keeps
 // Atlassian/Incident.io CDNs comfortable while still parallelising heavily.
 const PHASE_CONCURRENCY = 10;
 
@@ -80,7 +85,30 @@ function toUpsertInput(
     startedAt: incident.startedAt,
     createdAt: incident.createdAt,
     resolvedAt: incident.resolvedAt,
+    affectedComponentIds: incident.affectedComponentIds,
     raw: incident.raw,
+  };
+}
+
+type ComponentSnapshot = {
+  component_id: string;
+  external_service_id: number;
+  indicator: string;
+  status: string;
+  fetched_at: number;
+};
+
+function toComponentUpsertInput(
+  component: NormalizedComponent,
+): UpsertExternalComponentInput {
+  return {
+    upstreamComponentId: component.upstreamComponentId,
+    name: component.name,
+    description: component.description,
+    groupName: component.groupName,
+    position: component.position,
+    indicator: component.severity,
+    status: component.status,
   };
 }
 
@@ -98,6 +126,11 @@ type StatusPhaseOutcome =
 
 type IncidentPhaseOutcome =
   | { kind: "ok"; slug: string; count: number }
+  | { kind: "skip"; slug: string }
+  | { kind: "fail"; slug: string; reason: string };
+
+type ComponentPhaseOutcome =
+  | { kind: "ok"; slug: string; snapshots: ComponentSnapshot[] }
   | { kind: "skip"; slug: string }
   | { kind: "fail"; slug: string; reason: string };
 
@@ -193,6 +226,73 @@ function runIncidentPhase(
   );
 }
 
+function runComponentPhase(
+  triplets: Triplet[],
+  tickStartedAt: Date,
+  fetchedAt: number,
+): Effect.Effect<ComponentPhaseOutcome[]> {
+  return Effect.forEach(
+    triplets,
+    ({ row, entry, fetcher }) => {
+      if (!fetcher || !fetcher.fetchComponents) {
+        return Effect.succeed<ComponentPhaseOutcome>({
+          kind: "skip",
+          slug: entry.id,
+        });
+      }
+      return fetcher.fetchComponents(entry).pipe(
+        Effect.flatMap((components) =>
+          Effect.tryPromise({
+            try: () =>
+              upsertExternalComponentsForService({
+                ctx: { db },
+                externalServiceId: row.id,
+                components: components.map(toComponentUpsertInput),
+                now: tickStartedAt,
+              }),
+            catch: (e) =>
+              new FetchError({
+                url: entry.status_page_url,
+                fetcherName: fetcher.name,
+                entryId: entry.id,
+                cause: e instanceof Error ? e : new Error(String(e)),
+              }),
+          }).pipe(
+            Effect.map((result): ComponentPhaseOutcome => {
+              // History rows key on our PK, so the upstream→PK map from the
+              // upsert turns each normalized component into a snapshot.
+              const byUpstream = new Map(
+                components.map((c) => [c.upstreamComponentId, c]),
+              );
+              const snapshots: ComponentSnapshot[] = [];
+              for (const upserted of result.upserted) {
+                const c = byUpstream.get(upserted.upstreamComponentId);
+                if (!c) continue;
+                snapshots.push({
+                  component_id: String(upserted.id),
+                  external_service_id: row.id,
+                  indicator: c.severity,
+                  status: c.status,
+                  fetched_at: fetchedAt,
+                });
+              }
+              return { kind: "ok", slug: entry.id, snapshots };
+            }),
+          ),
+        ),
+        Effect.catchAll((err: FetchError) =>
+          Effect.succeed<ComponentPhaseOutcome>({
+            kind: "fail",
+            slug: entry.id,
+            reason: err.message,
+          }),
+        ),
+      );
+    },
+    { concurrency: PHASE_CONCURRENCY },
+  );
+}
+
 function summarizeStatus(outcomes: StatusPhaseOutcome[]): {
   counts: PhaseCounts;
   snapshots: Snapshot[];
@@ -254,6 +354,39 @@ function summarizeIncidents(outcomes: IncidentPhaseOutcome[]): PhaseCounts {
   };
 }
 
+function summarizeComponents(outcomes: ComponentPhaseOutcome[]): {
+  counts: PhaseCounts;
+  snapshots: ComponentSnapshot[];
+} {
+  const snapshots: ComponentSnapshot[] = [];
+  let successCount = 0;
+  let failureCount = 0;
+  let skippedCount = 0;
+  for (const o of outcomes) {
+    if (o.kind === "ok") {
+      successCount++;
+      snapshots.push(...o.snapshots);
+    } else if (o.kind === "skip") {
+      skippedCount++;
+    } else {
+      failureCount++;
+      logger.warn(
+        "external-status components: failed for slug={slug}: {reason}",
+        { slug: o.slug, reason: o.reason },
+      );
+    }
+  }
+  return {
+    counts: {
+      successCount,
+      failureCount,
+      skippedCount,
+      total: outcomes.length,
+    },
+    snapshots,
+  };
+}
+
 function buildTriplets(services: ExternalServiceRow[]): Triplet[] {
   return services.map((row) => {
     const entry = toStatusPageEntry(row);
@@ -265,30 +398,41 @@ function buildTriplets(services: ExternalServiceRow[]): Triplet[] {
 export async function runExternalStatusTick(): Promise<{
   status: PhaseCounts;
   incidents: PhaseCounts;
+  components: PhaseCounts;
 }> {
   const services = await listExternalServices({ ctx: { db } });
 
   const triplets = buildTriplets(services);
   const tickStartedAt = new Date();
 
-  const [statusOutcomes, incidentOutcomes] = await Effect.runPromise(
-    Effect.all(
-      [
-        runStatusPhase(triplets, tickStartedAt.getTime()),
-        runIncidentPhase(triplets, tickStartedAt),
-      ],
-      { concurrency: "unbounded" },
-    ),
-  );
+  // The three phases are intentionally independent: each hits a different
+  // upstream endpoint and store, so a failed status fetch must not suppress a
+  // service's components (or vice versa). A tick can therefore persist
+  // component history for a service whose status snapshot failed that tick.
+  const [statusOutcomes, incidentOutcomes, componentOutcomes] =
+    await Effect.runPromise(
+      Effect.all(
+        [
+          runStatusPhase(triplets, tickStartedAt.getTime()),
+          runIncidentPhase(triplets, tickStartedAt),
+          runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
+        ],
+        { concurrency: "unbounded" },
+      ),
+    );
 
   const status = summarizeStatus(statusOutcomes);
   const incidents = summarizeIncidents(incidentOutcomes);
+  const components = summarizeComponents(componentOutcomes);
 
   if (status.snapshots.length > 0) {
     await tb.publishExternalStatus(status.snapshots);
   }
+  if (components.snapshots.length > 0) {
+    await tb.publishExternalStatusComponent(components.snapshots);
+  }
 
-  return { status: status.counts, incidents };
+  return { status: status.counts, incidents, components: components.counts };
 }
 
 export async function handleExternalStatusCron(c: Context) {
@@ -309,7 +453,7 @@ export async function handleExternalStatusCron(c: Context) {
       Effect.tap((res) =>
         Effect.sync(() => {
           logger.info(
-            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped)",
+            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped)",
             {
               statusOk: res.status.successCount,
               statusTotal: res.status.total,
@@ -319,6 +463,10 @@ export async function handleExternalStatusCron(c: Context) {
               incTotal: res.incidents.total,
               incFail: res.incidents.failureCount,
               incSkip: res.incidents.skippedCount,
+              compOk: res.components.successCount,
+              compTotal: res.components.total,
+              compFail: res.components.failureCount,
+              compSkip: res.components.skippedCount,
             },
           );
           void cronCompleted();

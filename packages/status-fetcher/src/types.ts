@@ -124,7 +124,18 @@ export interface NormalizedIncident {
   startedAt?: Date;
   createdAt: Date;
   resolvedAt: Date | null;
+  affectedComponentIds: string[];
   raw: JsonValue;
+}
+
+export interface NormalizedComponent {
+  upstreamComponentId: string;
+  name: string;
+  description?: string;
+  groupName?: string;
+  position: number;
+  severity: SeverityLevel;
+  status: StatusType;
 }
 
 export interface StatusFetcher {
@@ -134,4 +145,7 @@ export interface StatusFetcher {
   fetchIncidents?(
     entry: StatusPageEntry,
   ): Effect.Effect<NormalizedIncident[], FetchError>;
+  fetchComponents?(
+    entry: StatusPageEntry,
+  ): Effect.Effect<NormalizedComponent[], FetchError>;
 }

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { ButtonLink } from "@/content/mdx-components/button-link";
 import { CustomLink } from "@/content/mdx-components/custom-link";
-import { cachedGetExternalServiceBySlug } from "@/lib/external-service-cache";
+import { cachedGetExternalComponentBySlug } from "@/lib/external-service-cache";
 import {
   APP_URL,
   BASE_URL,
@@ -18,39 +18,40 @@ import {
   ContentBoxContainer,
   ContentBoxDescription,
   ContentBoxTitle,
-} from "../../content-box";
-import { ServiceDetail } from "./service-detail";
+} from "../../../content-box";
+import { ComponentDetail } from "./component-detail";
 
 export const dynamic = "force-dynamic";
 
 const HISTORY_DAYS = 45;
 
-type RouteParams = { id: string };
+type RouteParams = { id: string; component: string };
 
 export async function generateMetadata(args: {
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
-  const { id } = await args.params;
-  const service = await cachedGetExternalServiceBySlug(id);
-  if (!service) return { ...defaultMetadata, title: "Not Found" };
+  const { id, component: componentParam } = await args.params;
+  const { service, component } = await cachedGetExternalComponentBySlug(
+    id,
+    componentParam,
+  );
+  if (!service || !component) {
+    return { ...defaultMetadata, title: "Not Found" };
+  }
 
-  const title = `Is ${service.name} Down? ${service.name} Status & Incidents`;
-  const description = `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
-  const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
-  const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
-  const indexable = service.deletedAt == null;
+  const fullName = `${service.name} ${component.name}`;
+  const title = `Is ${fullName} Down? ${fullName} Status & History`;
+  const description = `Is ${component.name} (${service.name}) down right now? Check the live status, uptime over the last ${HISTORY_DAYS} days, and recent incidents for ${component.name} tracked by OpenStatus.`;
+  const canonicalUrl = `${BASE_URL}/status/${service.slug}/${component.slug}`;
+  const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}&component=${encodeURIComponent(component.slug)}`;
+  const indexable = service.deletedAt == null && !component.stale;
 
   return {
     ...defaultMetadata,
     title,
     description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    robots: {
-      index: indexable,
-      follow: true,
-    },
+    alternates: { canonical: canonicalUrl },
+    robots: { index: indexable, follow: true },
     openGraph: {
       ...ogMetadata,
       title,
@@ -58,41 +59,36 @@ export async function generateMetadata(args: {
       url: canonicalUrl,
       images: [ogImage],
     },
-    twitter: {
-      ...twitterMetadata,
-      title,
-      description,
-      images: [ogImage],
-    },
+    twitter: { ...twitterMetadata, title, description, images: [ogImage] },
   };
 }
 
 export default async function Page(args: { params: Promise<RouteParams> }) {
-  const { id } = await args.params;
-  const service = await cachedGetExternalServiceBySlug(id);
-  if (!service) notFound();
+  const { id, component: componentParam } = await args.params;
+  const { service, component } = await cachedGetExternalComponentBySlug(
+    id,
+    componentParam,
+  );
+  if (!service || !component) notFound();
 
   if (service.slug !== id) {
-    permanentRedirect(`/status/${service.slug}`);
+    permanentRedirect(`/status/${service.slug}/${componentParam}`);
+  }
+  if (component.slug !== componentParam) {
+    permanentRedirect(`/status/${service.slug}/${component.slug}`);
   }
 
-  await Promise.all([
-    api.externalService.detail.prefetch({
-      slug: service.slug,
-      days: HISTORY_DAYS,
-    }),
-    api.externalService.incidents.prefetch({ slug: service.slug }),
-    api.externalService.components.prefetch({
-      slug: service.slug,
-      days: HISTORY_DAYS,
-    }),
-  ]);
+  await api.externalService.component.prefetch({
+    serviceSlug: service.slug,
+    componentSlug: component.slug,
+    days: HISTORY_DAYS,
+  });
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
       <ContentBoxContainer className="not-prose my-6 px-4 py-2 text-sm">
         <CustomLink
-          href={`${APP_URL}?ref=status-service-top`}
+          href={`${APP_URL}?ref=status-component-top`}
           className="font-medium underline-offset-4 hover:underline"
         >
           Catch downtime instantly and keep your users in the loop with
@@ -105,12 +101,16 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
           fallback={
             <section className="prose dark:prose-invert mb-12 max-w-none">
               <p className="text-muted-foreground">
-                Loading {service.name} status…
+                Loading {service.name} {component.name} status…
               </p>
             </section>
           }
         >
-          <ServiceDetail slug={service.slug} days={HISTORY_DAYS} />
+          <ComponentDetail
+            serviceSlug={service.slug}
+            componentSlug={component.slug}
+            days={HISTORY_DAYS}
+          />
         </Suspense>
       </HydrateClient>
 
@@ -121,7 +121,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         <ContentBoxDescription className="m-0! text-sm">
           Every service needs a status page. Run yours with OpenStatus.
         </ContentBoxDescription>
-        <ButtonLink href={`${APP_URL}?ref=status-service-bottom`}>
+        <ButtonLink href={`${APP_URL}?ref=status-component-bottom`}>
           Create your status page
         </ButtonLink>
       </ContentBoxContainer>

@@ -512,6 +512,13 @@
       "when": 1779967971625,
       "tag": "0072_curvy_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "6",
+      "when": 1780560757326,
+      "tag": "0073_tiresome_doomsday",
+      "breakpoints": true
     }
   ]
 }
