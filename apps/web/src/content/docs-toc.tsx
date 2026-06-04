@@ -214,18 +214,10 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
       >
         <TocB items={items} active={active} />
       </div>
-      <div
-        data-uidotsh-option="Numbered sections"
-        className="contents"
-        hidden
-      >
+      <div data-uidotsh-option="Numbered sections" className="contents" hidden>
         <TocC items={items} active={active} />
       </div>
-      <div
-        data-uidotsh-option="Minimal fade"
-        className="contents"
-        hidden
-      >
+      <div data-uidotsh-option="Minimal fade" className="contents" hidden>
         <TocD items={items} active={active} />
       </div>
     </div>

@@ -151,9 +151,7 @@ export function CopyDropdownButton({
         <span className="relative top-px">
           <AnimatedCopyIcon isCopied={isCopied} />
         </span>
-        <span className="text-sm">
-          {isCopied ? "Copied" : "Copy link"}
-        </span>
+        <span className="text-sm">{isCopied ? "Copied" : "Copy link"}</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -163,9 +161,7 @@ export function CopyDropdownButton({
             className="group h-8 w-6 rounded-none text-muted-foreground transition-colors duration-150 ease hover:text-foreground motion-reduce:transition-none"
             aria-label="More copy options"
           >
-            <ChevronDown
-              className="size-3 transition-transform duration-200 ease-out group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-            />
+            <ChevronDown className="size-3 transition-transform duration-200 ease-out group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent

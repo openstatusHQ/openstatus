@@ -147,9 +147,8 @@ export function DocsSubNav({
 }: React.ComponentProps<"div"> & { title?: string }) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean).slice(0, -1);
-  const currentPage = title || capitalize(
-    pathname.split("/").filter(Boolean).pop() ?? "",
-  );
+  const currentPage =
+    title || capitalize(pathname.split("/").filter(Boolean).pop() ?? "");
 
   return (
     <div
@@ -174,11 +173,7 @@ export function DocsSubNav({
         >
           <BreadcrumbC segments={segments} currentPage={currentPage} />
         </div>
-        <div
-          data-uidotsh-option="Minimal path"
-          className="contents"
-          hidden
-        >
+        <div data-uidotsh-option="Minimal path" className="contents" hidden>
           <BreadcrumbD segments={segments} currentPage={currentPage} />
         </div>
       </div>
