@@ -169,6 +169,7 @@ export function StatusCalendar({
       locale={dateFnsLocale}
       markers={markers}
       renderMarkerRow={renderMarkerRow}
+      eventTypes={["report", "maintenance"]}
       disableFuture
       {...rest}
     />

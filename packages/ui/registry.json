@@ -295,7 +295,8 @@
         "button",
         "hover-card",
         "separator",
-        "skeleton"
+        "skeleton",
+        "use-media-query"
       ],
       "dependencies": ["date-fns", "lucide-react", "react-day-picker"],
       "files": [

@@ -11,6 +11,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
+  type FocusEvent,
   type ReactNode,
   type RefObject,
   forwardRef,
@@ -37,6 +38,7 @@ import {
 } from "@openstatus/ui/components/ui/hover-card";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 
 type BarEvent = StatusBarData["events"][number];
@@ -82,6 +84,12 @@ export interface StatusCalendarProps {
   locale?: Locale;
   /** Override how a single marker row renders inside the hover card. */
   renderMarkerRow?: (marker: StatusCalendarMarker) => ReactNode;
+  /**
+   * Restrict which event types drive the calendar (day fills, hover cards, and
+   * the forward-navigation cap). Markers of any other type are ignored. When
+   * omitted, all event types are shown.
+   */
+  eventTypes?: StatusEventType[];
 }
 
 const SEVERITY_RANK: Record<StatusCalendarMarker["status"], number> = {
@@ -91,14 +99,15 @@ const SEVERITY_RANK: Record<StatusCalendarMarker["status"], number> = {
   success: 0,
 };
 
-// Tinted-field treatment: the cell itself carries the status via a soft fill
-// at ~15% opacity. Hover deepens the same tint instead of swapping to the
-// neutral accent color, so the severity signal survives the hover state.
+// Tinted-field treatment: the cell carries the status via a soft fill at ~15%
+// opacity plus a matching day-number text color. Hover deepens the same tint
+// instead of swapping to the neutral accent color, so the severity signal
+// survives the hover state.
 const SEVERITY_FILL: Record<StatusCalendarMarker["status"], string> = {
-  error: "bg-destructive/15 hover:bg-destructive/25",
-  degraded: "bg-warning/15 hover:bg-warning/25",
-  info: "bg-info/15 hover:bg-info/25",
-  success: "bg-success/15 hover:bg-success/25",
+  error: "bg-destructive/10 hover:bg-destructive/20 text-destructive",
+  degraded: "bg-warning/10 hover:bg-warning/20 text-warning",
+  info: "bg-info/10 hover:bg-info/20 text-info",
+  success: "bg-success/10 hover:bg-success/20 text-success",
 };
 
 function dayKey(date: Date): string {
@@ -124,6 +133,7 @@ export function StatusCalendar({
   title,
   locale,
   renderMarkerRow,
+  eventTypes,
 }: StatusCalendarProps) {
   const labels = useStatusBlocksLabels();
   const resolvedTitle = title ?? labels.calendarTitle;
@@ -147,27 +157,35 @@ export function StatusCalendar({
     onMonthChange?.(normalized);
   };
 
+  // Drop markers whose type the caller opted out of before anything else reads
+  // them, so excluded types affect neither the fills, the cards, nor nav.
+  const visibleMarkers = useMemo(() => {
+    if (!eventTypes) return markers;
+    const allowed = new Set(eventTypes);
+    return markers.filter((m) => allowed.has(m.type));
+  }, [markers, eventTypes]);
+
   const markersByDay = useMemo(() => {
     const map = new Map<string, StatusCalendarMarker[]>();
-    for (const marker of markers) {
+    for (const marker of visibleMarkers) {
       const key = dayKey(marker.date);
       const bucket = map.get(key);
       if (bucket) bucket.push(marker);
       else map.set(key, [marker]);
     }
     return map;
-  }, [markers]);
+  }, [visibleMarkers]);
 
   // Cap forward navigation at the latest month that has a marker (or the
   // current month, whichever is later). Prevents browsing into empty future
   // months when no maintenance/event is scheduled.
   const maxMonth = useMemo(() => {
     const today = startOfMonth(new Date());
-    return markers.reduce((acc, m) => {
+    return visibleMarkers.reduce((acc, m) => {
       const mm = startOfMonth(m.date);
       return mm.getTime() > acc.getTime() ? mm : acc;
     }, today);
-  }, [markers]);
+  }, [visibleMarkers]);
   const canGoNext = currentMonth.getTime() < maxMonth.getTime();
 
   // Status-history cutoff: disable days strictly after the latest event (or
@@ -176,17 +194,31 @@ export function StatusCalendar({
   const maxDay = useMemo(() => {
     if (!disableFuture) return null;
     const today = startOfDay(new Date());
-    return markers.reduce((acc, m) => {
+    return visibleMarkers.reduce((acc, m) => {
       const d = startOfDay(m.date);
       return d.getTime() > acc.getTime() ? d : acc;
     }, today);
-  }, [markers, disableFuture]);
+  }, [visibleMarkers, disableFuture]);
 
   // Open state lives at the parent level: a per-day controlled HoverCard would
   // be lost if DayPicker decided to remount its day cells (e.g. during refetch-
   // driven parent re-renders). Tracking `activeDayKey` here keeps the popover
   // alive across remounts and re-renders.
+  //
+  // Interaction model mirrors `status-bar.tsx`: `(hover: none)` flags touch,
+  // hover only opens on non-touch, and a tap/click "pins" the card open (tap
+  // again to close). An outside pointerdown closes the pinned card.
+  const isTouch = useMediaQuery("(hover: none)");
+  const containerRef = useRef<HTMLDivElement>(null);
   const [activeDayKey, setActiveDayKey] = useState<string | null>(null);
+  const [interaction, setInteraction] = useState<
+    "hover" | "pin" | "focus" | null
+  >(null);
+  const interactionRef = useRef(interaction);
+  useEffect(() => {
+    interactionRef.current = interaction;
+  }, [interaction]);
+
   const closeTimerRef = useRef<number | null>(null);
   const cancelClose = useCallback(() => {
     if (closeTimerRef.current !== null) {
@@ -194,17 +226,74 @@ export function StatusCalendar({
       closeTimerRef.current = null;
     }
   }, []);
-  const requestOpen = useCallback(
+  const close = useCallback(() => {
+    cancelClose();
+    setActiveDayKey(null);
+    setInteraction(null);
+  }, [cancelClose]);
+
+  // Tap/click pins the card; tapping the pinned day again closes it. This is
+  // the only open path on touch — Radix HoverCard ignores touch pointers. The
+  // `interactionRef` lags a tap's focus event, so a focus-then-click on the
+  // same day still reads "pin" and toggles closed.
+  const handleClick = useCallback(
     (key: string) => {
       cancelClose();
-      setActiveDayKey(key);
+      setActiveDayKey((prev) => {
+        if (prev === key && interactionRef.current === "pin") {
+          setInteraction(null);
+          return null;
+        }
+        setInteraction("pin");
+        return key;
+      });
     },
     [cancelClose],
   );
-  const requestClose = useCallback(() => {
-    cancelClose();
-    closeTimerRef.current = window.setTimeout(() => setActiveDayKey(null), 120);
-  }, [cancelClose]);
+  const handleHoverStart = useCallback(
+    (key: string) => {
+      if (isTouch) return;
+      cancelClose();
+      setActiveDayKey(key);
+      setInteraction("hover");
+    },
+    [isTouch, cancelClose],
+  );
+  const handleHoverEnd = useCallback(() => {
+    if (interactionRef.current !== "hover") return;
+    closeTimerRef.current = window.setTimeout(() => {
+      setActiveDayKey(null);
+      setInteraction(null);
+    }, 100);
+  }, []);
+  const handleFocus = useCallback((key: string) => {
+    setActiveDayKey(key);
+    setInteraction("focus");
+  }, []);
+  const handleBlur = useCallback(
+    (e: FocusEvent) => {
+      const next = e.relatedTarget as Element | null;
+      // Focus moving into the card (e.g. an event link) shouldn't close it.
+      if (next?.closest('[data-slot="status-bar-card"]')) return;
+      close();
+    },
+    [close],
+  );
+
+  // Outside pointerdown closes the pinned card. Radix's own dismiss is
+  // suppressed on touch (see HoverCardContent) and the card is portaled out of
+  // `containerRef`, so we also keep clicks that land inside the card itself.
+  useEffect(() => {
+    if (activeDayKey === null) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (containerRef.current?.contains(target)) return;
+      if (target?.closest('[data-slot="status-bar-card"]')) return;
+      close();
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [activeDayKey, close]);
 
   const renderMarkerRowRef = useRef(renderMarkerRow);
   useEffect(() => {
@@ -217,19 +306,39 @@ export function StatusCalendar({
         {...dayProps}
         markersByDay={markersByDay}
         activeDayKey={activeDayKey}
-        onRequestOpen={requestOpen}
-        onRequestClose={requestClose}
+        isTouch={isTouch}
+        onClickDay={handleClick}
+        onHoverStart={handleHoverStart}
+        onHoverEnd={handleHoverEnd}
+        onHoverCardEnter={cancelClose}
+        onHoverCardLeave={close}
+        onFocusDay={handleFocus}
+        onBlurDay={handleBlur}
+        onClose={close}
         renderMarkerRowRef={renderMarkerRowRef}
         maxDay={maxDay}
       />
     ),
-    [markersByDay, activeDayKey, requestOpen, requestClose, maxDay],
+    [
+      markersByDay,
+      activeDayKey,
+      isTouch,
+      handleClick,
+      handleHoverStart,
+      handleHoverEnd,
+      cancelClose,
+      close,
+      handleFocus,
+      handleBlur,
+      maxDay,
+    ],
   );
 
   const dayPickerComponents = useMemo(() => ({ Day }), [Day]);
 
   return (
     <div
+      ref={containerRef}
       data-slot="status-calendar"
       className={cn(
         "flex flex-col rounded-lg border bg-card text-card-foreground",
@@ -301,8 +410,15 @@ export function StatusCalendar({
 interface CalendarDayProps extends DayProps {
   markersByDay: Map<string, StatusCalendarMarker[]>;
   activeDayKey: string | null;
-  onRequestOpen: (key: string) => void;
-  onRequestClose: () => void;
+  isTouch: boolean;
+  onClickDay: (key: string) => void;
+  onHoverStart: (key: string) => void;
+  onHoverEnd: () => void;
+  onHoverCardEnter: () => void;
+  onHoverCardLeave: () => void;
+  onFocusDay: (key: string) => void;
+  onBlurDay: (e: FocusEvent) => void;
+  onClose: () => void;
   renderMarkerRowRef: RefObject<
     ((marker: StatusCalendarMarker) => ReactNode) | undefined
   >;
@@ -317,8 +433,15 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       displayMonth,
       markersByDay,
       activeDayKey,
-      onRequestOpen,
-      onRequestClose,
+      isTouch,
+      onClickDay,
+      onHoverStart,
+      onHoverEnd,
+      onHoverCardEnter,
+      onHoverCardLeave,
+      onFocusDay,
+      onBlurDay,
+      onClose,
       renderMarkerRowRef,
       maxDay,
     },
@@ -336,7 +459,9 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     // logic — we have to drop these cells ourselves so the grid only shows the
     // current month.
     if (isOutside) {
-      return <div data-day-state="outside" />;
+      return (
+        <div data-day-state="outside" className="h-12 w-full bg-muted/30" />
+      );
     }
 
     // Past the status-history cutoff: render a dimmed, non-interactive cell.
@@ -402,15 +527,10 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     );
 
     return (
-      <HoverCard
-        openDelay={0}
-        closeDelay={0}
-        open={open}
-        onOpenChange={(next) => {
-          if (next) onRequestOpen(thisDayKey);
-          else onRequestClose();
-        }}
-      >
+      // No `onOpenChange`: open state is fully controlled by our handlers (see
+      // parent), matching `status-bar.tsx`. Radix's hover/dismiss listeners fire
+      // into a no-op, so they can't fight the pin/toggle model.
+      <HoverCard openDelay={0} closeDelay={0} open={open}>
         <HoverCardTrigger asChild>
           <button
             type="button"
@@ -419,13 +539,13 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
             data-day-state="interactive"
             aria-pressed={open}
             className={dayClass}
-            onClick={() => onRequestOpen(thisDayKey)}
-            onMouseEnter={() => onRequestOpen(thisDayKey)}
-            onMouseLeave={onRequestClose}
-            onFocus={() => onRequestOpen(thisDayKey)}
-            onBlur={onRequestClose}
+            onClick={() => onClickDay(thisDayKey)}
+            onMouseEnter={() => onHoverStart(thisDayKey)}
+            onMouseLeave={onHoverEnd}
+            onFocus={() => onFocusDay(thisDayKey)}
+            onBlur={onBlurDay}
             onKeyDown={(e) => {
-              if (e.key === "Escape") onRequestClose();
+              if (e.key === "Escape") onClose();
             }}
           >
             {format(date, "d")}
@@ -435,8 +555,14 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
           side="top"
           align="center"
           className="w-auto min-w-40 p-0"
-          onMouseEnter={() => onRequestOpen(thisDayKey)}
-          onMouseLeave={onRequestClose}
+          onMouseEnter={onHoverCardEnter}
+          onMouseLeave={onHoverCardLeave}
+          // On touch, the opening tap's emulated pointer sequence would trip
+          // Radix's dismiss-on-outside and close the card immediately. Suppress
+          // it here; the parent's document listener handles real outside taps.
+          onPointerDownOutside={(e) => {
+            if (isTouch) e.preventDefault();
+          }}
         >
           <StatusBarCard
             item={barItem}
@@ -446,7 +572,9 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
               const idx = indexByEventId.get(event.id) ?? 0;
               return (
                 <div key={`${event.id}-${event.type}`}>
-                  {eventIndex > 0 && <Separator className="-mx-2 my-2" />}
+                  {eventIndex > 0 && (
+                    <Separator className="-mx-2 my-2 data-[orientation=horizontal]:w-auto" />
+                  )}
                   {fn(dayMarkers[idx])}
                 </div>
               );
