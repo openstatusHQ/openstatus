@@ -199,18 +199,6 @@ export function ComponentDetail({
         }}
       />
 
-      <nav className="not-prose mb-4 text-muted-foreground text-sm">
-        <a className="hover:underline" href="/status">
-          External Status
-        </a>
-        {" / "}
-        <a className="hover:underline" href={`/status/${service.slug}`}>
-          {service.name}
-        </a>
-        {" / "}
-        <span className="text-foreground">{component.name}</span>
-      </nav>
-
       <h1>
         Is {service.name} {component.name} down?
       </h1>
@@ -235,9 +223,6 @@ export function ComponentDetail({
             ) : null}
           </span>
         ) : null}
-        <a className="text-sm underline" href={`/status/${service.slug}`}>
-          ← {service.name} status
-        </a>
         <a
           className="text-sm underline"
           href={service.statusPageUrl}
