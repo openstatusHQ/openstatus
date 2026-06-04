@@ -10,6 +10,7 @@ const DAILY_LIMIT_BY_PLAN: Record<WorkspacePlan, number> = {
   free: 20,
   starter: 50,
   team: 50,
+  scale: 50,
 };
 
 export type ChatRateLimitResult = {

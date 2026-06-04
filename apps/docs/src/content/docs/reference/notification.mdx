@@ -86,43 +86,9 @@ Sends HTTP POST requests to a custom endpoint with a JSON payload.
 -   **URL:** (Required) The endpoint URL to which the webhook payload will be sent.
 -   **Headers:** (Optional) Custom HTTP headers to include with the webhook request (key-value pairs).
 
-#### Notification Payloads
+#### Notification Payload
 
-Webhook notifications utilize specific JSON payloads for different monitor status changes.
-
-##### Monitor Recovery Payload
-
-Sent when a monitor recovers from a `degraded` or `error` state.
-
-```json
-{
-  "monitor": {
-    "id": 1,
-    "name": "test",
-    "url": "http://openstat.us"
-  },
-  "cronTimestamp": 1744023705307,
-  "status": "recovered",
-  "statusCode": 200,
-  "latency": 1337
-}
-```
-
-**Payload Fields:**
-
-| Field         | Type     | Description                                                          |
-| :------------ | :------- | :------------------------------------------------------------------- |
-| `monitor.id`  | `number` | Unique identifier of the monitor.                                    |
-| `monitor.name`| `string` | Name of the monitor.                                                 |
-| `monitor.url` | `string` | The URL or URI being monitored.                                      |
-| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.        |
-| `status`      | `string` | Indicates the monitor status: `"recovered"`.                        |
-| `statusCode`  | `number` | (Optional) HTTP status code returned by the monitored service.        |
-| `latency`     | `number` | (Optional) Time taken to complete the check in milliseconds.         |
-
-##### Monitor Failure Payload
-
-Sent when a monitor enters an `error` or `degraded` state.
+Every webhook notification — `error`, `degraded`, and `recovered` — uses the same flat JSON payload. `statusCode`, `latency`, and `errorMessage` are optional on **every** status; the sender includes whichever apply to the check.
 
 ```json
 {
@@ -133,20 +99,28 @@ Sent when a monitor enters an `error` or `degraded` state.
   },
   "cronTimestamp": 1744023705307,
   "status": "error",
-  "errorMessage": "Connection refused"
+  "statusCode": 500,
+  "latency": 1337,
+  "errorMessage": "Internal Server Error"
 }
 ```
 
 **Payload Fields:**
 
-| Field         | Type     | Description                                                          |
-| :------------ | :------- | :------------------------------------------------------------------- |
-| `monitor.id`  | `number` | Unique identifier of the monitor.                                    |
-| `monitor.name`| `string` | Name of the monitor.                                                 |
-| `monitor.url` | `string` | The URL or URI being monitored.                                      |
-| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.        |
-| `status`      | `string` | Indicates the monitor status: `"degraded"` or `"error"`.         |
-| `errorMessage`| `string` | (Optional) A description of the error encountered during the check.  |
+| Field          | Type     | Description                                                          |
+| :------------- | :------- | :------------------------------------------------------------------- |
+| `monitor.id`   | `number` | Unique identifier of the monitor.                                   |
+| `monitor.name` | `string` | Name of the monitor.                                               |
+| `monitor.url`  | `string` | The URL or URI being monitored.                                    |
+| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.       |
+| `status`       | `string` | Monitor status: `"degraded"`, `"error"`, or `"recovered"`.         |
+| `statusCode`   | `number` | (Optional) HTTP status code returned by the monitored service.      |
+| `latency`      | `number` | (Optional) Time taken to complete the check in milliseconds.        |
+| `errorMessage` | `string` | (Optional) A description of the error encountered during the check. |
+
+#### Authentication
+
+Webhook requests carry **no payload signature or HMAC**. The only verification mechanism is the custom headers you configure (e.g. a shared-secret header such as `Authorization` or `x-webhook-secret`) — validate one of those on your endpoint.
 
 #### Zod Schema
 

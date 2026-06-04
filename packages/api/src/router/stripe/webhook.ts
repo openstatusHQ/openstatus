@@ -117,7 +117,7 @@ export const webhookRouter = createTRPCRouter({
           .get();
         if (!userResult) return;
 
-        const planOrder = ["free", "starter", "team"] as const;
+        const planOrder = ["free", "starter", "team", "scale"] as const;
         const oldIndex = planOrder.indexOf(oldPlan ?? "free");
         const newIndex = planOrder.indexOf(newPlan ?? "free");
 
