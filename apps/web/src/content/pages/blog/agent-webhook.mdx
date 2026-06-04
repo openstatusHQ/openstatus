@@ -12,7 +12,7 @@ When a service goes down, the openstatus status page flips to red on its own.
 But that's all it says: a red bar and no explanation.
 Users can see something is wrong, they just can't tell what, how bad, or whether anyone is on it, so they open a ticket while the on-call engineer is already heads-down fixing the actual problem.
 
-Thibault had the idea to close that gap: what if the webhook openstatus already fires didn't just trigger a script, but an agent that writes the status update itself?
+Thibault had the idea to close that gap: what if when an incident or alert is triggered, the webhook openstatus already fires didn't just trigger a script, but an agent that writes the status update itself?
 I picked it up and built it.
 
 This is the story of how, the decisions that shaped it, and the things that bit me.
@@ -197,7 +197,12 @@ That's the cool part: the trigger doesn't have to be an openstatus monitor.
 I wrote the schema to speak openstatus's webhook format, but a schema is easy to swap.
 Just adapt the schema, and the same agent will happily turn a Sentry issue, a Grafana alert, or a PagerDuty incident into a report on your openstatus status page.
 
+The same goes for the MCP server.
+Right now it's only using the openstatus MCP, but give the LLM any other source of info and it can be included in the status report!
+If the service you're using doesn't offer an MCP server, you could also give it any CLI tool to call.
+
 You still have to tell the agent which monitor and status page an incoming alert maps to, so it knows where to post and what to investigate.
+
 
 ## Try it
 
