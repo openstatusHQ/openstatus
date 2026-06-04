@@ -27,7 +27,7 @@ Get a key from the dashboard's **Settings → API Tokens**.
 
 Each API key carries a scope that controls what tools the MCP server exposes:
 
-- **Read-only** — the server only registers `list_*` tools. Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
+- **Read-only** — the server only registers read tools (`list_*` and `get_*`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
 - **Read & write** — every tool is available.
 
 Scope is set at key creation time and is **immutable**. To change a key's scope, revoke it and issue a new one.
@@ -36,25 +36,65 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 9 tools, scoped to the workspace tied to your API key. Mutations write to the audit log with `metadata.transport = "mcp"`.
+The server exposes 18 tools, grouped by resource and scoped to the workspace tied to your API key. Mutations write to the audit log with `metadata.transport = "mcp"`.
+
+### Pages
+
+| Tool                   | Type | Purpose |
+|------------------------|------|---------|
+| `list_status_pages`    | read | List public status pages with their slug and id. Used to discover the `pageId` required by mutation tools. |
+| `list_page_components` | read | List components on a status page with their id, name, type (`monitor` / `static`), and linked monitor. Used to discover the `pageComponentIds` accepted by `create_status_report`, `update_status_report`, and `create_maintenance`. |
+
+### Status reports
 
 | Tool                       | Type     | Purpose |
 |----------------------------|----------|---------|
-| `list_status_pages`        | read     | List public status pages with their slug and id. Used to discover the `pageId` required by mutation tools. |
-| `list_page_components`     | read     | List components on a status page with their id, name, type (`monitor` / `static`), and linked monitor. Used to discover the `pageComponentIds` accepted by `create_status_report`, `update_status_report`, and `create_maintenance`. |
 | `list_status_reports`      | read     | List status reports newest-first. `filter: "active" \| "all"` (defaults to active = excludes resolved). Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
-| `list_maintenances`        | read     | List maintenance windows newest-first. Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
 | `create_status_report`     | mutation | Create a new status report on a status page with an initial public update. |
 | `add_status_report_update` | mutation | Append a public update to an existing status report and bump its status. |
 | `update_status_report`     | mutation | Edit a report's title, status, or affected components without posting a public update. |
 | `resolve_status_report`    | mutation | Mark a report resolved and post a final public update with the supplied message. |
-| `create_maintenance`       | mutation | Schedule a maintenance window (`from` / `to` are ISO 8601 strings). |
+
+### Maintenance
+
+| Tool                 | Type     | Purpose |
+|----------------------|----------|---------|
+| `list_maintenances`  | read     | List maintenance windows newest-first. Paginated via `page` (1-indexed) and `perPage`; response carries a `pagination` object with `page`, `perPage`, `totalSize`, and `totalPages`. |
+| `create_maintenance` | mutation | Schedule a maintenance window (`from` / `to` are ISO 8601 strings). |
+
+### Monitors
+
+| Tool                  | Type | Purpose |
+|-----------------------|------|---------|
+| `list_monitors`       | read | List monitors newest-first, including `activeIncidentCount`. Used to discover the numeric `monitorId` the other monitor tools require. |
+| `get_monitor`         | read | Full configuration for one monitor: URL, regions, periodicity, retry/timeout, notification channels, tags. Does not return latency or status. |
+| `get_monitor_status`  | read | Per-region current health (active / degraded / error). No time window. |
+| `get_monitor_summary` | read | Aggregate success/degraded/error counts, p50–p99 latency, and `lastPingAt` over `1d` (default), `7d`, or `14d`. |
+| `list_response_logs`  | read | Recent per-region HTTP check results — request status, status code, latency — over `1d` (default), `7d`, or `14d`. HTTP monitors only; `limit` ≤ 100. |
+| `get_response_log`    | read | Full detail of one check: URL, timing breakdown (dns/connect/tls/ttfb/transfer), redacted response headers, error message, assertion results. |
+
+### Notifications
+
+| Tool                 | Type | Purpose |
+|----------------------|------|---------|
+| `list_notifications` | read | List notification channels and the monitors each one is wired to. Channel credentials are never exposed. |
+
+### Audit
+
+Registered only when the workspace plan includes the `audit-log` feature — otherwise these tools are absent from `tools/list`.
+
+| Tool              | Type | Purpose |
+|-------------------|------|---------|
+| `list_audit_logs` | read | List audit-log entries (mutating actions) newest-first, bounded to the last 14 days. Optional `entityType` + `entityId` filter. |
+| `get_audit_log`   | read | Full before/after snapshots and `changedFields` for a single audit-log entry. |
 
 The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
 
 ### Notifying subscribers
 
 Every mutation tool has a **required** `notify: boolean` field — there is no default. The tool's input schema rejects calls that omit it, which forces the LLM to make an explicit choice (and therefore ask the user) before firing.
+
+This required-field behaviour is specific to MCP. The dashboard AI assistant and the Slack agent wrap these same tools in an approval step that strips `notify` from the model-facing schema and injects it from a human toggle defaulting to `false`. MCP exposes the raw schema, so the caller must supply `notify` explicitly.
 
 Notifications dispatch as part of the same call. There is no separate notify tool: if you create a status report or append an update with `notify: false`, that update will **never** reach subscribers — you cannot retroactively notify the same update later. This matches the dashboard and Slack agent semantics.
 
@@ -140,6 +180,7 @@ Error messages are not redacted — the consumer is an LLM that benefits from th
 ## Limits
 
 - `list_status_reports` and `list_maintenances` use offset pagination: `page` (1-indexed, default 1) and `perPage` (default 50, max 200). The response's `pagination.totalPages` tells the LLM whether more pages exist. `list_status_pages` is unpaginated (workspaces typically have a handful).
+- `list_monitors` and `list_audit_logs` page via `perPage` (max 50); `list_notifications` via `perPage` (max 200); `list_response_logs` via `limit` (max 100) and `offset`.
 - No per-key rate limiting today. Treat MCP usage like REST: one server call per tool invocation.
 
 ## Audit log
