@@ -1,3 +1,5 @@
+import { getDocsPage } from "../docs";
+import { docsNavTree, findDocsNode } from "../docs.config";
 import {
   type MDXData,
   formatDate,
@@ -7,7 +9,7 @@ import {
   getCustomerPages,
   getGuides,
   getUseCasePages,
-} from "./utils";
+} from "./index";
 
 /**
  * Generates sitemap-style markdown listings for index and category pages
@@ -19,6 +21,12 @@ export function generateListingForPath(pathname: string): string | null {
   // Root path → overview of all content
   if (segments.length === 0) {
     return generateRootListing();
+  }
+
+  // Docs containers (hub, sections) have no backing MDX file — they render as
+  // card grids; list their children from the nav tree. Leaves hit TIER 1.
+  if (segments[0] === "docs") {
+    return generateDocsListing(`/${segments.join("/")}`);
   }
 
   const [category, subcategory, slug] = segments;
@@ -135,4 +143,24 @@ function generateRootListing(): string {
     .join("\n\n");
 
   return `# OpenStatus Content\n\n${content}\n`;
+}
+
+// List a docs container node's children. Any node in the tree with children is
+// listable (hub lists sections, a section lists pages); leaves return null and
+// fall through to their MDX file. Descriptions are resolved lazily per child.
+function generateDocsListing(href: string): string | null {
+  const node = findDocsNode(docsNavTree(), href);
+  if (!node?.children?.length) return null;
+
+  const intro = node.description ? `${node.description}\n\n` : "";
+  const items = node.children
+    .map((child) => {
+      const description = child.slug
+        ? getDocsPage(child.slug)?.metadata.description
+        : undefined;
+      return `- [${child.label}](${child.href})${description ? `: ${description}` : ""}`;
+    })
+    .join("\n");
+
+  return `# ${node.label}\n\n${intro}${items}\n`;
 }

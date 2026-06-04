@@ -14,12 +14,10 @@ import {
 import { DocsSubNav } from "@/content/docs-sub-nav";
 import { TableOfContents } from "@/content/docs-toc";
 import {
-  type DocsNavSection,
-  docsNav,
+  type DocsNavNode,
+  docsNavTree,
+  findDocsNode,
   getParentSlugs,
-  isExternalItem,
-  sectionForParentSlug,
-  sectionParentSlug,
 } from "@/content/docs.config";
 import { CustomMDX } from "@/content/mdx";
 import { Grid } from "@/content/mdx-components/grid";
@@ -67,10 +65,10 @@ export async function generateMetadata({
   const joined = slug.join("/");
   const doc = getDocsPage(joined);
   if (!doc) {
-    const section = sectionForParentSlug(joined);
-    if (section) {
+    const node = findDocsNode(docsNavTree(), `/docs/${joined}`);
+    if (node?.children?.length) {
       return {
-        title: `${section.label} — openstatus docs`,
+        title: `${node.label} — openstatus docs`,
         alternates: { canonical: `${BASE_URL}/docs/${joined}` },
       };
     }
@@ -83,74 +81,33 @@ export async function generateMetadata({
   };
 }
 
-type DocsCard = { href: string; title: string; description?: string };
-
-function DocsGrid({
-  title,
-  description,
-  cards,
-}: {
-  title: string;
-  description?: string;
-  cards: DocsCard[];
-}) {
+// A container node (the /docs hub or a section) → one card per child. Same nav
+// tree the markdown listing walks, so HTML and markdown can't drift.
+function DocsContainerLanding({ node }: { node: DocsNavNode }) {
   return (
-    <section className="prose dark:prose-invert max-w-none">
-      <h1>{title}</h1>
-      {description ? <p>{description}</p> : null}
-      <Grid cols={2}>
-        {cards.map((card) => (
-          <ContentBoxLink key={card.href} href={card.href}>
-            <ContentBoxTitle>{card.title}</ContentBoxTitle>
-            {card.description ? (
-              <ContentBoxDescription>{card.description}</ContentBoxDescription>
-            ) : null}
-          </ContentBoxLink>
-        ))}
-      </Grid>
-    </section>
+    <div className="min-w-0 flex-1 space-y-8">
+      <DocsSubNav />
+      <section className="prose dark:prose-invert max-w-none">
+        <h1>{node.label}</h1>
+        {node.description ? <p>{node.description}</p> : null}
+        <Grid cols={2}>
+          {node.children?.map((card) => {
+            const description = card.slug
+              ? getDocsPage(card.slug)?.metadata.description
+              : undefined;
+            return (
+              <ContentBoxLink key={card.href} href={card.href}>
+                <ContentBoxTitle>{card.label}</ContentBoxTitle>
+                {description ? (
+                  <ContentBoxDescription>{description}</ContentBoxDescription>
+                ) : null}
+              </ContentBoxLink>
+            );
+          })}
+        </Grid>
+      </section>
+    </div>
   );
-}
-
-// /docs → one card per section, linking to the section landing.
-function HubLanding() {
-  const cards: DocsCard[] = docsNav.flatMap((section) => {
-    const parent = sectionParentSlug(section);
-    if (!parent) return [];
-    const first = section.items.find((i) => !isExternalItem(i));
-    const overview =
-      first && !isExternalItem(first) ? getDocsPage(first.slug) : undefined;
-    return [
-      {
-        href: `/docs/${parent}`,
-        title: section.label,
-        description: overview?.metadata.description,
-      },
-    ];
-  });
-  return (
-    <DocsGrid
-      title="openstatus documentation"
-      description="Learn how to create your status page, monitor your endpoints, and configure notifications."
-      cards={cards}
-    />
-  );
-}
-
-// /docs/<section> → one card per page in that section.
-function SectionLanding({ section }: { section: DocsNavSection }) {
-  const cards: DocsCard[] = section.items.flatMap((item) =>
-    isExternalItem(item)
-      ? []
-      : [
-          {
-            href: `/docs/${item.slug}`,
-            title: item.label,
-            description: getDocsPage(item.slug)?.metadata.description,
-          },
-        ],
-  );
-  return <DocsGrid title={section.label} cards={cards} />;
 }
 
 export default async function DocsPage({
@@ -159,13 +116,15 @@ export default async function DocsPage({
   params: Promise<Params>;
 }) {
   const { slug } = await params;
-  if (!slug || slug.length === 0) return <HubLanding />;
+  const joined = slug?.join("/") ?? "";
 
-  const joined = slug.join("/");
-  const doc = getDocsPage(joined);
+  const doc = joined ? getDocsPage(joined) : undefined;
   if (!doc) {
-    const section = sectionForParentSlug(joined);
-    if (section) return <SectionLanding section={section} />;
+    const node = findDocsNode(
+      docsNavTree(),
+      joined ? `/docs/${joined}` : "/docs",
+    );
+    if (node?.children?.length) return <DocsContainerLanding node={node} />;
     notFound();
   }
 

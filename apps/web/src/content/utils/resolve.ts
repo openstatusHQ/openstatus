@@ -1,6 +1,5 @@
-import { getDocsPage } from "./docs";
-import { generateListingForPath } from "./listing";
-import type { MDXData } from "./utils";
+import { getDocsPage } from "../docs";
+import type { MDXData } from "./index";
 import {
   getBlogPosts,
   getChangelogPosts,
@@ -12,7 +11,8 @@ import {
   getToolsPages,
   getUnrelatedPages,
   getUseCasePages,
-} from "./utils";
+} from "./index";
+import { generateListingForPath } from "./listing";
 
 /**
  * Content resolution result - either MDX content or a generated listing

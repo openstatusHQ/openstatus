@@ -249,6 +249,59 @@ export function getParentSlugs(): string[] {
   return docsNav.map(sectionParentSlug).filter((s): s is string => Boolean(s));
 }
 
+// A navigable node in the docs hierarchy (hub → sections → pages). `slug` is set
+// for internal docs/sections so descriptions can be resolved lazily; `description`
+// holds a node's own intro text (only the hub has one). Pure — no fs.
+export type DocsNavNode = {
+  label: string;
+  href: string;
+  slug?: string;
+  description?: string;
+  children?: DocsNavNode[];
+};
+
+// The whole docs hierarchy as one rooted tree, derived from `docsNav`. Drives
+// path-agnostic listing: find a node by href, list its children at any depth.
+export function docsNavTree(): DocsNavNode {
+  return {
+    label: "openstatus documentation",
+    href: "/docs",
+    description:
+      "Learn how to create your status page, monitor your endpoints, and configure notifications.",
+    children: docsNav.map((section) => {
+      const parent = sectionParentSlug(section);
+      const overview = section.items.find((i) => !isExternalItem(i));
+      return {
+        label: section.label,
+        href: parent ? `/docs/${parent}` : "/docs",
+        slug: overview && !isExternalItem(overview) ? overview.slug : undefined,
+        children: section.items.map((item) =>
+          isExternalItem(item)
+            ? { label: item.label, href: item.link }
+            : {
+                label: item.label,
+                href: `/docs/${item.slug}`,
+                slug: item.slug,
+              },
+        ),
+      };
+    }),
+  };
+}
+
+// Depth-first lookup of a node by its href (e.g. "/docs", "/docs/concept").
+export function findDocsNode(
+  node: DocsNavNode,
+  href: string,
+): DocsNavNode | undefined {
+  if (node.href === href) return node;
+  for (const child of node.children ?? []) {
+    const found = findDocsNode(child, href);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 // Map a slug back to its section label (the value a doc's `category` must hold).
 export function sectionForSlug(slug: string): DocsSection | undefined {
   for (const section of docsNav) {
