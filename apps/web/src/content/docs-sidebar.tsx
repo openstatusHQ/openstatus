@@ -109,7 +109,7 @@ export function DocsSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   return (
     <aside className={className}>
-      <div className="sticky top-4">
+      <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
         <NavTree pathname={pathname} />
       </div>
     </aside>

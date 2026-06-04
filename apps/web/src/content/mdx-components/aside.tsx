@@ -1,21 +1,37 @@
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 import type React from "react";
 
 type AsideType = "note" | "tip" | "caution" | "danger";
 
-const ASIDE_META: Record<
-  AsideType,
-  { label: string; rule: string; text: string }
-> = {
-  note: { label: "Note", rule: "border-l-foreground", text: "text-foreground" },
-  tip: { label: "Tip", rule: "border-l-info", text: "text-info" },
-  caution: { label: "Caution", rule: "border-l-warning", text: "text-warning" },
-  danger: {
-    label: "Danger",
-    rule: "border-l-destructive",
-    text: "text-destructive",
-  },
+const ASIDE_LABEL: Record<AsideType, string> = {
+  note: "Note",
+  tip: "Tip",
+  caution: "Caution",
+  danger: "Danger",
 };
+
+const asideVariants = cva("my-4 border border-border p-4", {
+  variants: {
+    type: {
+      note: "border-border",
+      tip: "border-info",
+      caution: "border-warning",
+      danger: "border-destructive",
+    },
+  },
+});
+
+const asideTextVariants = cva("!mt-0 font-medium", {
+  variants: {
+    type: {
+      note: "text-foreground",
+      tip: "text-info",
+      caution: "text-warning",
+      danger: "text-destructive",
+    },
+  },
+});
 
 export function Aside({
   type = "note",
@@ -26,17 +42,13 @@ export function Aside({
   title?: string;
   children: React.ReactNode;
 }) {
-  const meta = ASIDE_META[type];
   return (
     <div
-      className={cn(
-        "my-4 border border-border border-l-2 p-4",
-        meta.rule,
-        "[&>*:last-child]:!mb-0",
-      )}
+      className={cn(asideVariants({ type }), "[&>*:last-child]:!mb-0")}
+      role="note"
     >
-      <p className={cn("!mt-0 mb-2 font-medium text-sm", meta.text)}>
-        {title ?? meta.label}
+      <p className={asideTextVariants({ type })}>
+        {title ?? ASIDE_LABEL[type]}
       </p>
       {children}
     </div>

@@ -95,13 +95,21 @@ You can add any number of custom HTTP headers to your request. This is particula
 
 
 <Aside title="We've got your User-Agent covered!">
+
 openstatus automatically includes the `"User-Agent": "openstatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
+
 </Aside>
 
 
 ## Important Considerations
+
 ### Monitoring Third-Party Endpoints
-<Aside>If you're monitoring a URL you don't own (like `google.com` or a partner API), your requests might be blocked by firewalls or rate limiters (e.g., Cloudflare). This is a security measure on their end to prevent scraping or denial-of-service attacks.</Aside>
+
+<Aside>
+
+If you're monitoring a URL you don't own (like `google.com` or a partner API), your requests might be blocked by firewalls or rate limiters (e.g., Cloudflare). This is a security measure on their end to prevent scraping or denial-of-service attacks.
+
+</Aside>
 
 ## What you've accomplished
 

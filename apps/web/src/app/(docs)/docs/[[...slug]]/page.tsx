@@ -182,7 +182,7 @@ export default async function DocsPage({
           <CustomMDX source={doc.content} />
         </article>
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-muted-foreground text-sm">
+          <div className="flex flex-row flex-wrap justify-between gap-x-4 gap-y-2 text-muted-foreground text-sm">
             <a
               href={`${EDIT_BASE}/${joined}.mdx`}
               target="_blank"
@@ -208,7 +208,7 @@ export default async function DocsPage({
       </div>
 
       <aside className="hidden w-48 shrink-0 xl:block">
-        <div className="sticky top-4">
+        <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
           <TableOfContents items={toc} />
         </div>
       </aside>
