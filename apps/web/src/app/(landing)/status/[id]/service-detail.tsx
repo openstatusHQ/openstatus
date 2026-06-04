@@ -1,11 +1,11 @@
 "use client";
 
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
 import { Suspense } from "react";
 
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
 import { api } from "@/trpc/rq-client";
 
+import { ExternalServicePill } from "../external-service-pill";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";

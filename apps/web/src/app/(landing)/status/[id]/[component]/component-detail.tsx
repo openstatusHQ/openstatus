@@ -1,7 +1,5 @@
 "use client";
 
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
-
 import {
   ContentBoxDescription,
   ContentBoxLink,
@@ -11,6 +9,7 @@ import { Grid } from "@/content/mdx-components/grid";
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
 import { api } from "@/trpc/rq-client";
 
+import { ExternalServicePill } from "../../external-service-pill";
 import { formatRelative } from "../../utils";
 import { HistoryBars } from "../history-bars";
 

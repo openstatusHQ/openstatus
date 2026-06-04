@@ -3,7 +3,7 @@
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 
-import { ExternalServicePill } from "@openstatus/ui/components/blocks/external-service-pill";
+import { ExternalServicePill } from "./external-service-pill";
 
 import { Grid } from "@/content/mdx-components/grid";
 import { api } from "@/trpc/rq-client";

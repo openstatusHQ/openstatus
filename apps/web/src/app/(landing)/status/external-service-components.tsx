@@ -38,8 +38,7 @@ export type ExternalServiceComponentItem = {
 export type ExternalServiceComponentsProps = {
   components: ExternalServiceComponentItem[];
   days: number;
-  // When set, each component name links to `${hrefBase}/${slug}`. Plain anchor so
-  // this block stays framework-agnostic (ADR-0003). Omit to render static rows.
+  // When set, each component name links to `${hrefBase}/${slug}`.
   hrefBase?: string;
 };
 

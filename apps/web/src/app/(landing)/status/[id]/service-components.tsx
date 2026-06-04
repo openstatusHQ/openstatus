@@ -1,8 +1,8 @@
 "use client";
 
-import { ExternalServiceComponents } from "@openstatus/ui/components/blocks/external-service-components";
-
 import { api } from "@/trpc/rq-client";
+
+import { ExternalServiceComponents } from "../external-service-components";
 
 export function ServiceComponents({
   slug,
