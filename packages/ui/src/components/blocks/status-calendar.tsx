@@ -99,10 +99,8 @@ const SEVERITY_RANK: Record<StatusCalendarMarker["status"], number> = {
   success: 0,
 };
 
-// Tinted-field treatment: the cell carries the status via a soft fill at ~15%
-// opacity plus a matching day-number text color. Hover deepens the same tint
-// instead of swapping to the neutral accent color, so the severity signal
-// survives the hover state.
+// Hover deepens the same tint rather than swapping to the neutral accent, so
+// the severity signal survives the hover state.
 const SEVERITY_FILL: Record<StatusCalendarMarker["status"], string> = {
   error: "bg-destructive/10 hover:bg-destructive/20 text-destructive",
   degraded: "bg-warning/10 hover:bg-warning/20 text-warning",
@@ -200,17 +198,17 @@ export function StatusCalendar({
     }, today);
   }, [visibleMarkers, disableFuture]);
 
-  // Open state lives at the parent level: a per-day controlled HoverCard would
-  // be lost if DayPicker decided to remount its day cells (e.g. during refetch-
-  // driven parent re-renders). Tracking `activeDayKey` here keeps the popover
-  // alive across remounts and re-renders.
-  //
-  // Interaction model mirrors `status-bar.tsx`: `(hover: none)` flags touch,
-  // hover only opens on non-touch, and a tap/click "pins" the card open (tap
-  // again to close). An outside pointerdown closes the pinned card.
+  // Open state lives at the parent so the popover survives DayPicker remounts.
+  // Interaction model mirrors `status-bar.tsx` (hover on non-touch, tap pins).
   const isTouch = useMediaQuery("(hover: none)");
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeDayKey, setActiveDayKey] = useState<string | null>(null);
+  // Via ref, not a `Day` dep: keeps `Day` identity stable so cells don't remount
+  // every hover. CalendarDay re-renders top-down on setActiveDayKey regardless.
+  const activeDayKeyRef = useRef(activeDayKey);
+  useEffect(() => {
+    activeDayKeyRef.current = activeDayKey;
+  }, [activeDayKey]);
   const [interaction, setInteraction] = useState<
     "hover" | "pin" | "focus" | null
   >(null);
@@ -305,7 +303,7 @@ export function StatusCalendar({
       <CalendarDay
         {...dayProps}
         markersByDay={markersByDay}
-        activeDayKey={activeDayKey}
+        activeDayKeyRef={activeDayKeyRef}
         isTouch={isTouch}
         onClickDay={handleClick}
         onHoverStart={handleHoverStart}
@@ -321,7 +319,6 @@ export function StatusCalendar({
     ),
     [
       markersByDay,
-      activeDayKey,
       isTouch,
       handleClick,
       handleHoverStart,
@@ -409,7 +406,7 @@ export function StatusCalendar({
 
 interface CalendarDayProps extends DayProps {
   markersByDay: Map<string, StatusCalendarMarker[]>;
-  activeDayKey: string | null;
+  activeDayKeyRef: RefObject<string | null>;
   isTouch: boolean;
   onClickDay: (key: string) => void;
   onHoverStart: (key: string) => void;
@@ -432,7 +429,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
       date,
       displayMonth,
       markersByDay,
-      activeDayKey,
+      activeDayKeyRef,
       isTouch,
       onClickDay,
       onHoverStart,
@@ -486,7 +483,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     const dayMarkers = markersByDay.get(thisDayKey) ?? [];
     const severity =
       dayMarkers.length > 0 ? worstSeverity(dayMarkers) : undefined;
-    const open = activeDayKey === thisDayKey;
+    const open = activeDayKeyRef.current === thisDayKey;
 
     const hasMarkers = dayMarkers.length > 0;
     // Tinted-field: severity days get a soft fill that owns the hover state,
@@ -603,11 +600,7 @@ export interface StatusCalendarSkeletonProps {
   className?: string;
 }
 
-/**
- * Loading-state placeholder that mirrors `<StatusCalendar>`'s chrome (header
- * + weekday strip + 6×7 grid). Render this while the data feeding the calendar
- * is in flight; swap to `<StatusCalendar>` once `markers` are ready.
- */
+/** Loading placeholder mirroring `<StatusCalendar>`'s chrome (header + 6×7 grid). */
 export function StatusCalendarSkeleton({
   title,
   className,

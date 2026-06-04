@@ -70,11 +70,10 @@ export function StatusCalendar({
       const lastUpdate = updates[updates.length - 1];
       const startedAt = firstUpdate?.date ?? report.createdAt;
       if (!startedAt) continue;
+      // Null (ongoing) unless a resolved update gives a real end date.
       const resolvedAt =
-        report.status === "resolved"
-          ? lastUpdate?.status === "resolved"
-            ? lastUpdate.date
-            : report.createdAt ?? null
+        report.status === "resolved" && lastUpdate?.status === "resolved"
+          ? lastUpdate.date
           : null;
 
       out.push({
