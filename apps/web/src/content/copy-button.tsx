@@ -11,7 +11,71 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeMiterlimit="10"
+      strokeLinecap="square"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M7 15L3 15L3 3L17 3L17 9" />
+      <path d="M7 9L7 21L21 21L21 9L7 9Z" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function AnimatedCopyIcon({ isCopied }: { isCopied: boolean }) {
+  return (
+    <span className="relative inline-flex size-4">
+      <CopyIcon
+        className={cn(
+          "absolute inset-0 transition-[opacity,transform,filter] duration-200 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+          isCopied
+            ? "scale-[0.25] opacity-0 blur-[4px]"
+            : "scale-100 opacity-100 blur-0",
+        )}
+      />
+      <CheckIcon
+        className={cn(
+          "absolute inset-0 transition-[opacity,transform,filter] duration-200 [transition-timing-function:cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none",
+          isCopied
+            ? "scale-100 opacity-100 blur-0"
+            : "scale-[0.25] opacity-0 blur-[4px]",
+        )}
+      />
+    </span>
+  );
+}
 
 export function CopyButton({
   className,
@@ -74,29 +138,34 @@ export function CopyDropdownButton({
 
   return (
     <ButtonGroup
-      className={cn("rounded-none border-none p-4", className)}
+      className={cn("rounded-none border-none", className)}
       {...props}
     >
       <Button
         variant="ghost"
-        className="rounded-none p-4"
+        size="sm"
+        className="h-8 gap-1.5 rounded-none px-2 text-muted-foreground transition-colors duration-150 ease hover:text-foreground motion-reduce:transition-none"
         onClick={handleCopyLink}
+        aria-label={isCopied ? "Link copied" : "Copy link"}
       >
-        {isCopied ? "[link copied]" : "[copy link]"}
+        <span className="relative top-px">
+          <AnimatedCopyIcon isCopied={isCopied} />
+        </span>
+        <span className="text-sm">
+          {isCopied ? "Copied" : "Copy link"}
+        </span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="group rounded-none"
-            aria-label="Copy dropdown"
+            size="icon"
+            className="group h-8 w-6 rounded-none text-muted-foreground transition-colors duration-150 ease hover:text-foreground motion-reduce:transition-none"
+            aria-label="More copy options"
           >
-            <span
-              className="relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground group-data-[state=open]:rotate-180 group-data-[state=open]:text-foreground"
-              aria-hidden="true"
-            >
-              ▲
-            </span>
+            <ChevronDown
+              className="size-3 transition-transform duration-200 ease-out group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -110,7 +179,7 @@ export function CopyDropdownButton({
               className="rounded-none font-mono"
               onClick={handleCopyMarkdown}
             >
-              [copy markdown]
+              Copy as Markdown
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
