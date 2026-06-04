@@ -9,7 +9,7 @@ jobs:
     runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run:
           flyctl deploy --config apps/server/fly.toml
