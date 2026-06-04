@@ -230,6 +230,12 @@
   @apply aspect-video object-cover border border-border;
 }
 
+.prose figure img.img-fit {
+  /* opt out of the forced 16:9 crop: show non-16:9 images (wide diagrams, terminal strips, portrait cards) whole */
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
 .prose figure figcaption {
   @apply text-sm text-muted-foreground not-empty:mt-1;
 }

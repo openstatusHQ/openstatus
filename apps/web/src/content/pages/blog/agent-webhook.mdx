@@ -2,12 +2,11 @@
 title: "How we built an agent webhook for our status pages"
 description: "A build log: wiring an AI agent to OpenStatus webhooks so it writes the status page report itself, and the things that bit me along the way."
 author: "Colin Ozanne"
-publishedAt: "2026-06-03"
+publishedAt: "2026-06-04"
 category: "engineering"
 image: "/assets/posts/agent-webhook/hero.png"
 ---
 
-{/* TODO: gate publishedAt on openstatusHQ/agent-webhook going public (the repo link in "Try it" depends on it). */}
 
 When a service goes down, the OpenStatus status page flips to red on its own.
 But that's all it says: a red bar and no explanation.
@@ -17,8 +16,6 @@ Thibault had the idea to close that gap: what if the webhook OpenStatus already 
 I picked it up and built it.
 
 This is the story of how, the decisions that shaped it, and the things that bit me.
-
-{/* <Image src="/assets/posts/agent-webhook/hero.png" alt="A red status page with no report, beside the same page after the agent publishes an explanation" width={2400} height={1350} /> */}
 
 ## A webhook that hands off to an agent
 
@@ -34,7 +31,8 @@ The entry point is deliberately dumb: it's just a validated payload.
 One arktype schema checks the body and hands off.
 The webhook doesn't care who sent it, which matters later.
 
-{/* <Image src="/assets/posts/agent-webhook/flow.png" alt="Flow: webhook → agent → status report" width={1600} height={900} /> */}
+<Image src="/assets/posts/agent-webhook/flow.svg" alt="Flow: webhook → agent → status report" width={1880} height={360} className="img-fit" />
+{/* ^ set width/height to flow.png's real pixel dims (sips -g pixelWidth -g pixelHeight); img-fit keeps it from being cropped to 16:9 */}
 
 ## The rule that shaped everything: the agent can read, but it can't act
 
@@ -72,7 +70,7 @@ In dry-run the agent does everything for real, it investigates live events and w
 You watch it handle real incidents until you're happy with it.
 Turning dry-run off doesn't sign off on the drafts you saw, it just hands over the keys: from then on every event gets a fresh investigation and freshly written wording, with no human in the loop.
 
-{/* <Image src="/assets/posts/agent-webhook/dry-run.png" alt="The agent's dry-run decision logged before any write" width={1600} height={500} /> */}
+<Image src="/assets/posts/agent-webhook/logs.png" alt="The agent's dry-run decision logged before any write" width={2350} height={478} className="img-fit" />
 
 ## Talking to OpenStatus over MCP
 
@@ -148,7 +146,7 @@ There's one last rule: when in doubt, publish.
 Silence during a real incident is the worst outcome there is.
 A false positive costs almost nothing, since it goes out without notifying anyone, so no one actually sees it, and a human can edit or delete it quickly.
 
-{/* <Image src="/assets/posts/agent-webhook/report.png" alt="A status report the agent drafted automatically" width={806} height={598} /> */}
+<Image src="/assets/posts/agent-webhook/resolved.png" alt="A complete status report the agent drafted automatically" width={2650} height={1570} className="img-fit" />
 
 ## The unglamorous plumbing
 
