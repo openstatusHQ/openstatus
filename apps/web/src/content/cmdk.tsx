@@ -76,7 +76,7 @@ const CONFIG: ConfigSection[] = [
       {
         type: "item",
         label: "Go to Docs",
-        href: "https://docs.openstatus.dev",
+        href: "/docs",
       },
       {
         type: "item",
