@@ -1,13 +1,12 @@
+import type { MDXData } from "@/content/utils";
 import Link from "next/link";
-
-export type PaginationLink = { href: string; title: string };
 
 export function ContentPagination({
   prev,
   next,
 }: {
-  prev?: PaginationLink;
-  next?: PaginationLink;
+  prev?: MDXData;
+  next?: MDXData;
 }) {
   if (!prev && !next) return null;
   return (
@@ -15,7 +14,9 @@ export function ContentPagination({
       {prev ? (
         <Link href={prev.href} className="no-underline! ">
           <span className="block text-muted-foreground">Previous</span>
-          <span className="font-medium text-foreground">{prev.title}</span>
+          <span className="font-medium text-foreground">
+            {prev.metadata.title}
+          </span>
         </Link>
       ) : (
         <span />
@@ -23,7 +24,9 @@ export function ContentPagination({
       {next ? (
         <Link href={next.href} className="no-underline! text-right">
           <span className="block text-muted-foreground">Next</span>
-          <span className="font-medium text-foreground">{next.title}</span>
+          <span className="font-medium text-foreground">
+            {next.metadata.title}
+          </span>
         </Link>
       ) : (
         <span />

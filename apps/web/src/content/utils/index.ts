@@ -1,88 +1,9 @@
-import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
-import slugify from "slugify";
-import { z } from "zod";
-import { type DocsData, getDocs } from "./docs";
+import { getDocs } from "../docs";
+import { type MDXData, getMDXDataFromDir, getMDXDataFromFile } from "./read";
 
-// Structured data schemas
-const howtoStepSchema = z.object({
-  name: z.string(),
-  text: z.string(),
-  image: z.string().optional(),
-  url: z.string().optional(),
-});
-
-const howtoSchema = z.object({
-  totalTime: z.string().optional(), // ISO 8601 duration format (e.g., "PT2H")
-  steps: z.array(howtoStepSchema),
-});
-
-const faqItemSchema = z.object({
-  question: z.string(),
-  answer: z.string(),
-});
-
-const metadataSchema = z.object({
-  title: z.string(),
-  publishedAt: z.coerce.date(),
-  description: z.string(),
-  category: z.string(),
-  author: z.string(),
-  image: z.string().optional(),
-  // Structured data fields
-  howto: howtoSchema.optional(),
-  faq: z.array(faqItemSchema).optional(),
-});
-
-export type Metadata = z.infer<typeof metadataSchema>;
-export type HowToStep = z.infer<typeof howtoStepSchema>;
-export type HowToData = z.infer<typeof howtoSchema>;
-export type FAQItem = z.infer<typeof faqItemSchema>;
-
-function parseFrontmatter(fileContent: string) {
-  const { data, content } = matter(fileContent);
-
-  const validatedMetadata = metadataSchema.safeParse(data);
-
-  if (!validatedMetadata.success) {
-    console.error(validatedMetadata.error);
-    throw new Error(`Invalid metadata: ${validatedMetadata.error.message}`);
-  }
-
-  return { metadata: validatedMetadata.data, content };
-}
-
-function getMDXFiles(dir: string) {
-  return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
-}
-
-function readMDXFile(filePath: string) {
-  const rawContent = fs.readFileSync(filePath, "utf-8");
-  return parseFrontmatter(rawContent);
-}
-
-function getMDXDataFromDir(dir: string, prefix = "") {
-  const mdxFiles = getMDXFiles(dir);
-  return mdxFiles.map((file) => {
-    return getMDXDataFromFile(path.join(dir, file), prefix);
-  });
-}
-
-function getMDXDataFromFile(filePath: string, prefix = "") {
-  const { metadata, content } = readMDXFile(filePath);
-  const slugRaw = path.basename(filePath, path.extname(filePath));
-  const slug = slugify(slugRaw, { lower: true, strict: true });
-  const href = prefix ? `${prefix}/${slug}` : `/${slug}`;
-  return {
-    metadata,
-    slug,
-    content,
-    href,
-  };
-}
-
-export type MDXData = ReturnType<typeof getMDXDataFromFile>;
+export * from "./schema";
+export type { MDXData } from "./read";
 
 export function getBlogPosts(): MDXData[] {
   return getMDXDataFromDir(
@@ -218,25 +139,8 @@ export function getCustomerPage(slug: string): MDXData {
   );
 }
 
-// Adapt a doc (relaxed schema) to the MDXData shape the search/sitemap/llms
-// surfaces expect: publishedAt falls back to the file mtime, author to "openstatus".
-export function docToMDXData(doc: DocsData): MDXData {
-  return {
-    metadata: {
-      title: doc.metadata.title,
-      description: doc.metadata.description,
-      category: doc.metadata.category,
-      author: doc.metadata.author ?? "openstatus",
-      publishedAt: doc.metadata.publishedAt ?? fs.statSync(doc.filePath).mtime,
-    },
-    slug: doc.slug,
-    content: doc.content,
-    href: doc.href,
-  };
-}
-
 export function getDocPages(): MDXData[] {
-  return getDocs().map(docToMDXData);
+  return getDocs();
 }
 
 export const PAGE_TYPES = [

@@ -203,10 +203,7 @@ export default async function DocsPage({
             ) : null}
           </div>
 
-          <ContentPagination
-            prev={prev && { href: `/docs/${prev.slug}`, title: prev.label }}
-            next={next && { href: `/docs/${next.slug}`, title: next.label }}
-          />
+          <ContentPagination prev={prev} next={next} />
         </div>
       </div>
 

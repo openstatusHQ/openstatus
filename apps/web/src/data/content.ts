@@ -37,7 +37,7 @@ const resourcesFooterSection = {
     },
     {
       label: "Docs",
-      href: "https://docs.openstatus.dev",
+      href: "/docs",
     },
     {
       label: "Guides",
@@ -83,7 +83,7 @@ const resourcesHeaderSection = {
     },
     {
       label: "Docs",
-      href: "https://docs.openstatus.dev",
+      href: "/docs",
     },
     {
       label: "Blog",

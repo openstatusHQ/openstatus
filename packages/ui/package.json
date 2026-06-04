@@ -99,7 +99,7 @@
     "zod": "catalog:"
   },
   "peerDependencies": {
-    "next-themes": "0.4.6",
-    "sonner": "2.0.5"
+    "next-themes": "catalog:",
+    "sonner": "catalog:"
   }
 }

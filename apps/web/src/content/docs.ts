@@ -1,34 +1,12 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
-import { z } from "zod";
 import {
   type DocsSection,
   flattenDocsNav,
   sectionForSlug,
 } from "./docs.config";
-
-// Docs reuse `category` as their section but, unlike blog/changelog, carry no
-// author or publish date — so the shared `metadataSchema` is relaxed here.
-const docsMetadataSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  category: z.string(),
-  publishedAt: z.coerce.date().optional(),
-  author: z.string().optional(),
-  image: z.string().optional(),
-});
-
-export type DocsMetadata = z.infer<typeof docsMetadataSchema>;
-
-export type DocsData = {
-  metadata: DocsMetadata;
-  slug: string; // nested, e.g. "concept/getting-started"
-  content: string;
-  href: string; // "/docs/<slug>"
-  filePath: string;
-};
+import { type MDXData, parseFrontmatter } from "./utils/read";
 
 const DOCS_DIR = path.join(process.cwd(), "src", "content", "pages", "docs");
 
@@ -41,15 +19,13 @@ function walkMDX(dir: string): string[] {
   });
 }
 
-function readDocsFile(filePath: string): DocsData {
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const { data, content } = matter(raw);
-  const parsed = docsMetadataSchema.safeParse(data);
-  if (!parsed.success) {
-    throw new Error(
-      `Invalid docs metadata in ${path.relative(DOCS_DIR, filePath)}: ${parsed.error.message}`,
-    );
-  }
+function readDocsFile(filePath: string): MDXData {
+  // Docs frontmatter omits author/publishedAt — supply defaults so the shared
+  // reader validates docs identically to other MDX content.
+  const { metadata, content } = parseFrontmatter(filePath, {
+    author: "openstatus",
+    publishedAt: fs.statSync(filePath).mtime,
+  });
   const rel = path.relative(DOCS_DIR, filePath).replace(/\.mdx$/, "");
   // `index.mdx` represents its directory: sdk/nodejs/index → sdk/nodejs
   const slug = rel
@@ -57,7 +33,7 @@ function readDocsFile(filePath: string): DocsData {
     .join("/")
     .replace(/\/index$|^index$/, "");
   return {
-    metadata: parsed.data,
+    metadata,
     content,
     slug,
     href: `/docs/${slug}`,
@@ -65,11 +41,11 @@ function readDocsFile(filePath: string): DocsData {
   };
 }
 
-export function getDocs(): DocsData[] {
+export function getDocs(): MDXData[] {
   return walkMDX(DOCS_DIR).map(readDocsFile);
 }
 
-export function getDocsPage(slug: string): DocsData | undefined {
+export function getDocsPage(slug: string): MDXData | undefined {
   const direct = path.join(DOCS_DIR, `${slug}.mdx`);
   if (fs.existsSync(direct)) return readDocsFile(direct);
   const asIndex = path.join(DOCS_DIR, slug, "index.mdx");
@@ -113,13 +89,15 @@ export function validateDocsNav(): { errors: string[]; warnings: string[] } {
 
 // Prev/next from the flattened nav order (not date-sorted like blog).
 export function getDocsPagination(slug: string): {
-  prev?: { slug: string; label: string };
-  next?: { slug: string; label: string };
+  prev?: MDXData;
+  next?: MDXData;
 } {
   const flat = flattenDocsNav();
   const idx = flat.findIndex((i) => i.slug === slug);
   if (idx === -1) return {};
-  return { prev: flat[idx - 1], next: flat[idx + 1] };
+  const toData = (item?: { slug: string }) =>
+    item ? getDocsPage(item.slug) : undefined;
+  return { prev: toData(flat[idx - 1]), next: toData(flat[idx + 1]) };
 }
 
 export function getDocsCategories(): DocsSection[] {
