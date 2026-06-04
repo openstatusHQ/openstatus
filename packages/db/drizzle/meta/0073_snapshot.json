@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "9ac2ec4e-1dd3-43fd-a727-40fd0ed8f3f2",
+  "id": "6ede1d53-1511-41e0-b751-e8acc5911166",
   "prevId": "92505161-27ae-4e83-a520-f156d29ba5e1",
   "tables": {
     "workspace": {
@@ -4220,7 +4220,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(json_array())"
+          "default": "'[]'"
         },
         "raw_payload": {
           "name": "raw_payload",
