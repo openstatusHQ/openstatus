@@ -1,6 +1,6 @@
 ---
 title: "How we built an agent webhook for our status pages"
-description: "A build log: wiring an AI agent to OpenStatus webhooks so it writes the status page report itself, and the things that bit me along the way."
+description: "A build log: wiring an AI agent to openstatus webhooks so it writes the status page report itself, and the things that bit me along the way."
 author: "Colin Ozanne"
 publishedAt: "2026-06-04"
 category: "engineering"
@@ -8,23 +8,23 @@ image: "/assets/posts/agent-webhook/hero.png"
 ---
 
 
-When a service goes down, the OpenStatus status page flips to red on its own.
+When a service goes down, the openstatus status page flips to red on its own.
 But that's all it says: a red bar and no explanation.
 Users can see something is wrong, they just can't tell what, how bad, or whether anyone is on it, so they open a ticket while the on-call engineer is already heads-down fixing the actual problem.
 
-Thibault had the idea to close that gap: what if the webhook OpenStatus already fires didn't just trigger a script, but an agent that writes the status update itself?
+Thibault had the idea to close that gap: what if the webhook openstatus already fires didn't just trigger a script, but an agent that writes the status update itself?
 I picked it up and built it.
 
 This is the story of how, the decisions that shaped it, and the things that bit me.
 
 ## A webhook that hands off to an agent
 
-OpenStatus already fires a webhook whenever a monitor changes state: `error`, `degraded`, or `recovered`.
+openstatus already fires a webhook whenever a monitor changes state: `error`, `degraded`, or `recovered`.
 Normally you point that at a script that forwards it somewhere.
 I pointed it at an agent instead.
 
 The flow is small.
-A monitor changes state, OpenStatus posts to `/webhook`, the agent investigates what's going on, and then it creates, updates, or resolves a report on the status page.
+A monitor changes state, openstatus posts to `/webhook`, the agent investigates what's going on, and then it creates, updates, or resolves a report on the status page.
 `error` and `degraded` open a report or update the one that's already live; `recovered` resolves it.
 
 The entry point is deliberately dumb: it's just a validated payload.
@@ -72,9 +72,9 @@ Turning dry-run off doesn't sign off on the drafts you saw, it just hands over t
 
 <Image src="/assets/posts/agent-webhook/logs.png" alt="The agent's dry-run decision logged before any write" width={2350} height={478} className="img-fit" />
 
-## Talking to OpenStatus over MCP
+## Talking to openstatus over MCP
 
-The agent doesn't get a private backdoor into OpenStatus.
+The agent doesn't get a private backdoor into openstatus.
 It talks to the same MCP server any agent would.
 It's just a home-made consumer of a public interface we already expose.
 
@@ -133,7 +133,7 @@ Then it has to put numbers on it.
 
 The other half is voice.
 The reader is a customer, not someone on the team.
-They don't know or care that OpenStatus runs synthetic checks from probes around the world, so the agent is told never to mention any of it.
+They don't know or care that openstatus runs synthetic checks from probes around the world, so the agent is told never to mention any of it.
 It writes about the service, and frames affected regions as where users are, not where our probes sit.
 
 Here are the different outputs that produces:
@@ -189,13 +189,13 @@ I don't have a clean answer yet.
 We could generate the docs straight from the schemas so they can't go stale.
 For now, we just build something real against our own product.
 
-## It doesn't have to be OpenStatus
+## It doesn't have to be openstatus
 
 Remember that the receiver only needs a valid payload and an agent.
-That's the cool part: the trigger doesn't have to be an OpenStatus monitor.
+That's the cool part: the trigger doesn't have to be an openstatus monitor.
 
-I wrote the schema to speak OpenStatus's webhook format, but a schema is easy to swap.
-Just adapt the schema, and the same agent will happily turn a Sentry issue, a Grafana alert, or a PagerDuty incident into a report on your OpenStatus status page.
+I wrote the schema to speak openstatus's webhook format, but a schema is easy to swap.
+Just adapt the schema, and the same agent will happily turn a Sentry issue, a Grafana alert, or a PagerDuty incident into a report on your openstatus status page.
 
 You still have to tell the agent which monitor and status page an incoming alert maps to, so it knows where to post and what to investigate.
 
@@ -208,4 +208,4 @@ Flip the flag once the logs look right.
 `deno task dev` to run it, `deno task test <recovered|error|degraded>` to fire a fake event at it.
 
 You can also just use it as-is with the [pre-built Docker image](https://github.com/openstatusHQ/agent-webhook/blob/main/compose.yaml).
-Just set the environment as required by the schema and you're good to point OpenStatus to your brand new autonomous webhook!
+Just set the environment as required by the schema and you're good to point openstatus to your brand new autonomous webhook!
