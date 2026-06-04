@@ -29,8 +29,6 @@ Fake users, real signal. That's the trade synthetic monitoring makes - scripts t
 
 It runs even when you have no traffic. It tests what you actually care about - the login flow, the checkout, the API endpoint your largest customer depends on - rather than waiting for someone to complain on Twitter.
 
----
-
 ## How Synthetic Monitoring Works
 
 A synthetic monitor is a script that runs on a schedule from your monitoring provider's infrastructure. The basic shape:
@@ -41,8 +39,6 @@ A synthetic monitor is a script that runs on a schedule from your monitoring pro
 4. If checks fail across multiple regions, alerts fire
 
 The check itself can range from "GET /healthz, expect 200" to "load the homepage, fill in the signup form, complete payment, verify the receipt email" - all driven by a script.
-
----
 
 ## Types of Synthetic Checks
 
@@ -94,8 +90,6 @@ Tests the actual paths your customers integrate against. Catches problems where 
 
 Each fills a specific gap. Most teams use them sparingly.
 
----
-
 ## Synthetic vs Real User Monitoring (RUM)
 
 Two complementary approaches to understanding service health:
@@ -112,8 +106,6 @@ Two complementary approaches to understanding service health:
 Synthetic answers "does this scenario work?" RUM answers "what are users actually experiencing?"
 
 They complement each other. Use synthetic to catch issues before users do; use RUM to understand the long tail of problems specific to particular devices, browsers, or regions.
-
----
 
 ## When to Use Synthetic Monitoring
 
@@ -134,8 +126,6 @@ They complement each other. Use synthetic to catch issues before users do; use R
 
 The thing to optimize: signal per monitor. Fewer well-chosen synthetic checks beat a dashboard full of redundant ones.
 
----
-
 ## A Practical Setup
 
 A reasonable starting point for a mid-stage SaaS:
@@ -149,8 +139,6 @@ That's roughly 10-15 monitors. Enough to catch real problems. Not so many that a
 
 For multi-region coverage, run each from at least 3 geographically distributed locations and require majority failure before alerting.
 
----
-
 ## Common Mistakes
 
 **Monitoring too many things.** Every monitor is an alert source. Every alert is an interruption. Be ruthless about pruning monitors that don't represent real customer impact.
@@ -162,8 +150,6 @@ For multi-region coverage, run each from at least 3 geographically distributed l
 **Treating synthetic results as ground truth.** Synthetic tells you whether your scripted scenario works. It doesn't tell you whether the user in Indonesia on a flaky 4G connection is having a good time. Pair with RUM for that.
 
 **Not updating scripts when the app changes.** Synthetic checks rot. A login flow check that's still using a deprecated form selector silently passes for weeks while users are actually broken. Treat synthetic scripts like code - review them, version them, update them when the underlying app changes.
-
----
 
 ## The Bottom Line
 

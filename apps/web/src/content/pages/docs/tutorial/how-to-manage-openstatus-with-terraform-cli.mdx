@@ -33,8 +33,6 @@ By the end of this tutorial, you'll have:
 - Slack notifications wired to your monitors
 - A status report workflow using the CLI for incident communication
 
----
-
 ## Part 1 — Infrastructure with Terraform
 
 ### Step 1 — Set up the provider
@@ -262,8 +260,6 @@ terraform import openstatus_notification.slack <notification-id>
 
 After importing, run `terraform plan` to ensure your `.tf` files match the imported state. Adjust any drift until the plan shows no changes.
 
----
-
 ## Part 2 — Status reports with the CLI
 
 Terraform is great for infrastructure, but status reports are operational — you create them when an incident is happening and update them as you investigate and resolve. The CLI is the right tool here.
@@ -357,8 +353,6 @@ Delete a report (e.g., created by mistake):
 ```bash
 openstatus status-report delete <report-id>
 ```
-
----
 
 ## Putting it all together
 

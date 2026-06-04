@@ -29,8 +29,6 @@ Every team deals with unplanned service disruptions. The difference between team
 
 That process is incident management. It runs three workstreams in parallel during every incident: fixing the technical problem, communicating with affected users, and learning from what happened so the same thing doesn't recur. Teams that neglect any of the three pay for it later.
 
----
-
 ## The Incident Lifecycle
 
 A well-run incident moves through six stages:
@@ -69,8 +67,6 @@ Within a week, write up what happened. Timeline, root cause, customer impact, co
 
 The point is to learn. If your postmortems aren't producing action items that actually get done, you're doing them wrong.
 
----
-
 ## Roles During an Incident
 
 Small teams may have one person filling multiple roles. Larger teams split them explicitly.
@@ -95,8 +91,6 @@ Engineers who actually fix the problem. They report to the IC. They focus on tec
 
 Captures the timeline as the incident unfolds. Hugely valuable for the postmortem because human memory is unreliable two hours later. Often the IC takes notes themselves on smaller incidents.
 
----
-
 ## Severity Levels
 
 A working severity model:
@@ -114,8 +108,6 @@ A common pitfall: severity inflation. If everything is SEV1, nothing is. Be hone
 
 See our [incident severity matrix](/guides/incident-severity-matrix) for a more detailed framework.
 
----
-
 ## Communication During an Incident
 
 The cadence:
@@ -126,8 +118,6 @@ The cadence:
 - **Postmortem** within a week: what happened, why, what we're changing.
 
 Silence is the enemy. "Still investigating, next update at 14:30" is more useful than nothing. Users tolerate problems they're being told about; they don't tolerate problems they're being ignored about.
-
----
 
 ## Postmortems
 
@@ -143,8 +133,6 @@ A good postmortem has:
 
 **Blameless framing.** People don't show up wanting to cause incidents. If a system allowed a human mistake to cause customer impact, the system is the actual problem. Postmortems that blame individuals produce defensive responses and dishonest writeups. Postmortems that focus on systems produce real improvements.
 
----
-
 ## Common Mistakes
 
 **No formal declaration.** Engineers debug for an hour before someone says "wait, should we call this an incident?" By then, customers have been on Twitter for 45 minutes.
@@ -159,8 +147,6 @@ A good postmortem has:
 
 **Communication as an afterthought.** Engineers focus on the fix and forget to update the status page for 90 minutes. Customers fill the void with assumptions, all of them worse than reality.
 
----
-
 ## How Monitoring Fits In
 
 Incident management starts the moment you detect a problem. Detection comes from monitoring - external [uptime](/guides/what-is-uptime-monitoring) and [synthetic](/guides/what-is-synthetic-monitoring) checks for service availability, internal metrics for performance and errors.
@@ -170,8 +156,6 @@ Better monitoring shortens detection time. Shorter detection time means lower [M
 Then communication happens through your [status page](/guides/what-is-a-status-page), which becomes the single source of truth for customers during the incident.
 
 The pipeline: monitor → detect → declare → respond → communicate → resolve → learn. Every part has to work.
-
----
 
 ## The Bottom Line
 

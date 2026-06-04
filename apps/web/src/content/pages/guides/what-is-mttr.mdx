@@ -31,8 +31,6 @@ There are four different "MTT-" acronyms in incident management. They all sound 
 
 MTTR is the headline one - the average time from incident detection to service restored. It's the standard benchmark for how good a team is at handling outages. Here's what it actually measures, how it relates to the other three MTT-metrics, and how to actually move the number.
 
----
-
 ## The Four MTT-Metrics
 
 Most incident timelines have four phases. Each has its own metric.
@@ -77,8 +75,6 @@ Driven by: overall reliability, change management, system design.
 
 Less commonly tracked. Requires a long incident history to be meaningful. Often used for hardware originally; less precise for software systems.
 
----
-
 ## How to Calculate MTTR
 
 The basic math:
@@ -95,8 +91,6 @@ The catch is defining "downtime." Two definitions in common use:
 - **Impact start to resolution** - measures total customer-visible downtime. Includes [MTTD](/guides/what-is-mttr#mttd) inside it.
 
 Pick one. Be explicit about which. Don't switch between them.
-
----
 
 ## The Average Is Misleading
 
@@ -118,8 +112,6 @@ The averages are nearly identical. Team B's customers are having a much worse ex
 
 A team with MTTR of 30 minutes and P95 of 35 minutes is consistent. A team with MTTR of 30 minutes and P95 of 4 hours is occasionally catastrophic. Same average. Very different reality.
 
----
-
 ## What's a Good MTTR?
 
 It depends on severity. A 4-hour MTTR is fine for SEV3. It's a crisis for SEV1.
@@ -133,8 +125,6 @@ Rough benchmarks for SaaS:
 | SEV3     | < 4h      | Same/next day | > 1 week |
 
 The trend matters more than the absolute number. A team whose MTTR is dropping quarter over quarter is getting better. A team with low MTTR that's been flat for a year may just be in a quiet period.
-
----
 
 ## How to Actually Lower MTTR
 
@@ -167,8 +157,6 @@ Most "we took too long to fix it" postmortems are actually "we took too long to 
 
 The teams that recover fastest aren't necessarily the smartest - they've practiced the recovery steps until they're muscle memory.
 
----
-
 ## Common Mistakes
 
 **Reporting MTTR aggregated across severities.** A great MTTR for SEV3 hides a bad MTTR for SEV1. Always break down by severity.
@@ -181,8 +169,6 @@ The teams that recover fastest aren't necessarily the smartest - they've practic
 
 **Ignoring the tail.** Reporting only the mean lets one bad outage hide in the data. Always look at P95 and P99.
 
----
-
 ## How MTTR Connects to SLOs
 
 MTTR shows up directly in your [SLO budget math](/guides/sla-vs-slo-vs-sli).
@@ -190,8 +176,6 @@ MTTR shows up directly in your [SLO budget math](/guides/sla-vs-slo-vs-sli).
 If your SLO allows 43 minutes of downtime per month (99.9%), and your MTTR is 60 minutes, you can afford less than one incident per month before burning the budget. If your MTTR is 5 minutes, you can afford eight incidents and still stay within budget.
 
 Lower MTTR effectively buys you more deployment risk. Each incident costs less budget, so you can take more chances. This is why mature teams obsess over MTTR - it's the most leveraged metric for reliability improvement.
-
----
 
 ## The Bottom Line
 
