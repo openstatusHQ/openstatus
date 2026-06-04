@@ -207,7 +207,7 @@ export default async function DocsPage({
         </div>
       </div>
 
-      <aside className="hidden w-48 shrink-0 xl:block">
+      <aside className="hidden w-56 shrink-0 xl:block">
         <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
           <TableOfContents items={toc} />
         </div>
