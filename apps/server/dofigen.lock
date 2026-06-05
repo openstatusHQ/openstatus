@@ -10,43 +10,25 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-      label:
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        path: node
+        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app/
       run:
-      - bun install --production --frozen-lockfile --verbose
+      - corepack enable pnpm
+      - pnpm install --prod --frozen-lockfile --verbose
       cache:
-      - target: /root/.bun/install/cache
+      - target: /root/.local/share/pnpm/store
       bind:
-      - target: bunfig.toml
-        source: bunfig.toml
+      - target: pnpm-workspace.yaml
+        source: pnpm-workspace.yaml
+      - target: pnpm-lock.yaml
+        source: pnpm-lock.yaml
       - target: package.json
         source: package.json
       - target: apps/server/package.json
@@ -69,6 +51,8 @@ effective: |
         source: packages/notifications/grafana-oncall/package.json
       - target: packages/notifications/google-chat/package.json
         source: packages/notifications/google-chat/package.json
+      - target: packages/notifications/ms-teams/package.json
+        source: packages/notifications/ms-teams/package.json
       - target: packages/notifications/ntfy/package.json
         source: packages/notifications/ntfy/package.json
       - target: packages/notifications/opsgenie/package.json
@@ -111,18 +95,47 @@ effective: |
         source: packages/services/package.json
       - target: packages/importers/package.json
         source: packages/importers/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
+        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        org.opencontainers.image.stage: build
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/server/node_modules
+        target: /app/apps/server/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f
+    digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.digest: sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.title: OpenStatus Server
-    io.dofigen.version: 2.6.0
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    io.dofigen.version: 2.7.0
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   user:
     user: '1000'
     group: '1000'
@@ -152,14 +165,17 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:1a4701c321b1d28b1ff5f0230e766791e4b79b1d4c6c7a70064f4b297b1a330f
+          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+      node:
+        24-slim:
+          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
     oven:
       bun:
         1.3.6:
           digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
 resources:
   dofigen.yml:
-    hash: 1759a213e33b260058574d435c45eadd2a9c2b2468f09644d06b78765abc076a
+    hash: 4cc23ad9bfc0f05d70c6249323f4baaad4fc11aa5cd7f61660abba8221aa6755
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -176,12 +192,13 @@ resources:
       builders:
         # Stage 1: Install production dependencies
         install:
-          fromImage: oven/bun:1.3.6
+          fromImage: node:24-slim
           workdir: /app/
           labels:
             org.opencontainers.image.stage: install
           bind:
-            - bunfig.toml
+            - pnpm-workspace.yaml
+            - pnpm-lock.yaml
             - package.json
             - apps/server/package.json
             - packages/analytics/package.json
@@ -193,6 +210,7 @@ resources:
             - packages/notifications/email/package.json
             - packages/notifications/grafana-oncall/package.json
             - packages/notifications/google-chat/package.json
+            - packages/notifications/ms-teams/package.json
             - packages/notifications/ntfy/package.json
             - packages/notifications/opsgenie/package.json
             - packages/notifications/pagerduty/package.json
@@ -214,9 +232,11 @@ resources:
             - packages/locales/package.json
             - packages/services/package.json
             - packages/importers/package.json
-          run: bun install --production --frozen-lockfile --verbose
+          run:
+            - corepack enable pnpm
+            - pnpm install --prod --frozen-lockfile --verbose
           cache:
-            - /root/.bun/install/cache
+            - /root/.local/share/pnpm/store
 
         # Stage 2: Build application (compile to binary)
         build:
@@ -231,6 +251,12 @@ resources:
             - fromBuilder: install
               source: /app/node_modules
               target: /app/node_modules
+            - fromBuilder: install
+              source: /app/apps/server/node_modules
+              target: /app/apps/server/node_modules
+            - fromBuilder: install
+              source: /app/packages
+              target: /app/packages
           run: bun build --compile --sourcemap src/index.ts --outfile=app
 
       # Runtime stage

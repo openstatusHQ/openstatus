@@ -1,0 +1,20 @@
+ALTER TABLE `workspace` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `users_to_workspaces` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `status_report` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `integration` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `page` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `notification` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `invitation` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `incident` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `monitor_tag` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `application` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `maintenance` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `check` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `monitor_run` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `private_location` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `monitor_group` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `api_key` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `page_component` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `page_component_groups` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `feedback` DROP COLUMN `deleted_at`;--> statement-breakpoint
+ALTER TABLE `chat_session` DROP COLUMN `deleted_at`;

@@ -4,6 +4,7 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getCustomerPages,
   getGuides,
   getUseCasePages,
 } from "./utils";
@@ -35,6 +36,8 @@ export function generateListingForPath(pathname: string): string | null {
         return generatePostsList(getGuides(), "Guides");
       case "use-case":
         return generatePostsList(getUseCasePages(), "Use Cases");
+      case "customers":
+        return generatePostsList(getCustomerPages(), "Customers");
       default:
         return null;
     }
@@ -106,6 +109,7 @@ function generateRootListing(): string {
     { title: "Comparisons", posts: getComparePages(), path: "/compare" },
     { title: "Guides", posts: getGuides(), path: "/guides" },
     { title: "Use Cases", posts: getUseCasePages(), path: "/use-case" },
+    { title: "Customers", posts: getCustomerPages(), path: "/customers" },
   ];
 
   const content = sections

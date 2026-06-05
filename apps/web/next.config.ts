@@ -32,9 +32,11 @@ const securityHeaders = [
 const homepageLinkHeader = [
   '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
+  '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
   '<https://docs.openstatus.dev>; rel="service-doc"; type="text/html"',
   '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
+  '<https://www.openstatus.dev/llms-full.txt>; rel="alternate"; type="text/plain"; title="llms-full"',
   '<https://www.openstatus.dev/terms>; rel="terms-of-service"',
   '<https://www.openstatus.dev/privacy>; rel="privacy-policy"',
 ].join(", ");
@@ -276,6 +278,11 @@ const nextConfig: NextConfig = {
             },
           ],
           destination: "https://www.stpg.dev/_next/:path*",
+        },
+        // Markdown via .md URL suffix (e.g. /blog/foo.md → /api/markdown/blog/foo)
+        {
+          source: "/:path*\\.md",
+          destination: "/api/markdown/:path*",
         },
         // Markdown content negotiation for AI tools
         {

@@ -12,20 +12,30 @@ const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
 const REVALIDATE = process.env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
+// Daily-aggregate columns shared by the external-status history pipes (page-
+// level and per-component). One shape so the `day` GMT-parse can't drift.
+const externalStatusHistoryDailyShape = {
+  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+  worst_indicator: z.string(),
+  had_maintenance: z.int(),
+  snapshot_count: z.int(),
+};
+
 export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
     const tinybirdUrl = process.env.TINYBIRD_URL;
+    // Empty token → noop unconditionally; pipes resolve empty rather than
+    // failing authn. Dev/test without a TINYBIRD_URL also gets a noop.
     if (
-      (process.env.NODE_ENV === "development" ||
+      !token ||
+      ((process.env.NODE_ENV === "development" ||
         process.env.NODE_ENV === "test") &&
-      !tinybirdUrl
+        !tinybirdUrl)
     ) {
       this.tb = new NoopTinybird();
     } else {
-      // Use local Tinybird container if available (Docker/self-hosted)
-      // https://www.tinybird.co/docs/api-reference
       this.tb = new Client({
         token,
         baseUrl: tinybirdUrl || "https://api.tinybird.co",
@@ -1760,6 +1770,83 @@ export class OSTinybird {
         p90Latency: z.int(),
         p95Latency: z.int(),
         p99Latency: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get publishExternalStatus() {
+    return this.tb.buildIngestEndpoint({
+      datasource: "external_status__v1",
+      event: z.object({
+        id: z.string(),
+        indicator: z.string(),
+        status: z.string(),
+        status_message: z.string(),
+        fetched_at: z.int(),
+        updated_at: z.int(),
+        time_zone: z.string(),
+      }),
+    });
+  }
+
+  public get externalStatusLatest() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_status_latest__v1",
+      parameters: z.object({
+        ids: z.array(z.string()).optional(),
+      }),
+      data: z.object({
+        id: z.string(),
+        indicator: z.string(),
+        status: z.string(),
+        status_message: z.string(),
+        time_zone: z.string(),
+        updated_at: z.int(),
+        last_fetched_at: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get externalStatusHistory() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_status_history__v0",
+      parameters: z.object({
+        ids: z.array(z.string()).min(1),
+        days: z.int().min(1).max(90).optional(),
+      }),
+      data: z.object({
+        ...externalStatusHistoryDailyShape,
+        id: z.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get publishExternalStatusComponent() {
+    return this.tb.buildIngestEndpoint({
+      datasource: "external_status_component__v0",
+      event: z.object({
+        component_id: z.string(),
+        external_service_id: z.int(),
+        indicator: z.string(),
+        status: z.string(),
+        fetched_at: z.int(),
+      }),
+    });
+  }
+
+  public get externalStatusComponentHistory() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_status_component_history__v0",
+      parameters: z.object({
+        component_ids: z.array(z.string()).min(1),
+        days: z.int().min(1).max(90).optional(),
+      }),
+      data: z.object({
+        ...externalStatusHistoryDailyShape,
+        component_id: z.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });

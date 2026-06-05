@@ -7,6 +7,7 @@ export {
   auditEntrySchema,
 } from "@openstatus/db/src/schema";
 export { diffTopLevel, emitAudit } from "./emit";
+export { getAuditLog } from "./get";
 export {
   type AuditLogListItem,
   type ListAuditLogsResult,

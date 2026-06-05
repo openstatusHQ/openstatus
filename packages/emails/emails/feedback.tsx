@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 
-import { Body, Head, Html, Preview } from "@react-email/components";
+import { Body, Head, Html, Preview } from "react-email";
 
 const FeedbackEmail = () => {
   return (

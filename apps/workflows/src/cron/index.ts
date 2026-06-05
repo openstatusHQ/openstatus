@@ -1,10 +1,13 @@
-import { getSentry } from "@hono/sentry";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import * as Sentry from "@sentry/bun";
 import { Effect, Schedule } from "effect";
 import { Hono } from "hono";
 import { env } from "../env";
+import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
+import { handleExternalIncidentsPruneCron } from "./external-incidents-prune";
+import { handleExternalStatusCron } from "./external-status";
 import {
   LaunchMonitorWorkflow,
   Step3Days,
@@ -31,44 +34,62 @@ app.get("/checker/:period", async (c) => {
   if (!schema.success) {
     return c.json({ error: schema.error.issues?.[0].message }, 400);
   }
-  const sentry = getSentry(c);
-  const checkInId = sentry.captureCheckIn({
-    monitorSlug: period,
-    status: "in_progress",
-  });
+  const periodicity = schema.data;
+  const { cronCompleted, cronFailed } = runSentryCron(periodicity);
 
+  // Background chain: must not capture `c` or anything derived from it
+  // (e.g. via getSentry(c)). The handler returns 200 before this resolves, and
+  // a captured per-request Sentry hub stays pinned across retries — see
+  // apps/workflows/plan.md.
   void Effect.runPromise(
     Effect.tryPromise({
-      try: () => sendCheckerTasks(schema.data, c),
-      catch: (e) => new Error(`Error in /checker/${period} cron: ${e}`),
+      try: () => sendCheckerTasks(periodicity),
+      // Surface `cause` — DrizzleQueryError stringifies to "Failed query: …"
+      // without the underlying libSQL reason, so callers see no hint of *why*
+      // the query failed unless we flatten the cause into the message.
+      catch: (e) => {
+        const causeMessage =
+          e instanceof Error && e.cause instanceof Error
+            ? `\nCause: ${e.cause.message}`
+            : "";
+        return new Error(
+          `Error in /checker/${periodicity} cron: ${e}${causeMessage}`,
+          { cause: e },
+        );
+      },
     }).pipe(
       Effect.retry({
         times: 3,
         schedule: Schedule.exponential("1000 millis"),
       }),
-      Effect.tap(() =>
-        Effect.sync(() =>
-          sentry.captureCheckIn({
-            checkInId,
-            monitorSlug: period,
-            status: "ok",
-          }),
-        ),
+      Effect.tap((result) =>
+        Effect.sync(() => {
+          if (result.failed > 0) {
+            void reportBackgroundError(
+              `sendCheckerTasks for ${periodicity} ended with ${result.failed} failed tasks`,
+            );
+          }
+          void cronCompleted();
+        }),
       ),
       Effect.catchAll((e) =>
         Effect.sync(() => {
           console.error(e);
-          sentry.captureMessage(e.message, "error");
-          sentry.captureCheckIn({
-            checkInId,
-            monitorSlug: period,
-            status: "error",
-          });
+          void reportBackgroundError(e.message);
+          void cronFailed();
         }),
       ),
     ),
   );
-  return c.json({ success: schema.data }, 200);
+  return c.json({ success: periodicity }, 200);
+});
+
+app.get("/external-status", async (c) => {
+  return handleExternalStatusCron(c);
+});
+
+app.get("/external-incidents-prune", async (c) => {
+  return handleExternalIncidentsPruneCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {
@@ -97,14 +118,11 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    getSentry(c).captureMessage(
-      "userId is missing in /monitors/:step cron",
-      "error",
-    );
+    Sentry.captureMessage("userId is missing in /monitors/:step cron", "error");
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {
-    getSentry(c).captureMessage(
+    Sentry.captureMessage(
       "initalRun is missing in /monitors/:step cron",
       "error",
     );

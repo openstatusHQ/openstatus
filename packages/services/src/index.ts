@@ -4,11 +4,14 @@ export {
   type DrizzleClient,
   type DrizzleTx,
   type ServiceContext,
+  defaultTb,
   extractActorId,
   isTx,
   tryGetActorUserId,
   withTransaction,
 } from "./context";
+
+export { isRetryableDbError, withBusyRetry } from "./retry";
 
 export {
   ConflictError,

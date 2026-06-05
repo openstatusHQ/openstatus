@@ -4,7 +4,9 @@ import {
   maintenance,
   maintenancesToPageComponents,
   page,
+  pageComponent,
 } from "@openstatus/db/src/schema";
+import { clearAuditLogFor } from "@openstatus/services/test/helpers";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";
@@ -12,12 +14,21 @@ import { createInnerTRPCContext } from "../trpc";
 
 let otherWorkspaceMaintenanceId: number;
 let otherWorkspacePageId: number;
+let otherWorkspaceComponentId: number;
+
+// Track maintenance ids the tRPC service writes / mutates. Without this
+// the `maintenance.create` / `maintenance.update` audit rows outlive
+// the row itself and — because INTEGER PRIMARY KEY recycles — a later
+// test inserting into `maintenance` can land on the orphan's id and
+// inherit its actor attribution. See docs/adr/test-audit-cleanup.md.
+const createdMaintenanceIds: number[] = [];
+const updatedMaintenanceIds: number[] = [];
 
 beforeAll(async () => {
   const p = await db
     .insert(page)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       title: "Maintenance IDOR Test Page",
       description: "Page for maintenance IDOR testing",
       slug: "maintenance-idor-test-page",
@@ -27,12 +38,24 @@ beforeAll(async () => {
     .get();
   otherWorkspacePageId = p.id;
 
+  const component = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: 3,
+      pageId: otherWorkspacePageId,
+      name: "Other workspace component",
+      type: "static",
+    })
+    .returning()
+    .get();
+  otherWorkspaceComponentId = component.id;
+
   // Maintenance for workspace 2, referencing page 1 (page ownership is not
   // enforced at DB level, only at API level, so this insert works for testing)
   const m = await db
     .insert(maintenance)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       title: "Other workspace maintenance",
       message: "Scheduled maintenance",
       pageId: 1,
@@ -47,7 +70,7 @@ beforeAll(async () => {
     .insert(maintenancesToPageComponents)
     .values({
       maintenanceId: otherWorkspaceMaintenanceId,
-      pageComponentId: 1,
+      pageComponentId: otherWorkspaceComponentId,
     })
     .run();
 });
@@ -64,7 +87,23 @@ afterAll(async () => {
   await db
     .delete(maintenance)
     .where(eq(maintenance.id, otherWorkspaceMaintenanceId));
+  await db
+    .delete(pageComponent)
+    .where(eq(pageComponent.id, otherWorkspaceComponentId));
   await db.delete(page).where(eq(page.id, otherWorkspacePageId));
+
+  if (createdMaintenanceIds.length > 0) {
+    await clearAuditLogFor({
+      entityType: "maintenance",
+      entityIds: createdMaintenanceIds,
+    });
+  }
+  if (updatedMaintenanceIds.length > 0) {
+    await clearAuditLogFor({
+      entityType: "maintenance",
+      entityIds: updatedMaintenanceIds,
+    });
+  }
 });
 
 test("maintenance.update rejects maintenance from another workspace", async () => {
@@ -119,6 +158,7 @@ test("maintenance.update succeeds for own workspace maintenance", async () => {
     endDate: new Date(Date.now() + 7_200_000),
     pageComponents: [1],
   });
+  updatedMaintenanceIds.push(1);
 
   const updated = await db.query.maintenance.findFirst({
     where: eq(maintenance.id, 1),
@@ -170,6 +210,7 @@ test("maintenance.new succeeds for own workspace page", async () => {
   });
 
   expect(result).toBeDefined();
+  createdMaintenanceIds.push(result.id);
 
   // Cleanup
   await db

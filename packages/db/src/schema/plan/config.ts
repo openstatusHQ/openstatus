@@ -3,7 +3,7 @@ import type { WorkspacePlan } from "../workspaces/validation";
 import type { Addons, IntervalPrice, PlanLimits, Price } from "./schema";
 
 type PlanConfig = {
-  title: "Hobby" | "Starter" | "Pro";
+  title: "Hobby" | "Starter" | "Pro" | "Scale";
   id: WorkspacePlan;
   description: string;
   price: IntervalPrice;
@@ -24,8 +24,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     id: "free",
     description: "Perfect for personal projects",
     price: {
-      monthly: { USD: 0, EUR: 0, INR: 0 },
-      yearly: { USD: 0, EUR: 0, INR: 0 },
+      monthly: { USD: 0, EUR: 0 },
+      yearly: { USD: 0, EUR: 0 },
     },
     addons: {},
     limits: {
@@ -71,8 +71,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     id: "starter",
     description: "Perfect for uptime monitoring",
     price: {
-      monthly: { USD: 30, EUR: 30, INR: 3_000 },
-      yearly: { USD: 300, EUR: 300, INR: 30_000 },
+      monthly: { USD: 30, EUR: 30 },
+      yearly: { USD: 300, EUR: 300 },
     },
     addons: {
       "email-domain-protection": {
@@ -82,7 +82,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 100,
           EUR: 100,
-          INR: 10_000,
         },
       },
       "ip-restriction": {
@@ -92,7 +91,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 100,
           EUR: 100,
-          INR: 10_000,
         },
       },
       "white-label": {
@@ -102,7 +100,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 300,
           EUR: 300,
-          INR: 30_000,
         },
       },
       "status-pages": {
@@ -111,7 +108,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 20,
           EUR: 20,
-          INR: 2_000,
         },
       },
     },
@@ -158,8 +154,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     id: "team",
     description: "Perfect for global synthetic monitoring",
     price: {
-      monthly: { USD: 100, EUR: 100, INR: 10_000 },
-      yearly: { USD: 1_000, EUR: 1_000, INR: 100_000 },
+      monthly: { USD: 100, EUR: 100 },
+      yearly: { USD: 1_000, EUR: 1_000 },
     },
     addons: {
       "email-domain-protection": {
@@ -169,7 +165,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 100,
           EUR: 100,
-          INR: 10_000,
         },
       },
       "ip-restriction": {
@@ -179,7 +174,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 100,
           EUR: 100,
-          INR: 10_000,
         },
       },
       "white-label": {
@@ -189,7 +183,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 300,
           EUR: 300,
-          INR: 30_000,
         },
       },
       "status-pages": {
@@ -198,7 +191,6 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         price: {
           USD: 20,
           EUR: 20,
-          INR: 2_000,
         },
       },
     },
@@ -224,6 +216,62 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "email-domain-protection": false,
       "ip-restriction": false,
       "white-label": false,
+      "no-index": true,
+      notifications: true,
+      sms: true,
+      "sms-limit": 100,
+      pagerduty: true,
+      opsgenie: true,
+      "grafana-oncall": true,
+      whatsapp: true,
+      "notification-channels": 20,
+      members: "Unlimited",
+      "audit-log": true,
+      regions: [...AVAILABLE_REGIONS],
+      "private-locations": true,
+      "slack-agent": true,
+    },
+  },
+  scale: {
+    title: "Scale",
+    id: "scale",
+    description: "For teams running serious infrastructure at scale",
+    price: {
+      monthly: { USD: 500, EUR: 500 },
+      yearly: { USD: 5_000, EUR: 5_000 },
+    },
+    addons: {
+      "status-pages": {
+        title: "Status Pages",
+        description: "Create and manage status pages for your workspace.",
+        price: {
+          USD: 20,
+          EUR: 20,
+        },
+      },
+    },
+    limits: {
+      version: undefined,
+      monitors: 50,
+      "synthetic-checks": 300,
+      periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
+      "multi-region": true,
+      "max-regions": AVAILABLE_REGIONS.length,
+      "data-retention": "24 months",
+      "status-pages": 10,
+      "page-components": 500,
+      maintenance: true,
+      "monitor-values-visibility": true,
+      "response-logs": true,
+      screenshots: true,
+      otel: true,
+      "status-subscribers": true,
+      "custom-domain": true,
+      i18n: true,
+      "password-protection": true,
+      "email-domain-protection": true,
+      "ip-restriction": true,
+      "white-label": true,
       "no-index": true,
       notifications: true,
       sms: true,

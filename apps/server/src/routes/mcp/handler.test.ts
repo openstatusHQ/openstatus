@@ -3,7 +3,7 @@ import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 
-import { db, eq } from "@openstatus/db";
+import { db, desc, eq } from "@openstatus/db";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
 
@@ -76,7 +76,7 @@ describe("MCP transport", () => {
     expect(res.status).toBe(401);
   });
 
-  test("tools/list returns the 8 registered tools", async () => {
+  test("tools/list returns the expected registered tool set", async () => {
     const app = makeApp();
     const res = await app.fetch(jsonRpc({ method: "tools/list" }));
     expect(res.status).toBe(200);
@@ -87,7 +87,17 @@ describe("MCP transport", () => {
       "add_status_report_update",
       "create_maintenance",
       "create_status_report",
+      "get_audit_log",
+      "get_monitor",
+      "get_monitor_status",
+      "get_monitor_summary",
+      "get_response_log",
+      "list_audit_logs",
       "list_maintenances",
+      "list_monitors",
+      "list_notifications",
+      "list_page_components",
+      "list_response_logs",
       "list_status_pages",
       "list_status_reports",
       "resolve_status_report",
@@ -176,7 +186,7 @@ describe("MCP transport", () => {
         }[];
       }
     ).tools;
-    expect(tools).toHaveLength(8);
+    expect(tools.length).toBeGreaterThan(0);
     for (const tool of tools) {
       expect(tool.description?.length ?? 0).toBeGreaterThan(40);
       expect(tool.inputSchema).toBeDefined();
@@ -200,6 +210,7 @@ describe("MCP transport", () => {
  */
 describe("MCP transport — audit stamping", () => {
   const E2E_PREFIX = "mcp-handler-test";
+  const E2E_SLUG_SUFFIX = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   let e2ePageId: number | null = null;
   const createdReports: number[] = [];
 
@@ -210,7 +221,7 @@ describe("MCP transport — audit stamping", () => {
         workspaceId: SEEDED_WORKSPACE_TEAM_ID,
         title: `${E2E_PREFIX}-page`,
         description: "e2e page",
-        slug: `${E2E_PREFIX}-page-slug`,
+        slug: `${E2E_PREFIX}-page-slug-${E2E_SLUG_SUFFIX}`,
         customDomain: "",
       })
       .returning()
@@ -274,6 +285,7 @@ describe("MCP transport — audit stamping", () => {
       .select()
       .from(auditLog)
       .where(eq(auditLog.entityId, String(reportId)))
+      .orderBy(desc(auditLog.id))
       .all();
     const createRow = rows.find((r) => r.action === "status_report.create");
     expect(createRow).toBeDefined();

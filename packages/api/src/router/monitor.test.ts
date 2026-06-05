@@ -31,7 +31,7 @@ beforeAll(async () => {
   const otherLoc = await db
     .insert(privateLocation)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       name: "Other workspace private location",
       token: "monitor-test-other-token",
     })

@@ -382,6 +382,18 @@ export const statusPageRouter = createTRPCRouter({
         (a, b) => b.from.getTime() - a.from.getTime(),
       );
 
+      // In "manual" mode the page only surfaces user-authored events, so drop
+      // monitor-derived incidents from the components consumers read (e.g. the
+      // calendar). Mirrors the bar/uptime gating in statusPage.utils.ts.
+      const publicPageComponents =
+        barType === "manual"
+          ? pageComponents.map((c) =>
+              c.monitor
+                ? { ...c, monitor: { ...c.monitor, incidents: [] } }
+                : c,
+            )
+          : pageComponents;
+
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         monitors,
@@ -394,7 +406,7 @@ export const statusPageRouter = createTRPCRouter({
         status,
         lastEvents,
         openEvents,
-        pageComponents,
+        pageComponents: publicPageComponents,
         pageComponentGroups: _page.pageComponentGroups,
         whiteLabel,
       });

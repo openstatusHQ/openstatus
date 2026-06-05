@@ -1,18 +1,25 @@
-import { components } from "@/content/mdx";
-import { env } from "@/env";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
 import {
+  APP_URL,
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+import { HydrateClient, api } from "@/trpc/rq-server";
 import {
+  ContentBoxContainer,
   ContentBoxDescription,
-  ContentBoxLink,
   ContentBoxTitle,
-  ContentBoxUrl,
 } from "../content-box";
-import { type AtlassianDescriptionEnum, externalStatusArray } from "./utils";
+
+import { ExternalStatusGrid } from "./external-status-grid";
+import { searchParamsCache } from "./search-params";
+import { ServiceSearch } from "./service-search";
 
 export const dynamic = "force-dynamic";
 
@@ -20,61 +27,72 @@ const TITLE = "External Status";
 const DESCRIPTION =
   "Easily check if your external providers is working properly";
 
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/status",
-  },
-  openGraph: {
-    ...ogMetadata,
+export async function generateMetadata(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const { q } = await searchParamsCache.parse(props.searchParams);
+  const hasQuery = q.trim() !== "";
+
+  return {
+    ...defaultMetadata,
     title: TITLE,
     description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+    alternates: {
+      canonical: "/status",
+    },
+    robots: hasQuery ? { index: false, follow: true } : defaultMetadata.robots,
+    openGraph: {
+      ...ogMetadata,
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [`${BASE_URL}/api/og/external-service`],
+    },
+    twitter: {
+      ...twitterMetadata,
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [`${BASE_URL}/api/og/external-service`],
+    },
+  };
+}
 
 export default async function Page() {
-  const res = await fetch(env.EXTERNAL_API_URL);
-  const data = await res.json();
-  const externalStatus = externalStatusArray.parse(data);
+  await api.externalService.grid.prefetch();
+
   return (
-    <section className="prose dark:prose-invert max-w-none">
-      <h1>External Status</h1>
-      <components.Grid cols={2}>
-        {externalStatus.map((status) => (
-          <ContentBoxLink
-            key={status.name}
-            href={status.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ContentBoxTitle>{status.name}</ContentBoxTitle>
-            <ContentBoxDescription
-              className={STATUS[status.status_description]}
-            >
-              {status.status_description}
-            </ContentBoxDescription>
-            <ContentBoxUrl url={status.url} />
-          </ContentBoxLink>
-        ))}
-      </components.Grid>
+    <section className="prose dark:prose-invert mb-12 flex max-w-none flex-col gap-4">
+      <ContentBoxContainer className="not-prose mb-2 px-4 py-2 text-sm">
+        <CustomLink
+          href={`${APP_URL}?ref=status-index-top`}
+          className="font-medium underline-offset-4 hover:underline"
+        >
+          Catch downtime instantly and keep your users in the loop with
+          OpenStatus →
+        </CustomLink>
+      </ContentBoxContainer>
+
+      <HydrateClient>
+        <ServiceSearch />
+        <Suspense
+          fallback={
+            <p className="text-muted-foreground">Loading external status…</p>
+          }
+        >
+          <ExternalStatusGrid />
+        </Suspense>
+      </HydrateClient>
+
+      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+        <ContentBoxTitle className="m-0! text-lg">
+          Looking for a status page?
+        </ContentBoxTitle>
+        <ContentBoxDescription className="m-0! text-sm">
+          Every service needs a status page. Run yours with OpenStatus.
+        </ContentBoxDescription>
+        <ButtonLink href={`${APP_URL}?ref=status-index-bottom`}>
+          Create your status page
+        </ButtonLink>
+      </ContentBoxContainer>
     </section>
   );
 }
-
-const STATUS = {
-  "All Systems Operational": "text-success",
-  "Major System Outage": "text-destructive",
-  "Partial System Outage": "text-warning",
-  "Minor Service Outage": "text-warning",
-  "Degraded System Service": "text-warning",
-  "Partially Degraded Service": "text-warning",
-  "Service Under Maintenance": "text-info",
-} satisfies Record<AtlassianDescriptionEnum, string>;

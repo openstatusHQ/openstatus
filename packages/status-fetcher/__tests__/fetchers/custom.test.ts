@@ -1,6 +1,12 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import { CustomApiFetcher } from "../../src/fetchers/custom";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("CustomApiFetcher", () => {
   let fetcher: CustomApiFetcher;
@@ -53,7 +59,7 @@ describe("CustomApiFetcher", () => {
   });
 
   describe("fetch", () => {
-    it("should throw error if endpoint is not provided", async () => {
+    it("should fail with FetchError if endpoint is not provided", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -64,7 +70,12 @@ describe("CustomApiFetcher", () => {
         api_config: { type: "custom" },
       };
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      if (!(err.cause instanceof Error)) {
+        throw new Error("expected Error cause");
+      }
+      expect(err.cause.message).toContain(
         "Custom API requires explicit endpoint configuration",
       );
     });
@@ -92,14 +103,14 @@ describe("CustomApiFetcher", () => {
           active_incidents: [],
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("none");
         expect(result.description).toBe("All Systems Operational");
@@ -129,14 +140,14 @@ describe("CustomApiFetcher", () => {
           active_incidents: [],
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("none");
         expect(result.updated_at).toBe(1708091234000);
@@ -172,14 +183,14 @@ describe("CustomApiFetcher", () => {
           ],
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("minor");
         expect(result.description).toBe("Login Issues");
@@ -215,14 +226,14 @@ describe("CustomApiFetcher", () => {
           ],
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("major");
         expect(result.description).toBe("Service Unavailable");
@@ -249,14 +260,14 @@ describe("CustomApiFetcher", () => {
           message: "All systems running smoothly",
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("none");
         expect(result.description).toBe("All systems running smoothly");
@@ -281,14 +292,14 @@ describe("CustomApiFetcher", () => {
           message: "System is down",
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("major");
         expect(result.description).toBe("System is down");
@@ -313,14 +324,14 @@ describe("CustomApiFetcher", () => {
           description: "Performance issues",
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("minor");
         expect(result.description).toBe("Performance issues");
@@ -344,14 +355,14 @@ describe("CustomApiFetcher", () => {
           health: "healthy",
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => mockResponse,
           } as Response),
         );
 
-        const result = await fetcher.fetch(entry);
+        const result = await runFetcher(fetcher, entry);
 
         expect(result.severity).toBe("none");
         expect(result.description).toBe("healthy");
@@ -359,7 +370,7 @@ describe("CustomApiFetcher", () => {
     });
 
     describe("AWS parser", () => {
-      it("should throw error for unimplemented AWS parser", async () => {
+      it("should fail with FetchError for unimplemented AWS parser", async () => {
         const entry: StatusPageEntry = {
           id: "aws",
           name: "AWS",
@@ -374,20 +385,25 @@ describe("CustomApiFetcher", () => {
           },
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: true,
             json: async () => ({}),
           } as Response),
         );
 
-        await expect(fetcher.fetch(entry)).rejects.toThrow(
+        const exit = await runFetcherExit(fetcher, entry);
+        const err = expectFetchError(exit);
+        if (!(err.cause instanceof Error)) {
+          throw new Error("expected Error cause");
+        }
+        expect(err.cause.message).toContain(
           "AWS parser not implemented - uses RSS feeds",
         );
       });
     });
 
-    it("should throw error on non-200 response", async () => {
+    it("should fail with FetchError on 4xx response", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -401,7 +417,7 @@ describe("CustomApiFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 401,
@@ -409,9 +425,9 @@ describe("CustomApiFetcher", () => {
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
-        "HTTP 401: Unauthorized",
-      );
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(401);
     });
   });
 });

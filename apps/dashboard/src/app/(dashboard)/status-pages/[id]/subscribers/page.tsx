@@ -27,6 +27,7 @@ import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -185,6 +186,7 @@ export default function Page() {
             columns={columns}
             data={subscribers}
             toolbarComponent={SubscribersDataTableToolbar}
+            paginationComponent={DataTablePaginationSimple}
             defaultColumnFilters={[{ id: "status", value: ["active"] }]}
           />
         ) : (

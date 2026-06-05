@@ -155,6 +155,65 @@ describe("setDataByType", () => {
       expect(statuses).toContain("info");
     });
 
+    it("should keep downtime proportional to the day when maintenance is present", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [
+        createMaintenance(1, 0, 2), // 2h maintenance
+        createIncident(2, 0, 1), // 1h downtime
+      ];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      const errorHeight = bar.find((b) => b.status === "error")?.height ?? 0;
+      const infoHeight = bar.find((b) => b.status === "info")?.height ?? 0;
+
+      // 1h downtime is at most 1/24 of the day (~4.17%), never the old ~33%
+      expect(errorHeight).toBeGreaterThan(0);
+      expect(errorHeight).toBeLessThan(5);
+      expect(errorHeight).toBeLessThan(infoHeight);
+      // maintenance fills the remaining space, no green uptime
+      expect(bar.some((b) => b.status === "success")).toBe(false);
+      expect(errorHeight + infoHeight).toBeCloseTo(100, 5);
+    });
+
+    it("should fill the whole day for a maintenance-only day", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [createMaintenance(1, 0, 2)];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      expect(result[0].bar).toHaveLength(1);
+      expect(result[0].bar[0].status).toBe("info");
+      expect(result[0].bar[0].height).toBe(100);
+    });
+
+    it("should fill the whole day for a report-only day", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [createReport(1, 0, 2)];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      expect(result[0].bar).toHaveLength(1);
+      expect(result[0].bar[0].status).toBe("degraded");
+      expect(result[0].bar[0].height).toBe(100);
+    });
+
     it("should show empty bar when no data available", () => {
       const data = [createStatusData(0, 0, 0, 0)];
       const events: Event[] = [];

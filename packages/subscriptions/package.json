@@ -22,11 +22,11 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-base": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "zod": "4.1.13"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/bun": "latest",
-    "typescript": "5.9.3"
+    "typescript": "catalog:"
   }
 }

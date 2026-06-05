@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { redactSensitiveHeaders } from "./response-logs";
+import { redactSensitiveHeaders } from "@openstatus/services/monitor";
 
 test("redactSensitiveHeaders returns an empty object when headers are missing", () => {
   expect(redactSensitiveHeaders(null)).toEqual({});

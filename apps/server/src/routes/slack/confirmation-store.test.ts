@@ -14,15 +14,14 @@ const redisStore = (globalThis as Record<string, unknown>)
 function makePendingInput(): Omit<PendingAction, "id" | "createdAt"> {
   return {
     workspaceId: 1,
-    limits: {},
     botToken: "xoxb-test-token",
     channelId: "C123",
     threadTs: "1234567890.123456",
     messageTs: "1234567890.654321",
     userId: "U123",
-    action: {
-      type: "createStatusReport",
-      params: {
+    payload: {
+      toolName: "create_status_report",
+      input: {
         title: "Test Incident",
         status: "investigating",
         message: "We are investigating",
@@ -57,7 +56,7 @@ describe("confirmation-store", () => {
       const stored = JSON.parse(redisStore.get(actionKey) as string);
       expect(stored.id).toBe(id);
       expect(stored.workspaceId).toBe(1);
-      expect(stored.action.type).toBe("createStatusReport");
+      expect(stored.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.get(threadKey)).toBe(id);
     });
@@ -71,9 +70,8 @@ describe("confirmation-store", () => {
       const result = await get(id);
       expect(result).toBeDefined();
       expect(result?.id).toBe(id);
-      expect(result?.action.type).toBe("createStatusReport");
+      expect(result?.payload.toolName).toBe("create_status_report");
 
-      // Keys should still exist
       expect(redisStore.has(`slack:action:${id}`)).toBe(true);
       expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(true);
     });
@@ -99,7 +97,7 @@ describe("confirmation-store", () => {
       const result = await consume(id);
       expect(result).toBeDefined();
       expect(result?.id).toBe(id);
-      expect(result?.action.type).toBe("createStatusReport");
+      expect(result?.payload.toolName).toBe("create_status_report");
 
       expect(redisStore.has(`slack:action:${id}`)).toBe(false);
       expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(false);
@@ -143,102 +141,60 @@ describe("confirmation-store", () => {
   });
 
   describe("replace", () => {
-    test("replaces the action on an existing pending", async () => {
+    test("replaces the payload on an existing pending", async () => {
       const input = makePendingInput();
       const id = await store(input);
 
-      const newAction: PendingAction["action"] = {
-        type: "addStatusReportUpdate",
-        params: {
+      await replace(id, {
+        toolName: "add_status_report_update",
+        input: {
           statusReportId: 42,
           status: "identified",
           message: "Root cause found",
         },
-      };
-
-      await replace(id, newAction);
+      });
 
       const result = await consume(id);
       expect(result).toBeDefined();
-      expect(result?.action.type).toBe("addStatusReportUpdate");
-      if (result?.action.type === "addStatusReportUpdate") {
-        expect(result?.action.params.statusReportId).toBe(42);
-      }
+      expect(result?.payload.toolName).toBe("add_status_report_update");
     });
 
     test("does nothing for unknown id", async () => {
       await replace("nonexistent", {
-        type: "resolveStatusReport",
-        params: { statusReportId: 1, message: "fixed" },
+        toolName: "resolve_status_report",
+        input: { statusReportId: 1, message: "fixed" },
       });
       expect(redisStore.size).toBe(0);
     });
   });
 
   describe("zod validation", () => {
-    test("validates all action types", async () => {
-      const actions: PendingAction["action"][] = [
-        {
-          type: "createStatusReport",
-          params: {
-            title: "Test",
-            status: "investigating",
-            message: "msg",
-            pageId: 1,
-          },
-        },
-        {
-          type: "addStatusReportUpdate",
-          params: {
-            statusReportId: 1,
-            status: "identified",
-            message: "update",
-          },
-        },
-        {
-          type: "updateStatusReport",
-          params: { statusReportId: 1, title: "New Title" },
-        },
-        {
-          type: "resolveStatusReport",
-          params: { statusReportId: 1, message: "resolved" },
-        },
-      ];
-
-      for (const action of actions) {
-        const input = { ...makePendingInput(), action };
-        const id = await store(input);
-        const result = await consume(id);
-        expect(result).toBeDefined();
-        expect(result?.action.type).toBe(action.type);
-      }
-    });
-
-    test("rejects invalid status values", async () => {
+    test("rejects payloads missing required fields", async () => {
+      // No `payload` field on the persisted shape — must reject.
       const raw = JSON.stringify({
         id: "test",
         workspaceId: 1,
-        limits: makePendingInput().limits,
         botToken: "tok",
         channelId: "C1",
         threadTs: "1.1",
         messageTs: "1.2",
         userId: "U1",
         createdAt: Date.now(),
-        action: {
-          type: "createStatusReport",
-          params: {
-            title: "T",
-            status: "invalid_status",
-            message: "m",
-            pageId: 1,
-          },
-        },
+        action: { type: "old-shape" },
       });
-
-      redisStore.set("slack:action:bad-status", raw);
-      const result = await consume("bad-status");
+      redisStore.set("slack:action:legacy", raw);
+      const result = await consume("legacy");
       expect(result).toBeUndefined();
+    });
+
+    test("accepts arbitrary input objects (validated downstream)", async () => {
+      const input = {
+        ...makePendingInput(),
+        payload: { toolName: "create_maintenance", input: { foo: "bar" } },
+      };
+      const id = await store(input);
+      const result = await consume(id);
+      expect(result?.payload.toolName).toBe("create_maintenance");
     });
   });
 });

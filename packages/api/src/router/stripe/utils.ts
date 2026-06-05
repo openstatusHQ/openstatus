@@ -76,6 +76,23 @@ export const PLANS = [
       },
     },
   },
+  {
+    plan: "scale",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "XXXX",
+          production: "price_1Te9BLBXJcTfzsyJlXLsuyFP",
+        },
+      },
+      yearly: {
+        priceIds: {
+          test: "XXXX",
+          production: "price_1Te9BLBXJcTfzsyJliabl2ou",
+        },
+      },
+    },
+  },
 ] satisfies Array<{
   plan: WorkspacePlan;
   price: {

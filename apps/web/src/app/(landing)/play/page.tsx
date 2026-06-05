@@ -59,6 +59,11 @@ const PLAY = [
     href: "/play/checker",
   },
   {
+    label: "MCP Server Health Check",
+    description: "JSON-RPC ping check for Model Context Protocol servers",
+    href: "/play/mcp-health",
+  },
+  {
     label: "cURL Builder",
     description: "Curl your website",
     href: "/play/curl",

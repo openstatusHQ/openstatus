@@ -10,8 +10,8 @@ import { createHeading } from "./heading";
 import { Pre } from "./pre";
 import { PricingTabs } from "./pricing-tabs";
 import { MDXStatusPageExample } from "./status-page-example";
+import { Subtle } from "./subtle";
 import { Table } from "./table";
-import { MDXTweet } from "./tweet";
 
 export { slugify } from "./heading";
 
@@ -32,8 +32,8 @@ export const components = {
   Details, // Capital D for JSX usage with props
   details: Details, // lowercase for HTML tag replacement
   SimpleChart: LatencyChartTable,
-  Tweet: MDXTweet,
   StatusPageExample: MDXStatusPageExample,
   PricingTabs,
+  Subtle,
   Suspense: Suspense,
 };

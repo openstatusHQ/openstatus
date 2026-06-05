@@ -1,14 +1,55 @@
+import { Effect } from "effect";
 import { fetchers } from "../src/fetchers";
-import { getStatusDirectory } from "../src/index";
-import type { SeverityLevel } from "../src/types";
+import type { SeverityLevel, StatusPageEntry } from "../src/types";
 
-/**
- * Test all fetchers against real status page APIs
- *
- * Run with: bun scripts/test-fetchers.ts
- */
+const fixtures: StatusPageEntry[] = [
+  {
+    id: "github",
+    name: "GitHub",
+    url: "https://github.com",
+    status_page_url: "https://www.githubstatus.com",
+    provider: "atlassian-statuspage",
+    industry: ["development-tools"],
+    api_config: { type: "atlassian" },
+  },
+  {
+    id: "linear",
+    name: "Linear",
+    url: "https://linear.app",
+    status_page_url: "https://status.linear.app",
+    provider: "incidentio",
+    industry: ["development-tools"],
+    api_config: { type: "incidentio" },
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    url: "https://slack.com",
+    status_page_url: "https://slack-status.com",
+    provider: "custom",
+    industry: ["communication"],
+    api_config: {
+      type: "custom",
+      endpoint: "https://slack-status.com/api/v2.0.0/current",
+      parser: "slack",
+    },
+  },
+  {
+    id: "bluesky",
+    name: "Bluesky",
+    url: "https://bsky.app",
+    status_page_url: "https://status.bsky.app",
+    provider: "uptime-robot",
+    industry: ["communication"],
+    api_config: {
+      type: "uptimerobot",
+      endpoint: "https://status.bsky.app/api/getMonitorList/2102707-357837",
+    },
+  },
+];
+
 async function testFetchers() {
-  const directory = getStatusDirectory();
+  const directory = fixtures;
 
   console.log(`\n🔍 Testing ${directory.length} entries...\n`);
 
@@ -33,7 +74,7 @@ async function testFetchers() {
 
     try {
       const startTime = Date.now();
-      const status = await fetcher.fetch(entry);
+      const status = await Effect.runPromise(fetcher.fetch(entry));
       const duration = Date.now() - startTime;
 
       const statusEmoji = getStatusEmoji(status.severity);

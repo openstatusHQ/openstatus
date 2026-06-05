@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 15
     services:
       sqld:
-        image: ghcr.io/tursodatabase/libsql-server:latest
+        image: ghcr.io/tursodatabase/libsql-server:e4beaca
         ports:
           - 8080:8080
         # env:
@@ -31,8 +31,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.26.0
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v6

@@ -192,4 +192,8 @@ export const Events = {
     name: "global_speed_checker",
     channel: "checker",
   },
+  MCPHealthCheck: {
+    name: "mcp_health_check",
+    channel: "checker",
+  },
 } as const satisfies Record<string, EventProps>;

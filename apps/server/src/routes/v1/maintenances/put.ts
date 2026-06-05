@@ -10,7 +10,13 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import type { maintenancesApi } from "./index";
-import { MaintenanceSchema, ParamsSchema } from "./schema";
+import {
+  MaintenanceObjectSchema,
+  MaintenanceSchema,
+  ParamsSchema,
+  dateRangeError,
+  refineDateRange,
+} from "./schema";
 
 const putRoute = createRoute({
   method: "put",
@@ -23,7 +29,9 @@ const putRoute = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: MaintenanceSchema.omit({ id: true }).partial(),
+          schema: MaintenanceObjectSchema.omit({ id: true })
+            .partial()
+            .refine(refineDateRange, dateRangeError),
         },
       },
     },

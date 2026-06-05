@@ -28,7 +28,6 @@ import {
 import { regionDict } from "@openstatus/regions";
 import { db } from "../lib/db";
 
-import { getSentry } from "@hono/sentry";
 import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
@@ -37,7 +36,6 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import type { Context } from "hono";
 import { env } from "../env";
 
 type TaskInput = {
@@ -64,8 +62,7 @@ const client = new CloudTasksClient({
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
-  c: Context,
-) {
+): Promise<{ success: number; failed: number }> {
   const parent = client.queuePath(
     env().GCP_PROJECT_ID,
     env().GCP_LOCATION,
@@ -121,7 +118,7 @@ export async function sendCheckerTasks(
 
   if (monitors.data.length === 0) {
     logger.info("No monitors to check", { periodicity });
-    return;
+    return { success: 0, failed: 0 };
   }
 
   // Batch fetch all monitor statuses in a single query (N+1 fix)
@@ -235,11 +232,9 @@ export async function sendCheckerTasks(
       failed_count: failed,
       success_count: success,
     });
-    getSentry(c).captureMessage(
-      `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
-      "error",
-    );
   }
+
+  return { success, failed };
 }
 // timestamp needs to be in ms
 const createCronTask = async (

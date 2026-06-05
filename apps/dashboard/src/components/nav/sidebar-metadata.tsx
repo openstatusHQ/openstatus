@@ -1,10 +1,9 @@
-import { ChevronRight } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-} from "@/components/content/empty-state";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -14,6 +13,10 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import {
   Table,
@@ -32,16 +35,59 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 
-export type SidebarMetadataProps = {
+export type SidebarMetadataItem = {
   label: string;
-  items?: {
-    label: string;
-    value: React.ReactNode;
-    isNested?: boolean;
-  }[];
+  value: React.ReactNode;
+  isNested?: boolean;
 };
 
-export function SidebarMetadata({ label, items }: SidebarMetadataProps) {
+export type SidebarMetadataListItem = {
+  /** Stable React key + handle for `active` matching. */
+  id: string | number;
+  label: React.ReactNode;
+  /** Trailing meta on the row (e.g. "2m ago"). */
+  meta?: React.ReactNode;
+  /** Optional small leading icon. */
+  icon?: LucideIcon;
+  /** Click target — renders as `next/link` when set. */
+  href?: string;
+  /** Marks this row as the current selection. */
+  active?: boolean;
+  /** Hover-revealed `…` button that opens a `QuickActions` dropdown. */
+  actions?: {
+    id: string;
+    label: string;
+    icon: LucideIcon;
+    variant: "default" | "destructive";
+    onClick?: () => Promise<void> | void;
+  }[];
+  /** Destructive item in the same `…` dropdown, with confirmation dialog. */
+  deleteAction?: {
+    confirmationValue?: string;
+    submitAction: () => Promise<void>;
+  };
+};
+
+/**
+ * Metadata section in `SidebarRight`. Two shapes:
+ *  - `type: "table"` (default) — label/value rows with copy-on-tap.
+ *  - `type: "list"` — clickable rows with optional active state, leading
+ *    icon, trailing meta and a hover-revealed action.
+ */
+export type SidebarMetadataProps =
+  | {
+      label: string;
+      type?: "table";
+      items?: SidebarMetadataItem[];
+    }
+  | {
+      label: string;
+      type: "list";
+      items?: SidebarMetadataListItem[];
+    };
+
+export function SidebarMetadata(props: SidebarMetadataProps) {
+  const { label } = props;
   return (
     <SidebarGroup className="p-0">
       <Collapsible defaultOpen className="group/collapsible border-b">
@@ -56,12 +102,10 @@ export function SidebarMetadata({ label, items }: SidebarMetadataProps) {
         </SidebarGroupLabel>
         <CollapsibleContent>
           <SidebarGroupContent className="border-t">
-            {items && items.length > 0 ? (
-              <SidebarMetadataTable items={items} />
+            {props.type === "list" ? (
+              <SidebarMetadataList items={props.items ?? []} />
             ) : (
-              <EmptyStateContainer className="m-2">
-                <EmptyStateDescription>No {label}</EmptyStateDescription>
-              </EmptyStateContainer>
+              <SidebarMetadataTable items={props.items ?? []} />
             )}
           </SidebarGroupContent>
         </CollapsibleContent>
@@ -104,6 +148,71 @@ function SidebarMetadataTable({
         ))}
       </TableBody>
     </Table>
+  );
+}
+
+function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
+  return (
+    <SidebarGroup className="p-0">
+      <SidebarMenu className="gap-0">
+        {items.map((item) => {
+          const inner = (
+            <>
+              {item.icon ? <item.icon className="size-3.5 shrink-0" /> : null}
+              <span className="flex-1 truncate">{item.label}</span>
+              {item.meta != null ? (
+                <span className="ml-auto shrink-0 font-mono text-muted-foreground text-xs">
+                  {item.meta}
+                </span>
+              ) : null}
+            </>
+          );
+          const hasMenu =
+            (item.actions?.length ?? 0) > 0 || !!item.deleteAction;
+          return (
+            <SidebarMenuItem key={item.id} className="border-b last:border-b-0">
+              <SidebarMenuButton
+                asChild
+                isActive={item.active}
+                // Flat row treatment to match `SidebarMetadataTable`: no
+                // rounded corners, edge-to-edge, table-cell padding.
+                className="h-9 rounded-none px-2 group-has-data-[sidebar=menu-action]/menu-item:pr-2"
+              >
+                {item.href ? (
+                  <Link href={item.href}>{inner}</Link>
+                ) : (
+                  <button type="button">{inner}</button>
+                )}
+              </SidebarMenuButton>
+              {hasMenu ? (
+                <QuickActions
+                  actions={item.actions}
+                  deleteAction={item.deleteAction}
+                  side="right"
+                  align="start"
+                >
+                  <SidebarMenuAction
+                    showOnHover
+                    // Solid backdrop + left-side gradient so the dots cover
+                    // the meta timestamp underneath when revealed.
+                    // `ring-inset` keeps the focus ring within the button so
+                    // it doesn't bleed past the sidebar's right edge.
+                    // V-center: the default action `top` is driven by a
+                    // `peer-data-[size=...]/menu-button` variant tuned for
+                    // the shorter button sizes; we use a taller `h-9` row,
+                    // so override the variant directly and re-anchor at 50%.
+                    className="before:-left-6 -translate-y-1/2 bg-sidebar-accent before:absolute before:inset-y-0 before:right-full before:bg-gradient-to-l before:from-sidebar-accent before:to-transparent focus-visible:ring-inset peer-data-[size=default]/menu-button:top-1/2"
+                  >
+                    <MoreHorizontal />
+                    <span className="sr-only">More</span>
+                  </SidebarMenuAction>
+                </QuickActions>
+              ) : null}
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }
 

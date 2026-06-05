@@ -1,4 +1,4 @@
-import { OpenPanel, type PostEventPayload } from "@openpanel/sdk";
+import { OpenPanel, type TrackProperties } from "@openpanel/sdk";
 import { env } from "../env";
 import type { EventProps } from "./events";
 
@@ -17,7 +17,7 @@ export type IdentifyProps = {
   fullName?: string | null;
   email?: string;
   workspaceId?: string;
-  plan?: "free" | "starter" | "team";
+  plan?: "free" | "starter" | "team" | "scale";
   // headers from the request
   location?: string;
   userAgent?: string;
@@ -51,7 +51,7 @@ export async function setupAnalytics(props: IdentifyProps) {
   }
 
   return {
-    track: (opts: EventProps & PostEventPayload["properties"]) => {
+    track: (opts: EventProps & TrackProperties) => {
       const { name, ...rest } = opts;
       return op.track(name, rest);
     },
@@ -63,9 +63,7 @@ export async function setupAnalytics(props: IdentifyProps) {
  */
 async function noop() {
   return {
-    track: (
-      opts: EventProps & PostEventPayload["properties"],
-    ): Promise<unknown> => {
+    track: (opts: EventProps & TrackProperties): Promise<unknown> => {
       return new Promise((resolve) => {
         console.log(`>>> Track Noop Event: ${opts.name}`);
         resolve(null);

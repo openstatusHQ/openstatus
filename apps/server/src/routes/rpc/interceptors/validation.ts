@@ -1,4 +1,4 @@
-import type { Interceptor } from "@connectrpc/connect";
+import { ConnectError, type Interceptor } from "@connectrpc/connect";
 import { createValidateInterceptor } from "@connectrpc/validate";
 
 // Methods that skip standard protovalidate (they do manual validation in handlers)
@@ -8,6 +8,16 @@ const SKIP_VALIDATION_METHODS = new Set([
   "UpdateTCPMonitor",
   "UpdateDNSMonitor",
 ]);
+
+// protovalidate >=1.2 dropped the "value " prefix from the string.pattern
+// violation message; restore it so API consumers (and existing tests) keep
+// the previous wording.
+function normalizeValidationMessage(message: string): string {
+  return message.replace(
+    /(^|: )does not match regex pattern/g,
+    "$1value does not match regex pattern",
+  );
+}
 
 /**
  * Validation interceptor for ConnectRPC using protovalidate.
@@ -29,6 +39,22 @@ export function validationInterceptor(): Interceptor {
     if (SKIP_VALIDATION_METHODS.has(req.method.name)) {
       return next(req);
     }
-    return baseInterceptor(next)(req);
+    try {
+      return await baseInterceptor(next)(req);
+    } catch (err) {
+      if (err instanceof ConnectError) {
+        const normalized = normalizeValidationMessage(err.rawMessage);
+        if (normalized !== err.rawMessage) {
+          throw new ConnectError(
+            normalized,
+            err.code,
+            err.metadata,
+            undefined,
+            err.cause,
+          );
+        }
+      }
+      throw err;
+    }
   };
 }

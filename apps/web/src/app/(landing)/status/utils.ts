@@ -1,53 +1,47 @@
-import { z } from "zod";
+export const STALE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 
-export const atlassianDescriptionEnum = z.enum([
-  "All Systems Operational", // green
-  "Major System Outage", // red
-  "Partial System Outage", // orange
-  "Minor Service Outage", // yellow
-  "Degraded System Service", // yellow
-  "Partially Degraded Service", // yellow
-  "Service Under Maintenance", // blue
-]);
+export function formatRelative(updatedAtMs: number): string {
+  const diff = Date.now() - updatedAtMs;
+  if (diff < 0) return "just now";
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
-export const externalStatus = z.object({
-  id: z.number(),
-  name: z.string(),
-  url: z.string(),
-  external_id: z.string(),
-  last_updated_at: z.iso.datetime({ offset: true }),
-  time_zone: z.string(),
-  status_indicator: z.string(),
-  status_description: atlassianDescriptionEnum,
-  created_at: z.string(),
-  updated_at: z.iso.datetime(),
-});
+export function isStale(fetchedAtMs: number): boolean {
+  return Date.now() - fetchedAtMs > STALE_THRESHOLD_MS;
+}
 
-export const externalStatusArray = z.array(externalStatus);
-
-export type ExternalStatus = z.infer<typeof externalStatus>;
-export type ExternalStatusArray = z.infer<typeof externalStatusArray>;
-export type AtlassianDescriptionEnum = z.infer<typeof atlassianDescriptionEnum>;
-
-// ------------------------------
-
-export function getClassname(status: ExternalStatus) {
-  switch (status.status_description) {
-    case "All Systems Operational":
-      return "text-status-operational";
-    case "Major System Outage":
-      return "text-status-down";
-    case "Partial System Outage":
-      return "text-status-degraded";
-    case "Minor Service Outage":
-      return "text-status-degraded";
-    case "Degraded System Service":
-      return "text-status-degraded";
-    case "Partially Degraded Service":
-      return "text-status-degraded";
-    case "Service Under Maintenance":
-      return "text-status-monitoring";
+// Natural-language answer to "Is <name> down?" — used both as on-page lead copy
+// and as the FAQPage answer in JSON-LD. Mirrors getPillStyle semantics.
+export function getStatusAnswer(args: {
+  name: string;
+  indicator: string;
+  status: string;
+  hasLiveData: boolean;
+}): string {
+  const { name, indicator, status, hasLiveData } = args;
+  if (!hasLiveData) {
+    return `We don't have live data for ${name} right now — check the official ${name} status page below.`;
+  }
+  if (status === "under_maintenance") {
+    return `${name} is currently undergoing scheduled maintenance.`;
+  }
+  switch (indicator) {
+    case "none":
+      return `No, ${name} is not down. All ${name} systems are operational.`;
+    case "minor":
+      return `${name} is up, but currently experiencing a minor issue.`;
+    case "major":
+      return `Yes, ${name} is experiencing a partial outage right now.`;
+    case "critical":
+      return `Yes, ${name} is down — a major outage is currently affecting ${name}.`;
     default:
-      return "text-gray-500";
+      return `The current status of ${name} is unknown — check the official ${name} status page below.`;
   }
 }

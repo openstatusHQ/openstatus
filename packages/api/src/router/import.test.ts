@@ -19,6 +19,7 @@ import {
   MOCK_PAGES,
   MOCK_SUBSCRIBERS,
 } from "@openstatus/importers/statuspage/fixtures";
+import { clearAuditLogFor } from "@openstatus/services/test/helpers";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
@@ -121,8 +122,21 @@ async function cleanup() {
       );
   }
 
-  // 3. statusReportUpdate (via statusReportId)
+  // 3. statusReportUpdate (via statusReportId). Capture ids first so we
+  // can wipe their audit rows — `statusReportUpdate.id` recycles after
+  // delete, and an orphan audit row would re-attribute a later
+  // unrelated update.
+  let statusReportUpdateIds: number[] = [];
   if (createdIds.statusReports.length > 0) {
+    statusReportUpdateIds = (
+      await db
+        .select({ id: statusReportUpdate.id })
+        .from(statusReportUpdate)
+        .where(
+          inArray(statusReportUpdate.statusReportId, createdIds.statusReports),
+        )
+        .all()
+    ).map((r) => r.id);
     await db
       .delete(statusReportUpdate)
       .where(
@@ -162,6 +176,35 @@ async function cleanup() {
   if (createdIds.pages.length > 0) {
     await db.delete(page).where(inArray(page.id, createdIds.pages));
   }
+
+  // 9. audit_log: the importer service emits one audit row per created
+  // entity. The entities are gone but the rows are not — and
+  // INTEGER PRIMARY KEY ids recycle, so a later test inserting into the
+  // same table can land on an id that already has an audit row,
+  // inheriting its actor attribution. See docs/adr/test-audit-cleanup.md.
+  await Promise.all([
+    clearAuditLogFor({ entityType: "page", entityIds: createdIds.pages }),
+    clearAuditLogFor({
+      entityType: "page_component_group",
+      entityIds: createdIds.componentGroups,
+    }),
+    clearAuditLogFor({
+      entityType: "page_component",
+      entityIds: createdIds.components,
+    }),
+    clearAuditLogFor({
+      entityType: "status_report",
+      entityIds: createdIds.statusReports,
+    }),
+    clearAuditLogFor({
+      entityType: "status_report_update",
+      entityIds: statusReportUpdateIds,
+    }),
+    clearAuditLogFor({
+      entityType: "maintenance",
+      entityIds: createdIds.maintenances,
+    }),
+  ]);
 
   // Reset trackers
   createdIds.pages = [];
@@ -297,7 +340,7 @@ test("run creates page, components, and groups in DB", async () => {
 
   // Clean up for next tests
   await cleanup();
-});
+}, 15_000);
 
 test("run with existing pageId imports into that page", async () => {
   const result = await caller.import.run({
@@ -330,7 +373,7 @@ test("run with existing pageId imports into that page", async () => {
   expect(matchingComps.length).toBe(MOCK_COMPONENTS.length);
 
   await cleanup();
-});
+}, 15_000);
 
 test("re-run skips already-imported resources (idempotency)", async () => {
   // First run
@@ -366,7 +409,7 @@ test("re-run skips already-imported resources (idempotency)", async () => {
   expect(allGroupsSkipped).toBe(true);
 
   await cleanup();
-});
+}, 15_000);
 
 test("run with includeStatusReports creates status reports", async () => {
   const result = await caller.import.run({
@@ -417,7 +460,7 @@ test("run with includeStatusReports creates status reports", async () => {
   expect(createdMaintIds.length).toBeGreaterThan(0);
 
   await cleanup();
-});
+}, 15_000);
 
 // ---------------------------------------------------------------------------
 // Limit warnings (go through the caller with custom workspace limits to

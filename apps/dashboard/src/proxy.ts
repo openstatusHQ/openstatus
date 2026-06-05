@@ -22,23 +22,56 @@ export default auth(async (req) => {
   }
 
   if (!req.auth && url.pathname !== "/login") {
-    console.log("User not authenticated, redirecting to login");
+    if (process.env.NODE_ENV === "development") {
+      console.log("User not authenticated, redirecting to login");
+    }
     const newURL = new URL("/login", req.url);
-    const encodedSearchParams = `${url.pathname}${url.search}`;
+    // Only worth preserving a non-root destination; tryRedirectToCallback
+    // rejects "/" anyway, so storing it would be a no-op redirect.
+    const encodedSearchParams =
+      url.pathname === "/" ? null : `${url.pathname}${url.search}`;
 
     if (encodedSearchParams) {
       newURL.searchParams.append("redirectTo", encodedSearchParams);
     }
 
-    return NextResponse.redirect(newURL);
+    const response = NextResponse.redirect(newURL);
+    // Store the redirect URL in a cookie for new users who go through onboarding.
+    // Auth.js may not reliably pass callbackUrl to pages.newUser, so we use a
+    // cookie as a fallback to ensure invite links work correctly.
+    if (encodedSearchParams) {
+      response.cookies.set("auth-redirect", encodedSearchParams, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 10, // 10 minutes
+      });
+    }
+    return response;
   }
 
   if (req.auth && url.pathname === "/login") {
     const redirectTo = url.searchParams.get("redirectTo");
-    console.log("User authenticated, redirecting to", redirectTo);
     if (redirectTo) {
-      const redirectToUrl = new URL(redirectTo, req.url);
-      return NextResponse.redirect(redirectToUrl);
+      // Same-origin only: rebuild from path/search/hash so an absolute
+      // redirectTo (e.g. https://evil.com) can't become an open redirect.
+      const target = new URL(redirectTo, req.nextUrl.origin);
+      if (
+        (target.protocol === "http:" || target.protocol === "https:") &&
+        !target.pathname.startsWith("//")
+      ) {
+        const safe = new URL(
+          `${target.pathname}${target.search}${target.hash}`,
+          req.nextUrl.origin,
+        );
+        if (process.env.NODE_ENV === "development") {
+          console.log("User authenticated, redirecting to", safe);
+        }
+        const res = NextResponse.redirect(safe);
+        res.cookies.delete("auth-redirect");
+        return res;
+      }
     }
   }
 
@@ -62,6 +95,20 @@ export default auth(async (req) => {
 
   if (!req.auth && hasWorkspaceSlug) {
     response.cookies.delete("workspace-slug");
+  }
+
+  // auth-redirect is single-use and consumed by the /onboarding Server
+  // Component. Middleware response-cookie writes are reflected into the same
+  // request's cookies(), so deleting it on the /onboarding request itself
+  // would race (and lose) that read. Clear it on the next authenticated
+  // request instead: by then onboarding has redirected to the target, the
+  // cookie's job is done, and the stale back-button re-redirect is killed.
+  if (
+    req.auth &&
+    url.pathname !== "/onboarding" &&
+    req.cookies.has("auth-redirect")
+  ) {
+    response.cookies.delete("auth-redirect");
   }
 
   return response;

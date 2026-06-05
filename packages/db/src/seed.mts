@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
 import {
+  externalService,
   incidentTable,
   maintenance,
   maintenancesToPageComponents,
@@ -20,6 +21,7 @@ import {
   usersToWorkspaces,
   workspace,
 } from "./schema";
+import { externalServicesSeed } from "./seed/external-services";
 
 async function main() {
   const db = drizzle(
@@ -459,6 +461,13 @@ async function main() {
     })
     .onConflictDoNothing()
     .run();
+
+  await db
+    .insert(externalService)
+    .values(externalServicesSeed)
+    .onConflictDoNothing()
+    .run();
+
   process.exit(0);
 }
 

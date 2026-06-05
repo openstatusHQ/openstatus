@@ -108,4 +108,46 @@ export const cases: EvalCase[] = [
       'Edit the title of status report 7 to "Investigating slow queries" — do not post a new public update.',
     expectedTool: "update_status_report",
   },
+
+  {
+    id: "antiguess.monitor_by_name",
+    prompt: "How healthy is our checkout monitor?",
+    expectedTool: "list_monitors",
+  },
+  {
+    id: "antiguess.notification_by_name",
+    prompt: "Is the PagerDuty channel still wired up?",
+    expectedTool: "list_notifications",
+  },
+  {
+    id: "compose.status_before_report",
+    prompt:
+      "Monitor 12 looks degraded — draft a status report saying our API is slow in EU.",
+    expectedTool: "get_monitor_status",
+    requiredArgs: ["monitorId"],
+  },
+  {
+    id: "select.monitor_status_by_id",
+    prompt: "Which regions is monitor 17 failing in right now?",
+    expectedTool: "get_monitor_status",
+    requiredArgs: ["monitorId"],
+  },
+  {
+    id: "default.summary_1d",
+    prompt: "What's the p95 latency on monitor 17 right now?",
+    expectedTool: "get_monitor_summary",
+    requiredArgs: ["monitorId"],
+  },
+  {
+    id: "select.response_logs",
+    prompt: "Show me the failing checks for monitor 17 in the last hour.",
+    expectedTool: "list_response_logs",
+    requiredArgs: ["monitorId"],
+  },
+  {
+    id: "select.list_notifications",
+    prompt:
+      "What alerting channels do we have configured? Will anyone get paged if monitor 17 goes down?",
+    expectedTool: "list_notifications",
+  },
 ];

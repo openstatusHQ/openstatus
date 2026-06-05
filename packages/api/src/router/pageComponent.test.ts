@@ -13,7 +13,7 @@ beforeAll(async () => {
   const m = await db
     .insert(monitor)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       name: "Other workspace monitor",
       jobType: "http",
       periodicity: "1m",

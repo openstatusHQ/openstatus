@@ -33,7 +33,9 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         headers: {
           "x-trpc-source": "server",
         },
-        fetch: async (url, options) => {
+        // `typeof fetch` carries a `preconnect` static (React 19 typings) that
+        // tRPC's link will never invoke — cast the call-signature wrapper.
+        fetch: (async (url, options) => {
           const cookieStore = await cookies();
           console.log("[dashboard trpc server] fetch", {
             hasSessionToken:
@@ -48,7 +50,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
               cookie: cookieStore.toString(),
             },
           });
-        },
+        }) as typeof fetch,
       }),
     ],
   }),

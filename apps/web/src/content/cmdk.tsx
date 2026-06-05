@@ -127,6 +127,12 @@ const CONFIG: ConfigSection[] = [
         page: "use-case",
       },
       {
+        type: "group",
+        label: "Search in Customers...",
+        heading: "Customers",
+        page: "customers",
+      },
+      {
         type: "item",
         label: "Go to About",
         href: "/about",
@@ -450,7 +456,8 @@ function SearchResults({
 
         return (
           <CommandItem
-            key={item.slug}
+            key={item.href}
+            value={item.href}
             keywords={[item.metadata.title, item.content, search]}
             onSelect={() => {
               router.push(item.href);

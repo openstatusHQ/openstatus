@@ -1,5 +1,9 @@
 import { convertMdxToMarkdown } from "@/content/convert";
 import { resolveContent } from "@/content/resolve";
+import {
+  generateStatusDetailMarkdown,
+  generateStatusIndexMarkdown,
+} from "@/content/status-markdown";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs"; // Need fs access for content loading
@@ -16,6 +20,19 @@ export async function GET(
     // Extract pathname from catch-all params
     const { path: pathSegments } = await params;
     const pathname = pathSegments ? `/${pathSegments.join("/")}` : "/";
+
+    const statusMd = await resolveStatusMarkdown(pathSegments);
+    if (statusMd != null) {
+      return new NextResponse(statusMd, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/markdown; charset=utf-8",
+          "Cache-Control":
+            "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+          "X-Content-Source": "status",
+        },
+      });
+    }
 
     // Resolve content (MDX or listing)
     const result = resolveContent(pathname);
@@ -52,6 +69,22 @@ export async function GET(
     console.error("Error serving markdown:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
+}
+
+async function resolveStatusMarkdown(
+  pathSegments: string[] | undefined,
+): Promise<string | null> {
+  if (!pathSegments || pathSegments.length === 0) return null;
+  if (pathSegments[0] !== "status") return null;
+  if (pathSegments.length === 1) {
+    return generateStatusIndexMarkdown();
+  }
+  if (pathSegments.length === 2) {
+    const slug = pathSegments[1];
+    if (!slug) return null;
+    return generateStatusDetailMarkdown(slug);
+  }
+  return null;
 }
 
 // Only allow GET requests

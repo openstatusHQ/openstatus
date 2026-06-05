@@ -1,4 +1,6 @@
+import type { Effect } from "effect";
 import { z } from "zod";
+import type { FetchError } from "./fetch";
 
 // Define arrays as source of truth
 export const API_CONFIG_TYPES = [
@@ -6,6 +8,7 @@ export const API_CONFIG_TYPES = [
   "instatus",
   "betterstack",
   "incidentio",
+  "uptimerobot",
   "custom",
   "html-scraper",
 ] as const;
@@ -18,6 +21,7 @@ export const STATUS_PAGE_PROVIDERS = [
   "status.io",
   "custom",
   "better-uptime",
+  "uptime-robot",
   "unknown",
 ] as const;
 
@@ -103,8 +107,45 @@ export interface StatusResult {
   timezone?: string;
 }
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+export interface NormalizedIncident {
+  providerIncidentId: string;
+  name: string;
+  status: string;
+  impact?: string;
+  shortlink?: string;
+  startedAt?: Date;
+  createdAt: Date;
+  resolvedAt: Date | null;
+  affectedComponentIds: string[];
+  raw: JsonValue;
+}
+
+export interface NormalizedComponent {
+  upstreamComponentId: string;
+  name: string;
+  description?: string;
+  groupName?: string;
+  position: number;
+  severity: SeverityLevel;
+  status: StatusType;
+}
+
 export interface StatusFetcher {
   name: string;
   canHandle(entry: StatusPageEntry): boolean;
-  fetch(entry: StatusPageEntry): Promise<StatusResult>;
+  fetch(entry: StatusPageEntry): Effect.Effect<StatusResult, FetchError>;
+  fetchIncidents?(
+    entry: StatusPageEntry,
+  ): Effect.Effect<NormalizedIncident[], FetchError>;
+  fetchComponents?(
+    entry: StatusPageEntry,
+  ): Effect.Effect<NormalizedComponent[], FetchError>;
 }

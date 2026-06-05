@@ -2,72 +2,156 @@
 title: "Pricing"
 publishedAt: "2025-11-10"
 author: "Maximilian Kaske"
-description: "Start free with uptime monitoring and a status page. Upgrade to Starter ($30/mo) or Pro ($100/mo) for more monitors, team collaboration, and advanced features. No credit card required."
+description: "Start free with uptime monitoring and a status page. Upgrade to Starter ($30/mo), Pro ($100/mo), or Scale ($500/mo) for more monitors, team collaboration, and advanced features. No credit card required."
 category: "company"
 faq:
   - question: "What billing options are available?"
-    answer: "All paid plans are available with monthly or annual billing. Choose annual billing to get 2 months free — Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo)."
+    answer: "All paid plans are available with monthly or annual billing. Choose annual billing to get 2 months free — Starter at $300/year ($25/mo), Pro at $1,000/year (~$83/mo), and Scale at $5,000/year (~$416/mo)."
   - question: "Can I switch between monthly and annual billing?"
     answer: "Yes. You can switch between monthly and annual billing at any time from your dashboard."
-  - question: "What does the free plan include?"
-    answer: "The free plan includes one monitor, one status page with three components, and a minimum check interval of 10 minutes. No credit card required."
+  - question: "Do you offer a free plan?"
+    answer: "Yes. Our free Hobby plan includes one monitor, one status page with three components, and a minimum check interval of 10 minutes. No credit card required."
   - question: "What are add-ons and how are they billed?"
     answer: "Add-ons are workspace-level settings like White Label, Email Authentication, IP Restriction, and extra status pages. Once enabled, they apply to your entire workspace. Add-ons are billed monthly regardless of your plan's billing cycle."
   - question: "Can I upgrade or downgrade my plan?"
     answer: "Yes. You can upgrade or downgrade at any time from your dashboard. Changes take effect immediately, and billing is prorated."
   - question: "What currencies do you support?"
-    answer: "We support EUR, USD, and INR. Contact us at ping@openstatus.dev or book a call if you have questions about pricing in your currency."
+    answer: "We support EUR and USD. Contact us at ping@openstatus.dev or book a call if you have questions about pricing in your currency."
+  - question: "Do you offer refunds?"
+    answer: "Yes. If you are not happy with openstatus, reach out at ping@openstatus.dev within 30 days of your payment and we will issue a full refund — no questions asked."
+  - question: "Can I cancel my subscription at any time?"
+    answer: "Yes. You can cancel anytime from your dashboard. Your plan stays active until the end of the current billing period, and you will not be charged again."
+  - question: "What happens if I exceed my plan limits?"
+    answer: "We will never stop your monitors or status pages without notice. If you approach or exceed a limit, we will reach out to help you pick the right plan. Add-ons like extra status pages are billed per unit as listed in the comparison table."
+  - question: "Do you offer custom or enterprise plans?"
+    answer: "Yes. If you need higher limits, custom regions, SSO, a dedicated SLA, or a custom contract, book a call and we will tailor a plan to your needs."
+  - question: "What payment methods do you accept?"
+    answer: "We accept all major credit and debit cards through Stripe. For annual plans we can also issue invoices on request — contact us at ping@openstatus.dev."
 ---
 
 <Suspense>
     <PricingTabs />
 </Suspense>
 
-| Features comparison | Free - Hobby |$30/month - Starter | $100/month - Pro |
+| Features comparison | $30/month - Starter | $100/month - Pro | $500/month - Scale |
 | --- | --- | --- | --- |
 | [Status Pages](/status-page) |  |  |  |
-| Number of status pages | 1 | 1 +$20/mo./each | 5 +$20/mo./each |
-| Number of components | 3 | 20 | 50 |
+| Number of status pages | 1 +$20/mo./each | 5 +$20/mo./each | 10 +$20/mo./each |
+| Number of components | 20 | 50 | 500 |
 | Maintenance status | + | + | + |
 | Toggle numbers visibility | + | + | + |
-| Subscribers |  | + | + |
-| Custom domain |  | + | + |
-| Locale switcher |  | + | + |
-| Slack Agent |  | + | + |
-| White Label |  | $300/mo. | $300/mo. |
+| Subscribers | + | + | + |
+| Custom domain | + | + | + |
+| Locale switcher | + | + | + |
+| Slack Agent | + | + | + |
+| White Label | $300/mo. | $300/mo. | + |
 | **Audience** |  |  |  |
-| Password Protection |  | + | + |
-| Email Authentification |  | $100/mo. | $100/mo. |
-| IP Restriction |  | $100/mo. | $100/mo. |
+| Password Protection | + | + | + |
+| Email Authentification | $100/mo. | $100/mo. | + |
+| IP Restriction | $100/mo. | $100/mo. | + |
 | [Monitors](/uptime-monitoring) |  |  |  |
-| Check Interval | 10m | 1m | 30s |
-| Number of monitors | 1 | 20 | 50 |
+| Check Interval | 1m | 30s | 30s |
+| Number of monitors | 20 | 50 | 50 |
 | Multi-region monitoring | + | + | + |
-| Total regions | 6 | 28 | 28 |
-| Regions per monitor | 6 | 6 | 28 |
-| Data retention | 14 days | 3 months | 12 months |
-| Response logs |  | + | + |
-| Private locations |  |  | + |
-| OTel Exporter |  |  | + |
-| Number of on-demand checks | 30/mo. | 100/mo. | 300/mo. |
+| Total regions | 28 | 28 | 28 |
+| Regions per monitor | 6 | 28 | 28 |
+| Data retention | 3 months | 12 months | 24 months |
+| Response logs | + | + | + |
+| Private locations |  | + | + |
+| OTel Exporter |  | + | + |
 | **Alerts** |  |  |  |
 | Slack, Discord, Email, Webhook | + | + | + |
-| WhatsApp |  | + | + |
-| SMS |  | + | + |
-| PagerDuty |  | + | + |
-| OpsGenie |  | + | + |
-| Grafana OnCall |  | + | + |
-| Number of notification channels | 1 | 10 | 20 |
+| WhatsApp | + | + | + |
+| SMS | + | + | + |
+| PagerDuty | + | + | + |
+| OpsGenie | + | + | + |
+| Grafana OnCall | + | + | + |
+| Number of notification channels | 10 | 20 | 20 |
 | **Collaboration** |  |  |  |
-| Team members | 1 | Unlimited | Unlimited |
-| Audit log |  |  | + |
+| Team members | Unlimited | Unlimited | Unlimited |
+| Audit log |  | + | + |
 
-All paid plans are available with **monthly** or **annual** billing. Choose annual billing to get **2 months free** — that's Starter at $300/year ($25/mo) and Pro at $1,000/year (~$83/mo).
 
-We provide pricing support for **EUR**/**USD**/**INR** as currency. Contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev) or [book a call](https://openstatus.dev/cal) if you have questions.
+---
+## Enterprise
 
-**Add-ons** are workspace settings. Once enabled, you can use these configurations for every status page, monitor, etc. in your workspace. Add-ons are billed monthly.
+For teams that need more than what Scale offers — **SOC2 reports**, **SAML/SSO**, **custom regions**, **higher monitor and status page limits**, a **dedicated SLA**, custom contracts, and invoicing. We will tailor a plan to your requirements.
 
+<ButtonLink href="mailto:ping@openstatus.dev">Contact us</ButtonLink>
+
+---
+
+
+## Frequently asked questions
+
+<Details summary="Do you offer a free plan?">
+
+Yes. Our free **Hobby** plan includes **one monitor**, **one status page with three components**, and a minimum check interval of **10 minutes**. No credit card required.
+
+</Details>
+
+<Details summary="Do you offer refunds?">
+
+Yes. If you are not happy with openstatus, reach out at [ping@openstatus.dev](mailto:ping@openstatus.dev) within **30 days** of your payment and we will issue a full refund — no questions asked.
+
+</Details>
+
+<Details summary="What billing options are available?">
+
+All paid plans are available with **monthly** or **annual** billing. Choose annual billing to get **2 months free** — Starter at **$300/year** ($25/mo), Pro at **$1,000/year** ($83/mo), and Scale at **$5,000/year** ($416/mo).
+
+</Details>
+
+<Details summary="Can I switch between monthly and annual billing?">
+
+Yes. You can switch between monthly and annual billing at any time from your dashboard.
+
+</Details>
+
+
+<Details summary="What are add-ons and how are they billed?">
+
+Add-ons are workspace-level settings like **White Label**, **Email Authentication**, **IP Restriction**, and **extra status pages**. Once enabled, they apply to your entire workspace. Add-ons are billed monthly regardless of your plan's billing cycle.
+
+</Details>
+
+<Details summary="Can I upgrade or downgrade my plan?">
+
+Yes. You can upgrade or downgrade at any time from your dashboard. Changes take effect immediately, and billing is prorated.
+
+</Details>
+
+<Details summary="What currencies do you support?">
+
+We support **EUR** and **USD**. Contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev) or [book a call](https://openstatus.dev/cal) if you have questions about pricing in your currency.
+
+</Details>
+
+
+<Details summary="Can I cancel my subscription at any time?">
+
+Yes. You can cancel anytime from your dashboard. Your plan stays active until the end of the current billing period, and you will not be charged again.
+
+</Details>
+
+<Details summary="What happens if I exceed my plan limits?">
+
+We will never stop your monitors or status pages without notice. If you approach or exceed a limit, we will reach out to help you pick the right plan. Add-ons like extra status pages are billed per unit as listed in the comparison table.
+
+</Details>
+
+
+<Details summary="Do you offer custom or enterprise plans?">
+
+Yes. If you need higher limits, custom regions, SSO, a dedicated SLA, or a custom contract, [book a call](https://openstatus.dev/cal) and we will tailor a plan to your needs.
+
+</Details>
+
+<Details summary="What payment methods do you accept?">
+
+We accept all major credit and debit cards through **Stripe**. For annual plans we can also issue invoices on request — contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev).
+
+</Details>
 ---
 
 Go to the dashboard and get started

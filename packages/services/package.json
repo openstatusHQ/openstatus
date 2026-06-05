@@ -53,6 +53,14 @@
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
     },
+    "./chat-session": {
+      "import": "./src/chat-session/index.ts",
+      "types": "./src/chat-session/index.ts"
+    },
+    "./agent-tools": {
+      "import": "./src/agent-tools/index.ts",
+      "types": "./src/agent-tools/index.ts"
+    },
     "./import": {
       "import": "./src/import/index.ts",
       "types": "./src/import/index.ts"
@@ -85,6 +93,18 @@
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
     },
+    "./external-service": {
+      "import": "./src/external-service/index.ts",
+      "types": "./src/external-service/index.ts"
+    },
+    "./external-service-incident": {
+      "import": "./src/external-service-incident/index.ts",
+      "types": "./src/external-service-incident/index.ts"
+    },
+    "./external-service-component": {
+      "import": "./src/external-service-component/index.ts",
+      "types": "./src/external-service-component/index.ts"
+    },
     "./test/helpers": {
       "import": "./test/helpers.ts",
       "types": "./test/helpers.ts"
@@ -95,7 +115,8 @@
     }
   },
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
@@ -105,12 +126,13 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/subscriptions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
+    "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "zod": "4.1.13"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/bun": "latest",
-    "typescript": "5.9.3"
+    "typescript": "catalog:"
   }
 }

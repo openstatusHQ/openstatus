@@ -6,16 +6,16 @@ description: "Connect Claude, ChatGPT, Cursor, and any other Model Context Proto
 category: "Product"
 faq:
   - question: "What does the MCP server let an assistant do?"
-    answer: "The MCP server exposes 8 tools scoped to your workspace: list status pages, list and create status reports, append updates, resolve reports, edit metadata, and schedule maintenance windows. Every mutation writes to the audit log and the assistant must explicitly confirm whether to notify subscribers."
+    answer: "The MCP server exposes 17 read and write tools scoped to your workspace: list status pages, monitors, response logs, notifications, and audit logs; inspect a single monitor or response log; create, update, and resolve status reports; schedule maintenance windows. Every mutation writes to the audit log, and publishing tools require an explicit notify decision."
   - question: "Are skills different from the MCP server?"
     answer: "Skills are prompt and command bundles installed into your local agent (Claude Code, etc.) that wrap the openstatus CLI. The MCP server is a remote endpoint that any MCP-compatible client can connect to. Skills are great for terminal-shaped workflows; MCP is great for chat-shaped workflows."
   - question: "Do I need a separate MCP credential?"
     answer: "No. We don't implement the MCP OAuth flow — there's no consent screen and no extra credential to manage. Authentication is the x-openstatus-key header, the same key the CLI, API, and Terraform use."
   - question: "Can the assistant accidentally notify subscribers?"
-    answer: "No. Every mutation tool requires the assistant to set notify: true | false explicitly. Models can't quietly fan out an alert by omitting the flag — and every call lands in the audit log under actor_type = 'mcp' so you can see exactly what happened."
+    answer: "No. Every publishing tool requires the assistant to set notify: true | false explicitly — there's no default. Metadata-only edits like update_status_report can't notify at all. Every call lands in the audit log under actor_type = 'mcp', so you can see exactly what happened."
 ---
 
-The openstatus MCP server connects Claude Desktop, ChatGPT, Cursor, and any other [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace — so an AI assistant can read and update status pages, status reports, and maintenance windows directly from a conversation.
+The openstatus MCP server connects Claude Desktop, ChatGPT, Cursor, and any other [Model Context Protocol](https://modelcontextprotocol.io) client to your workspace — so an AI assistant can read monitors, response logs, and audit history, and drive status pages, status reports, and maintenance windows directly from a conversation.
 
 ## Quickstart
 
@@ -37,25 +37,32 @@ Drop the snippet into your client's MCP config (`claude_desktop_config.json`, Cu
 
 ## What you can do
 
-The server exposes **8 tools** scoped to your workspace:
+The server exposes **18 tools** scoped to your workspace, grouped by entity:
 
-- `list_status_pages` — discover the pages your assistant can act on.
-- `list_status_reports` / `create_status_report` — read and post incidents.
-- `append_status_report_update` / `resolve_status_report` — drive an incident through its lifecycle.
-- `update_status_report` — edit metadata after the fact.
-- `create_maintenance` / `update_maintenance` — schedule and adjust planned downtime.
+- **Status pages** — `list_status_pages` · `list_page_components`
+- **Status reports** — `list_status_reports` · `create_status_report` · `add_status_report_update` · `update_status_report` · `resolve_status_report`
+- **Maintenance** — `list_maintenances` · `create_maintenance`
+- **Monitors** — `list_monitors` · `get_monitor` · `get_monitor_status` · `get_monitor_summary`
+- **Response logs** — `list_response_logs` · `get_response_log`
+- **Notifications** — `list_notifications`
+- **Audit log** *(workspaces on the audit-log plan only)* — `list_audit_logs` · `get_audit_log`
 
-Every mutation tool requires `notify: true | false` — the assistant must explicitly choose whether to notify subscribers, so an LLM cannot quietly fan out an alert.
+The four **publishing** tools (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) require `notify: true | false` — the assistant must explicitly choose whether to notify subscribers, so an LLM cannot quietly fan out an alert. `update_status_report` is metadata-only and cannot notify.
 
-## Auth & audit
+The same tool registry powers the [in-app assistant](/blog/from-clickops-to-chatops) — every tool you see in `/chat` is the same tool you call over MCP, kept in sync by shape-equivalence tests.
+
+## Auth & scopes
 
 Authentication is the `x-openstatus-key` header — the same API key the CLI, API, and Terraform use. We don't implement the MCP OAuth flow: no separate credential to manage, no consent screen, just one key from **Settings → API Tokens**.
+
+API keys carry a `read` or `write` scope. Read-only keys never see write tools in `tools/list` — they don't exist for that session. Write tools throw a clean error if a read-only key somehow attempts them.
 
 Every mutation lands in the audit log under `actor_type = 'mcp'`, so you can trace any change back to a key, a user, and a transport.
 
 ## Other surfaces
 
-- Want a terminal interface for AI agents (Claude Code, etc.) instead of chat? See [skills](/tooling/cli#ai-skills) on the CLI page.
+- Want chat inside the dashboard instead of an external client? See the [in-app assistant](/blog/from-clickops-to-chatops).
+- Want a terminal interface for AI agents (Claude Code, etc.)? See [skills](/tooling/cli#ai-skills) on the CLI page.
 - Building an in-app integration? Call the [API](/tooling/api) directly.
 - Want Slack instead of Claude or ChatGPT? See the [Slack agent](/status-page#slack-agent).
 

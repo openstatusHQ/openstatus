@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 
-import { Body, Head, Html, Link, Preview } from "@react-email/components";
+import { Body, Head, Html, Link, Preview } from "react-email";
 
 interface SubscribeProps {
   page: string;
