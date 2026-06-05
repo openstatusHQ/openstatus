@@ -7,11 +7,32 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@openstatus/ui/components/ui/sheet";
-import { ChevronRight, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type DocsNavSection, docsNav, isExternalItem } from "./docs.config";
+
+function CollapsibleList({
+  open,
+  children,
+  className,
+}: {
+  open: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
+        open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+      )}
+    >
+      <div className={cn("overflow-hidden", className)}>{children}</div>
+    </div>
+  );
+}
 
 function NavSection({
   section,
@@ -27,7 +48,6 @@ function NavSection({
   );
   const [open, setOpen] = useState(!section.collapsed || containsActive);
 
-  // Auto-expand the section when navigating into one of its pages.
   useEffect(() => {
     if (containsActive) setOpen(true);
   }, [containsActive]);
@@ -37,14 +57,20 @@ function NavSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between py-1 font-medium text-foreground hover:bg-muted"
+        className="group ease flex w-full items-center justify-between px-2 py-2 text-foreground transition-colors duration-150 hover:bg-muted motion-reduce:transition-none"
       >
-        {section.label}
-        <ChevronRight
-          className={cn("size-4 transition-transform", open && "rotate-90")}
-        />
+        <span className="font-medium font-mono">{section.label}</span>
+        <span
+          className={cn(
+            "relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground motion-reduce:transition-none",
+            open && "rotate-180 text-foreground",
+          )}
+          aria-hidden="true"
+        >
+          ▲
+        </span>
       </button>
-      {open ? (
+      <CollapsibleList open={open}>
         <ul>
           {section.items.map((item) => {
             if (isExternalItem(item)) {
@@ -54,7 +80,7 @@ function NavSection({
                     href={item.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="ease block px-2 py-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none"
                   >
                     {item.label}
                   </a>
@@ -69,7 +95,7 @@ function NavSection({
                   href={href}
                   onClick={onNavigate}
                   className={cn(
-                    "block py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground",
+                    "ease block px-2 py-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none",
                     active && "bg-muted text-foreground",
                   )}
                 >
@@ -79,7 +105,7 @@ function NavSection({
             );
           })}
         </ul>
-      ) : null}
+      </CollapsibleList>
     </div>
   );
 }
@@ -92,7 +118,7 @@ function NavTree({
   onNavigate?: () => void;
 }) {
   return (
-    <nav aria-label="Docs" className="flex flex-col gap-2 text-sm">
+    <nav aria-label="Docs" className="flex flex-col gap-1 text-sm">
       {docsNav.map((section) => (
         <NavSection
           key={section.label}
@@ -122,13 +148,13 @@ export function DocsMobileNav({ className }: { className?: string }) {
   return (
     <div className={className}>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger className="mb-4 flex items-center gap-2 border border-border px-3 py-2 text-sm hover:bg-muted">
+        <SheetTrigger className="ease mb-4 font-mono flex items-center gap-2 border border-border px-3 py-2 text-sm transition-colors duration-150 hover:bg-muted motion-reduce:transition-none">
           <Menu className="size-4" />
           Docs menu
         </SheetTrigger>
         <SheetContent
           side="left"
-          className="gap-0 rounded-none p-0 font-mono sm:w-96"
+          className="gap-0 rounded-none p-0 font-sans sm:w-96"
         >
           <SheetTitle className="border-border border-b p-4 font-medium">
             Documentation

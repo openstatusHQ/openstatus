@@ -15,13 +15,19 @@ export function DocsSubNav({
 
   return (
     <div
-      className={cn("flex items-center justify-between gap-2", className)}
+      className={cn(
+        "flex items-center justify-between gap-2 font-mono",
+        className,
+      )}
       {...props}
     >
-      <div className="prose text-muted-foreground">
+      <div className="text-muted-foreground">
         {segments.map((segment, index) => (
           <Fragment key={segment}>
-            <Link href={`/${segments.slice(0, index + 1).join("/")}`}>
+            <Link
+              href={`/${segments.slice(0, index + 1).join("/")}`}
+              className="ease transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+            >
               {segment.split("-").join(" ")}
             </Link>
             {index < segments.length - 1 ? (

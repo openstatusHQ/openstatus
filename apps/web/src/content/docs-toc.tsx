@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import type { TocItem } from "./toc";
 
-export function TableOfContents({ items }: { items: TocItem[] }) {
+function useActiveHeading(items: TocItem[]) {
   const [active, setActive] = useState<string>();
 
   useEffect(() => {
@@ -27,18 +27,24 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
     return () => observer.disconnect();
   }, [items]);
 
+  return active;
+}
+
+export function TableOfContents({ items }: { items: TocItem[] }) {
+  const active = useActiveHeading(items);
+
   if (items.length === 0) return null;
 
   return (
     <nav aria-label="Table of contents" className="text-sm">
-      <p className="mb-3 font-medium text-foreground">On this page</p>
+      <p className="mb-3 font-medium font-mono text-foreground">On this page</p>
       <ul>
         {items.map((item) => (
           <li key={item.slug}>
             <a
               href={`#${item.slug}`}
               className={cn(
-                "block py-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                "ease block py-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none",
                 item.depth === 2 ? "pl-2" : "pl-4",
                 active === item.slug && "bg-muted text-foreground",
               )}

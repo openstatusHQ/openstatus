@@ -189,7 +189,10 @@ const CONFIG: ConfigSection[] = [
   },
 ];
 
-export function CmdK({ defaultPage }: { defaultPage?: string } = {}) {
+export function CmdK({
+  defaultPage,
+  className,
+}: { defaultPage?: string; className?: string } = {}) {
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
@@ -295,6 +298,7 @@ export function CmdK({ defaultPage }: { defaultPage?: string } = {}) {
         className={cn(
           "flex w-full items-center text-left hover:bg-muted",
           open && "bg-muted!",
+          className,
         )}
         onClick={() => setOpen(true)}
       >

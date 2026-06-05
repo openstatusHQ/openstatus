@@ -4,7 +4,7 @@ import { FooterStatus } from "./footer-status";
 
 export function DocsFooter() {
   return (
-    <footer>
+    <footer className="font-mono">
       <div className="grid gap-px border border-border bg-border sm:grid-cols-2 md:grid-cols-3 [&>*]:bg-background">
         <Link
           href="/cal"

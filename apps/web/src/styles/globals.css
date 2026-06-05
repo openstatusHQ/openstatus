@@ -145,7 +145,7 @@
 }
 
 .prose a {
-  @apply text-foreground underline transition-all decoration-muted-foreground/50 underline-offset-2 decoration-2 hover:decoration-muted-foreground;
+  @apply text-foreground underline decoration-muted-foreground/50 underline-offset-2 decoration-2 hover:decoration-muted-foreground transition-colors duration-150 motion-reduce:transition-none;
 }
 
 .prose .anchor:after {
@@ -193,15 +193,15 @@
 }
 
 .prose h2 {
-  @apply text-2xl text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative;
+  @apply text-2xl text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative scroll-mt-12;
 }
 
 .prose h3 {
-  @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative;
+  @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
 }
 
 .prose h4 {
-  @apply text-lg text-foreground font-medium tracking-tight mt-6 mb-2 relative;
+  @apply text-lg text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-6;
 }
 
 .prose hr {
@@ -231,7 +231,7 @@
 }
 
 .prose figure img {
-  @apply aspect-video object-cover border border-border;
+  @apply aspect-video object-cover border border-border outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10;
 }
 
 .prose figure figcaption {

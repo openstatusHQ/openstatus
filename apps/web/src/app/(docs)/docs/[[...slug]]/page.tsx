@@ -136,7 +136,7 @@ export default async function DocsPage({
     <div className="flex gap-8">
       <div className="min-w-0 flex-1 space-y-8">
         <DocsSubNav />
-        <article className="prose dark:prose-invert max-w-none font-sans">
+        <article className="prose dark:prose-invert max-w-none">
           <h1>{doc.metadata.title}</h1>
           <CustomMDX source={doc.content} />
         </article>
@@ -146,7 +146,7 @@ export default async function DocsPage({
               href={`${EDIT_BASE}/${joined}.mdx`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground"
+              className="ease transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
             >
               Edit this page on GitHub
             </a>
