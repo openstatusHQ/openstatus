@@ -6,6 +6,7 @@ import { sendTest as sendMsTeamsTest } from "@openstatus/notification-ms-teams";
 import { sendTest as sendNtfyTest } from "@openstatus/notification-ntfy";
 import { sendTest as sendOpsgenieTest } from "@openstatus/notification-opsgenie";
 import { sendTest as sendPagerDutyTest } from "@openstatus/notification-pagerduty";
+import { sendTest as sendPushoverTest } from "@openstatus/notification-pushover";
 import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
@@ -156,6 +157,20 @@ export async function sendTestNotification(
             key: h.key,
             value: h.value,
           })),
+        });
+        return { success: true };
+      }
+
+      case NotificationProvider.PUSHOVER: {
+        if (data.data.case !== "pushover") {
+          throw invalidNotificationDataError(
+            "Expected pushover data for Pushover provider",
+          );
+        }
+        await sendPushoverTest({
+          token: data.data.value.token,
+          user: data.data.value.user,
+          priority: data.data.value.priority,
         });
         return { success: true };
       }

@@ -8,6 +8,7 @@ import {
   ntfyDataSchema,
   opsgenieDataSchema,
   pagerdutyDataSchema,
+  pushoverDataSchema,
   slackDataSchema,
   telegramDataSchema,
   webhookDataSchema,
@@ -25,6 +26,7 @@ import {
   PagerDutySchema,
   sendTest as sendPagerDutyTest,
 } from "@openstatus/notification-pagerduty";
+import { sendTest as sendPushoverTest } from "@openstatus/notification-pushover";
 import { sendTestSlackMessage as sendSlackTest } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
@@ -309,6 +311,18 @@ export const notificationRouter = createTRPCRouter({
         await sendPagerDutyTest({
           integrationKey: parsed.data.integration_keys[0].integration_key,
         });
+        return;
+      }
+      if (opts.input.provider === "pushover") {
+        const _data = pushoverDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        await sendPushoverTest(_data.data.pushover);
         return;
       }
 
