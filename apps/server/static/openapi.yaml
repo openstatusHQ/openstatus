@@ -2003,6 +2003,15 @@ components:
             - pagerduty
         - type: object
           properties:
+            pushover:
+              title: pushover
+              description: Pushover configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.PushoverData'
+          title: pushover
+          required:
+            - pushover
+        - type: object
+          properties:
             slack:
               title: slack
               description: Slack configuration.
@@ -2067,6 +2076,7 @@ components:
         - NOTIFICATION_PROVIDER_WEBHOOK
         - NOTIFICATION_PROVIDER_WHATSAPP
         - NOTIFICATION_PROVIDER_MS_TEAMS
+        - NOTIFICATION_PROVIDER_PUSHOVER
       description: NotificationProvider represents the supported notification channel types.
     openstatus.notification.v1.NotificationSummary:
       type: object
@@ -2158,6 +2168,37 @@ components:
       title: PagerDutyData
       additionalProperties: false
       description: PagerDutyData contains configuration for PagerDuty notifications.
+    openstatus.notification.v1.PushoverData:
+      type: object
+      properties:
+        token:
+          type: string
+          examples:
+            - azGDORePK8gMaC0QOYAMyEEuzJnyUi
+          title: token
+          maxLength: 30
+          minLength: 30
+          pattern: ^[A-Za-z0-9]+$
+          description: Pushover application API token (30 alphanumeric characters).
+        user:
+          type: string
+          examples:
+            - uQiRzpo4DXghDmr9QzzfQu27cmVRsG
+          title: user
+          maxLength: 30
+          minLength: 30
+          pattern: ^[A-Za-z0-9]+$
+          description: Pushover user or group key (30 alphanumeric characters).
+        priority:
+          type: integer
+          title: priority
+          maximum: 1
+          minimum: -2
+          format: int32
+          description: Message priority (-2 lowest, -1 low, 0 normal, 1 high).
+      title: PushoverData
+      additionalProperties: false
+      description: PushoverData contains configuration for Pushover notifications.
     openstatus.notification.v1.SendTestNotificationRequest:
       type: object
       properties:
