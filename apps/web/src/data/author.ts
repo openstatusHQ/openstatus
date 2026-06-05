@@ -11,6 +11,10 @@ export const author = {
     name: "Moulik Aggarwal",
     url: "https://x.com/aggmoulik",
   },
+  "Colin Ozanne": {
+    name: "Colin Ozanne",
+    url: "https://finxol.eu",
+  },
 } as const;
 
 export function getAuthor(name: string) {
