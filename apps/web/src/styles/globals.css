@@ -193,15 +193,15 @@
 }
 
 .prose h2 {
-  @apply text-2xl text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative scroll-mt-20;
+  @apply text-2xl text-foreground font-semibold tracking-tight mt-12 mb-4 pt-8 border-t border-border/60 relative scroll-mt-12;
 }
 
 .prose h3 {
-  @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-20;
+  @apply text-xl text-foreground font-medium tracking-tight mt-8 mb-3 relative scroll-mt-8;
 }
 
 .prose h4 {
-  @apply text-lg text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-20;
+  @apply text-lg text-foreground font-medium tracking-tight mt-6 mb-2 relative scroll-mt-6;
 }
 
 .prose hr {
