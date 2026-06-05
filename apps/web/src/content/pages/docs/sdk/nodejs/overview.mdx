@@ -1,0 +1,48 @@
+---
+category: SDK
+title: Node.js SDK
+description: "Interact with openstatus programmatically from your JavaScript and TypeScript applications"
+---
+
+
+The openstatus Node.js SDK lets you manage monitors, status pages, status reports, maintenance windows, and notifications from JavaScript and TypeScript. Request and response messages are fully typed, generated from the openstatus protobuf schemas.
+
+The SDK is open source and developed in its own repository, [openstatusHQ/sdk-node](https://github.com/openstatusHQ/sdk-node) (separate from the main monorepo).
+
+## Features
+
+- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide.
+- **Status pages** — create and manage public status pages with monitor-based or static components, grouping, and subscribers.
+- **Status reports and maintenance** — manage incident reports with update timelines and schedule planned maintenance windows.
+- **Notifications** — configure Slack, Discord, Email, PagerDuty, Opsgenie, Telegram, and webhook channels.
+- **Type-safe** — typed request/response messages generated from the openstatus protobuf schemas.
+- **Cross-runtime** — works on Node.js, Deno, and Bun, in both ESM and CJS.
+
+## Installation
+
+```bash
+npm install @openstatus/sdk-node
+```
+
+See [Getting Started](/docs/sdk/nodejs/getting-started) for JSR, Deno, and Bun instructions, a quick start, and a full end-to-end workflow.
+
+## Services
+
+The client exposes one service per domain. Each has its own reference page:
+
+| Service | Page | Purpose |
+|---------|------|---------|
+| Monitor | [Monitor Service](/docs/sdk/nodejs/monitor-service) | Manage HTTP, TCP, and DNS monitors; trigger checks; read status and summaries. |
+| Health | [Health Service](/docs/sdk/nodejs/health-service) | Liveness check for the API. No authentication required. |
+| Status Report | [Status Report Service](/docs/sdk/nodejs/status-report-service) | Manage incident reports and their update timelines. |
+| Status Page | [Status Page Service](/docs/sdk/nodejs/status-page-service) | Manage status pages, components, component groups, and subscribers. |
+| Maintenance | [Maintenance Service](/docs/sdk/nodejs/maintenance-service) | Schedule and manage planned maintenance windows. |
+| Notification | [Notification Service](/docs/sdk/nodejs/notification-service) | Configure notification channels and check usage limits. |
+
+For authentication, errors, and TypeScript ergonomics, see [Authentication](/docs/sdk/nodejs/authentication), [Error Handling](/docs/sdk/nodejs/error-handling), [TypeScript Tips](/docs/sdk/nodejs/typescript-tips), and the full [Reference](/docs/sdk/nodejs/reference).
+
+## Resources
+
+- [openstatusHQ/sdk-node on GitHub](https://github.com/openstatusHQ/sdk-node)
+- [@openstatus/sdk-node on npm](https://www.npmjs.com/package/@openstatus/sdk-node)
+- [API Reference](https://api.openstatus.dev/openapi)

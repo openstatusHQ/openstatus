@@ -1,0 +1,176 @@
+import {
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+} from "@/app/(landing)/content-box";
+import { ContentPagination } from "@/app/(landing)/content-pagination";
+import {
+  getDocs,
+  getDocsPage,
+  getDocsPagination,
+  gitLastModified,
+  validateDocsNav,
+} from "@/content/docs";
+import { DocsSubNav } from "@/content/docs-sub-nav";
+import { TableOfContents } from "@/content/docs-toc";
+import {
+  type DocsNavNode,
+  docsNavTree,
+  findDocsNode,
+  getDocsContainerSlugs,
+} from "@/content/docs.config";
+import { CustomMDX } from "@/content/mdx";
+import { Grid } from "@/content/mdx-components/grid";
+import { extractHeadings } from "@/content/toc";
+import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+export const dynamicParams = false;
+
+const EDIT_BASE =
+  "https://github.com/openstatusHQ/openstatus/edit/main/apps/web/src/content/pages/docs";
+
+type Params = { slug?: string[] };
+
+export function generateStaticParams(): Params[] {
+  const { errors, warnings } = validateDocsNav();
+  for (const w of warnings) console.warn(`[docs] ${w}`);
+  if (errors.length > 0) {
+    const message = `docs nav validation failed:\n${errors.join("\n")}`;
+    if (process.env.NODE_ENV === "production") throw new Error(message);
+    for (const e of errors) console.warn(`[docs] ERROR ${e}`);
+  }
+  return [
+    { slug: [] },
+    ...getDocsContainerSlugs().map((s) => ({ slug: s.split("/") })),
+    ...getDocs().map((d) => ({ slug: d.slug.split("/") })),
+  ];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<Params>;
+}): Promise<Metadata | undefined> {
+  const { slug } = await params;
+  if (!slug || slug.length === 0) {
+    return {
+      title: "openstatus documentation",
+      description:
+        "Learn how to create your status page, monitor your endpoints, and configure notifications with openstatus.",
+      alternates: { canonical: `${BASE_URL}/docs` },
+    };
+  }
+  const joined = slug.join("/");
+  const doc = getDocsPage(joined);
+  if (!doc) {
+    const node = findDocsNode(docsNavTree(), `/docs/${joined}`);
+    if (node?.children?.length) {
+      return {
+        title: `${node.label} — openstatus docs`,
+        alternates: { canonical: `${BASE_URL}/docs/${joined}` },
+      };
+    }
+    return;
+  }
+  return {
+    title: doc.metadata.title,
+    description: doc.metadata.description,
+    alternates: { canonical: `${BASE_URL}${doc.href}` },
+  };
+}
+
+// A container node (the /docs hub or a section) → one card per child. Same nav
+// tree the markdown listing walks, so HTML and markdown can't drift.
+function DocsContainerLanding({ node }: { node: DocsNavNode }) {
+  return (
+    <div className="min-w-0 flex-1 space-y-8">
+      <DocsSubNav />
+      <section className="prose dark:prose-invert max-w-none">
+        <h1>{node.label}</h1>
+        {node.description ? <p>{node.description}</p> : null}
+        <Grid cols={2}>
+          {node.children?.map((card) => {
+            const description = card.slug
+              ? getDocsPage(card.slug)?.metadata.description
+              : undefined;
+            return (
+              <ContentBoxLink key={card.href} href={card.href}>
+                <ContentBoxTitle>{card.label}</ContentBoxTitle>
+                {description ? (
+                  <ContentBoxDescription>{description}</ContentBoxDescription>
+                ) : null}
+              </ContentBoxLink>
+            );
+          })}
+        </Grid>
+      </section>
+    </div>
+  );
+}
+
+export default async function DocsPage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  const { slug } = await params;
+  const joined = slug?.join("/") ?? "";
+
+  const doc = joined ? getDocsPage(joined) : undefined;
+  if (!doc) {
+    const node = findDocsNode(
+      docsNavTree(),
+      joined ? `/docs/${joined}` : "/docs",
+    );
+    if (node?.children?.length) return <DocsContainerLanding node={node} />;
+    notFound();
+  }
+
+  const toc = extractHeadings(doc.content);
+  const { prev, next } = getDocsPagination(joined);
+  const lastUpdated = gitLastModified(doc.filePath);
+
+  return (
+    <div className="flex gap-8">
+      <div className="min-w-0 flex-1 space-y-8">
+        <DocsSubNav />
+        <article className="prose dark:prose-invert max-w-none">
+          <h1>{doc.metadata.title}</h1>
+          <CustomMDX source={doc.content} />
+        </article>
+        <div className="space-y-4">
+          <div className="flex flex-row flex-wrap justify-between gap-x-4 gap-y-2 text-muted-foreground text-sm">
+            <a
+              href={`${EDIT_BASE}/${joined}.mdx`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ease transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+            >
+              Edit this page on GitHub
+            </a>
+            {lastUpdated ? (
+              <span>
+                Last updated{" "}
+                {lastUpdated.toLocaleDateString("en-us", {
+                  month: "short",
+                  day: "2-digit",
+                  year: "numeric",
+                })}
+              </span>
+            ) : null}
+          </div>
+
+          <ContentPagination prev={prev} next={next} />
+        </div>
+      </div>
+
+      <aside className="hidden w-56 shrink-0 xl:block">
+        <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+          <TableOfContents items={toc} />
+        </div>
+      </aside>
+    </div>
+  );
+}

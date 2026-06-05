@@ -68,9 +68,15 @@ const CONFIG: ConfigSection[] = [
         href: "/pricing",
       },
       {
+        type: "group",
+        label: "Search in Docs...",
+        heading: "Docs",
+        page: "docs",
+      },
+      {
         type: "item",
         label: "Go to Docs",
-        href: "https://docs.openstatus.dev",
+        href: "/docs",
       },
       {
         type: "item",
@@ -183,13 +189,18 @@ const CONFIG: ConfigSection[] = [
   },
 ];
 
-export function CmdK() {
+export function CmdK({
+  defaultPage,
+  className,
+}: { defaultPage?: string; className?: string } = {}) {
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const resetTimerRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
   const [search, setSearch] = React.useState("");
-  const [pages, setPages] = React.useState<string[]>([]);
+  const [pages, setPages] = React.useState<string[]>(
+    defaultPage ? [defaultPage] : [],
+  );
   const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
 
@@ -264,7 +275,7 @@ export function CmdK() {
       }
       resetTimerRef.current = setTimeout(() => {
         setSearch("");
-        setPages([]);
+        setPages(defaultPage ? [defaultPage] : []);
       }, DELAY);
     }
 
@@ -278,7 +289,7 @@ export function CmdK() {
         clearTimeout(resetTimerRef.current);
       }
     };
-  }, [open, items.length]);
+  }, [open, items.length, defaultPage]);
 
   return (
     <>
@@ -287,6 +298,7 @@ export function CmdK() {
         className={cn(
           "flex w-full items-center text-left hover:bg-muted",
           open && "bg-muted!",
+          className,
         )}
         onClick={() => setOpen(true)}
       >

@@ -29,8 +29,6 @@ Your internal dashboards say everything is fine. Your CPU graphs are flat. Your 
 
 This is the gap uptime monitoring exists to close. Send a request to your endpoint every minute from outside your own network, check the response, alert if something is wrong. The premise is simple. The interesting parts are in the details - what you check, how often, from where, and what counts as wrong.
 
----
-
 ## How Uptime Monitoring Works
 
 A monitoring service sits outside your infrastructure and makes synthetic requests to your endpoints on a schedule. The basic loop:
@@ -52,8 +50,6 @@ The whole cycle repeats every 30 seconds to 5 minutes per monitor, from probe lo
 
 Most teams use HTTP for the bulk of monitors and add browser checks for critical user paths like login or checkout.
 
----
-
 ## Why External Monitoring Matters
 
 Your internal monitoring tells you when servers are unhealthy. It cannot tell you when your service is unreachable from your customers' networks.
@@ -68,8 +64,6 @@ Common problems that only external monitoring catches:
 - **DDoS protection misbehaving** - legitimate traffic is being challenged
 
 A server with green internal metrics can still be completely unreachable for users. External probes catch that gap.
-
----
 
 ## What "99.9% Uptime" Actually Means
 
@@ -91,8 +85,6 @@ For the gory details on what these numbers actually buy you, see [why uptime per
 
 Want to compute the maximum downtime your SLA permits? Use our [uptime SLA calculator](/play/uptime-sla).
 
----
-
 ## Choosing a Monitoring Frequency
 
 | Frequency       | Use case                                          |
@@ -104,8 +96,6 @@ Want to compute the maximum downtime your SLA permits? Use our [uptime SLA calcu
 
 Faster isn't always better. At 10-second intervals you start measuring network noise more than service health. Your false positive rate climbs and your cost goes up. Default to 1 minute unless you have a specific reason to go faster.
 
----
-
 ## Multi-Region Monitoring
 
 A single probe location lies to you. Networks fail. Probe servers have bad days. Bot detection rules sometimes catch monitoring traffic.
@@ -113,8 +103,6 @@ A single probe location lies to you. Networks fail. Probe servers have bad days.
 The fix: run the same check from at least 3 regions on different continents, and require a majority to fail before alerting. This eliminates almost all false positives from transient probe-side issues while still catching real outages within seconds.
 
 If two of three regions in different continents can't reach your service, something is genuinely wrong. If one of three can't, it's almost always a network issue on the probe side - not your problem.
-
----
 
 ## What to Monitor
 
@@ -138,8 +126,6 @@ Don't monitor everything. Monitor the things customers actually use.
 
 Each monitor costs money and generates alerts. Keep the list lean and the signal high.
 
----
-
 ## Uptime Monitoring vs Synthetic Monitoring
 
 Uptime monitoring is the simplest form of [synthetic monitoring](/guides/what-is-synthetic-monitoring) - one request, one response, did it work. Synthetic monitoring is the broader category that includes:
@@ -149,8 +135,6 @@ Uptime monitoring is the simplest form of [synthetic monitoring](/guides/what-is
 - API sequence monitoring ("does the OAuth dance work?")
 
 If you only need to know whether your endpoints respond, uptime monitoring is enough. If you need to know whether complex user journeys work, you need full synthetic monitoring.
-
----
 
 ## The Bottom Line
 

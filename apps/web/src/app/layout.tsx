@@ -4,6 +4,7 @@ import { OpenPanelComponent } from "@openpanel/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
+import Script from "next/script";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { WebMcpProvider } from "@/components/webmcp-provider";
@@ -18,7 +19,7 @@ import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import PlausibleProvider from "next-plausible";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const calSans = LocalFont({
   src: "../public/fonts/CalSans-SemiBold.ttf",
@@ -46,7 +47,7 @@ export default function RootLayout({
         className={`${
           inter.className
           // biome-ignore lint/nursery/useSortedClasses: <explanation>
-        } ${calSans.variable}`}
+        } ${inter.variable} ${calSans.variable} antialiased`}
       >
         <PlausibleProvider domain="openstatus.dev">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -86,6 +87,7 @@ export default function RootLayout({
           }}
           richColors
         />
+        <Script src="https://ui.sh/ui-picker.js" />
       </body>
     </html>
   );

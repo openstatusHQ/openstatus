@@ -97,11 +97,7 @@ export default async function Guide({
         </div>
       ) : null}
       <CustomMDX source={post.content} />
-      <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/guides"
-      />
+      <ContentPagination prev={previousPost} next={nextPost} />
     </section>
   );
 }

@@ -1,5 +1,5 @@
-import { generateListingForPath } from "./listing";
-import type { MDXData } from "./utils";
+import { getDocsPage } from "../docs";
+import type { MDXData } from "./index";
 import {
   getBlogPosts,
   getChangelogPosts,
@@ -11,7 +11,8 @@ import {
   getToolsPages,
   getUnrelatedPages,
   getUseCasePages,
-} from "./utils";
+} from "./index";
+import { generateListingForPath } from "./listing";
 
 /**
  * Content resolution result - either MDX content or a generated listing
@@ -59,6 +60,11 @@ function resolveMdxContent(pathname: string): MDXData | null {
       // home.mdx doesn't exist, will fallback to listing
       return null;
     }
+  }
+
+  // Docs use nested slugs (concept/x, sdk/nodejs/x) — resolve the full tail.
+  if (segments[0] === "docs" && segments.length >= 2) {
+    return getDocsPage(segments.slice(1).join("/")) ?? null;
   }
 
   // Prefixed paths (category/slug format)

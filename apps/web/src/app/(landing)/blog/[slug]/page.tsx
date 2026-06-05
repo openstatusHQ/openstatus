@@ -97,11 +97,7 @@ export default async function Blog({
         </div>
       ) : null}
       <CustomMDX source={post.content} />
-      <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/blog"
-      />
+      <ContentPagination prev={previousPost} next={nextPost} />
     </section>
   );
 }

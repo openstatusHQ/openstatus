@@ -1,87 +1,9 @@
-import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
-import slugify from "slugify";
-import { z } from "zod";
+import { getDocs } from "../docs";
+import { type MDXData, getMDXDataFromDir, getMDXDataFromFile } from "./read";
 
-// Structured data schemas
-const howtoStepSchema = z.object({
-  name: z.string(),
-  text: z.string(),
-  image: z.string().optional(),
-  url: z.string().optional(),
-});
-
-const howtoSchema = z.object({
-  totalTime: z.string().optional(), // ISO 8601 duration format (e.g., "PT2H")
-  steps: z.array(howtoStepSchema),
-});
-
-const faqItemSchema = z.object({
-  question: z.string(),
-  answer: z.string(),
-});
-
-const metadataSchema = z.object({
-  title: z.string(),
-  publishedAt: z.coerce.date(),
-  description: z.string(),
-  category: z.string(),
-  author: z.string(),
-  image: z.string().optional(),
-  // Structured data fields
-  howto: howtoSchema.optional(),
-  faq: z.array(faqItemSchema).optional(),
-});
-
-export type Metadata = z.infer<typeof metadataSchema>;
-export type HowToStep = z.infer<typeof howtoStepSchema>;
-export type HowToData = z.infer<typeof howtoSchema>;
-export type FAQItem = z.infer<typeof faqItemSchema>;
-
-function parseFrontmatter(fileContent: string) {
-  const { data, content } = matter(fileContent);
-
-  const validatedMetadata = metadataSchema.safeParse(data);
-
-  if (!validatedMetadata.success) {
-    console.error(validatedMetadata.error);
-    throw new Error(`Invalid metadata: ${validatedMetadata.error.message}`);
-  }
-
-  return { metadata: validatedMetadata.data, content };
-}
-
-function getMDXFiles(dir: string) {
-  return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
-}
-
-function readMDXFile(filePath: string) {
-  const rawContent = fs.readFileSync(filePath, "utf-8");
-  return parseFrontmatter(rawContent);
-}
-
-function getMDXDataFromDir(dir: string, prefix = "") {
-  const mdxFiles = getMDXFiles(dir);
-  return mdxFiles.map((file) => {
-    return getMDXDataFromFile(path.join(dir, file), prefix);
-  });
-}
-
-function getMDXDataFromFile(filePath: string, prefix = "") {
-  const { metadata, content } = readMDXFile(filePath);
-  const slugRaw = path.basename(filePath, path.extname(filePath));
-  const slug = slugify(slugRaw, { lower: true, strict: true });
-  const href = prefix ? `${prefix}/${slug}` : `/${slug}`;
-  return {
-    metadata,
-    slug,
-    content,
-    href,
-  };
-}
-
-export type MDXData = ReturnType<typeof getMDXDataFromFile>;
+export * from "./schema";
+export type { MDXData } from "./read";
 
 export function getBlogPosts(): MDXData[] {
   return getMDXDataFromDir(
@@ -217,6 +139,10 @@ export function getCustomerPage(slug: string): MDXData {
   );
 }
 
+export function getDocPages(): MDXData[] {
+  return getDocs();
+}
+
 export const PAGE_TYPES = [
   "blog",
   "changelog",
@@ -228,6 +154,7 @@ export const PAGE_TYPES = [
   "customers",
   "guides",
   "use-case",
+  "docs",
   "all",
 ] as const;
 
@@ -255,6 +182,8 @@ export function getPages(type: PageType) {
       return getGuides();
     case "use-case":
       return getUseCasePages();
+    case "docs":
+      return getDocPages();
     case "all":
       return [
         ...getBlogPosts(),

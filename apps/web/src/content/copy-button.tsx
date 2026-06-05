@@ -92,7 +92,7 @@ export function CopyDropdownButton({
             aria-label="Copy dropdown"
           >
             <span
-              className="relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground group-data-[state=open]:rotate-180 group-data-[state=open]:text-foreground"
+              className="relative top-[1px] shrink-0 origin-center font-sans text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground group-data-[state=open]:rotate-180 group-data-[state=open]:text-foreground"
               aria-hidden="true"
             >
               ▲

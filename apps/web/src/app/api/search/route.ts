@@ -74,6 +74,7 @@ function search(params: SearchParams) {
       ...getPages("guides"),
       ...getPages("use-case"),
       ...getPages("unrelated"),
+      ...getPages("docs"),
       home,
     ];
   } else {
