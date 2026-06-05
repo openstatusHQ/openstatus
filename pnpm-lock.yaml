@@ -964,6 +964,9 @@ importers:
       '@openstatus/notification-pagerduty':
         specifier: workspace:*
         version: link:../../packages/notifications/pagerduty
+      '@openstatus/notification-pushover':
+        specifier: workspace:*
+        version: link:../../packages/notifications/pushover
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack
@@ -1624,6 +1627,9 @@ importers:
       '@openstatus/notification-pagerduty':
         specifier: workspace:*
         version: link:../../packages/notifications/pagerduty
+      '@openstatus/notification-pushover':
+        specifier: workspace:*
+        version: link:../../packages/notifications/pushover
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack
@@ -1761,6 +1767,9 @@ importers:
       '@openstatus/notification-pagerduty':
         specifier: workspace:*
         version: link:../notifications/pagerduty
+      '@openstatus/notification-pushover':
+        specifier: workspace:*
+        version: link:../notifications/pushover
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../notifications/slack
@@ -2337,6 +2346,31 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.15)
+      bun-types:
+        specifier: 'catalog:'
+        version: 1.3.14
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/notifications/pushover:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@openstatus/notification-base':
+        specifier: workspace:*
+        version: link:../base
+      zod:
+        specifier: 'catalog:'
+        version: 4.1.13
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.4
       bun-types:
         specifier: 'catalog:'
         version: 1.3.14

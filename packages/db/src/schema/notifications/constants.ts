@@ -12,4 +12,5 @@ export const notificationProvider = [
   "telegram",
   "webhook",
   "whatsapp",
+  "pushover",
 ] as const;

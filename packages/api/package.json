@@ -26,6 +26,7 @@
     "@openstatus/notification-ntfy": "workspace:*",
     "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
+    "@openstatus/notification-pushover": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-telegram": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",

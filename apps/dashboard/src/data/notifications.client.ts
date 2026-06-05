@@ -3,6 +3,7 @@ import {
   GoogleIcon,
   GrafanaIcon,
   MicrosoftTeamsIcon,
+  PushoverIcon,
   TelegramIcon,
   WhatsappIcon,
 } from "@openstatus/icons";
@@ -26,6 +27,7 @@ import { FormMsTeams } from "@/components/forms/notifications/form-ms-teams";
 import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
 import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
+import { FormPushover } from "@/components/forms/notifications/form-pushover";
 import { FormSlack } from "@/components/forms/notifications/form-slack";
 import { FormSms } from "@/components/forms/notifications/form-sms";
 import { FormTelegram } from "@/components/forms/notifications/form-telegram";
@@ -120,6 +122,11 @@ export const config = {
     icon: TelegramIcon,
     label: "Telegram",
     form: FormTelegram,
+  },
+  pushover: {
+    icon: PushoverIcon,
+    label: "Pushover",
+    form: FormPushover,
   },
   whatsapp: {
     icon: WhatsappIcon,
