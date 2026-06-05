@@ -72,16 +72,22 @@ export function FormPushover({
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ?? {
-      name: "",
-      provider: "pushover",
-      data: {
-        token: "",
-        user: "",
-        priority: "0",
-      },
-      monitors: [],
-    },
+    defaultValues: defaultValues
+      ? {
+          ...defaultValues,
+          data: {
+            ...defaultValues.data,
+            // priority may be persisted as a number (API-created); the Select
+            // and schema both expect a string.
+            priority: String(defaultValues.data.priority ?? "0"),
+          },
+        }
+      : {
+          name: "",
+          provider: "pushover",
+          data: { token: "", user: "", priority: "0" },
+          monitors: [],
+        },
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
