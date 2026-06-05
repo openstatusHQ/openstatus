@@ -4,6 +4,7 @@ export function PushoverIcon(props: React.ComponentProps<"svg">) {
       role="img"
       viewBox="0 0 600 600"
       xmlns="http://www.w3.org/2000/svg"
+      stroke="currentColor"
       fill="currentColor"
       fillRule="evenodd"
       {...props}
