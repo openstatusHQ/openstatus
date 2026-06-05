@@ -39,13 +39,15 @@ const pushoverKeySchema = z
   .string()
   .regex(/^[A-Za-z0-9]{30}$/, "Must be exactly 30 alphanumeric characters");
 
+const prioritySchema = z.enum(["-2", "-1", "0", "1"]);
+
 const schema = z.object({
   name: z.string(),
   provider: z.literal("pushover"),
   data: z.object({
     token: pushoverKeySchema,
     user: pushoverKeySchema,
-    priority: z.string(),
+    priority: prioritySchema,
   }),
   monitors: z.array(z.number()),
 });
@@ -77,9 +79,11 @@ export function FormPushover({
           ...defaultValues,
           data: {
             ...defaultValues.data,
-            // priority may be persisted as a number (API-created); the Select
-            // and schema both expect a string.
-            priority: String(defaultValues.data.priority ?? "0"),
+            // priority may be persisted as a number (API-created); coerce to a
+            // valid enum value, defaulting to normal.
+            priority: prioritySchema
+              .catch("0")
+              .parse(String(defaultValues.data.priority)),
           },
         }
       : {
@@ -129,7 +133,11 @@ export function FormPushover({
     if (isPending) return;
 
     startTransition(async () => {
-      const valid = await form.trigger(["data.token", "data.user"]);
+      const valid = await form.trigger([
+        "data.token",
+        "data.user",
+        "data.priority",
+      ]);
       if (!valid) return;
       try {
         const provider = form.getValues("provider");
