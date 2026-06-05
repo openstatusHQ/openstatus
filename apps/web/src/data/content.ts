@@ -74,16 +74,16 @@ const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
+      label: "Docs",
+      href: "/docs",
+    },
+    {
       label: "Customers",
       href: "/customers",
     },
     {
       label: "Use Cases",
       href: "/use-case",
-    },
-    {
-      label: "Docs",
-      href: "/docs",
     },
     {
       label: "Blog",
