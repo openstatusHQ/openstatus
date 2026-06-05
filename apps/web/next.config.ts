@@ -33,7 +33,7 @@ const homepageLinkHeader = [
   '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
-  '<https://docs.openstatus.dev>; rel="service-doc"; type="text/html"',
+  '<https://www.openstatus.dev/docs>; rel="service-doc"; type="text/html"',
   '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
   '<https://www.openstatus.dev/llms-full.txt>; rel="alternate"; type="text/plain"; title="llms-full"',
@@ -99,6 +99,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "docs.openstatus.dev" }],
+        destination: "https://www.openstatus.dev/docs/:path*",
+        permanent: true,
+      },
       {
         source: "/legal/terms",
         destination: "/terms",
