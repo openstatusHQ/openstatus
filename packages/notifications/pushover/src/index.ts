@@ -42,13 +42,16 @@ async function send({
   }
 }
 
+const parsePushover = (data: string) =>
+  pushoverDataSchema.parse(JSON.parse(data)).pushover;
+
 export const sendAlert = async ({
   monitor,
   notification,
   statusCode,
   message,
 }: NotificationContext) => {
-  const { pushover } = pushoverDataSchema.parse(JSON.parse(notification.data));
+  const pushover = parsePushover(notification.data);
   await send({
     ...pushover,
     title: `${monitor.name} is down`,
@@ -63,7 +66,7 @@ export const sendRecovery = async ({
   monitor,
   notification,
 }: NotificationContext) => {
-  const { pushover } = pushoverDataSchema.parse(JSON.parse(notification.data));
+  const pushover = parsePushover(notification.data);
   // Recovery is never urgent: force normal priority so "up again" can't
   // bypass the user's Pushover quiet hours.
   await send({
@@ -79,7 +82,7 @@ export const sendDegraded = async ({
   monitor,
   notification,
 }: NotificationContext) => {
-  const { pushover } = pushoverDataSchema.parse(JSON.parse(notification.data));
+  const pushover = parsePushover(notification.data);
   await send({
     ...pushover,
     title: `${monitor.name} is degraded`,
