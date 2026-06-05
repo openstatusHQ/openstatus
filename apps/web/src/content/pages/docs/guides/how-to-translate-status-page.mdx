@@ -20,6 +20,7 @@ Currently supported languages:
 | `fr` | Français |
 | `de` | Deutsch |
 | `tr` | Türkçe |
+| `hi` | हिंदी |
 
 ## Enable translations on your status page
 
@@ -50,22 +51,24 @@ Add your locale to `packages/locales/index.ts`:
 
 ```ts
 import type { Locale as DateFnsLocale } from "date-fns/locale";
-import { de, enUS, es, fr } from "date-fns/locale";
+import { de, enUS, fr, hi, tr } from "date-fns/locale";
 
-export const locales = ["en", "fr", "de", "es"] as const;
+export const locales = ["en", "fr", "de", "tr", "hi"] as const;
 // ...
 export const localeDetails: Record<Locale, { name: string; flag: string }> = {
   en: { name: "English", flag: "🇺🇸" },
   fr: { name: "Français", flag: "🇫🇷" },
   de: { name: "Deutsch", flag: "🇩🇪" },
-  es: { name: "Español", flag: "🇪🇸" },
+  tr: { name: "Türkçe", flag: "🇹🇷" },
+  hi: { name: "हिंदी", flag: "🇮🇳" },
 };
 
 export const dateFnsLocales: Record<Locale, DateFnsLocale> = {
   en: enUS,
   fr,
   de,
-  es,
+  tr,
+  hi,
 };
 ```
 

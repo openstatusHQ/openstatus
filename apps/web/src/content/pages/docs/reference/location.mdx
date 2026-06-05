@@ -6,7 +6,7 @@ description: Complete technical specification for Location monitoring
 
 ## Overview
 
-openstatus monitors your endpoints from multiple global locations to ensure accurate uptime and latency reporting. Each monitoring location corresponds to a Fly.io region, with both IPv4 and IPv6 addresses available for each.
+openstatus monitors your endpoints from multiple global locations to ensure accurate uptime and latency reporting. Locations span several infrastructure providers (Fly.io, Railway, and Koyeb), so IP availability varies: Fly.io regions expose both IPv4 and IPv6 addresses, Railway regions are IPv4-only, and Koyeb does not provide static IPs.
 
 You can use these locations to:
 - Configure region-specific checks
@@ -58,5 +58,5 @@ Koyeb does not provide static IP addresses for their regions. For more informati
 
 **Note:**  
 
-- Both IPv4 and IPv6 addresses are provided for allowlisting and diagnostics.
+- Where available, IPv4 and IPv6 addresses are provided for allowlisting and diagnostics (Fly.io regions only; Railway is IPv4-only and Koyeb has no static IPs).
 - Location names are for reference and may be used in the dashboard UI.

@@ -18,9 +18,9 @@ export function ShowcaseYouTube({
 }) {
   return (
     <div className="my-4 grid gap-4 sm:grid-cols-2">
-      {entries.map((entry) => (
+      {entries.map((entry, i) => (
         <div
-          key={entry.href}
+          key={`${entry.href}-${i}`}
           className="relative aspect-video w-full overflow-hidden border border-border"
         >
           <iframe

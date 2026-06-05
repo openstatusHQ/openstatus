@@ -34,7 +34,7 @@ try {
 ConnectRPC does not retry by default. For transient failures (`unavailable`, `deadline_exceeded`), implement your own retry logic:
 
 ```typescript
-import { ConnectError } from "@connectrpc/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 
 async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -43,7 +43,8 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
     } catch (error) {
       if (
         error instanceof ConnectError &&
-        (error.code === "unavailable" || error.code === "deadline_exceeded") &&
+        (error.code === Code.Unavailable ||
+          error.code === Code.DeadlineExceeded) &&
         attempt < maxRetries
       ) {
         await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));

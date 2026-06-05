@@ -117,7 +117,7 @@ export function gitLastModified(filePath: string): Date | undefined {
       ["log", "-1", "--format=%cI", "--", filePath],
       { encoding: "utf-8" },
     ).trim();
-    return iso ? new Date(iso) : new Date();
+    return iso ? new Date(iso) : undefined;
   } catch {
     return undefined;
   }
