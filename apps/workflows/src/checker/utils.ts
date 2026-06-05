@@ -46,6 +46,11 @@ import {
   sendAlert as sendPagerdutyAlert,
 } from "@openstatus/notification-pagerduty";
 import {
+  sendAlert as sendPushoverAlert,
+  sendDegraded as sendPushoverDegraded,
+  sendRecovery as sendPushoverRecovery,
+} from "@openstatus/notification-pushover";
+import {
   sendAlert as sendSlackAlert,
   sendDegraded as sendSlackDegraded,
   sendRecovery as sendSlackRecovery,
@@ -114,6 +119,11 @@ export const providerToFunction: Record<NotificationProvider, Notif> = {
     sendAlert: sendPagerdutyAlert,
     sendRecovery: sendPagerDutyRecovery,
     sendDegraded: sendPagerDutyDegraded,
+  },
+  pushover: {
+    sendAlert: sendPushoverAlert,
+    sendRecovery: sendPushoverRecovery,
+    sendDegraded: sendPushoverDegraded,
   },
   slack: {
     sendAlert: sendSlackAlert,

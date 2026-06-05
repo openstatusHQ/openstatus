@@ -84,6 +84,18 @@ export const whatsappDataSchema = z.object({
   whatsapp: phoneSchema,
 });
 
+const pushoverKeySchema = z
+  .string()
+  .regex(/^[A-Za-z0-9]{30}$/, "Must be 30 alphanumeric characters");
+
+export const pushoverDataSchema = z.object({
+  pushover: z.object({
+    token: pushoverKeySchema,
+    user: pushoverKeySchema,
+    priority: z.coerce.number().int().min(-2).max(1).prefault(0),
+  }),
+});
+
 export const NotificationDataSchema = z.union([
   discordDataSchema,
   emailDataSchema,
@@ -98,6 +110,7 @@ export const NotificationDataSchema = z.union([
   webhookDataSchema,
   whatsappDataSchema,
   googleChatDataSchema,
+  pushoverDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
@@ -179,6 +192,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("whatsapp"),
         data: whatsappDataSchema,
+      }).shape,
+    ),
+    insertNotificationSchema.extend(
+      z.object({
+        provider: z.literal("pushover"),
+        data: pushoverDataSchema,
       }).shape,
     ),
   ],

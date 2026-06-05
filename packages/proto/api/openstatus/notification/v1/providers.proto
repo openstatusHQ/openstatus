@@ -37,6 +37,8 @@ enum NotificationProvider {
   NOTIFICATION_PROVIDER_WHATSAPP = 12;
   // Microsoft Teams notification.
   NOTIFICATION_PROVIDER_MS_TEAMS = 13;
+  // Pushover notification.
+  NOTIFICATION_PROVIDER_PUSHOVER = 14;
 }
 
 // DiscordData contains configuration for Discord notifications.
@@ -170,6 +172,22 @@ message MsTeamsData {
   ];
 }
 
+// PushoverData contains configuration for Pushover notifications.
+message PushoverData {
+  // Pushover application API token (30 alphanumeric characters).
+  string token = 1 [
+    (buf.validate.field).string = {len: 30, pattern: "^[A-Za-z0-9]+$"},
+    (gnostic.openapi.v3.property) = {example: {yaml: "azGDORePK8gMaC0QOYAMyEEuzJnyUi"}}
+  ];
+  // Pushover user or group key (30 alphanumeric characters).
+  string user = 2 [
+    (buf.validate.field).string = {len: 30, pattern: "^[A-Za-z0-9]+$"},
+    (gnostic.openapi.v3.property) = {example: {yaml: "uQiRzpo4DXghDmr9QzzfQu27cmVRsG"}}
+  ];
+  // Message priority (-2 lowest, -1 low, 0 normal, 1 high).
+  int32 priority = 3 [(buf.validate.field).int32 = {gte: -2, lte: 1}];
+}
+
 // NotificationData is a union of provider-specific configuration.
 message NotificationData {
   oneof data {
@@ -199,5 +217,7 @@ message NotificationData {
     WhatsappData whatsapp = 12;
     // Microsoft Teams configuration.
     MsTeamsData ms_teams = 13;
+    // Pushover configuration.
+    PushoverData pushover = 14;
   }
 }
