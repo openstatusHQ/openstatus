@@ -35,10 +35,18 @@ import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
+const pushoverKeySchema = z
+  .string()
+  .regex(/^[A-Za-z0-9]{30}$/, "Must be exactly 30 alphanumeric characters");
+
 const schema = z.object({
   name: z.string(),
   provider: z.literal("pushover"),
-  data: z.record(z.string(), z.string()),
+  data: z.object({
+    token: pushoverKeySchema,
+    user: pushoverKeySchema,
+    priority: z.string(),
+  }),
   monitors: z.array(z.number()),
 });
 
@@ -115,6 +123,8 @@ export function FormPushover({
     if (isPending) return;
 
     startTransition(async () => {
+      const valid = await form.trigger(["data.token", "data.user"]);
+      if (!valid) return;
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
@@ -173,6 +183,7 @@ export function FormPushover({
                 <FormLabel>Application API Token</FormLabel>
                 <FormControl>
                   <Input
+                    type="password"
                     placeholder="azGDORePK8gMaC0QOYAMyEEuzJnyUi"
                     {...field}
                   />
@@ -192,6 +203,7 @@ export function FormPushover({
                 <FormLabel>User / Group Key</FormLabel>
                 <FormControl>
                   <Input
+                    type="password"
                     placeholder="uQiRzpo4DXghDmr9QzzfQu27cmVRsG"
                     {...field}
                   />

@@ -92,6 +92,8 @@ export const pushoverDataSchema = z.object({
   pushover: z.object({
     token: pushoverKeySchema,
     user: pushoverKeySchema,
+    // Emergency priority (2) is excluded: it requires extra retry/expire
+    // params and acknowledgement handling not surfaced here.
     priority: z.coerce.number().int().min(-2).max(1).prefault(0),
   }),
 });
