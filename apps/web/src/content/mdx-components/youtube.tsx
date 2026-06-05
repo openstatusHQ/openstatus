@@ -27,6 +27,7 @@ export function ShowcaseYouTube({
             src={toEmbedUrl(entry.href)}
             title={entry.title ?? "YouTube video"}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            loading="lazy"
             allowFullScreen
             className="absolute inset-0 h-full w-full"
           />
