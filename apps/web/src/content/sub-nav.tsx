@@ -15,10 +15,13 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
       className={cn("flex items-center justify-between gap-2", className)}
       {...props}
     >
-      <div className="prose px-4 text-muted-foreground">
+      <div className="px-4 text-muted-foreground">
         {segments.map((segment, index) => (
           <Fragment key={segment}>
-            <Link href={`/${segments.slice(0, index + 1).join("/")}`}>
+            <Link
+              href={`/${segments.slice(0, index + 1).join("/")}`}
+              className="ease transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+            >
               {segment.split("-").join(" ")}
             </Link>
             {index < segments.length - 1 ? (
