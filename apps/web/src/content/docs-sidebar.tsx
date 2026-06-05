@@ -1,17 +1,38 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@openstatus/ui/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@openstatus/ui/components/ui/drawer";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { type DocsNavSection, docsNav, isExternalItem } from "./docs.config";
+import {
+  type DocsNavGroup,
+  type DocsNavItem,
+  docsNav,
+  isExternalItem,
+  isGroupItem,
+} from "./docs.config";
+
+// A group header and its direct pages share one indent level; descending into a
+// nested chapter steps in by one. Top sections and their pages stay flat at 0.
+const rowIndent = (depth: number) => ({
+  paddingLeft: `${0.5 + depth * 0.75}rem`,
+});
+
+function groupContainsActive(group: DocsNavGroup, pathname: string): boolean {
+  return group.items.some((item) => {
+    if (isExternalItem(item)) return false;
+    if (isGroupItem(item)) return groupContainsActive(item, pathname);
+    return pathname === `/docs/${item.slug}`;
+  });
+}
 
 function CollapsibleList({
   open,
@@ -34,19 +55,21 @@ function CollapsibleList({
   );
 }
 
-function NavSection({
-  section,
+// A collapsible group — used identically for top-level sections and nested
+// chapters; only the indent depth differs.
+function NavGroup({
+  group,
   pathname,
   onNavigate,
+  depth,
 }: {
-  section: DocsNavSection;
+  group: DocsNavGroup;
   pathname: string;
   onNavigate?: () => void;
+  depth: number;
 }) {
-  const containsActive = section.items.some(
-    (item) => !isExternalItem(item) && pathname === `/docs/${item.slug}`,
-  );
-  const [open, setOpen] = useState(!section.collapsed || containsActive);
+  const containsActive = groupContainsActive(group, pathname);
+  const [open, setOpen] = useState(!group.collapsed || containsActive);
 
   useEffect(() => {
     if (containsActive) setOpen(true);
@@ -57,9 +80,10 @@ function NavSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group ease flex w-full items-center justify-between px-2 py-2 text-foreground transition-colors duration-150 hover:bg-muted motion-reduce:transition-none"
+        className="group ease flex w-full items-center justify-between py-2 pr-2 text-foreground transition-colors duration-150 hover:bg-muted motion-reduce:transition-none"
+        style={rowIndent(depth)}
       >
-        <span className="font-medium font-mono">{section.label}</span>
+        <span className="font-medium font-mono">{group.label}</span>
         <span
           className={cn(
             "relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground motion-reduce:transition-none",
@@ -71,42 +95,77 @@ function NavSection({
         </span>
       </button>
       <CollapsibleList open={open}>
-        <ul>
-          {section.items.map((item) => {
-            if (isExternalItem(item)) {
-              return (
-                <li key={item.link}>
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ease block px-2 py-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none"
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              );
-            }
-            const href = `/docs/${item.slug}`;
-            const active = pathname === href;
-            return (
-              <li key={item.slug}>
-                <Link
-                  href={href}
-                  onClick={onNavigate}
-                  className={cn(
-                    "ease block px-2 py-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none",
-                    active && "bg-muted text-foreground",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <NavItems
+          items={group.items}
+          pathname={pathname}
+          onNavigate={onNavigate}
+          depth={depth}
+        />
       </CollapsibleList>
     </div>
+  );
+}
+
+function NavItems({
+  items,
+  pathname,
+  onNavigate,
+  depth,
+}: {
+  items: DocsNavItem[];
+  pathname: string;
+  onNavigate?: () => void;
+  depth: number;
+}) {
+  return (
+    <ul>
+      {items.map((item) => {
+        if (isExternalItem(item)) {
+          return (
+            <li key={item.link}>
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ease block py-2 pr-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none"
+                style={rowIndent(depth)}
+              >
+                {item.label}
+              </a>
+            </li>
+          );
+        }
+        if (isGroupItem(item)) {
+          return (
+            <li key={item.label}>
+              <NavGroup
+                group={item}
+                pathname={pathname}
+                onNavigate={onNavigate}
+                depth={depth + 1}
+              />
+            </li>
+          );
+        }
+        const href = `/docs/${item.slug}`;
+        const active = pathname === href;
+        return (
+          <li key={item.slug}>
+            <Link
+              href={href}
+              onClick={onNavigate}
+              className={cn(
+                "ease block py-2 pr-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none",
+                active && "bg-muted text-foreground",
+              )}
+              style={rowIndent(depth)}
+            >
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -120,11 +179,12 @@ function NavTree({
   return (
     <nav aria-label="Docs" className="flex flex-col gap-1 text-sm">
       {docsNav.map((section) => (
-        <NavSection
+        <NavGroup
           key={section.label}
-          section={section}
+          group={section}
           pathname={pathname}
           onNavigate={onNavigate}
+          depth={0}
         />
       ))}
     </nav>
@@ -147,23 +207,26 @@ export function DocsMobileNav({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className={className}>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger className="ease mb-4 font-mono flex items-center gap-2 border border-border px-3 py-2 text-sm transition-colors duration-150 hover:bg-muted motion-reduce:transition-none">
-          <Menu className="size-4" />
-          Docs menu
-        </SheetTrigger>
-        <SheetContent
-          side="left"
-          className="gap-0 rounded-none p-0 font-sans sm:w-96"
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger
+          aria-label="Open docs menu"
+          className="fixed right-4 bottom-4 z-40"
+          asChild
         >
-          <SheetTitle className="border-border border-b p-4 font-medium">
+          <Button className="rounded-none p-4 font-mono">
+            <Menu className="size-4" />
+            Docs menu
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent className="rounded-none! font-sans">
+          <DrawerTitle className="border-border border-b p-4 font-medium">
             Documentation
-          </SheetTitle>
+          </DrawerTitle>
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <NavTree pathname={pathname} onNavigate={() => setOpen(false)} />
           </div>
-        </SheetContent>
-      </Sheet>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

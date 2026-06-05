@@ -37,7 +37,7 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
 
   return (
     <nav aria-label="Table of contents" className="text-sm">
-      <p className="mb-3 font-medium font-mono text-foreground">On this page</p>
+      <p className="py-2 font-medium font-mono text-foreground">On this page</p>
       <ul>
         {items.map((item) => (
           <li key={item.slug}>

@@ -27,11 +27,10 @@ function readDocsFile(filePath: string): MDXData {
     publishedAt: fs.statSync(filePath).mtime,
   });
   const rel = path.relative(DOCS_DIR, filePath).replace(/\.mdx$/, "");
-  // `index.mdx` represents its directory: sdk/nodejs/index → sdk/nodejs
-  const slug = rel
-    .split(path.sep)
-    .join("/")
-    .replace(/\/index$|^index$/, "");
+  // One file ↔ one slug. Directory landings (e.g. /docs/sdk/nodejs) are synthetic
+  // card grids with no backing file — `index.mdx` is forbidden (see validateDocsNav)
+  // precisely so it can't shadow a landing; use `overview.mdx` for a landing page.
+  const slug = rel.split(path.sep).join("/");
   return {
     metadata,
     content,
@@ -48,8 +47,6 @@ export function getDocs(): MDXData[] {
 export function getDocsPage(slug: string): MDXData | undefined {
   const direct = path.join(DOCS_DIR, `${slug}.mdx`);
   if (fs.existsSync(direct)) return readDocsFile(direct);
-  const asIndex = path.join(DOCS_DIR, slug, "index.mdx");
-  if (fs.existsSync(asIndex)) return readDocsFile(asIndex);
   return undefined;
 }
 
@@ -79,6 +76,11 @@ export function validateDocsNav(): { errors: string[]; warnings: string[] } {
   }
 
   for (const doc of docs) {
+    if (path.basename(doc.filePath) === "index.mdx") {
+      errors.push(
+        `index.mdx is not allowed (it would shadow a directory landing); rename to overview.mdx: ${doc.slug}`,
+      );
+    }
     if (!navSlugs.has(doc.slug)) {
       errors.push(`doc not listed in docs.config.ts: ${doc.slug}`);
     }

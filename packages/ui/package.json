@@ -96,6 +96,7 @@
     "recharts": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss-animate": "catalog:",
+    "vaul": "catalog:",
     "zod": "catalog:"
   },
   "peerDependencies": {

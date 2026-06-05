@@ -17,7 +17,7 @@ import {
   type DocsNavNode,
   docsNavTree,
   findDocsNode,
-  getParentSlugs,
+  getDocsContainerSlugs,
 } from "@/content/docs.config";
 import { CustomMDX } from "@/content/mdx";
 import { Grid } from "@/content/mdx-components/grid";
@@ -43,7 +43,7 @@ export function generateStaticParams(): Params[] {
   }
   return [
     { slug: [] },
-    ...getParentSlugs().map((s) => ({ slug: s.split("/") })),
+    ...getDocsContainerSlugs().map((s) => ({ slug: s.split("/") })),
     ...getDocs().map((d) => ({ slug: d.slug.split("/") })),
   ];
 }

@@ -4,15 +4,19 @@
 // membership is mirrored by each doc's `category` frontmatter and cross-checked
 // at build time (see `validateDocsNav`).
 
-export type DocsNavItem =
-  | { slug: string; label: string }
-  | { link: string; label: string; external: true };
-
-export type DocsNavSection = {
+export type DocsNavLeaf = { slug: string; label: string };
+export type DocsNavExternal = { link: string; label: string; external: true };
+// A chapter: a collapsible group of items, nestable to any depth. Has no slug of
+// its own — its landing page (if any) is just the first child, by convention an
+// "Overview" leaf — mirroring how a top-level section is rendered.
+export type DocsNavGroup = {
   label: string;
   collapsed?: boolean;
   items: DocsNavItem[];
 };
+export type DocsNavItem = DocsNavLeaf | DocsNavExternal | DocsNavGroup;
+
+export type DocsNavSection = DocsNavGroup;
 
 export const DOCS_SECTIONS = [
   "Concepts",
@@ -150,27 +154,38 @@ export const docsNav: DocsNavSection[] = [
     label: "SDK",
     collapsed: true,
     items: [
-      { slug: "sdk/nodejs", label: "Node SDK" },
-      { slug: "sdk/nodejs/getting-started", label: "Getting Started" },
-      { slug: "sdk/nodejs/authentication", label: "Authentication" },
-      { slug: "sdk/nodejs/monitor-service", label: "Monitor Service" },
-      { slug: "sdk/nodejs/status-page-service", label: "Status Page Service" },
       {
-        slug: "sdk/nodejs/status-report-service",
-        label: "Status Report Service",
+        label: "Node SDK",
+        collapsed: true,
+        items: [
+          { slug: "sdk/nodejs/overview", label: "Overview" },
+          { slug: "sdk/nodejs/getting-started", label: "Getting Started" },
+          { slug: "sdk/nodejs/authentication", label: "Authentication" },
+          { slug: "sdk/nodejs/monitor-service", label: "Monitor Service" },
+          {
+            slug: "sdk/nodejs/status-page-service",
+            label: "Status Page Service",
+          },
+          {
+            slug: "sdk/nodejs/status-report-service",
+            label: "Status Report Service",
+          },
+          {
+            slug: "sdk/nodejs/maintenance-service",
+            label: "Maintenance Service",
+          },
+          {
+            slug: "sdk/nodejs/notification-service",
+            label: "Notification Service",
+          },
+          { slug: "sdk/nodejs/health-service", label: "Health Service" },
+          { slug: "sdk/nodejs/error-handling", label: "Error Handling" },
+          { slug: "sdk/nodejs/typescript-tips", label: "TypeScript Tips" },
+          { slug: "sdk/nodejs/reference", label: "Reference" },
+        ],
       },
-      {
-        slug: "sdk/nodejs/maintenance-service",
-        label: "Maintenance Service",
-      },
-      {
-        slug: "sdk/nodejs/notification-service",
-        label: "Notification Service",
-      },
-      { slug: "sdk/nodejs/health-service", label: "Health Service" },
-      { slug: "sdk/nodejs/error-handling", label: "Error Handling" },
-      { slug: "sdk/nodejs/typescript-tips", label: "TypeScript Tips" },
-      { slug: "sdk/nodejs/reference", label: "Reference" },
+      { slug: "sdk/php/overview", label: "PHP SDK" },
+      { slug: "sdk/python/overview", label: "Python SDK" },
     ],
   },
   {
@@ -217,25 +232,46 @@ export const docsNav: DocsNavSection[] = [
   },
 ];
 
-export function isExternalItem(
-  item: DocsNavItem,
-): item is { link: string; label: string; external: true } {
+export function isExternalItem(item: DocsNavItem): item is DocsNavExternal {
   return "external" in item && item.external;
 }
 
+export function isGroupItem(item: DocsNavItem): item is DocsNavGroup {
+  return "items" in item;
+}
+
+// First internal leaf slug in document order, descending into nested groups.
+// Used to derive a section/chapter's URL parent and landing page.
+export function firstLeafSlug(items: DocsNavItem[]): string | undefined {
+  for (const item of items) {
+    if (isExternalItem(item)) continue;
+    if (isGroupItem(item)) {
+      const nested = firstLeafSlug(item.items);
+      if (nested) return nested;
+    } else {
+      return item.slug;
+    }
+  }
+  return undefined;
+}
+
 // Flattened, in-order list of internal doc slugs — drives prev/next navigation
-// and the build-time validation against the content directory.
-export function flattenDocsNav(): { slug: string; label: string }[] {
-  return docsNav.flatMap((section) =>
-    section.items.filter((i) => !isExternalItem(i)),
-  ) as { slug: string; label: string }[];
+// and the build-time validation against the content directory. Recurses into
+// nested chapters so every leaf is covered regardless of depth.
+export function flattenDocsNav(): DocsNavLeaf[] {
+  const walk = (items: DocsNavItem[]): DocsNavLeaf[] =>
+    items.flatMap((item) => {
+      if (isExternalItem(item)) return [];
+      if (isGroupItem(item)) return walk(item.items);
+      return [item];
+    });
+  return docsNav.flatMap((section) => walk(section.items));
 }
 
 // The URL segment that represents a whole section, e.g. Concepts → /docs/concept.
 // Each section's items share a unique first path segment.
 export function sectionParentSlug(section: DocsNavSection): string | undefined {
-  const item = section.items.find((i) => !isExternalItem(i));
-  return item && !isExternalItem(item) ? item.slug.split("/")[0] : undefined;
+  return firstLeafSlug(section.items)?.split("/")[0];
 }
 
 export function sectionForParentSlug(
@@ -270,23 +306,71 @@ export function docsNavTree(): DocsNavNode {
       "Learn how to create your status page, monitor your endpoints, and configure notifications.",
     children: docsNav.map((section) => {
       const parent = sectionParentSlug(section);
-      const overview = section.items.find((i) => !isExternalItem(i));
       return {
         label: section.label,
+        // Sections own a synthetic landing at the directory root (e.g. /docs/sdk).
         href: parent ? `/docs/${parent}` : "/docs",
-        slug: overview && !isExternalItem(overview) ? overview.slug : undefined,
-        children: section.items.map((item) =>
-          isExternalItem(item)
-            ? { label: item.label, href: item.link }
-            : {
-                label: item.label,
-                href: `/docs/${item.slug}`,
-                slug: item.slug,
-              },
-        ),
+        slug: firstLeafSlug(section.items),
+        children: section.items.map(itemToNode),
       };
     }),
   };
+}
+
+// One nav item → one tree node. A nested chapter's landing is its directory hub
+// (e.g. /docs/sdk/nodejs) — a synthetic card grid, never a backing doc — so its
+// pages live one level deeper (sdk/nodejs/overview, …).
+function itemToNode(item: DocsNavItem): DocsNavNode {
+  if (isExternalItem(item)) return { label: item.label, href: item.link };
+  if (isGroupItem(item)) {
+    const hub = groupHubSlug(item);
+    return {
+      label: item.label,
+      href: hub ? `/docs/${hub}` : "/docs",
+      slug: hub,
+      children: item.items.map(itemToNode),
+    };
+  }
+  return { label: item.label, href: `/docs/${item.slug}`, slug: item.slug };
+}
+
+// Every leaf slug under a set of items, descending into nested chapters.
+function leafSlugs(items: DocsNavItem[]): string[] {
+  return items.flatMap((item) => {
+    if (isExternalItem(item)) return [];
+    if (isGroupItem(item)) return leafSlugs(item.items);
+    return [item.slug];
+  });
+}
+
+// A chapter's hub slug: the directory shared by all its pages. The Node SDK
+// chapter (pages under sdk/nodejs/*) → "sdk/nodejs".
+function groupHubSlug(group: DocsNavGroup): string | undefined {
+  const dirs = leafSlugs(group.items).map((s) => s.split("/").slice(0, -1));
+  if (dirs.length === 0) return undefined;
+  let prefix = dirs[0];
+  for (const dir of dirs.slice(1)) {
+    let i = 0;
+    while (i < prefix.length && prefix[i] === dir[i]) i++;
+    prefix = prefix.slice(0, i);
+  }
+  return prefix.length ? prefix.join("/") : undefined;
+}
+
+// Slugs of every container node (sections + chapters) — the synthetic hub URLs
+// that have no backing MDX file and must be statically generated as card grids.
+export function getDocsContainerSlugs(): string[] {
+  const out: string[] = [];
+  const walk = (node: DocsNavNode) => {
+    for (const child of node.children ?? []) {
+      if (!child.children?.length) continue;
+      const slug = child.href.replace(/^\/docs\/?/, "");
+      if (slug) out.push(slug);
+      walk(child);
+    }
+  };
+  walk(docsNavTree());
+  return out;
 }
 
 // Depth-first lookup of a node by its href (e.g. "/docs", "/docs/concept").
@@ -304,14 +388,14 @@ export function findDocsNode(
 
 // Map a slug back to its section label (the value a doc's `category` must hold).
 export function sectionForSlug(slug: string): DocsSection | undefined {
+  const has = (items: DocsNavItem[]): boolean =>
+    items.some((i) => {
+      if (isExternalItem(i)) return false;
+      if (isGroupItem(i)) return has(i.items);
+      return i.slug === slug;
+    });
   for (const section of docsNav) {
-    if (
-      section.items.some(
-        (i) => !isExternalItem(i) && "slug" in i && i.slug === slug,
-      )
-    ) {
-      return section.label as DocsSection;
-    }
+    if (has(section.items)) return section.label as DocsSection;
   }
   return undefined;
 }
