@@ -39,6 +39,14 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Uptime Monitoring",
       },
       {
+        slug: "concept/probes-and-locations",
+        label: "Probes, Locations, and Regions",
+      },
+      {
+        slug: "concept/private-locations",
+        label: "Understanding Private Locations",
+      },
+      {
         slug: "concept/best-practices-status-page",
         label: "Building Trust with Status Pages",
       },
@@ -66,8 +74,16 @@ export const docsNav: DocsNavSection[] = [
         label: "Create an Uptime Monitor in 5 Minutes",
       },
       {
+        slug: "tutorial/your-first-notification",
+        label: "Wire Up Your First Notification",
+      },
+      {
         slug: "tutorial/how-to-create-status-page",
         label: "Create a Status Page",
+      },
+      {
+        slug: "tutorial/your-first-status-report",
+        label: "Publish Your First Status Report",
       },
       {
         slug: "tutorial/how-to-configure-status-page",
@@ -192,6 +208,7 @@ export const docsNav: DocsNavSection[] = [
     label: "Reference",
     collapsed: true,
     items: [
+      { slug: "reference/overview", label: "Overview" },
       {
         link: "https://api.openstatus.dev/v1",
         label: "API Reference V1 - Deprecated",
@@ -274,9 +291,7 @@ export function sectionParentSlug(section: DocsNavSection): string | undefined {
   return firstLeafSlug(section.items)?.split("/")[0];
 }
 
-export function sectionForParentSlug(
-  parentSlug: string,
-): DocsNavSection | undefined {
+export function sectionForParentSlug(parentSlug: string): DocsNavSection | undefined {
   return docsNav.find((s) => sectionParentSlug(s) === parentSlug);
 }
 
@@ -374,10 +389,7 @@ export function getDocsContainerSlugs(): string[] {
 }
 
 // Depth-first lookup of a node by its href (e.g. "/docs", "/docs/concept").
-export function findDocsNode(
-  node: DocsNavNode,
-  href: string,
-): DocsNavNode | undefined {
+export function findDocsNode(node: DocsNavNode, href: string): DocsNavNode | undefined {
   if (node.href === href) return node;
   for (const child of node.children ?? []) {
     const found = findDocsNode(child, href);

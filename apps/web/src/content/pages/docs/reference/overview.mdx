@@ -1,0 +1,48 @@
+---
+category: Reference
+title: Reference Overview
+description: "Technical specifications for openstatus monitors, status pages, notifications, locations, and the CLI, MCP, and Terraform integrations."
+---
+
+This section is the source of truth for openstatus configuration. Use it to look up exact field names, types, defaults, and behaviour — not to learn how to do something. For task-oriented walkthroughs, see the [how-to guides](/docs/guides/getting-started); for learning paths, see the [tutorials](/docs/tutorial/getting-started).
+
+## Monitors
+
+How each monitor type runs checks and what you can configure on it.
+
+- **[HTTP Monitor](/docs/reference/http-monitor)** — URL, method, headers, body, assertions, regions.
+- **[TCP Monitor](/docs/reference/tcp-monitor)** — host:port checks for non-HTTP services.
+- **[DNS Monitor](/docs/reference/dns-monitor)** — record-type assertions for A, AAAA, CNAME, MX, NS, TXT.
+
+## Status pages
+
+Public surfaces for communicating service health.
+
+- **[Status Page](/docs/reference/status-page)** — page settings, custom domains, IP restrictions, themes, locales.
+- **[Page Components](/docs/reference/page-components)** — monitor-linked and static components, component groups, ordering.
+- **[Status Report](/docs/reference/status-report)** — incident updates and the state machine they drive.
+- **[Maintenance](/docs/reference/maintenance)** — scheduled maintenance windows.
+- **[Subscriber](/docs/reference/subscriber)** — email subscribers to a status page.
+
+## Alerting
+
+- **[Notification Channels](/docs/reference/notification)** — Slack, Discord, Email, SMS, WhatsApp, Telegram, PagerDuty, OpsGenie, Google Chat, Grafana OnCall, Ntfy, and generic webhooks.
+- **[Incident](/docs/reference/incident)** — auto-generated incident objects, trigger thresholds, and lifecycle states.
+
+## Probing infrastructure
+
+- **[Location](/docs/reference/location)** — every public region, its provider, and the IPv4/IPv6 addresses to allowlist.
+- **[Private Location](/docs/reference/private-location)** — fields for a customer-deployed probe and the API surface that manages it.
+
+## Tooling
+
+- **[CLI](/docs/reference/cli-reference)** — every command, subcommand, and flag in the `openstatus` CLI.
+- **[Terraform Provider](/docs/reference/terraform)** — resource and data source schemas for `openstatusHQ/openstatus`.
+- **[MCP Server](/docs/reference/mcp-server)** — tools and transport for the openstatus Model Context Protocol server.
+
+## HTTP API
+
+The HTTP API has its own dedicated documentation, generated from the OpenAPI schema:
+
+- **[API Reference (current)](https://api.openstatus.dev/openapi)** — the OpenAPI document, machine-readable, always up to date with the deployed server.
+- **[API Reference V1 (deprecated)](https://api.openstatus.dev/v1)** — the legacy V1 surface; kept available for existing integrations.
