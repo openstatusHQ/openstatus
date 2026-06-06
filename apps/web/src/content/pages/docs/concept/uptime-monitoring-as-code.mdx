@@ -19,107 +19,107 @@ This works for small teams with few monitors, but doesn't scale.
 
 **Monitoring as Code** treats your monitoring configuration the same way you treat your application code: as text files that can be versioned, reviewed, and deployed through automated pipelines.
 
-Instead of clicking buttons, you define monitors in YAML:
+Instead of clicking buttons, you declare monitors, status pages, and notifications in Terraform — and apply them with the same workflow your team already uses for the rest of your infrastructure.
 
-Uptime monitoring is a vital part of any robust system, ensuring your services are online and available to users. Historically, this has involved manually configuring monitors through a web interface, which can be tedious and prone to human error. Uptime Monitoring as Code changes this by treating your monitoring configurations like any other part of your application-as code.
-
-
-## Why Use Uptime Monitoring as Code?
+## Why use monitoring as code?
 
 This approach offers significant advantages:
 
-- **Version Control:** By defining your monitors in a YAML file, you can track every change, rollback to previous versions, and see who made which modifications using tools like Git. This is crucial for auditing and troubleshooting.
+- **Version Control:** Every change to a monitor lives in Git. You can see who modified what, review diffs, and roll back to a known-good state. Crucial for auditing and troubleshooting.
 
-- **Automation and Consistency:** Your monitoring setup can be part of your automated deployment pipeline. When you deploy a new service, its monitors are created automatically, ensuring consistency across your entire infrastructure. This eliminates the risk of forgetting to set up monitoring for a new service.
+- **Automation and Consistency:** Your monitoring setup becomes part of your deployment pipeline. When you ship a new service, its monitors, alerts, and status page components are provisioned automatically alongside it — no risk of forgetting to wire one up.
 
-- **Collaboration:** A code-based approach simplifies collaboration among teams. A developer can create a new monitor definition in the YAML file and submit it for peer review, just as they would with any other code change. This promotes a shared understanding of your system's health.
+- **Collaboration:** A code-based workflow makes peer review natural. A developer opens a pull request that adds a monitor, the team reviews it like any other change, and `terraform plan` shows exactly what will happen before it does.
 
-- **Scalability:** Manually setting up hundreds of monitors is a nightmare. With a code-based approach, you can programmatically generate configurations for a large number of services, making it easy to scale your monitoring as your infrastructure grows.
+- **Scalability:** Managing hundreds of monitors through a UI is impractical. With Terraform, you can use modules, `for_each`, and variables to generate configurations programmatically as your infrastructure grows.
 
-- **Simplified Auditing:** Since the entire configuration is in a file, it's easy to see the current state of your monitors at a glance. You don't have to navigate through multiple screens in a web UI.
+- **Simplified Auditing:** The current state of every monitor, page, and notification is captured in your `.tf` files. One `terraform plan` shows you any drift between what's declared and what's live.
 
+## How it works with openstatus
 
-## How It Works with openstatus
+We publish an official [Terraform provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) that lets you manage your entire openstatus workspace declaratively — monitors, status pages, component groups, notifications, and maintenance windows.
 
- We offer the use ofa simple, human-readable YAML file to define all uptime monitors. This file serves as the single source of truth for your monitoring setup. You define each monitor with its URL, expected status code, and other parameters.
+Here's what a minimal `main.tf` looks like:
 
-Here’s an example of what your `openstatus.yaml` file might look like:
+```terraform
+terraform {
+  required_providers {
+    openstatus = {
+      source  = "openstatusHQ/openstatus"
+      version = "~> 0.1"
+    }
+  }
+}
 
-```yaml
-# openstatus.yaml
-# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
-uptime-monitor:
-  name: "Uptime Monitor"
-  description: "Uptime monitoring example"
-  frequency: "10m"
-  active: true
-  regions:
-    - iad
-    - ams
-    - syd
-    - jnb
-    - gru
-  retry: 3
-  kind: http
-  request:
-    url: https://openstat.us
-    method: GET
-    headers:
-      User-Agent: openstatus
-  assertions:
-    - kind: statusCode
-      compare: eq
-      target: 200
+provider "openstatus" {
+  api_token = var.openstatus_api_token
+}
 
-graphql-monitor:
-  name: "Graphql"
-  description: "GitHub GraphQL API"
-  frequency: "10m"
-  active: true
-  regions:
-    - iad
-    - ams
-    - syd
-    - jnb
-    - gru
-  retry: 3
-  kind: http
-  request:
-    url: https://api.github.com/graphql
-    method: POST
-    headers:
-      User-Agent: openstatus
-      Authorization: Bearer YOUR_TOKEN_HERE
-    body: |
-      {
-        "query": "query { viewer { login }}"
-      }
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  description = "Monitors the main API health endpoint."
+  url         = "https://api.example.com/health"
+  periodicity = "5m"
+  method      = "GET"
+  active      = true
+  regions     = ["fly-iad", "fly-ams", "fly-syd"]
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+
+  body_assertions {
+    target     = "ok"
+    comparator = "contains"
+  }
+}
+
+resource "openstatus_notification" "slack" {
+  name          = "Slack Alerts"
+  provider_type = "slack"
+  monitor_ids   = [openstatus_http_monitor.api.id]
+
+  slack {
+    webhook_url = var.slack_webhook_url
+  }
+}
 ```
 
-### Making Changes with the CLI
+### Applying changes
 
-Once your `openstatus.yaml` file is ready, you use our [command-line interface (CLI)](/docs/tutorial/get-started-with-openstatus-cli) to apply the changes. The CLI compares your local configuration with the current state of your monitors and applies only the necessary changes creating new monitors, updating existing ones, or deleting those no longer defined.
+Once your configuration is ready, the standard Terraform workflow takes over. `terraform plan` shows you a diff against the live state; `terraform apply` reconciles it.
 
-**Common CLI Commands:**
+```bash
+terraform init    # Download the openstatus provider
+terraform plan    # Preview what will change
+terraform apply   # Apply the changes
+```
 
-- `openstatus monitors apply`: Applies the changes defined in your `openstatus.yaml` file.
-- `openstatus monitors import`: Import the monitors from your dashboard to a new `openstatus.yaml` file.
+Terraform only modifies what changed — updates are in place, with no downtime for unaffected monitors.
 
-By integrating this **Uptime Monitoring as Code** workflow into your development lifecycle, you can achieve a more reliable, consistent, and scalable system. It's about moving from manual clicks to automated, version-controlled operations.
+### Adopting it for an existing workspace
+
+If you already have monitors and status pages set up in the dashboard, you don't have to rewrite them by hand. The openstatus CLI can export your workspace into ready-to-use `.tf` files:
+
+```bash
+openstatus terraform generate
+```
+
+From there, import the resources into Terraform state and you're managing the existing setup as code.
 
 ## Best practices
 
 1. **Start simple**: Begin with a few monitors, expand as you learn
-2. **Use templates**: Create reusable patterns for common monitor types
-3. **Environment variables**: Use secrets management for tokens and sensitive data
-4. **Review changes**: Always review diffs before applying
+2. **Use modules**: Wrap common monitor patterns in reusable Terraform modules
+3. **Sensitive variables**: Mark API tokens and webhook URLs as `sensitive` and pass them via `TF_VAR_*` env vars or a secrets manager
+4. **Review changes**: Always run `terraform plan` and review the diff before applying
 5. **Document decisions**: Use commit messages to explain "why"
 
 ## Next steps
 
 Ready to implement monitoring as code?
 
-- **[Get Started with CLI](/docs/tutorial/get-started-with-openstatus-cli)** - Install and configure the CLI
+- **[Manage openstatus with Terraform](/docs/tutorial/how-to-manage-openstatus-with-terraform-cli)** - End-to-end tutorial
+- **[Terraform Provider Reference](/docs/reference/terraform)** - Full resource specification
 - **[Monitor Your MCP Server](/docs/guides/how-to-monitor-mcp-server)** - Real-world example
-- **[CLI Reference](/docs/reference/cli-reference)** - Complete command documentation
-- **[YAML Examples](https://github.com/openstatusHQ/cli-template)** - Sample configurations

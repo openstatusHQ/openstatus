@@ -39,6 +39,14 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Uptime Monitoring",
       },
       {
+        slug: "concept/probes-and-locations",
+        label: "Probes, Locations, and Regions",
+      },
+      {
+        slug: "concept/private-locations",
+        label: "Understanding Private Locations",
+      },
+      {
         slug: "concept/best-practices-status-page",
         label: "Building Trust with Status Pages",
       },
@@ -66,8 +74,16 @@ export const docsNav: DocsNavSection[] = [
         label: "Create an Uptime Monitor",
       },
       {
+        slug: "tutorial/your-first-notification",
+        label: "Wire Up Your First Notification",
+      },
+      {
         slug: "tutorial/create-your-first-status-page",
         label: "Create a Status Page",
+      },
+      {
+        slug: "tutorial/your-first-status-report",
+        label: "Publish Your First Status Report",
       },
       {
         slug: "tutorial/get-started-with-openstatus-cli",
@@ -192,6 +208,7 @@ export const docsNav: DocsNavSection[] = [
     label: "Reference",
     collapsed: true,
     items: [
+      { slug: "reference/overview", label: "Overview" },
       {
         link: "https://api.openstatus.dev/v1",
         label: "API Reference V1 - Deprecated",

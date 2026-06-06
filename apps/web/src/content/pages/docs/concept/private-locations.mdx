@@ -1,0 +1,69 @@
+---
+category: Concepts
+title: Understanding Private Locations
+description: "What a private location is, when to use one, how it talks to openstatus, and how it differs from a public probe."
+---
+
+A **private location** is a monitoring probe you run on your own infrastructure. Instead of openstatus checking your endpoint from one of its public regions, a container you control performs the check and reports the result back over an outbound connection.
+
+This page explains the model — what a private location *is* and the trade-offs of using one. For the setup walkthrough, see the [private location tutorial](/docs/tutorial/how-to-create-private-location); for fields and the API surface, see the [private location reference](/docs/reference/private-location).
+
+## When a private location is the right tool
+
+Public probes can only reach what's reachable from the public internet. Anything behind a firewall, on a VPC, or on an internal-only DNS name is invisible to them. A private location lives inside that network boundary and can reach those endpoints directly.
+
+Concretely, reach for a private location when you need to monitor:
+
+- Internal APIs and services behind a corporate firewall or VPC.
+- Databases, message brokers, or other backing services that don't expose a public port.
+- Services in a region openstatus doesn't offer a public probe in.
+- An endpoint where the *path* the request takes matters — e.g. a check from your production VPC validates the same network policy your app traffic depends on.
+
+If your endpoint is already public and you only want geographic coverage, the [public locations](/docs/reference/location) are simpler and cheaper to operate.
+
+## How the connection works
+
+A private location is not an inbound port openstatus calls into. The probe initiates everything:
+
+1. You deploy the openstatus probe container — typically `ghcr.io/openstatushq/probe:latest` — somewhere inside the network that needs to be monitored.
+2. The probe opens an outbound, authenticated connection to the openstatus platform using the token issued when you created the location.
+3. openstatus dispatches the checks assigned to that location down the connection. The probe runs them against your internal endpoints and streams the results back.
+
+The consequence is that you only need **outbound** network access from the probe to `api.openstatus.dev` on port 443. No inbound firewall rules, no exposed ports, no reverse tunnel — the same shape as any other agent that calls home.
+
+## How it differs from a public location
+
+| | Public location | Private location |
+| --- | --- | --- |
+| Operator | openstatus | You |
+| Network reach | Public internet only | Whatever the probe host can reach |
+| IPs to allowlist | [Documented per region](/docs/reference/location) | Yours |
+| Cost model | Included with monitor checks | You pay for the host/container |
+| Auto-incident & alerts | Yes | Not yet (see limitations below) |
+| Use on public status pages | Yes | Not yet (see limitations below) |
+
+A monitor can be assigned to public locations, private locations, or both. Public-and-private hybrids are useful when you want a public probe for SLA reporting and a private probe for in-network diagnostics on the same endpoint.
+
+## Trade-offs to know about
+
+Running a private location moves operational responsibility to you. Plan for:
+
+- **Probe availability.** If your probe host is down, openstatus can't run checks from it. Treat the probe as part of your own infrastructure — restart policy, host monitoring, log retention.
+- **Token handling.** The probe's token authenticates it as your workspace. Inject it as an environment variable, store it the same way you store other secrets, and rotate it if a host is decommissioned.
+- **Egress only.** Because the connection is outbound, an egress firewall that blocks `api.openstatus.dev:443` will silently stop the probe from running checks. The probe will appear "connected" briefly and then go quiet.
+
+## Current limitations
+
+Private locations are in **beta**. Two capabilities are not yet wired up:
+
+- **No automatic incidents.** A failing check from a private location does not currently open an incident or fire notifications. If you need alerting today, keep at least one public location on the monitor.
+- **Not displayed on public status pages.** Monitors assigned only to private locations won't appear on a public status page as a monitor-linked component.
+
+Both are tracked and expected to land — when they do, the [private location reference](/docs/reference/private-location) will reflect the change.
+
+## Next steps
+
+- **[Set up a private location](/docs/tutorial/how-to-create-private-location)** — step-by-step deployment of the Docker probe.
+- **[Deploy a private probe on Cloudflare Containers](/docs/guides/how-to-deploy-probes-cloudflare-containers)** — a serverless deployment pattern instead of a long-running container.
+- **[Private Location Reference](/docs/reference/private-location)** — fields, API surface, and supported operations.
+- **[Probes and Locations](/docs/concept/probes-and-locations)** — how the terms "probe", "location", and "region" relate.

@@ -5,12 +5,9 @@ import {
   Bell,
   Bot,
   Cog,
-  Globe,
   LayoutGrid,
   MessageSquare,
   PanelTop,
-  ScanEye,
-  Terminal,
 } from "lucide-react";
 import * as React from "react";
 
@@ -74,16 +71,6 @@ const data = {
       icon: Cog,
     },
     {
-      name: "Private Locations",
-      url: "/private-locations",
-      icon: Globe,
-    },
-    {
-      name: "Audit Logs",
-      url: "/audit-logs",
-      icon: ScanEye,
-    },
-    {
       name: "Assistant",
       url: "/chat",
       icon: MessageSquare,
@@ -92,11 +79,6 @@ const data = {
       name: "Slack agent",
       url: "/agents",
       icon: Bot,
-    },
-    {
-      name: "CLI",
-      url: "/cli",
-      icon: Terminal,
     },
   ],
 };

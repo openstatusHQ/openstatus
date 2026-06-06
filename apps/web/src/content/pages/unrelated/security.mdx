@@ -52,7 +52,7 @@ API access uses scoped keys: a key with the `read` scope can only call read-only
 
 Every workspace is isolated. Every database read and write is filtered by workspace ID at the service layer — there is no shared state between workspaces.
 
-Every mutation in your workspace — whether it comes from the dashboard, the API, MCP, or the Slack integration — is recorded in an append-only audit log. Workspace members on **Pro** can browse it at `/audit-logs` in the dashboard. If a teammate changes a monitor, deletes an integration, or rotates an API key, it's on record.
+Every mutation in your workspace — whether it comes from the dashboard, the API, MCP, or the Slack integration — is recorded in an append-only audit log. Workspace members on **Pro** can browse it at `/settings/audit-logs` in the dashboard. If a teammate changes a monitor, deletes an integration, or rotates an API key, it's on record.
 
 ## Where your data lives
 

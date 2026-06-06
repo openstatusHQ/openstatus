@@ -1,0 +1,91 @@
+---
+category: Tutorials
+title: Wire Up Your First Notification
+description: "Send your first alert from openstatus — create a notification channel, attach it to a monitor, and confirm an alert lands."
+---
+
+## What you'll learn
+
+| | |
+|---|---|
+| **Time** | ~5 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | openstatus account, one monitor |
+
+In this tutorial, you'll wire up a notification channel and attach it to a monitor so you actually get alerted when something breaks. A monitor without a notification channel is a tree falling in the woods — the data is there, but no one hears about it until they open the dashboard. By the end you'll have a working alert path you can verify with a single test endpoint.
+
+This tutorial uses **email** because it's the channel that needs the least setup. The wiring is the same for Slack, Discord, PagerDuty, Telegram, webhooks, and every other channel — only the channel-specific config field changes. The [notification reference](/docs/reference/notification) lists each channel's exact configuration.
+
+### Prerequisites
+
+- An openstatus account ([openstatus.dev](https://www.openstatus.dev))
+- At least one monitor (see [Create Your First Monitor](/docs/tutorial/how-to-create-monitor))
+- An email address you can read right now
+
+### What you'll build
+
+By the end of this tutorial, you'll have:
+
+- An email notification channel created in openstatus
+- The channel attached to one of your monitors
+- A clear understanding of what triggers a notification and what doesn't
+
+## 1. Create a notification channel
+
+Navigate to **Settings** > **Notification Channels** in the dashboard and click **Create Notification Channel**.
+
+Pick **Email** as the channel type and fill in two fields:
+
+- **Name** — how the channel shows up in the dashboard. Use something self-descriptive like `On-call email` or `Engineering alerts`. You'll see this name on every monitor it's attached to.
+- **Email address** — the recipient. Use an address you can check right now so you can verify the alert arrives.
+
+Save the channel. It's now created but not yet attached to anything — no notifications will fire.
+
+<Aside>
+Channels are workspace-scoped, not monitor-scoped. One channel can be attached to many monitors, and one monitor can fan out to many channels. Treat channels like routing targets ("on-call", "platform team", "noisy-staging-channel") rather than per-monitor settings.
+</Aside>
+
+## 2. Attach the channel to a monitor
+
+Open one of your monitors and go to its **Notifications** tab. Select the channel you just created and save.
+
+That's the wiring done. From now on, when the monitor transitions into a failing state — `down` or `degraded` — your channel will receive a notification. When the monitor recovers, you'll get a recovery notification too.
+
+**Checkpoint:** the monitor's notification tab should now show the channel listed. If it doesn't appear in the dropdown, refresh the page once — newly created channels can take a moment to propagate to the monitor settings.
+
+## 3. Trigger a test alert
+
+The fastest way to see a real notification is to point a monitor at an endpoint that's guaranteed to fail, and let it run for a few checks.
+
+Create (or temporarily reconfigure) a monitor with these settings:
+
+- **URL:** `https://openstat.us/500` — a public test endpoint that always responds `500 Internal Server Error`.
+- **Frequency:** `1 minute` — so you don't have to wait long.
+- **Notification channel:** the one you just created.
+
+Wait a couple of minutes. Once enough consecutive checks have failed to cross the trigger threshold (50% of recent checks — see [Incident Reference](/docs/reference/incident)), openstatus opens an incident and fires the notification.
+
+Check the inbox you used in step 1. You should see an alert with the monitor name, the URL, the status code, and a link back to the dashboard. Delete the test monitor — or point it back at a real URL — once you've confirmed the email arrived.
+
+<Aside type="tip">
+The same trigger threshold that fires the alert also gates *recovery*. If you point the test monitor back at a healthy URL, you'll get a second email confirming the monitor is up again, once enough checks have passed.
+</Aside>
+
+## What you've accomplished
+
+- Created an email notification channel
+- Attached it to a monitor and confirmed an alert lands end-to-end
+- Learned that channels are workspace-scoped and reusable across monitors
+- Seen first-hand how the trigger threshold delays the first alert (this is the feature, not a bug — it prevents flapping)
+
+## What's next?
+
+Now you have one alert path working. From here:
+
+- **[Set up the Slack agent](/docs/tutorial/how-to-setup-slack-agent)** — turn alerts into a two-way conversation where you can also create and resolve incidents from Slack.
+- **[Open your first status report](/docs/tutorial/your-first-status-report)** — when an alert fires, communicate the incident to your users.
+
+### Learn more
+
+- **[Notification Channels Reference](/docs/reference/notification)** — every channel type, its config fields, and (for webhooks) the payload schema.
+- **[Incident Reference](/docs/reference/incident)** — exactly what triggers a notification and the lifecycle states an incident goes through.
