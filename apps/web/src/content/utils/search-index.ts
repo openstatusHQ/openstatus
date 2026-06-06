@@ -1,6 +1,6 @@
 import "server-only";
 import { slugify } from "@/content/mdx";
-import { type MDXData, getHomePage, getPages } from ".";
+import { type MDXData, PAGE_TYPES, getHomePage, getPages } from ".";
 import type { Corpus, SearchResult } from "../search-meta";
 
 type Heading = { slug: string; index: number };
@@ -16,19 +16,7 @@ type IndexedDoc = {
   headingsLower: string;
 };
 
-const CORPORA: Corpus[] = [
-  "blog",
-  "changelog",
-  "product",
-  "unrelated",
-  "compare",
-  "tools",
-  "tooling",
-  "customers",
-  "guides",
-  "use-case",
-  "docs",
-];
+const CORPORA: Corpus[] = PAGE_TYPES.filter((t): t is Corpus => t !== "all");
 
 // Content is static after build; parse + index each corpus once. Skip the cache
 // in dev so editing an .mdx file is reflected without a restart.

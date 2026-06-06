@@ -206,13 +206,14 @@ export function CmdK({
     defaultPage ? [defaultPage] : [],
   );
   const debouncedSearch = useDebounce(search, 150);
+  const query = debouncedSearch.trim();
   const router = useRouter();
 
   // Explicitly pinned corpus (e.g. "Search in Docs…" or the docs-page default).
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
   // Typing with nothing pinned searches everything — no need to pick a corpus first.
   const scope: Corpus | "all" | null =
-    (page as Corpus | null) ?? (search ? "all" : null);
+    (page as Corpus | null) ?? (search.trim() ? "all" : null);
   // Commands (Go to…, links, theme) stay matchable while typing, unless a corpus
   // is pinned — then the palette is focused on searching within that corpus.
   const showCommands = !page;
@@ -222,17 +223,17 @@ export function CmdK({
     isLoading: loading,
     isFetching: fetching,
   } = useQuery<SearchResult[]>({
-    queryKey: ["search", scope, debouncedSearch],
+    queryKey: ["search", scope, query],
     queryFn: async () => {
       if (!scope) return [];
       const searchParams = new URLSearchParams();
       searchParams.set("p", scope);
-      if (debouncedSearch) searchParams.set("q", debouncedSearch);
+      if (query) searchParams.set("q", query);
       const res = await fetch(`/api/search?${searchParams.toString()}`);
       return res.json();
     },
     // A pinned corpus can browse with an empty query; unpinned "all" waits for input.
-    enabled: !!page || !!debouncedSearch,
+    enabled: !!page || !!query,
     placeholderData: (previousData) => previousData,
   });
 
