@@ -1,11 +1,19 @@
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
 import { getChangelogPosts } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -61,8 +69,22 @@ export default async function ChangelogCategoryPage({
       changelog.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Changelog", url: `${BASE_URL}/changelog` },
+      {
+        name: `${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
+        url: `${BASE_URL}/changelog/category/${slug}`,
+      },
+    ]),
+    getJsonLDItemList(filteredChangelogs, "/changelog"),
+  ]);
+
   return (
     <div className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1 className="capitalize">Changelog | {slug}</h1>
       <ContentCategory data={allChangelogs} prefix="/changelog" />
       <ContentList data={filteredChangelogs} prefix="/changelog" />
