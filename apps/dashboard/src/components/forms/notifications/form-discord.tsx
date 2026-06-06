@@ -161,7 +161,7 @@ export function FormDiscord({
                 <FormDescription>
                   Enter the webhook URL to your Discord channel.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/reference/notification/#discord"
+                    href="https://www.openstatus.dev/docs/reference/notification/#discord"
                     rel="noreferrer"
                     target="_blank"
                   >

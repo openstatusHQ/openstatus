@@ -19,7 +19,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         className="absolute top-4 right-4 z-10"
         asChild
       >
-        <a href="https://docs.openstatus.dev" target="_blank" rel="noreferrer">
+        <a href="https://www.openstatus.dev/docs" target="_blank" rel="noreferrer">
           <BookOpen />
           Documentation
         </a>

@@ -30,7 +30,7 @@ ConnectRPC accepts both JSON and protobuf. POST is required even for read operat
 ## Schema
 
 - OpenAPI explorer (machine-readable description): <https://api.openstatus.dev/openapi>
-- Reference docs: <https://docs.openstatus.dev>
+- Reference docs: <https://www.openstatus.dev/docs>
 
 ## SDKs
 

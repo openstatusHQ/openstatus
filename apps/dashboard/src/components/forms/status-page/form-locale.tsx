@@ -224,7 +224,7 @@ export function FormLocale({
             <FormCardFooterInfo>
               When the locale switcher is enabled, visitors can choose their
               preferred language. Learn more about{" "}
-              <Link href="https://docs.openstatus.dev/reference/status-page/#translations-i18n">
+              <Link href="https://www.openstatus.dev/docs/reference/status-page/#translations-i18n">
                 Translations
               </Link>
               .

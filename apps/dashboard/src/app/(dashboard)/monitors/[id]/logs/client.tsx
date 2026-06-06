@@ -165,7 +165,7 @@ function BillingPlaceholder() {
         <BillingOverlayDescription>
           Access response headers, timing phases and more for each request.{" "}
           <Link
-            href="https://docs.openstatus.dev/monitoring/monitor-data-collected/"
+            href="https://www.openstatus.dev/docs/monitoring/monitor-data-collected/"
             rel="noreferrer"
             target="_blank"
           >

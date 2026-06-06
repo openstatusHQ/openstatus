@@ -76,7 +76,7 @@ export function Client() {
           <SectionDescription>
             Define your notifications to receive alerts when downtime occurs.{" "}
             <Link
-              href="https://docs.openstatus.dev/reference/notification/"
+              href="https://www.openstatus.dev/docs/reference/notification/"
               rel="noreferrer"
               target="_blank"
             >

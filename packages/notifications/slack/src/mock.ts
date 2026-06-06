@@ -9,7 +9,7 @@ import {
 const monitor: Monitor = {
   id: 1,
   name: "OpenStatus Docs",
-  url: "https://docs.openstatus.dev",
+  url: "https://www.openstatus.dev/docs",
   periodicity: "10m",
   jobType: "http",
   active: true,

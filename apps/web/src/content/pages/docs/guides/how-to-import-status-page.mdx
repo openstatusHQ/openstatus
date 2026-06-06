@@ -1,5 +1,5 @@
 ---
-category: Tutorials
+category: Guides
 title: Import a Status Page from Another Provider
 description: "Import your existing status page setup from Atlassian Statuspage, Better Stack, or Instatus into openstatus"
 ---
@@ -40,7 +40,7 @@ Where to find your API key varies by provider. See the provider-specific guides 
 
 ### 2. Open the import page
 
-In the openstatus dashboard, navigate to **Status Pages** and select the status page you want to import into. If you have not yet created a status page, create one first -- see [Create a Status Page](/docs/tutorial/how-to-create-status-page) for instructions.
+In the openstatus dashboard, navigate to **Status Pages** and select the status page you want to import into. If you have not yet created a status page, create one first -- see [Create a Status Page](/docs/tutorial/create-your-first-status-page) for instructions.
 
 Open the **Components** tab and scroll down to the **Import** section at the bottom of the page.
 
@@ -109,7 +109,7 @@ The import creates resources in openstatus but does not automatically make your 
 
 1. **Verify imported data.** Open your status page and confirm that components, incidents, and maintenances appear correctly. Check that component groups are structured as expected.
 
-2. **Connect monitors to static components.** Imported components may not have monitors attached. Navigate to each component and link an existing openstatus monitor, or [create a new monitor](/docs/tutorial/how-to-create-monitor) for it.
+2. **Connect monitors to static components.** Imported components may not have monitors attached. Navigate to each component and link an existing openstatus monitor, or [create a new monitor](/docs/tutorial/create-your-first-monitor) for it.
 
 3. **Update DNS for your custom domain.** If you are migrating a custom domain (e.g., `status.yourdomain.com`), update your CNAME record to point to `status.openstatus.dev`. See the [Status Page Reference](/docs/reference/status-page) for DNS configuration details.
 
@@ -141,8 +141,8 @@ Running the import a second time does not deduplicate incidents or maintenances.
 
 Now that your data is in openstatus, explore these resources to get the most out of your new setup:
 
-- **[Configure Your Status Page](/docs/tutorial/how-to-configure-status-page)** -- Customize the appearance, add a logo, and configure notification preferences.
-- **[Create Your First Monitor](/docs/tutorial/how-to-create-monitor)** -- Set up synthetic monitoring for your imported components.
+- **[Configure Your Status Page](/docs/guides/how-to-configure-status-page)** -- Customize the appearance, add a logo, and configure notification preferences.
+- **[Create Your First Monitor](/docs/tutorial/create-your-first-monitor)** -- Set up synthetic monitoring for your imported components.
 - **[Status Page Reference](/docs/reference/status-page)** -- Full reference for all status page configuration options.
 - **[Building Trust with Status Pages](/docs/concept/best-practices-status-page)** -- Best practices for transparent incident communication.
 

@@ -306,6 +306,6 @@ docker inspect openstatus-dashboard --format='{{.State.Health.Status}}'
 
 ## Getting Help
 
-- **Documentation**: [docs.openstatus.dev](https://docs.openstatus.dev)
+- **Documentation**: [docs.openstatus.dev](https://www.openstatus.dev/docs)
 - **Discord**: [openstatus.dev/discord](https://www.openstatus.dev/discord)
 - **GitHub Issues**: [github.com/openstatusHQ/openstatus/issues](https://github.com/openstatusHQ/openstatus/issues)

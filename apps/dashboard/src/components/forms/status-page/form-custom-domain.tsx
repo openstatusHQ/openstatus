@@ -131,7 +131,7 @@ export function FormCustomDomain({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/reference/status-page/#custom-domain"
+                href="https://www.openstatus.dev/docs/reference/status-page/#custom-domain"
                 rel="noreferrer"
                 target="_blank"
               >

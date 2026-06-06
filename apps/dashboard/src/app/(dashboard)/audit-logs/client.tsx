@@ -136,7 +136,7 @@ export function Client() {
               <BillingOverlayDescription>
                 Keep a verifiable history of every change in your workspace.{" "}
                 <Link
-                  href="https://docs.openstatus.dev/"
+                  href="https://www.openstatus.dev/docs/"
                   rel="noreferrer"
                   target="_blank"
                 >

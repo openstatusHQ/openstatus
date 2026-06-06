@@ -30,7 +30,7 @@ type FeatureLinkItem = {
   external?: boolean;
 };
 
-const DOCS = "https://docs.openstatus.dev";
+const DOCS = "https://www.openstatus.dev/docs";
 const WEB = "https://www.openstatus.dev";
 
 const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [

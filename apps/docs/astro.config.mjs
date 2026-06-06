@@ -10,7 +10,7 @@ import Icons from "unplugin-icons/vite";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://docs.openstatus.dev",
+  site: "https://www.openstatus.dev/docs",
   vite: {
     plugins: [Icons({ compiler: "astro" }), tailwindcss()],
     ssr: {

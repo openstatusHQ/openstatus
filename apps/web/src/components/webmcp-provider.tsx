@@ -78,7 +78,7 @@ const tools: WebMcpTool[] = [
       additionalProperties: false,
     },
     execute: ({ topic }) => {
-      const base = "https://docs.openstatus.dev";
+      const base = "https://www.openstatus.dev/docs";
       if (typeof topic === "string" && topic.trim().length > 0) {
         return navigateTo(`${base}?q=${encodeURIComponent(topic.trim())}`);
       }

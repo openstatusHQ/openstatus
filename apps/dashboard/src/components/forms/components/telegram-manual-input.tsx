@@ -44,7 +44,7 @@ export function TelegramManualInput({
             <FormDescription>
               Enter the Telegram chat ID to send notifications to.{" "}
               <Link
-                href="https://docs.openstatus.dev/reference/notification/#telegram"
+                href="https://www.openstatus.dev/docs/reference/notification/#telegram"
                 rel="noreferrer"
                 target="_blank"
               >

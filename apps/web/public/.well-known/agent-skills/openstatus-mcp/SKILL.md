@@ -47,5 +47,5 @@ All MCP mutations are written to the workspace audit log with `actor_type = 'mcp
 
 ## Reference
 
-- Full tool schemas and error codes: <https://docs.openstatus.dev/reference/mcp-server/>
+- Full tool schemas and error codes: <https://www.openstatus.dev/docs/reference/mcp-server/>
 - Product overview: <https://www.openstatus.dev/tooling/mcp-server>

@@ -61,7 +61,7 @@ But we’re not great at maintaining our self-hosted product. We’ve published 
 
 Over time, we’ve tried to reduce friction - like migrating from Clerk to NextAuth - but we’re not fully there yet. Thankfully, [Tinybird published a Docker version](https://www.tinybird.co/blog-posts/tinybird-local-docker-container), which removed one of our biggest blockers. And our usage of Google Queue can easily be replaced.
 
-Our resources are limited. Until there's a clear and urgent need to invest in self-hosting, we have to stay focused. That’s also why we’re not building an on-call system or branching out into features that would broaden our audience too much. Doing so would mess up our purpose: monitoring and status pages. Instead, we provide solid integrations with tools like [OpsGenie](https://docs.openstatus.dev/reference/notification/#opsgenie) and [PagerDuty](https://docs.openstatus.dev/reference/notification/#pagerduty).
+Our resources are limited. Until there's a clear and urgent need to invest in self-hosting, we have to stay focused. That’s also why we’re not building an on-call system or branching out into features that would broaden our audience too much. Doing so would mess up our purpose: monitoring and status pages. Instead, we provide solid integrations with tools like [OpsGenie](https://www.openstatus.dev/docs/reference/notification/#opsgenie) and [PagerDuty](https://www.openstatus.dev/docs/reference/notification/#pagerduty).
 
 Also: running OpenStatus yourself, with all features enabled, is often **more expensive** than paying for a hosted plan.
 
@@ -73,7 +73,7 @@ We have a [GitHub issue open](https://github.com/openstatusHQ/openstatus/issues/
 
 We can’t (and won’t) say: “With OpenStatus, users recover X times faster.”  Mainly because users usually start with us to begin monitoring. Also, we’re not fans of bragging based on self-created numbers.
 
-But we now provide a simple way for uptime monitoring as code: you don't need language stuff - just a simple yaml file. Run it in your CI/CD pipes and add additional health checks after deployments via our [GitHub integration](https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action/).
+But we now provide a simple way for uptime monitoring as code: you don't need language stuff - just a simple yaml file. Run it in your CI/CD pipes and add additional health checks after deployments via our [GitHub integration](https://www.openstatus.dev/docs/guides/how-to-run-synthetic-test-github-action/).
 
 > We know that our marketing page doesn’t clearly explain the problems we solve.
 > It lists features (not even very well), but it should focus on the _problems_ we address - and how OpenStatus helps solve them. It will take time to rework our pages and fill it with words.

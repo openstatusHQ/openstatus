@@ -309,7 +309,7 @@ export function FormPageAccess({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/reference/status-page/#password"
+                href="https://www.openstatus.dev/docs/reference/status-page/#password"
                 rel="noreferrer"
                 target="_blank"
               >

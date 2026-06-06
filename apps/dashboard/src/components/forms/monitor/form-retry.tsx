@@ -113,7 +113,7 @@ export function FormRetry({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/reference/http-monitor/#retry"
+                href="https://www.openstatus.dev/docs/reference/http-monitor/#retry"
                 rel="noreferrer"
                 target="_blank"
               >
