@@ -13,6 +13,7 @@ import {
 import {
   type INTERVALS,
   type PERCENTILES,
+  type PERIODS,
   mapTimingPhases,
 } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -66,7 +67,7 @@ export function ChartAreaTimingPhases({
 }: {
   monitorId: string;
   degradedAfter: number | null;
-  period: "1d" | "7d" | "14d";
+  period: (typeof PERIODS)[number];
   percentile: (typeof PERCENTILES)[number];
   interval: (typeof INTERVALS)[number];
   regions: string[] | undefined;

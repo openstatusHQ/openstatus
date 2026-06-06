@@ -24,7 +24,7 @@ import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { mapRegionMetrics } from "@/data/metrics.client";
-import { periodToFromDate } from "@/data/metrics.client";
+import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 import {
@@ -60,8 +60,8 @@ export function Client() {
       period: period,
       type: (monitor?.jobType ?? "http") as "http" | "tcp",
       regions: selectedRegions,
-      // Request 30-minute buckets by default
-      interval: 30,
+      // bucket by period (daily at 30d/90d) to keep payload + chart readable
+      interval: periodToInterval[period],
       fromDate: fromDate.toISOString(),
       toDate: toDate.toISOString(),
     }),

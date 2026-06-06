@@ -1,16 +1,12 @@
-VERSION 0
-
-TAGS tcp
+TAGS "tcp"
 
 NODE endpoint
 SQL >
 
     %
     SELECT
-        region,
         toStartOfInterval(
-            toDateTime(cronTimestamp / 1000),
-            INTERVAL {{ Int64(interval, 30) }} MINUTE -- use 2880 (2d) in case you want the 1d summary for the regions
+            toDateTime(cronTimestamp / 1000), INTERVAL {{ Int64(interval, 1440) }} MINUTE
         ) as h,
         toUnixTimestamp64Milli(toDateTime64(h, 3)) as timestamp,
         round(quantile(0.50)(latency)) as p50Latency,
@@ -18,11 +14,10 @@ SQL >
         round(quantile(0.90)(latency)) as p90Latency,
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency
-    FROM mv__tcp_1d__v0
+    FROM mv__tcp_30d__v1
     WHERE
         monitorId = {{ String(monitorId, '4433', required=True) }}
-    GROUP BY h, region
+    GROUP BY h
     ORDER BY h DESC
-
 
 TYPE ENDPOINT

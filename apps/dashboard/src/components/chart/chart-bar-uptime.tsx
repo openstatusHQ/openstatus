@@ -61,6 +61,8 @@ export function ChartBarUptime({
       regions,
       interval,
       type,
+      // 30d MV only retains 30 days; the 90d window needs the 90d uptime pipe
+      period: period === "90d" ? "90d" : "30d",
     }),
   );
 

@@ -12,7 +12,7 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
-import { mapMetrics, metricsCards } from "@/data/metrics.client";
+import { type PERIODS, mapMetrics, metricsCards } from "@/data/metrics.client";
 import {
   formatMilliseconds,
   formatNumber,
@@ -38,7 +38,7 @@ export function GlobalUptimeSection({
 }: {
   monitorId: string;
   jobType: "http" | "tcp";
-  period: "1d" | "7d" | "14d";
+  period: (typeof PERIODS)[number];
   regions: string[] | undefined;
 }) {
   const trpc = useTRPC();
@@ -80,11 +80,13 @@ export function GlobalUptimeSection({
           })();
 
           if (k in acc) {
+            // no prior-period baseline (raw === 0) → no trend, so we don't
+            // render a misleading "0%" badge (e.g. the empty 90d previous window)
             const trend = acc[k]?.raw
               ? k === "uptime"
                 ? acc[k]?.raw / (value ?? 0)
                 : (value ?? 0) / acc[k]?.raw
-              : 1;
+              : Number.NaN;
             const hasTrend =
               !Number.isNaN(trend) &&
               trend !== Number.POSITIVE_INFINITY &&

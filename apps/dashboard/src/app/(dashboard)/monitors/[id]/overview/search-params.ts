@@ -7,7 +7,7 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server";
 
-const PERIOD = ["1d", "7d", "14d"] as const;
+const PERIOD = ["1d", "7d", "14d", "30d", "90d"] as const;
 const PERCENTILE = ["p50", "p75", "p90", "p95", "p99"] as const;
 
 export const searchParamsParsers = {
