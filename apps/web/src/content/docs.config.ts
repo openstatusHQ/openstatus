@@ -373,19 +373,6 @@ export function getDocsContainerSlugs(): string[] {
   return out;
 }
 
-// Depth-first lookup of a node by its href (e.g. "/docs", "/docs/concept").
-export function findDocsNode(
-  node: DocsNavNode,
-  href: string,
-): DocsNavNode | undefined {
-  if (node.href === href) return node;
-  for (const child of node.children ?? []) {
-    const found = findDocsNode(child, href);
-    if (found) return found;
-  }
-  return undefined;
-}
-
 // Root-to-target node trail (inclusive) — the ancestor chain that drives nested
 // breadcrumbs. Every intermediate node is a navigable hub (section/chapter landing).
 export function findDocsTrail(
@@ -398,6 +385,14 @@ export function findDocsTrail(
     if (found) return [node, ...found];
   }
   return undefined;
+}
+
+// Depth-first lookup of a node by its href (e.g. "/docs", "/docs/concept").
+export function findDocsNode(
+  node: DocsNavNode,
+  href: string,
+): DocsNavNode | undefined {
+  return findDocsTrail(node, href)?.at(-1);
 }
 
 // Map a slug back to its section label (the value a doc's `category` must hold).

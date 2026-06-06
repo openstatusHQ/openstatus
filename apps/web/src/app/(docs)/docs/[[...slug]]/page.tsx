@@ -96,10 +96,15 @@ export async function generateMetadata({
 // tree the markdown listing walks, so HTML and markdown can't drift.
 function DocsContainerLanding({ node }: { node: DocsNavNode }) {
   const trail = findDocsTrail(docsNavTree(), node.href);
-  // Cards backed by a real doc (sub-hubs have no MDX file) form the ItemList.
-  const childDocs = (node.children ?? [])
-    .map((card) => (card.slug ? getDocsPage(card.slug) : undefined))
-    .filter((doc): doc is NonNullable<typeof doc> => Boolean(doc));
+  // ItemList mirrors the rendered cards: use each child's href (section hubs
+  // point at the hub, not the leaf doc whose slug they happen to carry).
+  const cardEntries = (node.children ?? []).map((card) => ({
+    name: card.label,
+    url: `${BASE_URL}${card.href}`,
+    description: card.slug
+      ? getDocsPage(card.slug)?.metadata.description
+      : undefined,
+  }));
 
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
@@ -111,7 +116,7 @@ function DocsContainerLanding({ node }: { node: DocsNavNode }) {
         url: `${BASE_URL}${n.href}`,
       })),
     ]),
-    getJsonLDItemList(childDocs, "/docs"),
+    getJsonLDItemList(cardEntries),
   ]);
 
   return (

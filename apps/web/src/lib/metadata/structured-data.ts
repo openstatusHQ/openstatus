@@ -199,26 +199,45 @@ export const getJsonLDPerson = (item: {
   };
 };
 
-export const getJsonLDItemList = (
+type ItemListEntry = { name: string; url: string; description?: string };
+
+export function getJsonLDItemList(
   items: MDXData[],
   prefix: string,
-): WithContext<CollectionPage> => {
+): WithContext<CollectionPage>;
+export function getJsonLDItemList(
+  items: ItemListEntry[],
+): WithContext<CollectionPage>;
+export function getJsonLDItemList(
+  items: MDXData[] | ItemListEntry[],
+  prefix?: string,
+): WithContext<CollectionPage> {
+  // MDXData overload maps slug → URL via prefix; the entry overload carries
+  // pre-resolved URLs (used where card href ≠ slug, e.g. docs section hubs).
+  const entries: ItemListEntry[] =
+    prefix !== undefined
+      ? (items as MDXData[]).map((item) => ({
+          name: item.metadata.title,
+          url: `${BASE_URL}${prefix}/${item.slug}`,
+          description: item.metadata.description,
+        }))
+      : (items as ItemListEntry[]);
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: items.length,
-      itemListElement: items.map((item, index) => ({
+      numberOfItems: entries.length,
+      itemListElement: entries.map((entry, index) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: `${BASE_URL}${prefix}/${item.slug}`,
-        name: item.metadata.title,
-        description: item.metadata.description,
+        url: entry.url,
+        name: entry.name,
+        description: entry.description,
       })),
     },
   };
-};
+}
 
 export const getJsonLDBreadcrumbList = (
   items: { name: string; url: string }[],
@@ -278,20 +297,7 @@ export const getJsonLDHowTo = (post: MDXData): WithContext<HowTo> | null => {
   };
 };
 
-/**
- * Creates a unified JSON-LD graph from multiple schema objects
- * Combines multiple schemas into a single @graph structure
- *
- * @param items - Array of schema objects with @context
- * @returns A single schema object with @graph containing all items
- *
- * @example
- * const graph = createJsonLDGraph([
- *   getJsonLDWebPage(data),
- *   getJsonLDBlogPosting(data),
- *   getJsonLDFAQPage(faqs),
- * ]);
- */
+/** Merge schema objects into a single `@graph`, stripping their per-item `@context`. */
 export const createJsonLDGraph = (
   items: (WithContext<Thing> | null)[],
 ): Graph => {
