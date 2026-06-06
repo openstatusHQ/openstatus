@@ -291,7 +291,9 @@ export function sectionParentSlug(section: DocsNavSection): string | undefined {
   return firstLeafSlug(section.items)?.split("/")[0];
 }
 
-export function sectionForParentSlug(parentSlug: string): DocsNavSection | undefined {
+export function sectionForParentSlug(
+  parentSlug: string,
+): DocsNavSection | undefined {
   return docsNav.find((s) => sectionParentSlug(s) === parentSlug);
 }
 
