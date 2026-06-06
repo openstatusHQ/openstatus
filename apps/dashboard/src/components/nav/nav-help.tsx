@@ -61,7 +61,7 @@ export function NavHelp() {
                 </FormDialogSupportContact>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="https://docs.openstatus.dev"
+                    href="https://www.openstatus.dev/docs"
                     target="_blank"
                     rel="noreferrer"
                   >

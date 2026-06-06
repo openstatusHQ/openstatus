@@ -145,6 +145,46 @@ const nextConfig: NextConfig = {
         destination: "https://app.openstatus.dev/",
         permanent: true,
       },
+      {
+        source: "/docs/tutorial/how-to-create-monitor",
+        destination: "/docs/tutorial/create-your-first-monitor",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-create-status-page",
+        destination: "/docs/tutorial/create-your-first-status-page",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-configure-status-page",
+        destination: "/docs/guides/how-to-configure-status-page",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-setup-slack-agent",
+        destination: "/docs/guides/how-to-setup-slack-agent",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-create-private-location",
+        destination: "/docs/guides/how-to-create-private-location",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-import-status-page",
+        destination: "/docs/guides/how-to-import-status-page",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-manage-openstatus-with-terraform-cli",
+        destination: "/docs/guides/how-to-manage-openstatus-with-terraform-cli",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-claude-code",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

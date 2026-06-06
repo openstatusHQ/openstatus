@@ -14,7 +14,7 @@ const card = {
     description:
       "Read and update openstatus status pages, status reports, and maintenance windows from any Model Context Protocol client.",
     homepage: "https://www.openstatus.dev/tooling/mcp-server",
-    documentation: "https://docs.openstatus.dev/reference/mcp-server/",
+    documentation: "https://www.openstatus.dev/docs/reference/mcp-server/",
     vendor: { name: "Openstatus", url: "https://www.openstatus.dev" },
     license: "AGPL-3.0",
   },
@@ -71,7 +71,7 @@ const card = {
     },
   ],
   links: {
-    "service-doc": "https://docs.openstatus.dev/reference/mcp-server/",
+    "service-doc": "https://www.openstatus.dev/docs/reference/mcp-server/",
     "service-desc": "https://api.openstatus.dev/openapi",
     "terms-of-service": "https://www.openstatus.dev/terms",
     "privacy-policy": "https://www.openstatus.dev/privacy",

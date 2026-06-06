@@ -13,7 +13,7 @@ const linkset = {
       ],
       "service-doc": [
         {
-          href: "https://docs.openstatus.dev",
+          href: "https://www.openstatus.dev/docs",
           type: "text/html",
           title: "Openstatus documentation",
         },
@@ -49,7 +49,7 @@ const linkset = {
       ],
       "service-doc": [
         {
-          href: "https://docs.openstatus.dev/reference/mcp-server/",
+          href: "https://www.openstatus.dev/docs/reference/mcp-server/",
           type: "text/html",
           title: "Openstatus MCP server reference",
         },

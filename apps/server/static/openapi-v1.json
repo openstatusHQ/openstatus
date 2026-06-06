@@ -421,7 +421,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/BAD_REQUEST"
           },
           "requestId": {
             "type": "string",
@@ -458,7 +458,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/UNAUTHORIZED"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/UNAUTHORIZED"
           },
           "requestId": {
             "type": "string",
@@ -495,7 +495,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/PAYMENT_REQUIRED"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/PAYMENT_REQUIRED"
           },
           "requestId": {
             "type": "string",
@@ -532,7 +532,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/FORBIDDEN"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/FORBIDDEN"
           },
           "requestId": {
             "type": "string",
@@ -569,7 +569,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/NOT_FOUND"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/NOT_FOUND"
           },
           "requestId": {
             "type": "string",
@@ -606,7 +606,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/CONFLICT"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/CONFLICT"
           },
           "requestId": {
             "type": "string",
@@ -643,7 +643,7 @@
           "docs": {
             "type": "string",
             "description": "A link to the documentation for the error.",
-            "example": "https://docs.openstatus.dev/api-references/errors/code/INTERNAL_SERVER_ERROR"
+            "example": "https://www.openstatus.dev/docs/api-references/errors/code/INTERNAL_SERVER_ERROR"
           },
           "requestId": {
             "type": "string",

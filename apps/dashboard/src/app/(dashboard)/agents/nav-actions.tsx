@@ -17,7 +17,7 @@ export function NavActions() {
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
               <a
-                href={"https://docs.openstatus.dev/reference/cli-reference"}
+                href={"https://www.openstatus.dev/docs/reference/cli-reference"}
                 target="_blank"
                 rel="noreferrer"
               >

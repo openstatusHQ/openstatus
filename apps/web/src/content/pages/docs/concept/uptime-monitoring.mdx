@@ -59,6 +59,15 @@ At its core, uptime monitoring answers three critical questions:
 
 - **Alerting**: The system of notifying a team or individual when downtime is detected. Alerts can be sent via email, SMS, Slack, or other communication channels.
 
+### openstatus vocabulary
+
+These terms appear throughout the docs. We use them with specific meanings:
+
+- **Monitor**: A configured endpoint and the rules for watching it (URL, frequency, regions, assertions). You create monitors; they persist until you delete them.
+- **Check**: A single execution of a monitor at a point in time — one request, one response, one row of data. A monitor produces many checks over its lifetime.
+- **Region**: A geographic location where openstatus runs checks from (e.g. `iad`, `fra`, `sin`). The terms *region*, *location*, and *probe* are used interchangeably in product UI and prose, but they refer to the same concept: where the request originates. See the [Location Reference](/docs/reference/location) for the full list.
+- **Private location**: A region you operate yourself — typically a Docker container behind your firewall — so openstatus can check internal services it could not otherwise reach.
+
 ## Why Uptime Monitoring is Crucial
 
 - **Business Continuity**: Downtime can lead to significant financial losses, damage to reputation, and loss of customer trust. Uptime monitoring helps you address issues quickly, ensuring your services are always available to your users.
@@ -136,7 +145,7 @@ Modern uptime monitoring goes beyond simple "up or down" checks:
 
 Now that you understand uptime monitoring concepts:
 
-- **[Get started with a monitor](/docs/tutorial/how-to-create-monitor)** - Apply these concepts in practice
+- **[Get started with a monitor](/docs/tutorial/create-your-first-monitor)** - Apply these concepts in practice
 - **[Learn about uptime calculations](/docs/concept/uptime-calculation-and-values)** - Understand how uptime percentages work
 - **[Building Trust with Status Pages](/docs/concept/best-practices-status-page)** - Communicate effectively during incidents
 - **[Monitoring as Code](/docs/concept/uptime-monitoring-as-code)** - Manage monitoring configuration programmatically

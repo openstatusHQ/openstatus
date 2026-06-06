@@ -7,7 +7,7 @@
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
     <br />
-    <a href="https://docs.openstatus.dev">Documentation</a>
+    <a href="https://www.openstatus.dev/docs">Documentation</a>
     ·
     <a href="https://www.openstatus.dev">Website</a>
     ·

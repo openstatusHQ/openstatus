@@ -182,7 +182,7 @@ export default function Page() {
             Get started with the CLI to export and manage your monitors in your
             code.{" "}
             <Link
-              href="https://docs.openstatus.dev/reference/cli-reference/"
+              href="https://www.openstatus.dev/docs/reference/cli-reference/"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -244,7 +244,7 @@ export default function Page() {
           <SectionDescription>
             We have a few more commands to run. Check the{" "}
             <Link
-              href="https://docs.openstatus.dev/reference/cli-reference/"
+              href="https://www.openstatus.dev/docs/reference/cli-reference/"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -289,7 +289,7 @@ export default function Page() {
             </Link>{" "}
             page or our{" "}
             <Link
-              href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action/"
+              href="https://www.openstatus.dev/docs/guides/how-to-run-synthetic-test-github-action/"
               target="_blank"
               rel="noopener noreferrer"
             >

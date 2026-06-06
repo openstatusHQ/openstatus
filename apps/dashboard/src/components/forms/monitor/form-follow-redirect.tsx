@@ -107,7 +107,7 @@ export function FormFollowRedirect({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/monitoring/customization/follow-redirects/"
+                href="https://www.openstatus.dev/docs/monitoring/customization/follow-redirects/"
                 rel="noreferrer"
                 target="_blank"
               >

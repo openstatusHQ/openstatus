@@ -125,7 +125,7 @@ export function FormLinks({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/tutorial/how-to-configure-status-page/#3-links"
+                href="https://www.openstatus.dev/docs/tutorial/how-to-configure-status-page/#3-links"
                 rel="noreferrer"
                 target="_blank"
               >

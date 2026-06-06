@@ -161,7 +161,7 @@ export function FormSlack({
                 <FormDescription>
                   Enter the webhook URL to your Slack channel.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/reference/notification/#slack"
+                    href="https://www.openstatus.dev/docs/reference/notification/#slack"
                     rel="noreferrer"
                     target="_blank"
                   >

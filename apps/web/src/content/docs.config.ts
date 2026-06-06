@@ -70,15 +70,15 @@ export const docsNav: DocsNavSection[] = [
     items: [
       { slug: "tutorial/getting-started", label: "Overview" },
       {
-        slug: "tutorial/how-to-create-monitor",
-        label: "Create an Uptime Monitor in 5 Minutes",
+        slug: "tutorial/create-your-first-monitor",
+        label: "Create an Uptime Monitor",
       },
       {
         slug: "tutorial/your-first-notification",
         label: "Wire Up Your First Notification",
       },
       {
-        slug: "tutorial/how-to-create-status-page",
+        slug: "tutorial/create-your-first-status-page",
         label: "Create a Status Page",
       },
       {
@@ -86,32 +86,8 @@ export const docsNav: DocsNavSection[] = [
         label: "Publish Your First Status Report",
       },
       {
-        slug: "tutorial/how-to-configure-status-page",
-        label: "Configure Your Status Page",
-      },
-      {
-        slug: "tutorial/how-to-create-private-location",
-        label: "Create a Private Location",
-      },
-      {
         slug: "tutorial/get-started-with-openstatus-cli",
         label: "Get Started with openstatus CLI",
-      },
-      {
-        slug: "tutorial/how-to-setup-slack-agent",
-        label: "Set Up the openstatus Slack Agent",
-      },
-      {
-        slug: "tutorial/how-to-connect-openstatus-to-claude-code",
-        label: "Connect openstatus to Claude Code",
-      },
-      {
-        slug: "tutorial/how-to-manage-openstatus-with-terraform-cli",
-        label: "Manage Your openstatus Stack with Terraform and the CLI",
-      },
-      {
-        slug: "tutorial/how-to-import-status-page",
-        label: "Import a Status Page from Another Provider",
       },
     ],
   },
@@ -120,6 +96,30 @@ export const docsNav: DocsNavSection[] = [
     collapsed: true,
     items: [
       { slug: "guides/getting-started", label: "Overview" },
+      {
+        slug: "guides/how-to-configure-status-page",
+        label: "How to Configure Your Status Page",
+      },
+      {
+        slug: "guides/how-to-import-status-page",
+        label: "How to Import a Status Page from Another Provider",
+      },
+      {
+        slug: "guides/how-to-translate-status-page",
+        label: "How to translate your status page",
+      },
+      {
+        slug: "guides/how-to-embed-status-page-iframe",
+        label: "How to Embed a Status Page in an Iframe",
+      },
+      {
+        slug: "guides/how-to-add-svg-status-badge",
+        label: "How to Add a Status Badge to a GitHub README",
+      },
+      {
+        slug: "guides/how-to-use-react-widget",
+        label: "How to Use openstatus React Widget",
+      },
       {
         slug: "guides/how-to-monitor-mcp-server",
         label: "How to Monitor Your Model Context Provider (MCP) Server",
@@ -133,12 +133,20 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Export Metrics to an OTLP Endpoint",
       },
       {
-        slug: "guides/how-to-add-svg-status-badge",
-        label: "How to Add a Status Badge to a GitHub README",
+        slug: "guides/how-to-setup-slack-agent",
+        label: "How to Set Up the openstatus Slack Agent",
       },
       {
-        slug: "guides/how-to-use-react-widget",
-        label: "How to Use openstatus React Widget",
+        slug: "guides/how-to-connect-openstatus-to-claude-code",
+        label: "How to Connect openstatus to Claude Code",
+      },
+      {
+        slug: "guides/how-to-manage-openstatus-with-terraform-cli",
+        label: "How to Manage Your openstatus Stack with Terraform and the CLI",
+      },
+      {
+        slug: "guides/how-to-create-private-location",
+        label: "How to Create a Private Location",
       },
       {
         slug: "guides/how-to-deploy-probes-cloudflare-containers",
@@ -155,14 +163,6 @@ export const docsNav: DocsNavSection[] = [
       {
         slug: "guides/how-deploy-status-page-cf-pages",
         label: "How to Deploy a Status Page to Cloudflare Pages",
-      },
-      {
-        slug: "guides/how-to-translate-status-page",
-        label: "How to translate your status page",
-      },
-      {
-        slug: "guides/how-to-embed-status-page-iframe",
-        label: "How to Embed a Status Page in an Iframe",
       },
     ],
   },

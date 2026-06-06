@@ -8,7 +8,7 @@ info:
     url: https://www.openstatus.dev
 externalDocs:
   description: OpenStatus Documentation
-  url: https://docs.openstatus.dev
+  url: https://www.openstatus.dev/docs
 components:
   securitySchemes:
     ApiKeyAuth:

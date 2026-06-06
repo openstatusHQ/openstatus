@@ -927,7 +927,7 @@ export function FormGeneral({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/tutorial/how-to-create-monitor/"
+                href="https://www.openstatus.dev/docs/tutorial/how-to-create-monitor/"
                 rel="noreferrer"
                 target="_blank"
               >
@@ -935,7 +935,7 @@ export function FormGeneral({
               </Link>{" "}
               and{" "}
               <Link
-                href="https://docs.openstatus.dev/tutorial/how-to-create-monitor/"
+                href="https://www.openstatus.dev/docs/tutorial/how-to-create-monitor/"
                 rel="noreferrer"
                 target="_blank"
               >
