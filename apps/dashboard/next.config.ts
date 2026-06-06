@@ -21,12 +21,12 @@ const nextConfig: NextConfig = {
       {
         source: "/private-locations",
         destination: "/settings/private-locations",
-        permanent: true,
+        permanent: false,
       },
       {
         source: "/audit-logs",
         destination: "/settings/audit-logs",
-        permanent: true,
+        permanent: false,
       },
     ];
   },
