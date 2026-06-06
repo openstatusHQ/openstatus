@@ -136,7 +136,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
   {
     label: "Workspace",
     items: [
-      { name: "Audit logs", href: "/audit-logs", icon: ScanEye },
+      { name: "Audit logs", href: "/settings/audit-logs", icon: ScanEye },
       { name: "Team & invites", href: "/settings/general", icon: UserPlus },
     ],
   },
