@@ -1,7 +1,7 @@
 "use client";
 
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { PAID_PERIODS, PERIODS } from "@/data/metrics.client";
+import { PERIODS, isPaidPeriod } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -41,8 +41,6 @@ export const PERIOD_VALUES = [
   },
 ] satisfies { value: (typeof PERIODS)[number]; label: string }[];
 
-const PAID_PERIOD_SET = new Set<string>(PAID_PERIODS);
-
 const parsePeriod = parseAsStringLiteral(PERIODS).withDefault("1d");
 
 export function DropdownPeriod() {
@@ -66,7 +64,7 @@ export function DropdownPeriod() {
               Period
             </DropdownMenuLabel>
             {PERIOD_VALUES.map(({ value, label }) => {
-              const locked = isFree && PAID_PERIOD_SET.has(value);
+              const locked = isFree && isPaidPeriod(value);
               return (
                 <DropdownMenuItem
                   key={value}

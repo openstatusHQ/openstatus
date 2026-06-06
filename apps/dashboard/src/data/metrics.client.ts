@@ -11,6 +11,14 @@ export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d", "30d", "90d"] as const;
 // 30d/90d require a paid plan; the dropdown gates them for free workspaces.
 export const PAID_PERIODS = ["30d", "90d"] as const;
+
+export type Period = (typeof PERIODS)[number];
+export type PaidPeriod = (typeof PAID_PERIODS)[number];
+
+// widen to string[] so any Period can be tested, not just the paid literals
+export function isPaidPeriod(period: string): period is PaidPeriod {
+  return (PAID_PERIODS as readonly string[]).includes(period);
+}
 export const REGIONS =
   monitorRegions as unknown as (typeof monitorRegions)[number][];
 export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;

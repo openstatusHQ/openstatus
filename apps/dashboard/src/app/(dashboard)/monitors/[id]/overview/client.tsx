@@ -23,7 +23,7 @@ import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { mapRegionMetrics } from "@/data/metrics.client";
+import { isPaidPeriod, mapRegionMetrics } from "@/data/metrics.client";
 import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
@@ -37,7 +37,8 @@ import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
@@ -45,11 +46,25 @@ const TIMELINE_INTERVAL = 30; // in days
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
-  const [{ period, regions, percentile, interval }] =
+  const [{ period, regions, percentile, interval }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
+  useEffect(() => {
+    const isFree = workspace?.plan === "free";
+    if (!isFree || !isPaidPeriod(period)) return;
+    const timeout = setTimeout(() => {
+      toast.error("30 and 90 day windows require a paid plan", {
+        description: "Showing the last 14 days instead.",
+      });
+      setSearchParams({ period: "14d" });
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [workspace?.plan, period, setSearchParams]);
+
   const selectedRegions = regions ?? undefined;
   const fromDate = periodToFromDate[period];
   const toDate = endOfDay(new Date());
