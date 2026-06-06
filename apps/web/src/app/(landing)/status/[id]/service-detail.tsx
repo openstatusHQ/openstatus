@@ -2,7 +2,15 @@
 
 import { Suspense } from "react";
 
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
+  getJsonLDService,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import { api } from "@/trpc/rq-client";
 
 import { ExternalServicePill } from "../external-service-pill";
@@ -17,51 +25,20 @@ function jsonLd(args: {
   canonicalUrl: string;
   answer: string;
 }) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Service",
-        name: args.serviceName,
-        url: args.serviceUrl,
-      },
-      {
-        "@type": "WebPage",
-        url: args.canonicalUrl,
-        name: `${args.serviceName} Status`,
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: `Is ${args.serviceName} down?`,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: args.answer,
-            },
-          },
-        ],
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "External Status",
-            item: `${BASE_URL}/status`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: args.serviceName,
-            item: args.canonicalUrl,
-          },
-        ],
-      },
-    ],
-  };
+  return createJsonLDGraph([
+    getJsonLDService({ name: args.serviceName, url: args.serviceUrl }),
+    getJsonLDWebPage({
+      name: `${args.serviceName} Status`,
+      url: args.canonicalUrl,
+    }),
+    getJsonLDFAQPage([
+      { question: `Is ${args.serviceName} down?`, answer: args.answer },
+    ]),
+    getJsonLDBreadcrumbList([
+      { name: "External Status", url: `${BASE_URL}/status` },
+      { name: args.serviceName, url: args.canonicalUrl },
+    ]),
+  ]);
 }
 
 export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
@@ -91,13 +68,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd graph={ld} />
       <h1>Is {service.name} down?</h1>
       <p>
         {answer} Below you'll find the live {service.name} status, uptime over

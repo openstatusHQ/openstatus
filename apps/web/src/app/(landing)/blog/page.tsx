@@ -1,6 +1,17 @@
 import { getBlogPosts } from "@/content/utils";
-import { defaultMetadata, ogMetadata } from "@/lib/metadata/shared-metadata";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import {
+  BASE_URL,
+  defaultMetadata,
+  ogMetadata,
+} from "@/lib/metadata/shared-metadata";
 import { twitterMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentCategory } from "../content-category";
@@ -32,8 +43,17 @@ export const metadata: Metadata = {
 
 export default function BlogListPage() {
   const allBlogs = getBlogPosts();
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Blog", url: `${BASE_URL}/blog` },
+    ]),
+    getJsonLDItemList(allBlogs, "/blog"),
+  ]);
   return (
     <div className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1>Blog</h1>
       <ContentCategory data={allBlogs} prefix="/blog" />
       <p>

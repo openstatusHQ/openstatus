@@ -1,6 +1,7 @@
 import { CustomMDX } from "@/content/mdx";
 import { CustomImage } from "@/content/mdx-components/custom-image";
 import { getCustomerPages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -63,14 +64,7 @@ export default async function CustomerPage({
 
   return (
     <section className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd graph={jsonLDGraph} />
       {page.metadata.image ? (
         <CustomImage
           src={page.metadata.image}
