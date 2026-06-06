@@ -17,12 +17,23 @@ import {
   type DocsNavNode,
   docsNavTree,
   findDocsNode,
+  findDocsTrail,
   getDocsContainerSlugs,
 } from "@/content/docs.config";
 import { CustomMDX } from "@/content/mdx";
 import { Grid } from "@/content/mdx-components/grid";
 import { extractHeadings } from "@/content/toc";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
+  getJsonLDHowTo,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+  getJsonLDTechArticle,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -84,8 +95,28 @@ export async function generateMetadata({
 // A container node (the /docs hub or a section) → one card per child. Same nav
 // tree the markdown listing walks, so HTML and markdown can't drift.
 function DocsContainerLanding({ node }: { node: DocsNavNode }) {
+  const trail = findDocsTrail(docsNavTree(), node.href);
+  // Cards backed by a real doc (sub-hubs have no MDX file) form the ItemList.
+  const childDocs = (node.children ?? [])
+    .map((card) => (card.slug ? getDocsPage(card.slug) : undefined))
+    .filter((doc): doc is NonNullable<typeof doc> => Boolean(doc));
+
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Docs", url: `${BASE_URL}/docs` },
+      ...(trail ?? []).slice(1).map((n) => ({
+        name: n.label,
+        url: `${BASE_URL}${n.href}`,
+      })),
+    ]),
+    getJsonLDItemList(childDocs, "/docs"),
+  ]);
+
   return (
     <div className="min-w-0 flex-1 space-y-8">
+      <JsonLd graph={jsonLDGraph} />
       <DocsSubNav />
       <section className="prose dark:prose-invert max-w-none">
         <h1>{node.label}</h1>
@@ -119,6 +150,7 @@ export default async function DocsPage({
   const joined = slug?.join("/") ?? "";
 
   const doc = joined ? getDocsPage(joined) : undefined;
+
   if (!doc) {
     const node = findDocsNode(
       docsNavTree(),
@@ -132,8 +164,30 @@ export default async function DocsPage({
   const { prev, next } = getDocsPagination(joined);
   const lastUpdated = gitLastModified(doc.filePath);
 
+  const trail = findDocsTrail(docsNavTree(), doc.href);
+  // trail[0] is the /docs root; nest each ancestor hub, leaf shows the page title.
+  const nestedCrumbs = trail
+    ? trail.slice(1).map((node, i, arr) => ({
+        name: i === arr.length - 1 ? doc.metadata.title : node.label,
+        url: `${BASE_URL}${node.href}`,
+      }))
+    : [{ name: doc.metadata.title, url: `${BASE_URL}${doc.href}` }];
+
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDTechArticle(doc),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Docs", url: `${BASE_URL}/docs` },
+      ...nestedCrumbs,
+    ]),
+    getJsonLDHowTo(doc),
+    getJsonLDFAQPage(doc),
+  ]);
+
   return (
     <div className="flex gap-8">
+      <JsonLd graph={jsonLDGraph} />
       <div className="min-w-0 flex-1 space-y-8">
         <DocsSubNav />
         <article className="prose dark:prose-invert max-w-none">

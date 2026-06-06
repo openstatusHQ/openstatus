@@ -1,6 +1,17 @@
 import { getGuides } from "@/content/utils";
-import { defaultMetadata, ogMetadata } from "@/lib/metadata/shared-metadata";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import {
+  BASE_URL,
+  defaultMetadata,
+  ogMetadata,
+} from "@/lib/metadata/shared-metadata";
 import { twitterMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
@@ -30,8 +41,17 @@ export const metadata: Metadata = {
 
 export default function GuidesListPage() {
   const allGuides = getGuides();
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Guides", url: `${BASE_URL}/guides` },
+    ]),
+    getJsonLDItemList(allGuides, "/guides"),
+  ]);
   return (
     <div className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1>Guides</h1>
       <ContentCategory data={allGuides} prefix="/guides" />
       <ContentList data={allGuides} prefix="/guides" withCategory />

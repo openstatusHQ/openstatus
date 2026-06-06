@@ -386,6 +386,20 @@ export function findDocsNode(
   return undefined;
 }
 
+// Root-to-target node trail (inclusive) — the ancestor chain that drives nested
+// breadcrumbs. Every intermediate node is a navigable hub (section/chapter landing).
+export function findDocsTrail(
+  node: DocsNavNode,
+  href: string,
+): DocsNavNode[] | undefined {
+  if (node.href === href) return [node];
+  for (const child of node.children ?? []) {
+    const found = findDocsTrail(child, href);
+    if (found) return [node, ...found];
+  }
+  return undefined;
+}
+
 // Map a slug back to its section label (the value a doc's `category` must hold).
 export function sectionForSlug(slug: string): DocsSection | undefined {
   const has = (items: DocsNavItem[]): boolean =>

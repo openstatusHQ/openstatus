@@ -6,7 +6,14 @@ import {
   ContentBoxTitle,
 } from "@/app/(landing)/content-box";
 import { Grid } from "@/content/mdx-components/grid";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import { api } from "@/trpc/rq-client";
 
 import { ExternalServicePill } from "../../external-service-pill";
@@ -72,49 +79,23 @@ function jsonLd(args: {
   componentUrl: string;
   answer: string;
 }) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
+  return createJsonLDGraph([
+    getJsonLDWebPage({
+      name: `${args.serviceName} ${args.componentName} Status`,
+      url: args.componentUrl,
+    }),
+    getJsonLDFAQPage([
       {
-        "@type": "WebPage",
-        url: args.componentUrl,
-        name: `${args.serviceName} ${args.componentName} Status`,
+        question: `Is ${args.serviceName} ${args.componentName} down?`,
+        answer: args.answer,
       },
-      {
-        "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: `Is ${args.serviceName} ${args.componentName} down?`,
-            acceptedAnswer: { "@type": "Answer", text: args.answer },
-          },
-        ],
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "External Status",
-            item: `${BASE_URL}/status`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: args.serviceName,
-            item: args.serviceUrl,
-          },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: args.componentName,
-            item: args.componentUrl,
-          },
-        ],
-      },
-    ],
-  };
+    ]),
+    getJsonLDBreadcrumbList([
+      { name: "External Status", url: `${BASE_URL}/status` },
+      { name: args.serviceName, url: args.serviceUrl },
+      { name: args.componentName, url: args.componentUrl },
+    ]),
+  ]);
 }
 
 function OtherComponents({
@@ -191,13 +172,7 @@ export function ComponentDetail({
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd graph={ld} />
 
       <h1>
         Is {service.name} {component.name} down?

@@ -1,10 +1,18 @@
 import { components } from "@/content/mdx";
 import { getCustomerPages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import {
   ContentBoxDescription,
@@ -40,8 +48,17 @@ export const metadata: Metadata = {
 
 export default function CustomersListPage() {
   const pages = getCustomerPages();
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Customers", url: `${BASE_URL}/customers` },
+    ]),
+    getJsonLDItemList(pages, "/customers"),
+  ]);
   return (
     <section className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1>{TITLE}</h1>
       <p className="text-lg">{DESCRIPTION}</p>
       <components.Grid cols={2}>

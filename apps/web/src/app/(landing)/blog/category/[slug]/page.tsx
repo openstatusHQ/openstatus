@@ -1,11 +1,19 @@
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
 import { getBlogPosts } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -60,8 +68,22 @@ export default async function BlogCategoryPage({
     (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Blog", url: `${BASE_URL}/blog` },
+      {
+        name: `${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
+        url: `${BASE_URL}/blog/category/${slug}`,
+      },
+    ]),
+    getJsonLDItemList(filteredBlogs, "/blog"),
+  ]);
+
   return (
     <div className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1 className="capitalize">Blog | {slug}</h1>
       <ContentCategory data={allBlogs} prefix="/blog" />
       <ContentList data={filteredBlogs} prefix="/blog" />
