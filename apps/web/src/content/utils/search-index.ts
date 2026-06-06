@@ -237,8 +237,7 @@ function getContentSnippet(sanitized: string, needle: string | null): string {
 }
 
 export function sanitizeContent(input: string) {
-  return input
-    .replace(/<[^>]+>/g, "") // strip JSX tags
+  return stripTags(input)
     .replace(/^#{1,6}\s+/gm, "") // strip markdown heading symbols, keep text
     .replace(/!\[.*?\]\(.*?\)/g, "") // strip images
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // keep link text
@@ -249,4 +248,15 @@ export function sanitizeContent(input: string) {
     .replace(/\s+/g, " ") // collapse whitespace
     .replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;")) // escape stray brackets for safe innerHTML
     .trim();
+}
+
+// Loop until stable: stripping a tag can splice fragments into a new tag (`<scr<b>ipt>` → `<script>`).
+function stripTags(input: string) {
+  let prev: string;
+  let out = input;
+  do {
+    prev = out;
+    out = out.replace(/<[^>]+>/g, "");
+  } while (out !== prev);
+  return out;
 }
