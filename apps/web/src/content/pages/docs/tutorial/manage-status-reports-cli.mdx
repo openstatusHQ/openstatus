@@ -1,0 +1,146 @@
+---
+category: Tutorials
+title: Manage Status Reports from the CLI
+description: "Open, update, and resolve status reports from the terminal during an incident — the operational counterpart to managing your stack as code."
+---
+
+| | |
+|---|---|
+| **Time** | ~10 minutes |
+| **Level** | Intermediate |
+| **Prerequisites** | openstatus account, a status page with at least one component (see [Create a status page](/docs/tutorial/create-your-first-status-page)), [openstatus CLI](/docs/tutorial/get-started-with-openstatus-cli) installed |
+
+In this tutorial, you'll drive the whole status report lifecycle from your terminal: open a report, post updates as you investigate, and resolve it. The CLI is the right tool here — status reports are operational and time-sensitive. You create one when an incident is happening, not when you're planning infrastructure. The CLI is fast, imperative, and scriptable from CI; the dashboard and Terraform are wrong for this job.
+
+If you haven't published a status report before, you might also want to walk through the [dashboard version of this workflow](/docs/tutorial/your-first-status-report) first to internalise the four-state lifecycle.
+
+## 1. Configure the CLI
+
+Make sure your API token is set:
+
+```bash
+export OPENSTATUS_API_TOKEN="your-api-token"
+```
+
+Verify your setup:
+
+```bash
+openstatus whoami
+```
+
+You should see your workspace name. If you get an authentication error, the token is missing or wrong — check the [CLI tutorial](/docs/tutorial/get-started-with-openstatus-cli) for the setup steps.
+
+## 2. Find your page and component IDs
+
+Status report commands need the IDs of the status page and the components the incident affects. Look them up once and save them somewhere:
+
+```bash
+# List your status pages
+openstatus status-page list
+
+# Show the page details, including component IDs
+openstatus status-page info <page-id>
+```
+
+<Aside>Keep these IDs in a script or your shell history — during a real incident you don't want to be hunting for them. Many teams wrap the report commands in a small shell function that already knows the IDs.</Aside>
+
+## 3. Open the report
+
+When the incident starts, create the report with an initial `investigating` status and notify subscribers:
+
+```bash
+openstatus status-report create \
+  --title "API Elevated Latency" \
+  --status investigating \
+  --message "We are investigating increased response times on the API." \
+  --page-id <page-id> \
+  --component-ids <api-component-id> \
+  --notify
+```
+
+Key flags:
+
+- **`--status`** — the initial state. `investigating`, `identified`, `monitoring`, or `resolved`.
+- **`--page-id`** — links the report to your status page so visitors can see it.
+- **`--component-ids`** — marks specific components as affected (comma-separated for multiple).
+- **`--notify`** — sends a notification to all status page subscribers.
+
+The command returns the new report ID. Save it — every update command needs it.
+
+**Checkpoint:** open your status page in a browser. You should see a banner with the title, the `Investigating` label, and the affected components highlighted.
+
+## 4. Post updates as you investigate
+
+As the incident progresses, append updates. Each update changes the status and adds a timestamped message:
+
+```bash
+# Root cause identified
+openstatus status-report add-update <report-id> \
+  --status identified \
+  --message "Root cause identified: a misconfigured cache TTL is causing stale responses." \
+  --notify
+
+# Fix deployed, monitoring
+openstatus status-report add-update <report-id> \
+  --status monitoring \
+  --message "Fix deployed to production. Monitoring response times for recovery."
+
+# Incident resolved
+openstatus status-report add-update <report-id> \
+  --status resolved \
+  --message "Response times have returned to normal. Incident resolved." \
+  --notify
+```
+
+Each update appears on your public status page as a new timeline entry under the original report, giving users a clear visibility into what happened and when.
+
+<Aside type="tip">`--notify` is per-update, not per-report. Use it on the opening report, on `identified` once you have something concrete to say, and on `resolved`. Skip it on intermediate `monitoring` updates so you don't spam subscribers while you watch the metrics recover.</Aside>
+
+## 5. Review and manage reports
+
+List recent incidents:
+
+```bash
+# All reports
+openstatus status-report list
+
+# Only active incidents
+openstatus status-report list --status investigating
+
+# Detailed view of a specific report
+openstatus status-report info <report-id>
+```
+
+Update report metadata (title, affected components) without posting a new public update:
+
+```bash
+openstatus status-report update <report-id> \
+  --title "API Elevated Latency — Cache Misconfiguration" \
+  --component-ids <api-component-id>,<db-component-id>
+```
+
+Delete a report (e.g., one created by mistake):
+
+```bash
+openstatus status-report delete <report-id>
+```
+
+## What you've accomplished
+
+- Opened a status report from the terminal and published an initial update to subscribers
+- Walked the report through all four lifecycle states with `add-update`
+- Updated metadata after the fact without re-notifying subscribers
+- Built the muscle memory you actually want before a real incident, not during one
+
+## What's next
+
+- **[Manage your stack with Terraform](/docs/guides/how-to-manage-openstatus-with-terraform)** — the infrastructure counterpart to this tutorial.
+- **[Run synthetic tests in GitHub Actions](/docs/guides/how-to-run-synthetic-test-github-action)** — script the CLI into your CI/CD pipeline.
+- **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)** — drive the same workflow from Slack when you're already in a war-room channel.
+
+### Learn more
+
+- **[CLI reference](/docs/reference/cli-reference)** — every command, subcommand, and flag.
+- **[Status report reference](/docs/reference/status-report)** — every field on a status report and what the four states mean precisely.
+- **[Incident reference](/docs/reference/incident)** — how openstatus auto-detects incidents from monitor failures (the trigger side of the same workflow).
+- **[Building trust with status pages](/docs/concept/best-practices-status-page)** — the *why* behind the four-state cadence.

@@ -89,6 +89,10 @@ export const docsNav: DocsNavSection[] = [
         slug: "tutorial/get-started-with-openstatus-cli",
         label: "Get Started with openstatus CLI",
       },
+      {
+        slug: "tutorial/manage-status-reports-cli",
+        label: "Manage Status Reports from the CLI",
+      },
     ],
   },
   {
@@ -141,8 +145,8 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Connect openstatus to Claude Code",
       },
       {
-        slug: "guides/how-to-manage-openstatus-with-terraform-cli",
-        label: "How to Manage Your openstatus Stack with Terraform and the CLI",
+        slug: "guides/how-to-manage-openstatus-with-terraform",
+        label: "How to Manage Your openstatus Stack with Terraform",
       },
       {
         slug: "guides/how-to-create-private-location",
