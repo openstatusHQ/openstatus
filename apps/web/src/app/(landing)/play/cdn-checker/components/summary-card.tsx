@@ -3,6 +3,7 @@
 import { regionFormatter } from "@/lib/checker/utils";
 import { cn } from "@/lib/utils";
 import { CDN_LABELS } from "@openstatus/header-analysis";
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { useCdnChecker } from "../client";
 
 function ratioColor(cached: number, responded: number) {
@@ -20,7 +21,10 @@ export function SummaryCard() {
     if (isPending || rows.length > 0) {
       return (
         <div className="border border-border p-4 text-muted-foreground">
-          Probing {rows.length > 0 ? `${rows.length} of 28 regions...` : "..."}
+          Probing{" "}
+          {rows.length > 0
+            ? `${rows.length} of ${AVAILABLE_REGIONS.length} regions...`
+            : "..."}
         </div>
       );
     }

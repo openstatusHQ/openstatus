@@ -26,6 +26,7 @@ export function MonitorCta() {
   if (!summary || !checkedUrl) return null;
 
   const uncached = summary.uncachedRegions.length;
+  const unreachable = summary.unreachableRegions.length;
   const assertion = summary.cdn ? CACHE_ASSERTION[summary.cdn] : undefined;
 
   const params = new URLSearchParams({ url: checkedUrl, ref: "cdn-checker" });
@@ -43,7 +44,9 @@ export function MonitorCta() {
             ? `Your CDN is not serving from cache in ${uncached} ${
                 uncached === 1 ? "region" : "regions"
               }.`
-            : "Caching looks healthy — keep it that way."}
+            : unreachable > 0
+              ? `Caching looks healthy in the regions that responded (${unreachable} unreachable).`
+              : "Caching looks healthy — keep it that way."}
         </p>
         <p className="my-0! text-muted-foreground text-sm">
           {uncached > 0

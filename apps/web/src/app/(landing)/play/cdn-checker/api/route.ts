@@ -44,6 +44,12 @@ function errorResponse(
 
 const encoder = new TextEncoder();
 
+// strip query, hash and userinfo: tracked URLs must not leak tokens
+function urlForAnalytics(url: string): string {
+  const parsed = new URL(url);
+  return `${parsed.origin}${parsed.pathname}`;
+}
+
 async function* makeIterator({ url }: { url: string }) {
   const rows: CdnRegionResponse[] = [];
   const promises = AVAILABLE_REGIONS.map(async (region) => {
@@ -112,7 +118,10 @@ export async function POST(request: Request) {
   after(async () => {
     try {
       const analytics = await setupAnalytics({});
-      await analytics.track({ ...Events.CdnChecker, url: parsed.url });
+      await analytics.track({
+        ...Events.CdnChecker,
+        url: urlForAnalytics(parsed.url),
+      });
     } catch (error) {
       console.error("cdn-checker analytics failed", error);
     }
