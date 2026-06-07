@@ -17,8 +17,9 @@ export function validateCdnUrl(url: string): UrlGuardResult {
   }
 
   const urlObject = new URL(url);
+  const hostname = urlObject.hostname.toLowerCase();
   if (
-    urlObject.hostname.toLowerCase().endsWith("openstatus.dev") &&
+    (hostname === "openstatus.dev" || hostname.endsWith(".openstatus.dev")) &&
     urlObject.pathname.startsWith("/play/cdn-checker/api")
   ) {
     return { ok: false, error: "Self-requests are not allowed", status: 400 };

@@ -1,5 +1,6 @@
 import { parseCfRay } from "../parser/cf-ray";
 import { regions as iataRegions } from "../regions/cloudflare";
+import { regions as vercelRegions } from "../regions/vercel";
 import type { CdnProvider } from "./detect-cdn";
 import { getHeader } from "./get-header";
 
@@ -49,9 +50,14 @@ export function extractEdgePop(
     case "vercel": {
       // e.g. "fra1::iad1::82mqm-..." — first segment is the serving edge
       const id = getHeader(headers, "x-vercel-id");
-      const pop = id?.match(/^([a-z]{3})\d*/)?.[0];
-      const code = id?.match(/^([a-z]{3})/)?.[1];
-      if (pop && code) return { pop, location: lookupIata(code) };
+      const pop = id?.match(/^([a-z]{3}\d*)/)?.[1];
+      if (pop) {
+        const known = vercelRegions[pop];
+        return {
+          pop,
+          location: known?.location ?? lookupIata(pop.slice(0, 3)),
+        };
+      }
       break;
     }
     default:

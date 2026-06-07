@@ -35,6 +35,12 @@ describe("extractEdgePop", () => {
     expect(result.location).toContain("Frankfurt");
   });
 
+  test("vercel pops resolve via the vercel region map (not IATA)", () => {
+    const result = extractEdgePop({ "X-Vercel-Id": "cle1::abc" }, "vercel");
+    expect(result.pop).toBe("cle1");
+    expect(result.location).toContain("Cleveland");
+  });
+
   test("unknown provider -> null", () => {
     const result = extractEdgePop({ "X-Cache": "HIT" }, null);
     expect(result.pop).toBeNull();
