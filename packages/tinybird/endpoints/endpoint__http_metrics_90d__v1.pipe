@@ -21,24 +21,19 @@ SQL >
             AND time >= toDateTime64(now() - INTERVAL 90 DAY, 3)
             {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
         UNION ALL
-        -- previous 90d window is beyond the 90d TTL, so this row is empty and the
-        -- client suppresses the trend badge (NaN). keeps the 2-row contract intact.
+        -- the previous 90d window (90-180d ago) is past the 90d MV TTL, so there's no
+        -- real comparison data. emit an empty row to keep the 2-row contract; count 0
+        -- makes the client suppress the trend badge (NaN).
         SELECT
-            round(quantile(0.50)(latency)) AS p50Latency,
-            round(quantile(0.75)(latency)) AS p75Latency,
-            round(quantile(0.90)(latency)) AS p90Latency,
-            round(quantile(0.95)(latency)) AS p95Latency,
-            round(quantile(0.99)(latency)) AS p99Latency,
-            count() as count,
-            countIf(requestStatus = 'success') AS success,
-            countIf(requestStatus = 'degraded') AS degraded,
-            countIf(requestStatus = 'error') AS error,
-            NULL as lastTimestamp
-        FROM mv__http_90d__v1
-        WHERE
-            monitorId = {{ String(monitorId, '1', required=True) }}
-            AND time >= toDateTime64(now() - INTERVAL 180 DAY, 3)
-            AND time < toDateTime64(now() - INTERVAL 90 DAY, 3)
-            {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
+            0 AS p50Latency,
+            0 AS p75Latency,
+            0 AS p90Latency,
+            0 AS p95Latency,
+            0 AS p99Latency,
+            0 AS count,
+            0 AS success,
+            0 AS degraded,
+            0 AS error,
+            NULL AS lastTimestamp
 
 TYPE ENDPOINT
