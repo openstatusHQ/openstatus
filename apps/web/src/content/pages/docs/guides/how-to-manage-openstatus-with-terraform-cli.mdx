@@ -5,37 +5,22 @@ description: "Use Terraform to manage monitors, status pages, and notifications 
 ---
 
 
-## What you'll learn
-
 | | |
 |---|---|
 | **Time** | ~20 minutes |
 | **Level** | Intermediate |
-| **Prerequisites** | openstatus account, Terraform installed, CLI installed |
+| **Prerequisites** | openstatus account, [Terraform](https://developer.hashicorp.com/terraform/install) installed, [openstatus CLI](/docs/tutorial/get-started-with-openstatus-cli) installed, API token from workspace settings |
 
-In this tutorial, you'll set up a complete monitoring stack using two tools:
+In this guide, you'll set up a complete monitoring stack using two tools:
 
 - **Terraform** to manage your infrastructure — monitors, status pages, notifications. These are long-lived resources that change infrequently and benefit from code review, version control, and `terraform plan`.
 - **The openstatus CLI** to handle operational tasks — creating and updating status reports during incidents. These are time-sensitive actions that need to happen fast, often from a terminal or a CI script.
 
-### Prerequisites
+By the end you'll have HTTP, TCP, and DNS monitors deployed via Terraform, a public status page with grouped components, Slack notifications wired to your monitors, and a status report workflow running through the CLI.
 
-- An openstatus account ([sign up free](https://www.openstatus.dev))
-- [Terraform](https://developer.hashicorp.com/terraform/install) installed
-- The openstatus CLI installed ([installation guide](/docs/tutorial/get-started-with-openstatus-cli))
-- Your API token from workspace settings (Settings > API)
+## Part 1 — infrastructure with Terraform
 
-### What you'll build
-
-By the end of this tutorial, you'll have:
-- HTTP, TCP, and DNS monitors deployed via Terraform
-- A public status page with grouped components
-- Slack notifications wired to your monitors
-- A status report workflow using the CLI for incident communication
-
-## Part 1 — Infrastructure with Terraform
-
-### Step 1 — Set up the provider
+### Step 1 — set up the provider
 
 Create a new directory for your Terraform configuration and add a `main.tf` file:
 
@@ -67,7 +52,7 @@ terraform init
 
 <Aside>Set the token via an environment variable to avoid passing it on every run: `export TF_VAR_openstatus_api_token="your-token"`</Aside>
 
-### Step 2 — Define your monitors
+### Step 2 — define your monitors
 
 Add monitors to your `main.tf`. We'll create three types — HTTP, TCP, and DNS.
 
@@ -135,7 +120,7 @@ resource "openstatus_dns_monitor" "domain" {
 }
 ```
 
-### Step 3 — Add notifications
+### Step 3 — add notifications
 
 Wire up a Slack notification so you get alerted when monitors fail:
 
@@ -161,7 +146,7 @@ resource "openstatus_notification" "slack" {
 
 <Aside>The provider supports 12 notification types including PagerDuty, Discord, Email, OpsGenie, and webhooks. See the [Terraform provider reference](/docs/reference/terraform#openstatus_notification) for all options.</Aside>
 
-### Step 4 — Create a status page with components
+### Step 4 — create a status page with components
 
 Define a public status page and organize monitors into component groups:
 
@@ -205,7 +190,7 @@ resource "openstatus_status_page_component" "db_component" {
 }
 ```
 
-### Step 5 — Plan and apply
+### Step 5 — plan and apply
 
 Preview the changes Terraform will make:
 
@@ -223,7 +208,7 @@ terraform apply
 - Open your openstatus dashboard — your monitors should appear in the Monitors tab
 - Visit your status page at `https://<your-slug>.openstatus.dev` — you should see your component groups and monitors
 
-### Step 6 — Update your infrastructure
+### Step 6 — update your infrastructure
 
 To make changes, edit your `.tf` files and re-apply. For example, add a new region to the API monitor:
 
@@ -240,7 +225,7 @@ terraform apply  # Apply the update
 
 Terraform only modifies what changed — the monitor gets updated in place, no downtime.
 
-### Step 7 — Import existing resources
+### Step 7 — import existing resources
 
 If you already have monitors, status pages, or notifications created in the dashboard, you can generate the corresponding Terraform configuration automatically using the CLI:
 
@@ -260,11 +245,11 @@ terraform import openstatus_notification.slack <notification-id>
 
 After importing, run `terraform plan` to ensure your `.tf` files match the imported state. Adjust any drift until the plan shows no changes.
 
-## Part 2 — Status reports with the CLI
+## Part 2 — status reports with the CLI
 
 Terraform is great for infrastructure, but status reports are operational — you create them when an incident is happening and update them as you investigate and resolve. The CLI is the right tool here.
 
-### Step 8 — Configure the CLI
+### Step 8 — configure the CLI
 
 Make sure your API token is set:
 
@@ -278,7 +263,7 @@ Verify your setup:
 openstatus whoami
 ```
 
-### Step 9 — Create a status report
+### Step 9 — create a status report
 
 When an incident starts, create a status report and link it to your status page and affected components:
 
@@ -300,7 +285,7 @@ Key flags:
 
 <Aside>Find your page and component IDs with `openstatus status-page list` and `openstatus status-page info <page-id>`.</Aside>
 
-### Step 10 — Post updates as you investigate
+### Step 10 — post updates as you investigate
 
 As the incident progresses, add updates to the report. Each update changes the status and adds a timestamped message:
 
@@ -325,7 +310,7 @@ openstatus status-report add-update <report-id> \
 
 Each update appears on your public status page as a timeline entry, giving your users clear visibility into what happened and when.
 
-### Step 11 — Review and manage reports
+### Step 11 — review and manage reports
 
 List recent incidents:
 
@@ -388,24 +373,23 @@ Here's how the two tools fit into your workflow:
 
 ## What you've accomplished
 
-You've successfully:
-- ✅ Deployed HTTP, TCP, and DNS monitors with Terraform
-- ✅ Created a status page with component groups and monitor-linked components
-- ✅ Configured Slack notifications for monitor failures
-- ✅ Used the CLI to manage the full lifecycle of an incident status report
-- ✅ Learned when to use Terraform vs. the CLI for different tasks
+- Deployed HTTP, TCP, and DNS monitors with Terraform
+- Created a status page with component groups and monitor-linked components
+- Configured Slack notifications for monitor failures
+- Used the CLI to manage the full lifecycle of an incident status report
+- Learned when to use Terraform vs. the CLI for different tasks
 
-## What's next?
+## What's next
 
-- **[Terraform Provider Reference](/docs/reference/terraform)** — Full specification for all resources and data sources
-- **[Run Synthetic Tests in GitHub Actions](/docs/guides/how-to-run-synthetic-test-github-action)** — Automate monitoring in your CI/CD pipeline
-- **[Export Metrics to an OTLP Endpoint](/docs/guides/how-to-export-metrics-to-otlp-endpoint)** — Send monitor data to your observability stack
+- **[Terraform provider reference](/docs/reference/terraform)** — full specification for all resources and data sources.
+- **[Run synthetic tests in GitHub Actions](/docs/guides/how-to-run-synthetic-test-github-action)** — automate monitoring in your CI/CD pipeline.
+- **[Export metrics to an OTLP endpoint](/docs/guides/how-to-export-metrics-to-otlp-endpoint)** — send monitor data to your observability stack.
 
-## Learn more
+### Learn more
 
-- **[Understanding Monitoring as Code](/docs/concept/uptime-monitoring-as-code)** — Why manage monitors as code
-- **[CLI Reference](/docs/reference/cli-reference)** — Complete command documentation
-- **[Status Report Reference](/docs/reference/status-report)** — Status report properties and lifecycle
-- **[HTTP Monitor Reference](/docs/reference/http-monitor)** — Full HTTP monitor specification
-- **[TCP Monitor Reference](/docs/reference/tcp-monitor)** — Full TCP monitor specification
-- **[DNS Monitor Reference](/docs/reference/dns-monitor)** — Full DNS monitor specification
+- **[Understanding monitoring as code](/docs/concept/uptime-monitoring-as-code)** — why manage monitors as code.
+- **[CLI reference](/docs/reference/cli-reference)** — complete command documentation.
+- **[Status report reference](/docs/reference/status-report)** — status report properties and lifecycle.
+- **[HTTP monitor reference](/docs/reference/http-monitor)** — full HTTP monitor specification.
+- **[TCP monitor reference](/docs/reference/tcp-monitor)** — full TCP monitor specification.
+- **[DNS monitor reference](/docs/reference/dns-monitor)** — full DNS monitor specification.

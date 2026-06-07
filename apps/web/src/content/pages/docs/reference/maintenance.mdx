@@ -4,13 +4,11 @@ title: Maintenance Reference
 description: Technical specification for scheduled maintenance windows in openstatus.
 ---
 
-## Overview
-
 A maintenance window is a scheduled period during which you expect planned disruption to one or more services — a database upgrade, a deployment, or infrastructure work. Announcing it ahead of time lets you communicate the disruption to your users instead of letting your status page register it as an unexpected outage.
 
 A maintenance belongs to a single status page and targets one or more of that page's components — monitor-linked or static.
 
-## Behavior
+## Behaviour
 
 While a maintenance window is active (the current time is between `from` and `to`):
 
@@ -22,7 +20,7 @@ Maintenance windows **do not** exclude downtime from uptime calculations. The up
 
 When a maintenance is created, status page subscribers can be notified that it has been scheduled (see [Notify](#notify)). Updating a maintenance never re-notifies.
 
-## Configuration and Properties
+## Configuration and properties
 
 ### Title
 
@@ -55,13 +53,13 @@ When the maintenance window starts.
 
 When the maintenance window ends. Must be later than `from`.
 
-### Status Page
+### Status page
 
 **Type:** Integer (required)
 
 The id of the status page this maintenance belongs to. A maintenance is scoped to exactly one status page.
 
-### Affected Components
+### Affected components
 
 **Type:** Array of integers (optional)
 **Default:** `[]`
@@ -86,6 +84,6 @@ The v1 REST API does not expose this flag; it notifies subscribers automatically
 
 ## Related resources
 
-- **[Status Page Reference](/docs/reference/status-page)** - How maintenance windows surface on the public status page.
-- **[Page Components](/docs/reference/page-components)** - The monitor and static components a maintenance window can target.
-- **[Status Report Reference](/docs/reference/status-report)** - Communicate unplanned incidents, as opposed to scheduled maintenance.
+- **[Status page reference](/docs/reference/status-page)** — how maintenance windows surface on the public status page.
+- **[Page components](/docs/reference/page-components)** — the monitor and static components a maintenance window can target.
+- **[Status report reference](/docs/reference/status-report)** — communicate unplanned incidents, as opposed to scheduled maintenance.

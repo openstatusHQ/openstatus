@@ -12,7 +12,7 @@ You want a status page to communicate incidents and maintenance to your users, b
 
 openstatus provides a lightweight Docker Compose setup that runs only 4 services: a database, a one-shot migration runner, the dashboard, and the status page. This is ideal for teams who only want to self-host the status page without monitoring, or for teams that manage incidents manually using external monitoring tools.
 
-## Lightweight vs Full
+## Lightweight vs full
 
 The lightweight stack strips away all monitoring infrastructure. Here's what each version includes:
 
@@ -36,9 +36,9 @@ If you need automated monitoring, follow the [full self-hosting guide](/docs/gui
 
 ## Step-by-step guide
 
-### Part 1: Initial Setup and Service Launch
+### Part 1: initial setup and service launch
 
-1.  **Clone the Repository**
+1.  **Clone the repository**
 
     Get the latest version of openstatus:
     ```bash
@@ -46,7 +46,7 @@ If you need automated monitoring, follow the [full self-hosting guide](/docs/gui
     cd openstatus
     ```
 
-2.  **Configure Your Environment**
+2.  **Configure your environment**
 
     Copy the example environment file. This is a simplified version of the full configuration, with only the variables relevant to the status page and dashboard.
     ```bash
@@ -62,7 +62,7 @@ If you need automated monitoring, follow the [full self-hosting guide](/docs/gui
 
     Optionally, you can configure GitHub or Google OAuth providers by filling in the `AUTH_GITHUB_*` or `AUTH_GOOGLE_*` variables in the same file.
 
-3.  **Build and Start Services**
+3.  **Build and start services**
 
     Use Docker Compose to build and run all services in the background:
     ```bash
@@ -78,16 +78,16 @@ If you need automated monitoring, follow the [full self-hosting guide](/docs/gui
 
     Wait until all services show as `healthy` before proceeding. The `db-migrate` service will show as exited — this is expected, as it runs once and stops.
 
-### Part 2: Application Configuration
+### Part 2: application configuration
 
-4.  **Access the Applications**
+4.  **Access the applications**
 
     -   **Dashboard:** `http://localhost:3000`
     -   **Status Page:** `http://localhost:3001`
 
     Log in to the dashboard using email authentication (magic link). This will create your account and workspace.
 
-5.  **Set Workspace Limits**
+5.  **Set workspace limits**
 
     Because this is a self-hosted instance, you need to manually set the feature limits for your workspace directly in the database. The following command updates the limits for the workspace with `id = 1`:
 
@@ -102,13 +102,13 @@ If you need automated monitoring, follow the [full self-hosting guide](/docs/gui
       -d '{"statements":["SELECT id, name FROM workspace"]}'
     ```
 
-6.  **Create Your Status Page**
+6.  **Create your status page**
 
     In the dashboard, create a new status page, add components for the services you want to display, and publish it. Your status page will be available at `http://localhost:3001`.
 
 ## Service architecture
 
-| Service | Container | Host Port | Purpose |
+| Service | Container | Host port | Purpose |
 |---------|-----------|-----------|---------|
 | libsql | openstatus-libsql | 8080 | Database (HTTP API) |
 | db-migrate | openstatus-db-migrate | — | One-shot database migration (exits after completion) |
@@ -142,5 +142,5 @@ docker compose -f docker-compose-lightweight.yaml ps
 
 ## Next steps
 
-- **[Self-Host openstatus (Full)](/docs/guides/self-hosting-openstatus)** — Add automated monitoring, analytics, and alerting
-- **[Join our Discord](https://www.openstatus.dev/discord)** — Get help from the community
+- **[Self-host openstatus (full)](/docs/guides/self-hosting-openstatus)** — add automated monitoring, analytics, and alerting.
+- **[Join our Discord](https://www.openstatus.dev/discord)** — get help from the community.

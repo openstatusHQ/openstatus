@@ -28,12 +28,12 @@ The code for the Cloudflare Worker template is available on [GitHub](https://git
 
 First, you need to create a private location in your openstatus workspace to get an access key.
 
-1.  Go to the openstatus dashboard.
-2.  Navigate to **Settings** > **Private Locations**.
-3.  Click **Create Private Location**.
-4.  Give it a human-readable name (e.g., "Cloudflare-EU").
-5.  Copy the generated token and save it somewhere secure.
-6.  Click **Submit** to save the new private location.
+1. Go to the openstatus dashboard.
+2. Navigate to **Settings** > **Private Locations**.
+3. Click **Create Private Location**.
+4. Give it a human-readable name (e.g., "Cloudflare-EU").
+5. Copy the generated token and save it somewhere secure.
+6. Click **Submit** to save the new private location.
 
 ### 2. Set up the Cloudflare project
 
@@ -67,13 +67,13 @@ pnpm wrangler containers push openstatus-private-location:v1
 
 Now, configure your Cloudflare project to use the container and run it on a schedule.
 
-1.  Open the `wrangler.toml` file.
-2.  Add a `[containers]` section to link the image you pushed. Replace `GENERATED_ID` with the actual ID from the previous step's output.
+1. Open the `wrangler.toml` file.
+2. Add a `[containers]` section to link the image you pushed. Replace `GENERATED_ID` with the actual ID from the previous step's output.
     ```toml
     [containers]
     image = "registry.cloudflare.com/GENERATED_ID/openstatus-private-location:v1"
     ```
-3.  Add a `triggers` section to run the worker on a cron schedule. This keeps the container alive, as Cloudflare Containers automatically scales to zero.
+3. Add a `triggers` section to run the worker on a cron schedule. This keeps the container alive, as Cloudflare Containers automatically scales to zero.
     ```toml
     triggers = { cron = ["*/2 * * * *"] } # Runs every 2 minutes
     ```
@@ -82,11 +82,11 @@ Now, configure your Cloudflare project to use the container and run it on a sche
 
 Update the worker script (`index.ts`) to start the container with the correct environment variables.
 
-1.  Set the `sleepAfter` value to control how long the container runs after being invoked.
+1. Set the `sleepAfter` value to control how long the container runs after being invoked.
     ```typescript
     sleepAfter = "150s";
     ```
-2.  Update the `scheduled` function to pass your openstatus key to the container.
+2. Update the `scheduled` function to pass your openstatus key to the container.
     ```typescript
     async scheduled(_controller: any, env: Env) {
       try {

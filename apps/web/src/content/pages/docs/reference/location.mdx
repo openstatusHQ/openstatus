@@ -4,20 +4,19 @@ title: Location Reference
 description: Complete technical specification for Location monitoring
 ---
 
-## Overview
-
 openstatus monitors your endpoints from multiple global locations to ensure accurate uptime and latency reporting. Locations span several infrastructure providers (Fly.io, Railway, and Koyeb), so IP availability varies: Fly.io regions expose both IPv4 and IPv6 addresses, Railway regions are IPv4-only, and Koyeb does not provide static IPs.
 
 You can use these locations to:
-- Configure region-specific checks
-- Allowlist monitoring IPs in your firewall
-- Understand where requests originate during synthetic monitoring
 
-### Fly.io Regions & Monitoring IPs
+- Configure region-specific checks.
+- Allowlist monitoring IPs in your firewall.
+- Understand where requests originate during synthetic monitoring.
+
+### Fly.io regions and monitoring IPs
 
 Below is the complete list of regions used for monitoring, along with their associated IPv4 and IPv6 addresses.
 
-| Region Code | Location Name      | IPv4 Address      | IPv6 Address                   |
+| Region code | Location name      | IPv4 address      | IPv6 address                   |
 |-------------|-------------------|-------------------|-------------------------------|
 | ams         | Amsterdam         | 209.71.64.1       | 2a09:8280:e601:1:0:22:b79b:0  |
 | arn         | Stockholm         | 209.71.98.189     | 2a09:8280:e602:1:0:22:b79b:0  |
@@ -39,22 +38,22 @@ Below is the complete list of regions used for monitoring, along with their asso
 | yyz         | Toronto           | 209.71.99.51      | 2a09:8280:e637:1:0:22:b79b:0  |
 
 
-## Railway Regions & Monitoring IPs
+## Railway regions and monitoring IPs
 
 Below is the complete list of Railway regions used for monitoring, along with their associated IPv4 addresses.
 
-| Region Code              | Location Name     | IPv4 Address      |
+| Region code              | Location name     | IPv4 address      |
 |--------------------------|------------------|-------------------|
 | europe-west4-drams3a     | Europe West      | 208.77.244.15     |
 | asia-southeast1-eqsg3a   | Asia Southeast   | 208.77.246.15     |
 | us-east4-eqdc4a          | US East          | 162.220.234.15    |
 | us-west2                 | US West          | 162.220.232.99    |
 
-## Koyeb Regions
+## Koyeb regions
 
 Koyeb does not provide static IP addresses for their regions, so IPs are not available for allowlisting. For details, see Koyeb's [documentation](https://www.koyeb.com/docs/faqs/general#i-want-to-restrict-access-to-a-database-or-other-application-by-ip-address-what-ip-addresses-does-koyeb-use).
 
-| Region Code  | Location Name           |
+| Region code  | Location name           |
 |--------------|-------------------------|
 | koyeb_fra    | Frankfurt, Germany      |
 | koyeb_par    | Paris, France           |

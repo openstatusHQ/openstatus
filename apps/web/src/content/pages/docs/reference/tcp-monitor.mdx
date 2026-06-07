@@ -4,15 +4,14 @@ title: TCP Monitor Reference
 description: Complete technical specification for TCP service monitoring.
 ---
 
-## Overview
-
-A TCP Monitor is a component that establishes a connection to a specified TCP endpoint (IP address and port) to verify its reachability and responsiveness. This is fundamental for monitoring the availability of services that communicate over TCP, such as databases, mail servers, and custom network services.
+A TCP monitor establishes a connection to a specified TCP endpoint (IP address and port) to verify its reachability and responsiveness. This is fundamental for monitoring the availability of services that communicate over TCP, such as databases, mail servers, and custom network services.
 
 **Use cases:**
--   Database server availability checks (e.g., PostgreSQL, MySQL).
--   Mail server (SMTP, IMAP, POP3) reachability.
--   Custom application service port monitoring.
--   Validating network connectivity to specific endpoints.
+
+- Database server availability checks (e.g., PostgreSQL, MySQL).
+- Mail server (SMTP, IMAP, POP3) reachability.
+- Custom application service port monitoring.
+- Validating network connectivity to specific endpoints.
 
 ## Configuration
 
@@ -30,62 +29,10 @@ The endpoint of the TCP service you want to monitor. This includes the hostname 
 
 ### Regions
 
-**Type:** Array of Strings (required)
+**Type:** Array of strings (required)
 **Format:** Region identifiers (e.g., `iad`, `jnb`)
 
-The geographical regions from which the TCP connection attempt will be initiated. This allows for verification of service availability and network latency across different global locations.
-
-__Africa__
-
-- Johannesburg, South Africa 🇿🇦 (free)
-
-__Asia__
-
-- Hong Kong, Hong Kong 🇭🇰 (free)
-- Mumbai, India 🇮🇳
-- Singapore, Singapore 🇸🇬
-- Tokyo, Japan 🇯🇵
-
-__Europe__
-
-- Amsterdam, Netherlands 🇳🇱 (free)
-- Bucharest, Romania 🇷🇴
-- Frankfurt, Germany 🇩🇪
-- London, United Kingdom 🇬🇧
-- Madrid, Spain 🇪🇸
-- Paris, France 🇫🇷
-- Stockholm, Sweden 🇸🇪
-- Warsaw, Poland 🇵🇱
-
-__North America__
-
-- Ashburn, Virginia, USA 🇺🇸 (free)
-- Atlanta, Georgia, USA 🇺🇸
-- Boston, Massachusetts, USA 🇺🇸
-- Chicago, Illinois, USA 🇺🇸
-- Dallas, Texas, USA 🇺🇸
-- Denver, Colorado, USA 🇺🇸
-- Guadalajara, Mexico 🇲🇽
-- Los Angeles, California, USA 🇺🇸
-- Miami, Florida, USA 🇺🇸
-- Montreal, Canada 🇨🇦
-- Phoenix, Arizona, USA 🇺🇸
-- Queretaro, Mexico 🇲🇽
-- Seattle, Washington, USA 🇺🇸
-- San Jose, California, USA 🇺🇸
-- Toronto, Canada 🇨🇦
-
-__South America__
-
-- Bogota, Colombia 🇨🇴
-- Buenos Aires, Argentina 🇦🇷
-- Rio de Janeiro, Brazil 🇧🇷
-- Sao Paulo, Brazil 🇧🇷 (free)
-- Santiago, Chile 🇨🇱
-
-__Oceania__
-
-- Sydney, Australia 🇦🇺 (free)
+The geographical regions from which the TCP connection attempt will be initiated. This allows for verification of service availability and network latency across different global locations. See the [Location Reference](/docs/reference/location) for the full list of regions and the IPs to allowlist.
 
 ### Frequency
 
@@ -100,7 +47,7 @@ The interval at which the TCP monitor will attempt to connect to the target URI.
 - `30 minutes`
 - `1 hour`
 
-### Response Time Thresholds
+### Response time thresholds
 
 #### Timeout
 
@@ -126,14 +73,14 @@ The number of times the monitor will automatically retry a failed TCP connection
 
 Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
 
-#### OTLP Endpoint
+#### OTLP endpoint
 
 **Type:** String (optional)
 **Protocol:** HTTP only
 
 The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported. Only HTTP endpoints are supported for metric export.
 
-#### OTLP Headers
+#### OTLP headers
 
 **Type:** Key-value pairs (optional)
 
@@ -146,5 +93,5 @@ Authorization: Bearer <your_token>
 
 ## Related resources
 
-- **[Create Your First Monitor](/docs/tutorial/create-your-first-monitor)** - Step-by-step tutorial on setting up a monitor.
-- **[CLI Reference](/docs/reference/cli-reference)** - Guide to managing openstatus monitors programmatically using the command-line interface.
+- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
+- **[CLI reference](/docs/reference/cli-reference)** — manage monitors programmatically from the command line.
