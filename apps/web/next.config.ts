@@ -177,7 +177,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/docs/tutorial/how-to-manage-openstatus-with-terraform-cli",
-        destination: "/docs/guides/how-to-manage-openstatus-with-terraform-cli",
+        destination: "/docs/guides/how-to-manage-openstatus-with-terraform",
+        permanent: true,
+      },
+      {
+        source: "/docs/guides/how-to-manage-openstatus-with-terraform-cli",
+        destination: "/docs/guides/how-to-manage-openstatus-with-terraform",
         permanent: true,
       },
       {
