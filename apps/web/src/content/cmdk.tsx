@@ -89,6 +89,11 @@ const CONFIG: ConfigSection[] = [
         shortcut: "⌘G",
       },
       {
+        type: "item",
+        label: "Go to CDN Cache Checker",
+        href: "/play/cdn-checker",
+      },
+      {
         type: "group",
         label: "Search in Products...",
         heading: "Products",
