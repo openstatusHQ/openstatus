@@ -6,7 +6,7 @@ SQL >
     %
     SELECT
         toStartOfInterval(
-            toDateTime(timestamp / 1000), INTERVAL {{ String(interval, '30', required=True) }} minute
+            toDateTime(timestamp / 1000), INTERVAL {{ String(interval, '1440', required=True) }} minute
         ) AS interval,
         countIf(requestStatus = 'success') AS success,
         countIf(requestStatus = 'degraded') AS degraded,
@@ -15,7 +15,7 @@ SQL >
     WHERE
         monitorId = {{ String(monitorId, '7417', required=True) }}
         -- dns_response__v0 has no TTL; cap the window like the TTL-bound http/tcp uptime MVs
-        AND toDateTime(timestamp / 1000) >= now() - INTERVAL 30 DAY
+        AND toDateTime(timestamp / 1000) >= now() - INTERVAL 90 DAY
         {% if defined(fromDate) %}
             AND toDateTime(timestamp / 1000) >= parseDateTimeBestEffortOrNull({{ String(fromDate) }})
         {% end %}
@@ -25,6 +25,5 @@ SQL >
         {% if defined(regions) %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
     GROUP BY interval
     ORDER BY interval DESC
-
 
 TYPE ENDPOINT

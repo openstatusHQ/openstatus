@@ -10,7 +10,11 @@ import {
   YAxis,
 } from "recharts";
 
-import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
+import {
+  type PERCENTILES,
+  type PERIODS,
+  mapLatency,
+} from "@/data/metrics.client";
 import { periodToFromDate } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import {
@@ -45,7 +49,7 @@ export function ChartAreaLatency({
   monitorId: string;
   degradedAfter: number | null;
   percentile: (typeof PERCENTILES)[number];
-  period: "1d" | "7d" | "14d";
+  period: (typeof PERIODS)[number];
   type: "http" | "tcp";
   regions: string[] | undefined;
 }) {

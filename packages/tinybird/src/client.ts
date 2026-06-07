@@ -1733,6 +1733,531 @@ export class OSTinybird {
     });
   }
 
+  public get httpMetrics30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_30d__v1",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+        count: z.int().prefault(0),
+        success: z.int().prefault(0),
+        degraded: z.int().prefault(0),
+        error: z.int().prefault(0),
+        lastTimestamp: z.int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpMetrics90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_90d__v1",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+        count: z.int().prefault(0),
+        success: z.int().prefault(0),
+        degraded: z.int().prefault(0),
+        error: z.int().prefault(0),
+        lastTimestamp: z.int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpMetrics30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_30d__v1",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+        count: z.int().prefault(0),
+        success: z.int().prefault(0),
+        degraded: z.int().prefault(0),
+        error: z.int().prefault(0),
+        lastTimestamp: z.int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpMetrics90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_90d__v1",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+        count: z.int().prefault(0),
+        success: z.int().prefault(0),
+        degraded: z.int().prefault(0),
+        error: z.int().prefault(0),
+        lastTimestamp: z.int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetrics30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_30d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+        count: z.int().prefault(0),
+        success: z.int().prefault(0),
+        degraded: z.int().prefault(0),
+        error: z.int().prefault(0),
+        lastTimestamp: z.int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetrics90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_90d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+        count: z.int().prefault(0),
+        success: z.int().prefault(0),
+        degraded: z.int().prefault(0),
+        error: z.int().prefault(0),
+        lastTimestamp: z.int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpUptime90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_uptime_90d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+        interval: z.int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.int(),
+        degraded: z.int(),
+        error: z.int(),
+      }),
+    });
+  }
+
+  public get tcpUptime90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_uptime_90d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+        interval: z.int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.int(),
+        degraded: z.int(),
+        error: z.int(),
+      }),
+    });
+  }
+
+  public get dnsUptime90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_uptime_90d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+        interval: z.int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.int(),
+        degraded: z.int(),
+        error: z.int(),
+      }),
+    });
+  }
+
+  public get httpMetricsRegions30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_regions_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.int().optional(),
+        regions: z.string().array().optional(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.int(),
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpMetricsRegions90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_regions_90d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.int().optional(),
+        regions: z.string().array().optional(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.int(),
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpMetricsByInterval30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_interval_30d__v0",
+      parameters: z.object({
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.int(),
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpMetricsByInterval90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_interval_90d__v0",
+      parameters: z.object({
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.int(),
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsRegions30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_regions_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.int().optional(),
+        regions: z.string().array().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.int(),
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsRegions90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_regions_90d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.int().optional(),
+        regions: z.string().array().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.int(),
+        p50Latency: z.number().nullable().prefault(0),
+        p75Latency: z.number().nullable().prefault(0),
+        p90Latency: z.number().nullable().prefault(0),
+        p95Latency: z.number().nullable().prefault(0),
+        p99Latency: z.number().nullable().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpMetricsLatency30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_30d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+    });
+  }
+
+  public get httpMetricsLatency90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_90d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+    });
+  }
+
+  public get tcpMetricsLatency30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_30d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+    });
+  }
+
+  public get tcpMetricsLatency90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_90d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+    });
+  }
+
+  public get dnsMetricsLatency30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_latency_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+    });
+  }
+
+  public get dnsMetricsLatency90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_latency_90d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+    });
+  }
+
+  public get httpTimingPhases30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_timing_phases_30d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Dns: z.int().nullable().prefault(0),
+        p50Ttfb: z.int().nullable().prefault(0),
+        p50Transfer: z.int().nullable().prefault(0),
+        p50Connect: z.int().nullable().prefault(0),
+        p50Tls: z.int().nullable().prefault(0),
+        p75Dns: z.int().nullable().prefault(0),
+        p75Ttfb: z.int().nullable().prefault(0),
+        p75Transfer: z.int().nullable().prefault(0),
+        p75Connect: z.int().nullable().prefault(0),
+        p75Tls: z.int().nullable().prefault(0),
+        p90Dns: z.int().nullable().prefault(0),
+        p90Ttfb: z.int().nullable().prefault(0),
+        p90Transfer: z.int().nullable().prefault(0),
+        p90Connect: z.int().nullable().prefault(0),
+        p90Tls: z.int().nullable().prefault(0),
+        p95Dns: z.int().nullable().prefault(0),
+        p95Ttfb: z.int().nullable().prefault(0),
+        p95Transfer: z.int().nullable().prefault(0),
+        p95Connect: z.int().nullable().prefault(0),
+        p95Tls: z.int().nullable().prefault(0),
+        p99Dns: z.int().nullable().prefault(0),
+        p99Ttfb: z.int().nullable().prefault(0),
+        p99Transfer: z.int().nullable().prefault(0),
+        p99Connect: z.int().nullable().prefault(0),
+        p99Tls: z.int().nullable().prefault(0),
+      }),
+    });
+  }
+
+  public get httpTimingPhases90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_timing_phases_90d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        p50Dns: z.int().nullable().prefault(0),
+        p50Ttfb: z.int().nullable().prefault(0),
+        p50Transfer: z.int().nullable().prefault(0),
+        p50Connect: z.int().nullable().prefault(0),
+        p50Tls: z.int().nullable().prefault(0),
+        p75Dns: z.int().nullable().prefault(0),
+        p75Ttfb: z.int().nullable().prefault(0),
+        p75Transfer: z.int().nullable().prefault(0),
+        p75Connect: z.int().nullable().prefault(0),
+        p75Tls: z.int().nullable().prefault(0),
+        p90Dns: z.int().nullable().prefault(0),
+        p90Ttfb: z.int().nullable().prefault(0),
+        p90Transfer: z.int().nullable().prefault(0),
+        p90Connect: z.int().nullable().prefault(0),
+        p90Tls: z.int().nullable().prefault(0),
+        p95Dns: z.int().nullable().prefault(0),
+        p95Ttfb: z.int().nullable().prefault(0),
+        p95Transfer: z.int().nullable().prefault(0),
+        p95Connect: z.int().nullable().prefault(0),
+        p95Tls: z.int().nullable().prefault(0),
+        p99Dns: z.int().nullable().prefault(0),
+        p99Ttfb: z.int().nullable().prefault(0),
+        p99Transfer: z.int().nullable().prefault(0),
+        p99Connect: z.int().nullable().prefault(0),
+        p99Tls: z.int().nullable().prefault(0),
+      }),
+    });
+  }
+
   public get dnsStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_45d__v0",

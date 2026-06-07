@@ -79,15 +79,19 @@ export type SidebarMetadataProps =
       label: string;
       type?: "table";
       items?: SidebarMetadataItem[];
+      /** Shown when `items` is empty. Defaults to "None". */
+      emptyMessage?: string;
     }
   | {
       label: string;
       type: "list";
       items?: SidebarMetadataListItem[];
+      /** Shown when `items` is empty. Defaults to "None". */
+      emptyMessage?: string;
     };
 
 export function SidebarMetadata(props: SidebarMetadataProps) {
-  const { label } = props;
+  const { label, emptyMessage = "None" } = props;
   return (
     <SidebarGroup className="p-0">
       <Collapsible defaultOpen className="group/collapsible border-b">
@@ -103,9 +107,15 @@ export function SidebarMetadata(props: SidebarMetadataProps) {
         <CollapsibleContent>
           <SidebarGroupContent className="border-t">
             {props.type === "list" ? (
-              <SidebarMetadataList items={props.items ?? []} />
+              <SidebarMetadataList
+                items={props.items ?? []}
+                emptyMessage={emptyMessage}
+              />
             ) : (
-              <SidebarMetadataTable items={props.items ?? []} />
+              <SidebarMetadataTable
+                items={props.items ?? []}
+                emptyMessage={emptyMessage}
+              />
             )}
           </SidebarGroupContent>
         </CollapsibleContent>
@@ -114,8 +124,13 @@ export function SidebarMetadata(props: SidebarMetadataProps) {
   );
 }
 
+function SidebarMetadataEmpty({ message }: { message: string }) {
+  return <p className="px-2 py-2 text-muted-foreground text-sm">{message}</p>;
+}
+
 function SidebarMetadataTable({
   items,
+  emptyMessage,
 }: {
   items: {
     label: string;
@@ -123,7 +138,11 @@ function SidebarMetadataTable({
     isNested?: boolean;
     tooltip?: string;
   }[];
+  emptyMessage: string;
 }) {
+  if (items.length === 0) {
+    return <SidebarMetadataEmpty message={emptyMessage} />;
+  }
   return (
     <Table>
       <TableHeader className="sr-only">
@@ -151,7 +170,16 @@ function SidebarMetadataTable({
   );
 }
 
-function SidebarMetadataList({ items }: { items: SidebarMetadataListItem[] }) {
+function SidebarMetadataList({
+  items,
+  emptyMessage,
+}: {
+  items: SidebarMetadataListItem[];
+  emptyMessage: string;
+}) {
+  if (items.length === 0) {
+    return <SidebarMetadataEmpty message={emptyMessage} />;
+  }
   return (
     <SidebarGroup className="p-0">
       <SidebarMenu className="gap-0">

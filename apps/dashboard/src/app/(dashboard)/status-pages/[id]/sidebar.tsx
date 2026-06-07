@@ -111,6 +111,7 @@ export function Sidebar() {
         },
         {
           label: "Monitors",
+          emptyMessage: "No monitors attached",
           items: statusPage.pageComponents.flatMap((component) => {
             const arr = [];
             arr.push({

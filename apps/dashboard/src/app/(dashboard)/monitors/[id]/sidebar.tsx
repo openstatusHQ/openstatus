@@ -102,6 +102,7 @@ export function Sidebar() {
         },
         {
           label: "Notifications",
+          emptyMessage: "No notifications attached",
           items: monitor.notifications.flatMap((notification) => {
             const arr = [];
             arr.push({
@@ -129,43 +130,41 @@ export function Sidebar() {
         },
         {
           label: "Assertions",
-          items:
-            assertions.length > 0
-              ? assertions.flatMap((assertion) => {
-                  const arr = [];
+          emptyMessage: "No assertions configured",
+          items: assertions.flatMap((assertion) => {
+            const arr = [];
 
-                  arr.push({
-                    label: "Type",
-                    value: assertion.schema.type,
-                  });
+            arr.push({
+              label: "Type",
+              value: assertion.schema.type,
+            });
 
-                  arr.push({
-                    label: "Compare",
-                    value: assertion.schema.compare,
-                    isNested: true,
-                  });
+            arr.push({
+              label: "Compare",
+              value: assertion.schema.compare,
+              isNested: true,
+            });
 
-                  if (
-                    (assertion.schema.type === "header" ||
-                      assertion.schema.type === "dnsRecord") &&
-                    assertion.schema.key
-                  ) {
-                    arr.push({
-                      label: "Key",
-                      value: assertion.schema.key,
-                      isNested: true,
-                    });
-                  }
+            if (
+              (assertion.schema.type === "header" ||
+                assertion.schema.type === "dnsRecord") &&
+              assertion.schema.key
+            ) {
+              arr.push({
+                label: "Key",
+                value: assertion.schema.key,
+                isNested: true,
+              });
+            }
 
-                  arr.push({
-                    label: "Value",
-                    value: assertion.schema.target,
-                    isNested: true,
-                  });
+            arr.push({
+              label: "Value",
+              value: assertion.schema.target,
+              isNested: true,
+            });
 
-                  return arr;
-                })
-              : [],
+            return arr;
+          }),
         },
         // {
         //   label: "Last Logs",
