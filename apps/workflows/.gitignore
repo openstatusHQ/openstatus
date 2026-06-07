@@ -1,2 +1,6 @@
 # deps
 node_modules/
+
+# local sync replica (dev)
+dev.db
+dev.db-*

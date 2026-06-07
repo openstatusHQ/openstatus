@@ -1,13 +1,17 @@
 import path from "node:path";
 
-// Create package.json that contains @libsql/client as dependency. It will be used to create node_modules and copy them alongside compiled server https://github.com/oven-sh/bun/issues/18909
+// Create package.json that contains native-addon deps. It will be used to create node_modules and copy them alongside compiled server https://github.com/oven-sh/bun/issues/18909
 type PackageJson = Record<"name" | "description" | "version", string> &
   Record<"dependencies", Record<string, string>>;
-const packageJson: PackageJson = await Bun.file(
+const dbPackageJson: PackageJson = await Bun.file(
   path.join(__dirname, "../../../packages/db", "package.json"),
 ).json();
+const workflowsPackageJson: PackageJson = await Bun.file(
+  path.join(__dirname, "..", "package.json"),
+).json();
 
-const extractDependenciesNames = ["@libsql/client"];
+const dbExtractNames = ["@libsql/client"] as const;
+const workflowsExtractNames = ["@tursodatabase/sync"] as const;
 const workspaceConfig = await Bun.file(
   path.join(__dirname, "../../../pnpm-workspace.yaml"),
 ).text();
@@ -55,23 +59,30 @@ const resolveVersion = (name: string, spec: string) => {
   return resolved;
 };
 
-const extractedDependencies = extractDependenciesNames.reduce(
-  (acc, cur) => {
-    const spec = packageJson.dependencies[cur];
+const extractFrom = (
+  source: PackageJson,
+  names: readonly string[],
+  acc: Record<string, string>,
+) => {
+  for (const name of names) {
+    const spec = source.dependencies[name];
     if (spec) {
-      acc[cur] = resolveVersion(cur, spec);
+      acc[name] = resolveVersion(name, spec);
     }
+  }
+  return acc;
+};
 
-    return acc;
-  },
-  {} as Record<string, string>,
+const extractedDependencies = extractFrom(
+  workflowsPackageJson,
+  workflowsExtractNames,
+  extractFrom(dbPackageJson, dbExtractNames, {}),
 );
 
 const packageJsonBuild = {
-  name: packageJson.name,
-  description: packageJson.description,
-  version: packageJson.version,
-  // type: "module",
+  name: dbPackageJson.name,
+  description: dbPackageJson.description,
+  version: dbPackageJson.version,
   dependencies: extractedDependencies,
 };
 

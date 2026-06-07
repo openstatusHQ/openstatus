@@ -15,6 +15,7 @@ import { requestId } from "hono/request-id";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import { shutdownDb } from "./lib/db";
 import "./lib/sentry";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
@@ -184,6 +185,17 @@ if (NODE_ENV === "development") {
 }
 
 logger.info("Starting server", { port: PORT, environment: NODE_ENV });
+
+const onShutdown = async (signal: string) => {
+  logger.info("Shutdown signal received", { signal });
+  await shutdownDb();
+};
+process.on("SIGTERM", () => {
+  void onShutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  void onShutdown("SIGINT");
+});
 
 const server = { port: PORT, fetch: app.fetch };
 

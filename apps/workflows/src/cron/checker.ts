@@ -1,32 +1,17 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { Database } from "@tursodatabase/sync";
 import { Effect, Either, Schedule } from "effect";
 import { z } from "zod";
 
 import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  notInArray,
-} from "@openstatus/db";
-import {
   type MonitorStatus,
-  maintenance,
-  monitor,
-  monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import {
-  maintenancesToPageComponents,
-  pageComponent,
-} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
-import { db } from "../lib/db";
+import { getDb } from "../lib/db";
 
 import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
@@ -37,6 +22,7 @@ import {
   transformHeaders,
 } from "@openstatus/utils";
 import { env } from "../env";
+import { reportBackgroundError } from "../lib/sentry";
 
 type TaskInput = {
   row: z.infer<typeof selectMonitorSchema>;
@@ -60,6 +46,160 @@ const client = new CloudTasksClient({
   },
 });
 
+type SqlValue = string | number | null;
+
+interface PreparedStatement<TRow> {
+  all(...bindParameters: SqlValue[]): Promise<TRow[]>;
+}
+
+type MonitorRow = {
+  id: number;
+  jobType: string;
+  periodicity: string;
+  status: string;
+  active: number;
+  regions: string;
+  url: string;
+  name: string;
+  externalName: string | null;
+  description: string;
+  headers: string | null;
+  body: string | null;
+  method: string | null;
+  workspaceId: number | null;
+  timeout: number;
+  degradedAfter: number | null;
+  assertions: string | null;
+  otelEndpoint: string | null;
+  otelHeaders: string | null;
+  public: number | null;
+  retry: number | null;
+  followRedirects: number | null;
+  createdAt: number | null;
+  updatedAt: number | null;
+  deletedAt: number | null;
+};
+
+type MonitorStatusRow = {
+  monitorId: number;
+  region: string;
+  status: string;
+  createdAt: number | null;
+  updatedAt: number | null;
+};
+
+type HydratedMonitorRow = Omit<
+  MonitorRow,
+  | "active"
+  | "public"
+  | "followRedirects"
+  | "createdAt"
+  | "updatedAt"
+  | "deletedAt"
+> & {
+  active: boolean;
+  public: boolean | null;
+  followRedirects: boolean | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+};
+
+type HydratedMonitorStatusRow = Omit<
+  MonitorStatusRow,
+  "createdAt" | "updatedAt"
+> & {
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+
+let monitorStmtCache: {
+  db: Database;
+  stmt: PreparedStatement<MonitorRow>;
+} | null = null;
+
+const MONITOR_QUERY_SQL = `
+  SELECT
+    id,
+    job_type         AS jobType,
+    periodicity,
+    status,
+    active,
+    regions,
+    url,
+    name,
+    external_name    AS externalName,
+    description,
+    headers,
+    body,
+    method,
+    workspace_id     AS workspaceId,
+    timeout,
+    degraded_after   AS degradedAfter,
+    assertions,
+    otel_endpoint    AS otelEndpoint,
+    otel_headers     AS otelHeaders,
+    public,
+    retry,
+    follow_redirects AS followRedirects,
+    created_at       AS createdAt,
+    updated_at       AS updatedAt,
+    deleted_at       AS deletedAt
+  FROM monitor
+  WHERE periodicity = ?
+    AND active = 1
+    AND id NOT IN (
+      SELECT pc.monitor_id
+      FROM maintenance_to_page_component mtpc
+      INNER JOIN maintenance m      ON mtpc.maintenance_id = m.id
+      INNER JOIN page_component pc  ON mtpc.page_component_id = pc.id
+      WHERE m."from" <= ?
+        AND m."to"   >= ?
+        AND pc.monitor_id IS NOT NULL
+    )
+`;
+
+async function getMonitorStmt(
+  db: Database,
+): Promise<PreparedStatement<MonitorRow>> {
+  if (monitorStmtCache?.db === db) return monitorStmtCache.stmt;
+  const prepared = (await db.prepare(
+    MONITOR_QUERY_SQL,
+  )) as PreparedStatement<MonitorRow>;
+  monitorStmtCache = { db, stmt: prepared };
+  return prepared;
+}
+
+function toDate(value: number | null): Date | null {
+  return value == null ? null : new Date(value * 1000);
+}
+
+function toBool(value: number | null): boolean | null {
+  return value == null ? null : value !== 0;
+}
+
+function hydrateMonitorRow(r: MonitorRow): HydratedMonitorRow {
+  return {
+    ...r,
+    active: r.active !== 0,
+    public: toBool(r.public),
+    followRedirects: toBool(r.followRedirects),
+    createdAt: toDate(r.createdAt),
+    updatedAt: toDate(r.updatedAt),
+    deletedAt: toDate(r.deletedAt),
+  };
+}
+
+function hydrateMonitorStatusRow(
+  r: MonitorStatusRow,
+): HydratedMonitorStatusRow {
+  return {
+    ...r,
+    createdAt: toDate(r.createdAt),
+    updatedAt: toDate(r.updatedAt),
+  };
+}
+
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
 ): Promise<{ success: number; failed: number }> {
@@ -71,45 +211,40 @@ export async function sendCheckerTasks(
 
   const timestamp = Date.now();
 
-  const currentMaintenance = db
-    .select({ id: maintenance.id })
-    .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
-    .as("currentMaintenance");
+  const db = await getDb();
 
-  const currentMaintenanceMonitors = db
-    .select({ id: pageComponent.monitorId })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      currentMaintenance,
-      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(isNotNull(pageComponent.monitorId));
+  const pullStart = Date.now();
+  try {
+    const changed = await db.pull();
+    logger.info("Pulled replica", {
+      periodicity,
+      changed,
+      duration_ms: Date.now() - pullStart,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("Replica pull failed; continuing against local state", {
+      periodicity,
+      error_message: message,
+    });
+    void reportBackgroundError(
+      `Replica pull failed (${periodicity}): ${message}`,
+    );
+  }
 
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
-    )
-    .all();
+  // maintenance.from/to use SQLite integer timestamp mode (unix seconds).
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  const monitorStmt = await getMonitorStmt(db);
+  const rawMonitors = await monitorStmt.all(periodicity, nowSec, nowSec);
+  const hydratedMonitors = rawMonitors.map(hydrateMonitorRow);
 
   logger.info("Starting cron job", {
     periodicity,
-    monitor_count: result.length,
+    monitor_count: hydratedMonitors.length,
   });
 
-  const monitors = z.array(selectMonitorSchema).safeParse(result);
+  const monitors = z.array(selectMonitorSchema).safeParse(hydratedMonitors);
   const taskInputs: TaskInput[] = [];
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
@@ -121,20 +256,32 @@ export async function sendCheckerTasks(
     return { success: 0, failed: 0 };
   }
 
-  // Batch fetch all monitor statuses in a single query (N+1 fix)
+  // Batch fetch all monitor statuses in a single query (N+1 fix).
+  // SQLite caps prepared-statement params at 999; openstatus is well under that today.
   const monitorIds = monitors.data.map((m) => m.id);
-  const rawStatuses = await db
-    .select()
-    .from(monitorStatusTable)
-    .where(inArray(monitorStatusTable.monitorId, monitorIds))
-    .all();
+  const placeholders = monitorIds.map(() => "?").join(", ");
+  const rawStatuses = (await db.all(
+    `
+    SELECT
+      monitor_id AS monitorId,
+      region,
+      status,
+      created_at AS createdAt,
+      updated_at AS updatedAt
+    FROM monitor_status
+    WHERE monitor_id IN (${placeholders})
+    `,
+    ...monitorIds,
+  )) as MonitorStatusRow[];
 
   const statusMap = new Map<
     number,
     z.infer<typeof selectMonitorStatusSchema>[]
   >();
   for (const raw of rawStatuses) {
-    const parsed = selectMonitorStatusSchema.safeParse(raw);
+    const parsed = selectMonitorStatusSchema.safeParse(
+      hydrateMonitorStatusRow(raw),
+    );
     if (!parsed.success) {
       logger.error("Failed to parse monitor status row", {
         monitor_id: raw.monitorId,

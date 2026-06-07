@@ -7,7 +7,6 @@
   },
   "dependencies": {
     "@google-cloud/tasks": "catalog:",
-    "@libsql/client": "catalog:",
     "@logtape/logtape": "catalog:",
     "@logtape/otel": "catalog:",
     "@logtape/sentry": "catalog:",
@@ -36,6 +35,7 @@
     "@opentelemetry/resources": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
     "@sentry/bun": "catalog:",
+    "@tursodatabase/sync": "^0.6.1",
     "@upstash/qstash": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
