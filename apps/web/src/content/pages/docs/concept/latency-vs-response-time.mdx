@@ -39,7 +39,7 @@ Latency is the time it takes for data to travel from its source to its destinati
 
 To measure latency, you can monitor endpoints like `/ping` or `/healthcheck` with minimum server processing time.
 
-## What Is Response Time?
+## What is response time?
 
 ```
     openstatus                 Network                Server
@@ -59,7 +59,7 @@ To measure latency, you can monitor endpoints like `/ping` or `/healthcheck` wit
 
 Response time is the total time from the moment a user's request is sent until the moment the first byte of the server's response is received. It includes both the network latency and the server's processing time.
 
-Response time = Network Latency + Server Processing Time
+Response time = network latency + server processing time
 
 The server processing time is the duration the server spends on tasks like:
 
@@ -99,28 +99,32 @@ By monitoring both metrics, you can quickly pinpoint whether a performance slowd
 
 ### Common scenarios
 
-**Scenario 1: Consistent latency, variable response time**
-- Indicates server-side performance issues
-- Look at: Database queries, API calls, resource utilization
+**Scenario 1: consistent latency, variable response time**
 
-**Scenario 2: High latency from specific regions**
-- Indicates geographic network issues
-- Solution: Add regional monitoring points or CDN
+- Indicates server-side performance issues.
+- Look at: database queries, API calls, resource utilisation.
 
-**Scenario 3: Both metrics degrading**
-- Could be network saturation or DDoS attack
-- Check: Network bandwidth, traffic patterns, security
+**Scenario 2: high latency from specific regions**
+
+- Indicates geographic network issues.
+- Solution: add regional monitoring points or a CDN.
+
+**Scenario 3: both metrics degrading**
+
+- Could be network saturation or a DDoS attack.
+- Check: network bandwidth, traffic patterns, security.
 
 ## What openstatus tracks
 
 openstatus monitors and displays:
-- **Total response time**: The complete user experience
-- **Detailed timing breakdown**: DNS, TCP, TLS, request, response
-- **Regional differences**: Compare performance across locations
-- **Historical trends**: Identify patterns over time
+
+- **Total response time** — the complete user experience.
+- **Detailed timing breakdown** — DNS, TCP, TLS, request, response.
+- **Regional differences** — compare performance across locations.
+- **Historical trends** — identify patterns over time.
 
 ## Next steps
 
-- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** - Start tracking these metrics
-- **[Understanding uptime monitoring](/docs/concept/uptime-monitoring)** - Broader monitoring concepts
-- **[HTTP monitor reference](/docs/reference/http-monitor)** - Technical specifications
+- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — start tracking these metrics.
+- **[Understanding uptime monitoring](/docs/concept/uptime-monitoring)** — broader monitoring concepts.
+- **[HTTP monitor reference](/docs/reference/http-monitor)** — technical specifications.

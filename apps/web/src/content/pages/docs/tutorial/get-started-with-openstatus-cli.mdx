@@ -5,29 +5,15 @@ description: "Step-by-step tutorial to install and use the openstatus CLI for mo
 ---
 
 
-## What you'll learn
-
 | | |
 |---|---|
 | **Time** | ~10 minutes |
 | **Level** | Intermediate |
-| **Prerequisites** | openstatus account, command line experience |
+| **Prerequisites** | openstatus account, command-line experience, API token from your workspace (Settings → API) |
 
-In this tutorial, you'll learn how to use the openstatus CLI to manage your monitors as code. This enables you to version control your monitoring configuration, automate deployments, and implement GitOps workflows.
+In this tutorial, you'll use the openstatus CLI to manage your monitors as code. This lets you version-control your monitoring configuration, automate deployments, and implement GitOps workflows.
 
-### Prerequisites
-
-- An openstatus account
-- Command line experience
-- API token from your openstatus workspace (Settings → API)
-
-### What you'll build
-
-By the end of this tutorial, you'll have:
-- openstatus CLI installed on your system
-- Monitors exported to a YAML configuration file
-- Understanding of monitoring as code workflows
-- Ability to manage monitors programmatically
+By the end you'll have the openstatus CLI installed on your system, your monitors exported to a YAML configuration file, and a working sense of the monitoring-as-code workflow.
 
 <Image
   src="/docs/tutorial/get-started-with-openstatus-cli/CLI.png"
@@ -126,11 +112,10 @@ The CLI will show you a diff of changes before applying them, ensuring you're aw
 
 ## What you've accomplished
 
-Excellent work! You've successfully:
-- ✅ Installed the openstatus CLI
-- ✅ Configured API authentication
-- ✅ Imported monitors to a YAML file
-- ✅ Learned the monitoring as code workflow
+- Installed the openstatus CLI
+- Configured API authentication
+- Imported monitors to a YAML file
+- Learned the monitoring-as-code workflow
 
 ## Troubleshooting
 
@@ -163,25 +148,13 @@ export PATH="$HOME/.local/bin:$PATH"
 
 **Fix:** Create at least one monitor in the dashboard first, then retry the import.
 
-## What's next?
+## What's next
 
-Now that you have the CLI set up, you can:
+- **[Monitor your MCP server](/docs/guides/how-to-monitor-mcp-server)** — example of CLI-based monitor configuration.
+- **[Run synthetic tests in GitHub Actions](/docs/guides/how-to-run-synthetic-test-github-action)** — automate monitoring in your pipeline.
 
-- **[Monitor Your MCP Server](/docs/guides/how-to-monitor-mcp-server)** - Example of CLI-based monitor configuration
-- **[CLI Reference](/docs/reference/cli-reference)** - Complete command documentation
-- **[Set up CI/CD](/docs/guides/how-to-run-synthetic-test-github-action)** - Automate monitoring in your pipeline
+### Learn more
 
-### Advanced workflows
-
-With the CLI, you can:
-- Version control your monitoring configuration with Git
-- Review monitoring changes in pull requests
-- Automate monitor creation for new services
-- Sync monitors across multiple environments
-- Implement GitOps for infrastructure monitoring
-
-## Learn more
-
-- **[Monitoring as Code Concept](/docs/concept/uptime-monitoring-as-code)** - Why manage monitors as code
-- **[CLI Reference](/docs/reference/cli-reference)** - All available commands
-- **[YAML Configuration Examples](https://github.com/openstatusHQ/cli-template)** - Sample configurations
+- **[Monitoring-as-code concept](/docs/concept/uptime-monitoring-as-code)** — why manage monitors as code.
+- **[CLI reference](/docs/reference/cli-reference)** — all available commands.
+- **[YAML configuration examples](https://github.com/openstatusHQ/cli-template)** — sample configurations.

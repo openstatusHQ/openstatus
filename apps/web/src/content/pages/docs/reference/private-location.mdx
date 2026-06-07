@@ -4,51 +4,51 @@ title: Private Location Reference
 description: Technical specification for configuring and utilizing private monitoring locations.
 ---
 
-## Overview
-
-A private location in openstatus enables users to deploy monitoring probes within their own infrastructure or private networks. This capability is essential for monitoring internal services, APIs, or systems that are not publicly accessible from the internet, such as those behind firewalls or within a Virtual Private Cloud (VPC).
+A private location in openstatus lets you deploy monitoring probes within your own infrastructure or private networks. This is essential for monitoring internal services, APIs, or systems that are not publicly accessible from the internet, such as those behind firewalls or within a Virtual Private Cloud (VPC).
 
 **Key benefits:**
--   **Internal Monitoring:** Monitor services running on private networks.
--   **Security:** Keep sensitive internal endpoints protected from public exposure.
--   **Compliance:** Meet specific regulatory or security compliance requirements by controlling data paths.
--   **Reduced Latency:** Conduct checks closer to your services for more accurate performance metrics.
 
-## How it Works
+- **Internal monitoring** — monitor services running on private networks.
+- **Security** — keep sensitive internal endpoints protected from public exposure.
+- **Compliance** — meet specific regulatory or security compliance requirements by controlling data paths.
+- **Reduced latency** — conduct checks closer to your services for more accurate performance metrics.
 
-When a private location is configured, openstatus provides a mechanism (e.g., a container image or agent) that you deploy within your private environment. This deployed component acts as a local monitoring probe, executing checks on behalf of your openstatus account.
+## How it works
 
-1.  **Deployment:** You deploy the openstatus private probe within your chosen infrastructure (e.g., a Docker container on a server, a Kubernetes pod).
-2.  **Secure Connection:** The private probe establishes a secure, outbound-only connection to the openstatus platform, eliminating the need for inbound firewall rules.
-3.  **Check Execution:** openstatus dispatches monitoring tasks to your private probe via this secure connection. The probe then executes the configured checks against your internal services.
-4.  **Result Reporting:** The private probe securely sends the monitoring results (e.g., status, latency, response data) back to the openstatus platform for processing, alerting, and visualization.
+When a private location is configured, openstatus provides a container image you deploy within your private environment. This deployed component acts as a local monitoring probe, executing checks on behalf of your openstatus account.
+
+1. **Deployment** — you deploy the openstatus private probe within your chosen infrastructure (e.g., a Docker container on a server, a Kubernetes pod).
+2. **Secure connection** — the private probe establishes a secure, outbound-only connection to the openstatus platform, eliminating the need for inbound firewall rules.
+3. **Check execution** — openstatus dispatches monitoring tasks to your private probe via this secure connection. The probe then executes the configured checks against your internal services.
+4. **Result reporting** — the private probe securely sends the monitoring results (e.g., status, latency, response data) back to the openstatus platform for processing, alerting, and visualisation.
 
 ## Configuration
 
 Detailed steps for setting up a private location involve:
 
-1.  **Probe Deployment:** Provisioning a server or container environment within your private network.
-2.  **Agent Installation:** Deploying the openstatus private probe agent (e.g., Docker image) onto your infrastructure.
-3.  **Authentication:** Configuring the probe with necessary API keys or tokens to securely authenticate with your openstatus workspace.
-4.  **Network Access:** Ensuring the deployed probe has network access to the internal services it needs to monitor, as well as outbound access to the openstatus platform.
+1. **Probe deployment** — provisioning a server or container environment within your private network.
+2. **Agent installation** — deploying the openstatus private probe agent (e.g., Docker image) onto your infrastructure.
+3. **Authentication** — configuring the probe with necessary API keys or tokens to securely authenticate with your openstatus workspace.
+4. **Network access** — ensuring the deployed probe has network access to the internal services it needs to monitor, as well as outbound access to the openstatus platform.
 
 ## Current API surface
 
 Private locations can currently be created, listed, updated, and deleted from the authenticated dashboard API. The supported private location fields are:
 
-- `name`: the display name shown in the dashboard.
-- `token`: the probe authentication token.
-- `monitors`: the monitor IDs attached to the private location.
-- `lastSeenAt`: the last time the private location probe connected.
+- `name` — the display name shown in the dashboard.
+- `token` — the probe authentication token.
+- `monitors` — the monitor IDs attached to the private location.
+- `lastSeenAt` — the last time the private location probe connected.
 
 Additional display metadata such as country, city, or hosting provider is not currently part of the private location model. If you need that information today, include it in the location name, for example `Frankfurt - Hetzner`.
 
-**Example Use Cases:**
--   Monitoring an internal REST API that is only accessible from within your corporate network.
--   Checking the health of a database server running on a private subnet.
--   Performing synthetic transactions on an internal web application before it's exposed publicly.
+**Example use cases:**
+
+- Monitoring an internal REST API that is only accessible from within your corporate network.
+- Checking the health of a database server running on a private subnet.
+- Performing synthetic transactions on an internal web application before it's exposed publicly.
 
 ## Related resources
 
-- **[How to Deploy Probes on Cloudflare Containers](/docs/guides/how-to-deploy-probes-cloudflare-containers)** - A guide for deploying private probes using Cloudflare Workers/Containers. (Example deployment guide)
-- **[CLI Reference](/docs/reference/cli-reference)** - Manage monitors as code, including those utilizing private locations.
+- **[How to deploy probes on Cloudflare Containers](/docs/guides/how-to-deploy-probes-cloudflare-containers)** — a guide for deploying private probes using Cloudflare Workers and Containers.
+- **[CLI reference](/docs/reference/cli-reference)** — manage monitors as code, including those using private locations.

@@ -25,15 +25,11 @@ Instead of clicking buttons, you declare monitors, status pages, and notificatio
 
 This approach offers significant advantages:
 
-- **Version Control:** Every change to a monitor lives in Git. You can see who modified what, review diffs, and roll back to a known-good state. Crucial for auditing and troubleshooting.
-
-- **Automation and Consistency:** Your monitoring setup becomes part of your deployment pipeline. When you ship a new service, its monitors, alerts, and status page components are provisioned automatically alongside it — no risk of forgetting to wire one up.
-
-- **Collaboration:** A code-based workflow makes peer review natural. A developer opens a pull request that adds a monitor, the team reviews it like any other change, and `terraform plan` shows exactly what will happen before it does.
-
-- **Scalability:** Managing hundreds of monitors through a UI is impractical. With Terraform, you can use modules, `for_each`, and variables to generate configurations programmatically as your infrastructure grows.
-
-- **Simplified Auditing:** The current state of every monitor, page, and notification is captured in your `.tf` files. One `terraform plan` shows you any drift between what's declared and what's live.
+- **Version control** — every change to a monitor lives in Git. You can see who modified what, review diffs, and roll back to a known-good state. Crucial for auditing and troubleshooting.
+- **Automation and consistency** — your monitoring setup becomes part of your deployment pipeline. When you ship a new service, its monitors, alerts, and status page components are provisioned automatically alongside it — no risk of forgetting to wire one up.
+- **Collaboration** — a code-based workflow makes peer review natural. A developer opens a pull request that adds a monitor, the team reviews it like any other change, and `terraform plan` shows exactly what will happen before it does.
+- **Scalability** — managing hundreds of monitors through a UI is impractical. With Terraform, you can use modules, `for_each`, and variables to generate configurations programmatically as your infrastructure grows.
+- **Simplified auditing** — the current state of every monitor, page, and notification is captured in your `.tf` files. One `terraform plan` shows you any drift between what's declared and what's live.
 
 ## How it works with openstatus
 
@@ -110,16 +106,14 @@ From there, import the resources into Terraform state and you're managing the ex
 
 ## Best practices
 
-1. **Start simple**: Begin with a few monitors, expand as you learn
-2. **Use modules**: Wrap common monitor patterns in reusable Terraform modules
-3. **Sensitive variables**: Mark API tokens and webhook URLs as `sensitive` and pass them via `TF_VAR_*` env vars or a secrets manager
-4. **Review changes**: Always run `terraform plan` and review the diff before applying
-5. **Document decisions**: Use commit messages to explain "why"
+1. **Start simple** — begin with a few monitors, expand as you learn.
+2. **Use modules** — wrap common monitor patterns in reusable Terraform modules.
+3. **Sensitive variables** — mark API tokens and webhook URLs as `sensitive` and pass them via `TF_VAR_*` env vars or a secrets manager.
+4. **Review changes** — always run `terraform plan` and review the diff before applying.
+5. **Document decisions** — use commit messages to explain "why".
 
 ## Next steps
 
-Ready to implement monitoring as code?
-
-- **[Manage openstatus with Terraform](/docs/tutorial/how-to-manage-openstatus-with-terraform-cli)** - End-to-end tutorial
-- **[Terraform Provider Reference](/docs/reference/terraform)** - Full resource specification
-- **[Monitor Your MCP Server](/docs/guides/how-to-monitor-mcp-server)** - Real-world example
+- **[Manage openstatus with Terraform](/docs/guides/how-to-manage-openstatus-with-terraform-cli)** — end-to-end guide.
+- **[Terraform provider reference](/docs/reference/terraform)** — full resource specification.
+- **[Monitor your MCP server](/docs/guides/how-to-monitor-mcp-server)** — real-world example.

@@ -4,31 +4,15 @@ title: Publish Your First Status Report
 description: "Open, update, and resolve a status report from the openstatus dashboard — the four-state workflow your users will see during an incident."
 ---
 
-## What you'll learn
-
 | | |
 |---|---|
 | **Time** | ~10 minutes |
 | **Level** | Beginner |
-| **Prerequisites** | openstatus account, one status page |
+| **Prerequisites** | openstatus account, a status page with at least one component (see [Create a status page](/docs/tutorial/create-your-first-status-page)) |
 
 In this tutorial, you'll publish a status report end-to-end: open it, post two updates as your investigation progresses, and resolve it. A status report is what your users actually read during an incident — the trace of "we noticed, we found it, we fixed it, we're done." Doing one in calm conditions, before you need it under pressure, is the cheapest way to learn the workflow.
 
 Status reports follow a four-state lifecycle: **investigating → identified → monitoring → resolved**. You'll walk through all four states in one short exercise.
-
-### Prerequisites
-
-- An openstatus account ([openstatus.dev](https://www.openstatus.dev))
-- A status page with at least one component (see [Create a Status Page](/docs/tutorial/how-to-create-status-page))
-- A few minutes — the tutorial walks all four states in a single sitting
-
-### What you'll build
-
-By the end of this tutorial, you'll have:
-
-- An incident report visible on your status page, then archived as resolved
-- A working mental model of the four states and when to use each
-- Practical experience with the update cadence — what to write, when to ship it
 
 <Aside>
 The dashboard isn't the only way to manage status reports. The [openstatus CLI](/docs/reference/cli-reference#status-report-command) drives the same workflow from a terminal — handy during a real outage when you don't want to context-switch. This tutorial sticks to the dashboard because the goal is to learn the lifecycle, not the tooling.
@@ -88,14 +72,14 @@ Save. The report is now archived. On the status page it moves out of the active 
 - Practiced the kind of language each state calls for — neutral, specific, time-bounded
 - Built the muscle memory you actually want before a real incident, not during one
 
-## What's next?
+## What's next
 
-- **[Set up the Slack agent](/docs/tutorial/how-to-setup-slack-agent)** — create and update status reports by talking to the openstatus bot from Slack.
+- **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)** — create and update status reports by talking to the openstatus bot from Slack.
 - **[Wire up your first notification](/docs/tutorial/your-first-notification)** — make sure you find out about an incident before your users do.
 
 ### Learn more
 
-- **[Status Report Reference](/docs/reference/status-report)** — every field on a status report and what the four states mean precisely.
-- **[Incident Reference](/docs/reference/incident)** — how openstatus auto-detects incidents from monitor failures (the trigger side of the same workflow).
-- **[Building Trust with Status Pages](/docs/concept/best-practices-status-page)** — the *why* behind the four-state cadence.
-- **[CLI Reference — status-report](/docs/reference/cli-reference#status-report-command)** — the same workflow from a terminal.
+- **[Status report reference](/docs/reference/status-report)** — every field on a status report and what the four states mean precisely.
+- **[Incident reference](/docs/reference/incident)** — how openstatus auto-detects incidents from monitor failures (the trigger side of the same workflow).
+- **[Building trust with status pages](/docs/concept/best-practices-status-page)** — the *why* behind the four-state cadence.
+- **[CLI reference — status-report](/docs/reference/cli-reference#status-report-command)** — the same workflow from a terminal.

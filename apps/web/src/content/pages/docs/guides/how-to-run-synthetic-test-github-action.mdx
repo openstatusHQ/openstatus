@@ -35,11 +35,12 @@ tests:
 ```
 
 **Finding monitor IDs:**
-1. Go to your openstatus dashboard
-2. Click on a monitor
-3. The ID is in the URL: `https://www.openstatus.dev/app/[workspace]/monitors/[ID]`
 
-**Tip:** Start with your most critical monitors and expand from there.
+1. Go to your openstatus dashboard.
+2. Click on a monitor.
+3. The ID is in the URL: `https://www.openstatus.dev/app/[workspace]/monitors/[ID]`.
+
+**Tip:** start with your most critical monitors and expand from there.
 
 ### 2. Get your openstatus API key
 
@@ -98,13 +99,12 @@ The GitHub Action will run automatically on the next push to `main`.
 
 ## What you've accomplished
 
-Great work! You've successfully:
-- ✅ Integrated openstatus into your CI/CD pipeline
-- ✅ Automated synthetic testing on every deployment
-- ✅ Added a safety check before production releases
-- ✅ Set up continuous validation of critical endpoints
+- Integrated openstatus into your CI/CD pipeline
+- Automated synthetic testing on every deployment
+- Added a safety check before production releases
+- Set up continuous validation of critical endpoints
 
-## Customization options
+## Customisation options
 
 ### Run on different branches
 
@@ -142,35 +142,34 @@ on:
 
 ## Best practices
 
-1. **Start small**: Begin with 2-3 critical monitors
-2. **Fail fast**: Run synthetic tests early in your pipeline
-3. **Monitor the monitors**: Track your synthetic test success rate
-4. **Environment-specific**: Use different monitors for staging vs production
-5. **Document failures**: Investigate and document any CI failures
+1. **Start small** — begin with 2–3 critical monitors.
+2. **Fail fast** — run synthetic tests early in your pipeline.
+3. **Monitor the monitors** — track your synthetic test success rate.
+4. **Environment-specific** — use different monitors for staging vs production.
+5. **Document failures** — investigate and document any CI failures.
 
 ## Troubleshooting
 
 **Action fails with authentication error:**
-- Verify `OPENSTATUS_API_KEY` secret is set correctly
-- Check that your API key hasn't expired
+
+- Verify `OPENSTATUS_API_KEY` secret is set correctly.
+- Check that your API key hasn't been revoked.
 
 **Monitors not found:**
-- Confirm monitor IDs are correct in `openstatus.config.yaml`
-- Ensure monitors are active in your openstatus dashboard
+
+- Confirm monitor IDs are correct in `openstatus.config.yaml`.
+- Ensure monitors are active in your openstatus dashboard.
 
 **Tests timing out:**
-- Check that your endpoints are accessible from GitHub's runners
-- Consider increasing timeouts in monitor configuration
 
-## Next steps
+- Check that your endpoints are accessible from GitHub's runners.
+- Consider increasing timeouts in monitor configuration.
 
-- **[Monitor Your MCP Server](/docs/guides/how-to-monitor-mcp-server)** - Advanced monitoring examples
-- **[Monitoring as Code](/docs/concept/uptime-monitoring-as-code)** - Manage monitors with YAML
-- **[CLI Reference](/docs/reference/cli-reference)** - Automate monitor management
-- **[Export Metrics](/docs/guides/how-to-export-metrics-to-otlp-endpoint)** - Send data to your observability platform
+## What's next
 
-## Related resources
-
-- **[GitHub Action on Marketplace](https://github.com/marketplace/actions/openstatus-synthetics-ci)** - Official action
-- **[Example Repository](https://github.com/openstatusHQ/github-action-example)** - Working examples
-- **[Join Discord](https://www.openstatus.dev/discord)** - Get help from the community
+- **[Monitor your MCP server](/docs/guides/how-to-monitor-mcp-server)** — advanced monitoring examples.
+- **[Monitoring as code](/docs/concept/uptime-monitoring-as-code)** — manage monitors with YAML.
+- **[CLI reference](/docs/reference/cli-reference)** — automate monitor management.
+- **[Export metrics](/docs/guides/how-to-export-metrics-to-otlp-endpoint)** — send data to your observability platform.
+- **[GitHub Action on Marketplace](https://github.com/marketplace/actions/openstatus-synthetics-ci)** — official action.
+- **[Example repository](https://github.com/openstatusHQ/github-action-example)** — working examples.

@@ -4,15 +4,14 @@ title: Terraform Provider Reference
 description: Technical specification for the openstatus Terraform Provider.
 ---
 
-## Overview
-
-The openstatus Terraform provider enables you to manage your monitoring infrastructure programmatically using HashiCorp Terraform. Define monitors, notification channels, and status pages as code — with full support for version control, automated deployments, and IaC workflows.
+The openstatus Terraform provider lets you manage your monitoring infrastructure programmatically using HashiCorp Terraform. Define monitors, notification channels, and status pages as code — with full support for version control, automated deployments, and IaC workflows.
 
 **Key capabilities:**
-- Manage HTTP, TCP, and DNS monitors with assertions
-- Configure notification channels (Slack, PagerDuty, email, webhooks, and more)
-- Create and manage status pages with component groups
-- Import existing resources into Terraform state
+
+- Manage HTTP, TCP, and DNS monitors with assertions.
+- Configure notification channels (Slack, PagerDuty, email, webhooks, and more).
+- Create and manage status pages with component groups.
+- Import existing resources into Terraform state.
 
 ## Installation
 
@@ -31,7 +30,7 @@ terraform {
 
 For the latest version, refer to the [Terraform Registry](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest).
 
-## Provider Configuration
+## Provider configuration
 
 ```terraform
 provider "openstatus" {

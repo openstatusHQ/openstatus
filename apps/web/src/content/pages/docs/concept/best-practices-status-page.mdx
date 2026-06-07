@@ -7,16 +7,16 @@ description: "Understanding how to communicate effectively during incidents and 
 
 ```
 +------------------------------------------------+
-|               openstatus Status Page           |
+|               openstatus status page           |
 +------------------------------------------------+
-| Service Name      | Status | Uptime            |
-+-------------------+--------+-------------------+
-| Web Server        | ✅ OK       | 99.9%        |
-| Database          | ✅ OK       | 99.8%        |
-| API Gateway       | ⚠️ Degraded | 99.5%        |
-| Monitoring        | ✅ OK       | 100%         |
-| Payment Processing| ✅ OK       | 99.7%        |
-+-------------------+--------+-------------------+
+| Service name      | Status     | Uptime        |
++-------------------+------------+---------------+
+| Web Server        | OK         | 99.9%         |
+| Database          | OK         | 99.8%         |
+| API Gateway       | Degraded   | 99.5%         |
+| Monitoring        | OK         | 100%          |
+| Payment Processing| OK         | 99.7%         |
++-------------------+------------+---------------+
 | Incidents:                                     |
 |                                                |
 |   - Degraded performance on API Gateway due    |
@@ -36,94 +36,84 @@ When done right, a status page:
 
 This article explores the principles that make a status page an effective tool for building trust.
 
-## Principles of Effective Status Pages
+## Principles of effective status pages
 
-### Maintain Transparency and Honesty
+### Maintain transparency and honesty
 
 A status page's effectiveness hinges on being a reliable source of truth. Be upfront about issues, even minor ones. Hiding problems erodes user trust and can lead to frustration and a higher support load.
 
-- **Communicate Clearly:** Use simple, non-technical language. Your users shouldn't need a technical dictionary to understand the impact of an issue.
+- **Communicate clearly** — use simple, non-technical language. Your users shouldn't need a technical dictionary to understand the impact of an issue.
+- **Be timely** — update the page as soon as an incident is confirmed. Provide regular, predictable updates throughout the resolution process, even if the only update is "we're still working on it."
 
-- **Be Timely:** Update the page as soon as an incident is confirmed. Provide regular, predictable updates throughout the resolution process, even if the only update is "we're still working on it."
-
-### Automate Where Possible
+### Automate where possible
 
 Manual updates during a high-stress outage are prone to error and can be slow. Automation ensures that your status page reflects reality quickly and accurately.
 
-- **Integrate Monitoring Tools:** Your status page should be directly connected to your internal monitoring and alerting systems. When a metric crosses a threshold (e.g., a high error rate), the status page can be updated automatically to reflect a degraded state.
+- **Integrate monitoring tools** — your status page should be directly connected to your internal monitoring and alerting systems. When a metric crosses a threshold (e.g., a high error rate), the status page can be updated automatically to reflect a degraded state.
+- **Use an API** — we provide APIs that let you programmatically update component statuses and post new incidents, integrating your status page into your incident response workflows.
 
-- **Use an API:** We provide APIs that allow you to programmatically update component statuses and post new incidents, integrating your status page into your incident response workflows.
-
-
-### Provide Context-Rich Incident Communication
+### Provide context-rich incident communication
 
 When an incident occurs, a structured narrative helps users understand the situation.
 
-- **Start with the Impact:** Clearly and concisely state what the problem is from the user's perspective. For example, "Users are currently unable to log in."
-
-- **Explain the Cause (When Known):** Briefly explain the root cause if you've identified it. Transparency here is key.
-
-- **Outline Next Steps and ETA:** Explain what is being done to resolve the issue and provide an estimated time to resolution if possible. It's better to give a conservative estimate or no estimate than to give one you can't meet.
+- **Start with the impact** — clearly and concisely state what the problem is from the user's perspective. For example, "Users are currently unable to log in."
+- **Explain the cause (when known)** — briefly explain the root cause if you've identified it. Transparency here is key.
+- **Outline next steps and ETA** — explain what is being done to resolve the issue and provide an estimated time to resolution if possible. It's better to give a conservative estimate or no estimate than to give one you can't meet.
 
 A typical incident communication lifecycle looks like this:
 
-- **Investigating:** "We're currently investigating an issue affecting user logins."
+- **Investigating** — "We're currently investigating an issue affecting user logins."
+- **Identified** — "We've identified the root cause as a database connection issue and are working on a fix."
+- **Monitoring** — "A fix has been deployed, and we're monitoring the system to ensure stability."
+- **Resolved** — "The issue has been resolved. We will publish a post-mortem within 48 hours."
 
-- **Identified:** "We've identified the root cause as a database connection issue and are working on a fix."
-
-- **Monitoring:** "A fix has been deployed, and we're monitoring the system to ensure stability."
-
-- **Resolved:** "The issue has been resolved. We will publish a post-mortem within 48 hours."
-
-
-### Ensure Easy Accessibility
+### Ensure easy accessibility
 
 Your status page is useless if no one can find it.
 
-- **Prominent Link:** Link to your status page from your application's footer, your main website, and your support documentation.
+- **Prominent link** — link to your status page from your application's footer, your main website, and your support documentation.
+- **Custom domain** — use a simple, memorable URL like `status.yourcompany.com`.
 
-- **Custom Domain:** Use a simple, memorable URL like `status.yourcompany.com`.
+## Advanced considerations for deeper trust
 
-## Advanced Considerations for Deeper Trust
-
-### Scheduled Maintenance
+### Scheduled maintenance
 
 Communicating planned downtime is just as important as communicating unexpected incidents.
+
 - Announce maintenance well in advance (e.g., at least 72 hours).
 - Display upcoming maintenance windows clearly on the status page.
 - Send reminders to subscribers before maintenance begins.
 
-### Historical Data and Post-Mortems
+### Historical data and post-mortems
 
 Demonstrate your commitment to reliability by being open about your track record.
+
 - Display historical uptime percentages (e.g., over the last 30/60/90 days).
 - Link to past incidents and their post-mortems. Being honest about past failures and what you've learned from them is a powerful trust-builder.
 
-### Subscriber Notifications
+### Subscriber notifications
 
 Allow users to opt-in to the level of communication they want.
+
 - Email notifications for new incidents and resolutions.
 - SMS for critical alerts (if applicable).
 - RSS/Atom feeds for users who want to integrate your status into their own monitoring.
 
-## Common Pitfalls to Avoid
+## Common pitfalls to avoid
 
-1. **Claiming unrealistic uptime**: Don't claim 100% uptime unless you can back it up. Honesty is better than perfection.
-2. **Hiding or downplaying incidents**: Users will find out anyway. It's better they hear it from you.
-3. **Using technical jargon**: Write for a broad audience, not just other engineers.
-4. **Leaving users in the dark**: During an incident, regular updates are crucial, even if there's no new information. A simple "still investigating" is better than silence.
-5. **Hosting your status page on the same infrastructure**: Your status page must be available even when your main service is down.
+1. **Claiming unrealistic uptime** — don't claim 100% uptime unless you can back it up. Honesty is better than perfection.
+2. **Hiding or downplaying incidents** — users will find out anyway. It's better they hear it from you.
+3. **Using technical jargon** — write for a broad audience, not just other engineers.
+4. **Leaving users in the dark** — during an incident, regular updates are crucial, even if there's no new information. A simple "still investigating" is better than silence.
+5. **Hosting your status page on the same infrastructure** — your status page must be available even when your main service is down.
 
 ## Implementing with openstatus
 
-openstatus is designed to make implementing these principles straightforward:
-
-- **[Create a status page](/docs/tutorial/create-your-first-status-page)** - Get set up in minutes.
-- **[Configure your page](/docs/guides/how-to-configure-status-page)** - Customize its appearance to match your brand.
-- **[Understand uptime calculations](/docs/concept/uptime-calculation-and-values)** - Be transparent about how you measure uptime.
+- **[Create a status page](/docs/tutorial/create-your-first-status-page)** — get set up in minutes.
+- **[Configure your page](/docs/guides/how-to-configure-status-page)** — customise its appearance to match your brand.
+- **[Understand uptime calculations](/docs/concept/uptime-calculation-and-values)** — be transparent about how you measure uptime.
 
 ## Next steps
 
-
-- **[Understanding uptime monitoring](/docs/concept/uptime-monitoring)** - Learn more about monitoring what you communicate.
-- **[Status page reference](/docs/reference/status-page)** - Dive into technical configuration options.
+- **[Understanding uptime monitoring](/docs/concept/uptime-monitoring)** — learn more about monitoring what you communicate.
+- **[Status page reference](/docs/reference/status-page)** — dive into technical configuration options.

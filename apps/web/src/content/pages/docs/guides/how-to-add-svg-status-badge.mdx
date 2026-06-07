@@ -19,20 +19,20 @@ openstatus provides embeddable status badges that you can add to any Markdown fi
 
 ## Step-by-step guide
 
-### Step 1: Choose your badge type
+### Step 1: choose your badge type
 
-We recommend using the modern SVG badge (v2) as it offers more customization options.
+We recommend using the modern SVG badge (v2) as it offers more customisation options.
 
--   **SVG Badge (v2)**: More flexible, better styling, and uses a monospaced font.
--   **PNG Badge (Legacy)**: Simpler, but with fewer customization options.
+- **SVG badge (v2)** — more flexible, better styling, and uses a monospaced font.
+- **PNG badge (legacy)** — simpler, but with fewer customisation options.
 
-### Step 2: Add the badge to your README
+### Step 2: add the badge to your README
 
 Copy the Markdown snippet for your chosen badge type and paste it into your `README.md` file. **Remember to replace `[slug]` with your status page slug.**
 
 ---
 
-#### Option A: Modern SVG Badge (Recommended)
+#### Option A: modern SVG badge (recommended)
 
 This is the recommended badge for most use cases.
 
@@ -42,7 +42,7 @@ This is the recommended badge for most use cases.
 https://[slug].openstatus.dev/badge/v2
 ```
 
-##### Markdown Snippet
+##### Markdown snippet
 
 ```
 ![Status](https://[slug].openstatus.dev/badge/v2)
@@ -52,13 +52,13 @@ https://[slug].openstatus.dev/badge/v2
 
 ![Status](https://status.openstatus.dev/badge/v2)
 
-##### Customization
+##### Customisation
 
-You can customize the badge by adding query parameters to the URL.
+You can customise the badge by adding query parameters to the URL.
 
--   **Theme**: `?theme=dark` (default is `light`)
--   **Size**: `?size=md` (options: `sm`, `md`, `lg`, `xl`; default is `sm`)
--   **Variant**: `?variant=outline` (adds a border; default has no border)
+- **Theme** — `?theme=dark` (default is `light`).
+- **Size** — `?size=md` (options: `sm`, `md`, `lg`, `xl`; default is `sm`).
+- **Variant** — `?variant=outline` (adds a border; default has no border).
 
 **Example with all options:**
 
@@ -68,7 +68,7 @@ You can customize the badge by adding query parameters to the URL.
 
 ---
 
-#### Option B: Legacy PNG Badge
+#### Option B: legacy PNG badge
 
 Use this badge if you prefer the older style.
 
@@ -78,7 +78,7 @@ Use this badge if you prefer the older style.
 https://[slug].openstatus.dev/badge
 ```
 
-##### Markdown Snippet
+##### Markdown snippet
 
 ```markdown
 ![Status](https://[slug].openstatus.dev/badge)
@@ -88,10 +88,10 @@ https://[slug].openstatus.dev/badge
 
 ![Status](https://status.openstatus.dev/badge)
 
-##### Customization
+##### Customisation
 
--   **Theme**: `?theme=dark` (default is `light`)
--   **Size**: `?size=lg` (options: `sm`, `md`, `lg`, `xl`; default is `sm`)
+- **Theme** — `?theme=dark` (default is `light`).
+- **Size** — `?size=lg` (options: `sm`, `md`, `lg`, `xl`; default is `sm`).
 
 **Example with all options:**
 
@@ -99,6 +99,6 @@ https://[slug].openstatus.dev/badge
 ![Status](https://[slug].openstatus.dev/badge?theme=dark&size=lg)
 ```
 
-### Step 3: Commit your changes
+### Step 3: commit your changes
 
 Save your `README.md` file and commit it to your repository. The status badge will now be visible to anyone visiting your repository. It will automatically update to reflect the current status of your services.

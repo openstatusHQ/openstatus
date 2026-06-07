@@ -4,20 +4,19 @@ title: Status Page Reference
 description: Complete technical specification for openstatus status page configuration.
 ---
 
-## Overview
-
-A status page is a dedicated web interface provided by openstatus that publicly displays the operational status of your services and systems. It serves as a transparent communication tool during incidents and for showcasing overall service health.
+A status page is a dedicated web interface that publicly displays the operational status of your services and systems. It serves as a transparent communication tool during incidents and for showcasing overall service health.
 
 **Key features:**
--   Real-time service status updates.
--   Incident communication and history.
--   Customizable branding and domain.
--   Multiple access control options.
--   Multi-language support with a locale switcher.
+
+- Real-time service status updates.
+- Incident communication and history.
+- Customisable branding and domain.
+- Multiple access control options.
+- Multi-language support with a locale switcher.
 
 ## Configuration
 
-openstatus provides several configuration options to customize your status page's appearance, accessibility, and functionality.
+openstatus provides several configuration options to customise your status page's appearance, accessibility, and functionality.
 
 ### Slug
 
@@ -26,39 +25,39 @@ openstatus provides several configuration options to customize your status page'
 
 A unique identifier that forms part of your status page's default URL. For example, a slug of `status` will result in a URL like `https://status.openstatus.dev`.
 
-### Custom Domain
+### Custom domain
 
 **Type:** String (optional)
 **Format:** Valid domain name (e.g., `status.example.com`)
 
-Allows you to host your status page on a custom domain. Once configured, your status page will be accessible at `https://your-custom-domain.com`.
+Lets you host your status page on a custom domain. Once configured, your status page will be accessible at `https://your-custom-domain.com`.
 
-**DNS Configuration:**
+**DNS configuration:**
 
 | Domain type | Record | Name | Value | TTL |
 |---|---|---|---|---|
 | Subdomain (e.g., `status.example.com`) | CNAME | `status` | `cname.vercel-dns.com` | 86400 |
 | Apex domain (e.g., `example.com`) | A | `@` | `76.76.21.21` | 86400 |
 
-**Domain verification (conditional):** If your domain is already registered on another Vercel project, a TXT record will be required to prove ownership. The dashboard will display the exact TXT record name and value when this step is needed.
+**Domain verification (conditional):** if your domain is already registered on another Vercel project, a TXT record will be required to prove ownership. The dashboard will display the exact TXT record name and value when this step is needed.
 
 After saving your custom domain in the dashboard, the exact DNS records will be displayed with any additional verification steps needed.
 
-### Password (Basic Auth)
+### Password (basic auth)
 
 **Type:** String (optional)
 
 Enables basic password protection for your status page. If a password is set, users will be redirected to a login page (`/login`) to gain access. The password is stored in a cookie upon successful authentication.
 
-**Sharing with password:** You can provide direct access by appending the password as a URL search parameter: `https://[slug].openstatus.dev/?pw=your-secret-password`. This method is also useful for authenticating private RSS feeds.
+**Sharing with password:** you can provide direct access by appending the password as a URL search parameter: `https://[slug].openstatus.dev/?pw=your-secret-password`. This method is also useful for authenticating private RSS feeds.
 
-### Magic Link (Session Auth)
+### Magic link (session auth)
 
 **Type:** Boolean (add-on feature)
 
 Restricts access to your status page to users with approved email domains. Users receive a magic link via email, which, upon clicking, authenticates them via a session token. This feature is typically available as a paid add-on for specific plans.
 
-### IP Restriction (Network Auth)
+### IP restriction (network auth)
 
 **Type:** String (add-on feature)
 
@@ -67,12 +66,12 @@ Restricts access to your status page based on client IPv4 addresses. You provide
 Visitors from outside the allowed ranges are redirected to a static "Access Restricted" page — there is no login flow since IP-based access cannot be changed by the user.
 
 **Configuration:**
-- Set `access_type` to `ip-restriction` in the dashboard or API.
-- Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically
-                      append /32 to single IPs).
-- IPv6 is not supported
 
-**Note:** This feature is available as a paid add-on for Starter and Pro plans.
+- Set `access_type` to `ip-restriction` in the dashboard or API.
+- Provide `allowed_ip_ranges` as a comma-separated list of IPv4 CIDR ranges (we automatically append `/32` to single IPs).
+- IPv6 is not supported.
+
+**Note:** this feature is available as a paid add-on for Starter and Pro plans.
 
 ### Favicon
 
@@ -80,7 +79,7 @@ Visitors from outside the allowed ranges are redirected to a static "Access Rest
 
 Allows you to upload a custom favicon that will appear in browser tabs and bookmarks for your status page. SVG files are sanitized server-side and must be under 100KB.
 
-### JSON Feed
+### JSON feed
 
 **Type:** Read-only endpoint
 **Format:** JSON
@@ -89,17 +88,17 @@ Provides a machine-readable JSON representation of your status page data. This f
 
 **Example:** `https://status.openstatus.dev/feed/json`
 
-**Deprecation Notice:**
+**Deprecation notice:**
 
 The following fields are deprecated and will be removed in a future version:
 
-- **`monitors`** (top-level): Use `pageComponents` instead, which provides a more flexible component-based structure that supports both monitors and external services.
-- **`maintenances[].monitors`**: Use `maintenances[].pageComponents` instead, which references page component IDs rather than monitor IDs.
-- **`statusReports[].monitors`**: Use `statusReports[].pageComponents` instead, which references page component IDs rather than monitor IDs.
+- **`monitors`** (top-level) — use `pageComponents` instead, which provides a more flexible component-based structure that supports both monitors and external services.
+- **`maintenances[].monitors`** — use `maintenances[].pageComponents` instead, which references page component IDs rather than monitor IDs.
+- **`statusReports[].monitors`** — use `statusReports[].pageComponents` instead, which references page component IDs rather than monitor IDs.
 
 These deprecated fields are currently maintained for backward compatibility but may be removed in future versions.
 
-### SSH Command
+### SSH command
 
 **Type:** Command-line utility
 
@@ -122,14 +121,15 @@ Enables multi-language support for your status page. You can set a default local
 **Supported locales:** `en` (English), `fr` (Français), `de` (Deutsch)
 
 **Configuration:**
-- **Default Locale** — the fallback language for your status page (defaults to `en`).
-- **Locale Switcher** — when enabled, visitors see a language dropdown. You select which locales to offer.
 
-**Routing:** The default locale is omitted from the URL (`as-needed` prefix). Non-default locales appear in the path (e.g., `/fr/events`).
+- **Default locale** — the fallback language for your status page (defaults to `en`).
+- **Locale switcher** — when enabled, visitors see a language dropdown. You select which locales to offer.
+
+**Routing:** the default locale is omitted from the URL (`as-needed` prefix). Non-default locales appear in the path (e.g., `/fr/events`).
 
 See [How to translate your status page](/docs/guides/how-to-translate-status-page) for setup instructions and contributing new translations.
 
-### White Label
+### White label
 
 **Type:** Boolean (add-on feature)
 
@@ -137,7 +137,7 @@ Removes the "powered by openstatus.dev" footer from your status page, providing 
 
 ## Related resources
 
-- **[Create Status Page](/docs/tutorial/create-your-first-status-page)** - Step-by-step tutorial on creating a status page.
-- **[How to Configure Status Page](/docs/guides/how-to-configure-status-page)** - Guide on advanced status page configuration.
-- **[Status Report Reference](/docs/reference/status-report)** - Details on how incident statuses are managed and reported.
-- **[How to Translate Your Status Page](/docs/guides/how-to-translate-status-page)** - Enable multiple languages and contribute translations.
+- **[Create a status page](/docs/tutorial/create-your-first-status-page)** — step-by-step tutorial on creating a status page.
+- **[How to configure a status page](/docs/guides/how-to-configure-status-page)** — advanced status page configuration.
+- **[Status report reference](/docs/reference/status-report)** — how incident statuses are managed and reported.
+- **[How to translate your status page](/docs/guides/how-to-translate-status-page)** — enable multiple languages and contribute translations.
