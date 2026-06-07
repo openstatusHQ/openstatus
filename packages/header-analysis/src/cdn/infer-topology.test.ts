@@ -27,6 +27,19 @@ describe("inferTopology", () => {
     expect(inferTopology(rows, null).topology).toBe("unknown");
   });
 
+  test("null-IP rows are not vantage points", () => {
+    const rows = [
+      { edgeIp: "1.2.3.4" },
+      { edgeIp: null },
+      { edgeIp: null },
+      { edgeIp: null },
+    ];
+    expect(inferTopology(rows, null)).toEqual({
+      topology: "unknown",
+      basis: null,
+    });
+  });
+
   test("no IPs, known-anycast provider -> provider heuristic", () => {
     const rows = [{ edgeIp: null }, { edgeIp: null }];
     expect(inferTopology(rows, "cloudflare")).toEqual({

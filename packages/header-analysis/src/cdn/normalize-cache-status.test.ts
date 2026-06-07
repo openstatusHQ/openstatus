@@ -98,6 +98,13 @@ describe("generic fallback", () => {
     expect(result.source).toBe("cache-control");
   });
 
+  test("mixed-case directives are matched (RFC 9111)", () => {
+    const result = normalizeCacheStatus({
+      "Cache-Control": "Private, No-Store",
+    });
+    expect(result.status).toBe("DYNAMIC");
+  });
+
   test("age 0 with cacheable cache-control -> UNKNOWN", () => {
     const result = normalizeCacheStatus({
       Age: "0",

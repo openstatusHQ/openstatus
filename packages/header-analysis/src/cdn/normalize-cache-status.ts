@@ -76,7 +76,9 @@ export function normalizeCacheStatus(
 
   if (cacheControl) {
     const directives = parseCacheControlHeader(cacheControl);
-    const has = (name: string) => directives.some((d) => d.name === name);
+    // directive names are case-insensitive per RFC 9111
+    const has = (name: string) =>
+      directives.some((d) => d.name.toLowerCase() === name);
     if (has("no-store") || has("private")) {
       return { status: "DYNAMIC", raw: cacheControl, source: "cache-control" };
     }

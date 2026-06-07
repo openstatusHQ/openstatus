@@ -44,7 +44,7 @@ export default function Page() {
         <MonitorCta />
       </CdnCheckerProvider>
       <p className="text-muted-foreground text-sm">
-        URLs are checked live and never stored.
+        Checks run live — results are not stored.
       </p>
       <CustomMDX source={page.content} />
     </section>
