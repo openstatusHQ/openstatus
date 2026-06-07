@@ -3,9 +3,9 @@ import { pruneStaleRawPayloads } from "@openstatus/services/external-service-inc
 import { Effect } from "effect";
 import type { Context } from "hono";
 
+import { db } from "@openstatus/db";
 // import { db } from "../lib/db";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
-import { db } from "@openstatus/db";
 
 const logger = getLogger(["workflow", "external-incidents-prune"]);
 
@@ -16,7 +16,9 @@ export async function runExternalIncidentsPruneTick(): Promise<{
 }
 
 export async function handleExternalIncidentsPruneCron(c: Context) {
-  const { cronCompleted, cronFailed } = runSentryCron("external-incidents-prune");
+  const { cronCompleted, cronFailed } = runSentryCron(
+    "external-incidents-prune",
+  );
 
   void Effect.runPromise(
     Effect.tryPromise({
@@ -28,9 +30,12 @@ export async function handleExternalIncidentsPruneCron(c: Context) {
     }).pipe(
       Effect.tap((res) =>
         Effect.sync(() => {
-          logger.info("external-incidents-prune tick complete: purged={purged}", {
-            purged: res.purged,
-          });
+          logger.info(
+            "external-incidents-prune tick complete: purged={purged}",
+            {
+              purged: res.purged,
+            },
+          );
           void cronCompleted();
         }),
       ),
