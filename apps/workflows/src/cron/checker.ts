@@ -3,15 +3,7 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { Effect, Either, Schedule } from "effect";
 import { z } from "zod";
 
-import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  notInArray,
-} from "@openstatus/db";
+import { and, db, eq, gte, inArray, isNotNull, lte, notInArray } from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
@@ -26,7 +18,7 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
-import { db } from "../lib/db";
+// import { db } from "../lib/db";
 
 import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
@@ -63,20 +55,14 @@ const client = new CloudTasksClient({
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
 ): Promise<{ success: number; failed: number }> {
-  const parent = client.queuePath(
-    env().GCP_PROJECT_ID,
-    env().GCP_LOCATION,
-    periodicity,
-  );
+  const parent = client.queuePath(env().GCP_PROJECT_ID, env().GCP_LOCATION, periodicity);
 
   const timestamp = Date.now();
 
   const currentMaintenance = db
     .select({ id: maintenance.id })
     .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
+    .where(and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())))
     .as("currentMaintenance");
 
   const currentMaintenanceMonitors = db
@@ -86,10 +72,7 @@ export async function sendCheckerTasks(
       currentMaintenance,
       eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
     )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
+    .innerJoin(pageComponent, eq(maintenancesToPageComponents.pageComponentId, pageComponent.id))
     .where(isNotNull(pageComponent.monitorId));
 
   const result = await db
@@ -129,10 +112,7 @@ export async function sendCheckerTasks(
     .where(inArray(monitorStatusTable.monitorId, monitorIds))
     .all();
 
-  const statusMap = new Map<
-    number,
-    z.infer<typeof selectMonitorStatusSchema>[]
-  >();
+  const statusMap = new Map<number, z.infer<typeof selectMonitorStatusSchema>[]>();
   for (const raw of rawStatuses) {
     const parsed = selectMonitorStatusSchema.safeParse(raw);
     if (!parsed.success) {
@@ -151,8 +131,7 @@ export async function sendCheckerTasks(
     const monitorStatuses = statusMap.get(row.id) ?? [];
 
     for (const region of row.regions) {
-      const status =
-        monitorStatuses.find((m) => region === m.region)?.status || "active";
+      const status = monitorStatuses.find((m) => region === m.region)?.status || "active";
 
       const r = regionDict[region as keyof typeof regionDict];
 
@@ -237,10 +216,7 @@ export async function sendCheckerTasks(
   return { success, failed };
 }
 // timestamp needs to be in ms
-const createCronTask = async (
-  { row, timestamp, status, region }: TaskInput,
-  parent: string,
-) => {
+const createCronTask = async ({ row, timestamp, status, region }: TaskInput, parent: string) => {
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
@@ -269,8 +245,7 @@ const createCronTask = async (
           }
         : undefined,
       retry: row.retry || 3,
-      followRedirects:
-        row.followRedirects === null ? true : row.followRedirects,
+      followRedirects: row.followRedirects === null ? true : row.followRedirects,
     };
   }
   if (row.jobType === "tcp") {
