@@ -74,6 +74,58 @@ The duration after which a DNS response is considered degraded. This indicates a
 
 The number of times the monitor will retry a failed DNS lookup before reporting a definitive failure. For example: `3`
 
+### Assertions
+
+Assertions let you validate the records returned by a DNS lookup. A check fails if any assertion does not match.
+
+**Limits:** up to 10 assertions per monitor.
+
+#### Record assertions
+
+Validate the values returned for a specific DNS record type.
+
+**Supported record types:** `A`, `AAAA`, `CNAME`, `MX`, `TXT`.
+
+> `NS` records can be looked up but cannot be asserted on.
+
+**Comparisons:**
+
+- `Equal` — the returned record value must exactly match the specified target.
+- `Not Equal` — the returned record value must not exactly match the specified target.
+- `Contains` — the returned record value must include the specified target string.
+- `Not Contains` — the returned record value must not include the specified target string.
+
+**Example use cases:**
+
+- Verify an `A` record resolves to your expected IP after a DNS change.
+- Confirm a `CNAME` still points at your CDN provider.
+- Check that an `MX` record contains the expected mail host.
+- Detect drift in `TXT` records (SPF, DKIM, DMARC, site verification).
+
+### OpenTelemetry
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
+#### OTLP endpoint
+
+**Type:** String (optional)
+**Protocol:** HTTP only
+
+The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported.
+
+**Example:** `https://otlp.example.com/v1/metrics`
+
+#### OTLP headers
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
+
 ## Related resources
 
 - **[CLI reference](/docs/reference/cli-reference)** — manage monitors as code using the openstatus CLI.

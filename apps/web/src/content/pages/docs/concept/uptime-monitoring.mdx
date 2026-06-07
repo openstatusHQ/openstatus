@@ -65,7 +65,7 @@ These terms appear throughout the docs. We use them with specific meanings:
 
 - **Monitor**: A configured endpoint and the rules for watching it (URL, frequency, regions, assertions). You create monitors; they persist until you delete them.
 - **Check**: A single execution of a monitor at a point in time — one request, one response, one row of data. A monitor produces many checks over its lifetime.
-- **Region**: A geographic location where openstatus runs checks from (e.g. `iad`, `fra`, `sin`). The terms *region*, *location*, and *probe* are used interchangeably in product UI and prose, but they refer to the same concept: where the request originates. See the [Location Reference](/docs/reference/location) for the full list.
+- **Region**: A geographic place where openstatus runs checks from (e.g. `iad`, `fra`, `sin`). Region is one layer in a stack with *probe* and *location*; see [Probes, Locations, and Regions](/docs/concept/probes-and-locations) for the distinction. The [Location Reference](/docs/reference/location) has the full list and the IPs to allowlist.
 - **Private location**: A region you operate yourself — typically a Docker container behind your firewall — so openstatus can check internal services it could not otherwise reach.
 
 ## Why uptime monitoring is crucial
