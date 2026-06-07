@@ -23,7 +23,11 @@ import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { isPaidPeriod, mapRegionMetrics } from "@/data/metrics.client";
+import {
+  FREE_MAX_PERIOD,
+  isPaidPeriod,
+  mapRegionMetrics,
+} from "@/data/metrics.client";
 import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
@@ -53,30 +57,34 @@ export function Client() {
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
+  const isBlockedPeriod = workspace?.plan === "free" && isPaidPeriod(period);
+  // snap free workspaces back synchronously so charts never fire (and the server
+  // never rejects) a paid-only window; the effect below fixes the URL.
+  const effectivePeriod = isBlockedPeriod ? FREE_MAX_PERIOD : period;
+
   useEffect(() => {
-    const isFree = workspace?.plan === "free";
-    if (!isFree || !isPaidPeriod(period)) return;
+    if (!isBlockedPeriod) return;
     const timeout = setTimeout(() => {
       toast.error("30 and 90 day windows require a paid plan", {
         description: "Showing the last 14 days instead.",
       });
-      setSearchParams({ period: "14d" });
+      setSearchParams({ period: FREE_MAX_PERIOD });
     }, 0);
     return () => clearTimeout(timeout);
-  }, [workspace?.plan, period, setSearchParams]);
+  }, [isBlockedPeriod, setSearchParams]);
 
   const selectedRegions = regions ?? undefined;
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate[effectivePeriod];
   const toDate = endOfDay(new Date());
 
   const regionTimelineQuery = {
     ...trpc.tinybird.metricsRegions.queryOptions({
       monitorId: id,
-      period: period,
+      period: effectivePeriod,
       type: (monitor?.jobType ?? "http") as "http" | "tcp",
       regions: selectedRegions,
       // bucket by period (daily at 30d/90d) to keep payload + chart readable
-      interval: periodToInterval[period],
+      interval: periodToInterval[effectivePeriod],
       fromDate: fromDate.toISOString(),
       toDate: toDate.toISOString(),
     }),
@@ -135,7 +143,7 @@ export function Client() {
         <GlobalUptimeSection
           monitorId={id}
           jobType={monitor.jobType as "http" | "tcp"}
-          period={period}
+          period={effectivePeriod}
           regions={selectedRegions}
         />
       </Section>
@@ -149,7 +157,7 @@ export function Client() {
         <ChartBarUptime
           monitorId={id}
           type={monitor.jobType as "http" | "tcp"}
-          period={period}
+          period={effectivePeriod}
           regions={selectedRegions}
         />
       </Section>
@@ -177,7 +185,7 @@ export function Client() {
             monitorId={id}
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http"}
-            period={period}
+            period={effectivePeriod}
             percentile={percentile}
             interval={interval}
             regions={selectedRegions}
@@ -188,7 +196,7 @@ export function Client() {
             percentile={percentile}
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http" | "tcp"}
-            period={period}
+            period={effectivePeriod}
             regions={selectedRegions}
           />
         )}

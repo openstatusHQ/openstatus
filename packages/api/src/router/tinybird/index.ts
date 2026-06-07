@@ -50,7 +50,6 @@ export function getWorkspace30dProcedure(type: Type) {
 }
 // Helper functions to get the right procedure based on period and type
 export function getListProcedure(period: Period, type: Type) {
-  console.log({ period, type });
   switch (period) {
     case "1d":
       if (type === "http") return tb.httpListDaily;
@@ -175,6 +174,7 @@ export function getGlobalMetricsProcedure(type: Type) {
 export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {
   switch (period) {
     case "7d":
+      // no 7d DNS uptime pipe; the 30d MV is filtered down by the client window
       if (type === "dns") return tb.dnsUptime30d;
       if (type === "http") return tb.httpUptimeWeekly;
       if (type === "tcp") return tb.tcpUptimeWeekly;
@@ -210,6 +210,8 @@ export function getMetricsLatencyProcedure(_period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsLatency7d;
       if (type === "tcp") return tb.tcpMetricsLatency7d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    // no dedicated 14d latency pipe; 30d MV is the smallest window covering 14d
+    case "14d":
     case "30d":
       if (type === "dns") return tb.dnsMetricsLatency30d;
       if (type === "http") return tb.httpMetricsLatency30d;

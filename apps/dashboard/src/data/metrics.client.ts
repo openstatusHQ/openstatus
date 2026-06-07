@@ -12,6 +12,9 @@ export const PERIODS = ["1d", "7d", "14d", "30d", "90d"] as const;
 // 30d/90d require a paid plan; the dropdown gates them for free workspaces.
 export const PAID_PERIODS = ["30d", "90d"] as const;
 
+// longest window a free workspace may view; paid periods snap back to this.
+export const FREE_MAX_PERIOD = "14d" as const;
+
 export type Period = (typeof PERIODS)[number];
 export type PaidPeriod = (typeof PAID_PERIODS)[number];
 
