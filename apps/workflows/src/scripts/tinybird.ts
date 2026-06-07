@@ -105,16 +105,16 @@ async function main() {
   const rest = [...starters, ...teams, ...scales];
 
   if (rest.length > 0) {
-    deleteLogs(lastTwoWeeks, rest, true);
+    await deleteLogs(lastTwoWeeks, rest, true);
   }
   if (starters.length > 0) {
-    deleteLogs(lastThreeMonths, starters);
+    await deleteLogs(lastThreeMonths, starters);
   }
   if (teams.length > 0) {
-    deleteLogs(lastYear, teams);
+    await deleteLogs(lastYear, teams);
   }
   if (scales.length > 0) {
-    deleteLogs(lastTwoYears, scales);
+    await deleteLogs(lastTwoYears, scales);
   }
 }
 
