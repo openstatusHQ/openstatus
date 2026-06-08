@@ -140,7 +140,6 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
             }),
           )
           .parse(JSON.parse(_newMonitor.otelHeaders))
-          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
           .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
       : undefined;
 

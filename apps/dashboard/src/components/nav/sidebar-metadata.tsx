@@ -253,7 +253,6 @@ function SidebarMetadataTableCell({
   const { copy, isCopied } = useCopyToClipboard();
   const [open, setOpen] = React.useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   React.useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);

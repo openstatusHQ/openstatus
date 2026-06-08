@@ -86,7 +86,6 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
               if (!key) return acc; // key === "" is an invalid header
 
               return {
-                // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
                 ...acc,
                 [key]: value,
               };

@@ -86,7 +86,7 @@ await configure({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
+/* oxlint-disable-next-line typescript/no-explicit-any */
 function shouldSample(event: Record<string, any>): boolean {
   // Always keep errors
   if (event.status_code >= 500) return true;

@@ -11,7 +11,6 @@ import {
 } from "./index";
 
 describe("Discord Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {

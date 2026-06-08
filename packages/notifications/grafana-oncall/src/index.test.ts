@@ -5,7 +5,6 @@ import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Grafana OnCall Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {

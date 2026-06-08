@@ -49,7 +49,6 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
                 }),
               )
               .parse(JSON.parse(monitor.otelHeaders))
-              // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
               .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
           : undefined;
         return {

@@ -13,12 +13,10 @@ const products = getProductPages();
 
 const productsSection = {
   label: "Products",
-  items: [
-    ...products.map((product) => ({
-      label: product.metadata.title,
-      href: `/${product.slug}`,
-    })),
-  ],
+  items: products.map((product) => ({
+    label: product.metadata.title,
+    href: `/${product.slug}`,
+  })),
 };
 
 const resourcesFooterSection = {

@@ -78,7 +78,6 @@ export function StatusBrand({
   ...props
 }: React.ComponentProps<"img">) {
   return (
-    // biome-ignore lint/a11y/useAltText: <explanation>
     <img src={src} alt={alt} className={cn("size-8", className)} {...props} />
   );
 }

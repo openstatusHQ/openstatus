@@ -76,7 +76,7 @@ export type InferAgentToolOutput<T> =
 
 // `any` is the variance escape hatch — `unknown` would block storing
 // concrete tools because function inputs are contravariant.
-// biome-ignore lint/suspicious/noExplicitAny: registry-level variance escape hatch
+// oxlint-disable-next-line typescript/no-explicit-any -- registry-level variance escape hatch
 export type AnyAgentTool = AgentTool<any, any>;
 
 export type AgentToolRegistry = Record<string, AnyAgentTool>;

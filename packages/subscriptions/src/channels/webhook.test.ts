@@ -14,7 +14,6 @@ import {
 const SLACK_URL = "https://hooks.slack.com/services/T1/B1/XXX";
 const DISCORD_URL = "https://discord.com/api/webhooks/1/xxx";
 
-// biome-ignore lint/suspicious/noExplicitAny: test spy
 let fetchMock: any;
 
 function makeSub(overrides: Partial<Subscription> = {}): Subscription {

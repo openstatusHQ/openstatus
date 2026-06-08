@@ -90,7 +90,6 @@ describe("createApiKey", () => {
           ctx,
           input: {
             name: `${TEST_PREFIX}-star`,
-            // biome-ignore lint/suspicious/noExplicitAny: testing the parse boundary
             scopes: ["*"] as any,
           },
         }),

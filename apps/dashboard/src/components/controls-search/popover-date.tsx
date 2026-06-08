@@ -25,7 +25,6 @@ export function PopoverDate() {
   );
   const [range, setRange] = useState<DateRange>({ from, to });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const presets = useMemo(
     () => [
       {
@@ -103,7 +102,6 @@ export function PopoverDate() {
     );
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!open) {
       setFrom(range.from ?? null);

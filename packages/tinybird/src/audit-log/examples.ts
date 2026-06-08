@@ -6,7 +6,7 @@ const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
 
 const auditLog = new AuditLog({ tb });
 
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+// oxlint-disable-next-line eslint/no-unused-vars
 async function seed() {
   await auditLog.publishAuditLog({
     id: "monitor:2",
@@ -32,7 +32,7 @@ async function seed() {
   });
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+// oxlint-disable-next-line eslint/no-unused-vars
 async function history() {
   return await auditLog.getAuditLog({ event_id: "user:1" });
 }

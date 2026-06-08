@@ -45,7 +45,6 @@ export default function RootLayout({
       <body
         className={`${
           inter.className
-          // biome-ignore lint/nursery/useSortedClasses: <explanation>
         } ${inter.variable} ${calSans.variable} antialiased`}
       >
         <PlausibleProvider domain="openstatus.dev">

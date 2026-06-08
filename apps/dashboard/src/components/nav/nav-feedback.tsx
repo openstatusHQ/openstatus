@@ -54,9 +54,9 @@ export function NavFeedback() {
     }
 
     const SpeechRecognitionCtor =
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // oxlint-disable-next-line typescript/no-explicit-any
       (window as any).webkitSpeechRecognition ||
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // oxlint-disable-next-line typescript/no-explicit-any
       (window as any).SpeechRecognition;
 
     // Browser not supported

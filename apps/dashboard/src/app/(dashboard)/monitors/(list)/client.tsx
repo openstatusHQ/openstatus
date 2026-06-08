@@ -80,7 +80,6 @@ export function Client() {
   });
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (searchParams.status) {
       setColumnFilters([{ id: "status", value: [searchParams.status] }]);

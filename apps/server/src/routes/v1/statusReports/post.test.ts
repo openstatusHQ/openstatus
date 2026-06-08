@@ -11,7 +11,6 @@ import { app } from "@/index";
 
 import { StatusReportSchema } from "./schema";
 
-// biome-ignore lint/suspicious/noExplicitAny: test utility
 const spies = (globalThis as any).__subscriptionSpies as {
   dispatchStatusReportUpdate: {
     mockClear: () => void;

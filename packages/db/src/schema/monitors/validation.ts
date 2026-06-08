@@ -11,7 +11,7 @@ export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 
 // TODO: shared function
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+// oxlint-disable-next-line eslint/no-unused-vars
 function stringToArrayProcess<T>(_string: T) {}
 
 const regionsToArraySchema = z.preprocess((val) => {

@@ -22,7 +22,6 @@ export default function VerifyPage() {
     trpc.statusPage.verifyEmail.mutationOptions({}),
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     verifyEmailMutation.mutate({ slug: domain, token });
   }, [domain, token]);

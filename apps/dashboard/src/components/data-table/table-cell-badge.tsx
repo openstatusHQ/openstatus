@@ -18,7 +18,6 @@ export function TableCellBadge({
   const [isTruncated, setIsTruncated] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);

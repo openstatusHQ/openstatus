@@ -30,7 +30,7 @@ export default async function Layout({
     <PlausibleProvider domain="themes.openstatus.dev">
       <style
         id="theme-styles"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: generateThemeStyles() }}
       />
       <NextIntlClientProvider locale={locale} messages={messages}>

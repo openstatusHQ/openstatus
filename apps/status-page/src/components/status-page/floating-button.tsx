@@ -146,7 +146,6 @@ export function FloatingButton({
     parseAsString,
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const enabled =
       localStorage.getItem("configuration-token") === token ||

@@ -540,7 +540,7 @@ function SearchResults({
                 <div className="grid min-w-0">
                   <span
                     className="block truncate"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight markup, content sanitized server-side
+                    // oxlint-disable-next-line react/no-danger -- highlight markup, content sanitized server-side
                     dangerouslySetInnerHTML={{
                       __html: highlight(item.metadata.title),
                     }}
@@ -548,7 +548,7 @@ function SearchResults({
                   {item.content && search ? (
                     <span
                       className="text-muted-foreground block truncate text-xs"
-                      // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight markup, content sanitized server-side
+                      // oxlint-disable-next-line react/no-danger -- highlight markup, content sanitized server-side
                       dangerouslySetInnerHTML={{
                         __html: highlight(item.content),
                       }}

@@ -221,6 +221,6 @@ export async function getStatusReport(args: {
   });
   const [enriched] = await enrichReportsBatch(db, [report]);
   // `enrichReportsBatch` guarantees a 1:1 mapping for a non-empty input.
-  // biome-ignore lint/style/noNonNullAssertion: always non-null for len === 1
+  // oxlint-disable-next-line typescript/no-non-null-assertion -- always non-null for len === 1
   return enriched!;
 }

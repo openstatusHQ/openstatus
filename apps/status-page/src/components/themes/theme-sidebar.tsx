@@ -145,7 +145,7 @@ const THEME_STYLE_BUILDER = {
 } satisfies Record<string, ThemeBuilderColor | ThemeBuilderCheckbox>;
 
 // Helper function to get nested property value from an object
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// oxlint-disable-next-line typescript/no-explicit-any
 function getNestedValue(obj: any, path: string): string | undefined {
   const keys = path.split(".");
   let value = obj;
