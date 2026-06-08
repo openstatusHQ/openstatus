@@ -100,9 +100,7 @@ export async function upsertExternalIncidentsForService(args: {
           affectedComponentIds: externalServiceIncident.affectedComponentIds,
         })
         .from(externalServiceIncident)
-        .where(
-          eq(externalServiceIncident.externalServiceId, externalServiceId),
-        )
+        .where(eq(externalServiceIncident.externalServiceId, externalServiceId))
         .all();
 
       const existingByKey = new Map<string, ExistingRow>(

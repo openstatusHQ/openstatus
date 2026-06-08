@@ -145,28 +145,33 @@ function toIncidentDTO(i: ExternalIncidentListItem) {
 }
 
 export const externalServiceRouter = createTRPCRouter({
-  grid: publicProcedure.output(z.array(gridItemSchema)).query(async ({ ctx }) => {
-    const [services, latestRows] = await Promise.all([
-      listExternalServices({}),
-      safeData(ctx.tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
-    ]);
+  grid: publicProcedure
+    .output(z.array(gridItemSchema))
+    .query(async ({ ctx }) => {
+      const [services, latestRows] = await Promise.all([
+        listExternalServices({}),
+        safeData(
+          ctx.tb.externalStatusLatest({}),
+          "externalStatusLatest (grid)",
+        ),
+      ]);
 
-    const byId = new Map<string, (typeof latestRows)[number]>();
-    for (const row of latestRows) byId.set(row.id, row);
+      const byId = new Map<string, (typeof latestRows)[number]>();
+      for (const row of latestRows) byId.set(row.id, row);
 
-    return services.map((s) => {
-      const snap = byId.get(s.slug);
-      return {
-        slug: s.slug,
-        name: s.name,
-        url: s.url,
-        aliases: Array.isArray(s.aliases) ? s.aliases : [],
-        indicator: snap?.indicator ?? "",
-        status: snap?.status ?? "",
-        statusMessage: snap?.status_message ?? "Status unavailable",
-      };
-    });
-  }),
+      return services.map((s) => {
+        const snap = byId.get(s.slug);
+        return {
+          slug: s.slug,
+          name: s.name,
+          url: s.url,
+          aliases: Array.isArray(s.aliases) ? s.aliases : [],
+          indicator: snap?.indicator ?? "",
+          status: snap?.status ?? "",
+          statusMessage: snap?.status_message ?? "Status unavailable",
+        };
+      });
+    }),
 
   detail: publicProcedure
     .input(

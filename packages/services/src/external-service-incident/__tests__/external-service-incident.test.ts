@@ -6,10 +6,10 @@ import {
 } from "@openstatus/db/src/schema";
 
 import {
+  type UpsertExternalIncidentInput,
   listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
   pruneStaleRawPayloads,
-  type UpsertExternalIncidentInput,
   upsertExternalIncidentsForService,
 } from "../index";
 

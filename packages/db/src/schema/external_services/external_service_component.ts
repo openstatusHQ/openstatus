@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-  index,
   integer,
   sqliteTable,
   text,

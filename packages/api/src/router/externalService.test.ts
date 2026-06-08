@@ -142,10 +142,9 @@ describe("externalService.components staleness filter", () => {
 
     const ctx = makeCtx({ kind: "byId", byId });
     const caller = edgeRouter.createCaller(ctx);
-    const { supported, components } =
-      await caller.externalService.components({
-        slug: `${TEST_PREFIX}-stale`,
-      });
+    const { supported, components } = await caller.externalService.components({
+      slug: `${TEST_PREFIX}-stale`,
+    });
 
     expect(supported).toBe(true);
     expect(components).toHaveLength(1);
@@ -163,10 +162,9 @@ describe("externalService.components staleness filter", () => {
 
     const ctx = makeCtx({ kind: "error" });
     const caller = edgeRouter.createCaller(ctx);
-    const { supported, components } =
-      await caller.externalService.components({
-        slug: `${TEST_PREFIX}-tberror`,
-      });
+    const { supported, components } = await caller.externalService.components({
+      slug: `${TEST_PREFIX}-tberror`,
+    });
 
     expect(supported).toBe(true);
     expect(components).toHaveLength(2);
@@ -183,10 +181,9 @@ describe("externalService.components staleness filter", () => {
 
     const ctx = makeCtx({ kind: "empty" });
     const caller = edgeRouter.createCaller(ctx);
-    const { supported, components } =
-      await caller.externalService.components({
-        slug: `${TEST_PREFIX}-tbempty`,
-      });
+    const { supported, components } = await caller.externalService.components({
+      slug: `${TEST_PREFIX}-tbempty`,
+    });
 
     expect(supported).toBe(true);
     expect(components).toHaveLength(0);
