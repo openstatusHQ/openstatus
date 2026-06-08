@@ -50,9 +50,18 @@ function nullish<T>(value: T | null | undefined): T | null {
   return value ?? null;
 }
 
-function arraysEqual(a: string[], b: string[]): boolean {
+// `affectedComponentIds` comes from upstream (Atlassian / incident.io) and the
+// order is not guaranteed stable across ticks — sort copies before comparing so
+// a reordered-but-otherwise-identical payload doesn't trigger a write.
+function affectedIdsEqual(a: string[], b: string[]): boolean {
   if (a === b) return true;
-  return JSON.stringify(a) === JSON.stringify(b);
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  for (let i = 0; i < sortedA.length; i++) {
+    if (sortedA[i] !== sortedB[i]) return false;
+  }
+  return true;
 }
 
 function datesEqual(a: Date | null, b: Date | null): boolean {
@@ -69,7 +78,10 @@ function incidentsEqual(existing: ExistingRow, desired: DesiredRow): boolean {
     nullish(existing.shortlink) === nullish(desired.shortlink) &&
     datesEqual(existing.startedAt, desired.startedAt) &&
     datesEqual(existing.resolvedAt, desired.resolvedAt) &&
-    arraysEqual(existing.affectedComponentIds, desired.affectedComponentIds)
+    affectedIdsEqual(
+      existing.affectedComponentIds,
+      desired.affectedComponentIds,
+    )
   );
 }
 
