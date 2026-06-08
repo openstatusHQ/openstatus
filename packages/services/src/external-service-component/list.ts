@@ -44,6 +44,13 @@ type LatestFetchedResult = {
 
 async function fetchLatestByIds(ids: string[]): Promise<LatestFetchedResult> {
   if (ids.length === 0) return { errored: false, byId: new Map() };
+  // Without a Tinybird token, `defaultTb` is a NoopTinybird that returns empty
+  // data — which would mark every component as stale and hide the page.
+  // Treat the absence of credentials as "TB unavailable" so the page renders
+  // (degrade open) in tests, local dev, and misconfigured prod environments.
+  if (!process.env.TINY_BIRD_API_KEY) {
+    return { errored: true, byId: new Map() };
+  }
   const byId = new Map<string, number>();
   try {
     for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
