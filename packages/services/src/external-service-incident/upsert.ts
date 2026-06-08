@@ -1,4 +1,4 @@
-import { db as defaultDb, sql } from "@openstatus/db";
+import { db as defaultDb, eq } from "@openstatus/db";
 import { externalServiceIncident } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -21,6 +21,70 @@ export type UpsertExternalIncidentsResult = {
   upserted: number;
 };
 
+type ExistingRow = {
+  id: number;
+  providerIncidentId: string;
+  name: string;
+  status: string;
+  impact: string | null;
+  shortlink: string | null;
+  startedAt: Date | null;
+  resolvedAt: Date | null;
+  affectedComponentIds: string[];
+};
+
+type DesiredRow = {
+  providerIncidentId: string;
+  name: string;
+  status: string;
+  impact: string | null;
+  shortlink: string | null;
+  startedAt: Date | null;
+  createdAt: Date;
+  resolvedAt: Date | null;
+  affectedComponentIds: string[];
+  rawPayload: unknown;
+};
+
+function nullish<T>(value: T | null | undefined): T | null {
+  return value ?? null;
+}
+
+// `affectedComponentIds` comes from upstream (Atlassian / incident.io) and the
+// order is not guaranteed stable across ticks — sort copies before comparing so
+// a reordered-but-otherwise-identical payload doesn't trigger a write.
+function affectedIdsEqual(a: string[], b: string[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  for (let i = 0; i < sortedA.length; i++) {
+    if (sortedA[i] !== sortedB[i]) return false;
+  }
+  return true;
+}
+
+function datesEqual(a: Date | null, b: Date | null): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  return a.getTime() === b.getTime();
+}
+
+function incidentsEqual(existing: ExistingRow, desired: DesiredRow): boolean {
+  return (
+    existing.name === desired.name &&
+    existing.status === desired.status &&
+    nullish(existing.impact) === nullish(desired.impact) &&
+    nullish(existing.shortlink) === nullish(desired.shortlink) &&
+    datesEqual(existing.startedAt, desired.startedAt) &&
+    datesEqual(existing.resolvedAt, desired.resolvedAt) &&
+    affectedIdsEqual(
+      existing.affectedComponentIds,
+      desired.affectedComponentIds,
+    )
+  );
+}
+
 export async function upsertExternalIncidentsForService(args: {
   ctx?: { db?: DB };
   externalServiceId: number;
@@ -33,50 +97,102 @@ export async function upsertExternalIncidentsForService(args: {
   const now = args.now ?? new Date();
   const db = ctx?.db ?? defaultDb;
 
-  const values = incidents.map((incident) => ({
-    externalServiceId,
-    providerIncidentId: incident.providerIncidentId,
-    name: incident.name,
-    status: incident.status,
-    impact: incident.impact,
-    shortlink: incident.shortlink,
-    startedAt: incident.startedAt,
-    createdAt: incident.createdAt,
-    resolvedAt: incident.resolvedAt,
-    affectedComponentIds: incident.affectedComponentIds ?? [],
-    rawPayload: incident.raw,
-    rawPayloadPurgedAt: null,
-    firstSeenAt: now,
-    lastSeenAt: now,
-    updatedAt: now,
-  }));
-
   return withBusyRetry(() =>
     db.transaction(async (tx) => {
-      await tx
-        .insert(externalServiceIncident)
-        .values(values)
-        .onConflictDoUpdate({
-          target: [
-            externalServiceIncident.externalServiceId,
-            externalServiceIncident.providerIncidentId,
-          ],
-          set: {
-            name: sql`excluded.name`,
-            status: sql`excluded.status`,
-            impact: sql`excluded.impact`,
-            shortlink: sql`excluded.shortlink`,
-            startedAt: sql`excluded.started_at`,
-            resolvedAt: sql`excluded.resolved_at`,
-            affectedComponentIds: sql`excluded.affected_component_ids`,
-            rawPayload: sql`excluded.raw_payload`,
-            rawPayloadPurgedAt: null,
-            lastSeenAt: now,
-            updatedAt: now,
-          },
+      const existing = await tx
+        .select({
+          id: externalServiceIncident.id,
+          providerIncidentId: externalServiceIncident.providerIncidentId,
+          name: externalServiceIncident.name,
+          status: externalServiceIncident.status,
+          impact: externalServiceIncident.impact,
+          shortlink: externalServiceIncident.shortlink,
+          startedAt: externalServiceIncident.startedAt,
+          resolvedAt: externalServiceIncident.resolvedAt,
+          affectedComponentIds: externalServiceIncident.affectedComponentIds,
         })
-        .run();
-      return { upserted: values.length };
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, externalServiceId))
+        .all();
+
+      const existingByKey = new Map<string, ExistingRow>(
+        existing.map((row) => [row.providerIncidentId, row]),
+      );
+
+      const inserts: DesiredRow[] = [];
+      const updates: Array<{ id: number; row: DesiredRow }> = [];
+
+      for (const incident of incidents) {
+        const desired: DesiredRow = {
+          providerIncidentId: incident.providerIncidentId,
+          name: incident.name,
+          status: incident.status,
+          impact: nullish(incident.impact),
+          shortlink: nullish(incident.shortlink),
+          startedAt: incident.startedAt ?? null,
+          createdAt: incident.createdAt,
+          resolvedAt: incident.resolvedAt,
+          affectedComponentIds: incident.affectedComponentIds ?? [],
+          rawPayload: incident.raw,
+        };
+
+        const prev = existingByKey.get(incident.providerIncidentId);
+        if (!prev) {
+          inserts.push(desired);
+          continue;
+        }
+        if (!incidentsEqual(prev, desired)) {
+          updates.push({ id: prev.id, row: desired });
+        }
+      }
+
+      if (inserts.length > 0) {
+        await tx
+          .insert(externalServiceIncident)
+          .values(
+            inserts.map((row) => ({
+              externalServiceId,
+              providerIncidentId: row.providerIncidentId,
+              name: row.name,
+              status: row.status,
+              impact: row.impact,
+              shortlink: row.shortlink,
+              startedAt: row.startedAt,
+              createdAt: row.createdAt,
+              resolvedAt: row.resolvedAt,
+              affectedComponentIds: row.affectedComponentIds,
+              rawPayload: row.rawPayload,
+              rawPayloadPurgedAt: null,
+              firstSeenAt: now,
+              updatedAt: now,
+            })),
+          )
+          .run();
+      }
+
+      for (const { id, row } of updates) {
+        // rawPayload co-rewrites whenever a scalar field changes — we do not
+        // diff the blob, only its scalar siblings. This eliminates the per-tick
+        // JSON rewrite on idle incidents.
+        await tx
+          .update(externalServiceIncident)
+          .set({
+            name: row.name,
+            status: row.status,
+            impact: row.impact,
+            shortlink: row.shortlink,
+            startedAt: row.startedAt,
+            resolvedAt: row.resolvedAt,
+            affectedComponentIds: row.affectedComponentIds,
+            rawPayload: row.rawPayload,
+            rawPayloadPurgedAt: null,
+            updatedAt: now,
+          })
+          .where(eq(externalServiceIncident.id, id))
+          .run();
+      }
+
+      return { upserted: inserts.length + updates.length };
     }),
   );
 }

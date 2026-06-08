@@ -2376,4 +2376,20 @@ export class OSTinybird {
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
+
+  public get externalStatusComponentLatest() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_status_component_latest__v0",
+      parameters: z.object({
+        component_ids: z.array(z.string()).min(1),
+      }),
+      data: z.object({
+        component_id: z.string(),
+        indicator: z.string(),
+        status: z.string(),
+        last_fetched_at: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
 }

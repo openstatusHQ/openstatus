@@ -61,7 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const { components } = await cachedListExternalComponentsBySlug(s.slug);
         return components.map((c) => ({
           url: `https://www.openstatus.dev/status/${s.slug}/${c.slug}`,
-          lastModified: c.lastSeenAt.toISOString().slice(0, 10),
+          lastModified: new Date().toISOString().slice(0, 10),
           changeFrequency: "hourly" as const,
           priority: 0.6,
         }));

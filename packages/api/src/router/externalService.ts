@@ -112,7 +112,7 @@ const componentDetailSchema = z.object({
       groupName: z.string().nullable(),
       indicator: z.string(),
       status: z.string(),
-      lastSeenAt: z.number(),
+      lastFetchedAt: z.number(),
       stale: z.boolean(),
     })
     .nullable(),
@@ -391,7 +391,7 @@ export const externalServiceRouter = createTRPCRouter({
             groupName: component.groupName,
             indicator: component.indicator,
             status: component.status,
-            lastSeenAt: component.lastSeenAt.getTime(),
+            lastFetchedAt: component.lastFetchedAt ?? 0,
             stale: component.stale,
           },
           history: historyRows.map(toHistoryRow),

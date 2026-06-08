@@ -16,8 +16,6 @@ export type ExternalIncidentListItem = {
   startedAt: Date | null;
   createdAt: Date;
   resolvedAt: Date | null;
-  firstSeenAt: Date;
-  lastSeenAt: Date;
 };
 
 const DEFAULT_LIMIT = 5;
@@ -53,8 +51,6 @@ export async function listExternalIncidentsByServiceId(args: {
       startedAt: externalServiceIncident.startedAt,
       createdAt: externalServiceIncident.createdAt,
       resolvedAt: externalServiceIncident.resolvedAt,
-      firstSeenAt: externalServiceIncident.firstSeenAt,
-      lastSeenAt: externalServiceIncident.lastSeenAt,
     })
     .from(externalServiceIncident)
     .where(eq(externalServiceIncident.externalServiceId, externalServiceId))
@@ -94,8 +90,6 @@ export async function listExternalIncidentsByComponent(args: {
       startedAt: externalServiceIncident.startedAt,
       createdAt: externalServiceIncident.createdAt,
       resolvedAt: externalServiceIncident.resolvedAt,
-      firstSeenAt: externalServiceIncident.firstSeenAt,
-      lastSeenAt: externalServiceIncident.lastSeenAt,
     })
     .from(externalServiceIncident)
     .where(

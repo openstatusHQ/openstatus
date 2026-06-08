@@ -33,9 +33,6 @@ export const externalServiceIncident = sqliteTable(
     firstSeenAt: integer("first_seen_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),
-    lastSeenAt: integer("last_seen_at", { mode: "timestamp" })
-      .notNull()
-      .default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer("updated_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),

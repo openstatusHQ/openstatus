@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-  index,
   integer,
   sqliteTable,
   text,
@@ -31,9 +30,6 @@ export const externalServiceComponent = sqliteTable(
     firstSeenAt: integer("first_seen_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),
-    lastSeenAt: integer("last_seen_at", { mode: "timestamp" })
-      .notNull()
-      .default(sql`(strftime('%s', 'now'))`),
     updatedAt: integer("updated_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),
@@ -46,10 +42,6 @@ export const externalServiceComponent = sqliteTable(
     uniqueIndex("external_service_component_slug_unique_idx").on(
       t.externalServiceId,
       t.slug,
-    ),
-    index("external_service_component_last_seen_at_idx").on(
-      t.externalServiceId,
-      t.lastSeenAt,
     ),
   ],
 );

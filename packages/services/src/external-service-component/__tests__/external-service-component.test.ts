@@ -125,7 +125,179 @@ describe("upsertExternalComponentsForService", () => {
     expect(updated[0]?.status).toBe("partial_outage");
     expect(updated[0]?.indicator).toBe("major");
     expect(updated[0]?.firstSeenAt.getTime()).toBe(baseDate.getTime());
-    expect(updated[0]?.lastSeenAt.getTime()).toBe(laterDate.getTime());
+    expect(updated[0]?.updatedAt.getTime()).toBe(laterDate.getTime());
+  });
+
+  test("idle re-upsert with identical input leaves updatedAt unchanged", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-idle` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+    const input = {
+      upstreamComponentId: "cmp-idle",
+      name: "Idle component",
+      groupName: "Regions",
+      position: 0,
+      indicator: "none",
+      status: "operational",
+    } as const;
+
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      components: [input],
+    });
+
+    const before = await db
+      .select()
+      .from(externalServiceComponent)
+      .where(
+        and(
+          eq(externalServiceComponent.externalServiceId, serviceId),
+          eq(externalServiceComponent.upstreamComponentId, "cmp-idle"),
+        ),
+      )
+      .all();
+
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-06-01T13:00:00.000Z"),
+      components: [input],
+    });
+
+    const after = await db
+      .select()
+      .from(externalServiceComponent)
+      .where(
+        and(
+          eq(externalServiceComponent.externalServiceId, serviceId),
+          eq(externalServiceComponent.upstreamComponentId, "cmp-idle"),
+        ),
+      )
+      .all();
+    expect(after[0]?.updatedAt.getTime()).toBe(
+      before[0]?.updatedAt.getTime() ?? -1,
+    );
+  });
+
+  test("real change bumps updatedAt only on the changed row", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-changed` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      components: [
+        {
+          upstreamComponentId: "cmp-a",
+          name: "A",
+          position: 0,
+          indicator: "none",
+          status: "operational",
+        },
+        {
+          upstreamComponentId: "cmp-b",
+          name: "B",
+          position: 1,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const before = await db
+      .select()
+      .from(externalServiceComponent)
+      .where(eq(externalServiceComponent.externalServiceId, serviceId))
+      .all();
+    const beforeByKey = new Map(
+      before.map((r) => [r.upstreamComponentId, r.updatedAt.getTime()]),
+    );
+
+    const laterDate = new Date("2024-06-01T13:00:00.000Z");
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: laterDate,
+      components: [
+        {
+          upstreamComponentId: "cmp-a",
+          name: "A",
+          position: 0,
+          indicator: "major",
+          status: "partial_outage",
+        },
+        {
+          upstreamComponentId: "cmp-b",
+          name: "B",
+          position: 1,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const after = await db
+      .select()
+      .from(externalServiceComponent)
+      .where(eq(externalServiceComponent.externalServiceId, serviceId))
+      .all();
+    const afterByKey = new Map(
+      after.map((r) => [r.upstreamComponentId, r.updatedAt.getTime()]),
+    );
+
+    expect(afterByKey.get("cmp-a")).toBe(laterDate.getTime());
+    expect(afterByKey.get("cmp-b")).toBe(beforeByKey.get("cmp-b"));
+  });
+
+  test("new component is inserted with firstSeenAt = now", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-new` });
+
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-06-01T12:00:00.000Z"),
+      components: [
+        {
+          upstreamComponentId: "existing",
+          name: "existing",
+          position: 0,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const newNow = new Date("2024-06-01T13:00:00.000Z");
+    await upsertExternalComponentsForService({
+      externalServiceId: serviceId,
+      now: newNow,
+      components: [
+        {
+          upstreamComponentId: "existing",
+          name: "existing",
+          position: 0,
+          indicator: "none",
+          status: "operational",
+        },
+        {
+          upstreamComponentId: "fresh",
+          name: "fresh",
+          position: 1,
+          indicator: "none",
+          status: "operational",
+        },
+      ],
+    });
+
+    const rows = await db
+      .select()
+      .from(externalServiceComponent)
+      .where(
+        and(
+          eq(externalServiceComponent.externalServiceId, serviceId),
+          eq(externalServiceComponent.upstreamComponentId, "fresh"),
+        ),
+      )
+      .all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.firstSeenAt.getTime()).toBe(newNow.getTime());
   });
 
   test("no-op when given an empty list", async () => {
@@ -197,32 +369,6 @@ describe("listExternalComponentsBySlug", () => {
     expect(viaAlias.components).toHaveLength(1);
   });
 
-  test("hides components not seen within the 24h window", async () => {
-    const serviceId = await seedService({ slug: `${TEST_PREFIX}-stale` });
-    const longAgo = new Date("2024-01-01T00:00:00.000Z");
-
-    await upsertExternalComponentsForService({
-      externalServiceId: serviceId,
-      now: longAgo,
-      components: [
-        {
-          upstreamComponentId: "gone",
-          name: "retired-region",
-          position: 0,
-          indicator: "none",
-          status: "operational",
-        },
-      ],
-    });
-
-    const now = new Date("2024-06-01T00:00:00.000Z");
-    const { components } = await listExternalComponentsBySlug({
-      slug: `${TEST_PREFIX}-stale`,
-      now,
-    });
-    expect(components).toHaveLength(0);
-  });
-
   test("returns supported=false for a provider without component support", async () => {
     await seedService({
       slug: `${TEST_PREFIX}-custom`,
@@ -269,7 +415,6 @@ describe("getExternalComponentBySlug", () => {
       now: new Date("2024-06-01T00:05:00.000Z"),
     });
     expect(byOriginal.component?.slug).toBe("frankfurt");
-    expect(byOriginal.component?.stale).toBe(false);
 
     // rename → slug becomes eu-central, "frankfurt" preserved as alias
     await upsertExternalComponentsForService({
@@ -297,32 +442,6 @@ describe("getExternalComponentBySlug", () => {
       componentSlug: "frankfurt",
     });
     expect(byAlias.component?.slug).toBe("eu-central");
-  });
-
-  test("flags a component stale when last seen beyond the 24h window", async () => {
-    const serviceSlug = `${TEST_PREFIX}-getstale`;
-    const serviceId = await seedService({ slug: serviceSlug });
-    await upsertExternalComponentsForService({
-      externalServiceId: serviceId,
-      now: new Date("2024-01-01T00:00:00.000Z"),
-      components: [
-        {
-          upstreamComponentId: "r1",
-          name: "Frankfurt",
-          position: 0,
-          indicator: "none",
-          status: "operational",
-        },
-      ],
-    });
-
-    const res = await getExternalComponentBySlug({
-      serviceSlug,
-      componentSlug: "frankfurt",
-      now: new Date("2024-06-01T00:00:00.000Z"),
-    });
-    expect(res.component?.slug).toBe("frankfurt");
-    expect(res.component?.stale).toBe(true);
   });
 
   test("returns null component for an unknown component slug", async () => {
