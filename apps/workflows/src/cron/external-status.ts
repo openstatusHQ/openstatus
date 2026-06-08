@@ -314,7 +314,10 @@ function summarizeStatus(outcomes: StatusPhaseOutcome[]): {
       failureCount++;
       logger.warn(
         "external-status status: fetch failed for slug={slug}: {reason}",
-        { slug: o.slug, reason: o.reason },
+        {
+          slug: o.slug,
+          reason: o.reason,
+        },
       );
     }
   }
@@ -342,7 +345,10 @@ function summarizeIncidents(outcomes: IncidentPhaseOutcome[]): PhaseCounts {
       failureCount++;
       logger.warn(
         "external-status incidents: failed for slug={slug}: {reason}",
-        { slug: o.slug, reason: o.reason },
+        {
+          slug: o.slug,
+          reason: o.reason,
+        },
       );
     }
   }
@@ -372,7 +378,10 @@ function summarizeComponents(outcomes: ComponentPhaseOutcome[]): {
       failureCount++;
       logger.warn(
         "external-status components: failed for slug={slug}: {reason}",
-        { slug: o.slug, reason: o.reason },
+        {
+          slug: o.slug,
+          reason: o.reason,
+        },
       );
     }
   }
@@ -417,7 +426,7 @@ export async function runExternalStatusTick(): Promise<{
           runIncidentPhase(triplets, tickStartedAt),
           runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
         ],
-        { concurrency: "unbounded" },
+        { concurrency: "50" },
       ),
     );
 
