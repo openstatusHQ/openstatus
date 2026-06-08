@@ -73,7 +73,9 @@ function buildSnapshot(args: {
   };
 }
 
-function toUpsertInput(incident: NormalizedIncident): UpsertExternalIncidentInput {
+function toUpsertInput(
+  incident: NormalizedIncident,
+): UpsertExternalIncidentInput {
   return {
     providerIncidentId: incident.providerIncidentId,
     name: incident.name,
@@ -96,7 +98,9 @@ type ComponentSnapshot = {
   fetched_at: number;
 };
 
-function toComponentUpsertInput(component: NormalizedComponent): UpsertExternalComponentInput {
+function toComponentUpsertInput(
+  component: NormalizedComponent,
+): UpsertExternalComponentInput {
   return {
     upstreamComponentId: component.upstreamComponentId,
     name: component.name,
@@ -257,7 +261,9 @@ function runComponentPhase(
             Effect.map((result): ComponentPhaseOutcome => {
               // History rows key on our PK, so the upstream→PK map from the
               // upsert turns each normalized component into a snapshot.
-              const byUpstream = new Map(components.map((c) => [c.upstreamComponentId, c]));
+              const byUpstream = new Map(
+                components.map((c) => [c.upstreamComponentId, c]),
+              );
               const snapshots: ComponentSnapshot[] = [];
               for (const upserted of result.upserted) {
                 const c = byUpstream.get(upserted.upstreamComponentId);
@@ -306,10 +312,13 @@ function summarizeStatus(outcomes: StatusPhaseOutcome[]): {
       });
     } else {
       failureCount++;
-      logger.warn("external-status status: fetch failed for slug={slug}: {reason}", {
-        slug: o.slug,
-        reason: o.reason,
-      });
+      logger.warn(
+        "external-status status: fetch failed for slug={slug}: {reason}",
+        {
+          slug: o.slug,
+          reason: o.reason,
+        },
+      );
     }
   }
   return {
@@ -334,10 +343,13 @@ function summarizeIncidents(outcomes: IncidentPhaseOutcome[]): PhaseCounts {
       skippedCount++;
     } else {
       failureCount++;
-      logger.warn("external-status incidents: failed for slug={slug}: {reason}", {
-        slug: o.slug,
-        reason: o.reason,
-      });
+      logger.warn(
+        "external-status incidents: failed for slug={slug}: {reason}",
+        {
+          slug: o.slug,
+          reason: o.reason,
+        },
+      );
     }
   }
   return {
@@ -364,10 +376,13 @@ function summarizeComponents(outcomes: ComponentPhaseOutcome[]): {
       skippedCount++;
     } else {
       failureCount++;
-      logger.warn("external-status components: failed for slug={slug}: {reason}", {
-        slug: o.slug,
-        reason: o.reason,
-      });
+      logger.warn(
+        "external-status components: failed for slug={slug}: {reason}",
+        {
+          slug: o.slug,
+          reason: o.reason,
+        },
+      );
     }
   }
   return {
@@ -403,16 +418,17 @@ export async function runExternalStatusTick(): Promise<{
   // upstream endpoint and store, so a failed status fetch must not suppress a
   // service's components (or vice versa). A tick can therefore persist
   // component history for a service whose status snapshot failed that tick.
-  const [statusOutcomes, incidentOutcomes, componentOutcomes] = await Effect.runPromise(
-    Effect.all(
-      [
-        runStatusPhase(triplets, tickStartedAt.getTime()),
-        runIncidentPhase(triplets, tickStartedAt),
-        runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
-      ],
-      { concurrency: "50" },
-    ),
-  );
+  const [statusOutcomes, incidentOutcomes, componentOutcomes] =
+    await Effect.runPromise(
+      Effect.all(
+        [
+          runStatusPhase(triplets, tickStartedAt.getTime()),
+          runIncidentPhase(triplets, tickStartedAt),
+          runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
+        ],
+        { concurrency: "50" },
+      ),
+    );
 
   const status = summarizeStatus(statusOutcomes);
   const incidents = summarizeIncidents(incidentOutcomes);
@@ -439,7 +455,9 @@ export async function handleExternalStatusCron(c: Context) {
     Effect.tryPromise({
       try: () => runExternalStatusTick(),
       catch: (e) =>
-        new Error(`external-status tick failed: ${e instanceof Error ? e.message : String(e)}`),
+        new Error(
+          `external-status tick failed: ${e instanceof Error ? e.message : String(e)}`,
+        ),
     }).pipe(
       Effect.tap((res) =>
         Effect.sync(() => {
