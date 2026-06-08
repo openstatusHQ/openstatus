@@ -62,23 +62,29 @@ export function mapCheckToCdnResult(
 export async function probeCdnRegion({
   url,
   region,
+  timeoutMs = PROBE_TIMEOUT_MS,
 }: {
   url: string;
   region: Region;
+  timeoutMs?: number;
 }): Promise<CdnRegionResponse> {
   try {
-    const check = await Promise.race([
-      checkRegion({ url, region, method: "GET" }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), PROBE_TIMEOUT_MS),
-      ),
-    ]);
+    const check = await checkRegion({
+      url,
+      region,
+      method: "GET",
+      // hard abort, not a soft race: the underlying fetch must not keep
+      // running (and consuming the edge function budget) after timeout
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     return mapCheckToCdnResult(check);
   } catch (error) {
-    return {
-      state: "error",
-      region,
-      message: error instanceof Error ? error.message : "Request failed",
-    };
+    const message =
+      error instanceof Error
+        ? error.name === "TimeoutError"
+          ? "Timeout"
+          : error.message
+        : "Request failed";
+    return { state: "error", region, message };
   }
 }
