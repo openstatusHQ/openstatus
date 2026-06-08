@@ -57,7 +57,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
-                <BreadcrumbPage className=" hidden max-w-[120px] font-commit-mono tracking-tight md:block lg:max-w-[200px] ">
+                <BreadcrumbPage className="font-commit-mono hidden max-w-[120px] tracking-tight md:block lg:max-w-[200px]">
                   <span className="flex min-w-0 items-center gap-1.5">
                     {item.icon && (
                       <item.icon

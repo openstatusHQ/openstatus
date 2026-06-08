@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Collapsible,
@@ -9,6 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
 import { cn } from "@openstatus/ui/lib/utils";
+import * as React from "react";
 
 export function BlockWrapper({
   className,
@@ -44,7 +43,7 @@ export function BlockWrapper({
         {!isOpened ? (
           <div
             className={cn(
-              "absolute flex items-center justify-center bg-gradient-to-b from-transparent to-90% to-background p-2",
+              "to-background absolute flex items-center justify-center bg-gradient-to-b from-transparent to-90% p-2",
               isOpened ? "inset-x-0 bottom-0 h-12" : "inset-0",
             )}
           >

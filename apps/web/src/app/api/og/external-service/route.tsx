@@ -1,6 +1,5 @@
-import { ImageResponse } from "next/og";
-
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
+import { ImageResponse } from "next/og";
 
 import { isStale } from "@/app/(landing)/status/utils";
 import { env } from "@/env";
@@ -10,6 +9,7 @@ import {
   cachedListExternalServices,
 } from "@/lib/external-service-cache";
 import { cn } from "@/lib/utils";
+
 import { SIZE } from "../utils";
 
 export const runtime = "edge";
@@ -174,7 +174,7 @@ export async function GET(req: Request) {
           <div tw="flex flex-row items-center text-2xl text-slate-700">
             [
             {categoryDot ? (
-              <div tw={cn("rounded-full h-5 w-5 mr-2", categoryDot)} />
+              <div tw={cn("mr-2 h-5 w-5 rounded-full", categoryDot)} />
             ) : null}
             <p>{category}</p>]
             {isDetail

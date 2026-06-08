@@ -64,7 +64,7 @@ export function ExternalServicePill({
   const body = (
     <span
       className={cn(
-        "inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs",
+        "inline-flex items-center rounded-none border px-2.5 py-0.5 text-xs font-medium",
         pill.className,
         className,
       )}

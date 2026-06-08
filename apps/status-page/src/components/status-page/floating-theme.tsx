@@ -1,6 +1,5 @@
 "use client";
 
-import { ThemeSelect } from "@/components/themes/theme-select";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -21,6 +20,9 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { Check, ChevronsUpDown, Palette } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
+
+import { ThemeSelect } from "@/components/themes/theme-select";
+
 import { useStatusPage } from "./floating-button";
 
 export const COMMUNITY_THEME = THEME_KEYS;
@@ -60,7 +62,7 @@ export function FloatingTheme({ className }: { className?: string }) {
         <PopoverContent className="w-80 p-0" align="end">
           <div className="space-y-4 p-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">Theme Settings</h4>
+              <h4 className="leading-none font-medium">Theme Settings</h4>
               <p className="text-muted-foreground text-sm">
                 Test community themes on the status page.
               </p>
@@ -105,7 +107,7 @@ export function FloatingTheme({ className }: { className?: string }) {
                             <span className="truncate">
                               {THEMES[theme].name}
                             </span>
-                            <span className="truncate font-commit-mono text-muted-foreground text-xs">
+                            <span className="font-commit-mono text-muted-foreground truncate text-xs">
                               by {THEMES[theme].author.name}
                             </span>
                             <Check

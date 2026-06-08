@@ -45,13 +45,13 @@ export function StatusComponentGroup({
       defaultOpen={defaultOpen}
       className={cn(
         "-mx-3",
-        "rounded-lg border border-transparent bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",
+        "bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50 rounded-lg border border-transparent",
         className,
       )}
     >
       <CollapsibleTrigger
         className={cn(
-          "group/component flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium font-mono",
+          "group/component flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-mono font-medium",
           "cursor-pointer",
           className,
         )}
@@ -67,7 +67,7 @@ export function StatusComponentGroup({
       <CollapsibleContent
         data-animate={mounted}
         className={cn(
-          "flex flex-col gap-3 border-border/50 border-t px-3 py-2",
+          "border-border/50 flex flex-col gap-3 border-t px-3 py-2",
           "overflow-hidden",
           "data-[animate=true]:data-[state=closed]:animate-collapsible-up data-[animate=true]:data-[state=open]:animate-collapsible-down",
         )}

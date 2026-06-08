@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { sanitizeRedirectParam } from "./sanitize-redirect-param";
 
 describe("sanitizeRedirectParam", () => {

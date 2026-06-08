@@ -158,7 +158,7 @@ export function Calculation() {
             return (
               <li key={period}>
                 <span className="capitalize">{period} reporting:</span>{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {formatDuration(Math.round(allowedDowntimeSeconds))}
                 </span>{" "}
                 <span>downtime</span>
@@ -202,7 +202,7 @@ export function Calculation() {
             return (
               <li key={period}>
                 <span className="capitalize">{period} reporting:</span>{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {uptimePercentage.toFixed(5)}%
                 </span>{" "}
                 <span>uptime</span>

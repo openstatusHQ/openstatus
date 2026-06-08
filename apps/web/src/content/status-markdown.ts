@@ -1,9 +1,10 @@
+import { OSTinybird, safePipeData } from "@openstatus/tinybird";
+
 import { env } from "@/env";
 import {
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
 } from "@/lib/external-service-cache";
-import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 type LatestRow = {
   id: string;

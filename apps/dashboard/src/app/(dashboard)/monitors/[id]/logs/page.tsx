@@ -1,4 +1,5 @@
 import type { SearchParams } from "nuqs/server";
+
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
 

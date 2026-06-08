@@ -1,10 +1,10 @@
 import { createRoute } from "@hono/zod-openapi";
-
 import { and, db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
+
 import type { statusReportsApi } from "./index";
 import { ParamsSchema, StatusReportSchema } from "./schema";
 

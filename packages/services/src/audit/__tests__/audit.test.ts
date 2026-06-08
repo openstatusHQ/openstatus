@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { auditLog, user } from "@openstatus/db/src/schema";
-
 import type { AuditEntry } from "@openstatus/db/src/schema";
+
 import {
   SEEDED_WORKSPACE_FREE_ID,
   SEEDED_WORKSPACE_TEAM_ID,
@@ -19,7 +20,6 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { NotFoundError } from "../../errors";
-
 import { diffTopLevel, emitAudit } from "../emit";
 import { getAuditLog } from "../get";
 

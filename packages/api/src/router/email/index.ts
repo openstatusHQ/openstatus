@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { and, eq } from "@openstatus/db";
 import {
   invitation,
@@ -11,6 +9,8 @@ import { notifyMaintenance } from "@openstatus/services/maintenance";
 import { notifyStatusReport } from "@openstatus/services/status-report";
 import { getChannel } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { env } from "../../env";
 import { toServiceCtx, toTRPCError } from "../../service-adapter";
 import {

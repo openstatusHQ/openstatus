@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { mockCheckAllRegions } from "@/lib/checker/mock";
@@ -13,8 +16,7 @@ import {
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+
 import { Table } from "./client";
 
 function formatDate(date: Date) {

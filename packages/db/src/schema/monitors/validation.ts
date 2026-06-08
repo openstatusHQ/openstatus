@@ -1,7 +1,6 @@
+import * as assertions from "@openstatus/assertions";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-
-import * as assertions from "@openstatus/assertions";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";

@@ -12,7 +12,4 @@ export {
   listExternalIncidentsBySlug,
   supportsIncidents,
 } from "./list";
-export {
-  type PruneRawPayloadsResult,
-  pruneStaleRawPayloads,
-} from "./prune";
+export { type PruneRawPayloadsResult, pruneStaleRawPayloads } from "./prune";

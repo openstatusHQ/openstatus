@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { getHealthReportById } from "@/lib/mcp/health-check";
@@ -10,7 +12,7 @@ import {
   getJsonLDHowTo,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+
 import {
   AuthChallengeCallout,
   DetailsButtonLink,

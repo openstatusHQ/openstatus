@@ -1,5 +1,11 @@
 {
+  "name": "openstatus",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/**/*",
+    "packages/config/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -27,7 +33,5 @@
     "turbo": "2.9.14",
     "typescript": "catalog:"
   },
-  "packageManager": "pnpm@11.2.1",
-  "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
+  "packageManager": "pnpm@11.2.1"
 }

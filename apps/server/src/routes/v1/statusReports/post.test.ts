@@ -1,12 +1,14 @@
 import { beforeEach, expect, test } from "bun:test";
 
-import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
 import {
   pageComponent,
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+
+import { app } from "@/index";
+
 import { StatusReportSchema } from "./schema";
 
 // biome-ignore lint/suspicious/noExplicitAny: test utility

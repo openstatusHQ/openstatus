@@ -1,5 +1,7 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import {
   Section,
   SectionDescription,
@@ -13,7 +15,6 @@ import { FormMembers } from "@/components/forms/settings/form-members";
 import { FormSlug } from "@/components/forms/settings/form-slug";
 import { FormWorkspace } from "@/components/forms/settings/form-workspace";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const BASE_URL = "https://app.openstatus.dev/invite";
 

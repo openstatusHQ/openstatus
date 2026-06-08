@@ -69,12 +69,10 @@ export type ApprovalMeta<TInput> = {
   verb?: string;
 };
 
-export type InferAgentToolInput<T> = T extends AgentTool<infer I, unknown>
-  ? I
-  : never;
-export type InferAgentToolOutput<T> = T extends AgentTool<unknown, infer O>
-  ? O
-  : never;
+export type InferAgentToolInput<T> =
+  T extends AgentTool<infer I, unknown> ? I : never;
+export type InferAgentToolOutput<T> =
+  T extends AgentTool<unknown, infer O> ? O : never;
 
 // `any` is the variance escape hatch — `unknown` would block storing
 // concrete tools because function inputs are contravariant.

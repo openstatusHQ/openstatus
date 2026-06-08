@@ -1,3 +1,4 @@
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 
 import {
@@ -6,7 +7,6 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { Badge } from "@openstatus/ui/components/ui/badge";
 
 const SUGGESTIONS = [
   "List all my monitors",

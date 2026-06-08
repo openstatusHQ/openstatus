@@ -1,10 +1,11 @@
 "use client";
 
-import { useEmbed } from "@/hooks/use-embed";
-import { embedThemeParser } from "@/lib/embed-params";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useQueryState } from "nuqs";
 import type * as React from "react";
+
+import { useEmbed } from "@/hooks/use-embed";
+import { embedThemeParser } from "@/lib/embed-params";
 
 export function ThemeProvider({
   children,

@@ -1,5 +1,5 @@
-import { cn } from "@openstatus/ui/lib/utils";
 import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
+import { cn } from "@openstatus/ui/lib/utils";
 
 /**
  * Status - Root container component for status page layouts
@@ -156,7 +156,7 @@ export function StatusTitle({
     <div
       data-slot="status-title"
       className={cn(
-        "font-semibold text-foreground text-lg leading-none",
+        "text-foreground text-lg leading-none font-semibold",
         className,
       )}
       {...props}
@@ -190,7 +190,10 @@ export function StatusDescription({
   className,
 }: React.ComponentProps<"div">) {
   return (
-    <div data-slot="status-description" className={cn("text-muted-foreground", className)}>
+    <div
+      data-slot="status-description"
+      className={cn("text-muted-foreground", className)}
+    >
       {children}
     </div>
   );
@@ -226,7 +229,10 @@ export function StatusContent({
   className,
 }: React.ComponentProps<"div">) {
   return (
-    <div data-slot="status-content" className={cn("flex flex-col gap-3", className)}>
+    <div
+      data-slot="status-content"
+      className={cn("flex flex-col gap-3", className)}
+    >
       {children}
     </div>
   );

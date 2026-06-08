@@ -1,4 +1,5 @@
 import type { Page } from "@openstatus/db/src/schema";
+
 import { stripPrefixForExternal } from "./strip-prefix-for-external";
 import type { Action, ComposeInput } from "./types";
 

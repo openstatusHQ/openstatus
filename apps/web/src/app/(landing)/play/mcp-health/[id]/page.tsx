@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { getHealthReportById } from "@/lib/mcp/health-check";
@@ -8,8 +11,7 @@ import {
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+
 import { VERDICT_LABEL, formatTimestamp } from "../utils";
 import { Table } from "./client";
 

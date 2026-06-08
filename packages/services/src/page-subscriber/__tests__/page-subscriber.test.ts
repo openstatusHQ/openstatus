@@ -7,6 +7,7 @@ import {
   expect,
   test,
 } from "bun:test";
+
 import { and, db, eq, sql } from "@openstatus/db";
 import {
   auditLog,

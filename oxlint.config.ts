@@ -16,7 +16,11 @@ export default defineConfig({
     // Mirror Biome's recommended set. Existing violations are suppressed in-code.
     "no-unused-vars": [
       "warn",
-      { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
+      {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrors: "none",
+      },
     ],
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",

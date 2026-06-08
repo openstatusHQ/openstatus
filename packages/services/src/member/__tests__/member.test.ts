@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
 

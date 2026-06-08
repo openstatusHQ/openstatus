@@ -84,7 +84,8 @@ async function enrichIncidentsBatch(
 
   return rows.map((r) => ({
     ...r,
-    monitor: r.monitorId != null ? monitorById.get(r.monitorId) ?? null : null,
+    monitor:
+      r.monitorId != null ? (monitorById.get(r.monitorId) ?? null) : null,
   }));
 }
 

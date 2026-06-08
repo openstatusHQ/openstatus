@@ -1,6 +1,7 @@
 import { COLORS, COLOR_DECIMALS } from "@openstatus/notification-base";
 import { assertSafeUrl } from "@openstatus/utils";
 import { z } from "zod";
+
 import type { PageUpdate, Subscription } from "../types";
 
 export type WebhookFlavor = "slack" | "discord" | "generic";

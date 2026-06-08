@@ -1,10 +1,10 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
-
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
+import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
+
 import { signInWithResendAction } from "./actions";
 import { LoginButton } from "./login-button";
 

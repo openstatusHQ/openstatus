@@ -1,7 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+
+import { cn } from "@/lib/utils";
+
 import type { TocItem } from "./toc";
 
 function useActiveHeading(items: TocItem[]) {
@@ -52,14 +54,14 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
 
   return (
     <nav aria-label="Table of contents" className="text-sm">
-      <p className="py-2 font-medium font-mono text-foreground">On this page</p>
+      <p className="text-foreground py-2 font-mono font-medium">On this page</p>
       <ul>
         {items.map((item) => (
           <li key={item.slug}>
             <a
               href={`#${item.slug}`}
               className={cn(
-                "ease block py-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none",
+                "ease text-muted-foreground hover:bg-muted hover:text-foreground block py-2 transition-colors duration-150 motion-reduce:transition-none",
                 item.depth === 2 ? "pl-2" : "pl-4",
                 active === item.slug && "bg-muted text-foreground",
               )}

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import { IncidentioFetcher } from "../../src/fetchers/incidentio";
 import type { StatusFetcher, StatusPageEntry } from "../../src/types";

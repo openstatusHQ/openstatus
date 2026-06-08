@@ -1,17 +1,19 @@
 "use client";
 
-import { TableCellBadge } from "@/components/data-table/table-cell-badge";
-import { TableCellDate } from "@/components/data-table/table-cell-date";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { colors } from "@/data/status-report-updates.client";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+
+import { TableCellBadge } from "@/components/data-table/table-cell-badge";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { colors } from "@/data/status-report-updates.client";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];

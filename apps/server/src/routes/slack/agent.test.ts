@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { buildSystemPrompt } from "./agent";
 
 describe("buildSystemPrompt", () => {

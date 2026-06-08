@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Google Chat Notifications", () => {

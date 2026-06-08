@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  // XAxis,
-  YAxis,
-} from "recharts";
-
-import { regions } from "@/data/regions";
-import { formatMilliseconds } from "@/lib/formatter";
 import type { MonitorRegion } from "@openstatus/db/src/schema";
 import {
   type ChartConfig,
@@ -22,6 +11,18 @@ import {
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  // XAxis,
+  YAxis,
+} from "recharts";
+
+import { regions } from "@/data/regions";
+import { formatMilliseconds } from "@/lib/formatter";
+
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 

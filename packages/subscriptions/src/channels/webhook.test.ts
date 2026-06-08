@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import type { PageUpdate, Subscription } from "../types";
 import {
   buildGenericPayload,

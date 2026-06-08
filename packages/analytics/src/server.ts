@@ -1,4 +1,5 @@
 import { OpenPanel, type TrackProperties } from "@openpanel/sdk";
+
 import { env } from "../env";
 import type { EventProps } from "./events";
 

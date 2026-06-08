@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
+
 import { Cause, Effect, Exit, Option } from "effect";
 import { z } from "zod";
+
 import { FetchError, fetchJson, fetchText } from "../src/fetch";
 
 const TEST_URL = "https://api.example.com/status";

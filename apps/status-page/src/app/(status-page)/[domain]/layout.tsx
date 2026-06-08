@@ -1,3 +1,9 @@
+import { pageConfigurationSchema } from "@openstatus/db/src/schema";
+import { generateThemeStyles } from "@openstatus/theme-store";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
 import { PasswordWrapper } from "@/components/password-wrapper";
 import {
@@ -7,11 +13,6 @@ import {
 import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import { pageConfigurationSchema } from "@openstatus/db/src/schema";
-import { generateThemeStyles } from "@openstatus/theme-store";
-import { Toaster } from "@openstatus/ui/components/ui/sonner";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 // Canonical schema — guarantees concrete enum output (never null/undefined).
 

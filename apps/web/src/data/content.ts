@@ -1,3 +1,5 @@
+import type { Region } from "@openstatus/regions";
+
 import {
   getBlogPosts,
   getComparePages,
@@ -6,7 +8,6 @@ import {
   getToolsPages,
   getUseCasePages,
 } from "@/content/utils";
-import type { Region } from "@openstatus/regions";
 
 const products = getProductPages();
 

@@ -1,15 +1,5 @@
 "use client";
 
-import { IconCloudProvider } from "@/components/icon-cloud-provider";
-import {
-  type Timing,
-  is32CharHex,
-  latencyFormatter,
-  regionCheckerSchema,
-  regionFormatter,
-} from "@/lib/checker/utils";
-import { toast } from "@/lib/toast";
-import { cn, notEmpty } from "@/lib/utils";
 import {
   AVAILABLE_REGIONS,
   type Region,
@@ -34,6 +24,18 @@ import {
   useState,
   useTransition,
 } from "react";
+
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
+import {
+  type Timing,
+  is32CharHex,
+  latencyFormatter,
+  regionCheckerSchema,
+  regionFormatter,
+} from "@/lib/checker/utils";
+import { toast } from "@/lib/toast";
+import { cn, notEmpty } from "@/lib/utils";
+
 import { searchParamsParsers } from "./search-params";
 import { handleExportCSV } from "./utils";
 
@@ -319,11 +321,11 @@ export function ResultTable() {
               <td>
                 <IconCloudProvider
                   provider="globe"
-                  className="size-4 text-muted-foreground"
+                  className="text-muted-foreground size-4"
                 />
               </td>
               <td>
-                <div className="size-4 bg-muted-foreground" />
+                <div className="bg-muted-foreground size-4" />
               </td>
               <td>
                 <br />
@@ -414,7 +416,7 @@ export function DetailsButtonLink() {
     >
       <Link
         href={`/play/checker/${id}`}
-        className="no-underline! w-full text-background!"
+        className="text-background! w-full no-underline!"
       >
         Response details
       </Link>

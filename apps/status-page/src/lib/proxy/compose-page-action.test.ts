@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+
 import type { Page } from "@openstatus/db/src/schema";
+
 import type { ResolvedRoute } from "../resolve-route";
 import { type ComposeInput, composePageAction } from "./compose-page-action";
 

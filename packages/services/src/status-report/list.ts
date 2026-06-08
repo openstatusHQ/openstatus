@@ -156,7 +156,7 @@ async function enrichReportsBatch(
       updates: updatesByReport.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
-      page: r.pageId != null ? pageById.get(r.pageId) ?? null : null,
+      page: r.pageId != null ? (pageById.get(r.pageId) ?? null) : null,
     };
   });
 }

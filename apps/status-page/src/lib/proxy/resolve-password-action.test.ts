@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import type { ResolvedRoute } from "../resolve-route";
 import { resolvePasswordAction } from "./resolve-password-action";
 

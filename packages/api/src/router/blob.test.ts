@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+
 import { isSvgFile, sanitizeSvg } from "./blob";
 
 describe("isSvgFile", () => {

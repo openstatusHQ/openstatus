@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { Code, ConnectError } from "@connectrpc/connect";
 
+import { Code, ConnectError } from "@connectrpc/connect";
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
   ForbiddenError,

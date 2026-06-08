@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { isIpAllowed } from "./is-ip-allowed";
 
 describe("isIpAllowed", () => {

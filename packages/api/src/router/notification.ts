@@ -1,6 +1,4 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import {
   discordDataSchema,
   googleChatDataSchema,
@@ -15,16 +13,6 @@ import {
   webhookDataSchema,
   whatsappDataSchema,
 } from "@openstatus/db/src/schema";
-import { NotFoundError } from "@openstatus/services";
-import {
-  NotificationDataInputSchema,
-  createNotification,
-  deleteNotification,
-  listNotifications,
-  updateNotification,
-} from "@openstatus/services/notification";
-
-import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-bird-whatsapp";
 import { sendTestDiscordMessage as sendDiscordTest } from "@openstatus/notification-discord";
@@ -40,8 +28,18 @@ import {
 import { sendTestSlackMessage as sendSlackTest } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
+import { NotFoundError } from "@openstatus/services";
+import {
+  NotificationDataInputSchema,
+  createNotification,
+  deleteNotification,
+  listNotifications,
+  updateNotification,
+} from "@openstatus/services/notification";
 import { redis } from "@openstatus/upstash";
+import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import {

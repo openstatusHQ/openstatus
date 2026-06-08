@@ -1,11 +1,13 @@
-import { Link } from "@/components/common/link";
-import { Note } from "@/components/common/note";
-import { FormCardGroup } from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
+import { FormCardGroup } from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
@@ -199,7 +201,7 @@ export function FormStatusPageUpdate() {
             authEmailDomains: values.authEmailDomains,
             allowedIpRanges:
               values.accessType === "ip-restriction"
-                ? values.allowedIpRanges ?? null
+                ? (values.allowedIpRanges ?? null)
                 : null,
             allowIndex: values.allowIndex,
           });

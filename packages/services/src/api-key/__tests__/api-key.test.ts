@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, test } from "bun:test";
+
 import { eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
 

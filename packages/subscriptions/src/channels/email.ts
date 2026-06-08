@@ -1,5 +1,6 @@
 import { EmailClient } from "@openstatus/emails";
 import { z } from "zod";
+
 import type { PageUpdate, Subscription } from "../types";
 
 let emailClient: EmailClient | null = null;

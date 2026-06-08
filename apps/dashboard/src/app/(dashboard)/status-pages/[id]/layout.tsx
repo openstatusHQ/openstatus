@@ -4,13 +4,13 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
-
 import {
   HydrateClient,
   fetchQueryOrNotFound,
   getQueryClient,
   trpc,
 } from "@/lib/trpc/server";
+
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 import { Tabs } from "./tabs";

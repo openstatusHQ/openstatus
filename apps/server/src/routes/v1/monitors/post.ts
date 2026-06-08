@@ -1,13 +1,12 @@
 import { createRoute, z } from "@hono/zod-openapi";
-
 import { Events } from "@openstatus/analytics";
+import { serialize } from "@openstatus/assertions";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { serialize } from "@openstatus/assertions";
-
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
+
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
 import { getAssertions } from "./utils";

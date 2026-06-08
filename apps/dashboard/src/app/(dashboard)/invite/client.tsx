@@ -1,5 +1,12 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import { useQueryStates } from "nuqs";
+import { useTransition } from "react";
+import { toast } from "sonner";
+
 import {
   Section,
   SectionDescription,
@@ -8,12 +15,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import { useQueryStates } from "nuqs";
-import { useTransition } from "react";
-import { toast } from "sonner";
+
 import { searchParamsParsers } from "./search-params";
 
 export function Client() {

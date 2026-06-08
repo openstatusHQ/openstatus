@@ -1,3 +1,8 @@
+import { Events, setupAnalytics } from "@openstatus/analytics";
+import { assertSafeUrlSync } from "@openstatus/utils";
+import { after } from "next/server";
+import { z } from "zod";
+
 import {
   type HealthCheckReport,
   normalizeUrlForStorage,
@@ -6,10 +11,6 @@ import {
   toPersistedReport,
 } from "@/lib/mcp/health-check";
 import { getClientIP, ratelimit } from "@/lib/ratelimit";
-import { Events, setupAnalytics } from "@openstatus/analytics";
-import { assertSafeUrlSync } from "@openstatus/utils";
-import { after } from "next/server";
-import { z } from "zod";
 
 export const runtime = "edge";
 // Worst-case 16s of step time + metadata fetch + analytics; give some slack.

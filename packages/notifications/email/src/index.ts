@@ -3,6 +3,7 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { EmailClient } from "@openstatus/emails/src/client";
 import type { NotificationContext } from "@openstatus/notification-base";
 import { regionDict } from "@openstatus/regions";
+
 import { env } from "../env";
 
 export const sendAlert = async ({

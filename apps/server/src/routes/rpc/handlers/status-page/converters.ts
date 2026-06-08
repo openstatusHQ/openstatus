@@ -365,7 +365,9 @@ export function dbSubscriberToProto(
     name: subscriber.name ?? undefined,
     channelType: subscriber.channelType,
     webhookUrl: webhookUrlForProto(subscriber.source, subscriber.webhookUrl),
-    channelConfig: isVendor ? subscriber.channelConfig ?? undefined : undefined,
+    channelConfig: isVendor
+      ? (subscriber.channelConfig ?? undefined)
+      : undefined,
     componentIds: (subscriber.componentIds ?? []).map(String),
   };
 }

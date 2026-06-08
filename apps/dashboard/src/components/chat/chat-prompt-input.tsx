@@ -59,7 +59,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
   }, [isGenerating, onStop]);
 
   return (
-    <div className="sticky bottom-0 z-10 border-t bg-background px-3 pt-3 pb-2">
+    <div className="bg-background sticky bottom-0 z-10 border-t px-3 pt-3 pb-2">
       <div className="mx-auto flex max-w-3xl flex-col gap-1">
         <form onSubmit={handleSubmit}>
           <InputGroup>
@@ -95,7 +95,7 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
             </InputGroupAddon>
           </InputGroup>
         </form>
-        <p className="text-center text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-center text-xs">
           Powered by Claude. AI responses may contain errors, double-check
           results.
         </p>

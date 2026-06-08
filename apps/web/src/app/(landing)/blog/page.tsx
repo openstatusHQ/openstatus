@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
 import { getBlogPosts } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
 import {
@@ -12,8 +15,7 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import Link from "next/link";
+
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 

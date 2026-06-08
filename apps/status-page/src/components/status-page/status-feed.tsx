@@ -1,11 +1,13 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import { ProcessMessage } from "@/components/content/process-message";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { StatusBlankAction } from "@openstatus/ui/components/blocks/status-blank";
 import { StatusFeed as BlockStatusFeed } from "@openstatus/ui/components/blocks/status-feed";
 import { useExtracted } from "next-intl";
+
+import { Link } from "@/components/common/link";
+import { ProcessMessage } from "@/components/content/process-message";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+
 import { StatusBlankLink } from "./status-blank";
 
 const renderMarkdownMessage = (message: string) => (

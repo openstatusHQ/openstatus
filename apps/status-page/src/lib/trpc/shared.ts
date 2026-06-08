@@ -1,8 +1,7 @@
+import type { AppRouter } from "@openstatus/api";
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink } from "@trpc/client";
 import type { TRPCError } from "@trpc/server";
-
-import type { AppRouter } from "@openstatus/api";
 import superjson from "superjson";
 
 /**

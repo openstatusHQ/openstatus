@@ -1,10 +1,11 @@
 "use client";
 
-import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
 import { CircleCheck, Globe, X } from "lucide-react";
+
+import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 

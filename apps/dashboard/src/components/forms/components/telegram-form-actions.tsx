@@ -1,12 +1,14 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
+
+import { useTRPC } from "@/lib/trpc/client";
+
 import type { FormValues } from "../notifications/form-telegram";
 
 interface TelegramFormActionsProps {

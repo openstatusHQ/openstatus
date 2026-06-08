@@ -1,3 +1,4 @@
+import { Events } from "@openstatus/analytics";
 import {
   headerAssertion,
   jsonBodyAssertion,
@@ -31,7 +32,6 @@ import {
 } from "@openstatus/services/monitor";
 import { z } from "zod";
 
-import { Events } from "@openstatus/analytics";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { testDns, testHttp, testTcp } from "./checker";

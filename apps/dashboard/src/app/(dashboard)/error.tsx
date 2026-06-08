@@ -1,10 +1,11 @@
 "use client";
 
-import { Code } from "@/components/common/code";
 import { Button } from "@openstatus/ui/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { useEffect } from "react";
+
+import { Code } from "@/components/common/code";
 
 export default function ErrorPage({
   error,
@@ -19,11 +20,11 @@ export default function ErrorPage({
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 md:p-8">
-      <div className="mx-auto w-full max-w-md rounded-lg border border-border bg-sidebar">
+      <div className="border-border bg-sidebar mx-auto w-full max-w-md rounded-lg border">
         <div className="flex flex-col gap-6 p-6 sm:p-8">
           <div className="flex flex-col gap-1 text-center">
-            <p className="font-mono text-destructive">500 Error</p>
-            <h2 className="font-cal text-2xl text-foreground">
+            <p className="text-destructive font-mono">500 Error</p>
+            <h2 className="font-cal text-foreground text-2xl">
               Something went wrong
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -38,7 +39,7 @@ export default function ErrorPage({
             </p>
           </div>
           {process.env.NODE_ENV === "development" && (
-            <Code className="max-h-40 overflow-auto rounded-md border border-border bg-background text-destructive">
+            <Code className="border-border bg-background text-destructive max-h-40 overflow-auto rounded-md border">
               {error.message}
               {error.stack && `\n\n${error.stack}`}
             </Code>

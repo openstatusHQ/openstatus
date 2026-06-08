@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "effect": "catalog:",
-    "zod": "catalog:",
-    "node-html-parser": "catalog:"
+    "node-html-parser": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/bun": "latest"

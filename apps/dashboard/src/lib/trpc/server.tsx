@@ -1,7 +1,5 @@
 import "server-only";
-
 import type { AppRouter } from "@openstatus/api";
-
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient, loggerLink } from "@trpc/client";
@@ -13,6 +11,7 @@ import {
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+
 import { makeQueryClient } from "./query-client";
 import { endingLink } from "./shared";
 

@@ -1,6 +1,14 @@
 "use client";
 
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@openstatus/ui/components/ui/table";
+import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
@@ -18,16 +26,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui/components/ui/table";
 import { Fragment } from "react";
+
 import type { DataTableActionBarProps } from "./data-table-action-bar";
 import type { DataTablePaginationProps } from "./data-table-pagination";
 import type { DataTableToolbarProps } from "./data-table-toolbar";

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { components } from "@/content/mdx";
 import { getCustomerPages } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
@@ -13,7 +15,7 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,

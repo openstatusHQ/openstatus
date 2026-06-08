@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  StatusBlankContainer,
-  StatusBlankDescription,
-  StatusBlankTitle,
-} from "@/components/status-page/status-blank";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { RouterOutputs } from "@openstatus/api";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -23,6 +18,12 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  StatusBlankContainer,
+  StatusBlankDescription,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 

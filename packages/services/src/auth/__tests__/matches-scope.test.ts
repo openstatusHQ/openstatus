@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import type { Scope } from "@openstatus/db/src/schema";
 
 import { matchesScope } from "../matches-scope";

@@ -1,11 +1,5 @@
 "use client";
 
-import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
-import { HoverCardTiming } from "@/components/common/hover-card-timing";
-import { TableCellDate } from "@/components/data-table/table-cell-date";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { TableCellRegion } from "@/components/data-table/table-cell-region";
-import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
 import {
@@ -16,6 +10,13 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";
+
+import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { HoverCardTiming } from "@/components/common/hover-card-timing";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { TableCellRegion } from "@/components/data-table/table-cell-region";
+import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 
 type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
 
@@ -32,13 +33,13 @@ export function getColumns(
       cell: ({ row }) => {
         const value = row.getValue("requestStatus");
         if (value === "error") {
-          return <div className="h-2.5 w-2.5 rounded-[2px] bg-destructive" />;
+          return <div className="bg-destructive h-2.5 w-2.5 rounded-[2px]" />;
         }
         if (value === "degraded") {
-          return <div className="h-2.5 w-2.5 rounded-[2px] bg-warning" />;
+          return <div className="bg-warning h-2.5 w-2.5 rounded-[2px]" />;
         }
         if (value === "success") {
-          return <div className="h-2.5 w-2.5 rounded-[2px] bg-success" />;
+          return <div className="bg-success h-2.5 w-2.5 rounded-[2px]" />;
         }
         return <div className="text-muted-foreground">-</div>;
       },
@@ -54,7 +55,7 @@ export function getColumns(
           <HoverCardTimestamp date={value}>
             <TableCellDate
               value={value}
-              className="font-mono text-foreground"
+              className="text-foreground font-mono"
             />
           </HoverCardTimestamp>
         );
@@ -127,7 +128,7 @@ export function getColumns(
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Icon className="size-3 text-muted-foreground" />
+                  <Icon className="text-muted-foreground size-3" />
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   <p>{label}</p>

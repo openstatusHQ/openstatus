@@ -8,6 +8,7 @@
  */
 
 import type { Page } from "@openstatus/db/src/schema";
+
 import type { ResolvedRoute } from "../resolve-route";
 
 export type ActionType = "rewrite" | "redirect" | "passthrough";

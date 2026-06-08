@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+
 import {
   MOCK_COMPONENTS,
   MOCK_INCIDENTS,

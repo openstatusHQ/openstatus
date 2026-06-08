@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { monitor, pageComponent } from "@openstatus/db/src/schema";
 

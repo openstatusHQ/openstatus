@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useState } from "react";
+
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
   FormSheetContent,
@@ -15,9 +19,6 @@ import {
   type FormValues,
 } from "@/components/forms/status-report/form";
 import type { CheckboxTreeItem } from "@/components/ui/checkbox-tree";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { useState } from "react";
 
 export function FormSheetStatusReport({
   children,
@@ -45,7 +46,7 @@ export function FormSheetStatusReport({
         </FormSheetHeader>
         {warning ? (
           <>
-            <p className="px-4 py-4 text-sm text-warning">{warning}</p>
+            <p className="text-warning px-4 py-4 text-sm">{warning}</p>
             <Separator />
           </>
         ) : null}

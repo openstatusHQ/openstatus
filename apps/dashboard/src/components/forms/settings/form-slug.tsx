@@ -1,5 +1,10 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { Check, Copy } from "lucide-react";
+import { z } from "zod";
+
 import {
   FormCard,
   FormCardContent,
@@ -9,12 +14,7 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@openstatus/ui/components/ui/button";
-
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
-import { z } from "zod";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -59,7 +59,7 @@ export function FormSlug({ defaultValues }: { defaultValues?: FormValues }) {
             <Button
               variant="ghost"
               size="sm"
-              className="px-0 py-0 text-accent-foreground hover:bg-transparent dark:hover:bg-transparent"
+              className="text-accent-foreground px-0 py-0 hover:bg-transparent dark:hover:bg-transparent"
             >
               Let us know
             </Button>
