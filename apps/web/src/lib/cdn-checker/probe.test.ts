@@ -107,7 +107,10 @@ describe("probeCdnRegion abort propagation", () => {
       );
     }) as typeof fetch;
 
-    const result = await probeCdnRegion({ url: "https://example.com", region: "fra" });
+    const result = await probeCdnRegion({
+      url: "https://example.com",
+      region: "fra",
+    });
     expect(result.state).toBe("success");
     expect(received).toBeInstanceOf(AbortSignal);
   });
@@ -127,6 +130,10 @@ describe("probeCdnRegion abort propagation", () => {
       region: "fra",
       timeoutMs: 20,
     });
-    expect(result).toEqual({ state: "error", region: "fra", message: "Timeout" });
+    expect(result).toEqual({
+      state: "error",
+      region: "fra",
+      message: "Timeout",
+    });
   });
 });
