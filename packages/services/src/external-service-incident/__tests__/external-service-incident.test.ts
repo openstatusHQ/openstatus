@@ -189,6 +189,62 @@ describe("upsertExternalIncidentsForService", () => {
     );
   });
 
+  test("idle re-upsert ignores sub-second precision lost on storage round-trip", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-subsec` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+    const incident: UpsertExternalIncidentInput = {
+      providerIncidentId: "subsec-1",
+      name: "Sub-second outage",
+      status: "resolved",
+      impact: "critical",
+      shortlink: "https://stspg.io/subsec",
+      startedAt: new Date("2024-06-01T11:55:00.569Z"),
+      createdAt: new Date("2024-06-01T11:56:00.123Z"),
+      resolvedAt: new Date("2024-06-01T12:30:00.611Z"),
+      affectedComponentIds: ["cmp-a"],
+      raw: { id: "subsec-1" },
+    };
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      incidents: [incident],
+    });
+
+    const before = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "subsec-1"),
+        ),
+      )
+      .all();
+
+    const laterDate = new Date("2024-06-01T13:00:00.000Z");
+    const result = await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: laterDate,
+      incidents: [incident],
+    });
+    expect(result.upserted).toBe(0);
+
+    const after = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "subsec-1"),
+        ),
+      )
+      .all();
+    expect(after[0]?.updatedAt.getTime()).toBe(
+      before[0]?.updatedAt.getTime() ?? -1,
+    );
+  });
+
   test("rawPayload co-rewrites when a scalar field changes", async () => {
     const serviceId = await seedService({ slug: `${TEST_PREFIX}-corew` });
     const baseDate = new Date("2024-06-01T12:00:00.000Z");
