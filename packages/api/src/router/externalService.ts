@@ -14,12 +14,7 @@ import {
   listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
 } from "@openstatus/services/external-service-incident";
-import { OSTinybird } from "@openstatus/tinybird";
-
-import { env } from "../env";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const DEFAULT_HISTORY_DAYS = 45;
 const INCIDENTS_LIMIT = 5;
@@ -112,7 +107,7 @@ const componentDetailSchema = z.object({
       groupName: z.string().nullable(),
       indicator: z.string(),
       status: z.string(),
-      lastSeenAt: z.number(),
+      lastFetchedAt: z.number(),
       stale: z.boolean(),
     })
     .nullable(),
@@ -150,10 +145,10 @@ function toIncidentDTO(i: ExternalIncidentListItem) {
 }
 
 export const externalServiceRouter = createTRPCRouter({
-  grid: publicProcedure.output(z.array(gridItemSchema)).query(async () => {
+  grid: publicProcedure.output(z.array(gridItemSchema)).query(async ({ ctx }) => {
     const [services, latestRows] = await Promise.all([
       listExternalServices({}),
-      safeData(tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
+      safeData(ctx.tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
     ]);
 
     const byId = new Map<string, (typeof latestRows)[number]>();
@@ -187,7 +182,7 @@ export const externalServiceRouter = createTRPCRouter({
         history: z.array(historyRowSchema),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const service = await getExternalServiceBySlug({ slug: input.slug });
       if (!service) {
         throw new TRPCError({
@@ -202,11 +197,11 @@ export const externalServiceRouter = createTRPCRouter({
 
       const [latestRows, historyRows] = await Promise.all([
         safeData(
-          tb.externalStatusLatest({ ids: slugChain }),
+          ctx.tb.externalStatusLatest({ ids: slugChain }),
           "externalStatusLatest",
         ),
         safeData(
-          tb.externalStatusHistory({ ids: slugChain, days }),
+          ctx.tb.externalStatusHistory({ ids: slugChain, days }),
           "externalStatusHistory",
         ),
       ]);
@@ -285,9 +280,10 @@ export const externalServiceRouter = createTRPCRouter({
         components: z.array(componentItemSchema),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const { supported, components } = await listExternalComponentsBySlug({
+          ctx: { tb: ctx.tb },
           slug: input.slug,
         });
         if (!supported || components.length === 0) {
@@ -297,7 +293,7 @@ export const externalServiceRouter = createTRPCRouter({
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const componentIds = components.map((c) => String(c.id));
         const historyRows = await safeData(
-          tb.externalStatusComponentHistory({
+          ctx.tb.externalStatusComponentHistory({
             component_ids: componentIds,
             days,
           }),
@@ -345,7 +341,7 @@ export const externalServiceRouter = createTRPCRouter({
       }),
     )
     .output(componentDetailSchema)
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const empty = {
         found: false as const,
         service: null,
@@ -355,6 +351,7 @@ export const externalServiceRouter = createTRPCRouter({
       };
       try {
         const { service, component } = await getExternalComponentBySlug({
+          ctx: { tb: ctx.tb },
           serviceSlug: input.serviceSlug,
           componentSlug: input.componentSlug,
         });
@@ -363,7 +360,7 @@ export const externalServiceRouter = createTRPCRouter({
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const [historyRows, incidents] = await Promise.all([
           safeData(
-            tb.externalStatusComponentHistory({
+            ctx.tb.externalStatusComponentHistory({
               component_ids: [String(component.id)],
               days,
             }),
@@ -391,7 +388,7 @@ export const externalServiceRouter = createTRPCRouter({
             groupName: component.groupName,
             indicator: component.indicator,
             status: component.status,
-            lastSeenAt: component.lastSeenAt.getTime(),
+            lastFetchedAt: component.lastFetchedAt ?? 0,
             stale: component.stale,
           },
           history: historyRows.map(toHistoryRow),

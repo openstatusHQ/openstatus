@@ -1,9 +1,13 @@
-import { and, asc, db as defaultDb, eq, gte, or, sql } from "@openstatus/db";
+import { and, asc, db as defaultDb, eq, or, sql } from "@openstatus/db";
 import type { ApiConfigType, ExternalService } from "@openstatus/db/src/schema";
 import { externalServiceComponent } from "@openstatus/db/src/schema";
 
 import { getExternalServiceBySlug } from "../external-service";
-import type { GlobalReadContext } from "../external-service/internal";
+import {
+  type ExternalComponentLatestReader,
+  type GlobalReadContext,
+  getReadTb,
+} from "../external-service/internal";
 
 export type ExternalComponentListItem = {
   id: number;
@@ -17,12 +21,14 @@ export type ExternalComponentListItem = {
   indicator: string;
   status: string;
   firstSeenAt: Date;
-  lastSeenAt: Date;
+  lastFetchedAt: number | null;
 };
 
 // A component absent from upstream for longer than this is hidden from the page
 // without being deleted (ADR-0007): the next tick that re-sees it brings it back.
 const COMPONENT_STALE_MS = 24 * 60 * 60 * 1000;
+
+const TB_BATCH_SIZE = 100;
 
 // must stay in sync with fetchers that implement `fetchComponents` in @openstatus/status-fetcher
 export const COMPONENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
@@ -34,6 +40,37 @@ export function supportsComponents(type: ApiConfigType | undefined): boolean {
   return type !== undefined && COMPONENT_SUPPORTED_API_CONFIG_TYPES.has(type);
 }
 
+type LatestFetchedResult = {
+  errored: boolean;
+  byId: Map<string, number>;
+};
+
+async function fetchLatestByIds(
+  tb: ExternalComponentLatestReader,
+  ids: string[],
+): Promise<LatestFetchedResult> {
+  if (ids.length === 0) return { errored: false, byId: new Map() };
+  const byId = new Map<string, number>();
+  try {
+    for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
+      const chunk = ids.slice(i, i + TB_BATCH_SIZE);
+      const { data } = await tb.externalStatusComponentLatest({
+        component_ids: chunk,
+      });
+      for (const row of data) {
+        byId.set(row.component_id, row.last_fetched_at);
+      }
+    }
+    return { errored: false, byId };
+  } catch (err) {
+    console.warn(
+      "[external-service components] TB latest-fetched lookup failed:",
+      err,
+    );
+    return { errored: true, byId: new Map() };
+  }
+}
+
 export async function listExternalComponentsByServiceId(args: {
   ctx?: GlobalReadContext;
   externalServiceId: number;
@@ -41,9 +78,6 @@ export async function listExternalComponentsByServiceId(args: {
 }): Promise<ExternalComponentListItem[]> {
   const { ctx, externalServiceId } = args;
   const db = ctx?.db ?? defaultDb;
-  const cutoff = new Date(
-    (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS,
-  );
 
   const rows = await db
     .select({
@@ -58,22 +92,34 @@ export async function listExternalComponentsByServiceId(args: {
       indicator: externalServiceComponent.indicator,
       status: externalServiceComponent.status,
       firstSeenAt: externalServiceComponent.firstSeenAt,
-      lastSeenAt: externalServiceComponent.lastSeenAt,
     })
     .from(externalServiceComponent)
-    .where(
-      and(
-        eq(externalServiceComponent.externalServiceId, externalServiceId),
-        gte(externalServiceComponent.lastSeenAt, cutoff),
-      ),
-    )
+    .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
     .orderBy(
       asc(externalServiceComponent.position),
       asc(externalServiceComponent.name),
     )
     .all();
 
-  return rows;
+  if (rows.length === 0) return [];
+
+  const tb = getReadTb(ctx);
+  const { errored, byId } = await fetchLatestByIds(
+    tb,
+    rows.map((r) => String(r.id)),
+  );
+
+  const cutoff = (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS;
+
+  const out: ExternalComponentListItem[] = [];
+  for (const row of rows) {
+    const lastFetchedAt = byId.get(String(row.id)) ?? null;
+    if (!errored && (lastFetchedAt === null || lastFetchedAt < cutoff)) {
+      continue;
+    }
+    out.push({ ...row, lastFetchedAt });
+  }
+  return out;
 }
 
 export type ListComponentsBySlugResult = {
@@ -155,7 +201,6 @@ export async function getExternalComponentBySlug(args: {
       indicator: externalServiceComponent.indicator,
       status: externalServiceComponent.status,
       firstSeenAt: externalServiceComponent.firstSeenAt,
-      lastSeenAt: externalServiceComponent.lastSeenAt,
     })
     .from(externalServiceComponent)
     .where(
@@ -173,11 +218,14 @@ export async function getExternalComponentBySlug(args: {
   const row = rows[0];
   if (!row) return { service, component: null };
 
-  const cutoff = new Date(
-    (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS,
-  );
+  const tb = getReadTb(ctx);
+  const { errored, byId } = await fetchLatestByIds(tb, [String(row.id)]);
+  const lastFetchedAt = byId.get(String(row.id)) ?? null;
+  const cutoff = (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS;
+  const stale = !errored && (lastFetchedAt === null || lastFetchedAt < cutoff);
+
   return {
     service,
-    component: { ...row, stale: row.lastSeenAt < cutoff },
+    component: { ...row, lastFetchedAt, stale },
   };
 }

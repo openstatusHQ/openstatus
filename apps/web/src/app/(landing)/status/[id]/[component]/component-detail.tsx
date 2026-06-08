@@ -188,9 +188,9 @@ export function ComponentDetail({
           status={component.status}
           statusMessage={component.description ?? undefined}
         />
-        {component.lastSeenAt > 0 ? (
+        {component.lastFetchedAt > 0 ? (
           <span className="text-muted-foreground text-sm">
-            Last updated {formatRelative(component.lastSeenAt)}
+            Last updated {formatRelative(component.lastFetchedAt)}
             {component.stale ? (
               <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
                 (stale)

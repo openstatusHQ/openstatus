@@ -5,4 +5,10 @@ export {
   listExternalServices,
 } from "./list";
 export { type SlugMap, listExternalServiceSlugs } from "./list-slugs";
-export { assertSlugAvailable } from "./internal";
+export {
+  type ExternalComponentLatestReader,
+  type ExternalComponentLatestRow,
+  type GlobalReadContext,
+  assertSlugAvailable,
+  getReadTb,
+} from "./internal";
