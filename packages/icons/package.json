@@ -5,10 +5,9 @@
   "types": "./src/index.tsx",
   "license": "MIT",
   "scripts": {
-    "lint": "biome lint \"**/*.ts*\""
+    "lint": "oxlint"
   },
   "devDependencies": {
-    "@biomejs/biome": "catalog:",
     "@openstatus/tsconfig": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
