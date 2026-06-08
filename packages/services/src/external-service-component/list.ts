@@ -2,12 +2,9 @@ import { and, asc, db as defaultDb, eq, or, sql } from "@openstatus/db";
 import type { ApiConfigType, ExternalService } from "@openstatus/db/src/schema";
 import { externalServiceComponent } from "@openstatus/db/src/schema";
 
+import { defaultTb } from "../context";
 import { getExternalServiceBySlug } from "../external-service";
-import {
-  type ExternalComponentLatestReader,
-  type GlobalReadContext,
-  getReadTb,
-} from "../external-service/internal";
+import type { GlobalReadContext } from "../external-service/internal";
 
 export type ExternalComponentListItem = {
   id: number;
@@ -45,16 +42,13 @@ type LatestFetchedResult = {
   byId: Map<string, number>;
 };
 
-async function fetchLatestByIds(
-  tb: ExternalComponentLatestReader,
-  ids: string[],
-): Promise<LatestFetchedResult> {
+async function fetchLatestByIds(ids: string[]): Promise<LatestFetchedResult> {
   if (ids.length === 0) return { errored: false, byId: new Map() };
   const byId = new Map<string, number>();
   try {
     for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
       const chunk = ids.slice(i, i + TB_BATCH_SIZE);
-      const { data } = await tb.externalStatusComponentLatest({
+      const { data } = await defaultTb.externalStatusComponentLatest({
         component_ids: chunk,
       });
       for (const row of data) {
@@ -103,9 +97,7 @@ export async function listExternalComponentsByServiceId(args: {
 
   if (rows.length === 0) return [];
 
-  const tb = getReadTb(ctx);
   const { errored, byId } = await fetchLatestByIds(
-    tb,
     rows.map((r) => String(r.id)),
   );
 
@@ -218,8 +210,7 @@ export async function getExternalComponentBySlug(args: {
   const row = rows[0];
   if (!row) return { service, component: null };
 
-  const tb = getReadTb(ctx);
-  const { errored, byId } = await fetchLatestByIds(tb, [String(row.id)]);
+  const { errored, byId } = await fetchLatestByIds([String(row.id)]);
   const lastFetchedAt = byId.get(String(row.id)) ?? null;
   const cutoff = (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS;
   const stale = !errored && (lastFetchedAt === null || lastFetchedAt < cutoff);

@@ -14,7 +14,12 @@ import {
   listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
 } from "@openstatus/services/external-service-incident";
+import { OSTinybird } from "@openstatus/tinybird";
+
+import { env } from "../env";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const DEFAULT_HISTORY_DAYS = 45;
 const INCIDENTS_LIMIT = 5;
@@ -145,33 +150,28 @@ function toIncidentDTO(i: ExternalIncidentListItem) {
 }
 
 export const externalServiceRouter = createTRPCRouter({
-  grid: publicProcedure
-    .output(z.array(gridItemSchema))
-    .query(async ({ ctx }) => {
-      const [services, latestRows] = await Promise.all([
-        listExternalServices({}),
-        safeData(
-          ctx.tb.externalStatusLatest({}),
-          "externalStatusLatest (grid)",
-        ),
-      ]);
+  grid: publicProcedure.output(z.array(gridItemSchema)).query(async () => {
+    const [services, latestRows] = await Promise.all([
+      listExternalServices({}),
+      safeData(tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
+    ]);
 
-      const byId = new Map<string, (typeof latestRows)[number]>();
-      for (const row of latestRows) byId.set(row.id, row);
+    const byId = new Map<string, (typeof latestRows)[number]>();
+    for (const row of latestRows) byId.set(row.id, row);
 
-      return services.map((s) => {
-        const snap = byId.get(s.slug);
-        return {
-          slug: s.slug,
-          name: s.name,
-          url: s.url,
-          aliases: Array.isArray(s.aliases) ? s.aliases : [],
-          indicator: snap?.indicator ?? "",
-          status: snap?.status ?? "",
-          statusMessage: snap?.status_message ?? "Status unavailable",
-        };
-      });
-    }),
+    return services.map((s) => {
+      const snap = byId.get(s.slug);
+      return {
+        slug: s.slug,
+        name: s.name,
+        url: s.url,
+        aliases: Array.isArray(s.aliases) ? s.aliases : [],
+        indicator: snap?.indicator ?? "",
+        status: snap?.status ?? "",
+        statusMessage: snap?.status_message ?? "Status unavailable",
+      };
+    });
+  }),
 
   detail: publicProcedure
     .input(
@@ -187,7 +187,7 @@ export const externalServiceRouter = createTRPCRouter({
         history: z.array(historyRowSchema),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const service = await getExternalServiceBySlug({ slug: input.slug });
       if (!service) {
         throw new TRPCError({
@@ -202,11 +202,11 @@ export const externalServiceRouter = createTRPCRouter({
 
       const [latestRows, historyRows] = await Promise.all([
         safeData(
-          ctx.tb.externalStatusLatest({ ids: slugChain }),
+          tb.externalStatusLatest({ ids: slugChain }),
           "externalStatusLatest",
         ),
         safeData(
-          ctx.tb.externalStatusHistory({ ids: slugChain, days }),
+          tb.externalStatusHistory({ ids: slugChain, days }),
           "externalStatusHistory",
         ),
       ]);
@@ -285,10 +285,9 @@ export const externalServiceRouter = createTRPCRouter({
         components: z.array(componentItemSchema),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       try {
         const { supported, components } = await listExternalComponentsBySlug({
-          ctx: { tb: ctx.tb },
           slug: input.slug,
         });
         if (!supported || components.length === 0) {
@@ -298,7 +297,7 @@ export const externalServiceRouter = createTRPCRouter({
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const componentIds = components.map((c) => String(c.id));
         const historyRows = await safeData(
-          ctx.tb.externalStatusComponentHistory({
+          tb.externalStatusComponentHistory({
             component_ids: componentIds,
             days,
           }),
@@ -346,7 +345,7 @@ export const externalServiceRouter = createTRPCRouter({
       }),
     )
     .output(componentDetailSchema)
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const empty = {
         found: false as const,
         service: null,
@@ -356,7 +355,6 @@ export const externalServiceRouter = createTRPCRouter({
       };
       try {
         const { service, component } = await getExternalComponentBySlug({
-          ctx: { tb: ctx.tb },
           serviceSlug: input.serviceSlug,
           componentSlug: input.componentSlug,
         });
@@ -365,7 +363,7 @@ export const externalServiceRouter = createTRPCRouter({
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const [historyRows, incidents] = await Promise.all([
           safeData(
-            ctx.tb.externalStatusComponentHistory({
+            tb.externalStatusComponentHistory({
               component_ids: [String(component.id)],
               days,
             }),

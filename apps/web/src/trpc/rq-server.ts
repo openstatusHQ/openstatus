@@ -3,7 +3,6 @@ import "server-only";
 import { type AppRouter, appRouter, t } from "@openstatus/api";
 import type { Context } from "@openstatus/api/src/trpc";
 import { db } from "@openstatus/db";
-import { defaultTb } from "@openstatus/services";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import { cache } from "react";
 import { makeQueryClient } from "./query-client";
@@ -13,7 +12,6 @@ const createContextCached = cache(
     return {
       req: undefined,
       db,
-      tb: defaultTb,
       session: null,
     };
   },

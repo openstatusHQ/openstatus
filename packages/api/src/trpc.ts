@@ -11,8 +11,6 @@ import {
 } from "@openstatus/analytics";
 import { db } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
-import { defaultTb } from "@openstatus/services";
-import type { OSTinybird } from "@openstatus/tinybird";
 
 import { resolveActiveWorkspace } from "./auth/resolve-active-workspace";
 
@@ -38,7 +36,6 @@ type CreateContextOptions = {
   workspace?: Workspace | null;
   user?: User | null;
   req?: NextRequest;
-  tb?: OSTinybird;
   metadata?: {
     userAgent?: string;
     location?: string;
@@ -60,11 +57,9 @@ type Meta = {
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
 export const createInnerTRPCContext = (opts: CreateContextOptions) => {
-  const { tb, ...rest } = opts;
   return {
-    ...rest,
+    ...opts,
     db,
-    tb: tb ?? defaultTb,
   };
 };
 

@@ -6,10 +6,6 @@ import {
   externalServiceComponent,
 } from "@openstatus/db/src/schema";
 
-import type {
-  ExternalComponentLatestReader,
-  ExternalComponentLatestRow,
-} from "../../external-service";
 import {
   getExternalComponentBySlug,
   listExternalComponentsBySlug,
@@ -17,26 +13,6 @@ import {
 } from "../index";
 
 const TEST_PREFIX = "svc-extcomponent-test";
-
-// Tests that exercise list/get paths pass this through ctx. By default it
-// returns a fresh `last_fetched_at` so the 24h staleness filter never trips on
-// rows the test just inserted.
-function makeFreshTb(now = Date.now()): ExternalComponentLatestReader {
-  return {
-    externalStatusComponentLatest: async ({
-      component_ids,
-    }: { component_ids: string[] }) => ({
-      data: component_ids.map(
-        (id): ExternalComponentLatestRow => ({
-          component_id: id,
-          indicator: "none",
-          status: "operational",
-          last_fetched_at: now,
-        }),
-      ),
-    }),
-  };
-}
 
 afterEach(async () => {
   const ids = await db
@@ -359,10 +335,7 @@ describe("listExternalComponentsBySlug", () => {
     });
 
     const { service, supported, components } =
-      await listExternalComponentsBySlug({
-        ctx: { tb: makeFreshTb() },
-        slug: `${TEST_PREFIX}-list`,
-      });
+      await listExternalComponentsBySlug({ slug: `${TEST_PREFIX}-list` });
     expect(service).not.toBeNull();
     expect(supported).toBe(true);
     expect(components).toHaveLength(2);
@@ -390,7 +363,6 @@ describe("listExternalComponentsBySlug", () => {
     });
 
     const viaAlias = await listExternalComponentsBySlug({
-      ctx: { tb: makeFreshTb() },
       slug: `${TEST_PREFIX}-aliased`,
     });
     expect(viaAlias.service?.id).toBe(serviceId);
@@ -438,13 +410,11 @@ describe("getExternalComponentBySlug", () => {
     });
 
     const byOriginal = await getExternalComponentBySlug({
-      ctx: { tb: makeFreshTb(new Date("2024-06-01T00:05:00.000Z").getTime()) },
       serviceSlug,
       componentSlug: "frankfurt",
       now: new Date("2024-06-01T00:05:00.000Z"),
     });
     expect(byOriginal.component?.slug).toBe("frankfurt");
-    expect(byOriginal.component?.stale).toBe(false);
 
     // rename → slug becomes eu-central, "frankfurt" preserved as alias
     await upsertExternalComponentsForService({
@@ -462,14 +432,12 @@ describe("getExternalComponentBySlug", () => {
     });
 
     const byCurrent = await getExternalComponentBySlug({
-      ctx: { tb: makeFreshTb() },
       serviceSlug,
       componentSlug: "eu-central",
     });
     expect(byCurrent.component?.slug).toBe("eu-central");
 
     const byAlias = await getExternalComponentBySlug({
-      ctx: { tb: makeFreshTb() },
       serviceSlug,
       componentSlug: "frankfurt",
     });
@@ -480,7 +448,6 @@ describe("getExternalComponentBySlug", () => {
     const serviceSlug = `${TEST_PREFIX}-getmissing`;
     await seedService({ slug: serviceSlug });
     const res = await getExternalComponentBySlug({
-      ctx: { tb: makeFreshTb() },
       serviceSlug,
       componentSlug: "nope",
     });
