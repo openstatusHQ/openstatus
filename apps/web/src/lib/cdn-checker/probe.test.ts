@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import type { RegionCheckerResponse } from "@/lib/checker/utils";
-import { mapCheckToCdnResult } from "./probe";
+import { mapCheckToCdnResult, probeCdnRegion } from "./probe";
 
 const timing = {
   dnsStart: 0,
@@ -80,5 +80,53 @@ describe("mapCheckToCdnResult", () => {
       region: "syd",
       message: "connection refused",
     });
+  });
+});
+
+describe("probeCdnRegion abort propagation", () => {
+  const realFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  test("forwards an abort signal to the underlying fetch", async () => {
+    let received: AbortSignal | undefined;
+    globalThis.fetch = (async (_input: unknown, init?: RequestInit) => {
+      received = init?.signal ?? undefined;
+      return new Response(
+        JSON.stringify({
+          type: "http",
+          state: "success",
+          status: 200,
+          latency: 10,
+          headers: { "Cf-Cache-Status": "HIT", "Cf-Ray": "abc-FRA" },
+          timestamp: 0,
+          timing,
+        }),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+
+    const result = await probeCdnRegion({ url: "https://example.com", region: "fra" });
+    expect(result.state).toBe("success");
+    expect(received).toBeInstanceOf(AbortSignal);
+  });
+
+  test("aborts the fetch when the timeout elapses and returns a Timeout row", async () => {
+    globalThis.fetch = ((_input: unknown, init?: RequestInit) => {
+      // resolve only when the signal aborts, mirroring a hung request
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () =>
+          reject(init.signal?.reason ?? new Error("aborted")),
+        );
+      });
+    }) as typeof fetch;
+
+    const result = await probeCdnRegion({
+      url: "https://example.com",
+      region: "fra",
+      timeoutMs: 20,
+    });
+    expect(result).toEqual({ state: "error", region: "fra", message: "Timeout" });
   });
 });
