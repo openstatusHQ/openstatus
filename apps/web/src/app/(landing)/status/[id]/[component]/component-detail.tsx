@@ -1,5 +1,7 @@
 "use client";
 
+import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,
@@ -220,7 +222,7 @@ export function ComponentDetail({
           <p className="text-muted-foreground text-sm">
             {component.reporters} user{" "}
             {component.reporters === 1 ? "report" : "reports"} for{" "}
-            {component.name} in the last 15 minutes.
+            {component.name} in the last {REPORT_WINDOW_MINUTES} minutes.
           </p>
         ) : null}
       </div>
