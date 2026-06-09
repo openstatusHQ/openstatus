@@ -39,8 +39,9 @@ export function ReportIssue({
   const [selected, setSelected] = useState<string>(WHOLE_SERVICE);
   const mutation = api.externalService.report.useMutation({
     onSuccess: () => {
-      utils.externalService.reports.invalidate({ slug });
-      utils.externalService.detail.invalidate({ slug });
+      utils.externalService.reports.invalidate();
+      utils.externalService.detail.invalidate();
+      utils.externalService.component.invalidate();
       utils.externalService.grid.invalidate();
     },
   });

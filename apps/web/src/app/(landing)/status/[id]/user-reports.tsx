@@ -1,5 +1,6 @@
 "use client";
 
+import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
 import {
   type ChartConfig,
   ChartContainer,
@@ -60,12 +61,12 @@ export function UserReports({
         {active ? (
           <div className="border-warning/30 bg-warning/10 text-warning border px-3 py-2 text-sm">
             Users are reporting problems with {serviceName}: {win.reporters} in
-            the last 15 minutes{countries(win.countries)}.
+            the last {REPORT_WINDOW_MINUTES} minutes{countries(win.countries)}.
           </div>
         ) : (
           <p className="text-muted-foreground m-0! text-sm">
             {win.reporters} user {win.reporters === 1 ? "report" : "reports"} in
-            the last 15 minutes{countries(win.countries)}.
+            the last {REPORT_WINDOW_MINUTES} minutes{countries(win.countries)}.
           </p>
         )}
 

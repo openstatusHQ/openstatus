@@ -78,26 +78,26 @@ export function ExternalServicePill({
     </span>
   );
 
-  if (escalated) {
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        {pillSpan}
-        <span
-          title={ESCALATED_TITLE}
-          className="border-warning/30 text-warning inline-flex items-center rounded-none border px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase"
-        >
-          user-reported
-        </span>
-      </span>
-    );
-  }
-
-  if (!statusMessage) return pillSpan;
-
-  return (
+  const pillWithMessage = statusMessage ? (
     <Tooltip>
       <TooltipTrigger asChild>{pillSpan}</TooltipTrigger>
       <TooltipContent className="rounded-none">{statusMessage}</TooltipContent>
     </Tooltip>
+  ) : (
+    pillSpan
+  );
+
+  if (!escalated) return pillWithMessage;
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {pillWithMessage}
+      <span
+        title={ESCALATED_TITLE}
+        className="border-warning/30 text-warning inline-flex items-center rounded-none border px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase"
+      >
+        user-reported
+      </span>
+    </span>
   );
 }

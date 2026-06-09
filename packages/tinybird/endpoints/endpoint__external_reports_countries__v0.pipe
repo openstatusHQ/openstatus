@@ -12,7 +12,7 @@ SQL >
         AND country != ''
         AND reported_at >= {{ Int64(since, 0) }}
     GROUP BY country
-    ORDER BY total DESC
+    ORDER BY total DESC, country ASC
     LIMIT {{ Int16(limit, 5) }}
 
 TYPE ENDPOINT

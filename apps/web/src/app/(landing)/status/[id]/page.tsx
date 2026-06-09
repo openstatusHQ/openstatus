@@ -1,3 +1,4 @@
+import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
@@ -37,13 +38,11 @@ export async function generateMetadata(args: {
 
   const { escalated } = await getServiceEscalation(service);
 
-  // Conservative copy: report spikes never assert "X is down", only that users
-  // are reporting problems.
   const title = escalated
     ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
     : `Is ${service.name} Down? ${service.name} Status & Incidents`;
   const description = escalated
-    ? `Users are reporting problems with ${service.name} in the last 15 minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
+    ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
     : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
   const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
   const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;

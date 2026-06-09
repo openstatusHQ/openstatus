@@ -89,7 +89,7 @@ describe("recordExternalServiceReport", () => {
   });
 
   test("throws for an unknown service", async () => {
-    expect(
+    await expect(
       recordExternalServiceReport({
         tb,
         input: {
@@ -107,7 +107,7 @@ describe("recordExternalServiceReport", () => {
       slug: `${TEST_PREFIX}-gone`,
       deletedAt: new Date(),
     });
-    expect(
+    await expect(
       recordExternalServiceReport({
         tb,
         input: {
@@ -149,7 +149,7 @@ describe("recordExternalServiceReport", () => {
 
   test("throws for an unknown component", async () => {
     await seedService({ slug: `${TEST_PREFIX}-nocomp` });
-    expect(
+    await expect(
       recordExternalServiceReport({
         tb,
         input: {

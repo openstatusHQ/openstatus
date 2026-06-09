@@ -114,23 +114,18 @@ export async function GET(req: Request) {
   if (componentResult?.service && componentResult.component) {
     const { service, component } = componentResult;
     isDetail = true;
-    const esc = component.stale
-      ? null
-      : await getComponentEscalation({
-          serviceSlug: service.slug,
-          componentId: component.id,
-          indicator: component.indicator,
-          status: component.status,
-        });
+    const esc = await getComponentEscalation({
+      serviceSlug: service.slug,
+      componentId: component.id,
+      indicator: component.indicator,
+      status: component.status,
+    });
     const content = component.stale
       ? UNKNOWN
-      : getStatus({
-          indicator: esc?.indicator ?? component.indicator,
-          status: esc?.status ?? component.status,
-        });
+      : getStatus({ indicator: esc.indicator, status: esc.status });
     category = content.label;
     categoryDot = content.bg;
-    title = esc?.escalated
+    title = esc.escalated
       ? `Users reporting issues with ${service.name} ${component.name}`
       : `Is ${service.name} ${component.name} down?`;
     description = "";

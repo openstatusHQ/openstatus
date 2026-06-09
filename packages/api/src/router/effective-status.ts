@@ -1,5 +1,6 @@
 export const REPORT_THRESHOLD = 7;
 export const REPORT_WINDOW_MS = 15 * 60 * 1000;
+export const REPORT_WINDOW_MINUTES = REPORT_WINDOW_MS / 60_000;
 
 export type EffectiveStatus = {
   indicator: string;

@@ -559,11 +559,13 @@ export const externalServiceRouter = createTRPCRouter({
       const ip = getClientIp(ctx.req?.headers);
       const reporterHash = await hashReporter(ip);
 
-      const limited = await reportAlreadyLimited(
-        `extreport:${input.slug}:${reporterHash}`,
-      );
-      if (limited) {
-        return { ok: true, alreadyReported: true };
+      if (ip) {
+        const limited = await reportAlreadyLimited(
+          `extreport:${input.slug}:${reporterHash}`,
+        );
+        if (limited) {
+          return { ok: true, alreadyReported: true };
+        }
       }
 
       try {
