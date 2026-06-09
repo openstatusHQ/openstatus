@@ -558,7 +558,10 @@ export const externalServiceRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const ip = getClientIp(ctx.req?.headers);
       if (!ip) {
-        return { ok: false, alreadyReported: false };
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Could not determine the reporter's origin",
+        });
       }
 
       const reporterHash = await hashReporter(ip);
