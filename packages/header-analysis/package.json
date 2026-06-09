@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {},
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@types/bun": "latest",
     "typescript": "catalog:"
   },
   "keywords": [],
