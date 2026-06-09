@@ -7,6 +7,8 @@ import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 import { env } from "@/env";
 
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
+
 type EscalationInput = {
   slug: string;
   aliases: unknown;
@@ -24,7 +26,6 @@ export type ServiceEscalation = {
 export async function getServiceEscalation(
   service: EscalationInput,
 ): Promise<ServiceEscalation> {
-  const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
   const slugChain = [service.slug, ...aliasSlugs];
   const since = Date.now() - REPORT_WINDOW_MS;
@@ -66,7 +67,6 @@ export async function getComponentEscalation(args: {
   indicator: string;
   status: string;
 }): Promise<{ indicator: string; status: string; escalated: boolean }> {
-  const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
   const since = Date.now() - REPORT_WINDOW_MS;
   const res = await safePipeData(
     tb.externalReportsComponentWindow({ id: args.serviceSlug, since }),
