@@ -128,7 +128,8 @@ export async function getServiceReportCountries(args: {
   since: Date;
   limit: number;
 }): Promise<CountryReport[]> {
-  const { ctx, serviceId, since, limit } = args;
+  const { ctx, serviceId, since } = args;
+  const limit = Math.max(0, Math.trunc(args.limit));
   const db = ctx?.db ?? defaultDb;
   return db
     .select({ country: externalServiceReport.country, total: totalReports })

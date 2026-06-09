@@ -14,8 +14,8 @@ export const externalServiceReport = sqliteTable(
     externalServiceComponentId: integer(
       "external_service_component_id",
     ).references(() => externalServiceComponent.id),
-    reporterHash: text("reporter_hash").notNull(),
-    country: text("country").notNull().default(""),
+    reporterHash: text("reporter_hash", { length: 64 }).notNull(),
+    country: text("country", { length: 2 }).notNull().default(""),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),

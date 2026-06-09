@@ -38,7 +38,8 @@ async function serviceReporters(
       since,
     });
     return rows[0]?.reporters ?? 0;
-  } catch {
+  } catch (err) {
+    console.error("[escalation] service reporters read failed:", err);
     return 0;
   }
 }
@@ -92,7 +93,9 @@ export async function getComponentEscalation(args: {
     });
     reporters =
       rows.find((r) => r.componentId === args.componentId)?.reporters ?? 0;
-  } catch {}
+  } catch (err) {
+    console.error("[escalation] component reporters read failed:", err);
+  }
   return computeEffectiveStatus({
     providerIndicator: args.indicator,
     providerStatus: args.status,

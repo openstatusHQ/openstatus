@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6f780016-2ffd-4f40-be1a-d141e20d0438",
-  "prevId": "ee96c648-1fc8-425a-8d84-a201788f265a",
+  "id": "19b6ee3f-cf23-46db-9fbd-9469ad0af6dd",
+  "prevId": "6f780016-2ffd-4f40-be1a-d141e20d0438",
   "tables": {
     "workspace": {
       "name": "workspace",
@@ -3455,6 +3455,88 @@
         }
       }
     },
+    "status_report_update_to_page_component": {
+      "name": "status_report_update_to_page_component",
+      "columns": {
+        "status_report_update_id": {
+          "name": "status_report_update_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_component_id": {
+          "name": "page_component_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "impact": {
+          "name": "impact",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(strftime('%s', 'now'))"
+        }
+      },
+      "indexes": {
+        "status_report_update_to_page_component_page_component_id_idx": {
+          "name": "status_report_update_to_page_component_page_component_id_idx",
+          "columns": [
+            "page_component_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "status_report_update_to_page_component_status_report_update_id_status_report_update_id_fk": {
+          "name": "status_report_update_to_page_component_status_report_update_id_status_report_update_id_fk",
+          "tableFrom": "status_report_update_to_page_component",
+          "tableTo": "status_report_update",
+          "columnsFrom": [
+            "status_report_update_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "status_report_update_to_page_component_page_component_id_page_component_id_fk": {
+          "name": "status_report_update_to_page_component_page_component_id_page_component_id_fk",
+          "tableFrom": "status_report_update_to_page_component",
+          "tableTo": "page_component",
+          "columnsFrom": [
+            "page_component_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "status_report_update_to_page_component_status_report_update_id_page_component_id_pk": {
+          "columns": [
+            "status_report_update_id",
+            "page_component_id"
+          ],
+          "name": "status_report_update_to_page_component_status_report_update_id_page_component_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "status_report_to_page_component": {
       "name": "status_report_to_page_component",
       "columns": {
@@ -4269,6 +4351,104 @@
           "tableTo": "external_service",
           "columnsFrom": [
             "external_service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "external_service_report": {
+      "name": "external_service_report",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "external_service_id": {
+          "name": "external_service_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "external_service_component_id": {
+          "name": "external_service_component_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reporter_hash": {
+          "name": "reporter_hash",
+          "type": "text(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text(2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(strftime('%s', 'now'))"
+        }
+      },
+      "indexes": {
+        "external_service_report_service_idx": {
+          "name": "external_service_report_service_idx",
+          "columns": [
+            "external_service_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "external_service_report_component_idx": {
+          "name": "external_service_report_component_idx",
+          "columns": [
+            "external_service_component_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "external_service_report_external_service_id_external_service_id_fk": {
+          "name": "external_service_report_external_service_id_external_service_id_fk",
+          "tableFrom": "external_service_report",
+          "tableTo": "external_service",
+          "columnsFrom": [
+            "external_service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "external_service_report_external_service_component_id_external_service_component_id_fk": {
+          "name": "external_service_report_external_service_component_id_external_service_component_id_fk",
+          "tableFrom": "external_service_report",
+          "tableTo": "external_service_component",
+          "columnsFrom": [
+            "external_service_component_id"
           ],
           "columnsTo": [
             "id"
