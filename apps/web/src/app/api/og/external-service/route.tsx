@@ -115,7 +115,7 @@ export async function GET(req: Request) {
     const { service, component } = componentResult;
     isDetail = true;
     const esc = await getComponentEscalation({
-      serviceSlug: service.slug,
+      serviceId: service.id,
       componentId: component.id,
       indicator: component.indicator,
       status: component.status,

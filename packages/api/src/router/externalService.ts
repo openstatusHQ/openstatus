@@ -11,7 +11,13 @@ import {
   listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
 } from "@openstatus/services/external-service-incident";
-import { recordExternalServiceReport } from "@openstatus/services/external-service-report";
+import {
+  getComponentReportWindows,
+  getServiceReportCountries,
+  getServiceReportDaily,
+  getServiceReportWindows,
+  recordExternalServiceReport,
+} from "@openstatus/services/external-service-report";
 import { OSTinybird } from "@openstatus/tinybird";
 import { redis } from "@openstatus/upstash";
 import { TRPCError } from "@trpc/server";
@@ -84,6 +90,15 @@ async function reportAlreadyLimited(key: string): Promise<boolean> {
 // Next.js Edge runtime and `@openstatus/api` (like the edge-safe `services`
 // package) deliberately takes no logtape dependency. The logtape-based logger is
 // for Node contexts such as the `apps/workflows` cron. Matches every sibling router.
+async function safeRows<T>(promise: Promise<T[]>, label: string): Promise<T[]> {
+  try {
+    return await promise;
+  } catch (err) {
+    console.error(`[external-service] ${label} failed, returning empty:`, err);
+    return [];
+  }
+}
+
 async function safeData<T>(
   promise: Promise<{ data: T[] }>,
   label: string,
@@ -239,25 +254,24 @@ export const externalServiceRouter = createTRPCRouter({
       safeData(tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
     ]);
 
-    const slugs = services.map((s) => s.slug);
-    const reportRows = slugs.length
-      ? await safeData(
-          tb.externalReportsServiceWindow({
-            ids: slugs,
-            since: Date.now() - REPORT_WINDOW_MS,
-          }),
-          "externalReportsServiceWindow (grid)",
-        )
-      : [];
+    const reportRows = await safeRows(
+      getServiceReportWindows({
+        serviceIds: services.map((s) => s.id),
+        since: new Date(Date.now() - REPORT_WINDOW_MS),
+      }),
+      "getServiceReportWindows (grid)",
+    );
 
     const byId = new Map<string, (typeof latestRows)[number]>();
     for (const row of latestRows) byId.set(row.id, row);
-    const reportersById = new Map<string, number>();
-    for (const row of reportRows) reportersById.set(row.id, row.reporters);
+    const reportersByServiceId = new Map<number, number>();
+    for (const row of reportRows) {
+      reportersByServiceId.set(row.externalServiceId, row.reporters);
+    }
 
     return services.map((s) => {
       const snap = byId.get(s.slug);
-      const reporters = reportersById.get(s.slug) ?? 0;
+      const reporters = reportersByServiceId.get(s.id) ?? 0;
       const effective = computeEffectiveStatus({
         providerIndicator: snap?.indicator ?? "",
         providerStatus: snap?.status ?? "",
@@ -306,7 +320,7 @@ export const externalServiceRouter = createTRPCRouter({
       const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
       const slugChain = [service.slug, ...aliasSlugs];
       const days = input.days ?? DEFAULT_HISTORY_DAYS;
-      const since = Date.now() - REPORT_WINDOW_MS;
+      const since = new Date(Date.now() - REPORT_WINDOW_MS);
 
       const [latestRows, historyRows, reportRows] = await Promise.all([
         safeData(
@@ -317,9 +331,9 @@ export const externalServiceRouter = createTRPCRouter({
           tb.externalStatusHistory({ ids: slugChain, days }),
           "externalStatusHistory",
         ),
-        safeData(
-          tb.externalReportsServiceWindow({ ids: [service.slug], since }),
-          "externalReportsServiceWindow (detail)",
+        safeRows(
+          getServiceReportWindows({ serviceIds: [service.id], since }),
+          "getServiceReportWindows (detail)",
         ),
       ]);
 
@@ -484,7 +498,7 @@ export const externalServiceRouter = createTRPCRouter({
         if (!service || !component) return empty;
 
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
-        const since = Date.now() - REPORT_WINDOW_MS;
+        const since = new Date(Date.now() - REPORT_WINDOW_MS);
         const [historyRows, incidents, reportRows] = await Promise.all([
           safeData(
             tb.externalStatusComponentHistory({
@@ -498,15 +512,14 @@ export const externalServiceRouter = createTRPCRouter({
             upstreamComponentId: component.upstreamComponentId,
             limit: INCIDENTS_LIMIT,
           }),
-          safeData(
-            tb.externalReportsComponentWindow({ id: service.slug, since }),
-            "externalReportsComponentWindow (component)",
+          safeRows(
+            getComponentReportWindows({ serviceId: service.id, since }),
+            "getComponentReportWindows (component)",
           ),
         ]);
 
-        const componentKey = String(component.id);
         const reporters =
-          reportRows.find((r) => r.component_id === componentKey)?.reporters ??
+          reportRows.find((r) => r.componentId === component.id)?.reporters ??
           0;
         const effective = computeEffectiveStatus({
           providerIndicator: component.indicator,
@@ -574,13 +587,11 @@ export const externalServiceRouter = createTRPCRouter({
 
       try {
         await recordExternalServiceReport({
-          tb,
           input: {
             slug: input.slug,
             componentSlug: input.componentSlug ?? undefined,
             reporterHash,
             country: ctx.req?.headers.get("x-vercel-ip-country") ?? "",
-            reportedAt: Date.now(),
           },
         });
       } catch (err) {
@@ -608,25 +619,26 @@ export const externalServiceRouter = createTRPCRouter({
       }
 
       const days = input.days ?? DEFAULT_HISTORY_DAYS;
-      const since = Date.now() - REPORT_WINDOW_MS;
+      const since = new Date(Date.now() - REPORT_WINDOW_MS);
+      const dailySince = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
       const threshold = REPORT_THRESHOLD;
 
       const [windowRows, dailyRows, countryRows] = await Promise.all([
-        safeData(
-          tb.externalReportsServiceWindow({ ids: [service.slug], since }),
-          "externalReportsServiceWindow (reports)",
+        safeRows(
+          getServiceReportWindows({ serviceIds: [service.id], since }),
+          "getServiceReportWindows (reports)",
         ),
-        safeData(
-          tb.externalReportsDaily({ id: service.slug, days }),
-          "externalReportsDaily",
+        safeRows(
+          getServiceReportDaily({ serviceId: service.id, since: dailySince }),
+          "getServiceReportDaily",
         ),
-        safeData(
-          tb.externalReportsCountries({
-            id: service.slug,
+        safeRows(
+          getServiceReportCountries({
+            serviceId: service.id,
             since,
             limit: REPORT_COUNTRIES_LIMIT,
           }),
-          "externalReportsCountries",
+          "getServiceReportCountries",
         ),
       ]);
 

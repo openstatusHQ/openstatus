@@ -1,29 +1,38 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { db, eq, like } from "@openstatus/db";
+import { db, eq, inArray, like } from "@openstatus/db";
 import {
   externalService,
   externalServiceComponent,
+  externalServiceReport,
 } from "@openstatus/db/src/schema";
-import { OSTinybird } from "@openstatus/tinybird";
 
 import { NotFoundError } from "../../errors";
+import {
+  getComponentReportWindows,
+  getServiceReportCountries,
+  getServiceReportDaily,
+  getServiceReportWindows,
+} from "../read";
 import { recordExternalServiceReport } from "../record";
 
 const TEST_PREFIX = "svc-extreport-test";
-// Empty token → NoopTinybird, so publish/read resolve without a network call.
-const tb = new OSTinybird("");
 
 afterEach(async () => {
-  const rows = await db
+  const services = await db
     .select({ id: externalService.id })
     .from(externalService)
     .where(like(externalService.slug, `${TEST_PREFIX}-%`))
     .all();
-  for (const row of rows) {
+  const ids = services.map((s) => s.id);
+  if (ids.length > 0) {
+    await db
+      .delete(externalServiceReport)
+      .where(inArray(externalServiceReport.externalServiceId, ids))
+      .run();
     await db
       .delete(externalServiceComponent)
-      .where(eq(externalServiceComponent.externalServiceId, row.id))
+      .where(inArray(externalServiceComponent.externalServiceId, ids))
       .run();
   }
   await db
@@ -53,113 +62,309 @@ async function seedService(args: {
   return row;
 }
 
+async function seedComponent(serviceId: number, slug: string) {
+  const [row] = await db
+    .insert(externalServiceComponent)
+    .values({
+      externalServiceId: serviceId,
+      upstreamComponentId: `upstream-${slug}`,
+      slug,
+      name: slug,
+      indicator: "none",
+      status: "operational",
+    })
+    .returning();
+  return row;
+}
+
+async function insertReports(
+  rows: {
+    externalServiceId: number;
+    externalServiceComponentId?: number | null;
+    reporterHash: string;
+    country?: string;
+    createdAt: Date;
+  }[],
+) {
+  await db
+    .insert(externalServiceReport)
+    .values(
+      rows.map((r) => ({
+        externalServiceId: r.externalServiceId,
+        externalServiceComponentId: r.externalServiceComponentId ?? null,
+        reporterHash: r.reporterHash,
+        country: r.country ?? "",
+        createdAt: r.createdAt,
+      })),
+    )
+    .run();
+}
+
 describe("recordExternalServiceReport", () => {
-  test("records a service-level report keyed by the canonical slug", async () => {
-    await seedService({ slug: `${TEST_PREFIX}-live` });
+  test("inserts a service-level report row", async () => {
+    const service = await seedService({ slug: `${TEST_PREFIX}-live` });
     const result = await recordExternalServiceReport({
-      tb,
       input: {
         slug: `${TEST_PREFIX}-live`,
         reporterHash: "hash",
         country: "FR",
-        reportedAt: 1,
       },
     });
     expect(result).toEqual({
       serviceSlug: `${TEST_PREFIX}-live`,
-      componentId: "",
+      componentId: null,
     });
+    const rows = await db
+      .select()
+      .from(externalServiceReport)
+      .where(eq(externalServiceReport.externalServiceId, service.id))
+      .all();
+    expect(rows.length).toBe(1);
+    expect(rows[0].externalServiceComponentId).toBeNull();
+    expect(rows[0].country).toBe("FR");
   });
 
-  test("resolves an alias slug to the canonical slug", async () => {
-    await seedService({
+  test("resolves an alias slug to the canonical service", async () => {
+    const service = await seedService({
       slug: `${TEST_PREFIX}-canonical`,
       aliases: [`${TEST_PREFIX}-old`],
     });
     const result = await recordExternalServiceReport({
-      tb,
-      input: {
-        slug: `${TEST_PREFIX}-old`,
-        reporterHash: "hash",
-        country: "",
-        reportedAt: 1,
-      },
+      input: { slug: `${TEST_PREFIX}-old`, reporterHash: "hash", country: "" },
     });
     expect(result.serviceSlug).toBe(`${TEST_PREFIX}-canonical`);
+    const rows = await db
+      .select()
+      .from(externalServiceReport)
+      .where(eq(externalServiceReport.externalServiceId, service.id))
+      .all();
+    expect(rows.length).toBe(1);
   });
 
   test("throws for an unknown service", async () => {
     await expect(
       recordExternalServiceReport({
-        tb,
         input: {
           slug: `${TEST_PREFIX}-missing`,
           reporterHash: "hash",
           country: "",
-          reportedAt: 1,
         },
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   test("throws for a soft-deleted service", async () => {
-    await seedService({
-      slug: `${TEST_PREFIX}-gone`,
-      deletedAt: new Date(),
-    });
+    await seedService({ slug: `${TEST_PREFIX}-gone`, deletedAt: new Date() });
     await expect(
       recordExternalServiceReport({
-        tb,
         input: {
           slug: `${TEST_PREFIX}-gone`,
           reporterHash: "hash",
           country: "",
-          reportedAt: 1,
         },
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  test("records a component-level report keyed by the DB component id", async () => {
+  test("inserts a component-level report keyed by the component id", async () => {
     const service = await seedService({ slug: `${TEST_PREFIX}-withcomp` });
-    const [component] = await db
-      .insert(externalServiceComponent)
-      .values({
-        externalServiceId: service.id,
-        upstreamComponentId: "upstream-1",
-        slug: "api",
-        name: "API",
-        indicator: "none",
-        status: "operational",
-      })
-      .returning();
-
+    const component = await seedComponent(service.id, "api");
     const result = await recordExternalServiceReport({
-      tb,
       input: {
         slug: `${TEST_PREFIX}-withcomp`,
         componentSlug: "api",
         reporterHash: "hash",
         country: "DE",
-        reportedAt: 1,
       },
     });
-    expect(result.componentId).toBe(String(component.id));
+    expect(result.componentId).toBe(component.id);
+    const rows = await db
+      .select()
+      .from(externalServiceReport)
+      .where(eq(externalServiceReport.externalServiceId, service.id))
+      .all();
+    expect(rows[0].externalServiceComponentId).toBe(component.id);
   });
 
   test("throws for an unknown component", async () => {
     await seedService({ slug: `${TEST_PREFIX}-nocomp` });
     await expect(
       recordExternalServiceReport({
-        tb,
         input: {
           slug: `${TEST_PREFIX}-nocomp`,
           componentSlug: "does-not-exist",
           reporterHash: "hash",
           country: "",
-          reportedAt: 1,
         },
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe("report aggregation reads", () => {
+  test("getServiceReportWindows counts distinct reporters + countries", async () => {
+    const service = await seedService({ slug: `${TEST_PREFIX}-agg` });
+    const now = new Date();
+    await insertReports([
+      {
+        externalServiceId: service.id,
+        reporterHash: "a",
+        country: "US",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "a",
+        country: "US",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "b",
+        country: "FR",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "c",
+        country: "",
+        createdAt: now,
+      },
+    ]);
+    const [row] = await getServiceReportWindows({
+      serviceIds: [service.id],
+      since: new Date(now.getTime() - 60_000),
+    });
+    expect(row.reporters).toBe(3);
+    expect(row.total).toBe(4);
+    expect(row.countries).toBe(2);
+  });
+
+  test("getServiceReportWindows excludes rows before `since`", async () => {
+    const service = await seedService({ slug: `${TEST_PREFIX}-window` });
+    const now = new Date();
+    await insertReports([
+      { externalServiceId: service.id, reporterHash: "a", createdAt: now },
+      {
+        externalServiceId: service.id,
+        reporterHash: "b",
+        createdAt: new Date(now.getTime() - 60 * 60 * 1000),
+      },
+    ]);
+    const [row] = await getServiceReportWindows({
+      serviceIds: [service.id],
+      since: new Date(now.getTime() - 15 * 60 * 1000),
+    });
+    expect(row.reporters).toBe(1);
+  });
+
+  test("getComponentReportWindows groups by component, ignoring service-level", async () => {
+    const service = await seedService({ slug: `${TEST_PREFIX}-comp` });
+    const api = await seedComponent(service.id, "api");
+    const web = await seedComponent(service.id, "web");
+    const now = new Date();
+    await insertReports([
+      {
+        externalServiceId: service.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "a",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        externalServiceComponentId: api.id,
+        reporterHash: "b",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        externalServiceComponentId: web.id,
+        reporterHash: "a",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        externalServiceComponentId: null,
+        reporterHash: "z",
+        createdAt: now,
+      },
+    ]);
+    const rows = await getComponentReportWindows({
+      serviceId: service.id,
+      since: new Date(now.getTime() - 60_000),
+    });
+    const byComponent = new Map(rows.map((r) => [r.componentId, r.reporters]));
+    expect(byComponent.get(api.id)).toBe(2);
+    expect(byComponent.get(web.id)).toBe(1);
+    expect(rows.length).toBe(2);
+  });
+
+  test("getServiceReportDaily buckets by day", async () => {
+    const service = await seedService({ slug: `${TEST_PREFIX}-daily` });
+    await insertReports([
+      {
+        externalServiceId: service.id,
+        reporterHash: "a",
+        createdAt: new Date("2026-06-01T10:00:00Z"),
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "b",
+        createdAt: new Date("2026-06-01T12:00:00Z"),
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "c",
+        createdAt: new Date("2026-06-02T09:00:00Z"),
+      },
+    ]);
+    const rows = await getServiceReportDaily({
+      serviceId: service.id,
+      since: new Date("2026-05-01T00:00:00Z"),
+    });
+    expect(rows).toEqual([
+      { day: "2026-06-01", reporters: 2, total: 2 },
+      { day: "2026-06-02", reporters: 1, total: 1 },
+    ]);
+  });
+
+  test("getServiceReportCountries ranks non-empty countries", async () => {
+    const service = await seedService({ slug: `${TEST_PREFIX}-countries` });
+    const now = new Date();
+    await insertReports([
+      {
+        externalServiceId: service.id,
+        reporterHash: "a",
+        country: "US",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "b",
+        country: "US",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "c",
+        country: "FR",
+        createdAt: now,
+      },
+      {
+        externalServiceId: service.id,
+        reporterHash: "d",
+        country: "",
+        createdAt: now,
+      },
+    ]);
+    const rows = await getServiceReportCountries({
+      serviceId: service.id,
+      since: new Date(now.getTime() - 60_000),
+      limit: 5,
+    });
+    expect(rows).toEqual([
+      { country: "US", total: 2 },
+      { country: "FR", total: 1 },
+    ]);
   });
 });
