@@ -17,7 +17,9 @@ import { ExternalServicePill } from "../external-service-pill";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
+import { ReportIssue } from "./report-issue";
 import { ServiceComponents } from "./service-components";
+import { UserReports } from "./user-reports";
 
 function jsonLd(args: {
   serviceName: string;
@@ -43,10 +45,11 @@ function jsonLd(args: {
 
 export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
   const [data] = api.externalService.detail.useSuspenseQuery({ slug, days });
-  const { service, latest, history } = data;
+  const { service, latest, history, effective } = data;
 
-  const indicator = latest?.indicator ?? "";
-  const status = latest?.status ?? "";
+  const indicator = effective.indicator;
+  const status = effective.status;
+  const escalated = effective.escalated;
   const statusMessage = latest?.statusMessage || undefined;
   const fetchedAt = latest?.lastFetchedAt ?? 0;
   const stale = fetchedAt > 0 && isStale(fetchedAt);
@@ -79,6 +82,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
           indicator={indicator}
           status={status}
           statusMessage={statusMessage}
+          escalated={escalated}
         />
         {fetchedAt > 0 ? (
           <span className="text-muted-foreground text-sm">
@@ -91,7 +95,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
           </span>
         ) : (
           <span className="text-muted-foreground text-sm">
-            No data yet — tracking begins after first poll.
+            No data yet. Tracking begins after the first poll.
           </span>
         )}
         <a
@@ -104,8 +108,25 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
         </a>
       </div>
 
+      <div className="not-prose mt-6">
+        <ReportIssue
+          slug={service.slug}
+          name={service.name}
+          days={days}
+          allowComponentSelect
+        />
+      </div>
+
+      <Suspense fallback={null}>
+        <UserReports
+          slug={service.slug}
+          serviceName={service.name}
+          days={days}
+        />
+      </Suspense>
+
       <h2>
-        {service.name} uptime — last {days} days
+        {service.name} uptime over the last {days} days
       </h2>
       <div className="not-prose">
         <HistoryBars daily={history} days={days} />

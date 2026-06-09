@@ -1,0 +1,17 @@
+TAGS "external_status_reports"
+
+NODE service_window
+SQL >
+
+    %
+    SELECT
+        id,
+        uniq(reporter_hash) AS reporters,
+        count() AS total,
+        uniqIf(country, country != '') AS countries
+    FROM external_status_reports__v0
+    WHERE id IN {{ Array(ids, 'String') }}
+        AND reported_at >= {{ Int64(since, 0) }}
+    GROUP BY id
+
+TYPE ENDPOINT

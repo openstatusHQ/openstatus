@@ -2,7 +2,10 @@ import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 import { ImageResponse } from "next/og";
 
 import { isStale } from "@/app/(landing)/status/utils";
-import { env } from "@/env";
+import {
+  getComponentEscalation,
+  getServiceEscalation,
+} from "@/lib/external-report-escalation";
 import {
   cachedGetExternalComponentBySlug,
   cachedGetExternalServiceBySlug,
@@ -111,15 +114,25 @@ export async function GET(req: Request) {
   if (componentResult?.service && componentResult.component) {
     const { service, component } = componentResult;
     isDetail = true;
-    const content = component.stale
-      ? UNKNOWN
-      : getStatus({
+    const esc = component.stale
+      ? null
+      : await getComponentEscalation({
+          serviceSlug: service.slug,
+          componentId: component.id,
           indicator: component.indicator,
           status: component.status,
         });
+    const content = component.stale
+      ? UNKNOWN
+      : getStatus({
+          indicator: esc?.indicator ?? component.indicator,
+          status: esc?.status ?? component.status,
+        });
     category = content.label;
     categoryDot = content.bg;
-    title = `Is ${service.name} ${component.name} down?`;
+    title = esc?.escalated
+      ? `Users reporting issues with ${service.name} ${component.name}`
+      : `Is ${service.name} ${component.name} down?`;
     description = "";
     footer = `${FOOTER}/${service.slug}/${component.slug}`;
   } else {
@@ -131,34 +144,21 @@ export async function GET(req: Request) {
       const services = await cachedListExternalServices();
       category = "external status";
       title = INDEX_TITLE;
-      description = `${services.length} providers monitored — ${INDEX_DESCRIPTION}`;
+      description = `${services.length} providers monitored. ${INDEX_DESCRIPTION}`;
       footer = FOOTER;
     } else {
       isDetail = true;
-      const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
-      const slugChain = [service.slug, ...aliasSlugs];
-
-      const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-      const latestRes = await safePipeData(
-        tb.externalStatusLatest({ ids: slugChain }),
-        "externalStatusLatest (og)",
-      );
-      const latestRows = Array.isArray(latestRes.data) ? latestRes.data : [];
-      latestRows.sort((a, b) => b.last_fetched_at - a.last_fetched_at);
-      const latest = latestRows[0];
-
-      const fetchedAt = latest?.last_fetched_at ?? 0;
-      const stale = fetchedAt === 0 || isStale(fetchedAt);
+      const esc = await getServiceEscalation(service);
+      const stale = esc.lastFetchedAt === 0 || isStale(esc.lastFetchedAt);
       const content = stale
         ? UNKNOWN
-        : getStatus({
-            indicator: latest?.indicator ?? "",
-            status: latest?.status ?? "",
-          });
+        : getStatus({ indicator: esc.indicator, status: esc.status });
 
       category = content.label;
       categoryDot = content.bg;
-      title = `Is ${service.name} down?`;
+      title = esc.escalated
+        ? `Users reporting issues with ${service.name}`
+        : `Is ${service.name} down?`;
       description = "";
       footer = `${FOOTER}/${service.slug}`;
     }

@@ -1,0 +1,19 @@
+TAGS "external_status_reports"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDate(toTimeZone(fromUnixTimestamp64Milli(reported_at), 'UTC')) AS day,
+        id,
+        component_id,
+        uniqState(reporter_hash) AS reporters,
+        sumState(toUInt32(1)) AS total
+    FROM external_status_reports__v0
+    GROUP BY
+        day,
+        id,
+        component_id
+
+TYPE materialized
+DATASOURCE mv__external_status_reports_daily__v0

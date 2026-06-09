@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { ButtonLink } from "@/content/mdx-components/button-link";
 import { CustomLink } from "@/content/mdx-components/custom-link";
+import { getServiceEscalation } from "@/lib/external-report-escalation";
 import { cachedGetExternalServiceBySlug } from "@/lib/external-service-cache";
 import {
   APP_URL,
@@ -34,8 +35,16 @@ export async function generateMetadata(args: {
   const service = await cachedGetExternalServiceBySlug(id);
   if (!service) return { ...defaultMetadata, title: "Not Found" };
 
-  const title = `Is ${service.name} Down? ${service.name} Status & Incidents`;
-  const description = `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
+  const { escalated } = await getServiceEscalation(service);
+
+  // Conservative copy: report spikes never assert "X is down", only that users
+  // are reporting problems.
+  const title = escalated
+    ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
+    : `Is ${service.name} Down? ${service.name} Status & Incidents`;
+  const description = escalated
+    ? `Users are reporting problems with ${service.name} in the last 15 minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
+    : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
   const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
   const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
   const indexable = service.deletedAt == null;
@@ -83,6 +92,10 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
     }),
     api.externalService.incidents.prefetch({ slug: service.slug }),
     api.externalService.components.prefetch({
+      slug: service.slug,
+      days: HISTORY_DAYS,
+    }),
+    api.externalService.reports.prefetch({
       slug: service.slug,
       days: HISTORY_DAYS,
     }),

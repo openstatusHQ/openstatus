@@ -2393,4 +2393,84 @@ export class OSTinybird {
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
+
+  public get publishExternalReport() {
+    return this.tb.buildIngestEndpoint({
+      datasource: "external_status_reports__v0",
+      event: z.object({
+        id: z.string(),
+        component_id: z.string(),
+        reporter_hash: z.string(),
+        country: z.string(),
+        reported_at: z.int(),
+      }),
+    });
+  }
+
+  public get externalReportsServiceWindow() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_reports_service_window__v0",
+      parameters: z.object({
+        ids: z.array(z.string()).min(1),
+        since: z.int(),
+      }),
+      data: z.object({
+        id: z.string(),
+        reporters: z.int(),
+        total: z.int(),
+        countries: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get externalReportsComponentWindow() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_reports_component_window__v0",
+      parameters: z.object({
+        id: z.string(),
+        since: z.int(),
+      }),
+      data: z.object({
+        component_id: z.string(),
+        reporters: z.int(),
+        total: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get externalReportsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_reports_daily__v0",
+      parameters: z.object({
+        id: z.string(),
+        days: z.int().min(1).max(90).optional(),
+      }),
+      data: z.object({
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
+        reporters: z.int(),
+        total: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get externalReportsCountries() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__external_reports_countries__v0",
+      parameters: z.object({
+        id: z.string(),
+        since: z.int(),
+        limit: z.int().min(1).max(50).optional(),
+      }),
+      data: z.object({
+        country: z.string(),
+        total: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
 }

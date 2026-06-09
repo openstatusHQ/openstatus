@@ -1,0 +1,18 @@
+TAGS "external_status_reports"
+
+NODE countries
+SQL >
+
+    %
+    SELECT
+        country,
+        count() AS total
+    FROM external_status_reports__v0
+    WHERE id = {{ String(id) }}
+        AND country != ''
+        AND reported_at >= {{ Int64(since, 0) }}
+    GROUP BY country
+    ORDER BY total DESC
+    LIMIT {{ Int16(limit, 5) }}
+
+TYPE ENDPOINT
