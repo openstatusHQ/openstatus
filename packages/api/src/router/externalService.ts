@@ -557,15 +557,16 @@ export const externalServiceRouter = createTRPCRouter({
     .output(z.object({ ok: z.boolean(), alreadyReported: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const ip = getClientIp(ctx.req?.headers);
-      const reporterHash = await hashReporter(ip);
+      if (!ip) {
+        return { ok: false, alreadyReported: false };
+      }
 
-      if (ip) {
-        const limited = await reportAlreadyLimited(
-          `extreport:${input.slug}:${reporterHash}`,
-        );
-        if (limited) {
-          return { ok: true, alreadyReported: true };
-        }
+      const reporterHash = await hashReporter(ip);
+      const limited = await reportAlreadyLimited(
+        `extreport:${input.slug}:${reporterHash}`,
+      );
+      if (limited) {
+        return { ok: true, alreadyReported: true };
       }
 
       try {
