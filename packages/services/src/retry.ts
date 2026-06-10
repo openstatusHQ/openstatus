@@ -1,5 +1,6 @@
 const RETRYABLE_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED"]);
 const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
+const TRANSIENT_SERVER_MESSAGE = /Server returned HTTP status 5\d\d/i;
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 25;
 const MAX_DELAY_MS = 400;
@@ -34,6 +35,23 @@ export function isRetryableDbError(err: unknown): boolean {
   return false;
 }
 
+// Transient libSQL/Turso 5xx. Safe to retry only for idempotent reads —
+// a 502 may land after a write partially applied.
+export function isTransientServerError(err: unknown): boolean {
+  let current: unknown = err;
+  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+    if (typeof current !== "object" || current === null) return false;
+
+    if (hasCode(current) && current.code === "SERVER_ERROR") return true;
+    if (hasMessage(current) && typeof current.message === "string") {
+      if (TRANSIENT_SERVER_MESSAGE.test(current.message)) return true;
+    }
+    if (!hasCause(current) || current.cause === current) return false;
+    current = current.cause;
+  }
+  return false;
+}
+
 function backoffDelayMs(attempt: number): number {
   const cap = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempt);
   return Math.random() * cap;
@@ -41,12 +59,15 @@ function backoffDelayMs(attempt: number): number {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function withBusyRetry<T>(fn: () => Promise<T>): Promise<T> {
+export async function withBusyRetry<T>(
+  fn: () => Promise<T>,
+  isRetryable: (err: unknown) => boolean = isRetryableDbError,
+): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fn();
     } catch (err) {
-      if (attempt >= MAX_ATTEMPTS - 1 || !isRetryableDbError(err)) throw err;
+      if (attempt >= MAX_ATTEMPTS - 1 || !isRetryable(err)) throw err;
       await sleep(backoffDelayMs(attempt));
     }
   }
