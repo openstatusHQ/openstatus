@@ -18,6 +18,10 @@ function hasCause(value: object): value is { cause: unknown } {
   return "cause" in value;
 }
 
+function hasStatus(value: object): value is { status: unknown } {
+  return "status" in value;
+}
+
 export function isRetryableDbError(err: unknown): boolean {
   let current: unknown = err;
   for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
@@ -36,13 +40,18 @@ export function isRetryableDbError(err: unknown): boolean {
 }
 
 // Transient libSQL/Turso 5xx. Safe to retry only for idempotent reads —
-// a 502 may land after a write partially applied.
+// a 502 may land after a write partially applied. libsql maps every
+// HttpServerError to code "SERVER_ERROR" regardless of status, so gate on the
+// 5xx status (carried on the HttpServerError cause) or the 5xx message — never
+// the bare code, which also covers non-retryable 4xx (bad token, db not found).
 export function isTransientServerError(err: unknown): boolean {
   let current: unknown = err;
   for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
     if (typeof current !== "object" || current === null) return false;
 
-    if (hasCode(current) && current.code === "SERVER_ERROR") return true;
+    if (hasStatus(current) && typeof current.status === "number") {
+      if (current.status >= 500 && current.status <= 599) return true;
+    }
     if (hasMessage(current) && typeof current.message === "string") {
       if (TRANSIENT_SERVER_MESSAGE.test(current.message)) return true;
     }

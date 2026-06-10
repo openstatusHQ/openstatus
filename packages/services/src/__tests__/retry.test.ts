@@ -43,33 +43,44 @@ describe("isRetryableDbError", () => {
 });
 
 describe("isTransientServerError", () => {
-  test("true for libsql SERVER_ERROR code", () => {
-    expect(isTransientServerError({ code: "SERVER_ERROR" })).toBe(true);
+  test("true for a 5xx status (HttpServerError cause)", () => {
+    expect(isTransientServerError({ code: "SERVER_ERROR", status: 502 })).toBe(
+      true,
+    );
   });
 
-  test("true for a 502 message without a code", () => {
+  test("true for a 5xx message without a status", () => {
     expect(
-      isTransientServerError(new Error("Server returned HTTP status 502")),
+      isTransientServerError(new Error("Server returned HTTP status 503")),
     ).toBe(true);
   });
 
-  test("true for the drizzle-wrapped cause chain", () => {
+  test("true for the drizzle-wrapped 5xx cause chain", () => {
     const err = new Error("Failed query: select ...");
     (err as Error & { cause: unknown }).cause = {
       code: "SERVER_ERROR",
+      status: 502,
       message: "SERVER_ERROR: Server returned HTTP status 502",
     };
     expect(isTransientServerError(err)).toBe(true);
   });
 
-  test("false for a busy/locked error (handled by isRetryableDbError)", () => {
-    expect(isTransientServerError({ code: "SQLITE_BUSY" })).toBe(false);
+  test("false for a non-transient 4xx SERVER_ERROR", () => {
+    expect(
+      isTransientServerError({
+        code: "SERVER_ERROR",
+        status: 404,
+        message: "Server returned HTTP status 404",
+      }),
+    ).toBe(false);
   });
 
-  test("false for a 4xx message", () => {
-    expect(
-      isTransientServerError(new Error("Server returned HTTP status 404")),
-    ).toBe(false);
+  test("false for a bare SERVER_ERROR with no 5xx signal", () => {
+    expect(isTransientServerError({ code: "SERVER_ERROR" })).toBe(false);
+  });
+
+  test("false for a busy/locked error (handled by isRetryableDbError)", () => {
+    expect(isTransientServerError({ code: "SQLITE_BUSY" })).toBe(false);
   });
 });
 
@@ -112,7 +123,7 @@ describe("withBusyRetry", () => {
     const result = await withBusyRetry(
       async () => {
         attempts++;
-        if (attempts < 2) throw { code: "SERVER_ERROR" };
+        if (attempts < 2) throw { code: "SERVER_ERROR", status: 503 };
         return "ok";
       },
       (e) => isRetryableDbError(e) || isTransientServerError(e),
@@ -123,7 +134,7 @@ describe("withBusyRetry", () => {
 
   test("default predicate does not retry a transient 5xx", async () => {
     let attempts = 0;
-    const original = { code: "SERVER_ERROR" };
+    const original = { code: "SERVER_ERROR", status: 503 };
     const promise = withBusyRetry(async () => {
       attempts++;
       throw original;
