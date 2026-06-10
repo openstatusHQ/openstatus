@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+
 import {
   MetricCard,
   MetricCardBadge,
@@ -9,16 +12,13 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-
 import { type PERIODS, mapMetrics, metricsCards } from "@/data/metrics.client";
 import {
   formatMilliseconds,
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
-import { formatDistanceToNow } from "date-fns";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Metric = {
   label: string;

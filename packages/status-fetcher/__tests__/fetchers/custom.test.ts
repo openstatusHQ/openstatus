@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+
 import { CustomApiFetcher } from "../../src/fetchers/custom";
 import type { StatusPageEntry } from "../../src/types";
 import {

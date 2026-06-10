@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 describe("Twilio SMS Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
   const originalEnv = {
     TWILLIO_ACCOUNT_ID: process.env.TWILLIO_ACCOUNT_ID,

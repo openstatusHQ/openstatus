@@ -88,7 +88,7 @@ function ApprovalCard({
       ref={cardRef}
       tabIndex={-1}
       onKeyDown={onKeyDown}
-      className="not-prose w-full overflow-hidden rounded-xl border bg-background outline-none"
+      className="not-prose bg-background w-full overflow-hidden rounded-xl border outline-none"
     >
       <div className="flex items-center gap-2 p-3 text-sm">
         <ToolStateDot state="approval-requested" />
@@ -98,16 +98,16 @@ function ApprovalCard({
         {draft ? (
           <ChangesTable changes={draft} />
         ) : (
-          <pre className="max-h-64 overflow-auto rounded bg-muted/50 p-2 text-xs">
+          <pre className="bg-muted/50 max-h-64 overflow-auto rounded p-2 text-xs">
             {JSON.stringify(input, null, 2)}
           </pre>
         )}
       </div>
-      <div className="flex items-center justify-end gap-3 border-t bg-muted/30 p-3">
+      <div className="bg-muted/30 flex items-center justify-end gap-3 border-t p-3">
         <span className="text-muted-foreground text-xs">
-          <kbd className="rounded border bg-background px-1 font-mono">Esc</kbd>{" "}
+          <kbd className="bg-background rounded border px-1 font-mono">Esc</kbd>{" "}
           to cancel ·{" "}
-          <kbd className="rounded border bg-background px-1 font-mono">⌘ ↵</kbd>{" "}
+          <kbd className="bg-background rounded border px-1 font-mono">⌘ ↵</kbd>{" "}
           to apply
         </span>
         <div className="flex gap-2">
@@ -170,7 +170,7 @@ function ToolDisclosure({
         >
           <ToolStateDot state={state} />
           <span className="font-commit-mono font-medium">{toolName}</span>
-          <span className="flex-1 truncate text-muted-foreground">
+          <span className="text-muted-foreground flex-1 truncate">
             {summary ? `· ${summary}` : null}
           </span>
           {rich !== undefined ? (
@@ -207,7 +207,7 @@ function ToolDisclosure({
           ) : null}
           <ChevronDownIcon
             className={cn(
-              "size-4 shrink-0 text-muted-foreground transition-transform",
+              "text-muted-foreground size-4 shrink-0 transition-transform",
               open && "rotate-180",
             )}
           />
@@ -234,12 +234,12 @@ function ToolDisclosure({
             </>
           )}
           {part.state === "output-error" && part.errorText ? (
-            <div className="rounded-md bg-destructive/10 p-2 text-destructive text-xs">
+            <div className="bg-destructive/10 text-destructive rounded-md p-2 text-xs">
               {part.errorText}
             </div>
           ) : null}
           {state === "output-denied" && part.approval?.reason ? (
-            <div className="rounded-md bg-muted/50 p-2 text-muted-foreground text-xs">
+            <div className="bg-muted/50 text-muted-foreground rounded-md p-2 text-xs">
               {part.approval.reason}
             </div>
           ) : null}
@@ -252,10 +252,10 @@ function ToolDisclosure({
 function ToolPanel({ label, body }: { label: string; body: unknown }) {
   return (
     <div className="space-y-1">
-      <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+      <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </h4>
-      <pre className="overflow-x-auto rounded-md bg-muted/50 p-2 text-xs">
+      <pre className="bg-muted/50 overflow-x-auto rounded-md p-2 text-xs">
         {typeof body === "string" ? body : JSON.stringify(body, null, 2)}
       </pre>
     </div>

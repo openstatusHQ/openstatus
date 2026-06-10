@@ -1,19 +1,5 @@
-import { useTransition } from "react";
-import { z } from "zod";
-
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-  FormCardUpgrade,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { type Locale, localeDetails, locales } from "@openstatus/locales";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
@@ -34,10 +20,23 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
 import { Lock } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
-import { type Locale, localeDetails, locales } from "@openstatus/locales";
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+  FormCardUpgrade,
+} from "@/components/forms/form-card";
 
 const AVAILABLE_LOCALES = locales.map((code) => ({
   value: code,
@@ -189,7 +188,7 @@ export function FormLocale({
                 />
                 <label
                   htmlFor="multi-locale"
-                  className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                   Enable locale switcher
                 </label>

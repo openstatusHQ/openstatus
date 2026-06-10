@@ -52,7 +52,7 @@ export function listResponseLogsTable(
         timestamp: (
           <TableCellDate
             value={new Date(log.timestamp)}
-            className="font-mono text-foreground"
+            className="text-foreground font-mono"
           />
         ),
         region: <TableCellRegion value={log.region} className="font-mono" />,
@@ -74,7 +74,7 @@ export function listResponseLogsTable(
         id: (
           <TableCellText
             value={log.id ?? "—"}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
       },

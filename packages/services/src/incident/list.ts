@@ -84,7 +84,8 @@ async function enrichIncidentsBatch(
 
   return rows.map((r) => ({
     ...r,
-    monitor: r.monitorId != null ? monitorById.get(r.monitorId) ?? null : null,
+    monitor:
+      r.monitorId != null ? (monitorById.get(r.monitorId) ?? null) : null,
   }));
 }
 
@@ -143,6 +144,6 @@ export async function getIncident(args: {
     workspaceId: ctx.workspace.id,
   });
   const [enriched] = await enrichIncidentsBatch(db, [record], ctx.workspace.id);
-  // biome-ignore lint/style/noNonNullAssertion: always defined for len === 1
+  // oxlint-disable-next-line typescript/no-non-null-assertion -- always defined for len === 1
   return enriched!;
 }

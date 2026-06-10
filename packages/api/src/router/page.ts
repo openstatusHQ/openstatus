@@ -1,6 +1,3 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
 import { NotFoundError } from "@openstatus/services";
@@ -28,6 +25,8 @@ import {
   updatePageLocales,
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { env } from "../env";
 import { toServiceCtx, toTRPCError } from "../service-adapter";

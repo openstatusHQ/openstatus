@@ -23,10 +23,7 @@ import {
 import type { AnyAgentTool } from "./types";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
-export {
-  createMaintenanceTool,
-  listMaintenancesTool,
-} from "./maintenance";
+export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 export {
   getMonitorStatusTool,
   getMonitorSummaryTool,

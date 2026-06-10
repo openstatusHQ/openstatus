@@ -26,13 +26,13 @@ export function DetailsTable({ sections, empty }: DetailsTableData) {
   const total = sections.reduce((acc, s) => acc + s.rows.length, 0);
   if (total === 0) {
     return (
-      <div className="rounded-md border bg-background p-3 text-muted-foreground text-sm">
+      <div className="bg-background text-muted-foreground rounded-md border p-3 text-sm">
         {empty ?? "No details to show."}
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-md border bg-background">
+    <div className="bg-background overflow-hidden rounded-md border">
       <Table>
         <TableBody>
           {sections.map((section, sIdx) => (
@@ -47,10 +47,10 @@ export function DetailsTable({ sections, empty }: DetailsTableData) {
                   key={`${sIdx}-${row.label}`}
                   className="hover:bg-transparent"
                 >
-                  <TableHead className="w-1/3 border-r bg-muted/40 font-mono text-muted-foreground">
+                  <TableHead className="bg-muted/40 text-muted-foreground w-1/3 border-r font-mono">
                     {row.label}
                   </TableHead>
-                  <TableCell className="whitespace-normal break-words font-mono">
+                  <TableCell className="font-mono break-words whitespace-normal">
                     {row.value}
                   </TableCell>
                 </TableRow>

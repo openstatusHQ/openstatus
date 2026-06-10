@@ -1,8 +1,5 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-
-import { formatNumber } from "@/lib/formatter";
 import {
   type ChartConfig,
   ChartContainer,
@@ -13,6 +10,10 @@ import {
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
+import { formatNumber } from "@/lib/formatter";
+
 import { ChartLegendBadge } from "./chart-legend-badge";
 
 const chartConfig = {

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { buildSystemPrompt } from "./agent";
 
 describe("buildSystemPrompt", () => {
@@ -12,7 +13,7 @@ describe("buildSystemPrompt", () => {
     );
     expect(match).not.toBeNull();
 
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     const promptDate = new Date(match![1]);
     expect(promptDate.getTime()).toBeGreaterThanOrEqual(before.getTime());
     expect(promptDate.getTime()).toBeLessThanOrEqual(after.getTime());

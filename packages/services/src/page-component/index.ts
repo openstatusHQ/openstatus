@@ -1,8 +1,5 @@
 export { deletePageComponent } from "./delete";
-export {
-  listPageComponents,
-  type PageComponentWithRelations,
-} from "./list";
+export { listPageComponents, type PageComponentWithRelations } from "./list";
 export { updatePageComponentOrder } from "./update-order";
 
 export {

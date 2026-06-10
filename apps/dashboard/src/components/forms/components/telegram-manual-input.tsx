@@ -1,6 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
 import {
   FormControl,
   FormDescription,
@@ -11,6 +10,9 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import type { UseFormReturn } from "react-hook-form";
+
+import { Link } from "@/components/common/link";
+
 import type { FormValues } from "../notifications/form-telegram";
 
 interface TelegramManualInputProps {
@@ -36,7 +38,7 @@ export function TelegramManualInput({
           </FormControl>
           <FormMessage />
           {successMsg && (
-            <div className="font-medium text-green-600 text-sm">
+            <div className="text-sm font-medium text-green-600">
               {successMsg}
             </div>
           )}

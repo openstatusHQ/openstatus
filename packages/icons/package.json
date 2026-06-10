@@ -1,20 +1,19 @@
 {
   "name": "@openstatus/icons",
   "version": "0.0.0",
+  "license": "MIT",
   "main": "./src/index.tsx",
   "types": "./src/index.tsx",
-  "license": "MIT",
   "scripts": {
-    "lint": "biome lint \"**/*.ts*\""
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "react": "catalog:"
   },
   "devDependencies": {
-    "@biomejs/biome": "catalog:",
     "@openstatus/tsconfig": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "typescript": "catalog:"
-  },
-  "dependencies": {
-    "react": "catalog:"
   }
 }

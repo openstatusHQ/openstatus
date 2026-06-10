@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+
 import matter from "gray-matter";
 import slugify from "slugify";
+
 import { metadataSchema } from "./schema";
 
 // `defaults` are merged under the file's frontmatter (file wins) before

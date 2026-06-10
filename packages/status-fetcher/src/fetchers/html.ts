@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { parse } from "node-html-parser";
+
 import { type FetchError, fetchText } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { inferStatus } from "../utils";

@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { Info } from "lucide-react";
+
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
 import { Note } from "@/components/common/note";
@@ -11,9 +15,6 @@ import {
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 
 const messages = [
   {

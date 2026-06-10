@@ -1,8 +1,5 @@
 "use client";
 
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { PERIODS, isPaidPeriod } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +13,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Lock } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
+
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { PERIODS, isPaidPeriod } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 // TODO: where to move it?
 export const PERIOD_VALUES = [
@@ -60,7 +61,7 @@ export function DropdownPeriod() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuGroup>
-            <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
+            <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
               Period
             </DropdownMenuLabel>
             {PERIOD_VALUES.map(({ value, label }) => {

@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { z } from "zod";
+
 import { type FetchError, fetchJsonWithRaw } from "./fetch";
 import type { JsonValue, NormalizedIncident, StatusPageEntry } from "./types";
 

@@ -1,4 +1,5 @@
 import type { Page } from "@openstatus/db/src/schema";
+
 import { getValidSubdomain } from "../domain";
 import type { Action, ComposeInput } from "./types";
 

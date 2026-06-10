@@ -1,5 +1,6 @@
 import { FREE_FLY_REGIONS } from "@openstatus/regions";
 import { z } from "zod";
+
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 
 // REMINDER: this is not a database table but just a schema for the limits of the plan

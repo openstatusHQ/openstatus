@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+
 import {
   Section,
   SectionDescription,
@@ -9,8 +12,6 @@ import {
 } from "@/components/content/section";
 import { FormMonitorUpdate } from "@/components/forms/monitor/update";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();

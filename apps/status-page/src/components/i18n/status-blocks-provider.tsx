@@ -1,17 +1,18 @@
 "use client";
 
 import {
-  formatDate,
-  formatDateRange,
-  formatDateRangeParts,
-  formatDateTime,
-} from "@/lib/formatter";
-import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
 } from "@openstatus/ui/components/blocks/status-i18n";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo } from "react";
+
+import {
+  formatDate,
+  formatDateRange,
+  formatDateRangeParts,
+  formatDateTime,
+} from "@/lib/formatter";
 
 /**
  * StatusBlocksProvider

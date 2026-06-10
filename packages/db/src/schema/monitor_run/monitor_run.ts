@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable } from "drizzle-orm/sqlite-core";
+
 import { monitor } from "../monitors";
 import { workspace } from "../workspaces/workspace";
 

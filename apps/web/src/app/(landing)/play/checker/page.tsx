@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { mockCheckAllRegions } from "@/lib/checker/mock";
@@ -10,7 +12,7 @@ import {
   getJsonLDFAQPage,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+
 import {
   CheckerProvider,
   DetailsButtonLink,

@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 import type React from "react";
+
+import { cn } from "@/lib/utils";
 
 type AsideType = "note" | "tip" | "caution" | "danger";
 
@@ -11,7 +12,7 @@ const ASIDE_LABEL: Record<AsideType, string> = {
   danger: "Danger",
 };
 
-const asideVariants = cva("my-4 border border-border p-4", {
+const asideVariants = cva("border-border my-4 border p-4", {
   variants: {
     type: {
       note: "border-border",

@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 import { Container, Img, Link, Section } from "react-email";
+
 import { Footer } from "./footer";
 import { styles } from "./styles";
 

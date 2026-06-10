@@ -1,9 +1,5 @@
 "use client";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
-import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -33,6 +29,11 @@ import { useEffect, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+// FIXME: use input-group instead
+import { InputWithAddons } from "@/components/common/input-with-addons";
+import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
+import { useTRPC } from "@/lib/trpc/client";
 
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";

@@ -1,7 +1,9 @@
-import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
+
+import { getQueryClient, trpc } from "@/lib/trpc/server";
+
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
 

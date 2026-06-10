@@ -1,5 +1,7 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -8,6 +10,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
+import { Form } from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 import {
   FormCard,
@@ -17,14 +25,6 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Form } from "@openstatus/ui/components/ui/form";
-import { Input } from "@openstatus/ui/components/ui/input";
-import { useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
 
 const DEGRADED = 30_000;
 const TIMEOUT = 45_000;

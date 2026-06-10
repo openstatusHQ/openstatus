@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import {
   CreateInvitationInput,
@@ -9,8 +7,9 @@ import {
   getInvitationByToken,
   listInvitations,
 } from "@openstatus/services/invitation";
-
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

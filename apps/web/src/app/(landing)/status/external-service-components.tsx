@@ -14,6 +14,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
+
 import { ExternalServicePill } from "./external-service-pill";
 
 export type ComponentHistoryDay = {
@@ -177,17 +178,17 @@ function ComponentRow({
 }) {
   const series = buildSeries(component.history, days);
   return (
-    <div className="flex flex-col gap-1 border-border/50 border-b py-2 last:border-b-0">
+    <div className="border-border/50 flex flex-col gap-1 border-b py-2 last:border-b-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {hrefBase ? (
           <a
-            className="font-medium text-sm hover:underline"
+            className="text-sm font-medium hover:underline"
             href={`${hrefBase}/${component.slug}`}
           >
             {component.name}
           </a>
         ) : (
-          <span className="font-medium text-sm">{component.name}</span>
+          <span className="text-sm font-medium">{component.name}</span>
         )}
         <ExternalServicePill
           indicator={component.indicator}
@@ -195,7 +196,7 @@ function ComponentRow({
           statusMessage={component.description ?? undefined}
         />
       </div>
-      <div className="[&_[data-slot=status-bar-item]>div>div]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]]:rounded-none">
+      <div className="[&_[data-slot=status-bar-item]]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]>div>div]:rounded-none">
         <StatusBar data={series} />
       </div>
     </div>
@@ -224,10 +225,10 @@ function SectionBlock({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="border border-border"
+      className="border-border border"
     >
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left">
-        <span className="flex items-center gap-2 font-medium text-sm">
+        <span className="flex items-center gap-2 text-sm font-medium">
           {open ? (
             <ChevronDownIcon className="size-4 shrink-0" />
           ) : (

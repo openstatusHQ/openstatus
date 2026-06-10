@@ -34,19 +34,19 @@ export function listMonitorsTable(
         jobType: (
           <TableCellText
             value={m.jobType.toUpperCase()}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         periodicity: (
           <TableCellText
             value={m.periodicity}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         regions: (
           <TableCellText
             value={m.regions.join(", ") || "—"}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         active: <TableCellBoolean value={m.active} />,

@@ -1,10 +1,11 @@
 "use client";
 
-import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
 import { Database, User, X, Zap } from "lucide-react";
+
+import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 

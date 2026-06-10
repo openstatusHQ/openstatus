@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+
 import { StatusReportUpdateSchema } from "./schema";
 
 test("return the status report update", async () => {

@@ -1,8 +1,3 @@
-import { Link } from "@/components/common/link";
-import { Note, NoteButton } from "@/components/common/note";
-import { BillingAddons } from "@/components/content/billing-addons";
-import { DataTable } from "@/components/data-table/billing/data-table";
-import { useTRPC } from "@/lib/trpc/client";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
@@ -18,6 +13,12 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
+
+import { Link } from "@/components/common/link";
+import { Note, NoteButton } from "@/components/common/note";
+import { BillingAddons } from "@/components/content/billing-addons";
+import { DataTable } from "@/components/data-table/billing/data-table";
+import { useTRPC } from "@/lib/trpc/client";
 
 const PLANS = {
   free: ["starter", "team", "scale"],

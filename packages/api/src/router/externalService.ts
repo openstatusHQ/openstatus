@@ -1,6 +1,3 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
 import {
   getExternalServiceBySlug,
   listExternalServices,
@@ -15,6 +12,8 @@ import {
   listExternalIncidentsBySlug,
 } from "@openstatus/services/external-service-incident";
 import { OSTinybird } from "@openstatus/tinybird";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { env } from "../env";
 import { createTRPCRouter, publicProcedure } from "../trpc";

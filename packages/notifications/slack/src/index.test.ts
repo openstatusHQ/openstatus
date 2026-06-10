@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { COLORS } from "@openstatus/notification-base";
+
 import {
   sendAlert,
   sendDegraded,
@@ -9,7 +11,6 @@ import {
 } from "./index";
 
 describe("Slack Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {

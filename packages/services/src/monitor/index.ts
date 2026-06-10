@@ -10,10 +10,7 @@ export {
   getMonitorSummary,
   type GetMonitorSummaryResult,
 } from "./get-monitor-summary";
-export {
-  getResponseLog,
-  type ResponseLogDetail,
-} from "./get-response-log";
+export { getResponseLog, type ResponseLogDetail } from "./get-response-log";
 export {
   listResponseLogs,
   type ListResponseLogsResult,

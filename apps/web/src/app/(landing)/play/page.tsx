@@ -1,10 +1,12 @@
+import type { Metadata } from "next";
+
 import { components } from "@/content/mdx";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,

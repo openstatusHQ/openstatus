@@ -1,4 +1,5 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 const monitor: Monitor = {

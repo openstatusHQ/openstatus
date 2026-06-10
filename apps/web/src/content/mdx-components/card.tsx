@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type React from "react";
+
+import { cn } from "@/lib/utils";
 
 export function CardGrid({ children }: { children: React.ReactNode }) {
   return <div className="my-4 grid gap-4 sm:grid-cols-2">{children}</div>;
@@ -14,9 +15,9 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="[&>*:last-child]:!mb-0 border border-border p-4">
+    <div className="border-border border p-4 [&>*:last-child]:!mb-0">
       {title ? (
-        <p className="!mt-0 mb-2 font-medium text-foreground">{title}</p>
+        <p className="text-foreground !mt-0 mb-2 font-medium">{title}</p>
       ) : null}
       {children}
     </div>
@@ -39,12 +40,12 @@ export function LinkCard({
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noopener noreferrer" : undefined}
       className={cn(
-        "no-underline! my-4 block border border-border p-4 hover:bg-muted",
+        "border-border hover:bg-muted my-4 block border p-4 no-underline!",
       )}
     >
-      <span className="block font-medium text-foreground">{title}</span>
+      <span className="text-foreground block font-medium">{title}</span>
       {description ? (
-        <span className="mt-1 block text-muted-foreground text-sm">
+        <span className="text-muted-foreground mt-1 block text-sm">
           {description}
         </span>
       ) : null}

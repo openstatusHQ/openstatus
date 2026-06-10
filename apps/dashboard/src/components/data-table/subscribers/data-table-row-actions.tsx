@@ -1,9 +1,5 @@
 "use client";
 
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
-import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
@@ -11,6 +7,11 @@ import { isTRPCClientError } from "@trpc/client";
 import { Pencil, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 

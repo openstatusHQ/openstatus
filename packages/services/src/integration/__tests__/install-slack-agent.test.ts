@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, desc, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 

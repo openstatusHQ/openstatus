@@ -1,14 +1,5 @@
 "use client";
 
-import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
-import { Link } from "@/components/common/link";
-import {
-  BillingOverlay,
-  BillingOverlayButton,
-  BillingOverlayDescription,
-} from "@/components/content/billing-overlay";
-import type { REGIONS } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
 import { formatRegionCode, groupByContinent } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -29,6 +20,16 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Globe, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
+
+import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
+import { Link } from "@/components/common/link";
+import {
+  BillingOverlay,
+  BillingOverlayButton,
+  BillingOverlayDescription,
+} from "@/components/content/billing-overlay";
+import type { REGIONS } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function CommandRegion({
   regions,
@@ -131,7 +132,7 @@ export function CommandRegion({
                         <span className="font-mono">
                           {formatRegionCode(region.code)}
                         </span>
-                        <span className="truncate text-muted-foreground text-xs">
+                        <span className="text-muted-foreground truncate text-xs">
                           {region.location}
                         </span>
                         <Check

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { EmailClient } from "@openstatus/emails";
+
 import type { PageUpdate, Subscription } from "../types";
 import {
   sendEmailNotifications,

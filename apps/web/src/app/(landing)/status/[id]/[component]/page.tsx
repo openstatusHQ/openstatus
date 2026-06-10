@@ -114,7 +114,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>

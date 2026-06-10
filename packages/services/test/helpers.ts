@@ -1,4 +1,5 @@
 import { expect } from "bun:test";
+
 import { and, db, desc, eq, inArray } from "@openstatus/db";
 import {
   type Scope,

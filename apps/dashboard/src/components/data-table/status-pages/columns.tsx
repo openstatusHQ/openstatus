@@ -1,9 +1,11 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
+
+import { Link } from "@/components/common/link";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusPage = RouterOutputs["page"]["list"][number];
@@ -37,7 +39,7 @@ export const columns: ColumnDef<StatusPage>[] = [
         <img
           src={`${value}`}
           alt={`Favicon for ${row.getValue("title")}`}
-          className="h-4 w-4 rounded border bg-muted"
+          className="bg-muted h-4 w-4 rounded border"
         />
       );
     },

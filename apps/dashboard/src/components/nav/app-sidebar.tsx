@@ -1,6 +1,21 @@
 "use client";
 
 import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+  SidebarTrigger,
+  useSidebar,
+} from "@openstatus/ui/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import {
   Activity,
   Bell,
   Bot,
@@ -17,21 +32,7 @@ import { NavOverview } from "@/components/nav/nav-overview";
 import { NavStatusPages } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-  SidebarTrigger,
-  useSidebar,
-} from "@openstatus/ui/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
+
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
 
@@ -134,10 +135,10 @@ export function AppSidebarTrigger() {
         <TooltipContent side="right">
           <p className="mr-px inline-flex items-center">
             Toggle Sidebar{" "}
-            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
               ⌘
             </Kbd>
-            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
               {SIDEBAR_KEYBOARD_SHORTCUT}
             </Kbd>
           </p>

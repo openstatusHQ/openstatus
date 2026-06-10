@@ -1,5 +1,6 @@
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { notFound } from "next/navigation";
+
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,

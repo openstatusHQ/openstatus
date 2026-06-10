@@ -4,6 +4,7 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
+
 import { invalidStatusError } from "./errors";
 
 type DBStatusReport = {

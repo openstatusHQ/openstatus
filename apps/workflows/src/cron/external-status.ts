@@ -1,4 +1,5 @@
 import { getLogger } from "@logtape/logtape";
+import { db } from "@openstatus/db";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
 import {
@@ -21,7 +22,6 @@ import { OSTinybird } from "@openstatus/tinybird";
 import { Effect } from "effect";
 import type { Context } from "hono";
 
-import { db } from "@openstatus/db";
 import { env } from "../env";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 

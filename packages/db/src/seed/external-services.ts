@@ -1,4 +1,5 @@
 import type { InferInsertModel } from "drizzle-orm";
+
 import type { externalService } from "../schema";
 
 type ExternalServiceSeedEntry = InferInsertModel<typeof externalService>;

@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { z } from "zod";
+
 import { FetchError, fetchJson } from "../fetch";
 import type {
   SeverityLevel,

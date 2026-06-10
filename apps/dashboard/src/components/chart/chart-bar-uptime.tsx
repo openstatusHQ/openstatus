@@ -1,14 +1,5 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-
-import {
-  type PERIODS,
-  mapUptime,
-  periodToFromDate,
-  periodToInterval,
-} from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   type ChartConfig,
   ChartContainer,
@@ -20,6 +11,15 @@ import {
 import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
+import {
+  type PERIODS,
+  mapUptime,
+  periodToFromDate,
+  periodToInterval,
+} from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 const chartConfig = {
   ok: {

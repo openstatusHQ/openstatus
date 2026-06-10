@@ -1,6 +1,5 @@
 "use client";
 
-import { Note } from "@/components/common/note";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BlueskyIcon,
@@ -37,6 +36,8 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Note } from "@/components/common/note";
 
 const sources = [
   { id: "search-engine", title: "Search Engine", icon: Search },

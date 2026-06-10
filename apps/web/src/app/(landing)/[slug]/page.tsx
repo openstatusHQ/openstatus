@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
@@ -11,8 +14,6 @@ import {
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 

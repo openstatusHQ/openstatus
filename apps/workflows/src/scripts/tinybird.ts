@@ -1,8 +1,9 @@
+import readline from "node:readline";
+
 import { db, eq } from "@openstatus/db";
 import { type WorkspacePlan, workspace } from "@openstatus/db/src/schema";
-import { env } from "../env";
 
-import readline from "node:readline";
+import { env } from "../env";
 
 // Function to prompt user for confirmation
 const askConfirmation = async (question: string): Promise<boolean> => {

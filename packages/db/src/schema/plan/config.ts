@@ -1,4 +1,5 @@
 import { AVAILABLE_REGIONS, FREE_FLY_REGIONS } from "@openstatus/regions";
+
 import type { WorkspacePlan } from "../workspaces/validation";
 import type { Addons, IntervalPrice, PlanLimits, Price } from "./schema";
 

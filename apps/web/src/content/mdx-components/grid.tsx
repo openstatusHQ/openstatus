@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import type React from "react";
+
+import { cn } from "@/lib/utils";
 
 export function Grid({
   cols = 2,
@@ -40,7 +41,7 @@ export function Grid({
     <div
       className={cn(
         "my-4 grid grid-cols-1",
-        "[&>*]:border [&>*]:border-border [&>*]:p-4",
+        "[&>*]:border-border [&>*]:border [&>*]:p-4",
         // NOTE: remove extra margin from prose grid cells of first and last element
         "[&>*>*:first-child]:!mt-0 [&>*>*:last-child]:!mb-0",
         colsClass[cols],

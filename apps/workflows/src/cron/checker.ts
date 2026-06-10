@@ -1,8 +1,6 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
-import { Effect, Either, Schedule } from "effect";
-import { z } from "zod";
-
+import { getLogger } from "@logtape/logtape";
 import {
   and,
   eq,
@@ -21,22 +19,23 @@ import {
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
-import { db } from "../lib/db";
-
-import { getLogger } from "@logtape/logtape";
-import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type DNSPayloadSchema,
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import { Effect, Either, Schedule } from "effect";
+import { z } from "zod";
+
 import { env } from "../env";
+import { db } from "../lib/db";
 
 type TaskInput = {
   row: z.infer<typeof selectMonitorSchema>;

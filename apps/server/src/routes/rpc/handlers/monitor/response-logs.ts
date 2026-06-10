@@ -5,6 +5,7 @@ import {
   type HTTPResponseLogTiming,
   HTTPResponseLogTrigger,
 } from "@openstatus/proto/monitor/v1";
+
 import { stringToRegion } from "./converters";
 
 type TinybirdTiming = {

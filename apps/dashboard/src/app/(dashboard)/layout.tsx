@@ -1,13 +1,14 @@
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@openstatus/ui/components/ui/sidebar";
+
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import {
   LEFT_SIDEBAR_COOKIE,
   getSidebarDefaultOpen,
 } from "@/lib/sidebar-cookie";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@openstatus/ui/components/ui/sidebar";
 
 export default async function Layout({
   children,

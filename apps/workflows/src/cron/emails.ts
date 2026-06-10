@@ -6,6 +6,7 @@ import {
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
+
 import { env } from "../env";
 
 const email = new EmailClient({ apiKey: env().RESEND_API_KEY });

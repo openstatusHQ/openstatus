@@ -1,5 +1,16 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import { dateFnsLocales } from "@openstatus/locales";
+import { StatusBarEvent } from "@openstatus/ui/components/blocks/status-bar";
+import {
+  StatusCalendar as BlockStatusCalendar,
+  StatusCalendarSkeleton as BlockStatusCalendarSkeleton,
+  type StatusCalendarMarker,
+  type StatusCalendarProps,
+  type StatusCalendarSkeletonProps,
+} from "@openstatus/ui/components/blocks/status-calendar";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import {
   eachDayOfInterval,
   max as maxDate,
@@ -12,17 +23,6 @@ import { useCallback, useMemo } from "react";
 import { Link } from "@/components/common/link";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import type { Locale as AppLocale } from "@/i18n/config";
-import type { RouterOutputs } from "@openstatus/api";
-import { dateFnsLocales } from "@openstatus/locales";
-import { StatusBarEvent } from "@openstatus/ui/components/blocks/status-bar";
-import {
-  StatusCalendar as BlockStatusCalendar,
-  StatusCalendarSkeleton as BlockStatusCalendarSkeleton,
-  type StatusCalendarMarker,
-  type StatusCalendarProps,
-  type StatusCalendarSkeletonProps,
-} from "@openstatus/ui/components/blocks/status-calendar";
-import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 type ReportInput = Page["statusReports"][number];
@@ -149,7 +149,7 @@ export function StatusCalendar({
         <Link
           variant="unstyled"
           href={marker.href}
-          className="block cursor-pointer rounded-sm hover:bg-accent/50"
+          className="hover:bg-accent/50 block cursor-pointer rounded-sm"
         >
           {event}
         </Link>

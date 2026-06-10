@@ -84,7 +84,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
           <span className="text-muted-foreground text-sm">
             Last updated {formatRelative(fetchedAt)}
             {stale ? (
-              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
+              <span className="text-warning ml-1 inline-flex px-2 py-0.5 text-xs">
                 (stale)
               </span>
             ) : null}

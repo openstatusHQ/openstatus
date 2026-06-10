@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { CustomImage } from "@/content/mdx-components/custom-image";
 import { getCustomerPages } from "@/content/utils";
@@ -10,8 +13,6 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 

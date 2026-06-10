@@ -295,7 +295,7 @@ export async function writeComponentsPhase(
       }
 
       const resolvedGroupId = data.sourceGroupId
-        ? groupIdMap.get(data.sourceGroupId) ?? null
+        ? (groupIdMap.get(data.sourceGroupId) ?? null)
         : null;
 
       const [inserted] = await tx

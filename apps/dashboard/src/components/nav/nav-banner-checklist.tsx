@@ -1,7 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,6 +9,9 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, CircleDashed, X } from "lucide-react";
+
+import { Link } from "@/components/common/link";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function NavBannerChecklist({
   handleClose,
@@ -47,7 +48,7 @@ export function NavBannerChecklist({
   ];
 
   return (
-    <SidebarGroup className="rounded-lg border bg-background group-data-[collapsible=icon]:hidden">
+    <SidebarGroup className="bg-background rounded-lg border group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>Getting Started</span>
         <SidebarMenuAction
@@ -65,13 +66,13 @@ export function NavBannerChecklist({
           >
             {item.checked ? (
               <>
-                <CircleCheck className="shrink-0 text-success" size={12} />
+                <CircleCheck className="text-success shrink-0" size={12} />
                 <span>{item.title}</span>
               </>
             ) : (
               <>
                 <CircleDashed
-                  className="shrink-0 text-muted-foreground/50"
+                  className="text-muted-foreground/50 shrink-0"
                   size={12}
                 />
                 <Link href={item.href}>{item.title}</Link>

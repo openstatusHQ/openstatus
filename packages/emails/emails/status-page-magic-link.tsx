@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 
 import { Body, Head, Heading, Html, Link, Preview, Text } from "react-email";
+
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 

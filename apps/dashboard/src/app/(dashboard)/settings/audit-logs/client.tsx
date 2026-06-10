@@ -1,5 +1,10 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import { useQuery } from "@tanstack/react-query";
+import { Lock } from "lucide-react";
+import { useState } from "react";
+
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -26,10 +31,6 @@ import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
-import { useState } from "react";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
 

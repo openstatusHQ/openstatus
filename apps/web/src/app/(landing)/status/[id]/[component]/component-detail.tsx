@@ -124,7 +124,7 @@ function OtherComponents({
           <a
             key={c.slug}
             href={`/status/${serviceSlug}/${c.slug}`}
-            className="inline-flex rounded-none border px-2.5 py-0.5 text-sm hover:bg-muted"
+            className="hover:bg-muted inline-flex rounded-none border px-2.5 py-0.5 text-sm"
           >
             {c.name}
           </a>
@@ -192,7 +192,7 @@ export function ComponentDetail({
           <span className="text-muted-foreground text-sm">
             Last updated {formatRelative(component.lastFetchedAt)}
             {component.stale ? (
-              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
+              <span className="text-warning ml-1 inline-flex px-2 py-0.5 text-xs">
                 (stale)
               </span>
             ) : null}
@@ -238,11 +238,11 @@ export function ComponentDetail({
                 <div className="flex items-center justify-between gap-3">
                   <ContentBoxTitle className="m-0!">{inc.name}</ContentBoxTitle>
                   <span
-                    className={`inline-flex items-center rounded-none border px-2.5 py-0.5 font-medium text-xs ${impactClass(inc.impact)}`}
+                    className={`inline-flex items-center rounded-none border px-2.5 py-0.5 text-xs font-medium ${impactClass(inc.impact)}`}
                   >
                     {inc.impact === "none"
                       ? "incident"
-                      : inc.impact ?? "incident"}
+                      : (inc.impact ?? "incident")}
                   </span>
                 </div>
                 <ContentBoxDescription className="m-0! text-sm">

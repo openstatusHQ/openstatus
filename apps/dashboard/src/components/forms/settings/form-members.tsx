@@ -1,31 +1,7 @@
 "use client";
 
-import {
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-
-import {
-  FormCardContent,
-  FormCardDescription,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-  FormCardUpgrade,
-} from "@/components/forms/form-card";
-
-import { Button } from "@openstatus/ui/components/ui/button";
-import { FormCardFooter, FormCardFooterInfo } from "../form-card";
-
-import { Link } from "@/components/common/link";
-import { FormCard } from "@/components/forms/form-card";
-import { Tabs } from "@openstatus/ui/components/ui/tabs";
-import { Lock } from "lucide-react";
-
-import { DataTable as InvitationsDataTable } from "@/components/data-table/settings/invitations/data-table";
-import { DataTable as MembersDataTable } from "@/components/data-table/settings/members/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -35,10 +11,32 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { Tabs } from "@openstatus/ui/components/ui/tabs";
+import { Lock } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import { DataTable as InvitationsDataTable } from "@/components/data-table/settings/invitations/data-table";
+import { DataTable as MembersDataTable } from "@/components/data-table/settings/members/data-table";
+import {
+  FormCardContent,
+  FormCardDescription,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+  FormCardUpgrade,
+} from "@/components/forms/form-card";
+import { FormCard } from "@/components/forms/form-card";
+
+import { FormCardFooter, FormCardFooterInfo } from "../form-card";
 
 const schema = z.object({
   email: z.email(),

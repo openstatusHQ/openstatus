@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { ContentPagination } from "@/app/(landing)/content-pagination";
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
@@ -12,8 +15,6 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 

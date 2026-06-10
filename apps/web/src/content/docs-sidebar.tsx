@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Drawer,
@@ -12,6 +11,9 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { cn } from "@/lib/utils";
+
 import {
   type DocsNavGroup,
   type DocsNavItem,
@@ -80,14 +82,14 @@ function NavGroup({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group ease flex w-full items-center justify-between py-2 pr-2 text-foreground transition-colors duration-150 hover:bg-muted motion-reduce:transition-none"
+        className="group ease text-foreground hover:bg-muted flex w-full items-center justify-between py-2 pr-2 transition-colors duration-150 motion-reduce:transition-none"
         style={rowIndent(depth)}
       >
-        <span className="font-medium font-mono">{group.label}</span>
+        <span className="font-mono font-medium">{group.label}</span>
         <span
           className={cn(
-            "relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground motion-reduce:transition-none",
-            open && "rotate-180 text-foreground",
+            "text-muted-foreground group-hover:text-foreground relative top-[1px] shrink-0 origin-center text-[10px] transition duration-300 motion-reduce:transition-none",
+            open && "text-foreground rotate-180",
           )}
           aria-hidden="true"
         >
@@ -127,7 +129,7 @@ function NavItems({
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ease block py-2 pr-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none"
+                className="ease text-muted-foreground hover:bg-muted hover:text-foreground block py-2 pr-2 transition-colors duration-150 motion-reduce:transition-none"
                 style={rowIndent(depth)}
               >
                 {item.label}
@@ -155,7 +157,7 @@ function NavItems({
               href={href}
               onClick={onNavigate}
               className={cn(
-                "ease block py-2 pr-2 text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground motion-reduce:transition-none",
+                "ease text-muted-foreground hover:bg-muted hover:text-foreground block py-2 pr-2 transition-colors duration-150 motion-reduce:transition-none",
                 active && "bg-muted text-foreground",
               )}
               style={rowIndent(depth)}

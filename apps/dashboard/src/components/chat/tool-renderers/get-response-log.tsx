@@ -56,7 +56,7 @@ export function getResponseLogDetails(
         {
           label: "Headers",
           value: (
-            <pre className="whitespace-pre-wrap break-all text-foreground">
+            <pre className="text-foreground break-all whitespace-pre-wrap">
               {JSON.stringify(output.headers, null, 2)}
             </pre>
           ),
@@ -106,7 +106,7 @@ function timingRows(timing: Timing, latency: number): DetailsRow[] {
           %
         </span>
         <div className="flex flex-1 items-center justify-end gap-1">
-          <span className="text-nowrap text-muted-foreground">{value} ms</span>
+          <span className="text-muted-foreground text-nowrap">{value} ms</span>
           <div
             className="h-3"
             style={{
