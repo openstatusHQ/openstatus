@@ -49,7 +49,6 @@ type ConfigSection = {
   items: (ConfigItem | ConfigGroup)[];
 };
 
-// TODO: missing shortcuts
 const CONFIG: ConfigSection[] = [
   {
     type: "group",
@@ -492,6 +491,23 @@ function Home({
   );
 }
 
+// Bucket, preserving the server's rank order — first key seen is the best-scoring one.
+function bucket<K>(list: SearchResult[], keyOf: (item: SearchResult) => K) {
+  const groups: { key: K; items: SearchResult[] }[] = [];
+  const map = new Map<K, SearchResult[]>();
+  for (const item of list) {
+    const key = keyOf(item);
+    let b = map.get(key);
+    if (!b) {
+      b = [];
+      map.set(key, b);
+      groups.push({ key, items: b });
+    }
+    b.push(item);
+  }
+  return groups;
+}
+
 function SearchResults({
   items,
   search,
@@ -505,12 +521,16 @@ function SearchResults({
 }) {
   const router = useRouter();
 
+  const highlightRe = React.useMemo(
+    () =>
+      search
+        ? new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+        : null,
+    [search],
+  );
   const highlight = (text: string) =>
-    search
-      ? text.replace(
-          new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
-          (match) => `<mark>${match}</mark>`,
-        )
+    highlightRe
+      ? text.replace(highlightRe, (match) => `<mark>${match}</mark>`)
       : text;
 
   const renderRow = (item: SearchResult) => (
@@ -539,23 +559,6 @@ function SearchResults({
       </div>
     </CommandItem>
   );
-
-  // Bucket, preserving the server's rank order — first key seen is the best-scoring one.
-  function bucket<K>(list: SearchResult[], keyOf: (item: SearchResult) => K) {
-    const groups: { key: K; items: SearchResult[] }[] = [];
-    const map = new Map<K, SearchResult[]>();
-    for (const item of list) {
-      const key = keyOf(item);
-      let b = map.get(key);
-      if (!b) {
-        b = [];
-        map.set(key, b);
-        groups.push({ key, items: b });
-      }
-      b.push(item);
-    }
-    return groups;
-  }
 
   // Split full vs partial matches, then sub-group each tier: by corpus in "all"
   // scope (kept flat — no category level), by category within a single corpus.

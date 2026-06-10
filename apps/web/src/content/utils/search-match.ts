@@ -155,7 +155,7 @@ export function getContentSnippet(
   }
 
   let snippet = sanitized.slice(start, end).trim();
-  if (!snippet) return snippet;
+  if (!snippet) return `${sanitized.slice(0, 100)}...`;
   if (start > 0) snippet = `...${snippet}`;
   if (end < sanitized.length) snippet = `${snippet}...`;
   return snippet;
