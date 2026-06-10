@@ -15,7 +15,7 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
       className={cn("flex items-center justify-between gap-2", className)}
       {...props}
     >
-      <div className="px-4 text-muted-foreground">
+      <div className="min-w-0 truncate px-4 text-muted-foreground">
         {segments.map((segment, index) => (
           <Fragment key={segment}>
             <Link
