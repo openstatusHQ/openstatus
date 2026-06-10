@@ -10,7 +10,7 @@ const client = createClient({
   url: `file:${file}`,
   syncUrl: env().DATABASE_URL,
   authToken: env().DATABASE_AUTH_TOKEN,
-  syncInterval: 600,
+  syncInterval: 60,
 });
 
 export const db = drizzle({

@@ -64,10 +64,14 @@ function affectedIdsEqual(a: string[], b: string[]): boolean {
   return true;
 }
 
+// Storage is `integer({ mode: 'timestamp' })` — seconds. Incoming dates parsed
+// from upstream ISO strings carry sub-second precision that is lost on write,
+// so a strict ms compare flags every row as changed on the next tick. Compare
+// at the storage resolution instead.
 function datesEqual(a: Date | null, b: Date | null): boolean {
   if (a === b) return true;
   if (a === null || b === null) return false;
-  return a.getTime() === b.getTime();
+  return Math.floor(a.getTime() / 1000) === Math.floor(b.getTime() / 1000);
 }
 
 function incidentsEqual(existing: ExistingRow, desired: DesiredRow): boolean {
