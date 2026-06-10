@@ -55,37 +55,40 @@ const CONFIG: ConfigSection[] = [
     heading: "Resources",
     items: [
       {
-        type: "group",
-        label: "Search in all pages...",
-        heading: "All pages",
-        page: "all",
+        type: "item",
+        label: "Go to Docs",
+        href: "/docs",
+        shortcut: "⌘D",
       },
       {
         type: "item",
         label: "Go to Home",
         href: "/",
+        shortcut: "⌘H",
       },
       {
         type: "item",
         label: "Go to Pricing",
         href: "/pricing",
-      },
-      {
-        type: "group",
-        label: "Search in Docs...",
-        heading: "Docs",
-        page: "docs",
-      },
-      {
-        type: "item",
-        label: "Go to Docs",
-        href: "/docs",
+        shortcut: "⌘P",
       },
       {
         type: "item",
         label: "Go to Global Speed Checker",
         href: "/play/checker",
         shortcut: "⌘G",
+      },
+      {
+        type: "group",
+        label: "Search in all pages...",
+        heading: "All pages",
+        page: "all",
+      },
+      {
+        type: "group",
+        label: "Search in Docs...",
+        heading: "Docs",
+        page: "docs",
       },
       {
         type: "group",
