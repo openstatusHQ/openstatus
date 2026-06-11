@@ -76,12 +76,15 @@ export function FormStatusReportUpdate({
   onSubmit,
   className,
   components,
+  allowUnsetImpacts = false,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
   /** The report's affected components; renders the per-component impact picker. */
   components?: { id: number; name: string }[];
+  /** Edit mode: components without an entry show "No change". */
+  allowUnsetImpacts?: boolean;
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(
@@ -306,6 +309,7 @@ export function FormStatusReportUpdate({
                         components={components}
                         value={field.value ?? []}
                         onValueChange={field.onChange}
+                        allowUnset={allowUnsetImpacts}
                       />
                     </FormControl>
                     <FormMessage />

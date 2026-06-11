@@ -132,6 +132,10 @@ export default function Page() {
             <UpdatesDataTable
               updates={row.original.updates}
               reportId={row.original.id}
+              components={row.original.pageComponents.map((c) => ({
+                id: c.id,
+                name: c.name,
+              }))}
             />
           )}
         />

@@ -25,20 +25,9 @@ import {
   type FormValues as UpdateCardFormValues,
 } from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { impactsEqual } from "@/components/forms/status-report/component-impact-field";
 import { getNextStatus } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-
-function impactsEqual(
-  a: { pageComponentId: number; impact: string }[],
-  b: { pageComponentId: number; impact: string }[],
-) {
-  const key = (list: typeof a) =>
-    [...list]
-      .sort((x, y) => x.pageComponentId - y.pageComponentId)
-      .map((x) => `${x.pageComponentId}:${x.impact}`)
-      .join(",");
-  return key(a) === key(b);
-}
 
 export default function Page() {
   const { reportId } = useParams<{ id: string; reportId: string }>();
