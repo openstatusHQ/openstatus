@@ -12,9 +12,10 @@ import { ConflictError, NotFoundError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
   insertUpdateComponentImpacts,
-  sortComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
+  withComponentImpacts,
+  withPageComponentIds,
 } from "./internal";
 import { CreateStatusReportInput } from "./schemas";
 
@@ -98,20 +99,14 @@ export async function createStatusReport(args: {
       action: "status_report.create",
       entityType: "status_report",
       entityId: newReport.id,
-      after: {
-        ...newReport,
-        pageComponentIds: [...validated.componentIds].sort((a, b) => a - b),
-      },
+      after: withPageComponentIds(newReport, validated.componentIds),
     });
 
     await emitAudit(tx, ctx, {
       action: "status_report_update.create",
       entityType: "status_report_update",
       entityId: initialUpdate.id,
-      after: {
-        ...initialUpdate,
-        componentImpacts: sortComponentImpacts(componentImpacts),
-      },
+      after: withComponentImpacts(initialUpdate, componentImpacts),
       metadata: { statusReportId: newReport.id },
     });
 

@@ -18,9 +18,10 @@ import {
   getReportUpdateInWorkspace,
   insertUpdateComponentImpacts,
   pruneImpactRowsOutsideMembership,
-  sortComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
+  withComponentImpacts,
+  withPageComponentIds,
 } from "./internal";
 import {
   UpdateStatusReportInput,
@@ -54,9 +55,10 @@ export async function updateStatusReport(args: {
 
     // snapshot membership before/after so association-only edits still
     // produce a visible audit diff (join-table change, not an entity field)
-    const beforeComponentIds = (
-      await getPageComponentIdsForReport(tx, report.id)
-    ).sort((a, b) => a - b);
+    const beforeComponentIds = await getPageComponentIdsForReport(
+      tx,
+      report.id,
+    );
     let afterComponentIds = beforeComponentIds;
 
     const updateValues: Record<string, unknown> = { updatedAt: new Date() };
@@ -84,7 +86,7 @@ export async function updateStatusReport(args: {
         statusReportId: report.id,
         componentIds: validated.componentIds,
       });
-      afterComponentIds = [...validated.componentIds].sort((a, b) => a - b);
+      afterComponentIds = validated.componentIds;
     }
 
     const updated = await tx
@@ -104,8 +106,8 @@ export async function updateStatusReport(args: {
       action: "status_report.update",
       entityType: "status_report",
       entityId: updated.id,
-      before: { ...report, pageComponentIds: beforeComponentIds },
-      after: { ...updated, pageComponentIds: afterComponentIds },
+      before: withPageComponentIds(report, beforeComponentIds),
+      after: withPageComponentIds(updated, afterComponentIds),
     });
 
     return updated;
@@ -129,10 +131,7 @@ export async function updateStatusReportUpdate(args: {
     });
 
     const beforeImpacts = await getComponentImpactsForUpdate(tx, existing.id);
-    const afterImpacts =
-      input.componentImpacts !== undefined
-        ? sortComponentImpacts(input.componentImpacts)
-        : beforeImpacts;
+    const afterImpacts = input.componentImpacts ?? beforeImpacts;
 
     const updateValues: Record<string, unknown> = { updatedAt: new Date() };
     if (input.status !== undefined) updateValues.status = input.status;
@@ -209,8 +208,8 @@ export async function updateStatusReportUpdate(args: {
       action: "status_report_update.update",
       entityType: "status_report_update",
       entityId: updated.id,
-      before: { ...existing, componentImpacts: beforeImpacts },
-      after: { ...updated, componentImpacts: afterImpacts },
+      before: withComponentImpacts(existing, beforeImpacts),
+      after: withComponentImpacts(updated, afterImpacts),
     });
 
     return updated;

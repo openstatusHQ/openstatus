@@ -18,20 +18,6 @@ const componentImpactsInputShape = componentImpactsSchema
     "Per-component impact (operational | degraded_performance | partial_outage | major_outage). Component ids MUST come from list_page_components. Omit entirely for a report without impact tracking.",
   );
 
-function summarizeComponentImpacts(
-  impacts: { pageComponentId: number; impact: string }[] | undefined,
-): { label: string; value: string }[] {
-  if (!impacts?.length) return [];
-  return [
-    {
-      label: "Impacts",
-      value: impacts
-        .map((ci) => `${ci.pageComponentId} → ${ci.impact}`)
-        .join(", "),
-    },
-  ];
-}
-
 const PER_PAGE_DEFAULT = 50;
 const PER_PAGE_MAX = 200;
 
@@ -222,7 +208,16 @@ export const createStatusReportTool: AgentTool<
               },
             ]
           : []),
-        ...summarizeComponentImpacts(input.componentImpacts),
+        ...(input.componentImpacts?.length
+          ? [
+              {
+                label: "Impacts",
+                value: input.componentImpacts
+                  .map((ci) => `${ci.pageComponentId} → ${ci.impact}`)
+                  .join(", "),
+              },
+            ]
+          : []),
         { label: "Message", value: input.message },
       ],
     }),
@@ -324,7 +319,16 @@ export const addStatusReportUpdateTool: AgentTool<
       lines: [
         { label: "Report ID", value: String(input.statusReportId) },
         { label: "New Status", value: input.status },
-        ...summarizeComponentImpacts(input.componentImpacts),
+        ...(input.componentImpacts?.length
+          ? [
+              {
+                label: "Impacts",
+                value: input.componentImpacts
+                  .map((ci) => `${ci.pageComponentId} → ${ci.impact}`)
+                  .join(", "),
+              },
+            ]
+          : []),
         { label: "Message", value: input.message },
       ],
     }),

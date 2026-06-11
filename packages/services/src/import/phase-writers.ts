@@ -19,6 +19,10 @@ import type { PhaseResult, UpdateComponentImpact } from "@openstatus/importers";
 
 import { emitAudit } from "../audit";
 import type { DB, ServiceContext } from "../context";
+import {
+  withComponentImpacts,
+  withPageComponentIds,
+} from "../status-report/internal";
 import type { ImportProviderName } from "./schemas";
 import { clampPeriodicity, computePhaseStatus } from "./utils";
 
@@ -461,12 +465,10 @@ export async function writeIncidentsPhase(
           pageId,
           title: data.report.title,
         }),
-        after: {
-          ...insertedReport,
-          pageComponentIds: componentLinks
-            .map((l) => l.pageComponentId)
-            .sort((a, b) => a - b),
-        },
+        after: withPageComponentIds(
+          insertedReport,
+          componentLinks.map((l) => l.pageComponentId),
+        ),
       });
 
       // Insert updates one-by-one so each inserted id pairs with its source
@@ -518,15 +520,13 @@ export async function writeIncidentsPhase(
             sourceId: resource.sourceId,
             statusReportId: insertedReport.id,
           }),
-          after: {
-            ...row,
-            componentImpacts: impactRows
-              .map(({ pageComponentId, impact }) => ({
-                pageComponentId,
-                impact,
-              }))
-              .sort((a, b) => a.pageComponentId - b.pageComponentId),
-          },
+          after: withComponentImpacts(
+            row,
+            impactRows.map(({ pageComponentId, impact }) => ({
+              pageComponentId,
+              impact,
+            })),
+          ),
         });
       }
 

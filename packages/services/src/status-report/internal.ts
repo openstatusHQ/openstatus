@@ -192,6 +192,32 @@ export function sortComponentImpacts<T extends { pageComponentId: number }>(
   return [...impacts].sort((a, b) => a.pageComponentId - b.pageComponentId);
 }
 
+/**
+ * Audit snapshot for an update row + its impact rows. Every emitAudit
+ * before/after must go through this so key name and ordering never drift
+ * between snapshots — `changed_fields` diffs them across verbs.
+ */
+export function withComponentImpacts<
+  Row extends object,
+  Impact extends { pageComponentId: number },
+>(
+  row: Row,
+  impacts: ReadonlyArray<Impact>,
+): Row & { componentImpacts: Impact[] } {
+  return { ...row, componentImpacts: sortComponentImpacts(impacts) };
+}
+
+/** Same contract as withComponentImpacts, for report-level membership snapshots. */
+export function withPageComponentIds<Row extends object>(
+  row: Row,
+  pageComponentIds: ReadonlyArray<number>,
+): Row & { pageComponentIds: number[] } {
+  return {
+    ...row,
+    pageComponentIds: [...pageComponentIds].sort((a, b) => a - b),
+  };
+}
+
 /** Fetch the impact rows a single update set, sorted for snapshots. */
 export async function getComponentImpactsForUpdate(
   tx: DB,
