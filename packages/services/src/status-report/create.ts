@@ -12,6 +12,7 @@ import { ConflictError, NotFoundError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
   insertUpdateComponentImpacts,
+  sortComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
@@ -91,19 +92,27 @@ export async function createStatusReport(args: {
       componentImpacts,
     });
 
+    // membership + impacts live in join tables — surface them in the
+    // snapshots so the audit diff/UI sees them alongside the entity fields
     await emitAudit(tx, ctx, {
       action: "status_report.create",
       entityType: "status_report",
       entityId: newReport.id,
-      after: newReport,
+      after: {
+        ...newReport,
+        pageComponentIds: [...validated.componentIds].sort((a, b) => a - b),
+      },
     });
 
     await emitAudit(tx, ctx, {
       action: "status_report_update.create",
       entityType: "status_report_update",
       entityId: initialUpdate.id,
-      after: initialUpdate,
-      metadata: { statusReportId: newReport.id, componentImpacts },
+      after: {
+        ...initialUpdate,
+        componentImpacts: sortComponentImpacts(componentImpacts),
+      },
+      metadata: { statusReportId: newReport.id },
     });
 
     return { statusReport: newReport, initialUpdate };

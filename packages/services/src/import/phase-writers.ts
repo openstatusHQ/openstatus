@@ -430,6 +430,28 @@ export async function writeIncidentsPhase(
         continue;
       }
 
+      // membership = sourceComponentIds ∪ impact-named components, upholding
+      // the invariant that every impact row's component is in the report set
+      const memberSourceIds = new Set([
+        ...data.sourceComponentIds,
+        ...data.updates.flatMap((u) =>
+          (u.componentImpacts ?? []).map((ci) => ci.sourceComponentId),
+        ),
+      ]);
+      const componentLinks: Array<{
+        statusReportId: number;
+        pageComponentId: number;
+      }> = [];
+      for (const sourceCompId of memberSourceIds) {
+        const osCompId = componentIdMap.get(sourceCompId);
+        if (osCompId) {
+          componentLinks.push({
+            statusReportId: insertedReport.id,
+            pageComponentId: osCompId,
+          });
+        }
+      }
+
       await emitAudit(tx, ctx, {
         action: "status_report.create",
         entityType: "status_report",
@@ -439,7 +461,12 @@ export async function writeIncidentsPhase(
           pageId,
           title: data.report.title,
         }),
-        after: insertedReport,
+        after: {
+          ...insertedReport,
+          pageComponentIds: componentLinks
+            .map((l) => l.pageComponentId)
+            .sort((a, b) => a - b),
+        },
       });
 
       // Insert updates one-by-one so each inserted id pairs with its source
@@ -458,7 +485,7 @@ export async function writeIncidentsPhase(
           .get();
 
         // ids missing from `componentIdMap` get no impact row — same
-        // partial-map caveat as the membership links below
+        // partial-map caveat as the membership links
         const impactRows = (u.componentImpacts ?? []).flatMap((ci) => {
           const osCompId = componentIdMap.get(ci.sourceComponentId);
           return osCompId
@@ -485,31 +512,18 @@ export async function writeIncidentsPhase(
             sourceId: resource.sourceId,
             statusReportId: insertedReport.id,
           }),
-          after: row,
+          after: {
+            ...row,
+            componentImpacts: impactRows
+              .map(({ pageComponentId, impact }) => ({
+                pageComponentId,
+                impact,
+              }))
+              .sort((a, b) => a.pageComponentId - b.pageComponentId),
+          },
         });
       }
 
-      // membership = sourceComponentIds ∪ impact-named components, upholding
-      // the invariant that every impact row's component is in the report set
-      const memberSourceIds = new Set([
-        ...data.sourceComponentIds,
-        ...data.updates.flatMap((u) =>
-          (u.componentImpacts ?? []).map((ci) => ci.sourceComponentId),
-        ),
-      ]);
-      const componentLinks: Array<{
-        statusReportId: number;
-        pageComponentId: number;
-      }> = [];
-      for (const sourceCompId of memberSourceIds) {
-        const osCompId = componentIdMap.get(sourceCompId);
-        if (osCompId) {
-          componentLinks.push({
-            statusReportId: insertedReport.id,
-            pageComponentId: osCompId,
-          });
-        }
-      }
       if (componentLinks.length > 0) {
         await tx.insert(statusReportsToPageComponents).values(componentLinks);
       }

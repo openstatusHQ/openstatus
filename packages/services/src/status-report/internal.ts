@@ -150,6 +150,34 @@ export async function getUpdatesForReport(tx: DB, statusReportId: number) {
     .all();
 }
 
+/** Stable ordering for audit snapshots — diffing is array-order-sensitive. */
+export function sortComponentImpacts<T extends { pageComponentId: number }>(
+  impacts: ReadonlyArray<T>,
+): T[] {
+  return [...impacts].sort((a, b) => a.pageComponentId - b.pageComponentId);
+}
+
+/** Fetch the impact rows a single update set, sorted for snapshots. */
+export async function getComponentImpactsForUpdate(
+  tx: DB,
+  statusReportUpdateId: number,
+): Promise<{ pageComponentId: number; impact: PageComponentImpact }[]> {
+  const rows = await tx
+    .select({
+      pageComponentId: statusReportUpdateToPageComponents.pageComponentId,
+      impact: statusReportUpdateToPageComponents.impact,
+    })
+    .from(statusReportUpdateToPageComponents)
+    .where(
+      eq(
+        statusReportUpdateToPageComponents.statusReportUpdateId,
+        statusReportUpdateId,
+      ),
+    )
+    .all();
+  return sortComponentImpacts(rows);
+}
+
 /** Insert the impact rows an update sets. No-op on empty. */
 export async function insertUpdateComponentImpacts(args: {
   tx: DB;

@@ -706,19 +706,35 @@ describe("componentImpacts", () => {
         [testPageComponentId, testPageComponentId2].sort(),
       );
 
-      const auditRows = await readAuditLog({
+      // impacts and membership surface in the audit snapshots (CHANGES UI)
+      const updateAuditRows = await readAuditLog({
         workspaceId: teamCtx.workspace.id,
         entityType: "status_report_update",
         entityId: String(initialUpdate.id),
         db: tx,
       });
-      const hit = auditRows.find(
+      const updateHit = updateAuditRows.find(
         (r) => r.action === "status_report_update.create",
       );
-      expect(hit?.metadata).toMatchObject({
+      expect(updateHit?.after).toMatchObject({
         componentImpacts: [
           { pageComponentId: testPageComponentId2, impact: "major_outage" },
         ],
+      });
+
+      const reportAuditRows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "status_report",
+        entityId: String(report.id),
+        db: tx,
+      });
+      const reportHit = reportAuditRows.find(
+        (r) => r.action === "status_report.create",
+      );
+      expect(reportHit?.after).toMatchObject({
+        pageComponentIds: [testPageComponentId, testPageComponentId2].sort(
+          (a, b) => a - b,
+        ),
       });
     });
   });
@@ -948,6 +964,68 @@ describe("componentImpacts", () => {
       expect(membership.map((m) => m.pageComponentId)).toContain(
         testPageComponentId2,
       );
+
+      const auditRows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "status_report_update",
+        entityId: String(initialUpdate.id),
+        db: tx,
+      });
+      const hit = auditRows.find(
+        (r) => r.action === "status_report_update.update",
+      );
+      expect(hit?.changedFields).toContain("componentImpacts");
+      expect(hit?.before).toMatchObject({
+        componentImpacts: [
+          { pageComponentId: testPageComponentId, impact: "major_outage" },
+        ],
+      });
+      expect(hit?.after).toMatchObject({
+        componentImpacts: [
+          {
+            pageComponentId: testPageComponentId2,
+            impact: "degraded_performance",
+          },
+        ],
+      });
+    });
+  });
+
+  test("membership-only updateStatusReport emits an audit diff", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-audit-membership`,
+          status: "investigating",
+          message: "initial",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      await updateStatusReport({
+        ctx,
+        input: { id: report.id, pageComponentIds: [testPageComponentId2] },
+      });
+
+      const auditRows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "status_report",
+        entityId: String(report.id),
+        db: tx,
+      });
+      const hit = auditRows.find((r) => r.action === "status_report.update");
+      expect(hit).toBeDefined();
+      expect(hit?.changedFields).toContain("pageComponentIds");
+      expect(hit?.before).toMatchObject({
+        pageComponentIds: [testPageComponentId],
+      });
+      expect(hit?.after).toMatchObject({
+        pageComponentIds: [testPageComponentId2],
+      });
     });
   });
 

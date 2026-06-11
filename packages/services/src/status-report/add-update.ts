@@ -14,6 +14,7 @@ import {
   getCurrentImpactsForReport,
   getReportInWorkspace,
   insertUpdateComponentImpacts,
+  sortComponentImpacts,
   validatePageComponentIds,
 } from "./internal";
 import { AddStatusReportUpdateInput } from "./schemas";
@@ -122,8 +123,11 @@ export async function addStatusReportUpdate(args: {
       action: "status_report_update.create",
       entityType: "status_report_update",
       entityId: newUpdate.id,
-      after: newUpdate,
-      metadata: { statusReportId: report.id, componentImpacts: writtenImpacts },
+      after: {
+        ...newUpdate,
+        componentImpacts: sortComponentImpacts(writtenImpacts),
+      },
+      metadata: { statusReportId: report.id },
     });
 
     return { statusReport: updatedReport, statusReportUpdate: newUpdate };
