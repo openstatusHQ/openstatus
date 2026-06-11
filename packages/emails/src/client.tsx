@@ -104,46 +104,46 @@ export class EmailClient {
     }
   }
 
-private async sendBatch(
-  opts: {
-    from: string;
-    to: string;
-    subject: string;
-    html: string;
-    reply_to?: string;
-  }[],
-  batchKey?: string,
-): Promise<void> {
-  if (this.type === "smtp") {
-    const sendEmailPromises = opts.map((email) =>
-      this.smtpTransporter?.sendMail({
-        from: env.SMTP_FROM || email.from,
-        to: email.to,
-        subject: email.subject,
-        html: email.html,
-        replyTo: email.reply_to,
-      }),
-    );
-    await Promise.all(sendEmailPromises);
-  } else {
-    const chunks = chunk(opts, 100); // Resend batch limit
-    for (const batch of chunks) {
-      const response = await this.client?.batch.send(
-        batch.map((email) => ({
-          from: email.from,
+  private async sendBatch(
+    opts: {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      reply_to?: string;
+    }[],
+    batchKey?: string,
+  ): Promise<void> {
+    if (this.type === "smtp") {
+      const sendEmailPromises = opts.map((email) =>
+        this.smtpTransporter?.sendMail({
+          from: env.SMTP_FROM || email.from,
           to: email.to,
           subject: email.subject,
           html: email.html,
           replyTo: email.reply_to,
-        })),
-        batchKey ? { idempotencyKey: batchKey } : undefined,
+        }),
       );
-      if (response?.error) {
-        throw new Error(response.error.name ?? "resend_batch_error");
+      await Promise.all(sendEmailPromises);
+    } else {
+      const chunks = chunk(opts, 100); // Resend batch limit
+      for (const batch of chunks) {
+        const response = await this.client?.batch.send(
+          batch.map((email) => ({
+            from: email.from,
+            to: email.to,
+            subject: email.subject,
+            html: email.html,
+            replyTo: email.reply_to,
+          })),
+          batchKey ? { idempotencyKey: batchKey } : undefined,
+        );
+        if (response?.error) {
+          throw new Error(response.error.name ?? "resend_batch_error");
+        }
       }
     }
   }
-}
 
   public async sendFollowUp(req: { to: string }) {
     if (process.env.NODE_ENV === "development") {
