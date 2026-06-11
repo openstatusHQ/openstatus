@@ -951,7 +951,7 @@ describe("getUptime", () => {
       expect(Number.parseFloat(uptime)).toBeGreaterThan(97);
       expect(Number.parseFloat(uptime)).toBeLessThan(98);
     });
-    it("should ignore reports when calculating duration uptime", () => {
+    it("should ignore legacy reports (no impact rows) when calculating duration uptime", () => {
       const data = Array.from({ length: 45 }, (_, i) =>
         createStatusData(i, 100, 0, 0),
       );
@@ -1545,6 +1545,190 @@ describe("componentImpacts", () => {
       expect(
         getUptime({ data, events, barType: "manual", cardType: "manual" }),
       ).toBe("50%");
+    });
+
+    it("overlapping legacy reports count once and never go negative", () => {
+      const events = [
+        createLegacyEvent(1, day, hoursAfter(day, 24)),
+        createLegacyEvent(2, day, hoursAfter(day, 24)),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("0%");
+    });
+
+    it("partially overlapping reports merge their downtime", () => {
+      const day2 = dayStartUTC(2);
+      const data = [createStatusData(2, 1), createStatusData(1, 1)];
+      // 0-24h and 12-36h overlap by 12h: 36h downtime over 48h, not 48h
+      const events = [
+        createLegacyEvent(1, day2, hoursAfter(day2, 24)),
+        createLegacyEvent(2, hoursAfter(day2, 12), hoursAfter(day2, 36)),
+      ];
+      expect(
+        getUptime({ data, events, barType: "manual", cardType: "manual" }),
+      ).toBe("25%");
+    });
+
+    it("overlapping partial_outage reports take the worst weight, not the sum", () => {
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+        createImpactEvent(2, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("50%");
+    });
+
+    it("overlapping legacy and partial_outage reports take the worst weight", () => {
+      const events = [
+        createLegacyEvent(1, day, hoursAfter(day, 24)),
+        createImpactEvent(2, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("0%");
+    });
+  });
+
+  describe("getUptime - duration mode impact downtime", () => {
+    const day = dayStartUTC(1);
+    const day2 = dayStartUTC(2);
+    const twoDayData = [createStatusData(2, 1), createStatusData(1, 1)];
+
+    function createIncidentEvent(id: number, from: Date, to: Date | null) {
+      return {
+        id,
+        name: "Downtime",
+        from,
+        to,
+        type: "incident" as const,
+        status: "error" as const,
+      };
+    }
+
+    it("major_outage report intervals count as downtime", () => {
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("50%");
+    });
+
+    it("partial_outage report intervals count half", () => {
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("75%");
+    });
+
+    it("degraded_performance report intervals count as up", () => {
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          {
+            from: day2,
+            to: hoursAfter(day2, 24),
+            impact: "degraded_performance",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("100%");
+    });
+
+    it("incident and overlapping major_outage report count once", () => {
+      const events = [
+        createIncidentEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("50%");
+    });
+
+    it("incident downtime wins over an overlapping partial_outage report", () => {
+      const events = [
+        createIncidentEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("50%");
+    });
+
+    it("legacy reports stay ignored alongside impact reports", () => {
+      const events = [
+        createLegacyEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day, hoursAfter(day, 12), [
+          { from: day, to: hoursAfter(day, 12), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("75%");
     });
   });
 
