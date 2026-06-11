@@ -14,6 +14,10 @@ const smtpTransporter = env.SMTP_HOST ? nodemailer.createTransport({
   } : undefined,
 }) : null;
 
+if (!resendClient && !smtpTransporter) {
+  throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided.");
+}
+
 export interface Emails {
   react: React.JSX.Element;
   subject: string;
@@ -49,9 +53,6 @@ export const sendEmail = async (email: Emails) => {
       replyTo: email.reply_to, 
       })
     }
-    else{
-      throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided.");
-    }
 };
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
@@ -68,9 +69,6 @@ export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
     ));
   }else if (resendClient){
     await resendClient?.batch.send(emails)
-  }
-  else{
-    throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided.");
   }
 };
 
