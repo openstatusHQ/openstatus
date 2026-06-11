@@ -90,6 +90,7 @@ export const stripeRouter = createTRPCRouter({
   getCheckoutSession: protectedProcedure
     .input(
       z.object({
+        currency: z.string(),
         workspaceSlug: z.string(),
         plan: z.enum(workspacePlans),
         interval: z.enum(billingIntervals).default("monthly"),
@@ -150,6 +151,7 @@ export const stripeRouter = createTRPCRouter({
       const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
+        currency: opts.input.currency,
         customer: stripeId,
         customer_update: {
           name: "auto",
