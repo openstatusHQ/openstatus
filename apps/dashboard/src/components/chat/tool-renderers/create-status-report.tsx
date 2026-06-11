@@ -30,6 +30,15 @@ export function createStatusReportChanges(
     },
   ];
 
+  if (input.componentImpacts?.length) {
+    changes.push({
+      field: "componentImpacts",
+      after: input.componentImpacts.map(
+        (ci) => `${ci.pageComponentId} → ${ci.impact}`,
+      ),
+    });
+  }
+
   const resolvedDate = input.date ?? undefined;
   if (resolvedDate !== undefined) {
     changes.push({ field: "date", after: resolvedDate });

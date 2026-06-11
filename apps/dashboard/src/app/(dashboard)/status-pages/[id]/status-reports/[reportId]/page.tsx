@@ -70,6 +70,20 @@ export default function Page() {
     .map((component) => component.name)
     .join(", ");
 
+  const reportHasImpacts = statusReport.updates.some(
+    (u) => u.componentImpacts.length > 0,
+  );
+  // current impact = latest update (by date, ties by id) naming the component
+  const currentImpacts = new Map(
+    [...statusReport.updates]
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id)
+      .flatMap((u) =>
+        u.componentImpacts.map(
+          (ci) => [ci.pageComponentId, ci.impact] as const,
+        ),
+      ),
+  );
+
   return (
     <SectionGroup>
       <Section>
@@ -91,12 +105,30 @@ export default function Page() {
           <FormSheetStatusReportUpdate
             defaultValues={{
               status: getNextStatus(statusReport.status),
+              componentImpacts: statusReport.pageComponents.map((c) => ({
+                pageComponentId: c.id,
+                impact: currentImpacts.get(c.id) ?? "operational",
+              })),
             }}
+            components={statusReport.pageComponents.map((c) => ({
+              id: c.id,
+              name: c.name,
+            }))}
             onSubmit={async (values: FormValues) => {
+              // a legacy report stays legacy unless the operator actively
+              // sets a non-operational impact — never silently flip it green
+              const sendImpacts =
+                reportHasImpacts ||
+                values.componentImpacts?.some(
+                  (ci) => ci.impact !== "operational",
+                );
               await createStatusReportUpdateMutation.mutateAsync({
                 statusReportId: statusReport.id,
                 message: values.message,
                 status: values.status,
+                componentImpacts: sendImpacts
+                  ? values.componentImpacts
+                  : undefined,
                 date: values.date,
                 notifySubscribers: values.notifySubscribers,
               });

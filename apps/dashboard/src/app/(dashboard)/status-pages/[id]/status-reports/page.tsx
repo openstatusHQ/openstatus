@@ -91,11 +91,23 @@ export default function Page() {
                 // NOTE: for type safety, we need to check if the values have a date property
                 // because of the union type
                 if ("date" in values) {
+                  // every selected component gets an impact row — fresh
+                  // reports are never legacy (untouched pickers ⇒ operational)
+                  const componentImpacts = values.pageComponents.map(
+                    (pageComponentId) => ({
+                      pageComponentId,
+                      impact:
+                        values.componentImpacts?.find(
+                          (ci) => ci.pageComponentId === pageComponentId,
+                        )?.impact ?? ("operational" as const),
+                    }),
+                  );
                   await createStatusReportMutation.mutateAsync({
                     title: values.title,
                     status: values.status,
                     pageId: Number.parseInt(id),
                     pageComponents: values.pageComponents,
+                    componentImpacts,
                     date: values.date,
                     message: values.message,
                     notifySubscribers: values.notifySubscribers,

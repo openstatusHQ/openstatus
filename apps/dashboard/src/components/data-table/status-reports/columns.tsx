@@ -12,11 +12,39 @@ import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { colors } from "@/data/status-report-updates.client";
+import {
+  colors,
+  impactConfig,
+  untriagedImpact,
+} from "@/data/status-report-updates.client";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
+
+// derived top-level impact = worst current impact across components;
+// legacy reports (no impact rows) read "Untriaged"
+function worstCurrentImpact(report: StatusReport) {
+  const current = new Map(
+    [...report.updates]
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id)
+      .flatMap((u) =>
+        u.componentImpacts.map((ci) => [ci.pageComponentId, ci.impact] as const),
+      ),
+  );
+  if (current.size === 0) return null;
+  const order = [
+    "operational",
+    "degraded_performance",
+    "partial_outage",
+    "major_outage",
+  ] as const;
+  return [...current.values()].reduce(
+    (worst, impact) =>
+      order.indexOf(impact) > order.indexOf(worst) ? impact : worst,
+    "operational" as (typeof order)[number],
+  );
+}
 
 export const columns: ColumnDef<StatusReport>[] = [
   {
@@ -92,6 +120,19 @@ export const columns: ColumnDef<StatusReport>[] = [
     },
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    id: "impact",
+    accessorFn: (row) => worstCurrentImpact(row),
+    header: "Impact",
+    cell: ({ row }) => {
+      const impact = worstCurrentImpact(row.original);
+      const config = impact ? impactConfig[impact] : untriagedImpact;
+      return (
+        <div className={cn("font-mono", config.color)}>{config.label}</div>
+      );
+    },
+    enableSorting: false,
   },
   {
     id: "updates",

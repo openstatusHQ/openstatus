@@ -22,6 +22,14 @@ export function addStatusReportUpdateChanges(
       after: applied?.notified !== undefined ? applied.notified : input.notify,
     },
   ];
+  if (input.componentImpacts?.length) {
+    changes.push({
+      field: "componentImpacts",
+      after: input.componentImpacts.map(
+        (ci) => `${ci.pageComponentId} → ${ci.impact}`,
+      ),
+    });
+  }
   if (input.date) {
     changes.push({ field: "date", after: input.date });
   }

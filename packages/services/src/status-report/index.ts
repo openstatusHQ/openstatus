@@ -16,6 +16,8 @@ export { updateStatusReport, updateStatusReportUpdate } from "./update";
 
 export {
   AddStatusReportUpdateInput,
+  type ComponentImpacts,
+  componentImpactsSchema,
   CreateStatusReportInput,
   DeleteStatusReportInput,
   DeleteStatusReportUpdateInput,

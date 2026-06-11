@@ -1,5 +1,31 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
+import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Cog, Trash2 } from "lucide-react";
+
+export const impactConfig = {
+  operational: {
+    label: "Operational",
+    color: "text-success/80 data-[state=selected]:bg-success/10 data-[state=selected]:text-success",
+  },
+  degraded_performance: {
+    label: "Degraded performance",
+    color: "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
+  },
+  partial_outage: {
+    label: "Partial outage",
+    color: "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
+  },
+  major_outage: {
+    label: "Major outage",
+    color: "text-destructive/80 data-[state=selected]:bg-destructive/10 data-[state=selected]:text-destructive",
+  },
+} as const satisfies Record<PageComponentImpact, { label: string; color: string }>;
+
+// legacy report (created before impact tracking): no impact rows
+export const untriagedImpact = {
+  label: "Untriaged",
+  color: "text-muted-foreground/80",
+} as const;
 
 export const actions = [
   {
