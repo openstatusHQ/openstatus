@@ -358,11 +358,26 @@ export function StatusEventAside({
   );
 }
 
+type StatusReportImpact =
+  | "operational"
+  | "degraded_performance"
+  | "partial_outage"
+  | "major_outage";
+
 interface StatusReportUpdate {
   date: Date;
   message: string;
   status: StatusReportUpdateType;
+  /** Per-component impact changes this update set (e.g. "API → Major outage"). */
+  impactChanges?: { label: string; impact: StatusReportImpact }[];
 }
+
+const impactBadgeClasses: Record<StatusReportImpact, string> = {
+  operational: "text-success",
+  degraded_performance: "text-warning",
+  partial_outage: "text-warning",
+  major_outage: "text-destructive",
+};
 
 // ============================================================================
 // Timeline Components
@@ -566,6 +581,18 @@ export function StatusEventTimelineReportUpdate({
                 <span>{report.message}</span>
               )}
             </StatusEventTimelineMessage>
+            {report.impactChanges?.length ? (
+              <StatusEventAffected className="mt-1">
+                {report.impactChanges.map((change, i) => (
+                  <StatusEventAffectedBadge
+                    key={i}
+                    className={impactBadgeClasses[change.impact]}
+                  >
+                    {change.label}
+                  </StatusEventAffectedBadge>
+                ))}
+              </StatusEventAffected>
+            ) : null}
           </div>
         </div>
       </div>
