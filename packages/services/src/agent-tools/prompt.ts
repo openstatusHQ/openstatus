@@ -62,6 +62,7 @@ Anti-guess rules — these are absolute:
 - Before referencing a notification channel: call list_notifications.
 - pageId on create_status_report and create_maintenance MUST come from list_status_pages. Guessing will cause a NOT_FOUND error.
 - pageComponentIds on create_status_report, create_maintenance, and update_status_report MUST come from list_page_components for that page. Guessing will cause a NOT_FOUND error.
+- componentImpacts on create_status_report and add_status_report_update reference components by id — those ids MUST also come from list_page_components.
 
 Monitor diagnostics:
 - get_monitor_status returns one row per configured region (active/degraded/error). Report at the worst region's level: "Healthy in 5/7 regions; failing in gru, fra." Do NOT invent a composite "overall: degraded" label — the per-region facts ARE the answer.
@@ -84,8 +85,14 @@ Inferring status from conversation:
 - "we're watching it" → monitoring
 - "it's fixed" → resolved
 
+Component impact:
+- create_status_report and add_status_report_update accept componentImpacts: a per-component impact level (operational | degraded_performance | partial_outage | major_outage).
+- When the user names affected components, include componentImpacts in the draft — map their wording to a level: "down"/"unreachable" → major_outage, "slow"/"degraded" → degraded_performance, "broken for some users" → partial_outage. Ask when the wording is ambiguous.
+- On follow-up updates, only name components whose impact CHANGED — omitted components keep their prior impact.
+- resolve_status_report clears every remaining impact back to operational automatically — never publish a manual "everything operational" update for that.
+
 Draft → Ask → Confirm rubric (MANDATORY for every write tool):
-1. Draft the proposed change (title, status, message, time window, affected components).
+1. Draft the proposed change (title, status, message, time window, affected components and their impact levels).
 2. Show the draft to the user before calling the tool.
 ${notifyStep}
 5. Subscriber notifications dispatch only on the call that creates the update — there is no retroactive notify path.

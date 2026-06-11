@@ -23,4 +23,12 @@ describe("buildSystemPrompt", () => {
     const prompt = buildSystemPrompt("Acme Corp");
     expect(prompt).toContain('workspace "Acme Corp"');
   });
+
+  test("guides the model on componentImpacts", () => {
+    const prompt = buildSystemPrompt("Acme Corp");
+    expect(prompt).toContain("componentImpacts");
+    expect(prompt).toContain("major_outage");
+    // resolve auto-clears impacts; the model must not publish a manual clear.
+    expect(prompt).toContain("clears every remaining impact");
+  });
 });
