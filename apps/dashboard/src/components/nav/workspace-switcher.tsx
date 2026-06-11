@@ -1,9 +1,5 @@
 "use client";
 
-import { ChevronsUpDown, Plus } from "lucide-react";
-
-import { Link } from "@/components/common/link";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +16,10 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronsUpDown, Plus } from "lucide-react";
+
+import { Link } from "@/components/common/link";
+import { useTRPC } from "@/lib/trpc/client";
 
 interface WorkspaceSwitcherProps {
   className?: string;
@@ -47,11 +47,11 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
             <SidebarMenuButton
               size="lg"
               className={cn(
-                "h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2! group-data-[collapsible=icon]:rounded-lg! group-data-[collapsible=icon]:px-0!",
+                "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-14 rounded-none px-4 ring-inset group-data-[collapsible=icon]:mx-2! group-data-[collapsible=icon]:rounded-lg! group-data-[collapsible=icon]:px-0!",
                 className,
               )}
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
+              <div className="bg-sidebar-primary flex aspect-square size-8 items-center justify-center rounded-lg">
                 <div className="size-8 overflow-hidden rounded-lg">
                   <img
                     src={`https://api.dicebear.com/9.x/glass/svg?seed=${workspace.slug}`}
@@ -96,7 +96,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
                 <span className="truncate">
                   {workspace.name || "Untitled Workspace"}
                 </span>
-                <span className="truncate font-mono text-muted-foreground text-xs">
+                <span className="text-muted-foreground truncate font-mono text-xs">
                   {workspace.slug}
                 </span>
               </DropdownMenuItem>

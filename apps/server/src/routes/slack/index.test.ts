@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import crypto from "node:crypto";
+
 import { Hono } from "hono";
 
 const SIGNING_SECRET = "test-signing-secret";

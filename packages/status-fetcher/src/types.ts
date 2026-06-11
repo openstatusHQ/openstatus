@@ -1,5 +1,6 @@
 import type { Effect } from "effect";
 import { z } from "zod";
+
 import type { FetchError } from "./fetch";
 
 // Define arrays as source of truth

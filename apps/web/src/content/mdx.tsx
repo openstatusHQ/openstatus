@@ -1,6 +1,7 @@
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
 import React from "react";
 import remarkGfm from "remark-gfm";
+
 import { HighlightText } from "./highlight-text";
 import { components } from "./mdx-components";
 

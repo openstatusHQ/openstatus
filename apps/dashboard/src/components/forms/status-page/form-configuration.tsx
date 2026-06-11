@@ -1,18 +1,3 @@
-import { useEffect, useState, useTransition } from "react";
-import { z } from "zod";
-
-import { Link } from "@/components/common/link";
-import { Note } from "@/components/common/note";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -43,8 +28,23 @@ import {
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
+import { useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 
 const schema = z.object({
   configuration: z.record(
@@ -242,7 +242,7 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <p className="col-span-full text-foreground/70 text-sm">
+              <p className="text-foreground/70 col-span-full text-sm">
                 *Configuration settings only apply to monitor components.
               </p>
               <Note className="col-span-full">
@@ -417,7 +417,7 @@ function FormConfigurationDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">
-          <pre className="rounded-md border bg-muted/50 px-3 py-2 font-commit-mono text-sm">
+          <pre className="bg-muted/50 font-commit-mono rounded-md border px-3 py-2 text-sm">
             {JSON.stringify({ type, value, uptime, theme }, null, 2)}
           </pre>
         </div>

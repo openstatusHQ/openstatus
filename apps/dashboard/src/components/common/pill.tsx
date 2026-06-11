@@ -19,13 +19,13 @@ export function Pill({ label, value, className, variant = "default" }: Props) {
   return (
     <div
       className={cn(
-        "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-md border font-medium text-xs transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3",
+        "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-md border text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] [&>svg]:pointer-events-none [&>svg]:size-3",
         className,
       )}
     >
       <div
         className={cn(
-          "border-r py-0.5 pr-1 pl-2 text-foreground/70",
+          "text-foreground/70 border-r py-0.5 pr-1 pl-2",
           variant === "default" && "bg-muted",
         )}
       >

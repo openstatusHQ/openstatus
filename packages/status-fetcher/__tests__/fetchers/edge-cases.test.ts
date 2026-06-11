@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
+
 import { Exit } from "effect";
+
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";
 import { CustomApiFetcher } from "../../src/fetchers/custom";

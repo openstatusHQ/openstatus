@@ -143,9 +143,7 @@ async function callTool(
     requestId: "test-req",
     sendNotification: async () => undefined,
     sendRequest: async () => undefined as never,
-    // biome-ignore lint/suspicious/noExplicitAny: SDK types not relevant for unit test
   } as any;
-  // biome-ignore lint/suspicious/noExplicitAny: handler is dynamically typed by the SDK
   return (tool.handler as any)(args, extra);
 }
 

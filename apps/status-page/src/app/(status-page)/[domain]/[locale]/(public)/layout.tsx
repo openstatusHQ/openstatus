@@ -1,11 +1,12 @@
-import { EmbedShell } from "@/components/layout/embed-shell";
-import { Footer } from "@/components/nav/footer";
-import { Header } from "@/components/nav/header";
 import {
   StatusPageMain,
   StatusPageShell,
 } from "@openstatus/ui/components/blocks/status-page-shell";
 import { Suspense } from "react";
+
+import { EmbedShell } from "@/components/layout/embed-shell";
+import { Footer } from "@/components/nav/footer";
+import { Header } from "@/components/nav/header";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

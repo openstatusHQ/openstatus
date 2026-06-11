@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { stripPrefixForExternal } from "./strip-prefix-for-external";
 
 describe("stripPrefixForExternal", () => {

@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import { NotFoundError } from "@openstatus/services";
 import {
@@ -8,6 +6,7 @@ import {
   listPageComponents,
   updatePageComponentOrder,
 } from "@openstatus/services/page-component";
+import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";

@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import { getDocs } from "../docs";
 import { type MDXData, getMDXDataFromDir, getMDXDataFromFile } from "./read";
 

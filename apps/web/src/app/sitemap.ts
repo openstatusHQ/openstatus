@@ -1,3 +1,5 @@
+import type { MetadataRoute } from "next";
+
 import {
   getBlogPosts,
   getChangelogPosts,
@@ -16,7 +18,6 @@ import {
   cachedListExternalComponentsBySlug,
   cachedListExternalServices,
 } from "@/lib/external-service-cache";
-import type { MetadataRoute } from "next";
 
 export const revalidate = 3600;
 

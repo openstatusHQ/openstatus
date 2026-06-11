@@ -1,5 +1,6 @@
-import { env } from "@/env";
 import { createMiddleware } from "hono/factory";
+
+import { env } from "@/env";
 
 export const verifySlackSignature = createMiddleware<{
   Variables: { slackBody: unknown };

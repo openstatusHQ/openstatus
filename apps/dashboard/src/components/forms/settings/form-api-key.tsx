@@ -1,22 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { EmptyStateContainer } from "@/components/content/empty-state";
-import { DataTable } from "@/components/data-table/settings/api-key/data-table";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
@@ -66,6 +49,24 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import { EmptyStateContainer } from "@/components/content/empty-state";
+import { DataTable } from "@/components/data-table/settings/api-key/data-table";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
 
 // we should prefetch the api key on the server (layout)
 
@@ -258,10 +259,10 @@ export function FormApiKey() {
                             onValueChange={field.onChange}
                             className="gap-3 sm:grid-cols-2"
                           >
-                            <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/40 has-[[aria-checked=true]]:border-primary">
+                            <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
                               <RadioGroupItem value="read" className="mt-1" />
                               <div className="space-y-0.5">
-                                <div className="font-medium text-sm">
+                                <div className="text-sm font-medium">
                                   Read-only
                                 </div>
                                 <div className="text-muted-foreground text-xs">
@@ -270,10 +271,10 @@ export function FormApiKey() {
                                 </div>
                               </div>
                             </label>
-                            <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/40 has-[[aria-checked=true]]:border-primary">
+                            <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
                               <RadioGroupItem value="write" className="mt-1" />
                               <div className="space-y-0.5">
-                                <div className="font-medium text-sm">
+                                <div className="text-sm font-medium">
                                   Read &amp; write
                                 </div>
                                 <div className="text-muted-foreground text-xs">

@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import {
   CreateApiKeyInput,
@@ -7,6 +5,7 @@ import {
   listApiKeys,
   revokeApiKey,
 } from "@openstatus/services/api-key";
+import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";

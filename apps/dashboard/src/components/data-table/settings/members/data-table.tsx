@@ -1,6 +1,3 @@
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { formatDate } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   Table,
   TableBody,
@@ -10,6 +7,10 @@ import {
   TableRow,
 } from "@openstatus/ui/components/ui/table";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function DataTable() {
   const trpc = useTRPC();

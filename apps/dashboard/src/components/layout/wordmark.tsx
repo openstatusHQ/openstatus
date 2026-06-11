@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import Image from "next/image";
+
+import { cn } from "@/lib/utils";
 
 export function Wordmark({
   size = 24,
@@ -27,7 +28,7 @@ export function Wordmark({
           alt="openstatus"
           height={size}
           width={size}
-          className="rounded-full border border-border"
+          className="border-border rounded-full border"
         />
       </span>
       {showText ? (

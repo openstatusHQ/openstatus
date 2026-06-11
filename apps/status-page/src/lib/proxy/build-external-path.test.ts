@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { buildExternalPath } from "./build-external-path";
 
 describe("buildExternalPath", () => {

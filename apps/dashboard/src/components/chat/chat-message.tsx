@@ -41,7 +41,7 @@ export function MessageContent({
     <div
       className={cn(
         "flex max-w-full flex-col gap-2 overflow-hidden text-sm",
-        "group-data-[from=user]:rounded-xl group-data-[from=user]:bg-secondary group-data-[from=user]:px-4 group-data-[from=user]:py-3",
+        "group-data-[from=user]:bg-secondary group-data-[from=user]:rounded-xl group-data-[from=user]:px-4 group-data-[from=user]:py-3",
         "group-data-[from=assistant]:w-full",
         className,
       )}
@@ -78,13 +78,13 @@ const processor = unified()
       },
       code: (props: HTMLAttributes<HTMLElement>) => (
         <code
-          className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]"
+          className="bg-muted rounded px-1 py-0.5 font-mono text-[0.9em]"
           {...props}
         />
       ),
       pre: (props: HTMLAttributes<HTMLPreElement>) => (
         <pre
-          className="overflow-x-auto rounded-md border bg-muted p-3 text-xs"
+          className="bg-muted overflow-x-auto rounded-md border p-3 text-xs"
           {...props}
         />
       ),
@@ -107,7 +107,7 @@ export function MessageMarkdown({ children }: { children: string }) {
         "[&_li]:ml-4 [&_li]:list-disc [&_ol]:list-decimal",
         "[&_strong]:font-semibold",
         "[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs",
-        "[&_th]:border [&_th]:bg-muted/50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-medium",
+        "[&_th]:bg-muted/50 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-medium",
         "[&_td]:border [&_td]:px-2 [&_td]:py-1",
       )}
     >

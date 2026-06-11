@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   maintenance,
@@ -23,10 +22,10 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-
-import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
+import { z } from "zod";
+
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,

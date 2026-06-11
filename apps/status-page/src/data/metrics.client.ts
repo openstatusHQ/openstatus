@@ -1,9 +1,11 @@
 "use client";
 
-import type { MetricCard } from "@/components/content/metric-card";
-import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
+
+import type { MetricCard } from "@/components/content/metric-card";
+import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
+
 import type { RegionMetric } from "./region-metrics";
 import type { Region } from "./regions";
 

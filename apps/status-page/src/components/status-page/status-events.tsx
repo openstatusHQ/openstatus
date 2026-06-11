@@ -1,11 +1,12 @@
 "use client";
 
-import { ProcessMessage } from "@/components/content/process-message";
 import {
   StatusEventTimelineMaintenance as BlockStatusEventTimelineMaintenance,
   StatusEventTimelineReport as BlockStatusEventTimelineReport,
   StatusEventTimelineReportUpdate as BlockStatusEventTimelineReportUpdate,
 } from "@openstatus/ui/components/blocks/status-events";
+
+import { ProcessMessage } from "@/components/content/process-message";
 
 // Re-export pass-through primitives that don't need glue.
 export {

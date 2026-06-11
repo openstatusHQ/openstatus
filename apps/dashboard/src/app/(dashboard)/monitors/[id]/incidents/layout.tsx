@@ -1,9 +1,11 @@
+import { SidebarProvider } from "@openstatus/ui/components/ui/sidebar";
+
 import {
   RIGHT_SIDEBAR_COOKIE,
   getSidebarDefaultOpen,
 } from "@/lib/sidebar-cookie";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { SidebarProvider } from "@openstatus/ui/components/ui/sidebar";
+
 import { Sidebar } from "../sidebar";
 
 export default async function Layout({

@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import React, { useEffect, useMemo } from "react";
+import { toast } from "sonner";
+
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
@@ -31,18 +44,7 @@ import {
 import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { endOfDay } from "date-fns";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import React, { useEffect, useMemo } from "react";
-import { toast } from "sonner";
+
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days

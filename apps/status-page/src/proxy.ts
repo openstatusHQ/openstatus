@@ -1,9 +1,9 @@
+import { db, sql } from "@openstatus/db";
+import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 
-import { db, sql } from "@openstatus/db";
-import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { composePageAction } from "./lib/proxy/compose-page-action";

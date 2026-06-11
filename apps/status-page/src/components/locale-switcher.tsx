@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  defaultLocale as globalDefaultLocale,
-  localeTranslations,
-  locales,
-} from "@/i18n/config";
-import {
   StatusLocaleSwitcher as BlockLocaleSwitcher,
   type StatusLocaleOption,
   StatusLocaleSwitcherSkeleton,
@@ -13,6 +8,12 @@ import {
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
+
+import {
+  defaultLocale as globalDefaultLocale,
+  localeTranslations,
+  locales,
+} from "@/i18n/config";
 
 export function LocaleSwitcher({
   className,

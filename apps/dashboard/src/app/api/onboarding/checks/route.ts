@@ -1,4 +1,3 @@
-import { getServiceContextFromRequest } from "@/lib/edge-context";
 import { ServiceError, type ServiceErrorCode } from "@openstatus/services";
 import {
   type CheckResult,
@@ -6,6 +5,8 @@ import {
 } from "@openstatus/services/monitor";
 import { iteratorToStream } from "@openstatus/utils";
 import { z } from "zod";
+
+import { getServiceContextFromRequest } from "@/lib/edge-context";
 
 export const runtime = "edge";
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+
 import { inferStatus, urlHostnameEndsWith } from "../src/utils";
 
 describe("urlHostnameEndsWith", () => {

@@ -1,5 +1,22 @@
 "use client";
 
+import { StatusBarCard } from "@openstatus/ui/components/blocks/status-bar";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import type {
+  StatusBarData,
+  StatusEventType,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui/components/ui/hover-card";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
+import { cn } from "@openstatus/ui/lib/utils";
 import {
   type Locale,
   addMonths,
@@ -22,24 +39,6 @@ import {
   useState,
 } from "react";
 import { DayPicker, type DayProps } from "react-day-picker";
-
-import { StatusBarCard } from "@openstatus/ui/components/blocks/status-bar";
-import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
-import type {
-  StatusBarData,
-  StatusEventType,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
-import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@openstatus/ui/components/ui/hover-card";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
-import { cn } from "@openstatus/ui/lib/utils";
 
 type BarEvent = StatusBarData["events"][number];
 
@@ -338,13 +337,13 @@ export function StatusCalendar({
       ref={containerRef}
       data-slot="status-calendar"
       className={cn(
-        "flex flex-col rounded-lg border bg-card text-card-foreground",
+        "bg-card text-card-foreground flex flex-col rounded-lg border",
         className,
       )}
     >
       <header className="flex items-center gap-3 px-4 py-3">
-        <div className="font-medium text-sm">{resolvedTitle}</div>
-        <div className="ml-auto flex items-center gap-1 text-muted-foreground text-sm">
+        <div className="text-sm font-medium">{resolvedTitle}</div>
+        <div className="text-muted-foreground ml-auto flex items-center gap-1 text-sm">
           <Button
             variant="ghost"
             size="icon"
@@ -354,7 +353,7 @@ export function StatusCalendar({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="text-center font-medium font-mono text-foreground tabular-nums">
+          <span className="text-foreground text-center font-mono font-medium tabular-nums">
             {formatMonthYear(currentMonth)}
           </span>
           <Button
@@ -388,9 +387,9 @@ export function StatusCalendar({
             row: "flex w-full border-b last:border-b-0",
             cell: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
             day: cn(
-              "inline-flex h-12 w-full items-center justify-center text-sm font-normal text-foreground/80 transition-colors",
+              "text-foreground/80 inline-flex h-12 w-full items-center justify-center text-sm font-normal transition-colors",
               "hover:bg-accent hover:text-accent-foreground",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+              "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
             ),
             day_today: "text-foreground font-semibold",
             day_outside: "text-muted-foreground/50",
@@ -457,7 +456,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     // current month.
     if (isOutside) {
       return (
-        <div data-day-state="outside" className="h-12 w-full bg-muted/30" />
+        <div data-day-state="outside" className="bg-muted/30 h-12 w-full" />
       );
     }
 
@@ -472,7 +471,7 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
           data-day-state="disabled"
           aria-disabled
           tabIndex={-1}
-          className="inline-flex h-12 w-full items-center justify-center font-mono text-muted-foreground/40 text-sm"
+          className="text-muted-foreground/40 inline-flex h-12 w-full items-center justify-center font-mono text-sm"
         >
           {format(date, "d")}
         </div>
@@ -489,8 +488,8 @@ const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
     // Tinted-field: severity days get a soft fill that owns the hover state,
     // empty days fall back to the neutral accent hover.
     const dayClass = cn(
-      "inline-flex h-12 w-full items-center justify-center font-mono text-sm font-normal text-foreground/80 transition-colors",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+      "text-foreground/80 inline-flex h-12 w-full items-center justify-center font-mono text-sm font-normal transition-colors",
+      "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
       isToday && "text-foreground font-semibold",
       severity
         ? SEVERITY_FILL[severity]
@@ -610,12 +609,12 @@ export function StatusCalendarSkeleton({
     <div
       data-slot="status-calendar-skeleton"
       className={cn(
-        "flex flex-col rounded-lg border bg-card text-card-foreground",
+        "bg-card text-card-foreground flex flex-col rounded-lg border",
         className,
       )}
     >
       <header className="flex items-center gap-3 px-4 py-3">
-        <div className="font-medium text-sm">
+        <div className="text-sm font-medium">
           {title ?? labels.calendarTitle}
         </div>
         <div className="ml-auto flex items-center gap-1">

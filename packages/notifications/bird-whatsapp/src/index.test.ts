@@ -7,8 +7,10 @@ import {
   spyOn,
   test,
 } from "bun:test";
+
 import type { Monitor } from "@openstatus/db/src/schema";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 const BIRD_URL_PATTERN =

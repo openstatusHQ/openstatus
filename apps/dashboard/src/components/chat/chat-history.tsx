@@ -1,10 +1,10 @@
 "use client";
 
-import { Link } from "@/components/common/link";
 import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 
+import { Link } from "@/components/common/link";
 import { useTRPC } from "@/lib/trpc/client";
 
 const MAX_VISIBLE = 5;
@@ -22,7 +22,7 @@ export function ChatHistory() {
   return (
     <div className="flex w-full max-w-xl flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-muted-foreground text-xs uppercase tracking-wide">
+        <span className="text-muted-foreground font-mono text-xs tracking-wide uppercase">
           Recent
         </span>
       </div>
@@ -31,10 +31,10 @@ export function ChatHistory() {
           <li key={s.id}>
             <Link
               href={`/chat/${s.id}`}
-              className="flex items-center justify-between gap-3 text-muted-foreground text-sm hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground flex items-center justify-between gap-3 text-sm"
             >
               <span className="truncate">{s.title}</span>
-              <span className="shrink-0 font-commit-mono text-muted-foreground text-xs">
+              <span className="font-commit-mono text-muted-foreground shrink-0 text-xs">
                 {formatDistanceToNow(new Date(s.updatedAt), {
                   addSuffix: true,
                 })}
@@ -47,7 +47,7 @@ export function ChatHistory() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="self-start font-mono text-muted-foreground text-xs hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground self-start font-mono text-xs"
         >
           {extra} more {extra === 1 ? "conversation" : "conversations"}
         </button>

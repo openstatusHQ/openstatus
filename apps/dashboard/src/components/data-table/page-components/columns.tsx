@@ -1,8 +1,10 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
+
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type PageComponent = RouterOutputs["pageComponent"]["list"][number];
@@ -21,7 +23,7 @@ export const columns: ColumnDef<PageComponent>[] = [
     cell: ({ row }) => {
       const value = row.getValue("description");
       return (
-        <span className="max-w-[200px] truncate text-muted-foreground">
+        <span className="text-muted-foreground max-w-[200px] truncate">
           {value ? String(value) : "-"}
         </span>
       );

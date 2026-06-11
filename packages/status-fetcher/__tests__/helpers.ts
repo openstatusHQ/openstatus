@@ -1,5 +1,7 @@
 import { mock } from "bun:test";
+
 import { Cause, Effect, Exit, Option } from "effect";
+
 import type { FetchError } from "../src/fetch";
 import type {
   NormalizedComponent,

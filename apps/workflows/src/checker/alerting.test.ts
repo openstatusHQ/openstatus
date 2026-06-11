@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, expect, mock, test } from "bun:test";
+
 import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,

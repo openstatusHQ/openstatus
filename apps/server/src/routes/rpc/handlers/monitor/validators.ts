@@ -45,9 +45,7 @@ export function toValidMethod(value: string | undefined): MonitorMethod {
  * Note: name, url/uri, and periodicity are validated by protovalidate interceptor.
  * Throws ConnectError if validation fails.
  */
-export function validateCommonMonitorFields(mon: {
-  regions?: Region[];
-}): void {
+export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
   if (mon.regions && mon.regions.length > 0) {
     const regionStrings = regionsToStrings(mon.regions);
     const invalidRegions = validateRegions(regionStrings);

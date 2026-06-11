@@ -12,7 +12,6 @@ type Props = {
 
 export function ChatConversation({ messages, status }: Props) {
   // No inner overflow container — pin the window itself.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are change triggers, not reads
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.scrollTo({ top: document.body.scrollHeight });

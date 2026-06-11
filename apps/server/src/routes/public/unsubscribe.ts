@@ -1,8 +1,7 @@
 import { getLogger } from "@logtape/logtape";
-import { Hono } from "hono";
-
 import { db, eq } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
+import { Hono } from "hono";
 
 const logger = getLogger("api-server");
 

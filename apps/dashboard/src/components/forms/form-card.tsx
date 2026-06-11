@@ -8,12 +8,11 @@ import {
 } from "@openstatus/ui/components/ui/card";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
-
 import { type VariantProps, cva } from "class-variance-authority";
 
 // py-0
 const formCardVariants = cva(
-  "group relative w-full overflow-hidden py-0 shadow-none gap-4",
+  "group relative w-full gap-4 overflow-hidden py-0 shadow-none",
   {
     variants: {
       variant: {
@@ -99,7 +98,7 @@ export function FormCardSeparator({
 }
 
 const formCardFooterVariants = cva(
-  "border-t flex items-center gap-2 pb-4 px-4 [&>:last-child]:ml-auto [.border-t]:pt-4",
+  "flex items-center gap-2 border-t px-4 pb-4 [.border-t]:pt-4 [&>:last-child]:ml-auto",
   {
     variants: {
       variant: {
@@ -205,7 +204,7 @@ export function FormCardEmpty({
     <div
       data-slot="card-empty"
       className={cn(
-        "pointer-events-none absolute inset-0 z-10 bg-background opacity-70 blur",
+        "bg-background pointer-events-none absolute inset-0 z-10 opacity-70 blur",
         className,
       )}
       {...props}

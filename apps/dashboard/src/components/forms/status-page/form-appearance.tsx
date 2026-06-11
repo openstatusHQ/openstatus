@@ -1,17 +1,3 @@
-import { useTransition } from "react";
-import { z } from "zod";
-
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -33,8 +19,22 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 
 const schema = z.object({
   forceTheme: z.enum(["light", "dark", "system"]),

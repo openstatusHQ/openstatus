@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  CORPUS_LABELS,
-  type Corpus,
-  type SearchResult,
-} from "@/content/search-meta";
-import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -29,6 +24,12 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import {
+  CORPUS_LABELS,
+  type Corpus,
+  type SearchResult,
+} from "@/content/search-meta";
+
 type ConfigItem = {
   type: "item";
   label: string;
@@ -49,12 +50,35 @@ type ConfigSection = {
   items: (ConfigItem | ConfigGroup)[];
 };
 
-// TODO: missing shortcuts
 const CONFIG: ConfigSection[] = [
   {
     type: "group",
     heading: "Resources",
     items: [
+      {
+        type: "item",
+        label: "Go to Docs",
+        href: "/docs",
+        shortcut: "⌘D",
+      },
+      {
+        type: "item",
+        label: "Go to Home",
+        href: "/",
+        shortcut: "⌘H",
+      },
+      {
+        type: "item",
+        label: "Go to Pricing",
+        href: "/pricing",
+        shortcut: "⌘P",
+      },
+      {
+        type: "item",
+        label: "Go to Global Speed Checker",
+        href: "/play/checker",
+        shortcut: "⌘G",
+      },
       {
         type: "group",
         label: "Search in all pages...",
@@ -62,31 +86,10 @@ const CONFIG: ConfigSection[] = [
         page: "all",
       },
       {
-        type: "item",
-        label: "Go to Home",
-        href: "/",
-      },
-      {
-        type: "item",
-        label: "Go to Pricing",
-        href: "/pricing",
-      },
-      {
         type: "group",
         label: "Search in Docs...",
         heading: "Docs",
         page: "docs",
-      },
-      {
-        type: "item",
-        label: "Go to Docs",
-        href: "/docs",
-      },
-      {
-        type: "item",
-        label: "Go to Global Speed Checker",
-        href: "/play/checker",
-        shortcut: "⌘G",
       },
       {
         type: "group",
@@ -271,10 +274,6 @@ export function CmdK({
     return () => document.removeEventListener("keydown", down);
   }, [open, router]);
 
-  React.useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   // NOTE: Reset search and pages after dialog closes (with delay for animation)
   // - if within 1 second of closing, the dialog will not reset
   React.useEffect(() => {
@@ -307,21 +306,27 @@ export function CmdK({
       <button
         type="button"
         className={cn(
-          "flex w-full items-center text-left hover:bg-muted",
+          "hover:bg-muted flex w-full items-center text-left",
           open && "bg-muted!",
           className,
         )}
         onClick={() => setOpen(true)}
       >
-        <span className="truncate text-muted-foreground">
+        <span className="text-muted-foreground truncate">
           Search<span className="text-xs">...</span>
         </span>
-        <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground opacity-100">
+        <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl lg:max-w-2xl xl:max-w-3xl">
+        <DialogContent
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            inputRef.current?.focus();
+          }}
+          className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl lg:max-w-2xl xl:max-w-3xl"
+        >
           <DialogTitle className="sr-only">Search</DialogTitle>
           <Command
             onKeyDown={(e) => {
@@ -344,7 +349,7 @@ export function CmdK({
                 <Search className="h-4 w-4 shrink-0 opacity-50" />
               )}
               {page ? (
-                <span className="inline-flex shrink-0 items-center gap-1 border bg-muted px-1.5 py-0.5 text-muted-foreground text-xs">
+                <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 border px-1.5 py-0.5 text-xs">
                   {CORPUS_LABELS[page as Corpus] ?? page}
                   <button
                     type="button"
@@ -356,12 +361,13 @@ export function CmdK({
                   </button>
                 </span>
               ) : scope === "all" ? (
-                <span className="inline-flex shrink-0 items-center border bg-muted px-1.5 py-0.5 text-muted-foreground text-xs">
+                <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center border px-1.5 py-0.5 text-xs">
                   all
                 </span>
               ) : null}
               <CommandPrimitive.Input
-                className="flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden placeholder:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
+                ref={inputRef}
+                className="placeholder:text-foreground-muted flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder={
                   page
                     ? `Search in ${CORPUS_LABELS[page as Corpus] ?? page}…`
@@ -394,6 +400,7 @@ export function CmdK({
                   items={items}
                   search={search}
                   setOpen={setOpen}
+                  scope={scope}
                 />
               ) : null}
             </CommandList>
@@ -488,77 +495,108 @@ function Home({
   );
 }
 
+// Bucket, preserving the server's rank order — first key seen is the best-scoring one.
+function bucket<K>(list: SearchResult[], keyOf: (item: SearchResult) => K) {
+  const groups: { key: K; items: SearchResult[] }[] = [];
+  const map = new Map<K, SearchResult[]>();
+  for (const item of list) {
+    const key = keyOf(item);
+    let b = map.get(key);
+    if (!b) {
+      b = [];
+      map.set(key, b);
+      groups.push({ key, items: b });
+    }
+    b.push(item);
+  }
+  return groups;
+}
+
 function SearchResults({
   items,
   search,
   setOpen,
+  scope,
 }: {
   items: SearchResult[];
   search: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  scope: Corpus | "all";
 }) {
   const router = useRouter();
 
-  // Bucket by corpus, preserving the server's rank order for both groups and rows.
-  const groups: { type: Corpus; items: SearchResult[] }[] = [];
-  const byType = new Map<Corpus, SearchResult[]>();
-  for (const item of items) {
-    let bucket = byType.get(item.type);
-    if (!bucket) {
-      bucket = [];
-      byType.set(item.type, bucket);
-      groups.push({ type: item.type, items: bucket });
-    }
-    bucket.push(item);
-  }
-
+  const highlightRe = React.useMemo(
+    () =>
+      search
+        ? new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+        : null,
+    [search],
+  );
   const highlight = (text: string) =>
-    search
-      ? text.replace(
-          new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
-          (match) => `<mark>${match}</mark>`,
-        )
+    highlightRe
+      ? text.replace(highlightRe, (match) => `<mark>${match}</mark>`)
       : text;
+
+  const renderRow = (item: SearchResult) => (
+    <CommandItem
+      key={item.href}
+      value={item.href}
+      keywords={[item.metadata.title, item.content, search]}
+      onSelect={() => {
+        router.push(item.href);
+        setOpen(false);
+      }}
+    >
+      <div className="grid min-w-0">
+        <span
+          className="block truncate"
+          // oxlint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: highlight(item.metadata.title) }}
+        />
+        {item.content && search ? (
+          <span
+            className="text-muted-foreground block truncate text-xs"
+            // oxlint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{ __html: highlight(item.content) }}
+          />
+        ) : null}
+      </div>
+    </CommandItem>
+  );
+
+  // Split full vs partial matches, then sub-group each tier: by corpus in "all"
+  // scope (kept flat — no category level), by category within a single corpus.
+  const keyOf: (item: SearchResult) => string =
+    scope === "all"
+      ? (item) => CORPUS_LABELS[item.type]
+      : (item) => item.metadata.category || CORPUS_LABELS[item.type];
+
+  const full = bucket(
+    items.filter((i) => i.tier !== "partial"),
+    keyOf,
+  );
+  const partial = bucket(
+    items.filter((i) => i.tier === "partial"),
+    keyOf,
+  );
+
+  const renderGroups = (
+    groups: { key: string; items: SearchResult[] }[],
+    prefix: string,
+  ) =>
+    groups.map((group, index) => (
+      <React.Fragment key={`${prefix}-${group.key}`}>
+        {index > 0 && <CommandSeparator />}
+        <CommandGroup heading={group.key}>
+          {group.items.map(renderRow)}
+        </CommandGroup>
+      </React.Fragment>
+    ));
 
   return (
     <>
-      {groups.map((group, index) => (
-        <React.Fragment key={group.type}>
-          {index > 0 && <CommandSeparator />}
-          <CommandGroup heading={CORPUS_LABELS[group.type]}>
-            {group.items.map((item) => (
-              <CommandItem
-                key={item.href}
-                value={item.href}
-                keywords={[item.metadata.title, item.content, search]}
-                onSelect={() => {
-                  router.push(item.href);
-                  setOpen(false);
-                }}
-              >
-                <div className="grid min-w-0">
-                  <span
-                    className="block truncate"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight markup, content sanitized server-side
-                    dangerouslySetInnerHTML={{
-                      __html: highlight(item.metadata.title),
-                    }}
-                  />
-                  {item.content && search ? (
-                    <span
-                      className="block truncate text-muted-foreground text-xs"
-                      // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight markup, content sanitized server-side
-                      dangerouslySetInnerHTML={{
-                        __html: highlight(item.content),
-                      }}
-                    />
-                  ) : null}
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </React.Fragment>
-      ))}
+      {renderGroups(full, "full")}
+      {partial.length > 0 ? renderGroups(partial, "partial") : null}
     </>
   );
 }

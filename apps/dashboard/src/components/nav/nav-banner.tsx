@@ -1,8 +1,10 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@/lib/trpc/client";
+
 import { NavBannerChecklist } from "./nav-banner-checklist";
 import { NavBannerUpgrade } from "./nav-banner-upgrade";
 

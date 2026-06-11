@@ -1,12 +1,13 @@
 "use client";
 
-import { Details } from "@/content/mdx-components/details";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { Slider } from "@openstatus/ui/components/ui/slider";
 import { useState } from "react";
+
+import { Details } from "@/content/mdx-components/details";
 
 type SeverityLevel = "SEV0" | "SEV1" | "SEV2" | "SEV3";
 
@@ -210,7 +211,7 @@ export function SeverityMatrixBuilder() {
         {/* Result */}
         <div className={`space-y-3 border-2 p-4 ${SEVERITY_BORDER[severity]}`}>
           <div className="space-y-1">
-            <p className="mt-0! font-medium font-mono text-2xl">
+            <p className="mt-0! font-mono text-2xl font-medium">
               {meta.emoji} {severity} – {meta.label}
             </p>
             <p className="text-muted-foreground text-sm">{reason}</p>
@@ -218,33 +219,33 @@ export function SeverityMatrixBuilder() {
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-muted-foreground">Response time</dt>
-              <dd className="font-medium text-foreground">
+              <dd className="text-foreground font-medium">
                 {meta.responseTime}
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Update cadence</dt>
-              <dd className="font-medium text-foreground">
+              <dd className="text-foreground font-medium">
                 {meta.updateCadence}
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Postmortem</dt>
-              <dd className="font-medium text-foreground">{meta.postmortem}</dd>
+              <dd className="text-foreground font-medium">{meta.postmortem}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Status page</dt>
-              <dd className="font-medium text-foreground">
+              <dd className="text-foreground font-medium">
                 {meta.statusPageLabel}
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Escalation</dt>
-              <dd className="font-medium text-foreground">{meta.escalation}</dd>
+              <dd className="text-foreground font-medium">{meta.escalation}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Communication</dt>
-              <dd className="font-medium text-foreground">
+              <dd className="text-foreground font-medium">
                 {meta.communication}
               </dd>
             </div>
@@ -256,7 +257,7 @@ export function SeverityMatrixBuilder() {
             <Label className="text-base" htmlFor="users-affected">
               Users affected
             </Label>
-            <span className="font-medium font-mono text-base text-foreground">
+            <span className="text-foreground font-mono text-base font-medium">
               {value.usersAffected}%
             </span>
           </div>
@@ -372,7 +373,7 @@ export function SeverityMatrixBuilder() {
                 }
                 className="h-auto! rounded-none p-4 pr-8 text-base md:text-base"
               />
-              <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-4 text-muted-foreground">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
                 %
               </span>
             </div>
@@ -400,7 +401,7 @@ export function SeverityMatrixBuilder() {
                 }
                 className="h-auto! rounded-none p-4 pr-8 text-base md:text-base"
               />
-              <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-4 text-muted-foreground">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
                 %
               </span>
             </div>
@@ -428,7 +429,7 @@ export function SeverityMatrixBuilder() {
                 }
                 className="h-auto! rounded-none p-4 pr-8 text-base md:text-base"
               />
-              <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-4 text-muted-foreground">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
                 %
               </span>
             </div>

@@ -31,7 +31,7 @@ export function listStatusPagesTable(
         slug: (
           <TableCellText
             value={p.slug}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         id: <TableCellNumber value={p.id} />,

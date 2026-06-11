@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
 import { getBlogPosts } from "@/content/utils";
@@ -14,7 +16,6 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
 
 export async function generateMetadata({
   params,

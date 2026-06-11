@@ -1,9 +1,9 @@
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import type { StepCardVariant } from "@/components/forms/step-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
 
 export function useDomainStatus(domain?: string) {
   const trpc = useTRPC();

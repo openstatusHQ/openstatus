@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+
 import { db, like, sql } from "@openstatus/db";
 import { externalService } from "@openstatus/db/src/schema";
 

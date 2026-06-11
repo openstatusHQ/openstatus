@@ -1,6 +1,4 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import type { Adapter } from "next-auth/adapters";
-
 import { db } from "@openstatus/db";
 import {
   verificationToken,
@@ -8,6 +6,7 @@ import {
   viewerAccounts,
   viewerSession,
 } from "@openstatus/db/src/schema";
+import type { Adapter } from "next-auth/adapters";
 
 export const adapter: Adapter = {
   ...DrizzleAdapter(db, {

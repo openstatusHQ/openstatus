@@ -1,15 +1,13 @@
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { ChevronDown, ChevronUp } from "lucide-react";
-
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-
-import { cn } from "@openstatus/ui/lib/utils";
 import type React from "react";
 
 const metricCardVariants = cva(
-  "flex flex-col gap-1 border rounded-lg px-3 py-2 text-card-foreground",
+  "text-card-foreground flex flex-col gap-1 rounded-lg border px-3 py-2",
   {
     variants: {
       variant: {
@@ -51,7 +49,7 @@ export function MetricCardTitle({
   return (
     <p
       className={cn(
-        "font-commit-mono font-medium text-sm tracking-tight ",
+        "font-commit-mono text-sm font-medium tracking-tight",
         className,
       )}
       {...props}
@@ -88,7 +86,7 @@ export function MetricCardValue({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-medium text-foreground", className)} {...props}>
+    <p className={cn("text-foreground font-medium", className)} {...props}>
       {children}
     </p>
   );
@@ -160,7 +158,7 @@ export function MetricCardBadge({
 }
 
 const metricCardButtonVariants = cva(
-  "group w-full text-left transition-all rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 cursor-pointer",
+  "group focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 w-full cursor-pointer rounded-md text-left transition-all outline-none focus-visible:ring-[3px]",
   // TODO: discuss if we want rings
 );
 

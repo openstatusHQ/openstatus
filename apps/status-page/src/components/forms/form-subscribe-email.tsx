@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  StatusBlankContainer,
-  StatusBlankDescription,
-  StatusBlankTitle,
-} from "@/components/status-page/status-blank";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { RouterOutputs } from "@openstatus/api";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -23,6 +18,12 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  StatusBlankContainer,
+  StatusBlankDescription,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
@@ -114,7 +115,7 @@ export function FormSubscribeEmail({
           )}
         />
         {form.watch("subscribeComponents") && (
-          <div className="flex max-h-56 flex-col gap-2 overflow-y-auto rounded-md border border-border bg-muted p-2">
+          <div className="border-border bg-muted flex max-h-56 flex-col gap-2 overflow-y-auto rounded-md border p-2">
             {page?.trackers && page.trackers.length > 0 ? (
               page.trackers.map((tracker) => {
                 if (tracker.type === "group") {

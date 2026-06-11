@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@openstatus/ui/components/ui/chart";
+import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
+import {
   Area,
   AreaChart,
   CartesianGrid,
@@ -17,16 +27,7 @@ import {
 } from "@/data/metrics.client";
 import { periodToFromDate } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@openstatus/ui/components/ui/chart";
-import { useQuery } from "@tanstack/react-query";
-import { endOfDay } from "date-fns";
+
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {

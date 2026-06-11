@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-
 import { afterEach, mock } from "bun:test";
+
 import { app } from "@/index";
 
 const mockFetch = mock();

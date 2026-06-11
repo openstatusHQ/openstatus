@@ -34,7 +34,7 @@ export function IconCloudProviderTooltip(
       <Tooltip delayDuration={0}>
         <TooltipTrigger
           type="button"
-          className="rounded-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2"
+          className="focus-visible:border-ring focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-[3px] focus-visible:ring-offset-2"
         >
           <IconCloudProvider {...props} />
         </TooltipTrigger>

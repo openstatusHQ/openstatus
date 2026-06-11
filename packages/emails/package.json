@@ -2,14 +2,14 @@
   "name": "@openstatus/emails",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "./src/index.ts",
   "scripts": {
     "dev:email": "email dev",
     "test": "bun test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "effect": "catalog:",

@@ -1,18 +1,5 @@
 "use client";
 
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import {
-  CheckboxTree,
-  type CheckboxTreeItem,
-} from "@/components/ui/checkbox-tree";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { detectWebhookFlavor } from "@openstatus/subscriptions/client";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -34,6 +21,20 @@ import React, { useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import {
+  CheckboxTree,
+  type CheckboxTreeItem,
+} from "@/components/ui/checkbox-tree";
 
 const headerSchema = z.object({
   key: z.string().min(1, "Key is required"),

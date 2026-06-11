@@ -1,6 +1,5 @@
 "use client";
 
-import { INTERVALS, PERIODS, periodToMinInterval } from "@/data/metrics.client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +16,8 @@ import {
   useQueryState,
 } from "nuqs";
 import { useEffect } from "react";
+
+import { INTERVALS, PERIODS, periodToMinInterval } from "@/data/metrics.client";
 
 const MAPPING = {
   5: "5 minutes",
@@ -56,7 +57,7 @@ export function DropdownInterval() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
             Resolution
           </DropdownMenuLabel>
           {options.map((item) => (

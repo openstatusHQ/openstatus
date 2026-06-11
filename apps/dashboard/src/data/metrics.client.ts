@@ -1,10 +1,12 @@
 "use client";
 
-import type { MetricCard } from "@/components/metric/metric-card";
-import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay, subDays } from "date-fns";
+
+import type { MetricCard } from "@/components/metric/metric-card";
+import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
+
 import type { RegionMetric } from "./region-metrics";
 
 export const STATUS = ["success", "error", "degraded"] as const;

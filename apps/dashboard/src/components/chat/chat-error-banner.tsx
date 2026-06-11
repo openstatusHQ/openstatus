@@ -8,7 +8,7 @@ export function ChatErrorBanner({ error }: Props) {
   const message = error.message ?? "";
   const isRateLimit = /Rate limit/i.test(message);
   return (
-    <div className="border-t bg-destructive/10 px-4 py-2 text-destructive text-sm">
+    <div className="bg-destructive/10 text-destructive border-t px-4 py-2 text-sm">
       {isRateLimit
         ? `You've hit the daily message cap${formatResetSuffix(message)}.`
         : "The assistant encountered an error. Try again."}

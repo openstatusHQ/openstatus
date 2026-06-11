@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { env } from "@/env";
+
 import { getLogger } from "@logtape/logtape";
 import { db, eq } from "@openstatus/db";
 import {
@@ -8,6 +8,8 @@ import {
 } from "@openstatus/db/src/schema";
 import { installSlackAgent } from "@openstatus/services/integration";
 import type { Context } from "hono";
+
+import { env } from "@/env";
 
 const logger = getLogger(["api-server", "slack", "oauth"]);
 

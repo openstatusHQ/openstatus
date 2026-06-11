@@ -1,12 +1,14 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+
 import {
   DataTableSheet,
   DataTableSheetContent,
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import type { RouterOutputs } from "@openstatus/api";
+
 import { DataTableBasics } from "./data-table-basics";
 
 type TestTCP = RouterOutputs["checker"]["testTcp"];

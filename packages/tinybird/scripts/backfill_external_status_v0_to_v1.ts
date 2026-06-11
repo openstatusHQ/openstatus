@@ -3,11 +3,10 @@ import { join } from "node:path";
 
 import { Tinybird } from "@chronark/zod-bird";
 import { createClient } from "@libsql/client";
+import { externalService } from "@openstatus/db/src/schema";
 import { isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { z } from "zod";
-
-import { externalService } from "@openstatus/db/src/schema";
 
 const env = z
   .object({

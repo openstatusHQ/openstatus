@@ -1,9 +1,9 @@
 import { getLogger } from "@logtape/logtape";
+import { db } from "@openstatus/db";
 import { pruneStaleRawPayloads } from "@openstatus/services/external-service-incident";
 import { Effect } from "effect";
 import type { Context } from "hono";
 
-import { db } from "@openstatus/db";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 
 const logger = getLogger(["workflow", "external-incidents-prune"]);

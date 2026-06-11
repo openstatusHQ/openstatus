@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, test } from "bun:test";
+
 import { eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
 
@@ -89,7 +90,6 @@ describe("createApiKey", () => {
           ctx,
           input: {
             name: `${TEST_PREFIX}-star`,
-            // biome-ignore lint/suspicious/noExplicitAny: testing the parse boundary
             scopes: ["*"] as any,
           },
         }),

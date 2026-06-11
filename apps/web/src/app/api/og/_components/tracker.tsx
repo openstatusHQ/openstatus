@@ -36,7 +36,7 @@ export function Tracker({ data }: TrackerProps) {
                 <div
                   key={i}
                   tw={cn(
-                    "h-16 w-3 rounded-full mr-1",
+                    "mr-1 h-16 w-3 rounded-full",
                     classNames[item.variant],
                   )}
                 />

@@ -1,6 +1,5 @@
-import { z } from "zod";
-
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
+import { z } from "zod";
 
 export const tcpPayload = z.object({
   workspaceId: z.string(),

@@ -1,5 +1,6 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import type React from "react";
+
 import { CustomLink } from "./custom-link";
 
 export function ButtonLink(
@@ -9,7 +10,7 @@ export function ButtonLink(
     <Button
       variant="outline"
       size="lg"
-      className="no-underline! h-auto rounded-none px-4 py-4 text-base"
+      className="h-auto rounded-none px-4 py-4 text-base no-underline!"
       asChild
       {...props}
     >

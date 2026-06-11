@@ -33,7 +33,7 @@ export function listPageComponentsTable(
         type: (
           <TableCellText
             value={c.type}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         page: <TableCellNumber value={c.pageId} />,

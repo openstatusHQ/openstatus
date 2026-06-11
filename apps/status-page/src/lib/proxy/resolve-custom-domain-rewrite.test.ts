@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { resolveCustomDomainRewrite } from "./resolve-custom-domain-rewrite";
 
 const page = {

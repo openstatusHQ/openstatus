@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+
 import { LatencyChartTable } from "../latency-chart-table";
 import { Aside } from "./aside";
 import { ButtonLink } from "./button-link";

@@ -1,5 +1,10 @@
 "use client";
 
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { useMemo } from "react";
+
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
 import {
   OnboardingActions,
@@ -25,10 +30,7 @@ import { checkResultToResponseLog } from "@/components/onboarding/checks-table-a
 import type { useStreamChecks } from "@/components/onboarding/use-stream-checks";
 import { exampleChecks } from "@/data/onboarding-checks";
 import { cn } from "@/lib/utils";
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { useMemo } from "react";
+
 import type { OnboardingMonitor } from "../client";
 
 const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
