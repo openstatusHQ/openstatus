@@ -7,7 +7,7 @@ import { env } from "./env";
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const smtpTransporter = env.SMTP_HOST ? nodemailer.createTransport({
   host: env.SMTP_HOST,
-  port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT) : 587,
+  port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT, 10) || 587 : 587,
   auth: env.SMTP_USER && env.SMTP_PASS ? {
     user: env.SMTP_USER,
     pass: env.SMTP_PASS,
@@ -40,15 +40,19 @@ export const sendEmail = async (email: Emails) => {
       html,
       replyTo: email.reply_to,
     });
-  }else{
+  }else if (resendClient){
     await resendClient?.emails.send({
       from: email.from,
       to: email.to,
       subject: email.subject,
       html,
       replyTo: email.reply_to, 
-  })
-}};
+      })
+    }
+    else{
+      throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided.");
+    }
+};
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
   if (process.env.NODE_ENV !== "production") return;
@@ -62,8 +66,11 @@ export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
     replyTo: email.reply_to,
       })
     ));
-  }else{
+  }else if (resendClient){
     await resendClient?.batch.send(emails)
+  }
+  else{
+    throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided.");
   }
 };
 

@@ -40,7 +40,7 @@ export class EmailClient {
       this.type = "smtp";
       this.smtpTransporter = nodemailer.createTransport({
         host: env.SMTP_HOST,
-        port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT) : 587 ,
+        port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT, 10) || 587 : 587,
         auth: env.SMTP_USER && env.SMTP_PASS ? {
           user: env.SMTP_USER,
           pass: env.SMTP_PASS,
