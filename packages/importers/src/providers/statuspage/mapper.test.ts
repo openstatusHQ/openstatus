@@ -109,6 +109,19 @@ describe("mapIncidentToStatusReport", () => {
     expect(lastUpdate.message).toContain("---\n\n**Postmortem**\n\n");
     expect(lastUpdate.message).toContain("## Summary");
   });
+
+  it("maps per-update component impacts from affected_components", () => {
+    const result = mapIncidentToStatusReport(MOCK_INCIDENTS[0], 1, 10);
+    expect(result.updates[0].componentImpacts).toEqual([
+      { sourceComponentId: "sp_comp_001", impact: "major_outage" },
+    ]);
+    expect(result.updates[2].componentImpacts).toEqual([
+      { sourceComponentId: "sp_comp_001", impact: "degraded_performance" },
+    ]);
+    expect(result.updates[3].componentImpacts).toEqual([
+      { sourceComponentId: "sp_comp_001", impact: "operational" },
+    ]);
+  });
 });
 
 describe("mapIncidentUpdateStatus", () => {
