@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
@@ -46,6 +47,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { data: page } = useQuery(
     trpc.page.get.queryOptions({ id: row.original.pageId }),
   );
+  const reportComponents =
+    row.original.pageComponents?.map((c) => ({ id: c.id, name: c.name })) ?? [];
+  const reportHasImpacts = row.original.updates.some(
+    (u) => u.componentImpacts.length > 0,
+  );
+  const currentImpacts = currentImpactsFromUpdates(row.original.updates);
+  const nextStatus = getNextStatus(row.original.status);
   const sendStatusReportUpdateMutation = useMutation(
     trpc.emailRouter.sendStatusReport.mutationOptions(),
   );
@@ -72,7 +80,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
       onSuccess: (update) => {
         // TODO: move to server
-        if (update) {
+        if (update?.notifySubscribers) {
           sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
         }
         //
@@ -153,14 +161,29 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       </FormSheetStatusReport>
       <FormSheetStatusReportUpdate
         defaultValues={{
-          status: getNextStatus(row.original.status),
+          status: nextStatus,
+          componentImpacts: reportComponents.map((c) => ({
+            pageComponentId: c.id,
+            impact:
+              nextStatus === "resolved"
+                ? "operational"
+                : (currentImpacts.get(c.id) ?? "operational"),
+          })),
         }}
+        components={reportComponents}
         onSubmit={async (values) => {
+          // a legacy report stays legacy unless the operator actively
+          // sets a non-operational impact
+          const sendImpacts =
+            reportHasImpacts ||
+            values.componentImpacts?.some((ci) => ci.impact !== "operational");
           await createStatusReportUpdateMutation.mutateAsync({
             statusReportId: row.original.id,
             message: values.message,
             status: values.status,
+            componentImpacts: sendImpacts ? values.componentImpacts : undefined,
             date: values.date,
+            notifySubscribers: values.notifySubscribers,
           });
         }}
       >

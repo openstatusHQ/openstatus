@@ -25,19 +25,22 @@ export function ComponentImpactList({
   value,
   onValueChange,
   allowUnset = false,
+  defaultImpact = "operational",
   placeholder = "No change",
 }: {
   components: { id: number; name: string }[];
   value: ComponentImpactValue[];
   onValueChange: (value: ComponentImpactValue[]) => void;
-  /** Components without an entry show the placeholder instead of defaulting to operational. */
+  /** Components without an entry show the placeholder instead of defaulting to `defaultImpact`. */
   allowUnset?: boolean;
+  /** Shown for components without an entry; the caller must apply the same fallback on submit. */
+  defaultImpact?: PageComponentImpact;
   placeholder?: string;
 }) {
   function impactFor(id: number): PageComponentImpact | undefined {
     const found = value.find((v) => v.pageComponentId === id)?.impact;
     if (found) return found;
-    return allowUnset ? undefined : "operational";
+    return allowUnset ? undefined : defaultImpact;
   }
 
   function setImpact(id: number, impact: PageComponentImpact) {

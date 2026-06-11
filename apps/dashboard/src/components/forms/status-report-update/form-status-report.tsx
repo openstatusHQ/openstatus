@@ -187,9 +187,23 @@ export function FormStatusReportUpdateCard({
                   <FormControl>
                     <Select
                       defaultValue={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // resolved implies components are back up — prefill, still editable
+                        if (value === "resolved" && components?.length) {
+                          form.setValue(
+                            "componentImpacts",
+                            components.map((c) => ({
+                              pageComponentId: c.id,
+                              impact: "operational" as const,
+                            })),
+                            { shouldDirty: true },
+                          );
+                        }
+                      }}
                     >
                       <SelectTrigger
+                        size="sm"
                         className={cn(
                           colors[field.value],
                           "w-full font-mono capitalize",
@@ -231,7 +245,7 @@ export function FormStatusReportUpdateCard({
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "h-9 w-full pl-3 text-left font-normal sm:w-[240px]",
+                            "w-full pl-3 text-left font-normal sm:w-[240px]",
                             !field.value && "text-muted-foreground",
                           )}
                         >
