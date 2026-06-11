@@ -151,9 +151,23 @@ export function FormStatusReportUpdate({
                 <FormControl>
                   <Select
                     defaultValue={field.value}
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // resolved implies components are back up — prefill, still editable
+                      if (value === "resolved" && components?.length) {
+                        form.setValue(
+                          "componentImpacts",
+                          components.map((c) => ({
+                            pageComponentId: c.id,
+                            impact: "operational" as const,
+                          })),
+                          { shouldDirty: true },
+                        );
+                      }
+                    }}
                   >
                     <SelectTrigger
+                      size="sm"
                       className={cn(
                         colors[field.value],
                         "font-mono capitalize",

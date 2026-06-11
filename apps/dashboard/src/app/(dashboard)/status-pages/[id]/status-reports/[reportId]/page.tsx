@@ -81,6 +81,7 @@ export default function Page() {
     (u) => u.componentImpacts.length > 0,
   );
   const currentImpacts = currentImpactsFromUpdates(statusReport.updates);
+  const nextStatus = getNextStatus(statusReport.status);
 
   return (
     <SectionGroup>
@@ -102,10 +103,13 @@ export default function Page() {
           <EmptyStateDescription>Status Page Report</EmptyStateDescription>
           <FormSheetStatusReportUpdate
             defaultValues={{
-              status: getNextStatus(statusReport.status),
+              status: nextStatus,
               componentImpacts: statusReport.pageComponents.map((c) => ({
                 pageComponentId: c.id,
-                impact: currentImpacts.get(c.id) ?? "operational",
+                impact:
+                  nextStatus === "resolved"
+                    ? "operational"
+                    : (currentImpacts.get(c.id) ?? "operational"),
               })),
             }}
             components={statusReport.pageComponents.map((c) => ({

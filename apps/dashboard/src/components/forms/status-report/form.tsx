@@ -191,6 +191,7 @@ export function FormStatusReport({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger
+                      size="sm"
                       className={cn(
                         colors[field.value],
                         "font-mono capitalize",
@@ -411,9 +412,6 @@ export function FormStatusReport({
                       How badly is each affected component impacted?
                     </FormDescription>
                     <FormControl>
-                      {/* unset must stay visibly unset — a fake "Operational"
-                          default would submit no impact rows (legacy report)
-                          while the bar renders orange, not the green shown */}
                       <ComponentImpactList
                         components={selectedComponents.map((c) => ({
                           id: c.id,
@@ -421,8 +419,7 @@ export function FormStatusReport({
                         }))}
                         value={field.value ?? []}
                         onValueChange={field.onChange}
-                        allowUnset
-                        placeholder="No impact set"
+                        defaultImpact="degraded_performance"
                       />
                     </FormControl>
                     <FormMessage />
