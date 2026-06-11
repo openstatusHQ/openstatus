@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildSystemPrompt } from "./agent";
+import { buildSystemPrompt } from "./system-prompt";
 
 describe("buildSystemPrompt", () => {
   test("includes the current date and time in ISO 8601 format", () => {
