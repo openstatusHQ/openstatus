@@ -1,3 +1,4 @@
+import { Code, ConnectError } from "@connectrpc/connect";
 import type {
   ComponentImpact,
   StatusReport,
@@ -8,7 +9,6 @@ import {
   PageComponentImpact,
   StatusReportStatus,
 } from "@openstatus/proto/status_report/v1";
-import { Code, ConnectError } from "@connectrpc/connect";
 
 import { invalidStatusError } from "./errors";
 

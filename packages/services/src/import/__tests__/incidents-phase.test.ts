@@ -149,7 +149,10 @@ describe("writeIncidentsPhase componentImpacts", () => {
           .select()
           .from(statusReportUpdateToPageComponents)
           .where(
-            eq(statusReportUpdateToPageComponents.statusReportUpdateId, updateId),
+            eq(
+              statusReportUpdateToPageComponents.statusReportUpdateId,
+              updateId,
+            ),
           )
           .all();
 

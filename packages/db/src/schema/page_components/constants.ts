@@ -35,7 +35,9 @@ export function worstImpact(
 ): PageComponentImpact {
   let worst: PageComponentImpact = "operational";
   for (const impact of impacts) {
-    if (pageComponentImpact.indexOf(impact) > pageComponentImpact.indexOf(worst)) {
+    if (
+      pageComponentImpact.indexOf(impact) > pageComponentImpact.indexOf(worst)
+    ) {
       worst = impact;
     }
   }

@@ -1411,9 +1411,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         : [];
 
     // Import the converters from status-report service
-    const { dbStatusToProto, dbUpdateToProto } = await import(
-      "../status-report/converters"
-    );
+    const { dbStatusToProto, dbUpdateToProto } =
+      await import("../status-report/converters");
 
     // Convert reports to proto format
     const statusReports = activeReports.map((report) => {

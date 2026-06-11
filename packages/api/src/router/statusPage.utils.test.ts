@@ -1681,7 +1681,9 @@ describe("componentImpacts", () => {
     const day = dayStartUTC(1);
     const dayData = [createStatusData(1, 1)];
 
-    function manualBarStatus(events: Parameters<typeof setDataByType>[0]["events"]) {
+    function manualBarStatus(
+      events: Parameters<typeof setDataByType>[0]["events"],
+    ) {
       const result = setDataByType({
         events,
         data: dayData,

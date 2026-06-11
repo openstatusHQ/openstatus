@@ -30,9 +30,7 @@ export function ComponentImpactList({
   onValueChange: (value: ComponentImpactValue[]) => void;
 }) {
   function impactFor(id: number): PageComponentImpact {
-    return (
-      value.find((v) => v.pageComponentId === id)?.impact ?? "operational"
-    );
+    return value.find((v) => v.pageComponentId === id)?.impact ?? "operational";
   }
 
   function setImpact(id: number, impact: PageComponentImpact) {

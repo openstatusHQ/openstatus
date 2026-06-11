@@ -29,7 +29,9 @@ function worstCurrentImpact(report: StatusReport) {
     [...report.updates]
       .sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id)
       .flatMap((u) =>
-        u.componentImpacts.map((ci) => [ci.pageComponentId, ci.impact] as const),
+        u.componentImpacts.map(
+          (ci) => [ci.pageComponentId, ci.impact] as const,
+        ),
       ),
   );
   if (current.size === 0) return null;

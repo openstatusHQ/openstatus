@@ -389,8 +389,7 @@ export function getEvents({
       }
 
       const to =
-        lastUpdate?.status === "resolved" ||
-        lastUpdate?.status === "monitoring"
+        lastUpdate?.status === "resolved" || lastUpdate?.status === "monitoring"
           ? lastUpdate?.date
           : null;
 
@@ -865,9 +864,10 @@ export function setDataByType({
     // worst impact color across the day's reports; "success" (operational all
     // day) means reports don't color the day
     const reportsDayStatus = reports.length
-      ? (getWorstVariant(
-          reports.map((e) => reportEventDayStatus(e, date)),
-        ) as "success" | "degraded" | "error")
+      ? (getWorstVariant(reports.map((e) => reportEventDayStatus(e, date))) as
+          | "success"
+          | "degraded"
+          | "error")
       : undefined;
     const activeReportsDayStatus =
       reportsDayStatus === "success" ? undefined : reportsDayStatus;
