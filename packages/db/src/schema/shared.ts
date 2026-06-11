@@ -5,7 +5,10 @@ import { selectMaintenanceSchema } from "./maintenances";
 import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageComponentGroupSchema } from "./page_component_groups";
-import { selectPageComponentSchema } from "./page_components";
+import {
+  pageComponentImpactSchema,
+  selectPageComponentSchema,
+} from "./page_components";
 import { selectPageSchema } from "./pages";
 import {
   selectStatusReportSchema,
@@ -31,7 +34,21 @@ export const selectPublicMonitorSchema =
   }));
 
 export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
-  statusReportUpdates: z.array(selectStatusReportUpdateSchema).prefault([]),
+  statusReportUpdates: z
+    .array(
+      selectStatusReportUpdateSchema.extend({
+        statusReportUpdateToPageComponents: z
+          .array(
+            z.object({
+              statusReportUpdateId: z.number(),
+              pageComponentId: z.number(),
+              impact: pageComponentImpactSchema,
+            }),
+          )
+          .prefault([]),
+      }),
+    )
+    .prefault([]),
   statusReportsToPageComponents: z
     .array(
       z.object({
