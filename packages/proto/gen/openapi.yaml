@@ -3603,6 +3603,15 @@ components:
             - "null"
           title: notify
           description: Whether to notify subscribers about this update (optional, defaults to false).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: |-
+            Per-component impacts this update sets (optional). Components named here
+             are added to the report's affected set; omitted components keep their
+             prior impact.
       title: AddStatusReportUpdateRequest
       additionalProperties: false
       description: AddStatusReportUpdateRequest is the request to add a new update to a status report.
@@ -3616,6 +3625,20 @@ components:
       title: AddStatusReportUpdateResponse
       additionalProperties: false
       description: AddStatusReportUpdateResponse is the response after adding an update to a status report.
+    openstatus.status_report.v1.ComponentImpact:
+      type: object
+      properties:
+        pageComponentId:
+          type: string
+          title: page_component_id
+          description: ID of the affected page component.
+        impact:
+          title: impact
+          description: Impact set for the component.
+          $ref: '#/components/schemas/openstatus.status_report.v1.PageComponentImpact'
+      title: ComponentImpact
+      additionalProperties: false
+      description: ComponentImpact pairs a page component with the impact an update set for it.
     openstatus.status_report.v1.CreateStatusReportRequest:
       type: object
       properties:
@@ -3661,6 +3684,15 @@ components:
             - "null"
           title: notify
           description: Whether to notify subscribers about this status report (optional, defaults to false).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: |-
+            Per-component impacts set by the initial update (optional). When provided,
+             the named components are added to the report's affected set. Omitting this
+             field creates a legacy report without impact tracking.
       title: CreateStatusReportRequest
       additionalProperties: false
       description: CreateStatusReportRequest is the request to create a new status report.
@@ -3762,6 +3794,18 @@ components:
       title: ListStatusReportsResponse
       additionalProperties: false
       description: ListStatusReportsResponse is the response containing status report summaries.
+    openstatus.status_report.v1.PageComponentImpact:
+      type: string
+      title: PageComponentImpact
+      enum:
+        - PAGE_COMPONENT_IMPACT_UNSPECIFIED
+        - PAGE_COMPONENT_IMPACT_OPERATIONAL
+        - PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE
+        - PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE
+        - PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE
+      description: |-
+        PageComponentImpact is the per-component impact a status report update sets.
+         UNSPECIFIED means the caller doesn't speak impact (legacy) — it is NOT operational.
     openstatus.status_report.v1.StatusReport:
       type: object
       properties:
@@ -3865,6 +3909,12 @@ components:
           type: string
           title: created_at
           description: Timestamp when the update was created (RFC 3339 format).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: Per-component impacts this update set (empty for legacy reports).
       title: StatusReportUpdate
       additionalProperties: false
       description: StatusReportUpdate represents a single update entry in a status report timeline.
