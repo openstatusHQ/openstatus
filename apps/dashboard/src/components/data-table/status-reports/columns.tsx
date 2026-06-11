@@ -2,7 +2,6 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import {
-  currentImpactsFromUpdates,
   type PageComponentImpact,
   worstImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
@@ -27,12 +26,15 @@ import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
-// derived top-level impact = worst current impact across components;
+// derived top-level impact = worst impact set by any update, not the
+// current one (a resolved report would always read "Operational");
 // legacy reports (no impact rows) read "Untriaged"
-function worstCurrentImpact(report: StatusReport) {
-  const current = currentImpactsFromUpdates(report.updates);
-  if (current.size === 0) return null;
-  return worstImpact(current.values());
+function worstReportImpact(report: StatusReport) {
+  const impacts = report.updates.flatMap((u) =>
+    u.componentImpacts.map((ci) => ci.impact),
+  );
+  if (impacts.length === 0) return null;
+  return worstImpact(impacts);
 }
 
 export const columns: ColumnDef<StatusReport>[] = [
@@ -112,7 +114,7 @@ export const columns: ColumnDef<StatusReport>[] = [
   },
   {
     id: "impact",
-    accessorFn: (row) => worstCurrentImpact(row),
+    accessorFn: (row) => worstReportImpact(row),
     header: "Impact",
     cell: ({ row }) => {
       const impact = row.getValue<PageComponentImpact | null>("impact");
