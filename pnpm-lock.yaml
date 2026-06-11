@@ -264,6 +264,9 @@ catalogs:
     '@types/node':
       specifier: 24.12.4
       version: 24.12.4
+    '@types/nodemailer':
+      specifier: 8.0.0
+      version: 8.0.0
     '@types/react':
       specifier: 19.2.15
       version: 19.2.15
@@ -387,6 +390,9 @@ catalogs:
     node-html-parser:
       specifier: 6.1.13
       version: 6.1.13
+    nodemailer:
+      specifier: 8.0.10
+      version: 8.0.10
     nuqs:
       specifier: 2.8.9
       version: 2.8.9
@@ -1997,7 +2003,7 @@ importers:
         specifier: 'catalog:'
         version: 3.21.2
       nodemailer:
-        specifier: ^8.0.10
+        specifier: 'catalog:'
         version: 8.0.10
       react:
         specifier: 'catalog:'
@@ -2028,7 +2034,7 @@ importers:
         specifier: 'catalog:'
         version: 24.12.4
       '@types/nodemailer':
-        specifier: ^8.0.0
+        specifier: 'catalog:'
         version: 8.0.0
       '@types/react':
         specifier: 'catalog:'
