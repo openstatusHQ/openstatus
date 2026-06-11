@@ -65,5 +65,7 @@ export type StatusBarData = {
     from: Date | null;
     to: Date | null;
     isAggregated?: boolean;
+    /** Overrides the type-derived dot color (e.g. the day's worst report impact). */
+    status?: Exclude<StatusType, "empty">;
   }[];
 };

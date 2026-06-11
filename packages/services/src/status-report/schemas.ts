@@ -52,7 +52,10 @@ export const AddStatusReportUpdateInput = z.object({
   status: statusReportStatusSchema,
   message: z.string(),
   date: z.coerce.date().optional(),
-  /** Impact changes this update sets. Omitted components keep their prior impact. */
+  /**
+   * Impact changes this update sets. Omitted components keep their prior
+   * impact; naming a component not yet on the report adds it to the report.
+   */
   componentImpacts: componentImpactsSchema.optional(),
 });
 export type AddStatusReportUpdateInput = z.infer<

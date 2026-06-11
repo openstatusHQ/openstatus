@@ -6,8 +6,8 @@ import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageComponentGroupSchema } from "./page_component_groups";
 import {
-  pageComponentImpactSchema,
   selectPageComponentSchema,
+  selectStatusReportUpdateToPageComponentSchema,
 } from "./page_components";
 import { selectPageSchema } from "./pages";
 import {
@@ -38,13 +38,7 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
     .array(
       selectStatusReportUpdateSchema.extend({
         statusReportUpdateToPageComponents: z
-          .array(
-            z.object({
-              statusReportUpdateId: z.number(),
-              pageComponentId: z.number(),
-              impact: pageComponentImpactSchema,
-            }),
-          )
+          .array(selectStatusReportUpdateToPageComponentSchema)
           .prefault([]),
       }),
     )

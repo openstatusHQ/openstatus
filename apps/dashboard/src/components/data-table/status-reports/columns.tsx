@@ -3,6 +3,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
   currentImpactsFromUpdates,
+  type PageComponentImpact,
   worstImpact,
 } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -114,7 +115,7 @@ export const columns: ColumnDef<StatusReport>[] = [
     accessorFn: (row) => worstCurrentImpact(row),
     header: "Impact",
     cell: ({ row }) => {
-      const impact = worstCurrentImpact(row.original);
+      const impact = row.getValue<PageComponentImpact | null>("impact");
       const config = impact ? impactConfig[impact] : untriagedImpact;
       return (
         <div className={cn("font-mono", config.color)}>{config.label}</div>

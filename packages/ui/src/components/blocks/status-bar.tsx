@@ -654,6 +654,7 @@ export function StatusBarCard({
                   from={event.from}
                   to={event.to}
                   isAggregated={event.isAggregated}
+                  status={event.status}
                 />
               );
             })}
@@ -764,10 +765,9 @@ StatusBarContent.displayName = "StatusBarContent";
  * - Date range (formatted as "Since", "Until", or "Jan 15 - Jan 16")
  * - Duration (formatted as "2 hours", "ongoing", or "across 3 days" for multiple incidents)
  *
- * The component automatically determines the status color based on the event type:
- * - incident → error (red)
- * - report → degraded (yellow)
- * - maintenance → info (blue)
+ * The component automatically determines the status color based on the event type
+ * (incident → error, report → degraded, maintenance → info) unless an explicit
+ * `status` is passed, e.g. the day's worst report impact.
  *
  * Returns null if no start date is provided.
  *
@@ -810,18 +810,22 @@ export function StatusBarEvent({
   to,
   type,
   isAggregated,
+  status: statusProp,
 }: {
   name: string;
   from?: Date | null;
   to?: Date | null;
   type: StatusEventType;
   isAggregated?: boolean;
+  /** Overrides the type-derived dot color (e.g. the day's worst report impact). */
+  status?: Exclude<StatusType, "empty">;
 }) {
   const labels = useStatusBlocksLabels();
   if (!from) return null;
 
   const status =
-    type === "incident" ? "error" : type === "report" ? "degraded" : "info";
+    statusProp ??
+    (type === "incident" ? "error" : type === "report" ? "degraded" : "info");
 
   return (
     <div className="group relative text-sm" data-slot="status-bar-event">

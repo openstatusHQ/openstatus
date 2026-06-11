@@ -10,6 +10,7 @@ import {
 } from "../status-report";
 import { createStatusReport } from "../status-report/create";
 import { componentImpactsSchema } from "../status-report/schemas";
+import { formatComponentImpacts } from "../status-report/utils";
 import type { AgentTool } from "./types";
 
 const componentImpactsInputShape = componentImpactsSchema
@@ -212,9 +213,9 @@ export const createStatusReportTool: AgentTool<
           ? [
               {
                 label: "Impacts",
-                value: input.componentImpacts
-                  .map((ci) => `${ci.pageComponentId} → ${ci.impact}`)
-                  .join(", "),
+                value: formatComponentImpacts(input.componentImpacts).join(
+                  ", ",
+                ),
               },
             ]
           : []),
@@ -323,9 +324,9 @@ export const addStatusReportUpdateTool: AgentTool<
           ? [
               {
                 label: "Impacts",
-                value: input.componentImpacts
-                  .map((ci) => `${ci.pageComponentId} → ${ci.impact}`)
-                  .join(", "),
+                value: formatComponentImpacts(input.componentImpacts).join(
+                  ", ",
+                ),
               },
             ]
           : []),

@@ -1072,7 +1072,15 @@ export function setDataByType({
     return {
       day: dayData.day,
       events: [
-        ...reports,
+        // row dot follows the day's worst impact; floors at degraded so an
+        // operational-only slice never renders a green row (mirrors calendar)
+        ...reports.map((e) => ({
+          ...e,
+          status:
+            reportEventDayStatus(e, date) === "error"
+              ? ("error" as const)
+              : ("degraded" as const),
+        })),
         ...maintenances,
         ...(barType === "absolute" ? bundledIncidents : []),
       ],
