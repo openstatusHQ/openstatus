@@ -126,7 +126,7 @@ export const columns: ColumnDef<StatusReport>[] = [
   {
     id: "updates",
     accessorFn: (row) => row.updates.length,
-    header: "Total Updates",
+    header: "Updates",
     cell: ({ row }) => {
       const value = row.getValue("updates");
       return <TableCellNumber value={value} />;
