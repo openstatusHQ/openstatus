@@ -445,6 +445,8 @@ type UptimeData = {
   card: {
     status: "success" | "degraded" | "error" | "info" | "empty";
     value: string;
+    /** Worst report impact of the day — refines the generic status label. */
+    impact?: PageComponentImpact;
   }[];
 };
 
@@ -498,12 +500,12 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${remainingMinutes}m`;
 }
 
-// worst projected report color for one day; legacy events stay orange
-function reportEventDayStatus(
+// worst report impact for one day; null = legacy event (no impact rows)
+function reportEventDayImpact(
   event: Event,
   date: Date,
-): "success" | "degraded" | "error" {
-  if (!event.impactIntervals) return "degraded";
+): PageComponentImpact | null {
+  if (!event.impactIntervals) return null;
 
   const startOfDay = new Date(date);
   startOfDay.setUTCHours(0, 0, 0, 0);
@@ -517,7 +519,16 @@ function reportEventDayStatus(
       end.getTime() >= startOfDay.getTime()
     );
   });
-  return impactToStatusType(worstImpact(overlapping.map((iv) => iv.impact)));
+  return worstImpact(overlapping.map((iv) => iv.impact));
+}
+
+// worst projected report color for one day; legacy events stay orange
+function reportEventDayStatus(
+  event: Event,
+  date: Date,
+): "success" | "degraded" | "error" {
+  const impact = reportEventDayImpact(event, date);
+  return impact === null ? "degraded" : impactToStatusType(impact);
 }
 
 // Helper to check if date is within event range
@@ -1000,16 +1011,29 @@ export function setDataByType({
         ];
         break;
 
-      case "manual":
+      case "manual": {
         const manualCardStatus =
           activeReportsDayStatus ?? (hasMaintenances ? "info" : undefined);
+        const dayImpacts = reports
+          .map((e) => reportEventDayImpact(e, date))
+          .filter((i): i is PageComponentImpact => i !== null);
+        const worstDayImpact =
+          dayImpacts.length > 0 ? worstImpact(dayImpacts) : null;
         cardData = [
           {
             status: manualCardStatus || "success",
             value: "",
+            // only when the impact agrees with the day color — a mixed
+            // legacy+impact day where legacy dominates keeps the generic label
+            impact:
+              worstDayImpact !== null &&
+              impactToStatusType(worstDayImpact) === manualCardStatus
+                ? worstDayImpact
+                : undefined,
           },
         ];
         break;
+      }
       default:
         // Default to requests behavior
         if (total === 0) {

@@ -2,7 +2,10 @@
 
 import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
-import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
+import type {
+  StatusReportImpact,
+  StatusReportUpdateType,
+} from "@openstatus/ui/components/blocks/status.types";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
@@ -357,12 +360,6 @@ export function StatusEventAside({
     </div>
   );
 }
-
-type StatusReportImpact =
-  | "operational"
-  | "degraded_performance"
-  | "partial_outage"
-  | "major_outage";
 
 interface StatusReportUpdate {
   date: Date;

@@ -4,6 +4,7 @@ import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i
 import type {
   StatusBarData,
   StatusEventType,
+  StatusReportImpact,
   StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
 import { statusColors } from "@openstatus/ui/components/blocks/status.utils";
@@ -630,6 +631,7 @@ export function StatusBarCard({
                   key={`${item.day}-card-${cardIndex}`}
                   status={cardItem.status}
                   value={cardItem.value}
+                  impact={cardItem.impact}
                 />
               );
             })}
@@ -723,9 +725,11 @@ StatusBarSkeleton.displayName = "StatusBarSkeleton";
 function StatusBarContent({
   status,
   value,
+  impact,
 }: {
   status: StatusType;
   value: string;
+  impact?: StatusReportImpact;
 }) {
   const labels = useStatusBlocksLabels();
   return (
@@ -737,7 +741,11 @@ function StatusBarContent({
             backgroundColor: statusColors[status],
           }}
         />
-        <div className="text-sm">{labels.requestStatus[status]}</div>
+        <div className="text-sm">
+          {impact
+            ? labels.componentImpact[impact]
+            : labels.requestStatus[status]}
+        </div>
       </div>
       <div className="text-muted-foreground ml-auto font-mono text-xs tracking-tight">
         {value}

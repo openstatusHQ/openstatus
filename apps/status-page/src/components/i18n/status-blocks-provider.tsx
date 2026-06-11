@@ -58,6 +58,12 @@ export function StatusBlocksProvider({
         info: t("Maintenance"),
         empty: t("No Data"),
       },
+      componentImpact: {
+        operational: t("Operational"),
+        degraded_performance: t("Degraded performance"),
+        partial_outage: t("Partial outage"),
+        major_outage: t("Major outage"),
+      },
 
       today: t("today"),
       ongoing: t("ongoing"),

@@ -1719,6 +1719,32 @@ describe("componentImpacts", () => {
       ).toBe("degraded");
     });
 
+    it("carries the day's worst impact for the hover card label", () => {
+      const result = setDataByType({
+        events: [
+          createImpactEvent(1, day, hoursAfter(day, 24), [
+            { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+          ]),
+        ],
+        data: dayData,
+        cardType: "manual",
+        barType: "manual",
+      });
+      expect(result[0].card[0].status).toBe("degraded");
+      expect(result[0].card[0].impact).toBe("partial_outage");
+    });
+
+    it("legacy report day carries no impact (generic label)", () => {
+      const result = setDataByType({
+        events: [createLegacyEvent(1, day, hoursAfter(day, 24))],
+        data: dayData,
+        cardType: "manual",
+        barType: "manual",
+      });
+      expect(result[0].card[0].status).toBe("degraded");
+      expect(result[0].card[0].impact).toBeUndefined();
+    });
+
     it("operational-only day renders success", () => {
       expect(
         manualBarStatus([

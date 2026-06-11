@@ -6,6 +6,13 @@ export type StatusReportUpdateType =
   | "monitoring"
   | "resolved";
 
+// mirrors openstatus's `pageComponentImpact` taxonomy (this package doesn't depend on the db)
+export type StatusReportImpact =
+  | "operational"
+  | "degraded_performance"
+  | "partial_outage"
+  | "major_outage";
+
 export const THEME_VALUES = ["light", "dark", "system"] as const;
 export type ThemeValue = (typeof THEME_VALUES)[number];
 
@@ -46,6 +53,8 @@ export type StatusBarData = {
   card: {
     status: StatusType;
     value: string;
+    /** Worst report impact of the day — refines the generic status label. */
+    impact?: StatusReportImpact;
   }[];
   events: {
     id: number | string;
