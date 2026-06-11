@@ -28,6 +28,19 @@ export const impactConfig = {
   { label: string; color: string }
 >;
 
+/** Set equality regardless of order — used to skip no-op impact writes. */
+export function impactsEqual(
+  a: { pageComponentId: number; impact: string }[],
+  b: { pageComponentId: number; impact: string }[],
+) {
+  const key = (list: { pageComponentId: number; impact: string }[]) =>
+    [...list]
+      .sort((x, y) => x.pageComponentId - y.pageComponentId)
+      .map((x) => `${x.pageComponentId}:${x.impact}`)
+      .join(",");
+  return key(a) === key(b);
+}
+
 // legacy report (created before impact tracking): no impact rows
 export const untriagedImpact = {
   label: "Untriaged",

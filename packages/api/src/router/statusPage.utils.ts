@@ -147,12 +147,16 @@ type Event = {
   impactIntervals?: ImpactInterval[];
 };
 
-// per component: change points across the report's updates (sorted by date asc)
+// per component: change points across the report's updates
 function buildComponentImpactIntervals(
   updates: StatusReportUpdateWithImpactRows[],
 ): Map<number, ImpactInterval[]> {
+  // closing the last open interval relies on ascending order; don't trust callers
+  const sorted = [...updates].sort(
+    (a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id,
+  );
   const byComponent = new Map<number, ImpactInterval[]>();
-  for (const update of updates) {
+  for (const update of sorted) {
     for (const row of update.statusReportUpdateToPageComponents ?? []) {
       const intervals = byComponent.get(row.pageComponentId) ?? [];
       const last = intervals[intervals.length - 1];

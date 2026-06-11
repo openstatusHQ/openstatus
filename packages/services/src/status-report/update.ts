@@ -158,7 +158,8 @@ export async function updateStatusReportUpdate(args: {
             `Components belong to page ${validated.pageId}, not the report's page ${report.pageId}.`,
           );
         }
-        // invariant: every impact row's component is in the report's membership set
+        // invariant: every impact row's component is in the report's membership
+        // set — editing impacts intentionally extends it (same as add-update)
         await tx
           .insert(statusReportsToPageComponents)
           .values(

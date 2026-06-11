@@ -7,8 +7,7 @@ import { useRef } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
-import { impactsEqual } from "@/components/forms/status-report/component-impact-field";
-import { getActions } from "@/data/status-report-updates.client";
+import { getActions, impactsEqual } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReportUpdate =

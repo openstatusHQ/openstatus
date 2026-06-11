@@ -20,19 +20,6 @@ export type ComponentImpactValue = {
   impact: PageComponentImpact;
 };
 
-/** Set equality regardless of order — used to skip no-op impact writes. */
-export function impactsEqual(
-  a: { pageComponentId: number; impact: string }[],
-  b: { pageComponentId: number; impact: string }[],
-) {
-  const key = (list: { pageComponentId: number; impact: string }[]) =>
-    [...list]
-      .sort((x, y) => x.pageComponentId - y.pageComponentId)
-      .map((x) => `${x.pageComponentId}:${x.impact}`)
-      .join(",");
-  return key(a) === key(b);
-}
-
 export function ComponentImpactList({
   components,
   value,

@@ -15,10 +15,11 @@ export type PageComponentImpact = (typeof pageComponentImpact)[number];
 // legacy report (no impact rows): keep pre-impact behavior — orange, full downtime
 export const LEGACY_IMPACT_WEIGHT = 1;
 
-// fraction of an interval counted as downtime in manual-mode uptime
+// fraction of an interval counted as downtime in manual-mode uptime.
+// degraded_performance is deliberately 0: slow but available ≠ downtime.
 export function impactUptimeWeight(impact: PageComponentImpact): number {
   if (impact === "major_outage" || impact === "partial_outage") return 1;
-  return 0; // operational | degraded_performance: available
+  return 0;
 }
 
 // project an impact onto the status-page bar palette

@@ -26,8 +26,10 @@ import {
   type FormValues as UpdateCardFormValues,
 } from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
-import { impactsEqual } from "@/components/forms/status-report/component-impact-field";
-import { getNextStatus } from "@/data/status-report-updates.client";
+import {
+  getNextStatus,
+  impactsEqual,
+} from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
