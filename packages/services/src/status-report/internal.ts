@@ -1,8 +1,10 @@
-import { and, desc, eq, inArray } from "@openstatus/db";
+import { and, asc, desc, eq, inArray } from "@openstatus/db";
 import {
+  type PageComponentImpact,
   pageComponent,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
@@ -146,6 +148,59 @@ export async function getUpdatesForReport(tx: DB, statusReportId: number) {
     .where(eq(statusReportUpdate.statusReportId, statusReportId))
     .orderBy(desc(statusReportUpdate.date))
     .all();
+}
+
+/** Insert the impact rows an update sets. No-op on empty. */
+export async function insertUpdateComponentImpacts(args: {
+  tx: DB;
+  statusReportUpdateId: number;
+  componentImpacts: ReadonlyArray<{
+    pageComponentId: number;
+    impact: PageComponentImpact;
+  }>;
+}): Promise<void> {
+  const { tx, statusReportUpdateId, componentImpacts } = args;
+  if (componentImpacts.length === 0) return;
+
+  await tx.insert(statusReportUpdateToPageComponents).values(
+    componentImpacts.map(({ pageComponentId, impact }) => ({
+      statusReportUpdateId,
+      pageComponentId,
+      impact,
+    })),
+  );
+}
+
+/**
+ * Current impact per component: the latest update (by `date`, ties by id)
+ * that names it wins. Empty map ⇒ legacy report (no impact rows).
+ */
+export async function getCurrentImpactsForReport(
+  tx: DB,
+  statusReportId: number,
+): Promise<Map<number, PageComponentImpact>> {
+  const rows = await tx
+    .select({
+      pageComponentId: statusReportUpdateToPageComponents.pageComponentId,
+      impact: statusReportUpdateToPageComponents.impact,
+    })
+    .from(statusReportUpdateToPageComponents)
+    .innerJoin(
+      statusReportUpdate,
+      eq(
+        statusReportUpdateToPageComponents.statusReportUpdateId,
+        statusReportUpdate.id,
+      ),
+    )
+    .where(eq(statusReportUpdate.statusReportId, statusReportId))
+    .orderBy(asc(statusReportUpdate.date), asc(statusReportUpdate.id))
+    .all();
+
+  const current = new Map<number, PageComponentImpact>();
+  for (const row of rows) {
+    current.set(row.pageComponentId, row.impact);
+  }
+  return current;
 }
 
 /** Fetch the associated component ids for a report. */

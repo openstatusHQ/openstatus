@@ -11,6 +11,7 @@ import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
+  insertUpdateComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
@@ -39,10 +40,15 @@ export async function createStatusReport(args: {
       .get();
     if (!page_) throw new NotFoundError("page", input.pageId);
 
+    const componentImpacts = input.componentImpacts ?? [];
+    // membership = union of the explicit set and the impact-named components
     const validated = await validatePageComponentIds({
       tx,
       workspaceId: ctx.workspace.id,
-      pageComponentIds: input.pageComponentIds,
+      pageComponentIds: [
+        ...input.pageComponentIds,
+        ...componentImpacts.map((ci) => ci.pageComponentId),
+      ],
     });
 
     if (validated.pageId !== null && validated.pageId !== input.pageId) {
@@ -79,6 +85,12 @@ export async function createStatusReport(args: {
       .returning()
       .get();
 
+    await insertUpdateComponentImpacts({
+      tx,
+      statusReportUpdateId: initialUpdate.id,
+      componentImpacts,
+    });
+
     await emitAudit(tx, ctx, {
       action: "status_report.create",
       entityType: "status_report",
@@ -91,7 +103,7 @@ export async function createStatusReport(args: {
       entityType: "status_report_update",
       entityId: initialUpdate.id,
       after: initialUpdate,
-      metadata: { statusReportId: newReport.id },
+      metadata: { statusReportId: newReport.id, componentImpacts },
     });
 
     return { statusReport: newReport, initialUpdate };
