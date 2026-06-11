@@ -20,6 +20,8 @@ export interface StatusReportUpdate {
   date: Date;
   message: string;
   status: StatusReportUpdateType;
+  /** Per-component impact changes this update set. */
+  impactChanges?: { name: string; impact: StatusReportImpact }[];
 }
 
 export interface StatusReport {

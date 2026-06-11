@@ -206,6 +206,28 @@ export const componentImpactLabels: Record<StatusReportImpact, string> = {
   major_outage: "Major outage",
 } as const;
 
+// ordered worst-last so worstImpact can compare by index (mirrors the db's `pageComponentImpact`)
+export const statusReportImpacts: readonly StatusReportImpact[] = [
+  "operational",
+  "degraded_performance",
+  "partial_outage",
+  "major_outage",
+] as const;
+
+export function worstStatusReportImpact(
+  impacts: Iterable<StatusReportImpact>,
+): StatusReportImpact {
+  let worst: StatusReportImpact = "operational";
+  for (const impact of impacts) {
+    if (
+      statusReportImpacts.indexOf(impact) > statusReportImpacts.indexOf(worst)
+    ) {
+      worst = impact;
+    }
+  }
+  return worst;
+}
+
 /**
  * Incident status labels
  * Used for displaying incident report update statuses

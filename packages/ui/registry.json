@@ -248,6 +248,7 @@
         "status-timestamp",
         "status-i18n",
         "badge",
+        "hover-card",
         "separator",
         "tooltip"
       ],

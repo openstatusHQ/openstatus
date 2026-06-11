@@ -18,6 +18,7 @@ import {
   StatusEventTitle,
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
+import { updatesWithImpactChanges } from "@/lib/report-impacts";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function ReportPage() {
@@ -43,25 +44,7 @@ export default function ReportPage() {
   const firstUpdate = updates[updates.length - 1];
   const lastUpdate = updates[0];
 
-  const componentNameById = new Map(
-    report.statusReportsToPageComponents.map((a) => [
-      a.pageComponent.id,
-      a.pageComponent.name,
-    ]),
-  );
-  const impactLabels = {
-    operational: t("Operational"),
-    degraded_performance: t("Degraded performance"),
-    partial_outage: t("Partial outage"),
-    major_outage: t("Major outage"),
-  } as const;
-  const updatesWithImpacts = report.statusReportUpdates.map((update) => ({
-    ...update,
-    impactChanges: update.statusReportUpdateToPageComponents.map((ci) => ({
-      label: `${componentNameById.get(ci.pageComponentId) ?? `#${ci.pageComponentId}`} → ${impactLabels[ci.impact]}`,
-      impact: ci.impact,
-    })),
-  }));
+  const updatesWithImpacts = updatesWithImpactChanges(report);
 
   // HACKY: LEGACY: only resolved via report and not via report update
   const isReportResolvedOnly =
