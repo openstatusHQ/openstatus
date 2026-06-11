@@ -13,6 +13,10 @@
       "import": "./src/status-report/index.ts",
       "types": "./src/status-report/index.ts"
     },
+    "./status-report/utils": {
+      "import": "./src/status-report/utils.ts",
+      "types": "./src/status-report/utils.ts"
+    },
     "./maintenance": {
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"

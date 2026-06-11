@@ -29,6 +29,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
+  activeReportStatus,
   fillStatusDataFor45Days,
   fillStatusDataFor45DaysNoop,
   getEvents,
@@ -86,6 +87,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
+                with: { statusReportUpdateToPageComponents: true },
               },
               statusReportsToPageComponents: { with: { pageComponent: true } },
             },
@@ -146,36 +148,39 @@ export const statusPageRouter = createTRPCRouter({
         // Calculate status based on component type
         let status: "success" | "degraded" | "error" | "info";
 
+        // impact-aware: an active report colors the component by its derived
+        // status (major ⇒ error); legacy reports keep flat degraded
+        const reportStatus = activeReportStatus(events);
+
         if (c.type === "static") {
           // Static: only reports and maintenances affect status
-          status = events.some((e) => e.type === "report" && !e.to)
-            ? "degraded"
-            : events.some(
-                  (e) =>
-                    e.type === "maintenance" &&
-                    e.to &&
-                    e.from.getTime() <= new Date().getTime() &&
-                    e.to.getTime() >= new Date().getTime(),
-                )
+          status =
+            reportStatus ??
+            (events.some(
+              (e) =>
+                e.type === "maintenance" &&
+                e.to &&
+                e.from.getTime() <= new Date().getTime() &&
+                e.to.getTime() >= new Date().getTime(),
+            )
               ? "info"
-              : "success";
+              : "success");
         } else {
           // Monitor: incidents, reports, and maintenances affect status
           status =
             events.some((e) => e.type === "incident" && !e.to) &&
             barType !== "manual"
               ? "error"
-              : events.some((e) => e.type === "report" && !e.to)
-                ? "degraded"
-                : events.some(
-                      (e) =>
-                        e.type === "maintenance" &&
-                        e.to &&
-                        e.from.getTime() <= new Date().getTime() &&
-                        e.to.getTime() >= new Date().getTime(),
-                    )
+              : (reportStatus ??
+                (events.some(
+                  (e) =>
+                    e.type === "maintenance" &&
+                    e.to &&
+                    e.from.getTime() <= new Date().getTime() &&
+                    e.to.getTime() >= new Date().getTime(),
+                )
                   ? "info"
-                  : "success";
+                  : "success"));
         }
 
         return {
@@ -197,17 +202,16 @@ export const statusPageRouter = createTRPCRouter({
           events.some((e) => e.type === "incident" && !e.to) &&
           barType !== "manual"
             ? "error"
-            : events.some((e) => e.type === "report" && !e.to)
-              ? "degraded"
-              : events.some(
-                    (e) =>
-                      e.type === "maintenance" &&
-                      e.to &&
-                      e.from.getTime() <= new Date().getTime() &&
-                      e.to.getTime() >= new Date().getTime(),
-                  )
+            : (activeReportStatus(events) ??
+              (events.some(
+                (e) =>
+                  e.type === "maintenance" &&
+                  e.to &&
+                  e.from.getTime() <= new Date().getTime() &&
+                  e.to.getTime() >= new Date().getTime(),
+              )
                 ? "info"
-                : "success";
+                : "success"));
         return {
           ...c.monitor,
           status,
@@ -218,14 +222,15 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-      const status =
-        monitors.some((m) => m.status === "error") && barType !== "manual"
-          ? "error"
-          : monitors.some((m) => m.status === "degraded")
-            ? "degraded"
-            : monitors.some((m) => m.status === "info")
-              ? "info"
-              : "success";
+      // no barType gate: incident-driven error is already suppressed per
+      // monitor in manual mode; report-driven error (major_outage) must show
+      const status = monitors.some((m) => m.status === "error")
+        ? "error"
+        : monitors.some((m) => m.status === "degraded")
+          ? "degraded"
+          : monitors.some((m) => m.status === "info")
+            ? "info"
+            : "success";
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -425,6 +430,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
+                with: { statusReportUpdateToPageComponents: true },
               },
               statusReportsToPageComponents: { with: { pageComponent: true } },
             },
@@ -547,7 +553,9 @@ export const statusPageRouter = createTRPCRouter({
           statusReports: {
             with: {
               statusReportsToPageComponents: { with: { pageComponent: true } },
-              statusReportUpdates: true,
+              statusReportUpdates: {
+                with: { statusReportUpdateToPageComponents: true },
+              },
             },
           },
           pageComponents: {
@@ -745,6 +753,7 @@ export const statusPageRouter = createTRPCRouter({
           },
           statusReportUpdates: {
             orderBy: (reports, { desc }) => desc(reports.date),
+            with: { statusReportUpdateToPageComponents: true },
           },
         },
       });
@@ -763,7 +772,7 @@ export const statusPageRouter = createTRPCRouter({
     const identifiedDate = new Date(date.setMinutes(date.getMinutes() - 32));
     const investigatingDate = new Date(date.setMinutes(date.getMinutes() - 4));
 
-    const props: z.infer<typeof selectStatusReportPageSchema> = {
+    const props: z.input<typeof selectStatusReportPageSchema> = {
       id: 1,
       pageId: 1,
       workspaceId: 1,

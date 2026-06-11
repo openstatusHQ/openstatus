@@ -10,12 +10,14 @@ import {
   sql,
 } from "@openstatus/db";
 import {
+  type PageComponentImpact,
   pageComponent,
   page as pageTable,
   selectPageComponentSchema,
   selectPageSchema,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
@@ -46,8 +48,13 @@ function periodToSince(period: StatusReportListPeriod): Date {
   }
 }
 
+export type StatusReportUpdateWithImpacts = StatusReportUpdate & {
+  /** Impacts this update set; empty for legacy reports. */
+  componentImpacts: { pageComponentId: number; impact: PageComponentImpact }[];
+};
+
 export type StatusReportWithRelations = StatusReport & {
-  updates: StatusReportUpdate[];
+  updates: StatusReportUpdateWithImpacts[];
   pageComponents: PageComponent[];
   /** Flat list of associated component ids. Convenience for proto conversion. */
   pageComponentIds: number[];
@@ -87,11 +94,50 @@ async function enrichReportsBatch(
     .where(inArray(statusReportUpdate.statusReportId, reportIds))
     .orderBy(desc(statusReportUpdate.date))
     .all();
-  const updatesByReport = new Map<number, StatusReportUpdate[]>();
+
+  // One query: all impact rows for all updates.
+  const updateIds = allUpdates.map((u) => u.id);
+  const impactRows =
+    updateIds.length > 0
+      ? await db
+          .select({
+            statusReportUpdateId:
+              statusReportUpdateToPageComponents.statusReportUpdateId,
+            pageComponentId: statusReportUpdateToPageComponents.pageComponentId,
+            impact: statusReportUpdateToPageComponents.impact,
+          })
+          .from(statusReportUpdateToPageComponents)
+          .where(
+            inArray(
+              statusReportUpdateToPageComponents.statusReportUpdateId,
+              updateIds,
+            ),
+          )
+          .all()
+      : [];
+  const impactsByUpdate = new Map<
+    number,
+    { pageComponentId: number; impact: PageComponentImpact }[]
+  >();
+  for (const row of impactRows) {
+    const arr = impactsByUpdate.get(row.statusReportUpdateId);
+    const entry = {
+      pageComponentId: row.pageComponentId,
+      impact: row.impact,
+    };
+    if (arr) arr.push(entry);
+    else impactsByUpdate.set(row.statusReportUpdateId, [entry]);
+  }
+
+  const updatesByReport = new Map<number, StatusReportUpdateWithImpacts[]>();
   for (const u of allUpdates) {
+    const withImpacts = {
+      ...u,
+      componentImpacts: impactsByUpdate.get(u.id) ?? [],
+    };
     const arr = updatesByReport.get(u.statusReportId);
-    if (arr) arr.push(u);
-    else updatesByReport.set(u.statusReportId, [u]);
+    if (arr) arr.push(withImpacts);
+    else updatesByReport.set(u.statusReportId, [withImpacts]);
   }
 
   // One query: all component associations joined to their components.

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Table,
@@ -36,10 +37,14 @@ type StatusReportUpdates =
 export function DataTable({
   updates,
   reportId,
+  components = [],
 }: {
   updates: StatusReportUpdates;
   reportId: number;
+  components?: { id: number; name: string }[];
 }) {
+  const reportHasImpacts = updates.some((u) => u.componentImpacts.length > 0);
+  const currentImpacts = currentImpactsFromUpdates(updates);
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -88,12 +93,27 @@ export function DataTable({
                     status: getNextStatus(
                       updates[updates.length - 1]?.status ?? "investigating",
                     ),
+                    componentImpacts: components.map((c) => ({
+                      pageComponentId: c.id,
+                      impact: currentImpacts.get(c.id) ?? "operational",
+                    })),
                   }}
+                  components={components}
                   onSubmit={async (values) => {
+                    // a legacy report stays legacy unless the operator
+                    // actively sets a non-operational impact
+                    const sendImpacts =
+                      reportHasImpacts ||
+                      values.componentImpacts?.some(
+                        (ci) => ci.impact !== "operational",
+                      );
                     await createStatusReportUpdateMutation.mutateAsync({
                       statusReportId: reportId,
                       message: values.message,
                       status: values.status,
+                      componentImpacts: sendImpacts
+                        ? values.componentImpacts
+                        : undefined,
                       date: values.date,
                       notifySubscribers: values.notifySubscribers,
                     });
@@ -133,7 +153,7 @@ export function DataTable({
                 <TableCellDate value={update.date} />
               </TableCell>
               <TableCell className="w-8">
-                <DataTableRowActions row={update} />
+                <DataTableRowActions row={update} components={components} />
               </TableCell>
             </TableRow>
           );

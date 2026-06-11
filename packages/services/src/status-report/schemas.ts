@@ -1,8 +1,25 @@
-import { statusReportStatusSchema } from "@openstatus/db/src/schema";
+import {
+  pageComponentImpactSchema,
+  statusReportStatusSchema,
+} from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 export { statusReportStatusSchema };
 export type StatusReportStatus = z.infer<typeof statusReportStatusSchema>;
+
+export const componentImpactsSchema = z
+  .array(
+    z.object({
+      pageComponentId: z.number().int(),
+      impact: pageComponentImpactSchema,
+    }),
+  )
+  .refine(
+    (impacts) =>
+      new Set(impacts.map((i) => i.pageComponentId)).size === impacts.length,
+    { message: "Duplicate pageComponentId in componentImpacts." },
+  );
+export type ComponentImpacts = z.infer<typeof componentImpactsSchema>;
 
 /** Periods supported by the status-report list filter — matches tRPC today. */
 export const statusReportListPeriods = ["1d", "7d", "14d"] as const;
@@ -16,6 +33,8 @@ export const CreateStatusReportInput = z.object({
   date: z.coerce.date(),
   pageId: z.number().int(),
   pageComponentIds: z.array(z.number().int()).default([]),
+  /** Per-component impact set by the initial update. Absent ⇒ legacy report. */
+  componentImpacts: componentImpactsSchema.optional(),
 });
 export type CreateStatusReportInput = z.infer<typeof CreateStatusReportInput>;
 
@@ -33,6 +52,11 @@ export const AddStatusReportUpdateInput = z.object({
   status: statusReportStatusSchema,
   message: z.string(),
   date: z.coerce.date().optional(),
+  /**
+   * Impact changes this update sets. Omitted components keep their prior
+   * impact; naming a component not yet on the report adds it to the report.
+   */
+  componentImpacts: componentImpactsSchema.optional(),
 });
 export type AddStatusReportUpdateInput = z.infer<
   typeof AddStatusReportUpdateInput
@@ -43,6 +67,8 @@ export const UpdateStatusReportUpdateInput = z.object({
   status: statusReportStatusSchema.optional(),
   message: z.string().optional(),
   date: z.coerce.date().optional(),
+  /** When provided, replaces the update's full impact-row set; omitted ⇒ untouched. */
+  componentImpacts: componentImpactsSchema.optional(),
 });
 export type UpdateStatusReportUpdateInput = z.infer<
   typeof UpdateStatusReportUpdateInput

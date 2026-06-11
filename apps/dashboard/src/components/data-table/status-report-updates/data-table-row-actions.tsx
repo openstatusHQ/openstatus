@@ -7,7 +7,7 @@ import { useRef } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
-import { getActions } from "@/data/status-report-updates.client";
+import { getActions, impactsEqual } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type StatusReportUpdate =
@@ -15,9 +15,13 @@ type StatusReportUpdate =
 
 interface DataTableRowActionsProps {
   row: StatusReportUpdate;
+  components?: { id: number; name: string }[];
 }
 
-export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+export function DataTableRowActions({
+  row,
+  components,
+}: DataTableRowActionsProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
@@ -79,13 +83,27 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           message: row.message,
           date: row.date,
           status: row.status,
+          componentImpacts: row.componentImpacts.map((ci) => ({
+            pageComponentId: ci.pageComponentId,
+            impact: ci.impact,
+          })),
         }}
+        components={components}
+        allowUnsetImpacts
         onSubmit={async (values) => {
           await updateStatusReportUpdateMutation.mutateAsync({
             id: row.id,
             statusReportId: row.statusReportId,
             message: values.message,
             status: values.status,
+            // replace-set semantics: only send when actually edited, so
+            // untouched (incl. legacy) updates keep their rows
+            componentImpacts: impactsEqual(
+              values.componentImpacts ?? [],
+              row.componentImpacts,
+            )
+              ? undefined
+              : values.componentImpacts,
             date: values.date,
           });
         }}

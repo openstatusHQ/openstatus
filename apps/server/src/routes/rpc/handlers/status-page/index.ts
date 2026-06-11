@@ -21,6 +21,7 @@ import {
   pageSubscriber,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { StatusPageService } from "@openstatus/proto/status_page/v1";
@@ -1393,8 +1394,31 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             .all()
         : [];
 
-    // Import the converter from status-report service
-    const { dbStatusToProto } = await import("../status-report/converters");
+    // Get impact rows for the reports' updates, grouped per update id
+    const updateIds = reportUpdates.map((u) => u.id);
+    const updateImpacts =
+      updateIds.length > 0
+        ? await db
+            .select()
+            .from(statusReportUpdateToPageComponents)
+            .where(
+              inArray(
+                statusReportUpdateToPageComponents.statusReportUpdateId,
+                updateIds,
+              ),
+            )
+            .all()
+        : [];
+    const impactsByUpdate = new Map<number, typeof updateImpacts>();
+    for (const row of updateImpacts) {
+      const arr = impactsByUpdate.get(row.statusReportUpdateId);
+      if (arr) arr.push(row);
+      else impactsByUpdate.set(row.statusReportUpdateId, [row]);
+    }
+
+    // Import the converters from status-report service
+    const { dbStatusToProto, dbUpdateToProto } =
+      await import("../status-report/converters");
 
     // Convert reports to proto format
     const statusReports = activeReports.map((report) => {
@@ -1411,14 +1435,15 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         status: dbStatusToProto(report.status),
         title: report.title,
         pageComponentIds: componentIds,
-        updates: updates.map((u) => ({
-          $typeName: "openstatus.status_report.v1.StatusReportUpdate" as const,
-          id: String(u.id),
-          status: dbStatusToProto(u.status),
-          date: u.date.toISOString(),
-          message: u.message,
-          createdAt: u.createdAt?.toISOString() ?? "",
-        })),
+        updates: updates.map((u) =>
+          dbUpdateToProto({
+            ...u,
+            componentImpacts: (impactsByUpdate.get(u.id) ?? []).map((row) => ({
+              pageComponentId: row.pageComponentId,
+              impact: row.impact,
+            })),
+          }),
+        ),
         createdAt: report.createdAt?.toISOString() ?? "",
         updatedAt: report.updatedAt?.toISOString() ?? "",
       };

@@ -1,3 +1,4 @@
+import type { ComponentImpact, UpdateComponentImpact } from "../../types";
 import type {
   StatuspageComponent,
   StatuspageGroupComponent,
@@ -11,6 +12,16 @@ export type StatusReportStatus =
   | "identified"
   | "monitoring"
   | "resolved";
+
+// `under_maintenance` has no openstatus equivalent — treat as available.
+// Unknown values are dropped rather than guessed.
+const COMPONENT_IMPACT_MAP: Record<string, ComponentImpact> = {
+  operational: "operational",
+  degraded_performance: "degraded_performance",
+  partial_outage: "partial_outage",
+  major_outage: "major_outage",
+  under_maintenance: "operational",
+};
 
 export function mapPage(page: StatuspagePage, workspaceId: number) {
   return {
@@ -85,6 +96,13 @@ export function mapIncidentToStatusReport(
     status: mapIncidentUpdateStatus(u.status),
     message: u.body ?? "",
     date: new Date(u.created_at),
+    componentImpacts: (u.affected_components ?? []).flatMap(
+      (c): UpdateComponentImpact[] => {
+        const impact = COMPONENT_IMPACT_MAP[c.new_status];
+        // `code` is the component id `componentIdMap` is keyed on
+        return impact ? [{ sourceComponentId: c.code, impact }] : [];
+      },
+    ),
   }));
 
   if (incident.postmortem_body && mappedUpdates.length > 0) {

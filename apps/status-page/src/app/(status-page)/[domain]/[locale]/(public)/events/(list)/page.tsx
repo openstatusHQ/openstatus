@@ -26,6 +26,7 @@ import {
   StatusEventTitle,
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
+import { updatesWithImpactChanges } from "@/lib/report-impacts";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
@@ -101,7 +102,7 @@ export default function Page() {
                         </StatusEventAffected>
                       ) : null}
                       <StatusEventTimelineReport
-                        updates={report.statusReportUpdates}
+                        updates={updatesWithImpactChanges(report)}
                       />
                     </StatusEventContent>
                   </Link>

@@ -18,6 +18,7 @@ import {
   StatusEventTitle,
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
+import { updatesWithImpactChanges } from "@/lib/report-impacts";
 import { useTRPC } from "@/lib/trpc/client";
 
 export default function ReportPage() {
@@ -42,6 +43,8 @@ export default function ReportPage() {
   );
   const firstUpdate = updates[updates.length - 1];
   const lastUpdate = updates[0];
+
+  const updatesWithImpacts = updatesWithImpactChanges(report);
 
   // HACKY: LEGACY: only resolved via report and not via report update
   const isReportResolvedOnly =
@@ -73,7 +76,7 @@ export default function ReportPage() {
               ))}
             </StatusEventAffected>
           ) : null}
-          <StatusEventTimelineReport updates={report.statusReportUpdates} />
+          <StatusEventTimelineReport updates={updatesWithImpacts} />
         </StatusEventContent>
       </StatusEvent>
     </div>

@@ -2,8 +2,17 @@
 
 import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
-import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
+import type {
+  StatusReportImpact,
+  StatusReportUpdate,
+} from "@openstatus/ui/components/blocks/status.types";
+import { worstStatusReportImpact } from "@openstatus/ui/components/blocks/status.utils";
 import { Badge } from "@openstatus/ui/components/ui/badge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui/components/ui/hover-card";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
   Tooltip,
@@ -358,10 +367,66 @@ export function StatusEventAside({
   );
 }
 
-interface StatusReportUpdate {
-  date: Date;
-  message: string;
-  status: StatusReportUpdateType;
+const impactTextClasses: Record<StatusReportImpact, string> = {
+  operational: "text-success",
+  degraded_performance: "text-warning",
+  partial_outage: "text-warning",
+  major_outage: "text-destructive",
+};
+
+/**
+ * StatusEventTimelineImpact - Worst impact label for a timeline update
+ *
+ * Shows the most severe impact among the update's component changes. The label
+ * is a hover card trigger listing each component's explicit impact.
+ */
+export function StatusEventTimelineImpact({
+  changes,
+  className,
+  ...props
+}: React.ComponentProps<"button"> & {
+  changes: { name: string; impact: StatusReportImpact }[];
+}) {
+  const labels = useStatusBlocksLabels();
+  const worst = worstStatusReportImpact(changes.map((c) => c.impact));
+  return (
+    <HoverCard openDelay={100} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          data-slot="status-event-timeline-impact"
+          className={cn(
+            "decoration-muted-foreground/30 hover:decoration-muted-foreground/60 font-mono text-xs font-medium underline decoration-dashed underline-offset-4",
+            impactTextClasses[worst],
+            className,
+          )}
+          {...props}
+        >
+          {labels.componentImpact[worst]}
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-auto min-w-48 p-3">
+        <div className="flex flex-col gap-1.5">
+          {changes.map((change, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-4 text-xs"
+            >
+              <span className="truncate">{change.name}</span>
+              <span
+                className={cn(
+                  "shrink-0 font-mono",
+                  impactTextClasses[change.impact],
+                )}
+              >
+                {labels.componentImpact[change.impact]}
+              </span>
+            </div>
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
 }
 
 // ============================================================================
@@ -545,7 +610,15 @@ export function StatusEventTimelineReportUpdate({
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{labels.incidentStatus[report.status]}</span>{" "}
-              <span className="text-muted-foreground/70">·</span>{" "}
+              {report.impactChanges?.length ? (
+                <>
+                  <span className="text-muted-foreground/70 mx-0.5">·</span>{" "}
+                  <StatusEventTimelineImpact
+                    changes={report.impactChanges}
+                  />{" "}
+                </>
+              ) : null}
+              <span className="text-muted-foreground/70 mx-0.5">·</span>{" "}
               <span className="text-muted-foreground font-mono text-xs">
                 <StatusTimestamp date={report.date} variant="rich" asChild>
                   <span>{labels.formatDateTime(report.date)}</span>

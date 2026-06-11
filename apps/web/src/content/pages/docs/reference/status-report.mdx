@@ -51,7 +51,67 @@ A descriptive message detailing the update, actions taken, or any relevant infor
 - `"Fix deployed to production. Monitoring service health for full recovery."`
 - `"All services restored to normal operation. Incident resolved."`
 
+### Affected components
+
+**Type:** Array of page component references (optional)
+
+A status report can be attached to one or more [page components](/docs/reference/page-components) on a single status page. The attached components define which services the report affects — they are highlighted on the public status page while the report is unresolved.
+
+All attached components must belong to the same status page. Adding a component impact in a later update (see below) automatically adds that component to the report's affected set.
+
+## Component impacts
+
+Beyond marking a component as affected, each update of a status report can declare **how badly** each component is affected. This per-component impact drives the component's live status, the report's overall indicator, and — for status pages using manual uptime — the uptime percentage.
+
+### Impact levels
+
+**Type:** Enumerated string, set per component and per update
+
+| Impact | Label | Meaning |
+|--------|-------|---------|
+| `operational` | Operational | The component has recovered or is unaffected. |
+| `degraded_performance` | Degraded performance | Slow or partially failing, but available. |
+| `partial_outage` | Partial outage | Some users or requests are failing. |
+| `major_outage` | Major outage | The component is down. |
+
+### How impacts evolve over time
+
+Impacts follow the timeline of the report's updates:
+
+- Each update snapshots the impacts it sets. A component's **current impact** is the one from the latest update that names it.
+- Components **omitted** from an update keep their prior impact — you only declare what changed.
+- Resolving a report sets every still-affected component back to `operational`, so the status page clears deterministically.
+
+**Example timeline:**
+
+```
+Update 1 (investigating): API → major outage
+Update 2 (identified):    API → partial outage, Website → degraded performance
+Update 3 (resolved):      API → operational,    Website → operational
+```
+
+After update 2, the API shows _partial outage_ (latest update naming it) and the Website shows _degraded performance_.
+
+### Effect on the status page
+
+- **Component status:** `major_outage` renders the component and its status bar red; `degraded_performance` and `partial_outage` render orange; `operational` renders green.
+- **Report indicator:** the report's overall state is derived from the **worst** active component impact — it is not stored separately.
+- **Manual uptime:** on status pages using [manual uptime calculation](/docs/concept/uptime-calculation-and-values#manual-type), each interval between updates counts against uptime weighted by its impact:
+
+| Impact | Downtime weight |
+|--------|-----------------|
+| `operational` | 0 |
+| `degraded_performance` | 0 — slow but available is not downtime |
+| `partial_outage` | 0.5 — some users affected, not all |
+| `major_outage` | 1 — full downtime |
+
+<Aside>
+Status reports created before component impacts existed (or via API clients that don't send impacts) have no impact rows. They keep the previous behavior: the affected components render orange and, in manual mode, the report's full duration counts as downtime.
+</Aside>
+
 ## Related resources
 
 - **[Incident reference](/docs/reference/incident)** — detailed information on incident creation and lifecycle.
 - **[Status page reference](/docs/reference/status-page)** — how status reports are displayed on public status pages.
+- **[Page components reference](/docs/reference/page-components)** — the components a report and its impacts attach to.
+- **[Uptime calculation](/docs/concept/uptime-calculation-and-values)** — how impacts weight manual-mode uptime.

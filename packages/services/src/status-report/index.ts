@@ -13,9 +13,12 @@ export {
 export { notifyStatusReport } from "./notify";
 export { resolveStatusReport } from "./resolve";
 export { updateStatusReport, updateStatusReportUpdate } from "./update";
+export { formatComponentImpacts } from "./utils";
 
 export {
   AddStatusReportUpdateInput,
+  type ComponentImpacts,
+  componentImpactsSchema,
   CreateStatusReportInput,
   DeleteStatusReportInput,
   DeleteStatusReportUpdateInput,

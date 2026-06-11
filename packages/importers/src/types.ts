@@ -1,4 +1,19 @@
 /**
+ * Per-component impact a status report update sets. Mirrors openstatus's
+ * `pageComponentImpact` taxonomy (this package doesn't depend on the db).
+ */
+export type ComponentImpact =
+  | "operational"
+  | "degraded_performance"
+  | "partial_outage"
+  | "major_outage";
+
+export type UpdateComponentImpact = {
+  sourceComponentId: string;
+  impact: ComponentImpact;
+};
+
+/**
  * Result of importing a single resource.
  */
 export type ResourceResult = {

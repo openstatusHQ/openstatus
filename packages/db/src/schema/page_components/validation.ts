@@ -1,7 +1,11 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import type { z } from "zod";
+import { z } from "zod";
 
-import { pageComponent } from "./page_components";
+import { pageComponentImpact } from "./constants";
+import {
+  pageComponent,
+  statusReportUpdateToPageComponents,
+} from "./page_components";
 
 export const selectPageComponentSchema = createSelectSchema(pageComponent);
 
@@ -27,3 +31,19 @@ export const insertPageComponentSchema = createInsertSchema(pageComponent, {
 
 export type InsertPageComponent = z.infer<typeof insertPageComponentSchema>;
 export type PageComponent = z.infer<typeof selectPageComponentSchema>;
+
+export const pageComponentImpactSchema = z.enum(pageComponentImpact);
+
+export const selectStatusReportUpdateToPageComponentSchema = createSelectSchema(
+  statusReportUpdateToPageComponents,
+  { impact: pageComponentImpactSchema },
+);
+
+export const insertStatusReportUpdateToPageComponentSchema = createInsertSchema(
+  statusReportUpdateToPageComponents,
+  { impact: pageComponentImpactSchema },
+);
+
+export type StatusReportUpdateToPageComponent = z.infer<
+  typeof selectStatusReportUpdateToPageComponentSchema
+>;
