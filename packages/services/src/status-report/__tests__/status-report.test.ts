@@ -875,6 +875,72 @@ describe("componentImpacts", () => {
     });
   });
 
+  test("membership replacement prunes impact rows for removed components", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-impact-prune`,
+          status: "investigating",
+          message: "initial",
+          date: new Date(Date.now() - 60_000),
+          pageId: testPageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: testPageComponentId, impact: "major_outage" },
+            {
+              pageComponentId: testPageComponentId2,
+              impact: "degraded_performance",
+            },
+          ],
+        },
+      });
+
+      await updateStatusReport({
+        ctx,
+        input: { id: report.id, pageComponentIds: [testPageComponentId] },
+      });
+
+      const rows = await impactRowsForUpdate(tx, initialUpdate.id);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].pageComponentId).toBe(testPageComponentId);
+
+      // the fold must not resurrect the removed component
+      const current = await getCurrentImpactsForReport(tx, report.id);
+      expect(current.has(testPageComponentId2)).toBe(false);
+      expect(current.get(testPageComponentId)).toBe("major_outage");
+    });
+  });
+
+  test("clearing membership prunes all impact rows (report reads legacy)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { statusReport: report, initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-impact-prune-all`,
+          status: "investigating",
+          message: "initial",
+          date: new Date(Date.now() - 60_000),
+          pageId: testPageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: testPageComponentId, impact: "partial_outage" },
+          ],
+        },
+      });
+
+      await updateStatusReport({
+        ctx,
+        input: { id: report.id, pageComponentIds: [] },
+      });
+
+      expect(await impactRowsForUpdate(tx, initialUpdate.id)).toHaveLength(0);
+      expect((await getCurrentImpactsForReport(tx, report.id)).size).toBe(0);
+    });
+  });
+
   test("rejects impacts for components on a different page", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };

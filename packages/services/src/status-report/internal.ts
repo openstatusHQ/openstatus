@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from "@openstatus/db";
+import { and, asc, desc, eq, inArray, notInArray } from "@openstatus/db";
 import {
   type PageComponentImpact,
   pageComponent,
@@ -89,6 +89,41 @@ export async function updatePageComponentAssociations(args: {
       })),
     );
   }
+}
+
+/**
+ * Drop impact rows across all of a report's updates for components outside
+ * the given membership set — upholds the invariant that every impact row's
+ * component is in the report's membership (folds would resurrect them).
+ */
+export async function pruneImpactRowsOutsideMembership(args: {
+  tx: DB;
+  statusReportId: number;
+  componentIds: ReadonlyArray<number>;
+}): Promise<void> {
+  const { tx, statusReportId, componentIds } = args;
+  const reportUpdateIds = tx
+    .select({ id: statusReportUpdate.id })
+    .from(statusReportUpdate)
+    .where(eq(statusReportUpdate.statusReportId, statusReportId));
+
+  const onReportUpdates = inArray(
+    statusReportUpdateToPageComponents.statusReportUpdateId,
+    reportUpdateIds,
+  );
+
+  await tx
+    .delete(statusReportUpdateToPageComponents)
+    .where(
+      componentIds.length === 0
+        ? onReportUpdates
+        : and(
+            onReportUpdates,
+            notInArray(statusReportUpdateToPageComponents.pageComponentId, [
+              ...componentIds,
+            ]),
+          ),
+    );
 }
 
 /** Load a status report by id, scoped to the workspace. Throws on miss. */

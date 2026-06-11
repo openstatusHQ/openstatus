@@ -644,26 +644,31 @@ export function setDataByType({
     maintenances: Event[],
     date: Date,
   ): Array<{ status: "info" | "degraded" | "error"; count: number }> {
-    // bucket reports by their day-worst impact color; operational-all-day
-    // reports drop out of the highlight segments entirely
-    const reportsByDayStatus = new Map<"degraded" | "error", Event[]>();
+    // impact reports contribute per-interval slices to each color bucket, so a
+    // 1h major_outage inside a 24h report only paints 1h red; legacy reports
+    // keep their full duration in the degraded bucket; operational slices drop
+    const degradedSlices: Event[] = [];
+    const errorSlices: Event[] = [];
     for (const report of reports) {
-      const dayStatus = reportEventDayStatus(report, date);
-      if (dayStatus === "success") continue;
-      const bucket = reportsByDayStatus.get(dayStatus) ?? [];
-      bucket.push(report);
-      reportsByDayStatus.set(dayStatus, bucket);
+      if (!report.impactIntervals) {
+        degradedSlices.push(report);
+        continue;
+      }
+      for (const iv of report.impactIntervals) {
+        const color = impactToStatusType(iv.impact);
+        if (color === "success") continue;
+        const slice = { ...report, from: iv.from, to: iv.to };
+        if (!isDateWithinEvent(date, slice)) continue;
+        (color === "error" ? errorSlices : degradedSlices).push(slice);
+      }
     }
 
     const eventTypes = [
       { status: "info" as const, events: maintenances },
-      {
-        status: "degraded" as const,
-        events: reportsByDayStatus.get("degraded") ?? [],
-      },
+      { status: "degraded" as const, events: degradedSlices },
       {
         status: "error" as const,
-        events: [...incidents, ...(reportsByDayStatus.get("error") ?? [])],
+        events: [...incidents, ...errorSlices],
       },
     ];
 

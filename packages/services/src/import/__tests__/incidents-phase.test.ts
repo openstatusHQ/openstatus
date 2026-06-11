@@ -180,6 +180,119 @@ describe("writeIncidentsPhase componentImpacts", () => {
     });
   });
 
+  test("dedupes source ids collapsing onto one component (worst impact wins)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId: ctx.workspace.id,
+          title: `${TEST_PREFIX}-collapse-page`,
+          description: "",
+          slug: `${TEST_PREFIX}-collapse-page-slug`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+
+      const comp = await tx
+        .insert(pageComponent)
+        .values({
+          workspaceId: ctx.workspace.id,
+          pageId: pageRow.id,
+          name: `${TEST_PREFIX}-collapse-component`,
+          type: "static",
+        })
+        .returning()
+        .get();
+
+      // the components phase dedupes by (name, pageId): two source ids → one row
+      const componentIdMap = new Map([
+        ["src_a1", comp.id],
+        ["src_a2", comp.id],
+      ]);
+
+      const phase: PhaseResult = {
+        phase: "incidents",
+        status: "completed",
+        resources: [
+          {
+            sourceId: "inc_collapse",
+            name: `${TEST_PREFIX}-collapse-incident`,
+            status: "created",
+            data: {
+              report: {
+                title: `${TEST_PREFIX}-collapse-report`,
+                status: "investigating" as const,
+                workspaceId: ctx.workspace.id,
+                pageId: pageRow.id,
+              },
+              updates: [
+                {
+                  status: "investigating" as const,
+                  message: "m1",
+                  date: new Date("2024-01-01T00:00:00Z"),
+                  componentImpacts: [
+                    {
+                      sourceComponentId: "src_a1",
+                      impact: "degraded_performance" as const,
+                    },
+                    {
+                      sourceComponentId: "src_a2",
+                      impact: "major_outage" as const,
+                    },
+                  ],
+                },
+              ],
+              sourceComponentIds: ["src_a1", "src_a2"],
+            },
+          },
+        ],
+      };
+
+      await writeIncidentsPhase(
+        { ctx, tx, provider: "statuspage" },
+        phase,
+        pageRow.id,
+        componentIdMap,
+      );
+
+      expect(phase.resources[0].status).toBe("created");
+      expect(phase.resources[0].error).toBeUndefined();
+      const reportId = phase.resources[0].openstatusId as number;
+
+      const updates = await tx
+        .select()
+        .from(statusReportUpdate)
+        .where(eq(statusReportUpdate.statusReportId, reportId))
+        .all();
+      expect(updates).toHaveLength(1);
+
+      const impactRows = await tx
+        .select()
+        .from(statusReportUpdateToPageComponents)
+        .where(
+          eq(
+            statusReportUpdateToPageComponents.statusReportUpdateId,
+            updates[0].id,
+          ),
+        )
+        .all();
+      expect(impactRows).toHaveLength(1);
+      expect(impactRows[0].pageComponentId).toBe(comp.id);
+      expect(impactRows[0].impact).toBe("major_outage");
+
+      const membership = await tx
+        .select()
+        .from(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, reportId))
+        .all();
+      expect(membership).toHaveLength(1);
+      expect(membership[0].pageComponentId).toBe(comp.id);
+    });
+  });
+
   test("skips impact rows on rerun (report already exists)", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };

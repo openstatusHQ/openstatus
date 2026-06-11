@@ -17,6 +17,7 @@ import {
   getReportInWorkspace,
   getReportUpdateInWorkspace,
   insertUpdateComponentImpacts,
+  pruneImpactRowsOutsideMembership,
   sortComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
@@ -74,6 +75,11 @@ export async function updateStatusReport(args: {
       }
 
       await updatePageComponentAssociations({
+        tx,
+        statusReportId: report.id,
+        componentIds: validated.componentIds,
+      });
+      await pruneImpactRowsOutsideMembership({
         tx,
         statusReportId: report.id,
         componentIds: validated.componentIds,

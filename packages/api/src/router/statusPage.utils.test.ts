@@ -1502,6 +1502,33 @@ describe("componentImpacts", () => {
       ).toBe("75%");
     });
 
+    it("partial_outage intervals count fully in a multi-update timeline", () => {
+      // major 6h (6h down) -> partial 6h (6h down) -> operational 12h
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 6), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 6),
+            to: hoursAfter(day, 12),
+            impact: "partial_outage",
+          },
+          {
+            from: hoursAfter(day, 12),
+            to: hoursAfter(day, 24),
+            impact: "operational",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("50%");
+    });
+
     it("mixes legacy and impact reports in one period", () => {
       const day2 = dayStartUTC(2);
       const data = [createStatusData(2, 1), createStatusData(1, 1)];
@@ -1753,6 +1780,71 @@ describe("componentImpacts", () => {
           ]),
         ]),
       ).toBe("success");
+    });
+  });
+
+  describe("setDataByType - absolute bar impact proportions", () => {
+    const day = dayStartUTC(1);
+    const dayData = [createStatusData(1, 100)];
+
+    it("colors only the major_outage slice red, not the full report", () => {
+      // 1h major + 23h degraded: error keeps its true 1/24 share
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 1), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 1),
+            to: hoursAfter(day, 24),
+            impact: "degraded_performance",
+          },
+        ]),
+      ];
+
+      const result = setDataByType({
+        events,
+        data: dayData,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      const errorHeight = bar.find((b) => b.status === "error")?.height ?? 0;
+      const degradedHeight =
+        bar.find((b) => b.status === "degraded")?.height ?? 0;
+      expect(errorHeight).toBeCloseTo(100 / 24, 1);
+      expect(degradedHeight).toBeCloseTo(100 - 100 / 24, 1);
+      expect(errorHeight + degradedHeight).toBeCloseTo(100, 5);
+    });
+
+    it("shows uptime vs downtime when the only slice is an outage", () => {
+      // 1h major then operational: 23h green, 1h red — not a full red day
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 1), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 1),
+            to: hoursAfter(day, 24),
+            impact: "operational",
+          },
+        ]),
+      ];
+
+      const result = setDataByType({
+        events,
+        data: dayData,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      expect(bar.find((b) => b.status === "success")?.height).toBeCloseTo(
+        100 - 100 / 24,
+        1,
+      );
+      expect(bar.find((b) => b.status === "error")?.height).toBeCloseTo(
+        100 / 24,
+        1,
+      );
     });
   });
 

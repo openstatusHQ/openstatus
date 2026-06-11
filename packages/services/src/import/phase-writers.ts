@@ -12,7 +12,9 @@ import {
   statusReportUpdate,
   statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
+  worstImpact,
 } from "@openstatus/db/src/schema";
+import type { PageComponentImpact } from "@openstatus/db/src/schema";
 import type { PhaseResult, UpdateComponentImpact } from "@openstatus/importers";
 
 import { emitAudit } from "../audit";
@@ -438,19 +440,17 @@ export async function writeIncidentsPhase(
           (u.componentImpacts ?? []).map((ci) => ci.sourceComponentId),
         ),
       ]);
-      const componentLinks: Array<{
-        statusReportId: number;
-        pageComponentId: number;
-      }> = [];
+      // distinct source ids can collapse onto one internal component (the
+      // components phase dedupes by name+page) — dedupe to respect the PK
+      const memberComponentIds = new Set<number>();
       for (const sourceCompId of memberSourceIds) {
         const osCompId = componentIdMap.get(sourceCompId);
-        if (osCompId) {
-          componentLinks.push({
-            statusReportId: insertedReport.id,
-            pageComponentId: osCompId,
-          });
-        }
+        if (osCompId) memberComponentIds.add(osCompId);
       }
+      const componentLinks = [...memberComponentIds].map((pageComponentId) => ({
+        statusReportId: insertedReport.id,
+        pageComponentId,
+      }));
 
       await emitAudit(tx, ctx, {
         action: "status_report.create",
@@ -485,19 +485,25 @@ export async function writeIncidentsPhase(
           .get();
 
         // ids missing from `componentIdMap` get no impact row — same
-        // partial-map caveat as the membership links
-        const impactRows = (u.componentImpacts ?? []).flatMap((ci) => {
+        // partial-map caveat as the membership links. Collapsed source ids
+        // (same internal component) keep the worst impact.
+        const impactByComponent = new Map<number, PageComponentImpact>();
+        for (const ci of u.componentImpacts ?? []) {
           const osCompId = componentIdMap.get(ci.sourceComponentId);
-          return osCompId
-            ? [
-                {
-                  statusReportUpdateId: row.id,
-                  pageComponentId: osCompId,
-                  impact: ci.impact,
-                },
-              ]
-            : [];
-        });
+          if (!osCompId) continue;
+          const prev = impactByComponent.get(osCompId);
+          impactByComponent.set(
+            osCompId,
+            prev ? worstImpact([prev, ci.impact]) : ci.impact,
+          );
+        }
+        const impactRows = [...impactByComponent].map(
+          ([pageComponentId, impact]) => ({
+            statusReportUpdateId: row.id,
+            pageComponentId,
+            impact,
+          }),
+        );
         if (impactRows.length > 0) {
           await tx
             .insert(statusReportUpdateToPageComponents)
