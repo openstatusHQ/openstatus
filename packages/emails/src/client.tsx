@@ -65,7 +65,8 @@ export class EmailClient {
   }):Promise<void>{
       const html = await render(opts.react);
       if(this.type === "smtp"){
-        await this.smtpTransporter?.sendMail({
+        // smtpTransporter is guaranteed to be set when this.type === "smtp"
+        await this.smtpTransporter!.sendMail({
           from: env.SMTP_FROM || opts.from,
           to: opts.to.join(", "),
           subject: opts.subject,
@@ -74,7 +75,8 @@ export class EmailClient {
         });
       }
       else{
-        await this.resendClient?.emails.send({
+        // resendClient is guaranteed to be set when this.type === "resend"
+        await this.resendClient!.emails.send({
           from: opts.from,
           to: opts.to,
           subject: opts.subject,
@@ -92,8 +94,9 @@ export class EmailClient {
     reply_to?: string;
   }[]):Promise<void>{
       if(this.type === "smtp"){
+        // smtpTransporter is guaranteed to be set when this.type === "smtp"
         const sendEmailPromises = opts.map(async (email) => {
-          return this.smtpTransporter?.sendMail({
+          return this.smtpTransporter!.sendMail({
             from: env.SMTP_FROM || email.from,
             to: email.to,
             subject: email.subject,
@@ -106,7 +109,8 @@ export class EmailClient {
       else{
         const chunks = chunk(opts, 100); // Resend batch limit
         for(const batch of chunks){
-          await this.resendClient?.batch.send(batch)
+          // resendClient is guaranteed to be set when this.type === "resend"
+          await this.resendClient!.batch.send(batch)
       }
     }
   }
