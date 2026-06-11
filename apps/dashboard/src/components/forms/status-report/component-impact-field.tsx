@@ -25,12 +25,14 @@ export function ComponentImpactList({
   value,
   onValueChange,
   allowUnset = false,
+  placeholder = "No change",
 }: {
   components: { id: number; name: string }[];
   value: ComponentImpactValue[];
   onValueChange: (value: ComponentImpactValue[]) => void;
-  /** Components without an entry show "No change" instead of defaulting to operational. */
+  /** Components without an entry show the placeholder instead of defaulting to operational. */
   allowUnset?: boolean;
+  placeholder?: string;
 }) {
   function impactFor(id: number): PageComponentImpact | undefined {
     const found = value.find((v) => v.pageComponentId === id)?.impact;
@@ -68,7 +70,7 @@ export function ComponentImpactList({
                   "w-[180px] font-mono",
                 )}
               >
-                <SelectValue placeholder="No change" />
+                <SelectValue placeholder={placeholder} />
               </SelectTrigger>
               <SelectContent>
                 {pageComponentImpact.map((option) => (

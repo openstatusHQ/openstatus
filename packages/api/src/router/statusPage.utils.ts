@@ -9,6 +9,7 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 import {
+  LEGACY_IMPACT_WEIGHT,
   currentImpactsFromUpdates,
   impactToStatusType,
   impactUptimeWeight,
@@ -424,18 +425,13 @@ export function getEvents({
 // Keep the old function name for backward compatibility
 export const getEventsByMonitorId = getEvents;
 
-export function getWorstVariant(
-  statuses: (keyof typeof STATUS_PRIORITY)[],
-): keyof typeof STATUS_PRIORITY {
-  if (statuses.length === 0) return "success";
-
-  return statuses.reduce(
-    (worst, current) => {
-      return STATUS_PRIORITY[current] > STATUS_PRIORITY[worst]
-        ? current
-        : worst;
-    },
-    "success" as keyof typeof STATUS_PRIORITY,
+export function getWorstVariant<T extends keyof typeof STATUS_PRIORITY>(
+  statuses: T[],
+): T | "success" {
+  return statuses.reduce<T | "success">(
+    (worst, current) =>
+      STATUS_PRIORITY[current] > STATUS_PRIORITY[worst] ? current : worst,
+    "success",
   );
 }
 
@@ -883,10 +879,7 @@ export function setDataByType({
     // worst impact color across the day's reports; "success" (operational all
     // day) means reports don't color the day
     const reportsDayStatus = reports.length
-      ? (getWorstVariant(reports.map((e) => reportEventDayStatus(e, date))) as
-          | "success"
-          | "degraded"
-          | "error")
+      ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, date)))
       : undefined;
     const activeReportsDayStatus =
       reportsDayStatus === "success" ? undefined : reportsDayStatus;
@@ -1123,7 +1116,8 @@ export function getUptime({
       .filter((e) => e.type === "report")
       .reduce((acc, item) => {
         // legacy report (no impact rows): full duration counts as downtime
-        if (!item.impactIntervals) return acc + clampedDuration(item);
+        if (!item.impactIntervals)
+          return acc + LEGACY_IMPACT_WEIGHT * clampedDuration(item);
         const weighted = item.impactIntervals.reduce(
           (sum, iv) =>
             sum +

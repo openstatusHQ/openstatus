@@ -1423,7 +1423,7 @@ describe("componentImpacts", () => {
       ).toBe("0%");
     });
 
-    it("partial_outage counts full downtime (weight 1.0)", () => {
+    it("partial_outage counts half downtime (weight 0.5)", () => {
       const events = [
         createImpactEvent(1, day, hoursAfter(day, 24), [
           { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
@@ -1436,7 +1436,7 @@ describe("componentImpacts", () => {
           barType: "manual",
           cardType: "manual",
         }),
-      ).toBe("0%");
+      ).toBe("50%");
     });
 
     it("degraded_performance counts as up", () => {
@@ -1502,8 +1502,8 @@ describe("componentImpacts", () => {
       ).toBe("75%");
     });
 
-    it("partial_outage intervals count fully in a multi-update timeline", () => {
-      // major 6h (6h down) -> partial 6h (6h down) -> operational 12h
+    it("partial_outage intervals count half in a multi-update timeline", () => {
+      // major 6h (6h down) -> partial 6h (3h down) -> operational 12h
       const events = [
         createImpactEvent(1, day, hoursAfter(day, 24), [
           { from: day, to: hoursAfter(day, 6), impact: "major_outage" },
@@ -1526,7 +1526,7 @@ describe("componentImpacts", () => {
           barType: "manual",
           cardType: "manual",
         }),
-      ).toBe("50%");
+      ).toBe("62.5%");
     });
 
     it("mixes legacy and impact reports in one period", () => {

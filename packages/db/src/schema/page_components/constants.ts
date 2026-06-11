@@ -16,10 +16,11 @@ export type PageComponentImpact = (typeof pageComponentImpact)[number];
 export const LEGACY_IMPACT_WEIGHT = 1;
 
 // fraction of an interval counted as downtime in manual-mode uptime.
-// partial_outage deliberately counts full downtime (supersedes the spec's
-// 0.5 draft); degraded_performance is 0: slow but available ≠ downtime.
+// partial_outage counts half — some users affected, not all;
+// degraded_performance is 0: slow but available ≠ downtime.
 export function impactUptimeWeight(impact: PageComponentImpact): number {
-  if (impact === "major_outage" || impact === "partial_outage") return 1;
+  if (impact === "major_outage") return 1;
+  if (impact === "partial_outage") return 0.5;
   return 0;
 }
 
