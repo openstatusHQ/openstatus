@@ -1,5 +1,11 @@
 "use client";
 
+import { cn } from "@openstatus/ui/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+
 import {
   StatusBlankContainer,
   StatusBlankContent,
@@ -7,11 +13,6 @@ import {
   StatusBlankTitle,
 } from "@/components/status-page/status-blank";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useMutation } from "@tanstack/react-query";
-import { useExtracted } from "next-intl";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
 
 export default function VerifyPage() {
   const t = useExtracted();
@@ -21,7 +22,6 @@ export default function VerifyPage() {
     trpc.statusPage.verifyEmail.mutationOptions({}),
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     verifyEmailMutation.mutate({ slug: domain, token });
   }, [domain, token]);

@@ -1,5 +1,6 @@
 import { whatsappDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+
 import { env } from "./env";
 
 const TEMPLATES = {

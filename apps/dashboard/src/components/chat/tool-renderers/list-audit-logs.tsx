@@ -47,13 +47,13 @@ export function listAuditLogsTable(
         entity: (
           <TableCellText
             value={`${item.entityType}#${item.entityId}`}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         actor: (
           <TableCellText
             value={item.actor}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         createdAt: (

@@ -1,4 +1,5 @@
 import type { Page } from "@openstatus/db/src/schema";
+
 import { buildExternalPath } from "./build-external-path";
 import { isIpAllowed } from "./is-ip-allowed";
 import type { Action, ComposeInput } from "./types";

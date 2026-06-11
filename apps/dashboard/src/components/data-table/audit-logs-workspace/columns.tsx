@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
 import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons";
 import {
@@ -11,6 +10,9 @@ import {
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { KeyIcon, MailIcon, ServerIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
 import { TableCellDate } from "../table-cell-date";
 
 type AuditLog = RouterOutputs["auditLog"]["list"]["items"][number];
@@ -52,8 +54,8 @@ export const columns: ColumnDef<AuditLog>[] = [
         if (type === "apiKey") {
           return (
             <div className="flex items-center gap-2">
-              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
-                <KeyIcon className="size-4 text-muted-foreground" />
+              <div className="bg-muted-foreground/10 flex size-6 items-center justify-center rounded-md">
+                <KeyIcon className="text-muted-foreground size-4" />
               </div>
               <span className="text-muted-foreground">API Key</span>
             </div>
@@ -62,8 +64,8 @@ export const columns: ColumnDef<AuditLog>[] = [
         if (type === "slack") {
           return (
             <div className="flex items-center gap-2">
-              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
-                <SlackIcon className="size-4 text-muted-foreground" />
+              <div className="bg-muted-foreground/10 flex size-6 items-center justify-center rounded-md">
+                <SlackIcon className="text-muted-foreground size-4" />
               </div>
               <span className="text-muted-foreground">Slack</span>
             </div>
@@ -72,8 +74,8 @@ export const columns: ColumnDef<AuditLog>[] = [
         if (type === "mcp") {
           return (
             <div className="flex items-center gap-2">
-              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
-                <ModelContextProtocolIcon className="size-4 text-muted-foreground" />
+              <div className="bg-muted-foreground/10 flex size-6 items-center justify-center rounded-md">
+                <ModelContextProtocolIcon className="text-muted-foreground size-4" />
               </div>
               <span className="text-muted-foreground">MCP Server</span>
             </div>
@@ -82,8 +84,8 @@ export const columns: ColumnDef<AuditLog>[] = [
         if (type === "system") {
           return (
             <div className="flex items-center gap-2">
-              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
-                <ServerIcon className="size-4 text-muted-foreground" />
+              <div className="bg-muted-foreground/10 flex size-6 items-center justify-center rounded-md">
+                <ServerIcon className="text-muted-foreground size-4" />
               </div>
               <span className="text-muted-foreground">System</span>
             </div>
@@ -92,8 +94,8 @@ export const columns: ColumnDef<AuditLog>[] = [
         if (type === "subscriber") {
           return (
             <div className="flex items-center gap-2">
-              <div className="flex size-6 items-center justify-center rounded-md bg-muted-foreground/10">
-                <MailIcon className="size-4 text-muted-foreground" />
+              <div className="bg-muted-foreground/10 flex size-6 items-center justify-center rounded-md">
+                <MailIcon className="text-muted-foreground size-4" />
               </div>
               <span className="text-muted-foreground">Subscriber</span>
             </div>
@@ -117,7 +119,7 @@ export const columns: ColumnDef<AuditLog>[] = [
               {user?.name?.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
-          <span className="truncate font-commit-mono text-xs tracking-tight">
+          <span className="font-commit-mono truncate text-xs tracking-tight">
             {user.name ?? user.email ?? "—"}
           </span>
         </div>

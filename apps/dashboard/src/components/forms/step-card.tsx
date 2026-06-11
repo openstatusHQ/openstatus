@@ -1,3 +1,4 @@
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -5,8 +6,6 @@ import {
   CardTitle,
 } from "@openstatus/ui/components/ui/card";
 import { cn } from "@openstatus/ui/lib/utils";
-
-import { Badge } from "@openstatus/ui/components/ui/badge";
 import { type VariantProps, cva } from "class-variance-authority";
 import { Check } from "lucide-react";
 
@@ -15,7 +14,7 @@ export type StepCardVariant = NonNullable<
 >;
 
 const stepCardVariants = cva(
-  "group relative w-full overflow-hidden py-0 gap-0 shadow-none",
+  "group relative w-full gap-0 overflow-hidden py-0 shadow-none",
   {
     variants: {
       variant: {
@@ -74,10 +73,10 @@ export function StepCardIndicator({
       role="img"
       aria-label={`Step ${step}`}
       className={cn(
-        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-medium text-xs",
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
         "group-data-[variant=completed]:bg-success group-data-[variant=completed]:text-white",
-        "group-data-[variant=active]:border group-data-[variant=active]:border-foreground group-data-[variant=active]:bg-background group-data-[variant=active]:text-foreground",
-        "group-data-[variant=upcoming]:border group-data-[variant=upcoming]:border-border group-data-[variant=upcoming]:bg-muted group-data-[variant=upcoming]:text-muted-foreground",
+        "group-data-[variant=active]:border-foreground group-data-[variant=active]:bg-background group-data-[variant=active]:text-foreground group-data-[variant=active]:border",
+        "group-data-[variant=upcoming]:border-border group-data-[variant=upcoming]:bg-muted group-data-[variant=upcoming]:text-muted-foreground group-data-[variant=upcoming]:border",
         className,
       )}
       {...props}
@@ -149,7 +148,7 @@ export function StepCardContent({
       className={cn(
         "px-4 pb-4",
         "group-data-[variant=completed]:hidden",
-        "group-data-[variant=upcoming]:select-none group-data-[variant=upcoming]:opacity-50",
+        "group-data-[variant=upcoming]:opacity-50 group-data-[variant=upcoming]:select-none",
         className,
       )}
       {...props}

@@ -1,7 +1,8 @@
 "use client";
 
-import { NavTabs } from "@/components/nav/nav-tabs";
 import { Blocks, Cog, CreditCard, Globe, ScanEye, User } from "lucide-react";
+
+import { NavTabs } from "@/components/nav/nav-tabs";
 
 export function Tabs() {
   return (

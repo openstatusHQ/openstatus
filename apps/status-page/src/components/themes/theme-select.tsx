@@ -1,8 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
-import type * as React from "react";
-
 import {
   Select,
   SelectContent,
@@ -13,6 +10,8 @@ import {
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Laptop, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import type * as React from "react";
 import { useState } from "react";
 import { useEffect } from "react";
 
@@ -30,7 +29,7 @@ export function ThemeSelect({
   if (!mounted) {
     return (
       <Skeleton
-        className={cn("h-9 rounded-md border border-border", className)}
+        className={cn("border-border h-9 rounded-md border", className)}
       />
     );
   }

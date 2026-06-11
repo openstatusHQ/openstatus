@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+
+import type { Scope } from "@openstatus/db/src/schema";
 import { Hono } from "hono";
 
 import type { Variables } from "@/types";
-import type { Scope } from "@openstatus/db/src/schema";
+
 import { requireWriteScope } from "./require-scope";
 
 /**

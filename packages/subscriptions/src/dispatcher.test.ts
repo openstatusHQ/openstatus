@@ -7,12 +7,14 @@ import {
   spyOn,
   test,
 } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
+
 import { dispatchPageUpdate } from "./dispatcher";
 import type { PageUpdate } from "./types";
 

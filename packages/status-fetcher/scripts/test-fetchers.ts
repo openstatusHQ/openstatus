@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+
 import { fetchers } from "../src/fetchers";
 import type { SeverityLevel, StatusPageEntry } from "../src/types";
 

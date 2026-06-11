@@ -1,8 +1,9 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { Check, Copy } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 export function CopyRow({
   label,

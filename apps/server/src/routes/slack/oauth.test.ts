@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import crypto from "node:crypto";
+
 import { Hono } from "hono";
+
 import { handleSlackInstall, handleSlackOAuthCallback } from "./oauth";
 
 const SIGNING_SECRET =

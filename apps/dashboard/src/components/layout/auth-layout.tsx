@@ -1,11 +1,12 @@
+import { Button } from "@openstatus/ui/components/ui/button";
+import { BookOpen } from "lucide-react";
+
 import {
   SHELL_CONTENT_COLUMN,
   SHELL_FORM_COLUMN,
 } from "@/components/layout/shell-columns";
 import { Wordmark } from "@/components/layout/wordmark";
 import { cn } from "@/lib/utils";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { BookOpen } from "lucide-react";
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,7 +37,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       */}
       <main
         className={cn(
-          "container col-span-1 mx-auto flex items-center justify-center md:col-span-1",
+          "col-span-1 container mx-auto flex items-center justify-center md:col-span-1",
           SHELL_FORM_COLUMN,
         )}
       >
@@ -44,13 +45,13 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </main>
       <aside
         className={cn(
-          "col-span-1 flex w-full flex-col gap-4 border border-border bg-sidebar p-4 backdrop-blur-[2px] md:p-8",
+          "border-border bg-sidebar col-span-1 flex w-full flex-col gap-4 border p-4 backdrop-blur-[2px] md:p-8",
           SHELL_CONTENT_COLUMN,
         )}
       >
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 text-center md:text-left">
           <div className="mx-auto grid gap-3">
-            <h1 className="font-cal text-3xl text-foreground">
+            <h1 className="font-cal text-foreground text-3xl">
               Your status page, live in minutes.
             </h1>
             <p className="font-commit-mono text-muted-foreground">

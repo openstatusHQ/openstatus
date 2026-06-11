@@ -42,20 +42,20 @@ export function ResultTable<K extends string>({
 }: ResultTableData<K>) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-md border bg-background p-3 text-muted-foreground text-sm">
+      <div className="bg-background text-muted-foreground rounded-md border p-3 text-sm">
         {empty}
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-md border bg-background">
+    <div className="bg-background overflow-hidden rounded-md border">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
             {columns.map((col) => (
               <TableHead
                 key={col.key}
-                className="font-mono text-muted-foreground"
+                className="text-muted-foreground font-mono"
               >
                 {col.header}
               </TableHead>

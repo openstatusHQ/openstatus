@@ -5,7 +5,6 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-
 import type { AdapterAccountType } from "next-auth/adapters";
 
 export const viewer = sqliteTable("viewer", {

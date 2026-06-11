@@ -5,6 +5,7 @@ import {
   TextBodyAssertion,
 } from "@openstatus/assertions";
 import type { z } from "zod";
+
 import type { assertion, assertionsSchema } from "./schema";
 
 export const getAssertions = (

@@ -1,8 +1,5 @@
 "use client";
 
-import { getColumns } from "@/components/data-table/response-logs/columns";
-import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
-import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -21,6 +18,10 @@ import {
 } from "@tanstack/react-table";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useState } from "react";
+
+import { getColumns } from "@/components/data-table/response-logs/columns";
+import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
+import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 
 // Use the wider `get`-shape so the row also satisfies the Sheet's input.
 // The column defs are typed against `list` shape, but every list field
@@ -61,20 +62,20 @@ export function OnboardingChecksTable({
   });
 
   const selected =
-    selectedId == null ? null : rows.find((r) => r.id === selectedId) ?? null;
+    selectedId == null ? null : (rows.find((r) => r.id === selectedId) ?? null);
 
   if (allFailed) {
     return (
       <div
         className={cn(
-          "flex flex-col items-center gap-3 rounded-md border border-border bg-muted/30 p-6 text-center",
+          "border-border bg-muted/30 flex flex-col items-center gap-3 rounded-md border p-6 text-center",
           className,
         )}
         {...props}
       >
-        <AlertTriangle className="size-5 text-destructive" />
+        <AlertTriangle className="text-destructive size-5" />
         <div className="space-y-1">
-          <p className="font-medium text-foreground text-sm">
+          <p className="text-foreground text-sm font-medium">
             Couldn&apos;t reach {url ? <code>{url}</code> : "your URL"}
           </p>
           <p className="text-muted-foreground text-xs">
@@ -94,7 +95,7 @@ export function OnboardingChecksTable({
     return (
       <div
         className={cn(
-          "overflow-auto rounded-md border border-border bg-background md:min-h-0 md:flex-1",
+          "border-border bg-background overflow-auto rounded-md border md:min-h-0 md:flex-1",
           className,
         )}
         {...props}
@@ -108,13 +109,13 @@ export function OnboardingChecksTable({
     <>
       <div
         className={cn(
-          "overflow-auto rounded-md border border-border bg-background md:min-h-0 md:flex-1",
+          "border-border bg-background overflow-auto rounded-md border md:min-h-0 md:flex-1",
           className,
         )}
         {...props}
       >
         <table className="w-full caption-bottom text-sm">
-          <TableHeader className="sticky top-0 z-10 bg-muted">
+          <TableHeader className="bg-muted sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => (
@@ -157,7 +158,7 @@ export function OnboardingChecksTable({
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={table.getVisibleLeafColumns().length}
-                  className="text-center text-muted-foreground text-xs"
+                  className="text-muted-foreground text-center text-xs"
                 >
                   Streaming results from {totalRegions - rows.length} more
                   region{totalRegions - rows.length === 1 ? "" : "s"}…

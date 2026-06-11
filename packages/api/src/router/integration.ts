@@ -1,5 +1,6 @@
-// biome-ignore lint/style/useNodejsImportProtocol: some error with build
+// oxlint-disable-next-line unicorn/prefer-node-protocol -- some error with build
 import crypto from "crypto";
+
 import {
   deleteIntegration,
   listIntegrations,

@@ -1,14 +1,15 @@
 import { Link } from "@/content/link";
 import { ThemeToggle } from "@/content/theme-toggle";
+
 import { FooterStatus } from "./footer-status";
 
 export function DocsFooter() {
   return (
     <footer className="font-mono">
-      <div className="grid gap-px border border-border bg-border sm:grid-cols-2 md:grid-cols-3 [&>*]:bg-background">
+      <div className="border-border bg-border [&>*]:bg-background grid gap-px border sm:grid-cols-2 md:grid-cols-3">
         <Link
           href="/cal"
-          className="flex w-full items-center gap-2 p-4 hover:bg-muted"
+          className="hover:bg-muted flex w-full items-center gap-2 p-4"
         >
           Talk to the founders
         </Link>

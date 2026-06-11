@@ -2,6 +2,7 @@
   "name": "@openstatus/db",
   "version": "0.0.1",
   "description": "",
+  "author": "OpenStatus",
   "main": "src/index.ts",
   "scripts": {
     "generate": "drizzle-kit generate",
@@ -32,6 +33,5 @@
     "drizzle-kit": "catalog:",
     "next-auth": "catalog:",
     "typescript": "catalog:"
-  },
-  "author": "OpenStatus"
+  }
 }

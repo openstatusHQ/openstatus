@@ -1,5 +1,6 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import type { NotificationService } from "@openstatus/proto/notification/v1";
+import { ForbiddenError } from "@openstatus/services";
 import {
   createNotification,
   deleteNotification,
@@ -7,8 +8,6 @@ import {
   listNotifications,
   updateNotification,
 } from "@openstatus/services/notification";
-
-import { ForbiddenError } from "@openstatus/services";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";

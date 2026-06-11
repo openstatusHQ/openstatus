@@ -157,8 +157,9 @@ async function enrichPageComponentsBatch(
 
   return rows.map((r) => ({
     ...selectPageComponentSchema.parse(r),
-    monitor: r.monitorId != null ? monitorById.get(r.monitorId) ?? null : null,
-    group: r.groupId != null ? groupById.get(r.groupId) ?? null : null,
+    monitor:
+      r.monitorId != null ? (monitorById.get(r.monitorId) ?? null) : null,
+    group: r.groupId != null ? (groupById.get(r.groupId) ?? null) : null,
     statusReports: statusReportsByComponent.get(r.id) ?? [],
     maintenances: maintenancesByComponent.get(r.id) ?? [],
   }));

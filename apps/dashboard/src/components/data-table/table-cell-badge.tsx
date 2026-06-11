@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Tooltip,
@@ -7,6 +6,8 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { useEffect, useRef, useState } from "react";
+
+import { cn } from "@/lib/utils";
 
 export function TableCellBadge({
   value,
@@ -17,7 +18,6 @@ export function TableCellBadge({
   const [isTruncated, setIsTruncated] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);

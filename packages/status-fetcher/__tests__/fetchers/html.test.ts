@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+
 import { HtmlScraperFetcher } from "../../src/fetchers/html";
 import type { StatusPageEntry } from "../../src/types";
 import {

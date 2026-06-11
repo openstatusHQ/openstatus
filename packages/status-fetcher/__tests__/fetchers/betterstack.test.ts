@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";
 import type { StatusPageEntry } from "../../src/types";
 import {

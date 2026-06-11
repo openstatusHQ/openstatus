@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  FormSubscribeEmail,
-  type FormValues,
-} from "@/components/forms/form-subscribe-email";
-import { getBaseUrl } from "@/lib/base-url";
 import type { RouterOutputs } from "@openstatus/api";
 import {
   StatusUpdates as BlockStatusUpdates,
@@ -28,6 +23,12 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useState } from "react";
+
+import {
+  FormSubscribeEmail,
+  type FormValues,
+} from "@/components/forms/form-subscribe-email";
+import { getBaseUrl } from "@/lib/base-url";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
@@ -142,7 +143,7 @@ function SuccessMessage() {
     <div className="flex flex-col items-center justify-center gap-1 p-3">
       <Inbox className="size-4 shrink-0" />
       <p className="text-center font-medium">{t("Check your inbox!")}</p>
-      <p className="text-center text-muted-foreground text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         {t("Validate your email to receive updates and you are all set.")}
       </p>
     </div>

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import type { Incident, Monitor } from "@openstatus/db/src/schema";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 type FetchMock = ReturnType<typeof spyOn<typeof globalThis, "fetch">>;

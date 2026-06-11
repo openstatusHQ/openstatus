@@ -1,12 +1,5 @@
 "use client";
 
-import { ProcessMessage } from "@/components/content/process-message";
-import { TableCellDate } from "@/components/data-table/table-cell-date";
-import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
-import { icons } from "@/data/icons";
-import { colors, getNextStatus } from "@/data/status-report-updates.client";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -26,6 +19,15 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
+
+import { ProcessMessage } from "@/components/content/process-message";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { icons } from "@/data/icons";
+import { colors, getNextStatus } from "@/data/status-report-updates.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReportUpdates =
@@ -123,11 +125,11 @@ export function DataTable({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="prose dark:prose-invert prose-sm line-clamp-3 text-wrap text-muted-foreground">
+                <div className="prose dark:prose-invert prose-sm text-muted-foreground line-clamp-3 text-wrap">
                   <ProcessMessage value={update.message} />
                 </div>
               </TableCell>
-              <TableCell className="w-[170px] text-muted-foreground">
+              <TableCell className="text-muted-foreground w-[170px]">
                 <TableCellDate value={update.date} />
               </TableCell>
               <TableCell className="w-8">

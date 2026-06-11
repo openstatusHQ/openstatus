@@ -1,10 +1,5 @@
 "use client";
 
-import type { Row } from "@tanstack/react-table";
-
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/incidents.client";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import {
   AlertDialog,
@@ -17,9 +12,14 @@ import {
   AlertDialogTitle,
 } from "@openstatus/ui/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Row } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/incidents.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Incident = RouterOutputs["incident"]["list"][number];
 

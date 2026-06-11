@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,
@@ -34,8 +37,6 @@ import {
   getJsonLDOrganization,
   getJsonLDTechArticle,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -200,12 +201,12 @@ export default async function DocsPage({
           <CustomMDX source={doc.content} />
         </article>
         <div className="space-y-4">
-          <div className="flex flex-row flex-wrap justify-between gap-x-4 gap-y-2 text-muted-foreground text-sm">
+          <div className="text-muted-foreground flex flex-row flex-wrap justify-between gap-x-4 gap-y-2 text-sm">
             <a
               href={`${EDIT_BASE}/${joined}.mdx`}
               target="_blank"
               rel="noopener noreferrer"
-              className="ease transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+              className="ease hover:text-foreground transition-colors duration-150 motion-reduce:transition-none"
             >
               Edit this page on GitHub
             </a>

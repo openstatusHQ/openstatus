@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { signOut } from "next-auth/react";
+
 import { Link } from "@/components/common/link";
 import {
   Section,
@@ -22,11 +28,6 @@ import {
 } from "@/components/forms/form-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Input } from "@openstatus/ui/components/ui/input";
-import { Label } from "@openstatus/ui/components/ui/label";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { signOut } from "next-auth/react";
 
 export default function Page() {
   const trpc = useTRPC();

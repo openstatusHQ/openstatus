@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getGuides } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
@@ -11,9 +15,7 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
+
 import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 
@@ -81,7 +83,7 @@ export default async function Guide({
       <h1>{post.metadata.title}</h1>
       <ContentMetadata data={post} />
       {post.metadata.image ? (
-        <div className="relative aspect-video w-full overflow-hidden border border-border">
+        <div className="border-border relative aspect-video w-full overflow-hidden border">
           <Image
             src={post.metadata.image}
             alt={post.metadata.title}

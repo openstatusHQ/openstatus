@@ -1,10 +1,12 @@
 import { beforeEach, expect, test } from "bun:test";
-import { app } from "@/index";
+
 import { db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
+
+import { app } from "@/index";
+
 import { MaintenanceSchema } from "./schema";
 
-// biome-ignore lint/suspicious/noExplicitAny: test utility
 const spies = (globalThis as any).__subscriptionSpies as {
   dispatchMaintenanceUpdate: {
     mockClear: () => void;

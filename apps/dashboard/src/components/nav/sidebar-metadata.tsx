@@ -1,9 +1,3 @@
-import type { LucideIcon } from "lucide-react";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
-import Link from "next/link";
-import * as React from "react";
-
-import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -34,6 +28,12 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import type { LucideIcon } from "lucide-react";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 
 export type SidebarMetadataItem = {
   label: string;
@@ -97,7 +97,7 @@ export function SidebarMetadata(props: SidebarMetadataProps) {
       <Collapsible defaultOpen className="group/collapsible border-b">
         <SidebarGroupLabel
           asChild
-          className="group/label h-9 w-full rounded-none text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 w-full rounded-none text-sm"
         >
           <CollapsibleTrigger>
             {label}{" "}
@@ -125,7 +125,7 @@ export function SidebarMetadata(props: SidebarMetadataProps) {
 }
 
 function SidebarMetadataEmpty({ message }: { message: string }) {
-  return <p className="px-2 py-2 text-muted-foreground text-sm">{message}</p>;
+  return <p className="text-muted-foreground px-2 py-2 text-sm">{message}</p>;
 }
 
 function SidebarMetadataTable({
@@ -154,8 +154,8 @@ function SidebarMetadataTable({
       <TableBody>
         {items.map((item, index) => (
           <TableRow key={`${item.label}-${index}`}>
-            <TableCell className="w-26 border-r text-muted-foreground">
-              <div className="min-w-[90px] max-w-[90px] truncate">
+            <TableCell className="text-muted-foreground w-26 border-r">
+              <div className="max-w-[90px] min-w-[90px] truncate">
                 {item.isNested ? "└ " : ""}
                 {item.label}
               </div>
@@ -189,7 +189,7 @@ function SidebarMetadataList({
               {item.icon ? <item.icon className="size-3.5 shrink-0" /> : null}
               <span className="flex-1 truncate">{item.label}</span>
               {item.meta != null ? (
-                <span className="ml-auto shrink-0 font-mono text-muted-foreground text-xs">
+                <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs">
                   {item.meta}
                 </span>
               ) : null}
@@ -229,7 +229,7 @@ function SidebarMetadataList({
                     // `peer-data-[size=...]/menu-button` variant tuned for
                     // the shorter button sizes; we use a taller `h-9` row,
                     // so override the variant directly and re-anchor at 50%.
-                    className="before:-left-6 -translate-y-1/2 bg-sidebar-accent before:absolute before:inset-y-0 before:right-full before:bg-gradient-to-l before:from-sidebar-accent before:to-transparent focus-visible:ring-inset peer-data-[size=default]/menu-button:top-1/2"
+                    className="bg-sidebar-accent before:from-sidebar-accent -translate-y-1/2 peer-data-[size=default]/menu-button:top-1/2 before:absolute before:inset-y-0 before:right-full before:-left-6 before:bg-gradient-to-l before:to-transparent focus-visible:ring-inset"
                   >
                     <MoreHorizontal />
                     <span className="sr-only">More</span>
@@ -253,7 +253,6 @@ function SidebarMetadataTableCell({
   const { copy, isCopied } = useCopyToClipboard();
   const [open, setOpen] = React.useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   React.useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);

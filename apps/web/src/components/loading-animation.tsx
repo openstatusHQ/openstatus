@@ -4,7 +4,7 @@ import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const loadingVariants = cva(
-  "animate-pulse rounded-full direction-alternate duration-700",
+  "direction-alternate animate-pulse rounded-full duration-700",
   {
     variants: {
       variant: {
@@ -25,8 +25,7 @@ const loadingVariants = cva(
 );
 
 interface Props
-  extends React.ComponentProps<"div">,
-    VariantProps<typeof loadingVariants> {}
+  extends React.ComponentProps<"div">, VariantProps<typeof loadingVariants> {}
 
 export function LoadingAnimation({
   className,

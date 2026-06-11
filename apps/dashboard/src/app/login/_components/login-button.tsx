@@ -30,7 +30,7 @@ export function LoginButton({
       variant="secondary"
       className={cn(
         "relative w-full",
-        isLastUsed && "border border-primary",
+        isLastUsed && "border-primary border",
         className,
       )}
       onClick={(e) => {
@@ -43,7 +43,7 @@ export function LoginButton({
       {isLastUsed ? (
         <Badge
           variant="secondary"
-          className="-top-2.5 -right-2.5 absolute border border-primary bg-background text-[10px]"
+          className="border-primary bg-background absolute -top-2.5 -right-2.5 border text-[10px]"
         >
           Last used
         </Badge>

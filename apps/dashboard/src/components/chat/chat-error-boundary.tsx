@@ -25,7 +25,7 @@ export class ChatErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div className="mx-auto max-w-3xl p-6 text-sm">
-          <div className="rounded-md border bg-destructive/10 p-4 text-destructive">
+          <div className="bg-destructive/10 text-destructive rounded-md border p-4">
             The conversation failed to render. Reload to recover.
           </div>
         </div>

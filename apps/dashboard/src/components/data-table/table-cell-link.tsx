@@ -1,6 +1,7 @@
+import { ArrowUpRight, ChevronRight } from "lucide-react";
+
 import { Link } from "@/components/common/link";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, ChevronRight } from "lucide-react";
 
 export function TableCellLink({
   value,
@@ -25,7 +26,7 @@ export function TableCellLink({
         {...props}
       >
         <span className="truncate">{value}</span>
-        <Icon className="size-4 flex-shrink-0 text-muted-foreground group-hover/link:text-foreground" />
+        <Icon className="text-muted-foreground group-hover/link:text-foreground size-4 flex-shrink-0" />
       </Link>
     );
   }

@@ -1,5 +1,10 @@
 "use client";
 
+import type { ThemeKey } from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { useState } from "react";
+
 import {
   CreatePageForm,
   type FormValues as CreatePageFormValues,
@@ -17,10 +22,7 @@ import {
   OnboardingStepper,
 } from "@/components/layout/onboarding-layout";
 import { OnboardingStatusPagePreview } from "@/components/onboarding/status-page-preview";
-import type { ThemeKey } from "@openstatus/theme-store";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+
 import type { OnboardingPage } from "../client";
 
 export function Step2({
@@ -118,10 +120,12 @@ export function Step2({
         <div className="flex h-[calc(100dvh-13rem)] flex-1 overflow-hidden md:h-auto md:min-h-0">
           <OnboardingStatusPagePreview
             slug={
-              isLocked ? createdPageData?.slug ?? "" : lockedPreviewValues.slug
+              isLocked
+                ? (createdPageData?.slug ?? "")
+                : lockedPreviewValues.slug
             }
             title={(isLocked
-              ? createdPageData?.title ?? ""
+              ? (createdPageData?.title ?? "")
               : lockedPreviewValues.slug
             ).replace(/-/g, " ")}
             components={lockedPreviewValues.components ?? []}

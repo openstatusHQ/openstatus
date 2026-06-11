@@ -1,6 +1,5 @@
 "use client";
 
-import { formatDate } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import { detectWebhookFlavor } from "@openstatus/subscriptions/client";
 import { Badge } from "@openstatus/ui/components/ui/badge";
@@ -10,6 +9,9 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
+
+import { formatDate } from "@/lib/formatter";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];

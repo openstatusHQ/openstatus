@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+
 import type {
   Incident,
   Maintenance,
@@ -6,6 +7,7 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
+
 import {
   fillStatusDataFor45Days,
   getEvents,

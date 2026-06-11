@@ -1,12 +1,5 @@
 "use client";
 
-import type {
-  HealthCheckReport,
-  StepResult,
-  ToolInfo,
-} from "@/lib/mcp/health-check";
-import { toast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
@@ -34,6 +27,15 @@ import {
   useState,
   useTransition,
 } from "react";
+
+import type {
+  HealthCheckReport,
+  StepResult,
+  ToolInfo,
+} from "@/lib/mcp/health-check";
+import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+
 import { searchParamsParsers } from "./search-params";
 import {
   STEP_REQUEST_BODIES,
@@ -325,7 +327,7 @@ export function ResultTableStatic({
             const row = (
               <tr
                 key={key}
-                className={report ? "cursor-pointer hover:bg-muted/50" : ""}
+                className={report ? "hover:bg-muted/50 cursor-pointer" : ""}
               >
                 <td>
                   <StatusDot input={report ? step : null} />
@@ -384,19 +386,19 @@ function StepDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-none! font-mono sm:max-w-5xl">
+      <DialogContent className="max-h-[90vh] overflow-x-hidden overflow-y-auto rounded-none! font-mono sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{label}</DialogTitle>
           <DialogDescription>
             JSON-RPC request and the response captured during the handshake.
           </DialogDescription>
         </DialogHeader>
-        <div className="prose dark:prose-invert min-w-0 max-w-none">
+        <div className="prose dark:prose-invert max-w-none min-w-0">
           <table>
             <tbody>
               <tr>
                 <td>Status</td>
-                <td>{step.ok ? "OK" : step.error?.code ?? "failed"}</td>
+                <td>{step.ok ? "OK" : (step.error?.code ?? "failed")}</td>
               </tr>
               <tr>
                 <td>Latency</td>
@@ -434,14 +436,14 @@ function StepDialog({
               </TabsTrigger>
             </TabsList>
             <TabsContent value="response" className="min-w-0 overflow-x-auto">
-              <pre className="my-0! whitespace-pre-wrap break-words">
+              <pre className="my-0! break-words whitespace-pre-wrap">
                 <code className="block break-words">
                   {formatResponseBody(step.rawBody) || "(no body captured)"}
                 </code>
               </pre>
             </TabsContent>
             <TabsContent value="request" className="min-w-0 overflow-x-auto">
-              <pre className="my-0! whitespace-pre-wrap break-words">
+              <pre className="my-0! break-words whitespace-pre-wrap">
                 <code className="block break-words">
                   {JSON.stringify(requestBody, null, 2)}
                 </code>
@@ -499,7 +501,7 @@ export function DetailsButtonLink() {
     >
       <Link
         href={`/play/mcp-health/${id}`}
-        className="no-underline! w-full text-background!"
+        className="text-background! w-full no-underline!"
       >
         Share this report
       </Link>
@@ -545,7 +547,7 @@ export function ToolsTableView({
             </summary>
             <p>{t.description ?? "—"}</p>
             {hints.length > 0 && (
-              <ul className=" text-muted-foreground text-sm">
+              <ul className="text-muted-foreground text-sm">
                 {hints.map((h: string) => (
                   <li key={h}>{h}</li>
                 ))}

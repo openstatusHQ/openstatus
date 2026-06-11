@@ -3,12 +3,11 @@
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 
-import { ExternalServicePill } from "./external-service-pill";
-
 import { Grid } from "@/content/mdx-components/grid";
 import { api } from "@/trpc/rq-client";
 
 import { ContentBoxLink } from "../content-box";
+import { ExternalServicePill } from "./external-service-pill";
 import { filterServices } from "./filter-services";
 import { qParser } from "./search-params";
 
@@ -22,13 +21,13 @@ export function ExternalStatusGrid() {
   return (
     <>
       <p
-        className="not-prose my-0! text-muted-foreground text-xs"
+        className="not-prose text-muted-foreground my-0! text-xs"
         role="status"
       >
         Showing {filtered.length} of {services.length} services
       </p>
       {filtered.length === 0 && hasQuery && (
-        <p className="my-0! text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           No services match &ldquo;{q}&rdquo;.
         </p>
       )}

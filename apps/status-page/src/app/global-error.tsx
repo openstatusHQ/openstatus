@@ -1,9 +1,10 @@
 "use client";
 
-import { Link } from "@/components/common/link";
 import { Button } from "@openstatus/ui/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+
+import { Link } from "@/components/common/link";
 
 export default function GlobalError({
   error,
@@ -19,12 +20,12 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body>
-        <main className="flex min-h-screen w-full flex-col space-y-6 bg-background p-4 md:p-8">
+        <main className="bg-background flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
           <div className="flex flex-1 flex-col items-center justify-center gap-8">
-            <div className="mx-auto max-w-xl border bg-card text-center">
+            <div className="bg-card mx-auto max-w-xl border text-center">
               <div className="flex flex-col gap-4 p-6 sm:p-12">
                 <div className="flex flex-col gap-1">
-                  <h2 className="font-cal text-2xl text-foreground">
+                  <h2 className="font-cal text-foreground text-2xl">
                     Application Error
                   </h2>
                   <p className="text-muted-foreground text-sm sm:text-base">

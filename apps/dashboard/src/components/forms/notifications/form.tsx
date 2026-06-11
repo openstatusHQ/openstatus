@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckboxTree } from "@/components/ui/checkbox-tree";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FormControl,
   FormDescription,
@@ -9,8 +9,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
@@ -18,6 +16,8 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { CheckboxTree } from "@/components/ui/checkbox-tree";
 
 const schema = z.object({
   name: z.string(),

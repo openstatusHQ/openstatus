@@ -1,6 +1,7 @@
-import { auth } from "@/lib/auth";
 import { asc, db, eq, schema } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
+
+import { auth } from "@/lib/auth";
 
 /**
  * Build a `ServiceContext` from a Next.js Edge Route Handler request.
@@ -50,9 +51,9 @@ export async function getServiceContextFromRequest(
   // Fall back to first workspace when the cookie is stale (slug renamed,
   // user removed) — matches `enforceUserIsAuthed` in tRPC.
   const activeWorkspace = workspaceSlugCookie
-    ? userAndWorkspace.usersToWorkspaces?.find(
+    ? (userAndWorkspace.usersToWorkspaces?.find(
         ({ workspace }) => workspace.slug === workspaceSlugCookie,
-      )?.workspace ?? userAndWorkspace.usersToWorkspaces?.[0]?.workspace
+      )?.workspace ?? userAndWorkspace.usersToWorkspaces?.[0]?.workspace)
     : userAndWorkspace.usersToWorkspaces?.[0]?.workspace;
 
   if (!activeWorkspace) return null;

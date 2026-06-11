@@ -2,6 +2,9 @@
   "name": "@openstatus/notification-base",
   "version": "0.0.1",
   "description": "Shared types and utilities for OpenStatus notification providers",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.ts",
   "scripts": {
     "test": "bun test",
@@ -16,8 +19,5 @@
     "@types/node": "catalog:",
     "bun-types": "catalog:",
     "typescript": "catalog:"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

@@ -1,14 +1,13 @@
 "use client";
 
-import { SearchIcon } from "lucide-react";
-import { useQueryState } from "nuqs";
-import { useEffect, useRef } from "react";
-
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@openstatus/ui/components/ui/input-group";
+import { SearchIcon } from "lucide-react";
+import { useQueryState } from "nuqs";
+import { useEffect, useRef } from "react";
 
 import { qParser } from "./search-params";
 
@@ -58,7 +57,7 @@ export function ServiceSearch() {
           }}
         />
         <InputGroupAddon align="inline-end">
-          <kbd className="hidden rounded-none! border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-block">
+          <kbd className="border-border bg-muted text-muted-foreground hidden rounded-none! border px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
             /
           </kbd>
         </InputGroupAddon>

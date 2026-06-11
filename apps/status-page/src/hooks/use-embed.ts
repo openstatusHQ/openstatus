@@ -1,7 +1,8 @@
 "use client";
 
-import { embedParser } from "@/lib/embed-params";
 import { useQueryState } from "nuqs";
+
+import { embedParser } from "@/lib/embed-params";
 
 export {
   ALL_EMBED_SECTIONS,

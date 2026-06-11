@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import {
   getWorkspace,
@@ -7,6 +5,7 @@ import {
   listWorkspaces,
   updateWorkspaceName,
 } from "@openstatus/services/workspace";
+import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";

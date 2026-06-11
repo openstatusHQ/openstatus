@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { getUseCasePages } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
 import {
@@ -12,7 +14,7 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+
 import { ContentList } from "../content-list";
 
 const TITLE = "Use Cases";

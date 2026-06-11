@@ -3,6 +3,7 @@
 import { Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
+
 import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";

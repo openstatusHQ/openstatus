@@ -54,7 +54,7 @@ export function StatusPagePoweredBy({
     <p
       data-slot="status-page-powered-by"
       className={cn(
-        "font-mono text-muted-foreground text-xs leading-none sm:text-sm",
+        "text-muted-foreground font-mono text-xs leading-none sm:text-sm",
         className,
       )}
       {...props}

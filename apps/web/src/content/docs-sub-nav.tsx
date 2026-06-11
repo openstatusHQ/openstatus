@@ -1,9 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
+
+import { cn } from "@/lib/utils";
+
 import { CopyDropdownButton } from "./copy-button";
 
 export function DocsSubNav({
@@ -26,7 +28,7 @@ export function DocsSubNav({
           <Fragment key={segment}>
             <Link
               href={`/${segments.slice(0, index + 1).join("/")}`}
-              className="ease transition-colors duration-150 hover:text-foreground motion-reduce:transition-none"
+              className="ease hover:text-foreground transition-colors duration-150 motion-reduce:transition-none"
             >
               {segment.split("-").join(" ")}
             </Link>

@@ -154,6 +154,6 @@ export async function getMaintenance(args: {
     workspaceId: ctx.workspace.id,
   });
   const [enriched] = await enrichMaintenancesBatch(db, [record]);
-  // biome-ignore lint/style/noNonNullAssertion: always defined for len === 1
+  // oxlint-disable-next-line typescript/no-non-null-assertion -- always defined for len === 1
   return enriched!;
 }

@@ -1,5 +1,19 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  Activity,
+  ArrowRight,
+  Bell,
+  Calendar,
+  CreditCard,
+  LayoutGrid,
+  PanelTop,
+  UserPlus,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo } from "react";
+
 import {
   OnboardingActions,
   OnboardingFormColumn,
@@ -14,19 +28,6 @@ import {
   FeatureBadgeWall,
   QuestionPanel,
 } from "@/components/onboarding/feature-badges";
-import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  Activity,
-  ArrowRight,
-  Bell,
-  Calendar,
-  CreditCard,
-  LayoutGrid,
-  PanelTop,
-  UserPlus,
-} from "lucide-react";
-import Link from "next/link";
-import { useMemo } from "react";
 
 export function Step3({
   stepperSteps,
@@ -87,7 +88,7 @@ export function Step3({
             <Link
               key={link.name}
               href={link.href}
-              className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-commit-mono text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="border-border bg-background font-commit-mono text-muted-foreground hover:bg-accent hover:text-accent-foreground flex items-center gap-2 rounded-md border px-4 py-2 text-sm transition-colors"
             >
               <link.icon className="h-4 w-4" />
               {link.name}

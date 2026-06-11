@@ -1,7 +1,5 @@
 import "server-only";
-
 import type { AppRouter } from "@openstatus/api";
-
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
 import { TRPCClientError, createTRPCClient, loggerLink } from "@trpc/client";
@@ -13,6 +11,7 @@ import {
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+
 import { makeQueryClient } from "./query-client";
 import { endingLink } from "./shared";
 
@@ -66,21 +65,21 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   );
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+// oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
 export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   queryOptions: T,
 ) {
   const queryClient = getQueryClient();
 
   if (queryOptions.queryKey[1]?.type === "infinite") {
-    // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+    // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
     void queryClient.prefetchInfiniteQuery(queryOptions as any);
   } else {
     void queryClient.prefetchQuery(queryOptions);
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+// oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
 export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   queryOptionsArray: T[],
 ) {
@@ -88,7 +87,7 @@ export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
 
   for (const queryOptions of queryOptionsArray) {
     if (queryOptions.queryKey[1]?.type === "infinite") {
-      // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+      // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
       void queryClient.prefetchInfiniteQuery(queryOptions as any);
     } else {
       void queryClient.prefetchQuery(queryOptions);

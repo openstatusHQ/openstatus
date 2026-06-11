@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
@@ -11,7 +13,6 @@ import {
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = defaultMetadata;
 

@@ -140,7 +140,7 @@ async function runAndPresent(args: {
   // honest if a future tool breaks the convention.
   const notified =
     flagId === "notify"
-      ? (output as { notified?: boolean }).notified ?? false
+      ? ((output as { notified?: boolean }).notified ?? false)
       : false;
   const text = await renderToolResult({
     tool,

@@ -1,8 +1,7 @@
 "use client";
 
-import type { ComponentProps, ElementType, ReactNode } from "react";
-
 import { cn } from "@openstatus/ui/lib/utils";
+import type { ComponentProps, ElementType, ReactNode } from "react";
 
 /**
  * CSS-only animated text shimmer — a gradient slides under a `bg-clip:text`

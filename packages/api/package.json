@@ -2,6 +2,9 @@
   "name": "@openstatus/api",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.ts",
   "scripts": {
     "test": "bun test",
@@ -15,6 +18,7 @@
     "@openstatus/error": "workspace:*",
     "@openstatus/importers": "workspace:*",
     "@openstatus/locales": "workspace:*",
+    "@openstatus/notification-bird-whatsapp": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-google-chat": "workspace:*",
     "@openstatus/notification-grafana-oncall": "workspace:*",
@@ -24,7 +28,6 @@
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-telegram": "workspace:*",
-    "@openstatus/notification-bird-whatsapp": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/services": "workspace:*",
@@ -53,8 +56,5 @@
     "@types/react-dom": "catalog:",
     "bun-types": "catalog:",
     "typescript": "catalog:"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

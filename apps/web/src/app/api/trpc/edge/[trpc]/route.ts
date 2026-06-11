@@ -1,9 +1,9 @@
+import { createTRPCContext } from "@openstatus/api";
+import { edgeRouter } from "@openstatus/api/src/edge";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
 import { createOnError, guardTRPCSource } from "@/trpc/shared";
-import { createTRPCContext } from "@openstatus/api";
-import { edgeRouter } from "@openstatus/api/src/edge";
 
 export const runtime = "edge";
 

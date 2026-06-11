@@ -21,7 +21,7 @@ export function ShowcaseYouTube({
       {entries.map((entry, i) => (
         <div
           key={`${entry.href}-${i}`}
-          className="relative aspect-video w-full overflow-hidden border border-border"
+          className="border-border relative aspect-video w-full overflow-hidden border"
         >
           <iframe
             src={toEmbedUrl(entry.href)}

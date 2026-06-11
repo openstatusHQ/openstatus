@@ -8,10 +8,7 @@ export {
   getSubscriberByToken,
 } from "./get-by-token";
 export { hasPendingSubscriber } from "./has-pending";
-export {
-  listPageSubscribers,
-  type PageSubscriberListItem,
-} from "./list";
+export { listPageSubscribers, type PageSubscriberListItem } from "./list";
 export { sendPageSubscriberTestWebhook } from "./send-test-webhook";
 export { unsubscribeSubscriber } from "./unsubscribe";
 export { updatePageSubscriberChannel } from "./update";

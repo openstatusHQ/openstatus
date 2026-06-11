@@ -5,7 +5,7 @@ export function JsonLd({ graph }: { graph: Graph }) {
     <script
       type="application/ld+json"
       suppressHydrationWarning
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
+      // oxlint-disable-next-line react/no-danger -- jsonLd
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(graph).replace(/</g, "\\u003c"),
       }}

@@ -21,7 +21,7 @@ export type ChangeRow = {
 export function ChangesTable({ changes }: { changes: ChangeRow[] }) {
   if (changes.length === 0) return null;
   return (
-    <div className="overflow-hidden rounded-md border bg-background text-sm">
+    <div className="bg-background overflow-hidden rounded-md border text-sm">
       {changes.map((change, idx) => (
         <div
           key={change.field}
@@ -30,7 +30,7 @@ export function ChangesTable({ changes }: { changes: ChangeRow[] }) {
             idx > 0 && "border-t",
           )}
         >
-          <div className="truncate border-r bg-muted/40 px-3 py-2 font-mono text-muted-foreground md:col-span-1">
+          <div className="bg-muted/40 text-muted-foreground truncate border-r px-3 py-2 font-mono md:col-span-1">
             {change.field}
           </div>
           <div className="grid truncate md:col-span-3">
@@ -60,10 +60,10 @@ function DiffLine({
       className="group flex items-start gap-2 px-3 py-2 font-mono has-[+[data-kind=added]]:pb-0"
       data-kind={kind}
     >
-      <span className="select-none text-muted-foreground group-data-[kind=added]:text-success group-data-[kind=removed]:text-destructive">
+      <span className="text-muted-foreground group-data-[kind=added]:text-success group-data-[kind=removed]:text-destructive select-none">
         {sign}
       </span>
-      <span className="whitespace-pre-wrap break-all group-data-[kind=added]:text-foreground group-data-[kind=removed]:text-muted-foreground group-data-[kind=removed]:line-through">
+      <span className="group-data-[kind=added]:text-foreground group-data-[kind=removed]:text-muted-foreground break-all whitespace-pre-wrap group-data-[kind=removed]:line-through">
         {formatValue(value)}
       </span>
     </div>

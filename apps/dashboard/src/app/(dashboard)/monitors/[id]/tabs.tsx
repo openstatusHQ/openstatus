@@ -1,7 +1,9 @@
 "use client";
 
-import { NavTabs } from "@/components/nav/nav-tabs";
 import { useParams } from "next/navigation";
+
+import { NavTabs } from "@/components/nav/nav-tabs";
+
 import { MONITOR_TABS } from "./constants";
 
 export function Tabs() {

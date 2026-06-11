@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -11,6 +12,7 @@ import {
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 
 import { app } from "@/index";
+
 import { protoStatusToDb } from "../converters";
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)

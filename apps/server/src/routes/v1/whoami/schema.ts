@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-
 import { apiKeySettableScopes } from "@openstatus/db/src/schema/api-keys/constants";
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 

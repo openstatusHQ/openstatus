@@ -1,9 +1,10 @@
-import { cn } from "@/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import type * as React from "react";
 
+import { cn } from "@/lib/utils";
+
 const kbdVariants = cva(
-  "-me-1 ms-2 inline-flex h-5 max-h-full items-center rounded border px-1 font-[inherit] font-medium text-[0.625rem]",
+  "ms-2 -me-1 inline-flex h-5 max-h-full items-center rounded border px-1 font-[inherit] text-[0.625rem] font-medium",
   {
     variants: {
       variant: {

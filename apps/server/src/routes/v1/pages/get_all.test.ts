@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { monitor, page, pageComponent } from "@openstatus/db/src/schema";
 
 import { app } from "@/index";
+
 import { PageSchema } from "./schema";
 
 const TEST_PREFIX = "v1-page-getall-test";

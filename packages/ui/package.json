@@ -36,20 +36,8 @@
   "scripts": {
     "build": "echo '@openstatus/ui has no build step (registry builds separately)'",
     "registry:build": "node scripts/transform-imports.mjs && shadcn build --cwd dist --output public/r registry.json && node scripts/copy-to-web.mjs",
-    "lint": "biome lint \"**/*.ts*\"",
+    "lint": "oxlint",
     "tsc": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "catalog:",
-    "@openstatus/tsconfig": "workspace:*",
-    "@types/luxon": "catalog:",
-    "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
-    "glob": "catalog:",
-    "shadcn": "catalog:",
-    "tailwindcss": "catalog:",
-    "typescript": "catalog:"
   },
   "dependencies": {
     "@date-fns/utc": "catalog:",
@@ -98,6 +86,17 @@
     "tailwindcss-animate": "catalog:",
     "vaul": "catalog:",
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/luxon": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "glob": "catalog:",
+    "shadcn": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
     "next-themes": "catalog:",

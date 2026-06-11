@@ -69,9 +69,9 @@ function actorScopes(ctx: ServiceContext): Scope[] {
  * RegisteredTool>` for tests / debugging).
  */
 export function registerScopedTool<
-  // biome-ignore lint/suspicious/noExplicitAny: SDK uses `any` here too
+  // oxlint-disable-next-line typescript/no-explicit-any -- SDK uses `any` here too
   InputArgs extends ZodRawShape | undefined = any,
-  // biome-ignore lint/suspicious/noExplicitAny: SDK uses `any` here too
+  // oxlint-disable-next-line typescript/no-explicit-any -- SDK uses `any` here too
   OutputArgs extends ZodRawShape | undefined = any,
 >(
   server: McpServer,
@@ -103,6 +103,6 @@ export function registerScopedTool<
   // exports the canonical config + handler types. The generic plumbing
   // around `registerTool` doesn't currently let us thread our narrowed
   // `ScopedToolDefinition` through without a cast at the boundary.
-  // biome-ignore lint/suspicious/noExplicitAny: pass-through to SDK
+  // oxlint-disable-next-line typescript/no-explicit-any -- pass-through to SDK
   return server.registerTool(name, merged as any, handler as any);
 }

@@ -13,7 +13,6 @@
 // canonical composition reshuffles, update this file by hand against the
 // reference above.
 
-import { cn } from "@/lib/utils";
 import {
   THEMES,
   type ThemeKey,
@@ -56,6 +55,8 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState } from "react";
+
+import { cn } from "@/lib/utils";
 
 // 45 days of all-green placeholder data so the bars render solid instead of
 // loading-skeleton on first paint. The user has no real history yet — this is
@@ -122,7 +123,7 @@ export function OnboardingStatusPagePreview({
 
   if (!mounted) {
     return (
-      <Skeleton className={cn("rounded-md border border-border", className)} />
+      <Skeleton className={cn("border-border rounded-md border", className)} />
     );
   }
 
@@ -132,15 +133,15 @@ export function OnboardingStatusPagePreview({
       data-status-preview
       style={themeStyle}
       className={cn(
-        "flex flex-col overflow-y-auto rounded-md border border-border bg-background text-foreground",
+        "border-border bg-background text-foreground flex flex-col overflow-y-auto rounded-md border",
         className,
       )}
     >
       <StatusPageShell className="min-h-0 shrink-0">
-        <StatusPageHeader className="w-full border-border border-b">
+        <StatusPageHeader className="border-border w-full border-b">
           <StatusPageHeaderContent>
             <StatusPageHeaderBrand>
-              <div className="flex size-8 items-center justify-center overflow-hidden rounded-md border border-border bg-background">
+              <div className="border-border bg-background flex size-8 items-center justify-center overflow-hidden rounded-md border">
                 <StatusPageHeaderBrandFallback title={displayTitle} />
               </div>
             </StatusPageHeaderBrand>

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { createInstatusClient } from "./client";
 import {
   MOCK_COMPONENTS,

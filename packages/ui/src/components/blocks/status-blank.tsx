@@ -33,7 +33,7 @@ export function StatusBlankContainer({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2.5 rounded-lg border bg-muted/30 px-3 py-2 text-center sm:px-8 sm:py-6",
+        "bg-muted/30 flex flex-col items-center justify-center gap-2.5 rounded-lg border px-3 py-2 text-center sm:px-8 sm:py-6",
         className,
       )}
       {...props}
@@ -95,7 +95,7 @@ export function StatusBlankDescription({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-mono text-muted-foreground text-sm", className)}
+      className={cn("text-muted-foreground font-mono text-sm", className)}
       {...props}
     >
       {children}
@@ -234,7 +234,7 @@ export function StatusBlankPage({
   return (
     <div
       className={cn(
-        "relative flex w-full max-w-xs flex-1 flex-col items-center justify-center gap-4 overflow-hidden rounded-lg border border-border/70 bg-background px-3 py-2 text-center",
+        "border-border/70 bg-background relative flex w-full max-w-xs flex-1 flex-col items-center justify-center gap-4 overflow-hidden rounded-lg border px-3 py-2 text-center",
         className,
       )}
       {...props}
@@ -276,13 +276,13 @@ export function StatusBlankPageHeader({
       )}
       {...props}
     >
-      <div className="size-3 rounded-sm bg-accent/60" />
+      <div className="bg-accent/60 size-3 rounded-sm" />
       <div className="flex flex-row gap-1">
-        <div className="h-3 w-8 rounded-sm bg-accent/60" />
-        <div className="h-3 w-8 rounded-sm bg-accent/60" />
-        <div className="h-3 w-8 rounded-sm bg-accent/60" />
+        <div className="bg-accent/60 h-3 w-8 rounded-sm" />
+        <div className="bg-accent/60 h-3 w-8 rounded-sm" />
+        <div className="bg-accent/60 h-3 w-8 rounded-sm" />
       </div>
-      <div className="h-3 w-8 rounded-sm bg-accent/60" />
+      <div className="bg-accent/60 h-3 w-8 rounded-sm" />
     </div>
   );
 }
@@ -319,16 +319,16 @@ export function StatusBlankMonitorUptime({
       {...props}
     >
       <div className="flex w-full flex-row gap-1">
-        <div className="h-3 w-8 rounded-sm bg-accent" />
-        <div className="h-3 w-12 rounded-sm bg-accent" />
-        <div className="h-3 w-10 rounded-sm bg-accent" />
+        <div className="bg-accent h-3 w-8 rounded-sm" />
+        <div className="bg-accent h-3 w-12 rounded-sm" />
+        <div className="bg-accent h-3 w-10 rounded-sm" />
       </div>
       <div className="flex w-full flex-row items-end gap-0.5">
         {Array.from({ length: 30 }).map((_, index) => (
           <div
             key={index}
             className={cn(
-              "h-12 flex-1 rounded-sm bg-accent",
+              "bg-accent h-12 flex-1 rounded-sm",
               [10, 20].includes(index) && "h-8",
               [25].includes(index) && "h-10",
             )}
@@ -368,15 +368,15 @@ export function StatusBlankReportUpdate({
   return (
     <div className={cn("flex w-full items-start gap-2", className)} {...props}>
       <div className="flex h-full flex-col items-center gap-0.5">
-        <div className="size-3 rounded-sm bg-accent" />
+        <div className="bg-accent size-3 rounded-sm" />
       </div>
       <div className="flex flex-1 flex-col gap-1 pb-2">
         <div className="flex items-center gap-1">
-          <div className="h-3 w-12 rounded-sm bg-accent" />
-          <div className="h-3 w-16 rounded-sm bg-accent" />
+          <div className="bg-accent h-3 w-12 rounded-sm" />
+          <div className="bg-accent h-3 w-16 rounded-sm" />
         </div>
-        <div className="h-3 w-full rounded-sm bg-accent" />
-        <div className="h-3 w-full rounded-sm bg-accent" />
+        <div className="bg-accent h-3 w-full rounded-sm" />
+        <div className="bg-accent h-3 w-full rounded-sm" />
       </div>
     </div>
   );
@@ -409,7 +409,7 @@ export function StatusBlankOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-40% from-transparent to-background p-2",
+        "to-background absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-transparent from-40% p-2",
         className,
       )}
       {...props}
@@ -462,8 +462,8 @@ export function StatusBlankEvents({
   return (
     <StatusBlankContainer {...props}>
       <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-        <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-        <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+        <StatusBlankReport className="absolute -top-16 scale-60 opacity-50" />
+        <StatusBlankReport className="absolute -top-8 scale-80 opacity-80" />
         <StatusBlankReport />
       </div>
       <StatusBlankContent>
@@ -516,8 +516,8 @@ export function StatusBlankMonitors({
   return (
     <StatusBlankContainer {...props}>
       <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-        <StatusBlankMonitor className="-top-16 absolute scale-60 opacity-50" />
-        <StatusBlankMonitor className="-top-8 absolute scale-80 opacity-80" />
+        <StatusBlankMonitor className="absolute -top-16 scale-60 opacity-50" />
+        <StatusBlankMonitor className="absolute -top-8 scale-80 opacity-80" />
         <StatusBlankMonitor />
       </div>
       <StatusBlankContent>
@@ -549,7 +549,7 @@ export function StatusBlankAction({
     <div
       data-slot="status-blank-action"
       className={cn(
-        "mt-2 inline-flex items-center justify-center rounded-md border border-border/70 px-3 py-1.5 font-mono text-muted-foreground text-sm hover:border-border hover:text-foreground [&>a]:no-underline [&>a]:text-inherit",
+        "border-border/70 text-muted-foreground hover:border-border hover:text-foreground mt-2 inline-flex items-center justify-center rounded-md border px-3 py-1.5 font-mono text-sm [&>a]:text-inherit [&>a]:no-underline",
         className,
       )}
       {...props}

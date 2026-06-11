@@ -1,8 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
+
+import { app } from "@/index";
+
 import { NotificationSchema } from "./schema";
 
 test("create a notification", async () => {

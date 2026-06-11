@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { z } from "zod";
+
 import { fetchAtlassianCompatibleComponents } from "../components";
 import { type FetchError, fetchJson } from "../fetch";
 import { fetchAtlassianCompatibleIncidents } from "../incidents";
