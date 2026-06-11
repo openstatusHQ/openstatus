@@ -1,10 +1,18 @@
 import type React from "react";
 import { Resend } from "resend";
-
+import nodemailer from "nodemailer";
 import { render } from "react-email";
 import { env } from "./env";
 
-export const resend = new Resend(env.RESEND_API_KEY);
+const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+const smtpTransporter = env.SMTP_HOST ? nodemailer.createTransport({
+  host: env.SMTP_HOST,
+  port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT) : 587,
+  auth: env.SMTP_USER && env.SMTP_PASS ? {
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS,
+  } : undefined,
+}) : null;
 
 export interface Emails {
   react: React.JSX.Element;
@@ -23,33 +31,39 @@ export type EmailHtml = {
 };
 export const sendEmail = async (email: Emails) => {
   if (process.env.NODE_ENV !== "production") return;
-  await resend.emails.send(email);
-};
+  const html = await render(email.react);
+  if(smtpTransporter){
+    await smtpTransporter.sendMail({
+      from: env.SMTP_FROM || email.from,
+      to: email.to.join(","),
+      subject: email.subject,
+      html,
+      replyTo: email.reply_to,
+    });
+  }else{
+    await resendClient?.emails.send({
+      from: email.from,
+      to: email.to,
+      subject: email.subject,
+      html,
+      replyTo: email.reply_to, 
+  })
+}};
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
   if (process.env.NODE_ENV !== "production") return;
-  await resend.batch.send(emails);
+  if(smtpTransporter){
+    await Promise.all(emails.map((email) =>
+    smtpTransporter.sendMail({
+    from: env.SMTP_FROM || email.from,
+    to: email.to,
+    subject: email.subject,
+    html: email.html,
+    replyTo: email.reply_to,
+      })
+    ));
+  }else{
+    await resendClient?.batch.send(emails)
+  }
 };
 
-// TODO: delete in favor of sendBatchEmailHtml
-export const sendEmailHtml = async (emails: EmailHtml[]) => {
-  if (process.env.NODE_ENV !== "production") return;
-
-  await fetch("https://api.resend.com/emails/batch", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify(emails),
-  });
-};
-
-export const sendWithRender = async (email: Emails) => {
-  if (process.env.NODE_ENV !== "production") return;
-  const html = await render(email.react);
-  await resend.emails.send({
-    ...email,
-    html,
-  });
-};
