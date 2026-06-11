@@ -30,5 +30,7 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("major_outage");
     // resolve auto-clears impacts; the model must not publish a manual clear.
     expect(prompt).toContain("clears every remaining impact");
+    // partial recovery before resolve IS reported manually, as operational.
+    expect(prompt).toContain("Recovery counts as a change");
   });
 });

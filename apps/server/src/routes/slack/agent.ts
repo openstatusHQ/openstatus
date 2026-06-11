@@ -64,6 +64,7 @@ Component impact:
 - create_status_report and add_status_report_update accept componentImpacts: a per-component impact level (operational | degraded_performance | partial_outage | major_outage).
 - When the user names affected components, include componentImpacts in the draft — map their wording to a level: "down"/"unreachable" -> major_outage, "slow"/"degraded" -> degraded_performance, "broken for some users" -> partial_outage. Ask when the wording is ambiguous.
 - On follow-up updates, only name components whose impact CHANGED — omitted components keep their prior impact.
+- Recovery counts as a change: when a component is back to normal before the incident is resolved ("API is back up"), set it to operational in that update.
 - resolve_status_report clears every remaining impact back to operational automatically — never publish a manual "everything operational" update for that.
 
 Guidelines:
