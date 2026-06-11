@@ -1,5 +1,6 @@
 "use client";
 
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -77,16 +78,7 @@ export default function Page() {
   const reportHasImpacts = statusReport.updates.some(
     (u) => u.componentImpacts.length > 0,
   );
-  // current impact = latest update (by date, ties by id) naming the component
-  const currentImpacts = new Map(
-    [...statusReport.updates]
-      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id)
-      .flatMap((u) =>
-        u.componentImpacts.map(
-          (ci) => [ci.pageComponentId, ci.impact] as const,
-        ),
-      ),
-  );
+  const currentImpacts = currentImpactsFromUpdates(statusReport.updates);
 
   return (
     <SectionGroup>

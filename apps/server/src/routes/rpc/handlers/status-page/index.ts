@@ -1394,7 +1394,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             .all()
         : [];
 
-    // Get impact rows for the reports' updates
+    // Get impact rows for the reports' updates, grouped per update id
     const updateIds = reportUpdates.map((u) => u.id);
     const updateImpacts =
       updateIds.length > 0
@@ -1409,6 +1409,12 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             )
             .all()
         : [];
+    const impactsByUpdate = new Map<number, typeof updateImpacts>();
+    for (const row of updateImpacts) {
+      const arr = impactsByUpdate.get(row.statusReportUpdateId);
+      if (arr) arr.push(row);
+      else impactsByUpdate.set(row.statusReportUpdateId, [row]);
+    }
 
     // Import the converters from status-report service
     const { dbStatusToProto, dbUpdateToProto } =
@@ -1432,12 +1438,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         updates: updates.map((u) =>
           dbUpdateToProto({
             ...u,
-            componentImpacts: updateImpacts
-              .filter((row) => row.statusReportUpdateId === u.id)
-              .map((row) => ({
-                pageComponentId: row.pageComponentId,
-                impact: row.impact,
-              })),
+            componentImpacts: (impactsByUpdate.get(u.id) ?? []).map((row) => ({
+              pageComponentId: row.pageComponentId,
+              impact: row.impact,
+            })),
           }),
         ),
         createdAt: report.createdAt?.toISOString() ?? "",

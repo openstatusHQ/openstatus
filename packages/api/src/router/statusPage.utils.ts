@@ -9,6 +9,7 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 import {
+  currentImpactsFromUpdates,
   impactToStatusType,
   impactUptimeWeight,
   worstImpact,
@@ -128,7 +129,7 @@ export type ImpactInterval = {
   impact: PageComponentImpact;
 };
 
-export type StatusReportUpdateWithImpacts = StatusReportUpdate & {
+export type StatusReportUpdateWithImpactRows = StatusReportUpdate & {
   statusReportUpdateToPageComponents?: {
     pageComponentId: number;
     impact: PageComponentImpact;
@@ -148,7 +149,7 @@ type Event = {
 
 // per component: change points across the report's updates (sorted by date asc)
 function buildComponentImpactIntervals(
-  updates: StatusReportUpdateWithImpacts[],
+  updates: StatusReportUpdateWithImpactRows[],
 ): Map<number, ImpactInterval[]> {
   const byComponent = new Map<number, ImpactInterval[]>();
   for (const update of updates) {
@@ -218,18 +219,15 @@ function clampOpenIntervals(
  * names it wins. Empty map ⇒ legacy report.
  */
 export function currentImpactByComponent(report: {
-  statusReportUpdates: StatusReportUpdateWithImpacts[];
+  statusReportUpdates: StatusReportUpdateWithImpactRows[];
 }): Map<number, PageComponentImpact> {
-  const updates = [...report.statusReportUpdates].sort(
-    (a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id,
+  return currentImpactsFromUpdates(
+    report.statusReportUpdates.map((u) => ({
+      id: u.id,
+      date: u.date,
+      componentImpacts: u.statusReportUpdateToPageComponents ?? [],
+    })),
   );
-  const current = new Map<number, PageComponentImpact>();
-  for (const update of updates) {
-    for (const row of update.statusReportUpdateToPageComponents ?? []) {
-      current.set(row.pageComponentId, row.impact);
-    }
-  }
-  return current;
 }
 
 /**
@@ -267,7 +265,7 @@ export function getEvents({
     statusReportsToPageComponents: {
       pageComponent: PageComponent | null;
     }[];
-    statusReportUpdates: StatusReportUpdateWithImpacts[];
+    statusReportUpdates: StatusReportUpdateWithImpactRows[];
   })[];
   pageComponentId?: number;
   monitorId?: number;
@@ -341,8 +339,8 @@ export function getEvents({
       return true;
     })
     .map((report) => {
-      const updates = report.statusReportUpdates.sort(
-        (a, b) => a.date.getTime() - b.date.getTime(),
+      const updates = [...report.statusReportUpdates].sort(
+        (a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id,
       );
       if (updates.length === 0) return;
 
@@ -393,15 +391,16 @@ export function getEvents({
           ? lastUpdate?.date
           : null;
 
-      // derived from the open (current) impacts; legacy stays flat orange
+      // derived from the open (current) impacts; legacy stays flat orange.
+      // No open non-operational interval — including the empty-projection
+      // case (component never named by any update) — reads "success" BY
+      // DESIGN: an open report whose impacts are all cleared no longer
+      // flags the component, even before the report is formally resolved.
+      const openImpacts = (impactIntervals ?? [])
+        .filter((iv) => iv.to === null)
+        .map((iv) => iv.impact);
       const status = hasImpacts
-        ? impactToStatusType(
-            worstImpact(
-              (impactIntervals ?? [])
-                .filter((iv) => iv.to === null)
-                .map((iv) => iv.impact),
-            ),
-          )
+        ? impactToStatusType(worstImpact(openImpacts))
         : ("degraded" as const);
 
       events.push({

@@ -43,3 +43,29 @@ export function worstImpact(
   }
   return worst;
 }
+
+/**
+ * Current impact per component: the latest update (by date, ties by id)
+ * naming it wins. Empty map ⇒ legacy report (no impact rows).
+ */
+export function currentImpactsFromUpdates(
+  updates: ReadonlyArray<{
+    id: number;
+    date: Date;
+    componentImpacts: ReadonlyArray<{
+      pageComponentId: number;
+      impact: PageComponentImpact;
+    }>;
+  }>,
+): Map<number, PageComponentImpact> {
+  const sorted = [...updates].sort(
+    (a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id,
+  );
+  const current = new Map<number, PageComponentImpact>();
+  for (const update of sorted) {
+    for (const row of update.componentImpacts) {
+      current.set(row.pageComponentId, row.impact);
+    }
+  }
+  return current;
+}

@@ -1,6 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  currentImpactsFromUpdates,
+  worstImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -25,27 +29,9 @@ type StatusReport = RouterOutputs["statusReport"]["list"][number];
 // derived top-level impact = worst current impact across components;
 // legacy reports (no impact rows) read "Untriaged"
 function worstCurrentImpact(report: StatusReport) {
-  const current = new Map(
-    [...report.updates]
-      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id)
-      .flatMap((u) =>
-        u.componentImpacts.map(
-          (ci) => [ci.pageComponentId, ci.impact] as const,
-        ),
-      ),
-  );
+  const current = currentImpactsFromUpdates(report.updates);
   if (current.size === 0) return null;
-  const order = [
-    "operational",
-    "degraded_performance",
-    "partial_outage",
-    "major_outage",
-  ] as const;
-  return [...current.values()].reduce(
-    (worst, impact) =>
-      order.indexOf(impact) > order.indexOf(worst) ? impact : worst,
-    "operational" as (typeof order)[number],
-  );
+  return worstImpact(current.values());
 }
 
 export const columns: ColumnDef<StatusReport>[] = [

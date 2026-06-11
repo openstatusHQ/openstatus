@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Table,
@@ -43,16 +44,7 @@ export function DataTable({
   components?: { id: number; name: string }[];
 }) {
   const reportHasImpacts = updates.some((u) => u.componentImpacts.length > 0);
-  // current impact = latest update (by date, ties by id) naming the component
-  const currentImpacts = new Map(
-    [...updates]
-      .sort((a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id)
-      .flatMap((u) =>
-        u.componentImpacts.map(
-          (ci) => [ci.pageComponentId, ci.impact] as const,
-        ),
-      ),
-  );
+  const currentImpacts = currentImpactsFromUpdates(updates);
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
