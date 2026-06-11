@@ -3,6 +3,13 @@ import { slugify } from "@/content/mdx";
 
 import { type MDXData, PAGE_TYPES, getHomePage, getPages } from ".";
 import type { Corpus, SearchResult } from "../search-meta";
+import {
+  closestHeadingSlug,
+  getContentSnippet,
+  makeMatcher,
+  sanitizeContent,
+  scoreDoc,
+} from "./search-match";
 
 type Heading = { slug: string; index: number };
 
@@ -81,62 +88,6 @@ function getAll(): IndexedDoc[] {
   ];
 }
 
-const WEIGHTS = {
-  phraseTitle: 100,
-  phraseHeading: 60,
-  phraseContent: 30,
-  termTitle: 10,
-  termHeading: 6,
-  termContent: 2,
-  allTermsBonus: 20,
-} as const;
-
-function scoreDoc(
-  entry: IndexedDoc,
-  phrase: string,
-  terms: string[],
-): { score: number; needle: string | null } {
-  let score = 0;
-  let needle: string | null = null;
-
-  if (entry.titleLower.includes(phrase)) score += WEIGHTS.phraseTitle;
-  if (entry.headingsLower.includes(phrase)) score += WEIGHTS.phraseHeading;
-  if (entry.sanitizedLower.includes(phrase)) {
-    score += WEIGHTS.phraseContent;
-    needle = phrase;
-  }
-
-  let matched = 0;
-  for (const term of terms) {
-    const inTitle = entry.titleLower.includes(term);
-    const inHeading = entry.headingsLower.includes(term);
-    const inContent = entry.sanitizedLower.includes(term);
-    if (inTitle) score += WEIGHTS.termTitle;
-    if (inHeading) score += WEIGHTS.termHeading;
-    if (inContent) {
-      score += WEIGHTS.termContent;
-      if (!needle) needle = term;
-    }
-    if (inTitle || inHeading || inContent) matched++;
-  }
-
-  if (terms.length > 1 && matched === terms.length)
-    score += WEIGHTS.allTermsBonus;
-
-  return { score, needle };
-}
-
-function closestHeadingSlug(entry: IndexedDoc, needle: string): string | null {
-  const matchIndex = entry.rawLower.indexOf(needle);
-  if (matchIndex === -1 || entry.headings.length === 0) return null;
-  let best: string | null = null;
-  for (const h of entry.headings) {
-    if (h.index <= matchIndex) best = h.slug;
-    else break;
-  }
-  return best;
-}
-
 export function searchCorpus(params: {
   p: Corpus | "all";
   q: string | null | undefined;
@@ -146,7 +97,8 @@ export function searchCorpus(params: {
 
   const query = q?.trim() ?? "";
   const phrase = query.toLowerCase();
-  const terms = phrase.split(/\s+/).filter(Boolean);
+  // Drop 1-char terms — pure noise that word-boundary matching can't tame.
+  const terms = phrase.split(/\s+/).filter((t) => t.length >= 2);
 
   if (!query) {
     return entries
@@ -154,25 +106,37 @@ export function searchCorpus(params: {
       .sort(byRecency);
   }
 
-  const scored: { entry: IndexedDoc; score: number; needle: string | null }[] =
-    [];
+  const matchers = terms.map(makeMatcher);
+  const usePhrase = phrase.includes(" ");
+
+  const scored: {
+    entry: IndexedDoc;
+    score: number;
+    needle: string | null;
+    full: boolean;
+  }[] = [];
   for (const entry of entries) {
-    const { score, needle } = scoreDoc(entry, phrase, terms);
-    if (score > 0) scored.push({ entry, score, needle });
+    const { score, needle, full } = scoreDoc(
+      entry,
+      phrase,
+      usePhrase,
+      matchers,
+    );
+    if (score > 0) scored.push({ entry, score, needle, full });
   }
 
   scored.sort(
     (a, b) => b.score - a.score || recency(b.entry) - recency(a.entry),
   );
 
-  return scored.map(({ entry, needle }) => {
+  return scored.map(({ entry, needle, full }) => {
     let href = `${entry.doc.href}?q=${encodeURIComponent(query)}`;
     if (needle) {
       const slug = closestHeadingSlug(entry, needle);
       if (slug) href = `${href}#${slug}`;
     }
     const snippet = getContentSnippet(entry.sanitized, needle);
-    return toResult(entry, snippet, href);
+    return toResult(entry, snippet, href, full ? "full" : "partial");
   });
 }
 
@@ -180,8 +144,9 @@ function toResult(
   entry: IndexedDoc,
   content: string,
   href: string,
+  tier?: "full" | "partial",
 ): SearchResult {
-  return { ...entry.doc, type: entry.type, content, href };
+  return { ...entry.doc, type: entry.type, content, href, tier };
 }
 
 function recency(entry: IndexedDoc) {
@@ -190,62 +155,4 @@ function recency(entry: IndexedDoc) {
 
 function byRecency(a: SearchResult, b: SearchResult) {
   return b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime();
-}
-
-const WORDS_BEFORE = 2;
-const WORDS_AFTER = 20;
-
-function getContentSnippet(sanitized: string, needle: string | null): string {
-  if (!needle) return `${sanitized.slice(0, 100)}...`;
-
-  const matchIndex = sanitized.toLowerCase().indexOf(needle.toLowerCase());
-  if (matchIndex === -1) return `${sanitized.slice(0, 100)}...`;
-
-  let start = matchIndex;
-  for (let i = 0; i < WORDS_BEFORE && start > 0; i++) {
-    const prevSpace = sanitized.lastIndexOf(" ", start - 2);
-    if (prevSpace === -1) break;
-    start = prevSpace + 1;
-  }
-
-  let end = matchIndex + needle.length;
-  for (let i = 0; i < WORDS_AFTER && end < sanitized.length; i++) {
-    const nextSpace = sanitized.indexOf(" ", end + 1);
-    if (nextSpace === -1) {
-      end = sanitized.length;
-      break;
-    }
-    end = nextSpace;
-  }
-
-  let snippet = sanitized.slice(start, end).trim();
-  if (!snippet) return snippet;
-  if (start > 0) snippet = `...${snippet}`;
-  if (end < sanitized.length) snippet = `${snippet}...`;
-  return snippet;
-}
-
-export function sanitizeContent(input: string) {
-  return stripTags(input)
-    .replace(/^#{1,6}\s+/gm, "") // strip markdown heading symbols, keep text
-    .replace(/!\[.*?\]\(.*?\)/g, "") // strip images
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // keep link text
-    .replace(/\*\*(.*?)\*\*/g, "$1") // strip bold
-    .replace(/__(.*?)__/g, "$1") // strip italic
-    .replace(/_(.*?)_/g, "$1") // strip underline
-    .replace(/[`*>~]/g, "") // strip most formatting
-    .replace(/\s+/g, " ") // collapse whitespace
-    .replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;")) // escape stray brackets for safe innerHTML
-    .trim();
-}
-
-// Loop until stable: stripping a tag can splice fragments into a new tag (`<scr<b>ipt>` → `<script>`).
-function stripTags(input: string) {
-  let prev: string;
-  let out = input;
-  do {
-    prev = out;
-    out = out.replace(/<[^>]+>/g, "");
-  } while (out !== prev);
-  return out;
 }
