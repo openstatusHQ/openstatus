@@ -1,5 +1,8 @@
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import type { StatusReportService } from "@openstatus/proto/status_report/v1";
+import type {
+  ComponentImpact,
+  StatusReportService,
+} from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 import {
   addStatusReportUpdate,
@@ -16,6 +19,7 @@ import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,
   dbReportToProtoSummary,
+  protoImpactToDb,
   protoStatusToDb,
 } from "./converters";
 import { invalidDateFormatError, statusReportIdRequiredError } from "./errors";
@@ -41,6 +45,20 @@ function parsePageComponentIds(ids: ReadonlyArray<string>): number[] {
   });
 }
 
+// empty list ⇒ undefined: an old client omitting the field must produce a
+// legacy report (zero impact rows), never default to operational
+function parseComponentImpacts(
+  impacts: ReadonlyArray<ComponentImpact>,
+):
+  | { pageComponentId: number; impact: ReturnType<typeof protoImpactToDb> }[]
+  | undefined {
+  if (impacts.length === 0) return undefined;
+  return impacts.map((ci) => ({
+    pageComponentId: parsePageComponentIds([ci.pageComponentId])[0],
+    impact: protoImpactToDb(ci.impact),
+  }));
+}
+
 export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
   {
     async createStatusReport(req, ctx) {
@@ -62,6 +80,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
             date: parseDate(req.date),
             pageId,
             pageComponentIds: parsePageComponentIds(req.pageComponentIds),
+            componentImpacts: parseComponentImpacts(req.componentImpacts),
           },
         });
 
@@ -212,6 +231,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
               status: protoStatusToDb(req.status),
               message: req.message,
               date: req.date ? parseDate(req.date) : undefined,
+              componentImpacts: parseComponentImpacts(req.componentImpacts),
             },
           });
 
