@@ -64,6 +64,8 @@ export const UpdateStatusReportUpdateInput = z.object({
   status: statusReportStatusSchema.optional(),
   message: z.string().optional(),
   date: z.coerce.date().optional(),
+  /** When provided, replaces the update's full impact-row set; omitted ⇒ untouched. */
+  componentImpacts: componentImpactsSchema.optional(),
 });
 export type UpdateStatusReportUpdateInput = z.infer<
   typeof UpdateStatusReportUpdateInput

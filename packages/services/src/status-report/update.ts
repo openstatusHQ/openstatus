@@ -1,14 +1,20 @@
 import { eq } from "@openstatus/db";
-import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
+import {
+  statusReport,
+  statusReportUpdate,
+  statusReportUpdateToPageComponents,
+  statusReportsToPageComponents,
+} from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { InternalServiceError } from "../errors";
+import { ConflictError, InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
   getReportInWorkspace,
   getReportUpdateInWorkspace,
+  insertUpdateComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "./internal";
@@ -89,7 +95,7 @@ export async function updateStatusReport(args: {
   });
 }
 
-/** Edit a single status-report update row (message / date / status). */
+/** Edit a single status-report update row (message / date / status / impacts). */
 export async function updateStatusReportUpdate(args: {
   ctx: ServiceContext;
   input: UpdateStatusReportUpdateInput;
@@ -110,6 +116,58 @@ export async function updateStatusReportUpdate(args: {
     if (input.message !== undefined) updateValues.message = input.message;
     if (input.date !== undefined) updateValues.date = input.date;
 
+    // replace the update's impact-row set; omitted ⇒ untouched (legacy stays legacy)
+    if (input.componentImpacts !== undefined) {
+      const report = await getReportInWorkspace({
+        tx,
+        id: existing.statusReportId,
+        workspaceId: ctx.workspace.id,
+      });
+
+      if (input.componentImpacts.length > 0) {
+        const validated = await validatePageComponentIds({
+          tx,
+          workspaceId: ctx.workspace.id,
+          pageComponentIds: input.componentImpacts.map(
+            (ci) => ci.pageComponentId,
+          ),
+        });
+        if (
+          validated.pageId !== null &&
+          report.pageId !== null &&
+          validated.pageId !== report.pageId
+        ) {
+          throw new ConflictError(
+            `Components belong to page ${validated.pageId}, not the report's page ${report.pageId}.`,
+          );
+        }
+        // invariant: every impact row's component is in the report's membership set
+        await tx
+          .insert(statusReportsToPageComponents)
+          .values(
+            validated.componentIds.map((pageComponentId) => ({
+              statusReportId: report.id,
+              pageComponentId,
+            })),
+          )
+          .onConflictDoNothing();
+      }
+
+      await tx
+        .delete(statusReportUpdateToPageComponents)
+        .where(
+          eq(
+            statusReportUpdateToPageComponents.statusReportUpdateId,
+            existing.id,
+          ),
+        );
+      await insertUpdateComponentImpacts({
+        tx,
+        statusReportUpdateId: existing.id,
+        componentImpacts: input.componentImpacts,
+      });
+    }
+
     const updated = await tx
       .update(statusReportUpdate)
       .set(updateValues)
@@ -129,6 +187,9 @@ export async function updateStatusReportUpdate(args: {
       entityId: updated.id,
       before: existing,
       after: updated,
+      ...(input.componentImpacts !== undefined
+        ? { metadata: { componentImpacts: input.componentImpacts } }
+        : {}),
     });
 
     return updated;

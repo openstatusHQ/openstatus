@@ -890,6 +890,96 @@ describe("componentImpacts", () => {
     });
   });
 
+  test("updateStatusReportUpdate replaces the update's impact rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-impact-edit`,
+          status: "investigating",
+          message: "initial",
+          date: new Date(Date.now() - 60_000),
+          pageId: testPageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: testPageComponentId, impact: "major_outage" },
+          ],
+        },
+      });
+
+      // edit without componentImpacts: rows untouched
+      await updateStatusReportUpdate({
+        ctx,
+        input: { id: initialUpdate.id, message: "edited message" },
+      });
+      let rows = await impactRowsForUpdate(tx, initialUpdate.id);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].impact).toBe("major_outage");
+
+      // edit with componentImpacts: full replace + membership sync
+      await updateStatusReportUpdate({
+        ctx,
+        input: {
+          id: initialUpdate.id,
+          componentImpacts: [
+            {
+              pageComponentId: testPageComponentId2,
+              impact: "degraded_performance",
+            },
+          ],
+        },
+      });
+      rows = await impactRowsForUpdate(tx, initialUpdate.id);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].pageComponentId).toBe(testPageComponentId2);
+      expect(rows[0].impact).toBe("degraded_performance");
+
+      const membership = await tx
+        .select()
+        .from(statusReportsToPageComponents)
+        .where(
+          eq(
+            statusReportsToPageComponents.statusReportId,
+            initialUpdate.statusReportId,
+          ),
+        )
+        .all();
+      expect(membership.map((m) => m.pageComponentId)).toContain(
+        testPageComponentId2,
+      );
+    });
+  });
+
+  test("updateStatusReportUpdate rejects impacts on another page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { initialUpdate } = await createStatusReport({
+        ctx,
+        input: {
+          title: `${TEST_PREFIX}-impact-edit-cross`,
+          status: "investigating",
+          message: "initial",
+          date: new Date(),
+          pageId: testPageId,
+          pageComponentIds: [testPageComponentId],
+        },
+      });
+
+      await expect(
+        updateStatusReportUpdate({
+          ctx,
+          input: {
+            id: initialUpdate.id,
+            componentImpacts: [
+              { pageComponentId: otherPageComponentId, impact: "major_outage" },
+            ],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+  });
+
   test("rejects duplicate component ids in componentImpacts", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };

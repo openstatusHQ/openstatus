@@ -48,6 +48,7 @@ const updateStatusReportUpdateTRPCInput = z.object({
   statusReportId: z.number().optional(),
   status: AddStatusReportUpdateInput.shape.status.optional(),
   message: z.string().optional(),
+  componentImpacts: componentImpactsSchema.optional(),
   date: z.coerce.date().optional(),
 });
 
@@ -119,6 +120,7 @@ export const statusReportRouter = createTRPCRouter({
             id: input.id,
             status: input.status,
             message: input.message,
+            componentImpacts: input.componentImpacts,
             date: input.date,
           },
         });

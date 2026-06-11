@@ -127,7 +127,10 @@ const statusReportUpdateActions = [
   action("status_report_update.create", "status_report_update", intId, {
     optionalMetadata: true,
   }),
-  action("status_report_update.update", "status_report_update", intId),
+  // metadata carries `componentImpacts` (child rows, not entity fields)
+  action("status_report_update.update", "status_report_update", intId, {
+    optionalMetadata: true,
+  }),
   action("status_report_update.delete", "status_report_update", intId),
 ] as const;
 

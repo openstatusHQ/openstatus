@@ -20,10 +20,25 @@ import {
 import { FormCardGroup } from "@/components/forms/form-card";
 import { FormSheetWithDirtyProtection } from "@/components/forms/form-sheet";
 import type { FormValues } from "@/components/forms/status-report-update/form";
-import { FormStatusReportUpdateCard } from "@/components/forms/status-report-update/form-status-report";
+import {
+  FormStatusReportUpdateCard,
+  type FormValues as UpdateCardFormValues,
+} from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { getNextStatus } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
+
+function impactsEqual(
+  a: { pageComponentId: number; impact: string }[],
+  b: { pageComponentId: number; impact: string }[],
+) {
+  const key = (list: typeof a) =>
+    [...list]
+      .sort((x, y) => x.pageComponentId - y.pageComponentId)
+      .map((x) => `${x.pageComponentId}:${x.impact}`)
+      .join(",");
+  return key(a) === key(b);
+}
 
 export default function Page() {
   const { reportId } = useParams<{ id: string; reportId: string }>();
@@ -148,17 +163,33 @@ export default function Page() {
                 id={`update-form-${update.id}`}
                 index={index}
                 update={update}
+                components={statusReport.pageComponents.map((c) => ({
+                  id: c.id,
+                  name: c.name,
+                }))}
                 defaultValues={{
                   status: update.status,
                   message: update.message,
                   date: update.date,
+                  componentImpacts: update.componentImpacts.map((ci) => ({
+                    pageComponentId: ci.pageComponentId,
+                    impact: ci.impact,
+                  })),
                 }}
-                onSubmit={async (values: FormValues) => {
+                onSubmit={async (values: UpdateCardFormValues) => {
                   await updateStatusReportUpdateMutation.mutateAsync({
                     id: update.id,
                     statusReportId: statusReport.id,
                     message: values.message,
                     status: values.status,
+                    // replace-set semantics: only send when actually edited,
+                    // so untouched (incl. legacy) updates keep their rows
+                    componentImpacts: impactsEqual(
+                      values.componentImpacts ?? [],
+                      update.componentImpacts,
+                    )
+                      ? undefined
+                      : values.componentImpacts,
                     date: values.date,
                   });
                 }}
