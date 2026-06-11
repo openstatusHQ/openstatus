@@ -64,7 +64,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),
-  title: z.string(),
+  title: z.string().min(1, "Title is required.").max(256),
   message: z.string(),
   date: z.date(),
   pageComponents: z.array(z.number()),
