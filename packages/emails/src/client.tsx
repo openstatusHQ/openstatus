@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 
 import { Effect, Schedule } from "effect";
+import nodemailer from "nodemailer";
 import { render } from "react-email";
 import { Resend } from "resend";
 
@@ -16,7 +17,6 @@ import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
-import nodemailer from "nodemailer";
 import { env } from "./env";
 
 // split an array into chunks of a given size.
@@ -35,86 +35,91 @@ export class EmailClient {
   private resendClient?: Resend;
   private smtpTransporter?: nodemailer.Transporter;
 
-  constructor(){
+  constructor() {
     if (process.env.NODE_ENV !== "production") return;
-    if(env.SMTP_HOST) {
+    if (env.SMTP_HOST) {
       this.type = "smtp";
       this.smtpTransporter = nodemailer.createTransport({
         host: env.SMTP_HOST,
         port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT, 10) || 587 : 587,
-        auth: env.SMTP_USER && env.SMTP_PASS ? {
-          user: env.SMTP_USER,
-          pass: env.SMTP_PASS,
-        } : undefined,
+        auth:
+          env.SMTP_USER && env.SMTP_PASS
+            ? {
+                user: env.SMTP_USER,
+                pass: env.SMTP_PASS,
+              }
+            : undefined,
       });
-    }
-    else if (env.RESEND_API_KEY) {
+    } else if (env.RESEND_API_KEY) {
       this.type = "resend";
       this.resendClient = new Resend(env.RESEND_API_KEY);
-    }
-    else{
-      throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided in the environment variables.");
+    } else {
+      throw new Error(
+        "Either RESEND_API_KEY or SMTP_HOST must be provided in the environment variables.",
+      );
     }
   }
 
-  private async sendSingle(opts:{
+  private async sendSingle(opts: {
     from: string;
     to: string[];
     subject: string;
     react: React.JSX.Element;
     reply_to?: string;
-  }):Promise<void>{
-      const html = await render(opts.react);
-      if(this.type === "smtp"){
-        if (!this.smtpTransporter) throw new Error("SMTP transporter not initialized");
-        await this.smtpTransporter.sendMail({
-          from: env.SMTP_FROM || opts.from,
-          to: opts.to.join(", "),
-          subject: opts.subject,
-          html,
-          replyTo: opts.reply_to,
-        });
-      }
-      else{
-        if (!this.resendClient) throw new Error("Resend client not initialized");
-        await this.resendClient.emails.send({
-          from: opts.from,
-          to: opts.to,
-          subject: opts.subject,
-          html,
-          replyTo: opts.reply_to,
-        });
-      }
+  }): Promise<void> {
+    const html = await render(opts.react);
+    if (this.type === "smtp") {
+      if (!this.smtpTransporter)
+        throw new Error("SMTP transporter not initialized");
+      await this.smtpTransporter.sendMail({
+        from: env.SMTP_FROM || opts.from,
+        to: opts.to.join(", "),
+        subject: opts.subject,
+        html,
+        replyTo: opts.reply_to,
+      });
+    } else {
+      if (!this.resendClient) throw new Error("Resend client not initialized");
+      await this.resendClient.emails.send({
+        from: opts.from,
+        to: opts.to,
+        subject: opts.subject,
+        html,
+        replyTo: opts.reply_to,
+      });
+    }
   }
 
-  private async sendBatch(opts:{
-    from: string;
-    to: string;
-    subject: string;
-    html: string;
-    reply_to?: string;
-  }[]):Promise<void>{
-      if(this.type === "smtp"){
-        if (!this.smtpTransporter) throw new Error("SMTP transporter not initialized");
-        const transporter = this.smtpTransporter; 
-        const sendEmailPromises = opts.map(async (email) => {
-          return transporter.sendMail({
-            from: env.SMTP_FROM || email.from,
-            to: email.to,
-            subject: email.subject,
-            html: email.html,
-            replyTo: email.reply_to,
-          });
+  private async sendBatch(
+    opts: {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      reply_to?: string;
+    }[],
+  ): Promise<void> {
+    if (this.type === "smtp") {
+      if (!this.smtpTransporter)
+        throw new Error("SMTP transporter not initialized");
+      const transporter = this.smtpTransporter;
+      const sendEmailPromises = opts.map(async (email) => {
+        return transporter.sendMail({
+          from: env.SMTP_FROM || email.from,
+          to: email.to,
+          subject: email.subject,
+          html: email.html,
+          replyTo: email.reply_to,
         });
-        await Promise.all(sendEmailPromises);
-      }
-      else{
-        if (!this.resendClient) throw new Error("Resend client not initialized");
-        const client = this.resendClient;
-        const chunks = chunk(opts, 100); // Resend batch limit
-        for(const batch of chunks){
-          // resendClient is guaranteed to be set when this.type === "resend"
-          await client.batch.send(batch)
+      });
+      await Promise.all(sendEmailPromises);
+    } else {
+      if (!this.resendClient) throw new Error("Resend client not initialized");
+      const client = this.resendClient;
+      const chunks = chunk(opts, 100); // Resend batch limit
+      for (const batch of chunks) {
+        // resendClient is guaranteed to be set when this.type === "resend"
+        await client.batch.send(batch);
       }
     }
   }
@@ -132,7 +137,7 @@ export class EmailClient {
         subject: "How's it going with OpenStatus?",
         to: [req.to],
         react: <FollowUpEmail />,
-      })
+      });
       console.log(`Sent follow up email to ${req.to}`);
       return;
     } catch (err) {
@@ -148,18 +153,24 @@ export class EmailClient {
     }
 
     const html = await render(<FollowUpEmail />);
-    
-    try{
-        await this.sendBatch(req.to.map((subscriber) => ({
+
+    try {
+      await this.sendBatch(
+        req.to.map((subscriber) => ({
           from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
           subject: "How's it going with OpenStatus?",
           to: subscriber,
           html,
-      })))
+        })),
+      );
       console.log(`Sent follow up emails to ${req.to}`);
       return;
-    }catch(err){
-      if(this.type === "resend" && err instanceof Error && err.name === "rate_limit_exceeded"){
+    } catch (err) {
+      if (
+        this.type === "resend" &&
+        err instanceof Error &&
+        err.name === "rate_limit_exceeded"
+      ) {
         throw err;
       }
       console.error(`Error sending follow up emails to ${req.to}: ${err}`);
@@ -209,7 +220,11 @@ export class EmailClient {
       console.log(`Sent slack feedback emails to ${req.to}`);
       return;
     } catch (err) {
-      if (this.type === "resend" && err instanceof Error && err.name === "rate_limit_exceeded") {
+      if (
+        this.type === "resend" &&
+        err instanceof Error &&
+        err.name === "rate_limit_exceeded"
+      ) {
         throw err;
       }
       console.error(`Error sending slack feedback email to ${req.to}: ${err}`);
