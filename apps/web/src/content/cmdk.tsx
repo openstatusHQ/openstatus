@@ -29,6 +29,7 @@ import {
   type Corpus,
   type SearchResult,
 } from "@/content/search-meta";
+import { buildHighlightRegex } from "@/content/utils/search-match";
 
 type ConfigItem = {
   type: "item";
@@ -526,10 +527,7 @@ function SearchResults({
   const router = useRouter();
 
   const highlightRe = React.useMemo(
-    () =>
-      search
-        ? new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
-        : null,
+    () => buildHighlightRegex(search),
     [search],
   );
   const highlight = (text: string) =>
@@ -541,7 +539,6 @@ function SearchResults({
     <CommandItem
       key={item.href}
       value={item.href}
-      keywords={[item.metadata.title, item.content, search]}
       onSelect={() => {
         router.push(item.href);
         setOpen(false);
