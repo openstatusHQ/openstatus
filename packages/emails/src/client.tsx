@@ -40,7 +40,7 @@ function chunk<T>(array: T[], size: number): T[][] {
 export type EmailClientOptions = "smtp" | "resend";
 
 export class EmailClient {
-  public readonly type: EmailClientOptions;
+  public readonly type: EmailClientOptions = "resend"; // default
   // Kept public (matches upstream) so tests can stub client.client.batch.send directly.
   public readonly client?: Resend;
   private smtpTransporter?: nodemailer.Transporter;
@@ -53,6 +53,7 @@ export class EmailClient {
     retryBackoff?: Duration.DurationInput;
   }) {
     this.retryBackoff = opts?.retryBackoff ?? "1000 millis";
+    if (process.env.NODE_ENV !== "production") return;
 
     if (env.SMTP_HOST) {
       this.type = "smtp";
@@ -152,7 +153,7 @@ export class EmailClient {
   }
 
   public async sendFollowUp(req: { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending follow up email to ${req.to}`);
       return;
     }
@@ -174,7 +175,7 @@ export class EmailClient {
   }
 
   public async sendFollowUpBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending follow up emails to ${req.to.join(", ")}`);
       return;
     }
@@ -202,7 +203,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedback(req: { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending slack feedback email to ${req.to}`);
       return;
     }
@@ -224,7 +225,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedbackBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending slack feedback emails to ${req.to.join(", ")}`);
       return;
     }
@@ -266,7 +267,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(
         `Sending status report update emails to ${req.subscribers.map((s) => s.email).join(", ")}`,
       );
@@ -323,7 +324,7 @@ export class EmailClient {
   }
 
   public async sendTeamInvitation(req: TeamInvitationProps & { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending team invitation email to ${req.to}`);
       return;
     }
@@ -344,7 +345,7 @@ export class EmailClient {
   }
 
   public async sendMonitorAlert(req: MonitorAlertProps & { to: string }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending monitor alert email to ${req.to}`);
       return;
     }
@@ -370,7 +371,7 @@ export class EmailClient {
   public async sendPageSubscription(
     req: PageSubscriptionProps & { to: string },
   ) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending page subscription email to ${req.to}`);
       return;
     }
@@ -393,7 +394,7 @@ export class EmailClient {
   public async sendStatusPageMagicLink(
     req: StatusPageMagicLinkProps & { to: string },
   ) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Sending status page magic link email to ${req.to}`);
       console.log(`>>> Magic Link: ${req.link}`);
       return;
@@ -430,7 +431,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "production") {
       console.log(
         `Sending maintenance notification emails to ${req.subscribers.map((s) => s.email).join(", ")}`,
       );
