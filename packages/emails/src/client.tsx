@@ -65,8 +65,8 @@ export class EmailClient {
   }):Promise<void>{
       const html = await render(opts.react);
       if(this.type === "smtp"){
-        // smtpTransporter is guaranteed to be set when this.type === "smtp"
-        await this.smtpTransporter!.sendMail({
+        if (!this.smtpTransporter) throw new Error("SMTP transporter not initialized");
+        await this.smtpTransporter.sendMail({
           from: env.SMTP_FROM || opts.from,
           to: opts.to.join(", "),
           subject: opts.subject,
@@ -75,8 +75,8 @@ export class EmailClient {
         });
       }
       else{
-        // resendClient is guaranteed to be set when this.type === "resend"
-        await this.resendClient!.emails.send({
+        if (!this.resendClient) throw new Error("Resend client not initialized");
+        await this.resendClient.emails.send({
           from: opts.from,
           to: opts.to,
           subject: opts.subject,
@@ -94,9 +94,10 @@ export class EmailClient {
     reply_to?: string;
   }[]):Promise<void>{
       if(this.type === "smtp"){
-        // smtpTransporter is guaranteed to be set when this.type === "smtp"
+        if (!this.smtpTransporter) throw new Error("SMTP transporter not initialized");
+        const transporter = this.smtpTransporter; 
         const sendEmailPromises = opts.map(async (email) => {
-          return this.smtpTransporter!.sendMail({
+          return transporter.sendMail({
             from: env.SMTP_FROM || email.from,
             to: email.to,
             subject: email.subject,
@@ -107,10 +108,12 @@ export class EmailClient {
         await Promise.all(sendEmailPromises);
       }
       else{
+        if (!this.resendClient) throw new Error("Resend client not initialized");
+        const client = this.resendClient;
         const chunks = chunk(opts, 100); // Resend batch limit
         for(const batch of chunks){
           // resendClient is guaranteed to be set when this.type === "resend"
-          await this.resendClient!.batch.send(batch)
+          await client.batch.send(batch)
       }
     }
   }
