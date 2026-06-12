@@ -3,10 +3,18 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-function highlight(root: HTMLElement, query: string) {
-  if (!query) return;
+import { buildHighlightRegex } from "@/content/utils/search-match";
 
-  const regex = new RegExp(`(${query})`, "gi");
+function escapeHtml(input: string) {
+  return input.replace(/[&<>]/g, (c) =>
+    c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;",
+  );
+}
+
+function highlight(root: HTMLElement, query: string) {
+  const regex = buildHighlightRegex(query);
+  if (!regex) return;
+
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
 
   const textNodes: Text[] = [];
@@ -21,10 +29,16 @@ function highlight(root: HTMLElement, query: string) {
 
   for (const textNode of textNodes) {
     const nodeValue = textNode.nodeValue;
+    // `g`-flag .test is stateful — reset so a hit in one node can't skip the next.
+    regex.lastIndex = 0;
     if (!nodeValue || !regex.test(nodeValue)) continue;
 
     const span = document.createElement("span");
-    span.innerHTML = nodeValue.replace(regex, "<mark>$1</mark>");
+    // Escape first — the text node's value must not parse as HTML.
+    span.innerHTML = escapeHtml(nodeValue).replace(
+      regex,
+      (match) => `<mark>${match}</mark>`,
+    );
 
     textNode.parentNode?.replaceChild(span, textNode);
   }

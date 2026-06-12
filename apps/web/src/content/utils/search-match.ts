@@ -4,9 +4,11 @@
 export const WEIGHTS = {
   phraseTitle: 100,
   phraseHeading: 60,
+  phraseDescription: 50,
   phraseContent: 30,
   termTitle: 10,
   termHeading: 6,
+  termDescription: 5,
   termContent: 2,
   allTermsBonus: 20,
 } as const;
@@ -27,6 +29,27 @@ function isWordLed(term: string): boolean {
 
 export type Matcher = { term: string; test: (text: string) => boolean };
 
+// Naive singular folds so a plural query still hits singular docs
+// ("notifications" → "notification", "dependencies" → "dependency").
+// Prefix matching already covers the singular→plural direction.
+export function foldTerm(term: string): string[] {
+  const out = [term];
+  if (term.endsWith("ies") && term.length >= 6)
+    out.push(`${term.slice(0, -3)}y`);
+  if (term.endsWith("es") && term.length >= 5) out.push(term.slice(0, -2));
+  if (term.endsWith("s") && !term.endsWith("ss") && term.length >= 4)
+    out.push(term.slice(0, -1));
+  return [...new Set(out)];
+}
+
+function termRegex(term: string): RegExp {
+  const alts = foldTerm(term)
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp)
+    .join("|");
+  return new RegExp(`\\b(?:${alts})`, "u");
+}
+
 // Match at a word start, prefix allowed: "monitor" hits "monitoring", but "as" no
 // longer hits "case". Note `\b` is ASCII-only even under the `u` flag, so boundary
 // detection around accented letters is approximate — acceptable for our corpus.
@@ -34,28 +57,95 @@ export function makeMatcher(term: string): Matcher {
   if (!isWordLed(term)) {
     return { term, test: (text) => text.includes(term) };
   }
-  const re = new RegExp(`\\b${escapeRegExp(term)}`, "u");
+  const re = termRegex(term);
   return { term, test: (text) => re.test(text) };
 }
 
 // Index of the first word-start occurrence (ASCII boundary), or the first substring
 // occurrence for symbol-led needles. Both inputs must already be lowercased.
+// Multi-word needles (phrases) keep the plain escaped regex — folding a phrase would mangle it.
 export function needleIndex(
   haystackLower: string,
   needleLower: string,
 ): number {
   if (isWordLed(needleLower)) {
-    const m = new RegExp(`\\b${escapeRegExp(needleLower)}`, "u").exec(
-      haystackLower,
-    );
+    const isSingleWord = !needleLower.includes(" ");
+    const re = isSingleWord
+      ? termRegex(needleLower)
+      : new RegExp(`\\b${escapeRegExp(needleLower)}`, "u");
+    const m = re.exec(haystackLower);
     if (m) return m.index;
   }
   return haystackLower.indexOf(needleLower);
 }
 
+const STOPWORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "for",
+  "with",
+  "is",
+  "are",
+  "be",
+  "it",
+  "this",
+  "that",
+  "my",
+  "your",
+  "our",
+  "how",
+  "do",
+  "does",
+  "can",
+  "what",
+  "when",
+  "i",
+  "you",
+  "we",
+]);
+
+// Drop stopwords unless that empties the query (e.g. "how to") — better a
+// noisy match than none.
+export function filterTerms(terms: string[]): string[] {
+  const content = terms.filter((t) => !STOPWORDS.has(t));
+  return content.length > 0 ? content : terms;
+}
+
+// 1:1 char replacement — keeps every index aligned with the unnormalized
+// string, which snippet extraction depends on.
+export function normalizeForMatch(input: string): string {
+  return input.toLowerCase().replace(/[-_]/g, " ");
+}
+
+// Shared <mark> regex for search surfaces (cmdk snippets, ?q= page highlight) so
+// what gets marked mirrors what the server matched: contiguous phrase plus folded
+// content terms, longest alternate first, regex-escaped, global.
+export function buildHighlightRegex(query: string): RegExp | null {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+  const terms = filterTerms(
+    normalizeForMatch(q)
+      .split(/\s+/)
+      .filter((t) => t.length >= 2),
+  ).flatMap(foldTerm);
+  const parts = [...new Set([q, ...terms])]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp);
+  return new RegExp(parts.join("|"), "gi");
+}
+
 type Scorable = {
   titleLower: string;
   headingsLower: string;
+  descriptionLower: string;
   sanitizedLower: string;
 };
 
@@ -80,6 +170,12 @@ export function scoreDoc(
       score += WEIGHTS.phraseHeading;
       phraseMatched = true;
     }
+    if (entry.descriptionLower.includes(phrase)) {
+      score += WEIGHTS.phraseDescription;
+      phraseMatched = true;
+      // needle stays null — description is not part of sanitized, so snippet
+      // lookup would fail; the leading excerpt fallback is correct here.
+    }
     if (entry.sanitizedLower.includes(phrase)) {
       score += WEIGHTS.phraseContent;
       phraseMatched = true;
@@ -91,14 +187,16 @@ export function scoreDoc(
   for (const m of matchers) {
     const inTitle = m.test(entry.titleLower);
     const inHeading = m.test(entry.headingsLower);
+    const inDescription = m.test(entry.descriptionLower);
     const inContent = m.test(entry.sanitizedLower);
     if (inTitle) score += WEIGHTS.termTitle;
     if (inHeading) score += WEIGHTS.termHeading;
+    if (inDescription) score += WEIGHTS.termDescription;
     if (inContent) {
       score += WEIGHTS.termContent;
       if (!needle) needle = m.term;
     }
-    if (inTitle || inHeading || inContent) matched++;
+    if (inTitle || inHeading || inDescription || inContent) matched++;
   }
 
   if (matchers.length > 1 && matched === matchers.length)
@@ -134,7 +232,10 @@ export function getContentSnippet(
 ): string {
   if (!needle) return `${sanitized.slice(0, 100)}...`;
 
-  const matchIndex = needleIndex(sanitized.toLowerCase(), needle.toLowerCase());
+  const matchIndex = needleIndex(
+    normalizeForMatch(sanitized),
+    normalizeForMatch(needle),
+  );
   if (matchIndex === -1) return `${sanitized.slice(0, 100)}...`;
 
   let start = matchIndex;
@@ -159,6 +260,74 @@ export function getContentSnippet(
   if (start > 0) snippet = `...${snippet}`;
   if (end < sanitized.length) snippet = `${snippet}...`;
   return snippet;
+}
+
+// True when a and b are within Damerau-Levenshtein distance 1
+// (one insert, delete, substitute, or adjacent transposition).
+export function withinEditDistance1(a: string, b: string): boolean {
+  const diff = a.length - b.length;
+  if (diff > 1 || diff < -1) return false;
+  if (a === b) return true;
+
+  if (diff === 0) {
+    // Equal length: count mismatches; allow 1 substitution or 1 adjacent swap.
+    let first = -1;
+    let mismatches = 0;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        mismatches++;
+        if (mismatches === 1) first = i;
+        if (mismatches > 2) return false;
+      }
+    }
+    if (mismatches <= 1) return true;
+    // Adjacent transposition: a[first] === b[first+1] && a[first+1] === b[first]
+    return (
+      first + 1 < a.length &&
+      a[first] === b[first + 1] &&
+      a[first + 1] === b[first]
+    );
+  }
+
+  // Length diff of 1: walk both, allow exactly one skip in the longer string.
+  const [longer, shorter] = diff > 0 ? [a, b] : [b, a];
+  let i = 0;
+  let j = 0;
+  let skips = 0;
+  while (i < longer.length && j < shorter.length) {
+    if (longer[i] !== shorter[j]) {
+      skips++;
+      if (skips > 1) return false;
+      i++;
+    } else {
+      i++;
+      j++;
+    }
+  }
+  return true;
+}
+
+// Cheapest plausible correction: same first letter, |len| ≤ 1, edit distance ≤ 1.
+// First-letter anchor kills most of the scan and most absurd corrections.
+export function findCorrection(term: string, vocab: string[]): string | null {
+  if (term.length < 4) return null;
+  let best: string | null = null;
+  let bestLenDiff = 2;
+  for (const word of vocab) {
+    if (word[0] !== term[0]) continue;
+    const lenDiff = Math.abs(word.length - term.length);
+    if (lenDiff > 1) continue;
+    if (!withinEditDistance1(term, word)) continue;
+    // Prefer smallest length difference, then lexicographically first.
+    if (
+      lenDiff < bestLenDiff ||
+      (lenDiff === bestLenDiff && best !== null && word < best)
+    ) {
+      best = word;
+      bestLenDiff = lenDiff;
+    }
+  }
+  return best;
 }
 
 export function sanitizeContent(input: string) {
