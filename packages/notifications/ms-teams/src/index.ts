@@ -25,6 +25,7 @@ const postCard = async (
 
   const res = await fetch(webhookUrl, {
     method: "POST",
+    redirect: "error",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       type: "message",
