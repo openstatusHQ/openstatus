@@ -17,7 +17,9 @@ import {
   expectAuditRow,
   loadSeededWorkspace,
   makeApiKeyCtx,
+  makeSystemCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
@@ -27,7 +29,7 @@ import { createMonitor } from "../create";
 import { deleteMonitor, deleteMonitors } from "../delete";
 import { getMonitor, listMonitors } from "../list";
 import { updateMonitorNotifiers, updateMonitorTags } from "../relations";
-import { updateMonitorGeneral } from "../update";
+import { bulkUpdateMonitors, updateMonitorGeneral } from "../update";
 
 const TEST_PREFIX = "svc-monitor-test";
 
@@ -576,6 +578,127 @@ describe("updateMonitorGeneral", () => {
         entityId: row.id,
         db: tx,
       });
+    });
+  });
+});
+
+describe("bulkUpdateMonitors", () => {
+  test("system actor pauses active monitors and audits", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const a = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-bulk-a`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+        },
+      });
+      const b = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-bulk-b`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+        },
+      });
+
+      await bulkUpdateMonitors({
+        ctx: {
+          ...makeSystemCtx(teamCtx.workspace, { job: "monitor-auto-pause" }),
+          db: tx,
+        },
+        input: { ids: [a.id, b.id], active: false },
+      });
+
+      const rows = await tx
+        .select()
+        .from(monitor)
+        .where(inArray(monitor.id, [a.id, b.id]))
+        .all();
+      expect(rows).toHaveLength(2);
+      for (const row of rows) {
+        expect(row.active).toBe(false);
+      }
+
+      for (const id of [a.id, b.id]) {
+        const audits = await readAuditLog({
+          workspaceId: teamCtx.workspace.id,
+          entityType: "monitor",
+          entityId: id,
+          db: tx,
+        });
+        const hit = audits.find(
+          (row) =>
+            row.action === "monitor.update" && row.actorType === "system",
+        );
+        expect(hit).toBeDefined();
+        expect(hit?.actorId).toBe("monitor-auto-pause");
+      }
+    });
+  });
+
+  test("ignores ids outside the workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const foreign = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-bulk-foreign`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: true,
+        },
+      });
+
+      await bulkUpdateMonitors({
+        ctx: {
+          ...makeSystemCtx(freeCtx.workspace, { job: "monitor-auto-pause" }),
+          db: tx,
+        },
+        input: { ids: [foreign.id], active: false },
+      });
+
+      const row = await tx
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, foreign.id))
+        .get();
+      expect(row?.active).toBe(true);
+
+      const audits = await readAuditLog({
+        workspaceId: freeCtx.workspace.id,
+        entityType: "monitor",
+        entityId: foreign.id,
+        db: tx,
+      });
+      expect(audits).toHaveLength(0);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        bulkUpdateMonitors({ ctx, input: { ids: [1], active: false } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });
