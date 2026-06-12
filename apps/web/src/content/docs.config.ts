@@ -47,6 +47,10 @@ export const docsNav: DocsNavSection[] = [
         label: "Understanding Private Locations",
       },
       {
+        slug: "concept/status-reports-and-incidents",
+        label: "Understanding Status Reports and Incidents",
+      },
+      {
         slug: "concept/best-practices-status-page",
         label: "Building Trust with Status Pages",
       },
