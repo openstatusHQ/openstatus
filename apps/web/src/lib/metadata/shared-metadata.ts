@@ -44,29 +44,25 @@ export const defaultMetadata: Metadata = {
   openGraph: ogMetadata,
 };
 
-export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
-  const { slug, metadata } = page;
-  const { title, description, category, publishedAt } = metadata;
+// Next merges metadata shallowly per field, so a page must emit its own
+// og/twitter blocks or it inherits the root layout's generic ones wholesale.
+export const getSocialMetadata = (args: {
+  title: string;
+  description: string;
+  url: string;
+  category?: string;
+}): Pick<Metadata, "openGraph" | "twitter"> => {
+  const { title, description, url, category } = args;
 
-  const ogImage = `${BASE_URL}/api/og?title=${encodeURIComponent(
-    title,
-  )}&description=${encodeURIComponent(description)}&category=${encodeURIComponent(category)}`;
-
-  const url = basePath
-    ? `${BASE_URL}/${basePath}/${slug}`
-    : `${BASE_URL}/${slug}`;
+  const searchParams = new URLSearchParams({ title, description });
+  if (category) searchParams.set("category", category);
+  const ogImage = `${BASE_URL}/api/og?${searchParams.toString()}`;
 
   return {
-    title,
-    description,
-    alternates: {
-      canonical: url,
-    },
     openGraph: {
       title,
       description,
-      type: "article",
-      publishedTime: publishedAt.toISOString(),
+      type: "website",
       url,
       images: [
         {
@@ -80,5 +76,35 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
       description,
       images: [ogImage],
     },
+  };
+};
+
+export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
+  const { slug, metadata } = page;
+  const { title, description, category, publishedAt } = metadata;
+
+  const url = basePath
+    ? `${BASE_URL}/${basePath}/${slug}`
+    : `${BASE_URL}/${slug}`;
+
+  const { openGraph, twitter } = getSocialMetadata({
+    title,
+    description,
+    url,
+    category,
+  });
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      ...openGraph,
+      type: "article",
+      publishedTime: publishedAt.toISOString(),
+    },
+    twitter,
   };
 };

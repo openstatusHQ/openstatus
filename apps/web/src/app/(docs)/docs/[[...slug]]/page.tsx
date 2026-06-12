@@ -27,7 +27,11 @@ import { CustomMDX } from "@/content/mdx";
 import { Grid } from "@/content/mdx-components/grid";
 import { extractHeadings } from "@/content/toc";
 import { JsonLd } from "@/lib/metadata/json-ld";
-import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import {
+  BASE_URL,
+  getPageMetadata,
+  getSocialMetadata,
+} from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
@@ -43,7 +47,26 @@ export const dynamicParams = false;
 const EDIT_BASE =
   "https://github.com/openstatusHQ/openstatus/edit/main/apps/web/src/content/pages/docs";
 
+const DOCS_DESCRIPTION =
+  "Learn how to create your status page, monitor your endpoints, and configure notifications with openstatus.";
+
 type Params = { slug?: string[] };
+
+// Hub pages (the /docs root and section landings) have no backing MDX file.
+function getHubMetadata(title: string, href: string): Metadata {
+  const url = `${BASE_URL}${href}`;
+  return {
+    title,
+    description: DOCS_DESCRIPTION,
+    alternates: { canonical: url },
+    ...getSocialMetadata({
+      title,
+      description: DOCS_DESCRIPTION,
+      url,
+      category: "docs",
+    }),
+  };
+}
 
 export function generateStaticParams(): Params[] {
   const { errors, warnings } = validateDocsNav();
@@ -67,30 +90,21 @@ export async function generateMetadata({
 }): Promise<Metadata | undefined> {
   const { slug } = await params;
   if (!slug || slug.length === 0) {
-    return {
-      title: "openstatus documentation",
-      description:
-        "Learn how to create your status page, monitor your endpoints, and configure notifications with openstatus.",
-      alternates: { canonical: `${BASE_URL}/docs` },
-    };
+    return getHubMetadata("openstatus documentation", "/docs");
   }
   const joined = slug.join("/");
   const doc = getDocsPage(joined);
   if (!doc) {
     const node = findDocsNode(docsNavTree(), `/docs/${joined}`);
     if (node?.children?.length) {
-      return {
-        title: `${node.label} — openstatus docs`,
-        alternates: { canonical: `${BASE_URL}/docs/${joined}` },
-      };
+      return getHubMetadata(
+        `${node.label} — openstatus docs`,
+        `/docs/${joined}`,
+      );
     }
     return;
   }
-  return {
-    title: doc.metadata.title,
-    description: doc.metadata.description,
-    alternates: { canonical: `${BASE_URL}${doc.href}` },
-  };
+  return getPageMetadata(doc, "docs");
 }
 
 // A container node (the /docs hub or a section) → one card per child. Same nav
