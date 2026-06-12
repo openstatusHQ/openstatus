@@ -11,22 +11,94 @@ import {
   listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
 } from "@openstatus/services/external-service-incident";
+import {
+  getComponentReportWindows,
+  getServiceReportCountries,
+  getServiceReportDaily,
+  getServiceReportWindows,
+  recordExternalServiceReport,
+} from "@openstatus/services/external-service-report";
 import { OSTinybird } from "@openstatus/tinybird";
+import { redis } from "@openstatus/upstash";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../env";
+import { toTRPCError } from "../service-adapter";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import {
+  REPORT_THRESHOLD,
+  REPORT_WINDOW_MS,
+  computeEffectiveStatus,
+} from "./effective-status";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const DEFAULT_HISTORY_DAYS = 45;
 const INCIDENTS_LIMIT = 5;
+const REPORT_COUNTRIES_LIMIT = 5;
+const REPORT_COOLDOWN_SECONDS = REPORT_WINDOW_MS / 1000;
+const REPORT_RATELIMIT_TIMEOUT_MS = 1000;
+
+function getClientIp(headers: Headers | undefined): string {
+  if (!headers) return "";
+  const realIp = headers.get("x-real-ip");
+  if (realIp) return realIp;
+  const forwardedFor = headers.get("x-forwarded-for");
+  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+  return "";
+}
+
+async function hashReporter(ip: string): Promise<string> {
+  const salt = env.EXTERNAL_REPORT_SALT ?? "";
+  const data = new TextEncoder().encode(`${salt}:${ip}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function reportAlreadyLimited(key: string): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const work = (async () => {
+    const count = await redis.incr(key);
+    if (count === 1) await redis.expire(key, REPORT_COOLDOWN_SECONDS);
+    return count > 1;
+  })();
+  work.catch(() => {});
+  try {
+    return await Promise.race([
+      work,
+      new Promise<boolean>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("redis timeout")),
+          REPORT_RATELIMIT_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch (err) {
+    console.warn(
+      `[external-service report] rate-limit skipped: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return false;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 // Logging here uses `console.*`, not `@logtape/logtape`: this router runs on the
 // Next.js Edge runtime and `@openstatus/api` (like the edge-safe `services`
 // package) deliberately takes no logtape dependency. The logtape-based logger is
 // for Node contexts such as the `apps/workflows` cron. Matches every sibling router.
+async function safeRows<T>(promise: Promise<T[]>, label: string): Promise<T[]> {
+  try {
+    return await promise;
+  } catch (err) {
+    console.error(`[external-service] ${label} failed, returning empty:`, err);
+    return [];
+  }
+}
+
 async function safeData<T>(
   promise: Promise<{ data: T[] }>,
   label: string,
@@ -48,6 +120,31 @@ const gridItemSchema = z.object({
   indicator: z.string(),
   status: z.string(),
   statusMessage: z.string(),
+  escalated: z.boolean(),
+  reporters: z.number(),
+});
+
+const effectiveSchema = z.object({
+  indicator: z.string(),
+  status: z.string(),
+  escalated: z.boolean(),
+});
+
+const reportsSummarySchema = z.object({
+  window: z.object({
+    reporters: z.number(),
+    countries: z.number(),
+    total: z.number(),
+  }),
+  threshold: z.number(),
+  daily: z.array(
+    z.object({
+      day: z.string(),
+      reporters: z.number(),
+      total: z.number(),
+    }),
+  ),
+  topCountries: z.array(z.object({ country: z.string(), total: z.number() })),
 });
 
 const detailServiceSchema = z.object({
@@ -113,6 +210,8 @@ const componentDetailSchema = z.object({
       status: z.string(),
       lastFetchedAt: z.number(),
       stale: z.boolean(),
+      escalated: z.boolean(),
+      reporters: z.number(),
     })
     .nullable(),
   history: z.array(historyRowSchema),
@@ -155,19 +254,40 @@ export const externalServiceRouter = createTRPCRouter({
       safeData(tb.externalStatusLatest({}), "externalStatusLatest (grid)"),
     ]);
 
+    const reportRows = await safeRows(
+      getServiceReportWindows({
+        serviceIds: services.map((s) => s.id),
+        since: new Date(Date.now() - REPORT_WINDOW_MS),
+      }),
+      "getServiceReportWindows (grid)",
+    );
+
     const byId = new Map<string, (typeof latestRows)[number]>();
     for (const row of latestRows) byId.set(row.id, row);
+    const reportersByServiceId = new Map<number, number>();
+    for (const row of reportRows) {
+      reportersByServiceId.set(row.externalServiceId, row.reporters);
+    }
 
     return services.map((s) => {
       const snap = byId.get(s.slug);
+      const reporters = reportersByServiceId.get(s.id) ?? 0;
+      const effective = computeEffectiveStatus({
+        providerIndicator: snap?.indicator ?? "",
+        providerStatus: snap?.status ?? "",
+        reporters,
+        threshold: REPORT_THRESHOLD,
+      });
       return {
         slug: s.slug,
         name: s.name,
         url: s.url,
         aliases: Array.isArray(s.aliases) ? s.aliases : [],
-        indicator: snap?.indicator ?? "",
-        status: snap?.status ?? "",
+        indicator: effective.indicator,
+        status: effective.status,
         statusMessage: snap?.status_message ?? "Status unavailable",
+        escalated: effective.escalated,
+        reporters,
       };
     });
   }),
@@ -184,6 +304,8 @@ export const externalServiceRouter = createTRPCRouter({
         service: detailServiceSchema,
         latest: latestSchema.nullable(),
         history: z.array(historyRowSchema),
+        effective: effectiveSchema,
+        reports: z.object({ reporters: z.number(), threshold: z.number() }),
       }),
     )
     .query(async ({ input }) => {
@@ -198,8 +320,9 @@ export const externalServiceRouter = createTRPCRouter({
       const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
       const slugChain = [service.slug, ...aliasSlugs];
       const days = input.days ?? DEFAULT_HISTORY_DAYS;
+      const since = new Date(Date.now() - REPORT_WINDOW_MS);
 
-      const [latestRows, historyRows] = await Promise.all([
+      const [latestRows, historyRows, reportRows] = await Promise.all([
         safeData(
           tb.externalStatusLatest({ ids: slugChain }),
           "externalStatusLatest",
@@ -207,6 +330,10 @@ export const externalServiceRouter = createTRPCRouter({
         safeData(
           tb.externalStatusHistory({ ids: slugChain, days }),
           "externalStatusHistory",
+        ),
+        safeRows(
+          getServiceReportWindows({ serviceIds: [service.id], since }),
+          "getServiceReportWindows (detail)",
         ),
       ]);
 
@@ -224,6 +351,15 @@ export const externalServiceRouter = createTRPCRouter({
           }
         : null;
 
+      const reporters = reportRows[0]?.reporters ?? 0;
+      const threshold = REPORT_THRESHOLD;
+      const effective = computeEffectiveStatus({
+        providerIndicator: latest?.indicator ?? "",
+        providerStatus: latest?.status ?? "",
+        reporters,
+        threshold,
+      });
+
       return {
         service: {
           slug: service.slug,
@@ -235,6 +371,8 @@ export const externalServiceRouter = createTRPCRouter({
         },
         latest,
         history: historyRows.map(toHistoryRow),
+        effective,
+        reports: { reporters, threshold },
       };
     }),
 
@@ -360,7 +498,8 @@ export const externalServiceRouter = createTRPCRouter({
         if (!service || !component) return empty;
 
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
-        const [historyRows, incidents] = await Promise.all([
+        const since = new Date(Date.now() - REPORT_WINDOW_MS);
+        const [historyRows, incidents, reportRows] = await Promise.all([
           safeData(
             tb.externalStatusComponentHistory({
               component_ids: [String(component.id)],
@@ -373,7 +512,21 @@ export const externalServiceRouter = createTRPCRouter({
             upstreamComponentId: component.upstreamComponentId,
             limit: INCIDENTS_LIMIT,
           }),
+          safeRows(
+            getComponentReportWindows({ serviceId: service.id, since }),
+            "getComponentReportWindows (component)",
+          ),
         ]);
+
+        const reporters =
+          reportRows.find((r) => r.componentId === component.id)?.reporters ??
+          0;
+        const effective = computeEffectiveStatus({
+          providerIndicator: component.indicator,
+          providerStatus: component.status,
+          reporters,
+          threshold: REPORT_THRESHOLD,
+        });
 
         return {
           found: true,
@@ -388,10 +541,12 @@ export const externalServiceRouter = createTRPCRouter({
             name: component.name,
             description: component.description,
             groupName: component.groupName,
-            indicator: component.indicator,
-            status: component.status,
+            indicator: effective.indicator,
+            status: effective.status,
             lastFetchedAt: component.lastFetchedAt ?? 0,
             stale: component.stale,
+            escalated: effective.escalated,
+            reporters,
           },
           history: historyRows.map(toHistoryRow),
           incidents: incidents.map(toIncidentDTO),
@@ -403,5 +558,107 @@ export const externalServiceRouter = createTRPCRouter({
         );
         return empty;
       }
+    }),
+
+  report: publicProcedure
+    .input(
+      z.object({
+        slug: z.string(),
+        componentSlug: z.string().nullish(),
+      }),
+    )
+    .output(z.object({ ok: z.boolean(), alreadyReported: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const ip = getClientIp(ctx.req?.headers);
+      if (!ip) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Could not determine the reporter's origin",
+        });
+      }
+
+      const reporterHash = await hashReporter(ip);
+      const limited = await reportAlreadyLimited(
+        `extreport:${input.slug}:${reporterHash}`,
+      );
+      if (limited) {
+        return { ok: true, alreadyReported: true };
+      }
+
+      try {
+        await recordExternalServiceReport({
+          input: {
+            slug: input.slug,
+            componentSlug: input.componentSlug ?? undefined,
+            reporterHash,
+            country: ctx.req?.headers.get("x-vercel-ip-country") ?? "",
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+
+      return { ok: true, alreadyReported: false };
+    }),
+
+  reports: publicProcedure
+    .input(
+      z.object({
+        slug: z.string(),
+        days: z.number().int().min(1).max(90).optional(),
+      }),
+    )
+    .output(reportsSummarySchema)
+    .query(async ({ input }) => {
+      const service = await getExternalServiceBySlug({ slug: input.slug });
+      if (!service) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "External service not found",
+        });
+      }
+
+      const days = input.days ?? DEFAULT_HISTORY_DAYS;
+      const since = new Date(Date.now() - REPORT_WINDOW_MS);
+      const dailySince = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const threshold = REPORT_THRESHOLD;
+
+      const [windowRows, dailyRows, countryRows] = await Promise.all([
+        safeRows(
+          getServiceReportWindows({ serviceIds: [service.id], since }),
+          "getServiceReportWindows (reports)",
+        ),
+        safeRows(
+          getServiceReportDaily({ serviceId: service.id, since: dailySince }),
+          "getServiceReportDaily",
+        ),
+        safeRows(
+          getServiceReportCountries({
+            serviceId: service.id,
+            since,
+            limit: REPORT_COUNTRIES_LIMIT,
+          }),
+          "getServiceReportCountries",
+        ),
+      ]);
+
+      const win = windowRows[0];
+      return {
+        window: {
+          reporters: win?.reporters ?? 0,
+          countries: win?.countries ?? 0,
+          total: win?.total ?? 0,
+        },
+        threshold,
+        daily: dailyRows.map((r) => ({
+          day: r.day,
+          reporters: r.reporters,
+          total: r.total,
+        })),
+        topCountries: countryRows.map((r) => ({
+          country: r.country,
+          total: r.total,
+        })),
+      };
     }),
 });

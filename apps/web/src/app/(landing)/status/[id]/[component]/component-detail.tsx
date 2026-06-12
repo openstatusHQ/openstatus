@@ -1,5 +1,7 @@
 "use client";
 
+import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,
@@ -19,6 +21,7 @@ import { api } from "@/trpc/rq-client";
 import { ExternalServicePill } from "../../external-service-pill";
 import { formatRelative } from "../../utils";
 import { HistoryBars } from "../history-bars";
+import { ReportIssue } from "../report-issue";
 
 function answerFor(args: {
   fullName: string;
@@ -28,7 +31,7 @@ function answerFor(args: {
 }): string {
   const { fullName, indicator, status, stale } = args;
   if (stale) {
-    return `We don't have live data for ${fullName} right now — check the official status page below.`;
+    return `We don't have live data for ${fullName} right now. Check the official status page below.`;
   }
   if (status === "under_maintenance") {
     return `${fullName} is currently undergoing scheduled maintenance.`;
@@ -41,9 +44,9 @@ function answerFor(args: {
     case "major":
       return `Yes, ${fullName} is experiencing a partial outage right now.`;
     case "critical":
-      return `Yes, ${fullName} is down — a major outage is currently affecting it.`;
+      return `Yes, ${fullName} is down. A major outage is currently affecting it.`;
     default:
-      return `The current status of ${fullName} is unknown — check the official status page below.`;
+      return `The current status of ${fullName} is unknown. Check the official status page below.`;
   }
 }
 
@@ -107,7 +110,7 @@ function OtherComponents({
   serviceName: string;
   currentSlug: string;
 }) {
-  // days:1 — this sibling nav only uses slug/name, so fetch the minimum history.
+  // days:1 keeps history minimal; this sibling nav only uses slug/name.
   const { data } = api.externalService.components.useQuery({
     slug: serviceSlug,
     days: 1,
@@ -187,6 +190,7 @@ export function ComponentDetail({
           indicator={component.indicator}
           status={component.status}
           statusMessage={component.description ?? undefined}
+          escalated={component.escalated}
         />
         {component.lastFetchedAt > 0 ? (
           <span className="text-muted-foreground text-sm">
@@ -208,10 +212,25 @@ export function ComponentDetail({
         </a>
       </div>
 
+      <div className="not-prose mt-6 flex flex-col gap-2">
+        <ReportIssue
+          slug={service.slug}
+          name={`${service.name} ${component.name}`}
+          componentSlug={component.slug}
+        />
+        {component.reporters > 0 ? (
+          <p className="text-muted-foreground text-sm">
+            {component.reporters} user{" "}
+            {component.reporters === 1 ? "report" : "reports"} for{" "}
+            {component.name} in the last {REPORT_WINDOW_MINUTES} minutes.
+          </p>
+        ) : null}
+      </div>
+
       {component.description ? <p>{component.description}</p> : null}
 
       <h2>
-        {component.name} uptime — last {days} days
+        {component.name} uptime over the last {days} days
       </h2>
       <div className="not-prose">
         <HistoryBars daily={history} days={days} />
