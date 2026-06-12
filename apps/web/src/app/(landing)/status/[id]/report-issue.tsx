@@ -4,13 +4,17 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { useState } from "react";
 
 import { api } from "@/trpc/rq-client";
+
+import { buildSections } from "../external-service-components";
 
 const WHOLE_SERVICE = "all";
 
@@ -54,6 +58,7 @@ export function ReportIssue({
     allowComponentSelect && components.data?.supported
       ? components.data.components
       : [];
+  const sections = buildSections(componentOptions);
 
   if (mutation.isSuccess) {
     return (
@@ -91,15 +96,30 @@ export function ReportIssue({
               <SelectItem value={WHOLE_SERVICE} className="rounded-none">
                 Whole service
               </SelectItem>
-              {componentOptions.map((c) => (
-                <SelectItem
-                  key={c.slug}
-                  value={c.slug}
-                  className="rounded-none"
-                >
-                  {c.name}
-                </SelectItem>
-              ))}
+              {sections.length === 1 && sections[0].name === null
+                ? sections[0].components.map((c) => (
+                    <SelectItem
+                      key={c.slug}
+                      value={c.slug}
+                      className="rounded-none"
+                    >
+                      {c.name}
+                    </SelectItem>
+                  ))
+                : sections.map((section) => (
+                    <SelectGroup key={section.key}>
+                      <SelectLabel>{section.name ?? "Other"}</SelectLabel>
+                      {section.components.map((c) => (
+                        <SelectItem
+                          key={c.slug}
+                          value={c.slug}
+                          className="rounded-none"
+                        >
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
             </SelectContent>
           </Select>
         ) : null}
