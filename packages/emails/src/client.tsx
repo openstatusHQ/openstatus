@@ -86,7 +86,8 @@ export class EmailClient {
   }): Promise<void> {
     const html = await render(opts.react);
     if (this.type === "smtp") {
-      await this.smtpTransporter?.sendMail({
+      if (!this.smtpTransporter) throw new Error("SMTP transporter not initialized");
+      await this.smtpTransporter.sendMail({
         from: env.SMTP_FROM || opts.from,
         to: opts.to.join(", "),
         subject: opts.subject,
@@ -94,7 +95,8 @@ export class EmailClient {
         replyTo: opts.reply_to,
       });
     } else {
-      await this.client?.emails.send({
+      if (!this.client) throw new Error("Resend client not initialized");
+      await this.client.emails.send({
         from: opts.from,
         to: opts.to,
         subject: opts.subject,
@@ -115,8 +117,10 @@ export class EmailClient {
     batchKey?: string,
   ): Promise<void> {
     if (this.type === "smtp") {
+      if (!this.smtpTransporter) throw new Error("SMTP transporter not initialized");
+      const transporter = this.smtpTransporter;
       const sendEmailPromises = opts.map((email) =>
-        this.smtpTransporter?.sendMail({
+        transporter.sendMail({
           from: env.SMTP_FROM || email.from,
           to: email.to,
           subject: email.subject,
@@ -126,9 +130,11 @@ export class EmailClient {
       );
       await Promise.all(sendEmailPromises);
     } else {
+      if (!this.client) throw new Error("Resend client not initialized");
+      const client = this.client;
       const chunks = chunk(opts, 100); // Resend batch limit
       for (const batch of chunks) {
-        const response = await this.client?.batch.send(
+        const response = await client.batch.send(
           batch.map((email) => ({
             from: email.from,
             to: email.to,
@@ -186,8 +192,8 @@ export class EmailClient {
       );
       console.log(`Sent follow up emails to ${req.to}`);
       return;
-    }catch(err){
-      if(this.type === "resend" && err instanceof Error && err.name === "rate_limit_exceeded"){
+    } catch (err) {
+      if (this.type === "resend" && err instanceof Error && err.name === "rate_limit_exceeded") {
         throw err;
       }
       console.error(`Error sending follow up emails to ${req.to}: ${err}`);
