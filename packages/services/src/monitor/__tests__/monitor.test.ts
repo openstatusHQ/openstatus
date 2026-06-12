@@ -640,6 +640,7 @@ describe("bulkUpdateMonitors", () => {
           (row) =>
             row.action === "monitor.update" && row.actorType === "system",
         );
+        expect(hit).toBeDefined();
         expect(hit?.actorId).toBe("monitor-auto-pause");
       }
     });
