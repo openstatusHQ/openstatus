@@ -126,7 +126,9 @@ type Section = {
   worst: number;
 };
 
-function buildSections(components: ExternalServiceComponentItem[]): Section[] {
+export function buildSections(
+  components: ExternalServiceComponentItem[],
+): Section[] {
   const byGroup = new Map<string | null, ExternalServiceComponentItem[]>();
   for (const c of components) {
     const key = c.groupName ?? null;
