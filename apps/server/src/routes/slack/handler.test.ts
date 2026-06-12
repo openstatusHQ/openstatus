@@ -3,6 +3,8 @@ import crypto from "node:crypto";
 
 import { Hono } from "hono";
 
+import * as agentModule from "./agent";
+
 const SIGNING_SECRET = "test-signing-secret";
 
 process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
@@ -64,6 +66,7 @@ let runAgentOverride:
   | null = null;
 
 mock.module("./agent", () => ({
+  ...agentModule,
   runAgent: () => {
     if (runAgentOverride) return runAgentOverride();
     return Promise.resolve({
