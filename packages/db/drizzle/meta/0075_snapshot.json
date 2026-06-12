@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6f780016-2ffd-4f40-be1a-d141e20d0438",
+  "id": "38652d73-0c5d-4a06-8dda-e5fe7f7f008a",
   "prevId": "ee96c648-1fc8-425a-8d84-a201788f265a",
   "tables": {
     "workspace": {
@@ -3454,6 +3454,88 @@
           "value": "\"page_component\".\"type\" = 'monitor' AND \"page_component\".\"monitor_id\" IS NOT NULL OR \"page_component\".\"type\" = 'static' AND \"page_component\".\"monitor_id\" IS NULL"
         }
       }
+    },
+    "status_report_update_to_page_component": {
+      "name": "status_report_update_to_page_component",
+      "columns": {
+        "status_report_update_id": {
+          "name": "status_report_update_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_component_id": {
+          "name": "page_component_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "impact": {
+          "name": "impact",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(strftime('%s', 'now'))"
+        }
+      },
+      "indexes": {
+        "status_report_update_to_page_component_page_component_id_idx": {
+          "name": "status_report_update_to_page_component_page_component_id_idx",
+          "columns": [
+            "page_component_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "status_report_update_to_page_component_status_report_update_id_status_report_update_id_fk": {
+          "name": "status_report_update_to_page_component_status_report_update_id_status_report_update_id_fk",
+          "tableFrom": "status_report_update_to_page_component",
+          "tableTo": "status_report_update",
+          "columnsFrom": [
+            "status_report_update_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "status_report_update_to_page_component_page_component_id_page_component_id_fk": {
+          "name": "status_report_update_to_page_component_page_component_id_page_component_id_fk",
+          "tableFrom": "status_report_update_to_page_component",
+          "tableTo": "page_component",
+          "columnsFrom": [
+            "page_component_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "status_report_update_to_page_component_status_report_update_id_page_component_id_pk": {
+          "columns": [
+            "status_report_update_id",
+            "page_component_id"
+          ],
+          "name": "status_report_update_to_page_component_status_report_update_id_page_component_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "status_report_to_page_component": {
       "name": "status_report_to_page_component",
