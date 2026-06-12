@@ -64,6 +64,19 @@ describe("search_docs", () => {
     expect(searchDocsTool.outputSchema.safeParse(result).success).toBe(true);
   });
 
+  test("returns error shape when fetch throws", async () => {
+    globalThis.fetch = (async () => {
+      throw new Error("ECONNREFUSED");
+    }) as unknown as typeof fetch;
+    const result = await searchDocsTool.run({
+      ctx,
+      input: { query: "monitor", type: "docs" },
+    });
+    expect(result.results).toEqual([]);
+    expect(result.error).toBe("search unavailable (network error)");
+    expect(searchDocsTool.outputSchema.safeParse(result).success).toBe(true);
+  });
+
   test("caps results at 8", async () => {
     mockFetch(
       Response.json(Array.from({ length: 12 }, (_, i) => searchFixture(i))),
@@ -111,6 +124,19 @@ describe("get_doc_page", () => {
     });
     expect(result.markdown).toBe("");
     expect(result.error).toBe("page not found (HTTP 404)");
+  });
+
+  test("returns error shape when fetch throws", async () => {
+    globalThis.fetch = (async () => {
+      throw new Error("ECONNREFUSED");
+    }) as unknown as typeof fetch;
+    const result = await getDocPageTool.run({
+      ctx,
+      input: { path: "docs/concept/page-1" },
+    });
+    expect(result.markdown).toBe("");
+    expect(result.error).toBe("page unavailable (network error)");
+    expect(getDocPageTool.outputSchema.safeParse(result).success).toBe(true);
   });
 
   test("rejects non-allowlisted paths without fetching", async () => {

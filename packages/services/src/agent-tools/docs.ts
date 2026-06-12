@@ -7,6 +7,7 @@ const WEB_BASE_URL =
   process.env.OPENSTATUS_WEB_BASE_URL ?? "https://www.openstatus.dev";
 
 const MAX_RESULTS = 8;
+const FETCH_TIMEOUT_MS = 10_000;
 // ≈6k tokens — the free tier runs Haiku; a clipped page beats a blown context.
 const MAX_MARKDOWN_CHARS = 24_000;
 
@@ -43,45 +44,56 @@ export const searchDocsTool: AgentTool<
   destructive: false,
   inputSchema: SearchDocsInput,
   outputSchema: SearchDocsOutput,
+  // A docs lookup failure should degrade the answer, not abort the chat turn.
   async run({ input }) {
-    const { query, type } = input;
-    const res = await fetch(
-      `${WEB_BASE_URL}/api/search?p=${type}&q=${encodeURIComponent(query)}`,
-    );
-    // A docs lookup failure should degrade the answer, not abort the chat turn.
-    if (!res.ok) {
-      return { results: [], error: `search unavailable (HTTP ${res.status})` };
-    }
-    const body = (await res.json()) as unknown;
-    if (!Array.isArray(body)) {
-      return { results: [], error: "search unavailable (unexpected response)" };
-    }
-    // Pick fields defensively — the web app's response shape can drift.
-    const results = body
-      .flatMap((el) => {
-        const item = el as {
-          metadata?: { title?: unknown; description?: unknown };
-          content?: unknown;
-          href?: unknown;
+    try {
+      const { query, type } = input;
+      const res = await fetch(
+        `${WEB_BASE_URL}/api/search?p=${type}&q=${encodeURIComponent(query)}`,
+        { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
+      );
+      if (!res.ok) {
+        return {
+          results: [],
+          error: `search unavailable (HTTP ${res.status})`,
         };
-        const title = item.metadata?.title;
-        const href = item.href;
-        if (typeof title !== "string" || typeof href !== "string") return [];
-        return [
-          {
-            title,
-            description:
-              typeof item.metadata?.description === "string"
-                ? item.metadata.description
-                : undefined,
-            snippet: typeof item.content === "string" ? item.content : "",
-            url: `${WEB_BASE_URL}${href}`,
-            path: href.split(/[?#]/)[0].replace(/^\//, ""),
-          },
-        ];
-      })
-      .slice(0, MAX_RESULTS);
-    return { results };
+      }
+      const body = (await res.json()) as unknown;
+      if (!Array.isArray(body)) {
+        return {
+          results: [],
+          error: "search unavailable (unexpected response)",
+        };
+      }
+      // Pick fields defensively — the web app's response shape can drift.
+      const results = body
+        .flatMap((el) => {
+          const item = el as {
+            metadata?: { title?: unknown; description?: unknown };
+            content?: unknown;
+            href?: unknown;
+          };
+          const title = item.metadata?.title;
+          const href = item.href;
+          if (typeof title !== "string" || typeof href !== "string") return [];
+          return [
+            {
+              title,
+              description:
+                typeof item.metadata?.description === "string"
+                  ? item.metadata.description
+                  : undefined,
+              snippet: typeof item.content === "string" ? item.content : "",
+              url: `${WEB_BASE_URL}${href}`,
+              path: href.split(/[?#]/)[0].replace(/^\//, ""),
+            },
+          ];
+        })
+        .slice(0, MAX_RESULTS);
+      return { results };
+    } catch {
+      return { results: [], error: "search unavailable (network error)" };
+    }
   },
 };
 
@@ -120,25 +132,36 @@ export const getDocPageTool: AgentTool<
         error: "path must start with docs/, guides/ or changelog/",
       };
     }
-    // No Accept: text/markdown header — the site middleware rewrites any
-    // request carrying it to /api/markdown/<path>, doubling the prefix → 404.
-    const res = await fetch(`${WEB_BASE_URL}/api/markdown/${path}`);
-    if (!res.ok) {
+    try {
+      // No Accept: text/markdown header — the site middleware rewrites any
+      // request carrying it to /api/markdown/<path>, doubling the prefix → 404.
+      const res = await fetch(`${WEB_BASE_URL}/api/markdown/${path}`, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (!res.ok) {
+        return {
+          url,
+          markdown: "",
+          truncated: false,
+          error: `page not found (HTTP ${res.status})`,
+        };
+      }
+      const text = await res.text();
+      if (text.length <= MAX_MARKDOWN_CHARS) {
+        return { url, markdown: text, truncated: false };
+      }
+      return {
+        url,
+        markdown: `${text.slice(0, MAX_MARKDOWN_CHARS)}\n\n[truncated — content continues at ${url}]`,
+        truncated: true,
+      };
+    } catch {
       return {
         url,
         markdown: "",
         truncated: false,
-        error: `page not found (HTTP ${res.status})`,
+        error: "page unavailable (network error)",
       };
     }
-    const text = await res.text();
-    if (text.length <= MAX_MARKDOWN_CHARS) {
-      return { url, markdown: text, truncated: false };
-    }
-    return {
-      url,
-      markdown: `${text.slice(0, MAX_MARKDOWN_CHARS)}\n\n[truncated — content continues at ${url}]`,
-      truncated: true,
-    };
   },
 };
