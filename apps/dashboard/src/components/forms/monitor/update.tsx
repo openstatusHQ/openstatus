@@ -2,7 +2,9 @@
 
 import { deserialize } from "@openstatus/assertions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
@@ -40,36 +42,85 @@ export function FormMonitorUpdate() {
   const updateRetryMutation = useMutation(
     trpc.monitor.updateRetry.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
   const updateOtelMutation = useMutation(
     trpc.monitor.updateOtel.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
   const updatePublicMutation = useMutation(
     trpc.monitor.updatePublic.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
   const updateSchedulingRegionsMutation = useMutation(
     trpc.monitor.updateSchedulingRegions.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
   const updateResponseTimeMutation = useMutation(
     trpc.monitor.updateResponseTime.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
   const updateTagsMutation = useMutation(
     trpc.monitor.updateTags.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
   const updateFollowRedirectsMutation = useMutation(
     trpc.monitor.updateFollowRedirects.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
 
@@ -83,8 +134,11 @@ export function FormMonitorUpdate() {
         refetch();
       },
       onError: (err) => {
-        // TODO: open dialog
-        console.error(err);
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
       },
     }),
   );
@@ -92,6 +146,13 @@ export function FormMonitorUpdate() {
   const updateNotifiersMutation = useMutation(
     trpc.monitor.updateNotifiers.mutationOptions({
       onSuccess: () => refetch(),
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to update monitor");
+        }
+      },
     }),
   );
 
@@ -102,6 +163,13 @@ export function FormMonitorUpdate() {
           queryKey: trpc.monitor.list.queryKey(),
         });
         router.push("/monitors");
+      },
+      onError: (err) => {
+        if (isTRPCClientError(err)) {
+          toast.error(err.message);
+        } else {
+          toast.error("Failed to delete monitor");
+        }
       },
     }),
   );
