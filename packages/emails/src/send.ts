@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import type React from "react";
 import { render } from "react-email";
 import { Resend } from "resend";
-
+import { chunk } from "./utils";
 import { env } from "./env";
 
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
@@ -40,13 +40,6 @@ export type EmailHtml = {
   reply_to?: string;
 };
 
-function chunk<T>(array: T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    result.push(array.slice(i, i + size));
-  }
-  return result;
-}
 
 export const sendEmail = async (email: Emails) => {
   if (process.env.NODE_ENV !== "production") return;
@@ -72,20 +65,20 @@ export const sendEmail = async (email: Emails) => {
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
   if (process.env.NODE_ENV !== "production") return;
-  if(smtpTransporter){
-    const chunks = chunk(emails, 100); // Send in batches of 100
-    for (const batch of chunks) {
-      await Promise.all(batch.map((email) =>
-        smtpTransporter.sendMail({
-          from: env.SMTP_FROM || email.from,
-          to: email.to,
-          subject: email.subject,
-          html: email.html,
-          replyTo: email.reply_to,
-        })
-      ));
-    }
-  }else if (resendClient){
+  if (smtpTransporter) {
+  const chunks = chunk(emails, 10); // 10 concurrent at a time
+  for (const batch of chunks) {
+    await Promise.all(batch.map((email) =>
+      smtpTransporter.sendMail({
+        from: env.SMTP_FROM || email.from,
+        to: email.to,
+        subject: email.subject,
+        html: email.html,
+        replyTo: email.reply_to,
+      })
+    ));
+  }
+}else if (resendClient){
     await resendClient.batch.send(emails)
   }
 };

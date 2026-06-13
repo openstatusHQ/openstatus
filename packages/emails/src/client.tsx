@@ -18,15 +18,7 @@ import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
 import { env } from "./env";
-
-// split an array into chunks of a given size.
-function chunk<T>(array: T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    result.push(array.slice(i, i + size));
-  }
-  return result;
-}
+import { chunk } from "./utils";
 
 export type EmailClientOptions = "smtp" | "resend";
 
