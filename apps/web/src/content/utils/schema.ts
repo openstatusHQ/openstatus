@@ -18,6 +18,18 @@ const faqItemSchema = z.object({
   answer: z.string(),
 });
 
+// Per-page SEO/social overrides. Each falls back to its top-level twin
+// (seo.title ?? title, seo.description ?? description); the rest are opt-in.
+const seoSchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+    ogImage: z.string(),
+    noindex: z.boolean(),
+    canonical: z.string(),
+  })
+  .partial();
+
 export const metadataSchema = z.object({
   title: z.string(),
   publishedAt: z.coerce.date(),
@@ -25,12 +37,14 @@ export const metadataSchema = z.object({
   category: z.string(),
   author: z.string(),
   image: z.string().optional(),
+  seo: seoSchema.optional(),
   // Structured data fields
   howto: howtoSchema.optional(),
   faq: z.array(faqItemSchema).optional(),
 });
 
 export type Metadata = z.infer<typeof metadataSchema>;
+export type SeoData = z.infer<typeof seoSchema>;
 export type HowToStep = z.infer<typeof howtoStepSchema>;
 export type HowToData = z.infer<typeof howtoSchema>;
 export type FAQItem = z.infer<typeof faqItemSchema>;
