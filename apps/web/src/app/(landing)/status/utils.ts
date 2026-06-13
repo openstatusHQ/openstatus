@@ -17,7 +17,7 @@ export function isStale(fetchedAtMs: number): boolean {
   return Date.now() - fetchedAtMs > STALE_THRESHOLD_MS;
 }
 
-// Natural-language answer to "Is <name> down?", used both as on-page lead copy
+// Natural-language answer to "Is <name> down?" — used both as on-page lead copy
 // and as the FAQPage answer in JSON-LD. Mirrors getPillStyle semantics.
 export function getStatusAnswer(args: {
   name: string;
@@ -27,7 +27,7 @@ export function getStatusAnswer(args: {
 }): string {
   const { name, indicator, status, hasLiveData } = args;
   if (!hasLiveData) {
-    return `We don't have live data for ${name} right now. Check the official ${name} status page below.`;
+    return `We don't have live data for ${name} right now — check the official ${name} status page below.`;
   }
   if (status === "under_maintenance") {
     return `${name} is currently undergoing scheduled maintenance.`;
@@ -40,8 +40,8 @@ export function getStatusAnswer(args: {
     case "major":
       return `Yes, ${name} is experiencing a partial outage right now.`;
     case "critical":
-      return `Yes, ${name} is down. A major outage is currently affecting ${name}.`;
+      return `Yes, ${name} is down — a major outage is currently affecting ${name}.`;
     default:
-      return `The current status of ${name} is unknown. Check the official ${name} status page below.`;
+      return `The current status of ${name} is unknown — check the official ${name} status page below.`;
   }
 }

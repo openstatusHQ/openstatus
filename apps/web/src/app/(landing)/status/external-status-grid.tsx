@@ -43,7 +43,6 @@ export function ExternalStatusGrid() {
               indicator={service.indicator}
               status={service.status}
               statusMessage={service.statusMessage || undefined}
-              escalated={service.escalated}
               className="self-start"
             />
           </ContentBoxLink>

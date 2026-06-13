@@ -2,18 +2,10 @@ import type {
   Incident,
   Maintenance,
   PageComponent,
-  PageComponentImpact,
   PageComponentType,
   PageComponentWithMonitorRelation,
   StatusReport,
   StatusReportUpdate,
-} from "@openstatus/db/src/schema";
-import {
-  LEGACY_IMPACT_WEIGHT,
-  currentImpactsFromUpdates,
-  impactToStatusType,
-  impactUptimeWeight,
-  worstImpact,
 } from "@openstatus/db/src/schema";
 
 /**
@@ -124,19 +116,6 @@ export function fillStatusDataFor45DaysNoop({
   return fillStatusDataFor45Days(data, "1", lookbackPeriod);
 }
 
-export type ImpactInterval = {
-  from: Date;
-  to: Date | null; // null = still active
-  impact: PageComponentImpact;
-};
-
-export type StatusReportUpdateWithImpactRows = StatusReportUpdate & {
-  statusReportUpdateToPageComponents?: {
-    pageComponentId: number;
-    impact: PageComponentImpact;
-  }[];
-};
-
 type Event = {
   id: number;
   name: string;
@@ -144,112 +123,7 @@ type Event = {
   to: Date | null;
   type: "maintenance" | "incident" | "report";
   status: "success" | "degraded" | "error" | "info";
-  // absent ⇒ legacy report (no impact rows): orange bar, full-duration downtime
-  impactIntervals?: ImpactInterval[];
 };
-
-// per component: change points across the report's updates
-function buildComponentImpactIntervals(
-  updates: StatusReportUpdateWithImpactRows[],
-): Map<number, ImpactInterval[]> {
-  // closing the last open interval relies on ascending order; don't trust callers
-  const sorted = [...updates].sort(
-    (a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id,
-  );
-  const byComponent = new Map<number, ImpactInterval[]>();
-  for (const update of sorted) {
-    for (const row of update.statusReportUpdateToPageComponents ?? []) {
-      const intervals = byComponent.get(row.pageComponentId) ?? [];
-      const last = intervals[intervals.length - 1];
-      if (last && last.to === null) last.to = update.date;
-      intervals.push({ from: update.date, to: null, impact: row.impact });
-      byComponent.set(row.pageComponentId, intervals);
-    }
-  }
-  return byComponent;
-}
-
-// page-level projection: worst impact across components per time slice
-function mergeWorstImpactIntervals(
-  perComponent: ImpactInterval[][],
-): ImpactInterval[] {
-  const all = perComponent.flat();
-  if (all.length === 0) return [];
-
-  const boundaries = [...new Set(all.map((iv) => iv.from.getTime()))].sort(
-    (a, b) => a - b,
-  );
-
-  const merged: ImpactInterval[] = [];
-  for (let i = 0; i < boundaries.length; i++) {
-    const sliceStart = boundaries[i];
-    const sliceEnd = i + 1 < boundaries.length ? boundaries[i + 1] : null;
-    const active = all.filter(
-      (iv) =>
-        iv.from.getTime() <= sliceStart &&
-        (iv.to === null || iv.to.getTime() > sliceStart),
-    );
-    if (active.length === 0) continue;
-    const impact = worstImpact(active.map((iv) => iv.impact));
-    const last = merged[merged.length - 1];
-    if (
-      last &&
-      last.impact === impact &&
-      last.to !== null &&
-      last.to.getTime() === sliceStart
-    ) {
-      last.to = sliceEnd === null ? null : new Date(sliceEnd);
-    } else {
-      merged.push({
-        from: new Date(sliceStart),
-        to: sliceEnd === null ? null : new Date(sliceEnd),
-        impact,
-      });
-    }
-  }
-  return merged;
-}
-
-// keep impact downtime inside the event window the rest of the math uses
-function clampOpenIntervals(
-  intervals: ImpactInterval[] | undefined,
-  to: Date | null,
-): ImpactInterval[] | undefined {
-  if (!intervals || to === null) return intervals;
-  return intervals.map((iv) => (iv.to === null ? { ...iv, to } : iv));
-}
-
-/**
- * Current impact per component: the latest update (by date, ties by id) that
- * names it wins. Empty map ⇒ legacy report.
- */
-export function currentImpactByComponent(report: {
-  statusReportUpdates: StatusReportUpdateWithImpactRows[];
-}): Map<number, PageComponentImpact> {
-  return currentImpactsFromUpdates(
-    report.statusReportUpdates.map((u) => ({
-      id: u.id,
-      date: u.date,
-      componentImpacts: u.statusReportUpdateToPageComponents ?? [],
-    })),
-  );
-}
-
-/**
- * Worst status among still-active report events. "success"-status reports
- * (everything operational for this projection) don't flag the component.
- */
-export function activeReportStatus(
-  events: Event[],
-): "error" | "degraded" | undefined {
-  let worst: "error" | "degraded" | undefined;
-  for (const e of events) {
-    if (e.type !== "report" || e.to) continue;
-    if (e.status === "error") return "error";
-    if (e.status !== "success") worst = "degraded";
-  }
-  return worst;
-}
 
 export function getEvents({
   maintenances,
@@ -270,7 +144,7 @@ export function getEvents({
     statusReportsToPageComponents: {
       pageComponent: PageComponent | null;
     }[];
-    statusReportUpdates: StatusReportUpdateWithImpactRows[];
+    statusReportUpdates: StatusReportUpdate[];
   })[];
   pageComponentId?: number;
   monitorId?: number;
@@ -344,8 +218,8 @@ export function getEvents({
       return true;
     })
     .map((report) => {
-      const updates = [...report.statusReportUpdates].sort(
-        (a, b) => a.date.getTime() - b.date.getTime() || a.id - b.id,
+      const updates = report.statusReportUpdates.sort(
+        (a, b) => a.date.getTime() - b.date.getTime(),
       );
       if (updates.length === 0) return;
 
@@ -355,67 +229,31 @@ export function getEvents({
       // NOTE: we don't check threshold here because we display all unresolved reports
       if (!firstUpdate?.date) return;
 
-      const componentIntervals = buildComponentImpactIntervals(updates);
-      const hasImpacts = componentIntervals.size > 0;
-
-      const targetComponentId =
-        pageComponentId ??
-        (monitorId
-          ? report.statusReportsToPageComponents.find(
-              (r) => r.pageComponent?.monitorId === monitorId,
-            )?.pageComponent?.id
-          : undefined);
-
-      // per-component view projects that component's timeline; page-level
-      // takes the worst impact across components per time slice
-      let impactIntervals: ImpactInterval[] | undefined;
-      if (hasImpacts) {
-        impactIntervals =
-          targetComponentId !== undefined
-            ? (componentIntervals.get(targetComponentId) ?? [])
-            : mergeWorstImpactIntervals([...componentIntervals.values()]);
-      }
-
       // HACKY: LEGACY: we shouldn't have report.status anymore and instead use the update status for that.
+      // Ideally, we could replace the status with "downtime", "degraded", "operational" to indicate the gravity of the issue
       if (report.status === "resolved") {
-        const to = lastUpdate?.date ?? null;
         events.push({
           id: report.id,
           name: report.title,
           from: firstUpdate?.date,
-          to,
+          to: lastUpdate?.date,
           type: "report",
           status: "success" as const,
-          impactIntervals: clampOpenIntervals(impactIntervals, to),
         });
         return;
       }
-
-      const to =
-        lastUpdate?.status === "resolved" || lastUpdate?.status === "monitoring"
-          ? lastUpdate?.date
-          : null;
-
-      // derived from the open (current) impacts; legacy stays flat orange.
-      // No open non-operational interval — including the empty-projection
-      // case (component never named by any update) — reads "success" BY
-      // DESIGN: an open report whose impacts are all cleared no longer
-      // flags the component, even before the report is formally resolved.
-      const openImpacts = (impactIntervals ?? [])
-        .filter((iv) => iv.to === null)
-        .map((iv) => iv.impact);
-      const status = hasImpacts
-        ? impactToStatusType(worstImpact(openImpacts))
-        : ("degraded" as const);
 
       events.push({
         id: report.id,
         name: report.title,
         from: firstUpdate?.date,
-        to,
+        to:
+          lastUpdate?.status === "resolved" ||
+          lastUpdate?.status === "monitoring"
+            ? lastUpdate?.date
+            : null,
         type: "report",
-        status,
-        impactIntervals: clampOpenIntervals(impactIntervals, to),
+        status: "degraded" as const,
       });
     });
 
@@ -425,13 +263,18 @@ export function getEvents({
 // Keep the old function name for backward compatibility
 export const getEventsByMonitorId = getEvents;
 
-export function getWorstVariant<T extends keyof typeof STATUS_PRIORITY>(
-  statuses: T[],
-): T | "success" {
-  return statuses.reduce<T | "success">(
-    (worst, current) =>
-      STATUS_PRIORITY[current] > STATUS_PRIORITY[worst] ? current : worst,
-    "success",
+export function getWorstVariant(
+  statuses: (keyof typeof STATUS_PRIORITY)[],
+): keyof typeof STATUS_PRIORITY {
+  if (statuses.length === 0) return "success";
+
+  return statuses.reduce(
+    (worst, current) => {
+      return STATUS_PRIORITY[current] > STATUS_PRIORITY[worst]
+        ? current
+        : worst;
+    },
+    "success" as keyof typeof STATUS_PRIORITY,
   );
 }
 
@@ -445,8 +288,6 @@ type UptimeData = {
   card: {
     status: "success" | "degraded" | "error" | "info" | "empty";
     value: string;
-    /** Worst report impact of the day — refines the generic status label. */
-    impact?: PageComponentImpact;
   }[];
 };
 
@@ -498,37 +339,6 @@ function formatDuration(minutes: number): string {
   const remainingMinutes = minutes % 60;
   if (remainingMinutes === 0) return `${hours}h`;
   return `${hours}h ${remainingMinutes}m`;
-}
-
-// worst report impact for one day; null = legacy event (no impact rows)
-function reportEventDayImpact(
-  event: Event,
-  date: Date,
-): PageComponentImpact | null {
-  if (!event.impactIntervals) return null;
-
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setUTCHours(23, 59, 59, 999);
-
-  const overlapping = event.impactIntervals.filter((iv) => {
-    const end = iv.to ?? new Date();
-    return (
-      iv.from.getTime() <= endOfDay.getTime() &&
-      end.getTime() >= startOfDay.getTime()
-    );
-  });
-  return worstImpact(overlapping.map((iv) => iv.impact));
-}
-
-// worst projected report color for one day; legacy events stay orange
-function reportEventDayStatus(
-  event: Event,
-  date: Date,
-): "success" | "degraded" | "error" {
-  const impact = reportEventDayImpact(event, date);
-  return impact === null ? "degraded" : impactToStatusType(impact);
 }
 
 // Helper to check if date is within event range
@@ -640,32 +450,10 @@ export function setDataByType({
     maintenances: Event[],
     date: Date,
   ): Array<{ status: "info" | "degraded" | "error"; count: number }> {
-    // impact reports contribute per-interval slices to each color bucket, so a
-    // 1h major_outage inside a 24h report only paints 1h red; legacy reports
-    // keep their full duration in the degraded bucket; operational slices drop
-    const degradedSlices: Event[] = [];
-    const errorSlices: Event[] = [];
-    for (const report of reports) {
-      if (!report.impactIntervals) {
-        degradedSlices.push(report);
-        continue;
-      }
-      for (const iv of report.impactIntervals) {
-        const color = impactToStatusType(iv.impact);
-        if (color === "success") continue;
-        const slice = { ...report, from: iv.from, to: iv.to };
-        if (!isDateWithinEvent(date, slice)) continue;
-        (color === "error" ? errorSlices : degradedSlices).push(slice);
-      }
-    }
-
     const eventTypes = [
       { status: "info" as const, events: maintenances },
-      { status: "degraded" as const, events: degradedSlices },
-      {
-        status: "error" as const,
-        events: [...incidents, ...errorSlices],
-      },
+      { status: "degraded" as const, events: reports },
+      { status: "error" as const, events: incidents },
     ];
 
     return eventTypes
@@ -874,20 +662,16 @@ export function setDataByType({
     const maintenances = dayEvents.filter((e) => e.type === "maintenance");
 
     const hasIncidents = incidents.length > 0;
+    const hasReports = reports.length > 0;
     const hasMaintenances = maintenances.length > 0;
-
-    // worst impact color across the day's reports; "success" (operational all
-    // day) means reports don't color the day
-    const reportsDayStatus = reports.length
-      ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, date)))
-      : undefined;
-    const activeReportsDayStatus =
-      reportsDayStatus === "success" ? undefined : reportsDayStatus;
 
     const eventStatus = hasIncidents
       ? "error"
-      : (activeReportsDayStatus ??
-        (hasMaintenances ? ("info" as const) : undefined));
+      : hasReports
+        ? "degraded"
+        : hasMaintenances
+          ? "info"
+          : undefined;
 
     // Calculate bar data based on barType
     // TODO: transform into a new Map<type, number>();
@@ -940,8 +724,11 @@ export function setDataByType({
         ];
         break;
       case "manual":
-        const manualEventStatus =
-          activeReportsDayStatus ?? (hasMaintenances ? "info" : undefined);
+        const manualEventStatus = hasReports
+          ? "degraded"
+          : hasMaintenances
+            ? "info"
+            : undefined;
         barData = [
           {
             status: manualEventStatus || "success",
@@ -1013,29 +800,19 @@ export function setDataByType({
         ];
         break;
 
-      case "manual": {
-        const manualCardStatus =
-          activeReportsDayStatus ?? (hasMaintenances ? "info" : undefined);
-        const dayImpacts = reports
-          .map((e) => reportEventDayImpact(e, date))
-          .filter((i): i is PageComponentImpact => i !== null);
-        const worstDayImpact =
-          dayImpacts.length > 0 ? worstImpact(dayImpacts) : null;
+      case "manual":
+        const manualEventStatus = hasReports
+          ? "degraded"
+          : hasMaintenances
+            ? "info"
+            : undefined;
         cardData = [
           {
-            status: manualCardStatus || "success",
+            status: manualEventStatus || "success",
             value: "",
-            // only when the impact agrees with the day color — a mixed
-            // legacy+impact day where legacy dominates keeps the generic label
-            impact:
-              worstDayImpact !== null &&
-              impactToStatusType(worstDayImpact) === manualCardStatus
-                ? worstDayImpact
-                : undefined,
           },
         ];
         break;
-      }
       default:
         // Default to requests behavior
         if (total === 0) {
@@ -1072,15 +849,7 @@ export function setDataByType({
     return {
       day: dayData.day,
       events: [
-        // row dot follows the day's worst impact; floors at degraded so an
-        // operational-only slice never renders a green row (mirrors calendar)
-        ...reports.map((e) => ({
-          ...e,
-          status:
-            reportEventDayStatus(e, date) === "error"
-              ? ("error" as const)
-              : ("degraded" as const),
-        })),
+        ...reports,
         ...maintenances,
         ...(barType === "absolute" ? bundledIncidents : []),
       ],
@@ -1088,31 +857,6 @@ export function setDataByType({
       card: cardData,
     };
   });
-}
-
-type WeightedInterval = { from: number; to: number; weight: number };
-
-// concurrent events describing the same outage must not double-count
-// downtime: per time slice the worst (max) weight wins, mirroring
-// mergeWorstImpactIntervals — summing could push uptime negative
-function mergedDowntimeMs(intervals: WeightedInterval[]): number {
-  const boundaries = [
-    ...new Set(intervals.flatMap((iv) => [iv.from, iv.to])),
-  ].sort((a, b) => a - b);
-
-  let total = 0;
-  for (let i = 0; i + 1 < boundaries.length; i++) {
-    const sliceStart = boundaries[i];
-    const sliceEnd = boundaries[i + 1];
-    let weight = 0;
-    for (const iv of intervals) {
-      if (iv.from <= sliceStart && iv.to >= sliceEnd) {
-        weight = Math.max(weight, iv.weight);
-      }
-    }
-    total += weight * (sliceEnd - sliceStart);
-  }
-  return total;
 }
 
 export function getUptime({
@@ -1136,57 +880,30 @@ export function getUptime({
   windowEndDate.setUTCHours(23, 59, 59, 999);
   const windowEnd = windowEndDate.getTime();
 
-  function clampedInterval(
-    from: Date,
-    to: Date | null,
-    weight: number,
-  ): WeightedInterval | null {
-    const start = Math.max(from.getTime(), windowStart);
-    const end = Math.min((to ?? new Date()).getTime(), windowEnd);
-    if (end <= start || weight === 0) return null;
-    return { from: start, to: end, weight };
-  }
-
-  function reportImpactIntervals(event: Event): WeightedInterval[] {
-    return (event.impactIntervals ?? [])
-      .map((iv) =>
-        clampedInterval(iv.from, iv.to, impactUptimeWeight(iv.impact)),
-      )
-      .filter((iv): iv is WeightedInterval => iv !== null);
+  function clampedDuration(item: Event): number {
+    if (!item.from) return 0;
+    const from = Math.max(item.from.getTime(), windowStart);
+    const to = Math.min((item.to || new Date()).getTime(), windowEnd);
+    return Math.max(0, to - from);
   }
 
   if (barType === "manual") {
-    // NOTE: we want only user events; legacy reports (no impact rows) keep
-    // their full duration as downtime
-    const intervals = events
+    const duration = events
+      // NOTE: we want only user events
       .filter((e) => e.type === "report")
-      .flatMap((e) =>
-        e.impactIntervals
-          ? reportImpactIntervals(e)
-          : (clampedInterval(e.from, e.to, LEGACY_IMPACT_WEIGHT) ?? []),
-      );
+      .reduce((acc, item) => acc + clampedDuration(item), 0);
 
     const total = data.length * MILLISECONDS_PER_DAY;
-    if (total === 0) return "100%";
-    const duration = mergedDowntimeMs(intervals);
 
     return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
   }
 
   if (cardType === "duration") {
-    // incidents and impact-report downtime share one timeline so an incident
-    // plus a report describing the same outage counts once; legacy reports
-    // stay ignored to preserve pre-impact uptime values
-    const intervals = events.flatMap((e) => {
-      if (e.type === "incident") return clampedInterval(e.from, e.to, 1) ?? [];
-      if (e.type === "report") return reportImpactIntervals(e);
-      return [];
-    });
+    const duration = events
+      .filter((e) => e.type === "incident")
+      .reduce((acc, item) => acc + clampedDuration(item), 0);
 
     const total = data.length * MILLISECONDS_PER_DAY;
-    if (total === 0) return "100%";
-    const duration = mergedDowntimeMs(intervals);
-
     return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
   }
 

@@ -52,7 +52,6 @@ import {
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { useEmbed } from "@/hooks/use-embed";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { updatesWithImpactChanges } from "@/lib/report-impacts";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
@@ -344,7 +343,7 @@ export function Client() {
                 affected: report.statusReportsToPageComponents.map(
                   (component) => component.pageComponent.name,
                 ),
-                updates: updatesWithImpactChanges(report),
+                updates: report.statusReportUpdates,
               }))}
             maintenances={page.maintenances
               .filter((maintenance) =>

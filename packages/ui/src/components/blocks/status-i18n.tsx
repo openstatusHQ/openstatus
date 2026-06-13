@@ -1,7 +1,6 @@
 "use client";
 
 import type {
-  StatusReportImpact,
   StatusReportUpdateType,
   StatusType,
   ThemeValue,
@@ -21,7 +20,6 @@ export type StatusBlocksLabels = {
   systemStatus: Record<StatusType, { long: string; short: string }>;
   incidentStatus: Record<StatusReportUpdateType, string>;
   requestStatus: Record<StatusType, string>;
-  componentImpact: Record<StatusReportImpact, string>;
 
   today: string;
   ongoing: string;

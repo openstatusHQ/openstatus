@@ -62,8 +62,8 @@ function isIssue(component: ExternalServiceComponentItem): boolean {
   return severityOf(component.indicator) > 0;
 }
 
-// Maintenance maps to indicator "none" (severity 0), so it is not an issue.
-// Count it separately or a maintenance-only section reads "All operational".
+// Maintenance maps to indicator "none" (severity 0), so it is not an issue —
+// count it separately or a maintenance-only section reads "All operational".
 function isMaintenance(component: ExternalServiceComponentItem): boolean {
   return component.status === "under_maintenance";
 }
@@ -126,9 +126,7 @@ type Section = {
   worst: number;
 };
 
-export function buildSections(
-  components: ExternalServiceComponentItem[],
-): Section[] {
+function buildSections(components: ExternalServiceComponentItem[]): Section[] {
   const byGroup = new Map<string | null, ExternalServiceComponentItem[]>();
   for (const c of components) {
     const key = c.groupName ?? null;

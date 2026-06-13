@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
-import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -50,7 +49,6 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { ComponentImpactList } from "@/components/forms/status-report/component-impact-field";
 import { colors } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -58,14 +56,6 @@ const schema = z.object({
   status: z.enum(statusReportStatus),
   message: z.string(),
   date: z.date(),
-  componentImpacts: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        impact: z.enum(pageComponentImpact),
-      }),
-    )
-    .optional(),
   notifySubscribers: z.boolean().optional(),
 });
 
@@ -75,16 +65,10 @@ export function FormStatusReportUpdate({
   defaultValues,
   onSubmit,
   className,
-  components,
-  allowUnsetImpacts = false,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
-  /** The report's affected components; renders the per-component impact picker. */
-  components?: { id: number; name: string }[];
-  /** Edit mode: components without an entry show "No change". */
-  allowUnsetImpacts?: boolean;
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(
@@ -98,7 +82,6 @@ export function FormStatusReportUpdate({
       status: defaultValues?.status ?? "identified",
       message: defaultValues?.message ?? "",
       date: defaultValues?.date ?? new Date(),
-      componentImpacts: defaultValues?.componentImpacts,
       notifySubscribers: defaultValues?.notifySubscribers ?? true,
     },
   });
@@ -151,23 +134,9 @@ export function FormStatusReportUpdate({
                 <FormControl>
                   <Select
                     defaultValue={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      // resolved implies components are back up — prefill, still editable
-                      if (value === "resolved" && components?.length) {
-                        form.setValue(
-                          "componentImpacts",
-                          components.map((c) => ({
-                            pageComponentId: c.id,
-                            impact: "operational" as const,
-                          })),
-                          { shouldDirty: true },
-                        );
-                      }
-                    }}
+                    onValueChange={field.onChange}
                   >
                     <SelectTrigger
-                      size="sm"
                       className={cn(
                         colors[field.value],
                         "font-mono capitalize",
@@ -305,34 +274,6 @@ export function FormStatusReportUpdate({
             )}
           />
         </FormCardContent>
-        {components && components.length > 0 ? (
-          <>
-            <FormCardSeparator />
-            <FormCardContent>
-              <FormField
-                control={form.control}
-                name="componentImpacts"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Component Impact</FormLabel>
-                    <FormDescription>
-                      How badly is each affected component impacted?
-                    </FormDescription>
-                    <FormControl>
-                      <ComponentImpactList
-                        components={components}
-                        value={field.value ?? []}
-                        onValueChange={field.onChange}
-                        allowUnset={allowUnsetImpacts}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormCardContent>
-          </>
-        ) : null}
         <FormCardSeparator />
         <FormCardContent>
           <Tabs defaultValue="tab-1">

@@ -1,5 +1,4 @@
 import type { AgentToolInput } from "@openstatus/services/agent-tools";
-import { formatComponentImpacts } from "@openstatus/services/status-report/utils";
 
 import type { ChangeRow } from "@/components/common/changes-table";
 
@@ -24,25 +23,12 @@ export function createStatusReportChanges(
     { field: "status", after: input.status },
     { field: "message", after: input.message },
     { field: "pageId", after: input.pageId },
+    { field: "pageComponentIds", after: input.pageComponentIds },
     {
       field: "notify",
       after: applied?.notified !== undefined ? applied.notified : input.notify,
     },
   ];
-
-  if (input.pageComponentIds?.length) {
-    changes.push({
-      field: "pageComponentIds",
-      after: input.pageComponentIds,
-    });
-  }
-
-  if (input.componentImpacts?.length) {
-    changes.push({
-      field: "componentImpacts",
-      after: formatComponentImpacts(input.componentImpacts),
-    });
-  }
 
   const resolvedDate = input.date ?? undefined;
   if (resolvedDate !== undefined) {

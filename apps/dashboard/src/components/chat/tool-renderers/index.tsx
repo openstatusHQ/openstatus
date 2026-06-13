@@ -29,7 +29,6 @@ import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
 import { resolveStatusReportChanges } from "./resolve-status-report";
 import { ResultTable } from "./result-table";
-import { searchDocsTable } from "./search-docs";
 import { updateStatusReportChanges } from "./update-status-report";
 
 /**
@@ -195,16 +194,6 @@ export const toolRenderers: ToolRendererRegistry = {
       <ChangesTable changes={getAuditLogChanges(output)} />
     ),
     summary: (o) => `${o.action} · #${o.id}`,
-  },
-  search_docs: {
-    renderResult: ({ output }) => <ResultTable {...searchDocsTable(output)} />,
-    summary: (o) => (o.error ? o.error : itemsCountSummary(o.results)),
-  },
-  // No renderResult — a full markdown page in the transcript is noise; the
-  // summary line plus the model's cited answer is the UX.
-  get_doc_page: {
-    summary: (o) =>
-      o.error ? o.error : `read ${o.url}${o.truncated ? " (truncated)" : ""}`,
   },
 };
 

@@ -11,11 +11,7 @@ export {
   withTransaction,
 } from "./context";
 
-export {
-  isRetryableDbError,
-  isTransientServerError,
-  withBusyRetry,
-} from "./retry";
+export { isRetryableDbError, withBusyRetry } from "./retry";
 
 export {
   ConflictError,

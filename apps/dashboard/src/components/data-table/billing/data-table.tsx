@@ -140,7 +140,6 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                             return;
                           }
                           await checkoutSessionMutation.mutateAsync({
-                            currency: currency || "USD",
                             plan: id,
                             interval,
                             workspaceSlug: workspace.slug,

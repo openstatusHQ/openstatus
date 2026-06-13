@@ -72,7 +72,7 @@ You can customize the component name to be different from the monitor name. For 
 
 **Status hierarchy:**
 
-1. **Error** — active incidents from the linked monitor, or a status report with a `major_outage` [impact](/docs/reference/status-report#component-impacts).
+1. **Error** — active incidents from the linked monitor.
 2. **Degraded** — unresolved status reports affecting this component.
 3. **Info** — ongoing scheduled maintenance.
 4. **Success** — healthy and operational.
@@ -113,8 +113,8 @@ Static components give you full manual control over what your visitors see:
 
 **Status reports:**
 Create status reports to indicate issues or degraded performance for static components. For example:
-- "Stripe payment processing experiencing delays" (degraded performance impact).
-- "Email delivery service partially unavailable" (partial outage impact).
+- "Stripe payment processing experiencing delays" (degraded status).
+- "Email delivery service partially unavailable" (degraded status).
 
 Once you resolve the issue and mark the status report as resolved, the component returns to a success status.
 
@@ -134,10 +134,9 @@ Static components do not perform any health checks or generate incidents. You ar
 
 **Status hierarchy:**
 
-1. **Error** — a status report with a `major_outage` [impact](/docs/reference/status-report#component-impacts).
-2. **Degraded** — other unresolved status reports affecting this component.
-3. **Info** — ongoing scheduled maintenance.
-4. **Success** — no active reports or maintenances.
+1. **Degraded** — unresolved status reports affecting this component.
+2. **Info** — ongoing scheduled maintenance.
+3. **Success** — no active reports or maintenances.
 
 **What affects static components:**
 
@@ -206,7 +205,7 @@ Static components **never** generate incidents because they are not linked to mo
 
 Status reports are manually created updates about component health or issues. They provide a way to communicate problems that may not trigger automatic monitoring or to manually report issues with static components.
 
-**Status impact:** each report update can set a per-component [impact level](/docs/reference/status-report#component-impacts) (`degraded_performance`, `partial_outage`, `major_outage`). A component with an active `major_outage` impact shows an **error** status; the other non-operational impacts show **degraded**. Reports without impact levels show a **degraded** status while unresolved.
+**Status impact:** components with unresolved status reports show a **degraded** status (unless overridden by an incident for monitor components).
 
 **Use cases for monitor components:**
 

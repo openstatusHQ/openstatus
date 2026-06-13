@@ -1,27 +1,16 @@
 import { eq } from "@openstatus/db";
-import {
-  statusReport,
-  statusReportUpdate,
-  statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
-} from "@openstatus/db/src/schema";
+import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { ConflictError, InternalServiceError } from "../errors";
+import { InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
-  getComponentImpactsForUpdate,
-  getPageComponentIdsForReport,
   getReportInWorkspace,
   getReportUpdateInWorkspace,
-  insertUpdateComponentImpacts,
-  pruneImpactRowsOutsideMembership,
   updatePageComponentAssociations,
   validatePageComponentIds,
-  withComponentImpacts,
-  withPageComponentIds,
 } from "./internal";
 import {
   UpdateStatusReportInput,
@@ -53,14 +42,6 @@ export async function updateStatusReport(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    // snapshot membership before/after so association-only edits still
-    // produce a visible audit diff (join-table change, not an entity field)
-    const beforeComponentIds = await getPageComponentIdsForReport(
-      tx,
-      report.id,
-    );
-    let afterComponentIds = beforeComponentIds;
-
     const updateValues: Record<string, unknown> = { updatedAt: new Date() };
     if (input.title !== undefined) updateValues.title = input.title;
     if (input.status !== undefined) updateValues.status = input.status;
@@ -81,12 +62,6 @@ export async function updateStatusReport(args: {
         statusReportId: report.id,
         componentIds: validated.componentIds,
       });
-      await pruneImpactRowsOutsideMembership({
-        tx,
-        statusReportId: report.id,
-        componentIds: validated.componentIds,
-      });
-      afterComponentIds = validated.componentIds;
     }
 
     const updated = await tx
@@ -106,15 +81,15 @@ export async function updateStatusReport(args: {
       action: "status_report.update",
       entityType: "status_report",
       entityId: updated.id,
-      before: withPageComponentIds(report, beforeComponentIds),
-      after: withPageComponentIds(updated, afterComponentIds),
+      before: report,
+      after: updated,
     });
 
     return updated;
   });
 }
 
-/** Edit a single status-report update row (message / date / status / impacts). */
+/** Edit a single status-report update row (message / date / status). */
 export async function updateStatusReportUpdate(args: {
   ctx: ServiceContext;
   input: UpdateStatusReportUpdateInput;
@@ -130,66 +105,10 @@ export async function updateStatusReportUpdate(args: {
       workspaceId: ctx.workspace.id,
     });
 
-    const beforeImpacts = await getComponentImpactsForUpdate(tx, existing.id);
-    const afterImpacts = input.componentImpacts ?? beforeImpacts;
-
     const updateValues: Record<string, unknown> = { updatedAt: new Date() };
     if (input.status !== undefined) updateValues.status = input.status;
     if (input.message !== undefined) updateValues.message = input.message;
     if (input.date !== undefined) updateValues.date = input.date;
-
-    // replace the update's impact-row set; omitted ⇒ untouched (legacy stays legacy)
-    if (input.componentImpacts !== undefined) {
-      const report = await getReportInWorkspace({
-        tx,
-        id: existing.statusReportId,
-        workspaceId: ctx.workspace.id,
-      });
-
-      if (input.componentImpacts.length > 0) {
-        const validated = await validatePageComponentIds({
-          tx,
-          workspaceId: ctx.workspace.id,
-          pageComponentIds: input.componentImpacts.map(
-            (ci) => ci.pageComponentId,
-          ),
-        });
-        if (
-          validated.pageId !== null &&
-          report.pageId !== null &&
-          validated.pageId !== report.pageId
-        ) {
-          throw new ConflictError(
-            `Components belong to page ${validated.pageId}, not the report's page ${report.pageId}.`,
-          );
-        }
-        // invariant: every impact row's component is in the report's membership
-        // set — editing impacts intentionally extends it (same as add-update)
-        await tx
-          .insert(statusReportsToPageComponents)
-          .values(
-            validated.componentIds.map((pageComponentId) => ({
-              statusReportId: report.id,
-              pageComponentId,
-            })),
-          )
-          .onConflictDoNothing();
-      }
-
-      await tx
-        .delete(statusReportUpdateToPageComponents)
-        .where(
-          eq(
-            statusReportUpdateToPageComponents.statusReportUpdateId,
-            existing.id,
-          ),
-        );
-      await insertUpdateComponentImpacts({
-        tx,
-        statusReportUpdateId: existing.id,
-        componentImpacts: input.componentImpacts,
-      });
-    }
 
     const updated = await tx
       .update(statusReportUpdate)
@@ -208,8 +127,8 @@ export async function updateStatusReportUpdate(args: {
       action: "status_report_update.update",
       entityType: "status_report_update",
       entityId: updated.id,
-      before: withComponentImpacts(existing, beforeImpacts),
-      after: withComponentImpacts(updated, afterImpacts),
+      before: existing,
+      after: updated,
     });
 
     return updated;

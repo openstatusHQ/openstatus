@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildSystemPrompt } from "./system-prompt";
+import { buildSystemPrompt } from "./agent";
 
 describe("buildSystemPrompt", () => {
   test("includes the current date and time in ISO 8601 format", () => {
@@ -22,15 +22,5 @@ describe("buildSystemPrompt", () => {
   test("includes the workspace name", () => {
     const prompt = buildSystemPrompt("Acme Corp");
     expect(prompt).toContain('workspace "Acme Corp"');
-  });
-
-  test("guides the model on componentImpacts", () => {
-    const prompt = buildSystemPrompt("Acme Corp");
-    expect(prompt).toContain("componentImpacts");
-    expect(prompt).toContain("major_outage");
-    // resolve auto-clears impacts; the model must not publish a manual clear.
-    expect(prompt).toContain("clears every remaining impact");
-    // partial recovery before resolve IS reported manually, as operational.
-    expect(prompt).toContain("Recovery counts as a change");
   });
 });

@@ -1,7 +1,6 @@
 import type { z } from "zod";
 
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
-import { getDocPageTool, searchDocsTool } from "./docs";
 import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 import {
   getMonitorStatusTool,
@@ -24,7 +23,6 @@ import {
 import type { AnyAgentTool } from "./types";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
-export { getDocPageTool, searchDocsTool } from "./docs";
 export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 export {
   getMonitorStatusTool,
@@ -88,8 +86,6 @@ export const agentTools = {
   list_notifications: listNotificationsTool,
   list_audit_logs: listAuditLogsTool,
   get_audit_log: getAuditLogTool,
-  search_docs: searchDocsTool,
-  get_doc_page: getDocPageTool,
 } satisfies Record<string, AnyAgentTool>;
 
 // Multi-flag confirmation UX should be a modal, not 2^N buttons. Fail

@@ -22,13 +22,9 @@ export function FormSheetStatusReportUpdate({
   children,
   defaultValues,
   onSubmit,
-  components,
-  allowUnsetImpacts,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
-  components?: { id: number; name: string }[];
-  allowUnsetImpacts?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -51,8 +47,6 @@ export function FormSheetStatusReportUpdate({
                 setOpen(false);
               }}
               defaultValues={defaultValues}
-              components={components}
-              allowUnsetImpacts={allowUnsetImpacts}
             />
           </FormCard>
         </FormCardGroup>

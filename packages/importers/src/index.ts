@@ -1,11 +1,9 @@
 export type {
-  ComponentImpact,
   ImportConfig,
   ImportProvider,
   ImportSummary,
   PhaseResult,
   ResourceResult,
-  UpdateComponentImpact,
 } from "./types";
 
 export { createStatuspageProvider } from "./providers/statuspage";

@@ -64,18 +64,6 @@ This is ideal if:
 
 In this mode, all displayed uptime values and statuses come from your shared report data, not from active pings.
 
-In simple terms: `uptime = (total duration - weighted status report duration) / total duration`
-
-How much a report counts against uptime depends on the [component impact](/docs/reference/status-report#component-impacts) each update sets:
-
-| Impact | Downtime weight |
-|--------|-----------------|
-| `operational` / `degraded_performance` | 0 |
-| `partial_outage` | 0.5 |
-| `major_outage` | 1 |
-
-A report that goes `major_outage` → `partial_outage` → `operational` across its updates counts each interval at its own weight.
-
-> **Legacy behavior:** reports without impact levels (created before component impacts existed, or via clients that don't send them) count their full duration as downtime — `uptime = (total duration - status report duration) / total duration`.
+In simple terms: `uptime = (total duration - status report duration) / total duration`
 
 > **Note:** the values you define are attached to a status page. You cannot change them per monitor (for now).

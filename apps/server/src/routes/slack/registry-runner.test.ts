@@ -96,19 +96,6 @@ describe("buildSlackTools", () => {
     expect("pageId" in shape).toBe(true);
   });
 
-  test("componentImpacts stays in the LLM-facing schema (only extraFlags are hidden)", () => {
-    for (const name of [
-      "create_status_report",
-      "add_status_report_update",
-    ] as const) {
-      const t = tools[name] as {
-        inputSchema: z.ZodObject<z.ZodRawShape>;
-      };
-      expect("componentImpacts" in t.inputSchema.shape, name).toBe(true);
-      expect("notify" in t.inputSchema.shape, name).toBe(false);
-    }
-  });
-
   test("destructive tools without extraFlags keep their full schema", () => {
     const t = tools.update_status_report as {
       inputSchema: z.ZodObject<z.ZodRawShape>;

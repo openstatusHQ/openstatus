@@ -2,12 +2,10 @@
 
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gauge, Plus } from "lucide-react";
-import NextLink from "next/link";
+import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
-import { Note, NoteButton } from "@/components/common/note";
 import {
   Section,
   SectionDescription,
@@ -62,18 +60,6 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Note>
-        <Gauge />
-        Status reports now support per-component impacts.
-        <NoteButton variant="default" asChild>
-          <NextLink
-            href="https://www.openstatus.dev/changelog/status-page-components-impact"
-            target="_blank"
-          >
-            Learn more
-          </NextLink>
-        </NoteButton>
-      </Note>
       <Section>
         <SectionHeaderRow>
           <SectionHeader>
@@ -105,24 +91,11 @@ export default function Page() {
                 // NOTE: for type safety, we need to check if the values have a date property
                 // because of the union type
                 if ("date" in values) {
-                  // every selected component gets an impact row — fresh
-                  // reports are never legacy; fallback must match the
-                  // picker's defaultImpact
-                  const componentImpacts = values.pageComponents.map(
-                    (pageComponentId) => ({
-                      pageComponentId,
-                      impact:
-                        values.componentImpacts?.find(
-                          (ci) => ci.pageComponentId === pageComponentId,
-                        )?.impact ?? ("degraded_performance" as const),
-                    }),
-                  );
                   await createStatusReportMutation.mutateAsync({
                     title: values.title,
                     status: values.status,
                     pageId: Number.parseInt(id),
                     pageComponents: values.pageComponents,
-                    componentImpacts,
                     date: values.date,
                     message: values.message,
                     notifySubscribers: values.notifySubscribers,
@@ -147,10 +120,6 @@ export default function Page() {
             <UpdatesDataTable
               updates={row.original.updates}
               reportId={row.original.id}
-              components={row.original.pageComponents.map((c) => ({
-                id: c.id,
-                name: c.name,
-              }))}
             />
           )}
         />

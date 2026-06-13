@@ -28,7 +28,7 @@ Get a key from the dashboard's **Settings → API Tokens**.
 
 Each API key carries a scope that controls what tools the MCP server exposes:
 
-- **Read-only** — the server only registers read tools (`list_*`, `get_*`, and `search_docs`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
+- **Read-only** — the server only registers read tools (`list_*` and `get_*`). Mutation tools (`create_*`, `update_*`, `add_*`, `resolve_*`) are not advertised in `tools/list` and cannot be called.
 - **Read & write** — every tool is available.
 
 Scope is set at key creation time and is **immutable**. To change a key's scope, revoke it and issue a new one.
@@ -37,7 +37,7 @@ For AI agents that should only observe state — health summaries, paging on-cal
 
 ## Tools
 
-The server exposes 20 tools, grouped by resource and scoped to the workspace tied to your API key. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
+The server exposes 18 tools, grouped by resource and scoped to the workspace tied to your API key. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)).
 
 ### Pages
 
@@ -88,15 +88,6 @@ Registered only when the workspace plan includes the `audit-log` feature — oth
 |-------------------|------|---------|
 | `list_audit_logs` | read | List audit-log entries (mutating actions) newest-first, bounded to the last 14 days. Optional `entityType` + `entityId` filter. |
 | `get_audit_log`   | read | Full before/after snapshots and `changedFields` for a single audit-log entry. |
-
-### Docs
-
-These query the public openstatus documentation — not your workspace data — so the assistant can answer product and how-to questions grounded in the official docs.
-
-| Tool           | Type | Purpose |
-|----------------|------|---------|
-| `search_docs`  | read | Search the public documentation, guides, or changelog (`type: "docs" \| "guides" \| "changelog"`). Returns scored results with title, snippet, url, and a `path` to pass to `get_doc_page`. |
-| `get_doc_page` | read | Fetch the full markdown of a docs, guides, or changelog page by `path` (as returned by `search_docs`). Long pages are truncated with a marker linking to the full page. |
 
 The MCP client gates every tool call behind your approval — the server does not gate again. Each tool also carries [MCP annotations](https://modelcontextprotocol.io/specification/server/tools#tool-annotations) (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so well-behaved clients can decide whether to confirm, cache, or surface differently.
 

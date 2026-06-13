@@ -1,10 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import {
-  statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
-} from "../page_components";
+import { statusReportsToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
 
@@ -83,13 +80,10 @@ export const StatusReportRelations = relations(
 
 export const statusReportUpdateRelations = relations(
   statusReportUpdate,
-  ({ one, many }) => ({
+  ({ one }) => ({
     statusReport: one(statusReport, {
       fields: [statusReportUpdate.statusReportId],
       references: [statusReport.id],
     }),
-    statusReportUpdateToPageComponents: many(
-      statusReportUpdateToPageComponents,
-    ),
   }),
 );

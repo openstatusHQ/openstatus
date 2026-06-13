@@ -47,9 +47,18 @@ const CNAME_VALUE =
 const A_RECORD_VALUE =
   process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_A || "76.76.21.21";
 
-// FIXME: add loading state!
 export default function DomainConfiguration({ domain }: { domain: string }) {
   const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
+
+  if (isLoading)
+    return (
+      <div className="flex items-center gap-3 border border-transparent px-4">
+        <DomainStatusIcon status="Valid Configuration" loading={true} />
+        <p className="text-muted-foreground text-sm">
+          Checking domain status...
+        </p>
+      </div>
+    );
 
   if (!status || !domainJson) return null;
 

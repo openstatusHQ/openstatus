@@ -9,12 +9,8 @@ export type ExternalServicePillProps = {
   indicator: string;
   status: string;
   statusMessage?: string;
-  escalated?: boolean;
   className?: string;
 };
-
-const ESCALATED_TITLE =
-  "This status is raised by user reports; the provider has not reported an issue.";
 
 type PillStyle = {
   label: string;
@@ -62,11 +58,10 @@ export function ExternalServicePill({
   indicator,
   status,
   statusMessage,
-  escalated,
   className,
 }: ExternalServicePillProps) {
   const pill = getPillStyle({ indicator, status });
-  const pillSpan = (
+  const body = (
     <span
       className={cn(
         "inline-flex items-center rounded-none border px-2.5 py-0.5 text-xs font-medium",
@@ -78,26 +73,12 @@ export function ExternalServicePill({
     </span>
   );
 
-  const pillWithMessage = statusMessage ? (
-    <Tooltip>
-      <TooltipTrigger asChild>{pillSpan}</TooltipTrigger>
-      <TooltipContent className="rounded-none">{statusMessage}</TooltipContent>
-    </Tooltip>
-  ) : (
-    pillSpan
-  );
-
-  if (!escalated) return pillWithMessage;
+  if (!statusMessage) return body;
 
   return (
-    <span className="inline-flex items-center gap-1.5">
-      {pillWithMessage}
-      <span
-        title={ESCALATED_TITLE}
-        className="border-warning/30 text-warning inline-flex items-center rounded-none border px-1.5 py-0.5 text-[10px] font-medium tracking-wide uppercase"
-      >
-        user-reported
-      </span>
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>{body}</TooltipTrigger>
+      <TooltipContent className="rounded-none">{statusMessage}</TooltipContent>
+    </Tooltip>
   );
 }

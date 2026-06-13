@@ -4,7 +4,6 @@ import {
   AddStatusReportUpdateInput,
   CreateStatusReportInput,
   addStatusReportUpdate,
-  componentImpactsSchema,
   createStatusReport,
   deleteStatusReport,
   deleteStatusReportUpdate,
@@ -27,8 +26,6 @@ const createStatusReportTRPCInput = z.object({
   status: CreateStatusReportInput.shape.status,
   pageId: z.number(),
   pageComponents: z.array(z.number()),
-  // nullish like notifySubscribers: clients may send null for "absent"
-  componentImpacts: componentImpactsSchema.nullish(),
   date: z.coerce.date(),
   message: z.string(),
   notifySubscribers: z.boolean().nullish(),
@@ -39,7 +36,6 @@ const createStatusReportUpdateTRPCInput = z.object({
   statusReportId: z.number(),
   status: AddStatusReportUpdateInput.shape.status,
   message: z.string(),
-  componentImpacts: componentImpactsSchema.nullish(),
   date: z.coerce.date().optional(),
   notifySubscribers: z.boolean().nullish(),
 });
@@ -49,7 +45,6 @@ const updateStatusReportUpdateTRPCInput = z.object({
   statusReportId: z.number().optional(),
   status: AddStatusReportUpdateInput.shape.status.optional(),
   message: z.string().optional(),
-  componentImpacts: componentImpactsSchema.nullish(),
   date: z.coerce.date().optional(),
 });
 
@@ -73,7 +68,6 @@ export const statusReportRouter = createTRPCRouter({
             status: input.status,
             pageId: input.pageId,
             pageComponentIds: input.pageComponents,
-            componentImpacts: input.componentImpacts ?? undefined,
             date: input.date,
             message: input.message,
           },
@@ -97,7 +91,6 @@ export const statusReportRouter = createTRPCRouter({
             statusReportId: input.statusReportId,
             status: input.status,
             message: input.message,
-            componentImpacts: input.componentImpacts ?? undefined,
             date: input.date,
           },
         });
@@ -121,7 +114,6 @@ export const statusReportRouter = createTRPCRouter({
             id: input.id,
             status: input.status,
             message: input.message,
-            componentImpacts: input.componentImpacts ?? undefined,
             date: input.date,
           },
         });

@@ -30,7 +30,6 @@ export function StatusBar(
             from={event.from}
             to={event.to}
             isAggregated={event.isAggregated}
-            status={event.status}
           />
         );
         if (event.type === "report" || event.type === "maintenance") {

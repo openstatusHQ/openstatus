@@ -13,25 +13,6 @@ enum StatusReportStatus {
   STATUS_REPORT_STATUS_RESOLVED = 4;
 }
 
-// PageComponentImpact is the per-component impact a status report update sets.
-// UNSPECIFIED means the caller doesn't speak impact (legacy) — it is NOT operational.
-enum PageComponentImpact {
-  PAGE_COMPONENT_IMPACT_UNSPECIFIED = 0;
-  PAGE_COMPONENT_IMPACT_OPERATIONAL = 1;
-  PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE = 2;
-  PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE = 3;
-  PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE = 4;
-}
-
-// ComponentImpact pairs a page component with the impact an update set for it.
-message ComponentImpact {
-  // ID of the affected page component.
-  string page_component_id = 1;
-
-  // Impact set for the component.
-  PageComponentImpact impact = 2;
-}
-
 // StatusReportUpdate represents a single update entry in a status report timeline.
 message StatusReportUpdate {
   // Unique identifier for the update.
@@ -48,9 +29,6 @@ message StatusReportUpdate {
 
   // Timestamp when the update was created (RFC 3339 format).
   string created_at = 5;
-
-  // Per-component impacts this update set (empty for legacy reports).
-  repeated ComponentImpact component_impacts = 6;
 }
 
 // StatusReportSummary represents metadata for a status report (used in list responses).

@@ -13,10 +13,6 @@
       "import": "./src/status-report/index.ts",
       "types": "./src/status-report/index.ts"
     },
-    "./status-report/utils": {
-      "import": "./src/status-report/utils.ts",
-      "types": "./src/status-report/utils.ts"
-    },
     "./maintenance": {
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
@@ -108,10 +104,6 @@
     "./external-service-component": {
       "import": "./src/external-service-component/index.ts",
       "types": "./src/external-service-component/index.ts"
-    },
-    "./external-service-report": {
-      "import": "./src/external-service-report/index.ts",
-      "types": "./src/external-service-report/index.ts"
     },
     "./test/helpers": {
       "import": "./test/helpers.ts",

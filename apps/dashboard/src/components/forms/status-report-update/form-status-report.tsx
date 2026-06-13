@@ -5,7 +5,6 @@ import {
   type StatusReportUpdate,
   statusReportStatus,
 } from "@openstatus/db/src/schema";
-import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -61,7 +60,6 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { ComponentImpactList } from "@/components/forms/status-report/component-impact-field";
 import { colors } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -69,14 +67,6 @@ const schema = z.object({
   status: z.enum(statusReportStatus),
   message: z.string(),
   date: z.date(),
-  componentImpacts: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        impact: z.enum(pageComponentImpact),
-      }),
-    )
-    .optional(),
   notifySubscribers: z.boolean().optional(),
 });
 
@@ -88,15 +78,12 @@ export function FormStatusReportUpdateCard({
   className,
   index,
   update,
-  components,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   index: number;
   update: StatusReportUpdate;
-  /** The report's affected components; renders the per-component impact picker. */
-  components?: { id: number; name: string }[];
 }) {
   const { reportId } = useParams<{ id: string; reportId: string }>();
   const trpc = useTRPC();
@@ -111,7 +98,6 @@ export function FormStatusReportUpdateCard({
       status: "identified",
       message: "",
       date: new Date(),
-      componentImpacts: undefined,
       notifySubscribers: true,
     },
   });
@@ -187,23 +173,9 @@ export function FormStatusReportUpdateCard({
                   <FormControl>
                     <Select
                       defaultValue={field.value}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        // resolved implies components are back up — prefill, still editable
-                        if (value === "resolved" && components?.length) {
-                          form.setValue(
-                            "componentImpacts",
-                            components.map((c) => ({
-                              pageComponentId: c.id,
-                              impact: "operational" as const,
-                            })),
-                            { shouldDirty: true },
-                          );
-                        }
-                      }}
+                      onValueChange={field.onChange}
                     >
                       <SelectTrigger
-                        size="sm"
                         className={cn(
                           colors[field.value],
                           "w-full font-mono capitalize",
@@ -245,7 +217,7 @@ export function FormStatusReportUpdateCard({
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "w-full pl-3 text-left font-normal sm:w-[240px]",
+                            "h-9 w-full pl-3 text-left font-normal sm:w-[240px]",
                             !field.value && "text-muted-foreground",
                           )}
                         >
@@ -340,35 +312,6 @@ export function FormStatusReportUpdateCard({
               ).
             </FormDescription>
           </FormCardContent>
-          {components && components.length > 0 ? (
-            <>
-              <FormCardSeparator />
-              <FormCardContent>
-                <FormField
-                  control={form.control}
-                  name="componentImpacts"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Component Impact</FormLabel>
-                      <FormDescription>
-                        The impact this update set per component. Components
-                        marked &quot;No change&quot; keep their prior impact.
-                      </FormDescription>
-                      <FormControl>
-                        <ComponentImpactList
-                          components={components}
-                          value={field.value ?? []}
-                          onValueChange={field.onChange}
-                          allowUnset
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </FormCardContent>
-            </>
-          ) : null}
           <FormCardSeparator />
           <FormCardContent>
             <Tabs defaultValue="tab-1">

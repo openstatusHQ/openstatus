@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
-import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -54,7 +53,6 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { ComponentImpactList } from "@/components/forms/status-report/component-impact-field";
 import {
   CheckboxTree,
   type CheckboxTreeItem,
@@ -64,26 +62,16 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),
-  title: z.string().min(1, "Title is required.").max(256),
+  title: z.string(),
   message: z.string(),
   date: z.date(),
   pageComponents: z.array(z.number()),
-  componentImpacts: z
-    .array(
-      z.object({
-        pageComponentId: z.number(),
-        impact: z.enum(pageComponentImpact),
-      }),
-    )
-    .optional(),
   notifySubscribers: z.boolean().optional(),
 });
 
-// membership-only edit: impacts change via status report updates
 const updateSchema = schema.omit({
   message: true,
   date: true,
-  componentImpacts: true,
   notifySubscribers: true,
 });
 
@@ -118,14 +106,8 @@ export function FormStatusReport({
     },
   });
   const watchMessage = form.watch("message");
-  const watchPageComponents = form.watch("pageComponents");
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
-
-  const selectedComponents = React.useMemo(() => {
-    const flat = items.flatMap((item) => item.children ?? [item]);
-    return flat.filter((c) => (watchPageComponents ?? []).includes(c.id));
-  }, [items, watchPageComponents]);
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
@@ -191,7 +173,6 @@ export function FormStatusReport({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger
-                      size="sm"
                       className={cn(
                         colors[field.value],
                         "font-mono capitalize",
@@ -398,37 +379,6 @@ export function FormStatusReport({
             )}
           />
         </FormCardContent>
-        {!defaultValues && selectedComponents.length > 0 ? (
-          <>
-            <FormCardSeparator />
-            <FormCardContent>
-              <FormField
-                control={form.control}
-                name="componentImpacts"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Component Impact</FormLabel>
-                    <FormDescription>
-                      How badly is each affected component impacted?
-                    </FormDescription>
-                    <FormControl>
-                      <ComponentImpactList
-                        components={selectedComponents.map((c) => ({
-                          id: c.id,
-                          name: c.label,
-                        }))}
-                        value={field.value ?? []}
-                        onValueChange={field.onChange}
-                        defaultImpact="degraded_performance"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormCardContent>
-          </>
-        ) : null}
         {!defaultValues && workspace?.limits["status-subscribers"] ? (
           <>
             <FormCardSeparator />

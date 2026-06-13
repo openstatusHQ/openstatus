@@ -121,7 +121,6 @@ export function formatTime(date: Date, locale = "en-US") {
 }
 
 import type {
-  StatusReportImpact,
   StatusReportUpdateType,
   StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
@@ -196,39 +195,6 @@ export const requestStatusLabels: Record<StatusType, string> = {
 export const requests = requestStatusLabels;
 
 /**
- * Component impact labels
- * Used for displaying per-component report impacts
- */
-export const componentImpactLabels: Record<StatusReportImpact, string> = {
-  operational: "Operational",
-  degraded_performance: "Degraded performance",
-  partial_outage: "Partial outage",
-  major_outage: "Major outage",
-} as const;
-
-// ordered worst-last so worstImpact can compare by index (mirrors the db's `pageComponentImpact`)
-export const statusReportImpacts: readonly StatusReportImpact[] = [
-  "operational",
-  "degraded_performance",
-  "partial_outage",
-  "major_outage",
-] as const;
-
-export function worstStatusReportImpact(
-  impacts: Iterable<StatusReportImpact>,
-): StatusReportImpact {
-  let worst: StatusReportImpact = "operational";
-  for (const impact of impacts) {
-    if (
-      statusReportImpacts.indexOf(impact) > statusReportImpacts.indexOf(worst)
-    ) {
-      worst = impact;
-    }
-  }
-  return worst;
-}
-
-/**
  * Incident status labels
  * Used for displaying incident report update statuses
  */
@@ -271,7 +237,6 @@ export const defaultStatusBlocksLabels = {
   systemStatus: systemStatusLabels,
   incidentStatus: incidentStatusLabels,
   requestStatus: requestStatusLabels,
-  componentImpact: componentImpactLabels,
 
   today: "Today",
   ongoing: "Ongoing",

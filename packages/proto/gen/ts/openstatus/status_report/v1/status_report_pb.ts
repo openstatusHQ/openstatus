@@ -10,35 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_report/v1/status_report.proto.
  */
 export const file_openstatus_status_report_v1_status_report: GenFile = /*@__PURE__*/
-  fileDesc("Ci9vcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjEvc3RhdHVzX3JlcG9ydC5wcm90bxIbb3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxIm4KD0NvbXBvbmVudEltcGFjdBIZChFwYWdlX2NvbXBvbmVudF9pZBgBIAEoCRJACgZpbXBhY3QYAiABKA4yMC5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuUGFnZUNvbXBvbmVudEltcGFjdCLdAQoSU3RhdHVzUmVwb3J0VXBkYXRlEgoKAmlkGAEgASgJEj8KBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXMSDAoEZGF0ZRgDIAEoCRIPCgdtZXNzYWdlGAQgASgJEhIKCmNyZWF0ZWRfYXQYBSABKAkSRwoRY29tcG9uZW50X2ltcGFjdHMYBiADKAsyLC5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuQ29tcG9uZW50SW1wYWN0IrUBChNTdGF0dXNSZXBvcnRTdW1tYXJ5EgoKAmlkGAEgASgJEj8KBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXMSDQoFdGl0bGUYAyABKAkSGgoScGFnZV9jb21wb25lbnRfaWRzGAQgAygJEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSLwAQoMU3RhdHVzUmVwb3J0EgoKAmlkGAEgASgJEj8KBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXMSDQoFdGl0bGUYAyABKAkSGgoScGFnZV9jb21wb25lbnRfaWRzGAQgAygJEkAKB3VwZGF0ZXMYBSADKAsyLy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0VXBkYXRlEhIKCmNyZWF0ZWRfYXQYBiABKAkSEgoKdXBkYXRlZF9hdBgHIAEoCSrPAQoSU3RhdHVzUmVwb3J0U3RhdHVzEiQKIFNUQVRVU19SRVBPUlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASJgoiU1RBVFVTX1JFUE9SVF9TVEFUVVNfSU5WRVNUSUdBVElORxABEiMKH1NUQVRVU19SRVBPUlRfU1RBVFVTX0lERU5USUZJRUQQAhIjCh9TVEFUVVNfUkVQT1JUX1NUQVRVU19NT05JVE9SSU5HEAMSIQodU1RBVFVTX1JFUE9SVF9TVEFUVVNfUkVTT0xWRUQQBCrlAQoTUGFnZUNvbXBvbmVudEltcGFjdBIlCiFQQUdFX0NPTVBPTkVOVF9JTVBBQ1RfVU5TUEVDSUZJRUQQABIlCiFQQUdFX0NPTVBPTkVOVF9JTVBBQ1RfT1BFUkFUSU9OQUwQARIuCipQQUdFX0NPTVBPTkVOVF9JTVBBQ1RfREVHUkFERURfUEVSRk9STUFOQ0UQAhIoCiRQQUdFX0NPTVBPTkVOVF9JTVBBQ1RfUEFSVElBTF9PVVRBR0UQAxImCiJQQUdFX0NPTVBPTkVOVF9JTVBBQ1RfTUFKT1JfT1VUQUdFEARCXlpcZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjE7c3RhdHVzcmVwb3J0djFiBnByb3RvMw");
-
-/**
- * ComponentImpact pairs a page component with the impact an update set for it.
- *
- * @generated from message openstatus.status_report.v1.ComponentImpact
- */
-export type ComponentImpact = Message<"openstatus.status_report.v1.ComponentImpact"> & {
-  /**
-   * ID of the affected page component.
-   *
-   * @generated from field: string page_component_id = 1;
-   */
-  pageComponentId: string;
-
-  /**
-   * Impact set for the component.
-   *
-   * @generated from field: openstatus.status_report.v1.PageComponentImpact impact = 2;
-   */
-  impact: PageComponentImpact;
-};
-
-/**
- * Describes the message openstatus.status_report.v1.ComponentImpact.
- * Use `create(ComponentImpactSchema)` to create a new message.
- */
-export const ComponentImpactSchema: GenMessage<ComponentImpact> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_report_v1_status_report, 0);
+  fileDesc("Ci9vcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjEvc3RhdHVzX3JlcG9ydC5wcm90bxIbb3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxIpQBChJTdGF0dXNSZXBvcnRVcGRhdGUSCgoCaWQYASABKAkSPwoGc3RhdHVzGAIgASgOMi8ub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLlN0YXR1c1JlcG9ydFN0YXR1cxIMCgRkYXRlGAMgASgJEg8KB21lc3NhZ2UYBCABKAkSEgoKY3JlYXRlZF9hdBgFIAEoCSK1AQoTU3RhdHVzUmVwb3J0U3VtbWFyeRIKCgJpZBgBIAEoCRI/CgZzdGF0dXMYAiABKA4yLy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3RhdHVzEg0KBXRpdGxlGAMgASgJEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgEIAMoCRISCgpjcmVhdGVkX2F0GAUgASgJEhIKCnVwZGF0ZWRfYXQYBiABKAki8AEKDFN0YXR1c1JlcG9ydBIKCgJpZBgBIAEoCRI/CgZzdGF0dXMYAiABKA4yLy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3RhdHVzEg0KBXRpdGxlGAMgASgJEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgEIAMoCRJACgd1cGRhdGVzGAUgAygLMi8ub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLlN0YXR1c1JlcG9ydFVwZGF0ZRISCgpjcmVhdGVkX2F0GAYgASgJEhIKCnVwZGF0ZWRfYXQYByABKAkqzwEKElN0YXR1c1JlcG9ydFN0YXR1cxIkCiBTVEFUVVNfUkVQT1JUX1NUQVRVU19VTlNQRUNJRklFRBAAEiYKIlNUQVRVU19SRVBPUlRfU1RBVFVTX0lOVkVTVElHQVRJTkcQARIjCh9TVEFUVVNfUkVQT1JUX1NUQVRVU19JREVOVElGSUVEEAISIwofU1RBVFVTX1JFUE9SVF9TVEFUVVNfTU9OSVRPUklORxADEiEKHVNUQVRVU19SRVBPUlRfU1RBVFVTX1JFU09MVkVEEARCXlpcZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjE7c3RhdHVzcmVwb3J0djFiBnByb3RvMw");
 
 /**
  * StatusReportUpdate represents a single update entry in a status report timeline.
@@ -80,13 +52,6 @@ export type StatusReportUpdate = Message<"openstatus.status_report.v1.StatusRepo
    * @generated from field: string created_at = 5;
    */
   createdAt: string;
-
-  /**
-   * Per-component impacts this update set (empty for legacy reports).
-   *
-   * @generated from field: repeated openstatus.status_report.v1.ComponentImpact component_impacts = 6;
-   */
-  componentImpacts: ComponentImpact[];
 };
 
 /**
@@ -94,7 +59,7 @@ export type StatusReportUpdate = Message<"openstatus.status_report.v1.StatusRepo
  * Use `create(StatusReportUpdateSchema)` to create a new message.
  */
 export const StatusReportUpdateSchema: GenMessage<StatusReportUpdate> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_report_v1_status_report, 1);
+  messageDesc(file_openstatus_status_report_v1_status_report, 0);
 
 /**
  * StatusReportSummary represents metadata for a status report (used in list responses).
@@ -150,7 +115,7 @@ export type StatusReportSummary = Message<"openstatus.status_report.v1.StatusRep
  * Use `create(StatusReportSummarySchema)` to create a new message.
  */
 export const StatusReportSummarySchema: GenMessage<StatusReportSummary> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_report_v1_status_report, 2);
+  messageDesc(file_openstatus_status_report_v1_status_report, 1);
 
 /**
  * StatusReport represents an incident or maintenance report with full details.
@@ -213,7 +178,7 @@ export type StatusReport = Message<"openstatus.status_report.v1.StatusReport"> &
  * Use `create(StatusReportSchema)` to create a new message.
  */
 export const StatusReportSchema: GenMessage<StatusReport> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_report_v1_status_report, 3);
+  messageDesc(file_openstatus_status_report_v1_status_report, 2);
 
 /**
  * StatusReportStatus represents the current state of a status report.
@@ -252,43 +217,4 @@ export enum StatusReportStatus {
  */
 export const StatusReportStatusSchema: GenEnum<StatusReportStatus> = /*@__PURE__*/
   enumDesc(file_openstatus_status_report_v1_status_report, 0);
-
-/**
- * PageComponentImpact is the per-component impact a status report update sets.
- * UNSPECIFIED means the caller doesn't speak impact (legacy) — it is NOT operational.
- *
- * @generated from enum openstatus.status_report.v1.PageComponentImpact
- */
-export enum PageComponentImpact {
-  /**
-   * @generated from enum value: PAGE_COMPONENT_IMPACT_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: PAGE_COMPONENT_IMPACT_OPERATIONAL = 1;
-   */
-  OPERATIONAL = 1,
-
-  /**
-   * @generated from enum value: PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE = 2;
-   */
-  DEGRADED_PERFORMANCE = 2,
-
-  /**
-   * @generated from enum value: PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE = 3;
-   */
-  PARTIAL_OUTAGE = 3,
-
-  /**
-   * @generated from enum value: PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE = 4;
-   */
-  MAJOR_OUTAGE = 4,
-}
-
-/**
- * Describes the enum openstatus.status_report.v1.PageComponentImpact.
- */
-export const PageComponentImpactSchema: GenEnum<PageComponentImpact> = /*@__PURE__*/
-  enumDesc(file_openstatus_status_report_v1_status_report, 1);
 

@@ -13,9 +13,9 @@ import { maintenance } from "../maintenances";
 import { monitor } from "../monitors";
 import { pageComponentGroup } from "../page_component_groups";
 import { page } from "../pages";
-import { statusReport, statusReportUpdate } from "../status_reports";
+import { statusReport } from "../status_reports";
 import { workspace } from "../workspaces";
-import { pageComponentImpact, pageComponentTypes } from "./constants";
+import { pageComponentTypes } from "./constants";
 
 export const pageComponent = sqliteTable(
   "page_component",
@@ -82,9 +82,6 @@ export const pageComponentRelations = relations(
       references: [pageComponentGroup.id],
     }),
     statusReportsToPageComponents: many(statusReportsToPageComponents),
-    statusReportUpdateToPageComponents: many(
-      statusReportUpdateToPageComponents,
-    ),
     maintenancesToPageComponents: many(maintenancesToPageComponents),
   }),
 );
@@ -154,44 +151,6 @@ export const statusReportsToPageComponentsRelations = relations(
     }),
     pageComponent: one(pageComponent, {
       fields: [statusReportsToPageComponents.pageComponentId],
-      references: [pageComponent.id],
-    }),
-  }),
-);
-
-// timeline: the impact each update set per component — the only place impact
-// is stored. `status_report_to_page_component` stays the membership source.
-export const statusReportUpdateToPageComponents = sqliteTable(
-  "status_report_update_to_page_component",
-  {
-    statusReportUpdateId: integer("status_report_update_id")
-      .notNull()
-      .references(() => statusReportUpdate.id, { onDelete: "cascade" }),
-    pageComponentId: integer("page_component_id")
-      .notNull()
-      .references(() => pageComponent.id, { onDelete: "cascade" }),
-    impact: text("impact", { enum: pageComponentImpact }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
-    ),
-  },
-  (t) => [
-    primaryKey({ columns: [t.statusReportUpdateId, t.pageComponentId] }),
-    index("status_report_update_to_page_component_page_component_id_idx").on(
-      t.pageComponentId,
-    ),
-  ],
-);
-
-export const statusReportUpdateToPageComponentsRelations = relations(
-  statusReportUpdateToPageComponents,
-  ({ one }) => ({
-    statusReportUpdate: one(statusReportUpdate, {
-      fields: [statusReportUpdateToPageComponents.statusReportUpdateId],
-      references: [statusReportUpdate.id],
-    }),
-    pageComponent: one(pageComponent, {
-      fields: [statusReportUpdateToPageComponents.pageComponentId],
       references: [pageComponent.id],
     }),
   }),
