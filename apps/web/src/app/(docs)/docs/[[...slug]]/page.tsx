@@ -211,7 +211,7 @@ export default async function DocsPage({
       <div className="min-w-0 flex-1 space-y-8">
         <DocsSubNav />
         <article className="prose dark:prose-invert max-w-none">
-          <h1>{doc.metadata.title}</h1>
+          <h1>{doc.metadata.hero ?? doc.metadata.title}</h1>
           <CustomMDX source={doc.content} />
         </article>
         <div className="space-y-4">

@@ -18,19 +18,36 @@ const faqItemSchema = z.object({
   answer: z.string(),
 });
 
+// Per-page SEO/social overrides. Each falls back to its top-level twin
+// (seo.title ?? title, seo.description ?? description); the rest are opt-in.
+const seoSchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+    ogImage: z.string(),
+    noindex: z.boolean(),
+    canonical: z.string(),
+  })
+  .partial();
+
 export const metadataSchema = z.object({
   title: z.string(),
+  // Visible page heading; falls back to `title`. Lets the on-page h1 differ
+  // from the canonical `title` used for SEO, breadcrumbs, search, and nav.
+  hero: z.string().optional(),
   publishedAt: z.coerce.date(),
   description: z.string(),
   category: z.string(),
   author: z.string(),
   image: z.string().optional(),
+  seo: seoSchema.optional(),
   // Structured data fields
   howto: howtoSchema.optional(),
   faq: z.array(faqItemSchema).optional(),
 });
 
 export type Metadata = z.infer<typeof metadataSchema>;
+export type SeoData = z.infer<typeof seoSchema>;
 export type HowToStep = z.infer<typeof howtoStepSchema>;
 export type HowToData = z.infer<typeof howtoSchema>;
 export type FAQItem = z.infer<typeof faqItemSchema>;

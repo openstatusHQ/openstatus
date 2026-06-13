@@ -55,7 +55,7 @@ export default async function Page(props: {
   return (
     <section className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{page.metadata.title}</h1>
+      <h1>{page.metadata.hero ?? page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
       <CheckerProvider
         defaultValues={data?.checks.sort((a, b) => a.latency - b.latency)}

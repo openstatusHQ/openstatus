@@ -51,12 +51,14 @@ export const getSocialMetadata = (args: {
   description: string;
   url: string;
   category?: string;
+  ogImage?: string;
 }): Pick<Metadata, "openGraph" | "twitter"> => {
-  const { title, description, url, category } = args;
+  const { title, description, url, category, ogImage: ogImageOverride } = args;
 
   const searchParams = new URLSearchParams({ title, description });
   if (category) searchParams.set("category", category);
-  const ogImage = `${BASE_URL}/api/og?${searchParams.toString()}`;
+  const ogImage =
+    ogImageOverride ?? `${BASE_URL}/api/og?${searchParams.toString()}`;
 
   return {
     openGraph: {
@@ -81,25 +83,31 @@ export const getSocialMetadata = (args: {
 
 export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
   const { slug, metadata } = page;
-  const { title, description, category, publishedAt } = metadata;
+  const { title, description, category, publishedAt, seo } = metadata;
 
   const url = basePath
     ? `${BASE_URL}/${basePath}/${slug}`
     : `${BASE_URL}/${slug}`;
 
+  const metaTitle = seo?.title ?? title;
+  const metaDescription = seo?.description ?? description;
+
   const { openGraph, twitter } = getSocialMetadata({
-    title,
-    description,
+    title: metaTitle,
+    description: metaDescription,
     url,
     category,
+    ogImage: seo?.ogImage,
   });
 
   return {
-    title,
-    description,
+    // `absolute` bypasses the `%s | openstatus` template so the override is verbatim
+    title: seo?.title ? { absolute: seo.title } : title,
+    description: metaDescription,
     alternates: {
-      canonical: url,
+      canonical: seo?.canonical ?? url,
     },
+    ...(seo?.noindex ? { robots: { index: false } } : {}),
     openGraph: {
       ...openGraph,
       type: "article",
