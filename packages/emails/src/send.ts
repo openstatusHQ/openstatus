@@ -78,7 +78,15 @@ export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
       })
     ));
   }
-}else if (resendClient){
-    await resendClient.batch.send(emails)
+} else if (resendClient) {
+    await resendClient.batch.send(
+      emails.map((email) => ({
+        from: email.from,
+        to: email.to,
+        subject: email.subject,
+        html: email.html,
+        replyTo: email.reply_to,
+      }))
+    );
   }
 };
