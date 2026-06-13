@@ -74,7 +74,7 @@ export default async function CustomerPage({
           className="h-8 w-auto"
         />
       ) : null}
-      <h1>{page.metadata.title}</h1>
+      <h1>{page.metadata.hero ?? page.metadata.title}</h1>
       <CustomMDX source={page.content} />
     </section>
   );

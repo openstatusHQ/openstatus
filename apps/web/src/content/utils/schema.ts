@@ -32,6 +32,9 @@ const seoSchema = z
 
 export const metadataSchema = z.object({
   title: z.string(),
+  // Visible page heading; falls back to `title`. Lets the on-page h1 differ
+  // from the canonical `title` used for SEO, breadcrumbs, search, and nav.
+  hero: z.string().optional(),
   publishedAt: z.coerce.date(),
   description: z.string(),
   category: z.string(),

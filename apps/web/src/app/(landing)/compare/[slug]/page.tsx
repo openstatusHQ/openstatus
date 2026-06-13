@@ -78,7 +78,7 @@ export default async function Blog({
   return (
     <section className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{post.metadata.title}</h1>
+      <h1>{post.metadata.hero ?? post.metadata.title}</h1>
       <p className="text-lg">{post.metadata.description}</p>
       <CustomMDX source={post.content} />
       <ContentPagination prev={previousPost} next={nextPost} />

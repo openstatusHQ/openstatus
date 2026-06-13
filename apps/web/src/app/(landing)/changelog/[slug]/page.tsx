@@ -80,7 +80,7 @@ export default async function Changelog({
   return (
     <section className="prose dark:prose-invert max-w-none">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{post.metadata.title}</h1>
+      <h1>{post.metadata.hero ?? post.metadata.title}</h1>
       <ContentMetadata data={post} />
       {post.metadata.image ? (
         <div className="border-border relative aspect-video w-full overflow-hidden border">

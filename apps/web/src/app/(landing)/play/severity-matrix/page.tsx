@@ -34,7 +34,7 @@ export default function Page() {
   return (
     <section className="prose dark:prose-invert max-w-none space-y-4">
       <JsonLd graph={jsonLDGraph} />
-      <h1>{page.metadata.title}</h1>
+      <h1>{page.metadata.hero ?? page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
       <SeverityMatrixBuilder />
       <CustomMDX source={page.content} />
