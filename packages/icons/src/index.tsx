@@ -3,6 +3,7 @@ export * from "./github";
 export * from "./google";
 export * from "./grafana";
 export * from "./pagerduty";
+export * from "./pushover";
 export * from "./slack";
 export * from "./opsgenie";
 export * from "./fly";
