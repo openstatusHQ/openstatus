@@ -20,7 +20,7 @@ const smtpTransporter = env.SMTP_HOST
     })
   : null;
 
-if (!resendClient && !smtpTransporter) {
+if (!resendClient && !smtpTransporter && process.env.NODE_ENV === "production") {
   throw new Error("Either RESEND_API_KEY or SMTP_HOST must be provided.");
 }
 
@@ -39,6 +39,15 @@ export type EmailHtml = {
   from: string;
   reply_to?: string;
 };
+
+function chunk<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
 export const sendEmail = async (email: Emails) => {
   if (process.env.NODE_ENV !== "production") return;
   const html = await render(email.react);
@@ -50,8 +59,8 @@ export const sendEmail = async (email: Emails) => {
       html,
       replyTo: email.reply_to,
     });
-  } else if (resendClient) {
-    await resendClient?.emails.send({
+    }else if (resendClient){
+    await resendClient.emails.send({
       from: email.from,
       to: email.to,
       subject: email.subject,
@@ -63,19 +72,20 @@ export const sendEmail = async (email: Emails) => {
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
   if (process.env.NODE_ENV !== "production") return;
-  if (smtpTransporter) {
-    await Promise.all(
-      emails.map((email) =>
+  if(smtpTransporter){
+    const chunks = chunk(emails, 100); // Send in batches of 100
+    for (const batch of chunks) {
+      await Promise.all(batch.map((email) =>
         smtpTransporter.sendMail({
           from: env.SMTP_FROM || email.from,
           to: email.to,
           subject: email.subject,
           html: email.html,
           replyTo: email.reply_to,
-        }),
-      ),
-    );
-  } else if (resendClient) {
-    await resendClient?.batch.send(emails);
+        })
+      ));
+    }
+  }else if (resendClient){
+    await resendClient.batch.send(emails)
   }
 };
