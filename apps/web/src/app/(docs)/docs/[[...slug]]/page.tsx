@@ -14,6 +14,7 @@ import {
   gitLastModified,
   validateDocsNav,
 } from "@/content/docs";
+import { DocsFeedback } from "@/content/docs-feedback";
 import { DocsSubNav } from "@/content/docs-sub-nav";
 import { TableOfContents } from "@/content/docs-toc";
 import {
@@ -241,8 +242,9 @@ export default async function DocsPage({
       </div>
 
       <aside className="hidden w-56 shrink-0 xl:block">
-        <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <div className="sticky top-4 max-h-[calc(100vh-2rem)] space-y-2 overflow-y-auto">
           <TableOfContents items={toc} />
+          <DocsFeedback />
         </div>
       </aside>
     </div>
