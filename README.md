@@ -1,27 +1,27 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">openstatus</h3>
+ <h3 align="center">openstatus</h3>
 
-  <p align="center">The open-source status page and uptime monitoring platform.
-    <br />
-    <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
-    <br />
-    <br />
-    <a href="https://www.openstatus.dev/docs">Documentation</a>
-    ·
-    <a href="https://www.openstatus.dev">Website</a>
-    ·
-    <a href="https://www.openstatus.dev/discord">Discord</a>
-  </p>
+ <p align="center">The open-source status page and uptime monitoring platform.
+  <br />
+  <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
+  <br />
+  <br />
+  <a href="https://www.openstatus.dev/docs">Documentation</a>
+  ·
+  <a href="https://www.openstatus.dev">Website</a>
+  ·
+  <a href="https://www.openstatus.dev/discord">Discord</a>
+ </p>
 
-  <p align="center">
-  <a href="https://status.openstatus.dev"><img src="https://status.openstatus.dev/badge/v2?variant=outline" alt="openstatus status"></a>
+ <p align="center">
+ <a href="https://status.openstatus.dev"><img src="https://status.openstatus.dev/badge/v2?variant=outline" alt="openstatus status"></a>
 
-  </p>
-  <p align="center">
-      <a href="https://github.com/openstatushq/openstatus/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License"></a>
-      <a href="https://github.com/openstatushq/openstatus/stargazers"><img src="https://img.shields.io/github/stars/openstatushq/openstatus?style=social" alt="GitHub stars"></a>
-      <a href="https://www.openstatus.dev/discord"><img src="https://img.shields.io/discord/1129008226264940625?color=7289da&logo=discord&logoColor=white" alt="Discord"></a>
+ </p>
+ <p align="center">
+   <a href="https://github.com/openstatushq/openstatus/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License"></a>
+   <a href="https://github.com/openstatushq/openstatus/stargazers"><img src="https://img.shields.io/github/stars/openstatushq/openstatus?style=social" alt="GitHub stars"></a>
+   <a href="https://www.openstatus.dev/discord"><img src="https://img.shields.io/discord/1129008226264940625?color=7289da&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
 ## About openstatus
@@ -29,7 +29,7 @@
 openstatus is an open-source platform that combines **status pages** and **uptime monitoring** in a single tool. Keep your users informed and your services reliable. Available as a managed service or self-hosted.
 
 <p align="center">
-  <img src="https://www.openstatus.dev/assets/landing/statuspage-meow.png" alt="openstatus status page" width="720" />
+ <img src="https://www.openstatus.dev/assets/landing/statuspage-meow.png" alt="openstatus status page" width="720" />
 </p>
 
 ## Why openstatus?
@@ -69,8 +69,8 @@ cp .env.docker.example .env.docker
 docker compose up -d
 
 # 3. Access the application
-open http://localhost:3002  # Dashboard
-open http://localhost:3003  # Status Pages
+open http://localhost:3002 # Dashboard
+open http://localhost:3003 # Status Pages
 ```
 
 Full guide: [DOCKER.md](DOCKER.md)
@@ -157,7 +157,7 @@ The above commands will automatically run the libSQL client on `8080` so you mig
 If you want to help us build the best status page and monitoring platform, check our [contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD).
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />
+ <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />
 </a>
 
 ![openstatus repository activity](https://repobeats.axiom.co/api/embed/180eee159c0128f683a30f15f51ac35bdbd9fa44.svg "Repobeats analytics image")
