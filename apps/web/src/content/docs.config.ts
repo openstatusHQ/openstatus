@@ -109,6 +109,10 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Configure Your Status Page",
       },
       {
+        slug: "guides/how-to-create-status-page-theme",
+        label: "How to Create Your Own Status Page Theme",
+      },
+      {
         slug: "guides/how-to-import-status-page",
         label: "How to Import a Status Page from Another Provider",
       },
