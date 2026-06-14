@@ -21,8 +21,6 @@ const schema = z.discriminatedUnion("kind", [
     kind: z.literal("rating"),
     path,
     rating: z.enum(["up", "down"]),
-    // prior vote on this path, so a switch decrements the old count (client dedupes via localStorage)
-    previous: z.enum(["up", "down"]).optional(),
   }),
   z.object({
     kind: z.literal("message"),
@@ -31,7 +29,17 @@ const schema = z.discriminatedUnion("kind", [
   }),
 ]);
 
+type Rating = "up" | "down";
+
 const countsKey = (path: string) => `docs-feedback:counts:${path}`;
+const voterKey = (path: string, ip: string) =>
+  `docs-feedback:voter:${path}:${ip}`;
+// bound voter-key storage; after expiry a re-vote may double count (acceptable)
+const VOTER_TTL = 60 * 60 * 24 * 180; // 180 days, seconds
+
+// Slack mrkdwn treats & < > as control chars; escape user text before interpolation
+const escapeSlack = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export async function POST(request: Request) {
   let data: z.infer<typeof schema>;
@@ -76,9 +84,16 @@ export async function POST(request: Request) {
   // historical tally of up/down votes per path; best-effort, never blocks Slack
   if (data.kind === "rating") {
     try {
-      await redis.hincrby(countsKey(data.path), data.rating, 1);
-      if (data.previous && data.previous !== data.rating) {
-        await redis.hincrby(countsKey(data.path), data.previous, -1);
+      // one vote per (path, IP); derive the prior vote server-side so the delta
+      // can't be forged — a tampered count needs both a real prior vote and the IP.
+      const voter = voterKey(data.path, clientIP);
+      const previous = await redis.get<Rating>(voter);
+      if (previous !== data.rating) {
+        await redis.hincrby(countsKey(data.path), data.rating, 1);
+        if (previous) {
+          await redis.hincrby(countsKey(data.path), previous, -1);
+        }
+        await redis.set(voter, data.rating, { ex: VOTER_TTL });
       }
     } catch (err) {
       console.error("Docs feedback: failed to record vote", err);
@@ -95,21 +110,26 @@ export async function POST(request: Request) {
     data.kind === "rating"
       ? `*Docs feedback:* ${data.rating === "up" ? "👍 helpful" : "👎 not helpful"}`
       : "*Docs feedback:* 💬 comment",
-    `*Path:* ${data.path}`,
+    `*Path:* ${escapeSlack(data.path)}`,
   ];
   if (data.kind === "message") {
     lines.push(
       "--------------------------------",
-      `*Message:* ${data.message}`,
+      `*Message:* ${escapeSlack(data.message)}`,
     );
   }
 
   try {
-    await fetch(webhook, {
+    const response = await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: lines.join("\n") }),
     });
+    if (!response.ok) {
+      console.error(
+        `Docs feedback: Slack webhook responded ${response.status}`,
+      );
+    }
   } catch (err) {
     console.error("Docs feedback: failed to post to Slack", err);
   }

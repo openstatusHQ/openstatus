@@ -21,6 +21,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { toastAction } from "@/lib/toast";
+
 type Rating = "up" | "down";
 
 const ratingKey = (path: string) => `docs-rating:${path}`;
@@ -33,15 +35,18 @@ type FeedbackBody =
   | { kind: "rating"; path: string; rating: Rating; previous?: Rating }
   | { kind: "message"; path: string; message: string };
 
-// best-effort: feedback must never block or error the reader
-async function postFeedback(body: FeedbackBody) {
+// never throws; returns whether the server accepted the submission
+async function postFeedback(body: FeedbackBody): Promise<boolean> {
   try {
-    await fetch("/api/feedback/docs", {
+    const res = await fetch("/api/feedback/docs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-  } catch {}
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 function DocsFeedbackBar({ path }: { path: string }) {
@@ -71,16 +76,27 @@ function DocsFeedbackBar({ path }: { path: string }) {
   }, [open, sent, form]);
 
   function rate(value: Rating) {
-    if (rating === value) return;
-    const previous = rating;
+    // read the prior vote from localStorage (not state) so a click before the
+    // hydration effect still reports the correct `previous` to the server
+    const stored = window.localStorage.getItem(ratingKey(path));
+    const previous = stored === "up" || stored === "down" ? stored : undefined;
+    if (previous === value) return;
     setRating(value);
     window.localStorage.setItem(ratingKey(path), value);
     void postFeedback({ kind: "rating", path, rating: value, previous });
   }
 
   async function onSubmit(values: z.infer<typeof schema>) {
-    await postFeedback({ kind: "message", path, message: values.message });
-    setSent(true);
+    const ok = await postFeedback({
+      kind: "message",
+      path,
+      message: values.message,
+    });
+    if (ok) {
+      setSent(true);
+    } else {
+      toastAction("error");
+    }
   }
 
   return (
