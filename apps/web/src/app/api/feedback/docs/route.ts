@@ -85,9 +85,9 @@ export async function POST(request: Request) {
     }
   }
 
-  const webhook = process.env.SLACK_SUPPORT_WEBHOOK_URL;
+  const webhook = process.env.SLACK_FEEDBACK_WEBHOOK_URL;
   if (!webhook) {
-    console.error("Docs feedback: SLACK_SUPPORT_WEBHOOK_URL not configured.");
+    console.error("Docs feedback: SLACK_FEEDBACK_WEBHOOK_URL not configured.");
     return Response.json({ success: true });
   }
 
