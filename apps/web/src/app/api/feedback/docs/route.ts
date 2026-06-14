@@ -8,18 +8,25 @@ export const runtime = "edge";
 const RATE_LIMIT_WINDOW = 60; // seconds
 const MAX_REQUESTS_PER_WINDOW = 5;
 
+// a docs pathname (from usePathname); constrained so it can't craft arbitrary Redis keys
+const path = z
+  .string()
+  .min(1)
+  .max(512)
+  .regex(/^\/[a-zA-Z0-9/_-]*$/);
+
 // rating-only (thumbs) and message-only (feedback) are separate actions
 const schema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("rating"),
-    path: z.string().min(1).max(512),
+    path,
     rating: z.enum(["up", "down"]),
     // prior vote on this path, so a switch decrements the old count (client dedupes via localStorage)
     previous: z.enum(["up", "down"]).optional(),
   }),
   z.object({
     kind: z.literal("message"),
-    path: z.string().min(1).max(512),
+    path,
     message: z.string().trim().min(1).max(2000),
   }),
 ]);
@@ -60,6 +67,12 @@ export async function POST(request: Request) {
     );
   }
 
+  // dev: skip external writes (Redis tally + Slack) so local runs don't pollute prod
+  if (process.env.NODE_ENV === "development") {
+    console.log("docs feedback", data);
+    return Response.json({ success: true });
+  }
+
   // historical tally of up/down votes per path; best-effort, never blocks Slack
   if (data.kind === "rating") {
     try {
@@ -75,11 +88,6 @@ export async function POST(request: Request) {
   const webhook = process.env.SLACK_SUPPORT_WEBHOOK_URL;
   if (!webhook) {
     console.error("Docs feedback: SLACK_SUPPORT_WEBHOOK_URL not configured.");
-    return Response.json({ success: true });
-  }
-
-  if (process.env.NODE_ENV === "development") {
-    console.log("docs feedback", data);
     return Response.json({ success: true });
   }
 
