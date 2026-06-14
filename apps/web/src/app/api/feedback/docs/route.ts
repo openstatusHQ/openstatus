@@ -2,6 +2,7 @@ import { redis } from "@openstatus/upstash";
 import { z } from "zod";
 
 import { getClientIP, ratelimit } from "@/lib/ratelimit";
+import { hashIP } from "@/lib/utils";
 
 export const runtime = "edge";
 
@@ -32,8 +33,8 @@ const schema = z.discriminatedUnion("kind", [
 type Rating = "up" | "down";
 
 const countsKey = (path: string) => `docs-feedback:counts:${path}`;
-const voterKey = (path: string, ip: string) =>
-  `docs-feedback:voter:${path}:${ip}`;
+const voterKey = (path: string, id: string) =>
+  `docs-feedback:voter:${path}:${id}`;
 // bound voter-key storage; after expiry a re-vote may double count (acceptable)
 const VOTER_TTL = 60 * 60 * 24 * 180; // 180 days, seconds
 
@@ -56,8 +57,9 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  const voterId = await hashIP(clientIP);
 
-  const limit = await ratelimit(`docs-feedback:${clientIP}`, {
+  const limit = await ratelimit(`docs-feedback:${voterId}`, {
     window: RATE_LIMIT_WINDOW,
     limit: MAX_REQUESTS_PER_WINDOW,
   });
@@ -84,16 +86,20 @@ export async function POST(request: Request) {
   // historical tally of up/down votes per path; best-effort, never blocks Slack
   if (data.kind === "rating") {
     try {
-      // one vote per (path, IP); derive the prior vote server-side so the delta
-      // can't be forged — a tampered count needs both a real prior vote and the IP.
-      const voter = voterKey(data.path, clientIP);
-      const previous = await redis.get<Rating>(voter);
+      // one vote per (path, voter); SET ... GET atomically claims the new vote and
+      // returns the prior one in a single round-trip, so concurrent requests can't
+      // both read a stale value and double-count. The delta derives from that prior
+      // value server-side, so a tampered count needs both a real prior vote and the IP.
+      const previous = (await redis.set(
+        voterKey(data.path, voterId),
+        data.rating,
+        { ex: VOTER_TTL, get: true },
+      )) as Rating | null;
       if (previous !== data.rating) {
         await redis.hincrby(countsKey(data.path), data.rating, 1);
         if (previous) {
           await redis.hincrby(countsKey(data.path), previous, -1);
         }
-        await redis.set(voter, data.rating, { ex: VOTER_TTL });
       }
     } catch (err) {
       console.error("Docs feedback: failed to record vote", err);
