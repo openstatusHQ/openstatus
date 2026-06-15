@@ -609,6 +609,42 @@ components:
       title: DeleteMonitorResponse
       additionalProperties: false
       description: DeleteMonitorResponse is the response after deleting a monitor.
+    openstatus.monitor.v1.GetMonitorDailySummaryRequest:
+      type: object
+      properties:
+        monitorIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          title: monitor_ids
+          maxItems: 50
+          minItems: 1
+          description: One or more monitor IDs to fetch daily status for. Each returned bucket is tagged with its monitor_id.
+        days:
+          type:
+            - integer
+            - "null"
+          title: days
+          maximum: 45
+          minimum: 1
+          format: int32
+          description: Number of days to return (1-45, defaults to 45 if unspecified).
+      title: GetMonitorDailySummaryRequest
+      additionalProperties: false
+      description: GetMonitorDailySummaryRequest is the request to get per-day status buckets for monitors.
+    openstatus.monitor.v1.GetMonitorDailySummaryResponse:
+      type: object
+      properties:
+        dailyStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.MonitorDailyStat'
+          title: daily_stats
+          description: Per-day status buckets across the requested monitors, oldest first.
+      title: GetMonitorDailySummaryResponse
+      additionalProperties: false
+      description: GetMonitorDailySummaryResponse is the response containing per-day status buckets.
     openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest:
       type: object
       properties:
@@ -1306,6 +1342,48 @@ components:
       title: MonitorConfig
       additionalProperties: false
       description: MonitorConfig represents the type-specific configuration for a monitor.
+    openstatus.monitor.v1.MonitorDailyStat:
+      type: object
+      properties:
+        monitorId:
+          type: string
+          title: monitor_id
+          description: Monitor ID this bucket belongs to.
+        day:
+          type: string
+          title: day
+          description: Day of the bucket in RFC 3339 format (UTC midnight).
+        count:
+          type:
+            - integer
+            - string
+          title: count
+          format: int64
+          description: Total number of checks that day.
+        ok:
+          type:
+            - integer
+            - string
+          title: ok
+          format: int64
+          description: Number of successful checks that day.
+        degraded:
+          type:
+            - integer
+            - string
+          title: degraded
+          format: int64
+          description: Number of degraded checks that day.
+        error:
+          type:
+            - integer
+            - string
+          title: error
+          format: int64
+          description: Number of failed checks that day.
+      title: MonitorDailyStat
+      additionalProperties: false
+      description: MonitorDailyStat is a single per-day status bucket for one monitor.
     openstatus.monitor.v1.MonitorStatus:
       type: string
       title: MonitorStatus
@@ -4380,6 +4458,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/GetMonitorDailySummary:
+    get:
+      tags:
+        - MonitorService
+      summary: GetMonitorDailySummary
+      description: Returns per-day status buckets (ok, degraded, error, count) for one or more monitors over the last N days (max 45). Each bucket is tagged with its monitor id, making it suitable for rendering per-monitor status bars and uptime calendars.
+      operationId: MonitorService_GetMonitorDailySummary.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorDailySummaryRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorDailySummaryResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: GetMonitorDailySummary
+      description: Returns per-day status buckets (ok, degraded, error, count) for one or more monitors over the last N days (max 45). Each bucket is tagged with its monitor id, making it suitable for rendering per-monitor status bars and uptime calendars.
+      operationId: MonitorService_GetMonitorDailySummary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorDailySummaryRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorDailySummaryResponse'
   /rpc/openstatus.monitor.v1.MonitorService/GetMonitorHTTPResponseLog:
     get:
       tags:

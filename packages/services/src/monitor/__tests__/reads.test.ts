@@ -14,6 +14,7 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { createMonitor } from "../create";
+import { getMonitorDailySummary } from "../get-daily-summary";
 import { getMonitorStatus } from "../get-monitor-status";
 import { getMonitorSummary } from "../get-monitor-summary";
 import { getResponseLog } from "../get-response-log";
@@ -161,6 +162,67 @@ describe("getMonitorSummary", () => {
         getMonitorSummary({
           ctx: { ...teamCtx, db: tx },
           input: { monitorId: row.id, timeRange: "1d" },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+});
+
+describe("getMonitorDailySummary", () => {
+  test("throws NotFoundError for cross-workspace monitorId", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-cross-ws-daily`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      await expect(
+        getMonitorDailySummary({
+          ctx: { ...freeCtx, db: tx },
+          input: { monitorIds: [row.id] },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("throws NotFoundError for unknown monitorId in own workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        getMonitorDailySummary({
+          ctx: { ...teamCtx, db: tx },
+          input: { monitorIds: [999_999_999] },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("throws ValidationError for unsupported jobType (icmp)", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-icmp-daily`,
+          jobType: "icmp",
+          url: "1.1.1.1",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      await expect(
+        getMonitorDailySummary({
+          ctx: { ...teamCtx, db: tx },
+          input: { monitorIds: [row.id] },
         }),
       ).rejects.toBeInstanceOf(ValidationError);
     });
