@@ -71,17 +71,23 @@ export async function getMonitorDailySummary(args: {
   const startOfTodayUtc = Math.floor(Date.now() / DAY_MS) * DAY_MS;
   const cutoff = startOfTodayUtc - (days - 1) * DAY_MS;
 
+  const results = await Promise.all(
+    (["http", "tcp", "dns"] as const)
+      .filter((jobType) => idsByJobType[jobType].length > 0)
+      .map((jobType) => {
+        const monitorIds = idsByJobType[jobType];
+        const pipe =
+          jobType === "http"
+            ? tb.httpStatus45d
+            : jobType === "tcp"
+              ? tb.tcpStatus45d
+              : tb.dnsStatus45d;
+        return pipe({ monitorIds });
+      }),
+  );
+
   const dailyStats: MonitorDailyStat[] = [];
-  for (const jobType of ["http", "tcp", "dns"] as const) {
-    const monitorIds = idsByJobType[jobType];
-    if (monitorIds.length === 0) continue;
-    const pipe =
-      jobType === "http"
-        ? tb.httpStatus45d
-        : jobType === "tcp"
-          ? tb.tcpStatus45d
-          : tb.dnsStatus45d;
-    const result = await pipe({ monitorIds });
+  for (const result of results) {
     for (const row of result.data) {
       if (new Date(row.day).getTime() < cutoff) continue;
       dailyStats.push({
