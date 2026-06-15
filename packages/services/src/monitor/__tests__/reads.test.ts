@@ -227,6 +227,94 @@ describe("getMonitorDailySummary", () => {
       ).rejects.toBeInstanceOf(ValidationError);
     });
   });
+
+  test("merges per-job-type pipes, applies the day window, and tags monitorId", async () => {
+    await withTestTransaction(async (tx) => {
+      const httpMon = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-daily-http`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+      const tcpMon = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-daily-tcp`,
+          jobType: "tcp",
+          url: "example.com:443",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+          regions: ["ams"],
+        },
+      });
+
+      const DAY = 86_400_000;
+      const startOfToday = Math.floor(Date.now() / DAY) * DAY;
+      const inWindow = new Date(startOfToday).toISOString();
+      const stale = new Date(startOfToday - 40 * DAY).toISOString();
+      const bucket = (monitorId: number, day: string) => ({
+        day,
+        count: 10,
+        ok: 9,
+        degraded: 1,
+        error: 0,
+        monitorId: String(monitorId),
+      });
+
+      const queried: Record<string, string[]> = {};
+      // fake Tinybird client exposing only the 45d pipes the verb calls
+      const fakeTb = {
+        httpStatus45d: ({ monitorIds }: { monitorIds: string[] }) => {
+          queried.http = monitorIds;
+          return Promise.resolve({
+            data: [bucket(httpMon.id, inWindow), bucket(httpMon.id, stale)],
+          });
+        },
+        tcpStatus45d: ({ monitorIds }: { monitorIds: string[] }) => {
+          queried.tcp = monitorIds;
+          return Promise.resolve({ data: [bucket(tcpMon.id, inWindow)] });
+        },
+        dnsStatus45d: () => Promise.resolve({ data: [] }),
+      } as unknown as NonNullable<ServiceContext["tb"]>;
+
+      const { dailyStats } = await getMonitorDailySummary({
+        ctx: { ...teamCtx, db: tx, tb: fakeTb },
+        input: { monitorIds: [httpMon.id, tcpMon.id], days: 7 },
+      });
+
+      // each pipe is queried only with its own job type's ids
+      expect(queried.http).toEqual([String(httpMon.id)]);
+      expect(queried.tcp).toEqual([String(tcpMon.id)]);
+      // the 40-day-old bucket is dropped by the 7-day window; ids come back as numbers, sorted by day then id
+      expect(dailyStats).toEqual([
+        {
+          monitorId: httpMon.id,
+          day: inWindow,
+          count: 10,
+          ok: 9,
+          degraded: 1,
+          error: 0,
+        },
+        {
+          monitorId: tcpMon.id,
+          day: inWindow,
+          count: 10,
+          ok: 9,
+          degraded: 1,
+          error: 0,
+        },
+      ]);
+    });
+  });
 });
 
 describe("getResponseLog", () => {
