@@ -18,7 +18,7 @@ function getCacheDescription(key: string): string {
       return "The response was served from the edge cache. A background request to the origin server was made to update the content.";
     case "PRERENDER":
       return "The response was served from static storage.";
-    case "REVLIDATED":
+    case "REVALIDATED":
       return "The response was served from the origin server and the cache was refreshed due to an authorization from the user in the incoming request.";
     default:
       return "-";
