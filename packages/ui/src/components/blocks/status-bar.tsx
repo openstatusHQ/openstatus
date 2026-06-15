@@ -118,7 +118,7 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [interactionType, setInteractionType] = useState<InteractionType>(null);
   const buttonRefs = useRef<(HTMLElement | null)[]>([]);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Clear hover timeout on unmount
