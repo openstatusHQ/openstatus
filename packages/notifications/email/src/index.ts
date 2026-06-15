@@ -59,7 +59,7 @@ export const sendRecovery = async ({
     url: monitor.url,
     status: statusCode?.toString(),
     latency: latency ? `${latency}ms` : "N/A",
-    region: region ?? "N/A",
+    region: region ? regionDict[region].location : "N/A",
     timestamp: new Date(cronTimestamp).toISOString(),
   });
 };
@@ -87,7 +87,7 @@ export const sendDegraded = async ({
     url: monitor.url,
     status: statusCode?.toString(),
     latency: latency ? `${latency}ms` : "N/A",
-    region: region ?? "N/A",
+    region: region ? regionDict[region].location : "N/A",
     timestamp: new Date(cronTimestamp).toISOString(),
   });
 };
