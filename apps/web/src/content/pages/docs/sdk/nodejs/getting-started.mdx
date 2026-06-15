@@ -76,7 +76,7 @@ console.log(`Found ${totalSize} monitors`);
 
 ## Runtime Support
 
-The SDK talks to the API over a fetch-based Connect transport (`@connectrpc/connect-web`), so it runs on any runtime with a global `fetch` — no HTTP/2 or `node:*` modules required:
+The SDK talks to the API over a fetch-based Connect transport (`@connectrpc/connect-web`), so it runs on any runtime with a global `fetch`:
 
 | Runtime            | Version | Module Format |
 |--------------------|---------|---------------|
@@ -87,7 +87,7 @@ The SDK talks to the API over a fetch-based Connect transport (`@connectrpc/conn
 
 ### Cloudflare Workers and edge runtimes
 
-The default client works on the edge as-is. The one caveat is that `@connectrpc/connect-web` issues requests with `redirect: "error"`, which `workerd` doesn't implement. If you hit `The redirect mode 'error' is not supported`, pass a transport with a redirect-tolerant `fetch` (the SDK re-exports `createAuthInterceptor` and the service descriptors for this):
+`@connectrpc/connect-web` sets `redirect: "error"` on every request. Node, Deno, and Bun's `fetch` support that mode, so they need no setup — but Cloudflare Workers (`workerd`) doesn't, so **every** request there fails with `The redirect mode 'error' is not supported`. On Workers, pass a transport with a redirect-normalizing `fetch` (the SDK re-exports `createAuthInterceptor` and the service descriptors for this):
 
 ```typescript
 import { createConnectTransport } from "@connectrpc/connect-web";
