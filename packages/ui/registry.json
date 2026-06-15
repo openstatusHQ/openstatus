@@ -4,44 +4,21 @@
   "homepage": "https://openstatus.dev",
   "version": "0.2.0",
   "style": "default",
-  "tailwind": {
-    "config": {
-      "theme": {
-        "extend": {
-          "colors": {
-            "success": "hsl(var(--success))",
-            "success-foreground": "hsl(var(--success-foreground))",
-            "warning": "hsl(var(--warning))",
-            "warning-foreground": "hsl(var(--warning-foreground))",
-            "destructive": "hsl(var(--destructive))",
-            "destructive-foreground": "hsl(var(--destructive-foreground))",
-            "info": "hsl(var(--info))",
-            "info-foreground": "hsl(var(--info-foreground))"
-          }
-        }
-      }
-    }
-  },
   "cssVars": {
+    "theme": {
+      "color-success": "var(--success)",
+      "color-warning": "var(--warning)",
+      "color-info": "var(--info)"
+    },
     "light": {
-      "success": "142.1 76.2% 36.3%",
-      "success-foreground": "355.7 100% 97.3%",
-      "warning": "38 92% 50%",
-      "warning-foreground": "48 96% 89%",
-      "destructive": "0 84.2% 60.2%",
-      "destructive-foreground": "0 0% 98%",
-      "info": "221.2 83.2% 53.3%",
-      "info-foreground": "210 40% 98%"
+      "success": "oklch(0.72 0.19 150)",
+      "warning": "oklch(0.77 0.16 70)",
+      "info": "oklch(0.62 0.19 260)"
     },
     "dark": {
-      "success": "142.1 70.6% 45.3%",
-      "success-foreground": "144.9 80.4% 10%",
-      "warning": "38 92% 50%",
-      "warning-foreground": "48 96% 89%",
-      "destructive": "0 72.2% 50.6%",
-      "destructive-foreground": "0 85.7% 97.3%",
-      "info": "217.2 91.2% 59.8%",
-      "info-foreground": "222.2 47.4% 11.2%"
+      "success": "oklch(0.72 0.19 150)",
+      "warning": "oklch(0.77 0.16 70)",
+      "info": "oklch(0.62 0.19 260)"
     }
   },
   "items": [
@@ -91,6 +68,23 @@
       "title": "Status Utilities",
       "description": "Utility functions for status formatting and display",
       "dependencies": ["date-fns"],
+      "cssVars": {
+        "theme": {
+          "color-success": "var(--success)",
+          "color-warning": "var(--warning)",
+          "color-info": "var(--info)"
+        },
+        "light": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        },
+        "dark": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        }
+      },
       "files": [
         {
           "path": "src/components/blocks/status.utils.ts",
@@ -106,6 +100,23 @@
       "description": "Unified status icon component with variants for different contexts",
       "registryDependencies": ["status-types"],
       "dependencies": ["lucide-react"],
+      "cssVars": {
+        "theme": {
+          "color-success": "var(--success)",
+          "color-warning": "var(--warning)",
+          "color-info": "var(--info)"
+        },
+        "light": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        },
+        "dark": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        }
+      },
       "files": [
         {
           "path": "src/components/blocks/status-icon.tsx",
@@ -166,7 +177,12 @@
         "use-copy-to-clipboard",
         "use-media-query"
       ],
-      "dependencies": ["date-fns", "@date-fns/utc@2.1.0", "lucide-react"],
+      "dependencies": [
+        "@radix-ui/react-hover-card",
+        "date-fns",
+        "@date-fns/utc@2.1.0",
+        "lucide-react"
+      ],
       "files": [
         {
           "path": "src/components/blocks/status-timestamp.tsx",
@@ -252,7 +268,7 @@
         "separator",
         "tooltip"
       ],
-      "dependencies": ["date-fns", "lucide-react"],
+      "dependencies": ["@radix-ui/react-slot", "date-fns", "lucide-react"],
       "files": [
         {
           "path": "src/components/blocks/status-events.tsx",
@@ -299,7 +315,7 @@
         "skeleton",
         "use-media-query"
       ],
-      "dependencies": ["date-fns", "lucide-react", "react-day-picker"],
+      "dependencies": ["date-fns", "lucide-react", "react-day-picker@8"],
       "files": [
         {
           "path": "src/components/blocks/status-calendar.tsx",
