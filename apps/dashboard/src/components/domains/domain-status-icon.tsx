@@ -7,7 +7,7 @@ export function DomainStatusIcon({
   status,
   loading,
 }: {
-  status: DomainVerificationStatusProps;
+  status?: DomainVerificationStatusProps;
   loading?: boolean;
 }) {
   return loading ? (
