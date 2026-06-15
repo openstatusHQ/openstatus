@@ -1,5 +1,10 @@
 export { cloneMonitor } from "./clone";
 export { createMonitor } from "./create";
+export {
+  getMonitorDailySummary,
+  type GetMonitorDailySummaryResult,
+  type MonitorDailyStat,
+} from "./get-daily-summary";
 export { deleteMonitor, deleteMonitors } from "./delete";
 export {
   getMonitorStatus,
@@ -52,6 +57,7 @@ export {
   CreateMonitorInput,
   DeleteMonitorInput,
   DeleteMonitorsInput,
+  GetMonitorDailySummaryInput,
   GetMonitorInput,
   GetMonitorStatusInput,
   GetMonitorSummaryInput,

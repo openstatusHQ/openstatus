@@ -164,6 +164,14 @@ export const GetMonitorSummaryInput = z.object({
 });
 export type GetMonitorSummaryInput = z.infer<typeof GetMonitorSummaryInput>;
 
+export const GetMonitorDailySummaryInput = z.object({
+  monitorIds: z.array(z.number().int()).min(1).max(50),
+  days: z.number().int().min(1).max(45).optional(),
+});
+export type GetMonitorDailySummaryInput = z.infer<
+  typeof GetMonitorDailySummaryInput
+>;
+
 export const ListResponseLogsInput = z.object({
   monitorId: z.number().int(),
   fromTimestamp: z.number().int().optional(),
