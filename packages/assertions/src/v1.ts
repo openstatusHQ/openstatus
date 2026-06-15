@@ -366,7 +366,7 @@ export class JsonBodyAssertion implements Assertion {
       // A no-match yields undefined, treated as an empty string.
       const value = JSONPath({ path: this.schema.path, json, wrap: false });
       const { success, message } = evaluateString(
-        String(value ?? ""),
+        String(value === undefined ? "" : value),
         this.schema.compare,
         this.schema.target,
       );
