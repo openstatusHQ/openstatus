@@ -33,9 +33,16 @@ SELF_HOST=true
 
 ### **Email Service (Required for Login)**
 ```bash
+# Option 1: Resend
 RESEND_API_KEY=re_your_resend_api_key_here
-```
 
+# Option 2: SMTP
+# SMTP_HOST=smtp.example.com
+# SMTP_PORT=587
+# SMTP_USER=your-smtp-username
+# SMTP_PASS=your-smtp-password
+# SMTP_FROM=notifications@example.com
+````
 ## 🔧 Optional Environment Variables
 
 ### **Analytics (TinyBird)**
@@ -133,7 +140,7 @@ WORKSPACES_HIDE_URL=false
 ### **Variable Categories in Coolify UI**
 - **Database**: `DATABASE_URL`, `DATABASE_AUTH_TOKEN`
 - **Authentication**: `AUTH_SECRET`, `NEXT_PUBLIC_URL`, `SELF_HOST`
-- **Email**: `RESEND_API_KEY`
+- **Email**: `RESEND_API_KEY` (Resend) or `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (SMTP)
 - **Analytics**: `TINY_BIRD_API_KEY`, `TINYBIRD_URL`
 - **OAuth**: `AUTH_GITHUB_*`, `AUTH_GOOGLE_*`
 - **Queue**: `UPSTASH_*`, `QSTASH_*`
@@ -157,7 +164,7 @@ WORKSPACES_HIDE_URL=false
 - **DATABASE_URL**: Must be `http://libsql:8080` (internal container communication)
 - **AUTH_SECRET**: Must be at least 32 characters
 - **NEXT_PUBLIC_URL**: Must include protocol (http:// or https://)
-- **RESEND_API_KEY**: Required for email login functionality
+- **Email**: Required for email login — either `RESEND_API_KEY` (Resend) or `SMTP_HOST` + SMTP credentials
 
 ### **Getting Help**
 - **Coolify Documentation**: Check Coolify's environment variables guide
@@ -173,7 +180,16 @@ DATABASE_URL=http://libsql:8080
 DATABASE_AUTH_TOKEN=
 AUTH_SECRET=your-32-char-secret
 NEXT_PUBLIC_URL=https://your-domain.com
-RESEND_API_KEY=your-resend-key
+# Option 1: Resend
+RESEND_API_KEY=re_your_resend_api_key_here
+
+# Option 2: SMTP
+# SMTP_HOST=smtp.example.com
+# SMTP_PORT=587
+# SMTP_USER=your-smtp-username
+# SMTP_PASS=your-smtp-password
+# SMTP_FROM=notifications@example.com
+
 ```
 
 ### **Testing Your Setup**

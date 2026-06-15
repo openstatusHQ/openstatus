@@ -190,8 +190,15 @@ AUTH_SECRET=your-secret-here
 DATABASE_URL=http://libsql:8080
 DATABASE_AUTH_TOKEN=basic:token
 
-# Email
+# Option 1: Resend
 RESEND_API_KEY=test
+
+# Option 2: SMTP
+# SMTP_HOST=smtp.example.com
+# SMTP_PORT=587
+# SMTP_USER=your-smtp-username
+# SMTP_PASS=your-smtp-password
+# SMTP_FROM=notifications@example.com
 ```
 
 ### Optional Services

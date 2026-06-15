@@ -13,6 +13,7 @@
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "effect": "catalog:",
+    "nodemailer": "catalog:",
     "react": "catalog:",
     "react-email": "catalog:",
     "resend": "catalog:",
@@ -22,6 +23,7 @@
     "@openstatus/tsconfig": "workspace:*",
     "@react-email/ui": "catalog:",
     "@types/node": "catalog:",
+    "@types/nodemailer": "catalog:",
     "@types/react": "catalog:",
     "typescript": "catalog:"
   }

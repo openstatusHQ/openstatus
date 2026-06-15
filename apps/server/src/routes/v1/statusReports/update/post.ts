@@ -15,7 +15,7 @@ import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
 
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+const emailClient = new EmailClient();
 
 const postRouteUpdate = createRoute({
   method: "post",
