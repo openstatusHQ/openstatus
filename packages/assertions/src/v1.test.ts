@@ -102,4 +102,46 @@ describe("JsonBodyAssertion", () => {
       success: true,
     });
   });
+
+  it("compares an explicit JSON null via its string form, not as empty", () => {
+    const assertion = new JsonBodyAssertion({
+      version: "v1",
+      type: "jsonBody",
+      path: "$.field",
+      compare: "eq",
+      target: "null",
+    });
+
+    expect(assertion.assert(request({ field: null }))).toEqual({
+      success: true,
+    });
+  });
+
+  it("treats an explicit JSON null as not empty", () => {
+    const assertion = new JsonBodyAssertion({
+      version: "v1",
+      type: "jsonBody",
+      path: "$.field",
+      compare: "not_empty",
+      target: "",
+    });
+
+    expect(assertion.assert(request({ field: null }))).toEqual({
+      success: true,
+    });
+  });
+
+  it("treats a missing path as empty (no match coerces to empty string)", () => {
+    const assertion = new JsonBodyAssertion({
+      version: "v1",
+      type: "jsonBody",
+      path: "$.missing",
+      compare: "empty",
+      target: "",
+    });
+
+    expect(assertion.assert(request({ field: null }))).toEqual({
+      success: true,
+    });
+  });
 });
