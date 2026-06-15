@@ -1,7 +1,8 @@
 {
   "extends": "@openstatus/tsconfig/base.json",
   "compilerOptions": {
-    "lib": ["es2015", "dom"]
+    "lib": ["es2015", "dom"],
+    "types": ["bun"]
   },
   "include": ["src", "*.ts"]
 }
