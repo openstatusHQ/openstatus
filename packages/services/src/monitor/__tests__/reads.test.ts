@@ -14,7 +14,7 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../../errors";
 import { createMonitor } from "../create";
-import { getMonitorDailySummary } from "../get-daily-summary";
+import { fetchMonitorDailyStats } from "../get-daily-summary";
 import { getMonitorStatus } from "../get-monitor-status";
 import { getMonitorSummary } from "../get-monitor-summary";
 import { getResponseLog } from "../get-response-log";
@@ -168,8 +168,14 @@ describe("getMonitorSummary", () => {
   });
 });
 
-describe("getMonitorDailySummary", () => {
-  test("throws NotFoundError for cross-workspace monitorId", async () => {
+describe("fetchMonitorDailyStats", () => {
+  const emptyTb = {
+    httpStatus45d: () => Promise.resolve({ data: [] }),
+    tcpStatus45d: () => Promise.resolve({ data: [] }),
+    dnsStatus45d: () => Promise.resolve({ data: [] }),
+  } as unknown as NonNullable<ServiceContext["tb"]>;
+
+  test("skips cross-workspace monitorId (returns empty, no throw)", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createMonitor({
         ctx: { ...teamCtx, db: tx },
@@ -184,27 +190,29 @@ describe("getMonitorDailySummary", () => {
           regions: ["ams"],
         },
       });
-      await expect(
-        getMonitorDailySummary({
-          ctx: { ...freeCtx, db: tx },
-          input: { monitorIds: [row.id] },
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      const stats = await fetchMonitorDailyStats({
+        db: tx,
+        tb: emptyTb,
+        monitorIds: [row.id],
+        workspaceId: freeCtx.workspace.id,
+      });
+      expect(stats).toEqual([]);
     });
   });
 
-  test("throws NotFoundError for unknown monitorId in own workspace", async () => {
+  test("skips unknown monitorId (returns empty)", async () => {
     await withTestTransaction(async (tx) => {
-      await expect(
-        getMonitorDailySummary({
-          ctx: { ...teamCtx, db: tx },
-          input: { monitorIds: [999_999_999] },
-        }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      const stats = await fetchMonitorDailyStats({
+        db: tx,
+        tb: emptyTb,
+        monitorIds: [999_999_999],
+        workspaceId: teamCtx.workspace.id,
+      });
+      expect(stats).toEqual([]);
     });
   });
 
-  test("throws ValidationError for unsupported jobType (icmp)", async () => {
+  test("skips unsupported jobType (icmp)", async () => {
     await withTestTransaction(async (tx) => {
       const row = await createMonitor({
         ctx: { ...teamCtx, db: tx },
@@ -219,16 +227,17 @@ describe("getMonitorDailySummary", () => {
           regions: ["ams"],
         },
       });
-      await expect(
-        getMonitorDailySummary({
-          ctx: { ...teamCtx, db: tx },
-          input: { monitorIds: [row.id] },
-        }),
-      ).rejects.toBeInstanceOf(ValidationError);
+      const stats = await fetchMonitorDailyStats({
+        db: tx,
+        tb: emptyTb,
+        monitorIds: [row.id],
+        workspaceId: teamCtx.workspace.id,
+      });
+      expect(stats).toEqual([]);
     });
   });
 
-  test("merges per-job-type pipes, applies the day window, and tags monitorId", async () => {
+  test("queries each pipe with its own job type's ids and merges the rows", async () => {
     await withTestTransaction(async (tx) => {
       const httpMon = await createMonitor({
         ctx: { ...teamCtx, db: tx },
@@ -257,12 +266,11 @@ describe("getMonitorDailySummary", () => {
         },
       });
 
-      const DAY = 86_400_000;
-      const startOfToday = Math.floor(Date.now() / DAY) * DAY;
-      const inWindow = new Date(startOfToday).toISOString();
-      const stale = new Date(startOfToday - 40 * DAY).toISOString();
-      const bucket = (monitorId: number, day: string) => ({
-        day,
+      const today = new Date(
+        Math.floor(Date.now() / 86_400_000) * 86_400_000,
+      ).toISOString();
+      const bucket = (monitorId: number) => ({
+        day: today,
         count: 10,
         ok: 9,
         degraded: 1,
@@ -271,48 +279,28 @@ describe("getMonitorDailySummary", () => {
       });
 
       const queried: Record<string, string[]> = {};
-      // fake Tinybird client exposing only the 45d pipes the verb calls
       const fakeTb = {
         httpStatus45d: ({ monitorIds }: { monitorIds: string[] }) => {
           queried.http = monitorIds;
-          return Promise.resolve({
-            data: [bucket(httpMon.id, inWindow), bucket(httpMon.id, stale)],
-          });
+          return Promise.resolve({ data: [bucket(httpMon.id)] });
         },
         tcpStatus45d: ({ monitorIds }: { monitorIds: string[] }) => {
           queried.tcp = monitorIds;
-          return Promise.resolve({ data: [bucket(tcpMon.id, inWindow)] });
+          return Promise.resolve({ data: [bucket(tcpMon.id)] });
         },
         dnsStatus45d: () => Promise.resolve({ data: [] }),
       } as unknown as NonNullable<ServiceContext["tb"]>;
 
-      const { dailyStats } = await getMonitorDailySummary({
-        ctx: { ...teamCtx, db: tx, tb: fakeTb },
-        input: { monitorIds: [httpMon.id, tcpMon.id], days: 7 },
+      const stats = await fetchMonitorDailyStats({
+        db: tx,
+        tb: fakeTb,
+        monitorIds: [httpMon.id, tcpMon.id],
+        workspaceId: teamCtx.workspace.id,
       });
 
-      // each pipe is queried only with its own job type's ids
       expect(queried.http).toEqual([String(httpMon.id)]);
       expect(queried.tcp).toEqual([String(tcpMon.id)]);
-      // the 40-day-old bucket is dropped by the 7-day window; ids come back as numbers, sorted by day then id
-      expect(dailyStats).toEqual([
-        {
-          monitorId: httpMon.id,
-          day: inWindow,
-          count: 10,
-          ok: 9,
-          degraded: 1,
-          error: 0,
-        },
-        {
-          monitorId: tcpMon.id,
-          day: inWindow,
-          count: 10,
-          ok: 9,
-          degraded: 1,
-          error: 0,
-        },
-      ]);
+      expect(stats).toEqual([bucket(httpMon.id), bucket(tcpMon.id)]);
     });
   });
 });

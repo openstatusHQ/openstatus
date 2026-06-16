@@ -75,14 +75,6 @@ service MonitorService {
     };
   }
 
-  // GetMonitorDailySummary returns per-day status buckets per monitor over the last N days (max 45).
-  rpc GetMonitorDailySummary(GetMonitorDailySummaryRequest) returns (GetMonitorDailySummaryResponse) {
-    option idempotency_level = NO_SIDE_EFFECTS;
-    option (gnostic.openapi.v3.operation) = {
-      description: "Returns per-day status buckets (ok, degraded, error, count) for one or more monitors over the last N days (max 45). Each bucket is tagged with its monitor id, making it suitable for rendering per-monitor status bars and uptime calendars."
-    };
-  }
-
   // GetMonitor returns a single monitor by ID within the authenticated workspace.
   // Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
   rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse) {
@@ -317,51 +309,6 @@ message GetMonitorSummaryResponse {
 
   // Regions included in the metrics.
   repeated Region regions = 12;
-}
-
-// GetMonitorDailySummaryRequest is the request to get per-day status buckets for monitors.
-message GetMonitorDailySummaryRequest {
-  // One or more monitor IDs to fetch daily status for. Each returned bucket is tagged with its monitor_id.
-  repeated string monitor_ids = 1 [(buf.validate.field).repeated = {
-    min_items: 1
-    max_items: 50
-    items: {
-      string: {min_len: 1}
-    }
-  }];
-
-  // Number of days to return (1-45, defaults to 45 if unspecified).
-  optional int32 days = 2 [(buf.validate.field).int32 = {
-    gte: 1
-    lte: 45
-  }];
-}
-
-// MonitorDailyStat is a single per-day status bucket for one monitor.
-message MonitorDailyStat {
-  // Monitor ID this bucket belongs to.
-  string monitor_id = 1;
-
-  // Day of the bucket in RFC 3339 format (UTC midnight).
-  string day = 2;
-
-  // Total number of checks that day.
-  int64 count = 3;
-
-  // Number of successful checks that day.
-  int64 ok = 4;
-
-  // Number of degraded checks that day.
-  int64 degraded = 5;
-
-  // Number of failed checks that day.
-  int64 error = 6;
-}
-
-// GetMonitorDailySummaryResponse is the response containing per-day status buckets.
-message GetMonitorDailySummaryResponse {
-  // Per-day status buckets across the requested monitors, oldest first.
-  repeated MonitorDailyStat daily_stats = 1;
 }
 
 // GetMonitorRequest is the request to get a single monitor by ID.

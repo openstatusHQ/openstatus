@@ -5,14 +5,12 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
-  GetMonitorDailySummaryResponse,
   GetMonitorResponse,
   GetMonitorSummaryResponse,
   HTTPMonitor,
   HTTPResponseLogPagination,
   ListMonitorHTTPResponseLogsResponse,
   MonitorConfig,
-  MonitorDailyStat,
   MonitorService,
   RegionStatus,
   TCPMonitor,
@@ -26,7 +24,6 @@ import {
 import {
   type MonitorTimeRange,
   deleteMonitor,
-  getMonitorDailySummary,
   getMonitorStatus,
   getMonitorSummary,
   getResponseLog,
@@ -773,45 +770,6 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       }
       if (err instanceof ValidationError) {
         throw monitorTypeMismatchError(req.id, "http, tcp, or dns", "other");
-      }
-      toConnectError(err);
-    }
-  },
-
-  async getMonitorDailySummary(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const idsLabel = req.monitorIds.join(", ");
-
-    try {
-      const result = await getMonitorDailySummary({
-        ctx: toServiceCtx(rpcCtx),
-        input: {
-          monitorIds: req.monitorIds.map(Number),
-          days: req.days,
-        },
-      });
-      const dailyStats = result.dailyStats.map(
-        (stat): MonitorDailyStat => ({
-          $typeName: "openstatus.monitor.v1.MonitorDailyStat",
-          monitorId: String(stat.monitorId),
-          day: stat.day,
-          count: BigInt(stat.count),
-          ok: BigInt(stat.ok),
-          degraded: BigInt(stat.degraded),
-          error: BigInt(stat.error),
-        }),
-      );
-      return {
-        $typeName:
-          "openstatus.monitor.v1.GetMonitorDailySummaryResponse" as const,
-        dailyStats,
-      } satisfies GetMonitorDailySummaryResponse;
-    } catch (err) {
-      if (err instanceof NotFoundError) {
-        throw monitorNotFoundError(idsLabel);
-      }
-      if (err instanceof ValidationError) {
-        throw monitorTypeMismatchError(idsLabel, "http, tcp, or dns", "other");
       }
       toConnectError(err);
     }

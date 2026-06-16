@@ -547,7 +547,9 @@ export function resolveDayStatus(
 }
 
 // worst impact over the whole event (reports only); undefined ⇒ no impact rows
-export function eventWorstImpact(event: Event): PageComponentImpact | undefined {
+export function eventWorstImpact(
+  event: Event,
+): PageComponentImpact | undefined {
   if (!event.impactIntervals || event.impactIntervals.length === 0) {
     return undefined;
   }
