@@ -23,9 +23,9 @@ export async function listExternalServiceSlugs(args?: {
     })
     .from(externalService);
 
-  const rows = includeDeleted
-    ? await retryRead(() => query.all())
-    : await retryRead(() => query.where(liveOnlyClause()).all());
+  const rows = await retryRead(() =>
+    includeDeleted ? query.all() : query.where(liveOnlyClause()).all(),
+  );
 
   const canonical: string[] = [];
   const aliases: Array<{ from: string; to: string }> = [];

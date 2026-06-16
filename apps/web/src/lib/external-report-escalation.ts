@@ -15,7 +15,9 @@ import { env } from "@/env";
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const REPORTS_REVALIDATE_SECONDS = 30;
-const REPORTS_TAG = "external-services";
+// Distinct from the "external-services" tag on service-lookup caches so that
+// service mutations don't also flush the short-lived reports cache.
+const REPORTS_TAG = "external-service-reports";
 
 // Keyed by serviceId only — `since` is a moving Date.now() window, so it must be
 // computed inside (keying on it would make every request a cache miss).

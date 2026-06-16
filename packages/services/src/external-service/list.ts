@@ -58,9 +58,9 @@ export async function listExternalServices(args: {
     .from(externalService)
     .orderBy(asc(sql`lower(${externalService.name})`));
 
-  const rows = input?.includeDeleted
-    ? await retryRead(() => query.all())
-    : await retryRead(() => query.where(liveOnlyClause()).all());
+  const rows = await retryRead(() =>
+    input?.includeDeleted ? query.all() : query.where(liveOnlyClause()).all(),
+  );
 
   return validateRows(rows);
 }

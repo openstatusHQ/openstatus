@@ -51,6 +51,26 @@ describe("isRetryableDbError", () => {
     expect(isRetryableDbError(null)).toBe(false);
     expect(isRetryableDbError("SQLITE_BUSY")).toBe(false);
   });
+
+  test("terminates on a self-referential cause cycle", () => {
+    const err: { code?: string; cause?: unknown } = {};
+    err.cause = err;
+    expect(isRetryableDbError(err)).toBe(false);
+  });
+
+  test("finds a retryable code at the deepest searched level", () => {
+    // wrapped 9 times -> code sits at depth 9, the last level inspected.
+    let chain: { code?: string; cause?: unknown } = { code: "SQLITE_BUSY" };
+    for (let i = 0; i < 9; i++) chain = { cause: chain };
+    expect(isRetryableDbError(chain)).toBe(true);
+  });
+
+  test("stops at MAX_CAUSE_DEPTH (code one level too deep is unreachable)", () => {
+    // wrapped 10 times -> code sits at depth 10, never inspected.
+    let chain: { code?: string; cause?: unknown } = { code: "SQLITE_BUSY" };
+    for (let i = 0; i < 10; i++) chain = { cause: chain };
+    expect(isRetryableDbError(chain)).toBe(false);
+  });
 });
 
 describe("isTransientServerError", () => {

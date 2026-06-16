@@ -15,7 +15,9 @@ import { cn } from "@/lib/utils";
 
 import { SIZE } from "../utils";
 
-export const runtime = "edge";
+// nodejs (not edge): this route pulls in the service reads + Effect retry, which
+// push the bundle past the 2 MB edge limit. Node has no such cap.
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const FOOTER = "openstatus.dev/status";
