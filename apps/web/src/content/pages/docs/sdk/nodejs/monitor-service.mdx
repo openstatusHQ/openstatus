@@ -347,43 +347,7 @@ console.log(`P99: ${summary.p99}ms`);
 
 The latency fields (`p50`, `p75`, `p90`, `p95`, `p99`) and count fields (`totalSuccessful`, `totalDegraded`, `totalFailed`) are `bigint` values. The `regions` parameter is optional — pass an empty array to get metrics across all regions.
 
-`getMonitorSummary` returns a single aggregate over the window and `TimeRange` caps at 14 days. For a per-day series (e.g. to render status bars), use `getMonitorDailySummary` below.
-
-## Get Monitor Daily Summary
-
-Get per-day status buckets for one or more monitors over the last N days (max 45). Each bucket is tagged with its `monitorId`, so you can render a status bar per monitor. This is the recommended way to feed the `status-bar` / `status-calendar` registry components.
-
-```typescript
-import { createOpenStatusClient } from "@openstatus/sdk-node";
-
-const client = createOpenStatusClient({
-  apiKey: process.env.OPENSTATUS_API_KEY,
-});
-
-const { dailyStats } = await client.monitor.v1.MonitorService
-  .getMonitorDailySummary({
-    monitorIds: ["123456", "123457"],
-    days: 45,
-  });
-
-for (const stat of dailyStats) {
-  console.log(
-    `[${stat.monitorId}] ${stat.day}: ` +
-      `${stat.ok}/${stat.count} ok, ${stat.degraded} degraded, ${stat.error} error`,
-  );
-}
-```
-
-Request parameters:
-
-| Parameter     | Type              | Description                                          |
-| ------------- | ----------------- | ---------------------------------------------------- |
-| `monitorIds`  | string[]          | One or more monitor IDs (1–50, required)             |
-| `days`        | number (optional) | Days to return (1–45, default 45; values >45 reject) |
-
-Each `MonitorDailyStat` has `monitorId`, `day` (RFC 3339, UTC midnight), and the `bigint` counts `count`, `ok`, `degraded`, `error`. Days with no checks are omitted — fill gaps client-side. Daily data is retained for 45 days.
-
-<Aside type="note">The REST endpoint `GET /v1/monitor/{id}/summary` also returns a daily series, but only `{ ok, count, day }` for a single monitor. Prefer `getMonitorDailySummary` — it is multi-monitor and includes `degraded`/`error`.</Aside>
+`getMonitorSummary` returns a single aggregate over the window and `TimeRange` caps at 14 days. For a per-day series to render status bars, use `getPageComponentDailySummary` on the [Status Page Service](/docs/sdk/nodejs/status-page-service) — it returns per-component daily buckets merged with the incident and maintenance timeline (max 45 days), the single source of truth for the `status-bar` / `status-calendar` registry components. The REST endpoint `GET /v1/monitor/{id}/summary` also exposes a single-monitor daily series (`{ ok, count, day }`).
 
 ## List Monitor HTTP Response Logs
 
