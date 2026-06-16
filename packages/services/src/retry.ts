@@ -1,9 +1,10 @@
+import { Cause, Effect, Exit, Schedule } from "effect";
+
 const RETRYABLE_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED"]);
 const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
 const TRANSIENT_SERVER_MESSAGE = /Server returned HTTP status 5\d\d/i;
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 25;
-const MAX_DELAY_MS = 400;
 const MAX_CAUSE_DEPTH = 10;
 
 function hasCode(value: object): value is { code: unknown } {
@@ -61,23 +62,28 @@ export function isTransientServerError(err: unknown): boolean {
   return false;
 }
 
-function backoffDelayMs(attempt: number): number {
-  const cap = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempt);
-  return Math.random() * cap;
-}
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const retrySchedule = Schedule.exponential(`${BASE_DELAY_MS} millis`).pipe(
+  Schedule.jittered,
+);
 
 export async function withBusyRetry<T>(
   fn: () => Promise<T>,
   isRetryable: (err: unknown) => boolean = isRetryableDbError,
 ): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt >= MAX_ATTEMPTS - 1 || !isRetryable(err)) throw err;
-      await sleep(backoffDelayMs(attempt));
-    }
-  }
+  const exit = await Effect.runPromiseExit(
+    Effect.tryPromise({ try: () => fn(), catch: (err) => err }).pipe(
+      Effect.retry({
+        schedule: retrySchedule,
+        times: MAX_ATTEMPTS - 1,
+        while: isRetryable,
+      }),
+    ),
+  );
+  // squash so callers reject with the original error, not Effect's FiberFailure.
+  if (Exit.isFailure(exit)) throw Cause.squash(exit.cause);
+  return exit.value;
 }
+
+// Idempotent reads only: also retries transient Turso 5xx (see isTransientServerError).
+export const retryRead = <T>(fn: () => Promise<T>): Promise<T> =>
+  withBusyRetry(fn, (e) => isRetryableDbError(e) || isTransientServerError(e));

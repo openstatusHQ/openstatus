@@ -12,6 +12,7 @@ import {
 import { externalServiceReport } from "@openstatus/db/src/schema";
 
 import type { GlobalReadContext } from "../external-service/internal";
+import { retryRead } from "../retry";
 
 export type ServiceReportWindow = {
   externalServiceId: number;
@@ -43,22 +44,24 @@ export async function getServiceReportWindows(args: {
   const { ctx, serviceIds, since } = args;
   if (serviceIds.length === 0) return [];
   const db = ctx?.db ?? defaultDb;
-  return db
-    .select({
-      externalServiceId: externalServiceReport.externalServiceId,
-      reporters: distinctReporters,
-      total: totalReports,
-      countries: distinctCountries,
-    })
-    .from(externalServiceReport)
-    .where(
-      and(
-        inArray(externalServiceReport.externalServiceId, serviceIds),
-        gte(externalServiceReport.createdAt, since),
-      ),
-    )
-    .groupBy(externalServiceReport.externalServiceId)
-    .all();
+  return retryRead(() =>
+    db
+      .select({
+        externalServiceId: externalServiceReport.externalServiceId,
+        reporters: distinctReporters,
+        total: totalReports,
+        countries: distinctCountries,
+      })
+      .from(externalServiceReport)
+      .where(
+        and(
+          inArray(externalServiceReport.externalServiceId, serviceIds),
+          gte(externalServiceReport.createdAt, since),
+        ),
+      )
+      .groupBy(externalServiceReport.externalServiceId)
+      .all(),
+  );
 }
 
 export async function getComponentReportWindows(args: {
@@ -68,22 +71,24 @@ export async function getComponentReportWindows(args: {
 }): Promise<ComponentReportWindow[]> {
   const { ctx, serviceId, since } = args;
   const db = ctx?.db ?? defaultDb;
-  const rows = await db
-    .select({
-      componentId: externalServiceReport.externalServiceComponentId,
-      reporters: distinctReporters,
-      total: totalReports,
-    })
-    .from(externalServiceReport)
-    .where(
-      and(
-        eq(externalServiceReport.externalServiceId, serviceId),
-        isNotNull(externalServiceReport.externalServiceComponentId),
-        gte(externalServiceReport.createdAt, since),
-      ),
-    )
-    .groupBy(externalServiceReport.externalServiceComponentId)
-    .all();
+  const rows = await retryRead(() =>
+    db
+      .select({
+        componentId: externalServiceReport.externalServiceComponentId,
+        reporters: distinctReporters,
+        total: totalReports,
+      })
+      .from(externalServiceReport)
+      .where(
+        and(
+          eq(externalServiceReport.externalServiceId, serviceId),
+          isNotNull(externalServiceReport.externalServiceComponentId),
+          gte(externalServiceReport.createdAt, since),
+        ),
+      )
+      .groupBy(externalServiceReport.externalServiceComponentId)
+      .all(),
+  );
   return rows.flatMap((r) =>
     r.componentId == null
       ? []
@@ -104,22 +109,24 @@ export async function getServiceReportDaily(args: {
 }): Promise<DailyReport[]> {
   const { ctx, serviceId, since } = args;
   const db = ctx?.db ?? defaultDb;
-  return db
-    .select({
-      day: dayBucket,
-      reporters: distinctReporters,
-      total: totalReports,
-    })
-    .from(externalServiceReport)
-    .where(
-      and(
-        eq(externalServiceReport.externalServiceId, serviceId),
-        gte(externalServiceReport.createdAt, since),
-      ),
-    )
-    .groupBy(dayBucket)
-    .orderBy(asc(dayBucket))
-    .all();
+  return retryRead(() =>
+    db
+      .select({
+        day: dayBucket,
+        reporters: distinctReporters,
+        total: totalReports,
+      })
+      .from(externalServiceReport)
+      .where(
+        and(
+          eq(externalServiceReport.externalServiceId, serviceId),
+          gte(externalServiceReport.createdAt, since),
+        ),
+      )
+      .groupBy(dayBucket)
+      .orderBy(asc(dayBucket))
+      .all(),
+  );
 }
 
 export async function getServiceReportCountries(args: {
@@ -131,18 +138,20 @@ export async function getServiceReportCountries(args: {
   const { ctx, serviceId, since } = args;
   const limit = Math.max(0, Math.trunc(args.limit));
   const db = ctx?.db ?? defaultDb;
-  return db
-    .select({ country: externalServiceReport.country, total: totalReports })
-    .from(externalServiceReport)
-    .where(
-      and(
-        eq(externalServiceReport.externalServiceId, serviceId),
-        gte(externalServiceReport.createdAt, since),
-        sql`${externalServiceReport.country} != ''`,
-      ),
-    )
-    .groupBy(externalServiceReport.country)
-    .orderBy(desc(totalReports), asc(externalServiceReport.country))
-    .limit(limit)
-    .all();
+  return retryRead(() =>
+    db
+      .select({ country: externalServiceReport.country, total: totalReports })
+      .from(externalServiceReport)
+      .where(
+        and(
+          eq(externalServiceReport.externalServiceId, serviceId),
+          gte(externalServiceReport.createdAt, since),
+          sql`${externalServiceReport.country} != ''`,
+        ),
+      )
+      .groupBy(externalServiceReport.country)
+      .orderBy(desc(totalReports), asc(externalServiceReport.country))
+      .limit(limit)
+      .all(),
+  );
 }

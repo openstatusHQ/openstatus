@@ -10,11 +10,7 @@ import {
   shouldUpdateLastUsed,
   verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
-import {
-  isRetryableDbError,
-  isTransientServerError,
-  withBusyRetry,
-} from "@openstatus/services";
+import { retryRead } from "@openstatus/services";
 import { UnkeyCore } from "@unkey/api/core";
 import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
@@ -24,10 +20,6 @@ import { OpenStatusApiError } from "@/libs/errors";
 import type { Variables } from "@/types";
 
 const logger = getLogger("api-server");
-
-// Reads only: a 502 can land after a write partially applied.
-const retryRead = <T>(fn: () => Promise<T>): Promise<T> =>
-  withBusyRetry(fn, (e) => isRetryableDbError(e) || isTransientServerError(e));
 
 export async function lookupWorkspace(workspaceId: number) {
   const _workspace = await retryRead(() =>

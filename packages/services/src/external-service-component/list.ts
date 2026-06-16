@@ -5,6 +5,7 @@ import { externalServiceComponent } from "@openstatus/db/src/schema";
 import { defaultTb } from "../context";
 import { getExternalServiceBySlug } from "../external-service";
 import type { GlobalReadContext } from "../external-service/internal";
+import { retryRead } from "../retry";
 
 export type ExternalComponentListItem = {
   id: number;
@@ -80,27 +81,29 @@ export async function listExternalComponentsByServiceId(args: {
   const { ctx, externalServiceId } = args;
   const db = ctx?.db ?? defaultDb;
 
-  const rows = await db
-    .select({
-      id: externalServiceComponent.id,
-      externalServiceId: externalServiceComponent.externalServiceId,
-      upstreamComponentId: externalServiceComponent.upstreamComponentId,
-      slug: externalServiceComponent.slug,
-      name: externalServiceComponent.name,
-      description: externalServiceComponent.description,
-      groupName: externalServiceComponent.groupName,
-      position: externalServiceComponent.position,
-      indicator: externalServiceComponent.indicator,
-      status: externalServiceComponent.status,
-      firstSeenAt: externalServiceComponent.firstSeenAt,
-    })
-    .from(externalServiceComponent)
-    .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
-    .orderBy(
-      asc(externalServiceComponent.position),
-      asc(externalServiceComponent.name),
-    )
-    .all();
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+        upstreamComponentId: externalServiceComponent.upstreamComponentId,
+        slug: externalServiceComponent.slug,
+        name: externalServiceComponent.name,
+        description: externalServiceComponent.description,
+        groupName: externalServiceComponent.groupName,
+        position: externalServiceComponent.position,
+        indicator: externalServiceComponent.indicator,
+        status: externalServiceComponent.status,
+        firstSeenAt: externalServiceComponent.firstSeenAt,
+      })
+      .from(externalServiceComponent)
+      .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
+      .orderBy(
+        asc(externalServiceComponent.position),
+        asc(externalServiceComponent.name),
+      )
+      .all(),
+  );
 
   if (rows.length === 0) return [];
 
@@ -186,33 +189,35 @@ export async function getExternalComponentBySlug(args: {
   const service = await getExternalServiceBySlug({ ctx, slug: serviceSlug });
   if (!service) return { service: null, component: null };
 
-  const rows = await db
-    .select({
-      id: externalServiceComponent.id,
-      externalServiceId: externalServiceComponent.externalServiceId,
-      upstreamComponentId: externalServiceComponent.upstreamComponentId,
-      slug: externalServiceComponent.slug,
-      aliases: externalServiceComponent.aliases,
-      name: externalServiceComponent.name,
-      description: externalServiceComponent.description,
-      groupName: externalServiceComponent.groupName,
-      position: externalServiceComponent.position,
-      indicator: externalServiceComponent.indicator,
-      status: externalServiceComponent.status,
-      firstSeenAt: externalServiceComponent.firstSeenAt,
-    })
-    .from(externalServiceComponent)
-    .where(
-      and(
-        eq(externalServiceComponent.externalServiceId, service.id),
-        or(
-          eq(externalServiceComponent.slug, componentSlug),
-          sql`EXISTS (SELECT 1 FROM json_each(${externalServiceComponent.aliases}) WHERE value = ${componentSlug})`,
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+        upstreamComponentId: externalServiceComponent.upstreamComponentId,
+        slug: externalServiceComponent.slug,
+        aliases: externalServiceComponent.aliases,
+        name: externalServiceComponent.name,
+        description: externalServiceComponent.description,
+        groupName: externalServiceComponent.groupName,
+        position: externalServiceComponent.position,
+        indicator: externalServiceComponent.indicator,
+        status: externalServiceComponent.status,
+        firstSeenAt: externalServiceComponent.firstSeenAt,
+      })
+      .from(externalServiceComponent)
+      .where(
+        and(
+          eq(externalServiceComponent.externalServiceId, service.id),
+          or(
+            eq(externalServiceComponent.slug, componentSlug),
+            sql`EXISTS (SELECT 1 FROM json_each(${externalServiceComponent.aliases}) WHERE value = ${componentSlug})`,
+          ),
         ),
-      ),
-    )
-    .limit(1)
-    .all();
+      )
+      .limit(1)
+      .all(),
+  );
 
   const row = rows[0];
   if (!row) return { service, component: null };

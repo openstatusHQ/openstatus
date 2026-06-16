@@ -136,6 +136,7 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "effect": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

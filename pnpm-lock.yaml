@@ -2551,6 +2551,9 @@ importers:
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../utils
+      effect:
+        specifier: 'catalog:'
+        version: 3.21.2
       zod:
         specifier: 'catalog:'
         version: 4.1.13
