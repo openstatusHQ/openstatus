@@ -189,33 +189,35 @@ export async function getExternalComponentBySlug(args: {
   const service = await getExternalServiceBySlug({ ctx, slug: serviceSlug });
   if (!service) return { service: null, component: null };
 
-  const rows = await db
-    .select({
-      id: externalServiceComponent.id,
-      externalServiceId: externalServiceComponent.externalServiceId,
-      upstreamComponentId: externalServiceComponent.upstreamComponentId,
-      slug: externalServiceComponent.slug,
-      aliases: externalServiceComponent.aliases,
-      name: externalServiceComponent.name,
-      description: externalServiceComponent.description,
-      groupName: externalServiceComponent.groupName,
-      position: externalServiceComponent.position,
-      indicator: externalServiceComponent.indicator,
-      status: externalServiceComponent.status,
-      firstSeenAt: externalServiceComponent.firstSeenAt,
-    })
-    .from(externalServiceComponent)
-    .where(
-      and(
-        eq(externalServiceComponent.externalServiceId, service.id),
-        or(
-          eq(externalServiceComponent.slug, componentSlug),
-          sql`EXISTS (SELECT 1 FROM json_each(${externalServiceComponent.aliases}) WHERE value = ${componentSlug})`,
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+        upstreamComponentId: externalServiceComponent.upstreamComponentId,
+        slug: externalServiceComponent.slug,
+        aliases: externalServiceComponent.aliases,
+        name: externalServiceComponent.name,
+        description: externalServiceComponent.description,
+        groupName: externalServiceComponent.groupName,
+        position: externalServiceComponent.position,
+        indicator: externalServiceComponent.indicator,
+        status: externalServiceComponent.status,
+        firstSeenAt: externalServiceComponent.firstSeenAt,
+      })
+      .from(externalServiceComponent)
+      .where(
+        and(
+          eq(externalServiceComponent.externalServiceId, service.id),
+          or(
+            eq(externalServiceComponent.slug, componentSlug),
+            sql`EXISTS (SELECT 1 FROM json_each(${externalServiceComponent.aliases}) WHERE value = ${componentSlug})`,
+          ),
         ),
-      ),
-    )
-    .limit(1)
-    .all();
+      )
+      .limit(1)
+      .all(),
+  );
 
   const row = rows[0];
   if (!row) return { service, component: null };

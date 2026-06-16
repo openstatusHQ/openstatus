@@ -1,6 +1,7 @@
 import { db as defaultDb } from "@openstatus/db";
 import { externalService } from "@openstatus/db/src/schema";
 
+import { retryRead } from "../retry";
 import { type GlobalReadContext, liveOnlyClause } from "./internal";
 
 export type SlugMap = {
@@ -23,8 +24,8 @@ export async function listExternalServiceSlugs(args?: {
     .from(externalService);
 
   const rows = includeDeleted
-    ? await query.all()
-    : await query.where(liveOnlyClause()).all();
+    ? await retryRead(() => query.all())
+    : await retryRead(() => query.where(liveOnlyClause()).all());
 
   const canonical: string[] = [];
   const aliases: Array<{ from: string; to: string }> = [];

@@ -109,22 +109,24 @@ export async function getServiceReportDaily(args: {
 }): Promise<DailyReport[]> {
   const { ctx, serviceId, since } = args;
   const db = ctx?.db ?? defaultDb;
-  return db
-    .select({
-      day: dayBucket,
-      reporters: distinctReporters,
-      total: totalReports,
-    })
-    .from(externalServiceReport)
-    .where(
-      and(
-        eq(externalServiceReport.externalServiceId, serviceId),
-        gte(externalServiceReport.createdAt, since),
-      ),
-    )
-    .groupBy(dayBucket)
-    .orderBy(asc(dayBucket))
-    .all();
+  return retryRead(() =>
+    db
+      .select({
+        day: dayBucket,
+        reporters: distinctReporters,
+        total: totalReports,
+      })
+      .from(externalServiceReport)
+      .where(
+        and(
+          eq(externalServiceReport.externalServiceId, serviceId),
+          gte(externalServiceReport.createdAt, since),
+        ),
+      )
+      .groupBy(dayBucket)
+      .orderBy(asc(dayBucket))
+      .all(),
+  );
 }
 
 export async function getServiceReportCountries(args: {
@@ -136,18 +138,20 @@ export async function getServiceReportCountries(args: {
   const { ctx, serviceId, since } = args;
   const limit = Math.max(0, Math.trunc(args.limit));
   const db = ctx?.db ?? defaultDb;
-  return db
-    .select({ country: externalServiceReport.country, total: totalReports })
-    .from(externalServiceReport)
-    .where(
-      and(
-        eq(externalServiceReport.externalServiceId, serviceId),
-        gte(externalServiceReport.createdAt, since),
-        sql`${externalServiceReport.country} != ''`,
-      ),
-    )
-    .groupBy(externalServiceReport.country)
-    .orderBy(desc(totalReports), asc(externalServiceReport.country))
-    .limit(limit)
-    .all();
+  return retryRead(() =>
+    db
+      .select({ country: externalServiceReport.country, total: totalReports })
+      .from(externalServiceReport)
+      .where(
+        and(
+          eq(externalServiceReport.externalServiceId, serviceId),
+          gte(externalServiceReport.createdAt, since),
+          sql`${externalServiceReport.country} != ''`,
+        ),
+      )
+      .groupBy(externalServiceReport.country)
+      .orderBy(desc(totalReports), asc(externalServiceReport.country))
+      .limit(limit)
+      .all(),
+  );
 }
