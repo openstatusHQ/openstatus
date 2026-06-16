@@ -6,7 +6,9 @@
   "license": "ISC",
   "author": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
@@ -14,6 +16,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "bun-types": "catalog:",
     "typescript": "catalog:"
   }
 }
