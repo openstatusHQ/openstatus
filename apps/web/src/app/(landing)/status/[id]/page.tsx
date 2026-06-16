@@ -33,46 +33,51 @@ export async function generateMetadata(args: {
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
   const { id } = await args.params;
-  const service = await cachedGetExternalServiceBySlug(id);
-  if (!service) return { ...defaultMetadata, title: "Not Found" };
+  try {
+    const service = await cachedGetExternalServiceBySlug(id);
+    if (!service) return { ...defaultMetadata, title: "Not Found" };
 
-  const { escalated } = await getServiceEscalation(service);
+    const { escalated } = await getServiceEscalation(service);
 
-  const title = escalated
-    ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
-    : `Is ${service.name} Down? ${service.name} Status & Incidents`;
-  const description = escalated
-    ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
-    : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
-  const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
-  const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
-  const indexable = service.deletedAt == null;
+    const title = escalated
+      ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
+      : `Is ${service.name} Down? ${service.name} Status & Incidents`;
+    const description = escalated
+      ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
+      : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
+    const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
+    const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
+    const indexable = service.deletedAt == null;
 
-  return {
-    ...defaultMetadata,
-    title,
-    description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    robots: {
-      index: indexable,
-      follow: true,
-    },
-    openGraph: {
-      ...ogMetadata,
+    return {
+      ...defaultMetadata,
       title,
       description,
-      url: canonicalUrl,
-      images: [ogImage],
-    },
-    twitter: {
-      ...twitterMetadata,
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      robots: {
+        index: indexable,
+        follow: true,
+      },
+      openGraph: {
+        ...ogMetadata,
+        title,
+        description,
+        url: canonicalUrl,
+        images: [ogImage],
+      },
+      twitter: {
+        ...twitterMetadata,
+        title,
+        description,
+        images: [ogImage],
+      },
+    };
+  } catch (err) {
+    console.warn(`[status metadata] fallback for ${id}:`, err);
+    return defaultMetadata;
+  }
 }
 
 export default async function Page(args: { params: Promise<RouteParams> }) {

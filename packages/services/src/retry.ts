@@ -81,3 +81,7 @@ export async function withBusyRetry<T>(
     }
   }
 }
+
+// Idempotent reads only: also retries transient Turso 5xx (see isTransientServerError).
+export const retryRead = <T>(fn: () => Promise<T>): Promise<T> =>
+  withBusyRetry(fn, (e) => isRetryableDbError(e) || isTransientServerError(e));

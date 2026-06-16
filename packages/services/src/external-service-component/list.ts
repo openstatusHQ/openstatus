@@ -5,6 +5,7 @@ import { externalServiceComponent } from "@openstatus/db/src/schema";
 import { defaultTb } from "../context";
 import { getExternalServiceBySlug } from "../external-service";
 import type { GlobalReadContext } from "../external-service/internal";
+import { retryRead } from "../retry";
 
 export type ExternalComponentListItem = {
   id: number;
@@ -80,27 +81,29 @@ export async function listExternalComponentsByServiceId(args: {
   const { ctx, externalServiceId } = args;
   const db = ctx?.db ?? defaultDb;
 
-  const rows = await db
-    .select({
-      id: externalServiceComponent.id,
-      externalServiceId: externalServiceComponent.externalServiceId,
-      upstreamComponentId: externalServiceComponent.upstreamComponentId,
-      slug: externalServiceComponent.slug,
-      name: externalServiceComponent.name,
-      description: externalServiceComponent.description,
-      groupName: externalServiceComponent.groupName,
-      position: externalServiceComponent.position,
-      indicator: externalServiceComponent.indicator,
-      status: externalServiceComponent.status,
-      firstSeenAt: externalServiceComponent.firstSeenAt,
-    })
-    .from(externalServiceComponent)
-    .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
-    .orderBy(
-      asc(externalServiceComponent.position),
-      asc(externalServiceComponent.name),
-    )
-    .all();
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+        upstreamComponentId: externalServiceComponent.upstreamComponentId,
+        slug: externalServiceComponent.slug,
+        name: externalServiceComponent.name,
+        description: externalServiceComponent.description,
+        groupName: externalServiceComponent.groupName,
+        position: externalServiceComponent.position,
+        indicator: externalServiceComponent.indicator,
+        status: externalServiceComponent.status,
+        firstSeenAt: externalServiceComponent.firstSeenAt,
+      })
+      .from(externalServiceComponent)
+      .where(eq(externalServiceComponent.externalServiceId, externalServiceId))
+      .orderBy(
+        asc(externalServiceComponent.position),
+        asc(externalServiceComponent.name),
+      )
+      .all(),
+  );
 
   if (rows.length === 0) return [];
 

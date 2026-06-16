@@ -6,6 +6,7 @@ import {
   selectExternalServiceSchema,
 } from "@openstatus/db/src/schema";
 
+import { retryRead } from "../retry";
 import { type GlobalReadContext, liveOnlyClause } from "./internal";
 
 export type ListExternalServicesInput = {
@@ -58,8 +59,8 @@ export async function listExternalServices(args: {
     .orderBy(asc(sql`lower(${externalService.name})`));
 
   const rows = input?.includeDeleted
-    ? await query.all()
-    : await query.where(liveOnlyClause()).all();
+    ? await retryRead(() => query.all())
+    : await retryRead(() => query.where(liveOnlyClause()).all());
 
   return validateRows(rows);
 }
@@ -71,16 +72,18 @@ export async function getExternalServiceBySlug(args: {
   const { ctx, slug } = args;
   const db = ctx?.db ?? defaultDb;
 
-  const rows = await db
-    .select()
-    .from(externalService)
-    .where(
-      or(
-        eq(externalService.slug, slug),
-        sql`EXISTS (SELECT 1 FROM json_each(${externalService.aliases}) WHERE value = ${slug})`,
-      ),
-    )
-    .all();
+  const rows = await retryRead(() =>
+    db
+      .select()
+      .from(externalService)
+      .where(
+        or(
+          eq(externalService.slug, slug),
+          sql`EXISTS (SELECT 1 FROM json_each(${externalService.aliases}) WHERE value = ${slug})`,
+        ),
+      )
+      .all(),
+  );
 
   const validated = validateRows(rows);
   return validated[0] ?? null;

@@ -4,8 +4,19 @@ import { NotFoundError } from "../errors";
 import {
   isRetryableDbError,
   isTransientServerError,
+  retryRead,
   withBusyRetry,
 } from "../retry";
+
+const transient502 = () => {
+  const err = new Error("Failed query: select ...");
+  (err as Error & { cause: unknown }).cause = {
+    code: "SERVER_ERROR",
+    status: 502,
+    message: "SERVER_ERROR: Server returned HTTP status 502",
+  };
+  return err;
+};
 
 describe("isRetryableDbError", () => {
   test("true for SQLITE_BUSY code", () => {
@@ -141,5 +152,59 @@ describe("withBusyRetry", () => {
     });
     await expect(promise).rejects.toBe(original);
     expect(attempts).toBe(1);
+  });
+});
+
+describe("retryRead", () => {
+  test("retries a drizzle-wrapped transient 502 then resolves", async () => {
+    let attempts = 0;
+    const result = await retryRead(async () => {
+      attempts++;
+      if (attempts < 3) throw transient502();
+      return "ok";
+    });
+    expect(result).toBe("ok");
+    expect(attempts).toBe(3);
+  });
+
+  test("retries SQLITE_BUSY", async () => {
+    let attempts = 0;
+    const result = await retryRead(async () => {
+      attempts++;
+      if (attempts < 2) throw { code: "SQLITE_BUSY" };
+      return "ok";
+    });
+    expect(result).toBe("ok");
+    expect(attempts).toBe(2);
+  });
+
+  test("does not retry a 4xx server error", async () => {
+    let attempts = 0;
+    const original = {
+      code: "SERVER_ERROR",
+      status: 404,
+      message: "Server returned HTTP status 404",
+    };
+    const promise = retryRead(async () => {
+      attempts++;
+      throw original;
+    });
+    await expect(promise).rejects.toBe(original);
+    expect(attempts).toBe(1);
+  });
+
+  test("gives up after 5 attempts on a sustained 5xx", async () => {
+    let attempts = 0;
+    const original = {
+      code: "SERVER_ERROR",
+      status: 503,
+      message: "Server returned HTTP status 503",
+    };
+    const promise = retryRead(async () => {
+      attempts++;
+      throw original;
+    });
+    await expect(promise).rejects.toBe(original);
+    expect(attempts).toBe(5);
   });
 });
