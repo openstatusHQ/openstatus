@@ -1701,6 +1701,8 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         ctx: toServiceCtx(rpcCtx),
         input: {
           pageId: pageData.id,
+          // scope to the resolved page's workspace, not the caller's — the slug
+          // (public) path may target a page in another workspace
           workspaceId: pageData.workspaceId,
           componentIds:
             req.componentIds.length > 0

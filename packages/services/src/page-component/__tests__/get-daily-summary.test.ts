@@ -19,6 +19,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
+import { NotFoundError } from "../../errors";
 import { getPageComponentDailySummary } from "../get-daily-summary";
 
 const TEST_PREFIX = "svc-page-component-daily-test";
@@ -205,6 +206,75 @@ describe("getPageComponentDailySummary", () => {
       expect(staticSummary.buckets.every((b) => b.status === "empty")).toBe(
         true,
       );
+    });
+  });
+
+  test("filters to requested componentIds and rejects unknown ones", async () => {
+    await withTestTransaction(async (tx) => {
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId,
+          title: `${TEST_PREFIX}-filter-page`,
+          description: "test",
+          slug: `${TEST_PREFIX}-filter-${Date.now()}`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+
+      const compA = await tx
+        .insert(pageComponent)
+        .values({
+          workspaceId,
+          pageId: pageRow.id,
+          type: "static",
+          name: "A",
+          order: 0,
+        })
+        .returning()
+        .get();
+      await tx
+        .insert(pageComponent)
+        .values({
+          workspaceId,
+          pageId: pageRow.id,
+          type: "static",
+          name: "B",
+          order: 1,
+        })
+        .returning()
+        .get();
+
+      // static-only page → no monitor ids → fetchMonitorDailyStats never calls a pipe
+      const emptyTb = {
+        httpStatus45d: () => Promise.resolve({ data: [] }),
+        tcpStatus45d: () => Promise.resolve({ data: [] }),
+        dnsStatus45d: () => Promise.resolve({ data: [] }),
+      } as unknown as NonNullable<ServiceContext["tb"]>;
+
+      const { components } = await getPageComponentDailySummary({
+        ctx: { ...teamCtx, db: tx, tb: emptyTb },
+        input: {
+          pageId: pageRow.id,
+          workspaceId,
+          componentIds: [compA.id],
+          days: 2,
+        },
+      });
+      expect(components.map((c) => c.componentId)).toEqual([compA.id]);
+
+      await expect(
+        getPageComponentDailySummary({
+          ctx: { ...teamCtx, db: tx, tb: emptyTb },
+          input: {
+            pageId: pageRow.id,
+            workspaceId,
+            componentIds: [compA.id, 999_999_999],
+            days: 2,
+          },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });
