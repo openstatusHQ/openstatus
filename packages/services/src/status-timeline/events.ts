@@ -273,8 +273,8 @@ export function getEvents({
   pastDays?: number;
 }): Event[] {
   const events: Event[] = [];
-  const pastThreshod = new Date();
-  pastThreshod.setDate(pastThreshod.getDate() - pastDays);
+  const pastThreshold = new Date();
+  pastThreshold.setDate(pastThreshold.getDate() - pastDays);
 
   // Filter maintenances - prioritize pageComponentId, fallback to monitorId for backward compatibility
   maintenances
@@ -292,7 +292,7 @@ export function getEvents({
       return true;
     })
     .forEach((maintenance) => {
-      if (maintenance.from < pastThreshod) return;
+      if (maintenance.from < pastThreshold) return;
       events.push({
         id: maintenance.id,
         name: maintenance.title,
@@ -311,7 +311,7 @@ export function getEvents({
         monitorId ? incident.monitorId === monitorId : true,
       )
       .forEach((incident) => {
-        if (!incident.createdAt || incident.createdAt < pastThreshod) return;
+        if (!incident.createdAt || incident.createdAt < pastThreshold) return;
         events.push({
           id: incident.id,
           name: "Downtime",
@@ -376,7 +376,7 @@ export function getEvents({
         const to = lastUpdate?.date ?? null;
         // unresolved reports show regardless of age; a resolved report that
         // ended before the window is out of range — drop it
-        if (to !== null && to < pastThreshod) return;
+        if (to !== null && to < pastThreshold) return;
         events.push({
           id: report.id,
           name: report.title,
