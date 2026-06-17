@@ -102,9 +102,13 @@ export function fillStatusDataFor45DaysNoop({
   lookbackPeriod?: number;
 }): Array<StatusData> {
   const issueDays = [...errorDays, ...degradedDays];
-  const data: StatusData[] = Array.from({ length: 45 }, (_, i) => {
+  // UTC day grid, matching fillStatusDataFor45Days, so synthetic days line up
+  const data: StatusData[] = Array.from({ length: lookbackPeriod }, (_, i) => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() - i);
+    date.setUTCHours(0, 0, 0, 0);
     return {
-      day: new Date(new Date().setDate(new Date().getDate() - i)).toISOString(),
+      day: date.toISOString(),
       count: 1,
       ok: issueDays.includes(i) ? 0 : 1,
       degraded: degradedDays.includes(i) ? 1 : 0,
@@ -370,6 +374,9 @@ export function getEvents({
       // HACKY: LEGACY: we shouldn't have report.status anymore and instead use the update status for that.
       if (report.status === "resolved") {
         const to = lastUpdate?.date ?? null;
+        // unresolved reports show regardless of age; a resolved report that
+        // ended before the window is out of range — drop it
+        if (to !== null && to < pastThreshod) return;
         events.push({
           id: report.id,
           name: report.title,

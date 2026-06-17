@@ -2859,6 +2859,7 @@ components:
               type: array
               items:
                 type: string
+                minLength: 1
               title: component_ids
               description: Restrict the result to these component ids (optional, defaults to all components).
             days:
