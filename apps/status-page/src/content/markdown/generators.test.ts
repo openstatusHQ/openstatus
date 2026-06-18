@@ -73,6 +73,8 @@ const overview = {
     },
   ],
   monitors: [{ id: 9, name: "API monitor", status: "success" }],
+  homepageUrl: "https://acme.com",
+  contactUrl: "mailto:status@acme.com",
 } as unknown as OverviewPage;
 
 const components = [
@@ -95,6 +97,11 @@ describe("generateOverview", () => {
     expect(md).toContain('title: "Acme Status"');
     expect(md).toContain(`canonical: "${BASE}"`);
     expect(md).not.toContain("generated-at");
+  });
+
+  test("frontmatter carries page homepage + contact urls", () => {
+    expect(md).toContain('homepage_url: "https://acme.com"');
+    expect(md).toContain('contact_url: "mailto:status@acme.com"');
   });
 
   test("peer nav links to monitors + events docs", () => {
@@ -188,8 +195,25 @@ describe("generateEventsList", () => {
     expect(md).not.toContain("**Investigating**");
   });
 
-  test("update bullet carries its own per-component impact", () => {
-    expect(md).toContain("· API (major outage)\n  Looking into it.");
+  test("update bullet carries its own per-component impact, no body", () => {
+    expect(md).toContain("· API (major outage)");
+    expect(md).not.toContain("Looking into it.");
+  });
+
+  test("greppable event log: fenced, sortable stamp, ref, trailing emoji", () => {
+    expect(md).toContain("## Event log");
+    expect(md).toContain("```text");
+    expect(md).toContain("# timestamp");
+    expect(md).toMatch(
+      /2026-06-18 10:00 {2}INVESTIGATING {2}report\/1 +🟥 API latency/,
+    );
+    expect(md).toMatch(
+      /2026-05-02 10:00 {2}RESOLVED {2,}report\/2 +🟩 Old outage/,
+    );
+    // newest update sorts above older ones
+    expect(md.indexOf("2026-06-18 10:00")).toBeLessThan(
+      md.indexOf("2026-05-02 10:00"),
+    );
   });
 
   test("maintenance heading is a link, no emoji", () => {
@@ -231,6 +255,14 @@ describe("generateReport", () => {
     ],
     statusReportUpdates: [
       {
+        status: "resolved",
+        message: "All good.",
+        date: new Date("2026-06-18T13:00:00.000Z"),
+        statusReportUpdateToPageComponents: [
+          { pageComponentId: 100, impact: "operational" },
+        ],
+      },
+      {
         status: "monitoring",
         message: "Recovering.",
         date: new Date("2026-06-18T12:00:00.000Z"),
@@ -264,9 +296,10 @@ describe("generateReport", () => {
     expect(md).toContain("### 🟥 Investigating — Jun 18, 10:00 AM");
   });
 
-  test("each update lists its own impact", () => {
+  test("each update lists its own impact, operational shown explicitly", () => {
     expect(md).toContain("affects: API (degraded performance)");
     expect(md).toContain("affects: API (major outage)");
+    expect(md).toContain("affects: API (operational)");
   });
 });
 

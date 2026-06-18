@@ -1,9 +1,12 @@
 import type { RouterOutputs } from "@openstatus/api";
 
 import {
+  type EventLogRow,
   canonicalUrl,
   componentImpact,
+  componentImpactExplicit,
   dominantDayStatus,
+  eventLog,
   formatDay,
   formatDayTime,
   formatMs,
@@ -54,6 +57,8 @@ export function generateOverview(
       title: page.title,
       description: page.description,
       canonical: canonicalUrl(baseUrl),
+      homepageUrl: page.homepageUrl,
+      contactUrl: page.contactUrl,
     }),
   );
   const now = Date.now();
@@ -62,7 +67,9 @@ export function generateOverview(
     `${navLine(
       [
         { label: "**Status**" },
-        { label: "Monitors", url: mdUrl(baseUrl, "monitors") },
+        ...(page.monitors.length > 0
+          ? [{ label: "Monitors", url: mdUrl(baseUrl, "monitors") }]
+          : []),
         { label: "Events", url: mdUrl(baseUrl, "events") },
       ],
       " · ",
@@ -147,6 +154,12 @@ export function generateOverview(
       out.push(`**${c.name}** — ${metric} · \`${days}d ago → today\``);
       out.push(uptimeBar(c.data));
 
+      // Only events within the chart window (c.data is oldest → newest); older
+      // ones fall off the bar and live on the /events page.
+      const windowStart = c.data[0]?.day
+        ? new Date(c.data[0].day).getTime()
+        : 0;
+
       // Link the reports/maintenances that explain this component's colored days.
       const events = [
         ...page.statusReports
@@ -169,7 +182,9 @@ export function generateOverview(
             sort: new Date(m.from).getTime(),
             link: `[${m.title}](${mdUrl(baseUrl, `events/maintenance/${m.id}`)})`,
           })),
-      ].sort((a, b) => b.sort - a.sort);
+      ]
+        .filter((e) => e.sort >= windowStart)
+        .sort((a, b) => b.sort - a.sort);
 
       if (events.length > 0) {
         const shown = events.slice(0, 5).map((e) => e.link);
@@ -195,6 +210,8 @@ export function generateMonitorsList(
       title: `${page.title} — Monitors`,
       description: `Monitors for ${page.title}`,
       canonical: canonicalUrl(baseUrl, "monitors"),
+      homepageUrl: page.homepageUrl,
+      contactUrl: page.contactUrl,
     }),
   );
   out.push(`# ${page.title} — Monitors\n`);
@@ -235,6 +252,8 @@ export function generateEventsList(
       title: `${page.title} — Events`,
       description: `Incident history and maintenance for ${page.title}`,
       canonical: canonicalUrl(baseUrl, "events"),
+      homepageUrl: page.homepageUrl,
+      contactUrl: page.contactUrl,
     }),
   );
   out.push(`# ${page.title} — Events · Reports\n`);
@@ -242,12 +261,49 @@ export function generateEventsList(
     `${navLine(
       [
         { label: "Status", url: mdUrl(baseUrl) },
-        { label: "Monitors", url: mdUrl(baseUrl, "monitors") },
+        ...(page.monitors.length > 0
+          ? [{ label: "Monitors", url: mdUrl(baseUrl, "monitors") }]
+          : []),
         { label: "**Events**" },
       ],
       " · ",
     )}\n`,
   );
+
+  const logRows: EventLogRow[] = [];
+  for (const report of page.statusReports) {
+    for (const update of report.statusReportUpdates) {
+      logRows.push({
+        timestamp: update.date,
+        label: statusLabel(update.status).toUpperCase(),
+        emoji: reportStatusEmoji(update.status),
+        ref: `report/${report.id}`,
+        title: report.title,
+      });
+    }
+  }
+  for (const m of page.maintenances) {
+    logRows.push({
+      timestamp: m.from,
+      label: "MAINTENANCE",
+      emoji: statusEmoji("info"),
+      ref: `maintenance/${m.id}`,
+      title: m.title,
+    });
+    if (new Date(m.to).getTime() <= now) {
+      logRows.push({
+        timestamp: m.to,
+        label: "COMPLETED",
+        emoji: statusEmoji("success"),
+        ref: `maintenance/${m.id}`,
+        title: m.title,
+      });
+    }
+  }
+  if (logRows.length > 0) {
+    out.push("## Event log\n");
+    out.push(`${eventLog(logRows)}\n`);
+  }
 
   if (page.statusReports.length === 0) {
     out.push("No status reports.\n");
@@ -302,14 +358,13 @@ export function generateEventsList(
         const updateAffects = (update.statusReportUpdateToPageComponents ?? [])
           .map((ci) => {
             const name = componentName.get(ci.pageComponentId);
-            return name ? componentImpact(name, ci.impact) : null;
+            return name ? componentImpactExplicit(name, ci.impact) : null;
           })
           .filter((v): v is string => Boolean(v));
         const head = `- ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`;
         out.push(
           updateAffects.length ? `${head} · ${updateAffects.join(", ")}` : head,
         );
-        if (update.message) out.push(`  ${update.message}`);
       }
       out.push("");
     }
@@ -330,7 +385,6 @@ export function generateEventsList(
         `### [${m.title}](${mdUrl(baseUrl, `events/maintenance/${m.id}`)})`,
       );
       out.push(meta.join(" · "));
-      if (m.message) out.push(`  ${m.message}`);
       out.push("");
     }
   }
@@ -342,11 +396,31 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
   const now = Date.now();
   const updates = report.statusReportUpdates;
   const oldest = updates[updates.length - 1];
+  const latest = updates[0];
+
+  const componentName = new Map<number, string>();
+  for (const c of report.statusReportsToPageComponents) {
+    if (c.pageComponent?.name)
+      componentName.set(c.pageComponentId, c.pageComponent.name);
+  }
+  const components = report.statusReportsToPageComponents
+    .map((c) => c.pageComponent?.name)
+    .filter((name): name is string => Boolean(name));
+
+  const description =
+    [
+      latest ? statusLabel(latest.status) : null,
+      components.length ? `affects ${components.join(", ")}` : null,
+      oldest ? formatDay(oldest.date) : null,
+    ]
+      .filter(Boolean)
+      .join(" · ") || `Status report: ${report.title}`;
+
   const out: string[] = [];
   out.push(
     frontmatter({
       title: report.title,
-      description: `Status report: ${report.title}`,
+      description,
       canonical: canonicalUrl(baseUrl, `events/report/${report.id}`),
     }),
   );
@@ -358,15 +432,6 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
       { label: report.title },
     ])}\n`,
   );
-
-  const componentName = new Map<number, string>();
-  for (const c of report.statusReportsToPageComponents) {
-    if (c.pageComponent?.name)
-      componentName.set(c.pageComponentId, c.pageComponent.name);
-  }
-  const components = report.statusReportsToPageComponents
-    .map((c) => c.pageComponent?.name)
-    .filter((name): name is string => Boolean(name));
   const meta = [
     oldest
       ? `${formatDay(oldest.date)} · ${relativeTime(oldest.date, now)}`
@@ -384,7 +449,7 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
       const updateAffects = (update.statusReportUpdateToPageComponents ?? [])
         .map((ci) => {
           const name = componentName.get(ci.pageComponentId);
-          return name ? componentImpact(name, ci.impact) : null;
+          return name ? componentImpactExplicit(name, ci.impact) : null;
         })
         .filter((v): v is string => Boolean(v));
       out.push(

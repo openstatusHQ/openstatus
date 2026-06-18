@@ -41,14 +41,20 @@ export function frontmatter(fields: {
   title: string;
   description: string;
   canonical: string;
+  homepageUrl?: string | null;
+  contactUrl?: string | null;
 }): string {
   const lines = [
     "---",
     `title: ${escapeYaml(fields.title)}`,
     `description: ${escapeYaml(fields.description)}`,
     `canonical: ${escapeYaml(fields.canonical)}`,
-    "---",
   ];
+  if (fields.homepageUrl)
+    lines.push(`homepage_url: ${escapeYaml(fields.homepageUrl)}`);
+  if (fields.contactUrl)
+    lines.push(`contact_url: ${escapeYaml(fields.contactUrl)}`);
+  lines.push("---");
   return `${lines.join("\n")}\n`;
 }
 
@@ -182,6 +188,18 @@ export function componentImpact(name: string, impact?: string | null): string {
     : name;
 }
 
+/**
+ * Like `componentImpact` but always shows the impact label, even operational —
+ * for a single update's affects line, where every component has a declared
+ * impact and dropping operational would read as inconsistent against siblings.
+ */
+export function componentImpactExplicit(
+  name: string,
+  impact?: string | null,
+): string {
+  return impact ? `${name} (${impactLabel(impact)})` : name;
+}
+
 /** Most severe impact among the given values, or null if empty. */
 export function worstImpact(impacts: string[]): string | null {
   let worst: string | null = null;
@@ -257,6 +275,46 @@ export function formatDayTime(date: Date | string | number): string {
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   const minutes = String(d.getUTCMinutes()).padStart(2, "0");
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${hour12}:${minutes} ${period}`;
+}
+
+/** "2026-06-18 14:50" (UTC, sortable, fixed-width). */
+export function formatLogStamp(date: Date | string | number): string {
+  const d = toDate(date);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const min = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
+
+export type EventLogRow = {
+  timestamp: Date | string | number;
+  label: string;
+  emoji: string;
+  ref: string;
+  title: string;
+};
+
+/**
+ * Greppable event log: one update per line, sortable stamp first, newest first.
+ * Aligned columns come before the emoji so its variable render width can't throw
+ * them off; the title trails as free human text. Built only from structured
+ * fields — no user-authored prose — so the index stays deterministic.
+ */
+export function eventLog(rows: EventLogRow[]): string {
+  if (rows.length === 0) return "";
+  const sorted = [...rows].sort(
+    (a, b) => toDate(b.timestamp).getTime() - toDate(a.timestamp).getTime(),
+  );
+  const statusW = Math.max(6, ...sorted.map((r) => r.label.length));
+  const refW = Math.max(5, ...sorted.map((r) => r.ref.length));
+  const header = `# ${"timestamp".padEnd(16)}  ${"status".padEnd(statusW)}  event`;
+  const lines = sorted.map(
+    (r) =>
+      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.emoji} ${r.title}`,
+  );
+  return ["```text", header, ...lines, "```"].join("\n");
 }
 
 /** "Jun 18, 2026 14:50 (GMT+0)" (UTC, deterministic). */
