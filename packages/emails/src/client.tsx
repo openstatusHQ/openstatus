@@ -95,23 +95,35 @@ export class EmailClient {
       if (!this.smtpTransporter)
         throw new Error("SMTP transporter not initialized");
       const transporter = this.smtpTransporter;
-      const sendEmailPromises = opts.map(async (email) => {
-        return transporter.sendMail({
-          from: env.SMTP_FROM || email.from,
-          to: email.to,
-          subject: email.subject,
-          html: email.html,
-          replyTo: email.reply_to,
-        });
-      });
-      await Promise.all(sendEmailPromises);
+      const chunks = chunk(opts, 10);
+      for (const batch of chunks) {
+        await Promise.all(
+          batch.map((email) =>
+            transporter.sendMail({
+              from: env.SMTP_FROM || email.from,
+              to: email.to,
+              subject: email.subject,
+              html: email.html,
+              replyTo: email.reply_to,
+            }),
+          ),
+        );
+      }
     } else {
       if (!this.resendClient) throw new Error("Resend client not initialized");
       const client = this.resendClient;
       const chunks = chunk(opts, 100); // Resend batch limit
       for (const batch of chunks) {
         // resendClient is guaranteed to be set when this.type === "resend"
-        await client.batch.send(batch);
+        await client.batch.send(
+          batch.map((email) => ({
+            from: email.from,
+            to: email.to,
+            subject: email.subject,
+            html: email.html,
+            replyTo: email.reply_to,
+          })),
+        );
       }
     }
   }
