@@ -1,6 +1,10 @@
 import type { Page } from "@openstatus/db/src/schema";
 
-import { isIpAllowed } from "./is-ip-allowed";
+import {
+  isEmailDomainAuthorized,
+  isIpAuthorized,
+  isPasswordAuthorized,
+} from "./access-predicates";
 
 export type MarkdownGateResult =
   | { ok: true }
@@ -25,38 +29,24 @@ export function evaluateMarkdownGate(input: {
     case "public":
       return { ok: true };
 
-    case "password": {
-      const expected = input.password;
-      // Empty/absent stored password should never authorize an empty input.
-      if (!expected) {
-        return { ok: false, status: 401, body: "Unauthorized" };
-      }
-      if (
-        input.queryPassword === expected ||
-        input.cookiePassword === expected
-      ) {
-        return { ok: true };
-      }
-      return { ok: false, status: 401, body: "Unauthorized" };
-    }
+    case "password":
+      return isPasswordAuthorized({
+        stored: input.password,
+        queryPassword: input.queryPassword,
+        cookiePassword: input.cookiePassword,
+      })
+        ? { ok: true }
+        : { ok: false, status: 401, body: "Unauthorized" };
 
-    case "email-domain": {
-      const domain = input.authEmail?.split("@")[1];
-      const allowed = input.authEmailDomains ?? [];
-      if (domain && allowed.includes(domain)) {
-        return { ok: true };
-      }
-      return { ok: false, status: 403, body: "Forbidden" };
-    }
+    case "email-domain":
+      return isEmailDomainAuthorized(input.authEmail, input.authEmailDomains)
+        ? { ok: true }
+        : { ok: false, status: 403, body: "Forbidden" };
 
-    case "ip-restriction": {
-      const ip = input.clientIp;
-      const ranges = input.allowedIpRanges ?? [];
-      if (ip && isIpAllowed(ip, ranges)) {
-        return { ok: true };
-      }
-      return { ok: false, status: 403, body: "Forbidden" };
-    }
+    case "ip-restriction":
+      return isIpAuthorized(input.clientIp, input.allowedIpRanges)
+        ? { ok: true }
+        : { ok: false, status: 403, body: "Forbidden" };
 
     default:
       // Unknown access type → deny.

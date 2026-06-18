@@ -1,5 +1,6 @@
 import type { Page } from "@openstatus/db/src/schema";
 
+import { isEmailDomainAuthorized } from "./access-predicates";
 import { buildExternalPath } from "./build-external-path";
 import type { Action, ComposeInput } from "./types";
 
@@ -28,9 +29,9 @@ export function resolveEmailDomainAction({
 }: Input): Action | null {
   if (page.accessType !== "email-domain") return null;
 
-  const emailDomain = authEmail?.split("@")[1];
-  const isAuthorised = !!(
-    emailDomain && page.authEmailDomains.includes(emailDomain)
+  const isAuthorised = isEmailDomainAuthorized(
+    authEmail,
+    page.authEmailDomains,
   );
   const isOnLogin = pathname.endsWith("/login");
 

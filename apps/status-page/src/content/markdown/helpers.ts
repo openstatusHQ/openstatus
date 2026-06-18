@@ -95,10 +95,14 @@ export function canonicalUrl(baseUrl: string, path = ""): string {
   return path ? `${baseUrl}/${path.replace(/^\//, "")}` : baseUrl;
 }
 
-/** Build the `.md` URL for a path under a page (root → `${baseUrl}/.md`). */
-export function mdUrl(baseUrl: string, path = ""): string {
+/**
+ * Root-relative `.md` link for a path under a page (root → `/.md`). Relative on
+ * purpose: the frontmatter `canonical` carries the absolute base, so in-body
+ * links need not repeat the host.
+ */
+export function mdUrl(path = ""): string {
   const clean = path.replace(/^\//, "");
-  return clean ? `${baseUrl}/${clean}.md` : `${baseUrl}/.md`;
+  return clean ? `/${clean}.md` : "/.md";
 }
 
 /**

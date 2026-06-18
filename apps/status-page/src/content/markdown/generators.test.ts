@@ -106,7 +106,7 @@ describe("generateOverview", () => {
 
   test("peer nav links to monitors + events docs", () => {
     expect(md).toContain(
-      `**Status** · [Monitors](${BASE}/monitors.md) · [Events](${BASE}/events.md)`,
+      `**Status** · [Monitors](/monitors.md) · [Events](/events.md)`,
     );
   });
 
@@ -135,7 +135,7 @@ describe("generateOverview", () => {
   });
 
   test("per-component event links to affecting reports", () => {
-    expect(md).toContain(`Events: [API latency](${BASE}/events/report/1.md)`);
+    expect(md).toContain(`Events: [API latency](/events/report/1.md)`);
   });
 
   test("showUptime=false renders current status instead of percentage", () => {
@@ -173,9 +173,7 @@ describe("generateOverview empty components", () => {
 describe("generateMonitorsList", () => {
   test("monitor row with status emoji + .md link", () => {
     const md = generateMonitorsList(overview, BASE);
-    expect(md).toContain(
-      `| 🟩 API monitor | Operational | ${BASE}/monitors/9.md |`,
-    );
+    expect(md).toContain(`| 🟩 API monitor | Operational | /monitors/9.md |`);
   });
 });
 
@@ -183,8 +181,8 @@ describe("generateEventsList", () => {
   const md = generateEventsList(overview, BASE);
 
   test("report heading is a link, no emoji", () => {
-    expect(md).toContain(`### [Old outage](${BASE}/events/report/2.md)`);
-    expect(md).toContain(`### [API latency](${BASE}/events/report/1.md)`);
+    expect(md).toContain(`### [Old outage](/events/report/2.md)`);
+    expect(md).toContain(`### [API latency](/events/report/1.md)`);
     expect(md).not.toContain("### 🟥");
   });
 
@@ -218,7 +216,7 @@ describe("generateEventsList", () => {
 
   test("maintenance heading is a link, no emoji", () => {
     expect(md).toContain("## Maintenance");
-    expect(md).toContain(`### [DB upgrade](${BASE}/events/maintenance/5.md)`);
+    expect(md).toContain(`### [DB upgrade](/events/maintenance/5.md)`);
   });
 });
 
@@ -283,9 +281,7 @@ describe("generateReport", () => {
   const md = generateReport(report, BASE);
 
   test("breadcrumb roots back to Status › Events", () => {
-    expect(md).toContain(
-      `[Status](${BASE}/.md) › [Events](${BASE}/events.md) › API latency`,
-    );
+    expect(md).toContain(`[Status](/.md) › [Events](/events.md) › API latency`);
   });
 
   test("lifecycle heading, affects, timeline", () => {
@@ -379,7 +375,7 @@ describe("generateMonitor", () => {
 
   test("breadcrumb roots back to Status › Monitors", () => {
     expect(md).toContain(
-      `[Status](${BASE}/.md) › [Monitors](${BASE}/monitors.md) › API monitor`,
+      `[Status](/.md) › [Monitors](/monitors.md) › API monitor`,
     );
   });
 

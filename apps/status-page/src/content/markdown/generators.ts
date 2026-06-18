@@ -68,9 +68,9 @@ export function generateOverview(
       [
         { label: "**Status**" },
         ...(page.monitors.length > 0
-          ? [{ label: "Monitors", url: mdUrl(baseUrl, "monitors") }]
+          ? [{ label: "Monitors", url: mdUrl("monitors") }]
           : []),
-        { label: "Events", url: mdUrl(baseUrl, "events") },
+        { label: "Events", url: mdUrl("events") },
       ],
       " · ",
     )}\n`,
@@ -98,7 +98,7 @@ export function generateOverview(
       const head = [
         `- ${reportStatusEmoji(report.status)} **${report.title}** — ${statusLabel(report.status)}`,
         affects.length ? `affects: ${affects.join(", ")}` : null,
-        mdUrl(baseUrl, `events/report/${report.id}`),
+        mdUrl(`events/report/${report.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
       if (latest) out.push(`  ${latest.message}`);
@@ -116,7 +116,7 @@ export function generateOverview(
       const head = [
         `- ${statusEmoji("info")} **${m.title}** — ${formatDay(m.from)} → ${formatDay(m.to)}`,
         affects.length ? `affects: ${affects.join(", ")}` : null,
-        mdUrl(baseUrl, `events/maintenance/${m.id}`),
+        mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
       if (m.message) out.push(`  ${m.message}`);
@@ -170,7 +170,7 @@ export function generateOverview(
           )
           .map((r) => ({
             sort: lastActivity(r),
-            link: `[${r.title}](${mdUrl(baseUrl, `events/report/${r.id}`)})`,
+            link: `[${r.title}](${mdUrl(`events/report/${r.id}`)})`,
           })),
         ...page.maintenances
           .filter((m) =>
@@ -180,7 +180,7 @@ export function generateOverview(
           )
           .map((m) => ({
             sort: new Date(m.from).getTime(),
-            link: `[${m.title}](${mdUrl(baseUrl, `events/maintenance/${m.id}`)})`,
+            link: `[${m.title}](${mdUrl(`events/maintenance/${m.id}`)})`,
           })),
       ]
         .filter((e) => e.sort >= windowStart)
@@ -189,8 +189,7 @@ export function generateOverview(
       if (events.length > 0) {
         const shown = events.slice(0, 5).map((e) => e.link);
         const extra = events.length - shown.length;
-        const more =
-          extra > 0 ? ` · [+${extra} more](${mdUrl(baseUrl, "events")})` : "";
+        const more = extra > 0 ? ` · [+${extra} more](${mdUrl("events")})` : "";
         out.push(`Events: ${shown.join(" · ")}${more}`);
       }
       out.push("");
@@ -218,9 +217,9 @@ export function generateMonitorsList(
   out.push(
     `${navLine(
       [
-        { label: "Status", url: mdUrl(baseUrl) },
+        { label: "Status", url: mdUrl() },
         { label: "**Monitors**" },
-        { label: "Events", url: mdUrl(baseUrl, "events") },
+        { label: "Events", url: mdUrl("events") },
       ],
       " · ",
     )}\n`,
@@ -232,7 +231,7 @@ export function generateMonitorsList(
     const rows = page.monitors.map((m) => [
       `${statusEmoji(m.status)} ${m.name}`,
       statusLabel(m.status),
-      mdUrl(baseUrl, `monitors/${m.id}`),
+      mdUrl(`monitors/${m.id}`),
     ]);
     out.push(table(["Monitor", "Status", "Details"], rows));
     out.push("");
@@ -260,9 +259,9 @@ export function generateEventsList(
   out.push(
     `${navLine(
       [
-        { label: "Status", url: mdUrl(baseUrl) },
+        { label: "Status", url: mdUrl() },
         ...(page.monitors.length > 0
-          ? [{ label: "Monitors", url: mdUrl(baseUrl, "monitors") }]
+          ? [{ label: "Monitors", url: mdUrl("monitors") }]
           : []),
         { label: "**Events**" },
       ],
@@ -350,9 +349,7 @@ export function generateEventsList(
           : null,
       ].filter(Boolean);
 
-      out.push(
-        `### [${report.title}](${mdUrl(baseUrl, `events/report/${report.id}`)})`,
-      );
+      out.push(`### [${report.title}](${mdUrl(`events/report/${report.id}`)})`);
       if (meta.length) out.push(`${meta.join(" · ")}`);
       for (const update of updates) {
         const updateAffects = (update.statusReportUpdateToPageComponents ?? [])
@@ -381,9 +378,7 @@ export function generateEventsList(
         humanDuration(m.from, m.to),
         affects.length ? `affects: ${affects.join(", ")}` : null,
       ].filter(Boolean);
-      out.push(
-        `### [${m.title}](${mdUrl(baseUrl, `events/maintenance/${m.id}`)})`,
-      );
+      out.push(`### [${m.title}](${mdUrl(`events/maintenance/${m.id}`)})`);
       out.push(meta.join(" · "));
       out.push("");
     }
@@ -427,8 +422,8 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
   out.push(`# ${report.title}\n`);
   out.push(
     `${navLine([
-      { label: "Status", url: mdUrl(baseUrl) },
-      { label: "Events", url: mdUrl(baseUrl, "events") },
+      { label: "Status", url: mdUrl() },
+      { label: "Events", url: mdUrl("events") },
       { label: report.title },
     ])}\n`,
   );
@@ -479,8 +474,8 @@ export function generateMaintenance(
   out.push(`# ${maintenance.title}\n`);
   out.push(
     `${navLine([
-      { label: "Status", url: mdUrl(baseUrl) },
-      { label: "Events", url: mdUrl(baseUrl, "events") },
+      { label: "Status", url: mdUrl() },
+      { label: "Events", url: mdUrl("events") },
       { label: maintenance.title },
     ])}\n`,
   );
@@ -516,8 +511,8 @@ export function generateMonitor(
   out.push(`# ${monitor.name}\n`);
   out.push(
     `${navLine([
-      { label: "Status", url: mdUrl(baseUrl) },
-      { label: "Monitors", url: mdUrl(baseUrl, "monitors") },
+      { label: "Status", url: mdUrl() },
+      { label: "Monitors", url: mdUrl("monitors") },
       { label: monitor.name },
     ])}\n`,
   );

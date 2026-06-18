@@ -1,7 +1,7 @@
 import type { Page } from "@openstatus/db/src/schema";
 
+import { isIpAuthorized } from "./access-predicates";
 import { buildExternalPath } from "./build-external-path";
-import { isIpAllowed } from "./is-ip-allowed";
 import type { Action, ComposeInput } from "./types";
 
 type Input = Pick<
@@ -27,7 +27,7 @@ export function resolveIpRestrictionAction({
 }: Input): Action | null {
   if (page.accessType !== "ip-restriction") return null;
 
-  const allowed = !!(clientIp && isIpAllowed(clientIp, page.allowedIpRanges));
+  const allowed = isIpAuthorized(clientIp, page.allowedIpRanges);
   const isOnRestricted = pathname.endsWith("/restricted");
 
   // Gate-in: disallowed and not already on /restricted → send to /restricted

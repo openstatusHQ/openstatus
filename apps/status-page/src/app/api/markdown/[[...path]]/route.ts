@@ -1,3 +1,4 @@
+import type { Page } from "@openstatus/db/src/schema";
 import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -15,6 +16,7 @@ import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
+import { markdownCacheControl } from "@/lib/proxy/markdown-cache-control";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 // Match the feed route: getQueryClient/httpBatchLink needs Node, not Edge.
@@ -34,14 +36,14 @@ function markdownResponse(
   body: string,
   source: string | null,
   whiteLabel: boolean,
+  accessType: string | null | undefined,
 ) {
-  const cacheControl =
-    source === "suffix"
-      ? "public, max-age=60, s-maxage=60, stale-while-revalidate=300"
-      : "private, no-store";
   return new NextResponse(withPoweredBy(body, whiteLabel), {
     status: 200,
-    headers: { "Content-Type": MARKDOWN, "Cache-Control": cacheControl },
+    headers: {
+      "Content-Type": MARKDOWN,
+      "Cache-Control": markdownCacheControl(source, accessType),
+    },
   });
 }
 
@@ -59,46 +61,71 @@ export async function GET(
 
     const source = request.headers.get("x-md-source");
     const queryClient = getQueryClient();
-
-    // Gate before any heavy/Tinybird fetch — getLight carries the access fields
-    // and runs no Tinybird queries.
-    const light = await queryClient.fetchQuery(
-      trpc.statusPage.getLight.queryOptions({ slug }),
-    );
-    if (!light) return textResponse("Not Found", 404);
-
     const url = new URL(request.url);
     const cookieStore = await cookies();
     const headerStore = await headers();
-    const session = light.accessType === "email-domain" ? await auth() : null;
     const xff = headerStore.get("x-forwarded-for");
     const clientIp = xff?.split(",")[0]?.trim() ?? headerStore.get("x-real-ip");
 
-    const gate = evaluateMarkdownGate({
-      accessType: light.accessType,
-      password: light.password ?? null,
-      queryPassword: url.searchParams.get("pw"),
-      cookiePassword: cookieStore.get(createProtectedCookieKey(light.slug))
-        ?.value,
-      authEmail: session?.user?.email,
-      authEmailDomains: light.authEmailDomains,
-      clientIp,
-      allowedIpRanges: light.allowedIpRanges,
-    });
-
-    if (!gate.ok) return textResponse(gate.body, gate.status);
-
-    const baseUrl = getBaseUrl({
-      slug: light.slug,
-      customDomain: light.customDomain,
-    });
+    // Shared gate over whichever page payload carries the access fields. `auth()`
+    // runs only for email-domain pages. Returns null when the gate passed.
+    async function denyResponse(gatePage: {
+      accessType: Page["accessType"];
+      password: string | null;
+      authEmailDomains: string[] | null;
+      allowedIpRanges: string[] | null;
+      slug: string;
+    }) {
+      const session =
+        gatePage.accessType === "email-domain" ? await auth() : null;
+      const gate = evaluateMarkdownGate({
+        accessType: gatePage.accessType,
+        password: gatePage.password ?? null,
+        queryPassword: url.searchParams.get("pw"),
+        cookiePassword: cookieStore.get(createProtectedCookieKey(gatePage.slug))
+          ?.value,
+        authEmail: session?.user?.email,
+        authEmailDomains: gatePage.authEmailDomains,
+        clientIp,
+        allowedIpRanges: gatePage.allowedIpRanges,
+      });
+      return gate.ok ? null : textResponse(gate.body, gate.status);
+    }
 
     switch (target.kind) {
-      case "overview": {
+      // List pages render from `get`, which also carries the access fields — so
+      // we gate off the same payload instead of a second full-graph getLight.
+      case "overview":
+      case "monitors":
+      case "events": {
         const page = await queryClient.fetchQuery(
           trpc.statusPage.get.queryOptions({ slug }),
         );
         if (!page) return textResponse("Not Found", 404);
+        const denied = await denyResponse(page);
+        if (denied) return denied;
+
+        const baseUrl = getBaseUrl({
+          slug: page.slug,
+          customDomain: page.customDomain,
+        });
+
+        if (target.kind === "monitors") {
+          return markdownResponse(
+            generateMonitorsList(page, baseUrl),
+            source,
+            page.whiteLabel,
+            page.accessType,
+          );
+        }
+        if (target.kind === "events") {
+          return markdownResponse(
+            generateEventsList(page, baseUrl),
+            source,
+            page.whiteLabel,
+            page.accessType,
+          );
+        }
         // Mirror what the live page renders: bar/card type and the uptime
         // toggle come from the page configuration, not hardcoded defaults.
         const cardType = page.configuration?.value ?? "requests";
@@ -117,44 +144,51 @@ export async function GET(
         return markdownResponse(
           generateOverview(page, uptime, baseUrl, showUptime),
           source,
-          light.whiteLabel,
+          page.whiteLabel,
+          page.accessType,
         );
       }
-      case "monitors":
-      case "events": {
-        const page = await queryClient.fetchQuery(
-          trpc.statusPage.get.queryOptions({ slug }),
-        );
-        if (!page) return textResponse("Not Found", 404);
-        const md =
-          target.kind === "monitors"
-            ? generateMonitorsList(page, baseUrl)
-            : generateEventsList(page, baseUrl);
-        return markdownResponse(md, source, light.whiteLabel);
-      }
-      case "monitor": {
-        const monitor = await queryClient.fetchQuery(
-          trpc.statusPage.getMonitor.queryOptions({ slug, id: target.id }),
-        );
-        if (!monitor) return textResponse("Not Found", 404);
-        return markdownResponse(
-          generateMonitor(monitor, baseUrl),
-          source,
-          light.whiteLabel,
-        );
-      }
-      case "report": {
-        const report = await queryClient.fetchQuery(
-          trpc.statusPage.getReport.queryOptions({ slug, id: target.id }),
-        );
-        if (!report) return textResponse("Not Found", 404);
-        return markdownResponse(
-          generateReport(report, baseUrl),
-          source,
-          light.whiteLabel,
-        );
-      }
+      // Detail pages: the detail queries don't carry access fields, so gate via
+      // getLight before fetching the (heavier) detail payload.
+      case "monitor":
+      case "report":
       case "maintenance": {
+        const light = await queryClient.fetchQuery(
+          trpc.statusPage.getLight.queryOptions({ slug }),
+        );
+        if (!light) return textResponse("Not Found", 404);
+        const denied = await denyResponse(light);
+        if (denied) return denied;
+
+        const baseUrl = getBaseUrl({
+          slug: light.slug,
+          customDomain: light.customDomain,
+        });
+
+        if (target.kind === "monitor") {
+          const monitor = await queryClient.fetchQuery(
+            trpc.statusPage.getMonitor.queryOptions({ slug, id: target.id }),
+          );
+          if (!monitor) return textResponse("Not Found", 404);
+          return markdownResponse(
+            generateMonitor(monitor, baseUrl),
+            source,
+            light.whiteLabel,
+            light.accessType,
+          );
+        }
+        if (target.kind === "report") {
+          const report = await queryClient.fetchQuery(
+            trpc.statusPage.getReport.queryOptions({ slug, id: target.id }),
+          );
+          if (!report) return textResponse("Not Found", 404);
+          return markdownResponse(
+            generateReport(report, baseUrl),
+            source,
+            light.whiteLabel,
+            light.accessType,
+          );
+        }
         const maintenance = await queryClient.fetchQuery(
           trpc.statusPage.getMaintenance.queryOptions({ slug, id: target.id }),
         );
@@ -163,6 +197,7 @@ export async function GET(
           generateMaintenance(maintenance, baseUrl),
           source,
           light.whiteLabel,
+          light.accessType,
         );
       }
     }
