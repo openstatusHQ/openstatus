@@ -5,8 +5,14 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
-import { assertPageInWorkspace, validateMonitorIds } from "./internal";
+import {
+  assertPageInWorkspace,
+  validateExternalRefs,
+  validateMonitorIds,
+} from "./internal";
 import { UpdatePageComponentOrderInput } from "./schemas";
+
+const isIdBased = (type: string) => type === "static" || type === "external";
 
 /**
  * Replace the full order/layout of a page's components and groups in one
@@ -16,7 +22,7 @@ import { UpdatePageComponentOrderInput } from "./schemas";
  *   1. Validate the page is in the workspace.
  *   2. Enforce the `page-components` plan limit across the workspace.
  *   3. Validate every monitor id on the input set belongs to the workspace.
- *   4. Delete removed monitor and static components.
+ *   4. Delete removed monitor, static, and external components.
  *   5. Clear `groupId` on all components (prevents FK errors before the
  *      next step), then delete existing groups and recreate them.
  *   6. Upsert monitor components via the `(pageId, monitorId)` unique
@@ -120,16 +126,49 @@ export async function updatePageComponentOrder(args: {
       monitorIds: inputMonitorIds,
     });
 
-    const inputStaticComponentIds = [
-      ...input.components
-        .filter((c) => c.type === "static" && c.id)
-        .map((c) => c.id),
-      ...input.groups.flatMap((g) =>
-        g.components
-          .filter((c) => c.type === "static" && c.id)
-          .map((c) => c.id),
-      ),
-    ] as number[];
+    const allInputComponents = [
+      ...input.components,
+      ...input.groups.flatMap((g) => g.components),
+    ];
+    const externalComponents = allInputComponents.filter(
+      (c): c is typeof c & { externalServiceId: number } =>
+        c.type === "external" && c.externalServiceId != null,
+    );
+    const externalKey = (c: {
+      externalServiceId?: number | null;
+      externalServiceComponentId?: number | null;
+    }) => `${c.externalServiceId}:${c.externalServiceComponentId ?? "all"}`;
+
+    // Reject duplicate external refs in one payload — a crafted request could
+    // bypass the client guard and create two rows for the same provider/component
+    // (NULLs make a partial unique index unable to catch the whole-service case).
+    const inputExternalKeys = externalComponents.map(externalKey);
+    if (new Set(inputExternalKeys).size !== inputExternalKeys.length) {
+      throw new ValidationError("Duplicate external component in input.");
+    }
+
+    const existingExternalKeys = new Set(
+      existingComponents
+        .filter((c) => c.type === "external")
+        .map((c) => externalKey(c)),
+    );
+    await validateExternalRefs({
+      tx,
+      serviceIds: externalComponents.map((c) => c.externalServiceId),
+      componentRefs: externalComponents
+        .filter((c) => c.externalServiceComponentId != null)
+        .map((c) => ({
+          serviceId: c.externalServiceId,
+          componentId: c.externalServiceComponentId as number,
+        })),
+      requireLiveServiceIds: externalComponents
+        .filter((c) => !existingExternalKeys.has(externalKey(c)))
+        .map((c) => c.externalServiceId),
+    });
+
+    const inputIdBasedComponentIds = allInputComponents
+      .filter((c) => isIdBased(c.type) && c.id)
+      .map((c) => c.id) as number[];
 
     // Guardrail against mass-delete via id-loss. If the input has any
     // static components *and* none of them carry ids, the diff below
@@ -141,19 +180,19 @@ export async function updatePageComponentOrder(args: {
     // static entries, which still runs through the normal diff — this
     // guard only catches the ambiguous "new statics alongside existing
     // ones, but the client forgot to round-trip the existing ids" case.
-    const inputHasAnyStatic =
-      input.components.some((c) => c.type === "static") ||
-      input.groups.some((g) => g.components.some((c) => c.type === "static"));
-    const hasExistingStatics = existingComponents.some(
-      (c) => c.type === "static",
+    const inputHasAnyIdBased = allInputComponents.some((c) =>
+      isIdBased(c.type),
+    );
+    const hasExistingIdBased = existingComponents.some((c) =>
+      isIdBased(c.type),
     );
     if (
-      inputHasAnyStatic &&
-      inputStaticComponentIds.length === 0 &&
-      hasExistingStatics
+      inputHasAnyIdBased &&
+      inputIdBasedComponentIds.length === 0 &&
+      hasExistingIdBased
     ) {
       throw new ValidationError(
-        "Existing static components must round-trip their ids.",
+        "Existing static/external components must round-trip their ids.",
       );
     }
 
@@ -175,18 +214,18 @@ export async function updatePageComponentOrder(args: {
     // with `ON DELETE CASCADE`, so recreate-on-each-save would wipe every
     // subscriber scope / active maintenance / status-report association
     // the moment a static came in without its id.
-    const removedStaticComponents = existingComponents.filter(
-      (c) => c.type === "static" && !inputStaticComponentIds.includes(c.id),
+    const removedIdBasedComponents = existingComponents.filter(
+      (c) => isIdBased(c.type) && !inputIdBasedComponentIds.includes(c.id),
     );
 
     const removedComponentIds = [
       ...removedMonitorComponents.map((c) => c.id),
-      ...removedStaticComponents.map((c) => c.id),
+      ...removedIdBasedComponents.map((c) => c.id),
     ];
 
     const removedComponents = [
       ...removedMonitorComponents,
-      ...removedStaticComponents,
+      ...removedIdBasedComponents,
     ];
     if (removedComponentIds.length > 0) {
       await tx
@@ -330,6 +369,8 @@ export async function updatePageComponentOrder(args: {
         description: c.description,
         type: c.type,
         monitorId: c.monitorId,
+        externalServiceId: c.externalServiceId ?? null,
+        externalServiceComponentId: c.externalServiceComponentId ?? null,
         order: g.order,
         groupId: newGroups[i]?.id,
         groupOrder: c.order,
@@ -344,6 +385,8 @@ export async function updatePageComponentOrder(args: {
       description: c.description,
       type: c.type,
       monitorId: c.monitorId,
+      externalServiceId: c.externalServiceId ?? null,
+      externalServiceComponentId: c.externalServiceComponentId ?? null,
       order: c.order,
       groupId: null as number | null,
       groupOrder: null as number | null,
@@ -357,8 +400,8 @@ export async function updatePageComponentOrder(args: {
     const monitorComponents = allComponentValues.filter(
       (c) => c.type === "monitor" && c.monitorId,
     );
-    const staticComponents = allComponentValues.filter(
-      (c) => c.type === "static",
+    const idBasedComponents = allComponentValues.filter((c) =>
+      isIdBased(c.type),
     );
 
     // Use the `(pageId, monitorId)` unique constraint to preserve ids.
@@ -429,14 +472,14 @@ export async function updatePageComponentOrder(args: {
     // on the stale pre-delete snapshot, take the UPDATE branch, and
     // silently no-op — the new static never gets inserted.
     const removedIdSet = new Set(removedComponentIds);
-    const existingStaticById = new Map(
+    const existingIdBasedById = new Map(
       existingComponents
-        .filter((c) => c.type === "static" && !removedIdSet.has(c.id))
+        .filter((c) => isIdBased(c.type) && !removedIdSet.has(c.id))
         .map((c) => [c.id, c]),
     );
 
-    for (const c of staticComponents) {
-      const before = c.id ? existingStaticById.get(c.id) : undefined;
+    for (const c of idBasedComponents) {
+      const before = c.id ? existingIdBasedById.get(c.id) : undefined;
       if (before) {
         const [after] = await tx
           .update(pageComponent)
@@ -445,6 +488,8 @@ export async function updatePageComponentOrder(args: {
             description: c.description,
             type: c.type,
             monitorId: c.monitorId,
+            externalServiceId: c.externalServiceId,
+            externalServiceComponentId: c.externalServiceComponentId,
             order: c.order,
             groupId: c.groupId,
             groupOrder: c.groupOrder,
@@ -459,7 +504,7 @@ export async function updatePageComponentOrder(args: {
           )
           .returning();
         if (!after) {
-          throw new Error("Failed to update static component");
+          throw new Error("Failed to update static/external component");
         }
 
         await emitAudit(tx, ctx, {
@@ -479,13 +524,15 @@ export async function updatePageComponentOrder(args: {
             description: c.description,
             type: c.type,
             monitorId: c.monitorId,
+            externalServiceId: c.externalServiceId,
+            externalServiceComponentId: c.externalServiceComponentId,
             order: c.order,
             groupId: c.groupId,
             groupOrder: c.groupOrder,
           })
           .returning();
         if (!created) {
-          throw new Error("Failed to insert static component");
+          throw new Error("Failed to insert static/external component");
         }
 
         await emitAudit(tx, ctx, {
