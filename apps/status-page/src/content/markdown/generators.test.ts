@@ -95,6 +95,7 @@ describe("generateOverview", () => {
 
   test("frontmatter + no generated-at", () => {
     expect(md).toContain('title: "Acme Status"');
+    expect(md).toContain(`base_url: "${BASE}"`);
     expect(md).toContain(`canonical: "${BASE}"`);
     expect(md).not.toContain("generated-at");
   });

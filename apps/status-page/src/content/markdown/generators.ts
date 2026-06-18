@@ -56,6 +56,7 @@ export function generateOverview(
     frontmatter({
       title: page.title,
       description: page.description,
+      baseUrl,
       canonical: canonicalUrl(baseUrl),
       homepageUrl: page.homepageUrl,
       contactUrl: page.contactUrl,
@@ -208,6 +209,7 @@ export function generateMonitorsList(
     frontmatter({
       title: `${page.title} — Monitors`,
       description: `Monitors for ${page.title}`,
+      baseUrl,
       canonical: canonicalUrl(baseUrl, "monitors"),
       homepageUrl: page.homepageUrl,
       contactUrl: page.contactUrl,
@@ -250,6 +252,7 @@ export function generateEventsList(
     frontmatter({
       title: `${page.title} — Events`,
       description: `Incident history and maintenance for ${page.title}`,
+      baseUrl,
       canonical: canonicalUrl(baseUrl, "events"),
       homepageUrl: page.homepageUrl,
       contactUrl: page.contactUrl,
@@ -416,6 +419,7 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
     frontmatter({
       title: report.title,
       description,
+      baseUrl,
       canonical: canonicalUrl(baseUrl, `events/report/${report.id}`),
     }),
   );
@@ -468,6 +472,7 @@ export function generateMaintenance(
     frontmatter({
       title: maintenance.title,
       description: `Maintenance: ${maintenance.title}`,
+      baseUrl,
       canonical: canonicalUrl(baseUrl, `events/maintenance/${maintenance.id}`),
     }),
   );
@@ -505,6 +510,7 @@ export function generateMonitor(
     frontmatter({
       title: monitor.name,
       description: `Monitor metrics for ${monitor.name} (last 7 days)`,
+      baseUrl,
       canonical: canonicalUrl(baseUrl, `monitors/${monitor.id}`),
     }),
   );

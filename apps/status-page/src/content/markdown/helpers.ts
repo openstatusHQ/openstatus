@@ -40,6 +40,7 @@ function escapeYaml(value: string): string {
 export function frontmatter(fields: {
   title: string;
   description: string;
+  baseUrl: string;
   canonical: string;
   homepageUrl?: string | null;
   contactUrl?: string | null;
@@ -48,6 +49,8 @@ export function frontmatter(fields: {
     "---",
     `title: ${escapeYaml(fields.title)}`,
     `description: ${escapeYaml(fields.description)}`,
+    // Origin the root-relative in-body links resolve against.
+    `base_url: ${escapeYaml(fields.baseUrl)}`,
     `canonical: ${escapeYaml(fields.canonical)}`,
   ];
   if (fields.homepageUrl)
