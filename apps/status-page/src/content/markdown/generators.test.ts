@@ -78,6 +78,7 @@ const overview = {
 const components = [
   {
     name: "laser pointer tracker",
+    pageComponentId: 100,
     uptime: "97.8%",
     data: [
       { bar: [{ status: "success", height: 100 }] },
@@ -124,6 +125,10 @@ describe("generateOverview", () => {
     expect(md).toContain("**laser pointer tracker** — 97.8%");
     expect(md).toContain("`3d ago → today`");
     expect(md).toContain("🟩🟥🟦");
+  });
+
+  test("per-component event links to affecting reports", () => {
+    expect(md).toContain(`Events: [API latency](${BASE}/events/report/1.md)`);
   });
 
   test("showUptime=false renders current status instead of percentage", () => {
@@ -183,6 +188,10 @@ describe("generateEventsList", () => {
     expect(md).not.toContain("**Investigating**");
   });
 
+  test("update bullet carries its own per-component impact", () => {
+    expect(md).toContain("· API (major outage)\n  Looking into it.");
+  });
+
   test("maintenance heading is a link, no emoji", () => {
     expect(md).toContain("## Maintenance");
     expect(md).toContain(`### [DB upgrade](${BASE}/events/maintenance/5.md)`);
@@ -217,17 +226,25 @@ describe("generateReport", () => {
     title: "API latency",
     status: "monitoring",
     createdAt: new Date("2026-06-18T10:00:00.000Z"),
-    statusReportsToPageComponents: [{ pageComponent: { name: "API" } }],
+    statusReportsToPageComponents: [
+      { pageComponentId: 100, pageComponent: { name: "API" } },
+    ],
     statusReportUpdates: [
       {
         status: "monitoring",
         message: "Recovering.",
         date: new Date("2026-06-18T12:00:00.000Z"),
+        statusReportUpdateToPageComponents: [
+          { pageComponentId: 100, impact: "degraded_performance" },
+        ],
       },
       {
         status: "investigating",
         message: "Started.",
         date: new Date("2026-06-18T10:00:00.000Z"),
+        statusReportUpdateToPageComponents: [
+          { pageComponentId: 100, impact: "major_outage" },
+        ],
       },
     ],
   } as unknown as ReportDetail;
@@ -245,6 +262,11 @@ describe("generateReport", () => {
     expect(md).toContain("### 🟥 Monitoring — Jun 18, 12:00 PM");
     expect(md).toContain("Recovering.");
     expect(md).toContain("### 🟥 Investigating — Jun 18, 10:00 AM");
+  });
+
+  test("each update lists its own impact", () => {
+    expect(md).toContain("affects: API (degraded performance)");
+    expect(md).toContain("affects: API (major outage)");
   });
 });
 

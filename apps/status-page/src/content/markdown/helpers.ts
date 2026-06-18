@@ -175,6 +175,13 @@ export function impactLabel(impact: string): string {
   return IMPACT_LABELS[impact] ?? impact;
 }
 
+/** "name (impact label)", dropping the impact when operational/absent. */
+export function componentImpact(name: string, impact?: string | null): string {
+  return impact && impact !== "operational"
+    ? `${name} (${impactLabel(impact)})`
+    : name;
+}
+
 /** Most severe impact among the given values, or null if empty. */
 export function worstImpact(impacts: string[]): string | null {
   let worst: string | null = null;

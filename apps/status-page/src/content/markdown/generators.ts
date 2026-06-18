@@ -2,6 +2,7 @@ import type { RouterOutputs } from "@openstatus/api";
 
 import {
   canonicalUrl,
+  componentImpact,
   dominantDayStatus,
   formatDay,
   formatDayTime,
@@ -10,7 +11,6 @@ import {
   formatStamp,
   frontmatter,
   humanDuration,
-  impactLabel,
   legend,
   mdUrl,
   navLine,
@@ -127,6 +127,18 @@ export function generateOverview(
     }
     const legendLine = legend(used);
     if (legendLine) out.push(`${legendLine}\n`);
+
+    const lastActivity = (r: OverviewPage["statusReports"][number]) => {
+      const dates = r.statusReportUpdates.map((u) =>
+        new Date(u.date).getTime(),
+      );
+      return dates.length
+        ? Math.max(...dates)
+        : r.createdAt
+          ? new Date(r.createdAt).getTime()
+          : 0;
+    };
+
     for (const c of components) {
       const days = c.data.length;
       const metric = showUptime
@@ -134,6 +146,38 @@ export function generateOverview(
         : statusLabel(dominantDayStatus(c.data[c.data.length - 1]?.bar ?? []));
       out.push(`**${c.name}** — ${metric} · \`${days}d ago → today\``);
       out.push(uptimeBar(c.data));
+
+      // Link the reports/maintenances that explain this component's colored days.
+      const events = [
+        ...page.statusReports
+          .filter((r) =>
+            r.statusReportsToPageComponents.some(
+              (x) => x.pageComponentId === c.pageComponentId,
+            ),
+          )
+          .map((r) => ({
+            sort: lastActivity(r),
+            link: `[${r.title}](${mdUrl(baseUrl, `events/report/${r.id}`)})`,
+          })),
+        ...page.maintenances
+          .filter((m) =>
+            m.maintenancesToPageComponents.some(
+              (x) => x.pageComponentId === c.pageComponentId,
+            ),
+          )
+          .map((m) => ({
+            sort: new Date(m.from).getTime(),
+            link: `[${m.title}](${mdUrl(baseUrl, `events/maintenance/${m.id}`)})`,
+          })),
+      ].sort((a, b) => b.sort - a.sort);
+
+      if (events.length > 0) {
+        const shown = events.slice(0, 5).map((e) => e.link);
+        const extra = events.length - shown.length;
+        const more =
+          extra > 0 ? ` · [+${extra} more](${mdUrl(baseUrl, "events")})` : "";
+        out.push(`Events: ${shown.join(" · ")}${more}`);
+      }
       out.push("");
     }
   }
@@ -213,6 +257,12 @@ export function generateEventsList(
       const oldest = updates[updates.length - 1];
       const start = oldest?.date ?? report.createdAt;
 
+      const componentName = new Map<number, string>();
+      for (const c of report.statusReportsToPageComponents) {
+        if (c.pageComponent?.name)
+          componentName.set(c.pageComponentId, c.pageComponent.name);
+      }
+
       // Worst impact each component reached over the report's lifetime.
       const impactByComponent = new Map<number, string>();
       for (const u of updates) {
@@ -228,10 +278,10 @@ export function generateEventsList(
         .map((c) => {
           const name = c.pageComponent?.name;
           if (!name) return null;
-          const impact = impactByComponent.get(c.pageComponentId);
-          return impact && impact !== "operational"
-            ? `${name} (${impactLabel(impact)})`
-            : name;
+          return componentImpact(
+            name,
+            impactByComponent.get(c.pageComponentId),
+          );
         })
         .filter((v): v is string => Boolean(v));
 
@@ -249,8 +299,15 @@ export function generateEventsList(
       );
       if (meta.length) out.push(`${meta.join(" · ")}`);
       for (const update of updates) {
+        const updateAffects = (update.statusReportUpdateToPageComponents ?? [])
+          .map((ci) => {
+            const name = componentName.get(ci.pageComponentId);
+            return name ? componentImpact(name, ci.impact) : null;
+          })
+          .filter((v): v is string => Boolean(v));
+        const head = `- ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`;
         out.push(
-          `- ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`,
+          updateAffects.length ? `${head} · ${updateAffects.join(", ")}` : head,
         );
         if (update.message) out.push(`  ${update.message}`);
       }
@@ -302,6 +359,11 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
     ])}\n`,
   );
 
+  const componentName = new Map<number, string>();
+  for (const c of report.statusReportsToPageComponents) {
+    if (c.pageComponent?.name)
+      componentName.set(c.pageComponentId, c.pageComponent.name);
+  }
   const components = report.statusReportsToPageComponents
     .map((c) => c.pageComponent?.name)
     .filter((name): name is string => Boolean(name));
@@ -319,9 +381,17 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
     out.push("No updates.\n");
   } else {
     for (const update of updates) {
+      const updateAffects = (update.statusReportUpdateToPageComponents ?? [])
+        .map((ci) => {
+          const name = componentName.get(ci.pageComponentId);
+          return name ? componentImpact(name, ci.impact) : null;
+        })
+        .filter((v): v is string => Boolean(v));
       out.push(
         `### ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}\n`,
       );
+      if (updateAffects.length)
+        out.push(`affects: ${updateAffects.join(", ")}\n`);
       out.push(`${update.message}\n`);
     }
   }
