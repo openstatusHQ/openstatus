@@ -4,6 +4,7 @@ import { render } from "react-email";
 import { Resend } from "resend";
 
 import { env } from "./env";
+import { chunk } from "./utils";
 
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
