@@ -95,6 +95,19 @@ export function mdUrl(baseUrl: string, path = ""): string {
   return clean ? `${baseUrl}/${clean}.md` : `${baseUrl}/.md`;
 }
 
+/**
+ * A breadcrumb / peer-nav line. Items with a `url` render as links; the current
+ * item (no `url`) renders as plain text. Use ` › ` for hierarchy, ` · ` for peers.
+ */
+export function navLine(
+  items: { label: string; url?: string }[],
+  separator = " › ",
+): string {
+  return items
+    .map((i) => (i.url ? `[${i.label}](${i.url})` : i.label))
+    .join(separator);
+}
+
 export type DayStatus = "success" | "degraded" | "error" | "info" | "empty";
 
 const STATUS_EMOJI: Record<DayStatus, string> = {
@@ -142,6 +155,40 @@ export function legend(statuses: Iterable<string>): string {
   return parts.length ? `Legend: ${parts.join(" · ")}` : "";
 }
 
+// Severity order mirrors `pageComponentImpact` in @openstatus/db; kept local so
+// the generators stay types-only against the API and don't value-import the schema.
+const IMPACT_ORDER = [
+  "operational",
+  "degraded_performance",
+  "partial_outage",
+  "major_outage",
+];
+
+const IMPACT_LABELS: Record<string, string> = {
+  operational: "operational",
+  degraded_performance: "degraded performance",
+  partial_outage: "partial outage",
+  major_outage: "major outage",
+};
+
+export function impactLabel(impact: string): string {
+  return IMPACT_LABELS[impact] ?? impact;
+}
+
+/** Most severe impact among the given values, or null if empty. */
+export function worstImpact(impacts: string[]): string | null {
+  let worst: string | null = null;
+  for (const i of impacts) {
+    if (
+      worst === null ||
+      IMPACT_ORDER.indexOf(i) > IMPACT_ORDER.indexOf(worst)
+    ) {
+      worst = i;
+    }
+  }
+  return worst;
+}
+
 /** Status emoji for a report/update lifecycle status (resolved → green, etc.). */
 export function reportStatusEmoji(status: string): string {
   if (status === "resolved") return STATUS_EMOJI.success;
@@ -168,27 +215,6 @@ export function uptimeBar(
   days: { bar: { status: string; height: number }[] }[],
 ): string {
   return days.map((d) => statusEmoji(dominantDayStatus(d.bar))).join("");
-}
-
-const SPARK_CHARS = "▁▂▃▄▅▆▇█";
-
-/** Map a numeric series to an 8-level block sparkline scaled between min and max. */
-export function sparkline(values: number[]): string {
-  const finite = values.filter((v) => Number.isFinite(v));
-  if (finite.length === 0) return "";
-  const min = Math.min(...finite);
-  const max = Math.max(...finite);
-  const range = max - min;
-  return values
-    .map((v) => {
-      if (!Number.isFinite(v)) return " ";
-      const idx =
-        range === 0
-          ? 0
-          : Math.round(((v - min) / range) * (SPARK_CHARS.length - 1));
-      return SPARK_CHARS[idx];
-    })
-    .join("");
 }
 
 const MONTHS = [
@@ -224,6 +250,14 @@ export function formatDayTime(date: Date | string | number): string {
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   const minutes = String(d.getUTCMinutes()).padStart(2, "0");
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${hour12}:${minutes} ${period}`;
+}
+
+/** "Jun 18, 2026 14:50 (GMT+0)" (UTC, deterministic). */
+export function formatStamp(date: Date | string | number): string {
+  const d = toDate(date);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()} ${hh}:${mm} (GMT+0)`;
 }
 
 const MINUTE = 60_000;

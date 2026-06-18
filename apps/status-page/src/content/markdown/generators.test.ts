@@ -28,12 +28,17 @@ const overview = {
       title: "API latency",
       status: "investigating",
       createdAt: new Date("2026-06-18T10:00:00.000Z"),
-      statusReportsToPageComponents: [{ pageComponent: { name: "API" } }],
+      statusReportsToPageComponents: [
+        { pageComponentId: 100, pageComponent: { name: "API" } },
+      ],
       statusReportUpdates: [
         {
           status: "investigating",
           message: "Looking into it.",
           date: new Date("2026-06-18T10:00:00.000Z"),
+          statusReportUpdateToPageComponents: [
+            { pageComponentId: 100, impact: "major_outage" },
+          ],
         },
       ],
     },
@@ -63,7 +68,8 @@ const overview = {
       title: "DB upgrade",
       message: "Brief downtime.",
       from: new Date("2026-06-20T00:00:00.000Z"),
-      to: new Date("2026-06-20T01:00:00.000Z"),
+      to: new Date("2099-06-20T01:00:00.000Z"),
+      maintenancesToPageComponents: [{ pageComponent: { name: "Database" } }],
     },
   ],
   monitors: [{ id: 9, name: "API monitor", status: "success" }],
@@ -90,14 +96,28 @@ describe("generateOverview", () => {
     expect(md).not.toContain("generated-at");
   });
 
-  test("overall status line with emoji", () => {
-    expect(md).toContain("🟧 **Degraded**");
+  test("peer nav links to monitors + events docs", () => {
+    expect(md).toContain(
+      `**Status** · [Monitors](${BASE}/monitors.md) · [Events](${BASE}/events.md)`,
+    );
   });
 
-  test("active incident (resolved excluded)", () => {
+  test("overall status line with emoji + timestamp", () => {
+    expect(md).toContain("🟧 **Degraded** · ");
+    expect(md).toMatch(/\(GMT\+0\)/);
+  });
+
+  test("active incident with affected components (resolved excluded)", () => {
     expect(md).toContain("**API latency**");
+    expect(md).toContain("affects: API");
     expect(md).toContain("Looking into it.");
     expect(md).not.toContain("Old outage");
+  });
+
+  test("active & upcoming maintenance with affected components", () => {
+    expect(md).toContain("## Active & upcoming maintenance");
+    expect(md).toContain("🟦 **DB upgrade**");
+    expect(md).toContain("affects: Database");
   });
 
   test("per-component emoji uptime bar", () => {
@@ -150,20 +170,22 @@ describe("generateMonitorsList", () => {
 describe("generateEventsList", () => {
   const md = generateEventsList(overview, BASE);
 
-  test("lifecycle heading with from→to emoji", () => {
-    expect(md).toContain("### 🟥→🟩 Old outage");
-    expect(md).toContain("### 🟥→🟥 API latency");
+  test("report heading is a link, no emoji", () => {
+    expect(md).toContain(`### [Old outage](${BASE}/events/report/2.md)`);
+    expect(md).toContain(`### [API latency](${BASE}/events/report/1.md)`);
+    expect(md).not.toContain("### 🟥");
   });
 
-  test("affects + emoji update bullets", () => {
-    expect(md).toContain("affects: API");
-    expect(md).toContain("- 🟥 **Investigating** —");
-    expect(md).toContain("- 🟩 **Resolved** —");
+  test("affects includes per-component impact; bullets have no bold", () => {
+    expect(md).toContain("affects: API (major outage)");
+    expect(md).toContain("- 🟥 Investigating —");
+    expect(md).toContain("- 🟩 Resolved —");
+    expect(md).not.toContain("**Investigating**");
   });
 
-  test("maintenance section", () => {
+  test("maintenance heading is a link, no emoji", () => {
     expect(md).toContain("## Maintenance");
-    expect(md).toContain("### 🟦 DB upgrade");
+    expect(md).toContain(`### [DB upgrade](${BASE}/events/maintenance/5.md)`);
   });
 });
 
@@ -211,8 +233,14 @@ describe("generateReport", () => {
   } as unknown as ReportDetail;
   const md = generateReport(report, BASE);
 
+  test("breadcrumb roots back to Status › Events", () => {
+    expect(md).toContain(
+      `[Status](${BASE}/.md) › [Events](${BASE}/events.md) › API latency`,
+    );
+  });
+
   test("lifecycle heading, affects, timeline", () => {
-    expect(md).toContain("# 🟥→🟥 API latency");
+    expect(md).toContain("# API latency");
     expect(md).toContain("affects: API");
     expect(md).toContain("### 🟥 Monitoring — Jun 18, 12:00 PM");
     expect(md).toContain("Recovering.");
@@ -231,8 +259,8 @@ describe("generateMaintenance", () => {
   } as unknown as MaintenanceDetail;
   const md = generateMaintenance(maintenance, BASE);
 
-  test("emoji heading, window, components", () => {
-    expect(md).toContain("# 🟦 DB upgrade");
+  test("heading, window, components", () => {
+    expect(md).toContain("# DB upgrade");
     expect(md).toContain(
       "**Window:** Jun 20, 12:00 AM → Jun 20, 1:00 AM · 1 hour",
     );
@@ -289,14 +317,15 @@ describe("generateMonitor", () => {
     expect(md).toContain("| Uptime (last 7 days) | 97.50% · 200 checks |");
   });
 
-  test("sparkline section", () => {
-    expect(md).toContain("## Global latency · p75 · last 7 days");
-    expect(md).toContain("200ms – 300ms ·");
-  });
-
   test("percentile table", () => {
     expect(md).toContain("| p50 | 150ms |");
     expect(md).toContain("| p99 | 450ms |");
+  });
+
+  test("breadcrumb roots back to Status › Monitors", () => {
+    expect(md).toContain(
+      `[Status](${BASE}/.md) › [Monitors](${BASE}/monitors.md) › API monitor`,
+    );
   });
 
   test("per-region p75, slowest first", () => {

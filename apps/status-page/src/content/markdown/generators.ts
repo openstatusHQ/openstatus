@@ -7,17 +7,20 @@ import {
   formatDayTime,
   formatMs,
   formatPercent,
+  formatStamp,
   frontmatter,
   humanDuration,
+  impactLabel,
   legend,
   mdUrl,
+  navLine,
   relativeTime,
   reportStatusEmoji,
-  sparkline,
   statusEmoji,
   statusLabel,
   table,
   uptimeBar,
+  worstImpact,
 } from "./helpers";
 
 export type OverviewPage = NonNullable<RouterOutputs["statusPage"]["get"]>;
@@ -53,9 +56,29 @@ export function generateOverview(
       canonical: canonicalUrl(baseUrl),
     }),
   );
+  const now = Date.now();
   out.push(`# ${page.title}\n`);
+  out.push(
+    `${navLine(
+      [
+        { label: "**Status**" },
+        { label: "Monitors", url: mdUrl(baseUrl, "monitors") },
+        { label: "Events", url: mdUrl(baseUrl, "events") },
+      ],
+      " · ",
+    )}\n`,
+  );
   if (page.description) out.push(`> ${page.description}\n`);
-  out.push(`${statusEmoji(page.status)} **${statusLabel(page.status)}**\n`);
+  out.push(
+    `${statusEmoji(page.status)} **${statusLabel(page.status)}** · ${formatStamp(now)}\n`,
+  );
+
+  const componentNames = (
+    links: { pageComponent?: { name?: string | null } | null }[],
+  ) =>
+    links
+      .map((l) => l.pageComponent?.name)
+      .filter((name): name is string => Boolean(name));
 
   const activeReports = page.statusReports.filter(
     (r) => r.status !== "resolved",
@@ -64,10 +87,32 @@ export function generateOverview(
     out.push("## Active incidents\n");
     for (const report of activeReports) {
       const latest = report.statusReportUpdates[0];
-      out.push(
-        `- ${reportStatusEmoji(report.status)} **${report.title}** — ${statusLabel(report.status)} · ${mdUrl(baseUrl, `events/report/${report.id}`)}`,
-      );
+      const affects = componentNames(report.statusReportsToPageComponents);
+      const head = [
+        `- ${reportStatusEmoji(report.status)} **${report.title}** — ${statusLabel(report.status)}`,
+        affects.length ? `affects: ${affects.join(", ")}` : null,
+        mdUrl(baseUrl, `events/report/${report.id}`),
+      ].filter(Boolean);
+      out.push(head.join(" · "));
       if (latest) out.push(`  ${latest.message}`);
+    }
+    out.push("");
+  }
+
+  const activeMaintenance = page.maintenances.filter(
+    (m) => m.to && new Date(m.to).getTime() >= now,
+  );
+  if (activeMaintenance.length > 0) {
+    out.push("## Active & upcoming maintenance\n");
+    for (const m of activeMaintenance) {
+      const affects = componentNames(m.maintenancesToPageComponents);
+      const head = [
+        `- ${statusEmoji("info")} **${m.title}** — ${formatDay(m.from)} → ${formatDay(m.to)}`,
+        affects.length ? `affects: ${affects.join(", ")}` : null,
+        mdUrl(baseUrl, `events/maintenance/${m.id}`),
+      ].filter(Boolean);
+      out.push(head.join(" · "));
+      if (m.message) out.push(`  ${m.message}`);
     }
     out.push("");
   }
@@ -109,6 +154,16 @@ export function generateMonitorsList(
     }),
   );
   out.push(`# ${page.title} — Monitors\n`);
+  out.push(
+    `${navLine(
+      [
+        { label: "Status", url: mdUrl(baseUrl) },
+        { label: "**Monitors**" },
+        { label: "Events", url: mdUrl(baseUrl, "events") },
+      ],
+      " · ",
+    )}\n`,
+  );
 
   if (page.monitors.length === 0) {
     out.push("No public monitors.\n");
@@ -139,6 +194,16 @@ export function generateEventsList(
     }),
   );
   out.push(`# ${page.title} — Events · Reports\n`);
+  out.push(
+    `${navLine(
+      [
+        { label: "Status", url: mdUrl(baseUrl) },
+        { label: "Monitors", url: mdUrl(baseUrl, "monitors") },
+        { label: "**Events**" },
+      ],
+      " · ",
+    )}\n`,
+  );
 
   if (page.statusReports.length === 0) {
     out.push("No status reports.\n");
@@ -147,26 +212,45 @@ export function generateEventsList(
       const updates = report.statusReportUpdates;
       const oldest = updates[updates.length - 1];
       const start = oldest?.date ?? report.createdAt;
-      const components = report.statusReportsToPageComponents
-        .map((c) => c.pageComponent?.name)
-        .filter((name): name is string => Boolean(name));
+
+      // Worst impact each component reached over the report's lifetime.
+      const impactByComponent = new Map<number, string>();
+      for (const u of updates) {
+        for (const ci of u.statusReportUpdateToPageComponents ?? []) {
+          const prev = impactByComponent.get(ci.pageComponentId);
+          impactByComponent.set(
+            ci.pageComponentId,
+            prev ? (worstImpact([prev, ci.impact]) ?? ci.impact) : ci.impact,
+          );
+        }
+      }
+      const affects = report.statusReportsToPageComponents
+        .map((c) => {
+          const name = c.pageComponent?.name;
+          if (!name) return null;
+          const impact = impactByComponent.get(c.pageComponentId);
+          return impact && impact !== "operational"
+            ? `${name} (${impactLabel(impact)})`
+            : name;
+        })
+        .filter((v): v is string => Boolean(v));
 
       const meta = [
         start ? formatDay(start) : null,
         start ? relativeTime(start, now) : null,
-        components.length ? `affects: ${components.join(", ")}` : null,
+        affects.length ? `affects: ${affects.join(", ")}` : null,
         oldest && updates[0]
           ? humanDuration(oldest.date, updates[0].date)
           : null,
       ].filter(Boolean);
 
       out.push(
-        `### ${reportStatusEmoji(oldest?.status ?? report.status)}→${reportStatusEmoji(report.status)} ${report.title}`,
+        `### [${report.title}](${mdUrl(baseUrl, `events/report/${report.id}`)})`,
       );
       if (meta.length) out.push(`${meta.join(" · ")}`);
       for (const update of updates) {
         out.push(
-          `- ${reportStatusEmoji(update.status)} **${statusLabel(update.status)}** — ${formatDayTime(update.date)}`,
+          `- ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`,
         );
         if (update.message) out.push(`  ${update.message}`);
       }
@@ -177,10 +261,18 @@ export function generateEventsList(
   if (page.maintenances.length > 0) {
     out.push("## Maintenance\n");
     for (const m of page.maintenances) {
-      out.push(`### ${statusEmoji("info")} ${m.title}`);
+      const affects = m.maintenancesToPageComponents
+        .map((c) => c.pageComponent?.name)
+        .filter((name): name is string => Boolean(name));
+      const meta = [
+        formatDay(m.from),
+        humanDuration(m.from, m.to),
+        affects.length ? `affects: ${affects.join(", ")}` : null,
+      ].filter(Boolean);
       out.push(
-        `${formatDay(m.from)} · ${humanDuration(m.from, m.to)} · ${mdUrl(baseUrl, `events/maintenance/${m.id}`)}`,
+        `### [${m.title}](${mdUrl(baseUrl, `events/maintenance/${m.id}`)})`,
       );
+      out.push(meta.join(" · "));
       if (m.message) out.push(`  ${m.message}`);
       out.push("");
     }
@@ -201,8 +293,13 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
       canonical: canonicalUrl(baseUrl, `events/report/${report.id}`),
     }),
   );
+  out.push(`# ${report.title}\n`);
   out.push(
-    `# ${reportStatusEmoji(oldest?.status ?? report.status)}→${reportStatusEmoji(report.status)} ${report.title}\n`,
+    `${navLine([
+      { label: "Status", url: mdUrl(baseUrl) },
+      { label: "Events", url: mdUrl(baseUrl, "events") },
+      { label: report.title },
+    ])}\n`,
   );
 
   const components = report.statusReportsToPageComponents
@@ -244,7 +341,14 @@ export function generateMaintenance(
       canonical: canonicalUrl(baseUrl, `events/maintenance/${maintenance.id}`),
     }),
   );
-  out.push(`# ${statusEmoji("info")} ${maintenance.title}\n`);
+  out.push(`# ${maintenance.title}\n`);
+  out.push(
+    `${navLine([
+      { label: "Status", url: mdUrl(baseUrl) },
+      { label: "Events", url: mdUrl(baseUrl, "events") },
+      { label: maintenance.title },
+    ])}\n`,
+  );
   out.push(
     `**Window:** ${formatDayTime(maintenance.from)} → ${formatDayTime(maintenance.to)} · ${humanDuration(maintenance.from, maintenance.to)}\n`,
   );
@@ -275,6 +379,13 @@ export function generateMonitor(
     }),
   );
   out.push(`# ${monitor.name}\n`);
+  out.push(
+    `${navLine([
+      { label: "Status", url: mdUrl(baseUrl) },
+      { label: "Monitors", url: mdUrl(baseUrl, "monitors") },
+      { label: monitor.name },
+    ])}\n`,
+  );
   if (monitor.description) out.push(`> ${monitor.description}\n`);
 
   const latencyData = [...(monitor.data.latency?.data ?? [])].sort(
@@ -335,15 +446,6 @@ export function generateMonitor(
     ),
   );
   out.push("");
-
-  // Block sparkline of global p75 over the window.
-  if (p75Series.length > 1) {
-    out.push("## Global latency · p75 · last 7 days\n");
-    out.push(`\`${sparkline(p75Series)}\`\n`);
-    out.push(
-      `${formatMs(p75Min)} – ${formatMs(p75Max)} · ${formatDay(latencyData[0].timestamp)} → today\n`,
-    );
-  }
 
   out.push("## Latency percentiles (last 7 days)\n");
   out.push(
