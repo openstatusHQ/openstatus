@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
 import { composePageAction } from "./lib/proxy/compose-page-action";
+import { detectMarkdown } from "./lib/proxy/detect-markdown";
 import { sanitizeRedirectParam } from "./lib/proxy/sanitize-redirect-param";
 import { resolveRoute } from "./lib/resolve-route";
 
@@ -17,14 +18,35 @@ export default auth(async (req) => {
   const passthroughResponse = NextResponse.next();
   const host = req.headers.get("x-forwarded-host");
 
+  // Strip a `.md` suffix before route resolution so path-based markdown
+  // (`/foo/en/monitors/123.md`) parses slug/locale correctly.
+  const { wantsMarkdown, source, pathname } = detectMarkdown({
+    pathname: url.pathname,
+    accept: req.headers.get("accept"),
+  });
+
   const initialRoute = resolveRoute({
     host,
     urlHost: url.host,
-    pathname: url.pathname,
+    pathname,
   });
 
   if (!initialRoute) {
     return passthroughResponse;
+  }
+
+  // Markdown requests bypass the proxy's DB lookup and gate chain: the route is
+  // reachable directly via `/api` anyway, so it re-validates every gate itself.
+  // Short-circuiting before the gates avoids 307-redirecting a gated `.md` to
+  // /login (it would never reach the route).
+  if (wantsMarkdown) {
+    const rewriteUrl = url.clone();
+    rewriteUrl.pathname = `/api/markdown${initialRoute.rewritePath}`;
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-md-source", source ?? "header");
+    return NextResponse.rewrite(rewriteUrl, {
+      request: { headers: requestHeaders },
+    });
   }
 
   const query = await db

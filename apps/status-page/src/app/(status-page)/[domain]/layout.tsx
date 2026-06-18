@@ -114,6 +114,11 @@ export async function generateMetadata({
       canonical: page?.customDomain
         ? `https://${page.customDomain}`
         : `https://${page.slug}.openstatus.dev`,
+      types: {
+        "text/markdown": page?.customDomain
+          ? `https://${page.customDomain}/.md`
+          : `https://${page.slug}.openstatus.dev/.md`,
+      },
     },
     twitter: {
       ...twitterMetadata,
