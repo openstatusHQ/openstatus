@@ -2667,6 +2667,9 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      bun-types:
+        specifier: 'catalog:'
+        version: 1.3.14
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
