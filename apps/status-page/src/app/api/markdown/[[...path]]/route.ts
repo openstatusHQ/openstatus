@@ -9,6 +9,7 @@ import {
   generateOverview,
   generateReport,
   matchMarkdownRoute,
+  withPoweredBy,
 } from "@/content/markdown";
 import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
@@ -29,12 +30,16 @@ function textResponse(body: string, status: number) {
   });
 }
 
-function markdownResponse(body: string, source: string | null) {
+function markdownResponse(
+  body: string,
+  source: string | null,
+  whiteLabel: boolean,
+) {
   const cacheControl =
     source === "suffix"
       ? "public, max-age=60, s-maxage=60, stale-while-revalidate=300"
       : "private, no-store";
-  return new NextResponse(body, {
+  return new NextResponse(withPoweredBy(body, whiteLabel), {
     status: 200,
     headers: { "Content-Type": MARKDOWN, "Cache-Control": cacheControl },
   });
@@ -102,21 +107,29 @@ export async function GET(
             : target.kind === "monitors"
               ? generateMonitorsList(page, baseUrl)
               : generateEventsList(page, baseUrl);
-        return markdownResponse(md, source);
+        return markdownResponse(md, source, light.whiteLabel);
       }
       case "monitor": {
         const monitor = await queryClient.fetchQuery(
           trpc.statusPage.getMonitor.queryOptions({ slug, id: target.id }),
         );
         if (!monitor) return textResponse("Not Found", 404);
-        return markdownResponse(generateMonitor(monitor, baseUrl), source);
+        return markdownResponse(
+          generateMonitor(monitor, baseUrl),
+          source,
+          light.whiteLabel,
+        );
       }
       case "report": {
         const report = await queryClient.fetchQuery(
           trpc.statusPage.getReport.queryOptions({ slug, id: target.id }),
         );
         if (!report) return textResponse("Not Found", 404);
-        return markdownResponse(generateReport(report, baseUrl), source);
+        return markdownResponse(
+          generateReport(report, baseUrl),
+          source,
+          light.whiteLabel,
+        );
       }
       case "maintenance": {
         const maintenance = await queryClient.fetchQuery(
@@ -126,6 +139,7 @@ export async function GET(
         return markdownResponse(
           generateMaintenance(maintenance, baseUrl),
           source,
+          light.whiteLabel,
         );
       }
     }

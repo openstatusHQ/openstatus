@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { statusLabel } from "./helpers";
+import { statusLabel, withPoweredBy } from "./helpers";
 import {
   type MaintenanceDetail,
   type MonitorDetail,
@@ -142,6 +142,22 @@ describe("generateEventsList", () => {
     expect(md).toContain("API latency");
     expect(md).toContain("## Maintenance");
     expect(md).toContain("DB upgrade");
+  });
+});
+
+describe("withPoweredBy", () => {
+  test("appends attribution footer when not white-labeled", () => {
+    const out = withPoweredBy("# Title\n", false);
+    expect(out).toContain(
+      "_Powered by [openstatus.dev](https://openstatus.dev)_",
+    );
+    expect(out).toContain("# Title");
+  });
+
+  test("omits footer when white-labeled", () => {
+    const out = withPoweredBy("# Title\n", true);
+    expect(out).toBe("# Title\n");
+    expect(out).not.toContain("openstatus.dev");
   });
 });
 

@@ -179,6 +179,7 @@ export const selectPublicPageLightSchemaWithRelation = selectPageSchema
     // NEW: Include pageComponents for modern consumers
     pageComponents: selectPageComponentWithMonitorRelation.array().prefault([]),
     pageComponentGroups: selectPageComponentGroupSchema.array().prefault([]),
+    whiteLabel: z.boolean().prefault(false),
   })
   .omit({
     id: true,

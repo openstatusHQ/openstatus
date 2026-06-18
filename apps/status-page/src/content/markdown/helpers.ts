@@ -94,3 +94,14 @@ export function mdUrl(baseUrl: string, path = ""): string {
   const clean = path.replace(/^\//, "");
   return clean ? `${baseUrl}/${clean}.md` : `${baseUrl}/.md`;
 }
+
+/** Attribution footer appended to every doc unless the page is white-labeled. */
+export function poweredByFooter(): string {
+  return "---\n\n_Powered by [openstatus.dev](https://openstatus.dev)_\n";
+}
+
+/** Append the attribution footer to rendered markdown unless white-labeled. */
+export function withPoweredBy(markdown: string, whiteLabel: boolean): string {
+  if (whiteLabel) return markdown;
+  return `${markdown}\n${poweredByFooter()}`;
+}

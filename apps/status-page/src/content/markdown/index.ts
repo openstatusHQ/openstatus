@@ -1,5 +1,6 @@
 export { matchMarkdownRoute } from "./match-route";
 export type { MarkdownTarget } from "./match-route";
+export { poweredByFooter, withPoweredBy } from "./helpers";
 export {
   generateEventsList,
   generateMaintenance,

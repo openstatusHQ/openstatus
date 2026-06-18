@@ -480,6 +480,9 @@ export const statusPageRouter = createTRPCRouter({
         (c) => c.monitor?.incidents ?? [],
       );
 
+      const ws = selectWorkspaceSchema.safeParse(_page.workspace);
+      const whiteLabel = ws.data?.limits["white-label"] ?? false;
+
       return selectPublicPageLightSchemaWithRelation.parse({
         ..._page,
         monitors,
@@ -489,6 +492,7 @@ export const statusPageRouter = createTRPCRouter({
         pageComponents: _page.pageComponents,
         pageComponentGroups: _page.pageComponentGroups,
         workspacePlan: _page.workspace.plan,
+        whiteLabel,
       });
     }),
 
