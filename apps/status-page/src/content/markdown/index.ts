@@ -14,4 +14,5 @@ export type {
   MonitorDetail,
   OverviewPage,
   ReportDetail,
+  UptimeComponent,
 } from "./generators";

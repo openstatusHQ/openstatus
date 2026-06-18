@@ -94,7 +94,32 @@ export async function GET(
     });
 
     switch (target.kind) {
-      case "overview":
+      case "overview": {
+        const page = await queryClient.fetchQuery(
+          trpc.statusPage.get.queryOptions({ slug }),
+        );
+        if (!page) return textResponse("Not Found", 404);
+        // Mirror what the live page renders: bar/card type and the uptime
+        // toggle come from the page configuration, not hardcoded defaults.
+        const cardType = page.configuration?.value ?? "requests";
+        const barType = page.configuration?.type ?? "absolute";
+        const showUptime = page.configuration?.uptime ?? true;
+        // Per-day uptime series (Tinybird) — only after the gate passes.
+        const uptime =
+          (await queryClient.fetchQuery(
+            trpc.statusPage.getUptime.queryOptions({
+              slug,
+              pageComponentIds: page.pageComponents.map((c) => c.id.toString()),
+              cardType,
+              barType,
+            }),
+          )) ?? [];
+        return markdownResponse(
+          generateOverview(page, uptime, baseUrl, showUptime),
+          source,
+          light.whiteLabel,
+        );
+      }
       case "monitors":
       case "events": {
         const page = await queryClient.fetchQuery(
@@ -102,11 +127,9 @@ export async function GET(
         );
         if (!page) return textResponse("Not Found", 404);
         const md =
-          target.kind === "overview"
-            ? generateOverview(page, baseUrl)
-            : target.kind === "monitors"
-              ? generateMonitorsList(page, baseUrl)
-              : generateEventsList(page, baseUrl);
+          target.kind === "monitors"
+            ? generateMonitorsList(page, baseUrl)
+            : generateEventsList(page, baseUrl);
         return markdownResponse(md, source, light.whiteLabel);
       }
       case "monitor": {

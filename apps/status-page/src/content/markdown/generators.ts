@@ -2,16 +2,28 @@ import type { RouterOutputs } from "@openstatus/api";
 
 import {
   canonicalUrl,
-  formatDate,
+  dominantDayStatus,
+  formatDay,
+  formatDayTime,
   formatMs,
   formatPercent,
   frontmatter,
+  humanDuration,
+  legend,
   mdUrl,
+  relativeTime,
+  reportStatusEmoji,
+  sparkline,
+  statusEmoji,
   statusLabel,
   table,
+  uptimeBar,
 } from "./helpers";
 
 export type OverviewPage = NonNullable<RouterOutputs["statusPage"]["get"]>;
+export type UptimeComponent = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number];
 export type MonitorDetail = NonNullable<
   RouterOutputs["statusPage"]["getMonitor"]
 >;
@@ -27,8 +39,12 @@ function avg(values: number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-export function generateOverview(page: OverviewPage, baseUrl: string): string {
-  const now = Date.now();
+export function generateOverview(
+  page: OverviewPage,
+  components: UptimeComponent[],
+  baseUrl: string,
+  showUptime = true,
+): string {
   const out: string[] = [];
   out.push(
     frontmatter({
@@ -38,74 +54,43 @@ export function generateOverview(page: OverviewPage, baseUrl: string): string {
     }),
   );
   out.push(`# ${page.title}\n`);
-  out.push(`**Overall status:** ${statusLabel(page.status)}\n`);
+  if (page.description) out.push(`> ${page.description}\n`);
+  out.push(`${statusEmoji(page.status)} **${statusLabel(page.status)}**\n`);
 
   const activeReports = page.statusReports.filter(
     (r) => r.status !== "resolved",
   );
-  out.push("## Active incidents\n");
-  if (activeReports.length === 0) {
-    out.push("No active incidents.\n");
-  } else {
+  if (activeReports.length > 0) {
+    out.push("## Active incidents\n");
     for (const report of activeReports) {
       const latest = report.statusReportUpdates[0];
-      out.push(`### ${report.title}\n`);
-      out.push(`- Status: ${statusLabel(report.status)}`);
-      if (latest) {
-        out.push(
-          `- Latest update (${formatDate(latest.date)}): ${latest.message}`,
-        );
-      }
-      out.push(`- Details: ${mdUrl(baseUrl, `events/report/${report.id}`)}\n`);
+      out.push(
+        `- ${reportStatusEmoji(report.status)} **${report.title}** — ${statusLabel(report.status)} · ${mdUrl(baseUrl, `events/report/${report.id}`)}`,
+      );
+      if (latest) out.push(`  ${latest.message}`);
     }
-  }
-
-  const activeMaintenance = page.maintenances.filter(
-    (m) => m.to && new Date(m.to).getTime() >= now,
-  );
-  out.push("## Active & upcoming maintenance\n");
-  if (activeMaintenance.length === 0) {
-    out.push("No active or upcoming maintenance.\n");
-  } else {
-    for (const m of activeMaintenance) {
-      out.push(`### ${m.title}\n`);
-      out.push(`- Window: ${formatDate(m.from)} → ${formatDate(m.to)}`);
-      out.push(`- Details: ${mdUrl(baseUrl, `events/maintenance/${m.id}`)}\n`);
-    }
+    out.push("");
   }
 
   out.push("## Components\n");
-  const rows: string[][] = [];
-  for (const tracker of page.trackers) {
-    if (tracker.type === "component") {
-      rows.push([
-        tracker.component.name,
-        statusLabel(tracker.component.status),
-      ]);
-    } else {
-      rows.push([`${tracker.groupName} (group)`, statusLabel(tracker.status)]);
-      for (const c of tracker.components) {
-        rows.push([`— ${c.name}`, statusLabel(c.status)]);
-      }
-    }
-  }
-  out.push(
-    rows.length ? table(["Component", "Status"], rows) : "No components.",
-  );
-  out.push("");
-
-  out.push("## Recent events\n");
-  if (page.lastEvents.length === 0) {
-    out.push("No recent events.\n");
+  if (components.length === 0) {
+    out.push("No components.\n");
   } else {
-    const eventRows = page.lastEvents.map((e) => [
-      e.name,
-      e.type,
-      statusLabel(e.status),
-      formatDate(e.from),
-    ]);
-    out.push(table(["Event", "Type", "Status", "Date"], eventRows));
-    out.push("");
+    const used = new Set<string>();
+    for (const c of components) {
+      for (const d of c.data) used.add(dominantDayStatus(d.bar));
+    }
+    const legendLine = legend(used);
+    if (legendLine) out.push(`${legendLine}\n`);
+    for (const c of components) {
+      const days = c.data.length;
+      const metric = showUptime
+        ? c.uptime
+        : statusLabel(dominantDayStatus(c.data[c.data.length - 1]?.bar ?? []));
+      out.push(`**${c.name}** — ${metric} · \`${days}d ago → today\``);
+      out.push(uptimeBar(c.data));
+      out.push("");
+    }
   }
 
   return `${out.join("\n").trimEnd()}\n`;
@@ -129,7 +114,7 @@ export function generateMonitorsList(
     out.push("No public monitors.\n");
   } else {
     const rows = page.monitors.map((m) => [
-      m.name,
+      `${statusEmoji(m.status)} ${m.name}`,
       statusLabel(m.status),
       mdUrl(baseUrl, `monitors/${m.id}`),
     ]);
@@ -144,6 +129,7 @@ export function generateEventsList(
   page: OverviewPage,
   baseUrl: string,
 ): string {
+  const now = Date.now();
   const out: string[] = [];
   out.push(
     frontmatter({
@@ -152,42 +138,61 @@ export function generateEventsList(
       canonical: canonicalUrl(baseUrl, "events"),
     }),
   );
-  out.push(`# ${page.title} — Events\n`);
+  out.push(`# ${page.title} — Events · Reports\n`);
 
-  out.push("## Status reports\n");
   if (page.statusReports.length === 0) {
     out.push("No status reports.\n");
   } else {
-    const rows = page.statusReports.map((r) => {
-      const latest = r.statusReportUpdates[0];
-      return [
-        r.title,
-        statusLabel(r.status),
-        latest ? formatDate(latest.date) : "—",
-        mdUrl(baseUrl, `events/report/${r.id}`),
-      ];
-    });
-    out.push(table(["Report", "Status", "Last update", "Details"], rows));
-    out.push("");
+    for (const report of page.statusReports) {
+      const updates = report.statusReportUpdates;
+      const oldest = updates[updates.length - 1];
+      const start = oldest?.date ?? report.createdAt;
+      const components = report.statusReportsToPageComponents
+        .map((c) => c.pageComponent?.name)
+        .filter((name): name is string => Boolean(name));
+
+      const meta = [
+        start ? formatDay(start) : null,
+        start ? relativeTime(start, now) : null,
+        components.length ? `affects: ${components.join(", ")}` : null,
+        oldest && updates[0]
+          ? humanDuration(oldest.date, updates[0].date)
+          : null,
+      ].filter(Boolean);
+
+      out.push(
+        `### ${reportStatusEmoji(oldest?.status ?? report.status)}→${reportStatusEmoji(report.status)} ${report.title}`,
+      );
+      if (meta.length) out.push(`${meta.join(" · ")}`);
+      for (const update of updates) {
+        out.push(
+          `- ${reportStatusEmoji(update.status)} **${statusLabel(update.status)}** — ${formatDayTime(update.date)}`,
+        );
+        if (update.message) out.push(`  ${update.message}`);
+      }
+      out.push("");
+    }
   }
 
-  out.push("## Maintenance\n");
-  if (page.maintenances.length === 0) {
-    out.push("No maintenance.\n");
-  } else {
-    const rows = page.maintenances.map((m) => [
-      m.title,
-      `${formatDate(m.from)} → ${formatDate(m.to)}`,
-      mdUrl(baseUrl, `events/maintenance/${m.id}`),
-    ]);
-    out.push(table(["Maintenance", "Window", "Details"], rows));
-    out.push("");
+  if (page.maintenances.length > 0) {
+    out.push("## Maintenance\n");
+    for (const m of page.maintenances) {
+      out.push(`### ${statusEmoji("info")} ${m.title}`);
+      out.push(
+        `${formatDay(m.from)} · ${humanDuration(m.from, m.to)} · ${mdUrl(baseUrl, `events/maintenance/${m.id}`)}`,
+      );
+      if (m.message) out.push(`  ${m.message}`);
+      out.push("");
+    }
   }
 
   return `${out.join("\n").trimEnd()}\n`;
 }
 
 export function generateReport(report: ReportDetail, baseUrl: string): string {
+  const now = Date.now();
+  const updates = report.statusReportUpdates;
+  const oldest = updates[updates.length - 1];
   const out: string[] = [];
   out.push(
     frontmatter({
@@ -196,23 +201,29 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
       canonical: canonicalUrl(baseUrl, `events/report/${report.id}`),
     }),
   );
-  out.push(`# ${report.title}\n`);
-  out.push(`**Status:** ${statusLabel(report.status)}\n`);
+  out.push(
+    `# ${reportStatusEmoji(oldest?.status ?? report.status)}→${reportStatusEmoji(report.status)} ${report.title}\n`,
+  );
 
   const components = report.statusReportsToPageComponents
     .map((c) => c.pageComponent?.name)
     .filter((name): name is string => Boolean(name));
-  if (components.length > 0) {
-    out.push(`**Affected components:** ${components.join(", ")}\n`);
-  }
+  const meta = [
+    oldest
+      ? `${formatDay(oldest.date)} · ${relativeTime(oldest.date, now)}`
+      : null,
+    components.length ? `affects: ${components.join(", ")}` : null,
+    oldest && updates[0] ? humanDuration(oldest.date, updates[0].date) : null,
+  ].filter(Boolean);
+  if (meta.length) out.push(`${meta.join(" · ")}\n`);
 
   out.push("## Updates\n");
-  if (report.statusReportUpdates.length === 0) {
+  if (updates.length === 0) {
     out.push("No updates.\n");
   } else {
-    for (const update of report.statusReportUpdates) {
+    for (const update of updates) {
       out.push(
-        `### ${statusLabel(update.status)} — ${formatDate(update.date)}\n`,
+        `### ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}\n`,
       );
       out.push(`${update.message}\n`);
     }
@@ -233,9 +244,9 @@ export function generateMaintenance(
       canonical: canonicalUrl(baseUrl, `events/maintenance/${maintenance.id}`),
     }),
   );
-  out.push(`# ${maintenance.title}\n`);
+  out.push(`# ${statusEmoji("info")} ${maintenance.title}\n`);
   out.push(
-    `**Window:** ${formatDate(maintenance.from)} → ${formatDate(maintenance.to)}\n`,
+    `**Window:** ${formatDayTime(maintenance.from)} → ${formatDayTime(maintenance.to)} · ${humanDuration(maintenance.from, maintenance.to)}\n`,
   );
 
   const components = maintenance.maintenancesToPageComponents
@@ -264,8 +275,12 @@ export function generateMonitor(
     }),
   );
   out.push(`# ${monitor.name}\n`);
-  if (monitor.description) out.push(`${monitor.description}\n`);
-  out.push(`**URL:** ${monitor.url}\n`);
+  if (monitor.description) out.push(`> ${monitor.description}\n`);
+
+  const latencyData = [...(monitor.data.latency?.data ?? [])].sort(
+    (a, b) => a.timestamp - b.timestamp,
+  );
+  const p75Series = latencyData.map((d) => d.p75Latency);
 
   // Uptime over the hardcoded 7-day window.
   const uptimeData = monitor.data.uptime?.data ?? [];
@@ -282,27 +297,6 @@ export function generateMonitor(
     totalChecks > 0
       ? formatPercent((totals.success + totals.degraded) / totalChecks)
       : "N/A";
-  out.push(`**Uptime (last 7 days):** ${uptime} (${totalChecks} checks)\n`);
-
-  // Latency aggregates (mean per percentile across the 7-day window).
-  const latencyData = monitor.data.latency?.data ?? [];
-  const p50 = avg(latencyData.map((d) => d.p50Latency));
-  const p75 = avg(latencyData.map((d) => d.p75Latency));
-  const p95 = avg(latencyData.map((d) => d.p95Latency));
-  const p99 = avg(latencyData.map((d) => d.p99Latency));
-  out.push("## Latency (last 7 days)\n");
-  out.push(
-    table(
-      ["Quantile", "Latency"],
-      [
-        ["p50", formatMs(p50)],
-        ["p75", formatMs(p75)],
-        ["p95", formatMs(p95)],
-        ["p99", formatMs(p99)],
-      ],
-    ),
-  );
-  out.push("");
 
   // Per-region p75 (mean across the window).
   const regionData = monitor.data.regions?.data ?? [];
@@ -314,12 +308,62 @@ export function generateMonitor(
     }
     byRegion.set(d.region, list);
   }
+  const regionAverages = Array.from(byRegion.entries())
+    .map(([region, values]) => ({ region, p75: avg(values) }))
+    .sort((a, b) => (a.p75 ?? Infinity) - (b.p75 ?? Infinity));
+  const fastest = regionAverages[0]?.region;
+
+  const p75Min = p75Series.length ? Math.min(...p75Series) : null;
+  const p75Max = p75Series.length ? Math.max(...p75Series) : null;
+
+  out.push(
+    table(
+      ["Metric", "Value"],
+      [
+        [
+          "Global latency (p75)",
+          p75Min !== null ? `${formatMs(p75Min)} – ${formatMs(p75Max)}` : "—",
+        ],
+        [
+          "Region latency",
+          byRegion.size
+            ? `${byRegion.size} regions · fastest: ${fastest}`
+            : "—",
+        ],
+        ["Uptime (last 7 days)", `${uptime} · ${totalChecks} checks`],
+      ],
+    ),
+  );
+  out.push("");
+
+  // Block sparkline of global p75 over the window.
+  if (p75Series.length > 1) {
+    out.push("## Global latency · p75 · last 7 days\n");
+    out.push(`\`${sparkline(p75Series)}\`\n`);
+    out.push(
+      `${formatMs(p75Min)} – ${formatMs(p75Max)} · ${formatDay(latencyData[0].timestamp)} → today\n`,
+    );
+  }
+
+  out.push("## Latency percentiles (last 7 days)\n");
+  out.push(
+    table(
+      ["Quantile", "Latency"],
+      [
+        ["p50", formatMs(avg(latencyData.map((d) => d.p50Latency)))],
+        ["p75", formatMs(avg(p75Series))],
+        ["p95", formatMs(avg(latencyData.map((d) => d.p95Latency)))],
+        ["p99", formatMs(avg(latencyData.map((d) => d.p99Latency)))],
+      ],
+    ),
+  );
+  out.push("");
+
   out.push("## Latency by region — p75 (last 7 days)\n");
-  if (byRegion.size === 0) {
+  if (regionAverages.length === 0) {
     out.push("No regional data.\n");
   } else {
-    const rows = Array.from(byRegion.entries())
-      .map(([region, values]) => ({ region, p75: avg(values) }))
+    const rows = [...regionAverages]
       .sort((a, b) => (b.p75 ?? 0) - (a.p75 ?? 0))
       .map((r) => [r.region, formatMs(r.p75)]);
     out.push(table(["Region", "p75"], rows));

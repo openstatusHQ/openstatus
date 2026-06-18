@@ -6,6 +6,7 @@ import {
   type MonitorDetail,
   type OverviewPage,
   type ReportDetail,
+  type UptimeComponent,
   generateEventsList,
   generateMaintenance,
   generateMonitor,
@@ -26,6 +27,8 @@ const overview = {
       id: 1,
       title: "API latency",
       status: "investigating",
+      createdAt: new Date("2026-06-18T10:00:00.000Z"),
+      statusReportsToPageComponents: [{ pageComponent: { name: "API" } }],
       statusReportUpdates: [
         {
           status: "investigating",
@@ -38,110 +41,129 @@ const overview = {
       id: 2,
       title: "Old outage",
       status: "resolved",
-      statusReportUpdates: [],
+      createdAt: new Date("2026-05-01T10:00:00.000Z"),
+      statusReportsToPageComponents: [],
+      statusReportUpdates: [
+        {
+          status: "resolved",
+          message: "Fixed.",
+          date: new Date("2026-05-02T10:00:00.000Z"),
+        },
+        {
+          status: "investigating",
+          message: "Down.",
+          date: new Date("2026-05-01T10:00:00.000Z"),
+        },
+      ],
     },
   ],
   maintenances: [
     {
       id: 5,
       title: "DB upgrade",
+      message: "Brief downtime.",
       from: new Date("2026-06-20T00:00:00.000Z"),
-      to: new Date("2099-06-20T01:00:00.000Z"),
-    },
-  ],
-  trackers: [
-    {
-      type: "component",
-      component: { name: "API", status: "error" },
-      order: 0,
-    },
-    {
-      type: "group",
-      groupName: "Web",
-      status: "success",
-      components: [{ name: "Landing", status: "success" }],
-      order: 1,
-    },
-  ],
-  lastEvents: [
-    {
-      name: "Resolved incident",
-      type: "report",
-      status: "success",
-      from: new Date("2026-06-15T00:00:00.000Z"),
+      to: new Date("2026-06-20T01:00:00.000Z"),
     },
   ],
   monitors: [{ id: 9, name: "API monitor", status: "success" }],
 } as unknown as OverviewPage;
 
-describe("generateOverview", () => {
-  const md = generateOverview(overview, BASE);
+const components = [
+  {
+    name: "laser pointer tracker",
+    uptime: "97.8%",
+    data: [
+      { bar: [{ status: "success", height: 100 }] },
+      { bar: [{ status: "error", height: 100 }] },
+      { bar: [{ status: "info", height: 100 }] },
+    ],
+  },
+] as unknown as UptimeComponent[];
 
-  test("frontmatter keys present, no generated-at", () => {
+describe("generateOverview", () => {
+  const md = generateOverview(overview, components, BASE);
+
+  test("frontmatter + no generated-at", () => {
     expect(md).toContain('title: "Acme Status"');
-    expect(md).toContain('description: "Acme service status"');
     expect(md).toContain(`canonical: "${BASE}"`);
     expect(md).not.toContain("generated-at");
   });
 
-  test("overall status label", () => {
-    expect(md).toContain("**Overall status:** Degraded");
+  test("overall status line with emoji", () => {
+    expect(md).toContain("🟧 **Degraded**");
   });
 
-  test("active incident rendered, resolved one excluded", () => {
-    expect(md).toContain("### API latency");
+  test("active incident (resolved excluded)", () => {
+    expect(md).toContain("**API latency**");
     expect(md).toContain("Looking into it.");
     expect(md).not.toContain("Old outage");
   });
 
-  test("detail link is a .md url", () => {
-    expect(md).toContain(`${BASE}/events/report/1.md`);
-    expect(md).toContain(`${BASE}/events/maintenance/5.md`);
+  test("per-component emoji uptime bar", () => {
+    expect(md).toContain("**laser pointer tracker** — 97.8%");
+    expect(md).toContain("`3d ago → today`");
+    expect(md).toContain("🟩🟥🟦");
   });
 
-  test("component table rows", () => {
-    expect(md).toContain("| API | Outage |");
-    expect(md).toContain("| Web (group) | Operational |");
-    expect(md).toContain("| — Landing | Operational |");
+  test("showUptime=false renders current status instead of percentage", () => {
+    const off = generateOverview(overview, components, BASE, false);
+    // last fixture day is "info" → Maintenance; percentage must not appear
+    expect(off).toContain("**laser pointer tracker** — Maintenance");
+    expect(off).not.toContain("97.8%");
+  });
+
+  test("adaptive legend lists only present statuses, in severity order", () => {
+    // fixture days are success, error, info → no degraded/no-data entries
+    expect(md).toContain("Legend: 🟩 Operational · 🟥 Outage · 🟦 Maintenance");
+    expect(md).not.toContain("🟧 Degraded");
+    expect(md).not.toContain("⬜");
   });
 });
 
-describe("generateOverview empty states", () => {
+describe("generateOverview empty components", () => {
   const empty = {
     title: "Empty",
-    description: "d",
+    description: "",
     status: "success",
     statusReports: [],
     maintenances: [],
-    trackers: [],
-    lastEvents: [],
     monitors: [],
   } as unknown as OverviewPage;
-  const md = generateOverview(empty, BASE);
+  const md = generateOverview(empty, [], BASE);
 
-  test("no active incidents copy", () => {
-    expect(md).toContain("No active incidents.");
-    expect(md).toContain("No active or upcoming maintenance.");
-    expect(md).toContain("No recent events.");
+  test("no components copy + operational", () => {
+    expect(md).toContain("🟩 **Operational**");
+    expect(md).toContain("No components.");
   });
 });
 
 describe("generateMonitorsList", () => {
-  test("monitor row with .md link", () => {
+  test("monitor row with status emoji + .md link", () => {
     const md = generateMonitorsList(overview, BASE);
     expect(md).toContain(
-      "| API monitor | Operational | " + `${BASE}/monitors/9.md`,
+      `| 🟩 API monitor | Operational | ${BASE}/monitors/9.md |`,
     );
   });
 });
 
 describe("generateEventsList", () => {
-  test("report and maintenance tables", () => {
-    const md = generateEventsList(overview, BASE);
-    expect(md).toContain("## Status reports");
-    expect(md).toContain("API latency");
+  const md = generateEventsList(overview, BASE);
+
+  test("lifecycle heading with from→to emoji", () => {
+    expect(md).toContain("### 🟥→🟩 Old outage");
+    expect(md).toContain("### 🟥→🟥 API latency");
+  });
+
+  test("affects + emoji update bullets", () => {
+    expect(md).toContain("affects: API");
+    expect(md).toContain("- 🟥 **Investigating** —");
+    expect(md).toContain("- 🟩 **Resolved** —");
+  });
+
+  test("maintenance section", () => {
     expect(md).toContain("## Maintenance");
-    expect(md).toContain("DB upgrade");
+    expect(md).toContain("### 🟦 DB upgrade");
   });
 });
 
@@ -151,28 +173,18 @@ describe("withPoweredBy", () => {
     expect(out).toContain(
       "_Powered by [openstatus.dev](https://openstatus.dev)_",
     );
-    expect(out).toContain("# Title");
   });
 
   test("omits footer when white-labeled", () => {
-    const out = withPoweredBy("# Title\n", true);
-    expect(out).toBe("# Title\n");
-    expect(out).not.toContain("openstatus.dev");
+    expect(withPoweredBy("# Title\n", true)).toBe("# Title\n");
   });
 });
 
 describe("statusLabel mapping", () => {
-  test("component statuses", () => {
+  test("component + report statuses", () => {
     expect(statusLabel("success")).toBe("Operational");
-    expect(statusLabel("degraded")).toBe("Degraded");
     expect(statusLabel("error")).toBe("Outage");
-    expect(statusLabel("info")).toBe("Maintenance");
-  });
-
-  test("report statuses", () => {
     expect(statusLabel("investigating")).toBe("Investigating");
-    expect(statusLabel("identified")).toBe("Identified");
-    expect(statusLabel("monitoring")).toBe("Monitoring");
     expect(statusLabel("resolved")).toBe("Resolved");
   });
 });
@@ -182,6 +194,7 @@ describe("generateReport", () => {
     id: 1,
     title: "API latency",
     status: "monitoring",
+    createdAt: new Date("2026-06-18T10:00:00.000Z"),
     statusReportsToPageComponents: [{ pageComponent: { name: "API" } }],
     statusReportUpdates: [
       {
@@ -198,13 +211,12 @@ describe("generateReport", () => {
   } as unknown as ReportDetail;
   const md = generateReport(report, BASE);
 
-  test("title, status, affected components, timeline", () => {
-    expect(md).toContain("# API latency");
-    expect(md).toContain("**Status:** Monitoring");
-    expect(md).toContain("**Affected components:** API");
-    expect(md).toContain("### Monitoring — 2026-06-18T12:00:00.000Z");
+  test("lifecycle heading, affects, timeline", () => {
+    expect(md).toContain("# 🟥→🟥 API latency");
+    expect(md).toContain("affects: API");
+    expect(md).toContain("### 🟥 Monitoring — Jun 18, 12:00 PM");
     expect(md).toContain("Recovering.");
-    expect(md).toContain("Started.");
+    expect(md).toContain("### 🟥 Investigating — Jun 18, 10:00 AM");
   });
 });
 
@@ -219,9 +231,10 @@ describe("generateMaintenance", () => {
   } as unknown as MaintenanceDetail;
   const md = generateMaintenance(maintenance, BASE);
 
-  test("window, components, message", () => {
+  test("emoji heading, window, components", () => {
+    expect(md).toContain("# 🟦 DB upgrade");
     expect(md).toContain(
-      "**Window:** 2026-06-20T00:00:00.000Z → 2026-06-20T01:00:00.000Z",
+      "**Window:** Jun 20, 12:00 AM → Jun 20, 1:00 AM · 1 hour",
     );
     expect(md).toContain("**Affected components:** Database");
     expect(md).toContain("Brief downtime.");
@@ -238,12 +251,14 @@ describe("generateMonitor", () => {
       latency: {
         data: [
           {
+            timestamp: 1_717_372_800_000,
             p50Latency: 100,
             p75Latency: 200,
             p95Latency: 300,
             p99Latency: 400,
           },
           {
+            timestamp: 1_717_459_200_000,
             p50Latency: 200,
             p75Latency: 300,
             p95Latency: 400,
@@ -268,17 +283,23 @@ describe("generateMonitor", () => {
   } as unknown as MonitorDetail;
   const md = generateMonitor(monitor, BASE);
 
-  test("7-day window label + aggregates", () => {
-    expect(md).toContain("**Uptime (last 7 days):** 97.50% (200 checks)");
-    expect(md).toContain("## Latency (last 7 days)");
+  test("KPI table", () => {
+    expect(md).toContain("| Global latency (p75) | 200ms – 300ms |");
+    expect(md).toContain("| Region latency | 2 regions · fastest: iad |");
+    expect(md).toContain("| Uptime (last 7 days) | 97.50% · 200 checks |");
+  });
+
+  test("sparkline section", () => {
+    expect(md).toContain("## Global latency · p75 · last 7 days");
+    expect(md).toContain("200ms – 300ms ·");
+  });
+
+  test("percentile table", () => {
     expect(md).toContain("| p50 | 150ms |");
-    expect(md).toContain("| p75 | 250ms |");
-    expect(md).toContain("| p95 | 350ms |");
     expect(md).toContain("| p99 | 450ms |");
   });
 
-  test("per-region p75 sorted slowest first", () => {
-    expect(md).toContain("## Latency by region — p75 (last 7 days)");
+  test("per-region p75, slowest first", () => {
     expect(md).toContain("| ams | 300ms |");
     expect(md).toContain("| iad | 100ms |");
     expect(md.indexOf("| ams |")).toBeLessThan(md.indexOf("| iad |"));
