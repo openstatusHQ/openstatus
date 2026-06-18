@@ -13,19 +13,28 @@ export const insertPageComponentSchema = createInsertSchema(pageComponent, {
   name: z.string().min(1),
 }).refine(
   (data) => {
-    // monitorId must be set when type='monitor'
-    if (data.type === "monitor" && !data.monitorId) {
-      return false;
+    switch (data.type) {
+      case "monitor":
+        return (
+          !!data.monitorId &&
+          !data.externalServiceId &&
+          !data.externalServiceComponentId
+        );
+      case "static":
+        return (
+          !data.monitorId &&
+          !data.externalServiceId &&
+          !data.externalServiceComponentId
+        );
+      case "external":
+        return !data.monitorId && !!data.externalServiceId;
+      default:
+        return false;
     }
-    // monitorId must be null when type='static'
-    if (data.type === "static" && data.monitorId) {
-      return false;
-    }
-    return true;
   },
   {
     message:
-      "monitorId must be set when type is 'monitor' and must be null when type is 'static'",
+      "monitor requires monitorId; static requires no refs; external requires externalServiceId",
   },
 );
 

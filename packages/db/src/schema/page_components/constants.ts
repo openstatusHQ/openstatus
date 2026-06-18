@@ -1,4 +1,4 @@
-export const pageComponentTypes = ["static", "monitor"] as const;
+export const pageComponentTypes = ["static", "monitor", "external"] as const;
 
 export type PageComponentType = (typeof pageComponentTypes)[number];
 

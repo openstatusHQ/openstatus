@@ -17,7 +17,7 @@ Page components are the individual elements displayed on your status page that s
 
 ## Component types
 
-Page components come in two distinct types, each serving different purposes on your status page.
+Page components come in three distinct types, each serving different purposes on your status page.
 
 ### Monitor components
 
@@ -144,6 +144,23 @@ Static components do not perform any health checks or generate incidents. You ar
 - Manual status reports.
 - Scheduled maintenances.
 - Automatic incidents are **not** supported.
+
+### External components
+
+**Type:** `external`
+
+External components surface the live status of a third-party provider from the openstatus provider catalog (e.g. a cloud provider, CDN, or SaaS API your service depends on). Add a whole provider as a single aggregated row, or pick the specific upstream components you rely on.
+
+**Characteristics:**
+- Status is read from the provider's published status and refreshed automatically — you do not manage it manually.
+- Rendered in a dedicated **Third-party dependencies** section, auto-grouped by provider.
+- Excluded from your page's overall status and uptime, so an upstream outage never counts against your own SLA.
+- Each provider links out to its own status page.
+- Show an **Unknown / no data** state when the upstream data is stale or unavailable.
+
+<Aside>
+The **Third-party dependencies** section is positionable: it appears at the position of its lowest-ordered external component, sharing the same order values as your own components and groups. Give an external component a lower order than your monitors and the whole section moves above them; order it last and the section sits at the bottom.
+</Aside>
 
 ## Component groups
 

@@ -50,6 +50,7 @@ import {
   StatusEventTimelineReportUpdate,
 } from "../../../../../components/status-page/status-events";
 import { StatusFeed } from "../../../../../components/status-page/status-feed";
+import { ThirdPartySection } from "../../../../../components/status-page/third-party-section";
 import { useEmbed } from "../../../../../hooks/use-embed";
 import { usePathnamePrefix } from "../../../../../hooks/use-pathname-prefix";
 import { updatesWithImpactChanges } from "../../../../../lib/report-impacts";
@@ -117,6 +118,12 @@ export function Client() {
     ),
   );
 
+  const { data: externalSection } = useQuery(
+    trpc.statusPage.getExternalSection.queryOptions(
+      componentsVisible && pageInitial ? { slug: domain } : skipToken,
+    ),
+  );
+
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
   const events = useMemo(() => {
@@ -135,6 +142,71 @@ export function Client() {
 
   // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
   const page = pageWithCustomConfiguration ?? pageInitial;
+
+  const sectionItems: { order: number; node: React.ReactNode }[] =
+    page.trackers.map((tracker) => {
+      if (tracker.type === "component") {
+        const component = tracker.component;
+        const { data, uptime } =
+          uptimeData?.find((u) => u.pageComponentId === component.id) ?? {};
+        return {
+          order: tracker.order,
+          node: (
+            <ComponentCard
+              key={`component-${component.id}`}
+              name={component.name}
+              description={component.description}
+              status={component.status}
+              data={data}
+              uptime={uptime}
+              showUptime={showUptime}
+              isLoading={isLoading}
+            />
+          ),
+        };
+      }
+      return {
+        order: tracker.order,
+        node: (
+          <StatusComponentGroup
+            key={`group-${tracker.groupId}`}
+            title={tracker.groupName}
+            status={tracker.status}
+            defaultOpen={tracker.defaultOpen}
+          >
+            {tracker.components.map((component) => {
+              const { data, uptime } =
+                uptimeData?.find((u) => u.pageComponentId === component.id) ??
+                {};
+              return (
+                <ComponentCard
+                  key={`component-${component.id}`}
+                  name={component.name}
+                  description={component.description}
+                  status={component.status}
+                  data={data}
+                  uptime={uptime}
+                  showUptime={showUptime}
+                  isLoading={isLoading}
+                />
+              );
+            })}
+          </StatusComponentGroup>
+        ),
+      };
+    });
+
+  if (
+    externalSection &&
+    externalSection.providers.length > 0 &&
+    externalSection.position != null
+  ) {
+    sectionItems.push({
+      order: externalSection.position,
+      node: <ThirdPartySection key="third-party" section={externalSection} />,
+    });
+  }
+  sectionItems.sort((a, b) => a.order - b.order);
 
   return (
     <div className="flex flex-col gap-6">
@@ -274,58 +346,9 @@ export function Client() {
           />
         )}
         {/* NOTE: check what gap feels right */}
-        {page.trackers.length > 0 ? (
+        {sectionItems.length > 0 ? (
           <StatusContent className="gap-5 group-data-[hide-components=true]/embed:hidden">
-            {page.trackers.map((tracker) => {
-              if (tracker.type === "component") {
-                const component = tracker.component;
-                const { data, uptime } =
-                  uptimeData?.find((u) => u.pageComponentId === component.id) ??
-                  {};
-
-                return (
-                  <ComponentCard
-                    key={`component-${component.id}`}
-                    name={component.name}
-                    description={component.description}
-                    status={component.status}
-                    data={data}
-                    uptime={uptime}
-                    showUptime={showUptime}
-                    isLoading={isLoading}
-                  />
-                );
-              }
-
-              return (
-                <StatusComponentGroup
-                  key={`group-${tracker.groupId}`}
-                  title={tracker.groupName}
-                  status={tracker.status}
-                  defaultOpen={tracker.defaultOpen}
-                >
-                  {tracker.components.map((component) => {
-                    const { data, uptime } =
-                      uptimeData?.find(
-                        (u) => u.pageComponentId === component.id,
-                      ) ?? {};
-
-                    return (
-                      <ComponentCard
-                        key={`component-${component.id}`}
-                        name={component.name}
-                        description={component.description}
-                        status={component.status}
-                        data={data}
-                        uptime={uptime}
-                        showUptime={showUptime}
-                        isLoading={isLoading}
-                      />
-                    );
-                  })}
-                </StatusComponentGroup>
-              );
-            })}
+            {sectionItems.map((item) => item.node)}
           </StatusContent>
         ) : null}
         <Separator className="group-data-[hide-components=true]/embed:hidden group-data-[hide-feed=true]/embed:hidden" />
