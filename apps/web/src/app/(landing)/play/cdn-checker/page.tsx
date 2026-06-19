@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
@@ -39,12 +40,14 @@ export default function Page() {
       <JsonLd graph={jsonLDGraph} />
       <h1>{page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
-      <CdnCheckerProvider>
-        <CdnForm />
-        <SummaryCard />
-        <ResultsTable />
-        <MonitorCta />
-      </CdnCheckerProvider>
+      <Suspense>
+        <CdnCheckerProvider>
+          <CdnForm />
+          <SummaryCard />
+          <ResultsTable />
+          <MonitorCta />
+        </CdnCheckerProvider>
+      </Suspense>
       <p className="text-muted-foreground text-sm">
         Checks run live — results are not stored.
       </p>

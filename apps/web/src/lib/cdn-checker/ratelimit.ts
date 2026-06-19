@@ -1,7 +1,7 @@
 export const RATE_LIMIT_WINDOW = 60;
 export const MAX_REQUESTS_PER_WINDOW = 3;
 
-export type CdnRateLimit =
+type CdnRateLimit =
   | { status: "skipped" }
   | { status: "no-client-ip" }
   | {
