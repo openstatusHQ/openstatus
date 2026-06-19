@@ -74,8 +74,11 @@ export function generateOverview(
       contactUrl: page.contactUrl,
       live: {
         status: page.status,
-        updatedAt: page.updatedAt,
-        activeIncidents: activeReports.length,
+        // Minute-granular so the body (and its ETag) stays stable within the
+        // minute, matching the visible timestamp — full precision would bust
+        // the conditional-GET window on every request.
+        fetchedAt: Math.floor(now / 60_000) * 60_000,
+        activeReports: activeReports.length,
         activeMaintenance: activeMaintenance.length,
         componentsOperational: flatComponents.filter(
           (c) => c.status === "success",

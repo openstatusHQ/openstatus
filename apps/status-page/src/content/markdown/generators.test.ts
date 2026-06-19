@@ -206,13 +206,16 @@ describe("generateOverview live frontmatter + agent mode", () => {
   test("frontmatter carries live machine state", () => {
     const md = generateOverview(page, comps, BASE);
     expect(md).toContain('status: "degraded"');
-    expect(md).toContain('indicator: "minor"');
-    expect(md).toContain('updated_at: "2026-06-18T14:03:00.000Z"');
-    expect(md).toContain("active_incidents: 1");
+    expect(md).toContain("active_reports: 1");
     expect(md).toContain("active_maintenance: 0");
     expect(md).toContain("components_operational: 2");
     expect(md).toContain("components_total: 3");
     expect(md).toContain('worst_component: "API"');
+    // fetched_at is the generation time, minute-granular ISO; no misleading
+    // page-mtime updated_at, no cryptic Statuspage indicator.
+    expect(md).toMatch(/fetched_at: "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00\.000Z"/);
+    expect(md).not.toContain("indicator:");
+    expect(md).not.toContain("updated_at:");
   });
 
   test("agent mode drops the emoji uptime bar + legend", () => {
@@ -221,7 +224,7 @@ describe("generateOverview live frontmatter + agent mode", () => {
     expect(count(human, "🟩")).toBeGreaterThan(0);
     expect(count(agent, "🟩")).toBe(0);
     // live frontmatter is still present in agent mode
-    expect(agent).toContain('indicator: "minor"');
+    expect(agent).toContain("active_reports: 1");
   });
 });
 

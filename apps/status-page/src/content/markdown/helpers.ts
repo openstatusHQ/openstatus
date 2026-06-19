@@ -1,4 +1,4 @@
-import { isoOrNull, pageIndicator } from "../status-vocab";
+import { isoOrNull } from "../status-vocab";
 
 export type ComponentStatus = "success" | "degraded" | "error" | "info";
 
@@ -41,13 +41,14 @@ function escapeYaml(value: string): string {
 
 /**
  * Live page state carried in frontmatter so an agent gets the answer from the
- * top ~10 lines without tokenizing the body. `status` is openstatus-native;
- * `indicator` is the Statuspage-compatible alias.
+ * top ~10 lines without tokenizing the body. `fetched_at` is the snapshot's
+ * generation time (truthful freshness signal); HTTP ETag/Cache-Control carry
+ * the rest.
  */
 export interface FrontmatterLive {
   status: string;
-  updatedAt: Date | string | number | null | undefined;
-  activeIncidents: number;
+  fetchedAt: Date | string | number | null | undefined;
+  activeReports: number;
   activeMaintenance: number;
   componentsOperational: number;
   componentsTotal: number;
@@ -76,12 +77,10 @@ export function frontmatter(fields: {
   if (fields.contactUrl)
     lines.push(`contact_url: ${escapeYaml(fields.contactUrl)}`);
   if (fields.live) {
-    const { indicator } = pageIndicator(fields.live.status);
-    const updated = isoOrNull(fields.live.updatedAt);
+    const fetched = isoOrNull(fields.live.fetchedAt);
     lines.push(`status: ${escapeYaml(fields.live.status)}`);
-    lines.push(`indicator: ${escapeYaml(indicator)}`);
-    if (updated) lines.push(`updated_at: ${escapeYaml(updated)}`);
-    lines.push(`active_incidents: ${fields.live.activeIncidents}`);
+    if (fetched) lines.push(`fetched_at: ${escapeYaml(fetched)}`);
+    lines.push(`active_reports: ${fields.live.activeReports}`);
     lines.push(`active_maintenance: ${fields.live.activeMaintenance}`);
     lines.push(`components_operational: ${fields.live.componentsOperational}`);
     lines.push(`components_total: ${fields.live.componentsTotal}`);
