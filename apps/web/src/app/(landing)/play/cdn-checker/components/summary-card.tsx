@@ -1,9 +1,11 @@
 "use client";
 
-import { regionFormatter } from "@/lib/checker/utils";
-import { cn } from "@/lib/utils";
 import { CDN_LABELS } from "@openstatus/header-analysis";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
+
+import { regionFormatter } from "@/lib/checker/utils";
+import { cn } from "@/lib/utils";
+
 import { useCdnChecker } from "../client";
 
 function ratioColor(cached: number, responded: number) {
@@ -20,7 +22,7 @@ export function SummaryCard() {
   if (!summary) {
     if (isPending || rows.length > 0) {
       return (
-        <div className="border border-border p-4 text-muted-foreground">
+        <div className="border-border text-muted-foreground border p-4">
           Probing{" "}
           {rows.length > 0
             ? `${rows.length} of ${AVAILABLE_REGIONS.length} regions...`
@@ -43,18 +45,18 @@ export function SummaryCard() {
   } = summary;
 
   return (
-    <div className="grid gap-4 border border-border p-4 sm:grid-cols-3">
+    <div className="border-border grid gap-4 border p-4 sm:grid-cols-3">
       <div className="sm:col-span-1">
-        <p className="my-0! text-muted-foreground text-sm">Cache hit ratio</p>
+        <p className="text-muted-foreground my-0! text-sm">Cache hit ratio</p>
         <p
           className={cn(
-            "my-0! font-semibold text-3xl tabular-nums",
+            "my-0! text-3xl font-semibold tabular-nums",
             ratioColor(cachedRegions, respondedRegions),
           )}
         >
           {cachedRegions} / {respondedRegions}
         </p>
-        <p className="my-0! text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           regions served from cache
           {unreachableRegions.length > 0
             ? ` (${unreachableRegions.length} unreachable)`
@@ -62,11 +64,11 @@ export function SummaryCard() {
         </p>
       </div>
       <div className="sm:col-span-1">
-        <p className="my-0! text-muted-foreground text-sm">CDN</p>
-        <p className="my-0! font-semibold text-3xl">
+        <p className="text-muted-foreground my-0! text-sm">CDN</p>
+        <p className="my-0! text-3xl font-semibold">
           {cdn ? CDN_LABELS[cdn] : "Not detected"}
         </p>
-        <p className="my-0! text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           {mixedCdn
             ? "multiple providers detected"
             : topology !== "unknown"
@@ -75,17 +77,17 @@ export function SummaryCard() {
         </p>
       </div>
       <div className="sm:col-span-1">
-        <p className="my-0! text-muted-foreground text-sm">Uncached regions</p>
+        <p className="text-muted-foreground my-0! text-sm">Uncached regions</p>
         {uncachedRegions.length === 0 ? (
-          <p className="my-0! font-semibold text-3xl text-success">None</p>
+          <p className="text-success my-0! text-3xl font-semibold">None</p>
         ) : (
-          <p className="my-0! font-medium text-base leading-7">
+          <p className="my-0! text-base leading-7 font-medium">
             {uncachedRegions
               .map((region) => regionFormatter(region, "short"))
               .join(", ")}
           </p>
         )}
-        <p className="my-0! text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           {uncachedRegions.length > 0
             ? "MISS can mean first request — run again to confirm"
             : "caching looks healthy"}

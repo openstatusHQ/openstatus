@@ -1,5 +1,11 @@
 "use client";
 
+import { CDN_LABELS, type CdnProvider } from "@openstatus/header-analysis";
+import { regionDict } from "@openstatus/regions";
+import { Button } from "@openstatus/ui/components/ui/button";
+import type { ColumnDef, Row, Table } from "@tanstack/react-table";
+import { X } from "lucide-react";
+
 import {
   DataTable,
   type DataTableToolbarProps,
@@ -9,11 +15,7 @@ import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-fa
 import type { CdnRegionResult } from "@/lib/cdn-checker/schema";
 import { continentFormatter, regionFormatter } from "@/lib/checker/utils";
 import { cn } from "@/lib/utils";
-import { CDN_LABELS, type CdnProvider } from "@openstatus/header-analysis";
-import { regionDict } from "@openstatus/regions";
-import { Button } from "@openstatus/ui/components/ui/button";
-import type { ColumnDef, Row, Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+
 import { useCdnChecker } from "../client";
 import {
   CACHE_STATUS_COLOR,
@@ -202,7 +204,7 @@ function RowDetail({ row }: { row: Row<CdnRegionResult> }) {
 
   if (entries.length === 0) {
     return (
-      <p className="my-0! p-2 text-muted-foreground text-sm">
+      <p className="text-muted-foreground my-0! p-2 text-sm">
         No cache headers returned.
       </p>
     );
@@ -212,7 +214,7 @@ function RowDetail({ row }: { row: Row<CdnRegionResult> }) {
     <dl className="my-0! grid gap-1 p-2 font-mono text-sm">
       {entries.map((entry) => (
         <div key={entry.label} className="flex gap-2">
-          <dt className="shrink-0 text-muted-foreground">{entry.label}:</dt>
+          <dt className="text-muted-foreground shrink-0">{entry.label}:</dt>
           <dd className="my-0! ml-0! break-all">{entry.value}</dd>
         </div>
       ))}

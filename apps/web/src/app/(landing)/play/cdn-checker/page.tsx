@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { JsonLd } from "@/lib/metadata/json-ld";
@@ -8,7 +10,7 @@ import {
   getJsonLDFAQPage,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+
 import { CdnCheckerProvider, CdnForm } from "./client";
 import { MonitorCta } from "./components/monitor-cta";
 import { ResultsTable } from "./components/results-table";

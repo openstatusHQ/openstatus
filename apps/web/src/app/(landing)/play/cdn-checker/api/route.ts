@@ -1,3 +1,8 @@
+import { Events, setupAnalytics } from "@openstatus/analytics";
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import { after } from "next/server";
+import { z } from "zod";
+
 import { devProbeCdnRegion } from "@/lib/cdn-checker/dev-probe";
 import { validateCdnUrl } from "@/lib/cdn-checker/guards";
 import { probeCdnRegion } from "@/lib/cdn-checker/probe";
@@ -10,10 +15,6 @@ import {
 import type { CdnRegionResponse } from "@/lib/cdn-checker/schema";
 import { computeCdnSummary } from "@/lib/cdn-checker/summary";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
-import { Events, setupAnalytics } from "@openstatus/analytics";
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { after } from "next/server";
-import { z } from "zod";
 
 export const runtime = "edge";
 // 28 concurrent probes, slowest capped at 12s + summary; give some slack

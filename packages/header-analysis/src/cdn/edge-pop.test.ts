@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { extractEdgePop } from "./edge-pop";
 
 describe("extractEdgePop", () => {

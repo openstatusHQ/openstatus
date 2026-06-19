@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
+
 import type { RegionCheckerResponse } from "@/lib/checker/utils";
+
 import { mapCheckToCdnResult, probeCdnRegion } from "./probe";
 
 const timing = {
