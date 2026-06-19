@@ -1,0 +1,142 @@
+---
+title: "Top Five Pingdom Alternatives in 2026"
+description: "The honest guide to Pingdom alternatives in 2026 — including openstatus, UptimeRobot, Better Stack, Checkly, and Uptime Kuma — with pricing, monitoring depth, free tiers, and who each is actually for."
+author: "openstatus"
+publishedAt: "2026-06-19"
+category: "alternative"
+faq:
+  - question: "Why do teams look for a Pingdom alternative?"
+    answer: "The most common reasons are: Pingdom discontinued its free tier after the SolarWinds acquisition, so there's no way to start for free; pricing climbs once you add real user monitoring or transaction checks; it's closed-source with no self-hosting; and it has no built-in public status page, so you need a second tool for incident communication."
+  - question: "Which Pingdom alternative has the best free tier?"
+    answer: "UptimeRobot has the most generous free tier (50 monitors), but it's limited to non-commercial use since October 2024. openstatus offers a permanent free plan with multi-region monitoring and a status page, and Better Stack has a usable free tier for solo developers. For unlimited free monitors, the self-hosted Uptime Kuma is the cheapest option if you're willing to run it."
+  - question: "Which Pingdom alternative includes a status page?"
+    answer: "openstatus, Better Stack, and Uptime Kuma include a status page. Pingdom itself does not offer a public status page, which is one of the more common reasons teams switch. UptimeRobot and Checkly are primarily monitoring tools."
+  - question: "Is there an open-source Pingdom alternative?"
+    answer: "Yes. openstatus (AGPL-3.0) and Uptime Kuma (MIT) are both open-source. openstatus is open-source but also offers a managed, multi-region cloud, while Uptime Kuma is self-hosted only and runs from a single location."
+---
+
+## TL;DR
+
+Pingdom is a mature website-performance suite, but it has no free tier, is closed-source, and doesn't include a public status page. The alternatives below cover the gaps people most often switch for.
+
+If you want **uptime monitoring plus a status page in one open-source tool**, look at [openstatus](https://openstatus.dev). If you want a **generous free tier for personal projects**, UptimeRobot or Better Stack. If you need **scripted browser checks**, Checkly. If you want **unlimited free monitors and are happy to self-host**, Uptime Kuma.
+
+## Why Teams Leave Pingdom
+
+Pingdom is a capable product — real user monitoring and transaction checks are genuinely useful. But there are recurring reasons teams move on:
+
+- **No free tier.** Pingdom retired its free plan after SolarWinds acquired it. The cheapest paid plan starts around $15/month, and there's only a 14-day trial to evaluate.
+- **No public status page.** Pingdom monitors, but it doesn't give you a branded page to communicate incidents to users — so you end up paying for a second tool.
+- **Closed-source, no self-hosting.** Teams with data-residency, audit, or compliance requirements increasingly want an open-source, self-hostable option.
+- **Price climbs with features.** Real user monitoring and transaction monitoring sit on higher tiers and add-ons; the entry price isn't the real price.
+- **Round-robin locations.** Pingdom cycles through its check locations rather than testing them all at once, so a regional outage can take a full rotation to surface.
+
+If none of these apply, Pingdom is fine. If two or more do, the alternatives below are worth a look.
+
+## What to Look For in a Pingdom Alternative
+
+1. **Free tier or trial** — can you evaluate it (and stay) without a contract?
+2. **Status page** — is incident communication built in, or another bill?
+3. **Monitoring depth** — HTTP, TCP, DNS, multi-region, and how locations are scheduled.
+4. **Configuration model** — UI-only, API, CLI, or a real Terraform provider.
+5. **Hosting model** — cloud-only or self-hostable, and where your data lives.
+
+## Pingdom Alternatives at a Glance
+
+| Feature              | openstatus       | UptimeRobot     | Better Stack | Checkly       | Uptime Kuma   |
+| -------------------- | ---------------- | --------------- | ------------ | ------------- | ------------- |
+| Free tier            | Yes              | Yes (non-commercial) | Yes     | Yes (limited) | Yes (self-host) |
+| Built-in status page | Yes              | Basic           | Yes          | No            | Yes           |
+| Multi-region         | 28 (parallel)    | Single location | Yes          | ~19 regions   | Single        |
+| Browser checks       | No               | No              | No           | Yes           | No            |
+| Monitoring as code   | Yes (Terraform)  | No              | Yes          | Yes (JS)      | No            |
+| Open-source          | Yes (AGPL-3.0)   | No              | No           | No            | Yes (MIT)     |
+| Self-hostable        | Yes              | No              | No           | No            | Yes           |
+
+Prices and limits change frequently — confirm with each vendor before deciding.
+
+## The Five Alternatives
+
+### 1. openstatus — best for teams that want monitoring and a status page in one open-source tool
+
+[openstatus](https://openstatus.dev) is an open-source synthetic monitoring and status page platform. It runs HTTP, TCP, and DNS checks from 28 regions **simultaneously** and powers a public or private status page from the same workspace.
+
+The differentiator versus Pingdom is that monitoring and incident communication live in one tool — you don't pay for a status page separately — and the whole thing is open-source. Define monitors in the dashboard, or as code via the Terraform provider so they live in version control.
+
+- **Monitoring**: HTTP, TCP, DNS from 28 regions checked in parallel, with assertions and thresholds.
+- **Config**: Terraform provider, a CLI, and an MCP server for AI agents.
+- **Pricing**: Permanent free tier; paid plans from $30/month with unlimited team members; self-host for $0.
+- **Trade-offs**: No real user monitoring or scripted browser checks — it's focused on uptime and status, not full RUM.
+
+**Best for**: Developer teams that want uptime monitoring, a status page, and developer tooling in one open-source product.
+
+### 2. UptimeRobot — best for a generous free tier on personal projects
+
+UptimeRobot is the well-known budget option, with a free plan that covers up to 50 monitors. It's simple, familiar, and fast to set up.
+
+The catches: as of October 2024 the free tier is restricted to **non-commercial use**, checks run from a single location at a time, and team access carries a per-seat add-on.
+
+- **Strengths**: Large free tier, simple UI, long track record.
+- **Trade-offs**: Single-location checks, per-seat team pricing, closed-source.
+
+**Best for**: Personal projects and side businesses that fit inside the non-commercial free tier.
+
+### 3. Better Stack — best all-in-one bundle with on-call
+
+Better Stack bundles uptime monitoring, on-call scheduling, incident management, and status pages. The free tier is usable for small teams, and it ships a Terraform provider.
+
+The trade-off is add-on pricing — custom styling, private status pages, and extra seats stack up once you're past the free tier.
+
+- **Strengths**: Monitoring + on-call + status in one product, generous free tier, Terraform support.
+- **Trade-offs**: Per-page and per-seat add-ons; no OpenTelemetry; closed-source.
+
+**Best for**: Small teams that want the on-call + status-page bundle and fit the free tier.
+
+### 4. Checkly — best for scripted browser and API monitoring
+
+Checkly is a code-first synthetic monitoring tool built around Playwright. If the reason you used Pingdom was transaction monitoring, Checkly is the more modern take on that.
+
+It's developer-focused (monitoring as code in JavaScript) but doesn't include a public status page, and pricing is usage-based.
+
+- **Strengths**: Powerful browser-based checks, code-first workflow, multi-region.
+- **Trade-offs**: No built-in status page; usage-based pricing; closed-source.
+
+**Best for**: Teams that need end-to-end browser flows as monitoring. See our [Checkly comparison](/compare/checkly) for detail.
+
+### 5. Uptime Kuma — best for unlimited free monitors if you self-host
+
+Uptime Kuma is the most popular open-source self-hosted monitor. Run it on a VPS or homelab and you get unlimited monitors and a status page for the cost of hosting.
+
+The trade-off is that you're now operating the monitor: it runs from a single location, and if its host goes down, so does your monitoring.
+
+- **Strengths**: Open-source (MIT), unlimited monitors, clean UI, large community.
+- **Trade-offs**: Single-location, self-managed, no managed multi-region.
+
+**Best for**: Homelabs and teams that want full control and don't mind running the infrastructure. If you like Kuma but want a managed, multi-region option, see [hosted Uptime Kuma alternative](/guides/hosted-uptime-kuma-alternative).
+
+## Pick the Right One
+
+- **One open-source tool for monitoring + status page** → openstatus
+- **Generous free tier, personal project** → UptimeRobot
+- **All-in-one with on-call** → Better Stack
+- **Scripted browser checks** → Checkly
+- **Unlimited free monitors, self-hosted** → Uptime Kuma
+
+## Related Guides
+
+- [Pingdom vs openstatus](/compare/pingdom) — full head-to-head
+- [What Is Uptime Monitoring?](/guides/what-is-uptime-monitoring)
+- [Best Hosted Status Page Tools in 2026](/guides/best-hosted-status-page-2026)
+- [Why Every SaaS Needs a Status Page](/guides/why-every-saas-needs-a-status-page)
+
+## Need Help or Have Questions?
+
+Join our [Discord community](https://www.openstatus.dev/discord), check the [documentation](https://www.openstatus.dev/docs), or reach out via [email](mailto:ping@openstatus.dev).
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=guide-pingdom-alternatives">Get Started Free</ButtonLink>
+
+---

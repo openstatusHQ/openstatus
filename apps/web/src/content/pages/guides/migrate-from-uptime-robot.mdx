@@ -1,0 +1,122 @@
+---
+title: "How to Migrate from UptimeRobot to openstatus"
+description: "A step-by-step guide to moving from UptimeRobot to openstatus — exporting your monitors, recreating them in the UI or as code, wiring up alerts, and publishing a status page. Most teams finish in under an hour."
+author: "openstatus"
+publishedAt: "2026-06-19"
+category: "alternative"
+howto:
+  totalTime: "PT1H"
+  steps:
+    - name: "Create a free openstatus account"
+      text: "Sign up at app.openstatus.dev. No credit card is required, and the free plan is enough to recreate your first monitors and a status page."
+    - name: "List your UptimeRobot monitors"
+      text: "Open your UptimeRobot dashboard and note each monitor's type (HTTP, keyword, ping, port), URL, check interval, and alert contacts. The UptimeRobot API can export this list if you have many monitors."
+    - name: "Recreate monitors in openstatus"
+      text: "Add each monitor in the openstatus dashboard, or define them as code with the Terraform provider or CLI. Choose the regions to check from and set assertions on status code, latency, or body."
+    - name: "Wire up notifications"
+      text: "Connect your alert channels — Slack, Discord, Email, PagerDuty, OpsGenie, and more — and attach them to your monitors."
+    - name: "Publish your status page"
+      text: "Create a status page, add components backed by your monitors, set a custom domain, and let users subscribe by email, RSS, or JSON."
+    - name: "Run in parallel, then switch off"
+      text: "Leave both tools running for a week or two. Once you trust the openstatus alerts and your status page is live, disable the UptimeRobot monitors and cancel the plan."
+faq:
+  - question: "Does openstatus automatically import my UptimeRobot monitors?"
+    answer: "openstatus's one-click importer covers status-page tools (Instatus, Atlassian Statuspage, Better Stack) — it imports components, incidents, maintenances, and subscribers. UptimeRobot is a monitoring tool, so its monitors are recreated rather than imported: rebuild them in the dashboard, or define them as code with the Terraform provider or CLI. Most setups take under an hour."
+  - question: "How long does migrating from UptimeRobot take?"
+    answer: "For a typical setup of a few dozen monitors, under an hour. If you define monitors as code with Terraform or the CLI, you can script the whole thing and apply it in one go."
+  - question: "Will my uptime history transfer from UptimeRobot?"
+    answer: "Historical uptime data stays in UptimeRobot — it isn't transferred. openstatus starts collecting data the moment your monitors go live. Many teams run both in parallel for a short period before switching off UptimeRobot."
+  - question: "Why migrate from UptimeRobot in the first place?"
+    answer: "Common reasons: UptimeRobot checks from a single location while openstatus checks from 28 regions in parallel; UptimeRobot restricted its free tier to non-commercial use in October 2024; openstatus is open-source and self-hostable; and openstatus includes monitoring as code, a CLI, and an MCP server for AI agents."
+---
+
+## Why teams move from UptimeRobot to openstatus
+
+UptimeRobot is a familiar, low-cost monitor, and for basic single-location checks it does the job. Teams usually switch when they outgrow that:
+
+- **Single-location checks** mean false positives from probe-side blips and no way to tell a regional outage apart from a global one. openstatus checks from **28 regions in parallel**.
+- **The free tier is now non-commercial only** (since October 2024), so production use needs a paid plan anyway.
+- **No monitoring as code** — no Terraform provider, no CLI. openstatus ships both, plus an MCP server for AI agents.
+- **Open-source and self-hostable** — openstatus is AGPL-3.0; UptimeRobot is closed-source SaaS.
+
+See the full [UptimeRobot vs openstatus comparison](/compare/uptime-robot) for the side-by-side.
+
+## What transfers, and what doesn't
+
+Set expectations before you start:
+
+- **Monitors** — recreated, not imported. openstatus's importer is built for status-page tools (Instatus, Atlassian Statuspage, Better Stack), not monitoring tools. Rebuilding monitors is quick, and defining them as code makes it quicker.
+- **Uptime history** — stays in UptimeRobot. openstatus starts fresh from the moment monitors go live. Run both in parallel for a week or two if you want overlap.
+- **Alert contacts** — reconfigured in openstatus, which supports more channels (Slack, Discord, PagerDuty, OpsGenie, and more).
+
+## Step 1 — Create a free openstatus account
+
+Sign up at [app.openstatus.dev](https://app.openstatus.dev?ref=migrate-uptimerobot). No credit card required. The free plan is enough to recreate your first monitors and a status page; upgrade when you need more monitors or a custom domain.
+
+## Step 2 — List your UptimeRobot monitors
+
+In UptimeRobot, note each monitor's:
+
+- **Type** — HTTP(s), keyword, ping, or port
+- **URL or host**
+- **Check interval**
+- **Alert contacts**
+
+If you have many monitors, the UptimeRobot API can dump the full list as JSON so you don't have to copy them by hand.
+
+## Step 3 — Recreate your monitors in openstatus
+
+Two ways, depending on how you like to work.
+
+**In the dashboard** — add each monitor, pick the regions to check from, and set assertions on status code, latency, headers, or body.
+
+**As code** — define monitors with the [Terraform provider](/docs/reference/terraform) so they live in version control and apply in one command:
+
+```terraform
+resource "openstatus_http_monitor" "api" {
+  name        = "API Health Check"
+  url         = "https://api.example.com/health"
+  periodicity = "1m"
+  regions     = ["iad", "ams", "syd"]
+
+  status_code_assertions {
+    target     = 200
+    comparator = "eq"
+  }
+}
+```
+
+The same is available through the openstatus CLI if you'd rather script it than write HCL.
+
+## Step 4 — Wire up notifications
+
+Connect your alert channels and attach them to your monitors. openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, Telegram, and more — so you can usually consolidate channels you had scattered across UptimeRobot.
+
+Because checks run from multiple regions, openstatus only alerts once several regions agree a check has failed, which cuts the false positives that single-location monitoring produces.
+
+## Step 5 — Publish your status page
+
+UptimeRobot's status page is basic; this is where openstatus pulls ahead. Create a status page, add components backed by your monitors, set a custom domain, and let users subscribe by email, RSS/Atom, or JSON. Publish status reports and schedule maintenance windows from the same workspace.
+
+## Step 6 — Run in parallel, then switch off
+
+Leave both tools running for a week or two. Once you trust the openstatus alerts and your status page is live, disable the UptimeRobot monitors and cancel the plan.
+
+## Related Resources
+
+- [UptimeRobot vs openstatus](/compare/uptime-robot) — full head-to-head
+- [Top Five Pingdom Alternatives in 2026](/guides/top-five-pingdom-alternatives)
+- [What Is Uptime Monitoring?](/guides/what-is-uptime-monitoring)
+- [Why Every SaaS Needs a Status Page](/guides/why-every-saas-needs-a-status-page)
+
+## Need Help?
+
+Join our [Discord community](https://www.openstatus.dev/discord), check the [documentation](https://www.openstatus.dev/docs), or reach out via [email](mailto:ping@openstatus.dev).
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=migrate-uptimerobot">Get Started Free</ButtonLink>
+
+---

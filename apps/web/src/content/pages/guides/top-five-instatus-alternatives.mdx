@@ -22,7 +22,7 @@ faq:
 
 Instatus is a nice status page tool — and a great fit if you already have monitoring solved and just want a branded page on top. The moment you also need monitoring, monitoring-as-code, OpenTelemetry, or private probes, you start stretching it beyond what it was designed for.
 
-If you're switching for the **monitoring + status page** bundle, look at [openstatus](https://openstatus.dev), [Datadog](https://www.datadoghq.com/product/status-page/), or [Betterstack](https://betterstack.com/status-pages/). If you want a **pure status page** for serious incident comms, look at [Atlassian Statuspage](https://www.atlassian.com/software/statuspage) or [Status.io](https://status.io). If you want **open-source and self-hostable**, openstatus is currently the only option on this list.
+If you're switching for the **monitoring + status page** bundle, look at [openstatus](https://openstatus.dev), Datadog, or Betterstack. If you want a **pure status page** for serious incident comms, look at Atlassian Statuspage or Status.io. If you want **open-source and self-hostable**, openstatus is currently the only option on this list.
 
 ## Why Teams Leave Instatus
 
@@ -119,7 +119,7 @@ When a check fails, the status page can update automatically or wait for a human
   height={575}
 />
 
-[Atlassian Statuspage](https://www.atlassian.com/software/statuspage) is the original and most mature status page product. It's deeply focused on incident communication — subscriber management, templates, audit trails, and integrations with Jira and Opsgenie are all first-class.
+Atlassian Statuspage is the original and most mature status page product. It's deeply focused on incident communication — subscriber management, templates, audit trails, and integrations with Jira and Opsgenie are all first-class.
 
 It does not include monitoring. You bring your own (Datadog, New Relic, Atlassian's own monitoring, etc.) and pipe events in. If incident comms is the hard problem and monitoring is already solved elsewhere, Statuspage's depth here is hard to match.
 
@@ -137,7 +137,7 @@ It does not include monitoring. You bring your own (Datadog, New Relic, Atlassia
   height={575}
 />
 
-[Status.io](https://status.io) is a long-standing, cloud-based status page provider. It's intentionally narrow: status communication and incident management, no monitoring. Customers like Docker have used it for years.
+Status.io is a long-standing, cloud-based status page provider. It's intentionally narrow: status communication and incident management, no monitoring. Customers like Docker have used it for years.
 
 If you specifically want a tool that does one thing and stays out of your monitoring stack, Status.io is a sensible choice. The flip side is that the headline pricing for advanced features (private pages, full customization) starts at $349/month, which is a steep jump from Instatus.
 
@@ -155,7 +155,7 @@ If you specifically want a tool that does one thing and stays out of your monito
   height={575}
 />
 
-[Datadog Status Page](https://www.datadoghq.com/blog/status-pages/) is the natural extension if Datadog is already your observability backbone. It links incidents directly to monitors, logs, and traces — meaning the page reflects the same source of truth your on-call team is already looking at.
+Datadog Status Page is the natural extension if Datadog is already your observability backbone. It links incidents directly to monitors, logs, and traces — meaning the page reflects the same source of truth your on-call team is already looking at.
 
 You're paying Datadog prices and committing further to the ecosystem, so this only makes sense if you're already in. As a standalone Instatus replacement for a small team it's almost always overkill.
 
@@ -173,7 +173,7 @@ You're paying Datadog prices and committing further to the ecosystem, so this on
   height={575}
 />
 
-[Betterstack](https://betterstack.com/status-page/) bundles uptime monitoring, on-call scheduling, incident management, and status pages into one product. The free tier is genuinely usable for personal projects and small side businesses, and Terraform support makes it a credible option for infrastructure teams.
+Betterstack bundles uptime monitoring, on-call scheduling, incident management, and status pages into one product. The free tier is genuinely usable for personal projects and small side businesses, and Terraform support makes it a credible option for infrastructure teams.
 
 The catch is per-page and per-seat add-ons: custom styling is a $12-per-page-per-month upcharge, the private status page lives behind a $42 add-on, and seats scale at $29 each. The bundle gets pricier than it looks once you're past the free tier.
 
