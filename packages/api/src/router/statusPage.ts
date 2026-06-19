@@ -61,6 +61,20 @@ import {
 const WORKSPACES =
   process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
+// Length-independent comparison so a wrong guess can't be timed character by
+// character. Pure JS (no node:crypto) keeps it usable from the Edge runtime.
+function constantTimeEqual(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (a == null || b == null || a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -1266,6 +1280,28 @@ export const statusPageRouter = createTRPCRouter({
       }
 
       return true;
+    }),
+
+  // Server-side password gate for the public `/api/*` routes. Returns a boolean
+  // so the stored password never leaves the server (the `get` output omits it).
+  isPasswordAuthorized: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        queryPassword: z.string().nullish(),
+        cookiePassword: z.string().nullish(),
+      }),
+    )
+    .query(async (opts) => {
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        columns: { password: true, accessType: true },
+      });
+      if (!_page || _page.accessType !== "password") return false;
+      // Query param wins over cookie: a present-but-wrong `?pw=` must not fall
+      // through to a valid cookie. Mirrors isPasswordAuthorized on the proxy.
+      const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
+      return constantTimeEqual(_page.password, submitted);
     }),
 
   getSubscriberByToken: publicProcedure

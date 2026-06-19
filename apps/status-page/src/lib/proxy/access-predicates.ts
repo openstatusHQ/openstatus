@@ -7,6 +7,21 @@ import { isIpAllowed } from "./is-ip-allowed";
  * cannot drift — only their wrapping behaviour differs.
  */
 
+// Length-independent comparison so a wrong guess can't be timed character by
+// character. Length itself still leaks, as it does for any such check. Pure JS
+// (no node:crypto) keeps it usable from the Edge proxy.
+function constantTimeEqual(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (a == null || b == null || a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 /**
  * Stored page password vs submitted. The query param wins over the cookie (a
  * present-but-wrong `?pw=` must not fall through to a valid cookie), matching
@@ -19,7 +34,7 @@ export function isPasswordAuthorized(input: {
 }): boolean {
   if (!input.stored) return false;
   const submitted = input.queryPassword ?? input.cookiePassword;
-  return submitted === input.stored;
+  return constantTimeEqual(submitted, input.stored);
 }
 
 /** Authenticated email's domain is in the page's allow-list. */

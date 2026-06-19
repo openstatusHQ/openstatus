@@ -46,7 +46,11 @@ function markdownResponse(
   if (isNotModified(request, etag)) {
     return new NextResponse(null, {
       status: 304,
-      headers: { ETag: etag, "Cache-Control": cacheControl },
+      headers: {
+        ETag: etag,
+        "Cache-Control": cacheControl,
+        "Content-Type": MARKDOWN,
+      },
     });
   }
   return new NextResponse(finalBody, {
@@ -88,19 +92,27 @@ export async function GET(
     // runs only for email-domain pages. Returns null when the gate passed.
     async function denyResponse(gatePage: {
       accessType: Page["accessType"];
-      password: string | null;
       authEmailDomains: string[] | null;
       allowedIpRanges: string[] | null;
       slug: string;
     }) {
       const session =
         gatePage.accessType === "email-domain" ? await auth() : null;
+      const passwordAuthorized =
+        gatePage.accessType === "password"
+          ? await queryClient.fetchQuery(
+              trpc.statusPage.isPasswordAuthorized.queryOptions({
+                slug: gatePage.slug,
+                queryPassword: url.searchParams.get("pw"),
+                cookiePassword: cookieStore.get(
+                  createProtectedCookieKey(gatePage.slug),
+                )?.value,
+              }),
+            )
+          : false;
       const gate = evaluateMarkdownGate({
         accessType: gatePage.accessType,
-        password: gatePage.password ?? null,
-        queryPassword: url.searchParams.get("pw"),
-        cookiePassword: cookieStore.get(createProtectedCookieKey(gatePage.slug))
-          ?.value,
+        passwordAuthorized,
         authEmail: session?.user?.email,
         authEmailDomains: gatePage.authEmailDomains,
         clientIp,

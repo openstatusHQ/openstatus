@@ -1,10 +1,6 @@
 import type { Page } from "@openstatus/db/src/schema";
 
-import {
-  isEmailDomainAuthorized,
-  isIpAuthorized,
-  isPasswordAuthorized,
-} from "./access-predicates";
+import { isEmailDomainAuthorized, isIpAuthorized } from "./access-predicates";
 
 export type MarkdownGateResult =
   | { ok: true }
@@ -14,12 +10,13 @@ export type MarkdownGateResult =
  * Pure access-control decision for a markdown request, mirroring the proxy gate
  * chain. Security-critical: the markdown route is reachable directly via `/api`,
  * which bypasses the proxy, so this is the only enforcement on that path.
+ *
+ * `passwordAuthorized` is resolved server-side (via `statusPage.isPasswordAuthorized`)
+ * so the stored password never reaches this surface.
  */
 export function evaluateMarkdownGate(input: {
   accessType: Page["accessType"];
-  password: string | null;
-  queryPassword: string | null;
-  cookiePassword: string | undefined;
+  passwordAuthorized: boolean;
   authEmail: string | null | undefined;
   authEmailDomains: string[] | null;
   clientIp: string | null | undefined;
@@ -30,11 +27,7 @@ export function evaluateMarkdownGate(input: {
       return { ok: true };
 
     case "password":
-      return isPasswordAuthorized({
-        stored: input.password,
-        queryPassword: input.queryPassword,
-        cookiePassword: input.cookiePassword,
-      })
+      return input.passwordAuthorized
         ? { ok: true }
         : { ok: false, status: 401, body: "Unauthorized" };
 

@@ -73,12 +73,21 @@ export async function GET(
     const xff = headerStore.get("x-forwarded-for");
     const clientIp = xff?.split(",")[0]?.trim() ?? headerStore.get("x-real-ip");
     const session = data.accessType === "email-domain" ? await auth() : null;
+    const passwordAuthorized =
+      data.accessType === "password"
+        ? await queryClient.fetchQuery(
+            trpc.statusPage.isPasswordAuthorized.queryOptions({
+              slug: data.slug,
+              queryPassword: url.searchParams.get("pw"),
+              cookiePassword: cookieStore.get(
+                createProtectedCookieKey(data.slug),
+              )?.value,
+            }),
+          )
+        : false;
     const gate = evaluateMarkdownGate({
       accessType: data.accessType,
-      password: data.password ?? null,
-      queryPassword: url.searchParams.get("pw"),
-      cookiePassword: cookieStore.get(createProtectedCookieKey(data.slug))
-        ?.value,
+      passwordAuthorized,
       authEmail: session?.user?.email,
       authEmailDomains: data.authEmailDomains,
       clientIp,
@@ -108,7 +117,11 @@ export async function GET(
     if (isNotModified(request, etag)) {
       return new NextResponse(null, {
         status: 304,
-        headers: { ETag: etag, "Cache-Control": cacheControl },
+        headers: {
+          ETag: etag,
+          "Cache-Control": cacheControl,
+          "Content-Type": "application/json; charset=utf-8",
+        },
       });
     }
 

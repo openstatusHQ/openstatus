@@ -3,9 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { evaluateMarkdownGate } from "./evaluate-markdown-gate";
 
 const base = {
-  password: null,
-  queryPassword: null,
-  cookiePassword: undefined,
+  passwordAuthorized: false,
   authEmail: null,
   authEmailDomains: null,
   clientIp: null,
@@ -20,56 +18,22 @@ describe("evaluateMarkdownGate", () => {
   });
 
   describe("password", () => {
-    test("correct via query → ok", () => {
+    test("authorized → ok", () => {
       expect(
         evaluateMarkdownGate({
           ...base,
           accessType: "password",
-          password: "s3cret",
-          queryPassword: "s3cret",
+          passwordAuthorized: true,
         }),
       ).toEqual({ ok: true });
     });
 
-    test("correct via cookie → ok", () => {
+    test("not authorized → 401", () => {
       expect(
         evaluateMarkdownGate({
           ...base,
           accessType: "password",
-          password: "s3cret",
-          cookiePassword: "s3cret",
-        }),
-      ).toEqual({ ok: true });
-    });
-
-    test("wrong → 401", () => {
-      expect(
-        evaluateMarkdownGate({
-          ...base,
-          accessType: "password",
-          password: "s3cret",
-          queryPassword: "nope",
-        }),
-      ).toMatchObject({ ok: false, status: 401 });
-    });
-
-    test("missing → 401", () => {
-      expect(
-        evaluateMarkdownGate({
-          ...base,
-          accessType: "password",
-          password: "s3cret",
-        }),
-      ).toMatchObject({ ok: false, status: 401 });
-    });
-
-    test("empty-string stored password never authorizes empty input → 401", () => {
-      expect(
-        evaluateMarkdownGate({
-          ...base,
-          accessType: "password",
-          password: "",
-          queryPassword: "",
+          passwordAuthorized: false,
         }),
       ).toMatchObject({ ok: false, status: 401 });
     });
