@@ -4,7 +4,46 @@ import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type {
   Addons,
   BillingInterval,
+  Limits,
 } from "@openstatus/db/src/schema/plan/schema";
+import {
+  getLimits,
+  updateAddonInLimits,
+} from "@openstatus/db/src/schema/plan/utils";
+import type Stripe from "stripe";
+
+/**
+ * Rebuild a workspace's limits from the full set of subscription line items.
+ * The plan item sets the baseline; each addon item then re-applies its flag or
+ * quantity on top, so purchased addons survive subscription updates instead of
+ * being reset to the plan default. Returns null when no plan item is present.
+ */
+export function buildLimitsFromSubscription(
+  subscription: Stripe.Subscription,
+): { plan: WorkspacePlan; limits: Limits } | null {
+  const detectedPlan = subscription.items.data
+    .map((item) => getPlanFromPriceId(item.price.id))
+    .find((plan) => plan !== undefined);
+
+  if (!detectedPlan) return null;
+
+  const baseLimits = getLimits(detectedPlan.plan);
+  let limits: Limits = baseLimits;
+
+  for (const item of subscription.items.data) {
+    const feature = getFeatureFromPriceId(item.price.id);
+    if (!feature) continue;
+    // Quantity addons add to the plan default; boolean addons just flip on.
+    const planDefault = baseLimits[feature.feature];
+    const value =
+      typeof planDefault === "number"
+        ? planDefault + (item.quantity ?? 1)
+        : true;
+    limits = updateAddonInLimits(limits, feature.feature, value);
+  }
+
+  return { plan: detectedPlan.plan, limits };
+}
 
 export const getPlanFromPriceId = (priceId: string) => {
   const env =

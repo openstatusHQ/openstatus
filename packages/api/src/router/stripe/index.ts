@@ -291,8 +291,6 @@ export const stripeRouter = createTRPCRouter({
         newValue,
       );
 
-      console.log("new Limits");
-
       await opts.ctx.db
         .update(workspace)
         .set({ limits: JSON.stringify(newLimits) })
