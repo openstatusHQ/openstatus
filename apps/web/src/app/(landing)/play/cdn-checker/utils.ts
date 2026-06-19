@@ -2,12 +2,12 @@ import type { CacheStatus } from "@openstatus/header-analysis";
 
 export const CACHE_STATUS_COLOR: Record<CacheStatus, string> = {
   HIT: "bg-success",
-  STALE: "bg-success/60",
+  STALE: "bg-success/80",
   EXPIRED: "bg-warning",
   MISS: "bg-destructive",
   BYPASS: "bg-muted-foreground",
   DYNAMIC: "bg-info",
-  UNKNOWN: "bg-muted-foreground/40",
+  UNKNOWN: "bg-muted-foreground",
 };
 
 export const CACHE_STATUS_DESCRIPTION: Record<CacheStatus, string> = {
@@ -19,12 +19,6 @@ export const CACHE_STATUS_DESCRIPTION: Record<CacheStatus, string> = {
   DYNAMIC: "Not eligible for caching",
   UNKNOWN: "No cache headers detected",
 };
-
-export function formatBytes(bytes: number | null): string {
-  if (bytes === null) return "-";
-  if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} kB`;
-}
 
 export function formatAge(seconds: number | null): string {
   if (seconds === null) return "-";
