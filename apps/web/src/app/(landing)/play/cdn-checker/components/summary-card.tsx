@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 import { useCdnChecker } from "../client";
 
+const UNCACHED_PREVIEW_COUNT = 6;
+
 function ratioColor(cached: number, responded: number) {
   if (responded === 0) return "text-muted-foreground";
   const ratio = cached / responded;
@@ -81,11 +83,20 @@ export function SummaryCard() {
         {uncachedRegions.length === 0 ? (
           <p className="text-success my-0! text-3xl font-semibold">None</p>
         ) : (
-          <p className="my-0! text-base leading-7 font-medium">
-            {uncachedRegions
-              .map((region) => regionFormatter(region, "short"))
-              .join(", ")}
-          </p>
+          <>
+            <p className="my-0! text-3xl font-semibold tabular-nums">
+              {uncachedRegions.length}
+            </p>
+            <p className="text-muted-foreground my-0! text-sm leading-6">
+              {uncachedRegions
+                .slice(0, UNCACHED_PREVIEW_COUNT)
+                .map((region) => regionFormatter(region, "short"))
+                .join(", ")}
+              {uncachedRegions.length > UNCACHED_PREVIEW_COUNT
+                ? ` +${uncachedRegions.length - UNCACHED_PREVIEW_COUNT} more`
+                : ""}
+            </p>
+          </>
         )}
         <p className="text-muted-foreground my-0! text-sm">
           {uncachedRegions.length > 0
