@@ -81,7 +81,20 @@ export function UserReports({
               <ChartTooltip
                 cursor={false}
                 content={
-                  <ChartTooltipContent indicator="line" labelKey="day" />
+                  <ChartTooltipContent
+                    indicator="line"
+                    labelFormatter={(_, payload) => {
+                      const day = payload?.[0]?.payload?.day;
+                      return day
+                        ? new Date(day).toLocaleDateString(undefined, {
+                            timeZone: "UTC",
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "";
+                    }}
+                  />
                 }
               />
               <Bar
