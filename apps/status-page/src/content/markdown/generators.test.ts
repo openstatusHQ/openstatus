@@ -2,17 +2,17 @@ import { describe, expect, test } from "bun:test";
 
 import { statusLabel, withPoweredBy } from "./helpers";
 import {
-  type MaintenanceDetail,
-  type MonitorDetail,
-  type OverviewPage,
-  type ReportDetail,
-  type UptimeComponent,
   generateEventsList,
   generateMaintenance,
   generateMonitor,
   generateMonitorsList,
   generateOverview,
   generateReport,
+  type MaintenanceDetail,
+  type MonitorDetail,
+  type OverviewPage,
+  type ReportDetail,
+  type UptimeComponent,
 } from "./index";
 
 const BASE = "https://acme.openstatus.dev";
@@ -151,6 +151,77 @@ describe("generateOverview", () => {
     expect(md).toContain("Legend: 🟩 Operational · 🟥 Outage · 🟦 Maintenance");
     expect(md).not.toContain("🟧 Degraded");
     expect(md).not.toContain("⬜");
+  });
+});
+
+describe("generateOverview live frontmatter + agent mode", () => {
+  const page = {
+    title: "Acme",
+    description: "",
+    status: "degraded",
+    updatedAt: new Date("2026-06-18T14:03:00.000Z"),
+    statusReports: [
+      {
+        id: 1,
+        title: "x",
+        status: "investigating",
+        createdAt: new Date("2026-06-18T10:00:00.000Z"),
+        statusReportsToPageComponents: [],
+        statusReportUpdates: [],
+      },
+    ],
+    maintenances: [],
+    monitors: [],
+    trackers: [
+      {
+        type: "component",
+        component: { name: "API", status: "error" },
+        order: 0,
+      },
+      {
+        type: "component",
+        component: { name: "Web", status: "success" },
+        order: 1,
+      },
+      {
+        type: "group",
+        groupName: "g",
+        components: [{ name: "DB", status: "success" }],
+        status: "success",
+        order: 2,
+      },
+    ],
+  } as unknown as OverviewPage;
+  const comps = [
+    {
+      name: "API",
+      pageComponentId: 1,
+      uptime: "99.0%",
+      data: [{ bar: [{ status: "success", height: 100 }] }],
+    },
+  ] as unknown as UptimeComponent[];
+
+  const count = (s: string, sub: string) => s.split(sub).length - 1;
+
+  test("frontmatter carries live machine state", () => {
+    const md = generateOverview(page, comps, BASE);
+    expect(md).toContain('status: "degraded"');
+    expect(md).toContain('indicator: "minor"');
+    expect(md).toContain('updated_at: "2026-06-18T14:03:00.000Z"');
+    expect(md).toContain("active_incidents: 1");
+    expect(md).toContain("active_maintenance: 0");
+    expect(md).toContain("components_operational: 2");
+    expect(md).toContain("components_total: 3");
+    expect(md).toContain('worst_component: "API"');
+  });
+
+  test("agent mode drops the emoji uptime bar + legend", () => {
+    const human = generateOverview(page, comps, BASE, true, false);
+    const agent = generateOverview(page, comps, BASE, true, true);
+    expect(count(human, "🟩")).toBeGreaterThan(0);
+    expect(count(agent, "🟩")).toBe(0);
+    // live frontmatter is still present in agent mode
+    expect(agent).toContain('indicator: "minor"');
   });
 });
 

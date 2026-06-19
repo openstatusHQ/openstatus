@@ -1,11 +1,12 @@
 import type { RouterOutputs } from "@openstatus/api";
 
+import { flattenComponents, worstComponent } from "../status-vocab";
 import {
-  type EventLogRow,
   canonicalUrl,
   componentImpact,
   componentImpactExplicit,
   dominantDayStatus,
+  type EventLogRow,
   eventLog,
   formatDay,
   formatDayTime,
@@ -50,8 +51,19 @@ export function generateOverview(
   components: UptimeComponent[],
   baseUrl: string,
   showUptime = true,
+  agent = false,
 ): string {
+  const now = Date.now();
   const out: string[] = [];
+
+  const activeReports = page.statusReports.filter(
+    (r) => r.status !== "resolved",
+  );
+  const activeMaintenance = page.maintenances.filter(
+    (m) => m.to && new Date(m.to).getTime() >= now,
+  );
+  const flatComponents = flattenComponents(page.trackers);
+
   out.push(
     frontmatter({
       title: page.title,
@@ -60,9 +72,19 @@ export function generateOverview(
       canonical: canonicalUrl(baseUrl),
       homepageUrl: page.homepageUrl,
       contactUrl: page.contactUrl,
+      live: {
+        status: page.status,
+        updatedAt: page.updatedAt,
+        activeIncidents: activeReports.length,
+        activeMaintenance: activeMaintenance.length,
+        componentsOperational: flatComponents.filter(
+          (c) => c.status === "success",
+        ).length,
+        componentsTotal: flatComponents.length,
+        worstComponent: worstComponent(flatComponents),
+      },
     }),
   );
-  const now = Date.now();
   out.push(`# ${page.title}\n`);
   out.push(
     `${navLine(
@@ -88,9 +110,6 @@ export function generateOverview(
       .map((l) => l.pageComponent?.name)
       .filter((name): name is string => Boolean(name));
 
-  const activeReports = page.statusReports.filter(
-    (r) => r.status !== "resolved",
-  );
   if (activeReports.length > 0) {
     out.push("## Active incidents\n");
     for (const report of activeReports) {
@@ -107,9 +126,6 @@ export function generateOverview(
     out.push("");
   }
 
-  const activeMaintenance = page.maintenances.filter(
-    (m) => m.to && new Date(m.to).getTime() >= now,
-  );
   if (activeMaintenance.length > 0) {
     out.push("## Active & upcoming maintenance\n");
     for (const m of activeMaintenance) {
@@ -133,7 +149,8 @@ export function generateOverview(
     for (const c of components) {
       for (const d of c.data) used.add(dominantDayStatus(d.bar));
     }
-    const legendLine = legend(used);
+    // The legend only explains the emoji bar, which agent mode drops.
+    const legendLine = agent ? "" : legend(used);
     if (legendLine) out.push(`${legendLine}\n`);
 
     const lastActivity = (r: OverviewPage["statusReports"][number]) => {
@@ -153,7 +170,9 @@ export function generateOverview(
         ? c.uptime
         : statusLabel(dominantDayStatus(c.data[c.data.length - 1]?.bar ?? []));
       out.push(`**${c.name}** — ${metric} · \`${days}d ago → today\``);
-      out.push(uptimeBar(c.data));
+      // The per-day emoji bar is a human visualization; for agents the uptime
+      // percentage already carries the signal, so drop the bar to save tokens.
+      if (!agent) out.push(uptimeBar(c.data));
 
       // Only events within the chart window (c.data is oldest → newest); older
       // ones fall off the bar and live on the /events page.

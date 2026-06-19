@@ -1,3 +1,5 @@
+import { isoOrNull, pageIndicator } from "../status-vocab";
+
 export type ComponentStatus = "success" | "degraded" | "error" | "info";
 
 export type ReportStatus =
@@ -37,6 +39,21 @@ function escapeYaml(value: string): string {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
+/**
+ * Live page state carried in frontmatter so an agent gets the answer from the
+ * top ~10 lines without tokenizing the body. `status` is openstatus-native;
+ * `indicator` is the Statuspage-compatible alias.
+ */
+export interface FrontmatterLive {
+  status: string;
+  updatedAt: Date | string | number | null | undefined;
+  activeIncidents: number;
+  activeMaintenance: number;
+  componentsOperational: number;
+  componentsTotal: number;
+  worstComponent?: string | null;
+}
+
 export function frontmatter(fields: {
   title: string;
   description: string;
@@ -44,6 +61,7 @@ export function frontmatter(fields: {
   canonical: string;
   homepageUrl?: string | null;
   contactUrl?: string | null;
+  live?: FrontmatterLive;
 }): string {
   const lines = [
     "---",
@@ -57,6 +75,19 @@ export function frontmatter(fields: {
     lines.push(`homepage_url: ${escapeYaml(fields.homepageUrl)}`);
   if (fields.contactUrl)
     lines.push(`contact_url: ${escapeYaml(fields.contactUrl)}`);
+  if (fields.live) {
+    const { indicator } = pageIndicator(fields.live.status);
+    const updated = isoOrNull(fields.live.updatedAt);
+    lines.push(`status: ${escapeYaml(fields.live.status)}`);
+    lines.push(`indicator: ${escapeYaml(indicator)}`);
+    if (updated) lines.push(`updated_at: ${escapeYaml(updated)}`);
+    lines.push(`active_incidents: ${fields.live.activeIncidents}`);
+    lines.push(`active_maintenance: ${fields.live.activeMaintenance}`);
+    lines.push(`components_operational: ${fields.live.componentsOperational}`);
+    lines.push(`components_total: ${fields.live.componentsTotal}`);
+    if (fields.live.worstComponent)
+      lines.push(`worst_component: ${escapeYaml(fields.live.worstComponent)}`);
+  }
   lines.push("---");
   return `${lines.join("\n")}\n`;
 }

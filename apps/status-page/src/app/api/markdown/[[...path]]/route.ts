@@ -14,6 +14,7 @@ import {
 } from "@/content/markdown";
 import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
+import { computeETag, isNotModified } from "@/lib/http/etag";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
 import { markdownCacheControl } from "@/lib/proxy/markdown-cache-control";
@@ -33,16 +34,27 @@ function textResponse(body: string, status: number) {
 }
 
 function markdownResponse(
+  request: NextRequest,
   body: string,
   source: string | null,
   whiteLabel: boolean,
   accessType: string | null | undefined,
 ) {
-  return new NextResponse(withPoweredBy(body, whiteLabel), {
+  const finalBody = withPoweredBy(body, whiteLabel);
+  const etag = computeETag(finalBody);
+  const cacheControl = markdownCacheControl(source, accessType);
+  if (isNotModified(request, etag)) {
+    return new NextResponse(null, {
+      status: 304,
+      headers: { ETag: etag, "Cache-Control": cacheControl },
+    });
+  }
+  return new NextResponse(finalBody, {
     status: 200,
     headers: {
       "Content-Type": MARKDOWN,
-      "Cache-Control": markdownCacheControl(source, accessType),
+      "Cache-Control": cacheControl,
+      ETag: etag,
     },
   });
 }
@@ -62,6 +74,10 @@ export async function GET(
     const source = request.headers.get("x-md-source");
     const queryClient = getQueryClient();
     const url = new URL(request.url);
+    // `Accept: text/markdown` negotiation (not a `.md` link a human clicked) is
+    // almost always a programmatic agent; `?view=summary` is the explicit opt-in.
+    const agent =
+      source === "header" || url.searchParams.get("view") === "summary";
     const cookieStore = await cookies();
     const headerStore = await headers();
     const xff = headerStore.get("x-forwarded-for");
@@ -112,6 +128,7 @@ export async function GET(
 
         if (target.kind === "monitors") {
           return markdownResponse(
+            request,
             generateMonitorsList(page, baseUrl),
             source,
             page.whiteLabel,
@@ -120,6 +137,7 @@ export async function GET(
         }
         if (target.kind === "events") {
           return markdownResponse(
+            request,
             generateEventsList(page, baseUrl),
             source,
             page.whiteLabel,
@@ -142,7 +160,8 @@ export async function GET(
             }),
           )) ?? [];
         return markdownResponse(
-          generateOverview(page, uptime, baseUrl, showUptime),
+          request,
+          generateOverview(page, uptime, baseUrl, showUptime, agent),
           source,
           page.whiteLabel,
           page.accessType,
@@ -171,6 +190,7 @@ export async function GET(
           );
           if (!monitor) return textResponse("Not Found", 404);
           return markdownResponse(
+            request,
             generateMonitor(monitor, baseUrl),
             source,
             light.whiteLabel,
@@ -183,6 +203,7 @@ export async function GET(
           );
           if (!report) return textResponse("Not Found", 404);
           return markdownResponse(
+            request,
             generateReport(report, baseUrl),
             source,
             light.whiteLabel,
@@ -194,6 +215,7 @@ export async function GET(
         );
         if (!maintenance) return textResponse("Not Found", 404);
         return markdownResponse(
+          request,
           generateMaintenance(maintenance, baseUrl),
           source,
           light.whiteLabel,
