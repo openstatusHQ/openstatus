@@ -65,6 +65,7 @@ export async function GET(
 ) {
   try {
     const { path = [] } = await params;
+    // _locale is ignored — markdown content is locale-agnostic.
     const [slug, _locale, ...rest] = path;
     if (!slug) return textResponse("Not Found", 404);
 

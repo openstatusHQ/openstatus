@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
       customDomain: page.customDomain,
       title: page.title,
       description: page.description,
+      accessType: page.accessType,
     })
     .from(page)
     .where(
@@ -63,6 +64,9 @@ export async function GET(request: NextRequest) {
     )
     .get();
   if (!row) return notFound();
+  // Only public pages get a discovery doc — don't leak title/description of
+  // password/email/IP-gated pages.
+  if (row.accessType !== "public") return notFound();
 
   const baseUrl = getBaseUrl({
     slug: row.slug,

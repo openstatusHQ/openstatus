@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { statusLabel, withPoweredBy } from "./helpers";
+import { escapeCell, statusLabel, withPoweredBy } from "./helpers";
 import {
   generateEventsList,
   generateMaintenance,
@@ -292,6 +292,40 @@ describe("generateEventsList", () => {
   test("maintenance heading is a link, no emoji", () => {
     expect(md).toContain("## Maintenance");
     expect(md).toContain(`### [DB upgrade](/events/maintenance/5.md)`);
+  });
+});
+
+describe("generateEventsList open-ended maintenance", () => {
+  // Regression: `m.to` is nullable; the old `new Date(m.to)` resolved to the
+  // epoch and produced a phantom 1970 "COMPLETED" row + a ~56-year duration.
+  const page = {
+    title: "X",
+    description: "",
+    monitors: [],
+    statusReports: [],
+    maintenances: [
+      {
+        id: 7,
+        title: "Rolling upgrade",
+        from: new Date("2026-06-18T00:00:00.000Z"),
+        to: null,
+        maintenancesToPageComponents: [],
+      },
+    ],
+  } as unknown as OverviewPage;
+  const md = generateEventsList(page, BASE);
+
+  test("no phantom COMPLETED row, no 1970 timestamp", () => {
+    expect(md).not.toContain("COMPLETED");
+    expect(md).not.toContain("1970");
+  });
+});
+
+describe("escapeCell", () => {
+  test("escapes backslash before pipe (CodeQL: incomplete escaping)", () => {
+    // input: backslash, pipe → both must end up escaped
+    expect(escapeCell(String.raw`\|`)).toBe(String.raw`\\\|`);
+    expect(escapeCell("plain")).toBe("plain");
   });
 });
 

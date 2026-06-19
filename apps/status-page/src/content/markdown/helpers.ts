@@ -93,7 +93,12 @@ export function frontmatter(fields: {
 
 /** Escape a markdown table cell — pipes and newlines would break the row. */
 export function escapeCell(value: string): string {
-  return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ").trim();
+  // Escape backslash first so the pipe-escaping we add isn't re-escaped.
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|")
+    .replace(/\r?\n/g, " ")
+    .trim();
 }
 
 export function table(headers: string[], rows: string[][]): string {

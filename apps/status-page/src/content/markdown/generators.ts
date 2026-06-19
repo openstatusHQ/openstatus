@@ -314,7 +314,9 @@ export function generateEventsList(
       ref: `maintenance/${m.id}`,
       title: m.title,
     });
-    if (new Date(m.to).getTime() <= now) {
+    // `m.to` is nullable (open-ended maintenance); `new Date(null)` is the epoch
+    // and would always read as completed in 1970.
+    if (m.to && new Date(m.to).getTime() <= now) {
       logRows.push({
         timestamp: m.to,
         label: "COMPLETED",
@@ -400,7 +402,7 @@ export function generateEventsList(
         .filter((name): name is string => Boolean(name));
       const meta = [
         formatDay(m.from),
-        humanDuration(m.from, m.to),
+        m.to ? humanDuration(m.from, m.to) : null,
         affects.length ? `affects: ${affects.join(", ")}` : null,
       ].filter(Boolean);
       out.push(`### [${m.title}](${mdUrl(`events/maintenance/${m.id}`)})`);
