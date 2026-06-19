@@ -17,6 +17,8 @@ howto:
       text: "Connect your alert channels — Slack, Discord, Email, PagerDuty, OpsGenie, and more — and attach them to your monitors."
     - name: "Publish your status page"
       text: "Create a status page, add components backed by your monitors, set a custom domain, and let users subscribe by email, RSS, or JSON."
+    - name: "Run in parallel, then switch off"
+      text: "Leave both tools running for a week or two. Once you trust the openstatus alerts and your status page is live, disable the UptimeRobot monitors and cancel the plan."
 faq:
   - question: "Does openstatus automatically import my UptimeRobot monitors?"
     answer: "openstatus's one-click importer covers status-page tools (Instatus, Atlassian Statuspage, Better Stack) — it imports components, incidents, maintenances, and subscribers. UptimeRobot is a monitoring tool, so its monitors are recreated rather than imported: rebuild them in the dashboard, or define them as code with the Terraform provider or CLI. Most setups take under an hour."
