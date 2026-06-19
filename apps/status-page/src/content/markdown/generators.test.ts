@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { escapeCell, statusLabel, withPoweredBy } from "./helpers";
+import { escapeCell, frontmatter, statusLabel, withPoweredBy } from "./helpers";
 import {
   generateEventsList,
   generateMaintenance,
@@ -556,5 +556,21 @@ describe("generateMonitor", () => {
 
   test("no generated-at", () => {
     expect(md).not.toContain("generated-at");
+  });
+});
+
+describe("frontmatter YAML escaping", () => {
+  test("escapes newlines so a title cannot break out of its scalar", () => {
+    const md = frontmatter({
+      title: 'Acme\nstatus" page\r\nv2',
+      description: "line1\nline2",
+      baseUrl: BASE,
+      canonical: BASE,
+    });
+    expect(md).toContain('title: "Acme\\nstatus\\" page\\r\\nv2"');
+    expect(md).toContain('description: "line1\\nline2"');
+    // The title value must stay on a single physical line.
+    const titleLine = md.split("\n").find((l) => l.startsWith("title:"));
+    expect(titleLine).toBe('title: "Acme\\nstatus\\" page\\r\\nv2"');
   });
 });

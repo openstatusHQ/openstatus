@@ -340,8 +340,8 @@ export function generateEventsList(
       ref: `maintenance/${m.id}`,
       title: m.title,
     });
-    // `m.to` is nullable (open-ended maintenance); `new Date(null)` is the epoch
-    // and would always read as completed in 1970.
+    // Only log a COMPLETED entry once the window has actually ended. (`m.to`
+    // is non-null per schema; the truthy check is just defensive.)
     if (m.to && new Date(m.to).getTime() <= now) {
       logRows.push({
         timestamp: m.to,

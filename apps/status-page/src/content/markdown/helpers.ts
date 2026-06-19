@@ -34,9 +34,14 @@ export function statusLabel(status: string): string {
   return status;
 }
 
-/** Escape a value for a single-quoted-equivalent YAML scalar (we use double quotes). */
+/** Escape a value for a double-quoted YAML scalar. Newlines must become `\n`/`\r`
+ * escapes — a literal newline splits the scalar and parsers disagree on the result. */
 function escapeYaml(value: string): string {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  return `"${value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")
+    .replace(/\r/g, "\\r")}"`;
 }
 
 /**
