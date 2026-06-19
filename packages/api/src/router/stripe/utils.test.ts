@@ -3,15 +3,21 @@ import { describe, expect, test } from "bun:test";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import type Stripe from "stripe";
 
-import { buildLimitsFromSubscription } from "./utils";
+import { FEATURES, PLANS, buildLimitsFromSubscription } from "./utils";
 
-// Test-env price ids from PLANS / FEATURES (NEXT_PUBLIC_VERCEL_ENV !== "production").
-const STARTER = "price_1OVHPlBXJcTfzsyJvPlB1kNb";
-const WHITE_LABEL = "price_1SlbQsBXJcTfzsyJ1awtpOno";
-const STATUS_PAGES = "price_1Slrk8BXJcTfzsyJXQxshFU4";
+// Derive test-env price ids from the source tables so the test breaks loudly
+// (assertion failure) rather than silently if a price id changes.
+const planPriceId = (plan: string) =>
+  PLANS.find((p) => p.plan === plan)?.price.monthly.priceIds.test;
+const featurePriceId = (feature: string) =>
+  FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds.test;
+
+const STARTER = planPriceId("starter");
+const WHITE_LABEL = featurePriceId("white-label");
+const STATUS_PAGES = featurePriceId("status-pages");
 
 function subscriptionWith(
-  items: { priceId: string; quantity?: number }[],
+  items: { priceId: string | undefined; quantity?: number }[],
 ): Stripe.Subscription {
   return {
     items: {
@@ -24,6 +30,12 @@ function subscriptionWith(
 }
 
 describe("buildLimitsFromSubscription", () => {
+  test("test price ids resolve from the source tables", () => {
+    expect(STARTER).toBeDefined();
+    expect(WHITE_LABEL).toBeDefined();
+    expect(STATUS_PAGES).toBeDefined();
+  });
+
   test("returns null when no plan line item is present", () => {
     expect(buildLimitsFromSubscription(subscriptionWith([]))).toBeNull();
     expect(
@@ -57,5 +69,13 @@ describe("buildLimitsFromSubscription", () => {
       ]),
     );
     expect(built?.limits["status-pages"]).toBe(planDefault + 3);
+  });
+
+  test("missing quantity on a numeric addon falls back to +1", () => {
+    const planDefault = getLimits("starter")["status-pages"] as number;
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([{ priceId: STARTER }, { priceId: STATUS_PAGES }]),
+    );
+    expect(built?.limits["status-pages"]).toBe(planDefault + 1);
   });
 });
