@@ -1,6 +1,8 @@
+import type { Region } from "@openstatus/db/src/schema/constants";
+
 import type { Timing } from "@/lib/checker/utils";
 import { wait } from "@/lib/utils";
-import type { Region } from "@openstatus/db/src/schema/constants";
+
 import { PROBE_TIMEOUT_MS, mapCheckToCdnResult } from "./probe";
 import type { CdnRegionResponse } from "./schema";
 

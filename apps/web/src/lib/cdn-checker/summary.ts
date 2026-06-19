@@ -1,4 +1,5 @@
 import { type CdnProvider, inferTopology } from "@openstatus/header-analysis";
+
 import type { CdnRegionResponse, CdnSummary } from "./schema";
 
 // STALE counts as cached: the response was served from the edge cache

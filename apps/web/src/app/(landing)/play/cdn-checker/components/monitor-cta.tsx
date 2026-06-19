@@ -1,8 +1,10 @@
 "use client";
 
-import { APP_URL } from "@/lib/metadata/shared-metadata";
 import type { CdnProvider } from "@openstatus/header-analysis";
 import { Button } from "@openstatus/ui/components/ui/button";
+
+import { APP_URL } from "@/lib/metadata/shared-metadata";
+
 import { useCdnChecker } from "../client";
 
 // keys in Go-canonical casing: the checker matches header assertions by
@@ -37,7 +39,7 @@ export function MonitorCta() {
   }
 
   return (
-    <div className="grid gap-4 border border-border bg-muted/30 p-4 sm:grid-cols-3">
+    <div className="border-border bg-muted/30 grid gap-4 border p-4 sm:grid-cols-3">
       <div className="sm:col-span-2">
         <p className="my-0! font-semibold">
           {uncached > 0
@@ -48,7 +50,7 @@ export function MonitorCta() {
               ? `Caching looks healthy in the regions that responded (${unreachable} unreachable).`
               : "Caching looks healthy — keep it that way."}
         </p>
-        <p className="my-0! text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           {uncached > 0
             ? "Monitor cache status and edge latency continuously and get alerted when caching breaks. Free."
             : "Monitor this URL and get alerted the moment a region stops caching. Free."}
@@ -63,7 +65,7 @@ export function MonitorCta() {
             href={`${APP_URL}/monitors/create?${params.toString()}`}
             target="_blank"
             rel="noreferrer"
-            className="no-underline! text-background!"
+            className="text-background! no-underline!"
           >
             Monitor this URL
           </a>

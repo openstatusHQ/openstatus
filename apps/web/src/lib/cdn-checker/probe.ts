@@ -1,8 +1,3 @@
-import {
-  type RegionCheckerResponse,
-  checkRegion,
-  getTimingPhases,
-} from "@/lib/checker/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   detectCdn,
@@ -10,6 +5,13 @@ import {
   getHeader,
   normalizeCacheStatus,
 } from "@openstatus/header-analysis";
+
+import {
+  type RegionCheckerResponse,
+  checkRegion,
+  getTimingPhases,
+} from "@/lib/checker/utils";
+
 import type { CdnRegionResponse } from "./schema";
 
 // the checker downloads the full body before responding; capping after

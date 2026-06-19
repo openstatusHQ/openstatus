@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { inferTopology } from "./infer-topology";
 
 describe("inferTopology", () => {

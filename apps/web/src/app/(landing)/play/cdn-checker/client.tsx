@@ -1,12 +1,5 @@
 "use client";
 
-import type { CdnRegionResponse, CdnSummary } from "@/lib/cdn-checker/schema";
-import {
-  cdnRegionResponseSchema,
-  cdnSummarySchema,
-} from "@/lib/cdn-checker/schema";
-import { regionFormatter } from "@/lib/checker/utils";
-import { toast } from "@/lib/toast";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { useQueryStates } from "nuqs";
@@ -18,6 +11,15 @@ import {
   useState,
   useTransition,
 } from "react";
+
+import type { CdnRegionResponse, CdnSummary } from "@/lib/cdn-checker/schema";
+import {
+  cdnRegionResponseSchema,
+  cdnSummarySchema,
+} from "@/lib/cdn-checker/schema";
+import { regionFormatter } from "@/lib/checker/utils";
+import { toast } from "@/lib/toast";
+
 import { searchParamsParsers } from "./search-params";
 
 type CdnCheckerContextType = {

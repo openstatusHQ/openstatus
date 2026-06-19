@@ -1,6 +1,14 @@
 "use client";
 
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@openstatus/ui/components/ui/table";
+import {
   type ColumnDef,
   type ColumnFiltersState,
   type Row,
@@ -16,15 +24,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui/components/ui/table";
 import { Fragment } from "react";
 
 export interface DataTableToolbarProps<TData> {

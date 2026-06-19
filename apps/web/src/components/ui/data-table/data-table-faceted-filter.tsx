@@ -1,7 +1,3 @@
-import type { Column } from "@tanstack/react-table";
-import { Check, PlusCircle } from "lucide-react";
-import type * as React from "react";
-
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -19,6 +15,9 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
+import type { Column } from "@tanstack/react-table";
+import { Check, PlusCircle } from "lucide-react";
+import type * as React from "react";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -114,7 +113,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                   >
                     <div
                       className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
                         isSelected
                           ? "bg-primary text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible",
@@ -127,7 +126,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       />
                     </div>
                     {option.icon && (
-                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <option.icon className="text-muted-foreground mr-2 h-4 w-4" />
                     )}
                     <span className="truncate">{option.label}</span>
                     {facets?.get(option.value) && (

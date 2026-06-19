@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import type { CdnRegionResponse, CdnRegionResult } from "./schema";
 import { computeCdnSummary } from "./summary";
 

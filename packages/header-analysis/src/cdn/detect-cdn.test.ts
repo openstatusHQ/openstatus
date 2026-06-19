@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { detectCdn } from "./detect-cdn";
 
 describe("detectCdn", () => {
