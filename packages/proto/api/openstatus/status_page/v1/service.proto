@@ -110,6 +110,16 @@ service StatusPageService {
       description: "Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational."
     };
   }
+
+  // GetPageComponentDailySummary returns per-component daily uptime buckets merged
+  // with the incident / maintenance / report timeline — the single source of truth
+  // for rendering per-component status bars and uptime calendars.
+  rpc GetPageComponentDailySummary(GetPageComponentDailySummaryRequest) returns (GetPageComponentDailySummaryResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns per-component daily status buckets (ok/degraded/error/count plus a resolved status) merged with the incident, maintenance, and status-report timeline over the last N days (max 45). Suitable as a single source of truth for status-bar and uptime-calendar rendering. Supports two access paths: by id (authenticated, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC)."
+    };
+  }
 }
 
 // =============================================================================
@@ -631,4 +641,117 @@ message GetOverallStatusResponse {
 
   // Status of individual components.
   repeated ComponentStatus component_statuses = 2;
+}
+
+// =============================================================================
+// Per-Component Daily Summary Messages
+// =============================================================================
+
+// GetPageComponentDailySummaryRequest is the request for per-component daily summaries.
+message GetPageComponentDailySummaryRequest {
+  // Identifier for the status page (either id or slug).
+  oneof identifier {
+    // ID of the status page.
+    string id = 1;
+    // Slug of the status page.
+    string slug = 2;
+  }
+
+  // Restrict the result to these component ids (optional, defaults to all components).
+  repeated string component_ids = 3 [(buf.validate.field).repeated = {
+    items: {
+      string: {min_len: 1}
+    }
+  }];
+
+  // Number of days to return (1-45, defaults to 45 if unspecified).
+  optional int32 days = 4 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 45
+  }];
+}
+
+// ComponentDayStatus is the resolved status of a component on a given day.
+enum ComponentDayStatus {
+  COMPONENT_DAY_STATUS_UNSPECIFIED = 0;
+  COMPONENT_DAY_STATUS_OPERATIONAL = 1;
+  COMPONENT_DAY_STATUS_DEGRADED = 2;
+  COMPONENT_DAY_STATUS_DOWN = 3;
+  COMPONENT_DAY_STATUS_MAINTENANCE = 4;
+  COMPONENT_DAY_STATUS_EMPTY = 5;
+}
+
+// ComponentEventType is the kind of timeline event affecting a component.
+enum ComponentEventType {
+  COMPONENT_EVENT_TYPE_UNSPECIFIED = 0;
+  COMPONENT_EVENT_TYPE_MAINTENANCE = 1;
+  COMPONENT_EVENT_TYPE_INCIDENT = 2;
+  COMPONENT_EVENT_TYPE_REPORT = 3;
+}
+
+// ComponentEventStatus is the projected status an event contributes.
+enum ComponentEventStatus {
+  COMPONENT_EVENT_STATUS_UNSPECIFIED = 0;
+  COMPONENT_EVENT_STATUS_OPERATIONAL = 1;
+  COMPONENT_EVENT_STATUS_DEGRADED = 2;
+  COMPONENT_EVENT_STATUS_DOWN = 3;
+  COMPONENT_EVENT_STATUS_MAINTENANCE = 4;
+}
+
+// ComponentDayBucket is one day of status data for a component.
+message ComponentDayBucket {
+  // Day in RFC 3339 format (UTC midnight).
+  string day = 1;
+  // Total checks that day.
+  int64 count = 2;
+  // Successful checks.
+  int64 ok = 3;
+  // Degraded checks.
+  int64 degraded = 4;
+  // Failed checks.
+  int64 error = 5;
+  // Convenience resolved status for the day.
+  ComponentDayStatus status = 6;
+  // Worst status-report impact overlapping the day (absent when none).
+  optional openstatus.status_report.v1.PageComponentImpact impact = 7;
+}
+
+// ComponentEvent is a single incident / maintenance / report affecting a component.
+message ComponentEvent {
+  // Identifier of the underlying event.
+  string id = 1;
+  // Human-readable name (incident "Downtime", maintenance / report title).
+  string name = 2;
+  // Kind of event.
+  ComponentEventType type = 3;
+  // Projected status this event contributes.
+  ComponentEventStatus status = 4;
+  // Start time (RFC 3339).
+  string from = 5;
+  // End time (RFC 3339); absent while the event is ongoing.
+  optional string to = 6;
+  // Worst impact over the event (reports only; absent otherwise).
+  optional openstatus.status_report.v1.PageComponentImpact impact = 7;
+}
+
+// PageComponentDailySummary is the per-day buckets + event timeline for one component.
+message PageComponentDailySummary {
+  // ID of the component.
+  string component_id = 1;
+  // Component type (monitor or static).
+  PageComponentType type = 2;
+  // Monitor id backing the component (absent for static components).
+  optional string monitor_id = 3;
+  // Display name of the component.
+  string name = 4;
+  // Per-day buckets, oldest first.
+  repeated ComponentDayBucket buckets = 5;
+  // Events affecting the component within the window.
+  repeated ComponentEvent events = 6;
+}
+
+// GetPageComponentDailySummaryResponse is the response containing per-component summaries.
+message GetPageComponentDailySummaryResponse {
+  // Per-component daily summaries, in page order.
+  repeated PageComponentDailySummary components = 1;
 }

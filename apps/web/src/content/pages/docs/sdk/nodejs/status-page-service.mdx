@@ -4,7 +4,7 @@ title: Status Page Service
 description: "Manage status pages, components, groups, and subscribers with the openstatus Node.js SDK"
 ---
 
-Manage status pages, components, component groups, and subscribers. The Status Page Service provides 17 RPC methods.
+Manage status pages, components, component groups, and subscribers. The Status Page Service provides 18 RPC methods.
 
 ## Status Page CRUD
 
@@ -67,7 +67,7 @@ Components represent individual services on a status page. They can be linked to
 const { component } = await client.statusPage.v1.StatusPageService
   .addMonitorComponent({
     pageId: "page_123",
-    monitorId: "mon_456",
+    monitorId: "123457",
     name: "API Server",
     description: "Main API endpoint",
     order: 1,
@@ -223,3 +223,54 @@ for (const { componentId, status } of componentStatuses) {
   console.log(`  ${componentId}: ${OverallStatus[status]}`);
 }
 ```
+
+## Get Page Component Daily Summary
+
+Get per-component daily uptime buckets merged with the incident, maintenance, and status-report timeline over the last N days (max 45). This is the single source of truth for rendering per-component status bars and uptime calendars: each component carries gap-filled daily `buckets` (with a resolved `status`) plus the `events` affecting it. Identify the page by ID or slug; optionally restrict to specific `componentIds`.
+
+```typescript
+import {
+  ComponentDayStatus,
+  createOpenStatusClient,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { components } = await client.statusPage.v1.StatusPageService
+  .getPageComponentDailySummary({
+    identifier: { case: "slug", value: "my-service" },
+    days: 45,
+  });
+
+for (const component of components) {
+  console.log(`${component.name} (${component.componentId})`);
+  for (const bucket of component.buckets) {
+    console.log(
+      `  ${bucket.day}: ${ComponentDayStatus[bucket.status]} ` +
+        `(${bucket.ok}/${bucket.count} ok)`,
+    );
+  }
+  for (const event of component.events) {
+    console.log(
+      `  event: ${event.name} (${event.from} → ${event.to ?? "ongoing"})`,
+    );
+  }
+}
+```
+
+Request parameters:
+
+| Parameter      | Type                | Description                                                 |
+| -------------- | ------------------- | ---------------------------------------------------------- |
+| `identifier`   | oneof id \| slug    | Page id (workspace-scoped) or slug (published public page) |
+| `componentIds` | string[] (optional) | Restrict to these component ids (default: all components)  |
+| `days`         | number (optional)   | Days to return (1–45, default 45; values >45 reject)       |
+
+Each component returns gap-filled `buckets` (one per day in the window, oldest first) and `events`:
+
+- **`buckets[]`** — `day` (RFC 3339, UTC midnight), the `bigint` counts `count` / `ok` / `degraded` / `error`, a resolved `status` (`ComponentDayStatus`: operational / degraded / down / maintenance / empty), and an optional `impact` (`PageComponentImpact`) for the worst status-report impact that day. Monitor-backed components carry real counts; static components have empty buckets.
+- **`events[]`** — `id`, `name`, `type` (`ComponentEventType`: maintenance / incident / report), a projected `status` (`ComponentEventStatus`), `from` / `to` (RFC 3339; `to` absent while ongoing), and an optional `impact` for report events.
+
+<Aside type="note">Like every RPC, this requires an API key. The slug path additionally requires the page to be published with public access — it is not anonymous.</Aside>

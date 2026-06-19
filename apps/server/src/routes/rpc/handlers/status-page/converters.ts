@@ -8,6 +8,9 @@ import type {
   WebhookChannelHeader,
 } from "@openstatus/proto/status_page/v1";
 import {
+  ComponentDayStatus,
+  ComponentEventStatus,
+  ComponentEventType,
   OverallStatus,
   PageAccessType,
   PageComponentType,
@@ -181,6 +184,66 @@ export function protoComponentTypeToDb(
       return "static";
     default:
       return "static";
+  }
+}
+
+/**
+ * Convert a resolved per-day component status to proto enum.
+ */
+export function dayStatusToProto(
+  status: "operational" | "degraded" | "down" | "maintenance" | "empty",
+): ComponentDayStatus {
+  switch (status) {
+    case "operational":
+      return ComponentDayStatus.OPERATIONAL;
+    case "degraded":
+      return ComponentDayStatus.DEGRADED;
+    case "down":
+      return ComponentDayStatus.DOWN;
+    case "maintenance":
+      return ComponentDayStatus.MAINTENANCE;
+    case "empty":
+      return ComponentDayStatus.EMPTY;
+    default:
+      return ComponentDayStatus.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert a timeline event type to proto enum.
+ */
+export function eventTypeToProto(
+  type: "maintenance" | "incident" | "report",
+): ComponentEventType {
+  switch (type) {
+    case "maintenance":
+      return ComponentEventType.MAINTENANCE;
+    case "incident":
+      return ComponentEventType.INCIDENT;
+    case "report":
+      return ComponentEventType.REPORT;
+    default:
+      return ComponentEventType.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert an event's projected status to proto enum.
+ */
+export function eventStatusToProto(
+  status: "success" | "degraded" | "error" | "info",
+): ComponentEventStatus {
+  switch (status) {
+    case "success":
+      return ComponentEventStatus.OPERATIONAL;
+    case "degraded":
+      return ComponentEventStatus.DEGRADED;
+    case "error":
+      return ComponentEventStatus.DOWN;
+    case "info":
+      return ComponentEventStatus.MAINTENANCE;
+    default:
+      return ComponentEventStatus.UNSPECIFIED;
   }
 }
 

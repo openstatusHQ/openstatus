@@ -4,7 +4,7 @@ title: Monitor Service
 description: "Create and manage HTTP, TCP, and DNS monitors with the openstatus Node.js SDK"
 ---
 
-Manage HTTP, TCP, and DNS monitors. The Monitor Service provides 12 RPC methods for creating, updating, listing, triggering, deleting, and querying monitor status and metrics.
+Manage HTTP, TCP, and DNS monitors. The Monitor Service provides 15 RPC methods for creating, updating, listing, triggering, deleting, querying monitor status and metrics, and inspecting HTTP response logs.
 
 All examples assume you have created a client:
 
@@ -80,7 +80,7 @@ Updates are partial — only include the fields you want to change.
 
 ```typescript
 const { monitor } = await client.monitor.v1.MonitorService.updateHTTPMonitor({
-  id: "mon_123",
+  id: "123456",
   monitor: {
     name: "Updated API Monitor",
     active: false,
@@ -141,7 +141,7 @@ const { monitor } = await client.monitor.v1.MonitorService.createTCPMonitor({
 
 ```typescript
 const { monitor } = await client.monitor.v1.MonitorService.updateTCPMonitor({
-  id: "mon_123",
+  id: "123456",
   monitor: {
     name: "Updated Database Monitor",
   },
@@ -207,7 +207,7 @@ const { monitor } = await client.monitor.v1.MonitorService.createDNSMonitor({
 
 ```typescript
 const { monitor } = await client.monitor.v1.MonitorService.updateDNSMonitor({
-  id: "mon_123",
+  id: "123456",
   monitor: {
     name: "Updated DNS Check",
   },
@@ -261,7 +261,7 @@ Get a single monitor by ID. The response uses a `MonitorConfig` oneof type that 
 
 ```typescript
 const { monitor } = await client.monitor.v1.MonitorService.getMonitor({
-  id: "mon_123",
+  id: "123456",
 });
 
 if (monitor?.config.case === "http") {
@@ -279,7 +279,7 @@ Trigger an immediate check for a monitor.
 
 ```typescript
 const { success } = await client.monitor.v1.MonitorService.triggerMonitor({
-  id: "mon_123",
+  id: "123456",
 });
 
 console.log(`Trigger successful: ${success}`);
@@ -289,7 +289,7 @@ console.log(`Trigger successful: ${success}`);
 
 ```typescript
 const { success } = await client.monitor.v1.MonitorService.deleteMonitor({
-  id: "mon_123",
+  id: "123456",
 });
 ```
 
@@ -309,7 +309,7 @@ const client = createOpenStatusClient({
 });
 
 const { id, regions } = await client.monitor.v1.MonitorService.getMonitorStatus(
-  { id: "mon_123" },
+  { id: "123456" },
 );
 
 for (const { region, status } of regions) {
@@ -329,7 +329,7 @@ const client = createOpenStatusClient({
 });
 
 const summary = await client.monitor.v1.MonitorService.getMonitorSummary({
-  id: "mon_123",
+  id: "123456",
   timeRange: TimeRange.TIME_RANGE_7D,
   regions: [],
 });
@@ -346,3 +346,77 @@ console.log(`P99: ${summary.p99}ms`);
 ```
 
 The latency fields (`p50`, `p75`, `p90`, `p95`, `p99`) and count fields (`totalSuccessful`, `totalDegraded`, `totalFailed`) are `bigint` values. The `regions` parameter is optional — pass an empty array to get metrics across all regions.
+
+`getMonitorSummary` returns a single aggregate over the window and `TimeRange` caps at 14 days. For a per-day series to render status bars, use `getPageComponentDailySummary` on the [Status Page Service](/docs/sdk/nodejs/status-page-service) — it returns per-component daily buckets merged with the incident and maintenance timeline (max 45 days), the single source of truth for the `status-bar` / `status-calendar` registry components. The REST endpoint `GET /v1/monitor/{id}/summary` also exposes a single-monitor daily series (`{ ok, count, day }`).
+
+## List Monitor HTTP Response Logs
+
+List HTTP response logs for a monitor within the 14-day retention window. Supports time-window filtering and offset-based pagination.
+
+<Aside type="caution">Response logs are a paid feature. On the free plan these methods return `permission_denied` ("Upgrade for response logs").</Aside>
+
+```typescript
+import {
+  createOpenStatusClient,
+  HTTPResponseLogRequestStatus,
+  HTTPResponseLogTrigger,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { logs, pagination } = await client.monitor.v1.MonitorService
+  .listMonitorHTTPResponseLogs({
+    id: "123456",
+    fromTimestamp: BigInt(Date.now() - 24 * 60 * 60 * 1000),
+    toTimestamp: BigInt(Date.now()),
+    limit: 25,
+    offset: 0,
+  });
+
+for (const log of logs) {
+  console.log(
+    `[${Region[log.region]}] ${log.timestamp}: ` +
+      `${log.statusCode ?? "n/a"} (${log.latency}ms) ` +
+      `status=${HTTPResponseLogRequestStatus[log.requestStatus]} ` +
+      `trigger=${HTTPResponseLogTrigger[log.trigger]}`,
+  );
+}
+
+if (pagination?.hasMore) {
+  console.log(`Next offset: ${pagination.nextOffset}`);
+}
+```
+
+Request parameters:
+
+| Parameter       | Type              | Description                                     |
+| --------------- | ----------------- | ----------------------------------------------- |
+| `id`            | string            | Monitor ID (required)                           |
+| `fromTimestamp` | bigint (optional) | Window start, Unix milliseconds (14d retention) |
+| `toTimestamp`   | bigint (optional) | Window end, Unix milliseconds                   |
+| `limit`         | number (optional) | Max results to return (1–100, default 25)       |
+| `offset`        | number (optional) | Number of results to skip (default 0)           |
+
+Each `HTTPResponseLogListItem` includes `id`, `latency`, `statusCode`, `monitorId`, `requestStatus`, `region`, `cronTimestamp`, `trigger`, `timestamp`, and an optional `timing` breakdown (`dns`, `connect`, `tls`, `ttfb`, `transfer`).
+
+## Get Monitor HTTP Response Log
+
+Get full debugging details for a single response log: the requested URL, redacted response headers, error message, and serialized assertions. Same plan gating as above.
+
+```typescript
+const { log } = await client.monitor.v1.MonitorService
+  .getMonitorHTTPResponseLog({
+    id: "123456",
+    logId: "log_456",
+  });
+
+console.log(`URL: ${log?.url}`);
+console.log(`Errored: ${log?.error}`);
+console.log(`Status code: ${log?.log?.statusCode}`);
+console.log(`Assertions: ${log?.assertions ?? "n/a"}`);
+```
+
+The `log.log` field embeds the same `HTTPResponseLogListItem` returned by `listMonitorHTTPResponseLogs`, so timing and classification fields are available alongside the detail fields.

@@ -41,6 +41,10 @@
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
     },
+    "./status-timeline": {
+      "import": "./src/status-timeline/index.ts",
+      "types": "./src/status-timeline/index.ts"
+    },
     "./workspace": {
       "import": "./src/workspace/index.ts",
       "types": "./src/workspace/index.ts"

@@ -76,11 +76,41 @@ console.log(`Found ${totalSize} monitors`);
 
 ## Runtime Support
 
-| Runtime | Version | Module Format |
-|---------|---------|---------------|
-| Node.js | 18+     | ESM and CJS   |
-| Deno    | 2+      | ESM (native)  |
-| Bun     | Latest  | ESM           |
+The SDK talks to the API over a fetch-based Connect transport (`@connectrpc/connect-web`), so it runs on any runtime with a global `fetch`:
+
+| Runtime            | Version | Module Format |
+|--------------------|---------|---------------|
+| Node.js            | 18+     | ESM and CJS   |
+| Deno               | 2+      | ESM (native)  |
+| Bun                | Latest  | ESM           |
+| Cloudflare Workers | —       | ESM (edge)    |
+
+### Cloudflare Workers and edge runtimes
+
+`@connectrpc/connect-web` sets `redirect: "error"` on every request. Node, Deno, and Bun's `fetch` support that mode, so they need no setup — but Cloudflare Workers (`workerd`) doesn't, so **every** request there fails with `The redirect mode 'error' is not supported`. On Workers, pass a transport with a redirect-normalizing `fetch` (the SDK re-exports `createAuthInterceptor` and the service descriptors for this):
+
+```typescript
+import { createConnectTransport } from "@connectrpc/connect-web";
+import {
+  createAuthInterceptor,
+  createOpenStatusClient,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  transport: createConnectTransport({
+    baseUrl: "https://api.openstatus.dev/rpc",
+    interceptors: [createAuthInterceptor(env.OPENSTATUS_API_KEY)],
+    // workerd does not implement fetch's `redirect: "error"`; normalise it.
+    fetch: (input, init) =>
+      fetch(
+        input,
+        init?.redirect === "error" ? { ...init, redirect: "manual" } : init,
+      ),
+  }),
+});
+```
+
+<Aside type="note">When you pass a `transport`, the `apiKey` and `baseUrl` options are ignored — configure authentication on the transport via `createAuthInterceptor`. For full control you can also import the raw service descriptors (`MonitorService`, `StatusPageService`, …) and call `createClient(MonitorService, transport)` from `@connectrpc/connect`.</Aside>
 
 ## Full Workflow Example
 

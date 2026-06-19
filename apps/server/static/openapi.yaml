@@ -2425,6 +2425,122 @@ components:
       title: AddStaticComponentResponse
       additionalProperties: false
       description: AddStaticComponentResponse is the response after adding a static component.
+    openstatus.status_page.v1.ComponentDayBucket:
+      type: object
+      properties:
+        day:
+          type: string
+          title: day
+          description: Day in RFC 3339 format (UTC midnight).
+        count:
+          type:
+            - integer
+            - string
+          title: count
+          format: int64
+          description: Total checks that day.
+        ok:
+          type:
+            - integer
+            - string
+          title: ok
+          format: int64
+          description: Successful checks.
+        degraded:
+          type:
+            - integer
+            - string
+          title: degraded
+          format: int64
+          description: Degraded checks.
+        error:
+          type:
+            - integer
+            - string
+          title: error
+          format: int64
+          description: Failed checks.
+        status:
+          title: status
+          description: Convenience resolved status for the day.
+          $ref: '#/components/schemas/openstatus.status_page.v1.ComponentDayStatus'
+        impact:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_report.v1.PageComponentImpact'
+            - type: "null"
+          title: impact
+          description: Worst status-report impact overlapping the day (absent when none).
+      title: ComponentDayBucket
+      additionalProperties: false
+      description: ComponentDayBucket is one day of status data for a component.
+    openstatus.status_page.v1.ComponentDayStatus:
+      type: string
+      title: ComponentDayStatus
+      enum:
+        - COMPONENT_DAY_STATUS_UNSPECIFIED
+        - COMPONENT_DAY_STATUS_OPERATIONAL
+        - COMPONENT_DAY_STATUS_DEGRADED
+        - COMPONENT_DAY_STATUS_DOWN
+        - COMPONENT_DAY_STATUS_MAINTENANCE
+        - COMPONENT_DAY_STATUS_EMPTY
+      description: ComponentDayStatus is the resolved status of a component on a given day.
+    openstatus.status_page.v1.ComponentEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Identifier of the underlying event.
+        name:
+          type: string
+          title: name
+          description: Human-readable name (incident "Downtime", maintenance / report title).
+        type:
+          title: type
+          description: Kind of event.
+          $ref: '#/components/schemas/openstatus.status_page.v1.ComponentEventType'
+        status:
+          title: status
+          description: Projected status this event contributes.
+          $ref: '#/components/schemas/openstatus.status_page.v1.ComponentEventStatus'
+        from:
+          type: string
+          title: from
+          description: Start time (RFC 3339).
+        to:
+          type:
+            - string
+            - "null"
+          title: to
+          description: End time (RFC 3339); absent while the event is ongoing.
+        impact:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_report.v1.PageComponentImpact'
+            - type: "null"
+          title: impact
+          description: Worst impact over the event (reports only; absent otherwise).
+      title: ComponentEvent
+      additionalProperties: false
+      description: ComponentEvent is a single incident / maintenance / report affecting a component.
+    openstatus.status_page.v1.ComponentEventStatus:
+      type: string
+      title: ComponentEventStatus
+      enum:
+        - COMPONENT_EVENT_STATUS_UNSPECIFIED
+        - COMPONENT_EVENT_STATUS_OPERATIONAL
+        - COMPONENT_EVENT_STATUS_DEGRADED
+        - COMPONENT_EVENT_STATUS_DOWN
+        - COMPONENT_EVENT_STATUS_MAINTENANCE
+      description: ComponentEventStatus is the projected status an event contributes.
+    openstatus.status_page.v1.ComponentEventType:
+      type: string
+      title: ComponentEventType
+      enum:
+        - COMPONENT_EVENT_TYPE_UNSPECIFIED
+        - COMPONENT_EVENT_TYPE_MAINTENANCE
+        - COMPONENT_EVENT_TYPE_INCIDENT
+        - COMPONENT_EVENT_TYPE_REPORT
+      description: ComponentEventType is the kind of timeline event affecting a component.
     openstatus.status_page.v1.ComponentStatus:
       type: object
       properties:
@@ -2735,6 +2851,60 @@ components:
       title: GetOverallStatusResponse
       additionalProperties: false
       description: GetOverallStatusResponse is the response containing the overall status and individual component statuses.
+    openstatus.status_page.v1.GetPageComponentDailySummaryRequest:
+      type: object
+      allOf:
+        - properties:
+            componentIds:
+              type: array
+              items:
+                type: string
+                minLength: 1
+              title: component_ids
+              description: Restrict the result to these component ids (optional, defaults to all components).
+            days:
+              type:
+                - integer
+                - "null"
+              title: days
+              maximum: 45
+              minimum: 1
+              format: int32
+              description: Number of days to return (1-45, defaults to 45 if unspecified).
+        - oneOf:
+            - type: object
+              properties:
+                id:
+                  type: string
+                  title: id
+                  description: ID of the status page.
+              title: id
+              required:
+                - id
+            - type: object
+              properties:
+                slug:
+                  type: string
+                  title: slug
+                  description: Slug of the status page.
+              title: slug
+              required:
+                - slug
+      title: GetPageComponentDailySummaryRequest
+      additionalProperties: false
+      description: GetPageComponentDailySummaryRequest is the request for per-component daily summaries.
+    openstatus.status_page.v1.GetPageComponentDailySummaryResponse:
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentDailySummary'
+          title: components
+          description: Per-component daily summaries, in page order.
+      title: GetPageComponentDailySummaryResponse
+      additionalProperties: false
+      description: GetPageComponentDailySummaryResponse is the response containing per-component summaries.
     openstatus.status_page.v1.GetStatusPageContentRequest:
       type: object
       oneOf:
@@ -2988,6 +3158,42 @@ components:
       title: PageComponent
       additionalProperties: false
       description: PageComponent represents a component displayed on a status page.
+    openstatus.status_page.v1.PageComponentDailySummary:
+      type: object
+      properties:
+        componentId:
+          type: string
+          title: component_id
+          description: ID of the component.
+        type:
+          title: type
+          description: Component type (monitor or static).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentType'
+        monitorId:
+          type:
+            - string
+            - "null"
+          title: monitor_id
+          description: Monitor id backing the component (absent for static components).
+        name:
+          type: string
+          title: name
+          description: Display name of the component.
+        buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentDayBucket'
+          title: buckets
+          description: Per-day buckets, oldest first.
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentEvent'
+          title: events
+          description: Events affecting the component within the window.
+      title: PageComponentDailySummary
+      additionalProperties: false
+      description: PageComponentDailySummary is the per-day buckets + event timeline for one component.
     openstatus.status_page.v1.PageComponentGroup:
       type: object
       properties:
@@ -5238,6 +5444,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponentDailySummary:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetPageComponentDailySummary
+      description: 'Returns per-component daily status buckets (ok/degraded/error/count plus a resolved status) merged with the incident, maintenance, and status-report timeline over the last N days (max 45). Suitable as a single source of truth for status-bar and uptime-calendar rendering. Supports two access paths: by id (authenticated, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      operationId: StatusPageService_GetPageComponentDailySummary.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetPageComponentDailySummary
+      description: 'Returns per-component daily status buckets (ok/degraded/error/count plus a resolved status) merged with the incident, maintenance, and status-report timeline over the last N days (max 45). Suitable as a single source of truth for status-bar and uptime-calendar rendering. Supports two access paths: by id (authenticated, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      operationId: StatusPageService_GetPageComponentDailySummary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPage:
     get:
       tags:

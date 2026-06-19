@@ -1,5 +1,6 @@
 export { cloneMonitor } from "./clone";
 export { createMonitor } from "./create";
+export { fetchMonitorDailyStats } from "./get-daily-summary";
 export { deleteMonitor, deleteMonitors } from "./delete";
 export {
   getMonitorStatus,
