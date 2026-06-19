@@ -228,6 +228,66 @@ describe("generateOverview live frontmatter + agent mode", () => {
   });
 });
 
+describe("generateOverview component ordering + grouping", () => {
+  const page = {
+    title: "Acme",
+    description: "",
+    status: "success",
+    statusReports: [],
+    maintenances: [],
+    monitors: [],
+    trackers: [
+      {
+        type: "component",
+        component: { id: 1, name: "API", status: "success" },
+        order: 0,
+      },
+      {
+        type: "component",
+        component: { id: 2, name: "Web", status: "success" },
+        order: 1,
+      },
+      {
+        type: "group",
+        groupName: "Databases",
+        components: [
+          { id: 3, name: "Primary DB", status: "success" },
+          { id: 4, name: "Replica DB", status: "success" },
+        ],
+        status: "success",
+        order: 2,
+      },
+    ],
+  } as unknown as OverviewPage;
+
+  // Uptime arrives in a different (DB-arbitrary) order than trackers.
+  const day = { bar: [{ status: "success", height: 100 }] };
+  const comps = [
+    { name: "Replica DB", pageComponentId: 4, uptime: "99%", data: [day] },
+    { name: "API", pageComponentId: 1, uptime: "100%", data: [day] },
+    { name: "Primary DB", pageComponentId: 3, uptime: "98%", data: [day] },
+    { name: "Web", pageComponentId: 2, uptime: "100%", data: [day] },
+  ] as unknown as UptimeComponent[];
+
+  const md = generateOverview(page, comps, BASE);
+
+  test("renders components in tracker order, not uptime-array order", () => {
+    const order = ["API", "Web", "Primary DB", "Replica DB"].map((n) =>
+      md.indexOf(`**${n}**`),
+    );
+    expect(order.every((i) => i >= 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  test("emits a heading for grouped components, not for ungrouped", () => {
+    expect(md).toContain("### Databases");
+    expect(md.indexOf("### Databases")).toBeLessThan(
+      md.indexOf("**Primary DB**"),
+    );
+    expect(md).not.toContain("### API");
+  });
+});
+
 describe("generateOverview empty components", () => {
   const empty = {
     title: "Empty",

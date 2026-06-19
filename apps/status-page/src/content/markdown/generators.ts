@@ -145,11 +145,33 @@ export function generateOverview(
   }
 
   out.push("## Components\n");
-  if (components.length === 0) {
+
+  // `components` (uptime data) has no stable order and is flat. Drive
+  // iteration from `page.trackers` instead — the same ordered, grouped
+  // structure the HTML page renders — and join uptime data by id.
+  const uptimeById = new Map(components.map((c) => [c.pageComponentId, c]));
+  const rows: { groupName: string | null; component: UptimeComponent }[] = [];
+  for (const tracker of page.trackers ?? []) {
+    if (tracker.type === "component") {
+      const u = uptimeById.get(tracker.component.id);
+      if (u) rows.push({ groupName: null, component: u });
+    } else {
+      for (const comp of tracker.components) {
+        const u = uptimeById.get(comp.id);
+        if (u) rows.push({ groupName: tracker.groupName, component: u });
+      }
+    }
+  }
+  // Defensive fallback: if trackers and uptime diverge, don't drop components.
+  if (rows.length === 0 && components.length > 0) {
+    for (const c of components) rows.push({ groupName: null, component: c });
+  }
+
+  if (rows.length === 0) {
     out.push("No components.\n");
   } else {
     const used = new Set<string>();
-    for (const c of components) {
+    for (const { component: c } of rows) {
       for (const d of c.data) used.add(dominantDayStatus(d.bar));
     }
     // The legend only explains the emoji bar, which agent mode drops.
@@ -167,7 +189,11 @@ export function generateOverview(
           : 0;
     };
 
-    for (const c of components) {
+    let currentGroup: string | null = null;
+    for (const { groupName, component: c } of rows) {
+      if (groupName && groupName !== currentGroup)
+        out.push(`### ${groupName}\n`);
+      currentGroup = groupName;
       const days = c.data.length;
       const metric = showUptime
         ? c.uptime
