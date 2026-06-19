@@ -44,16 +44,13 @@ function unresolvedIncidents(page: Page) {
     }));
 }
 
+// `completed` is intentionally absent: scheduledMaintenances only feeds windows
+// with `to >= now`, so a window is always either upcoming or live.
 function maintenanceState(
   from: Date | string | number,
-  to: Date | string | number | null,
   now: number,
-): "scheduled" | "in_progress" | "completed" {
-  const start = new Date(from).getTime();
-  const end = to ? new Date(to).getTime() : start;
-  if (now < start) return "scheduled";
-  if (now > end) return "completed";
-  return "in_progress";
+): "scheduled" | "in_progress" {
+  return now < new Date(from).getTime() ? "scheduled" : "in_progress";
 }
 
 function scheduledMaintenances(page: Page, now: number) {
@@ -62,7 +59,7 @@ function scheduledMaintenances(page: Page, now: number) {
     .map((m) => ({
       id: String(m.id),
       name: m.title,
-      status: maintenanceState(m.from, m.to, now),
+      status: maintenanceState(m.from, now),
       scheduled_for: isoOrNull(m.from),
       scheduled_until: isoOrNull(m.to),
     }));

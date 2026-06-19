@@ -163,12 +163,14 @@ export function navLine(
 
 export type DayStatus = "success" | "degraded" | "error" | "info" | "empty";
 
-const STATUS_EMOJI: Record<DayStatus, string> = {
-  success: "🟩",
-  degraded: "🟧",
-  error: "🟥",
-  info: "🟦",
-  empty: "⬜",
+// ASCII status markers: 1 column, monospace-stable, markdown-inert. Markdown has
+// no color, so shape carries the meaning — `x` reads as down/outage.
+const STATUS_GLYPH: Record<DayStatus, string> = {
+  success: "+",
+  degraded: "~",
+  error: "x",
+  info: "=",
+  empty: ".",
 };
 
 const DAY_PRIORITY: Record<DayStatus, number> = {
@@ -179,8 +181,8 @@ const DAY_PRIORITY: Record<DayStatus, number> = {
   empty: -1,
 };
 
-export function statusEmoji(status: string): string {
-  return STATUS_EMOJI[status as DayStatus] ?? STATUS_EMOJI.empty;
+export function statusGlyph(status: string): string {
+  return STATUS_GLYPH[status as DayStatus] ?? STATUS_GLYPH.empty;
 }
 
 const LEGEND_LABELS: Record<DayStatus, string> = {
@@ -199,13 +201,14 @@ const LEGEND_ORDER: DayStatus[] = [
   "empty",
 ];
 
-/** Legend line listing only the statuses present, in severity order. */
-export function legend(statuses: Iterable<string>): string {
-  const present = new Set(statuses);
-  const parts = LEGEND_ORDER.filter((s) => present.has(s)).map(
-    (s) => `${STATUS_EMOJI[s]} ${LEGEND_LABELS[s]}`,
+/** Legend line covering every status, in severity order. */
+export function legend(): string {
+  // Glyphs in code spans so they render in the same monospace as the bar they
+  // explain — a bare `.` / `~` is otherwise easy to miss or misread.
+  const parts = LEGEND_ORDER.map(
+    (s) => `\`${STATUS_GLYPH[s]}\` ${LEGEND_LABELS[s]}`,
   );
-  return parts.length ? `Legend: ${parts.join(" · ")}` : "";
+  return `Legend: ${parts.join(" · ")}`;
 }
 
 // Severity order mirrors `pageComponentImpact` in @openstatus/db; kept local so
@@ -261,11 +264,11 @@ export function worstImpact(impacts: string[]): string | null {
   return worst;
 }
 
-/** Status emoji for a report/update lifecycle status (resolved → green, etc.). */
-export function reportStatusEmoji(status: string): string {
-  if (status === "resolved") return STATUS_EMOJI.success;
-  if (status === "maintenance") return STATUS_EMOJI.info;
-  return STATUS_EMOJI.error;
+/** Status glyph for a report/update lifecycle status (resolved → `+`, etc.). */
+export function reportStatusGlyph(status: string): string {
+  if (status === "resolved") return STATUS_GLYPH.success;
+  if (status === "maintenance") return STATUS_GLYPH.info;
+  return STATUS_GLYPH.error;
 }
 
 /** Collapse a day's stacked bar segments to the single worst (most severe) status. */
@@ -282,11 +285,16 @@ export function dominantDayStatus(
   return best;
 }
 
-/** One emoji square per day, oldest → newest. */
+/**
+ * One ASCII cell per day, oldest → newest, in a code span. The code span pins
+ * the bar to monospace (cells stay aligned) and keeps it markdown-inert — a run
+ * of `~~` days would otherwise parse as strikethrough.
+ */
 export function uptimeBar(
   days: { bar: { status: string; height: number }[] }[],
 ): string {
-  return days.map((d) => statusEmoji(dominantDayStatus(d.bar))).join("");
+  if (days.length === 0) return "";
+  return `\`${days.map((d) => statusGlyph(dominantDayStatus(d.bar))).join("")}\``;
 }
 
 const MONTHS = [
@@ -338,16 +346,16 @@ export function formatLogStamp(date: Date | string | number): string {
 export type EventLogRow = {
   timestamp: Date | string | number;
   label: string;
-  emoji: string;
+  glyph: string;
   ref: string;
   title: string;
 };
 
 /**
  * Greppable event log: one update per line, sortable stamp first, newest first.
- * Aligned columns come before the emoji so its variable render width can't throw
- * them off; the title trails as free human text. Built only from structured
- * fields — no user-authored prose — so the index stays deterministic.
+ * Aligned columns precede the status glyph; the title trails as free human text.
+ * Built only from structured fields — no user-authored prose — so the index
+ * stays deterministic.
  */
 export function eventLog(rows: EventLogRow[]): string {
   if (rows.length === 0) return "";
@@ -359,7 +367,7 @@ export function eventLog(rows: EventLogRow[]): string {
   const header = `# ${"timestamp".padEnd(16)}  ${"status".padEnd(statusW)}  event`;
   const lines = sorted.map(
     (r) =>
-      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.emoji} ${r.title}`,
+      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title}`,
   );
   return ["```text", header, ...lines, "```"].join("\n");
 }

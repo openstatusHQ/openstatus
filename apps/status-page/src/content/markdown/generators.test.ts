@@ -111,8 +111,8 @@ describe("generateOverview", () => {
     );
   });
 
-  test("overall status line with emoji + timestamp", () => {
-    expect(md).toContain("🟧 **Degraded** · ");
+  test("overall status line with glyph + timestamp", () => {
+    expect(md).toContain("`~` **Degraded** · ");
     expect(md).toMatch(/\(GMT\+0\)/);
   });
 
@@ -125,14 +125,14 @@ describe("generateOverview", () => {
 
   test("active & upcoming maintenance with affected components", () => {
     expect(md).toContain("## Active & upcoming maintenance");
-    expect(md).toContain("🟦 **DB upgrade**");
+    expect(md).toContain("= **DB upgrade**");
     expect(md).toContain("affects: Database");
   });
 
-  test("per-component emoji uptime bar", () => {
+  test("per-component ascii uptime bar in a code span", () => {
     expect(md).toContain("**laser pointer tracker** — 97.8%");
     expect(md).toContain("`3d ago → today`");
-    expect(md).toContain("🟩🟥🟦");
+    expect(md).toContain("`+x=`");
   });
 
   test("per-component event links to affecting reports", () => {
@@ -146,11 +146,10 @@ describe("generateOverview", () => {
     expect(off).not.toContain("97.8%");
   });
 
-  test("adaptive legend lists only present statuses, in severity order", () => {
-    // fixture days are success, error, info → no degraded/no-data entries
-    expect(md).toContain("Legend: 🟩 Operational · 🟥 Outage · 🟦 Maintenance");
-    expect(md).not.toContain("🟧 Degraded");
-    expect(md).not.toContain("⬜");
+  test("legend lists every status in severity order", () => {
+    expect(md).toContain(
+      "Legend: `+` Operational · `~` Degraded · `x` Outage · `=` Maintenance · `.` No data",
+    );
   });
 });
 
@@ -218,11 +217,15 @@ describe("generateOverview live frontmatter + agent mode", () => {
     expect(md).not.toContain("updated_at:");
   });
 
-  test("agent mode drops the emoji uptime bar + legend", () => {
+  test("agent mode drops the ascii uptime bar + legend", () => {
     const human = generateOverview(page, comps, BASE, true, false);
     const agent = generateOverview(page, comps, BASE, true, true);
-    expect(count(human, "🟩")).toBeGreaterThan(0);
-    expect(count(agent, "🟩")).toBe(0);
+    // The `+` bar is a code span (`` `+` ``); `(GMT+0)` has a bare `+`, so match
+    // the wrapped form to isolate the bar.
+    expect(count(human, "`+`")).toBeGreaterThan(0);
+    expect(count(agent, "`+`")).toBe(0);
+    expect(human).toContain("Legend:");
+    expect(agent).not.toContain("Legend:");
     // live frontmatter is still present in agent mode
     expect(agent).toContain("active_reports: 1");
   });
@@ -300,31 +303,31 @@ describe("generateOverview empty components", () => {
   const md = generateOverview(empty, [], BASE);
 
   test("no components copy + operational", () => {
-    expect(md).toContain("🟩 **Operational**");
+    expect(md).toContain("`+` **Operational**");
     expect(md).toContain("No components.");
   });
 });
 
 describe("generateMonitorsList", () => {
-  test("monitor row with status emoji + .md link", () => {
+  test("monitor row with status glyph + .md link", () => {
     const md = generateMonitorsList(overview, BASE);
-    expect(md).toContain(`| 🟩 API monitor | Operational | /monitors/9.md |`);
+    expect(md).toContain(`| + API monitor | Operational | /monitors/9.md |`);
   });
 });
 
 describe("generateEventsList", () => {
   const md = generateEventsList(overview, BASE);
 
-  test("report heading is a link, no emoji", () => {
+  test("report heading is a link, no glyph", () => {
     expect(md).toContain(`### [Old outage](/events/report/2.md)`);
     expect(md).toContain(`### [API latency](/events/report/1.md)`);
-    expect(md).not.toContain("### 🟥");
+    expect(md).not.toContain("### x");
   });
 
   test("affects includes per-component impact; bullets have no bold", () => {
     expect(md).toContain("affects: API (major outage)");
-    expect(md).toContain("- 🟥 Investigating —");
-    expect(md).toContain("- 🟩 Resolved —");
+    expect(md).toContain("- x Investigating —");
+    expect(md).toContain("- + Resolved —");
     expect(md).not.toContain("**Investigating**");
   });
 
@@ -333,15 +336,15 @@ describe("generateEventsList", () => {
     expect(md).not.toContain("Looking into it.");
   });
 
-  test("greppable event log: fenced, sortable stamp, ref, trailing emoji", () => {
+  test("greppable event log: fenced, sortable stamp, ref, trailing glyph", () => {
     expect(md).toContain("## Event log");
     expect(md).toContain("```text");
     expect(md).toContain("# timestamp");
     expect(md).toMatch(
-      /2026-06-18 10:00 {2}INVESTIGATING {2}report\/1 +🟥 API latency/,
+      /2026-06-18 10:00 {2}INVESTIGATING {2}report\/1 +x API latency/,
     );
     expect(md).toMatch(
-      /2026-05-02 10:00 {2}RESOLVED {2,}report\/2 +🟩 Old outage/,
+      /2026-05-02 10:00 {2}RESOLVED {2,}report\/2 +\+ Old outage/,
     );
     // newest update sorts above older ones
     expect(md.indexOf("2026-06-18 10:00")).toBeLessThan(
@@ -349,7 +352,7 @@ describe("generateEventsList", () => {
     );
   });
 
-  test("maintenance heading is a link, no emoji", () => {
+  test("maintenance heading is a link, no glyph", () => {
     expect(md).toContain("## Maintenance");
     expect(md).toContain(`### [DB upgrade](/events/maintenance/5.md)`);
   });
@@ -456,9 +459,9 @@ describe("generateReport", () => {
   test("lifecycle heading, affects, timeline", () => {
     expect(md).toContain("# API latency");
     expect(md).toContain("affects: API");
-    expect(md).toContain("### 🟥 Monitoring — Jun 18, 12:00 PM");
+    expect(md).toContain("### x Monitoring — Jun 18, 12:00 PM");
     expect(md).toContain("Recovering.");
-    expect(md).toContain("### 🟥 Investigating — Jun 18, 10:00 AM");
+    expect(md).toContain("### x Investigating — Jun 18, 10:00 AM");
   });
 
   test("each update lists its own impact, operational shown explicitly", () => {

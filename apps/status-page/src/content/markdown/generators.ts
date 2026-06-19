@@ -19,8 +19,8 @@ import {
   mdUrl,
   navLine,
   relativeTime,
-  reportStatusEmoji,
-  statusEmoji,
+  reportStatusGlyph,
+  statusGlyph,
   statusLabel,
   table,
   uptimeBar,
@@ -103,7 +103,7 @@ export function generateOverview(
   );
   if (page.description) out.push(`> ${page.description}\n`);
   out.push(
-    `${statusEmoji(page.status)} **${statusLabel(page.status)}** · ${formatStamp(now)}\n`,
+    `\`${statusGlyph(page.status)}\` **${statusLabel(page.status)}** · ${formatStamp(now)}\n`,
   );
 
   const componentNames = (
@@ -119,7 +119,7 @@ export function generateOverview(
       const latest = report.statusReportUpdates[0];
       const affects = componentNames(report.statusReportsToPageComponents);
       const head = [
-        `- ${reportStatusEmoji(report.status)} **${report.title}** — ${statusLabel(report.status)}`,
+        `- ${reportStatusGlyph(report.status)} **${report.title}** — ${statusLabel(report.status)}`,
         affects.length ? `affects: ${affects.join(", ")}` : null,
         mdUrl(`events/report/${report.id}`),
       ].filter(Boolean);
@@ -134,7 +134,7 @@ export function generateOverview(
     for (const m of activeMaintenance) {
       const affects = componentNames(m.maintenancesToPageComponents);
       const head = [
-        `- ${statusEmoji("info")} **${m.title}** — ${formatDay(m.from)} → ${formatDay(m.to)}`,
+        `- ${statusGlyph("info")} **${m.title}** — ${formatDay(m.from)} → ${formatDay(m.to)}`,
         affects.length ? `affects: ${affects.join(", ")}` : null,
         mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
@@ -170,13 +170,8 @@ export function generateOverview(
   if (rows.length === 0) {
     out.push("No components.\n");
   } else {
-    const used = new Set<string>();
-    for (const { component: c } of rows) {
-      for (const d of c.data) used.add(dominantDayStatus(d.bar));
-    }
-    // The legend only explains the emoji bar, which agent mode drops.
-    const legendLine = agent ? "" : legend(used);
-    if (legendLine) out.push(`${legendLine}\n`);
+    // The legend only explains the uptime bar, which agent mode drops.
+    if (!agent) out.push(`${legend()}\n`);
 
     const lastActivity = (r: OverviewPage["statusReports"][number]) => {
       const dates = r.statusReportUpdates.map((u) =>
@@ -199,7 +194,7 @@ export function generateOverview(
         ? c.uptime
         : statusLabel(dominantDayStatus(c.data[c.data.length - 1]?.bar ?? []));
       out.push(`**${c.name}** — ${metric} · \`${days}d ago → today\``);
-      // The per-day emoji bar is a human visualization; for agents the uptime
+      // The per-day uptime bar is a human visualization; for agents the uptime
       // percentage already carries the signal, so drop the bar to save tokens.
       if (!agent) out.push(uptimeBar(c.data));
 
@@ -279,7 +274,7 @@ export function generateMonitorsList(
     out.push("No public monitors.\n");
   } else {
     const rows = page.monitors.map((m) => [
-      `${statusEmoji(m.status)} ${m.name}`,
+      `${statusGlyph(m.status)} ${m.name}`,
       statusLabel(m.status),
       mdUrl(`monitors/${m.id}`),
     ]);
@@ -326,7 +321,7 @@ export function generateEventsList(
       logRows.push({
         timestamp: update.date,
         label: statusLabel(update.status).toUpperCase(),
-        emoji: reportStatusEmoji(update.status),
+        glyph: reportStatusGlyph(update.status),
         ref: `report/${report.id}`,
         title: report.title,
       });
@@ -336,7 +331,7 @@ export function generateEventsList(
     logRows.push({
       timestamp: m.from,
       label: "MAINTENANCE",
-      emoji: statusEmoji("info"),
+      glyph: statusGlyph("info"),
       ref: `maintenance/${m.id}`,
       title: m.title,
     });
@@ -346,7 +341,7 @@ export function generateEventsList(
       logRows.push({
         timestamp: m.to,
         label: "COMPLETED",
-        emoji: statusEmoji("success"),
+        glyph: statusGlyph("success"),
         ref: `maintenance/${m.id}`,
         title: m.title,
       });
@@ -411,7 +406,7 @@ export function generateEventsList(
             return name ? componentImpactExplicit(name, ci.impact) : null;
           })
           .filter((v): v is string => Boolean(v));
-        const head = `- ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`;
+        const head = `- ${reportStatusGlyph(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`;
         out.push(
           updateAffects.length ? `${head} · ${updateAffects.join(", ")}` : head,
         );
@@ -502,7 +497,7 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
         })
         .filter((v): v is string => Boolean(v));
       out.push(
-        `### ${reportStatusEmoji(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}\n`,
+        `### ${reportStatusGlyph(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}\n`,
       );
       if (updateAffects.length)
         out.push(`affects: ${updateAffects.join(", ")}\n`);
