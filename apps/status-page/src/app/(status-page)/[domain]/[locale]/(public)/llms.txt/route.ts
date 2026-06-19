@@ -1,9 +1,8 @@
 import { db, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { getBaseUrl } from "@/lib/base-url";
-import { resolveRoute } from "@/lib/resolve-route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,11 +43,12 @@ function render({
 `;
 }
 
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const host = request.headers.get("x-forwarded-host");
-  const route = resolveRoute({ host, urlHost: url.host, pathname: "/" });
-  if (!route) return notFound();
+export async function GET(
+  _request: Request,
+  props: { params: Promise<{ domain: string }> },
+) {
+  const { domain } = await props.params;
+  const prefix = domain.toLowerCase();
 
   const row = await db
     .select({
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     })
     .from(page)
     .where(
-      sql`lower(${page.slug}) = ${route.prefix} OR lower(${page.customDomain}) = ${route.prefix}`,
+      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
     )
     .get();
   if (!row) return notFound();
