@@ -127,7 +127,7 @@ const columns: ColumnDef<CdnRegionResult>[] = [
   },
   {
     id: "details",
-    header: "",
+    header: () => <span className="sr-only">Details</span>,
     cell: ({ row }) => <DetailsDialog result={row.original} />,
     meta: {
       cellClassName: "text-right",

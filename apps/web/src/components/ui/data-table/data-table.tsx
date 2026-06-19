@@ -26,13 +26,13 @@ import {
 import * as React from "react";
 import { Fragment } from "react";
 
-export interface DataTableToolbarProps<TData> {
+interface DataTableToolbarProps<TData> {
   table: import("@tanstack/react-table").Table<TData>;
 }
 
 // trimmed port of apps/dashboard data-table: no pagination/action bar —
 // play tools render a fixed, small set of rows
-export interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   rowComponent?: React.ComponentType<{ row: Row<TData> }>;

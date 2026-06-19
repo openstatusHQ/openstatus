@@ -15,6 +15,7 @@ export function DataTableColumnHeader<TData, TValue>({
   column,
   title,
   className,
+  onClick,
   ...props
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
@@ -25,14 +26,15 @@ export function DataTableColumnHeader<TData, TValue>({
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => {
-        column.toggleSorting(undefined);
-      }}
       className={cn(
         "flex h-7 w-full items-center justify-between gap-2 px-0 py-0 hover:bg-transparent dark:hover:bg-transparent",
         className,
       )}
       {...props}
+      onClick={(event) => {
+        column.toggleSorting(undefined);
+        onClick?.(event);
+      }}
     >
       <span>{title}</span>
       <span className="flex flex-col">

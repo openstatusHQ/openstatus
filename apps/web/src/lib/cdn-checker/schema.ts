@@ -2,8 +2,8 @@ import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import { CACHE_STATUSES, CDN_PROVIDERS } from "@openstatus/header-analysis";
 import { z } from "zod";
 
-export const cacheStatusSchema = z.enum(CACHE_STATUSES);
-export const cdnProviderSchema = z.enum(CDN_PROVIDERS);
+const cacheStatusSchema = z.enum(CACHE_STATUSES);
+const cdnProviderSchema = z.enum(CDN_PROVIDERS);
 
 export const cdnRegionResultSchema = z.object({
   state: z.literal("success").prefault("success"),
@@ -24,7 +24,7 @@ export const cdnRegionResultSchema = z.object({
   cdn: cdnProviderSchema.nullable(),
 });
 
-export const cdnRegionErrorSchema = z.object({
+const cdnRegionErrorSchema = z.object({
   state: z.literal("error"),
   region: monitorRegionSchema,
   message: z.string(),
@@ -50,6 +50,5 @@ export const cdnSummarySchema = z.object({
 });
 
 export type CdnRegionResult = z.infer<typeof cdnRegionResultSchema>;
-export type CdnRegionError = z.infer<typeof cdnRegionErrorSchema>;
 export type CdnRegionResponse = z.infer<typeof cdnRegionResponseSchema>;
 export type CdnSummary = z.infer<typeof cdnSummarySchema>;

@@ -1,6 +1,6 @@
 import { assertSafeUrlSync } from "@openstatus/utils";
 
-export type UrlGuardResult =
+type UrlGuardResult =
   | { ok: true }
   | { ok: false; error: string; status: number };
 
