@@ -204,7 +204,10 @@ export async function GET(
           if (!monitor) return textResponse("Not Found", 404);
           return markdownResponse(
             request,
-            generateMonitor(monitor, baseUrl),
+            generateMonitor(monitor, baseUrl, {
+              homepageUrl: light.homepageUrl,
+              contactUrl: light.contactUrl,
+            }),
             source,
             light.whiteLabel,
             light.accessType,
@@ -217,7 +220,10 @@ export async function GET(
           if (!report) return textResponse("Not Found", 404);
           return markdownResponse(
             request,
-            generateReport(report, baseUrl),
+            generateReport(report, baseUrl, {
+              homepageUrl: light.homepageUrl,
+              contactUrl: light.contactUrl,
+            }),
             source,
             light.whiteLabel,
             light.accessType,
@@ -229,7 +235,10 @@ export async function GET(
         if (!maintenance) return textResponse("Not Found", 404);
         return markdownResponse(
           request,
-          generateMaintenance(maintenance, baseUrl),
+          generateMaintenance(maintenance, baseUrl, {
+            homepageUrl: light.homepageUrl,
+            contactUrl: light.contactUrl,
+          }),
           source,
           light.whiteLabel,
           light.accessType,

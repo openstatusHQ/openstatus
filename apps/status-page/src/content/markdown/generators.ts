@@ -41,6 +41,10 @@ export type MaintenanceDetail = NonNullable<
   RouterOutputs["statusPage"]["getMaintenance"]
 >;
 
+// Detail payloads don't carry the page's homepage/contact URLs — thread them in
+// from getLight so a directly-fetched detail page has those nav anchors.
+type PageUrls = { homepageUrl?: string | null; contactUrl?: string | null };
+
 function avg(values: number[]): number | null {
   if (values.length === 0) return null;
   return values.reduce((a, b) => a + b, 0) / values.length;
@@ -435,7 +439,11 @@ export function generateEventsList(
   return `${out.join("\n").trimEnd()}\n`;
 }
 
-export function generateReport(report: ReportDetail, baseUrl: string): string {
+export function generateReport(
+  report: ReportDetail,
+  baseUrl: string,
+  page?: PageUrls,
+): string {
   const now = Date.now();
   const updates = report.statusReportUpdates;
   const oldest = updates[updates.length - 1];
@@ -466,6 +474,8 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
       description,
       baseUrl,
       canonical: canonicalUrl(baseUrl, `events/report/${report.id}`),
+      homepageUrl: page?.homepageUrl,
+      contactUrl: page?.contactUrl,
     }),
   );
   out.push(`# ${report.title}\n`);
@@ -511,6 +521,7 @@ export function generateReport(report: ReportDetail, baseUrl: string): string {
 export function generateMaintenance(
   maintenance: MaintenanceDetail,
   baseUrl: string,
+  page?: PageUrls,
 ): string {
   const out: string[] = [];
   out.push(
@@ -519,6 +530,8 @@ export function generateMaintenance(
       description: `Maintenance: ${maintenance.title}`,
       baseUrl,
       canonical: canonicalUrl(baseUrl, `events/maintenance/${maintenance.id}`),
+      homepageUrl: page?.homepageUrl,
+      contactUrl: page?.contactUrl,
     }),
   );
   out.push(`# ${maintenance.title}\n`);
@@ -549,6 +562,7 @@ export function generateMaintenance(
 export function generateMonitor(
   monitor: MonitorDetail,
   baseUrl: string,
+  page?: PageUrls,
 ): string {
   const out: string[] = [];
   out.push(
@@ -557,6 +571,8 @@ export function generateMonitor(
       description: `Monitor metrics for ${monitor.name} (last 7 days)`,
       baseUrl,
       canonical: canonicalUrl(baseUrl, `monitors/${monitor.id}`),
+      homepageUrl: page?.homepageUrl,
+      contactUrl: page?.contactUrl,
     }),
   );
   out.push(`# ${monitor.name}\n`);

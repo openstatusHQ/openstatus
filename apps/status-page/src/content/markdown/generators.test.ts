@@ -469,6 +469,15 @@ describe("generateReport", () => {
     expect(md).toContain("affects: API (major outage)");
     expect(md).toContain("affects: API (operational)");
   });
+
+  test("frontmatter carries page homepage + contact urls", () => {
+    const withUrls = generateReport(report, BASE, {
+      homepageUrl: "https://acme.com",
+      contactUrl: "mailto:status@acme.com",
+    });
+    expect(withUrls).toContain('homepage_url: "https://acme.com"');
+    expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
+  });
 });
 
 describe("generateMaintenance", () => {
@@ -489,6 +498,15 @@ describe("generateMaintenance", () => {
     );
     expect(md).toContain("**Affected components:** Database");
     expect(md).toContain("Brief downtime.");
+  });
+
+  test("frontmatter carries page homepage + contact urls", () => {
+    const withUrls = generateMaintenance(maintenance, BASE, {
+      homepageUrl: "https://acme.com",
+      contactUrl: "mailto:status@acme.com",
+    });
+    expect(withUrls).toContain('homepage_url: "https://acme.com"');
+    expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
   });
 });
 
@@ -559,6 +577,15 @@ describe("generateMonitor", () => {
 
   test("no generated-at", () => {
     expect(md).not.toContain("generated-at");
+  });
+
+  test("frontmatter carries page homepage + contact urls", () => {
+    const withUrls = generateMonitor(monitor, BASE, {
+      homepageUrl: "https://acme.com",
+      contactUrl: "mailto:status@acme.com",
+    });
+    expect(withUrls).toContain('homepage_url: "https://acme.com"');
+    expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
   });
 });
 
