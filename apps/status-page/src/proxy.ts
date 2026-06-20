@@ -3,6 +3,7 @@ import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { resolveClientIp } from "@/lib/http/client-ip";
 
 import { createProtectedCookieKey } from "./lib/protected";
 import { applyPageLocaleOverride } from "./lib/proxy/apply-page-locale-override";
@@ -69,10 +70,7 @@ export default auth(async (req) => {
   const _page = validation.data;
   const route = applyPageLocaleOverride(initialRoute, _page);
 
-  // Vercel overwrites x-forwarded-for with the verified client IP — not spoofable.
-  // https://vercel.com/docs/headers/request-headers#x-forwarded-for
-  const xff = req.headers.get("x-forwarded-for");
-  const clientIp = xff?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip");
+  const clientIp = resolveClientIp(req.headers);
 
   console.log("[proxy] request", {
     host,

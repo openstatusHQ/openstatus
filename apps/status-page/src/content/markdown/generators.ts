@@ -6,6 +6,7 @@ import {
   componentImpact,
   componentImpactExplicit,
   dominantDayStatus,
+  escapeLinkLabel,
   type EventLogRow,
   eventLog,
   formatDay,
@@ -219,7 +220,7 @@ export function generateOverview(
           )
           .map((r) => ({
             sort: lastActivity(r),
-            link: `[${r.title}](${mdUrl(`events/report/${r.id}`)})`,
+            link: `[${escapeLinkLabel(r.title)}](${mdUrl(`events/report/${r.id}`)})`,
           })),
         ...page.maintenances
           .filter((m) =>
@@ -229,7 +230,7 @@ export function generateOverview(
           )
           .map((m) => ({
             sort: new Date(m.from).getTime(),
-            link: `[${m.title}](${mdUrl(`events/maintenance/${m.id}`)})`,
+            link: `[${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
           })),
       ]
         .filter((e) => e.sort >= windowStart)
@@ -404,7 +405,9 @@ export function generateEventsList(
           : null,
       ].filter(Boolean);
 
-      out.push(`### [${report.title}](${mdUrl(`events/report/${report.id}`)})`);
+      out.push(
+        `### [${escapeLinkLabel(report.title)}](${mdUrl(`events/report/${report.id}`)})`,
+      );
       if (meta.length) out.push(`${meta.join(" · ")}`);
       for (const update of updates) {
         const updateAffects = (update.statusReportUpdateToPageComponents ?? [])
@@ -433,7 +436,9 @@ export function generateEventsList(
         m.to ? humanDuration(m.from, m.to) : null,
         affects.length ? `affects: ${affects.join(", ")}` : null,
       ].filter(Boolean);
-      out.push(`### [${m.title}](${mdUrl(`events/maintenance/${m.id}`)})`);
+      out.push(
+        `### [${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
+      );
       out.push(meta.join(" · "));
       out.push("");
     }

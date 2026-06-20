@@ -2,7 +2,7 @@ import { db, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
 
-import type { OverviewPage } from "@/content/markdown";
+import { escapeLinkLabel, type OverviewPage } from "@/content/markdown";
 import { getBaseUrl } from "@/lib/base-url";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
@@ -39,7 +39,7 @@ function render({
     sections.push("", "## Monitors");
     for (const monitor of data.monitors) {
       sections.push(
-        `- [${monitor.name}](${baseUrl}/monitors/${monitor.id}.md)`,
+        `- [${escapeLinkLabel(monitor.name)}](${baseUrl}/monitors/${monitor.id}.md)`,
       );
     }
   }
@@ -54,12 +54,12 @@ function render({
     sections.push("", "## Active incidents & maintenance");
     for (const report of activeReports) {
       sections.push(
-        `- [${report.title}](${baseUrl}/events/report/${report.id}.md)`,
+        `- [${escapeLinkLabel(report.title)}](${baseUrl}/events/report/${report.id}.md)`,
       );
     }
     for (const maintenance of activeMaintenance) {
       sections.push(
-        `- [${maintenance.title}](${baseUrl}/events/maintenance/${maintenance.id}.md)`,
+        `- [${escapeLinkLabel(maintenance.title)}](${baseUrl}/events/maintenance/${maintenance.id}.md)`,
       );
     }
   }

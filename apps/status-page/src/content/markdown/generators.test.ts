@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { escapeCell, frontmatter, statusLabel, withPoweredBy } from "./helpers";
+import {
+  escapeCell,
+  escapeLinkLabel,
+  frontmatter,
+  statusLabel,
+  withPoweredBy,
+} from "./helpers";
 import {
   generateEventsList,
   generateMaintenance,
@@ -73,6 +79,7 @@ const overview = {
     },
   ],
   monitors: [{ id: 9, name: "API monitor", status: "success" }],
+  trackers: [],
   homepageUrl: "https://acme.com",
   contactUrl: "mailto:status@acme.com",
 } as unknown as OverviewPage;
@@ -323,6 +330,7 @@ describe("generateOverview empty components", () => {
     statusReports: [],
     maintenances: [],
     monitors: [],
+    trackers: [],
   } as unknown as OverviewPage;
   const md = generateOverview(empty, [], BASE);
 
@@ -532,6 +540,16 @@ describe("generateMaintenance", () => {
     expect(withUrls).toContain('homepage_url: "https://acme.com"');
     expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
   });
+
+  test("null `to` renders an em dash, not the unix epoch", () => {
+    const openEnded = {
+      ...maintenance,
+      to: null,
+    } as unknown as MaintenanceDetail;
+    const out = generateMaintenance(openEnded, BASE);
+    expect(out).toContain("**Window:** Jun 20, 12:00 AM → —");
+    expect(out).not.toContain("1970");
+  });
 });
 
 describe("generateMonitor", () => {
@@ -626,5 +644,25 @@ describe("frontmatter YAML escaping", () => {
     // The title value must stay on a single physical line.
     const titleLine = md.split("\n").find((l) => l.startsWith("title:"));
     expect(titleLine).toBe('title: "Acme\\nstatus\\" page\\r\\nv2"');
+  });
+
+  test("escapes tabs and other C0 control characters", () => {
+    const md = frontmatter({
+      title: "a\tbc",
+      description: "",
+      baseUrl: BASE,
+      canonical: BASE,
+    });
+    expect(md).toContain('title: "a\\tb\\x01c"');
+  });
+});
+
+describe("escapeLinkLabel", () => {
+  test("escapes brackets so a title cannot break a link label", () => {
+    expect(escapeLinkLabel("[API] is down")).toBe("\\[API\\] is down");
+  });
+
+  test("leaves bracket-free labels untouched", () => {
+    expect(escapeLinkLabel("API latency")).toBe("API latency");
   });
 });

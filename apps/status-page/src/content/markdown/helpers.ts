@@ -34,14 +34,22 @@ export function statusLabel(status: string): string {
   return status;
 }
 
-/** Escape a value for a double-quoted YAML scalar. Newlines must become `\n`/`\r`
- * escapes — a literal newline splits the scalar and parsers disagree on the result. */
+/** Quote a value as a double-quoted YAML scalar. Every C0 control char must be
+ * escaped — a literal newline/tab splits or corrupts the scalar and parsers
+ * disagree on the result. */
 function escapeYaml(value: string): string {
-  return `"${value
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, "\\n")
-    .replace(/\r/g, "\\r")}"`;
+  let out = '"';
+  for (const ch of value) {
+    const code = ch.charCodeAt(0);
+    if (ch === "\\") out += "\\\\";
+    else if (ch === '"') out += '\\"';
+    else if (ch === "\n") out += "\\n";
+    else if (ch === "\r") out += "\\r";
+    else if (ch === "\t") out += "\\t";
+    else if (code < 0x20) out += `\\x${code.toString(16).padStart(2, "0")}`;
+    else out += ch;
+  }
+  return `${out}"`;
 }
 
 /**
@@ -104,6 +112,11 @@ export function escapeCell(value: string): string {
     .replace(/\|/g, "\\|")
     .replace(/\r?\n/g, " ")
     .trim();
+}
+
+/** Escape a value used as a markdown link label — `[`/`]` would break `[text](url)`. */
+export function escapeLinkLabel(value: string): string {
+  return value.replace(/[[\]]/g, "\\$&");
 }
 
 export function table(headers: string[], rows: string[][]): string {
@@ -322,9 +335,13 @@ export function formatDay(date: Date | string | number): string {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
 
-/** "Feb 3, 1:42 PM" (UTC, deterministic). */
-export function formatDayTime(date: Date | string | number): string {
+/** "Feb 3, 1:42 PM" (UTC, deterministic). Null/invalid → "—". */
+export function formatDayTime(
+  date: Date | string | number | null | undefined,
+): string {
+  if (date === null || date === undefined) return "—";
   const d = toDate(date);
+  if (Number.isNaN(d.getTime())) return "—";
   const h = d.getUTCHours();
   const period = h < 12 ? "AM" : "PM";
   const hour12 = h % 12 === 0 ? 12 : h % 12;
@@ -353,9 +370,9 @@ export type EventLogRow = {
 
 /**
  * Greppable event log: one update per line, sortable stamp first, newest first.
- * Aligned columns precede the status glyph; the title trails as free human text.
- * Built only from structured fields — no user-authored prose — so the index
- * stays deterministic.
+ * Structured columns (stamp/status/ref/glyph) precede the user-authored title,
+ * which trails as free text. Newlines are stripped from the title so it can't
+ * inject a line that closes the fenced block.
  */
 export function eventLog(rows: EventLogRow[]): string {
   if (rows.length === 0) return "";
@@ -367,7 +384,7 @@ export function eventLog(rows: EventLogRow[]): string {
   const header = `# ${"timestamp".padEnd(16)}  ${"status".padEnd(statusW)}  event`;
   const lines = sorted.map(
     (r) =>
-      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title}`,
+      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title.replace(/\r?\n/g, " ")}`,
   );
   return ["```text", header, ...lines, "```"].join("\n");
 }

@@ -14,6 +14,7 @@ import {
 } from "@/content/markdown";
 import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
+import { resolveClientIp } from "@/lib/http/client-ip";
 import { computeETag, isNotModified } from "@/lib/http/etag";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
@@ -88,8 +89,7 @@ export async function GET(
       source === "header" || url.searchParams.get("view") === "summary";
     const cookieStore = await cookies();
     const headerStore = await headers();
-    const xff = headerStore.get("x-forwarded-for");
-    const clientIp = xff?.split(",")[0]?.trim() ?? headerStore.get("x-real-ip");
+    const clientIp = resolveClientIp(headerStore);
 
     // Shared gate over whichever page payload carries the access fields. `auth()`
     // runs only for email-domain pages. Returns null when the gate passed.

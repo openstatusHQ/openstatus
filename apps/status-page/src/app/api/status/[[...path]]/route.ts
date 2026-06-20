@@ -10,6 +10,7 @@ import {
 } from "@/content/status-json";
 import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
+import { resolveClientIp } from "@/lib/http/client-ip";
 import { computeETag, isNotModified } from "@/lib/http/etag";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
@@ -70,8 +71,7 @@ export async function GET(
 
     const headerStore = await headers();
     const cookieStore = await cookies();
-    const xff = headerStore.get("x-forwarded-for");
-    const clientIp = xff?.split(",")[0]?.trim() ?? headerStore.get("x-real-ip");
+    const clientIp = resolveClientIp(headerStore);
     const session = data.accessType === "email-domain" ? await auth() : null;
     const passwordAuthorized =
       data.accessType === "password"
