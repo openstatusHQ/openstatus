@@ -4,7 +4,51 @@ import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type {
   Addons,
   BillingInterval,
+  Limits,
 } from "@openstatus/db/src/schema/plan/schema";
+import {
+  getLimits,
+  updateAddonInLimits,
+} from "@openstatus/db/src/schema/plan/utils";
+import type Stripe from "stripe";
+
+/**
+ * Rebuild a workspace's limits from the full set of subscription line items.
+ * The plan item sets the baseline; each addon item then re-applies its flag or
+ * quantity on top, so purchased addons survive subscription updates instead of
+ * being reset to the plan default. Returns null when no plan item is present.
+ * Throws on a line item whose price is neither a known plan nor a known addon,
+ * so misconfigured prices surface instead of silently drifting from billing.
+ */
+export function buildLimitsFromSubscription(
+  subscription: Stripe.Subscription,
+): { plan: WorkspacePlan; limits: Limits } | null {
+  const detectedPlan = subscription.items.data
+    .map((item) => getPlanFromPriceId(item.price.id))
+    .find((plan) => plan !== undefined);
+
+  if (!detectedPlan) return null;
+
+  let limits: Limits = getLimits(detectedPlan.plan);
+
+  for (const item of subscription.items.data) {
+    if (getPlanFromPriceId(item.price.id)) continue;
+    const feature = getFeatureFromPriceId(item.price.id);
+    if (!feature) {
+      throw new Error(
+        `Unsupported Stripe price on subscription: ${item.price.id}`,
+      );
+    }
+    // Accumulate onto the running value so repeated addon items add up; boolean
+    // addons just flip on.
+    const current = limits[feature.feature];
+    const value =
+      typeof current === "number" ? current + (item.quantity ?? 1) : true;
+    limits = updateAddonInLimits(limits, feature.feature, value);
+  }
+
+  return { plan: detectedPlan.plan, limits };
+}
 
 export const getPlanFromPriceId = (priceId: string) => {
   const env =
@@ -19,8 +63,8 @@ export const getPlanFromPriceId = (priceId: string) => {
 export const getFeatureFromPriceId = (priceId: string) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find(
-    (feature) => feature.price.monthly.priceIds[env] === priceId,
+  return FEATURES.find((feature) =>
+    Object.values(feature.price).some((p) => p.priceIds[env] === priceId),
   );
 };
 

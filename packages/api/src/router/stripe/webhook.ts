@@ -10,17 +10,28 @@ import {
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
-import {
-  getLimits,
-  updateAddonInLimits,
-} from "@openstatus/db/src/schema/plan/utils";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getFeatureFromPriceId, getPlanFromPriceId } from "./utils";
+import { buildLimitsFromSubscription } from "./utils";
+
+// An unsupported price is a permanent misconfiguration; surface it as a 400 so
+// Stripe stops retrying instead of hammering the endpoint on a 5xx.
+function buildFromSubscriptionOrThrow(subscription: Stripe.Subscription) {
+  try {
+    return buildLimitsFromSubscription(subscription);
+  } catch (e) {
+    console.error(e);
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: e instanceof Error ? e.message : "Invalid subscription",
+    });
+  }
+}
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -65,28 +76,22 @@ export const webhookRouter = createTRPCRouter({
     const ws = selectWorkspaceSchema.parse(result);
     const oldPlan = ws.plan;
 
-    let detectedPlan: ReturnType<typeof getPlanFromPriceId> = undefined;
+    const built = buildFromSubscriptionOrThrow(subscription);
 
-    for (const item of subscription.items.data) {
-      const plan = getPlanFromPriceId(item.price.id);
-      if (plan) {
-        detectedPlan = plan;
-        break;
-      }
-    }
-
-    if (!detectedPlan) {
+    // Subscription has no recognized plan item (e.g. a standalone addon sub);
+    // nothing to sync here, unlike sessionCompleted which always has a plan.
+    if (!built) {
       return;
     }
 
     await opts.ctx.db
       .update(workspace)
       .set({
-        plan: detectedPlan.plan,
+        plan: built.plan,
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
-        limits: JSON.stringify(getLimits(detectedPlan.plan)),
+        limits: JSON.stringify(built.limits),
       })
       .where(eq(workspace.id, result.id))
       .run();
@@ -105,8 +110,8 @@ export const webhookRouter = createTRPCRouter({
       }
     }
 
-    const newPlan = detectedPlan?.plan ?? oldPlan;
-    if (detectedPlan && newPlan !== oldPlan) {
+    const newPlan = built.plan;
+    if (newPlan !== oldPlan) {
       const customer = await stripe.customers.retrieve(customerId);
       if (!customer.deleted && customer.email) {
         const userResult = await opts.ctx.db
@@ -163,76 +168,43 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    for (const item of subscription.items.data) {
-      const plan = getPlanFromPriceId(item.price.id);
-      if (!plan) {
-        const feature = getFeatureFromPriceId(item.price.id);
-        if (feature) {
-          const _ws = await opts.ctx.db
-            .select()
-            .from(workspace)
-            .where(eq(workspace.stripeId, customerId))
-            .get();
+    const built = buildFromSubscriptionOrThrow(subscription);
+    if (!built) {
+      console.error("Invalid plan");
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid plan",
+      });
+    }
 
-          const ws = selectWorkspaceSchema.parse(_ws);
+    await opts.ctx.db
+      .update(workspace)
+      .set({
+        plan: built.plan,
+        subscriptionId: subscription.id,
+        endsAt: new Date(subscription.current_period_end * 1000),
+        paidUntil: new Date(subscription.current_period_end * 1000),
+        limits: JSON.stringify(built.limits),
+      })
+      .where(eq(workspace.id, result.id))
+      .run();
 
-          const currentValue = ws.limits[feature.feature];
-          const newValue =
-            typeof currentValue === "boolean"
-              ? true
-              : typeof currentValue === "number"
-                ? currentValue + 1
-                : currentValue;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.deleted && customer.email) {
+      const userResult = await opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.email, customer.email))
+        .get();
+      if (!userResult) return;
 
-          const newLimits = updateAddonInLimits(
-            ws.limits,
-            feature.feature,
-            newValue,
-          );
-
-          await opts.ctx.db
-            .update(workspace)
-            .set({
-              limits: JSON.stringify(newLimits),
-            })
-            .where(eq(workspace.id, result.id))
-            .run();
-          continue;
-        }
-        console.error("Invalid plan");
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid plan",
-        });
-      }
-      await opts.ctx.db
-        .update(workspace)
-        .set({
-          plan: plan.plan,
-          subscriptionId: subscription.id,
-          endsAt: new Date(subscription.current_period_end * 1000),
-          paidUntil: new Date(subscription.current_period_end * 1000),
-          limits: JSON.stringify(getLimits(plan.plan)),
-        })
-        .where(eq(workspace.id, result.id))
-        .run();
-      const customer = await stripe.customers.retrieve(customerId);
-      if (!customer.deleted && customer.email) {
-        const userResult = await opts.ctx.db
-          .select()
-          .from(user)
-          .where(eq(user.email, customer.email))
-          .get();
-        if (!userResult) return;
-
-        const analytics = await setupAnalytics({
-          userId: `usr_${userResult.id}`,
-          email: userResult.email || undefined,
-          workspaceId: String(result.id),
-          plan: plan.plan,
-        });
-        await analytics.track(Events.UpgradeWorkspace);
-      }
+      const analytics = await setupAnalytics({
+        userId: `usr_${userResult.id}`,
+        email: userResult.email || undefined,
+        workspaceId: String(result.id),
+        plan: built.plan,
+      });
+      await analytics.track(Events.UpgradeWorkspace);
     }
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {

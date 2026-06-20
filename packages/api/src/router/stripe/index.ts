@@ -99,7 +99,6 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
       const result = await opts.ctx.db
         .select()
@@ -290,8 +289,6 @@ export const stripeRouter = createTRPCRouter({
         opts.input.feature,
         newValue,
       );
-
-      console.log("new Limits");
 
       await opts.ctx.db
         .update(workspace)
