@@ -47,9 +47,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const entries: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified },
-    { url: `${baseUrl}/monitors`, lastModified },
     { url: `${baseUrl}/events`, lastModified },
   ];
+
+  if (data.monitors.length > 0) {
+    entries.push({ url: `${baseUrl}/monitors`, lastModified });
+  }
 
   for (const monitor of data.monitors) {
     entries.push({ url: `${baseUrl}/monitors/${monitor.id}`, lastModified });

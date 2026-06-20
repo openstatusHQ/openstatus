@@ -3,7 +3,9 @@ import { describe, expect, test } from "bun:test";
 import {
   escapeCell,
   escapeLinkLabel,
+  eventLog,
   frontmatter,
+  navLine,
   statusLabel,
   withPoweredBy,
 } from "./helpers";
@@ -664,5 +666,39 @@ describe("escapeLinkLabel", () => {
 
   test("leaves bracket-free labels untouched", () => {
     expect(escapeLinkLabel("API latency")).toBe("API latency");
+  });
+});
+
+describe("navLine", () => {
+  test("escapes the label of a linked item", () => {
+    expect(navLine([{ label: "[x](evil)", url: "/safe" }])).toBe(
+      "[\\[x\\](evil)](/safe)",
+    );
+  });
+
+  test("leaves plain (unlinked) items untouched", () => {
+    expect(
+      navLine([{ label: "Status" }, { label: "Events", url: "/e.md" }]),
+    ).toBe("Status › [Events](/e.md)");
+  });
+});
+
+describe("eventLog", () => {
+  test("strips a lone CR so a title cannot close the code fence", () => {
+    const out = eventLog([
+      {
+        timestamp: new Date("2026-06-18T14:50:00.000Z"),
+        label: "Outage",
+        glyph: "x",
+        ref: "R-1",
+        title: "down\r```\n# injected",
+      },
+    ]);
+    // CommonMark treats a lone CR as a line ending; if it survived, the trailing
+    // ``` would start a new line and close the fence early.
+    expect(out).not.toContain("\r");
+    expect(out.startsWith("```text\n")).toBe(true);
+    expect(out.endsWith("\n```")).toBe(true);
+    expect(out).toContain("down ``` # injected");
   });
 });

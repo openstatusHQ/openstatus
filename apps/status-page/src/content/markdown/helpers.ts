@@ -110,7 +110,7 @@ export function escapeCell(value: string): string {
   return value
     .replace(/\\/g, "\\\\")
     .replace(/\|/g, "\\|")
-    .replace(/\r?\n/g, " ")
+    .replace(/[\r\n]+/g, " ")
     .trim();
 }
 
@@ -170,7 +170,7 @@ export function navLine(
   separator = " › ",
 ): string {
   return items
-    .map((i) => (i.url ? `[${i.label}](${i.url})` : i.label))
+    .map((i) => (i.url ? `[${escapeLinkLabel(i.label)}](${i.url})` : i.label))
     .join(separator);
 }
 
@@ -384,7 +384,7 @@ export function eventLog(rows: EventLogRow[]): string {
   const header = `# ${"timestamp".padEnd(16)}  ${"status".padEnd(statusW)}  event`;
   const lines = sorted.map(
     (r) =>
-      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title.replace(/\r?\n/g, " ")}`,
+      `${formatLogStamp(r.timestamp)}  ${r.label.padEnd(statusW)}  ${r.ref.padEnd(refW)}  ${r.glyph} ${r.title.replace(/[\r\n]+/g, " ")}`,
   );
   return ["```text", header, ...lines, "```"].join("\n");
 }
