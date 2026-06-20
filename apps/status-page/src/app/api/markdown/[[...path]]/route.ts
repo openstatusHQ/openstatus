@@ -184,12 +184,13 @@ export async function GET(
         );
       }
       // Detail pages: the detail queries don't carry access fields, so gate via
-      // getLight before fetching the (heavier) detail payload.
+      // getGate — a narrow access-only query — before fetching the (heavier)
+      // detail payload.
       case "monitor":
       case "report":
       case "maintenance": {
         const light = await queryClient.fetchQuery(
-          trpc.statusPage.getLight.queryOptions({ slug }),
+          trpc.statusPage.getGate.queryOptions({ slug }),
         );
         if (!light) return textResponse("Not Found", 404);
         const denied = await denyResponse(light);

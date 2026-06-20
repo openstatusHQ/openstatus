@@ -116,7 +116,7 @@ export function escapeCell(value: string): string {
 
 /** Escape a value used as a markdown link label — `[`/`]` would break `[text](url)`. */
 export function escapeLinkLabel(value: string): string {
-  return value.replace(/[[\]]/g, "\\$&");
+  return value.replace(/\\/g, "\\\\").replace(/[[\]]/g, "\\$&");
 }
 
 export function table(headers: string[], rows: string[][]): string {
