@@ -153,6 +153,28 @@ describe("generateOverview", () => {
   });
 });
 
+describe("generateOverview machine-readable pointer", () => {
+  test("public page points to json endpoints + llms.txt", () => {
+    const pub = {
+      ...overview,
+      accessType: "public",
+    } as unknown as OverviewPage;
+    expect(generateOverview(pub, components, BASE)).toContain(
+      "Machine-readable: [current.json](/api/status/current.json) · [summary.json](/api/status/summary.json) · [more](/llms.txt)",
+    );
+  });
+
+  test("gated page omits the pointer", () => {
+    const gated = {
+      ...overview,
+      accessType: "password",
+    } as unknown as OverviewPage;
+    expect(generateOverview(gated, components, BASE)).not.toContain(
+      "Machine-readable:",
+    );
+  });
+});
+
 describe("generateOverview live frontmatter + agent mode", () => {
   const page = {
     title: "Acme",

@@ -16,6 +16,7 @@ import {
   frontmatter,
   humanDuration,
   legend,
+  machineReadable,
   mdUrl,
   navLine,
   relativeTime,
@@ -243,6 +244,8 @@ export function generateOverview(
       out.push("");
     }
   }
+
+  if (page.accessType === "public") out.push(machineReadable());
 
   return `${out.join("\n").trimEnd()}\n`;
 }

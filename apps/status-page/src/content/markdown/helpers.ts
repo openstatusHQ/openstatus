@@ -425,6 +425,15 @@ export function humanDuration(
   return coarseSpan(Math.max(0, toDate(to).getTime() - toDate(from).getTime()));
 }
 
+/**
+ * Pointer to machine-readable formats, for agents that enter via a `.md` link
+ * and never see `llms.txt`. Public pages only — a gated page must not advertise
+ * JSON endpoints that may not honor its access gate.
+ */
+export function machineReadable(): string {
+  return "Machine-readable: [current.json](/api/status/current.json) · [summary.json](/api/status/summary.json) · [more](/llms.txt)";
+}
+
 /** Attribution footer appended to every doc unless the page is white-labeled. */
 export function poweredByFooter(): string {
   return "---\n\n_Powered by [openstatus.dev](https://openstatus.dev)_\n";
