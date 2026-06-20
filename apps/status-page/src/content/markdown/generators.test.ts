@@ -157,6 +157,7 @@ describe("generateOverview machine-readable pointer", () => {
   test("public page points to json endpoints + llms.txt", () => {
     const pub = {
       ...overview,
+      trackers: [],
       accessType: "public",
     } as unknown as OverviewPage;
     expect(generateOverview(pub, components, BASE)).toContain(
@@ -167,6 +168,7 @@ describe("generateOverview machine-readable pointer", () => {
   test("gated page omits the pointer", () => {
     const gated = {
       ...overview,
+      trackers: [],
       accessType: "password",
     } as unknown as OverviewPage;
     expect(generateOverview(gated, components, BASE)).not.toContain(
