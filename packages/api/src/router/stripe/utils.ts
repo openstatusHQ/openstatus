@@ -17,6 +17,8 @@ import type Stripe from "stripe";
  * The plan item sets the baseline; each addon item then re-applies its flag or
  * quantity on top, so purchased addons survive subscription updates instead of
  * being reset to the plan default. Returns null when no plan item is present.
+ * Throws on a line item whose price is neither a known plan nor a known addon,
+ * so misconfigured prices surface instead of silently drifting from billing.
  */
 export function buildLimitsFromSubscription(
   subscription: Stripe.Subscription,
@@ -27,18 +29,21 @@ export function buildLimitsFromSubscription(
 
   if (!detectedPlan) return null;
 
-  const baseLimits = getLimits(detectedPlan.plan);
-  let limits: Limits = baseLimits;
+  let limits: Limits = getLimits(detectedPlan.plan);
 
   for (const item of subscription.items.data) {
+    if (getPlanFromPriceId(item.price.id)) continue;
     const feature = getFeatureFromPriceId(item.price.id);
-    if (!feature) continue;
-    // Quantity addons add to the plan default; boolean addons just flip on.
-    const planDefault = baseLimits[feature.feature];
+    if (!feature) {
+      throw new Error(
+        `Unsupported Stripe price on subscription: ${item.price.id}`,
+      );
+    }
+    // Accumulate onto the running value so repeated addon items add up; boolean
+    // addons just flip on.
+    const current = limits[feature.feature];
     const value =
-      typeof planDefault === "number"
-        ? planDefault + (item.quantity ?? 1)
-        : true;
+      typeof current === "number" ? current + (item.quantity ?? 1) : true;
     limits = updateAddonInLimits(limits, feature.feature, value);
   }
 

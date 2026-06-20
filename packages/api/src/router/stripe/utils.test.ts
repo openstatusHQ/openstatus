@@ -78,4 +78,24 @@ describe("buildLimitsFromSubscription", () => {
     );
     expect(built?.limits["status-pages"]).toBe(planDefault + 1);
   });
+
+  test("repeated quantity addon items accumulate", () => {
+    const planDefault = getLimits("starter")["status-pages"] as number;
+    const built = buildLimitsFromSubscription(
+      subscriptionWith([
+        { priceId: STARTER },
+        { priceId: STATUS_PAGES, quantity: 2 },
+        { priceId: STATUS_PAGES, quantity: 3 },
+      ]),
+    );
+    expect(built?.limits["status-pages"]).toBe(planDefault + 5);
+  });
+
+  test("throws on an unsupported price when a plan is present", () => {
+    expect(() =>
+      buildLimitsFromSubscription(
+        subscriptionWith([{ priceId: STARTER }, { priceId: "price_unknown" }]),
+      ),
+    ).toThrow(/unsupported stripe price/i);
+  });
 });
