@@ -1317,7 +1317,7 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      if (_page.password !== opts.input.password) {
+      if (!constantTimeEqual(_page.password, opts.input.password)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invalid password",
@@ -1343,6 +1343,7 @@ export const statusPageRouter = createTRPCRouter({
         columns: { password: true, accessType: true },
       });
       if (!_page || _page.accessType !== "password") return false;
+      // TODO: rate-limit — an unauthenticated caller can brute-force guesses here.
       // Query param wins over cookie: a present-but-wrong `?pw=` must not fall
       // through to a valid cookie. Mirrors isPasswordAuthorized on the proxy.
       const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;

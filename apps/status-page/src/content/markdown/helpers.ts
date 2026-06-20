@@ -120,7 +120,7 @@ export function escapeLinkLabel(value: string): string {
 }
 
 export function table(headers: string[], rows: string[][]): string {
-  const head = `| ${headers.join(" | ")} |`;
+  const head = `| ${headers.map((cell) => escapeCell(cell)).join(" | ")} |`;
   const divider = `| ${headers.map(() => "---").join(" | ")} |`;
   const body = rows
     .map((row) => `| ${row.map((cell) => escapeCell(cell)).join(" | ")} |`)
@@ -170,7 +170,11 @@ export function navLine(
   separator = " › ",
 ): string {
   return items
-    .map((i) => (i.url ? `[${escapeLinkLabel(i.label)}](${i.url})` : i.label))
+    .map((i) =>
+      i.url
+        ? `[${escapeLinkLabel(i.label)}](${i.url})`
+        : escapeLinkLabel(i.label),
+    )
     .join(separator);
 }
 

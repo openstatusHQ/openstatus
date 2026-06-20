@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 /** Strong ETag from a content hash. Node runtime only (uses node:crypto). */
 export function computeETag(body: string): string {
-  return `"${createHash("sha1").update(body).digest("hex")}"`;
+  return `"${createHash("sha256").update(body).digest("hex")}"`;
 }
 
 /** Whether the request's If-None-Match matches the ETag — i.e. serve a 304. */
