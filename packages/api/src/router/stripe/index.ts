@@ -99,7 +99,6 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
       const result = await opts.ctx.db
         .select()

@@ -63,8 +63,8 @@ export const getPlanFromPriceId = (priceId: string) => {
 export const getFeatureFromPriceId = (priceId: string) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find(
-    (feature) => feature.price.monthly.priceIds[env] === priceId,
+  return FEATURES.find((feature) =>
+    Object.values(feature.price).some((p) => p.priceIds[env] === priceId),
   );
 };
 

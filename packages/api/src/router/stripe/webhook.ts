@@ -19,6 +19,20 @@ import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { buildLimitsFromSubscription } from "./utils";
 
+// An unsupported price is a permanent misconfiguration; surface it as a 400 so
+// Stripe stops retrying instead of hammering the endpoint on a 5xx.
+function buildFromSubscriptionOrThrow(subscription: Stripe.Subscription) {
+  try {
+    return buildLimitsFromSubscription(subscription);
+  } catch (e) {
+    console.error(e);
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: e instanceof Error ? e.message : "Invalid subscription",
+    });
+  }
+}
+
 const webhookProcedure = publicProcedure.input(
   z.object({
     // From type Stripe.Event
@@ -62,8 +76,10 @@ export const webhookRouter = createTRPCRouter({
     const ws = selectWorkspaceSchema.parse(result);
     const oldPlan = ws.plan;
 
-    const built = buildLimitsFromSubscription(subscription);
+    const built = buildFromSubscriptionOrThrow(subscription);
 
+    // Subscription has no recognized plan item (e.g. a standalone addon sub);
+    // nothing to sync here, unlike sessionCompleted which always has a plan.
     if (!built) {
       return;
     }
@@ -152,7 +168,7 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    const built = buildLimitsFromSubscription(subscription);
+    const built = buildFromSubscriptionOrThrow(subscription);
     if (!built) {
       console.error("Invalid plan");
       throw new TRPCError({
