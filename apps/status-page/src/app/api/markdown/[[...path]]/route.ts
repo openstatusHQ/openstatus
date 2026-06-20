@@ -50,6 +50,8 @@ function markdownResponse(
         ETag: etag,
         "Cache-Control": cacheControl,
         "Content-Type": MARKDOWN,
+        // Same URL serves HTML or markdown by Accept — shared caches must split.
+        Vary: "Accept",
       },
     });
   }
@@ -59,6 +61,7 @@ function markdownResponse(
       "Content-Type": MARKDOWN,
       "Cache-Control": cacheControl,
       ETag: etag,
+      Vary: "Accept",
     },
   });
 }

@@ -16,6 +16,9 @@ const isSelfHosted = process.env.SELF_HOST === "true";
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
   const passthroughResponse = NextResponse.next();
+  // HTML and markdown share the same URL (negotiated by Accept) — tell shared
+  // caches to key on it so a markdown variant is never served to a browser.
+  passthroughResponse.headers.set("Vary", "Accept");
   const host = req.headers.get("x-forwarded-host");
 
   // Strip a `.md` suffix before route resolution so path-based markdown
@@ -110,8 +113,13 @@ export default auth(async (req) => {
   switch (action.type) {
     case "redirect":
       return NextResponse.redirect(action.url);
-    case "rewrite":
-      return NextResponse.rewrite(action.url);
+    case "rewrite": {
+      // HTML served via internal rewrite shares its URL with the markdown
+      // variant — carry the same Vary so caches don't cross them.
+      const rewriteResponse = NextResponse.rewrite(action.url);
+      rewriteResponse.headers.set("Vary", "Accept");
+      return rewriteResponse;
+    }
     case "passthrough":
       return passthroughResponse;
   }
