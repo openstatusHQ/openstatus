@@ -155,7 +155,7 @@ export function generateOverview(
   // structure the HTML page renders — and join uptime data by id.
   const uptimeById = new Map(components.map((c) => [c.pageComponentId, c]));
   const rows: { groupName: string | null; component: UptimeComponent }[] = [];
-  for (const tracker of page.trackers ?? []) {
+  for (const tracker of page.trackers) {
     if (tracker.type === "component") {
       const u = uptimeById.get(tracker.component.id);
       if (u) rows.push({ groupName: null, component: u });

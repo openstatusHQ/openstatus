@@ -9,7 +9,8 @@ import { isIpAllowed } from "./is-ip-allowed";
 
 // Length-independent comparison so a wrong guess can't be timed character by
 // character. Length itself still leaks, as it does for any such check. Pure JS
-// (no node:crypto) keeps it usable from the Edge proxy.
+// (no node:crypto): must be Edge-safe for the proxy, so it can't import the twin
+// in packages/api (not in the middleware bundle) — hence the duplication.
 function constantTimeEqual(
   a: string | null | undefined,
   b: string | null | undefined,
