@@ -7,18 +7,22 @@ import { isIpAllowed } from "./is-ip-allowed";
  * cannot drift — only their wrapping behaviour differs.
  */
 
-// Length-independent comparison so a wrong guess can't be timed character by
-// character. Length itself still leaks, as it does for any such check. Pure JS
-// (no node:crypto): must be Edge-safe for the proxy, so it can't import the twin
-// in packages/api (not in the middleware bundle) — hence the duplication.
+// Length-independent comparison so a wrong guess can't be timed by length or
+// character. Pure JS (no node:crypto): must be Edge-safe for the proxy, so it
+// can't import the twin in packages/api (not in the middleware bundle) — hence
+// the duplication; keep both implementations in sync.
 function constantTimeEqual(
   a: string | null | undefined,
   b: string | null | undefined,
 ): boolean {
-  if (a == null || b == null || a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  if (a == null || b == null) return false;
+  // Iterate over the max length and fold the length delta into the accumulator
+  // so we never early-return or branch on length.
+  const max = Math.max(a.length, b.length);
+  let mismatch = a.length ^ b.length;
+  for (let i = 0; i < max; i++) {
+    // out-of-range indices read as 0; mismatch already non-zero on length diff.
+    mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   }
   return mismatch === 0;
 }
