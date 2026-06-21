@@ -55,7 +55,7 @@ catalog:
   "@hookform/devtools": 4.4.0
   "@hookform/resolvers": 5.2.2
   "@iconify-json/lucide": 1.2.109
-  "@libsql/client": 0.15.15
+  "@libsql/client": 0.17.4
   "@logtape/logtape": 2.1.1
   "@logtape/otel": 2.1.1
   "@logtape/sentry": 2.1.1
