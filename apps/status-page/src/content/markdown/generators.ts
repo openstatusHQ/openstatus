@@ -548,7 +548,9 @@ export function generateMaintenance(
   );
   const windowLine = [
     `${formatDayTime(maintenance.from)} → ${formatDayTime(maintenance.to)}`,
-    maintenance.to ? humanDuration(maintenance.from, maintenance.to) : "ongoing",
+    maintenance.to
+      ? humanDuration(maintenance.from, maintenance.to)
+      : "ongoing",
   ].join(" · ");
   out.push(`**Window:** ${windowLine}\n`);
 
