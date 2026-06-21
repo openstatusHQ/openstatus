@@ -10,14 +10,43 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      label:
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/server/node_modules
+        target: /app/apps/server/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: node
         digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
-        org.opencontainers.image.stage: install
-        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -95,46 +124,17 @@ effective: |
         source: packages/services/package.json
       - target: packages/importers/package.json
         source: packages/importers/package.json
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-        org.opencontainers.image.stage: build
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/server/node_modules
-        target: /app/apps/server/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    org.opencontainers.image.title: OpenStatus Server
+    io.dofigen.version: 2.8.0
     org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Server
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
-    io.dofigen.version: 2.7.0
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   user:
     user: '1000'
@@ -162,20 +162,20 @@ effective: |
     retries: 3
 images:
   docker.io:
+    oven:
+      bun:
+        1.3.11:
+          digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
     library:
-      debian:
-        bullseye-slim:
-          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
       node:
         24-slim:
           digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
-    oven:
-      bun:
-        1.3.6:
-          digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+      debian:
+        bullseye-slim:
+          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
 resources:
   dofigen.yml:
-    hash: 4cc23ad9bfc0f05d70c6249323f4baaad4fc11aa5cd7f61660abba8221aa6755
+    hash: 4ad3de79c65a09ba1ba428b29a15ab9131c66e271eb7c4376b4fdcc825ebd770
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -240,7 +240,7 @@ resources:
 
         # Stage 2: Build application (compile to binary)
         build:
-          fromImage: oven/bun:1.3.6
+          fromImage: oven/bun:1.3.11
           workdir: /app/apps/server
           labels:
             org.opencontainers.image.stage: build
