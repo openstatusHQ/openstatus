@@ -1,0 +1,119 @@
+---
+title: "Tokenminning: a status page your agents can actually read"
+description: "The same status page URL now serves a React page to humans and clean markdown to agents - chosen by Accept: text/markdown or a .md suffix. The page drops from ~60k tokens of HTML to ~1.2k of markdown, with the answer in the frontmatter. Here's how and why."
+image: "/assets/posts/status-page-markdown-for-agents/status-page-markdown-for-agents.png"
+author: "Maximilian Kaske"
+publishedAt: "2026-06-22"
+category: "engineering"
+---
+
+> everyone is tokenmaxxing, we are tokenminning
+
+An agent asking "is acme.com up?" should not have to render React, hunt for the right `<div>`, and guess what green means.
+
+But that's all we ever gave it: a status page built for eyeballs. Color, animation, a 60,000-token DOM. Great for a human at 2am. Useless for the LLM that human just asked.
+
+So we gave the status page a second reader. Same URL. The human gets the page. The agent gets markdown.
+
+## One URL, two readers
+
+You don't get a new API. You get the page you already share, in the format the caller asks for:
+
+```bash
+curl https://acme.openstatus.dev/monitors            # HTML, for humans
+curl -H "Accept: text/markdown" https://acme.openstatus.dev/monitors   # markdown
+curl https://acme.openstatus.dev/monitors.md         # markdown (byte-identical)
+```
+
+Two ways in - the `Accept` header for agents that set it, the `.md` suffix for everything that can't (a link in a doc, a crawler, you in a terminal at 2am). The suffix wins over the header on purpose: a `.md` URL is a stable cache key, so it keeps the cache-safe path even when a client also sends `Accept`. Everything else carries `Vary: Accept` so a shared cache never hands an agent the human page or a human the agent page.
+
+We didn't invent this. `Accept: text/markdown` is quietly becoming the handshake - Cloudflare now does [the same negotiation at the edge](https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/) for any site behind it, and calls markdown "the lingua franca for agents." The difference is *where the markdown comes from*. Edge conversion turns your **HTML** into markdown - generic, best-effort, working from whatever DOM it happens to see. We generate markdown from the **data**, which is the whole reason the next part works.
+
+## The numbers (or: why we bother)
+
+Same status page, fetched both ways, then tokenized:
+
+| Request | What you get | Bytes | Tokens |
+| --- | --- | --- | --- |
+| `GET /status` | HTML | ~166 KB | ~59,500 |
+| `GET /status.md` *(or `Accept: text/markdown`)* | markdown | ~4.7 KB | ~1,225 |
+| **Shrinks by** | | **~36×** | **~49×** |
+
+That's a status page going from ~59,500 tokens to ~1,225 - roughly **49× lighter**. The `.md` suffix and the `Accept` header return byte-identical markdown; how you ask doesn't change what you get. The homepage tells the same story: ~181 KB / ~60,000 tokens of HTML collapse to ~8.8 KB / ~2,100 tokens as `/index.md`, about **28× lighter**.
+
+Either way it's not an optimization, it's a threshold. At ~60k tokens a status page is a real bite out of a context window and an agent will skip it. At ~1k it's basically free to read - and since the answer lives in the frontmatter, the agent often never reads the body at all.
+
+And notice tokens shrink *more* than bytes do. The status page is a ~36× byte cut (166 KB → 4.7 KB) but a ~49× token cut - because HTML spends tokens on class soup, escaped entities, and inline `<script>` blobs an agent pays for and immediately throws in the bin. Bytes are what you transfer; tokens are what you're billed to *think* about. That's the tokenmaxxing tax. We'd rather not pay it.
+
+**How we measured.** No magic - fetch the bytes, count the tokens:
+
+```js
+// count.mjs — `node count.mjs`
+import { encode } from "gpt-tokenizer/encoding/o200k_base";
+
+const urls = [
+  "https://status.openstatus.dev",      // HTML
+  "https://status.openstatus.dev/.md",  // markdown (root → `/.md`)
+];
+for (const url of urls) {
+  const res = await fetch(url);
+  const buf = Buffer.from(await res.arrayBuffer());
+  console.log(buf.length, "bytes", encode(buf.toString("utf8")).length, "tokens", url);
+}
+```
+
+We counted with OpenAI's `o200k_base` (the GPT-4o encoding) and cross-checked against `cl100k_base` - the two agree within ~5%. Claude's tokenizer draws its boundaries in slightly different places, but the order of magnitude - ~60k vs ~1k - doesn't budge. The `~` is on purpose: the claim is "~50×," not a leaderboard score.
+
+## The refresh button is a `while` loop now
+
+People used to *subscribe* to a status page. Type in your email, wait for the "we're back" message, get on with your day. Increasingly they don't. They point an agent at the page and put it on a loop - literally `/loop check if acme is back every 2 minutes` - and walk away while it polls.
+
+That flips the economics. An email subscription is *one* notification when something changes. A polling loop is a fetch every couple of minutes, forever, until the service recovers - and an outage is precisely when *everyone's* loop is hammering the page at the same time. At ~60k tokens a pull, a handful of people asking "is it back yet?" every two minutes burns more context - and more money - than the incident itself. At 1.2k, with a `304` whenever nothing changed, it's a rounding error.
+
+That's the real reason tokenminning matters. We're not shaving tokens for a leaderboard. The dominant reader of a status page is becoming a loop, not a person, and a loop checks far more often than the page ever changes. Build for the reader you're actually getting.
+
+## The answer lives in the frontmatter
+
+The point isn't prettier text. It's that "is it up?" should cost almost nothing to read. So every page opens with a live snapshot in YAML frontmatter:
+
+```yaml
+---
+title: "Acme Status"
+status: "operational"
+fetched_at: "2026-06-20T14:50:00.000Z"
+active_reports: 0
+active_maintenance: 0
+components_operational: 5
+components_total: 5
+worst_component: null
+---
+```
+
+The agent gets its answer from the top ten lines, no body required. `fetched_at` is the snapshot's real generation time - an honest freshness signal - floored to the minute. That's not cosmetic: a minute-granular timestamp keeps the body (and its ETag) stable inside the cache window, so a polling agent gets a `304 Not Modified` instead of re-billing the read every few seconds. (Cloudflare returns an `x-markdown-tokens` header in the same spirit - tell the caller the cost up front.)
+
+## Markdown has no color, so shape carries the meaning
+
+The uptime bar is the fun part. On the web it's pretty colored bars. In markdown there is no color, so we encode status as *shape* - one ASCII column per day:
+
+```text
+`+` operational · `~` degraded · `x` outage · `=` maintenance · `.` no data
+`+++++~++x+++++++++++++++++++++++`
+```
+
+`x` reads as "down" with zero rendering.
+
+Our first instinct was emoji - 🟩🟩🟧🟩🟥🟩🟩 - which a human skims instantly. Then we tokenized it. A 45-day emoji bar costs **134 tokens**; the same bar in ASCII costs **8**. Every emoji is its own ~3-token unit that never compresses, while a run of `+` collapses into a single multi-character token. So we picked ASCII, and we'll be honest about why: it's *not* about human readability - nobody's curling a status page for the vibes. It saves ~17× the tokens. And, fine, ASCII is just nerdier, and a monospace `+++x++` bar in a terminal is the kind of thing this audience likes. Two birds.
+
+Two things bit us getting here. The glyphs live in a code span so they stay monospace and *aligned* - and so markdown leaves them alone, because a bare run of `~~` would otherwise turn into ~~strikethrough~~ and ruin the whole bar. Incident timelines get the same treatment: a fenced, greppable log, sortable timestamp first, user-written titles stripped of newlines so nobody can sneak in a line that closes the fence.
+
+## Gated pages stay gated
+
+A status page can be password-, email-, or IP-gated. The markdown path honors the same gate - and is paranoid about it. Public pages get an edge cache and advertise their machine-readable cousins (`summary.json`, `current.json`, an `llms.txt` index). Gated pages get `private, no-store` and advertise *nothing* - the discovery doc 404s before it can leak so much as the title of a page you weren't allowed to see. A ~50× token win is not worth one accidental data leak.
+
+## The docs and marketing site have done this since February
+
+None of this is new to `openstatus.dev` - we shipped the same `Accept` / `.md` negotiation for the docs, guides, and blog back in mid-February, months before the status page. This very post is served the same way - don't take the numbers on faith, `curl -sL https://www.openstatus.dev/blog/status-page-markdown-for-agents.md` and count the tokens yourself. It's also how our own MCP server feeds the docs back to an agent. And for callers that don't even want prose, there's a JSON tier: `current.json` is the cheapest possible "is it up?", and `summary.json` is Statuspage-compatible so existing tooling just works.
+
+The web didn't get more machine-readable by accident. We took the pages we already had, gave them a second reader, and handed that reader the answer first.
+
+Tokenmaxx less. Tokenmin more.

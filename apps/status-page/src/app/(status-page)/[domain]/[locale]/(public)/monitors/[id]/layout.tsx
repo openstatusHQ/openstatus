@@ -1,4 +1,21 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+import { statusPageAlternatesMetadata } from "@/lib/alternates-metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string; domain: string }>;
+}): Promise<Metadata> {
+  const { id, domain } = await params;
+  const numericId = Number(id);
+  if (Number.isNaN(numericId)) return {};
+  return statusPageAlternatesMetadata({
+    domain,
+    markdownPath: `/monitors/${numericId}.md`,
+  });
+}
 
 export default async function Layout({
   children,

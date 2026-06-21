@@ -1,5 +1,6 @@
 import type { Page } from "@openstatus/db/src/schema";
 
+import { isPasswordAuthorized } from "./access-predicates";
 import { buildExternalPath } from "./build-external-path";
 import type { Action, ComposeInput } from "./types";
 
@@ -43,15 +44,17 @@ export function resolvePasswordAction({
 }: Input): Action | null {
   if (page.accessType !== "password") return null;
 
-  // ?? rather than ||: an empty-string `?pw=` shouldn't silently fall through
-  // to the cookie (the query param is "present, empty" — not absent).
-  const password = queryPassword ?? cookiePassword;
+  const authorized = isPasswordAuthorized({
+    stored: page.password,
+    queryPassword,
+    cookiePassword,
+  });
   const isOnLogin = pathname.endsWith("/login");
   const needsCustomDomainRedirect =
     !isSelfHosted && !!page.customDomain && host !== `${page.slug}.stpg.dev`;
 
   // Gate-in: wrong password and not already on /login → send to login
-  if (password !== page.password && !isOnLogin) {
+  if (!authorized && !isOnLogin) {
     if (needsCustomDomainRedirect) {
       const leading = `/${page.customDomain}`;
       const redirect = pathname.startsWith(leading)
@@ -75,7 +78,7 @@ export function resolvePasswordAction({
   }
 
   // Gate-out: correct password and on /login → send to page root
-  if (password === page.password && isOnLogin) {
+  if (authorized && isOnLogin) {
     if (needsCustomDomainRedirect) {
       return {
         type: "redirect",
