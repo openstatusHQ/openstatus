@@ -12,6 +12,7 @@ import {
 } from "@/components/status-page/floating-button";
 import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
+import { statusPageAlternates } from "@/lib/alternates";
 import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 
 // Canonical schema — guarantees concrete enum output (never null/undefined).
@@ -110,19 +111,10 @@ export async function generateMetadata({
     icons: page?.icon?.toLowerCase().endsWith(".svg")
       ? { icon: { url: page.icon, type: "image/svg+xml" } }
       : page?.icon,
-    alternates: {
-      canonical: page?.customDomain
-        ? `https://${page.customDomain}`
-        : `https://${page.slug}.openstatus.dev`,
-      types: {
-        "text/markdown": page?.customDomain
-          ? `https://${page.customDomain}/.md`
-          : `https://${page.slug}.openstatus.dev/.md`,
-        "application/json": page?.customDomain
-          ? `https://${page.customDomain}/api/status/summary.json`
-          : `https://${page.slug}.openstatus.dev/api/status/summary.json`,
-      },
-    },
+    alternates: statusPageAlternates({
+      slug: page.slug,
+      customDomain: page.customDomain,
+    }),
     twitter: {
       ...twitterMetadata,
       images: [`/api/og/page?slug=${page?.slug}`],

@@ -10,21 +10,18 @@ import {
   generateOverview,
   generateReport,
   matchMarkdownRoute,
-  withPoweredBy,
 } from "@/content/markdown";
 import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
 import { resolveClientIp } from "@/lib/http/client-ip";
-import { computeETag, isNotModified } from "@/lib/http/etag";
+import { resolveMarkdownResponse } from "@/lib/http/markdown-response";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
-import { markdownCacheControl } from "@/lib/proxy/markdown-cache-control";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 // Match the feed route: getQueryClient/httpBatchLink needs Node, not Edge.
 export const runtime = "nodejs";
 
-const MARKDOWN = "text/markdown; charset=utf-8";
 const PLAIN = "text/plain; charset=utf-8";
 
 function textResponse(body: string, status: number) {
@@ -41,30 +38,17 @@ function markdownResponse(
   whiteLabel: boolean,
   accessType: string | null | undefined,
 ) {
-  const finalBody = withPoweredBy(body, whiteLabel);
-  const etag = computeETag(finalBody);
-  const cacheControl = markdownCacheControl(source, accessType);
-  if (isNotModified(request, etag)) {
-    return new NextResponse(null, {
-      status: 304,
-      headers: {
-        ETag: etag,
-        "Cache-Control": cacheControl,
-        "Content-Type": MARKDOWN,
-        // Same URL serves HTML or markdown by Accept — shared caches must split.
-        Vary: "Accept",
-      },
-    });
-  }
-  return new NextResponse(finalBody, {
-    status: 200,
-    headers: {
-      "Content-Type": MARKDOWN,
-      "Cache-Control": cacheControl,
-      ETag: etag,
-      Vary: "Accept",
-    },
+  const {
+    status,
+    body: finalBody,
+    headers,
+  } = resolveMarkdownResponse(request, {
+    body,
+    source,
+    whiteLabel,
+    accessType,
   });
+  return new NextResponse(finalBody, { status, headers });
 }
 
 export async function GET(
