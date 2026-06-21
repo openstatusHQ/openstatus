@@ -54,6 +54,7 @@ export function registerPutIncident(app: typeof incidentsApi) {
   return app.openapi(putRoute, async (c) => {
     const input = c.req.valid("json");
     const workspaceId = c.get("workspace").id;
+    const apiKey = c.get("apiKey");
     const { id } = c.req.valid("param");
 
     const _incident = await db
@@ -76,8 +77,16 @@ export function registerPutIncident(app: typeof incidentsApi) {
 
     const _newIncident = await db
       .update(incidentTable)
-      // TODO: we should set the acknowledgedBy and resolvedBy fields
-      .set({ ...input, updatedAt: new Date() })
+      .set({
+        ...input,
+        updatedAt: new Date(),
+        ...(input.acknowledgedAt !== undefined && {
+          acknowledgedBy: input.acknowledgedAt ? apiKey.createdById : null,
+        }),
+        ...(input.resolvedAt !== undefined && {
+          resolvedBy: input.resolvedAt ? apiKey.createdById : null,
+        }),
+      })
       .where(eq(incidentTable.id, Number(id)))
       .returning()
       .get();
