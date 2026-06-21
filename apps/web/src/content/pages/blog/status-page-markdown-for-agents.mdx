@@ -3,7 +3,7 @@ title: "Tokenminning: a status page your agents can actually read"
 description: "The same status page URL now serves a React page to humans and clean markdown to agents - chosen by Accept: text/markdown or a .md suffix. The page drops from ~60k tokens of HTML to ~1.2k of markdown, with the answer in the frontmatter. Here's how and why."
 image: "/assets/posts/status-page-markdown-for-agents/status-page-markdown-for-agents.png"
 author: "Maximilian Kaske"
-publishedAt: "2026-06-20"
+publishedAt: "2026-06-22"
 category: "engineering"
 ---
 
@@ -108,7 +108,7 @@ Two things bit us getting here. The glyphs live in a code span so they stay mono
 
 ## Gated pages stay gated
 
-A status page can be password-, email-, or IP-gated. The markdown path honors the same gate - and is paranoid about it. Public pages get an edge cache and advertise their machine-readable cousins (`summary.json`, `current.json`, an `llms.txt` index). Gated pages get `private, no-store` and advertise *nothing* - the discovery doc 404s before it can leak so much as the title of a page you weren't allowed to see. An 80× token win is not worth one accidental data leak.
+A status page can be password-, email-, or IP-gated. The markdown path honors the same gate - and is paranoid about it. Public pages get an edge cache and advertise their machine-readable cousins (`summary.json`, `current.json`, an `llms.txt` index). Gated pages get `private, no-store` and advertise *nothing* - the discovery doc 404s before it can leak so much as the title of a page you weren't allowed to see. A ~50× token win is not worth one accidental data leak.
 
 ## The docs and marketing site have done this since February
 
