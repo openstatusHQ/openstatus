@@ -1,6 +1,37 @@
 import { describe, expect, test } from "bun:test";
 
-import { matchMarkdownRoute } from "./match-route";
+import { matchMarkdownRoute, parseMarkdownPath } from "./match-route";
+
+describe("parseMarkdownPath", () => {
+  test("missing slug → null", () => {
+    expect(parseMarkdownPath([])).toBeNull();
+  });
+
+  test("slug only → overview rest", () => {
+    expect(parseMarkdownPath(["acme"])).toEqual({ slug: "acme", rest: [] });
+  });
+
+  test("drops a present locale segment", () => {
+    expect(parseMarkdownPath(["acme", "de", "monitors", "123"])).toEqual({
+      slug: "acme",
+      rest: ["monitors", "123"],
+    });
+  });
+
+  test("keeps a non-locale second segment (locale-less request)", () => {
+    expect(parseMarkdownPath(["acme", "monitors", "123"])).toEqual({
+      slug: "acme",
+      rest: ["monitors", "123"],
+    });
+  });
+
+  test("locale only, no rest", () => {
+    expect(parseMarkdownPath(["acme", "fr"])).toEqual({
+      slug: "acme",
+      rest: [],
+    });
+  });
+});
 
 describe("matchMarkdownRoute", () => {
   test("empty → overview", () => {

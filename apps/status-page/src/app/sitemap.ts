@@ -4,6 +4,7 @@ import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
 import { getBaseUrl } from "@/lib/base-url";
+import { stripHostPort } from "@/lib/domain";
 import { resolveRoute } from "@/lib/resolve-route";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
@@ -14,7 +15,9 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const headerStore = await headers();
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const host = stripHostPort(
+    headerStore.get("x-forwarded-host") ?? headerStore.get("host"),
+  );
   const route = resolveRoute({ host, urlHost: host ?? "", pathname: "/" });
   if (!route) return [];
 

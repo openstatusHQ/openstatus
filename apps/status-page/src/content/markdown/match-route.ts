@@ -1,6 +1,24 @@
+import { locales } from "@openstatus/locales";
+
 export type MarkdownTarget =
   | { kind: "overview" | "monitors" | "events" }
   | { kind: "monitor" | "report" | "maintenance"; id: number };
+
+/**
+ * Split the catch-all path into the page slug and rest-segments. Markdown is
+ * locale-agnostic, so a locale segment is dropped — but only when actually
+ * present, otherwise a real path segment would be consumed. Returns null when
+ * the slug is missing.
+ */
+export function parseMarkdownPath(
+  path: string[],
+): { slug: string; rest: string[] } | null {
+  const [slug, second, ...tail] = path;
+  if (!slug) return null;
+  const isLocale = (locales as readonly string[]).includes(second);
+  const rest = isLocale ? tail : [second, ...tail].filter(Boolean);
+  return { slug, rest };
+}
 
 function parseId(value: string | undefined): number | null {
   if (!value || !/^\d+$/.test(value)) return null;

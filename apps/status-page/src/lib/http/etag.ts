@@ -9,5 +9,7 @@ export function computeETag(body: string): string {
 export function isNotModified(request: Request, etag: string): boolean {
   const header = request.headers.get("if-none-match");
   if (!header) return false;
+  // RFC 7232 §3.2: `*` matches any current representation.
+  if (header.trim() === "*") return true;
   return header.split(",").some((tag) => tag.trim() === etag);
 }

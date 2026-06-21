@@ -42,4 +42,9 @@ describe("isNotModified", () => {
       true,
     );
   });
+
+  test("wildcard `*` matches any current ETag", () => {
+    expect(isNotModified(withINM("*"), computeETag("x"))).toBe(true);
+    expect(isNotModified(withINM("  *  "), computeETag("x"))).toBe(true);
+  });
 });

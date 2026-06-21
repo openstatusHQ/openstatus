@@ -43,8 +43,10 @@ export function isEmailDomainAuthorized(
   authEmail: string | null | undefined,
   authEmailDomains: string[] | null | undefined,
 ): boolean {
-  const domain = authEmail?.split("@")[1];
-  return !!(domain && (authEmailDomains ?? []).includes(domain));
+  // DNS domains are case-insensitive — normalise both sides before matching.
+  const domain = authEmail?.split("@")[1]?.toLowerCase();
+  const allowed = (authEmailDomains ?? []).map((d) => d.toLowerCase());
+  return !!(domain && allowed.includes(domain));
 }
 
 /** Client IP falls within one of the page's allowed CIDR ranges. */

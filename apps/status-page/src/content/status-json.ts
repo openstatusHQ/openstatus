@@ -9,6 +9,28 @@ import {
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
+export type StatusEndpoint = "summary" | "status" | "incidents";
+
+const ENDPOINTS: Record<string, StatusEndpoint> = {
+  "summary.json": "summary",
+  "current.json": "status",
+  "incidents.json": "incidents",
+};
+
+/**
+ * The endpoint is always the last path segment; an optional leading segment is a
+ * path-based slug (`/{slug}/summary.json`), mirroring the markdown route. Returns
+ * null for unknown shapes so the handler can 404.
+ */
+export function matchEndpoint(
+  path: string[],
+): { endpoint: StatusEndpoint; slug: string | null } | null {
+  if (path.length === 0 || path.length > 2) return null;
+  const endpoint = ENDPOINTS[path[path.length - 1]];
+  if (!endpoint) return null;
+  return { endpoint, slug: path.length === 2 ? path[0] : null };
+}
+
 function pageBlock(page: Page, baseUrl: string) {
   return {
     name: page.title,

@@ -538,13 +538,13 @@ describe("generateMaintenance", () => {
     expect(withUrls).toContain('contact_url: "mailto:status@acme.com"');
   });
 
-  test("null `to` renders an em dash, not the unix epoch", () => {
+  test("null `to` renders 'ongoing', not a bogus duration", () => {
     const openEnded = {
       ...maintenance,
       to: null,
     } as unknown as MaintenanceDetail;
     const out = generateMaintenance(openEnded, BASE);
-    expect(out).toContain("**Window:** Jun 20, 12:00 AM → —");
+    expect(out).toContain("**Window:** Jun 20, 12:00 AM → — · ongoing");
     expect(out).not.toContain("1970");
   });
 });

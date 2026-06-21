@@ -62,16 +62,20 @@ import {
 const WORKSPACES =
   process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
-// Length-independent comparison so a wrong guess can't be timed character by
+// Length-independent comparison so a wrong guess can't be timed by length or
 // character. Pure JS (no node:crypto) keeps it usable from the Edge runtime.
 function constantTimeEqual(
   a: string | null | undefined,
   b: string | null | undefined,
 ): boolean {
-  if (a == null || b == null || a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  if (a == null || b == null) return false;
+  // constant-time: iterate over the max length and fold the length delta into
+  // the accumulator so we never early-return or branch on length.
+  const max = Math.max(a.length, b.length);
+  let mismatch = a.length ^ b.length;
+  for (let i = 0; i < max; i++) {
+    // out-of-range indices read as 0; mismatch already non-zero on length diff.
+    mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   }
   return mismatch === 0;
 }

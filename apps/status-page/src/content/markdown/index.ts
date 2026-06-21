@@ -1,4 +1,4 @@
-export { matchMarkdownRoute } from "./match-route";
+export { matchMarkdownRoute, parseMarkdownPath } from "./match-route";
 export type { MarkdownTarget } from "./match-route";
 export { escapeLinkLabel, poweredByFooter, withPoweredBy } from "./helpers";
 export {

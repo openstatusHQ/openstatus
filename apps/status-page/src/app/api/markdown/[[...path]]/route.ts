@@ -1,4 +1,3 @@
-import type { Page } from "@openstatus/db/src/schema";
 import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -10,13 +9,12 @@ import {
   generateOverview,
   generateReport,
   matchMarkdownRoute,
+  parseMarkdownPath,
 } from "@/content/markdown";
-import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
 import { resolveClientIp } from "@/lib/http/client-ip";
 import { resolveMarkdownResponse } from "@/lib/http/markdown-response";
-import { createProtectedCookieKey } from "@/lib/protected";
-import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
+import { type GatePage, resolveGate } from "@/lib/proxy/resolve-gate";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 // Match the feed route: getQueryClient/httpBatchLink needs Node, not Edge.
@@ -57,9 +55,9 @@ export async function GET(
 ) {
   try {
     const { path = [] } = await params;
-    // _locale is ignored — markdown content is locale-agnostic.
-    const [slug, _locale, ...rest] = path;
-    if (!slug) return textResponse("Not Found", 404);
+    const parsed = parseMarkdownPath(path);
+    if (!parsed) return textResponse("Not Found", 404);
+    const { slug, rest } = parsed;
 
     const target = matchMarkdownRoute(rest);
     if (!target) return textResponse("Not Found", 404);
@@ -71,35 +69,14 @@ export async function GET(
     const headerStore = await headers();
     const clientIp = resolveClientIp(headerStore);
 
-    // Shared gate over whichever page payload carries the access fields. `auth()`
-    // runs only for email-domain pages. Returns null when the gate passed.
-    async function denyResponse(gatePage: {
-      accessType: Page["accessType"];
-      authEmailDomains: string[] | null;
-      allowedIpRanges: string[] | null;
-      slug: string;
-    }) {
-      const session =
-        gatePage.accessType === "email-domain" ? await auth() : null;
-      const passwordAuthorized =
-        gatePage.accessType === "password"
-          ? await queryClient.fetchQuery(
-              trpc.statusPage.isPasswordAuthorized.queryOptions({
-                slug: gatePage.slug,
-                queryPassword: url.searchParams.get("pw"),
-                cookiePassword: cookieStore.get(
-                  createProtectedCookieKey(gatePage.slug),
-                )?.value,
-              }),
-            )
-          : false;
-      const gate = evaluateMarkdownGate({
-        accessType: gatePage.accessType,
-        passwordAuthorized,
-        authEmail: session?.user?.email,
-        authEmailDomains: gatePage.authEmailDomains,
+    // Returns a response when the gate denies, null when it passes.
+    async function denyResponse(gatePage: GatePage) {
+      const gate = await resolveGate({
+        page: gatePage,
+        queryClient,
+        url,
+        cookieStore,
         clientIp,
-        allowedIpRanges: gatePage.allowedIpRanges,
       });
       return gate.ok ? null : textResponse(gate.body, gate.status);
     }

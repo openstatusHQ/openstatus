@@ -546,9 +546,11 @@ export function generateMaintenance(
       { label: maintenance.title },
     ])}\n`,
   );
-  out.push(
-    `**Window:** ${formatDayTime(maintenance.from)} → ${formatDayTime(maintenance.to)} · ${humanDuration(maintenance.from, maintenance.to)}\n`,
-  );
+  const windowLine = [
+    `${formatDayTime(maintenance.from)} → ${formatDayTime(maintenance.to)}`,
+    maintenance.to ? humanDuration(maintenance.from, maintenance.to) : "ongoing",
+  ].join(" · ");
+  out.push(`**Window:** ${windowLine}\n`);
 
   const components = maintenance.maintenancesToPageComponents
     .map((c) => c.pageComponent?.name)

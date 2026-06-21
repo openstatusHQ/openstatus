@@ -4,16 +4,16 @@ import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
 import {
+  matchEndpoint,
   toStatus,
   toSummary,
   toUnresolvedIncidents,
 } from "@/content/status-json";
-import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
+import { stripHostPort } from "@/lib/domain";
 import { resolveClientIp } from "@/lib/http/client-ip";
 import { computeETag, isNotModified } from "@/lib/http/etag";
-import { createProtectedCookieKey } from "@/lib/protected";
-import { evaluateMarkdownGate } from "@/lib/proxy/evaluate-markdown-gate";
+import { resolveGate } from "@/lib/proxy/resolve-gate";
 import { resolveRoute } from "@/lib/resolve-route";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
@@ -31,27 +31,28 @@ function json(body: unknown, status: number, extraHeaders?: HeadersInit) {
   });
 }
 
-type Endpoint = "summary" | "status" | "incidents";
-
-function matchEndpoint(path: string[]): Endpoint | null {
-  if (path.length === 1 && path[0] === "summary.json") return "summary";
-  if (path.length === 1 && path[0] === "current.json") return "status";
-  if (path.length === 1 && path[0] === "incidents.json") return "incidents";
-  return null;
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path?: string[] }> },
 ) {
   try {
     const { path = [] } = await params;
-    const endpoint = matchEndpoint(path);
-    if (!endpoint) return json({ error: "Not Found" }, 404);
+    const matched = matchEndpoint(path);
+    if (!matched) return json({ error: "Not Found" }, 404);
+    const { endpoint, slug: pathSlug } = matched;
 
     const url = new URL(request.url);
-    const host = request.headers.get("x-forwarded-host");
-    const route = resolveRoute({ host, urlHost: url.host, pathname: "/" });
+    // Strip the port: custom-domain lookups exact-match the port-less
+    // page.customDomain (parity with sitemap.ts / robots.ts).
+    const host = stripHostPort(request.headers.get("x-forwarded-host"));
+    // Host-keyed deploys (subdomain/custom domain) resolve from the host; a
+    // path-based deploy carries the slug in the URL (`{slug}/summary.json`),
+    // so feed it through resolveRoute as the pathname prefix.
+    const route = resolveRoute({
+      host,
+      urlHost: host ?? url.host,
+      pathname: pathSlug ? `/${pathSlug}` : "/",
+    });
     if (!route) return json({ error: "Not Found" }, 404);
 
     const row = await db
@@ -72,26 +73,12 @@ export async function GET(
     const headerStore = await headers();
     const cookieStore = await cookies();
     const clientIp = resolveClientIp(headerStore);
-    const session = data.accessType === "email-domain" ? await auth() : null;
-    const passwordAuthorized =
-      data.accessType === "password"
-        ? await queryClient.fetchQuery(
-            trpc.statusPage.isPasswordAuthorized.queryOptions({
-              slug: data.slug,
-              queryPassword: url.searchParams.get("pw"),
-              cookiePassword: cookieStore.get(
-                createProtectedCookieKey(data.slug),
-              )?.value,
-            }),
-          )
-        : false;
-    const gate = evaluateMarkdownGate({
-      accessType: data.accessType,
-      passwordAuthorized,
-      authEmail: session?.user?.email,
-      authEmailDomains: data.authEmailDomains,
+    const gate = await resolveGate({
+      page: data,
+      queryClient,
+      url,
+      cookieStore,
       clientIp,
-      allowedIpRanges: data.allowedIpRanges,
     });
     if (!gate.ok) return json({ error: gate.body }, gate.status);
 

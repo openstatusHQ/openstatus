@@ -48,7 +48,9 @@ function getUpdateLink(
   });
 
   return `${baseUrl}/feed/${type}${
-    page?.accessType === "password" && password ? `?pw=${password}` : ""
+    page?.accessType === "password" && password
+      ? `?pw=${encodeURIComponent(password)}`
+      : ""
   }`;
 }
 

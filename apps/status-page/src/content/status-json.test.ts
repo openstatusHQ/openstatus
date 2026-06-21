@@ -2,7 +2,46 @@ import { describe, expect, test } from "bun:test";
 
 import type { RouterOutputs } from "@openstatus/api";
 
-import { toStatus, toSummary, toUnresolvedIncidents } from "./status-json";
+import {
+  matchEndpoint,
+  toStatus,
+  toSummary,
+  toUnresolvedIncidents,
+} from "./status-json";
+
+describe("matchEndpoint", () => {
+  test("single endpoint segment, no slug", () => {
+    expect(matchEndpoint(["summary.json"])).toEqual({
+      endpoint: "summary",
+      slug: null,
+    });
+    expect(matchEndpoint(["current.json"])).toEqual({
+      endpoint: "status",
+      slug: null,
+    });
+    expect(matchEndpoint(["incidents.json"])).toEqual({
+      endpoint: "incidents",
+      slug: null,
+    });
+  });
+
+  test("path-based slug + endpoint", () => {
+    expect(matchEndpoint(["acme", "summary.json"])).toEqual({
+      endpoint: "summary",
+      slug: "acme",
+    });
+  });
+
+  test("unknown endpoint → null", () => {
+    expect(matchEndpoint(["acme", "unknown.json"])).toBeNull();
+    expect(matchEndpoint(["summary"])).toBeNull();
+  });
+
+  test("empty or too-long paths → null", () => {
+    expect(matchEndpoint([])).toBeNull();
+    expect(matchEndpoint(["a", "b", "summary.json"])).toBeNull();
+  });
+});
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
