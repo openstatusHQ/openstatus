@@ -42,6 +42,7 @@ import {
   StatusBar,
   StatusBarSkeleton,
 } from "@/components/status-page/status-bar";
+import { StatusCalendar } from "@/components/status-page/status-calendar";
 import { StatusComponentGroup } from "@/components/status-page/status-component-group";
 import {
   StatusEventAffected,
@@ -327,6 +328,14 @@ export function Client() {
             })}
           </StatusContent>
         ) : null}
+        <StatusContent className="group-data-[hide-components=true]/embed:hidden">
+          <StatusCalendar
+            statusReports={page.statusReports}
+            maintenances={page.maintenances}
+            pageComponents={page.pageComponents}
+            isLoading={isPageLoading}
+          />
+        </StatusContent>
         <Separator className="group-data-[hide-components=true]/embed:hidden group-data-[hide-feed=true]/embed:hidden" />
         <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
           <StatusFeed
