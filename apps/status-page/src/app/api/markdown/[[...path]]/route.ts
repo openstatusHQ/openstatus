@@ -83,10 +83,6 @@ export async function GET(
     const source = request.headers.get("x-md-source");
     const queryClient = getQueryClient();
     const url = new URL(request.url);
-    // `Accept: text/markdown` negotiation (not a `.md` link a human clicked) is
-    // almost always a programmatic agent; `?view=summary` is the explicit opt-in.
-    const agent =
-      source === "header" || url.searchParams.get("view") === "summary";
     const cookieStore = await cookies();
     const headerStore = await headers();
     const clientIp = resolveClientIp(headerStore);
@@ -177,7 +173,7 @@ export async function GET(
           )) ?? [];
         return markdownResponse(
           request,
-          generateOverview(page, uptime, baseUrl, showUptime, agent),
+          generateOverview(page, uptime, baseUrl, showUptime),
           source,
           page.whiteLabel,
           page.accessType,

@@ -186,7 +186,7 @@ describe("generateOverview machine-readable pointer", () => {
   });
 });
 
-describe("generateOverview live frontmatter + agent mode", () => {
+describe("generateOverview live frontmatter", () => {
   const page = {
     title: "Acme",
     description: "",
@@ -250,17 +250,12 @@ describe("generateOverview live frontmatter + agent mode", () => {
     expect(md).not.toContain("updated_at:");
   });
 
-  test("agent mode drops the ascii uptime bar + legend", () => {
-    const human = generateOverview(page, comps, BASE, true, false);
-    const agent = generateOverview(page, comps, BASE, true, true);
+  test("always renders the ascii uptime bar + legend", () => {
+    const md = generateOverview(page, comps, BASE);
     // The `+` bar is a code span (`` `+` ``); `(GMT+0)` has a bare `+`, so match
     // the wrapped form to isolate the bar.
-    expect(count(human, "`+`")).toBeGreaterThan(0);
-    expect(count(agent, "`+`")).toBe(0);
-    expect(human).toContain("Legend:");
-    expect(agent).not.toContain("Legend:");
-    // live frontmatter is still present in agent mode
-    expect(agent).toContain("active_reports: 1");
+    expect(count(md, "`+`")).toBeGreaterThan(0);
+    expect(md).toContain("Legend:");
   });
 });
 

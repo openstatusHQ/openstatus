@@ -57,7 +57,6 @@ export function generateOverview(
   components: UptimeComponent[],
   baseUrl: string,
   showUptime = true,
-  agent = false,
 ): string {
   const now = Date.now();
   const out: string[] = [];
@@ -176,8 +175,7 @@ export function generateOverview(
   if (rows.length === 0) {
     out.push("No components.\n");
   } else {
-    // The legend only explains the uptime bar, which agent mode drops.
-    if (!agent) out.push(`${legend()}\n`);
+    out.push(`${legend()}\n`);
 
     const lastActivity = (r: OverviewPage["statusReports"][number]) => {
       const dates = r.statusReportUpdates.map((u) =>
@@ -200,9 +198,7 @@ export function generateOverview(
         ? c.uptime
         : statusLabel(dominantDayStatus(c.data[c.data.length - 1]?.bar ?? []));
       out.push(`**${c.name}** — ${metric} · \`${days}d ago → today\``);
-      // The per-day uptime bar is a human visualization; for agents the uptime
-      // percentage already carries the signal, so drop the bar to save tokens.
-      if (!agent) out.push(uptimeBar(c.data));
+      out.push(uptimeBar(c.data));
 
       // Only events within the chart window (c.data is oldest → newest); older
       // ones fall off the bar and live on the /events page.
