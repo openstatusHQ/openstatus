@@ -269,6 +269,9 @@ export const statusColors: Record<StatusType, string> = {
  */
 export const colors = statusColors;
 
+// Timestamps render in UTC; the suffix tells viewers which zone.
+const withUTC = (value: string) => `${value} (UTC)`;
+
 /**
  * Default labels consumed by blocks when no StatusBlocksI18nProvider is mounted.
  * Registry/web preview render with this set; the status-page app overrides via the provider.
@@ -321,20 +324,23 @@ export const defaultStatusBlocksLabels = {
   durationFor: (s: string) => `(for ${s})`,
   durationAcross: (s: string) => `across ${s}`,
 
-  formatDate: (d: Date) => formatDate(d),
-  formatDateShort: (d: Date) => formatDateShort(d),
-  formatDateTime: (d: Date) => formatDateTime(d),
-  formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
+  formatDate: (d: Date) => withUTC(formatDate(d)),
+  formatDateShort: (d: Date) => withUTC(formatDateShort(d)),
+  formatDateTime: (d: Date) => withUTC(formatDateTime(d)),
+  formatDateRange: (from?: Date, to?: Date) => {
+    const range = formatDateRange(from, to);
+    return from || to ? withUTC(range) : range;
+  },
   formatDateRangeParts: (from: Date, to: Date) => {
     if (isSameDay(new UTCDate(from), new UTCDate(to))) {
-      return { from: formatDateTime(from), to: formatTime(to) };
+      return { from: formatDateTime(from), to: withUTC(formatTime(to)) };
     }
     const isFromStartDay =
       startOfDay(new UTCDate(from)).getTime() === from.getTime();
     const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
     if (isFromStartDay && isToEndDay) {
-      return { from: formatDate(from), to: formatDate(to) };
+      return { from: formatDate(from), to: withUTC(formatDate(to)) };
     }
-    return { from: formatDateTime(from), to: formatDateTime(to) };
+    return { from: formatDateTime(from), to: withUTC(formatDateTime(to)) };
   },
 } as const satisfies StatusBlocksLabels;
