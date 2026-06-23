@@ -338,6 +338,58 @@ describe("add_status_report_update carries prior impacts forward", () => {
     });
   });
 
+  test("prepareDraftInput enriches the confirmation preview with carried impacts", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-preview`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const approval = agentTools.add_status_report_update.approval;
+      if (!approval?.prepareDraftInput) {
+        throw new Error("expected prepareDraftInput to be defined");
+      }
+
+      const prepared = await approval.prepareDraftInput({
+        ctx,
+        input: {
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "watching it",
+          notify: false,
+        },
+      });
+
+      const impacts = prepared.componentImpacts ?? [];
+      expect(impacts).toContainEqual({
+        pageComponentId: componentA,
+        impact: "major_outage",
+      });
+
+      const summary = approval.summarize(prepared);
+      expect(
+        summary.lines.some((l) => l.label === "Impacts"),
+        "preview should include an Impacts line",
+      ).toBe(true);
+    });
+  });
+
   test("legacy report (no impacts) stays legacy on follow-up updates", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };

@@ -63,10 +63,13 @@ function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
     inputSchema: draftSchema,
     execute: async (input: unknown) => {
       const parsed = draftSchema.parse(input);
+      const prepared = t.approval?.prepareDraftInput
+        ? await t.approval.prepareDraftInput({ ctx, input: parsed })
+        : parsed;
       const draft: SlackToolDraft = {
         needsConfirmation: true,
         toolName: t.name,
-        input: parsed,
+        input: prepared,
       };
       return draft;
     },
