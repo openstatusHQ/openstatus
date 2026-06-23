@@ -347,7 +347,7 @@ export const defaultStatusBlocksLabels = {
   durationAcross: (s: string) => `across ${s}`,
 
   formatDate: (d: Date) => withUTC(formatDate(d)),
-  formatDateShort: (d: Date) => withUTC(formatDateShort(d)),
+  formatDateShort: (d: Date) => formatDateShort(d),
   formatDateTime: (d: Date) => withUTC(formatDateTime(d)),
   formatDateRange: (from?: Date, to?: Date) => {
     const range = formatDateRange(from, to);
