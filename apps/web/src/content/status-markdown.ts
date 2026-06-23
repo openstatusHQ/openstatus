@@ -105,16 +105,19 @@ async function generateReportsMarkdown(args: {
   const dailyRows = settledRows(dailyRes);
   const countryRows = settledRows(countryRes);
 
+  const windowOk = windowRes.status === "fulfilled";
   const reporters = windowRows[0]?.reporters ?? 0;
   const countries = windowRows[0]?.countries ?? 0;
   const dailyWithReports = dailyRows.filter((r) => r.total > 0);
   if (reporters === 0 && dailyWithReports.length === 0) return "";
 
   let md = `## ${args.serviceName} user reports\n\n`;
-  if (reporters >= REPORT_THRESHOLD) {
-    md += `Users are reporting problems with ${args.serviceName}: ${reporters} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
-  } else {
-    md += `${reporters} user ${reporters === 1 ? "report" : "reports"} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
+  if (windowOk) {
+    if (reporters >= REPORT_THRESHOLD) {
+      md += `Users are reporting problems with ${args.serviceName}: ${reporters} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
+    } else {
+      md += `${reporters} user ${reporters === 1 ? "report" : "reports"} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
+    }
   }
 
   if (countryRows.length > 0) {
