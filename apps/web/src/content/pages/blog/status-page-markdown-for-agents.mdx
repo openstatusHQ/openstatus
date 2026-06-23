@@ -35,8 +35,8 @@ Same status page, fetched both ways, then tokenized:
 
 | Request | What you get | Bytes | Tokens |
 | --- | --- | --- | --- |
-| `GET /status` | HTML | ~166 KB | ~59,500 |
-| `GET /status.md` *(or `Accept: text/markdown`)* | markdown | ~4.7 KB | ~1,225 |
+| `GET /` | HTML | ~166 KB | ~59,500 |
+| `GET /.md` *(or `Accept: text/markdown`)* | markdown | ~4.7 KB | ~1,225 |
 | **Shrinks by** | | **~36×** | **~49×** |
 
 That's a status page going from ~59,500 tokens to ~1,225 - roughly **49× lighter**. The `.md` suffix and the `Accept` header return byte-identical markdown; how you ask doesn't change what you get. The homepage tells the same story: ~181 KB / ~60,000 tokens of HTML collapse to ~8.8 KB / ~2,100 tokens as `/index.md`, about **28× lighter**.
