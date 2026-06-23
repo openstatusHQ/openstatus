@@ -5,12 +5,12 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "env": "bun env.ts",
-    "dev": "bun run --hot src/index.ts",
-    "start": "NODE_ENV=production bun run src/index.ts",
-    "test": "bun test",
-    "tsc": "tsc --noEmit",
-    "eval:mcp": "bun run src/routes/mcp/evals/run.ts"
+    "env": "deno run -A env.ts",
+    "dev": "deno run -A --watch --unstable-sloppy-imports src/serve.ts",
+    "start": "NODE_ENV=production deno run -A --unstable-sloppy-imports src/serve.ts",
+    "test": "deno test -A --no-check --unstable-sloppy-imports",
+    "check": "deno check --unstable-sloppy-imports src/serve.ts",
+    "eval:mcp": "deno run -A --unstable-sloppy-imports src/routes/mcp/evals/run.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
@@ -69,9 +69,11 @@
   },
   "devDependencies": {
     "@openstatus/locales": "workspace:*",
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "@types/validator": "catalog:",
-    "bun-types": "catalog:",
     "dotenv": "catalog:"
   }
 }

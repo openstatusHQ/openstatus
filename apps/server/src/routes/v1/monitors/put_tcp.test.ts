@@ -1,6 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
-import { app } from "@/index";
+import { app } from "../../../index";
 
 test("update the monitor", async () => {
   const res = await app.request("/v1/monitor/tcp/1", {

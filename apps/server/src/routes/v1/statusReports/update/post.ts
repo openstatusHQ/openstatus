@@ -7,10 +7,12 @@ import {
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails/src/client";
 
-import { env } from "@/env";
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { notEmpty } from "@/utils/not-empty";
-
+import { env } from "../../../../env";
+import {
+  OpenStatusApiError,
+  openApiErrorResponses,
+} from "../../../../libs/errors";
+import { notEmpty } from "../../../../utils/not-empty";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
@@ -114,8 +116,9 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         .all();
 
       const validSubscribers = subscribers.filter(
-        (s): s is typeof s & { token: string } =>
+        (s): s is typeof s & { token: string; email: string } =>
           s.token !== null &&
+          s.email !== null &&
           s.acceptedAt !== null &&
           s.unsubscribedAt === null,
       );

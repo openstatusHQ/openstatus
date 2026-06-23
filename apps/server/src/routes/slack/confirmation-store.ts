@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
-import { redis } from "@/libs/clients";
+import { redis } from "../../libs/clients";
 
 const pendingPayloadSchema = z.object({
   toolName: z.string(),

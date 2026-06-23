@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
@@ -8,8 +6,10 @@ import {
   pageComponent,
   pageSubscriber,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { app } from "@/index";
+import { app } from "../../../../../index";
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {

@@ -1,5 +1,5 @@
-import { Link } from "@/content/link";
-import { ThemeToggle } from "@/content/theme-toggle";
+import { Link } from "./link";
+import { ThemeToggle } from "./theme-toggle";
 
 import { FooterStatus } from "./footer-status";
 

@@ -19,7 +19,6 @@ import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 
 import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
-import openapiYaml from "../static/openapi.yaml" with { type: "text" };
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { mcpRoute } from "./routes/mcp";
@@ -41,6 +40,10 @@ export const app = new Hono<Env>({
 
 const logger = getLogger("api-server");
 const otelLogger = getLogger("api-server-otel");
+
+const openapiYaml = await Deno.readTextFile(
+  new URL("../static/openapi.yaml", import.meta.url),
+);
 
 /**
  * Configure logging asynchronously without blocking module initialization.
@@ -263,13 +266,6 @@ app.route("/mcp", mcpRoute);
  * create incidents, and send notifications.
  */
 
-const isDev = process.env.NODE_ENV === "development";
-const port = 3000;
-
-if (isDev) showRoutes(app, { verbose: true, colorize: true });
-
-logger.info("Starting server", { port, environment: env.NODE_ENV });
-
-const server = { port, fetch: app.fetch };
-
-export default server;
+if (process.env.NODE_ENV === "development") {
+  showRoutes(app, { verbose: true, colorize: true });
+}

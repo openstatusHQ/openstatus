@@ -1,0 +1,17 @@
+{
+  "name": "@openstatus/test-utils",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19"
+  }
+}

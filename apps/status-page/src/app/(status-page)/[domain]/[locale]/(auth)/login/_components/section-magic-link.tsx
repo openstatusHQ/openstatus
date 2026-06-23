@@ -11,15 +11,15 @@ import {
   EmptyStateContainer,
   EmptyStateDescription,
   EmptyStateTitle,
-} from "@/components/content/empty-state";
+} from "../../../../../../../components/content/empty-state";
 import {
   Section,
   SectionDescription,
   SectionHeader,
   SectionTitle,
-} from "@/components/content/section";
-import { FormEmail, type FormValues } from "@/components/forms/form-email";
-import { generateServerActionPromise } from "@/lib/server-actions";
+} from "../../../../../../../components/content/section";
+import { FormEmail, type FormValues } from "../../../../../../../components/forms/form-email";
+import { generateServerActionPromise } from "../../../../../../../lib/server-actions";
 
 import { signInWithResendAction } from "../actions";
 

@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   auditLog,
@@ -11,8 +9,10 @@ import {
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { app } from "@/index";
+import { app } from "../../../../../index";
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).

@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, mock, test } from "@openstatus/test-utils";
 
 import type { ServiceContext } from "@openstatus/services";
 import { agentTools } from "@openstatus/services/agent-tools";

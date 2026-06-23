@@ -1,10 +1,9 @@
-import { describe, expect, test } from "bun:test";
-
 import type { Scope } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 
-import type { Variables } from "@/types";
-
+import type { Variables } from "../../types";
 import { requireWriteScope } from "./require-scope";
 
 /**

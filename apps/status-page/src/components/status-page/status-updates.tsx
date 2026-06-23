@@ -29,9 +29,9 @@ import { useState } from "react";
 import {
   FormSubscribeEmail,
   type FormValues,
-} from "@/components/forms/form-subscribe-email";
-import { getBaseUrl } from "@/lib/base-url";
-import { createProtectedCookieKey } from "@/lib/protected";
+} from "../forms/form-subscribe-email";
+import { getBaseUrl } from "../../lib/base-url";
+import { createProtectedCookieKey } from "../../lib/protected";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 

@@ -6,7 +6,7 @@ import {
 } from "@openstatus/analytics";
 import type { Context, Next } from "hono";
 
-import type { Variables } from "@/types";
+import type { Variables } from "../../types";
 
 const logger = getLogger("api-server");
 

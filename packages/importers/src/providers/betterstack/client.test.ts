@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, spy } from "@std/testing/mock";
 
 import { createBetterstackClient } from "./client";
 import {
@@ -16,7 +18,7 @@ const originalFetch = globalThis.fetch;
 
 function mockFetchPaginated(data: unknown[], status = 200) {
   let callCount = 0;
-  globalThis.fetch = mock(() => {
+  globalThis.fetch = spy(() => {
     callCount++;
     const items = callCount === 1 ? data : [];
     const body = {
@@ -39,7 +41,7 @@ function mockFetchPaginated(data: unknown[], status = 200) {
 }
 
 function mockFetchError(status: number, statusText: string) {
-  globalThis.fetch = mock(() =>
+  globalThis.fetch = spy(() =>
     Promise.resolve(
       new Response(JSON.stringify({ error: statusText }), {
         status,
@@ -143,9 +145,9 @@ describe("BetterstackClient", () => {
   test("sends correct auth header", async () => {
     mockFetchPaginated(MOCK_MONITORS);
     await client.getMonitors();
-    const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
+    assertSpyCalls(fetchMock, 1);
+    const [url, options] = fetchMock.calls[0].args as [string, RequestInit];
     expect(url).toBe("https://uptime.betterstack.com/api/v2/monitors");
     expect((options.headers as Record<string, string>).Authorization).toBe(
       "Bearer test-api-key",
@@ -154,7 +156,7 @@ describe("BetterstackClient", () => {
 
   test("follows pagination.next for multiple pages", async () => {
     let callCount = 0;
-    globalThis.fetch = mock(() => {
+    globalThis.fetch = spy(() => {
       callCount++;
       const body =
         callCount === 1

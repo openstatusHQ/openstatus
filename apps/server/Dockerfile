@@ -52,10 +52,10 @@ pnpm install --prod --frozen-lockfile --verbose
 EOF
 
 # build
-FROM oven/bun@sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7 AS build
+FROM denoland/deno@sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.11" \
+    org.opencontainers.image.base.digest="sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29" \
+    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.0" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
@@ -74,7 +74,7 @@ COPY \
     --from=install \
     --link \
     "/app/packages" "/app/packages"
-RUN bun build --compile --sourcemap src/index.ts --outfile=app
+RUN deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
 
 # runtime
 FROM debian@sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604 AS runtime

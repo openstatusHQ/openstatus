@@ -5,8 +5,8 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
-import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
-import { DataTableViewOptions } from "@/components/ui/data-table/data-table-view-options";
+import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { DataTableViewOptions } from "./data-table-view-options";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;

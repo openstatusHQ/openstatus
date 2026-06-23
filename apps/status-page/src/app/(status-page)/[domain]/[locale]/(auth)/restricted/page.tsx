@@ -5,7 +5,7 @@ import { ShieldAlert } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 
-import { useTRPC } from "@/lib/trpc/client";
+import { useTRPC } from "../../../../../../lib/trpc/client";
 
 export default function RestrictedPage() {
   const { domain } = useParams<{ domain: string }>();

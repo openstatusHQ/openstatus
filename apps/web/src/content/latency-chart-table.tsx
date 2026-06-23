@@ -2,7 +2,7 @@ import fs from "node:fs";
 
 import { type Region, regionDict } from "@openstatus/regions";
 
-import type { RegionMetricsChartTable } from "@/data/content";
+import type { RegionMetricsChartTable } from "../data/content";
 
 import { SimpleChart } from "./simple-chart";
 

@@ -6,9 +6,14 @@
   "license": "ISC",
   "author": "",
   "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/client": "./src/client.tsx",
+    "./src/*": "./src/*.ts"
+  },
   "scripts": {
     "dev:email": "email dev",
-    "test": "bun test"
+    "test": "deno test -A --no-check --unstable-sloppy-imports"
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
@@ -21,6 +26,8 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@react-email/ui": "catalog:",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "typescript": "catalog:"

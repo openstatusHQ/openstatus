@@ -1,4 +1,4 @@
-import { mock } from "bun:test";
+import { mock } from "@openstatus/test-utils";
 
 mock.module("@openstatus/upstash", () => ({
   Redis: {

@@ -2,9 +2,9 @@ import { createRoute } from "@hono/zod-openapi";
 import { getLogger } from "@logtape/logtape";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
 
-import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
-import { openApiErrorResponses } from "@/libs/errors";
+import { env } from "../../../../env";
+import { getCheckerPayload, getCheckerUrl } from "../../../../libs/checker";
+import { openApiErrorResponses } from "../../../../libs/errors";
 
 const logger = getLogger("api-server");
 import { db } from "@openstatus/db/src/db";

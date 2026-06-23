@@ -1,6 +1,6 @@
-import { Link } from "@/content/link";
-import { ThemeToggle } from "@/content/theme-toggle";
-import { footerLinks } from "@/data/content";
+import { Link } from "./link";
+import { ThemeToggle } from "./theme-toggle";
+import { footerLinks } from "../data/content";
 
 import { FooterStatus } from "./footer-status";
 

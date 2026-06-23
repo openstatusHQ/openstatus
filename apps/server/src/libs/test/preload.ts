@@ -1,4 +1,4 @@
-import { mock } from "bun:test";
+import { mock } from "@openstatus/test-utils";
 
 // Import the real module BEFORE mock.module runs so we can spread real
 // service functions (createSubscription, updateChannel, etc.) into the

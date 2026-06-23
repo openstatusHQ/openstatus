@@ -12,20 +12,35 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    docker:
+    build:
       fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        path: denoland/deno
+        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
       label:
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
       workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
       copy:
       - paths:
         - .
         target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
       run:
-      - bun run src/build-docker.ts
+      - deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --output app src/serve.ts
     install:
       fromImage:
         path: node
@@ -105,62 +120,18 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
-    libsql:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      workdir: /app/
-      copy:
-      - fromBuilder: docker
-        paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
-      run:
-      - bun install --production
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     io.dofigen.version: 2.8.0
-    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -168,14 +139,6 @@ effective: |
     - /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: '555'
-  - fromBuilder: libsql
-    paths:
-    - /app/node_modules
-    target: /app/packages/db/node_modules
-  - fromBuilder: libsql
-    paths:
-    - /app/node_modules
-    target: /app/node_modules
   root:
     run:
     - apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
@@ -192,13 +155,13 @@ images:
       debian:
         bullseye-slim:
           digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
-    oven:
-      bun:
-        1.3.11:
-          digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+    denoland:
+      deno:
+        2.9.0:
+          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
 resources:
   dofigen.yml:
-    hash: 9ad08ee36ff20abe093e58fc36235d056b6ed3e22b8ae2f3fb30399e34cdaebe
+    hash: 884534f1ee6706da8d3c4edf722e14d8c845d7105eaad2eee13e1b8f2e1e8650
     content: |
       ignore:
         - node_modules
@@ -259,9 +222,9 @@ resources:
           cache:
             - /root/.local/share/pnpm/store
 
-        # Stage 4: Build application (compile to binary)
+        # Stage 4: Build application (compile to binary with Deno)
         build:
-          fromImage: oven/bun:1.3.11
+          fromImage: denoland/deno:2.9.0
           workdir: /app/apps/workflows
           labels:
             org.opencontainers.image.stage: build
@@ -276,30 +239,11 @@ resources:
             - fromBuilder: install
               source: /app/packages
               target: /app/packages
-            #  Should set env to production here
-          # Compile the TypeScript application
           env:
             NODE_ENV: production
-          run: bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
-
-        docker:
-          fromImage: oven/bun:1.3.11
-          workdir: /app/apps/workflows
-          copy:
-           - . /app/
-          run: bun run src/build-docker.ts
-
-        libsql:
-          fromImage: oven/bun:1.3.11
-          workdir: /app/
-          copy:
-            - fromBuilder: docker
-              source: /app/apps/build-docker/package.json
-              target: /app/package.json
-          # bun install is hoisted by default -> flat node_modules so the compiled bun binary can
-          # resolve the libsql native addon (@libsql/<platform>) from disk at runtime. No lockfile
-          # is needed (the generated package.json pins one exact version), so a single install does it.
-          run: bun install --production
+          # `deno compile` embeds the @libsql/client native addon into the binary, so no side-car
+          # node_modules is needed at runtime (unlike `bun build --compile`).
+          run: deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --output app src/serve.ts
 
       fromImage: debian:bullseye-slim
       workdir: /app/
@@ -314,18 +258,12 @@ resources:
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
 
-      # Copy artifacts from build stages
+      # Copy the self-contained compiled binary (native addon embedded by deno compile)
       copy:
         - fromBuilder: build
           source: /app/apps/workflows/app
           target: /app/apps/workflows/
           chmod: "555"
-        - fromBuilder: libsql
-          source: /app/node_modules
-          target: /app/packages/db/node_modules
-        - fromBuilder: libsql
-          source: /app/node_modules
-          target: /app/node_modules
       expose: "3000"
 
       entrypoint: /app/apps/workflows/app

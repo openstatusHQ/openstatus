@@ -1,4 +1,4 @@
-import { afterAll, afterEach, describe, expect, mock, test } from "bun:test";
+import { afterAll, afterEach, describe, expect, mock, test } from "@openstatus/test-utils";
 
 import { db, eq, inArray } from "@openstatus/db";
 import {

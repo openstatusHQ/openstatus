@@ -4,9 +4,9 @@ import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
-} from "@/app/(landing)/content-box";
-import { Grid } from "@/content/mdx-components/grid";
-import { api } from "@/trpc/rq-client";
+} from "../../content-box";
+import { Grid } from "../../../../content/mdx-components/grid";
+import { api } from "../../../../trpc/rq-client";
 
 function impactClass(impact: string | undefined): string {
   switch (impact) {

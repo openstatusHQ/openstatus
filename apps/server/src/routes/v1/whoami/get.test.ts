@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
-import { app } from "@/index";
-
+import { app } from "../../../index";
 import { WorkspaceSchema } from "./schema";
 
 test("return the whoami", async () => {

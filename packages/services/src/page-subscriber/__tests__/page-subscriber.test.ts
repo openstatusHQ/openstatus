@@ -1,13 +1,3 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-
 import { and, db, eq } from "@openstatus/db";
 import {
   auditLog,
@@ -15,6 +5,15 @@ import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  test,
+} from "@std/testing/bdd";
 
 import {
   createPageSubscriber,

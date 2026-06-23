@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
-import { app } from "@/index";
-import { createErrorSchema } from "@/libs/errors";
-
+import { app } from "../../../index";
+import { createErrorSchema } from "../../../libs/errors";
 import { MonitorSchema } from "./schema";
 
 test("create a valid monitor", async () => {

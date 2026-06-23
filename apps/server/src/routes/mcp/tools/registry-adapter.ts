@@ -1,7 +1,7 @@
 import type {
   McpServer,
   RegisteredTool,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
+} from "@modelcontextprotocol/sdk/server/mcp";
 import type { ServiceContext } from "@openstatus/services";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
 import { ZodObject, type ZodRawShape, type ZodType } from "zod";

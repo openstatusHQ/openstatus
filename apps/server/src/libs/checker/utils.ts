@@ -6,7 +6,7 @@ import {
   transformHeaders,
 } from "@openstatus/utils";
 
-import { OpenStatusApiError } from "@/libs/errors";
+import { OpenStatusApiError } from "../errors";
 
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,

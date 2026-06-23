@@ -8,12 +8,12 @@ import { NextIntlClientProvider } from "next-intl";
 import PlausibleProvider from "next-plausible";
 import { Suspense } from "react";
 
-import { Link } from "@/components/common/link";
-import { ThemeProvider } from "@/components/themes/theme-provider";
+import { Link } from "../../components/common/link";
+import { ThemeProvider } from "../../components/themes/theme-provider";
 import {
   SidebarTrigger,
   ThemeSidebar,
-} from "@/components/themes/theme-sidebar";
+} from "../../components/themes/theme-sidebar";
 
 const SIDEBAR_WIDTH = "20rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";

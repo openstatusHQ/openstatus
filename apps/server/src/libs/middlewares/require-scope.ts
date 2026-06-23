@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-import type { Variables } from "@/types";
+import type { Variables } from "../../types";
 
 /**
  * V1 REST middleware that enforces the `'write'` scope on any

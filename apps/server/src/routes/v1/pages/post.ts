@@ -9,8 +9,8 @@ import {
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import { trackMiddleware } from "../../../libs/middlewares";
 
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";

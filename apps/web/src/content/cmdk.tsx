@@ -28,8 +28,8 @@ import {
   CORPUS_LABELS,
   type Corpus,
   type SearchResult,
-} from "@/content/search-meta";
-import { buildHighlightRegex } from "@/content/utils/search-match";
+} from "./search-meta";
+import { buildHighlightRegex } from "./utils/search-match";
 
 type ConfigItem = {
   type: "item";

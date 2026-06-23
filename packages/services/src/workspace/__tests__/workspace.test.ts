@@ -1,7 +1,7 @@
-import { beforeAll, describe, expect, test } from "bun:test";
-
 import { eq } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
   getWorkspace,

@@ -6,9 +6,13 @@
   "license": "ISC",
   "author": "",
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./src/*": "./src/*.ts"
+  },
   "scripts": {
-    "test": "bun test",
-    "env": "bun env.ts"
+    "test": "deno test -A --no-check --unstable-sloppy-imports",
+    "env": "deno run -A env.ts"
   },
   "dependencies": {
     "@openstatus/analytics": "workspace:*",
@@ -52,6 +56,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "bun-types": "catalog:",

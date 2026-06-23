@@ -2,7 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
 
 import type { statusReportsApi } from "./index";
 import { ParamsSchema } from "./schema";

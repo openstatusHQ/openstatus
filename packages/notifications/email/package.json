@@ -4,7 +4,7 @@
   "description": "Log drains Vercel integration.",
   "main": "src/index.ts",
   "scripts": {
-    "test": "bun test",
+    "test": "deno test -A --no-check --unstable-sloppy-imports",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -20,10 +20,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/react-dom": "catalog:",
-    "bun-types": "catalog:",
     "typescript": "catalog:"
   }
 }

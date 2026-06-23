@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
-import { app } from "@/index";
-
+import { app } from "../../../../index";
 import { ResultRun } from "../schema";
 
 test.todo("get monitor result with valid id should return 200", async () => {

@@ -12,7 +12,7 @@ import {
   formatDateRange,
   formatDateRangeParts,
   formatDateTime,
-} from "@/lib/formatter";
+} from "../../lib/formatter";
 
 /**
  * StatusBlocksProvider

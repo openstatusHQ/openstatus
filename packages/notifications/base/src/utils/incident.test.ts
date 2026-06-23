@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
-
 import type { Incident } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { describe, it } from "@std/testing/bdd";
 
 import { getIncidentDuration } from "./incident";
 

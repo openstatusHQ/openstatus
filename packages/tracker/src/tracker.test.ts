@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
-
 import type {
   Incident,
   Maintenance,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { describe, test } from "@std/testing/bdd";
 
 import { blacklistDates } from "./blacklist";
 import { classNames, statusDetails } from "./config";
@@ -149,10 +149,12 @@ describe("Tracker", () => {
       ["0% → Major Outage", 100, 0, Status.MajorOutage],
     ];
 
-    test.each(cases)("%s", (_label, count, ok, expected) => {
-      const tracker = new Tracker({ data: [day("2024-01-01", count, ok)] });
-      expect(tracker.currentStatus).toBe(expected);
-    });
+    for (const [label, count, ok, expected] of cases) {
+      test(label, () => {
+        const tracker = new Tracker({ data: [day("2024-01-01", count, ok)] });
+        expect(tracker.currentStatus).toBe(expected);
+      });
+    }
 
     // NOTE: the lower boundary is `> 30`, while the other two are `>=`. So
     // exactly 30% uptime is Major (not Partial) Outage. Pinning current

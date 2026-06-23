@@ -1,7 +1,7 @@
 import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
-import { env } from "@/env";
+import { env } from "../env";
 
 /**
  * Shared singleton instances for external services.

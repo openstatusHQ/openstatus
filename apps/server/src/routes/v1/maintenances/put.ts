@@ -8,8 +8,8 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import { trackMiddleware } from "../../../libs/middlewares";
 
 import type { maintenancesApi } from "./index";
 import {

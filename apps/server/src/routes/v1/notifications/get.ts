@@ -5,7 +5,7 @@ import {
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
 
 import type { notificationsApi } from "./index";
 import { NotificationSchema, ParamsSchema } from "./schema";

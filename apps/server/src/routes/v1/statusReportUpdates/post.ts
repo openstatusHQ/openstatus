@@ -3,7 +3,7 @@ import { and, db, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
 
 import type { statusReportUpdatesApi } from "./index";
 import { StatusReportUpdateSchema } from "./schema";

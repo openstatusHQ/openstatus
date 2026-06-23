@@ -1,17 +1,17 @@
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 import { ImageResponse } from "next/og";
 
-import { isStale } from "@/app/(landing)/status/utils";
+import { isStale } from "../../../(landing)/status/utils";
 import {
   getComponentEscalation,
   getServiceEscalation,
-} from "@/lib/external-report-escalation";
+} from "../../../../lib/external-report-escalation";
 import {
   cachedGetExternalComponentBySlug,
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
-} from "@/lib/external-service-cache";
-import { cn } from "@/lib/utils";
+} from "../../../../lib/external-service-cache";
+import { cn } from "../../../../lib/utils";
 
 import { SIZE } from "../utils";
 

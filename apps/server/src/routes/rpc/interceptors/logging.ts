@@ -1,7 +1,7 @@
 import type { Interceptor } from "@connectrpc/connect";
 import { getLogger, withContext } from "@logtape/logtape";
 
-import { env } from "@/env";
+import { env } from "../../../env";
 
 import { RPC_CONTEXT_KEY } from "./auth";
 

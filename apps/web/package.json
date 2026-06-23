@@ -9,7 +9,7 @@
     "build": "pnpm build:registry && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "bun test",
+    "test": "deno test -A --no-check --unstable-sloppy-imports",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -98,6 +98,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "@tailwindcss/postcss": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

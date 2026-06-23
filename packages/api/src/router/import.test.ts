@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
-
 import { db, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
@@ -21,6 +19,8 @@ import {
   MOCK_SUBSCRIBERS,
 } from "@openstatus/importers/statuspage/fixtures";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";

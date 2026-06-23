@@ -10,7 +10,7 @@ import {
 import { getOpenTelemetrySink } from "@logtape/otel";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
-import * as Sentry from "@sentry/bun";
+import * as Sentry from "@sentry/deno";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
@@ -21,7 +21,7 @@ import { cronRouter } from "./cron";
 import { env } from "./env";
 import { incidentRoute } from "./incident";
 
-const { NODE_ENV, PORT } = env();
+const { NODE_ENV } = env();
 
 export type Env = {
   Variables: {
@@ -97,7 +97,7 @@ await configure({
 const logger = getLogger(["workflow"]);
 const otelLogger = getLogger(["workflow-otel"]);
 
-const app = new Hono<Env>({ strict: false });
+export const app = new Hono<Env>({ strict: false });
 
 app.use("*", requestId());
 
@@ -182,9 +182,3 @@ app.route("/incident", incidentRoute);
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
-
-logger.info("Starting server", { port: PORT, environment: NODE_ENV });
-
-const server = { port: PORT, fetch: app.fetch };
-
-export default server;

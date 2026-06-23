@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "@openstatus/test-utils";
 import crypto from "node:crypto";
 
 import { Hono } from "hono";

@@ -1,5 +1,5 @@
 import "server-only";
-import { slugify } from "@/content/mdx";
+import { slugify } from "../mdx";
 
 import { type MDXData, PAGE_TYPES, getHomePage, getPages } from ".";
 import type { Corpus, SearchResult } from "../search-meta";

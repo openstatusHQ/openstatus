@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import type { ServiceContext } from "@openstatus/services";
 
 import packageJson from "../../../package.json" with { type: "json" };

@@ -9,8 +9,8 @@ import {
 } from "@openstatus/db/src/schema/page_components";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import { trackMiddleware } from "../../../libs/middlewares";
 
 import type { maintenancesApi } from "./index";
 import {

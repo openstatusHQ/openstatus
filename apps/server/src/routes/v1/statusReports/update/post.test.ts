@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
-import { app } from "@/index";
-
+import { app } from "../../../../index";
 import { StatusReportSchema } from "../schema";
 
 test("create status report update with valid data should return 200", async () => {

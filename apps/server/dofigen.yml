@@ -59,9 +59,9 @@ builders:
     cache:
       - /root/.local/share/pnpm/store
 
-  # Stage 2: Build application (compile to binary)
+  # Stage 2: Build application (compile to binary with Deno)
   build:
-    fromImage: oven/bun:1.3.11
+    fromImage: denoland/deno:2.9.0
     workdir: /app/apps/server
     labels:
       org.opencontainers.image.stage: build
@@ -78,7 +78,9 @@ builders:
       - fromBuilder: install
         source: /app/packages
         target: /app/packages
-    run: bun build --compile --sourcemap src/index.ts --outfile=app
+    # Deno reads `catalog:` from root package.json; consumes pnpm's node_modules (manual).
+    # sloppy-imports resolves the codebase's extensionless relative imports.
+    run: deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
 
 # Runtime stage
 fromImage: debian:bullseye-slim

@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -14,9 +12,10 @@ import {
   PageComponentImpact,
   StatusReportStatus,
 } from "@openstatus/proto/status_report/v1";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { app } from "@/index";
-
+import { app } from "../../../../../index";
 import {
   dbImpactToProto,
   protoImpactToDb,

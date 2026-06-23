@@ -4,8 +4,8 @@ import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 // import { serialize } from "@openstatus/assertions";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import { trackMiddleware } from "../../../libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { DNSMonitorSchema, MonitorSchema } from "./schema";

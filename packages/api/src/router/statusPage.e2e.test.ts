@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
   incidentTable,
@@ -9,6 +7,8 @@ import {
   pageSubscriber,
   workspace,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 /**
  * End-to-end integration tests for the full unsubscribe flow.

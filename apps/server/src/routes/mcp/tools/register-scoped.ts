@@ -2,7 +2,7 @@ import type {
   McpServer,
   RegisteredTool,
   ToolCallback,
-} from "@modelcontextprotocol/sdk/server/mcp.js";
+} from "@modelcontextprotocol/sdk/server/mcp";
 import type { Scope } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
 import { matchesScope } from "@openstatus/services/auth";
