@@ -17,6 +17,7 @@ import { createStatusReport } from "../status-report/create";
 import {
   type ComponentImpacts,
   componentImpactsSchema,
+  type StatusReportStatus,
 } from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
 import type { AgentTool } from "./types";
@@ -28,8 +29,12 @@ import type { AgentTool } from "./types";
 async function withCarriedImpacts(
   ctx: ServiceContext,
   statusReportId: number,
+  status: StatusReportStatus,
   componentImpacts: ComponentImpacts | undefined,
 ): Promise<ComponentImpacts | undefined> {
+  // resolve clears every still-active component the update doesn't name; carrying
+  // them forward would mark them named and defeat that, so skip carry on resolve.
+  if (status === "resolved") return componentImpacts;
   const report = await getStatusReport({
     ctx,
     input: { id: statusReportId },
@@ -358,6 +363,7 @@ export const addStatusReportUpdateTool: AgentTool<
       componentImpacts: await withCarriedImpacts(
         ctx,
         input.statusReportId,
+        input.status,
         input.componentImpacts,
       ),
     }),
@@ -391,6 +397,7 @@ export const addStatusReportUpdateTool: AgentTool<
         componentImpacts: await withCarriedImpacts(
           ctx,
           input.statusReportId,
+          input.status,
           input.componentImpacts,
         ),
         date: input.date ? new Date(input.date) : undefined,

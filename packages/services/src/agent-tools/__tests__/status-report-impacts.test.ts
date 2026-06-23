@@ -390,6 +390,49 @@ describe("add_status_report_update carries prior impacts forward", () => {
     });
   });
 
+  test("status=resolved does not carry impacts forward, so resolve clears them", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA, componentB } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-resolve-clear`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+            { pageComponentId: componentB, impact: "partial_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "resolved",
+          message: "all fixed",
+          notify: false,
+        }),
+      });
+
+      const final = await getCurrentImpactsForReport(
+        tx,
+        created.statusReport.id,
+      );
+      expect(final.get(componentA)).toBe("operational");
+      expect(final.get(componentB)).toBe("operational");
+    });
+  });
+
   test("legacy report (no impacts) stays legacy on follow-up updates", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
