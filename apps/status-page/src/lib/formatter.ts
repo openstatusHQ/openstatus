@@ -1,3 +1,4 @@
+import { UTCDate } from "@date-fns/utc";
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
 
 export function formatMilliseconds(ms: number) {
@@ -41,6 +42,9 @@ export function formatNumber(
 
 // TODO: think of supporting custom formats
 
+// All status-page timestamps render in UTC for consistency across viewers; the
+// StatusTimestamp hover card surfaces the viewer's local timezone on demand.
+
 export function formatDate(
   date: Date,
   options?: Intl.DateTimeFormatOptions & { locale?: string },
@@ -50,6 +54,7 @@ export function formatDate(
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
     ...rest,
   });
 }
@@ -60,6 +65,7 @@ export function formatDateTime(date: Date, locale?: string) {
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -67,6 +73,7 @@ export function formatTime(date: Date, locale?: string) {
   return date.toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -80,14 +87,15 @@ export function formatDateRangeParts(
   to: Date,
   locale?: string,
 ): { from: string; to: string } {
-  if (isSameDay(from, to)) {
+  if (isSameDay(new UTCDate(from), new UTCDate(to))) {
     return {
       from: formatDateTime(from, locale),
       to: formatTime(to, locale),
     };
   }
-  const isFromStartDay = startOfDay(from).getTime() === from.getTime();
-  const isToEndDay = endOfDay(to).getTime() === to.getTime();
+  const isFromStartDay =
+    startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
   if (isFromStartDay && isToEndDay) {
     return {
       from: formatDate(from, { locale }),
@@ -101,9 +109,10 @@ export function formatDateRangeParts(
 }
 
 export function formatDateRange(from?: Date, to?: Date, locale?: string) {
-  const sameDay = from && to && isSameDay(from, to);
-  const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
-  const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
+  const sameDay = from && to && isSameDay(new UTCDate(from), new UTCDate(to));
+  const isFromStartDay =
+    from && startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = to && endOfDay(new UTCDate(to)).getTime() === to.getTime();
 
   if (sameDay) {
     if (from.getTime() === to.getTime()) {
