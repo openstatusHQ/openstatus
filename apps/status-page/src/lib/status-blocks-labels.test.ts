@@ -35,6 +35,12 @@ describe("defaultStatusBlocksLabels UTC suffix", () => {
       ).toBe("Since January 15 at 10:00 AM (UTC)");
     });
 
+    test("appends the UTC suffix to an open-start range", () => {
+      expect(
+        labels.formatDateRange(undefined, new Date("2024-01-15T15:00:00Z")),
+      ).toBe("Until January 15 at 3:00 PM (UTC)");
+    });
+
     test("leaves `All time` without a UTC suffix", () => {
       expect(labels.formatDateRange()).toBe("All time");
     });

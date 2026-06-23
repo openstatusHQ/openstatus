@@ -127,6 +127,27 @@ export function formatTime(date: Date, locale = "en-US") {
   });
 }
 
+/**
+ * Returns the start/end of a closed range as separate strings, collapsing the
+ * `to` side to a time-only render when `from` and `to` fall on the same UTC day.
+ * Use `formatDateRange` for open-ended cases (`Until …` / `Since …`).
+ */
+export function formatDateRangeParts(
+  from: Date,
+  to: Date,
+): { from: string; to: string } {
+  if (isSameDay(new UTCDate(from), new UTCDate(to))) {
+    return { from: formatDateTime(from), to: formatTime(to) };
+  }
+  const isFromStartDay =
+    startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
+  if (isFromStartDay && isToEndDay) {
+    return { from: formatDate(from), to: formatDate(to) };
+  }
+  return { from: formatDateTime(from), to: formatDateTime(to) };
+}
+
 import type {
   StatusReportImpact,
   StatusReportUpdateType,
@@ -333,15 +354,7 @@ export const defaultStatusBlocksLabels = {
     return from || to ? withUTC(range) : range;
   },
   formatDateRangeParts: (from: Date, to: Date) => {
-    if (isSameDay(new UTCDate(from), new UTCDate(to))) {
-      return { from: formatDateTime(from), to: withUTC(formatTime(to)) };
-    }
-    const isFromStartDay =
-      startOfDay(new UTCDate(from)).getTime() === from.getTime();
-    const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
-    if (isFromStartDay && isToEndDay) {
-      return { from: formatDate(from), to: withUTC(formatDate(to)) };
-    }
-    return { from: formatDateTime(from), to: withUTC(formatDateTime(to)) };
+    const { from: start, to: end } = formatDateRangeParts(from, to);
+    return { from: start, to: withUTC(end) };
   },
 } as const satisfies StatusBlocksLabels;
