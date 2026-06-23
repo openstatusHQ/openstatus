@@ -77,6 +77,12 @@ function countryCount(n: number): string {
   return ` from ${n} ${n === 1 ? "country" : "countries"}`;
 }
 
+function settledRows<T>(result: PromiseSettledResult<T[]>): T[] {
+  if (result.status === "fulfilled") return result.value;
+  console.warn("[status markdown] report query failed:", result.reason);
+  return [];
+}
+
 async function generateReportsMarkdown(args: {
   serviceId: number;
   serviceName: string;
@@ -85,50 +91,46 @@ async function generateReportsMarkdown(args: {
   const since = new Date(now - REPORT_WINDOW_MS);
   const dailySince = new Date(now - HISTORY_DAYS * 24 * 60 * 60 * 1000);
 
-  try {
-    const [windowRows, dailyRows, countryRows] = await Promise.all([
-      getServiceReportWindows({ serviceIds: [args.serviceId], since }),
-      getServiceReportDaily({ serviceId: args.serviceId, since: dailySince }),
-      getServiceReportCountries({
-        serviceId: args.serviceId,
-        since,
-        limit: REPORT_COUNTRIES_LIMIT,
-      }),
-    ]);
+  const [windowRes, dailyRes, countryRes] = await Promise.allSettled([
+    getServiceReportWindows({ serviceIds: [args.serviceId], since }),
+    getServiceReportDaily({ serviceId: args.serviceId, since: dailySince }),
+    getServiceReportCountries({
+      serviceId: args.serviceId,
+      since,
+      limit: REPORT_COUNTRIES_LIMIT,
+    }),
+  ]);
 
-    const reporters = windowRows[0]?.reporters ?? 0;
-    const countries = windowRows[0]?.countries ?? 0;
-    const dailyWithReports = dailyRows.filter((r) => r.total > 0);
-    if (reporters === 0 && dailyWithReports.length === 0) return "";
+  const windowRows = settledRows(windowRes);
+  const dailyRows = settledRows(dailyRes);
+  const countryRows = settledRows(countryRes);
 
-    let md = `## ${args.serviceName} user reports\n\n`;
-    if (reporters >= REPORT_THRESHOLD) {
-      md += `Users are reporting problems with ${args.serviceName}: ${reporters} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
-    } else {
-      md += `${reporters} user ${reporters === 1 ? "report" : "reports"} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
-    }
+  const reporters = windowRows[0]?.reporters ?? 0;
+  const countries = windowRows[0]?.countries ?? 0;
+  const dailyWithReports = dailyRows.filter((r) => r.total > 0);
+  if (reporters === 0 && dailyWithReports.length === 0) return "";
 
-    if (countryRows.length > 0) {
-      md += `Top countries: ${countryRows.map((c) => `${c.country} (${c.total})`).join(", ")}\n\n`;
-    }
-
-    if (dailyWithReports.length > 0) {
-      md += "| Day | Reports | Reporters |\n";
-      md += "| --- | --- | --- |\n";
-      for (const r of dailyWithReports) {
-        md += `| ${r.day} | ${r.total} | ${r.reporters} |\n`;
-      }
-      md += "\n";
-    }
-
-    return md;
-  } catch (err) {
-    console.warn(
-      `[status markdown] user reports skipped for ${args.serviceName}:`,
-      err,
-    );
-    return "";
+  let md = `## ${args.serviceName} user reports\n\n`;
+  if (reporters >= REPORT_THRESHOLD) {
+    md += `Users are reporting problems with ${args.serviceName}: ${reporters} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
+  } else {
+    md += `${reporters} user ${reporters === 1 ? "report" : "reports"} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
   }
+
+  if (countryRows.length > 0) {
+    md += `Top countries: ${countryRows.map((c) => `${c.country} (${c.total})`).join(", ")}\n\n`;
+  }
+
+  if (dailyWithReports.length > 0) {
+    md += "| Day | Reports | Reporters |\n";
+    md += "| --- | --- | --- |\n";
+    for (const r of dailyWithReports) {
+      md += `| ${r.day} | ${r.total} | ${r.reporters} |\n`;
+    }
+    md += "\n";
+  }
+
+  return md;
 }
 
 export async function generateStatusIndexMarkdown(): Promise<string> {
