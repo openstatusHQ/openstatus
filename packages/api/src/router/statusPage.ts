@@ -260,11 +260,7 @@ export const statusPageRouter = createTRPCRouter({
       // when no impact is set. No barType gate: incident-driven error is
       // already suppressed per monitor in manual mode; report-driven error
       // (major_outage) must show.
-      const status = getWorstVariant(
-        components.map(
-          (c) => c.status as "success" | "degraded" | "error" | "info",
-        ),
-      );
+      const status = getWorstVariant(components.map((c) => c.status));
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
