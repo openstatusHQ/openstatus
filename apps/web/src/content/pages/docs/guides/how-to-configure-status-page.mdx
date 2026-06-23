@@ -45,13 +45,21 @@ Before choosing to enable the new page, you can check the configuration first. C
 
 ### 1. Tracker configuration
 
-Three status tracker configurations give you flexibility in how collected data is displayed.
+The tracker configuration is split into two groups: how each component's **bars and cards** display its data, and the page-wide **uptime and history** view. They live in separate containers because they answer two different questions.
+
+#### Bars and cards
+
+These settings only apply to **monitor components** — the container is disabled until your status page has at least one.
 
 **Bar type** — how every day is displayed in a status tracker. Either **absolute** or **manual**.
 
-**Card type** — only configurable if the bar type is **absolute**. Choose between **duration**, which shows the duration of "success", "error", "degraded", or "maintenance" reports, or **requests**, which shares the number of request statuses themselves. If **manual** bar type is chosen, only the most significant status of the day is shown.
+**Card value** — only configurable if the bar type is **absolute**. Choose between **duration**, which shows the duration of "success", "error", "degraded", or "maintenance" reports, or **requests**, which shares the number of request statuses themselves. If **manual** bar type is chosen, only the most significant status of the day is shown.
+
+#### Uptime and history
 
 **Show uptime** — uptime is calculated by either the **duration** of the different reports _or_ the **request** values depending on what you've chosen for the **absolute** value (including incidents). If you've chosen **manual**, it's calculated only from the duration of your status reports.
+
+**History** — the number of days of history rendered on the bars. Choose between **30** or **45** days (defaults to **45**).
 
 A few examples to understand it:
 

@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
@@ -49,7 +50,7 @@ import {
 const schema = z.object({
   configuration: z.record(
     z.string(),
-    z.string().or(z.boolean().nullish()).optional(),
+    z.string().or(z.boolean()).or(z.number()).nullish().optional(),
   ),
 });
 
@@ -78,10 +79,12 @@ export function FormConfiguration({
   defaultValues,
   onSubmit,
   configLink,
+  hasMonitorComponents = true,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   configLink: string;
+  hasMonitorComponents?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
@@ -99,6 +102,7 @@ export function FormConfiguration({
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
+  const watchConfigurationDays = form.watch("configuration.days") ?? 45;
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
@@ -147,16 +151,22 @@ export function FormConfiguration({
               </FormCardDescription>
             </FormCardHeader>
             <FormCardSeparator />
-            <FormCardContent className="grid gap-4 sm:grid-cols-3">
+            <FormCardContent
+              className={cn(
+                "grid gap-4 sm:grid-cols-2",
+                !hasMonitorComponents && "pointer-events-none opacity-50",
+              )}
+            >
               <FormField
                 control={form.control}
                 name="configuration.type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bar Type*</FormLabel>
+                    <FormLabel>Bar Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "absolute"}
+                      disabled={!hasMonitorComponents}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full capitalize">
@@ -184,11 +194,14 @@ export function FormConfiguration({
                 name="configuration.value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Card Value*</FormLabel>
+                    <FormLabel>Card Value</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "duration"}
-                      disabled={watchConfigurationType === "manual"}
+                      disabled={
+                        !hasMonitorComponents ||
+                        watchConfigurationType === "manual"
+                      }
                     >
                       <FormControl>
                         <SelectTrigger className="w-full capitalize">
@@ -211,6 +224,38 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
+              <Note className="col-span-full">
+                {hasMonitorComponents ? (
+                  <ul className="list-inside list-disc">
+                    <li>
+                      <span>Bar Type </span>
+                      <span className="font-medium">
+                        {watchConfigurationType}
+                      </span>
+                      : <span>{message.type[watchConfigurationType]}</span>
+                    </li>
+                    <li>
+                      <span>Card Value </span>
+                      <span className="font-medium">
+                        {watchConfigurationValue}
+                      </span>
+                      :{" "}
+                      <span>
+                        {message.value[watchConfigurationValue] ??
+                          message.value.default}
+                      </span>
+                    </li>
+                  </ul>
+                ) : (
+                  <span>
+                    Add a monitor component to your status page to configure how
+                    its bars and cards display data.
+                  </span>
+                )}
+              </Note>
+            </FormCardContent>
+            <FormCardSeparator />
+            <FormCardContent className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="configuration.uptime"
@@ -269,35 +314,25 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <p className="text-foreground/70 col-span-full text-sm">
-                *Configuration settings only apply to monitor components.
-              </p>
               <Note className="col-span-full">
                 <ul className="list-inside list-disc">
-                  <li>
-                    <span>Bar Type </span>
-                    <span className="font-medium">
-                      {watchConfigurationType}
-                    </span>
-                    : <span>{message.type[watchConfigurationType]}</span>
-                  </li>
-                  <li>
-                    <span>Card Value </span>
-                    <span className="font-medium">
-                      {watchConfigurationValue}
-                    </span>
-                    :{" "}
-                    <span>
-                      {message.value[watchConfigurationValue] ??
-                        message.value.default}
-                    </span>
-                  </li>
                   <li>
                     <span>Show Uptime </span>
                     <span className="font-medium capitalize">
                       {String(watchConfigurationUptime)}
                     </span>
                     : <span>{message.uptime[watchConfigurationUptime]}</span>
+                  </li>
+                  <li>
+                    <span>History </span>
+                    <span className="font-medium">
+                      {String(watchConfigurationDays)} days
+                    </span>
+                    :{" "}
+                    <span>
+                      shows the last {String(watchConfigurationDays)} days of
+                      component history.
+                    </span>
                   </li>
                 </ul>
               </Note>

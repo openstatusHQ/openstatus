@@ -122,6 +122,9 @@ export function FormComponentsUpdate() {
         }}
       />
       <FormConfiguration
+        hasMonitorComponents={pageComponents.some(
+          (c) => c.type === "monitor",
+        )}
         defaultValues={{
           configuration: statusPage.configuration ?? {},
         }}
