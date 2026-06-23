@@ -1,3 +1,4 @@
+import { UTCDate } from "@date-fns/utc";
 import type { StatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
 
@@ -23,9 +24,10 @@ import { endOfDay, isSameDay, startOfDay } from "date-fns";
  * // => "January 1, 10:00 AM - 3:00 PM"
  */
 export function formatDateRange(from?: Date, to?: Date) {
-  const sameDay = from && to && isSameDay(from, to);
-  const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
-  const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
+  const sameDay = from && to && isSameDay(new UTCDate(from), new UTCDate(to));
+  const isFromStartDay =
+    from && startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = to && endOfDay(new UTCDate(to)).getTime() === to.getTime();
 
   if (sameDay) {
     if (from && to && from.getTime() === to.getTime()) {
@@ -71,6 +73,7 @@ export function formatDate(
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
     ...options,
   });
 }
@@ -87,6 +90,7 @@ export function formatDateShort(date: Date, locale = "en-US") {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -103,6 +107,7 @@ export function formatDateTime(date: Date, locale = "en-US") {
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -117,6 +122,7 @@ export function formatTime(date: Date, locale = "en-US") {
   return date.toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -320,11 +326,12 @@ export const defaultStatusBlocksLabels = {
   formatDateTime: (d: Date) => formatDateTime(d),
   formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
   formatDateRangeParts: (from: Date, to: Date) => {
-    if (isSameDay(from, to)) {
+    if (isSameDay(new UTCDate(from), new UTCDate(to))) {
       return { from: formatDateTime(from), to: formatTime(to) };
     }
-    const isFromStartDay = startOfDay(from).getTime() === from.getTime();
-    const isToEndDay = endOfDay(to).getTime() === to.getTime();
+    const isFromStartDay =
+      startOfDay(new UTCDate(from)).getTime() === from.getTime();
+    const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
     if (isFromStartDay && isToEndDay) {
       return { from: formatDate(from), to: formatDate(to) };
     }
