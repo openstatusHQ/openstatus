@@ -117,8 +117,7 @@ export function StatusBlocksProvider({
         t("across {duration}", { duration }),
 
       formatDate: (d: Date) => withUTC(formatDate(d, { locale })),
-      formatDateShort: (d: Date) =>
-        withUTC(formatDate(d, { month: "short", locale })),
+      formatDateShort: (d: Date) => formatDate(d, { month: "short", locale }),
       formatDateTime: (d: Date) => withUTC(formatDateTime(d, locale)),
       formatDateRange: (from?: Date, to?: Date) => {
         const range = formatDateRange(from, to, locale);

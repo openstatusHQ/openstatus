@@ -11,8 +11,8 @@ describe("defaultStatusBlocksLabels UTC suffix", () => {
     expect(labels.formatDate(date)).toBe("January 15, 2024 (UTC)");
   });
 
-  test("formatDateShort appends the UTC suffix", () => {
-    expect(labels.formatDateShort(date)).toBe("Jan 15, 2024 (UTC)");
+  test("formatDateShort omits the UTC suffix (date-only label)", () => {
+    expect(labels.formatDateShort(date)).toBe("Jan 15, 2024");
   });
 
   test("formatDateTime appends the UTC suffix", () => {
