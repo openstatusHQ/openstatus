@@ -29,6 +29,15 @@ describe("formatter UTC rendering", () => {
         "January 15, 2024",
       );
     });
+
+    test("ignores a caller attempt to override the timezone", () => {
+      // 01:00 UTC is still Jan 14 in New York, so a leaked override would read "January 14".
+      expect(
+        formatDate(new Date("2024-01-15T01:00:00Z"), {
+          timeZone: "America/New_York",
+        }),
+      ).toBe("January 15, 2024");
+    });
   });
 
   describe("formatDateTime", () => {

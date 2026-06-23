@@ -73,8 +73,9 @@ export function formatDate(
     year: "numeric",
     month: "long",
     day: "numeric",
-    timeZone: "UTC",
     ...options,
+    // last so callers can't override away from UTC (the "(UTC)" label depends on it)
+    timeZone: "UTC",
   });
 }
 
