@@ -1,8 +1,12 @@
-import { statusReportStatusSchema } from "@openstatus/db/src/schema";
+import {
+  currentImpactsFromUpdates,
+  statusReportStatusSchema,
+} from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import {
   addStatusReportUpdate,
+  getStatusReport,
   listStatusReports,
   notifyStatusReport,
   resolveStatusReport,
@@ -336,13 +340,35 @@ export const addStatusReportUpdateTool: AgentTool<
     verb: "added",
   },
   async run({ ctx, input }) {
+    // Agent surfaces send only the impacts that CHANGED (see system prompt).
+    // Carry the report's current non-operational impacts into this update's
+    // own rows so each update is self-contained for the per-update render.
+    const report = await getStatusReport({
+      ctx,
+      input: { id: input.statusReportId },
+    });
+    const current = currentImpactsFromUpdates(
+      report.updates.map((u) => ({
+        id: u.id,
+        date: u.date,
+        componentImpacts: u.componentImpacts,
+      })),
+    );
+    const merged = [...(input.componentImpacts ?? [])];
+    const named = new Set(merged.map((ci) => ci.pageComponentId));
+    for (const [pageComponentId, impact] of current) {
+      if (impact !== "operational" && !named.has(pageComponentId)) {
+        merged.push({ pageComponentId, impact });
+      }
+    }
+
     const result = await addStatusReportUpdate({
       ctx,
       input: {
         statusReportId: input.statusReportId,
         status: input.status,
         message: input.message,
-        componentImpacts: input.componentImpacts,
+        componentImpacts: merged.length > 0 ? merged : input.componentImpacts,
         date: input.date ? new Date(input.date) : undefined,
       },
     });
