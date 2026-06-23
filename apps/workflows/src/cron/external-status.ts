@@ -23,7 +23,11 @@ import { Effect } from "effect";
 import type { Context } from "hono";
 
 import { env } from "../env";
-import { reportBackgroundError, runSentryCron } from "../lib/sentry";
+import {
+  reportBackgroundError,
+  reportFetchFailure,
+  runSentryCron,
+} from "../lib/sentry";
 
 const logger = getLogger(["workflow", "external-status"]);
 
@@ -161,10 +165,9 @@ function runStatusPhase(
           }),
         ),
         Effect.catchAll((err: FetchError) =>
-          Effect.succeed<StatusPhaseOutcome>({
-            kind: "fail",
-            slug: entry.id,
-            reason: err.message,
+          Effect.sync<StatusPhaseOutcome>(() => {
+            reportFetchFailure({ phase: "status", slug: entry.id, error: err });
+            return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),
       );
@@ -214,10 +217,13 @@ function runIncidentPhase(
           ),
         ),
         Effect.catchAll((err: FetchError) =>
-          Effect.succeed<IncidentPhaseOutcome>({
-            kind: "fail",
-            slug: entry.id,
-            reason: err.message,
+          Effect.sync<IncidentPhaseOutcome>(() => {
+            reportFetchFailure({
+              phase: "incidents",
+              slug: entry.id,
+              error: err,
+            });
+            return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),
       );
@@ -281,10 +287,13 @@ function runComponentPhase(
           ),
         ),
         Effect.catchAll((err: FetchError) =>
-          Effect.succeed<ComponentPhaseOutcome>({
-            kind: "fail",
-            slug: entry.id,
-            reason: err.message,
+          Effect.sync<ComponentPhaseOutcome>(() => {
+            reportFetchFailure({
+              phase: "components",
+              slug: entry.id,
+              error: err,
+            });
+            return { kind: "fail", slug: entry.id, reason: err.message };
           }),
         ),
       );
@@ -426,7 +435,7 @@ export async function runExternalStatusTick(): Promise<{
           runIncidentPhase(triplets, tickStartedAt),
           runComponentPhase(triplets, tickStartedAt, tickStartedAt.getTime()),
         ],
-        { concurrency: "50" },
+        { concurrency: 50 },
       ),
     );
 
