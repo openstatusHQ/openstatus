@@ -242,6 +242,33 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="configuration.days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>History</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={String(field.value ?? 45)}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a range" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {["30", "45"].map((days) => (
+                          <SelectItem key={days} value={days}>
+                            {days} days
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <p className="text-foreground/70 col-span-full text-sm">
                 *Configuration settings only apply to monitor components.
               </p>
@@ -435,6 +462,7 @@ function FormConfigurationDialog({
                   value: value ?? undefined,
                   uptime: uptime ?? undefined,
                   theme: theme ?? undefined,
+                  days: defaultValues?.configuration?.days ?? undefined,
                 },
               })
             }
