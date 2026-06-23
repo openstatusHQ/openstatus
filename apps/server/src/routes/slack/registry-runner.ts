@@ -11,11 +11,18 @@ import { ZodObject, type ZodType, type z } from "zod";
  * Marker shape returned by destructive tool wrappers. The agent handler
  * detects it and posts a Block Kit confirmation card; the user's button
  * click then drives `executeRegistryAction` (see interactions.ts).
+ *
+ * `input` is the raw model input — it is persisted and re-runs through the
+ * tool at approval time, so carry-forward enrichment recomputes from fresh
+ * state then. `displayInput` is an enriched snapshot used only to render the
+ * confirmation card; freezing it into `input` would publish stale impacts if
+ * state changed between draft and approval.
  */
 export type SlackToolDraft = {
   needsConfirmation: true;
   toolName: string;
   input: unknown;
+  displayInput: unknown;
 };
 
 export function isSlackToolDraft(value: unknown): value is SlackToolDraft {
@@ -39,7 +46,7 @@ export function buildSlackTools(ctx: ServiceContext): Record<string, Tool> {
   return out;
 }
 
-function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
+export function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
   // HITL is gated on `destructive`, not on scope: a non-destructive
   // write (none today, but conceivable — e.g. an idempotent reconcile)
   // should run inline like reads do.
@@ -63,10 +70,14 @@ function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
     inputSchema: draftSchema,
     execute: async (input: unknown) => {
       const parsed = draftSchema.parse(input);
+      const displayInput = t.approval?.prepareDraftInput
+        ? await t.approval.prepareDraftInput({ ctx, input: parsed })
+        : parsed;
       const draft: SlackToolDraft = {
         needsConfirmation: true,
         toolName: t.name,
         input: parsed,
+        displayInput,
       };
       return draft;
     },

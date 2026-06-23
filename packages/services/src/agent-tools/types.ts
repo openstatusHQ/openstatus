@@ -60,6 +60,16 @@ export type ApprovalMeta<TInput> = {
    * the flag value merged in — must not mutate the input.
    */
   applyFlags?: (input: TInput, flags: Record<string, boolean>) => TInput;
+  /**
+   * Optional async enrichment applied to the draft input before the
+   * confirmation preview renders and the pending action is stored — so the
+   * card reflects what `run` will actually persist (e.g. carried-forward
+   * impacts). Surfaces that build a draft (Slack) call this; must not mutate.
+   */
+  prepareDraftInput?: (args: {
+    ctx: ServiceContext;
+    input: TInput;
+  }) => Promise<TInput>;
   /** Surface-rendered confirmation summary. */
   summarize: (input: TInput) => { title: string; lines: SummaryLine[] };
   /**

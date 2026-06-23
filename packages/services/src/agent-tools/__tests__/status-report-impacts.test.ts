@@ -9,7 +9,10 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
-import { getCurrentImpactsForReport } from "../../status-report/internal";
+import {
+  getComponentImpactsForUpdate,
+  getCurrentImpactsForReport,
+} from "../../status-report/internal";
 import { agentTools } from "../index";
 
 const TEST_PREFIX = "agent-tools-impacts-test";
@@ -164,5 +167,304 @@ describe("status-report agent tools: componentImpacts round-trip", () => {
       notify: false,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("add_status_report_update carries prior impacts forward", () => {
+  async function impactsByComponent(tx: DB, updateId: number) {
+    const rows = await getComponentImpactsForUpdate(tx, updateId);
+    return new Map(rows.map((r) => [r.pageComponentId, r.impact]));
+  }
+
+  test("carries prior non-operational impact into the new update's own rows", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-carry`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const update = await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "watching it",
+          notify: false,
+        }),
+      });
+
+      const rows = await impactsByComponent(tx, update.statusReportUpdateId);
+      expect(rows.get(componentA)).toBe("major_outage");
+    });
+  });
+
+  test("explicit change wins over carry-forward", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-explicit`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const update = await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "partial recovery",
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "degraded_performance" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const rows = await impactsByComponent(tx, update.statusReportUpdateId);
+      expect(rows.get(componentA)).toBe("degraded_performance");
+    });
+  });
+
+  test("recovery to operational is preserved, not re-inflated", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-recovery`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const update = await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "back up",
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "operational" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const rows = await impactsByComponent(tx, update.statusReportUpdateId);
+      expect(rows.get(componentA)).toBe("operational");
+    });
+  });
+
+  test("carries an unchanged component while adding a newly named one", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA, componentB } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-both`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const update = await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "identified",
+          message: "another component affected",
+          componentImpacts: [
+            { pageComponentId: componentB, impact: "partial_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const rows = await impactsByComponent(tx, update.statusReportUpdateId);
+      expect(rows.get(componentA)).toBe("major_outage");
+      expect(rows.get(componentB)).toBe("partial_outage");
+    });
+  });
+
+  test("prepareDraftInput enriches the confirmation preview with carried impacts", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-preview`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      const approval = agentTools.add_status_report_update.approval;
+      if (!approval?.prepareDraftInput) {
+        throw new Error("expected prepareDraftInput to be defined");
+      }
+
+      const prepared = await approval.prepareDraftInput({
+        ctx,
+        input: {
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "watching it",
+          notify: false,
+        },
+      });
+
+      const impacts = prepared.componentImpacts ?? [];
+      expect(impacts).toContainEqual({
+        pageComponentId: componentA,
+        impact: "major_outage",
+      });
+
+      const summary = approval.summarize(prepared);
+      expect(
+        summary.lines.some((l) => l.label === "Impacts"),
+        "preview should include an Impacts line",
+      ).toBe(true);
+    });
+  });
+
+  test("status=resolved does not carry impacts forward, so resolve clears them", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId, componentA, componentB } = await seedPageWithComponents(
+        tx,
+        ctx.workspace.id,
+      );
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-resolve-clear`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          componentImpacts: [
+            { pageComponentId: componentA, impact: "major_outage" },
+            { pageComponentId: componentB, impact: "partial_outage" },
+          ],
+          notify: false,
+        }),
+      });
+
+      await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "resolved",
+          message: "all fixed",
+          notify: false,
+        }),
+      });
+
+      const final = await getCurrentImpactsForReport(
+        tx,
+        created.statusReport.id,
+      );
+      expect(final.get(componentA)).toBe("operational");
+      expect(final.get(componentB)).toBe("operational");
+    });
+  });
+
+  test("legacy report (no impacts) stays legacy on follow-up updates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { pageId } = await seedPageWithComponents(tx, ctx.workspace.id);
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-legacy`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          notify: false,
+        }),
+      });
+
+      const update = await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "watching it",
+          notify: false,
+        }),
+      });
+
+      const rows = await getComponentImpactsForUpdate(
+        tx,
+        update.statusReportUpdateId,
+      );
+      expect(rows.length).toBe(0);
+    });
   });
 });
