@@ -112,6 +112,19 @@ describe("bucketIncidentsByUtcDay", () => {
     expect(keys([inc])).toEqual(["2026-06-23"]);
   });
 
+  test("present-but-invalid resolvedAt is resolved, not ongoing", () => {
+    const inc: OverlayIncident = {
+      id: "j",
+      name: "Bad resolvedAt",
+      startedAt: "2026-06-23T10:00:00.000Z",
+      createdAt: "2026-06-23T10:00:00.000Z",
+      resolvedAt: "not-a-date",
+    };
+    const map = bucket([inc]);
+    expect([...map.keys()]).toEqual(["2026-06-23"]);
+    expect(map.get("2026-06-23")?.[0]?.to).not.toBeNull();
+  });
+
   test("maintenance impact yields a maintenance event", () => {
     const inc: OverlayIncident = {
       id: "h",

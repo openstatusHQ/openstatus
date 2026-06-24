@@ -35,13 +35,21 @@ export function bucketIncidentsByUtcDay(
     const startMs = Date.parse(inc.startedAt ?? inc.createdAt);
     if (Number.isNaN(startMs)) continue;
 
-    const resolvedMs =
-      inc.resolvedAt != null ? Date.parse(inc.resolvedAt) : Number.NaN;
-    const ongoing = Number.isNaN(resolvedMs);
-    const endMs = ongoing ? now.getTime() : Math.max(resolvedMs, startMs);
-
+    // Only a null/absent resolvedAt is ongoing; a present-but-unparseable value
+    // is bad data, so resolve it to a zero-length span (not extended to today).
     const from = new Date(startMs);
-    const to = ongoing ? null : new Date(endMs);
+    let to: Date | null;
+    let endMs: number;
+    if (inc.resolvedAt == null) {
+      to = null;
+      endMs = now.getTime();
+    } else {
+      const resolvedMs = Date.parse(inc.resolvedAt);
+      endMs = Number.isNaN(resolvedMs)
+        ? startMs
+        : Math.max(resolvedMs, startMs);
+      to = new Date(endMs);
+    }
     const type: DayEvent["type"] =
       inc.impact === "maintenance" ? "maintenance" : "incident";
 
