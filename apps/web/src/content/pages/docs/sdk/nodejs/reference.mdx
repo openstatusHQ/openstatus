@@ -114,6 +114,21 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `MONITOR` | Linked to a monitor |
 | `STATIC` | Static component (manual) |
 
+### PageMetricType
+
+| Value | Description |
+|-------|-------------|
+| `DURATION` | Status bars represent response duration |
+| `REQUESTS` | Status bars represent request counts |
+| `MANUAL` | Status bars set manually |
+
+### PageBarType
+
+| Value | Description |
+|-------|-------------|
+| `ABSOLUTE` | Status bar computed from absolute values |
+| `MANUAL` | Status bar set manually |
+
 ### NumberComparator
 
 | Value | Description |
@@ -343,7 +358,8 @@ All types and enums exported from `@openstatus/sdk-node`:
 - `ListSubscribersRequest`, `ListSubscribersResponse`
 - `GetStatusPageContentRequest`, `GetStatusPageContentResponse`
 - `GetOverallStatusRequest`, `GetOverallStatusResponse`, `ComponentStatus`
-- `OverallStatus`, `PageAccessType`, `PageTheme`, `PageComponentType`
+- `GetStatusPageOverviewRequest`, `GetStatusPageOverviewResponse`, `PageConfiguration`
+- `OverallStatus`, `PageAccessType`, `PageTheme`, `PageComponentType`, `PageMetricType`, `PageBarType`
 
 ### Maintenance Types
 
