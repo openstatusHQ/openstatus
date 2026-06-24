@@ -118,7 +118,6 @@ SCREENSHOT_SERVICE_URL=your_screenshot_service_url
 ```bash
 TURBO_ENV_MODE=loose
 PLAYGROUND_UNKEY_API_KEY=your_playground_key
-WORKSPACES_LOOKBACK_30=true
 WORKSPACES_HIDE_URL=false
 ```
 

@@ -58,7 +58,7 @@ import { useTRPC } from "@/lib/trpc/client";
 export function Client() {
   const prefix = usePathnamePrefix();
   const { domain } = useParams<{ domain: string }>();
-  const { cardType, barType, showUptime } = useStatusPage();
+  const { cardType, barType, showUptime, numberOfDays } = useStatusPage();
   const embed = useEmbed();
   const trpc = useTRPC();
 
@@ -111,6 +111,7 @@ export function Client() {
             ),
             cardType,
             barType,
+            days: numberOfDays,
           }
         : skipToken,
     ),
