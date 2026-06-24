@@ -28,7 +28,7 @@ export function bucketIncidentsByUtcDay(
   const map = new Map<string, DayEvent[]>();
   const now = opts.now ?? new Date();
   const todayUtc = floorUtcDay(now);
-  const windowStart = floorUtcDay(now);
+  const windowStart = new Date(todayUtc);
   windowStart.setUTCDate(todayUtc.getUTCDate() - (opts.days - 1));
 
   for (const inc of incidents) {
