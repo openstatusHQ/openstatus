@@ -2848,6 +2848,246 @@ describe("StatusPageService.GetOverallStatus", () => {
   });
 });
 
+describe("StatusPageService.GetStatusPageOverview", () => {
+  test("returns full overview by id", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.id).toBe(String(testPageId));
+    expect(data).toHaveProperty("configuration");
+    expect(data).toHaveProperty("components");
+    expect(data).toHaveProperty("overallStatus");
+    expect(data).toHaveProperty("componentStatuses");
+  });
+
+  test("returns configuration defaults when unset", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-default-config`,
+        slug: `${TEST_PREFIX}-overview-default-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+      expect(data.configuration.barType).toBe("PAGE_BAR_TYPE_ABSOLUTE");
+      expect(data.configuration.showUptime).toBe(true);
+      expect(data.configuration.themeKey).toBe("default");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("maps stored configuration values", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-custom-config`,
+        slug: `${TEST_PREFIX}-overview-custom-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+        configuration: {
+          value: "duration",
+          type: "manual",
+          uptime: false,
+          theme: "dracula",
+        },
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_DURATION");
+      expect(data.configuration.barType).toBe("PAGE_BAR_TYPE_MANUAL");
+      // proto3 JSON omits a false bool (the default), so it reads back as undefined
+      expect(data.configuration.showUptime ?? false).toBe(false);
+      expect(data.configuration.themeKey).toBe("dracula");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("falls back to default configuration for invalid stored values", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-bad-config`,
+        slug: `${TEST_PREFIX}-overview-bad-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+        configuration: { value: "latency", theme: "removed-theme-xyz" },
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+      expect(data.configuration.themeKey).toBe("default");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetStatusPageOverview", {
+      id: String(testPageId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("returns 404 for non-existent page", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for a page in another workspace", async () => {
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-overview-other-ws`,
+        slug: `${TEST_PREFIX}-overview-other-ws-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(otherPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(page).where(eq(page.id, otherPage.id));
+    }
+  });
+
+  test("rejects slug identifier (id required)", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { slug: testPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("reflects degraded status from an active report", async () => {
+    const report = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        title: `${TEST_PREFIX}-overview-report`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    await db.insert(statusReportsToPageComponents).values({
+      statusReportId: report.id,
+      pageComponentId: testComponentId,
+    });
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(testPageId) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.overallStatus).toBe("OVERALL_STATUS_DEGRADED");
+      const reported = data.statusReports.find(
+        (r: { title: string }) => r.title === `${TEST_PREFIX}-overview-report`,
+      );
+      expect(reported).toBeDefined();
+    } finally {
+      await db
+        .delete(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, report.id));
+      await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
+  });
+
+  test("excludes uptime time-series buckets", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(Array.isArray(data.components)).toBe(true);
+    expect(data.components.length).toBeGreaterThan(0);
+    for (const component of data.components) {
+      expect(component).not.toHaveProperty("buckets");
+    }
+  });
+});
+
 // ==========================================================================
 // New Fields: icon, custom_domain, theme, access_type, password, auth_email_domains
 // ==========================================================================

@@ -3013,6 +3013,65 @@ components:
       title: GetStatusPageContentResponse
       additionalProperties: false
       description: GetStatusPageContentResponse is the response containing the full status page content.
+    openstatus.status_page.v1.GetStatusPageOverviewRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page (required, workspace-scoped).
+      title: GetStatusPageOverviewRequest
+      additionalProperties: false
+      description: GetStatusPageOverviewRequest requests the full overview of a status page by id.
+    openstatus.status_page.v1.GetStatusPageOverviewResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The status page details.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+        configuration:
+          title: configuration
+          description: Rich rendering configuration of the page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageConfiguration'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          title: components
+          description: Components on the status page.
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          title: groups
+          description: Component groups on the status page.
+        statusReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          title: status_reports
+          description: Active and recent status reports.
+        maintenances:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+          title: maintenances
+          description: Scheduled maintenances.
+        overallStatus:
+          title: overall_status
+          description: Aggregated status across all components.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+        componentStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentStatus'
+          title: component_statuses
+          description: Status of individual components.
+      title: GetStatusPageOverviewResponse
+      additionalProperties: false
+      description: GetStatusPageOverviewResponse bundles all data for a single status page.
     openstatus.status_page.v1.GetStatusPageRequest:
       type: object
       properties:
@@ -3156,6 +3215,14 @@ components:
         - PAGE_ACCESS_TYPE_AUTHENTICATED
         - PAGE_ACCESS_TYPE_IP_RESTRICTED
       description: PageAccessType defines who can access the status page.
+    openstatus.status_page.v1.PageBarType:
+      type: string
+      title: PageBarType
+      enum:
+        - PAGE_BAR_TYPE_UNSPECIFIED
+        - PAGE_BAR_TYPE_ABSOLUTE
+        - PAGE_BAR_TYPE_MANUAL
+      description: PageBarType mirrors page.configuration.type (how the status bar is computed).
     openstatus.status_page.v1.PageComponent:
       type: object
       properties:
@@ -3282,6 +3349,44 @@ components:
         - PAGE_COMPONENT_TYPE_MONITOR
         - PAGE_COMPONENT_TYPE_STATIC
       description: PageComponentType defines the type of a component on a status page.
+    openstatus.status_page.v1.PageConfiguration:
+      type: object
+      properties:
+        metricType:
+          title: metric_type
+          description: Which metric the status bars represent (configuration.value).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageMetricType'
+        barType:
+          title: bar_type
+          description: How the status bar is computed (configuration.type).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageBarType'
+        showUptime:
+          type: boolean
+          title: show_uptime
+          description: Whether to show the uptime percentage (configuration.uptime).
+        themeKey:
+          type: string
+          title: theme_key
+          description: |-
+            Theme key from the theme store (configuration.theme), e.g. "default".
+             Free-form string rather than an enum because the theme catalog is dynamic.
+        days:
+          type: integer
+          title: days
+          format: int32
+          description: 'Number of uptime-bar days rendered on the page (configuration.days): 30 or 45.'
+      title: PageConfiguration
+      additionalProperties: false
+      description: PageConfiguration is the rich rendering config stored in page.configuration.
+    openstatus.status_page.v1.PageMetricType:
+      type: string
+      title: PageMetricType
+      enum:
+        - PAGE_METRIC_TYPE_UNSPECIFIED
+        - PAGE_METRIC_TYPE_DURATION
+        - PAGE_METRIC_TYPE_REQUESTS
+        - PAGE_METRIC_TYPE_MANUAL
+      description: PageMetricType mirrors page.configuration.value (which metric the status bars represent).
     openstatus.status_page.v1.PageSubscriber:
       type: object
       properties:
@@ -5664,6 +5769,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageOverview:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageOverview
+      description: 'Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that.'
+      operationId: StatusPageService_GetStatusPageOverview.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageOverview
+      description: 'Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that.'
+      operationId: StatusPageService_GetStatusPageOverview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages:
     get:
       tags:

@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_page/v1/status_page.proto.
  */
 export const file_openstatus_status_page_v1_status_page: GenFile = /*@__PURE__*/
-  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIuoBCgtDdXN0b21UaGVtZRJACgVsaWdodBgBIAMoCzIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3VzdG9tVGhlbWUuTGlnaHRFbnRyeRI+CgRkYXJrGAIgAygLMjAub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DdXN0b21UaGVtZS5EYXJrRW50cnkaLAoKTGlnaHRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGisKCURhcmtFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBItIFCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWhI5Cg5kZWZhdWx0X2xvY2FsZRgOIAEoDjIhLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTG9jYWxlEjIKB2xvY2FsZXMYDyADKA4yIS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkxvY2FsZRIQCghwYXNzd29yZBgQIAEoCRIaChJhdXRoX2VtYWlsX2RvbWFpbnMYESADKAkSEwoLYWxsb3dfaW5kZXgYEiABKAgSGQoRYWxsb3dlZF9pcF9yYW5nZXMYEyABKAkSQQoMY3VzdG9tX3RoZW1lGBQgASgLMiYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DdXN0b21UaGVtZUgAiAEBQg8KDV9jdXN0b21fdGhlbWUiqQEKEVN0YXR1c1BhZ2VTdW1tYXJ5EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBHNsdWcYAyABKAkSEQoJcHVibGlzaGVkGAQgASgIEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCRIwCg1jdXN0b21fZG9tYWluGAcgASgJQhm6RxY6FBISc3RhdHVzLmV4YW1wbGUuY29tKsABCg5QYWdlQWNjZXNzVHlwZRIgChxQQUdFX0FDQ0VTU19UWVBFX1VOU1BFQ0lGSUVEEAASGwoXUEFHRV9BQ0NFU1NfVFlQRV9QVUJMSUMQARInCiNQQUdFX0FDQ0VTU19UWVBFX1BBU1NXT1JEX1BST1RFQ1RFRBACEiIKHlBBR0VfQUNDRVNTX1RZUEVfQVVUSEVOVElDQVRFRBADEiIKHlBBR0VfQUNDRVNTX1RZUEVfSVBfUkVTVFJJQ1RFRBAEKmkKCVBhZ2VUaGVtZRIaChZQQUdFX1RIRU1FX1VOU1BFQ0lGSUVEEAASFQoRUEFHRV9USEVNRV9TWVNURU0QARIUChBQQUdFX1RIRU1FX0xJR0hUEAISEwoPUEFHRV9USEVNRV9EQVJLEAMqTQoGTG9jYWxlEhYKEkxPQ0FMRV9VTlNQRUNJRklFRBAAEg0KCUxPQ0FMRV9FThABEg0KCUxPQ0FMRV9GUhACEg0KCUxPQ0FMRV9ERRADKuwBCg1PdmVyYWxsU3RhdHVzEh4KGk9WRVJBTExfU1RBVFVTX1VOU1BFQ0lGSUVEEAASHgoaT1ZFUkFMTF9TVEFUVVNfT1BFUkFUSU9OQUwQARIbChdPVkVSQUxMX1NUQVRVU19ERUdSQURFRBACEiEKHU9WRVJBTExfU1RBVFVTX1BBUlRJQUxfT1VUQUdFEAMSHwobT1ZFUkFMTF9TVEFUVVNfTUFKT1JfT1VUQUdFEAQSHgoaT1ZFUkFMTF9TVEFUVVNfTUFJTlRFTkFOQ0UQBRIaChZPVkVSQUxMX1NUQVRVU19VTktOT1dOEAZCWlpYZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxO3N0YXR1c3BhZ2V2MWIGcHJvdG8z", [file_gnostic_openapi_v3_annotations]);
+  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIuoBCgtDdXN0b21UaGVtZRJACgVsaWdodBgBIAMoCzIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3VzdG9tVGhlbWUuTGlnaHRFbnRyeRI+CgRkYXJrGAIgAygLMjAub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DdXN0b21UaGVtZS5EYXJrRW50cnkaLAoKTGlnaHRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGisKCURhcmtFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIsMBChFQYWdlQ29uZmlndXJhdGlvbhI+CgttZXRyaWNfdHlwZRgBIAEoDjIpLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuUGFnZU1ldHJpY1R5cGUSOAoIYmFyX3R5cGUYAiABKA4yJi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VCYXJUeXBlEhMKC3Nob3dfdXB0aW1lGAMgASgIEhEKCXRoZW1lX2tleRgEIAEoCRIMCgRkYXlzGAUgASgFItIFCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWhI5Cg5kZWZhdWx0X2xvY2FsZRgOIAEoDjIhLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTG9jYWxlEjIKB2xvY2FsZXMYDyADKA4yIS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkxvY2FsZRIQCghwYXNzd29yZBgQIAEoCRIaChJhdXRoX2VtYWlsX2RvbWFpbnMYESADKAkSEwoLYWxsb3dfaW5kZXgYEiABKAgSGQoRYWxsb3dlZF9pcF9yYW5nZXMYEyABKAkSQQoMY3VzdG9tX3RoZW1lGBQgASgLMiYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DdXN0b21UaGVtZUgAiAEBQg8KDV9jdXN0b21fdGhlbWUiqQEKEVN0YXR1c1BhZ2VTdW1tYXJ5EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBHNsdWcYAyABKAkSEQoJcHVibGlzaGVkGAQgASgIEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCRIwCg1jdXN0b21fZG9tYWluGAcgASgJQhm6RxY6FBISc3RhdHVzLmV4YW1wbGUuY29tKsABCg5QYWdlQWNjZXNzVHlwZRIgChxQQUdFX0FDQ0VTU19UWVBFX1VOU1BFQ0lGSUVEEAASGwoXUEFHRV9BQ0NFU1NfVFlQRV9QVUJMSUMQARInCiNQQUdFX0FDQ0VTU19UWVBFX1BBU1NXT1JEX1BST1RFQ1RFRBACEiIKHlBBR0VfQUNDRVNTX1RZUEVfQVVUSEVOVElDQVRFRBADEiIKHlBBR0VfQUNDRVNTX1RZUEVfSVBfUkVTVFJJQ1RFRBAEKmkKCVBhZ2VUaGVtZRIaChZQQUdFX1RIRU1FX1VOU1BFQ0lGSUVEEAASFQoRUEFHRV9USEVNRV9TWVNURU0QARIUChBQQUdFX1RIRU1FX0xJR0hUEAISEwoPUEFHRV9USEVNRV9EQVJLEAMqTQoGTG9jYWxlEhYKEkxPQ0FMRV9VTlNQRUNJRklFRBAAEg0KCUxPQ0FMRV9FThABEg0KCUxPQ0FMRV9GUhACEg0KCUxPQ0FMRV9ERRADKuwBCg1PdmVyYWxsU3RhdHVzEh4KGk9WRVJBTExfU1RBVFVTX1VOU1BFQ0lGSUVEEAASHgoaT1ZFUkFMTF9TVEFUVVNfT1BFUkFUSU9OQUwQARIbChdPVkVSQUxMX1NUQVRVU19ERUdSQURFRBACEiEKHU9WRVJBTExfU1RBVFVTX1BBUlRJQUxfT1VUQUdFEAMSHwobT1ZFUkFMTF9TVEFUVVNfTUFKT1JfT1VUQUdFEAQSHgoaT1ZFUkFMTF9TVEFUVVNfTUFJTlRFTkFOQ0UQBRIaChZPVkVSQUxMX1NUQVRVU19VTktOT1dOEAYqjQEKDlBhZ2VNZXRyaWNUeXBlEiAKHFBBR0VfTUVUUklDX1RZUEVfVU5TUEVDSUZJRUQQABIdChlQQUdFX01FVFJJQ19UWVBFX0RVUkFUSU9OEAESHQoZUEFHRV9NRVRSSUNfVFlQRV9SRVFVRVNUUxACEhsKF1BBR0VfTUVUUklDX1RZUEVfTUFOVUFMEAMqYgoLUGFnZUJhclR5cGUSHQoZUEFHRV9CQVJfVFlQRV9VTlNQRUNJRklFRBAAEhoKFlBBR0VfQkFSX1RZUEVfQUJTT0xVVEUQARIYChRQQUdFX0JBUl9UWVBFX01BTlVBTBACQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw", [file_gnostic_openapi_v3_annotations]);
 
 /**
  * CustomTheme holds per-mode CSS variable overrides merged over the page theme.
@@ -40,6 +40,56 @@ export type CustomTheme = Message<"openstatus.status_page.v1.CustomTheme"> & {
  */
 export const CustomThemeSchema: GenMessage<CustomTheme> = /*@__PURE__*/
   messageDesc(file_openstatus_status_page_v1_status_page, 0);
+
+/**
+ * PageConfiguration is the rich rendering config stored in page.configuration.
+ *
+ * @generated from message openstatus.status_page.v1.PageConfiguration
+ */
+export type PageConfiguration = Message<"openstatus.status_page.v1.PageConfiguration"> & {
+  /**
+   * Which metric the status bars represent (configuration.value).
+   *
+   * @generated from field: openstatus.status_page.v1.PageMetricType metric_type = 1;
+   */
+  metricType: PageMetricType;
+
+  /**
+   * How the status bar is computed (configuration.type).
+   *
+   * @generated from field: openstatus.status_page.v1.PageBarType bar_type = 2;
+   */
+  barType: PageBarType;
+
+  /**
+   * Whether to show the uptime percentage (configuration.uptime).
+   *
+   * @generated from field: bool show_uptime = 3;
+   */
+  showUptime: boolean;
+
+  /**
+   * Theme key from the theme store (configuration.theme), e.g. "default".
+   * Free-form string rather than an enum because the theme catalog is dynamic.
+   *
+   * @generated from field: string theme_key = 4;
+   */
+  themeKey: string;
+
+  /**
+   * Number of uptime-bar days rendered on the page (configuration.days): 30 or 45.
+   *
+   * @generated from field: int32 days = 5;
+   */
+  days: number;
+};
+
+/**
+ * Describes the message openstatus.status_page.v1.PageConfiguration.
+ * Use `create(PageConfigurationSchema)` to create a new message.
+ */
+export const PageConfigurationSchema: GenMessage<PageConfiguration> = /*@__PURE__*/
+  messageDesc(file_openstatus_status_page_v1_status_page, 1);
 
 /**
  * StatusPage represents a full status page with all details.
@@ -193,7 +243,7 @@ export type StatusPage = Message<"openstatus.status_page.v1.StatusPage"> & {
  * Use `create(StatusPageSchema)` to create a new message.
  */
 export const StatusPageSchema: GenMessage<StatusPage> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_page_v1_status_page, 1);
+  messageDesc(file_openstatus_status_page_v1_status_page, 2);
 
 /**
  * StatusPageSummary represents metadata for a status page (used in list responses).
@@ -256,7 +306,7 @@ export type StatusPageSummary = Message<"openstatus.status_page.v1.StatusPageSum
  * Use `create(StatusPageSummarySchema)` to create a new message.
  */
 export const StatusPageSummarySchema: GenMessage<StatusPageSummary> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_page_v1_status_page, 2);
+  messageDesc(file_openstatus_status_page_v1_status_page, 3);
 
 /**
  * PageAccessType defines who can access the status page.
@@ -409,4 +459,65 @@ export enum OverallStatus {
  */
 export const OverallStatusSchema: GenEnum<OverallStatus> = /*@__PURE__*/
   enumDesc(file_openstatus_status_page_v1_status_page, 3);
+
+/**
+ * PageMetricType mirrors page.configuration.value (which metric the status bars represent).
+ *
+ * @generated from enum openstatus.status_page.v1.PageMetricType
+ */
+export enum PageMetricType {
+  /**
+   * @generated from enum value: PAGE_METRIC_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PAGE_METRIC_TYPE_DURATION = 1;
+   */
+  DURATION = 1,
+
+  /**
+   * @generated from enum value: PAGE_METRIC_TYPE_REQUESTS = 2;
+   */
+  REQUESTS = 2,
+
+  /**
+   * @generated from enum value: PAGE_METRIC_TYPE_MANUAL = 3;
+   */
+  MANUAL = 3,
+}
+
+/**
+ * Describes the enum openstatus.status_page.v1.PageMetricType.
+ */
+export const PageMetricTypeSchema: GenEnum<PageMetricType> = /*@__PURE__*/
+  enumDesc(file_openstatus_status_page_v1_status_page, 4);
+
+/**
+ * PageBarType mirrors page.configuration.type (how the status bar is computed).
+ *
+ * @generated from enum openstatus.status_page.v1.PageBarType
+ */
+export enum PageBarType {
+  /**
+   * @generated from enum value: PAGE_BAR_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PAGE_BAR_TYPE_ABSOLUTE = 1;
+   */
+  ABSOLUTE = 1,
+
+  /**
+   * @generated from enum value: PAGE_BAR_TYPE_MANUAL = 2;
+   */
+  MANUAL = 2,
+}
+
+/**
+ * Describes the enum openstatus.status_page.v1.PageBarType.
+ */
+export const PageBarTypeSchema: GenEnum<PageBarType> = /*@__PURE__*/
+  enumDesc(file_openstatus_status_page_v1_status_page, 5);
 

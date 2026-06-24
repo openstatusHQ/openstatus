@@ -111,6 +111,16 @@ service StatusPageService {
     };
   }
 
+  // GetStatusPageOverview returns everything about a single status page in one
+  // authenticated call: page, rich configuration, components, groups, active
+  // reports, maintenances, and computed statuses.
+  rpc GetStatusPageOverview(GetStatusPageOverviewRequest) returns (GetStatusPageOverviewResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that."
+    };
+  }
+
   // GetPageComponentDailySummary returns per-component daily uptime buckets merged
   // with the incident / maintenance / report timeline — the single source of truth
   // for rendering per-component status bars and uptime calendars.
@@ -649,6 +659,39 @@ message GetOverallStatusResponse {
 
   // Status of individual components.
   repeated ComponentStatus component_statuses = 2;
+}
+
+// GetStatusPageOverviewRequest requests the full overview of a status page by id.
+message GetStatusPageOverviewRequest {
+  // ID of the status page (required, workspace-scoped).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetStatusPageOverviewResponse bundles all data for a single status page.
+message GetStatusPageOverviewResponse {
+  // The status page details.
+  StatusPage status_page = 1;
+
+  // Rich rendering configuration of the page.
+  PageConfiguration configuration = 2;
+
+  // Components on the status page.
+  repeated PageComponent components = 3;
+
+  // Component groups on the status page.
+  repeated PageComponentGroup groups = 4;
+
+  // Active and recent status reports.
+  repeated openstatus.status_report.v1.StatusReport status_reports = 5;
+
+  // Scheduled maintenances.
+  repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 6;
+
+  // Aggregated status across all components.
+  OverallStatus overall_status = 7;
+
+  // Status of individual components.
+  repeated ComponentStatus component_statuses = 8;
 }
 
 // =============================================================================

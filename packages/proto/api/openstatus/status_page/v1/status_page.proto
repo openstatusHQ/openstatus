@@ -52,6 +52,40 @@ message CustomTheme {
   map<string, string> dark = 2;
 }
 
+// PageMetricType mirrors page.configuration.value (which metric the status bars represent).
+enum PageMetricType {
+  PAGE_METRIC_TYPE_UNSPECIFIED = 0;
+  PAGE_METRIC_TYPE_DURATION = 1;
+  PAGE_METRIC_TYPE_REQUESTS = 2;
+  PAGE_METRIC_TYPE_MANUAL = 3;
+}
+
+// PageBarType mirrors page.configuration.type (how the status bar is computed).
+enum PageBarType {
+  PAGE_BAR_TYPE_UNSPECIFIED = 0;
+  PAGE_BAR_TYPE_ABSOLUTE = 1;
+  PAGE_BAR_TYPE_MANUAL = 2;
+}
+
+// PageConfiguration is the rich rendering config stored in page.configuration.
+message PageConfiguration {
+  // Which metric the status bars represent (configuration.value).
+  PageMetricType metric_type = 1;
+
+  // How the status bar is computed (configuration.type).
+  PageBarType bar_type = 2;
+
+  // Whether to show the uptime percentage (configuration.uptime).
+  bool show_uptime = 3;
+
+  // Theme key from the theme store (configuration.theme), e.g. "default".
+  // Free-form string rather than an enum because the theme catalog is dynamic.
+  string theme_key = 4;
+
+  // Number of uptime-bar days rendered on the page (configuration.days): 30 or 45.
+  int32 days = 5;
+}
+
 // StatusPage represents a full status page with all details.
 message StatusPage {
   // Unique identifier for the status page.
