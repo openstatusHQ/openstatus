@@ -60,6 +60,10 @@ const configurationSchema = z
     value: z.enum(["duration", "requests", "manual"]).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
+    days: z
+      .union([z.literal(30), z.literal(45)])
+      .or(z.literal("30").or(z.literal("45")))
+      .nullish(),
   })
   .refine(
     (data) => {
@@ -386,7 +390,7 @@ export function FormConfiguration({
 const message = {
   type: {
     manual:
-      "only shares the duration of reports and maintenaces you are setting up - nothing else.",
+      "only shares the duration of reports and maintenances you are setting up - nothing else.",
     absolute:
       "shares the status of your endpoint for the duration of the different statuses.",
   },
@@ -402,13 +406,14 @@ const message = {
   },
 } as const;
 
-// ?type=manual&value=manual&uptime=true&theme=default
+// ?type=manual&value=manual&uptime=true&theme=default&days=45
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
   value: parseAsStringLiteral(["duration", "requests", "manual"]),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
+  days: parseAsStringLiteral(["30", "45"]),
 };
 
 function FormConfigurationDialog({
@@ -421,7 +426,7 @@ function FormConfigurationDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [{ type, value, uptime, theme }, setSearchParams] =
+  const [{ type, value, uptime, theme, days }, setSearchParams] =
     useQueryStates(searchParams);
 
   useEffect(() => {
@@ -456,6 +461,7 @@ function FormConfigurationDialog({
           value: null,
           uptime: null,
           theme: null,
+          days: null,
         });
         setOpen(false);
       } catch (error) {
@@ -480,7 +486,7 @@ function FormConfigurationDialog({
         </DialogHeader>
         <div className="flex flex-col gap-2">
           <pre className="bg-muted/50 font-commit-mono rounded-md border px-3 py-2 text-sm">
-            {JSON.stringify({ type, value, uptime, theme }, null, 2)}
+            {JSON.stringify({ type, value, uptime, theme, days }, null, 2)}
           </pre>
         </div>
         <DialogFooter>
@@ -497,7 +503,9 @@ function FormConfigurationDialog({
                   value: value ?? undefined,
                   uptime: uptime ?? undefined,
                   theme: theme ?? undefined,
-                  days: defaultValues?.configuration?.days ?? undefined,
+                  // fall back to the page's stored value when the URL omits
+                  // `days` (e.g. links generated before it was added).
+                  days: days ?? defaultValues?.configuration?.days ?? undefined,
                 },
               })
             }

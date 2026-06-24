@@ -801,6 +801,12 @@ describe("fillStatusDataFor45Days", () => {
     expect(result).toHaveLength(45);
   });
 
+  it("should fill exactly 30 days when lookbackPeriod is 30", () => {
+    const result = fillStatusDataFor45Days([], "1", 30);
+
+    expect(result).toHaveLength(30);
+  });
+
   it("should sort data by day oldest first", () => {
     const data: StatusData[] = [];
     const result = fillStatusDataFor45Days(data, "1");

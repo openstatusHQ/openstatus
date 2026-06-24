@@ -596,6 +596,9 @@ export const statusPageRouter = createTRPCRouter({
         barType: z
           .enum(["absolute", "dominant", "manual"])
           .prefault("dominant"),
+        // preview override for the floating-button config; falls back to the
+        // page's stored `configuration.days` when omitted
+        days: z.union([z.literal(30), z.literal(45)]).optional(),
       }),
     )
     .query(async (opts) => {
@@ -691,9 +694,9 @@ export const statusPageRouter = createTRPCRouter({
       const parsedConfiguration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
       );
-      const lookbackPeriod = parsedConfiguration.success
-        ? parsedConfiguration.data.days
-        : 45;
+      const lookbackPeriod =
+        input.days ??
+        (parsedConfiguration.success ? parsedConfiguration.data.days : 45);
 
       return pageComponents.map((c) => {
         const events = getEvents({
