@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 import { render } from "react-email";
 
 import StatusReportEmail from "../emails/status-report";
+import { statusReportSubject } from "./client";
 
 describe("Status Report Email - Unsubscribe Link in Body", () => {
   const unsubscribeUrl =
@@ -80,6 +81,31 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
     // Check for muted styling (gray color for footer)
     expect(html).toContain("#6b7280");
+  });
+});
+
+describe("Status Report Email - Subject Line", () => {
+  const reportTitle = "API Outage";
+
+  test('prepends "RESOLVED:" only when status is "resolved"', () => {
+    expect(statusReportSubject({ status: "resolved", reportTitle })).toBe(
+      `RESOLVED: ${reportTitle}`,
+    );
+  });
+
+  test('does not prepend "RESOLVED:" for any non-resolved status', () => {
+    const nonResolved = [
+      "investigating",
+      "identified",
+      "monitoring",
+      "maintenance",
+    ] as const;
+
+    for (const status of nonResolved) {
+      const subject = statusReportSubject({ status, reportTitle });
+      expect(subject).toBe(reportTitle);
+      expect(subject).not.toContain("RESOLVED:");
+    }
   });
 });
 

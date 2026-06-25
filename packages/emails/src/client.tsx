@@ -17,6 +17,15 @@ import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
 
+export function statusReportSubject(req: {
+  status: StatusReportProps["status"];
+  reportTitle: string;
+}): string {
+  return req.status === "resolved"
+    ? `RESOLVED: ${req.reportTitle}`
+    : req.reportTitle;
+}
+
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
   const result: T[][] = [];
@@ -176,7 +185,7 @@ export class EmailClient {
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: req.reportTitle,
+                subject: statusReportSubject(req),
                 to: subscriber.email,
                 react: (
                   <StatusReportEmail
