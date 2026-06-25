@@ -7,14 +7,7 @@ let emailClient: EmailClient | null = null;
 
 function getEmailClient(): EmailClient {
   if (!emailClient) {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error(
-        "RESEND_API_KEY environment variable is required for email notifications",
-      );
-    }
-    emailClient = new EmailClient({
-      apiKey: process.env.RESEND_API_KEY,
-    });
+    emailClient = new EmailClient();
   }
   return emailClient;
 }

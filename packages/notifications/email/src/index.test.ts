@@ -7,7 +7,7 @@ import { sendAlert, sendDegraded, sendRecovery } from "./index";
 const sendMonitorAlertMock = mock(async (_callArgs) => {});
 
 mock.module("@openstatus/emails/src/client", () => ({
-  EmailClient: mock((_args: { apiKey: string }) => {
+  EmailClient: mock(() => {
     return {
       sendMonitorAlert: sendMonitorAlertMock,
     };

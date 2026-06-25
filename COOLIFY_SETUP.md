@@ -33,8 +33,10 @@ Create each service individually using the configurations below.
 3. **Required variables**:
    - `DATABASE_URL=http://libsql:8080`
    - `AUTH_SECRET=your-32-char-secret`
-   - `RESEND_API_KEY=your-resend-key`
    - `NEXT_PUBLIC_URL=http://your-domain:3002`
+   - Email (choose one):
+     - Resend: `RESEND_API_KEY=your-resend-key`
+     - SMTP: `SMTP_HOST=smtp.example.com`, `SMTP_PORT=587`, `SMTP_USER=your-user`, `SMTP_PASS=your-pass`, `SMTP_FROM=notifications@example.com`
 
 ## Service Configurations
 
