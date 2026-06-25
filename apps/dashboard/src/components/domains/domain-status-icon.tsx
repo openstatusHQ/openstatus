@@ -1,32 +1,31 @@
 "use client";
 
-import { AlertTriangle, Check, LoaderCircle, X } from "lucide-react";
-
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
+import { AlertTriangle, Check, LoaderCircle, X } from "lucide-react";
 
 export function DomainStatusIcon({
   status,
   loading,
 }: {
-  status: DomainVerificationStatusProps;
+  status?: DomainVerificationStatusProps;
   loading?: boolean;
 }) {
   return loading ? (
     <LoaderCircle
-      className="size-6 animate-spin text-muted-foreground"
+      className="text-muted-foreground size-6 animate-spin"
       stroke="currentColor"
     />
   ) : status === "Valid Configuration" ? (
-    <div className="flex size-6 items-center justify-center rounded-full bg-success">
-      <Check className="size-3 text-background" />
+    <div className="bg-success flex size-6 items-center justify-center rounded-full">
+      <Check className="text-background size-3" />
     </div>
   ) : status === "Pending Verification" ? (
-    <div className="flex size-6 items-center justify-center rounded-full bg-warning">
-      <AlertTriangle className="size-3 text-background" />
+    <div className="bg-warning flex size-6 items-center justify-center rounded-full">
+      <AlertTriangle className="text-background size-3" />
     </div>
   ) : (
-    <div className="flex size-6 items-center justify-center rounded-full bg-destructive">
-      <X className="size-3 text-background" />
+    <div className="bg-destructive flex size-6 items-center justify-center rounded-full">
+      <X className="text-background size-3" />
     </div>
   );
 }

@@ -1,20 +1,21 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { Scalar } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
 import { handleZodError } from "@/libs/errors";
 import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
-import type { Scope, Workspace } from "@openstatus/db/src/schema";
+
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
-import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
-import { statusReportUpdatesApi } from "./statusReportUpdates";
+import { pageSubscribersApi } from "./pageSubscribers";
 import { statusReportsApi } from "./statusReports";
+import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { whoamiApi } from "./whoami";
 
 export type Variables = RequestIdVariables & {
@@ -50,7 +51,7 @@ if (process.env.NODE_ENV === "production") {
         url: "https://www.openstatus.dev",
       },
       description:
-        "This version is deprecated please use v2 API: Read more about the new API in the documentation: https://docs.openstatus.dev/reference/api",
+        "This version is deprecated please use v2 API: Read more about the new API in the documentation: https://www.openstatus.dev/docs/reference/api",
     },
     tags: [
       {

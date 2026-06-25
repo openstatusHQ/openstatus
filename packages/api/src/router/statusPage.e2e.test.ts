@@ -1,6 +1,14 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
-import { page, pageSubscriber, workspace } from "@openstatus/db/src/schema";
+import {
+  incidentTable,
+  monitor,
+  page,
+  pageComponent,
+  pageSubscriber,
+  workspace,
+} from "@openstatus/db/src/schema";
 
 /**
  * End-to-end integration tests for the full unsubscribe flow.
@@ -922,5 +930,129 @@ describe("statusPage.get endpoint validation", () => {
       expect(monitor).toHaveProperty("id");
       expect(monitor).toHaveProperty("name");
     }
+  });
+});
+
+describe("statusPage.get gates incidents by barType (calendar manual mode)", () => {
+  const barTypeSlug = "bar-type-incident-gating-test-page";
+  let barTypePageId: number;
+  let barTypeMonitorId: number;
+  let barTypeIncidentId: number;
+  let barTypeComponentId: number;
+
+  async function getPage(barType?: "absolute" | "manual") {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+    const caller = edgeRouter.createCaller(ctx);
+    return caller.statusPage.get({ slug: barTypeSlug, barType });
+  }
+
+  function monitorIncidents(result: Awaited<ReturnType<typeof getPage>>) {
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === barTypeMonitorId,
+    );
+    return component?.monitor?.incidents ?? [];
+  }
+
+  beforeAll(async () => {
+    await db.delete(page).where(eq(page.slug, barTypeSlug));
+
+    // Page is stored as "manual" so we can also assert the default (no explicit
+    // barType arg) resolves from the page configuration.
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Bar Type Incident Gating Page",
+        description: "Verifies incident gating in statusPage.get",
+        slug: barTypeSlug,
+        customDomain: "",
+        configuration: {
+          type: "manual",
+          value: "requests",
+          uptime: true,
+          theme: "default",
+        },
+      })
+      .returning()
+      .get();
+    barTypePageId = testPage.id;
+
+    const testMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "Bar Type Test Monitor",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+      })
+      .returning()
+      .get();
+    barTypeMonitorId = testMonitor.id;
+
+    const testIncident = await db
+      .insert(incidentTable)
+      .values({
+        monitorId: barTypeMonitorId,
+        workspaceId: 1,
+        title: "Bar Type Test Incident",
+        startedAt: new Date(),
+      })
+      .returning()
+      .get();
+    barTypeIncidentId = testIncident.id;
+
+    const testComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: barTypePageId,
+        type: "monitor",
+        monitorId: barTypeMonitorId,
+        name: "Bar Type Test Component",
+        order: 0,
+      })
+      .returning()
+      .get();
+    barTypeComponentId = testComponent.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, barTypeComponentId));
+    await db
+      .delete(incidentTable)
+      .where(eq(incidentTable.id, barTypeIncidentId));
+    await db.delete(monitor).where(eq(monitor.id, barTypeMonitorId));
+    await db.delete(page).where(eq(page.id, barTypePageId));
+  });
+
+  test("barType 'absolute' keeps monitor incidents", async () => {
+    const result = await getPage("absolute");
+    const incidents = monitorIncidents(result);
+
+    expect(incidents.length).toBe(1);
+    expect(incidents[0].id).toBe(barTypeIncidentId);
+  });
+
+  test("barType 'manual' strips monitor incidents", async () => {
+    const result = await getPage("manual");
+
+    expect(monitorIncidents(result)).toEqual([]);
+  });
+
+  test("defaults to the page configuration when barType is omitted", async () => {
+    // Stored configuration is "manual", so incidents must be stripped without
+    // an explicit barType — this is the initial-load path the calendar uses.
+    const result = await getPage();
+
+    expect(monitorIncidents(result)).toEqual([]);
   });
 });

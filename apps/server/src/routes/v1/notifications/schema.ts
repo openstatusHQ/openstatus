@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-
 import { notificationProvider } from "@openstatus/db/src/schema/notifications/constants";
 
 export const ParamsSchema = z.object({

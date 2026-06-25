@@ -1,12 +1,13 @@
 "use client";
 
-import { useEmbed } from "@/hooks/use-embed";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import NextLink from "next/link";
 
+import { useEmbed } from "@/hooks/use-embed";
+
 export const linkVariants = cva(
-  "outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] rounded-sm",
+  "focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-[3px]",
   {
     variants: {
       variant: {
@@ -40,7 +41,7 @@ export function Link({
   const isAnchor = href?.startsWith("#");
   const shouldOpenNewTab = mode && !isExternal && !isAnchor;
   const embedTarget = shouldOpenNewTab ? "_blank" : target;
-  const embedRel = shouldOpenNewTab ? rel ?? "noopener noreferrer" : rel;
+  const embedRel = shouldOpenNewTab ? (rel ?? "noopener noreferrer") : rel;
 
   return (
     <NextLink

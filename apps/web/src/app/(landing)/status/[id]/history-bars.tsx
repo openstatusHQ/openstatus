@@ -118,7 +118,7 @@ export function HistoryBars(props: HistoryBarsProps) {
   // radius for this page only (descendant selectors outrank the block's
   // single-class utilities) without forking the shared component.
   return (
-    <div className="[&_[data-slot=status-bar-item]>div>div]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]]:rounded-none">
+    <div className="[&_[data-slot=status-bar-item]]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]>div>div]:rounded-none">
       <StatusBar data={data} />
     </div>
   );

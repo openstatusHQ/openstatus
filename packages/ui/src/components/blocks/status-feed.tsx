@@ -1,5 +1,4 @@
 "use client";
-import { useMemo } from "react";
 import { StatusBlankEvents } from "@openstatus/ui/components/blocks/status-blank";
 import {
   StatusEvent,
@@ -18,6 +17,7 @@ import type {
   StatusReport,
   Maintenance,
 } from "@openstatus/ui/components/blocks/status.types";
+import { useMemo } from "react";
 
 type UnifiedEvent = {
   id: number;
@@ -290,7 +290,10 @@ export function StatusFeed({
                   <StatusEventDate date={event.startDate} />
                 </StatusEventAside>
                 {renderEvent
-                  ? renderEvent({ type: "maintenance", data: maintenance }, node)
+                  ? renderEvent(
+                      { type: "maintenance", data: maintenance },
+                      node,
+                    )
                   : node}
               </StatusEvent>
             );

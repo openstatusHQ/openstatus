@@ -1,0 +1,276 @@
+---
+category: SDK
+title: Status Page Service
+description: "Manage status pages, components, groups, and subscribers with the openstatus Node.js SDK"
+---
+
+Manage status pages, components, component groups, and subscribers. The Status Page Service provides 18 RPC methods.
+
+## Status Page CRUD
+
+### Create Status Page
+
+```typescript
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .createStatusPage({
+    title: "My Service Status",
+    slug: "my-service",
+    description: "Status page for My Service",
+    homepageUrl: "https://example.com",
+    contactUrl: "https://example.com/contact",
+  });
+
+console.log(`Status page created: ${statusPage?.id}`);
+```
+
+### Get Status Page
+
+```typescript
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .getStatusPage({ id: "page_123" });
+```
+
+### List Status Pages
+
+```typescript
+const { statusPages, totalSize } = await client.statusPage.v1.StatusPageService
+  .listStatusPages({ limit: 10, offset: 0 });
+
+console.log(`Found ${totalSize} status pages`);
+```
+
+### Update Status Page
+
+```typescript
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .updateStatusPage({
+    id: "page_123",
+    title: "Updated Title",
+    description: "Updated description",
+  });
+```
+
+### Delete Status Page
+
+```typescript
+const { success } = await client.statusPage.v1.StatusPageService
+  .deleteStatusPage({ id: "page_123" });
+```
+
+## Components
+
+Components represent individual services on a status page. They can be linked to a monitor (automatically reflects monitor status) or static (manually managed).
+
+### Add Monitor Component
+
+```typescript
+const { component } = await client.statusPage.v1.StatusPageService
+  .addMonitorComponent({
+    pageId: "page_123",
+    monitorId: "123457",
+    name: "API Server",
+    description: "Main API endpoint",
+    order: 1,
+    groupId: "group_789",
+  });
+```
+
+### Add Static Component
+
+```typescript
+const { component } = await client.statusPage.v1.StatusPageService
+  .addStaticComponent({
+    pageId: "page_123",
+    name: "Third-party Service",
+    description: "External dependency",
+    order: 2,
+  });
+```
+
+### Update Component
+
+```typescript
+const { component } = await client.statusPage.v1.StatusPageService
+  .updateComponent({
+    id: "comp_123",
+    name: "Updated Component Name",
+    description: "Updated description",
+    order: 3,
+    groupId: "group_789",
+    groupOrder: 1,
+  });
+```
+
+### Remove Component
+
+```typescript
+const { success } = await client.statusPage.v1.StatusPageService
+  .removeComponent({ id: "comp_123" });
+```
+
+## Component Groups
+
+Group related components together on a status page.
+
+### Create Component Group
+
+```typescript
+const { group } = await client.statusPage.v1.StatusPageService
+  .createComponentGroup({
+    pageId: "page_123",
+    name: "Core Services",
+  });
+```
+
+### Update Component Group
+
+```typescript
+const { group } = await client.statusPage.v1.StatusPageService
+  .updateComponentGroup({
+    id: "group_123",
+    name: "Updated Group Name",
+  });
+```
+
+### Delete Component Group
+
+```typescript
+const { success } = await client.statusPage.v1.StatusPageService
+  .deleteComponentGroup({ id: "group_123" });
+```
+
+## Subscribers
+
+Manage email subscriptions to status page updates.
+
+### Subscribe to Page
+
+```typescript
+const { subscriber } = await client.statusPage.v1.StatusPageService
+  .subscribeToPage({
+    pageId: "page_123",
+    email: "user@example.com",
+  });
+```
+
+### Unsubscribe from Page
+
+Unsubscribe by email or subscriber ID using the `identifier` oneof:
+
+```typescript
+// By email
+const { success } = await client.statusPage.v1.StatusPageService
+  .unsubscribeFromPage({
+    pageId: "page_123",
+    identifier: { case: "email", value: "user@example.com" },
+  });
+
+// By subscriber ID
+const { success: success2 } = await client.statusPage.v1.StatusPageService
+  .unsubscribeFromPage({
+    pageId: "page_123",
+    identifier: { case: "id", value: "sub_456" },
+  });
+```
+
+### List Subscribers
+
+```typescript
+const { subscribers, totalSize } = await client.statusPage.v1.StatusPageService
+  .listSubscribers({
+    pageId: "page_123",
+    limit: 50,
+    offset: 0,
+    includeUnsubscribed: false,
+  });
+```
+
+## Get Status Page Content
+
+Get the full content of a status page including components, groups, active status reports, and maintenance windows. Identify the page by ID or slug.
+
+```typescript
+const content = await client.statusPage.v1.StatusPageService
+  .getStatusPageContent({
+    identifier: { case: "slug", value: "my-service" },
+  });
+
+console.log(`Page: ${content.statusPage?.title}`);
+console.log(`Components: ${content.components.length}`);
+console.log(`Groups: ${content.groups.length}`);
+console.log(`Active reports: ${content.statusReports.length}`);
+console.log(`Maintenances: ${content.maintenances.length}`);
+```
+
+## Get Overall Status
+
+Get the aggregated status of a status page and per-component statuses.
+
+```typescript
+import { createOpenStatusClient, OverallStatus } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { overallStatus, componentStatuses } = await client.statusPage.v1
+  .StatusPageService.getOverallStatus({
+    identifier: { case: "id", value: "page_123" },
+  });
+
+console.log(`Overall: ${OverallStatus[overallStatus]}`);
+for (const { componentId, status } of componentStatuses) {
+  console.log(`  ${componentId}: ${OverallStatus[status]}`);
+}
+```
+
+## Get Page Component Daily Summary
+
+Get per-component daily uptime buckets merged with the incident, maintenance, and status-report timeline over the last N days (max 45). This is the single source of truth for rendering per-component status bars and uptime calendars: each component carries gap-filled daily `buckets` (with a resolved `status`) plus the `events` affecting it. Identify the page by ID or slug; optionally restrict to specific `componentIds`.
+
+```typescript
+import {
+  ComponentDayStatus,
+  createOpenStatusClient,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { components } = await client.statusPage.v1.StatusPageService
+  .getPageComponentDailySummary({
+    identifier: { case: "slug", value: "my-service" },
+    days: 45,
+  });
+
+for (const component of components) {
+  console.log(`${component.name} (${component.componentId})`);
+  for (const bucket of component.buckets) {
+    console.log(
+      `  ${bucket.day}: ${ComponentDayStatus[bucket.status]} ` +
+        `(${bucket.ok}/${bucket.count} ok)`,
+    );
+  }
+  for (const event of component.events) {
+    console.log(
+      `  event: ${event.name} (${event.from} → ${event.to ?? "ongoing"})`,
+    );
+  }
+}
+```
+
+Request parameters:
+
+| Parameter      | Type                | Description                                                 |
+| -------------- | ------------------- | ---------------------------------------------------------- |
+| `identifier`   | oneof id \| slug    | Page id (workspace-scoped) or slug (published public page) |
+| `componentIds` | string[] (optional) | Restrict to these component ids (default: all components)  |
+| `days`         | number (optional)   | Days to return (1–45, default 45; values >45 reject)       |
+
+Each component returns gap-filled `buckets` (one per day in the window, oldest first) and `events`:
+
+- **`buckets[]`** — `day` (RFC 3339, UTC midnight), the `bigint` counts `count` / `ok` / `degraded` / `error`, a resolved `status` (`ComponentDayStatus`: operational / degraded / down / maintenance / empty), and an optional `impact` (`PageComponentImpact`) for the worst status-report impact that day. Monitor-backed components carry real counts; static components have empty buckets.
+- **`events[]`** — `id`, `name`, `type` (`ComponentEventType`: maintenance / incident / report), a projected `status` (`ComponentEventStatus`), `from` / `to` (RFC 3339; `to` absent while ongoing), and an optional `impact` for report events.
+
+<Aside type="note">Like every RPC, this requires an API key. The slug path additionally requires the page to be published with public access — it is not anonymous.</Aside>

@@ -1,5 +1,23 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import { useExtracted, useLocale } from "next-intl";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
+
 import { ButtonBack } from "@/components/button/button-back";
 import {
   FormCard,
@@ -19,23 +37,6 @@ import {
   StatusBlankTitle,
 } from "@/components/status-page/status-blank";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@openstatus/ui/components/ui/alert-dialog";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import { useExtracted, useLocale } from "next-intl";
-import { useParams } from "next/navigation";
-import { toast } from "sonner";
 
 export default function VerifyPage() {
   const t = useExtracted();

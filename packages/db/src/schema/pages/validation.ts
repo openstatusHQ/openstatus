@@ -104,6 +104,11 @@ export const pageConfigurationSchema = z.object({
     .enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]])
     .nullish()
     .transform((v) => v ?? "default"),
+  // number of uptime bars rendered on the status page; only 30 or 45 supported
+  days: z
+    .union([z.literal(30), z.literal(45)])
+    .nullish()
+    .transform((v) => v ?? 45),
 });
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 

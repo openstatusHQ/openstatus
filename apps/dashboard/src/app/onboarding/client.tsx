@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  OnboardingLayout,
-  OnboardingShell,
-} from "@/components/layout/onboarding-layout";
-import { useStreamChecks } from "@/components/onboarding/use-stream-checks";
-import { getCompanyDomainFromEmail } from "@/lib/onboarding/email-domain";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, PanelTop, Rocket } from "lucide-react";
@@ -14,6 +7,15 @@ import { usePathname } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";
 import { useEffect, useMemo, useRef } from "react";
+
+import {
+  OnboardingLayout,
+  OnboardingShell,
+} from "@/components/layout/onboarding-layout";
+import { useStreamChecks } from "@/components/onboarding/use-stream-checks";
+import { getCompanyDomainFromEmail } from "@/lib/onboarding/email-domain";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { Step1 } from "./_steps/step-1";
 import { Step2 } from "./_steps/step-2";
 import { Step3 } from "./_steps/step-3";

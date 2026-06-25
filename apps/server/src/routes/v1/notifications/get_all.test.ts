@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
 
 import { app } from "@/index";
+
 import { NotificationSchema } from "./schema";
 
 const TEST_PREFIX = "v1-notif-getall-test";

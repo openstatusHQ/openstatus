@@ -1,4 +1,3 @@
-import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -7,6 +6,8 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { Book } from "lucide-react";
+
+import { NavFeedback } from "@/components/nav/nav-feedback";
 
 export function NavActions() {
   return (
@@ -17,11 +18,11 @@ export function NavActions() {
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
               <a
-                href={"https://docs.openstatus.dev/reference/cli-reference"}
+                href={"https://www.openstatus.dev/docs/reference/cli-reference"}
                 target="_blank"
                 rel="noreferrer"
               >
-                <Book className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                <Book className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>
           </TooltipTrigger>

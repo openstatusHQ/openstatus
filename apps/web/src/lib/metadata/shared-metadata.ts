@@ -1,14 +1,13 @@
-import type { MDXData } from "@/content/utils";
 import type { Metadata } from "next";
 
+import type { MDXData } from "@/content/utils";
+
 export const TITLE = "openstatus";
-export const HOMEPAGE_TITLE =
-  "openstatus - The open-source status page trusted by growing teams";
+export const HOMEPAGE_TITLE = "The Compliance-First Status Page";
 export const DESCRIPTION =
   "Ship your status page before your SOC 2 auditor asks for it. Communicate incidents, prove compliance readiness, and monitor uptime from 28 global regions. Open source and free to start.";
 
-export const OG_DESCRIPTION =
-  "The open-source status page for compliance-ready teams";
+export const OG_DESCRIPTION = "The status page for compliance-ready teams";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -45,31 +44,27 @@ export const defaultMetadata: Metadata = {
   openGraph: ogMetadata,
 };
 
-export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
-  const { slug, metadata } = page;
-  const { title, description, category, publishedAt } = metadata;
+// Next merges metadata shallowly per field, so a page must emit its own
+// og/twitter blocks or it inherits the root layout's generic ones wholesale.
+export const getSocialMetadata = (args: {
+  title: string;
+  description: string;
+  url: string;
+  category?: string;
+  ogImage?: string;
+}): Pick<Metadata, "openGraph" | "twitter"> => {
+  const { title, description, url, category, ogImage: ogImageOverride } = args;
 
-  const ogImage = `${BASE_URL}/api/og?title=${encodeURIComponent(
-    title,
-  )}&description=${encodeURIComponent(
-    description,
-  )}&category=${encodeURIComponent(category)}`;
-
-  const url = basePath
-    ? `${BASE_URL}/${basePath}/${slug}`
-    : `${BASE_URL}/${slug}`;
+  const searchParams = new URLSearchParams({ title, description });
+  if (category) searchParams.set("category", category);
+  const ogImage =
+    ogImageOverride ?? `${BASE_URL}/api/og?${searchParams.toString()}`;
 
   return {
-    title,
-    description,
-    alternates: {
-      canonical: url,
-    },
     openGraph: {
       title,
       description,
-      type: "article",
-      publishedTime: publishedAt.toISOString(),
+      type: "website",
       url,
       images: [
         {
@@ -83,5 +78,41 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
       description,
       images: [ogImage],
     },
+  };
+};
+
+export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
+  const { slug, metadata } = page;
+  const { title, description, category, publishedAt, seo } = metadata;
+
+  const url = basePath
+    ? `${BASE_URL}/${basePath}/${slug}`
+    : `${BASE_URL}/${slug}`;
+
+  const metaTitle = seo?.title ?? title;
+  const metaDescription = seo?.description ?? description;
+
+  const { openGraph, twitter } = getSocialMetadata({
+    title: metaTitle,
+    description: metaDescription,
+    url,
+    category,
+    ogImage: seo?.ogImage,
+  });
+
+  return {
+    // `absolute` bypasses the `%s | openstatus` template so the override is verbatim
+    title: seo?.title ? { absolute: seo.title } : title,
+    description: metaDescription,
+    alternates: {
+      canonical: seo?.canonical ?? url,
+    },
+    ...(seo?.noindex ? { robots: { index: false } } : {}),
+    openGraph: {
+      ...openGraph,
+      type: "article",
+      publishedTime: publishedAt.toISOString(),
+    },
+    twitter,
   };
 };

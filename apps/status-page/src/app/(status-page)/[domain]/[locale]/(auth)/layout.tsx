@@ -1,8 +1,9 @@
+import { cn } from "@openstatus/ui/lib/utils";
+import { Suspense } from "react";
+
 import { EmbedShell } from "@/components/layout/embed-shell";
 import { Footer } from "@/components/nav/footer";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { cn } from "@openstatus/ui/lib/utils";
-import { Suspense } from "react";
 
 export default async function Layout({
   children,

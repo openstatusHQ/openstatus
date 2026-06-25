@@ -1,0 +1,33 @@
+name: Restart Workflows Machines
+
+# Periodic rolling restart to cap the native libsql embedded-replica memory growth
+# (see apps/workflows/research.md). Restarts machines one at a time so the app stays up.
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: restart-workflows
+  cancel-in-progress: false
+
+jobs:
+  restart:
+    name: Rolling restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Restart machines one at a time
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP: openstatus-workflows
+        run: |
+          set -euo pipefail
+          ids=$(flyctl machines list -a "$FLY_APP" --json | jq -r '.[].id')
+          for id in $ids; do
+            echo "Restarting machine $id"
+            flyctl machine restart "$id" -a "$FLY_APP"
+            # Let the machine pass its health check before touching the next one.
+            sleep 45
+          done

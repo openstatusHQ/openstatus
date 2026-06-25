@@ -1,3 +1,4 @@
+import { FetchError } from "@openstatus/status-fetcher";
 import * as Sentry from "@sentry/bun";
 
 import { env } from "../env";
@@ -31,4 +32,24 @@ export function runSentryCron(monitorSlug: string): {
 export async function reportBackgroundError(message: string): Promise<void> {
   Sentry.captureMessage(message, "error");
   await Sentry.flush();
+}
+
+// Fires inside the per-service fetch loop, so no flush here — the tick's
+// cronCompleted/cronFailed path flushes once the tick settles.
+export function reportFetchFailure(args: {
+  phase: "status" | "incidents" | "components";
+  slug: string;
+  error: FetchError;
+}): void {
+  const { phase, slug, error } = args;
+  Sentry.captureException(error, {
+    tags: {
+      cron: "external-status",
+      phase,
+      slug,
+      fetcher: error.fetcherName ?? "unknown",
+      http_status: error.httpStatus,
+    },
+    extra: { url: error.url },
+  });
 }

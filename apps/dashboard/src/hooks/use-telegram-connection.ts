@@ -1,11 +1,12 @@
 "use client";
 
-import type { FormValues } from "@/components/forms/notifications/form-telegram";
-import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import React, { useReducer, useTransition } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
+
+import type { FormValues } from "@/components/forms/notifications/form-telegram";
+import { useTRPC } from "@/lib/trpc/client";
 
 interface UseTelegramConnectionProps {
   form: UseFormReturn<FormValues>;
@@ -119,7 +120,7 @@ export function useTelegramConnection({
     ...trpc.notification.getTelegramUpdates.queryOptions({
       privateChatId:
         state.flowStep === "group"
-          ? state.privateChatId ?? undefined
+          ? (state.privateChatId ?? undefined)
           : undefined,
       since: state.sessionStartTime ?? undefined,
     }),

@@ -1,5 +1,6 @@
 import { type Duration, Effect, Schedule } from "effect";
 import type { z } from "zod";
+
 import type { JsonValue } from "./types";
 
 type FetchErrorInit = {

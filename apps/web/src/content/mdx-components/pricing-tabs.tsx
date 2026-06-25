@@ -9,9 +9,9 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
 const planColumns = [
-  { plan: "free" as const, header: "Hobby" },
   { plan: "starter" as const, header: "Starter" },
   { plan: "team" as const, header: "Pro" },
+  { plan: "scale" as const, header: "Scale" },
 ] as const;
 
 export function PricingTabs() {
@@ -67,7 +67,6 @@ function PricingUpdater({ interval }: { interval: BillingInterval }) {
   const formatPrice = useCallback(
     (plan: (typeof planColumns)[number]["plan"]) => {
       const config = allPlans[plan];
-      if (plan === "free") return "Free - Hobby";
       const price = getPriceConfig(plan, "USD", interval);
       const formatted = new Intl.NumberFormat(price.locale, {
         style: "currency",
@@ -87,7 +86,7 @@ function PricingUpdater({ interval }: { interval: BillingInterval }) {
       const tables = document.querySelectorAll(".table-wrapper table");
       for (const table of tables) {
         const headers = table.querySelectorAll("thead th");
-        // The pricing table has 4 columns: Features | Hobby | Starter | Pro
+        // The pricing table has 4 columns: Features | Starter | Pro | Scale
         if (headers.length !== 4) continue;
 
         for (let i = 0; i < planColumns.length; i++) {

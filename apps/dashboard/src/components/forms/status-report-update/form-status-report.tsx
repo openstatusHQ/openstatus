@@ -1,25 +1,11 @@
 "use client";
 
-import { ProcessMessage } from "@/components/content/process-message";
-import { FormAlertDialog } from "@/components/forms/form-alert-dialog";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import {
-  FormCard,
-  FormCardFooter,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { colors } from "@/data/status-report-updates.client";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type StatusReportUpdate,
   statusReportStatus,
 } from "@openstatus/db/src/schema";
+import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -62,10 +48,35 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { ProcessMessage } from "@/components/content/process-message";
+import { FormAlertDialog } from "@/components/forms/form-alert-dialog";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import {
+  FormCard,
+  FormCardFooter,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { ComponentImpactList } from "@/components/forms/status-report/component-impact-field";
+import { colors } from "@/data/status-report-updates.client";
+import { useTRPC } from "@/lib/trpc/client";
+
 const schema = z.object({
   status: z.enum(statusReportStatus),
   message: z.string(),
   date: z.date(),
+  componentImpacts: z
+    .array(
+      z.object({
+        pageComponentId: z.number(),
+        impact: z.enum(pageComponentImpact),
+      }),
+    )
+    .optional(),
   notifySubscribers: z.boolean().optional(),
 });
 
@@ -77,12 +88,15 @@ export function FormStatusReportUpdateCard({
   className,
   index,
   update,
+  components,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   index: number;
   update: StatusReportUpdate;
+  /** The report's affected components; renders the per-component impact picker. */
+  components?: { id: number; name: string }[];
 }) {
   const { reportId } = useParams<{ id: string; reportId: string }>();
   const trpc = useTRPC();
@@ -97,6 +111,7 @@ export function FormStatusReportUpdateCard({
       status: "identified",
       message: "",
       date: new Date(),
+      componentImpacts: undefined,
       notifySubscribers: true,
     },
   });
@@ -172,9 +187,23 @@ export function FormStatusReportUpdateCard({
                   <FormControl>
                     <Select
                       defaultValue={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // resolved implies components are back up — prefill, still editable
+                        if (value === "resolved" && components?.length) {
+                          form.setValue(
+                            "componentImpacts",
+                            components.map((c) => ({
+                              pageComponentId: c.id,
+                              impact: "operational" as const,
+                            })),
+                            { shouldDirty: true },
+                          );
+                        }
+                      }}
                     >
                       <SelectTrigger
+                        size="sm"
                         className={cn(
                           colors[field.value],
                           "w-full font-mono capitalize",
@@ -216,7 +245,7 @@ export function FormStatusReportUpdateCard({
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "h-9 w-full pl-3 text-left font-normal sm:w-[240px]",
+                            "w-full pl-3 text-left font-normal sm:w-[240px]",
                             !field.value && "text-muted-foreground",
                           )}
                         >
@@ -287,7 +316,7 @@ export function FormStatusReportUpdateCard({
                                 }
                               }}
                             />
-                            <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                            <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
                               <ClockIcon size={16} aria-hidden="true" />
                             </div>
                           </div>
@@ -311,6 +340,35 @@ export function FormStatusReportUpdateCard({
               ).
             </FormDescription>
           </FormCardContent>
+          {components && components.length > 0 ? (
+            <>
+              <FormCardSeparator />
+              <FormCardContent>
+                <FormField
+                  control={form.control}
+                  name="componentImpacts"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Component Impact</FormLabel>
+                      <FormDescription>
+                        The impact this update set per component. Components
+                        marked &quot;No change&quot; keep their prior impact.
+                      </FormDescription>
+                      <FormControl>
+                        <ComponentImpactList
+                          components={components}
+                          value={field.value ?? []}
+                          onValueChange={field.onChange}
+                          allowUnset
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </FormCardContent>
+            </>
+          ) : null}
           <FormCardSeparator />
           <FormCardContent>
             <Tabs defaultValue="tab-1">
@@ -337,7 +395,7 @@ export function FormStatusReportUpdateCard({
               <TabsContent value="tab-2">
                 <div className="grid gap-2">
                   <Label>Preview</Label>
-                  <div className="prose prose-sm dark:prose-invert rounded-md border px-3 py-2 text-foreground text-sm">
+                  <div className="prose prose-sm dark:prose-invert text-foreground rounded-md border px-3 py-2 text-sm">
                     <ProcessMessage value={watchMessage} />
                   </div>
                 </div>

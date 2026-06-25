@@ -1,6 +1,7 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+
 import { defaultLocale, locales } from "./src/i18n/config";
 
 const isDev = process.env.NODE_ENV === "development";

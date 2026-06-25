@@ -1,11 +1,13 @@
 "use client";
 
-import { FormComponents } from "@/components/forms/components/form-components";
-import { useTRPC } from "@/lib/trpc/client";
 import type { PageConfiguration } from "@openstatus/db/src/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+
+import { FormComponents } from "@/components/forms/components/form-components";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { FormCardGroup } from "../form-card";
 import { FormConfiguration } from "../status-page/form-configuration";
 import { FormImport, type ImportFormValues } from "./form-import";
@@ -120,6 +122,7 @@ export function FormComponentsUpdate() {
         }}
       />
       <FormConfiguration
+        hasMonitorComponents={pageComponents.some((c) => c.type === "monitor")}
         defaultValues={{
           configuration: statusPage.configuration ?? {},
         }}
@@ -142,6 +145,9 @@ export function FormComponentsUpdate() {
                 "absolute") as PageConfiguration["type"],
               theme: (values.configuration.theme ??
                 undefined) as PageConfiguration["theme"],
+              days: (values.configuration.days
+                ? Number(values.configuration.days)
+                : undefined) as PageConfiguration["days"],
             },
           });
         }}

@@ -1,4 +1,5 @@
 import { OpenPanel, type TrackProperties } from "@openpanel/sdk";
+
 import { env } from "../env";
 import type { EventProps } from "./events";
 
@@ -17,7 +18,7 @@ export type IdentifyProps = {
   fullName?: string | null;
   email?: string;
   workspaceId?: string;
-  plan?: "free" | "starter" | "team";
+  plan?: "free" | "starter" | "team" | "scale";
   // headers from the request
   location?: string;
   userAgent?: string;

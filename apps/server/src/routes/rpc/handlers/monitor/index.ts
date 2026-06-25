@@ -1,5 +1,3 @@
-import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import type { ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
@@ -31,6 +29,9 @@ import {
   getResponseLog,
   listResponseLogs,
 } from "@openstatus/services/monitor";
+
+import { env } from "@/env";
+import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";

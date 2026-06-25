@@ -1,15 +1,16 @@
 "use client";
 
-import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { SidebarRight } from "@/components/nav/sidebar-right";
-import { monitorTypes } from "@/data/monitors.client";
-import { formatMilliseconds } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
 import { deserialize } from "@openstatus/assertions";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { SidebarRight } from "@/components/nav/sidebar-right";
+import { monitorTypes } from "@/data/monitors.client";
+import { formatMilliseconds } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function Sidebar() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export function Sidebar() {
               value: type ? (
                 <span className="flex items-center gap-1">
                   <span className="uppercase">{type.label}</span>
-                  <type.icon className="h-2.5 w-2.5 text-muted-foreground" />
+                  <type.icon className="text-muted-foreground h-2.5 w-2.5" />
                 </span>
               ) : (
                 <span className="uppercase">{monitor.jobType}</span>
@@ -65,12 +66,12 @@ export function Sidebar() {
             {
               label: "Tags",
               value: (
-                <div className="group/badges -space-x-2 flex flex-wrap">
+                <div className="group/badges flex flex-wrap -space-x-2">
                   {monitor.tags.map((tag) => (
                     <Badge
                       key={tag.id}
                       variant="outline"
-                      className="relative flex translate-x-0 items-center gap-1.5 rounded-full bg-background transition-transform hover:z-10 hover:translate-x-1"
+                      className="bg-background relative flex translate-x-0 items-center gap-1.5 rounded-full transition-transform hover:z-10 hover:translate-x-1"
                     >
                       <div
                         className="size-2.5 rounded-full"
@@ -102,6 +103,7 @@ export function Sidebar() {
         },
         {
           label: "Notifications",
+          emptyMessage: "No notifications attached",
           items: monitor.notifications.flatMap((notification) => {
             const arr = [];
             arr.push({
@@ -129,43 +131,41 @@ export function Sidebar() {
         },
         {
           label: "Assertions",
-          items:
-            assertions.length > 0
-              ? assertions.flatMap((assertion) => {
-                  const arr = [];
+          emptyMessage: "No assertions configured",
+          items: assertions.flatMap((assertion) => {
+            const arr = [];
 
-                  arr.push({
-                    label: "Type",
-                    value: assertion.schema.type,
-                  });
+            arr.push({
+              label: "Type",
+              value: assertion.schema.type,
+            });
 
-                  arr.push({
-                    label: "Compare",
-                    value: assertion.schema.compare,
-                    isNested: true,
-                  });
+            arr.push({
+              label: "Compare",
+              value: assertion.schema.compare,
+              isNested: true,
+            });
 
-                  if (
-                    (assertion.schema.type === "header" ||
-                      assertion.schema.type === "dnsRecord") &&
-                    assertion.schema.key
-                  ) {
-                    arr.push({
-                      label: "Key",
-                      value: assertion.schema.key,
-                      isNested: true,
-                    });
-                  }
+            if (
+              (assertion.schema.type === "header" ||
+                assertion.schema.type === "dnsRecord") &&
+              assertion.schema.key
+            ) {
+              arr.push({
+                label: "Key",
+                value: assertion.schema.key,
+                isNested: true,
+              });
+            }
 
-                  arr.push({
-                    label: "Value",
-                    value: assertion.schema.target,
-                    isNested: true,
-                  });
+            arr.push({
+              label: "Value",
+              value: assertion.schema.target,
+              isNested: true,
+            });
 
-                  return arr;
-                })
-              : [],
+            return arr;
+          }),
         },
         // {
         //   label: "Last Logs",

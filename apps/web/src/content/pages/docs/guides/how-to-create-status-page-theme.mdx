@@ -1,0 +1,157 @@
+---
+category: Guides
+title: Create Your Own Status Page Theme
+description: "A step-by-step guide to designing, testing, and contributing a community theme for openstatus status pages."
+---
+
+
+
+| | |
+|---|---|
+| **Prerequisites** | a GitHub account, Node.js and pnpm installed, basic familiarity with CSS custom properties |
+
+Community themes let you restyle a status page with your own colors and design — and once merged, everyone can pick your theme from the [theme explorer](/docs/guides/how-to-configure-status-page#2-theme-explorer). This guide walks you through designing a palette, testing it locally, and opening a pull request.
+
+Themes are contributed through GitHub. We keep them in version control so every theme stays reviewable, accessible, and consistent across the platform.
+
+<Aside type="tip">
+If you use AI agents, install the [`openstatus-theme` skill](https://github.com/openstatusHQ/skills/tree/main/skills/openstatus-theme) with `npx skills add openstatushq/skills --skill openstatus-theme` for guided help through palette design, accessibility checks, file scaffolding, and PR submission.
+</Aside>
+
+## Two ways to build a theme
+
+<Grid cols={2}>
+<Card title="Visual builder">
+Configure a palette at [themes.openstatus.dev](https://themes.openstatus.dev/?b=true) and copy the generated configuration. Fastest way to get a starting point.
+</Card>
+<Card title="Local development">
+Run the status page app locally and iterate against real, seeded content. Best for fine-tuning and final testing.
+</Card>
+</Grid>
+
+Most contributors start in the builder, then test locally before submitting.
+
+## 1. Run the project locally
+
+Fork the [openstatus repository](https://github.com/openstatusHQ/openstatus) to your GitHub account, then follow the [Getting Started](https://github.com/openstatusHQ/openstatus?tab=readme-ov-file#getting-started-) steps. From the repository root, start the status page app:
+
+```bash
+pnpm dev:status-page
+```
+
+Then open one of:
+
+- [localhost:3000](http://localhost:3000) — the theme explorer
+- [localhost:3000/status](http://localhost:3000/status) — a status page with seeded entries
+
+A configuration button in the bottom-right corner gives you access to settings, including the community theme switcher.
+
+## 2. Create your theme file
+
+Theme files live in `packages/theme-store/src`. Create a new TypeScript file there (for example `my-theme.ts`). The easiest start is to copy an existing theme such as `github.ts` and edit the values.
+
+## 3. Define your theme
+
+Export a constant that satisfies the `Theme` interface. Each theme has an `id`, a display `name`, an `author`, and `light` / `dark` color maps:
+
+```typescript
+import type { Theme } from "./types";
+
+export const MY_THEME = {
+  id: "my-theme", // unique, kebab-case
+  name: "My Awesome Theme", // display name
+  author: {
+    name: "@yourusername",
+    url: "https://github.com/yourusername", // website or social link
+  },
+  light: {
+    "--background": "oklch(100% 0 0)",
+    "--foreground": "oklch(20% 0 0)",
+    "--success": "oklch(60.81% 0.1567 142.5)", // operational
+    "--destructive": "oklch(58.79% 0.1577 22.18)", // outage
+    // ...more variables
+  },
+  dark: {
+    "--background": "oklch(10% 0 0)",
+    "--foreground": "oklch(90% 0 0)",
+    // ...more variables
+  },
+} as const satisfies Theme;
+```
+
+<Aside type="note">
+You don't need to set every variable. Anything you leave out falls back to the default openstatus theme, so you can override only the colors that matter for your design.
+</Aside>
+
+### Status colors
+
+These four drive the meaning of a status page, so set them deliberately and make sure they're distinguishable:
+
+| Variable | Meaning |
+|---|---|
+| `--success` | resolved / operational (green) |
+| `--warning` | identified / degraded (yellow) |
+| `--info` | monitoring / maintenance (blue) |
+| `--destructive` | investigating / outage / error (red) |
+
+The remaining variables follow the [shadcn/ui](https://ui.shadcn.com/) naming convention — `--background`, `--foreground`, `--primary`, `--secondary`, `--accent`, `--muted`, `--border`, `--input`, `--ring`, the `--chart-*` series, and more. The complete list lives in [`packages/theme-store/src/types.ts`](https://github.com/openstatusHQ/openstatus/blob/main/packages/theme-store/src/types.ts) as `THEME_VAR_NAMES`.
+
+<Details summary="What about the --rainbow-* variables?">
+The `--rainbow-1` through `--rainbow-17` variables color the per-region series in the public monitor charts. They're optional — if you skip them, the [defaults](https://github.com/openstatusHQ/openstatus/blob/main/apps/status-page/src/app/globals.css) apply.
+</Details>
+
+## 4. Register your theme
+
+Add your theme to the `THEMES_LIST` array in `packages/theme-store/src/index.ts`. Keep the list ordered:
+
+```typescript
+const THEMES_LIST = [
+  OPENSTATUS_THEME,
+  OPENSTATUS_ROUNDED_THEME,
+  // ...
+  MY_THEME,
+] satisfies Theme[];
+```
+
+Theme IDs are validated at runtime to be unique, so a duplicate `id` will throw — pick something descriptive.
+
+## 5. Test your theme
+
+Before submitting, verify the theme against a real page:
+
+1. Apply it on a status page via the configuration button.
+2. Confirm both **light** and **dark** modes look correct.
+3. Check contrast with your browser dev tools.
+4. Make sure every status indicator (operational, degraded, monitoring, outage) is clearly distinguishable.
+
+<Aside type="tip">
+To preview themes outside local development, run `sessionStorage.setItem("community-theme", "true")` in the browser console. A floating button appears that lets you switch between themes and light/dark mode.
+</Aside>
+
+## 6. Submit a pull request
+
+Open a pull request against the openstatus repository with your new theme file and the `index.ts` change. We'll review it for design consistency and accessibility.
+
+## Design guidelines
+
+- **Use OKLCH** for better perceptual uniformity — though any valid CSS color is supported.
+- **Support both modes.** A theme must define a coherent `light` and `dark` variant.
+- **Meet WCAG contrast guidelines.** Test readability in both modes.
+- **Keep it cohesive.** All components should feel like one design.
+- **No "Christmas tree."** Avoid overly colorful or distracting palettes.
+
+## What you've accomplished
+
+- Designed a light and dark color palette
+- Created and registered a theme in the theme store
+- Tested it against a real status page in both modes
+- Opened a pull request to share it with the community
+
+## What's next
+
+- **[Configure your status page](/docs/guides/how-to-configure-status-page)** — apply themes and other display options.
+- **[Building trust with status pages](/docs/concept/best-practices-status-page)** — communicate incidents effectively.
+
+## Questions?
+
+Need help building a theme? [Open an issue](https://github.com/openstatusHQ/openstatus/issues), join our Discord, or reach out to the openstatus community.

@@ -4,6 +4,7 @@ import { integration } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
+
 import { runAgent } from "./agent";
 import { buildConfirmationBlocks, getConfirmationText } from "./blocks";
 import { findByThread, replace, store } from "./confirmation-store";
@@ -329,7 +330,7 @@ async function handleConfirmation(
     toolName: draft.toolName,
     input: draft.input,
   };
-  const text = getConfirmationText({ tool, input: draft.input });
+  const text = getConfirmationText({ tool, input: draft.displayInput });
 
   // findByThread + replace isn't atomic on its own — two concurrent
   // events on the same thread could both see `existing` and race on
@@ -344,7 +345,7 @@ async function handleConfirmation(
     const blocks = buildConfirmationBlocks({
       actionId: existing.id,
       tool,
-      input: draft.input,
+      input: draft.displayInput,
     });
     await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
     await slack.chat.update({
@@ -367,7 +368,7 @@ async function handleConfirmation(
     const blocks = buildConfirmationBlocks({
       actionId,
       tool,
-      input: draft.input,
+      input: draft.displayInput,
     });
     await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
   }

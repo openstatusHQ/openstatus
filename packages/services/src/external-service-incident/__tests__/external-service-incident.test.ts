@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+
 import { and, db, eq, like } from "@openstatus/db";
 import {
   externalService,
@@ -6,6 +7,8 @@ import {
 } from "@openstatus/db/src/schema";
 
 import {
+  type UpsertExternalIncidentInput,
+  listExternalIncidentsByComponent,
   listExternalIncidentsBySlug,
   pruneStaleRawPayloads,
   upsertExternalIncidentsForService,
@@ -128,7 +131,213 @@ describe("upsertExternalIncidentsForService", () => {
     expect(updated[0]?.status).toBe("resolved");
     expect(updated[0]?.resolvedAt).toBeInstanceOf(Date);
     expect(updated[0]?.firstSeenAt.getTime()).toBe(baseDate.getTime());
-    expect(updated[0]?.lastSeenAt.getTime()).toBe(laterDate.getTime());
+    expect(updated[0]?.updatedAt.getTime()).toBe(laterDate.getTime());
+  });
+
+  test("idle re-upsert with identical input leaves updatedAt unchanged", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-idle` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+    const incident: UpsertExternalIncidentInput = {
+      providerIncidentId: "idle-1",
+      name: "Idle outage",
+      status: "investigating",
+      impact: "minor",
+      shortlink: "https://stspg.io/idle",
+      startedAt: new Date("2024-06-01T11:55:00.000Z"),
+      createdAt: new Date("2024-06-01T11:56:00.000Z"),
+      resolvedAt: null,
+      affectedComponentIds: ["cmp-a", "cmp-b"],
+      raw: { id: "idle-1" },
+    };
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      incidents: [incident],
+    });
+
+    const before = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "idle-1"),
+        ),
+      )
+      .all();
+
+    const laterDate = new Date("2024-06-01T13:00:00.000Z");
+    const result = await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: laterDate,
+      incidents: [incident],
+    });
+    expect(result.upserted).toBe(0);
+
+    const after = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "idle-1"),
+        ),
+      )
+      .all();
+    expect(after[0]?.updatedAt.getTime()).toBe(
+      before[0]?.updatedAt.getTime() ?? -1,
+    );
+  });
+
+  test("idle re-upsert ignores sub-second precision lost on storage round-trip", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-subsec` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+    const incident: UpsertExternalIncidentInput = {
+      providerIncidentId: "subsec-1",
+      name: "Sub-second outage",
+      status: "resolved",
+      impact: "critical",
+      shortlink: "https://stspg.io/subsec",
+      startedAt: new Date("2024-06-01T11:55:00.569Z"),
+      createdAt: new Date("2024-06-01T11:56:00.123Z"),
+      resolvedAt: new Date("2024-06-01T12:30:00.611Z"),
+      affectedComponentIds: ["cmp-a"],
+      raw: { id: "subsec-1" },
+    };
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      incidents: [incident],
+    });
+
+    const before = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "subsec-1"),
+        ),
+      )
+      .all();
+
+    const laterDate = new Date("2024-06-01T13:00:00.000Z");
+    const result = await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: laterDate,
+      incidents: [incident],
+    });
+    expect(result.upserted).toBe(0);
+
+    const after = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "subsec-1"),
+        ),
+      )
+      .all();
+    expect(after[0]?.updatedAt.getTime()).toBe(
+      before[0]?.updatedAt.getTime() ?? -1,
+    );
+  });
+
+  test("rawPayload co-rewrites when a scalar field changes", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-corew` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      incidents: [
+        {
+          providerIncidentId: "co-1",
+          name: "Co-rewrite",
+          status: "investigating",
+          createdAt: new Date("2024-06-01T11:56:00.000Z"),
+          resolvedAt: null,
+          raw: { rev: 1 },
+        },
+      ],
+    });
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-06-01T13:00:00.000Z"),
+      incidents: [
+        {
+          providerIncidentId: "co-1",
+          name: "Co-rewrite",
+          status: "resolved",
+          createdAt: new Date("2024-06-01T11:56:00.000Z"),
+          resolvedAt: new Date("2024-06-01T12:45:00.000Z"),
+          raw: { rev: 2 },
+        },
+      ],
+    });
+
+    const rows = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "co-1"),
+        ),
+      )
+      .all();
+    expect(rows[0]?.rawPayload).toEqual({ rev: 2 });
+  });
+
+  test("rawPayload unchanged on no-op even if supplied raw differs", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-noop` });
+    const baseDate = new Date("2024-06-01T12:00:00.000Z");
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: baseDate,
+      incidents: [
+        {
+          providerIncidentId: "noop-1",
+          name: "No-op",
+          status: "investigating",
+          createdAt: new Date("2024-06-01T11:56:00.000Z"),
+          resolvedAt: null,
+          raw: { rev: "first" },
+        },
+      ],
+    });
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now: new Date("2024-06-01T13:00:00.000Z"),
+      incidents: [
+        {
+          providerIncidentId: "noop-1",
+          name: "No-op",
+          status: "investigating",
+          createdAt: new Date("2024-06-01T11:56:00.000Z"),
+          resolvedAt: null,
+          raw: { rev: "second" },
+        },
+      ],
+    });
+
+    const rows = await db
+      .select()
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, serviceId),
+          eq(externalServiceIncident.providerIncidentId, "noop-1"),
+        ),
+      )
+      .all();
+    expect(rows[0]?.rawPayload).toEqual({ rev: "first" });
   });
 
   test("backfills startedAt when upstream populates it after first sight", async () => {
@@ -271,6 +480,57 @@ describe("listExternalIncidentsBySlug", () => {
     });
     expect(service).toBeNull();
     expect(incidents).toEqual([]);
+  });
+});
+
+describe("listExternalIncidentsByComponent", () => {
+  test("returns only incidents tagged with the upstream component id", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-bycomp` });
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      incidents: [
+        {
+          providerIncidentId: "i-fra",
+          name: "Frankfurt outage",
+          status: "resolved",
+          createdAt: new Date("2024-06-01T00:00:00.000Z"),
+          startedAt: new Date("2024-06-01T00:00:00.000Z"),
+          resolvedAt: new Date("2024-06-01T01:00:00.000Z"),
+          affectedComponentIds: ["cmp-fra", "cmp-shared"],
+          raw: {},
+        },
+        {
+          providerIncidentId: "i-other",
+          name: "Stockholm only",
+          status: "resolved",
+          createdAt: new Date("2024-06-02T00:00:00.000Z"),
+          startedAt: new Date("2024-06-02T00:00:00.000Z"),
+          resolvedAt: new Date("2024-06-02T01:00:00.000Z"),
+          affectedComponentIds: ["cmp-arn"],
+          raw: {},
+        },
+      ],
+    });
+
+    const fra = await listExternalIncidentsByComponent({
+      externalServiceId: serviceId,
+      upstreamComponentId: "cmp-fra",
+    });
+    expect(fra).toHaveLength(1);
+    expect(fra[0]?.providerIncidentId).toBe("i-fra");
+
+    const shared = await listExternalIncidentsByComponent({
+      externalServiceId: serviceId,
+      upstreamComponentId: "cmp-shared",
+    });
+    expect(shared).toHaveLength(1);
+
+    const none = await listExternalIncidentsByComponent({
+      externalServiceId: serviceId,
+      upstreamComponentId: "cmp-unknown",
+    });
+    expect(none).toHaveLength(0);
   });
 });
 

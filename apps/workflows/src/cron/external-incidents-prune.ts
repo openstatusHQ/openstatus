@@ -1,9 +1,9 @@
 import { getLogger } from "@logtape/logtape";
+import { db } from "@openstatus/db";
 import { pruneStaleRawPayloads } from "@openstatus/services/external-service-incident";
 import { Effect } from "effect";
 import type { Context } from "hono";
 
-import { db } from "../lib/db";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 
 const logger = getLogger(["workflow", "external-incidents-prune"]);
@@ -31,7 +31,9 @@ export async function handleExternalIncidentsPruneCron(c: Context) {
         Effect.sync(() => {
           logger.info(
             "external-incidents-prune tick complete: purged={purged}",
-            { purged: res.purged },
+            {
+              purged: res.purged,
+            },
           );
           void cronCompleted();
         }),

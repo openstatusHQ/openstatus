@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 const sendMonitorAlertMock = mock(async (_callArgs) => {});
@@ -56,7 +58,7 @@ describe("Email Notifications", () => {
       statusCode: 500,
       message: "Something went wrong",
       latency: 1500,
-      region: "iad",
+      regions: ["iad"],
       cronTimestamp: Date.now(),
     });
 
@@ -68,6 +70,7 @@ describe("Email Notifications", () => {
     expect(callArgs.url).toBe("https://api.example.com/health");
     expect(callArgs.status).toBe("500");
     expect(callArgs.latency).toBe("1500ms");
+    expect(callArgs.region).toBe("Ashburn, Virginia, USA");
     expect(callArgs.message).toBe("Something went wrong");
     expect(callArgs.timestamp).toBeDefined();
   });
@@ -104,7 +107,7 @@ describe("Email Notifications", () => {
       notification,
       statusCode: 200,
       latency: 100,
-      region: "ams",
+      regions: ["ams"],
       cronTimestamp: Date.now(),
     });
 
@@ -115,6 +118,7 @@ describe("Email Notifications", () => {
     expect(callArgs.to).toBe("ping@openstatus.dev");
     expect(callArgs.status).toBe("200");
     expect(callArgs.latency).toBe("100ms");
+    expect(callArgs.region).toBe("Amsterdam, Netherlands");
   });
 
   test("Send Degraded", async () => {
@@ -129,7 +133,7 @@ describe("Email Notifications", () => {
       notification,
       statusCode: 503,
       latency: 2000,
-      region: "lax",
+      regions: ["lax"],
       cronTimestamp: Date.now(),
     });
 
@@ -139,6 +143,7 @@ describe("Email Notifications", () => {
     expect(callArgs.name).toBe("API Health Check");
     expect(callArgs.status).toBe("503");
     expect(callArgs.latency).toBe("2000ms");
+    expect(callArgs.region).toBe("Los Angeles, California, USA");
   });
 
   test("Handles invalid notification data gracefully", async () => {

@@ -1,3 +1,9 @@
+import { pageConfigurationSchema } from "@openstatus/db/src/schema";
+import { generateThemeStyles } from "@openstatus/theme-store";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
 import { PasswordWrapper } from "@/components/password-wrapper";
 import {
@@ -6,12 +12,8 @@ import {
 } from "@/components/status-page/floating-button";
 import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import { pageConfigurationSchema } from "@openstatus/db/src/schema";
-import { generateThemeStyles } from "@openstatus/theme-store";
-import { Toaster } from "@openstatus/ui/components/ui/sonner";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { statusPageAlternates } from "@/lib/alternates";
+import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 
 // Canonical schema — guarantees concrete enum output (never null/undefined).
 
@@ -43,7 +45,7 @@ export default async function Layout({
     <HydrateClient>
       <style
         id="theme-styles"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: generateThemeStyles(cfg.theme),
         }}
@@ -58,6 +60,7 @@ export default async function Layout({
           defaultBarType={cfg.type}
           defaultCardType={cfg.value}
           defaultShowUptime={cfg.uptime}
+          defaultNumberOfDays={cfg.days}
           defaultCommunityTheme={cfg.theme}
         >
           {children}
@@ -109,11 +112,10 @@ export async function generateMetadata({
     icons: page?.icon?.toLowerCase().endsWith(".svg")
       ? { icon: { url: page.icon, type: "image/svg+xml" } }
       : page?.icon,
-    alternates: {
-      canonical: page?.customDomain
-        ? `https://${page.customDomain}`
-        : `https://${page.slug}.openstatus.dev`,
-    },
+    alternates: statusPageAlternates({
+      slug: page.slug,
+      customDomain: page.customDomain,
+    }),
     twitter: {
       ...twitterMetadata,
       images: [`/api/og/page?slug=${page?.slug}`],

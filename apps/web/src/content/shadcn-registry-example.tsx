@@ -429,7 +429,7 @@ export function StatusPageExample() {
         </StatusComponentGroup>
         <Separator className="my-6" />
         <div className="space-y-4">
-          <h2 className="font-semibold text-lg">Recent Events</h2>
+          <h2 className="text-lg font-semibold">Recent Events</h2>
           <StatusFeed
             statusReports={statusReports}
             maintenances={maintenances}

@@ -1,6 +1,7 @@
+import { type Region, regionDict } from "@openstatus/regions";
+
 import { type Timing, getTimingPhases } from "@/lib/checker/utils";
 import { toast } from "@/lib/toast";
-import { type Region, regionDict } from "@openstatus/regions";
 
 export type CheckerRow = {
   region: string;

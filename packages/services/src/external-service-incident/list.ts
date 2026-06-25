@@ -1,9 +1,10 @@
-import { db as defaultDb, desc, eq, sql } from "@openstatus/db";
+import { and, db as defaultDb, desc, eq, sql } from "@openstatus/db";
 import type { ApiConfigType } from "@openstatus/db/src/schema";
 import { externalServiceIncident } from "@openstatus/db/src/schema";
 
 import { getExternalServiceBySlug } from "../external-service";
 import type { GlobalReadContext } from "../external-service/internal";
+import { retryRead } from "../retry";
 
 export type ExternalIncidentListItem = {
   id: number;
@@ -16,8 +17,6 @@ export type ExternalIncidentListItem = {
   startedAt: Date | null;
   createdAt: Date;
   resolvedAt: Date | null;
-  firstSeenAt: Date;
-  lastSeenAt: Date;
 };
 
 const DEFAULT_LIMIT = 5;
@@ -41,31 +40,77 @@ export async function listExternalIncidentsByServiceId(args: {
   const db = ctx?.db ?? defaultDb;
   const limit = args.limit ?? DEFAULT_LIMIT;
 
-  const rows = await db
-    .select({
-      id: externalServiceIncident.id,
-      externalServiceId: externalServiceIncident.externalServiceId,
-      providerIncidentId: externalServiceIncident.providerIncidentId,
-      name: externalServiceIncident.name,
-      status: externalServiceIncident.status,
-      impact: externalServiceIncident.impact,
-      shortlink: externalServiceIncident.shortlink,
-      startedAt: externalServiceIncident.startedAt,
-      createdAt: externalServiceIncident.createdAt,
-      resolvedAt: externalServiceIncident.resolvedAt,
-      firstSeenAt: externalServiceIncident.firstSeenAt,
-      lastSeenAt: externalServiceIncident.lastSeenAt,
-    })
-    .from(externalServiceIncident)
-    .where(eq(externalServiceIncident.externalServiceId, externalServiceId))
-    .orderBy(
-      desc(
-        sql`COALESCE(${externalServiceIncident.startedAt}, ${externalServiceIncident.createdAt})`,
-      ),
-      desc(externalServiceIncident.createdAt),
-    )
-    .limit(limit)
-    .all();
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceIncident.id,
+        externalServiceId: externalServiceIncident.externalServiceId,
+        providerIncidentId: externalServiceIncident.providerIncidentId,
+        name: externalServiceIncident.name,
+        status: externalServiceIncident.status,
+        impact: externalServiceIncident.impact,
+        shortlink: externalServiceIncident.shortlink,
+        startedAt: externalServiceIncident.startedAt,
+        createdAt: externalServiceIncident.createdAt,
+        resolvedAt: externalServiceIncident.resolvedAt,
+      })
+      .from(externalServiceIncident)
+      .where(eq(externalServiceIncident.externalServiceId, externalServiceId))
+      .orderBy(
+        desc(
+          sql`COALESCE(${externalServiceIncident.startedAt}, ${externalServiceIncident.createdAt})`,
+        ),
+        desc(externalServiceIncident.createdAt),
+      )
+      .limit(limit)
+      .all(),
+  );
+
+  return rows;
+}
+
+// Incidents whose Atlassian `components[]` array tagged this component (matched
+// by the upstream component id stored in `affected_component_ids`), recent-first.
+export async function listExternalIncidentsByComponent(args: {
+  ctx?: GlobalReadContext;
+  externalServiceId: number;
+  upstreamComponentId: string;
+  limit?: number;
+}): Promise<ExternalIncidentListItem[]> {
+  const { ctx, externalServiceId, upstreamComponentId } = args;
+  const db = ctx?.db ?? defaultDb;
+  const limit = args.limit ?? DEFAULT_LIMIT;
+
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceIncident.id,
+        externalServiceId: externalServiceIncident.externalServiceId,
+        providerIncidentId: externalServiceIncident.providerIncidentId,
+        name: externalServiceIncident.name,
+        status: externalServiceIncident.status,
+        impact: externalServiceIncident.impact,
+        shortlink: externalServiceIncident.shortlink,
+        startedAt: externalServiceIncident.startedAt,
+        createdAt: externalServiceIncident.createdAt,
+        resolvedAt: externalServiceIncident.resolvedAt,
+      })
+      .from(externalServiceIncident)
+      .where(
+        and(
+          eq(externalServiceIncident.externalServiceId, externalServiceId),
+          sql`EXISTS (SELECT 1 FROM json_each(${externalServiceIncident.affectedComponentIds}) WHERE value = ${upstreamComponentId})`,
+        ),
+      )
+      .orderBy(
+        desc(
+          sql`COALESCE(${externalServiceIncident.startedAt}, ${externalServiceIncident.createdAt})`,
+        ),
+        desc(externalServiceIncident.createdAt),
+      )
+      .limit(limit)
+      .all(),
+  );
 
   return rows;
 }

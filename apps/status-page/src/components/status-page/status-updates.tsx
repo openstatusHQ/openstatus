@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  FormSubscribeEmail,
-  type FormValues,
-} from "@/components/forms/form-subscribe-email";
-import { getBaseUrl } from "@/lib/base-url";
 import type { RouterOutputs } from "@openstatus/api";
 import {
   StatusUpdates as BlockStatusUpdates,
@@ -24,23 +19,38 @@ import {
   TabsList,
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
 import { useState } from "react";
+
+import {
+  FormSubscribeEmail,
+  type FormValues,
+} from "@/components/forms/form-subscribe-email";
+import { getBaseUrl } from "@/lib/base-url";
+import { createProtectedCookieKey } from "@/lib/protected";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
-function getUpdateLink(type: "rss" | "json" | "atom", page?: Page | null) {
+function getUpdateLink(
+  type: "rss" | "json" | "atom",
+  page?: Page | null,
+  password?: string,
+) {
   const baseUrl = getBaseUrl({
     slug: page?.slug,
     customDomain: page?.customDomain,
   });
 
   return `${baseUrl}/feed/${type}${
-    page?.accessType === "password" ? `?pw=${page?.password}` : ""
+    page?.accessType === "password" && password
+      ? `?pw=${encodeURIComponent(password)}`
+      : ""
   }`;
 }
 
@@ -59,12 +69,17 @@ export function StatusUpdates({
 }: StatusUpdatesProps) {
   const t = useExtracted();
   const [success, setSuccess] = useState(false);
+  const params = useParams();
+  const domain = typeof params.domain === "string" ? params.domain : "";
+  // The password lives in the cookie this browser set at login — not in the
+  // page payload, which intentionally omits it.
+  const [password] = useCookieState(createProtectedCookieKey(domain));
 
   if (types.length === 0) return null;
 
-  const rssUrl = getUpdateLink("rss", page);
-  const atomUrl = getUpdateLink("atom", page);
-  const jsonUrl = getUpdateLink("json", page);
+  const rssUrl = getUpdateLink("rss", page, password);
+  const atomUrl = getUpdateLink("atom", page, password);
+  const jsonUrl = getUpdateLink("json", page, password);
   const sshCommand = `ssh ${page?.slug}@ssh.openstatus.dev`;
 
   return (
@@ -142,7 +157,7 @@ function SuccessMessage() {
     <div className="flex flex-col items-center justify-center gap-1 p-3">
       <Inbox className="size-4 shrink-0" />
       <p className="text-center font-medium">{t("Check your inbox!")}</p>
-      <p className="text-center text-muted-foreground text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         {t("Validate your email to receive updates and you are all set.")}
       </p>
     </div>

@@ -1,7 +1,6 @@
+import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { TRPCError } from "@trpc/server";
 import { ZodError } from "zod";
-
-import { type ServiceContext, ServiceError } from "@openstatus/services";
 
 import type { Context } from "./trpc";
 

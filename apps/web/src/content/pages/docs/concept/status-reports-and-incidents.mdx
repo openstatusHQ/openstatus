@@ -1,0 +1,104 @@
+---
+title: Understanding Status Reports and Incidents
+description: "How openstatus separates detecting a problem (incidents) from communicating it (status reports and maintenance windows), and how report updates drive your status page."
+category: Concepts
+---
+
+When something goes wrong, two different things need to happen: your team needs to find out, and your users need to be told. openstatus models these as two separate objects — **incidents** and **status reports** — and adds a third, **maintenance windows**, for disruption you planned ahead of time.
+
+The word "incident" is overloaded. Colloquially it means the whole event — the outage, the scramble, the postmortem. In openstatus it means something narrower: the machine-created record that a monitor is failing. Keeping the two apart is the key to using all three tools well.
+
+```
+        DETECTION                          COMMUNICATION
+  (machine → your team)                 (your team → users)
+
++---------------------+            +--------------------------+
+| Monitor fails checks |           | You write a status report |
+|         ▼            |           |         ▼                 |
+| Incident is created  |  informs  | Updates as you progress   |
+|         ▼            | --------▶ |         ▼                 |
+| Your team is alerted |           | Report is resolved        |
++---------------------+            +--------------------------+
+```
+
+## Incidents: detection
+
+An incident is created **automatically** when enough of a monitor's recent checks fail — a threshold mechanism that filters out one-off network blips. You never create an incident by hand.
+
+An incident is scoped to a single **monitor** and is primarily an internal object:
+
+- It alerts your team through your configured [notification channels](/docs/reference/notification).
+- It can be **acknowledged** (someone is on it) and **resolved** (it's over) — and openstatus auto-resolves it when checks recover.
+- It records the timeline: when it started, who acknowledged it, who (or what) resolved it.
+
+Think of an incident as the smoke detector going off. It tells *you* something is wrong; it doesn't explain anything to your users. See the [Incident reference](/docs/reference/incident) for the full lifecycle.
+
+## Status reports: communication
+
+A status report is what your users actually read. It is created **manually** (dashboard, CLI, or API), belongs to a single **status page**, and is attached to one or more of that page's [components](/docs/reference/page-components) — the services your users recognize, not your internal monitors.
+
+Crucially, a status report is **not linked to an incident** in the data model. They are independent:
+
+- A monitor can fail (incident) without you publishing anything — say, a flapping internal service.
+- You can publish a report with no incident behind it — a third-party provider is down, or you spot a problem your monitors can't see.
+
+Most of the time, though, an incident is the *trigger* and the status report is the *response*.
+
+### Updates: the report's timeline
+
+A status report is not a single message — it's a sequence of **updates**. Each update carries three things:
+
+1. A **status**: `investigating` → `identified` → `monitoring` → `resolved`.
+2. A **message**: what you know, what you're doing, what users should expect.
+3. Optional **component impacts**: how badly each affected component is hit right now.
+
+The report's overall status is simply the status of its latest update. You move the report forward by posting updates, and the full sequence stays visible on the status page as a timeline — which is exactly what builds trust: users can see you were on it at 14:02, had a root cause at 14:15, and resolved at 14:40.
+
+### Component impacts
+
+Each update can declare a per-component impact — `degraded_performance`, `partial_outage`, or `major_outage` — and `operational` once it recovers:
+
+- A component's current impact is whatever the **latest update naming it** said. Components you omit from an update keep their previous impact — you only declare what changed.
+- Resolving the report sets every still-affected component back to `operational`, so the page clears deterministically.
+- On status pages using [manual uptime calculation](/docs/concept/uptime-calculation-and-values#manual-type), impacts also weight the uptime percentage: a major outage counts fully against uptime, a partial outage counts half, and degraded performance not at all.
+
+The [Status report reference](/docs/reference/status-report) covers the exact impact semantics and weights.
+
+## Maintenance windows: planned disruption
+
+A maintenance window is for disruption you know about **in advance** — a database upgrade, a migration, a deploy with expected downtime. Like a status report, it belongs to one status page and targets that page's components. Unlike a status report, it is scheduled: it has a `from` and a `to`, and during that window the affected components display **Under Maintenance**.
+
+Two properties make it the right tool for planned work:
+
+- **It never counts against uptime.** Uptime is computed from raw check results (or report impacts in manual mode); a maintenance window only changes the displayed status.
+- **Subscribers can be notified when it's scheduled**, so the disruption is announced before it happens instead of explained after.
+
+If planned work goes sideways and overruns or breaks something, escalate: publish a status report. An unresolved report (or an active incident) takes display precedence over maintenance.
+
+## The three side by side
+
+|  | Incident | Status report | Maintenance |
+|---|---|---|---|
+| Created | Automatically, by failing checks | Manually, by you | Manually, scheduled ahead |
+| Scoped to | A monitor | A status page + components | A status page + components |
+| Audience | Your team | Your users | Your users |
+| Timing | When detection fires | During/after the event | Announced before the event |
+| Affects uptime | Yes — failed checks count | Only in manual mode, via impacts | Never |
+| Resolved by | Acknowledge/resolve, or auto-resolve | A `resolved` update | The window ending |
+
+On the status page itself, when several apply to one component, the worst wins: an active incident (error) outranks an unresolved status report (degraded), which outranks maintenance (info), which outranks operational.
+
+## A typical event, end to end
+
+1. **14:00** — Your API monitor's checks start failing from multiple regions. An **incident** is created and your on-call gets paged.
+2. **14:02** — You acknowledge the incident, confirm it's real, and publish a **status report** on your status page: status `investigating`, API component set to `major_outage`.
+3. **14:15** — Root cause found. You post an update: `identified`, API downgraded to `partial_outage` as the rollback lands.
+4. **14:30** — Rollback complete, checks recovering. Update: `monitoring`.
+5. **14:40** — Stable. Final update: `resolved` — the API component returns to `operational`, and the incident auto-resolves as checks pass.
+6. **Next week** — The permanent fix needs a database migration, so you schedule a **maintenance window** for Sunday 02:00–04:00 and notify subscribers.
+
+## Next steps
+
+- **[Publish your first status report](/docs/tutorial/your-first-status-report)** — the hands-on version of this page.
+- **[Building trust with status pages](/docs/concept/best-practices-status-page)** — what to write in those updates.
+- **[Incident](/docs/reference/incident)**, **[Status report](/docs/reference/status-report)**, and **[Maintenance](/docs/reference/maintenance)** references — the field-level specifications.

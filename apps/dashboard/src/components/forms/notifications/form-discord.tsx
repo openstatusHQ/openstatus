@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckboxTree } from "@/components/ui/checkbox-tree";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -9,16 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-
-import { Link } from "@/components/common/link";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
@@ -28,6 +19,15 @@ import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { CheckboxTree } from "@/components/ui/checkbox-tree";
+import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   name: z.string(),
@@ -161,7 +161,7 @@ export function FormDiscord({
                 <FormDescription>
                   Enter the webhook URL to your Discord channel.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/reference/notification/#discord"
+                    href="https://www.openstatus.dev/docs/reference/notification/#discord"
                     rel="noreferrer"
                     target="_blank"
                   >

@@ -1,11 +1,12 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import {
   StatusBar as BlockStatusBar,
   StatusBarEvent,
 } from "@openstatus/ui/components/blocks/status-bar";
+
+import { Link } from "@/components/common/link";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 
 export { StatusBarSkeleton } from "@openstatus/ui/components/blocks/status-bar";
 
@@ -29,6 +30,7 @@ export function StatusBar(
             from={event.from}
             to={event.to}
             isAggregated={event.isAggregated}
+            status={event.status}
           />
         );
         if (event.type === "report" || event.type === "maintenance") {

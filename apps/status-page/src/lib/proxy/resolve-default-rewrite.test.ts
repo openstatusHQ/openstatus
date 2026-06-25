@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import type { ResolvedRoute } from "../resolve-route";
 import { resolveDefaultRewrite } from "./resolve-default-rewrite";
 
@@ -96,7 +97,7 @@ describe("resolveDefaultRewrite", () => {
       host: "docs.openstatus.dev",
       pathname: "/acme/en",
       search: "",
-      requestUrl: "https://docs.openstatus.dev/acme/en",
+      requestUrl: "https://www.openstatus.dev/docs/acme/en",
     });
     expect(action?.reason).toBe("default-rewrite");
   });

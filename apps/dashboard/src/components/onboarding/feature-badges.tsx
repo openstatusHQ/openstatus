@@ -1,8 +1,5 @@
 "use client";
 
-import { QuestionForm } from "@/components/forms/onboarding/question";
-import { OnboardingResultHeading } from "@/components/layout/onboarding-layout";
-import { cn } from "@/lib/utils";
 import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons";
 import {
   ArrowUpRight,
@@ -23,6 +20,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { QuestionForm } from "@/components/forms/onboarding/question";
+import { OnboardingResultHeading } from "@/components/layout/onboarding-layout";
+import { cn } from "@/lib/utils";
+
 type FeatureLinkItem = {
   name: string;
   href: string;
@@ -30,7 +31,7 @@ type FeatureLinkItem = {
   external?: boolean;
 };
 
-const DOCS = "https://docs.openstatus.dev";
+const DOCS = "https://www.openstatus.dev/docs";
 const WEB = "https://www.openstatus.dev";
 
 const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
@@ -136,7 +137,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
   {
     label: "Workspace",
     items: [
-      { name: "Audit logs", href: "/audit-logs", icon: ScanEye },
+      { name: "Audit logs", href: "/settings/audit-logs", icon: ScanEye },
       { name: "Team & invites", href: "/settings/general", icon: UserPlus },
     ],
   },
@@ -154,11 +155,11 @@ export function FeatureBadgeWall({
       <OnboardingResultHeading>
         What else openstatus can do
       </OnboardingResultHeading>
-      <div className="rounded-md border border-border bg-background p-4 md:min-h-0 md:flex-1 md:overflow-y-auto">
+      <div className="border-border bg-background rounded-md border p-4 md:min-h-0 md:flex-1 md:overflow-y-auto">
         <div className="flex flex-col gap-4">
           {FEATURE_CATEGORIES.map((category) => (
             <section key={category.label} className="flex flex-col gap-2">
-              <p className="font-commit-mono text-muted-foreground text-xs uppercase tracking-wide">
+              <p className="font-commit-mono text-muted-foreground text-xs tracking-wide uppercase">
                 {category.label}
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-1.5">
@@ -186,7 +187,7 @@ export function QuestionPanel({
       <OnboardingResultHeading>
         How did you hear about openstatus?
       </OnboardingResultHeading>
-      <div className="rounded-md border border-border bg-background p-4">
+      <div className="border-border bg-background rounded-md border p-4">
         <QuestionForm onSubmit={onSubmit} />
       </div>
     </div>
@@ -206,7 +207,7 @@ function FeatureLink({
   return (
     <Link
       className={cn(
-        "group inline-flex items-center gap-1.5 font-commit-mono text-muted-foreground text-sm transition-colors hover:text-foreground",
+        "group font-commit-mono text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors",
         className,
       )}
       href={item.href}
@@ -216,7 +217,7 @@ function FeatureLink({
       <item.icon className="size-3" />
       <span>{item.name}</span>
       {item.external ? (
-        <ArrowUpRight className="size-3 text-muted-foreground/70 group-hover:text-foreground" />
+        <ArrowUpRight className="text-muted-foreground/70 group-hover:text-foreground size-3" />
       ) : null}
     </Link>
   );

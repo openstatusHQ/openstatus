@@ -1,8 +1,11 @@
+import type { MetadataRoute } from "next";
+
 import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
   getCustomerPages,
+  getDocPages,
   getGuides,
   getHomePage,
   getProductPages,
@@ -11,8 +14,10 @@ import {
   getUnrelatedPages,
   getUseCasePages,
 } from "@/content/utils";
-import { cachedListExternalServices } from "@/lib/external-service-cache";
-import type { MetadataRoute } from "next";
+import {
+  cachedListExternalComponentsBySlug,
+  cachedListExternalServices,
+} from "@/lib/external-service-cache";
 
 export const revalidate = 3600;
 
@@ -28,6 +33,7 @@ const allGuides = getGuides();
 const allUseCases = getUseCasePages();
 const allTooling = getToolingPages();
 const allCustomers = getCustomerPages();
+const allDocs = getDocPages();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const externalServices = await cachedListExternalServices();
@@ -48,6 +54,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
   ];
+
+  const componentEntriesByService = await Promise.all(
+    externalServices
+      .filter((s) => s.deletedAt == null)
+      .map(async (s) => {
+        const { components } = await cachedListExternalComponentsBySlug(s.slug);
+        return components.map((c) => ({
+          url: `https://www.openstatus.dev/status/${s.slug}/${c.slug}`,
+          lastModified: new Date().toISOString().slice(0, 10),
+          changeFrequency: "hourly" as const,
+          priority: 0.6,
+        }));
+      }),
+  );
+  const externalServiceComponentEntries: MetadataRoute.Sitemap =
+    componentEntriesByService.flat();
 
   const blogs = allPosts.map((post) => ({
     url: `https://www.openstatus.dev/blog/${post.slug}`,
@@ -200,6 +222,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const docs = allDocs.map((page) => ({
+    url: `https://www.openstatus.dev/docs/${page.slug}`,
+    lastModified: page.metadata.publishedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  const docsIndex = [
+    {
+      url: "https://www.openstatus.dev/docs",
+      lastModified: new Date().toISOString().slice(0, 10),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+  ];
+
   return [
     ...home,
     ...blogs,
@@ -220,7 +258,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...toolingIndex,
     ...customers,
     ...customersIndex,
+    ...docs,
+    ...docsIndex,
     ...externalServicesIndex,
     ...externalServiceEntries,
+    ...externalServiceComponentEntries,
   ];
 }

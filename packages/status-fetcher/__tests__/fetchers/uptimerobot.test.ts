@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+
 import { UptimeRobotFetcher } from "../../src/fetchers/uptimerobot";
 import type { StatusPageEntry } from "../../src/types";
 import {

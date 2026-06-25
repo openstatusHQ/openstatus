@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getChangelogPosts } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -10,9 +15,7 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
+
 import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 
@@ -76,18 +79,11 @@ export default async function Changelog({
 
   return (
     <section className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
-      <h1>{post.metadata.title}</h1>
+      <JsonLd graph={jsonLDGraph} />
+      <h1>{post.metadata.hero ?? post.metadata.title}</h1>
       <ContentMetadata data={post} />
       {post.metadata.image ? (
-        <div className="relative aspect-video w-full overflow-hidden border border-border">
+        <div className="border-border relative aspect-video w-full overflow-hidden border">
           <Image
             src={post.metadata.image}
             alt={post.metadata.title}
@@ -97,11 +93,7 @@ export default async function Changelog({
         </div>
       ) : null}
       <CustomMDX source={post.content} />
-      <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/changelog"
-      />
+      <ContentPagination prev={previousPost} next={nextPost} />
     </section>
   );
 }

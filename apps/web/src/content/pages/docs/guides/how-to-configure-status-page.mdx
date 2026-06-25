@@ -1,0 +1,157 @@
+---
+category: Guides
+title: Configure Your Status Page
+description: "A step-by-step tutorial to customize and configure your status page"
+---
+
+
+
+| | |
+|---|---|
+| **Prerequisites** | openstatus account, a status page (see [Create a status page](/docs/tutorial/create-your-first-status-page)), at least one monitor added to it |
+
+In this guide, you'll customise your status page's appearance and behaviour. You'll explore different display options, themes, and configuration settings to create a status page that matches your brand and communication style.
+
+## Status page customisation
+
+openstatus offers enhanced status page customisation with multiple themes and display options. Explore available themes at [themes.openstatus.dev](https://themes.openstatus.dev).
+
+## Get started
+
+Go to the **Status Page Redesign** section in your status page settings and toggle `Enable New Version`. Once enabled, you'll see three subsections:
+
+1. **Tracker configuration**
+2. **Theme explorer**
+3. **Links**
+
+<Image
+    src="/docs/tutorial/configure-status-page/configure-status-page-1.png"
+    alt="Create your status page"
+/>
+
+### View and configure status page
+
+Before choosing to enable the new page, you can check the configuration first. Click on **View and configure status page** and you'll be forwarded to your status page with a floating button in the bottom right. Once you're done, click on **Dashboard** to be forwarded to your page where you'll be asked to save the config before continuing.
+
+<Image
+    src="/docs/tutorial/configure-status-page/status-page-floating.png"
+    alt="Status page floating configuration popover"
+/>
+
+
+---
+
+<Aside>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. **If you decide to deactivate the new version, it might take up to 10 minutes for the user to see the old page.**</Aside>
+
+### 1. Tracker configuration
+
+The tracker configuration is split into two groups: how each component's **bars and cards** display its data, and the page-wide **uptime and history** view. They live in separate containers because they answer two different questions.
+
+#### Bars and cards
+
+These settings only apply to **monitor components** — the container is disabled until your status page has at least one.
+
+**Bar type** — how every day is displayed in a status tracker. Either **absolute** or **manual**.
+
+**Card value** — only configurable if the bar type is **absolute**. Choose between **duration**, which shows the duration of "success", "error", "degraded", or "maintenance" reports, or **requests**, which shares the number of request statuses themselves. If **manual** bar type is chosen, only the most significant status of the day is shown.
+
+#### Uptime and history
+
+**Show uptime** — uptime is calculated by either the **duration** of the different reports _or_ the **request** values depending on what you've chosen for the **absolute** value (including incidents). If you've chosen **manual**, it's calculated only from the duration of your status reports.
+
+**History** — the number of days of history rendered on the bars. Choose between **30** or **45** days (defaults to **45**).
+
+A few examples to understand it:
+
+Example of **absolute bar** with **duration card** and **showing uptime**
+
+<Image
+    src="/docs/tutorial/configure-status-page/status-page-beta-3.png"
+    alt="absolute bar type with duration card and showing uptime"
+/>
+
+Example of **absolute bar** with **request card** and **hiding uptime**
+
+<Image
+    src="/docs/tutorial/configure-status-page/status-page-beta-4.png"
+    alt="absolute bar type with request card and hiding uptime"
+/>
+
+Example of **manual bar** with **simple card** and **hiding uptime**
+
+<Image
+    src="/docs/tutorial/configure-status-page/status-page-beta-2.png"
+    alt="manual bar type and hiding uptime"
+/>
+
+### 2. Theme explorer
+
+You can choose between different themes. The starting set is:
+
+- `default` (openstatus)
+- `supabase`
+- `github-high-contrast`
+
+Visit [themes.openstatus.dev](https://themes.openstatus.dev) to see the list of supported themes. You can also [create and contribute your own](/docs/guides/how-to-create-status-page-theme).
+
+If you use AI agents, install the [`openstatus-theme` skill](https://github.com/openstatusHQ/skills/tree/main/skills/openstatus-theme) with `npx skills add openstatushq/skills --skill openstatus-theme` for guided help through palette design, accessibility checks, file scaffolding, and PR submission.
+
+### 3. Links
+
+Your status page header navigation:
+
+<Image
+    src="/docs/tutorial/configure-status-page/status-page-beta-1.png"
+    alt="Header navigation of your status page"
+/>
+
+**Homepage URL** — your logo will link to your own website.
+
+**Contact URL** — if filled out, users will see a `Message` icon they can click to reach a contact page. This can also be an email client by starting the input with `mailto:` (e.g. `mailto:support@openstatus.dev`).
+
+---
+
+### 4. Locales
+
+You can offer your status page in multiple languages. In the **Locales** section of your status page settings:
+
+1. Choose a **default locale** — the fallback language for visitors.
+2. Enable the **locale switcher** to let visitors pick their preferred language.
+3. Select which languages to make available.
+
+See [How to translate your status page](/docs/guides/how-to-translate-status-page) for the supported list and how to contribute new translations.
+
+---
+
+We are continuously adding new features. Feel free to let us know what's missing!
+
+## What you've accomplished
+
+- Enabled and configured the new status page design
+- Customised status tracker display options
+- Explored and applied theme settings
+- Added navigation links to your status page
+- Configured locales and the language switcher
+- Previewed changes before making them live
+
+## What's next
+
+- **[Building trust with status pages](/docs/concept/best-practices-status-page)** — learn effective incident communication.
+- **[Status subscribers](/docs/reference/subscriber)** — let users subscribe to updates.
+
+### Learn more
+
+- **[Status page reference](/docs/reference/status-page)** — complete configuration options.
+- **[Uptime calculation values](/docs/concept/uptime-calculation-and-values)** — how uptime percentages work.
+
+## Video tutorial
+
+<ShowcaseYouTube
+  entries={[
+    {
+      href: 'https://www.youtube.com/watch?v=igMbSrej6RQ',
+      title: 'View, configure and enable the new status page',
+    },
+
+  ]}
+/>

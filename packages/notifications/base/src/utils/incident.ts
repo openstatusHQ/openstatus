@@ -1,4 +1,5 @@
 import type { Incident } from "@openstatus/db/src/schema";
+
 import { formatDuration } from "./duration";
 
 /**

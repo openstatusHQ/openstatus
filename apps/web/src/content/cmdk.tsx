@@ -1,6 +1,5 @@
 "use client";
 
-import type { MDXData } from "@/content/utils";
 import {
   Command,
   CommandEmpty,
@@ -20,10 +19,17 @@ import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+
+import {
+  CORPUS_LABELS,
+  type Corpus,
+  type SearchResult,
+} from "@/content/search-meta";
+import { buildHighlightRegex } from "@/content/utils/search-match";
 
 type ConfigItem = {
   type: "item";
@@ -45,12 +51,35 @@ type ConfigSection = {
   items: (ConfigItem | ConfigGroup)[];
 };
 
-// TODO: missing shortcuts
 const CONFIG: ConfigSection[] = [
   {
     type: "group",
     heading: "Resources",
     items: [
+      {
+        type: "item",
+        label: "Go to Docs",
+        href: "/docs",
+        shortcut: "⌘D",
+      },
+      {
+        type: "item",
+        label: "Go to Home",
+        href: "/",
+        shortcut: "⌘H",
+      },
+      {
+        type: "item",
+        label: "Go to Pricing",
+        href: "/pricing",
+        shortcut: "⌘P",
+      },
+      {
+        type: "item",
+        label: "Go to Global Speed Checker",
+        href: "/play/checker",
+        shortcut: "⌘G",
+      },
       {
         type: "group",
         label: "Search in all pages...",
@@ -58,25 +87,10 @@ const CONFIG: ConfigSection[] = [
         page: "all",
       },
       {
-        type: "item",
-        label: "Go to Home",
-        href: "/",
-      },
-      {
-        type: "item",
-        label: "Go to Pricing",
-        href: "/pricing",
-      },
-      {
-        type: "item",
-        label: "Go to Docs",
-        href: "https://docs.openstatus.dev",
-      },
-      {
-        type: "item",
-        label: "Go to Global Speed Checker",
-        href: "/play/checker",
-        shortcut: "⌘G",
+        type: "group",
+        label: "Search in Docs...",
+        heading: "Docs",
+        page: "docs",
       },
       {
         type: "group",
@@ -183,35 +197,47 @@ const CONFIG: ConfigSection[] = [
   },
 ];
 
-export function CmdK() {
+export function CmdK({
+  defaultPage,
+  className,
+}: { defaultPage?: string; className?: string } = {}) {
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const resetTimerRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
   const [search, setSearch] = React.useState("");
-  const [pages, setPages] = React.useState<string[]>([]);
-  const debouncedSearch = useDebounce(search, 300);
+  const [pages, setPages] = React.useState<string[]>(
+    defaultPage ? [defaultPage] : [],
+  );
+  const debouncedSearch = useDebounce(search, 150);
+  const query = debouncedSearch.trim();
   const router = useRouter();
 
+  // Explicitly pinned corpus (e.g. "Search in Docs…" or the docs-page default).
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
+  // Typing with nothing pinned searches everything — no need to pick a corpus first.
+  const scope: Corpus | "all" | null =
+    (page as Corpus | null) ?? (search.trim() ? "all" : null);
+  // Commands (Go to…, links, theme) stay matchable while typing, unless a corpus
+  // is pinned — then the palette is focused on searching within that corpus.
+  const showCommands = !page;
 
   const {
     data: items = [],
     isLoading: loading,
     isFetching: fetching,
-  } = useQuery({
-    queryKey: ["search", page, debouncedSearch],
+  } = useQuery<SearchResult[]>({
+    queryKey: ["search", scope, query],
     queryFn: async () => {
-      if (!page) return [];
+      if (!scope) return [];
       const searchParams = new URLSearchParams();
-      searchParams.set("p", page);
-      if (debouncedSearch) searchParams.set("q", debouncedSearch);
-      const promise = fetch(`/api/search?${searchParams.toString()}`);
-      // NOTE: artificial delay to avoid flickering
-      const delay = new Promise((r) => setTimeout(r, 300));
-      const [res, _] = await Promise.all([promise, delay]);
+      searchParams.set("p", scope);
+      if (query) searchParams.set("q", query);
+      const res = await fetch(`/api/search?${searchParams.toString()}`);
       return res.json();
     },
+    // A pinned corpus can browse with an empty query; unpinned "all" waits for input.
+    enabled: !!page || !!query,
     placeholderData: (previousData) => previousData,
   });
 
@@ -249,10 +275,6 @@ export function CmdK() {
     return () => document.removeEventListener("keydown", down);
   }, [open, router]);
 
-  React.useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   // NOTE: Reset search and pages after dialog closes (with delay for animation)
   // - if within 1 second of closing, the dialog will not reset
   React.useEffect(() => {
@@ -264,7 +286,7 @@ export function CmdK() {
       }
       resetTimerRef.current = setTimeout(() => {
         setSearch("");
-        setPages([]);
+        setPages(defaultPage ? [defaultPage] : []);
       }, DELAY);
     }
 
@@ -278,27 +300,34 @@ export function CmdK() {
         clearTimeout(resetTimerRef.current);
       }
     };
-  }, [open, items.length]);
+  }, [open, items.length, defaultPage]);
 
   return (
     <>
       <button
         type="button"
         className={cn(
-          "flex w-full items-center text-left hover:bg-muted",
+          "hover:bg-muted flex w-full items-center text-left",
           open && "bg-muted!",
+          className,
         )}
         onClick={() => setOpen(true)}
       >
-        <span className="truncate text-muted-foreground">
+        <span className="text-muted-foreground truncate">
           Search<span className="text-xs">...</span>
         </span>
-        <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground opacity-100">
+        <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl">
+        <DialogContent
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            inputRef.current?.focus();
+          }}
+          className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl lg:max-w-2xl xl:max-w-3xl"
+        >
           <DialogTitle className="sr-only">Search</DialogTitle>
           <Command
             onKeyDown={(e) => {
@@ -308,45 +337,71 @@ export function CmdK() {
                 setPages((pages) => pages.slice(0, -1));
               }
             }}
-            shouldFilter={!page}
+            shouldFilter={false}
             className="rounded-none"
           >
             <div
-              className="flex items-center border-b px-3"
+              className="flex items-center gap-2 border-b px-3"
               cmdk-input-wrapper=""
             >
               {loading || fetching ? (
-                <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-50" />
               ) : (
-                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Search className="h-4 w-4 shrink-0 opacity-50" />
               )}
+              {page ? (
+                <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 border px-1.5 py-0.5 text-xs">
+                  {CORPUS_LABELS[page as Corpus] ?? page}
+                  <button
+                    type="button"
+                    aria-label="Clear scope"
+                    className="opacity-60 hover:opacity-100"
+                    onClick={() => setPages([])}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ) : scope === "all" ? (
+                <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center border px-1.5 py-0.5 text-xs">
+                  all
+                </span>
+              ) : null}
               <CommandPrimitive.Input
-                className="flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden placeholder:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Type to search…"
+                ref={inputRef}
+                className="placeholder:text-foreground-muted flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder={
+                  page
+                    ? `Search in ${CORPUS_LABELS[page as Corpus] ?? page}…`
+                    : "Type to search…"
+                }
                 value={search}
                 onValueChange={setSearch}
               />
             </div>
-            <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
-              {(loading || fetching) && page && !items.length ? (
+            <CommandList
+              ref={listRef}
+              className="max-h-[50vh] lg:max-h-[60vh] [&_[cmdk-item]]:rounded-none"
+            >
+              {(loading || fetching) && scope && !items.length ? (
                 <CommandLoading>Searching...</CommandLoading>
               ) : null}
               {!(loading || fetching) ? (
                 <CommandEmpty>No results found.</CommandEmpty>
               ) : null}
-              {!page ? (
+              {showCommands ? (
                 <Home
+                  search={search}
                   setPages={setPages}
                   resetSearch={resetSearch}
                   setOpen={setOpen}
                 />
               ) : null}
-              {items.length > 0 ? (
+              {scope && items.length > 0 ? (
                 <SearchResults
                   items={items}
                   search={search}
                   setOpen={setOpen}
-                  page={page}
+                  scope={scope}
                 />
               ) : null}
             </CommandList>
@@ -358,10 +413,12 @@ export function CmdK() {
 }
 
 function Home({
+  search,
   setPages,
   resetSearch,
   setOpen,
 }: {
+  search: string;
   setPages: React.Dispatch<React.SetStateAction<string[]>>;
   resetSearch: () => void;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -369,33 +426,59 @@ function Home({
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
 
+  const matches = (label: string) =>
+    !search || label.toLowerCase().includes(search.toLowerCase());
+
+  const themeLabel = `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`;
+
+  // Build the visible sections up front so separators only sit between
+  // sections that actually render (no leading/trailing/doubled dividers).
+  const sections = CONFIG.map((group) => ({
+    heading: group.heading,
+    items: group.items.filter((item) => matches(item.label)),
+  })).filter((section) => section.items.length > 0);
+
+  if (matches(themeLabel)) {
+    sections.push({ heading: "Settings", items: [] });
+  }
+
   return (
     <>
-      {CONFIG.map((group, groupIndex) => (
-        <React.Fragment key={group.heading}>
-          {groupIndex > 0 && <CommandSeparator />}
-          <CommandGroup heading={group.heading}>
-            {group.items.map((item) => {
-              if (item.type === "item") {
-                return (
-                  <CommandItem
-                    key={item.label}
-                    onSelect={() => {
-                      router.push(item.href);
-                      setOpen(false);
-                    }}
-                  >
-                    <span>{item.label}</span>
-                    {item.shortcut && (
-                      <CommandShortcut>{item.shortcut}</CommandShortcut>
-                    )}
-                  </CommandItem>
-                );
-              }
-              if (item.type === "group") {
+      {sections.map((section, index) => (
+        <React.Fragment key={section.heading}>
+          {index > 0 && <CommandSeparator />}
+          <CommandGroup heading={section.heading}>
+            {section.heading === "Settings" ? (
+              <CommandItem
+                onSelect={() =>
+                  setTheme(resolvedTheme === "dark" ? "light" : "dark")
+                }
+              >
+                <span>{themeLabel}</span>
+              </CommandItem>
+            ) : (
+              section.items.map((item) => {
+                if (item.type === "item") {
+                  return (
+                    <CommandItem
+                      key={item.label}
+                      value={item.label}
+                      onSelect={() => {
+                        router.push(item.href);
+                        setOpen(false);
+                      }}
+                    >
+                      <span>{item.label}</span>
+                      {item.shortcut && (
+                        <CommandShortcut>{item.shortcut}</CommandShortcut>
+                      )}
+                    </CommandItem>
+                  );
+                }
                 return (
                   <CommandItem
                     key={item.page}
+                    value={item.label}
                     onSelect={() => {
                       setPages((pages) => [...pages, item.page]);
                       resetSearch();
@@ -404,83 +487,113 @@ function Home({
                     <span>{item.label}</span>
                   </CommandItem>
                 );
-              }
-              return null;
-            })}
+              })
+            )}
           </CommandGroup>
         </React.Fragment>
       ))}
-      <CommandSeparator />
-      <CommandGroup heading="Settings">
-        <CommandItem
-          onSelect={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-        >
-          <span>
-            Switch to {resolvedTheme === "dark" ? "light" : "dark"} theme
-          </span>
-        </CommandItem>
-      </CommandGroup>
     </>
   );
+}
+
+// Bucket, preserving the server's rank order — first key seen is the best-scoring one.
+function bucket<K>(list: SearchResult[], keyOf: (item: SearchResult) => K) {
+  const groups: { key: K; items: SearchResult[] }[] = [];
+  const map = new Map<K, SearchResult[]>();
+  for (const item of list) {
+    const key = keyOf(item);
+    let b = map.get(key);
+    if (!b) {
+      b = [];
+      map.set(key, b);
+      groups.push({ key, items: b });
+    }
+    b.push(item);
+  }
+  return groups;
 }
 
 function SearchResults({
   items,
   search,
   setOpen,
-  page,
+  scope,
 }: {
-  items: MDXData[];
+  items: SearchResult[];
   search: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  page: string | null;
+  scope: Corpus | "all";
 }) {
   const router = useRouter();
 
-  const _page = CONFIG[0].items.find(
-    (item) => item.type === "group" && item.page === page,
-  ) as ConfigGroup | undefined;
+  const highlightRe = React.useMemo(
+    () => buildHighlightRegex(search),
+    [search],
+  );
+  const highlight = (text: string) =>
+    highlightRe
+      ? text.replace(highlightRe, (match) => `<mark>${match}</mark>`)
+      : text;
+
+  const renderRow = (item: SearchResult) => (
+    <CommandItem
+      key={item.href}
+      value={item.href}
+      onSelect={() => {
+        router.push(item.href);
+        setOpen(false);
+      }}
+    >
+      <div className="grid min-w-0">
+        <span
+          className="block truncate"
+          // oxlint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: highlight(item.metadata.title) }}
+        />
+        {item.content && search ? (
+          <span
+            className="text-muted-foreground block truncate text-xs"
+            // oxlint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{ __html: highlight(item.content) }}
+          />
+        ) : null}
+      </div>
+    </CommandItem>
+  );
+
+  // Split full vs partial matches, then sub-group each tier: by corpus in "all"
+  // scope (kept flat — no category level), by category within a single corpus.
+  const keyOf: (item: SearchResult) => string =
+    scope === "all"
+      ? (item) => CORPUS_LABELS[item.type]
+      : (item) => item.metadata.category || CORPUS_LABELS[item.type];
+
+  const full = bucket(
+    items.filter((i) => i.tier !== "partial"),
+    keyOf,
+  );
+  const partial = bucket(
+    items.filter((i) => i.tier === "partial"),
+    keyOf,
+  );
+
+  const renderGroups = (
+    groups: { key: string; items: SearchResult[] }[],
+    prefix: string,
+  ) =>
+    groups.map((group, index) => (
+      <React.Fragment key={`${prefix}-${group.key}`}>
+        {index > 0 && <CommandSeparator />}
+        <CommandGroup heading={group.key}>
+          {group.items.map(renderRow)}
+        </CommandGroup>
+      </React.Fragment>
+    ));
 
   return (
-    <CommandGroup heading={_page?.heading ?? "Search Results"}>
-      {items.map((item) => {
-        // Highlight search term match in the title, case-insensitive
-        const title = item.metadata.title.replace(
-          new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
-          (match) => `<mark>${match}</mark>`,
-        );
-        const html = item.content.replace(
-          new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
-          (match) => `<mark>${match}</mark>`,
-        );
-
-        return (
-          <CommandItem
-            key={item.href}
-            value={item.href}
-            keywords={[item.metadata.title, item.content, search]}
-            onSelect={() => {
-              router.push(item.href);
-              setOpen(false);
-            }}
-          >
-            <div className="grid min-w-0">
-              <span
-                className="block truncate"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-                dangerouslySetInnerHTML={{ __html: title }}
-              />
-              {item.content && search ? (
-                <span
-                  className="block truncate text-muted-foreground text-xs"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-                  dangerouslySetInnerHTML={{ __html: html }}
-                />
-              ) : null}
-            </div>
-          </CommandItem>
-        );
-      })}
-    </CommandGroup>
+    <>
+      {renderGroups(full, "full")}
+      {partial.length > 0 ? renderGroups(partial, "partial") : null}
+    </>
   );
 }

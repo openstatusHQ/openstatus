@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   auditLog,
@@ -2213,26 +2214,31 @@ describe("StatusPageService.CreatePageSubscription", () => {
   });
 
   test("rejects when workspace has status-subscribers disabled", async () => {
-    // Temporarily disable the plan flag, hit the endpoint, then restore.
-    await db.run(
-      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('false')) WHERE id = 1`,
-    );
+    const freePage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-plan-gate`,
+        slug: `${TEST_PREFIX}-plan-gate`,
+        description: "Test page for plan gate",
+        customDomain: "",
+      })
+      .returning()
+      .get();
     try {
       const res = await connectRequest(
         "CreatePageSubscription",
         {
-          pageId: String(testPageId),
+          pageId: String(freePage.id),
           emailChannel: {
             email: `${TEST_PREFIX}-plan-gate@example.com`,
           },
         },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": "2" },
       );
       expect(res.status).toBe(403);
     } finally {
-      await db.run(
-        sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = 1`,
-      );
+      await db.delete(page).where(eq(page.id, freePage.id));
     }
   });
 });
@@ -3500,29 +3506,32 @@ describe("StatusPageService — allow_index", () => {
   });
 
   test("rejects allow_index=false when plan does not support it", async () => {
-    // Temporarily disable no-index feature on workspace
-    await db.run(
-      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('false')) WHERE id = 1`,
-    );
-
+    const freePage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-no-index`,
+        slug: `${TEST_PREFIX}-no-index`,
+        description: "Test page for no-index gate",
+        customDomain: "",
+      })
+      .returning()
+      .get();
     try {
       const res = await connectRequest(
         "UpdateStatusPage",
         {
-          id: String(allowIndexPageId),
+          id: String(freePage.id),
           allowIndex: false,
         },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": "2" },
       );
 
       expect(res.status).not.toBe(200);
       const data = await res.json();
-      expect(data.message).toContain("Upgrade");
+      expect(data.message).toContain("Upgrade for search engine indexing");
     } finally {
-      // Re-enable no-index feature
-      await db.run(
-        sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."no-index"', json('true')) WHERE id = 1`,
-      );
+      await db.delete(page).where(eq(page.id, freePage.id));
     }
   });
 

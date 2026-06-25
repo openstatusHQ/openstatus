@@ -1,9 +1,11 @@
+import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { ButtonLink } from "@/content/mdx-components/button-link";
 import { CustomLink } from "@/content/mdx-components/custom-link";
+import { getServiceEscalation } from "@/lib/external-report-escalation";
 import { cachedGetExternalServiceBySlug } from "@/lib/external-service-cache";
 import {
   APP_URL,
@@ -31,40 +33,51 @@ export async function generateMetadata(args: {
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
   const { id } = await args.params;
-  const service = await cachedGetExternalServiceBySlug(id);
-  if (!service) return { ...defaultMetadata, title: "Not Found" };
+  try {
+    const service = await cachedGetExternalServiceBySlug(id);
+    if (!service) return { ...defaultMetadata, title: "Not Found" };
 
-  const title = `Is ${service.name} Down? ${service.name} Status & Incidents`;
-  const description = `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
-  const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
-  const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
-  const indexable = service.deletedAt == null;
+    const { escalated } = await getServiceEscalation(service);
 
-  return {
-    ...defaultMetadata,
-    title,
-    description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    robots: {
-      index: indexable,
-      follow: true,
-    },
-    openGraph: {
-      ...ogMetadata,
+    const title = escalated
+      ? `Users reporting issues with ${service.name}. ${service.name} Status & Incidents`
+      : `Is ${service.name} Down? ${service.name} Status & Incidents`;
+    const description = escalated
+      ? `Users are reporting problems with ${service.name} in the last ${REPORT_WINDOW_MINUTES} minutes. Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`
+      : `Is ${service.name} down right now? Check the live ${service.name} status, uptime over the last ${HISTORY_DAYS} days, and recent ${service.name} incidents tracked by OpenStatus.`;
+    const canonicalUrl = `${BASE_URL}/status/${service.slug}`;
+    const ogImage = `${BASE_URL}/api/og/external-service?slug=${encodeURIComponent(service.slug)}`;
+    const indexable = service.deletedAt == null;
+
+    return {
+      ...defaultMetadata,
       title,
       description,
-      url: canonicalUrl,
-      images: [ogImage],
-    },
-    twitter: {
-      ...twitterMetadata,
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      robots: {
+        index: indexable,
+        follow: true,
+      },
+      openGraph: {
+        ...ogMetadata,
+        title,
+        description,
+        url: canonicalUrl,
+        images: [ogImage],
+      },
+      twitter: {
+        ...twitterMetadata,
+        title,
+        description,
+        images: [ogImage],
+      },
+    };
+  } catch (err) {
+    console.warn(`[status metadata] fallback for ${id}:`, err);
+    return defaultMetadata;
+  }
 }
 
 export default async function Page(args: { params: Promise<RouteParams> }) {
@@ -82,6 +95,14 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
       days: HISTORY_DAYS,
     }),
     api.externalService.incidents.prefetch({ slug: service.slug }),
+    api.externalService.components.prefetch({
+      slug: service.slug,
+      days: HISTORY_DAYS,
+    }),
+    api.externalService.reports.prefetch({
+      slug: service.slug,
+      days: HISTORY_DAYS,
+    }),
   ]);
 
   return (
@@ -110,7 +131,7 @@ export default async function Page(args: { params: Promise<RouteParams> }) {
         </Suspense>
       </HydrateClient>
 
-      <ContentBoxContainer className="not-prose mt-10 flex flex-col items-start gap-3 bg-muted/30">
+      <ContentBoxContainer className="not-prose bg-muted/30 mt-10 flex flex-col items-start gap-3">
         <ContentBoxTitle className="m-0! text-lg">
           Looking for a status page?
         </ContentBoxTitle>

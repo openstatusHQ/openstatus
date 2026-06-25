@@ -2,8 +2,13 @@
   "name": "@openstatus/tracker",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
@@ -11,9 +16,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "bun-types": "catalog:",
     "typescript": "catalog:"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

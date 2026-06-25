@@ -1,6 +1,4 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import type { Adapter } from "next-auth/adapters";
-
 import { db } from "@openstatus/db";
 import {
   account,
@@ -8,6 +6,7 @@ import {
   user,
   verificationToken,
 } from "@openstatus/db/src/schema";
+import type { Adapter } from "next-auth/adapters";
 
 import { createUser, getUser } from "./helpers";
 

@@ -1,5 +1,6 @@
-import { endOfDay, isSameDay, startOfDay } from "date-fns";
+import { UTCDate } from "@date-fns/utc";
 import type { StatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import { endOfDay, isSameDay, startOfDay } from "date-fns";
 
 /**
  * Formats a date range in a human-readable format.
@@ -23,35 +24,36 @@ import type { StatusBlocksLabels } from "@openstatus/ui/components/blocks/status
  * // => "January 1, 10:00 AM - 3:00 PM"
  */
 export function formatDateRange(from?: Date, to?: Date) {
-	const sameDay = from && to && isSameDay(from, to);
-	const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
-	const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
+  const sameDay = from && to && isSameDay(new UTCDate(from), new UTCDate(to));
+  const isFromStartDay =
+    from && startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = to && endOfDay(new UTCDate(to)).getTime() === to.getTime();
 
-	if (sameDay) {
-		if (from && to && from.getTime() === to.getTime()) {
-			return formatDateTime(from);
-		}
-		if (from && to) {
-			return `${formatDateTime(from)} - ${formatTime(to)}`;
-		}
-	}
+  if (sameDay) {
+    if (from && to && from.getTime() === to.getTime()) {
+      return formatDateTime(from);
+    }
+    if (from && to) {
+      return `${formatDateTime(from)} - ${formatTime(to)}`;
+    }
+  }
 
-	if (from && to) {
-		if (isFromStartDay && isToEndDay) {
-			return `${formatDate(from)} - ${formatDate(to)}`;
-		}
-		return `${formatDateTime(from)} - ${formatDateTime(to)}`;
-	}
+  if (from && to) {
+    if (isFromStartDay && isToEndDay) {
+      return `${formatDate(from)} - ${formatDate(to)}`;
+    }
+    return `${formatDateTime(from)} - ${formatDateTime(to)}`;
+  }
 
-	if (to) {
-		return `Until ${formatDateTime(to)}`;
-	}
+  if (to) {
+    return `Until ${formatDateTime(to)}`;
+  }
 
-	if (from) {
-		return `Since ${formatDateTime(from)}`;
-	}
+  if (from) {
+    return `Since ${formatDateTime(from)}`;
+  }
 
-	return "All time";
+  return "All time";
 }
 
 /**
@@ -63,16 +65,18 @@ export function formatDateRange(from?: Date, to?: Date) {
  * @returns A formatted date string
  */
 export function formatDate(
-	date: Date,
-	options?: Intl.DateTimeFormatOptions,
-	locale = "en-US",
+  date: Date,
+  options?: Intl.DateTimeFormatOptions,
+  locale = "en-US",
 ) {
-	return date.toLocaleDateString(locale, {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-		...options,
-	});
+  return date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    ...options,
+    // last so callers can't override away from UTC (the "(UTC)" label depends on it)
+    timeZone: "UTC",
+  });
 }
 
 /**
@@ -83,11 +87,12 @@ export function formatDate(
  * @returns A formatted date string with abbreviated month
  */
 export function formatDateShort(date: Date, locale = "en-US") {
-	return date.toLocaleDateString(locale, {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
+  return date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 /**
@@ -98,12 +103,13 @@ export function formatDateShort(date: Date, locale = "en-US") {
  * @returns A formatted date and time string
  */
 export function formatDateTime(date: Date, locale = "en-US") {
-	return date.toLocaleDateString(locale, {
-		month: "long",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	});
+  return date.toLocaleDateString(locale, {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 /**
@@ -114,15 +120,38 @@ export function formatDateTime(date: Date, locale = "en-US") {
  * @returns A formatted time string
  */
 export function formatTime(date: Date, locale = "en-US") {
-	return date.toLocaleTimeString(locale, {
-		hour: "numeric",
-		minute: "numeric",
-	});
+  return date.toLocaleTimeString(locale, {
+    hour: "numeric",
+    minute: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * Returns the start/end of a closed range as separate strings, collapsing the
+ * `to` side to a time-only render when `from` and `to` fall on the same UTC day.
+ * Use `formatDateRange` for open-ended cases (`Until …` / `Since …`).
+ */
+export function formatDateRangeParts(
+  from: Date,
+  to: Date,
+): { from: string; to: string } {
+  if (isSameDay(new UTCDate(from), new UTCDate(to))) {
+    return { from: formatDateTime(from), to: formatTime(to) };
+  }
+  const isFromStartDay =
+    startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
+  if (isFromStartDay && isToEndDay) {
+    return { from: formatDate(from), to: formatDate(to) };
+  }
+  return { from: formatDateTime(from), to: formatDateTime(to) };
 }
 
 import type {
-	StatusReportUpdateType,
-	StatusType,
+  StatusReportImpact,
+  StatusReportUpdateType,
+  StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
 
 /**
@@ -130,29 +159,29 @@ import type {
  * Used for displaying status banner and component statuses
  */
 export const systemStatusLabels: Record<
-	StatusType,
-	{ long: string; short: string }
+  StatusType,
+  { long: string; short: string }
 > = {
-	success: {
-		long: "All Systems Operational",
-		short: "Operational",
-	},
-	degraded: {
-		long: "Degraded Performance",
-		short: "Degraded",
-	},
-	error: {
-		long: "Partial Outage",
-		short: "Outage",
-	},
-	info: {
-		long: "Maintenance",
-		short: "Maintenance",
-	},
-	empty: {
-		long: "No Data",
-		short: "No Data",
-	},
+  success: {
+    long: "All Systems Operational",
+    short: "Operational",
+  },
+  degraded: {
+    long: "Degraded Performance",
+    short: "Degraded",
+  },
+  error: {
+    long: "Partial Outage",
+    short: "Outage",
+  },
+  info: {
+    long: "Maintenance",
+    short: "Maintenance",
+  },
+  empty: {
+    long: "No Data",
+    short: "No Data",
+  },
 } as const;
 
 /**
@@ -160,20 +189,20 @@ export const systemStatusLabels: Record<
  * @deprecated Use systemStatusLabels instead
  */
 export const messages = {
-	long: {
-		success: systemStatusLabels.success.long,
-		degraded: systemStatusLabels.degraded.long,
-		error: systemStatusLabels.error.long,
-		info: systemStatusLabels.info.long,
-		empty: systemStatusLabels.empty.long,
-	},
-	short: {
-		success: systemStatusLabels.success.short,
-		degraded: systemStatusLabels.degraded.short,
-		error: systemStatusLabels.error.short,
-		info: systemStatusLabels.info.short,
-		empty: systemStatusLabels.empty.short,
-	},
+  long: {
+    success: systemStatusLabels.success.long,
+    degraded: systemStatusLabels.degraded.long,
+    error: systemStatusLabels.error.long,
+    info: systemStatusLabels.info.long,
+    empty: systemStatusLabels.empty.long,
+  },
+  short: {
+    success: systemStatusLabels.success.short,
+    degraded: systemStatusLabels.degraded.short,
+    error: systemStatusLabels.error.short,
+    info: systemStatusLabels.info.short,
+    empty: systemStatusLabels.empty.short,
+  },
 } as const;
 
 /**
@@ -181,11 +210,11 @@ export const messages = {
  * Used for displaying individual request statuses
  */
 export const requestStatusLabels: Record<StatusType, string> = {
-	success: "Normal",
-	degraded: "Degraded",
-	error: "Error",
-	info: "Maintenance",
-	empty: "No Data",
+  success: "Normal",
+  degraded: "Degraded",
+  error: "Error",
+  info: "Maintenance",
+  empty: "No Data",
 } as const;
 
 /**
@@ -195,14 +224,47 @@ export const requestStatusLabels: Record<StatusType, string> = {
 export const requests = requestStatusLabels;
 
 /**
+ * Component impact labels
+ * Used for displaying per-component report impacts
+ */
+export const componentImpactLabels: Record<StatusReportImpact, string> = {
+  operational: "Operational",
+  degraded_performance: "Degraded performance",
+  partial_outage: "Partial outage",
+  major_outage: "Major outage",
+} as const;
+
+// ordered worst-last so worstImpact can compare by index (mirrors the db's `pageComponentImpact`)
+export const statusReportImpacts: readonly StatusReportImpact[] = [
+  "operational",
+  "degraded_performance",
+  "partial_outage",
+  "major_outage",
+] as const;
+
+export function worstStatusReportImpact(
+  impacts: Iterable<StatusReportImpact>,
+): StatusReportImpact {
+  let worst: StatusReportImpact = "operational";
+  for (const impact of impacts) {
+    if (
+      statusReportImpacts.indexOf(impact) > statusReportImpacts.indexOf(worst)
+    ) {
+      worst = impact;
+    }
+  }
+  return worst;
+}
+
+/**
  * Incident status labels
  * Used for displaying incident report update statuses
  */
 export const incidentStatusLabels: Record<StatusReportUpdateType, string> = {
-	resolved: "Resolved",
-	monitoring: "Monitoring",
-	identified: "Identified",
-	investigating: "Investigating",
+  resolved: "Resolved",
+  monitoring: "Monitoring",
+  identified: "Identified",
+  investigating: "Investigating",
 } as const;
 
 /**
@@ -216,11 +278,11 @@ export const status = incidentStatusLabels;
  * Maps StatusType to corresponding CSS custom properties
  */
 export const statusColors: Record<StatusType, string> = {
-	success: "var(--success)",
-	degraded: "var(--warning)",
-	error: "var(--destructive)",
-	info: "var(--info)",
-	empty: "var(--muted)",
+  success: "var(--success)",
+  degraded: "var(--warning)",
+  error: "var(--destructive)",
+  info: "var(--info)",
+  empty: "var(--muted)",
 } as const;
 
 /**
@@ -229,68 +291,70 @@ export const statusColors: Record<StatusType, string> = {
  */
 export const colors = statusColors;
 
+// Timestamps render in UTC; the suffix tells viewers which zone.
+const withUTC = (value: string) => `${value} (UTC)`;
+
 /**
  * Default labels consumed by blocks when no StatusBlocksI18nProvider is mounted.
  * Registry/web preview render with this set; the status-page app overrides via the provider.
  */
 export const defaultStatusBlocksLabels = {
-	systemStatus: systemStatusLabels,
-	incidentStatus: incidentStatusLabels,
-	requestStatus: requestStatusLabels,
+  systemStatus: systemStatusLabels,
+  incidentStatus: incidentStatusLabels,
+  requestStatus: requestStatusLabels,
+  componentImpact: componentImpactLabels,
 
-	today: "Today",
-	ongoing: "Ongoing",
-	reportResolved: "Report resolved",
-	noRecentNotifications: "No recent notifications",
-	noRecentNotificationsDescription:
-		"There have been no reports within the last 7 days.",
-	noReports: "No reports",
-	noReportsDescription: "There are no reports to display.",
-	noPublicMonitors: "No public monitors",
-	noPublicMonitorsDescription: "There are no public monitors to display.",
+  today: "Today",
+  ongoing: "Ongoing",
+  reportResolved: "Report resolved",
+  noRecentNotifications: "No recent notifications",
+  noRecentNotificationsDescription:
+    "There have been no reports within the last 7 days.",
+  noReports: "No reports",
+  noReportsDescription: "There are no reports to display.",
+  noPublicMonitors: "No public monitors",
+  noPublicMonitorsDescription: "There are no public monitors to display.",
 
-	themeNames: {
-		light: "Light",
-		dark: "Dark",
-		system: "System",
-	},
-	ariaToggleTheme: "Toggle theme",
+  themeNames: {
+    light: "Light",
+    dark: "Dark",
+    system: "System",
+  },
+  ariaToggleTheme: "Toggle theme",
 
-	subscribe: "Get updates",
-	subscribeRssDescription: "Get the RSS feed",
-	subscribeAtomDescription: "Get the Atom feed",
-	subscribeJsonDescription: "Get the JSON updates",
-	subscribeSlackDescription:
-		"For status updates in Slack, paste the text below into any channel.",
-	subscribeSshDescription: "Get status via SSH",
-	linkCopiedToClipboard: "Link copied to clipboard",
-	ariaCopyLink: "Copy Link",
+  subscribe: "Get updates",
+  subscribeRssDescription: "Get the RSS feed",
+  subscribeAtomDescription: "Get the Atom feed",
+  subscribeJsonDescription: "Get the JSON updates",
+  subscribeSlackDescription:
+    "For status updates in Slack, paste the text below into any channel.",
+  subscribeSshDescription: "Get status via SSH",
+  linkCopiedToClipboard: "Link copied to clipboard",
+  ariaCopyLink: "Copy Link",
 
-	poweredBy: "powered by",
-	getInTouch: "Get in touch",
+  poweredBy: "powered by",
+  getInTouch: "Get in touch",
 
-	ariaStatusTracker: "Status tracker",
-	ariaDayStatus: (n: number) => `Day ${n} status`,
-	clickAgainToUnpin: "Click again to unpin",
+  ariaStatusTracker: "Status tracker",
+  ariaDayStatus: (n: number) => `Day ${n} status`,
+  clickAgainToUnpin: "Click again to unpin",
 
-	durationIn: (s: string) => `(in ${s})`,
-	durationEarlier: (s: string) => `(${s} earlier)`,
-	durationFor: (s: string) => `(for ${s})`,
-	durationAcross: (s: string) => `across ${s}`,
+  calendarTitle: "Calendar",
 
-	formatDate: (d: Date) => formatDate(d),
-	formatDateShort: (d: Date) => formatDateShort(d),
-	formatDateTime: (d: Date) => formatDateTime(d),
-	formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
-	formatDateRangeParts: (from: Date, to: Date) => {
-		if (isSameDay(from, to)) {
-			return { from: formatDateTime(from), to: formatTime(to) };
-		}
-		const isFromStartDay = startOfDay(from).getTime() === from.getTime();
-		const isToEndDay = endOfDay(to).getTime() === to.getTime();
-		if (isFromStartDay && isToEndDay) {
-			return { from: formatDate(from), to: formatDate(to) };
-		}
-		return { from: formatDateTime(from), to: formatDateTime(to) };
-	},
+  durationIn: (s: string) => `(in ${s})`,
+  durationEarlier: (s: string) => `(${s} earlier)`,
+  durationFor: (s: string) => `(for ${s})`,
+  durationAcross: (s: string) => `across ${s}`,
+
+  formatDate: (d: Date) => withUTC(formatDate(d)),
+  formatDateShort: (d: Date) => formatDateShort(d),
+  formatDateTime: (d: Date) => withUTC(formatDateTime(d)),
+  formatDateRange: (from?: Date, to?: Date) => {
+    const range = formatDateRange(from, to);
+    return from || to ? withUTC(range) : range;
+  },
+  formatDateRangeParts: (from: Date, to: Date) => {
+    const { from: start, to: end } = formatDateRangeParts(from, to);
+    return { from: start, to: withUTC(end) };
+  },
 } as const satisfies StatusBlocksLabels;

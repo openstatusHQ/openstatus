@@ -1,13 +1,14 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import type { ColumnDef } from "@tanstack/react-table";
+
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { Pill } from "@/components/common/pill";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { config, getMetadata } from "@/data/audit-logs.client";
 import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import type { ColumnDef } from "@tanstack/react-table";
 
 type AuditLog = RouterOutputs["tinybird"]["auditLog"]["data"][number];
 

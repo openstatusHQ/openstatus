@@ -1,4 +1,5 @@
 import { mock } from "bun:test";
+
 // Import the real module BEFORE mock.module runs so we can spread real
 // service functions (createSubscription, updateChannel, etc.) into the
 // replacement while still stubbing the dispatch-side spies.

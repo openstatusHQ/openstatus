@@ -83,7 +83,57 @@ export function convertMdxToMarkdown(data: MDXData): string {
     "<!-- SimpleChart omitted -->",
   );
 
-  // Step 7: Extract text from <Grid> containers (remove Grid wrapper, keep content)
+  // Step 7: Convert <Aside> to a blockquote callout
+  const asideLabels: Record<string, string> = {
+    note: "Note",
+    tip: "Tip",
+    caution: "Caution",
+    danger: "Danger",
+  };
+  markdown = markdown.replace(
+    /<Aside\b([^>]*)>([\s\S]*?)<\/Aside>/g,
+    (_match, attrs, content) => {
+      const type = attrs.match(/type="([^"]*)"/)?.[1] ?? "note";
+      const label =
+        attrs.match(/title="([^"]*)"/)?.[1] ?? asideLabels[type] ?? "Note";
+      const lines = [`**${label}**`, "", ...content.trim().split("\n")];
+      return lines.map((line) => (line ? `> ${line}` : ">")).join("\n");
+    },
+  );
+
+  // Step 8: Convert <ShowcaseYouTube entries={[...]}> to a list of links
+  markdown = markdown.replace(/<ShowcaseYouTube\b[\s\S]*?\/>/g, (match) => {
+    const items: string[] = [];
+    for (const entry of match.matchAll(/\{[^{}]*href:[^{}]*\}/g)) {
+      const href = entry[0].match(/href:\s*['"]([^'"]+)['"]/)?.[1];
+      const title = entry[0].match(/title:\s*['"]([^'"]+)['"]/)?.[1];
+      if (href) items.push(`- [${title ?? "YouTube video"}](${href})`);
+    }
+    return items.join("\n");
+  });
+
+  // Step 9: Convert card components (unwrap grid, then serialize each card)
+  markdown = markdown.replace(
+    /<CardGrid[^>]*>([\s\S]*?)<\/CardGrid>/g,
+    (_match, content) => content,
+  );
+  markdown = markdown.replace(
+    /<Card\b([^>]*)>([\s\S]*?)<\/Card>/g,
+    (_match, attrs, content) => {
+      const title = attrs.match(/title="([^"]*)"/)?.[1];
+      const body = content.trim();
+      return title ? `**${title}**\n\n${body}` : body;
+    },
+  );
+  markdown = markdown.replace(/<LinkCard\b([^>]*?)\/>/g, (_match, attrs) => {
+    const title = attrs.match(/title="([^"]*)"/)?.[1] ?? "";
+    const href = attrs.match(/href="([^"]*)"/)?.[1] ?? "";
+    const description = attrs.match(/description="([^"]*)"/)?.[1];
+    const link = `[${title}](${href})`;
+    return description ? `- ${link} — ${description}` : `- ${link}`;
+  });
+
+  // Step 10: Extract text from <Grid> containers (remove Grid wrapper, keep content)
   markdown = markdown.replace(
     /<Grid[^>]*>([\s\S]*?)<\/Grid>/g,
     (_match, content) => {
@@ -91,7 +141,7 @@ export function convertMdxToMarkdown(data: MDXData): string {
     },
   );
 
-  // Step 8: Strip generic HTML containers but extract their text
+  // Step 11: Strip generic HTML containers but extract their text
   // This handles div, span, section, article
   markdown = markdown.replace(
     /<(div|span|section|article)(?:\s+[^>]*)?>[\s\S]*?<\/\1>/g,
@@ -101,7 +151,7 @@ export function convertMdxToMarkdown(data: MDXData): string {
     },
   );
 
-  // Step 9: Strip remaining unknown JSX components
+  // Step 12: Strip remaining unknown JSX components
   // Handle paired tags
   markdown = markdown.replace(/<[A-Z]\w*[^>]*>[\s\S]*?<\/[A-Z]\w*>/g, "");
   // Handle self-closing tags

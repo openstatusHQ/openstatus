@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -6,12 +7,21 @@ import {
   pageSubscriber,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
+import {
+  PageComponentImpact,
+  StatusReportStatus,
+} from "@openstatus/proto/status_report/v1";
 
 import { app } from "@/index";
-import { protoStatusToDb } from "../converters";
+
+import {
+  dbImpactToProto,
+  protoImpactToDb,
+  protoStatusToDb,
+} from "../converters";
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
@@ -1610,6 +1620,335 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.message).toContain("date: value does not match regex pattern");
+  });
+});
+
+describe("StatusReportService component impacts", () => {
+  async function cleanupReport(id: number) {
+    // update deletion cascades the impact join rows
+    await db
+      .delete(statusReportUpdate)
+      .where(eq(statusReportUpdate.statusReportId, id));
+    await db
+      .delete(statusReportsToPageComponents)
+      .where(eq(statusReportsToPageComponents.statusReportId, id));
+    await db.delete(statusReport).where(eq(statusReport.id, id));
+  }
+
+  test("create round-trips componentImpacts and extends membership", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-with-impacts`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Component is down.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [],
+        componentImpacts: [
+          {
+            pageComponentId: String(testPageComponentId),
+            impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+          },
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    try {
+      // impacted components join the report's affected set even when
+      // pageComponentIds is empty
+      expect(data.statusReport.pageComponentIds).toContain(
+        String(testPageComponentId),
+      );
+      expect(data.statusReport.updates).toHaveLength(1);
+      expect(data.statusReport.updates[0].componentImpacts).toEqual([
+        {
+          pageComponentId: String(testPageComponentId),
+          impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+        },
+      ]);
+
+      const updateId = Number(data.statusReport.updates[0].id);
+      const rows = await db
+        .select()
+        .from(statusReportUpdateToPageComponents)
+        .where(
+          eq(statusReportUpdateToPageComponents.statusReportUpdateId, updateId),
+        )
+        .all();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].pageComponentId).toBe(testPageComponentId);
+      expect(rows[0].impact).toBe("major_outage");
+    } finally {
+      await cleanupReport(Number(data.statusReport.id));
+    }
+  });
+
+  test("create without componentImpacts yields a legacy report (no impact rows)", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-legacy`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Legacy report without impact tracking.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [String(testPageComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    try {
+      const impacts = data.statusReport.updates[0].componentImpacts ?? [];
+      expect(impacts).toHaveLength(0);
+
+      const updateId = Number(data.statusReport.updates[0].id);
+      const rows = await db
+        .select()
+        .from(statusReportUpdateToPageComponents)
+        .where(
+          eq(statusReportUpdateToPageComponents.statusReportUpdateId, updateId),
+        )
+        .all();
+      expect(rows).toHaveLength(0);
+    } finally {
+      await cleanupReport(Number(data.statusReport.id));
+    }
+  });
+
+  test("create rejects UNSPECIFIED impact", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-unspecified-impact`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Should fail.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [],
+        componentImpacts: [
+          {
+            pageComponentId: String(testPageComponentId),
+            impact: "PAGE_COMPONENT_IMPACT_UNSPECIFIED",
+          },
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid component impact");
+  });
+
+  test("create returns 404 for impact on unknown component", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-unknown-impact-component`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Should fail.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [],
+        componentImpacts: [
+          {
+            pageComponentId: "99999",
+            impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+          },
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("addStatusReportUpdate writes impacts on the new update", async () => {
+    const createRes = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-add-update-impacts`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Initial.",
+        date: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        pageId: "1",
+        pageComponentIds: [String(testPageComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+    const created = await createRes.json();
+
+    try {
+      const res = await connectRequest(
+        "AddStatusReportUpdate",
+        {
+          statusReportId: created.statusReport.id,
+          status: "STATUS_REPORT_STATUS_IDENTIFIED",
+          message: "Now we know which component.",
+          date: new Date().toISOString(),
+          componentImpacts: [
+            {
+              pageComponentId: String(testPageComponentId),
+              impact: "PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE",
+            },
+          ],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      const newUpdate = data.statusReport.updates.find(
+        (u: { message: string }) =>
+          u.message === "Now we know which component.",
+      );
+      expect(newUpdate).toBeDefined();
+      expect(newUpdate.componentImpacts).toEqual([
+        {
+          pageComponentId: String(testPageComponentId),
+          impact: "PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE",
+        },
+      ]);
+    } finally {
+      await cleanupReport(Number(created.statusReport.id));
+    }
+  });
+
+  test("resolved update auto-clears unnamed impacted components", async () => {
+    const createRes = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-resolve-clears`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Component is down.",
+        date: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        pageId: "1",
+        pageComponentIds: [],
+        componentImpacts: [
+          {
+            pageComponentId: String(testPageComponentId),
+            impact: "PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE",
+          },
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+    const created = await createRes.json();
+
+    try {
+      const res = await connectRequest(
+        "AddStatusReportUpdate",
+        {
+          statusReportId: created.statusReport.id,
+          status: "STATUS_REPORT_STATUS_RESOLVED",
+          message: "All clear.",
+          date: new Date().toISOString(),
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      const resolveUpdate = data.statusReport.updates.find(
+        (u: { message: string }) => u.message === "All clear.",
+      );
+      expect(resolveUpdate).toBeDefined();
+      expect(resolveUpdate.componentImpacts).toEqual([
+        {
+          pageComponentId: String(testPageComponentId),
+          impact: "PAGE_COMPONENT_IMPACT_OPERATIONAL",
+        },
+      ]);
+    } finally {
+      await cleanupReport(Number(created.statusReport.id));
+    }
+  });
+
+  test("addStatusReportUpdate rejects impacts for components on a different page", async () => {
+    const createRes = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-cross-page-impact`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Initial.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [String(testPageComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+    const created = await createRes.json();
+
+    try {
+      const res = await connectRequest(
+        "AddStatusReportUpdate",
+        {
+          statusReportId: created.statusReport.id,
+          status: "STATUS_REPORT_STATUS_IDENTIFIED",
+          message: "Impact on wrong page.",
+          componentImpacts: [
+            {
+              pageComponentId: String(testPage2ComponentId),
+              impact: "PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE",
+            },
+          ],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.message).toContain("not the report's page");
+    } finally {
+      await cleanupReport(Number(created.statusReport.id));
+    }
+  });
+});
+
+describe("impact converters", () => {
+  test("protoImpactToDb converts all named impacts", () => {
+    expect(protoImpactToDb(PageComponentImpact.OPERATIONAL)).toBe(
+      "operational",
+    );
+    expect(protoImpactToDb(PageComponentImpact.DEGRADED_PERFORMANCE)).toBe(
+      "degraded_performance",
+    );
+    expect(protoImpactToDb(PageComponentImpact.PARTIAL_OUTAGE)).toBe(
+      "partial_outage",
+    );
+    expect(protoImpactToDb(PageComponentImpact.MAJOR_OUTAGE)).toBe(
+      "major_outage",
+    );
+  });
+
+  test("protoImpactToDb throws for UNSPECIFIED and unknown values", () => {
+    expect(() => protoImpactToDb(PageComponentImpact.UNSPECIFIED)).toThrow(
+      "Invalid component impact",
+    );
+    expect(() => protoImpactToDb(999 as PageComponentImpact)).toThrow(
+      "Invalid component impact",
+    );
+  });
+
+  test("dbImpactToProto round-trips every DB impact", () => {
+    for (const impact of [
+      "operational",
+      "degraded_performance",
+      "partial_outage",
+      "major_outage",
+    ] as const) {
+      expect(protoImpactToDb(dbImpactToProto(impact))).toBe(impact);
+    }
   });
 });
 

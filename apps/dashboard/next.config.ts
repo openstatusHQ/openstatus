@@ -15,6 +15,21 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
+  // moved under /settings — keep old links working
+  async redirects() {
+    return [
+      {
+        source: "/private-locations",
+        destination: "/settings/private-locations",
+        permanent: false,
+      },
+      {
+        source: "/audit-logs",
+        destination: "/settings/audit-logs",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 // For detailed options, refer to the official documentation:

@@ -1,5 +1,6 @@
-import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+
+import { useTRPC } from "@/lib/trpc/client";
 
 /**
  * Record<feature, [workspaceId, ...]>

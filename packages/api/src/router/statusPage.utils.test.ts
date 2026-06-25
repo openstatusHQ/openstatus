@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+
 import type {
   Incident,
   Maintenance,
@@ -6,7 +7,9 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
+
 import {
+  currentImpactByComponent,
   fillStatusDataFor45Days,
   getEvents,
   getUptime,
@@ -153,6 +156,65 @@ describe("setDataByType", () => {
       expect(statuses).toContain("error");
       expect(statuses).toContain("degraded");
       expect(statuses).toContain("info");
+    });
+
+    it("should keep downtime proportional to the day when maintenance is present", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [
+        createMaintenance(1, 0, 2), // 2h maintenance
+        createIncident(2, 0, 1), // 1h downtime
+      ];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      const errorHeight = bar.find((b) => b.status === "error")?.height ?? 0;
+      const infoHeight = bar.find((b) => b.status === "info")?.height ?? 0;
+
+      // 1h downtime is at most 1/24 of the day (~4.17%), never the old ~33%
+      expect(errorHeight).toBeGreaterThan(0);
+      expect(errorHeight).toBeLessThan(5);
+      expect(errorHeight).toBeLessThan(infoHeight);
+      // maintenance fills the remaining space, no green uptime
+      expect(bar.some((b) => b.status === "success")).toBe(false);
+      expect(errorHeight + infoHeight).toBeCloseTo(100, 5);
+    });
+
+    it("should fill the whole day for a maintenance-only day", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [createMaintenance(1, 0, 2)];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      expect(result[0].bar).toHaveLength(1);
+      expect(result[0].bar[0].status).toBe("info");
+      expect(result[0].bar[0].height).toBe(100);
+    });
+
+    it("should fill the whole day for a report-only day", () => {
+      const data = [createStatusData(0, 100, 0, 0)];
+      const events = [createReport(1, 0, 2)];
+
+      const result = setDataByType({
+        events,
+        data,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      expect(result[0].bar).toHaveLength(1);
+      expect(result[0].bar[0].status).toBe("degraded");
+      expect(result[0].bar[0].height).toBe(100);
     });
 
     it("should show empty bar when no data available", () => {
@@ -739,6 +801,12 @@ describe("fillStatusDataFor45Days", () => {
     expect(result).toHaveLength(45);
   });
 
+  it("should fill exactly 30 days when lookbackPeriod is 30", () => {
+    const result = fillStatusDataFor45Days([], "1", 30);
+
+    expect(result).toHaveLength(30);
+  });
+
   it("should sort data by day oldest first", () => {
     const data: StatusData[] = [];
     const result = fillStatusDataFor45Days(data, "1");
@@ -889,7 +957,7 @@ describe("getUptime", () => {
       expect(Number.parseFloat(uptime)).toBeGreaterThan(97);
       expect(Number.parseFloat(uptime)).toBeLessThan(98);
     });
-    it("should ignore reports when calculating duration uptime", () => {
+    it("should ignore legacy reports (no impact rows) when calculating duration uptime", () => {
       const data = Array.from({ length: 45 }, (_, i) =>
         createStatusData(i, 100, 0, 0),
       );
@@ -1225,5 +1293,789 @@ describe("getEvents - pageComponent filtering", () => {
     const reportEvents = events.filter((e) => e.type === "report");
     expect(reportEvents).toHaveLength(1);
     expect(reportEvents[0].status).toBe("degraded");
+  });
+});
+
+describe("componentImpacts", () => {
+  type Impact =
+    | "operational"
+    | "degraded_performance"
+    | "partial_outage"
+    | "major_outage";
+
+  function dayStartUTC(daysAgo: number): Date {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - daysAgo);
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function hoursAfter(date: Date, hours: number): Date {
+    return new Date(date.getTime() + hours * 60 * 60 * 1000);
+  }
+
+  function createImpactEvent(
+    id: number,
+    from: Date,
+    to: Date | null,
+    impactIntervals: { from: Date; to: Date | null; impact: Impact }[],
+  ) {
+    return {
+      id,
+      name: `Impact Report ${id}`,
+      from,
+      to,
+      type: "report" as const,
+      status: "degraded" as const,
+      impactIntervals,
+    };
+  }
+
+  function createLegacyEvent(id: number, from: Date, to: Date | null) {
+    return {
+      id,
+      name: `Legacy Report ${id}`,
+      from,
+      to,
+      type: "report" as const,
+      status: "degraded" as const,
+    };
+  }
+
+  function impactComponent(id: number, monitorId?: number): PageComponent {
+    return {
+      id,
+      workspaceId: 1,
+      pageId: 1,
+      type: monitorId ? ("monitor" as const) : ("static" as const),
+      monitorId: monitorId ?? null,
+      name: `Component ${id}`,
+      description: null,
+      order: 0,
+      groupId: null,
+      groupOrder: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  function createImpactReport(args: {
+    id: number;
+    status?: "investigating" | "resolved";
+    components: number[];
+    updates: Array<{
+      id: number;
+      date: Date;
+      status: "investigating" | "identified" | "monitoring" | "resolved";
+      impacts?: Array<{ pageComponentId: number; impact: Impact }>;
+    }>;
+  }) {
+    return {
+      id: args.id,
+      title: `Status Report ${args.id}`,
+      status: args.status ?? ("investigating" as const),
+      workspaceId: 1,
+      pageId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      statusReportsToPageComponents: args.components.map((pcId) => ({
+        pageComponent: impactComponent(pcId, pcId * 10),
+      })),
+      statusReportUpdates: args.updates.map((u) => ({
+        id: u.id,
+        statusReportId: args.id,
+        date: u.date,
+        status: u.status,
+        message: "m",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        statusReportUpdateToPageComponents: (u.impacts ?? []).map((r) => ({
+          pageComponentId: r.pageComponentId,
+          impact: r.impact,
+        })),
+      })),
+    };
+  }
+
+  describe("getUptime - manual mode weighting", () => {
+    const day = dayStartUTC(1);
+    const dayData = [createStatusData(1, 1)];
+
+    it("legacy report (no impact rows) counts its full duration", () => {
+      const events = [createLegacyEvent(1, day, hoursAfter(day, 24))];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("0%");
+    });
+
+    it("major_outage counts full downtime", () => {
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("0%");
+    });
+
+    it("partial_outage counts half downtime (weight 0.5)", () => {
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("50%");
+    });
+
+    it("degraded_performance counts as up", () => {
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          {
+            from: day,
+            to: hoursAfter(day, 24),
+            impact: "degraded_performance",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("100%");
+    });
+
+    it("operational rows count as up", () => {
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "operational" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("100%");
+    });
+
+    it("weights each interval of a multi-update timeline", () => {
+      // major 6h -> degraded 6h -> operational 12h: only the major 6h count
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 6), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 6),
+            to: hoursAfter(day, 12),
+            impact: "degraded_performance",
+          },
+          {
+            from: hoursAfter(day, 12),
+            to: hoursAfter(day, 24),
+            impact: "operational",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("75%");
+    });
+
+    it("partial_outage intervals count half in a multi-update timeline", () => {
+      // major 6h (6h down) -> partial 6h (3h down) -> operational 12h
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 6), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 6),
+            to: hoursAfter(day, 12),
+            impact: "partial_outage",
+          },
+          {
+            from: hoursAfter(day, 12),
+            to: hoursAfter(day, 24),
+            impact: "operational",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("62.5%");
+    });
+
+    it("mixes legacy and impact reports in one period", () => {
+      const day2 = dayStartUTC(2);
+      const data = [createStatusData(2, 1), createStatusData(1, 1)];
+      const events = [
+        createLegacyEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day, hoursAfter(day, 24), [
+          {
+            from: day,
+            to: hoursAfter(day, 24),
+            impact: "degraded_performance",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({ data, events, barType: "manual", cardType: "manual" }),
+      ).toBe("50%");
+    });
+
+    it("overlapping legacy reports count once and never go negative", () => {
+      const events = [
+        createLegacyEvent(1, day, hoursAfter(day, 24)),
+        createLegacyEvent(2, day, hoursAfter(day, 24)),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("0%");
+    });
+
+    it("partially overlapping reports merge their downtime", () => {
+      const day2 = dayStartUTC(2);
+      const data = [createStatusData(2, 1), createStatusData(1, 1)];
+      // 0-24h and 12-36h overlap by 12h: 36h downtime over 48h, not 48h
+      const events = [
+        createLegacyEvent(1, day2, hoursAfter(day2, 24)),
+        createLegacyEvent(2, hoursAfter(day2, 12), hoursAfter(day2, 36)),
+      ];
+      expect(
+        getUptime({ data, events, barType: "manual", cardType: "manual" }),
+      ).toBe("25%");
+    });
+
+    it("overlapping partial_outage reports take the worst weight, not the sum", () => {
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+        createImpactEvent(2, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("50%");
+    });
+
+    it("overlapping legacy and partial_outage reports take the worst weight", () => {
+      const events = [
+        createLegacyEvent(1, day, hoursAfter(day, 24)),
+        createImpactEvent(2, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: dayData,
+          events,
+          barType: "manual",
+          cardType: "manual",
+        }),
+      ).toBe("0%");
+    });
+  });
+
+  describe("getUptime - duration mode impact downtime", () => {
+    const day = dayStartUTC(1);
+    const day2 = dayStartUTC(2);
+    const twoDayData = [createStatusData(2, 1), createStatusData(1, 1)];
+
+    function createIncidentEvent(id: number, from: Date, to: Date | null) {
+      return {
+        id,
+        name: "Downtime",
+        from,
+        to,
+        type: "incident" as const,
+        status: "error" as const,
+      };
+    }
+
+    it("major_outage report intervals count as downtime", () => {
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("50%");
+    });
+
+    it("partial_outage report intervals count half", () => {
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("75%");
+    });
+
+    it("degraded_performance report intervals count as up", () => {
+      const events = [
+        createImpactEvent(1, day2, hoursAfter(day2, 24), [
+          {
+            from: day2,
+            to: hoursAfter(day2, 24),
+            impact: "degraded_performance",
+          },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("100%");
+    });
+
+    it("incident and overlapping major_outage report count once", () => {
+      const events = [
+        createIncidentEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("50%");
+    });
+
+    it("incident downtime wins over an overlapping partial_outage report", () => {
+      const events = [
+        createIncidentEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day2, hoursAfter(day2, 24), [
+          { from: day2, to: hoursAfter(day2, 24), impact: "partial_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("50%");
+    });
+
+    it("legacy reports stay ignored alongside impact reports", () => {
+      const events = [
+        createLegacyEvent(1, day2, hoursAfter(day2, 24)),
+        createImpactEvent(2, day, hoursAfter(day, 12), [
+          { from: day, to: hoursAfter(day, 12), impact: "major_outage" },
+        ]),
+      ];
+      expect(
+        getUptime({
+          data: twoDayData,
+          events,
+          barType: "absolute",
+          cardType: "duration",
+        }),
+      ).toBe("75%");
+    });
+  });
+
+  describe("getEvents - impact projection", () => {
+    const day = dayStartUTC(1);
+
+    it("projects the filtered component's own timeline and status", () => {
+      const report = createImpactReport({
+        id: 1,
+        components: [1, 2],
+        updates: [
+          {
+            id: 100,
+            date: day,
+            status: "investigating",
+            impacts: [
+              { pageComponentId: 1, impact: "major_outage" },
+              { pageComponentId: 2, impact: "degraded_performance" },
+            ],
+          },
+        ],
+      });
+
+      const apiEvents = getEvents({
+        maintenances: [],
+        incidents: [],
+        reports: [report],
+        pageComponentId: 1,
+      });
+      expect(apiEvents).toHaveLength(1);
+      expect(apiEvents[0].status).toBe("error");
+      expect(apiEvents[0].impactIntervals).toHaveLength(1);
+      expect(apiEvents[0].impactIntervals?.[0].impact).toBe("major_outage");
+
+      const webEvents = getEvents({
+        maintenances: [],
+        incidents: [],
+        reports: [report],
+        pageComponentId: 2,
+      });
+      expect(webEvents[0].status).toBe("degraded");
+      expect(webEvents[0].impactIntervals?.[0].impact).toBe(
+        "degraded_performance",
+      );
+    });
+
+    it("page-level projection takes the worst impact across components", () => {
+      const report = createImpactReport({
+        id: 1,
+        components: [1, 2],
+        updates: [
+          {
+            id: 100,
+            date: day,
+            status: "investigating",
+            impacts: [
+              { pageComponentId: 1, impact: "major_outage" },
+              { pageComponentId: 2, impact: "degraded_performance" },
+            ],
+          },
+        ],
+      });
+
+      const events = getEvents({
+        maintenances: [],
+        incidents: [],
+        reports: [report],
+      });
+      expect(events[0].status).toBe("error");
+      expect(events[0].impactIntervals?.[0].impact).toBe("major_outage");
+    });
+
+    it("legacy reports carry no impactIntervals and stay degraded", () => {
+      const report = createImpactReport({
+        id: 1,
+        components: [1],
+        updates: [{ id: 100, date: day, status: "investigating" }],
+      });
+
+      const events = getEvents({
+        maintenances: [],
+        incidents: [],
+        reports: [report],
+        pageComponentId: 1,
+      });
+      expect(events[0].status).toBe("degraded");
+      expect(events[0].impactIntervals).toBeUndefined();
+    });
+
+    it("an active report whose component recovered reads success", () => {
+      const report = createImpactReport({
+        id: 1,
+        components: [1],
+        updates: [
+          {
+            id: 100,
+            date: day,
+            status: "investigating",
+            impacts: [{ pageComponentId: 1, impact: "partial_outage" }],
+          },
+          {
+            id: 101,
+            date: hoursAfter(day, 2),
+            status: "identified",
+            impacts: [{ pageComponentId: 1, impact: "operational" }],
+          },
+        ],
+      });
+
+      const events = getEvents({
+        maintenances: [],
+        incidents: [],
+        reports: [report],
+        pageComponentId: 1,
+      });
+      expect(events[0].status).toBe("success");
+      // prior interval closed at the second update
+      expect(events[0].impactIntervals?.[0].to?.getTime()).toBe(
+        hoursAfter(day, 2).getTime(),
+      );
+    });
+
+    it("clamps open intervals to the resolved event end", () => {
+      const report = createImpactReport({
+        id: 1,
+        status: "resolved",
+        components: [1],
+        updates: [
+          {
+            id: 100,
+            date: day,
+            status: "investigating",
+            impacts: [{ pageComponentId: 1, impact: "major_outage" }],
+          },
+          {
+            id: 101,
+            date: hoursAfter(day, 3),
+            status: "resolved",
+            impacts: [{ pageComponentId: 1, impact: "operational" }],
+          },
+        ],
+      });
+
+      const events = getEvents({
+        maintenances: [],
+        incidents: [],
+        reports: [report],
+        pageComponentId: 1,
+      });
+      expect(events[0].status).toBe("success");
+      const intervals = events[0].impactIntervals ?? [];
+      expect(intervals).toHaveLength(2);
+      expect(intervals[0].impact).toBe("major_outage");
+      expect(intervals[0].to?.getTime()).toBe(hoursAfter(day, 3).getTime());
+      // trailing operational interval clamped to the event end, not open
+      expect(intervals[1].to?.getTime()).toBe(hoursAfter(day, 3).getTime());
+    });
+  });
+
+  describe("setDataByType - manual mode colors", () => {
+    const day = dayStartUTC(1);
+    const dayData = [createStatusData(1, 1)];
+
+    function manualBarStatus(
+      events: Parameters<typeof setDataByType>[0]["events"],
+    ) {
+      const result = setDataByType({
+        events,
+        data: dayData,
+        cardType: "manual",
+        barType: "manual",
+      });
+      return result[0].bar[0].status;
+    }
+
+    it("legacy report day stays degraded", () => {
+      expect(
+        manualBarStatus([createLegacyEvent(1, day, hoursAfter(day, 24))]),
+      ).toBe("degraded");
+    });
+
+    it("major_outage day renders error", () => {
+      expect(
+        manualBarStatus([
+          createImpactEvent(1, day, hoursAfter(day, 24), [
+            { from: day, to: hoursAfter(day, 24), impact: "major_outage" },
+          ]),
+        ]),
+      ).toBe("error");
+    });
+
+    it("partial_outage day renders degraded", () => {
+      expect(
+        manualBarStatus([
+          createImpactEvent(1, day, hoursAfter(day, 24), [
+            { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+          ]),
+        ]),
+      ).toBe("degraded");
+    });
+
+    it("carries the day's worst impact for the hover card label", () => {
+      const result = setDataByType({
+        events: [
+          createImpactEvent(1, day, hoursAfter(day, 24), [
+            { from: day, to: hoursAfter(day, 24), impact: "partial_outage" },
+          ]),
+        ],
+        data: dayData,
+        cardType: "manual",
+        barType: "manual",
+      });
+      expect(result[0].card[0].status).toBe("degraded");
+      expect(result[0].card[0].impact).toBe("partial_outage");
+    });
+
+    it("legacy report day carries no impact (generic label)", () => {
+      const result = setDataByType({
+        events: [createLegacyEvent(1, day, hoursAfter(day, 24))],
+        data: dayData,
+        cardType: "manual",
+        barType: "manual",
+      });
+      expect(result[0].card[0].status).toBe("degraded");
+      expect(result[0].card[0].impact).toBeUndefined();
+    });
+
+    it("operational-only day renders success", () => {
+      expect(
+        manualBarStatus([
+          createImpactEvent(1, day, hoursAfter(day, 24), [
+            { from: day, to: hoursAfter(day, 24), impact: "operational" },
+          ]),
+        ]),
+      ).toBe("success");
+    });
+  });
+
+  describe("setDataByType - absolute bar impact proportions", () => {
+    const day = dayStartUTC(1);
+    const dayData = [createStatusData(1, 100)];
+
+    it("colors only the major_outage slice red, not the full report", () => {
+      // 1h major + 23h degraded: error keeps its true 1/24 share
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 1), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 1),
+            to: hoursAfter(day, 24),
+            impact: "degraded_performance",
+          },
+        ]),
+      ];
+
+      const result = setDataByType({
+        events,
+        data: dayData,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      const errorHeight = bar.find((b) => b.status === "error")?.height ?? 0;
+      const degradedHeight =
+        bar.find((b) => b.status === "degraded")?.height ?? 0;
+      expect(errorHeight).toBeCloseTo(100 / 24, 1);
+      expect(degradedHeight).toBeCloseTo(100 - 100 / 24, 1);
+      expect(errorHeight + degradedHeight).toBeCloseTo(100, 5);
+    });
+
+    it("shows uptime vs downtime when the only slice is an outage", () => {
+      // 1h major then operational: 23h green, 1h red — not a full red day
+      const events = [
+        createImpactEvent(1, day, hoursAfter(day, 24), [
+          { from: day, to: hoursAfter(day, 1), impact: "major_outage" },
+          {
+            from: hoursAfter(day, 1),
+            to: hoursAfter(day, 24),
+            impact: "operational",
+          },
+        ]),
+      ];
+
+      const result = setDataByType({
+        events,
+        data: dayData,
+        cardType: "requests",
+        barType: "absolute",
+      });
+
+      const bar = result[0].bar;
+      expect(bar.find((b) => b.status === "success")?.height).toBeCloseTo(
+        100 - 100 / 24,
+        1,
+      );
+      expect(bar.find((b) => b.status === "error")?.height).toBeCloseTo(
+        100 / 24,
+        1,
+      );
+    });
+  });
+
+  describe("currentImpactByComponent", () => {
+    const day = dayStartUTC(1);
+
+    it("latest update naming a component wins; resolve clears", () => {
+      const report = createImpactReport({
+        id: 1,
+        components: [1, 2],
+        updates: [
+          {
+            id: 100,
+            date: day,
+            status: "investigating",
+            impacts: [
+              { pageComponentId: 1, impact: "major_outage" },
+              { pageComponentId: 2, impact: "degraded_performance" },
+            ],
+          },
+          {
+            id: 101,
+            date: hoursAfter(day, 1),
+            status: "identified",
+            impacts: [{ pageComponentId: 1, impact: "partial_outage" }],
+          },
+        ],
+      });
+
+      const current = currentImpactByComponent(report);
+      expect(current.get(1)).toBe("partial_outage");
+      expect(current.get(2)).toBe("degraded_performance");
+    });
+
+    it("returns an empty map for legacy reports", () => {
+      const report = createImpactReport({
+        id: 1,
+        components: [1],
+        updates: [{ id: 100, date: day, status: "investigating" }],
+      });
+      expect(currentImpactByComponent(report).size).toBe(0);
+    });
   });
 });

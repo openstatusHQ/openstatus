@@ -27,7 +27,7 @@ export function listNotificationsTable(
         provider: (
           <TableCellText
             value={n.provider}
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         monitors: (
@@ -37,7 +37,7 @@ export function listNotificationsTable(
                 ? "none"
                 : `${n.monitorIds.length} (${n.monitorIds.join(", ")})`
             }
-            className="font-mono text-muted-foreground"
+            className="text-muted-foreground font-mono"
           />
         ),
         id: <TableCellNumber value={n.id} />,

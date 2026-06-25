@@ -1,0 +1,60 @@
+---
+category: Concepts
+title: Probes, Locations, and Regions
+description: "Three words that look interchangeable but aren't — what each one means in openstatus and how they fit together."
+---
+
+Reading the openstatus docs, you'll hit three words that seem to mean the same thing — **probe**, **location**, and **region**. They don't. Each one names a different layer of the same system, and knowing which is which makes the rest of the configuration surface much easier to navigate.
+
+## The three terms in one sentence
+
+> A **probe** runs in a **region** and exposes itself to you as a **location** you can assign to a monitor.
+
+That's the relationship in shorthand. The rest of this page unpacks each term and explains why the distinction matters when you're configuring monitors or debugging where a check came from.
+
+## Probe
+
+A **probe** is the software that actually performs a check. It opens the TCP connection, sends the HTTP request, resolves the DNS record, measures the timing — and reports the result back. There are two kinds:
+
+- **Public probes.** Operated by openstatus, deployed across Fly.io, Railway, and Koyeb regions. You don't manage them.
+- **Private probes.** A container image (`ghcr.io/openstatushq/probe:latest`) you run on your own infrastructure. See [Understanding Private Locations](/docs/concept/private-locations).
+
+In day-to-day usage you rarely interact with the "probe" abstraction directly — you assign a *location* to a monitor, and the location decides which probe runs the check. The word matters mostly when you're reading debug output, opening a support ticket, or deploying a private location.
+
+## Region
+
+A **region** is a physical-ish place where probes run. For openstatus public probes, regions map onto cloud-provider regions: Fly.io's `fra` (Frankfurt), Railway's `europe-west4-drams3a`, Koyeb's regions, and so on.
+
+A region is an attribute of a probe, not something you configure directly on a monitor. Two facts follow from that:
+
+- The list of regions changes when openstatus adds or removes provider capacity. The canonical list lives on the [location reference page](/docs/reference/location), which also documents the public IPv4/IPv6 addresses for each region you might need to allowlist.
+- IP behaviour follows the underlying provider. Fly.io regions expose both IPv4 and IPv6, Railway is IPv4-only, Koyeb has no static IPs. If you allowlist by IP, this matters.
+
+## Location
+
+A **location** is what you assign to a monitor. It's the user-facing handle that points at one or more probes in a region. Two flavours:
+
+- **Public locations.** One per public region. Selecting `fly-fra` on a monitor means "run this check from a public probe in Frankfurt."
+- **Private locations.** Created by you. A private location has a name, a token, and a set of attached monitors. The probe(s) you deploy with that token form the location.
+
+When a monitor runs, the assigned locations determine where the check fans out to. Selecting three locations means three independent checks per cron tick — one per location — each contributing its own latency and status to the monitor's results.
+
+## Putting it together
+
+| Layer | Owned by | You configure it directly? |
+| --- | --- | --- |
+| Region | Cloud provider | No — it's a property of the underlying infra |
+| Probe | openstatus (public) or you (private) | Indirectly, via the location |
+| Location | You | **Yes** — this is what you attach to a monitor |
+
+Three quick scenarios make the distinction concrete:
+
+- **Adding global coverage.** You attach `fly-iad`, `fly-fra`, and `fly-syd` *locations* to a monitor. Each one represents a public *probe* running in the matching Fly.io *region*. You don't pick a probe directly.
+- **Allowlisting on a firewall.** You need IPs, which are a *region* attribute. Look them up in [Location Reference](/docs/reference/location). The location names like `fly-fra` are the shorthand you'd grep for.
+- **Monitoring an internal API.** No public region can reach your VPC, so you create a private *location*, deploy a private *probe* with its token, and pin the monitor to that location. The "region" is just wherever you happened to deploy the container.
+
+## Next steps
+
+- **[Location reference](/docs/reference/location)** — public locations, regions, providers, and the IPs to allowlist.
+- **[Understanding private locations](/docs/concept/private-locations)** — when to run your own probe and the trade-offs.
+- **[Create an uptime monitor](/docs/tutorial/create-your-first-monitor)** — applies these concepts to a working monitor.

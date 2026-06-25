@@ -1,12 +1,6 @@
 "use client";
 
 import { UTCDate } from "@date-fns/utc";
-import { format, formatDistanceToNowStrict } from "date-fns";
-import { Check, Copy } from "lucide-react";
-import { useEffect, useState } from "react";
-
-import type { HoverCardContentProps } from "@radix-ui/react-hover-card";
-
 import {
   HoverCard,
   HoverCardContent,
@@ -21,6 +15,10 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
+import type { HoverCardContentProps } from "@radix-ui/react-hover-card";
+import { format, formatDistanceToNowStrict } from "date-fns";
+import { Check, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type BaseProps = {
   date: Date;
@@ -187,12 +185,12 @@ function SimpleTimestamp({
       <Tooltip>
         <TooltipTrigger
           className={cn(
-            "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
+            "text-muted-foreground decoration-muted-foreground/30 font-mono underline decoration-dashed underline-offset-4",
             className,
           )}
           {...props}
         >
-          {children || format(new UTCDate(date), "LLL dd, y HH:mm (z)")}
+          {children || format(new UTCDate(date), "LLL dd, y HH:mm '(UTC)'")}
         </TooltipTrigger>
         <TooltipContent data-slot="status-timestamp-content">
           <p className="font-mono">{format(date, "LLL dd, y HH:mm (z)")}</p>

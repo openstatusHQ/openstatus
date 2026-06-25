@@ -1,5 +1,14 @@
 "use client";
 
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
+
 import {
   StepCard,
   StepCardBadge,
@@ -9,14 +18,7 @@ import {
   StepCardTitle,
 } from "@/components/forms/step-card";
 import { getSubdomain } from "@/lib/domains";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { cn } from "@openstatus/ui/lib/utils";
+
 import { DomainStatusIcon } from "./domain-status-icon";
 import { DomainTroubleshooting } from "./domain-troubleshooting";
 import { useDomainStatus } from "./use-domain-status";
@@ -31,7 +33,7 @@ export const InlineSnippet = ({
   return (
     <span
       className={cn(
-        "inline-block rounded-md bg-muted px-1 py-0.5 font-mono",
+        "bg-muted inline-block rounded-md px-1 py-0.5 font-mono",
         className,
       )}
     >
@@ -45,9 +47,18 @@ const CNAME_VALUE =
 const A_RECORD_VALUE =
   process.env.NEXT_PUBLIC_VERCEL_PROJECT_DNS_A || "76.76.21.21";
 
-// FIXME: add loading state!
 export default function DomainConfiguration({ domain }: { domain: string }) {
   const { status, domainJson, steps, isLoading } = useDomainStatus(domain);
+
+  if (isLoading && !domainJson)
+    return (
+      <div className="flex items-center gap-3 border border-transparent px-4">
+        <DomainStatusIcon loading={true} />
+        <p className="text-muted-foreground text-sm">
+          Checking domain status...
+        </p>
+      </div>
+    );
 
   if (!status || !domainJson) return null;
 
@@ -65,7 +76,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3 border border-transparent px-4">
         <DomainStatusIcon status={status} loading={isLoading} />
-        <p className="font-semibold text-sm">{status}</p>
+        <p className="text-sm font-semibold">{status}</p>
         <Badge variant="secondary">{domain}</Badge>
       </div>
 
@@ -96,49 +107,49 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                     <InlineSnippet>{domainJson.apexName}</InlineSnippet>
                     ), set the following A record on your DNS provider:
                   </p>
-                  <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+                  <div className="bg-muted flex items-center justify-start space-x-10 rounded-md p-2">
                     <div>
-                      <p className="font-bold text-sm">Type</p>
+                      <p className="text-sm font-bold">Type</p>
                       <p className="mt-2 font-mono text-sm">A</p>
                     </div>
                     <div>
-                      <p className="font-bold text-sm">Name</p>
+                      <p className="text-sm font-bold">Name</p>
                       <p className="mt-2 font-mono text-sm">@</p>
                     </div>
                     <div>
-                      <p className="font-bold text-sm">Value</p>
+                      <p className="text-sm font-bold">Value</p>
                       <p className="mt-2 font-mono text-sm">{A_RECORD_VALUE}</p>
                     </div>
                     <div>
-                      <p className="font-bold text-sm">TTL</p>
+                      <p className="text-sm font-bold">TTL</p>
                       <p className="mt-2 font-mono text-sm">86400</p>
                     </div>
                   </div>
                 </TabsContent>
                 <TabsContent value="CNAME">
-                  <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+                  <div className="bg-muted flex items-center justify-start space-x-10 rounded-md p-2">
                     <div>
-                      <p className="font-bold text-sm">Type</p>
+                      <p className="text-sm font-bold">Type</p>
                       <p className="mt-2 font-mono text-sm">CNAME</p>
                     </div>
                     <div>
-                      <p className="font-bold text-sm">Name</p>
+                      <p className="text-sm font-bold">Name</p>
                       <p className="mt-2 font-mono text-sm">
                         {subdomain ?? "www"}
                       </p>
                     </div>
                     <div>
-                      <p className="font-bold text-sm">Value</p>
+                      <p className="text-sm font-bold">Value</p>
                       <p className="mt-2 font-mono text-sm">{CNAME_VALUE}</p>
                     </div>
                     <div>
-                      <p className="font-bold text-sm">TTL</p>
+                      <p className="text-sm font-bold">TTL</p>
                       <p className="mt-2 font-mono text-sm">86400</p>
                     </div>
                   </div>
                 </TabsContent>
               </Tabs>
-              <p className="mt-3 text-muted-foreground text-sm">
+              <p className="text-muted-foreground mt-3 text-sm">
                 Note: for TTL, if <InlineSnippet>86400</InlineSnippet> is not
                 available, set the highest value possible. Domain propagation
                 can take up to an hour.
@@ -163,15 +174,15 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                 <InlineSnippet>{domainJson.apexName}</InlineSnippet> to prove
                 ownership of <InlineSnippet>{domainJson.name}</InlineSnippet>:
               </p>
-              <div className="my-3 flex items-start justify-start space-x-10 rounded-md bg-muted p-2">
+              <div className="bg-muted my-3 flex items-start justify-start space-x-10 rounded-md p-2">
                 <div>
-                  <p className="font-bold text-sm">Type</p>
+                  <p className="text-sm font-bold">Type</p>
                   <p className="mt-2 font-mono text-sm">
                     {txtVerification.type}
                   </p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Name</p>
+                  <p className="text-sm font-bold">Name</p>
                   <p className="mt-2 font-mono text-sm">
                     {txtVerification.domain.slice(
                       0,
@@ -182,8 +193,8 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                   </p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Value</p>
-                  <p className="mt-2 break-all font-mono text-sm">
+                  <p className="text-sm font-bold">Value</p>
+                  <p className="mt-2 font-mono text-sm break-all">
                     {txtVerification.value}
                   </p>
                 </div>

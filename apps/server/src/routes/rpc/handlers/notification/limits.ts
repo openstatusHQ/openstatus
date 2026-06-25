@@ -2,6 +2,7 @@ import { count, db, eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { NotificationProvider } from "@openstatus/proto/notification/v1";
+
 import {
   notificationLimitReachedError,
   providerNotAllowedError,

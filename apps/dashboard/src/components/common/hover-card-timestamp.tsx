@@ -8,6 +8,7 @@ import {
 } from "@openstatus/ui/components/ui/hover-card";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import type { ComponentPropsWithoutRef } from "react";
+
 import { CopyRow } from "./copy-row";
 
 // TODO: move to TableCellDate?

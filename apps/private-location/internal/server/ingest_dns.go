@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 
 	"connectrpc.com/connect"
@@ -10,14 +11,16 @@ import (
 )
 
 type DNSResponse struct {
-	ID            string              `json:"id"`
-	Timing        string              `json:"timing"`
-	ErrorMessage  string              `json:"errorMessage"`
-	Region        string              `json:"region"`
-	Trigger       string              `json:"trigger"`
-	URI           string              `json:"uri"`
-	RequestStatus string              `json:"requestStatus,omitempty"`
-	Records       map[string][]string `json:"records"`
+	ID            string `json:"id"`
+	Timing        string `json:"timing"`
+	ErrorMessage  string `json:"errorMessage"`
+	Region        string `json:"region"`
+	Trigger       string `json:"trigger"`
+	URI           string `json:"uri"`
+	RequestStatus string `json:"requestStatus,omitempty"`
+	// JSON-encoded map so Tinybird stores it in the single `records` String
+	// column instead of auto-flattening into quarantined records_* columns.
+	Records string `json:"records"`
 
 	RequestId     int64 `json:"requestId,omitempty"`
 	WorkspaceID   int64 `json:"workspaceId"`
@@ -63,6 +66,11 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		records[record.String()] = r
 	}
 
+	recordsJSON, err := json.Marshal(records)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
 	data := DNSResponse{
 		ID:            req.Msg.Id,
 		WorkspaceID:   int64(ic.Monitor.WorkspaceID),
@@ -76,7 +84,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		Trigger:       "cron",
 		URI:           req.Msg.Uri,
 		RequestStatus: req.Msg.RequestStatus,
-		Records:       records,
+		Records:       string(recordsJSON),
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceDNS, ic.Region.ID)

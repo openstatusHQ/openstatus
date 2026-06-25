@@ -1,16 +1,5 @@
 "use client";
 
-import type * as React from "react";
-import { useState, useTransition } from "react";
-
-import {
-  Check,
-  Copy,
-  type LucideIcon,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +25,15 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { isTRPCClientError } from "@trpc/client";
+import {
+  Check,
+  Copy,
+  type LucideIcon,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
+import type * as React from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface QuickActionsProps extends React.ComponentProps<typeof Button> {
@@ -104,7 +102,7 @@ export function QuickActions({
             <Button
               variant="ghost"
               size="icon"
-              className={className ?? "h-7 w-7 data-[state=open]:bg-accent"}
+              className={className ?? "data-[state=open]:bg-accent h-7 w-7"}
               {...props}
             >
               <MoreHorizontal />
@@ -192,7 +190,7 @@ export function QuickActions({
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
+            className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs"
             disabled={
               (deleteAction?.confirmationValue &&
                 value !== deleteAction?.confirmationValue) ||

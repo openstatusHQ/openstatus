@@ -11,8 +11,11 @@ import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
 import {
+  insertUpdateComponentImpacts,
   updatePageComponentAssociations,
   validatePageComponentIds,
+  withComponentImpacts,
+  withPageComponentIds,
 } from "./internal";
 import { CreateStatusReportInput } from "./schemas";
 
@@ -39,10 +42,15 @@ export async function createStatusReport(args: {
       .get();
     if (!page_) throw new NotFoundError("page", input.pageId);
 
+    const componentImpacts = input.componentImpacts ?? [];
+    // membership = union of the explicit set and the impact-named components
     const validated = await validatePageComponentIds({
       tx,
       workspaceId: ctx.workspace.id,
-      pageComponentIds: input.pageComponentIds,
+      pageComponentIds: [
+        ...input.pageComponentIds,
+        ...componentImpacts.map((ci) => ci.pageComponentId),
+      ],
     });
 
     if (validated.pageId !== null && validated.pageId !== input.pageId) {
@@ -79,18 +87,26 @@ export async function createStatusReport(args: {
       .returning()
       .get();
 
+    await insertUpdateComponentImpacts({
+      tx,
+      statusReportUpdateId: initialUpdate.id,
+      componentImpacts,
+    });
+
+    // membership + impacts live in join tables — surface them in the
+    // snapshots so the audit diff/UI sees them alongside the entity fields
     await emitAudit(tx, ctx, {
       action: "status_report.create",
       entityType: "status_report",
       entityId: newReport.id,
-      after: newReport,
+      after: withPageComponentIds(newReport, validated.componentIds),
     });
 
     await emitAudit(tx, ctx, {
       action: "status_report_update.create",
       entityType: "status_report_update",
       entityId: initialUpdate.id,
-      after: initialUpdate,
+      after: withComponentImpacts(initialUpdate, componentImpacts),
       metadata: { statusReportId: newReport.id },
     });
 

@@ -13,7 +13,7 @@ export function Code({
     const codeHTML = highlight(children?.toString() ?? "");
     return (
       <code
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: codeHTML }}
         className={className}
         {...props}

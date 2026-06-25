@@ -126,7 +126,7 @@ export function StatusUpdatesCopyInput({
             withToast: true,
           })
         }
-        className="-translate-y-1/2 absolute top-1/2 right-2 size-6"
+        className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
       >
         {isCopied ? <Check /> : <Copy />}
         <span className="sr-only">{labels.ariaCopyLink}</span>

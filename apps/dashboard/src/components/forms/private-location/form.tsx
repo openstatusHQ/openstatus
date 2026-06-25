@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -35,6 +25,17 @@ import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { CheckboxTree } from "@/components/ui/checkbox-tree";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),

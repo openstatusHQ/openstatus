@@ -1,17 +1,23 @@
+import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 import { ImageResponse } from "next/og";
 
-import { OSTinybird, safePipeData } from "@openstatus/tinybird";
-
 import { isStale } from "@/app/(landing)/status/utils";
-import { env } from "@/env";
 import {
+  getComponentEscalation,
+  getServiceEscalation,
+} from "@/lib/external-report-escalation";
+import {
+  cachedGetExternalComponentBySlug,
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
 } from "@/lib/external-service-cache";
 import { cn } from "@/lib/utils";
+
 import { SIZE } from "../utils";
 
-export const runtime = "edge";
+// nodejs (not edge): this route pulls in the service reads + Effect retry, which
+// push the bundle past the 2 MB edge limit. Node has no such cap.
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const FOOTER = "openstatus.dev/status";
@@ -19,8 +25,8 @@ const INDEX_TITLE = "External Status";
 const INDEX_DESCRIPTION =
   "Check if your external providers are working properly";
 
-// Mirrors getPillStyle in (landing)/status/external-service-pill.tsx so the OG
-// label matches the on-page pill.
+// Mirrors getPillStyle in (landing)/status/external-service-pill so the OG label
+// matches the on-page pill.
 function getStatus(args: { indicator: string; status: string }): {
   label: string;
   bg: string;
@@ -93,48 +99,66 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug") || undefined;
-
-  const service = slug ? await cachedGetExternalServiceBySlug(slug) : undefined;
+  const componentParam = searchParams.get("component") || undefined;
 
   let category: string;
   let categoryDot: string | undefined;
   let title: string;
   let description: string;
   let footer: string;
+  let isDetail = false;
 
-  if (!service) {
-    const services = await cachedListExternalServices();
-    category = "external status";
-    title = INDEX_TITLE;
-    description = `${services.length} providers monitored — ${INDEX_DESCRIPTION}`;
-    footer = FOOTER;
-  } else {
-    const aliasSlugs = Array.isArray(service.aliases) ? service.aliases : [];
-    const slugChain = [service.slug, ...aliasSlugs];
+  const componentResult =
+    slug && componentParam
+      ? await cachedGetExternalComponentBySlug(slug, componentParam)
+      : null;
 
-    const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-    const latestRes = await safePipeData(
-      tb.externalStatusLatest({ ids: slugChain }),
-      "externalStatusLatest (og)",
-    );
-    const latestRows = Array.isArray(latestRes.data) ? latestRes.data : [];
-    latestRows.sort((a, b) => b.last_fetched_at - a.last_fetched_at);
-    const latest = latestRows[0];
-
-    const fetchedAt = latest?.last_fetched_at ?? 0;
-    const stale = fetchedAt === 0 || isStale(fetchedAt);
-    const content = stale
+  if (componentResult?.service && componentResult.component) {
+    const { service, component } = componentResult;
+    isDetail = true;
+    const esc = await getComponentEscalation({
+      serviceId: service.id,
+      componentId: component.id,
+      indicator: component.indicator,
+      status: component.status,
+    });
+    const content = component.stale
       ? UNKNOWN
-      : getStatus({
-          indicator: latest?.indicator ?? "",
-          status: latest?.status ?? "",
-        });
-
+      : getStatus({ indicator: esc.indicator, status: esc.status });
     category = content.label;
     categoryDot = content.bg;
-    title = `Is ${service.name} down?`;
+    title = esc.escalated
+      ? `Users reporting issues with ${service.name} ${component.name}`
+      : `Is ${service.name} ${component.name} down?`;
     description = "";
-    footer = `${FOOTER}/${service.slug}`;
+    footer = `${FOOTER}/${service.slug}/${component.slug}`;
+  } else {
+    const service = slug
+      ? await cachedGetExternalServiceBySlug(slug)
+      : undefined;
+
+    if (!service) {
+      const services = await cachedListExternalServices();
+      category = "external status";
+      title = INDEX_TITLE;
+      description = `${services.length} providers monitored. ${INDEX_DESCRIPTION}`;
+      footer = FOOTER;
+    } else {
+      isDetail = true;
+      const esc = await getServiceEscalation(service);
+      const stale = esc.lastFetchedAt === 0 || isStale(esc.lastFetchedAt);
+      const content = stale
+        ? UNKNOWN
+        : getStatus({ indicator: esc.indicator, status: esc.status });
+
+      category = content.label;
+      categoryDot = content.bg;
+      title = esc.escalated
+        ? `Users reporting issues with ${service.name}`
+        : `Is ${service.name} down?`;
+      description = "";
+      footer = `${FOOTER}/${service.slug}`;
+    }
   }
 
   return new ImageResponse(
@@ -147,10 +171,10 @@ export async function GET(req: Request) {
           <div tw="flex flex-row items-center text-2xl text-slate-700">
             [
             {categoryDot ? (
-              <div tw={cn("rounded-full h-5 w-5 mr-2", categoryDot)} />
+              <div tw={cn("mr-2 h-5 w-5 rounded-full", categoryDot)} />
             ) : null}
             <p>{category}</p>]
-            {service
+            {isDetail
               ? ` | ${new Date().toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "long",

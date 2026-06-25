@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
 import type { Incident, MonitorStatus } from "@openstatus/db/src/schema";
 import {
@@ -5,10 +6,9 @@ import {
   selectNotificationSchema,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
-
-import { getLogger } from "@logtape/logtape";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { Effect, Schedule } from "effect";
+
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 

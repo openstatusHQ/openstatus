@@ -1,5 +1,13 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  ButtonGroup,
+  ButtonGroupText,
+} from "@openstatus/ui/components/ui/button-group";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { ArrowUpRight, Check, Copy } from "lucide-react";
+
 import {
   SHELL_CONTENT_COLUMN,
   SHELL_FORM_COLUMN,
@@ -8,13 +16,6 @@ import { Wordmark } from "@/components/layout/wordmark";
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { NavLogout } from "@/components/nav/nav-logout";
 import { cn } from "@/lib/utils";
-import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupText,
-} from "@openstatus/ui/components/ui/button-group";
-import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { ArrowUpRight, Check, Copy } from "lucide-react";
 
 type StepStatus = "current" | "completed" | "upcoming";
 
@@ -33,12 +34,12 @@ export function OnboardingLayout({
   return (
     <div
       className={cn(
-        "flex min-h-dvh flex-col bg-background md:h-dvh md:min-h-0 md:overflow-hidden",
+        "bg-background flex min-h-dvh flex-col md:h-dvh md:min-h-0 md:overflow-hidden",
         className,
       )}
       {...props}
     >
-      <header className="flex h-14 shrink-0 items-center justify-between border-border border-b px-4 md:px-6">
+      <header className="border-border flex h-14 shrink-0 items-center justify-between border-b px-4 md:px-6">
         <Wordmark size={24} showText />
         <div className="flex items-center gap-2">
           <NavFeedback />
@@ -80,7 +81,7 @@ export function OnboardingStepper({
               />
               <div
                 className={cn(
-                  "flex items-center gap-1.5 font-commit-mono text-xs tracking-tight transition-colors [&>svg]:size-3 [&>svg]:shrink-0",
+                  "font-commit-mono flex items-center gap-1.5 text-xs tracking-tight transition-colors [&>svg]:size-3 [&>svg]:shrink-0",
                   active ? "text-foreground" : "text-muted-foreground/70",
                 )}
               >
@@ -133,7 +134,7 @@ export function OnboardingResultColumn({
   return (
     <section
       className={cn(
-        "col-span-1 flex w-full flex-col gap-3 border-border border-t bg-sidebar p-4 md:min-h-0 md:overflow-hidden md:border-t-0 md:border-l md:p-8",
+        "border-border bg-sidebar col-span-1 flex w-full flex-col gap-3 border-t p-4 md:min-h-0 md:overflow-hidden md:border-t-0 md:border-l md:p-8",
         SHELL_CONTENT_COLUMN,
         className,
       )}
@@ -162,7 +163,7 @@ export function OnboardingStepTitle({
   return (
     <h1
       className={cn(
-        "font-cal text-2xl text-foreground tracking-tight",
+        "font-cal text-foreground text-2xl tracking-tight",
         className,
       )}
       {...props}
@@ -177,7 +178,7 @@ export function OnboardingStepDescription({
   return (
     <p
       className={cn(
-        "text-pretty font-commit-mono text-muted-foreground text-sm",
+        "font-commit-mono text-muted-foreground text-sm text-pretty",
         className,
       )}
       {...props}
@@ -192,7 +193,7 @@ export function OnboardingResultHeading({
   return (
     <h2
       className={cn(
-        "font-commit-mono font-medium text-foreground text-sm uppercase",
+        "font-commit-mono text-foreground text-sm font-medium uppercase",
         className,
       )}
       {...props}
@@ -230,7 +231,7 @@ export function OnboardingPreviewPlaceholder({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-md border border-border bg-background md:min-h-0 md:flex-1",
+        "border-border bg-background relative overflow-hidden rounded-md border md:min-h-0 md:flex-1",
         className,
       )}
       {...props}
@@ -260,7 +261,7 @@ export function OnboardingPreviewPlaceholderOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-0% from-transparent to-90% to-background p-2",
+        "to-background absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-transparent from-0% to-90% p-2",
         className,
       )}
       {...props}
@@ -275,7 +276,7 @@ export function OnboardingPreviewPlaceholderText({
   return (
     <p
       className={cn(
-        "max-w-xs text-pretty rounded-md border border-border p-2 text-center text-foreground text-sm backdrop-blur-sm",
+        "border-border text-foreground max-w-xs rounded-md border p-2 text-center text-sm text-pretty backdrop-blur-sm",
         className,
       )}
       {...props}
@@ -306,10 +307,10 @@ export function OnboardingLockedSummary({
     <div className={cn("space-y-3", className)} {...props}>
       <ButtonGroup className="w-full">
         <ButtonGroupText className="min-w-0 flex-1 justify-start">
-          <code className="truncate font-mono text-foreground text-sm">
+          <code className="text-foreground truncate font-mono text-sm">
             {value}
           </code>
-          <Check className="size-3 shrink-0 text-success" />
+          <Check className="text-success size-3 shrink-0" />
         </ButtonGroupText>
         <Button
           variant="outline"

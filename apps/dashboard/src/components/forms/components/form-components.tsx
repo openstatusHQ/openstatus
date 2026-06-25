@@ -1,30 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { STATUS } from "@/components/nav/nav-monitors";
-import {
-  Sortable,
-  SortableContent,
-  SortableItem,
-  SortableItemHandle,
-  SortableOverlay,
-} from "@/components/ui/sortable";
-import { cn } from "@/lib/utils";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { RouterOutputs } from "@openstatus/api";
@@ -90,6 +65,32 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { STATUS } from "@/components/nav/nav-monitors";
+import {
+  Sortable,
+  SortableContent,
+  SortableItem,
+  SortableItemHandle,
+  SortableOverlay,
+} from "@/components/ui/sortable";
+import { cn } from "@/lib/utils";
 
 type PageComponent = RouterOutputs["pageComponent"]["list"][number];
 type Monitor = RouterOutputs["monitor"]["list"][number];
@@ -438,7 +439,7 @@ export function FormComponents({
           <ComponentRow
             component={item}
             form={form}
-            className="border-transparent border-x px-2"
+            className="border-x border-transparent px-2"
             onDelete={handleDeleteComponent}
             // FIXME: this is used to show an input instead of the name when dragging a component
             // fieldNamePrefix={`components.${index}`}
@@ -545,7 +546,7 @@ export function FormComponents({
                             Add Static Component
                           </DropdownMenuItem>
                           <DropdownMenuSub>
-                            <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
+                            <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                               <Link2 className="text-muted-foreground" />
                               Add Monitor Component
                             </DropdownMenuSubTrigger>
@@ -649,7 +650,7 @@ export function FormComponents({
                         return (
                           <ComponentRow
                             key={`${item.id}-component`}
-                            className="border-transparent border-x px-2"
+                            className="border-x border-transparent px-2"
                             component={item}
                             form={form}
                             onDelete={handleDeleteComponent}
@@ -690,7 +691,7 @@ export function FormComponents({
             <FormCardFooter>
               <FormCardFooterInfo>
                 Learn more about{" "}
-                <Link href="https://docs.openstatus.dev/reference/status-page/#page-components">
+                <Link href="https://www.openstatus.dev/docs/reference/status-page/#page-components">
                   page components
                 </Link>
                 .
@@ -711,8 +712,10 @@ export function FormComponents({
   );
 }
 
-interface ComponentRowProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof SortableItem>, "value"> {
+interface ComponentRowProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof SortableItem>,
+  "value"
+> {
   component: PageComponent;
   form: UseFormReturn<FormValues>;
   onDelete: (componentId: number) => void;
@@ -755,7 +758,7 @@ function ComponentRow({
                   <FormControl>
                     <Input
                       placeholder="Name"
-                      className="w-full bg-background"
+                      className="bg-background w-full"
                       {...field}
                     />
                   </FormControl>
@@ -785,7 +788,7 @@ function ComponentRow({
                   <FormControl>
                     <Input
                       placeholder="Description"
-                      className="w-full bg-background"
+                      className="bg-background w-full"
                       {...field}
                     />
                   </FormControl>
@@ -799,7 +802,7 @@ function ComponentRow({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 self-center text-muted-foreground text-sm">
+        <div className="text-muted-foreground flex items-center gap-2 self-center text-sm">
           {component.monitor && component.type === "monitor" ? (
             <Link
               href={`/monitors/${component.monitorId}/overview`}
@@ -810,7 +813,7 @@ function ComponentRow({
               <span className="truncate">{component.monitor.name}</span>
             </Link>
           ) : (
-            <span className="flex items-center gap-2 text-muted-foreground text-sm">
+            <span className="text-muted-foreground flex items-center gap-2 text-sm">
               <Link2Off className="size-4 shrink-0" />{" "}
               <span className="truncate">Static Component</span>
             </span>
@@ -824,14 +827,14 @@ function ComponentRow({
                   {component.monitor.public ? (
                     <Tooltip>
                       <TooltipTrigger>
-                        <Eye className="size-4 text-muted-foreground" />
+                        <Eye className="text-muted-foreground size-4" />
                       </TooltipTrigger>
                       <TooltipContent>Public</TooltipContent>
                     </Tooltip>
                   ) : (
                     <Tooltip>
                       <TooltipTrigger>
-                        <EyeOff className="size-4 text-muted-foreground" />
+                        <EyeOff className="text-muted-foreground size-4" />
                       </TooltipTrigger>
                       <TooltipContent>Private</TooltipContent>
                     </Tooltip>
@@ -858,7 +861,7 @@ function ComponentRow({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:size-4 [&_svg]:text-destructive"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:text-destructive [&_svg]:size-4"
               >
                 <Trash2 />
               </Button>
@@ -878,7 +881,7 @@ function ComponentRow({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
+                  className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs"
                   onClick={() => onDelete(component.id)}
                 >
                   Remove
@@ -892,8 +895,10 @@ function ComponentRow({
   );
 }
 
-interface ComponentGroupRowProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof SortableItem>, "value"> {
+interface ComponentGroupRowProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof SortableItem>,
+  "value"
+> {
   group: ComponentGroup;
   groupIndex: number;
   onDeleteGroup: (groupId: number) => void;
@@ -992,7 +997,7 @@ function ComponentGroupRow({
   );
 
   return (
-    <SortableItem value={group.id} className="rounded-md border bg-muted">
+    <SortableItem value={group.id} className="bg-muted rounded-md border">
       <div className="grid grid-cols-4 gap-2 px-2 pt-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
@@ -1012,7 +1017,7 @@ function ComponentGroupRow({
                 <FormControl>
                   <Input
                     placeholder="Group Name"
-                    className="w-full bg-background"
+                    className="bg-background w-full"
                     {...field}
                   />
                 </FormControl>
@@ -1060,7 +1065,7 @@ function ComponentGroupRow({
                       Add Static Component
                     </DropdownMenuItem>
                     <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
+                      <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                         <Link2 className="text-muted-foreground" />
                         Add Monitor Component
                       </DropdownMenuSubTrigger>
@@ -1156,7 +1161,7 @@ function ComponentGroupRow({
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel className="!mt-0 font-normal text-muted-foreground text-sm">
+              <FormLabel className="text-muted-foreground !mt-0 text-sm font-normal">
                 Open by default
               </FormLabel>
             </FormItem>
@@ -1169,7 +1174,7 @@ function ComponentGroupRow({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:size-4 [&_svg]:text-destructive"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:text-destructive [&_svg]:size-4"
                 // NOTE: delete directly if no components are in the group
                 {...(data.length === 0
                   ? { onClick: () => onDeleteGroup(group.id) }
@@ -1205,7 +1210,7 @@ function ComponentGroupRow({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
+                  className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs"
                   onClick={() => onDeleteGroup(group.id)}
                 >
                   Remove
@@ -1286,7 +1291,7 @@ function ComponentAttachments({
   const remainingCount = allItems.length - displayLimit;
 
   return (
-    <ul className="list-inside list-disc space-y-1 text-foreground text-sm">
+    <ul className="text-foreground list-inside list-disc space-y-1 text-sm">
       {displayedItems.map((item) => (
         <li key={item.id}>
           {item.title}{" "}

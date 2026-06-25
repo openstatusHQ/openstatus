@@ -1,0 +1,71 @@
+---
+category: Guides
+title: How to Use openstatus React Widget
+description: Add an openstatus status widget to your React or Next.js app with the @openstatus/react package, as a server or client component.
+---
+
+Install the [npm](https://www.npmjs.com/package/@openstatus/react) package:
+
+```bash
+npm install @openstatus/react
+```
+
+## React server component
+
+```tsx
+import { StatusWidget } from "@openstatus/react";
+
+export function Page() {
+  return <StatusWidget slug="status" />;
+}
+```
+
+It will automatically attach the slug to the href to allow the user to open a new tab on click to `https://slug.openstatus.dev`. If you want to redirect to a specific page, use the `href` property:
+
+```tsx
+<StatusWidget slug="documenso" href="https://status.documenso.com" />
+```
+
+<Aside>`StatusWidget` is an **async function** and will only work with RSC. Using it within a plain React app will not work.</Aside>
+
+### Styling
+
+#### With Tailwind CSS
+
+```ts
+// tailwind.config.js
+module.exports = {
+  content: [
+    "./app/**/*.{tsx,ts,mdx,md}",
+    "./node_modules/@openstatus/react/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+#### Without Tailwind CSS
+
+```tsx
+// app/layout.tsx
+import "@openstatus/react/dist/styles.css";
+```
+
+## Typed fetch function
+
+```tsx
+import { getStatus } from "@openstatus/react";
+
+// React Server Component
+async function CustomStatusWidget() {
+  const res = await getStatus("slug");
+  // ^StatusResponse = { status: Status }
+
+  const { status } = res;
+  // ^Status = "unknown" | "operational" | "degraded_performance" | "partial_outage" | "major_outage" | "under_maintenance" | "incident"
+
+  return <div>{/* customize */}</div>;
+}
+```

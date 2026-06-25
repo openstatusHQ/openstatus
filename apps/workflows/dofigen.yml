@@ -88,18 +88,16 @@ builders:
     run: bun run src/build-docker.ts
 
   libsql:
-    fromImage: node:24-slim
+    fromImage: oven/bun:1.3.11
     workdir: /app/
     copy:
       - fromBuilder: docker
         source: /app/apps/build-docker/package.json
         target: /app/package.json
-    run:
-      - corepack enable pnpm
-      - pnpm install --prod --lockfile-only
-      # node-linker=hoisted gives a flat node_modules (like npm/bun) so the compiled bun
-      # binary can resolve the libsql native addon (@libsql/<platform>) from disk at runtime.
-      - pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
+    # bun install is hoisted by default -> flat node_modules so the compiled bun binary can
+    # resolve the libsql native addon (@libsql/<platform>) from disk at runtime. No lockfile
+    # is needed (the generated package.json pins one exact version), so a single install does it.
+    run: bun install --production
 
 fromImage: debian:bullseye-slim
 workdir: /app/

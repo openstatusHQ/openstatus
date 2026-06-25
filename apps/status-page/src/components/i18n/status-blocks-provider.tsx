@@ -1,17 +1,21 @@
 "use client";
 
 import {
-  formatDate,
-  formatDateRange,
-  formatDateRangeParts,
-  formatDateTime,
-} from "@/lib/formatter";
-import {
   StatusBlocksI18nProvider,
   type StatusBlocksLabels,
 } from "@openstatus/ui/components/blocks/status-i18n";
 import { useExtracted, useLocale } from "next-intl";
 import { useMemo } from "react";
+
+import {
+  formatDate,
+  formatDateRange,
+  formatDateRangeParts,
+  formatDateTime,
+} from "@/lib/formatter";
+
+// Status-page timestamps render in UTC; the suffix tells viewers which zone.
+const withUTC = (value: string) => `${value} (UTC)`;
 
 /**
  * StatusBlocksProvider
@@ -57,6 +61,12 @@ export function StatusBlocksProvider({
         info: t("Maintenance"),
         empty: t("No Data"),
       },
+      componentImpact: {
+        operational: t("Operational"),
+        degraded_performance: t("Degraded performance"),
+        partial_outage: t("Partial outage"),
+        major_outage: t("Major outage"),
+      },
 
       today: t("today"),
       ongoing: t("ongoing"),
@@ -97,6 +107,8 @@ export function StatusBlocksProvider({
       ariaDayStatus: (n: number) => t("Day {n} status", { n: String(n) }),
       clickAgainToUnpin: t("Click again to unpin"),
 
+      calendarTitle: t("Calendar"),
+
       durationIn: (duration: string) => t("(in {duration})", { duration }),
       durationEarlier: (timeFromLast: string) =>
         t("({timeFromLast} earlier)", { timeFromLast }),
@@ -104,13 +116,17 @@ export function StatusBlocksProvider({
       durationAcross: (duration: string) =>
         t("across {duration}", { duration }),
 
-      formatDate: (d: Date) => formatDate(d, { locale }),
+      formatDate: (d: Date) => withUTC(formatDate(d, { locale })),
       formatDateShort: (d: Date) => formatDate(d, { month: "short", locale }),
-      formatDateTime: (d: Date) => formatDateTime(d, locale),
-      formatDateRange: (from?: Date, to?: Date) =>
-        formatDateRange(from, to, locale),
-      formatDateRangeParts: (from: Date, to: Date) =>
-        formatDateRangeParts(from, to, locale),
+      formatDateTime: (d: Date) => withUTC(formatDateTime(d, locale)),
+      formatDateRange: (from?: Date, to?: Date) => {
+        const range = formatDateRange(from, to, locale);
+        return from || to ? withUTC(range) : range;
+      },
+      formatDateRangeParts: (from: Date, to: Date) => {
+        const { from: start, to: end } = formatDateRangeParts(from, to, locale);
+        return { from: start, to: withUTC(end) };
+      },
     }),
     [t, locale],
   );

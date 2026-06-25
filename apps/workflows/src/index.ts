@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+
 import {
   configure,
   getConsoleSink,
@@ -7,18 +8,17 @@ import {
   withContext,
 } from "@logtape/logtape";
 import { getOpenTelemetrySink } from "@logtape/otel";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import * as Sentry from "@sentry/bun";
-
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
+
 import { checkerRoute } from "./checker";
+import "./lib/sentry";
 import { cronRouter } from "./cron";
 import { env } from "./env";
-import "./lib/sentry";
-
-import { resourceFromAttributes } from "@opentelemetry/resources";
-import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import { incidentRoute } from "./incident";
 
 const { NODE_ENV, PORT } = env();

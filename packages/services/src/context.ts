@@ -1,6 +1,7 @@
 import { SQLiteTransaction, db as defaultDb, is } from "@openstatus/db";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
+
 import { withBusyRetry } from "./retry";
 
 // `@openstatus/db` does not export named DrizzleClient / DrizzleTx types today,

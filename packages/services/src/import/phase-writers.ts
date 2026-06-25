@@ -10,12 +10,19 @@ import {
   pageSubscriberToPageComponent,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
+  worstImpact,
 } from "@openstatus/db/src/schema";
-import type { PhaseResult } from "@openstatus/importers";
+import type { PageComponentImpact } from "@openstatus/db/src/schema";
+import type { PhaseResult, UpdateComponentImpact } from "@openstatus/importers";
 
 import { emitAudit } from "../audit";
 import type { DB, ServiceContext } from "../context";
+import {
+  withComponentImpacts,
+  withPageComponentIds,
+} from "../status-report/internal";
 import type { ImportProviderName } from "./schemas";
 import { clampPeriodicity, computePhaseStatus } from "./utils";
 
@@ -295,7 +302,7 @@ export async function writeComponentsPhase(
       }
 
       const resolvedGroupId = data.sourceGroupId
-        ? groupIdMap.get(data.sourceGroupId) ?? null
+        ? (groupIdMap.get(data.sourceGroupId) ?? null)
         : null;
 
       const [inserted] = await tx
@@ -364,6 +371,7 @@ export async function writeIncidentsPhase(
           status: "investigating" | "identified" | "monitoring" | "resolved";
           message: string;
           date: Date;
+          componentImpacts?: UpdateComponentImpact[];
         }>;
         sourceComponentIds: string[];
       };
@@ -428,6 +436,26 @@ export async function writeIncidentsPhase(
         continue;
       }
 
+      // membership = sourceComponentIds ∪ impact-named components, upholding
+      // the invariant that every impact row's component is in the report set
+      const memberSourceIds = new Set([
+        ...data.sourceComponentIds,
+        ...data.updates.flatMap((u) =>
+          (u.componentImpacts ?? []).map((ci) => ci.sourceComponentId),
+        ),
+      ]);
+      // distinct source ids can collapse onto one internal component (the
+      // components phase dedupes by name+page) — dedupe to respect the PK
+      const memberComponentIds = new Set<number>();
+      for (const sourceCompId of memberSourceIds) {
+        const osCompId = componentIdMap.get(sourceCompId);
+        if (osCompId) memberComponentIds.add(osCompId);
+      }
+      const componentLinks = [...memberComponentIds].map((pageComponentId) => ({
+        statusReportId: insertedReport.id,
+        pageComponentId,
+      }));
+
       await emitAudit(tx, ctx, {
         action: "status_report.create",
         entityType: "status_report",
@@ -437,51 +465,71 @@ export async function writeIncidentsPhase(
           pageId,
           title: data.report.title,
         }),
-        after: insertedReport,
+        after: withPageComponentIds(
+          insertedReport,
+          componentLinks.map((l) => l.pageComponentId),
+        ),
       });
 
-      // Batch the update rows with `.returning()` so per-update audit can
-      // attribute the specific update ids.
-      if (data.updates.length > 0) {
-        const insertedUpdates = await tx
+      // Insert updates one-by-one so each inserted id pairs with its source
+      // update's componentImpacts deterministically (batch `.returning()`
+      // order is not a guarantee worth relying on).
+      for (const u of data.updates) {
+        const row = await tx
           .insert(statusReportUpdate)
-          .values(
-            data.updates.map((u) => ({
-              status: u.status,
-              message: u.message,
-              date: u.date,
-              statusReportId: insertedReport.id,
-            })),
-          )
-          .returning();
-
-        for (const row of insertedUpdates) {
-          await emitAudit(tx, ctx, {
-            action: "status_report_update.create",
-            entityType: "status_report_update",
-            entityId: row.id,
-            metadata: auditMeta(pc, {
-              sourceId: resource.sourceId,
-              statusReportId: insertedReport.id,
-            }),
-            after: row,
-          });
-        }
-      }
-
-      const componentLinks: Array<{
-        statusReportId: number;
-        pageComponentId: number;
-      }> = [];
-      for (const sourceCompId of data.sourceComponentIds) {
-        const osCompId = componentIdMap.get(sourceCompId);
-        if (osCompId) {
-          componentLinks.push({
+          .values({
+            status: u.status,
+            message: u.message,
+            date: u.date,
             statusReportId: insertedReport.id,
-            pageComponentId: osCompId,
-          });
+          })
+          .returning()
+          .get();
+
+        // ids missing from `componentIdMap` get no impact row — same
+        // partial-map caveat as the membership links. Collapsed source ids
+        // (same internal component) keep the worst impact.
+        const impactByComponent = new Map<number, PageComponentImpact>();
+        for (const ci of u.componentImpacts ?? []) {
+          const osCompId = componentIdMap.get(ci.sourceComponentId);
+          if (!osCompId) continue;
+          const prev = impactByComponent.get(osCompId);
+          impactByComponent.set(
+            osCompId,
+            prev ? worstImpact([prev, ci.impact]) : ci.impact,
+          );
         }
+        const impactRows = [...impactByComponent].map(
+          ([pageComponentId, impact]) => ({
+            statusReportUpdateId: row.id,
+            pageComponentId,
+            impact,
+          }),
+        );
+        if (impactRows.length > 0) {
+          await tx
+            .insert(statusReportUpdateToPageComponents)
+            .values(impactRows);
+        }
+
+        await emitAudit(tx, ctx, {
+          action: "status_report_update.create",
+          entityType: "status_report_update",
+          entityId: row.id,
+          metadata: auditMeta(pc, {
+            sourceId: resource.sourceId,
+            statusReportId: insertedReport.id,
+          }),
+          after: withComponentImpacts(
+            row,
+            impactRows.map(({ pageComponentId, impact }) => ({
+              pageComponentId,
+              impact,
+            })),
+          ),
+        });
       }
+
       if (componentLinks.length > 0) {
         await tx.insert(statusReportsToPageComponents).values(componentLinks);
       }

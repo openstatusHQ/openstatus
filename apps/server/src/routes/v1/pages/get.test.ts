@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+
 import { PageSchema } from "./schema";
 
 test("return the page", async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import { agentTools } from "@openstatus/services/agent-tools";
 
 import {
@@ -55,6 +56,50 @@ describe("buildConfirmationBlocks", () => {
       text: { text: string };
     };
     expect(section.text.text).toContain("101, 102");
+  });
+
+  test("create_status_report shows impacts when provided", () => {
+    const tool = agentTools.create_status_report;
+    const blocks = buildConfirmationBlocks({
+      actionId: "i1",
+      tool,
+      input: {
+        title: "Test",
+        status: "investigating",
+        message: "msg",
+        pageId: 1,
+        pageComponentIds: [101],
+        componentImpacts: [
+          { pageComponentId: 101, impact: "major_outage" },
+          { pageComponentId: 102, impact: "degraded_performance" },
+        ],
+      },
+    });
+    const section = blocks.find((b) => b.type === "section") as {
+      text: { text: string };
+    };
+    expect(section.text.text).toContain("Impacts");
+    expect(section.text.text).toContain("101 → major_outage");
+    expect(section.text.text).toContain("102 → degraded_performance");
+  });
+
+  test("add_status_report_update shows impacts when provided", () => {
+    const tool = agentTools.add_status_report_update;
+    const blocks = buildConfirmationBlocks({
+      actionId: "i2",
+      tool,
+      input: {
+        statusReportId: 42,
+        status: "monitoring",
+        message: "recovering",
+        componentImpacts: [{ pageComponentId: 7, impact: "partial_outage" }],
+      },
+    });
+    const section = blocks.find((b) => b.type === "section") as {
+      text: { text: string };
+    };
+    expect(section.text.text).toContain("Impacts");
+    expect(section.text.text).toContain("7 → partial_outage");
   });
 
   test("add_status_report_update has 3 buttons", () => {

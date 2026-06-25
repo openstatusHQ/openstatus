@@ -21,9 +21,16 @@ import {
   pageSubscriber,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import type { StatusPageService } from "@openstatus/proto/status_page/v1";
+import type {
+  ComponentDayBucket,
+  ComponentEvent,
+  GetPageComponentDailySummaryResponse,
+  PageComponentDailySummary,
+  StatusPageService,
+} from "@openstatus/proto/status_page/v1";
 import {
   OverallStatus,
   PageAccessType,
@@ -48,7 +55,10 @@ import {
   updatePageLocales,
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
-import { deletePageComponent } from "@openstatus/services/page-component";
+import {
+  deletePageComponent,
+  getPageComponentDailySummary,
+} from "@openstatus/services/page-component";
 import {
   createPageSubscriber,
   upsertSelfSignupSubscriber,
@@ -58,12 +68,17 @@ import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
+import { dbImpactToProto } from "../status-report/converters";
 import {
+  dayStatusToProto,
   dbComponentToProto,
+  dbComponentTypeToProto,
   dbGroupToProto,
   dbPageToProto,
   dbPageToProtoSummary,
   dbSubscriberToProto,
+  eventStatusToProto,
+  eventTypeToProto,
   protoAccessTypeToDb,
   protoHeadersToPlain,
   protoLocaleToDb,
@@ -1393,8 +1408,31 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
             .all()
         : [];
 
-    // Import the converter from status-report service
-    const { dbStatusToProto } = await import("../status-report/converters");
+    // Get impact rows for the reports' updates, grouped per update id
+    const updateIds = reportUpdates.map((u) => u.id);
+    const updateImpacts =
+      updateIds.length > 0
+        ? await db
+            .select()
+            .from(statusReportUpdateToPageComponents)
+            .where(
+              inArray(
+                statusReportUpdateToPageComponents.statusReportUpdateId,
+                updateIds,
+              ),
+            )
+            .all()
+        : [];
+    const impactsByUpdate = new Map<number, typeof updateImpacts>();
+    for (const row of updateImpacts) {
+      const arr = impactsByUpdate.get(row.statusReportUpdateId);
+      if (arr) arr.push(row);
+      else impactsByUpdate.set(row.statusReportUpdateId, [row]);
+    }
+
+    // Import the converters from status-report service
+    const { dbStatusToProto, dbUpdateToProto } =
+      await import("../status-report/converters");
 
     // Convert reports to proto format
     const statusReports = activeReports.map((report) => {
@@ -1411,14 +1449,15 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         status: dbStatusToProto(report.status),
         title: report.title,
         pageComponentIds: componentIds,
-        updates: updates.map((u) => ({
-          $typeName: "openstatus.status_report.v1.StatusReportUpdate" as const,
-          id: String(u.id),
-          status: dbStatusToProto(u.status),
-          date: u.date.toISOString(),
-          message: u.message,
-          createdAt: u.createdAt?.toISOString() ?? "",
-        })),
+        updates: updates.map((u) =>
+          dbUpdateToProto({
+            ...u,
+            componentImpacts: (impactsByUpdate.get(u.id) ?? []).map((row) => ({
+              pageComponentId: row.pageComponentId,
+              impact: row.impact,
+            })),
+          }),
+        ),
         createdAt: report.createdAt?.toISOString() ?? "",
         updatedAt: report.updatedAt?.toISOString() ?? "",
       };
@@ -1627,5 +1666,101 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       overallStatus,
       componentStatuses,
     };
+  },
+
+  async getPageComponentDailySummary(req, ctx) {
+    type PageData = Awaited<ReturnType<typeof getPageById>>;
+    const rpcCtx = getRpcContext(ctx);
+    let pageData: PageData;
+    let identifierValue: string;
+    let isPublicAccess = false;
+
+    if (req.identifier.case === "id") {
+      identifierValue = req.identifier.value;
+      pageData = await getPageById(
+        Number(identifierValue),
+        rpcCtx.workspace.id,
+      );
+    } else if (req.identifier.case === "slug") {
+      identifierValue = req.identifier.value;
+      pageData = await getPageBySlug({ input: { slug: identifierValue } });
+      isPublicAccess = true;
+    } else {
+      throw statusPageIdRequiredError();
+    }
+
+    if (!pageData) {
+      throw statusPageNotFoundError(identifierValue);
+    }
+    if (isPublicAccess) {
+      validatePublicAccess(pageData, identifierValue);
+    }
+
+    try {
+      const result = await getPageComponentDailySummary({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          // scope to the resolved page's workspace, not the caller's — the slug
+          // (public) path may target a page in another workspace
+          workspaceId: pageData.workspaceId,
+          componentIds:
+            req.componentIds.length > 0
+              ? req.componentIds.map(Number)
+              : undefined,
+          days: req.days,
+        },
+      });
+
+      const components = result.components.map(
+        (component): PageComponentDailySummary => ({
+          $typeName: "openstatus.status_page.v1.PageComponentDailySummary",
+          componentId: String(component.componentId),
+          type: dbComponentTypeToProto(component.type),
+          monitorId:
+            component.monitorId != null
+              ? String(component.monitorId)
+              : undefined,
+          name: component.name,
+          buckets: component.buckets.map(
+            (bucket): ComponentDayBucket => ({
+              $typeName: "openstatus.status_page.v1.ComponentDayBucket",
+              day: bucket.day,
+              count: BigInt(bucket.count),
+              ok: BigInt(bucket.ok),
+              degraded: BigInt(bucket.degraded),
+              error: BigInt(bucket.error),
+              status: dayStatusToProto(bucket.status),
+              impact: bucket.impact
+                ? dbImpactToProto(bucket.impact)
+                : undefined,
+            }),
+          ),
+          events: component.events.map(
+            (event): ComponentEvent => ({
+              $typeName: "openstatus.status_page.v1.ComponentEvent",
+              id: String(event.id),
+              name: event.name,
+              type: eventTypeToProto(event.type),
+              status: eventStatusToProto(event.status),
+              from: event.from.toISOString(),
+              to: event.to ? event.to.toISOString() : undefined,
+              impact: event.impact ? dbImpactToProto(event.impact) : undefined,
+            }),
+          ),
+        }),
+      );
+
+      return {
+        $typeName:
+          "openstatus.status_page.v1.GetPageComponentDailySummaryResponse" as const,
+        components,
+      } satisfies GetPageComponentDailySummaryResponse;
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw statusPageNotFoundError(identifierValue);
+      }
+      toConnectError(err);
+    }
   },
 };

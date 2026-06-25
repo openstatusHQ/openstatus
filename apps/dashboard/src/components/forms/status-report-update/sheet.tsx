@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useState } from "react";
+
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
   FormSheetContent,
@@ -14,16 +17,18 @@ import {
   FormStatusReportUpdate,
   type FormValues,
 } from "@/components/forms/status-report-update/form";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useState } from "react";
 
 export function FormSheetStatusReportUpdate({
   children,
   defaultValues,
   onSubmit,
+  components,
+  allowUnsetImpacts,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
+  components?: { id: number; name: string }[];
+  allowUnsetImpacts?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -46,6 +51,8 @@ export function FormSheetStatusReportUpdate({
                 setOpen(false);
               }}
               defaultValues={defaultValues}
+              components={components}
+              allowUnsetImpacts={allowUnsetImpacts}
             />
           </FormCard>
         </FormCardGroup>

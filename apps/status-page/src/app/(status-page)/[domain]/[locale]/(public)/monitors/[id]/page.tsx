@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  Status,
+  StatusContent,
+  StatusDescription,
+  StatusHeader,
+  StatusTitle,
+} from "@openstatus/ui/components/blocks/status-layout";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { TrendingUp } from "lucide-react";
+import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { useMemo } from "react";
+
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import {
@@ -36,20 +51,7 @@ import {
   formatPercentage,
 } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  Status,
-  StatusContent,
-  StatusDescription,
-  StatusHeader,
-  StatusTitle,
-} from "@openstatus/ui/components/blocks/status-layout";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { TrendingUp } from "lucide-react";
-import { useExtracted } from "next-intl";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import { useMemo } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {

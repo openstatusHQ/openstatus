@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import {
   Status,
   StatusContent,
@@ -10,6 +9,8 @@ import {
 } from "@openstatus/ui/components/blocks/status-layout";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+
+import { useTRPC } from "@/lib/trpc/client";
 
 export default function UnsubscribeLayout({
   children,

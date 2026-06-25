@@ -1,6 +1,7 @@
+import { notFound, unauthorized } from "next/navigation";
+
 import { auth } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { notFound, unauthorized } from "next/navigation";
 
 export const revalidate = 60;
 
@@ -20,9 +21,13 @@ export async function GET(
 
     if (_page.accessType === "password") {
       const url = new URL(_request.url);
-      const password = url.searchParams.get("pw");
-      console.log({ url, _page, password });
-      if (password !== _page.password) return unauthorized();
+      const authorized = await queryClient.fetchQuery(
+        trpc.statusPage.isPasswordAuthorized.queryOptions({
+          slug: _page.slug,
+          queryPassword: url.searchParams.get("pw"),
+        }),
+      );
+      if (!authorized) return unauthorized();
     }
 
     if (_page.accessType === "email-domain") {

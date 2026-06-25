@@ -1,12 +1,21 @@
+import type { Metadata } from "next";
+
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
 import { getGuides } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
 
 export async function generateMetadata({
   params,
@@ -60,8 +69,22 @@ export default async function GuideCategoryPage({
     (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Guides", url: `${BASE_URL}/guides` },
+      {
+        name: `${slug.charAt(0).toUpperCase()}${slug.slice(1)}`,
+        url: `${BASE_URL}/guides/category/${slug}`,
+      },
+    ]),
+    getJsonLDItemList(filteredGuides, "/guides"),
+  ]);
+
   return (
     <div className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1 className="capitalize">Guides | {slug}</h1>
       <ContentCategory data={allGuides} prefix="/guides" />
       <ContentList data={filteredGuides} prefix="/guides" />

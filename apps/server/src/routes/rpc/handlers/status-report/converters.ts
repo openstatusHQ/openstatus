@@ -1,10 +1,27 @@
+import { Code, ConnectError } from "@connectrpc/connect";
 import type {
+  ComponentImpact,
   StatusReport,
   StatusReportSummary,
   StatusReportUpdate,
 } from "@openstatus/proto/status_report/v1";
-import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
+import {
+  PageComponentImpact,
+  StatusReportStatus,
+} from "@openstatus/proto/status_report/v1";
+
 import { invalidStatusError } from "./errors";
+
+type DBPageComponentImpact =
+  | "operational"
+  | "degraded_performance"
+  | "partial_outage"
+  | "major_outage";
+
+type DBComponentImpact = {
+  pageComponentId: number;
+  impact: DBPageComponentImpact;
+};
 
 type DBStatusReport = {
   id: number;
@@ -24,6 +41,7 @@ type DBStatusReportUpdate = {
   statusReportId: number;
   createdAt: Date | null;
   updatedAt: Date | null;
+  componentImpacts?: DBComponentImpact[];
 };
 
 /**
@@ -69,6 +87,59 @@ export function protoStatusToDb(
 }
 
 /**
+ * Convert DB impact string to proto enum.
+ */
+export function dbImpactToProto(
+  impact: DBPageComponentImpact,
+): PageComponentImpact {
+  switch (impact) {
+    case "operational":
+      return PageComponentImpact.OPERATIONAL;
+    case "degraded_performance":
+      return PageComponentImpact.DEGRADED_PERFORMANCE;
+    case "partial_outage":
+      return PageComponentImpact.PARTIAL_OUTAGE;
+    case "major_outage":
+      return PageComponentImpact.MAJOR_OUTAGE;
+    default:
+      return PageComponentImpact.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert proto enum to DB impact string. UNSPECIFIED is a caller error here —
+ * "doesn't speak impact" is expressed by omitting the entry, never by sending
+ * an unspecified one (it must not silently become operational).
+ */
+export function protoImpactToDb(
+  impact: PageComponentImpact,
+): DBPageComponentImpact {
+  switch (impact) {
+    case PageComponentImpact.OPERATIONAL:
+      return "operational";
+    case PageComponentImpact.DEGRADED_PERFORMANCE:
+      return "degraded_performance";
+    case PageComponentImpact.PARTIAL_OUTAGE:
+      return "partial_outage";
+    case PageComponentImpact.MAJOR_OUTAGE:
+      return "major_outage";
+    default:
+      throw new ConnectError(
+        `Invalid component impact: ${impact}`,
+        Code.InvalidArgument,
+      );
+  }
+}
+
+function dbComponentImpactToProto(impact: DBComponentImpact): ComponentImpact {
+  return {
+    $typeName: "openstatus.status_report.v1.ComponentImpact" as const,
+    pageComponentId: String(impact.pageComponentId),
+    impact: dbImpactToProto(impact.impact),
+  };
+}
+
+/**
  * Convert a DB status report update to proto format.
  */
 export function dbUpdateToProto(
@@ -81,6 +152,9 @@ export function dbUpdateToProto(
     date: update.date.toISOString(),
     message: update.message,
     createdAt: update.createdAt?.toISOString() ?? "",
+    componentImpacts: (update.componentImpacts ?? []).map(
+      dbComponentImpactToProto,
+    ),
   };
 }
 

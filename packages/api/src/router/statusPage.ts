@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   maintenance,
@@ -8,6 +7,7 @@ import {
   pageConfigurationSchema,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
+  selectPageSchema,
   selectPublicMonitorSchema,
   selectPublicPageLightSchemaWithRelation,
   selectPublicPageSchemaWithRelation,
@@ -23,13 +23,14 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-
-import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
+import { z } from "zod";
+
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
+  activeReportStatus,
   fillStatusDataFor45Days,
   fillStatusDataFor45DaysNoop,
   getEvents,
@@ -54,12 +55,35 @@ import {
 
 // NOTE: this router is used on status pages only - do not confuse with the page router which is used in the dashboard for the config
 
-/**
- * Right now, we do not allow workspaces to have a custom lookback period.
- * If we decide to allow this in the future, we should move this to the database.
- */
-const WORKSPACES =
-  process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
+// Length-independent comparison so a wrong guess can't be timed by length or
+// character. Pure JS (no node:crypto) keeps it usable from the Edge runtime.
+function constantTimeEqual(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (a == null || b == null) return false;
+  // constant-time: iterate over the max length and fold the length delta into
+  // the accumulator so we never early-return or branch on length.
+  const max = Math.max(a.length, b.length);
+  let mismatch = a.length ^ b.length;
+  for (let i = 0; i < max; i++) {
+    // out-of-range indices read as 0; mismatch already non-zero on length diff.
+    mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return mismatch === 0;
+}
+
+// Gate fields for getGate, reusing selectPageSchema's stringToArray transforms
+// so authEmailDomains / allowedIpRanges come back as arrays like getLight.
+const gateFieldsSchema = selectPageSchema.pick({
+  slug: true,
+  customDomain: true,
+  accessType: true,
+  authEmailDomains: true,
+  allowedIpRanges: true,
+  homepageUrl: true,
+  contactUrl: true,
+});
 
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
@@ -87,6 +111,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
+                with: { statusReportUpdateToPageComponents: true },
               },
               statusReportsToPageComponents: { with: { pageComponent: true } },
             },
@@ -147,36 +172,39 @@ export const statusPageRouter = createTRPCRouter({
         // Calculate status based on component type
         let status: "success" | "degraded" | "error" | "info";
 
+        // impact-aware: an active report colors the component by its derived
+        // status (major ⇒ error); legacy reports keep flat degraded
+        const reportStatus = activeReportStatus(events);
+
         if (c.type === "static") {
           // Static: only reports and maintenances affect status
-          status = events.some((e) => e.type === "report" && !e.to)
-            ? "degraded"
-            : events.some(
-                  (e) =>
-                    e.type === "maintenance" &&
-                    e.to &&
-                    e.from.getTime() <= new Date().getTime() &&
-                    e.to.getTime() >= new Date().getTime(),
-                )
+          status =
+            reportStatus ??
+            (events.some(
+              (e) =>
+                e.type === "maintenance" &&
+                e.to &&
+                e.from.getTime() <= new Date().getTime() &&
+                e.to.getTime() >= new Date().getTime(),
+            )
               ? "info"
-              : "success";
+              : "success");
         } else {
           // Monitor: incidents, reports, and maintenances affect status
           status =
             events.some((e) => e.type === "incident" && !e.to) &&
             barType !== "manual"
               ? "error"
-              : events.some((e) => e.type === "report" && !e.to)
-                ? "degraded"
-                : events.some(
-                      (e) =>
-                        e.type === "maintenance" &&
-                        e.to &&
-                        e.from.getTime() <= new Date().getTime() &&
-                        e.to.getTime() >= new Date().getTime(),
-                    )
+              : (reportStatus ??
+                (events.some(
+                  (e) =>
+                    e.type === "maintenance" &&
+                    e.to &&
+                    e.from.getTime() <= new Date().getTime() &&
+                    e.to.getTime() >= new Date().getTime(),
+                )
                   ? "info"
-                  : "success";
+                  : "success"));
         }
 
         return {
@@ -198,17 +226,16 @@ export const statusPageRouter = createTRPCRouter({
           events.some((e) => e.type === "incident" && !e.to) &&
           barType !== "manual"
             ? "error"
-            : events.some((e) => e.type === "report" && !e.to)
-              ? "degraded"
-              : events.some(
-                    (e) =>
-                      e.type === "maintenance" &&
-                      e.to &&
-                      e.from.getTime() <= new Date().getTime() &&
-                      e.to.getTime() >= new Date().getTime(),
-                  )
+            : (activeReportStatus(events) ??
+              (events.some(
+                (e) =>
+                  e.type === "maintenance" &&
+                  e.to &&
+                  e.from.getTime() <= new Date().getTime() &&
+                  e.to.getTime() >= new Date().getTime(),
+              )
                 ? "info"
-                : "success";
+                : "success"));
         return {
           ...c.monitor,
           status,
@@ -219,14 +246,15 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-      const status =
-        monitors.some((m) => m.status === "error") && barType !== "manual"
-          ? "error"
-          : monitors.some((m) => m.status === "degraded")
-            ? "degraded"
-            : monitors.some((m) => m.status === "info")
-              ? "info"
-              : "success";
+      // no barType gate: incident-driven error is already suppressed per
+      // monitor in manual mode; report-driven error (major_outage) must show
+      const status = monitors.some((m) => m.status === "error")
+        ? "error"
+        : monitors.some((m) => m.status === "degraded")
+          ? "degraded"
+          : monitors.some((m) => m.status === "info")
+            ? "info"
+            : "success";
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -382,6 +410,18 @@ export const statusPageRouter = createTRPCRouter({
         (a, b) => b.from.getTime() - a.from.getTime(),
       );
 
+      // In "manual" mode the page only surfaces user-authored events, so drop
+      // monitor-derived incidents from the components consumers read (e.g. the
+      // calendar). Mirrors the bar/uptime gating in statusPage.utils.ts.
+      const publicPageComponents =
+        barType === "manual"
+          ? pageComponents.map((c) =>
+              c.monitor
+                ? { ...c, monitor: { ...c.monitor, incidents: [] } }
+                : c,
+            )
+          : pageComponents;
+
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         monitors,
@@ -394,7 +434,7 @@ export const statusPageRouter = createTRPCRouter({
         status,
         lastEvents,
         openEvents,
-        pageComponents,
+        pageComponents: publicPageComponents,
         pageComponentGroups: _page.pageComponentGroups,
         whiteLabel,
       });
@@ -414,6 +454,7 @@ export const statusPageRouter = createTRPCRouter({
             with: {
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
+                with: { statusReportUpdateToPageComponents: true },
               },
               statusReportsToPageComponents: { with: { pageComponent: true } },
             },
@@ -463,6 +504,9 @@ export const statusPageRouter = createTRPCRouter({
         (c) => c.monitor?.incidents ?? [],
       );
 
+      const ws = selectWorkspaceSchema.safeParse(_page.workspace);
+      const whiteLabel = ws.data?.limits["white-label"] ?? false;
+
       return selectPublicPageLightSchemaWithRelation.parse({
         ..._page,
         monitors,
@@ -472,7 +516,40 @@ export const statusPageRouter = createTRPCRouter({
         pageComponents: _page.pageComponents,
         pageComponentGroups: _page.pageComponentGroups,
         workspacePlan: _page.workspace.plan,
+        whiteLabel,
       });
+    }),
+
+  // Narrow access-check query for the markdown detail routes: returns only the
+  // gate + chrome fields, skipping the full reports/maintenances/components graph
+  // that getLight loads.
+  getGate: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        columns: {
+          slug: true,
+          customDomain: true,
+          accessType: true,
+          authEmailDomains: true,
+          allowedIpRanges: true,
+          homepageUrl: true,
+          contactUrl: true,
+        },
+        with: { workspace: true },
+      });
+
+      if (!_page) return null;
+
+      const ws = selectWorkspaceSchema.safeParse(_page.workspace);
+      const whiteLabel = ws.data?.limits["white-label"] ?? false;
+
+      const { workspace: _workspace, ...rest } = _page;
+      const gate = gateFieldsSchema.parse(rest);
+      return { ...gate, whiteLabel };
     }),
 
   getMaintenance: publicProcedure
@@ -484,7 +561,7 @@ export const statusPageRouter = createTRPCRouter({
         .select()
         .from(page)
         .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+          sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         )
         .get();
 
@@ -519,6 +596,9 @@ export const statusPageRouter = createTRPCRouter({
         barType: z
           .enum(["absolute", "dominant", "manual"])
           .prefault("dominant"),
+        // preview override for the floating-button config; falls back to the
+        // page's stored `configuration.days` when omitted
+        days: z.union([z.literal(30), z.literal(45)]).optional(),
       }),
     )
     .query(async (opts) => {
@@ -526,7 +606,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${input.slug} OR  lower(${page.customDomain}) = ${input.slug}`,
+        where: sql`lower(${page.slug}) = ${input.slug} OR lower(${page.customDomain}) = ${input.slug}`,
         with: {
           maintenances: {
             with: {
@@ -536,7 +616,9 @@ export const statusPageRouter = createTRPCRouter({
           statusReports: {
             with: {
               statusReportsToPageComponents: { with: { pageComponent: true } },
-              statusReportUpdates: true,
+              statusReportUpdates: {
+                with: { statusReportUpdateToPageComponents: true },
+              },
             },
           },
           pageComponents: {
@@ -609,9 +691,12 @@ export const statusPageRouter = createTRPCRouter({
         }
       }
 
-      const lookbackPeriod = WORKSPACES.includes(_page.workspaceId ?? 0)
-        ? 30
-        : 45;
+      const parsedConfiguration = pageConfigurationSchema.safeParse(
+        _page.configuration ?? {},
+      );
+      const lookbackPeriod =
+        input.days ??
+        (parsedConfiguration.success ? parsedConfiguration.data.days : 45);
 
       return pageComponents.map((c) => {
         const events = getEvents({
@@ -717,7 +802,7 @@ export const statusPageRouter = createTRPCRouter({
         .select()
         .from(page)
         .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+          sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         )
         .get();
 
@@ -734,6 +819,7 @@ export const statusPageRouter = createTRPCRouter({
           },
           statusReportUpdates: {
             orderBy: (reports, { desc }) => desc(reports.date),
+            with: { statusReportUpdateToPageComponents: true },
           },
         },
       });
@@ -752,7 +838,7 @@ export const statusPageRouter = createTRPCRouter({
     const identifiedDate = new Date(date.setMinutes(date.getMinutes() - 32));
     const investigatingDate = new Date(date.setMinutes(date.getMinutes() - 4));
 
-    const props: z.infer<typeof selectStatusReportPageSchema> = {
+    const props: z.input<typeof selectStatusReportPageSchema> = {
       id: 1,
       pageId: 1,
       workspaceId: 1,
@@ -833,7 +919,7 @@ export const statusPageRouter = createTRPCRouter({
 
       // NOTE: revalidate the public monitors first
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           pageComponents: {
             with: {
@@ -933,7 +1019,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           pageComponents: {
             where: eq(pageComponent.monitorId, opts.input.id),
@@ -1026,7 +1112,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           workspace: true,
         },
@@ -1149,7 +1235,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
       });
 
       if (!_page) {
@@ -1217,7 +1303,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
       });
 
       if (!_page) {
@@ -1234,7 +1320,7 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      if (_page.password !== opts.input.password) {
+      if (!constantTimeEqual(_page.password, opts.input.password)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invalid password",
@@ -1242,6 +1328,29 @@ export const statusPageRouter = createTRPCRouter({
       }
 
       return true;
+    }),
+
+  // Server-side password gate for the public `/api/*` routes. Returns a boolean
+  // so the stored password never leaves the server (the `get` output omits it).
+  isPasswordAuthorized: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        queryPassword: z.string().nullish(),
+        cookiePassword: z.string().nullish(),
+      }),
+    )
+    .query(async (opts) => {
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        columns: { password: true, accessType: true },
+      });
+      if (!_page || _page.accessType !== "password") return false;
+      // TODO: rate-limit — an unauthenticated caller can brute-force guesses here.
+      // Query param wins over cookie: a present-but-wrong `?pw=` must not fall
+      // through to a valid cookie. Mirrors isPasswordAuthorized on the proxy.
+      const submitted = opts.input.queryPassword ?? opts.input.cookiePassword;
+      return constantTimeEqual(_page.password, submitted);
     }),
 
   getSubscriberByToken: publicProcedure

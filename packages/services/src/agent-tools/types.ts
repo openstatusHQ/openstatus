@@ -60,6 +60,16 @@ export type ApprovalMeta<TInput> = {
    * the flag value merged in — must not mutate the input.
    */
   applyFlags?: (input: TInput, flags: Record<string, boolean>) => TInput;
+  /**
+   * Optional async enrichment applied to the draft input before the
+   * confirmation preview renders and the pending action is stored — so the
+   * card reflects what `run` will actually persist (e.g. carried-forward
+   * impacts). Surfaces that build a draft (Slack) call this; must not mutate.
+   */
+  prepareDraftInput?: (args: {
+    ctx: ServiceContext;
+    input: TInput;
+  }) => Promise<TInput>;
   /** Surface-rendered confirmation summary. */
   summarize: (input: TInput) => { title: string; lines: SummaryLine[] };
   /**
@@ -69,16 +79,14 @@ export type ApprovalMeta<TInput> = {
   verb?: string;
 };
 
-export type InferAgentToolInput<T> = T extends AgentTool<infer I, unknown>
-  ? I
-  : never;
-export type InferAgentToolOutput<T> = T extends AgentTool<unknown, infer O>
-  ? O
-  : never;
+export type InferAgentToolInput<T> =
+  T extends AgentTool<infer I, unknown> ? I : never;
+export type InferAgentToolOutput<T> =
+  T extends AgentTool<unknown, infer O> ? O : never;
 
 // `any` is the variance escape hatch — `unknown` would block storing
 // concrete tools because function inputs are contravariant.
-// biome-ignore lint/suspicious/noExplicitAny: registry-level variance escape hatch
+// oxlint-disable-next-line typescript/no-explicit-any -- registry-level variance escape hatch
 export type AnyAgentTool = AgentTool<any, any>;
 
 export type AgentToolRegistry = Record<string, AnyAgentTool>;

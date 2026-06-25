@@ -1,0 +1,211 @@
+---
+category: SDK
+title: Python SDK
+description: "Interact with openstatus programmatically from your Python applications"
+---
+
+
+The openstatus Python SDK lets you manage monitors, status pages, status reports, maintenance windows, and notifications from Python code, scripts, and automations. It ships both synchronous and asynchronous clients with identical, fully typed method signatures.
+
+The SDK is open source and developed in its own repository, [openstatusHQ/sdk-python](https://github.com/openstatusHQ/sdk-python), and published on [PyPI](https://pypi.org/project/openstatus/).
+
+## Features
+
+- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide.
+- **Status pages** — create and manage public status pages with monitor-based or static components, grouping, and subscribers.
+- **Status reports and maintenance** — manage incident reports with update timelines and schedule planned maintenance windows.
+- **Notifications** — configure Slack, Discord, Email, PagerDuty, Opsgenie, Telegram, and webhook channels.
+- **Sync and async** — `OpenstatusClient` and `AsyncOpenstatusClient` share the same API surface.
+- **Type-safe** — typed request/response messages generated from the openstatus protobuf schemas.
+
+## Get Your API Key
+
+Before using the SDK, you need an API key:
+
+1. Log in to the [openstatus dashboard](https://www.openstatus.dev/app/login)
+2. Go to **Settings** > **API Keys**
+3. Click **Create API Key** and copy it
+
+<Aside type="tip">Store your API key as an environment variable (`OPENSTATUS_API_KEY`) — never commit it to source control.</Aside>
+
+## Installation
+
+Requires Python 3.10 or later.
+
+```bash
+pip install openstatus
+# or
+uv add openstatus
+```
+
+## Authentication
+
+Authentication uses the `OPENSTATUS_API_KEY` environment variable by default:
+
+```bash
+export OPENSTATUS_API_KEY="your-key-here"
+```
+
+Alternatively, pass credentials programmatically:
+
+```python
+from openstatus import ClientOptions, OpenstatusClient
+
+client = OpenstatusClient(ClientOptions(api_key="your-key"))
+```
+
+## Quick Start
+
+The SDK offers both synchronous and asynchronous clients with identical method signatures.
+
+**Sync:**
+
+```python
+from openstatus import OpenstatusClient
+from openstatus._gen.openstatus.health.v1.health_pb2 import CheckRequest
+
+with OpenstatusClient() as client:
+    health = client.health.v1.HealthService.check(CheckRequest())
+    print(health.status)
+```
+
+**Async:**
+
+```python
+import asyncio
+from openstatus import AsyncOpenstatusClient
+from openstatus._gen.openstatus.health.v1.health_pb2 import CheckRequest
+
+async def main():
+    async with AsyncOpenstatusClient() as client:
+        health = await client.health.v1.HealthService.check(CheckRequest())
+        print(health.status)
+
+asyncio.run(main())
+```
+
+## Services
+
+The SDK covers six primary services with typed request/response objects.
+
+| Service | Accessor | Purpose |
+|---------|----------|---------|
+| Monitor | `client.monitor.v1.MonitorService` | Manage HTTP, TCP, and DNS monitors; trigger checks; read status and summaries. |
+| Health | `client.health.v1.HealthService` | Liveness check for the API. No authentication required. |
+| Status Report | `client.status_report.v1.StatusReportService` | Manage incident reports and their update timelines. |
+| Status Page | `client.status_page.v1.StatusPageService` | Manage status pages, components, component groups, and subscribers. |
+| Maintenance | `client.maintenance.v1.MaintenanceService` | Schedule and manage planned maintenance windows. |
+| Notification | `client.notification.v1.NotificationService` | Configure notification channels and check usage limits. |
+
+### Monitors
+
+```python
+from openstatus._gen.openstatus.monitor.v1.service_pb2 import (
+    ListMonitorsRequest,
+    GetMonitorRequest,
+    TriggerMonitorRequest,
+)
+
+client.monitor.v1.MonitorService.list_monitors(ListMonitorsRequest())
+client.monitor.v1.MonitorService.get_monitor(GetMonitorRequest(id="abc"))
+client.monitor.v1.MonitorService.trigger_monitor(TriggerMonitorRequest(id="abc"))
+```
+
+### Status pages, reports, and maintenance
+
+```python
+from openstatus._gen.openstatus.status_report.v1.service_pb2 import ListStatusReportsRequest
+from openstatus._gen.openstatus.status_page.v1.service_pb2 import ListStatusPagesRequest
+from openstatus._gen.openstatus.maintenance.v1.service_pb2 import ListMaintenancesRequest
+
+client.status_report.v1.StatusReportService.list_status_reports(ListStatusReportsRequest())
+client.status_page.v1.StatusPageService.list_status_pages(ListStatusPagesRequest())
+client.maintenance.v1.MaintenanceService.list_maintenances(ListMaintenancesRequest())
+```
+
+### Notifications
+
+```python
+from openstatus._gen.openstatus.notification.v1.service_pb2 import ListNotificationsRequest
+
+client.notification.v1.NotificationService.list_notifications(ListNotificationsRequest())
+```
+
+## Advanced Configuration
+
+Customize HTTP behavior by passing your own `httpx` client:
+
+```python
+import httpx
+from openstatus import ClientOptions, OpenstatusClient
+
+http = httpx.Client(
+    timeout=httpx.Timeout(connect=2.0, read=10.0, write=10.0, pool=10.0),
+    transport=httpx.HTTPTransport(retries=3),
+)
+client = OpenstatusClient(ClientOptions(http_client=http))
+```
+
+## Error Handling
+
+The SDK provides a typed exception hierarchy for different failure scenarios:
+
+```python
+from openstatus import (
+    AuthenticationError,
+    NotFoundError,
+    OpenstatusError,
+    OpenstatusClient,
+)
+
+try:
+    result = client.monitor.v1.MonitorService.get_monitor(request)
+except NotFoundError as err:
+    print(f"Not found: {err.http_status}")
+except AuthenticationError:
+    print("Invalid credentials")
+except OpenstatusError as err:
+    print(f"Error: {err.connect_code}")
+```
+
+## Framework Integration
+
+### FastAPI
+
+```python
+from fastapi import Depends, FastAPI
+from openstatus import OpenstatusClient
+
+app = FastAPI()
+_client = OpenstatusClient()
+
+def get_client() -> OpenstatusClient:
+    return _client
+
+@app.on_event("shutdown")
+def shutdown():
+    _client.close()
+```
+
+### Django
+
+```python
+from django.conf import settings
+from openstatus import ClientOptions, OpenstatusClient
+
+_singleton = None
+
+def client() -> OpenstatusClient:
+    global _singleton
+    if _singleton is None:
+        _singleton = OpenstatusClient(
+            ClientOptions(api_key=settings.OPENSTATUS_API_KEY)
+        )
+    return _singleton
+```
+
+## Resources
+
+- [openstatusHQ/sdk-python on GitHub](https://github.com/openstatusHQ/sdk-python)
+- [openstatus on PyPI](https://pypi.org/project/openstatus/)
+- [API Reference](https://api.openstatus.dev/openapi)

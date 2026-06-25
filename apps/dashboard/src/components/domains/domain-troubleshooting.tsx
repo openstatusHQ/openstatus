@@ -1,6 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Card,
@@ -16,6 +15,9 @@ import {
 } from "@openstatus/ui/components/ui/collapsible";
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
+
+import { Link } from "@/components/common/link";
+
 import { InlineSnippet } from "./domain-configuration";
 
 const tools = [
@@ -51,7 +53,7 @@ export function DomainTroubleshooting({ domain }: { domain: string }) {
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="w-full cursor-pointer rounded-xl">
         <Card className="gap-0 border-dashed py-0 text-left shadow-none">
-          <CardHeader className="select-none px-4 py-3">
+          <CardHeader className="px-4 py-3 select-none">
             <CardTitle className="text-sm">Troubleshooting</CardTitle>
             <CardDescription>
               If the configuration stays pending or invalid for more than a few
@@ -114,7 +116,7 @@ export function DomainTroubleshooting({ domain }: { domain: string }) {
                 </li>
               </ul>
               <div className="space-y-2">
-                <p className="font-medium text-sm">Run external diagnostics</p>
+                <p className="text-sm font-medium">Run external diagnostics</p>
                 <div className="flex flex-wrap gap-2">
                   {tools.map((tool) => (
                     <Button

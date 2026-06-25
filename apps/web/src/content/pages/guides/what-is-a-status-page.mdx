@@ -27,8 +27,6 @@ When something breaks in production, users need to know if the problem is on you
 
 That single source of truth is the status page. It exists to deflect support load during outages, build trust through honest communication, and signal to enterprise buyers that you take reliability seriously.
 
----
-
 ## What a Status Page Actually Shows
 
 A useful status page has four things:
@@ -53,8 +51,6 @@ Planned downtime, announced in advance with a window, affected components, and e
 
 A rolling view of the last 30, 60, or 90 days showing uptime percentages and past incidents. This is your reliability proof. Enterprise buyers will scroll through it before signing a contract.
 
----
-
 ## Why Companies Use Status Pages
 
 ### Deflect Support Load
@@ -73,8 +69,6 @@ Enterprise buyers often require a public status page before signing. It's table 
 
 A status page is also a forcing function for incident response. The act of writing a public update clarifies what you actually know, what you're doing, and what's still uncertain. It's a discipline as much as a communication channel.
 
----
-
 ## Public vs Private Status Pages
 
 **Public** pages are for customers. They're curated, lag slightly behind real-time, and focus on user-impacting events. The audience is non-technical. Updates are written in plain language.
@@ -82,8 +76,6 @@ A status page is also a forcing function for incident response. The act of writi
 **Private** pages are for internal teams or specific partners. They're real-time, granular, and often include metrics that would confuse public users (per-region latency, error budget burn rate, SLO compliance). The audience is engineers and operations.
 
 Most mature SaaS companies run both. Public for trust, private for operations. See our guide on [public vs private status pages](/guides/public-vs-private-status-pages) for the deeper tradeoffs.
-
----
 
 ## What Makes a Good Status Page
 
@@ -103,8 +95,6 @@ Users should be able to subscribe to updates via email, SMS, Slack, RSS, or webh
 
 Past incidents stay accessible. Postmortems get linked from incident pages. Uptime metrics are computable and visible. This is how the status page doubles as a long-term reliability signal.
 
----
-
 ## Common Mistakes
 
 **Only updating once an incident is resolved.** Users want updates *during* the incident. Resolved-after-the-fact is documentation, not communication.
@@ -114,8 +104,6 @@ Past incidents stay accessible. Postmortems get linked from incident pages. Upti
 **Painting things green.** A status page that's always 100% green when users are experiencing problems isn't a status page - it's a marketing brochure. Tune your monitoring to actually surface user impact.
 
 **No subscription options.** Forcing users to refresh manually means they don't get updates. They get frustrated and tweet at you instead.
-
----
 
 ## How Status Pages Connect to Monitoring
 
@@ -128,8 +116,6 @@ The pipeline:
 4. Users see the update and stop filing duplicate tickets
 
 Some teams automate step 3 for low-severity events. Most keep a human in the loop for anything customer-visible - automated status updates that fire on flaky monitors create more noise than they prevent.
-
----
 
 ## The Bottom Line
 

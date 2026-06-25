@@ -13,6 +13,10 @@
       "import": "./src/status-report/index.ts",
       "types": "./src/status-report/index.ts"
     },
+    "./status-report/utils": {
+      "import": "./src/status-report/utils.ts",
+      "types": "./src/status-report/utils.ts"
+    },
     "./maintenance": {
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
@@ -36,6 +40,10 @@
     "./page": {
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
+    },
+    "./status-timeline": {
+      "import": "./src/status-timeline/index.ts",
+      "types": "./src/status-timeline/index.ts"
     },
     "./workspace": {
       "import": "./src/workspace/index.ts",
@@ -101,6 +109,14 @@
       "import": "./src/external-service-incident/index.ts",
       "types": "./src/external-service-incident/index.ts"
     },
+    "./external-service-component": {
+      "import": "./src/external-service-component/index.ts",
+      "types": "./src/external-service-component/index.ts"
+    },
+    "./external-service-report": {
+      "import": "./src/external-service-report/index.ts",
+      "types": "./src/external-service-report/index.ts"
+    },
     "./test/helpers": {
       "import": "./test/helpers.ts",
       "types": "./test/helpers.ts"
@@ -124,6 +140,7 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "effect": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

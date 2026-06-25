@@ -1,7 +1,7 @@
 import { base } from "@openstatus/assertions";
-import { MONITOR_METHODS, MONITOR_STATUSES } from "./constants";
-
 import { z } from "zod";
+
+import { MONITOR_METHODS, MONITOR_STATUSES } from "./constants";
 
 export const httpPayloadSchema = z.object({
   workspaceId: z.string(),

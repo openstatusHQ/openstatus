@@ -7,7 +7,6 @@ trustPolicy: off
 minimumReleaseAge: 1440 # 1 day (default)
 
 allowBuilds:
-  "@biomejs/biome": true
   "@bufbuild/buf": true
   "@parcel/watcher": true
   "@sentry/cli": true
@@ -32,7 +31,6 @@ catalog:
   "@auth/core": 0.40.0
   "@auth/drizzle-adapter": 1.11.2
   "@aws-sdk/client-s3": 3.1051.0
-  "@biomejs/biome": 1.8.3
   "@bufbuild/buf": 1.69.0
   "@bufbuild/protobuf": 2.12.0
   "@bufbuild/protoc-gen-es": 2.12.0
@@ -57,7 +55,7 @@ catalog:
   "@hookform/devtools": 4.4.0
   "@hookform/resolvers": 5.2.2
   "@iconify-json/lucide": 1.2.109
-  "@libsql/client": 0.15.15
+  "@libsql/client": 0.17.4
   "@logtape/logtape": 2.1.1
   "@logtape/otel": 2.1.1
   "@logtape/sentry": 2.1.1
@@ -162,9 +160,9 @@ catalog:
   next-themes: 0.4.6
   node-html-parser: 6.1.13
   nuqs: 2.8.9
-  oxfmt: 0.20.0
-  oxlint: 1.66.0
-  oxlint-tsgolint: 0.10.1
+  oxfmt: 0.53.0
+  oxlint: 1.68.0
+  oxlint-tsgolint: 0.23.0
   percentile: 1.6.0
   playwright: 1.60.0
   postcss: 8.5.15
@@ -210,4 +208,5 @@ catalog:
   unified: 11.0.5
   unplugin-icons: 22.5.0
   validator: 13.15.35
+  vaul: 1.1.2
   zod: 4.1.13

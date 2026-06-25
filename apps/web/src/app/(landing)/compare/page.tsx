@@ -1,11 +1,21 @@
+import type { Metadata } from "next";
+
 import { components } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
+  BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDItemList,
+  getJsonLDOrganization,
+} from "@/lib/metadata/structured-data";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,
@@ -38,11 +48,21 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
+  const pages = getComparePages();
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDBreadcrumbList([
+      { name: "Home", url: BASE_URL },
+      { name: "Compare", url: `${BASE_URL}/compare` },
+    ]),
+    getJsonLDItemList(pages, "/compare"),
+  ]);
   return (
     <section className="prose dark:prose-invert max-w-none">
+      <JsonLd graph={jsonLDGraph} />
       <h1>{TITLE}</h1>
       <components.Grid cols={2}>
-        {getComparePages().map((page) => (
+        {pages.map((page) => (
           <ContentBoxLink key={page.slug} href={`/compare/${page.slug}`}>
             <ContentBoxTitle>{page.metadata.title}</ContentBoxTitle>
             <ContentBoxDescription>

@@ -1,5 +1,3 @@
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
@@ -10,6 +8,10 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { dispatchMaintenanceUpdate } from "@openstatus/subscriptions";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+
 import type { maintenancesApi } from "./index";
 import {
   MaintenanceObjectSchema,

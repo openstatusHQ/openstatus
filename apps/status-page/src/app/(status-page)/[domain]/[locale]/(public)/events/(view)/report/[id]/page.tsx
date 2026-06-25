@@ -1,5 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
+
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import { StatusBlankEvents } from "@/components/status-page/status-blank";
@@ -14,10 +18,8 @@ import {
   StatusEventTitle,
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
+import { updatesWithImpactChanges } from "@/lib/report-impacts";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useExtracted } from "next-intl";
-import { useParams } from "next/navigation";
 
 export default function ReportPage() {
   const t = useExtracted();
@@ -41,6 +43,8 @@ export default function ReportPage() {
   );
   const firstUpdate = updates[updates.length - 1];
   const lastUpdate = updates[0];
+
+  const updatesWithImpacts = updatesWithImpactChanges(report);
 
   // HACKY: LEGACY: only resolved via report and not via report update
   const isReportResolvedOnly =
@@ -72,7 +76,7 @@ export default function ReportPage() {
               ))}
             </StatusEventAffected>
           ) : null}
-          <StatusEventTimelineReport updates={report.statusReportUpdates} />
+          <StatusEventTimelineReport updates={updatesWithImpacts} />
         </StatusEventContent>
       </StatusEvent>
     </div>

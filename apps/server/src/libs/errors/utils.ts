@@ -1,7 +1,5 @@
-// Props to Unkey: https://github.com/unkeyed/unkey/blob/main/apps/api/src/pkg/errors/http.ts
-import type { Context } from "hono";
-import { HTTPException } from "hono/http-exception";
-
+import { z } from "@hono/zod-openapi";
+import { getLogger } from "@logtape/logtape";
 import type { ErrorCode } from "@openstatus/error";
 import {
   ErrorCodes,
@@ -9,9 +7,9 @@ import {
   codeToStatus,
   statusToCode,
 } from "@openstatus/error";
-
-import { z } from "@hono/zod-openapi";
-import { getLogger } from "@logtape/logtape";
+// Props to Unkey: https://github.com/unkeyed/unkey/blob/main/apps/api/src/pkg/errors/http.ts
+import type { Context } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";
 
 const logger = getLogger("api-server");
@@ -42,7 +40,7 @@ export function handleError(err: Error, c: Context): Response {
       {
         code: "BAD_REQUEST",
         message: error.message,
-        docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
+        docs: "https://www.openstatus.dev/docs/api-references/errors/code/BAD_REQUEST",
         requestId: c.get("requestId"),
       },
       { status: 400 },
@@ -64,7 +62,7 @@ export function handleError(err: Error, c: Context): Response {
       {
         code: code,
         message: err.message,
-        docs: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
+        docs: `https://www.openstatus.dev/docs/api-references/errors/code/${code}`,
         requestId: c.get("requestId"),
       },
       { status: err.status },
@@ -77,7 +75,7 @@ export function handleError(err: Error, c: Context): Response {
       {
         code: code,
         message: err.message,
-        docs: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
+        docs: `https://www.openstatus.dev/docs/api-references/errors/code/${code}`,
         requestId: c.get("requestId"),
       },
       { status: err.status },
@@ -99,7 +97,7 @@ export function handleError(err: Error, c: Context): Response {
     {
       code: "INTERNAL_SERVER_ERROR",
       message: err.message ?? "Something went wrong",
-      docs: "https://docs.openstatus.dev/api-references/errors/code/INTERNAL_SERVER_ERROR",
+      docs: "https://www.openstatus.dev/docs/api-references/errors/code/INTERNAL_SERVER_ERROR",
       requestId: c.get("requestId"),
     },
 
@@ -124,7 +122,7 @@ export function handleZodError(
     return c.json<z.infer<ReturnType<typeof createErrorSchema>>>(
       {
         code: "BAD_REQUEST",
-        docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
+        docs: "https://www.openstatus.dev/docs/api-references/errors/code/BAD_REQUEST",
         message: error.message,
         requestId: c.get("requestId"),
       },
@@ -145,7 +143,7 @@ export function createErrorSchema(code: ErrorCode) {
     }),
     docs: z.string().openapi({
       description: "A link to the documentation for the error.",
-      example: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
+      example: `https://www.openstatus.dev/docs/api-references/errors/code/${code}`,
     }),
     requestId: z.string().openapi({
       description:

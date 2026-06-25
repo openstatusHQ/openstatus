@@ -1,26 +1,6 @@
 "use client";
 
 import {
-  Activity,
-  Bell,
-  Bot,
-  Cog,
-  Globe,
-  LayoutGrid,
-  MessageSquare,
-  PanelTop,
-  ScanEye,
-  Terminal,
-} from "lucide-react";
-import * as React from "react";
-
-import { Kbd } from "@/components/common/kbd";
-import { NavMonitors } from "@/components/nav/nav-monitors";
-import { NavOverview } from "@/components/nav/nav-overview";
-import { NavStatusPages } from "@/components/nav/nav-status-pages";
-import { NavUser } from "@/components/nav/nav-user";
-import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -35,6 +15,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
+import {
+  Activity,
+  Bell,
+  Bot,
+  Cog,
+  LayoutGrid,
+  MessageSquare,
+  PanelTop,
+} from "lucide-react";
+import * as React from "react";
+
+import { Kbd } from "@/components/common/kbd";
+import { NavMonitors } from "@/components/nav/nav-monitors";
+import { NavOverview } from "@/components/nav/nav-overview";
+import { NavStatusPages } from "@/components/nav/nav-status-pages";
+import { NavUser } from "@/components/nav/nav-user";
+import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
+
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
 
@@ -74,16 +72,6 @@ const data = {
       icon: Cog,
     },
     {
-      name: "Private Locations",
-      url: "/private-locations",
-      icon: Globe,
-    },
-    {
-      name: "Audit Logs",
-      url: "/audit-logs",
-      icon: ScanEye,
-    },
-    {
       name: "Assistant",
       url: "/chat",
       icon: MessageSquare,
@@ -92,11 +80,6 @@ const data = {
       name: "Slack agent",
       url: "/agents",
       icon: Bot,
-    },
-    {
-      name: "CLI",
-      url: "/cli",
-      icon: Terminal,
     },
   ],
 };
@@ -152,10 +135,10 @@ export function AppSidebarTrigger() {
         <TooltipContent side="right">
           <p className="mr-px inline-flex items-center">
             Toggle Sidebar{" "}
-            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
               ⌘
             </Kbd>
-            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
               {SIDEBAR_KEYBOARD_SHORTCUT}
             </Kbd>
           </p>

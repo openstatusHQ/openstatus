@@ -1,20 +1,41 @@
 "use client";
 
-import { TableCellBadge } from "@/components/data-table/table-cell-badge";
-import { TableCellDate } from "@/components/data-table/table-cell-date";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { colors } from "@/data/status-report-updates.client";
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  type PageComponentImpact,
+  worstImpact,
+} from "@openstatus/db/src/schema/page_components/constants";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+
+import { TableCellBadge } from "@/components/data-table/table-cell-badge";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import {
+  colors,
+  impactConfig,
+  untriagedImpact,
+} from "@/data/status-report-updates.client";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
+
+// derived top-level impact = worst impact set by any update, not the
+// current one (a resolved report would always read "Operational");
+// legacy reports (no impact rows) read "Untriaged"
+function worstReportImpact(report: StatusReport) {
+  const impacts = report.updates.flatMap((u) =>
+    u.componentImpacts.map((ci) => ci.impact),
+  );
+  if (impacts.length === 0) return null;
+  return worstImpact(impacts);
+}
 
 export const columns: ColumnDef<StatusReport>[] = [
   {
@@ -92,9 +113,22 @@ export const columns: ColumnDef<StatusReport>[] = [
     enableHiding: false,
   },
   {
+    id: "impact",
+    accessorFn: (row) => worstReportImpact(row),
+    header: "Impact",
+    cell: ({ row }) => {
+      const impact = row.getValue<PageComponentImpact | null>("impact");
+      const config = impact ? impactConfig[impact] : untriagedImpact;
+      return (
+        <div className={cn("font-mono", config.color)}>{config.label}</div>
+      );
+    },
+    enableSorting: false,
+  },
+  {
     id: "updates",
     accessorFn: (row) => row.updates.length,
-    header: "Total Updates",
+    header: "Updates",
     cell: ({ row }) => {
       const value = row.getValue("updates");
       return <TableCellNumber value={value} />;

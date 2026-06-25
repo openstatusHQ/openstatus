@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import type { ServiceContext } from "@openstatus/services";
 import { agentTools } from "@openstatus/services/agent-tools";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
@@ -6,6 +7,7 @@ import { z } from "zod";
 
 import {
   buildSlackTools,
+  buildTool,
   deriveDraftSchema,
   executeRegistryAction,
   getRegistryTool,
@@ -93,6 +95,19 @@ describe("buildSlackTools", () => {
     expect("notify" in shape).toBe(false);
     expect("title" in shape).toBe(true);
     expect("pageId" in shape).toBe(true);
+  });
+
+  test("componentImpacts stays in the LLM-facing schema (only extraFlags are hidden)", () => {
+    for (const name of [
+      "create_status_report",
+      "add_status_report_update",
+    ] as const) {
+      const t = tools[name] as {
+        inputSchema: z.ZodObject<z.ZodRawShape>;
+      };
+      expect("componentImpacts" in t.inputSchema.shape, name).toBe(true);
+      expect("notify" in t.inputSchema.shape, name).toBe(false);
+    }
   });
 
   test("destructive tools without extraFlags keep their full schema", () => {
@@ -275,5 +290,54 @@ describe("executeRegistryAction", () => {
     });
     expect(input).toEqual({ value: 42 });
     expect(output).toEqual({ value: 42 });
+  });
+});
+
+describe("buildTool draft split", () => {
+  function destructiveTool(
+    prepareDraftInput?: NonNullable<
+      AnyAgentTool["approval"]
+    >["prepareDraftInput"],
+  ): AnyAgentTool {
+    return {
+      name: "split_tool",
+      description: "x",
+      scope: "write",
+      destructive: true,
+      inputSchema: z.object({ value: z.number() }),
+      outputSchema: z.object({ ok: z.boolean() }),
+      run: async () => ({ ok: true }),
+      approval: {
+        summarize: () => ({ title: "x", lines: [] }),
+        prepareDraftInput,
+      },
+    };
+  }
+
+  async function runExecute(t: AnyAgentTool) {
+    const built = buildTool(t, fakeCtx);
+    if (!built.execute) throw new Error("expected an execute fn");
+    return built.execute({ value: 7 }, { toolCallId: "t", messages: [] });
+  }
+
+  test("persists raw input but enriches a separate displayInput", async () => {
+    const result = await runExecute(
+      destructiveTool(async ({ input }) => ({
+        ...(input as { value: number }),
+        value: (input as { value: number }).value + 100,
+      })),
+    );
+    if (!isSlackToolDraft(result)) throw new Error("expected a draft");
+    // raw input is what gets persisted + re-run at approval (fresh carry there)
+    expect(result.input).toEqual({ value: 7 });
+    // displayInput is the enriched snapshot shown on the confirmation card
+    expect(result.displayInput).toEqual({ value: 107 });
+  });
+
+  test("displayInput mirrors input when no prepareDraftInput", async () => {
+    const result = await runExecute(destructiveTool());
+    if (!isSlackToolDraft(result)) throw new Error("expected a draft");
+    expect(result.input).toEqual({ value: 7 });
+    expect(result.displayInput).toEqual({ value: 7 });
   });
 });

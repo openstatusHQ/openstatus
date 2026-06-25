@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { z } from "zod";
+
 import { type FetchError, fetchJsonWithRaw } from "./fetch";
 import type { JsonValue, NormalizedIncident, StatusPageEntry } from "./types";
 
@@ -12,6 +13,10 @@ export const atlassianIncidentSchema = z.object({
   started_at: z.string().optional(),
   created_at: z.string(),
   resolved_at: z.string().nullable().optional(),
+  components: z
+    .array(z.object({ id: z.string() }))
+    .optional()
+    .default([]),
 });
 
 export const atlassianIncidentsResponseSchema = z.object({
@@ -43,6 +48,7 @@ const normalizeAtlassianIncident = (
   startedAt: parsed.started_at ? new Date(parsed.started_at) : undefined,
   createdAt: new Date(parsed.created_at),
   resolvedAt: parsed.resolved_at ? new Date(parsed.resolved_at) : null,
+  affectedComponentIds: parsed.components.map((c) => c.id),
   raw,
 });
 

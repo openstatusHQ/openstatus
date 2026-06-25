@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import React, { useEffect, useMemo } from "react";
+import { toast } from "sonner";
+
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
@@ -23,21 +36,15 @@ import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { mapRegionMetrics } from "@/data/metrics.client";
-import { periodToFromDate } from "@/data/metrics.client";
+import {
+  FREE_MAX_PERIOD,
+  isPaidPeriod,
+  mapRegionMetrics,
+} from "@/data/metrics.client";
+import { periodToFromDate, periodToInterval } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { endOfDay } from "date-fns";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import React, { useMemo } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
@@ -45,23 +52,41 @@ const TIMELINE_INTERVAL = 30; // in days
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
-  const [{ period, regions, percentile, interval }] =
+  const [{ period, regions, percentile, interval }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
+  const isBlockedPeriod = workspace?.plan === "free" && isPaidPeriod(period);
+  // snap free workspaces back synchronously so charts never fire (and the server
+  // never rejects) a paid-only window; the effect below fixes the URL.
+  const effectivePeriod = isBlockedPeriod ? FREE_MAX_PERIOD : period;
+
+  useEffect(() => {
+    if (!isBlockedPeriod) return;
+    const timeout = setTimeout(() => {
+      toast.error("30 and 90 day windows require a paid plan", {
+        description: "Showing the last 14 days instead.",
+      });
+      setSearchParams({ period: FREE_MAX_PERIOD });
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [isBlockedPeriod, setSearchParams]);
+
   const selectedRegions = regions ?? undefined;
-  const fromDate = periodToFromDate[period];
+  const fromDate = periodToFromDate[effectivePeriod];
   const toDate = endOfDay(new Date());
 
   const regionTimelineQuery = {
     ...trpc.tinybird.metricsRegions.queryOptions({
       monitorId: id,
-      period: period,
+      period: effectivePeriod,
       type: (monitor?.jobType ?? "http") as "http" | "tcp",
       regions: selectedRegions,
-      // Request 30-minute buckets by default
-      interval: 30,
+      // bucket by period (daily at 30d/90d) to keep payload + chart readable
+      interval: periodToInterval[effectivePeriod],
       fromDate: fromDate.toISOString(),
       toDate: toDate.toISOString(),
     }),
@@ -120,7 +145,7 @@ export function Client() {
         <GlobalUptimeSection
           monitorId={id}
           jobType={monitor.jobType as "http" | "tcp"}
-          period={period}
+          period={effectivePeriod}
           regions={selectedRegions}
         />
       </Section>
@@ -134,7 +159,7 @@ export function Client() {
         <ChartBarUptime
           monitorId={id}
           type={monitor.jobType as "http" | "tcp"}
-          period={period}
+          period={effectivePeriod}
           regions={selectedRegions}
         />
       </Section>
@@ -162,7 +187,7 @@ export function Client() {
             monitorId={id}
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http"}
-            period={period}
+            period={effectivePeriod}
             percentile={percentile}
             interval={interval}
             regions={selectedRegions}
@@ -173,7 +198,7 @@ export function Client() {
             percentile={percentile}
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http" | "tcp"}
-            period={period}
+            period={effectivePeriod}
             regions={selectedRegions}
           />
         )}

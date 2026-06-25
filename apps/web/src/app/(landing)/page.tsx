@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
+
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { defaultMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -10,7 +13,6 @@ import {
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = defaultMetadata;
 
@@ -28,14 +30,8 @@ export default function Page() {
 
   return (
     <div className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
-      <h1>{homePage.metadata.title}</h1>
+      <JsonLd graph={jsonLDGraph} />
+      <h1>{homePage.metadata.hero ?? homePage.metadata.title}</h1>
       <p className="text-lg">{homePage.metadata.description}</p>
       <CustomMDX source={homePage.content} />
     </div>

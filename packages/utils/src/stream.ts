@@ -39,7 +39,7 @@ export async function* yieldMany<T>(promises: Promise<T>[]) {
       wake = null;
     }
     while (queue.length > 0) {
-      // biome-ignore lint/style/noNonNullAssertion: length-guarded above
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- length-guarded above
       yield queue.shift()!;
     }
     if (rejection) {

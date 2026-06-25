@@ -1,7 +1,4 @@
 import { CloudTasksClient, type protos } from "@google-cloud/tasks";
-import type { NextRequest } from "next/server";
-import { z } from "zod";
-
 import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
@@ -11,19 +8,21 @@ import {
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
-
-import { env } from "@/env";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
+
+import { env } from "@/env";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -40,7 +39,7 @@ export const isAuthorizedDomain = (url: string) => {
 
 export const cron = async ({
   periodicity,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  // oxlint-disable-next-line eslint/no-unused-vars
   req,
 }: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
   const client = new CloudTasksClient({

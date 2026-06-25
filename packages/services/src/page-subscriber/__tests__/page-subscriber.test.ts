@@ -7,9 +7,11 @@ import {
   expect,
   test,
 } from "bun:test";
-import { and, db, eq, sql } from "@openstatus/db";
+
+import { and, db, eq } from "@openstatus/db";
 import {
   auditLog,
+  page,
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
@@ -23,7 +25,10 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "..";
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
+import {
+  SEEDED_WORKSPACE_FREE_ID,
+  SEEDED_WORKSPACE_TEAM_ID,
+} from "../../../test/fixtures";
 import {
   clearAuditLog,
   expectAuditRow,
@@ -285,23 +290,26 @@ describe("upsertSelfSignupSubscriber", () => {
     ).rejects.toThrow();
   });
 
-  // Plan-gate: temporarily flip workspace 1's `status-subscribers` to
-  // false, hit the function, then restore. Mirrors the pattern in
-  // `apps/server/.../status-page.test.ts`.
   test("rejects when the workspace plan disables status-subscribers", async () => {
-    await db.run(
-      sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('false')) WHERE id = ${SEEDED_WORKSPACE_TEAM_ID}`,
-    );
+    const freePage = await db
+      .insert(page)
+      .values({
+        workspaceId: SEEDED_WORKSPACE_FREE_ID,
+        title: "plan-gate",
+        description: "plan-gate",
+        slug: `plan-gate-${Date.now()}`,
+        customDomain: "",
+      })
+      .returning()
+      .get();
     try {
       await expect(
         upsertSelfSignupSubscriber({
-          input: { email: EMAILS.planGate, pageId: PAGE_ID },
+          input: { email: EMAILS.planGate, pageId: freePage.id },
         }),
       ).rejects.toThrow("Upgrade to use status subscribers");
     } finally {
-      await db.run(
-        sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = ${SEEDED_WORKSPACE_TEAM_ID}`,
-      );
+      await db.delete(page).where(eq(page.id, freePage.id));
     }
   });
 });

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import crypto from "node:crypto";
+
 import { Hono } from "hono";
+
+import * as agentModule from "./agent";
 
 const SIGNING_SECRET = "test-signing-secret";
 
@@ -63,6 +66,7 @@ let runAgentOverride:
   | null = null;
 
 mock.module("./agent", () => ({
+  ...agentModule,
   runAgent: () => {
     if (runAgentOverride) return runAgentOverride();
     return Promise.resolve({

@@ -1,5 +1,12 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Lock, Plus } from "lucide-react";
+import { notFound, useParams } from "next/navigation";
+import { useState } from "react";
+
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -19,7 +26,6 @@ import {
   SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-
 import { Section } from "@/components/content/section";
 import { columns } from "@/components/data-table/subscribers/columns";
 import { SubscribersDataTableToolbar } from "@/components/data-table/subscribers/data-table-toolbar";
@@ -29,12 +35,6 @@ import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Lock, Plus } from "lucide-react";
-import { notFound, useParams } from "next/navigation";
-import { useState } from "react";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 
@@ -166,7 +166,7 @@ export default function Page() {
               <BillingOverlayDescription>
                 Keep your users in the loop with status page updates.{" "}
                 <Link
-                  href="https://docs.openstatus.dev/reference/subscriber/"
+                  href="https://www.openstatus.dev/docs/reference/subscriber/"
                   rel="noreferrer"
                   target="_blank"
                 >

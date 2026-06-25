@@ -2,13 +2,24 @@
 
 import { Suspense } from "react";
 
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
+  getJsonLDService,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import { api } from "@/trpc/rq-client";
 
 import { ExternalServicePill } from "../external-service-pill";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";
 import { Incidents } from "./incidents";
+import { ReportIssue } from "./report-issue";
+import { ServiceComponents } from "./service-components";
+import { UserReports } from "./user-reports";
 
 function jsonLd(args: {
   serviceName: string;
@@ -16,59 +27,29 @@ function jsonLd(args: {
   canonicalUrl: string;
   answer: string;
 }) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Service",
-        name: args.serviceName,
-        url: args.serviceUrl,
-      },
-      {
-        "@type": "WebPage",
-        url: args.canonicalUrl,
-        name: `${args.serviceName} Status`,
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: `Is ${args.serviceName} down?`,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: args.answer,
-            },
-          },
-        ],
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "External Status",
-            item: `${BASE_URL}/status`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: args.serviceName,
-            item: args.canonicalUrl,
-          },
-        ],
-      },
-    ],
-  };
+  return createJsonLDGraph([
+    getJsonLDService({ name: args.serviceName, url: args.serviceUrl }),
+    getJsonLDWebPage({
+      name: `${args.serviceName} Status`,
+      url: args.canonicalUrl,
+    }),
+    getJsonLDFAQPage([
+      { question: `Is ${args.serviceName} down?`, answer: args.answer },
+    ]),
+    getJsonLDBreadcrumbList([
+      { name: "External Status", url: `${BASE_URL}/status` },
+      { name: args.serviceName, url: args.canonicalUrl },
+    ]),
+  ]);
 }
 
 export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
   const [data] = api.externalService.detail.useSuspenseQuery({ slug, days });
-  const { service, latest, history } = data;
+  const { service, latest, history, effective } = data;
 
-  const indicator = latest?.indicator ?? "";
-  const status = latest?.status ?? "";
+  const indicator = effective.indicator;
+  const status = effective.status;
+  const escalated = effective.escalated;
   const statusMessage = latest?.statusMessage || undefined;
   const fetchedAt = latest?.lastFetchedAt ?? 0;
   const stale = fetchedAt > 0 && isStale(fetchedAt);
@@ -90,13 +71,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
 
   return (
     <section className="prose dark:prose-invert mb-12 max-w-none">
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD requires literal JSON
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(ld).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd graph={ld} />
       <h1>Is {service.name} down?</h1>
       <p>
         {answer} Below you'll find the live {service.name} status, uptime over
@@ -107,19 +82,20 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
           indicator={indicator}
           status={status}
           statusMessage={statusMessage}
+          escalated={escalated}
         />
         {fetchedAt > 0 ? (
           <span className="text-muted-foreground text-sm">
             Last updated {formatRelative(fetchedAt)}
             {stale ? (
-              <span className="ml-1 inline-flex px-2 py-0.5 text-warning text-xs">
+              <span className="text-warning ml-1 inline-flex px-2 py-0.5 text-xs">
                 (stale)
               </span>
             ) : null}
           </span>
         ) : (
           <span className="text-muted-foreground text-sm">
-            No data yet — tracking begins after first poll.
+            No data yet. Tracking begins after the first poll.
           </span>
         )}
         <a
@@ -132,12 +108,37 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
         </a>
       </div>
 
+      <div className="not-prose mt-6">
+        <ReportIssue
+          slug={service.slug}
+          name={service.name}
+          days={days}
+          allowComponentSelect
+        />
+      </div>
+
+      <Suspense fallback={null}>
+        <UserReports
+          slug={service.slug}
+          serviceName={service.name}
+          days={days}
+        />
+      </Suspense>
+
       <h2>
-        {service.name} uptime — last {days} days
+        {service.name} uptime over the last {days} days
       </h2>
       <div className="not-prose">
         <HistoryBars daily={history} days={days} />
       </div>
+
+      <Suspense fallback={null}>
+        <ServiceComponents
+          slug={service.slug}
+          serviceName={service.name}
+          days={days}
+        />
+      </Suspense>
 
       <h2>{service.name} recent incidents</h2>
       <Suspense

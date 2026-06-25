@@ -1,9 +1,3 @@
-import { Link } from "@/components/common/link";
-import { ThemeProvider } from "@/components/themes/theme-provider";
-import {
-  SidebarTrigger,
-  ThemeSidebar,
-} from "@/components/themes/theme-sidebar";
 import { generateThemeStyles } from "@openstatus/theme-store";
 import {
   SidebarInset,
@@ -13,6 +7,13 @@ import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import { NextIntlClientProvider } from "next-intl";
 import PlausibleProvider from "next-plausible";
 import { Suspense } from "react";
+
+import { Link } from "@/components/common/link";
+import { ThemeProvider } from "@/components/themes/theme-provider";
+import {
+  SidebarTrigger,
+  ThemeSidebar,
+} from "@/components/themes/theme-sidebar";
 
 const SIDEBAR_WIDTH = "20rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -29,7 +30,7 @@ export default async function Layout({
     <PlausibleProvider domain="themes.openstatus.dev">
       <style
         id="theme-styles"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: generateThemeStyles() }}
       />
       <NextIntlClientProvider locale={locale} messages={messages}>
@@ -46,7 +47,7 @@ export default async function Layout({
             <SidebarInset className="relative">
               <SidebarTrigger className="absolute top-2 right-2" />
               <main className="mx-auto">{children}</main>
-              <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
+              <footer className="text-muted-foreground flex items-center justify-center gap-4 p-4 text-center font-mono text-sm">
                 <p>
                   powered by{" "}
                   <Link href="https://openstatus.dev">openstatus</Link>

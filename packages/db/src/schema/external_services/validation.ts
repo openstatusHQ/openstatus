@@ -2,7 +2,9 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { externalService } from "./external_service";
+import { externalServiceComponent } from "./external_service_component";
 import { externalServiceIncident } from "./external_service_incident";
+import { externalServiceReport } from "./external_service_report";
 
 export const externalServiceSlugRegex = /^[a-z0-9](-?[a-z0-9])*$/;
 export const externalServiceSlugSchema = z
@@ -34,4 +36,34 @@ export type ExternalServiceIncident = z.infer<
 >;
 export type InsertExternalServiceIncident = z.infer<
   typeof insertExternalServiceIncidentSchema
+>;
+
+export const selectExternalServiceComponentSchema = createSelectSchema(
+  externalServiceComponent,
+);
+
+export const insertExternalServiceComponentSchema = createInsertSchema(
+  externalServiceComponent,
+);
+
+export type ExternalServiceComponent = z.infer<
+  typeof selectExternalServiceComponentSchema
+>;
+export type InsertExternalServiceComponent = z.infer<
+  typeof insertExternalServiceComponentSchema
+>;
+
+export const selectExternalServiceReportSchema = createSelectSchema(
+  externalServiceReport,
+);
+
+export const insertExternalServiceReportSchema = createInsertSchema(
+  externalServiceReport,
+);
+
+export type ExternalServiceReport = z.infer<
+  typeof selectExternalServiceReportSchema
+>;
+export type InsertExternalServiceReport = z.infer<
+  typeof insertExternalServiceReportSchema
 >;

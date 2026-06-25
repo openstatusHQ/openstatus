@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { CustomImage } from "@/content/mdx-components/custom-image";
 import { getCustomerPages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -9,8 +13,6 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -63,14 +65,7 @@ export default async function CustomerPage({
 
   return (
     <section className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd graph={jsonLDGraph} />
       {page.metadata.image ? (
         <CustomImage
           src={page.metadata.image}
@@ -79,7 +74,7 @@ export default async function CustomerPage({
           className="h-8 w-auto"
         />
       ) : null}
-      <h1>{page.metadata.title}</h1>
+      <h1>{page.metadata.hero ?? page.metadata.title}</h1>
       <CustomMDX source={page.content} />
     </section>
   );

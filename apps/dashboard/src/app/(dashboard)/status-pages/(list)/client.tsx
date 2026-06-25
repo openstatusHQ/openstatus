@@ -1,5 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { Palette } from "lucide-react";
+import Link from "next/link";
+
 import { Note, NoteButton } from "@/components/common/note";
 import {
   SectionDescription,
@@ -10,17 +14,14 @@ import {
 import { columns } from "@/components/data-table/status-pages/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { Palette } from "lucide-react";
-import Link from "next/link";
 
 export function Client() {
   const trpc = useTRPC();
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
 
-  // TODO: add skeleton
-  if (!statusPages) return null;
+  if (!statusPages) return <DataTableSkeleton rows={3} />;
 
   return (
     <SectionGroup>

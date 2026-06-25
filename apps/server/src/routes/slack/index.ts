@@ -1,5 +1,7 @@
-import { env } from "@/env";
 import { Hono } from "hono";
+
+import { env } from "@/env";
+
 import { handleSlackEvent } from "./handler";
 import { handleSlackInteraction } from "./interactions";
 import { handleSlackInstall, handleSlackOAuthCallback } from "./oauth";

@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -10,8 +14,6 @@ import {
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -62,15 +64,8 @@ export default async function Page({
 
   return (
     <section className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
-      <h1>{page.metadata.title}</h1>
+      <JsonLd graph={jsonLDGraph} />
+      <h1>{page.metadata.hero ?? page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
       <CustomMDX source={page.content} />
     </section>

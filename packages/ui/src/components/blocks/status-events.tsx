@@ -1,7 +1,18 @@
 "use client";
 
-import { Slot } from "@radix-ui/react-slot";
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
+import type {
+  StatusReportImpact,
+  StatusReportUpdate,
+} from "@openstatus/ui/components/blocks/status.types";
+import { worstStatusReportImpact } from "@openstatus/ui/components/blocks/status.utils";
 import { Badge } from "@openstatus/ui/components/ui/badge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui/components/ui/hover-card";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
   Tooltip,
@@ -10,11 +21,9 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
-import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
-import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
-import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 
 // ============================================================================
 // Container Components
@@ -128,7 +137,7 @@ export function StatusEventContent({
       data-hoverable={hoverable}
       className={cn(
         "group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2",
-        "data-[hoverable=true]:hover:cursor-pointer data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50",
+        "data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50 data-[hoverable=true]:hover:cursor-pointer",
         className,
       )}
       {...props}
@@ -194,7 +203,7 @@ export function StatusEventTitleCheck({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger aria-label={labels.reportResolved}>
-            <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
+            <div className="border-success/20 bg-success/10 text-success rounded-full border p-0.5">
               <Check className="size-3 shrink-0" aria-hidden="true" />
             </div>
           </TooltipTrigger>
@@ -305,7 +314,7 @@ export function StatusEventDate({
       className={cn("flex gap-2 lg:flex-col", className)}
       {...props}
     >
-      <div className="font-medium text-foreground">
+      <div className="text-foreground font-medium">
         {labels.formatDateShort(date)}
       </div>{" "}
       <Badge
@@ -349,7 +358,7 @@ export function StatusEventAside({
   return (
     <div
       data-slot="status-event-aside"
-      className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full"
+      className="border border-transparent lg:absolute lg:top-0 lg:-left-32 lg:h-full"
     >
       <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
         {children}
@@ -358,10 +367,66 @@ export function StatusEventAside({
   );
 }
 
-interface StatusReportUpdate {
-  date: Date;
-  message: string;
-  status: StatusReportUpdateType;
+const impactTextClasses: Record<StatusReportImpact, string> = {
+  operational: "text-success",
+  degraded_performance: "text-warning",
+  partial_outage: "text-warning",
+  major_outage: "text-destructive",
+};
+
+/**
+ * StatusEventTimelineImpact - Worst impact label for a timeline update
+ *
+ * Shows the most severe impact among the update's component changes. The label
+ * is a hover card trigger listing each component's explicit impact.
+ */
+export function StatusEventTimelineImpact({
+  changes,
+  className,
+  ...props
+}: React.ComponentProps<"button"> & {
+  changes: { name: string; impact: StatusReportImpact }[];
+}) {
+  const labels = useStatusBlocksLabels();
+  const worst = worstStatusReportImpact(changes.map((c) => c.impact));
+  return (
+    <HoverCard openDelay={100} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          data-slot="status-event-timeline-impact"
+          className={cn(
+            "decoration-muted-foreground/30 hover:decoration-muted-foreground/60 font-mono text-xs font-medium underline decoration-dashed underline-offset-4",
+            impactTextClasses[worst],
+            className,
+          )}
+          {...props}
+        >
+          {labels.componentImpact[worst]}
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-auto min-w-48 p-3">
+        <div className="flex flex-col gap-1.5">
+          {changes.map((change, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-4 text-xs"
+            >
+              <span className="truncate">{change.name}</span>
+              <span
+                className={cn(
+                  "shrink-0 font-mono",
+                  impactTextClasses[change.impact],
+                )}
+              >
+                {labels.componentImpact[change.impact]}
+              </span>
+            </div>
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
 }
 
 // ============================================================================
@@ -545,14 +610,22 @@ export function StatusEventTimelineReportUpdate({
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{labels.incidentStatus[report.status]}</span>{" "}
-              <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
+              {report.impactChanges?.length ? (
+                <>
+                  <span className="text-muted-foreground/70 mx-0.5">·</span>{" "}
+                  <StatusEventTimelineImpact
+                    changes={report.impactChanges}
+                  />{" "}
+                </>
+              ) : null}
+              <span className="text-muted-foreground/70 mx-0.5">·</span>{" "}
+              <span className="text-muted-foreground font-mono text-xs">
                 <StatusTimestamp date={report.date} variant="rich" asChild>
                   <span>{labels.formatDateTime(report.date)}</span>
                 </StatusTimestamp>
               </span>{" "}
               {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
+                <span className="text-muted-foreground/70 font-mono text-xs">
                   {duration}
                 </span>
               ) : null}
@@ -644,7 +717,7 @@ export function StatusEventTimelineMaintenance({
             <StatusEventTimelineTitle>
               <span>{maintenance.title}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
+              <span className="text-muted-foreground font-mono text-xs">
                 <StatusTimestamp date={maintenance.from} variant="rich" asChild>
                   <span>{from}</span>
                 </StatusTimestamp>
@@ -654,7 +727,7 @@ export function StatusEventTimelineMaintenance({
                 </StatusTimestamp>
               </span>{" "}
               {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
+                <span className="text-muted-foreground/70 font-mono text-xs">
                   {labels.durationFor(duration)}
                 </span>
               ) : null}
@@ -698,7 +771,7 @@ export function StatusEventTimelineTitle({
   return (
     <Comp
       data-slot="status-event-timeline-title"
-      className={cn("font-medium text-foreground text-sm", className)}
+      className={cn("text-foreground text-sm font-medium", className)}
       {...props}
     >
       {children}
@@ -728,7 +801,7 @@ export function StatusEventTimelineMessage({
     <div
       data-slot="status-event-timeline-message"
       className={cn(
-        "py-1.5 font-mono text-muted-foreground text-sm",
+        "text-muted-foreground py-1.5 font-mono text-sm",
         className,
       )}
       {...props}
@@ -764,7 +837,7 @@ export function StatusEventTimelineDot({
     <div
       data-slot="status-event-timeline-dot"
       className={cn(
-        "size-2.5 shrink-0 rounded-full bg-muted",
+        "bg-muted size-2.5 shrink-0 rounded-full",
         "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",

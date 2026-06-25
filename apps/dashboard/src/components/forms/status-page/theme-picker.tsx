@@ -1,6 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
 import { THEMES, THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -21,6 +20,8 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+
+import { Link } from "@/components/common/link";
 
 // Color swatches shown next to each theme option. Mirrors the playground
 // convention at `apps/status-page/.../public/client.tsx`.
@@ -44,12 +45,12 @@ export function ThemeSwatches({ themeKey }: { themeKey: ThemeKey }) {
   const palette =
     mounted && resolvedTheme === "dark" ? theme.dark : theme.light;
   return (
-    <div className="-space-x-1 flex shrink-0 items-center">
+    <div className="flex shrink-0 items-center -space-x-1">
       {SWATCH_VARS.map((cssVar) => (
         <span
           key={cssVar}
           aria-hidden
-          className="size-3 rounded-full border border-border ring-1 ring-background"
+          className="border-border ring-background size-3 rounded-full border ring-1"
           style={{ background: palette[cssVar] }}
         />
       ))}

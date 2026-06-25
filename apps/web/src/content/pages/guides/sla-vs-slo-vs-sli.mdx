@@ -23,8 +23,6 @@ Getting this wrong has real consequences. Either you over-promise to customers a
 
 Here's what they actually mean, how they relate, and how to use them without screwing up.
 
----
-
 ## What They Actually Are
 
 ### SLI (Service Level Indicator)
@@ -58,8 +56,6 @@ An SLA is your public promise to customers, with real consequences if you fail.
 
 This is a legal commitment. It has teeth. Miss it and you're writing refund checks or issuing service credits. That's the point—it's supposed to cost you when you fail customers.
 
----
-
 ## The Hierarchy
 
 These aren't interchangeable terms. They stack:
@@ -78,8 +74,6 @@ SLA → External promise to customers (has buffer from SLO)
 The gap between your SLO (99.95%) and your SLA (99.9%) is your **error budget**. That's the buffer that lets you deploy new features, run experiments, and handle incidents without immediately violating customer agreements.
 
 If your SLO and SLA are the same number, one bad deploy breaks your promises. You've eliminated the margin that makes continuous deployment possible.
-
----
 
 ## Common Mistakes Teams Make
 
@@ -113,8 +107,6 @@ Your documented SLI is "the site should feel fast." How do you measure feelings?
 
 **The fix:** Define specific, measurable thresholds. "P95 page load time under 2 seconds" is measurable. "Feels fast" is not.
 
----
-
 ## Real-World Examples
 
 ### Stripe (Doing It Right)
@@ -134,8 +126,6 @@ The 0.09% gap between their internal target and customer promise is their error 
 They marketed an aggressive SLA to win enterprise deals but never built the infrastructure to measure or maintain it. They discover violations when customers complain. By then, it's too late—trust is gone and refund requests are piling up.
 
 The lesson: don't promise what you can't measure. And don't measure without setting realistic internal targets first.
-
----
 
 ## How Status Pages Fit In
 
@@ -157,8 +147,6 @@ Whether public or private, everything flows from the SLIs. If you can't measure 
 
 Your entire reliability strategy—internal targets, customer promises, incident response priorities—depends on accurate, continuous SLI measurement.
 
----
-
 ## "But We're Just Three People"
 
 If you're a small startup with 5 engineers and 200 customers, implementing a full SLI/SLO/SLA framework might feel like bringing a spreadsheet to a knife fight. You're not wrong.
@@ -178,8 +166,6 @@ The three-tier framework (SLI → SLO → SLA) is the end state, not the startin
 You'll know when you need the full framework: when enterprise customers start asking for SLAs in contracts, when your team is big enough that "just check if it's up" stops scaling, or when you're mature enough that formal error budgets would actually guide deployment decisions.
 
 Until then? Keep it simple. Measure. Communicate. Don't over-promise.
-
----
 
 ## The Bottom Line
 

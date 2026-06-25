@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
@@ -33,7 +34,7 @@ const homepageLinkHeader = [
   '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
-  '<https://docs.openstatus.dev>; rel="service-doc"; type="text/html"',
+  '<https://www.openstatus.dev/docs>; rel="service-doc"; type="text/html"',
   '<https://api.openstatus.dev/openapi>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',
   '<https://www.openstatus.dev/llms-full.txt>; rel="alternate"; type="text/plain"; title="llms-full"',
@@ -100,6 +101,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [{ type: "host", value: "docs.openstatus.dev" }],
+        destination: "https://www.openstatus.dev/docs/:path*",
+        permanent: true,
+      },
+      {
         source: "/legal/terms",
         destination: "/terms",
         permanent: true,
@@ -137,6 +144,51 @@ const nextConfig: NextConfig = {
       {
         source: "/app/:path*",
         destination: "https://app.openstatus.dev/",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-create-monitor",
+        destination: "/docs/tutorial/create-your-first-monitor",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-create-status-page",
+        destination: "/docs/tutorial/create-your-first-status-page",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-configure-status-page",
+        destination: "/docs/guides/how-to-configure-status-page",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-setup-slack-agent",
+        destination: "/docs/guides/how-to-setup-slack-agent",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-create-private-location",
+        destination: "/docs/guides/how-to-create-private-location",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-import-status-page",
+        destination: "/docs/guides/how-to-import-status-page",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-manage-openstatus-with-terraform-cli",
+        destination: "/docs/guides/how-to-manage-openstatus-with-terraform",
+        permanent: true,
+      },
+      {
+        source: "/docs/guides/how-to-manage-openstatus-with-terraform-cli",
+        destination: "/docs/guides/how-to-manage-openstatus-with-terraform",
+        permanent: true,
+      },
+      {
+        source: "/docs/tutorial/how-to-connect-openstatus-to-claude-code",
+        destination: "/docs/guides/how-to-connect-openstatus-to-claude-code",
         permanent: true,
       },
     ];

@@ -1,6 +1,15 @@
 "use client";
 
 import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@openstatus/ui/components/ui/chart";
+import { useQuery } from "@tanstack/react-query";
+import {
   Area,
   AreaChart,
   CartesianGrid,
@@ -13,18 +22,11 @@ import {
 import {
   type INTERVALS,
   type PERCENTILES,
+  type PERIODS,
   mapTimingPhases,
 } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@openstatus/ui/components/ui/chart";
-import { useQuery } from "@tanstack/react-query";
+
 import {
   ChartTooltipNumber,
   ChartTooltipNumberRaw,
@@ -66,7 +68,7 @@ export function ChartAreaTimingPhases({
 }: {
   monitorId: string;
   degradedAfter: number | null;
-  period: "1d" | "7d" | "14d";
+  period: (typeof PERIODS)[number];
   percentile: (typeof PERCENTILES)[number];
   interval: (typeof INTERVALS)[number];
   regions: string[] | undefined;
@@ -132,7 +134,7 @@ export function ChartAreaTimingPhases({
                     <ChartTooltipNumberRaw
                       value={total}
                       label="Total"
-                      className="flex h-0 basis-full items-center border-t font-medium text-foreground text-xs"
+                      className="text-foreground flex h-0 basis-full items-center border-t text-xs font-medium"
                     />
                   </>
                 );

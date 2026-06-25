@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+
 import {
   MOCK_INCIDENTS,
   MOCK_MONITORS,
@@ -274,6 +275,26 @@ describe("mapReportToStatusReport", () => {
     expect(result.updates).toHaveLength(1);
     expect(result.updates[0].message).toBe("API Gateway Elevated Error Rates");
     expect(result.report.pageId).toBeUndefined();
+    // synthetic update inherits the report-level affected resources
+    expect(result.updates[0].componentImpacts).toEqual([
+      { sourceComponentId: "bs_res_001", impact: "major_outage" },
+    ]);
+  });
+
+  test("maps per-update component impacts from affected_resources", () => {
+    const result = mapReportToStatusReport(
+      MOCK_STATUS_REPORTS[0],
+      MOCK_STATUS_UPDATES_REPORT_001,
+      42,
+      1,
+    );
+    expect(result.updates[0].componentImpacts).toEqual([
+      { sourceComponentId: "bs_res_001", impact: "major_outage" },
+    ]);
+    // resolving update clears to operational
+    expect(result.updates[2].componentImpacts).toEqual([
+      { sourceComponentId: "bs_res_001", impact: "operational" },
+    ]);
   });
 });
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { ThemeSelect } from "@/components/themes/theme-select";
 import {
   THEMES,
   THEME_KEYS,
@@ -36,6 +35,8 @@ import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
+import { ThemeSelect } from "@/components/themes/theme-select";
+
 export const IS_DEV = process.env.NODE_ENV === "development";
 
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
@@ -50,6 +51,9 @@ export type BarType = (typeof BAR_TYPE)[number];
 export const COMMUNITY_THEME = THEME_KEYS;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
 
+export const NUMBER_OF_DAYS = [30, 45] as const;
+export type NumberOfDays = (typeof NUMBER_OF_DAYS)[number];
+
 interface StatusPageContextType {
   cardType: CardType;
   setCardType: (cardType: CardType) => void;
@@ -57,6 +61,8 @@ interface StatusPageContextType {
   setBarType: (barType: BarType) => void;
   showUptime: boolean;
   setShowUptime: (showUptime: boolean) => void;
+  numberOfDays: NumberOfDays;
+  setNumberOfDays: (numberOfDays: NumberOfDays) => void;
   communityTheme: CommunityTheme;
   setCommunityTheme: (communityTheme: CommunityTheme) => void;
 }
@@ -76,17 +82,21 @@ export function StatusPageProvider({
   defaultCardType = "duration",
   defaultBarType = "absolute",
   defaultShowUptime = true,
+  defaultNumberOfDays = 45,
   defaultCommunityTheme = "default",
 }: {
   children: React.ReactNode;
   defaultCardType?: CardType;
   defaultBarType?: BarType;
   defaultShowUptime?: boolean;
+  defaultNumberOfDays?: NumberOfDays;
   defaultCommunityTheme?: CommunityTheme;
 }) {
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
+  const [numberOfDays, setNumberOfDays] =
+    useState<NumberOfDays>(defaultNumberOfDays);
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
@@ -111,6 +121,8 @@ export function StatusPageProvider({
         setBarType,
         showUptime,
         setShowUptime,
+        numberOfDays,
+        setNumberOfDays,
         communityTheme,
         setCommunityTheme,
       }}
@@ -136,6 +148,8 @@ export function FloatingButton({
     setBarType,
     showUptime,
     setShowUptime,
+    numberOfDays,
+    setNumberOfDays,
     communityTheme,
     setCommunityTheme,
   } = useStatusPage();
@@ -145,7 +159,6 @@ export function FloatingButton({
     parseAsString,
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const enabled =
       localStorage.getItem("configuration-token") === token ||
@@ -185,7 +198,7 @@ export function FloatingButton({
         <PopoverContent className="w-80 p-0" align="end">
           <div className="space-y-4 p-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">Status Page Settings</h4>
+              <h4 className="leading-none font-medium">Status Page Settings</h4>
               <p className="text-muted-foreground text-sm">
                 Configure the status page appearance
               </p>
@@ -259,6 +272,26 @@ export function FloatingButton({
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="number-of-days">History</Label>
+                <Select
+                  value={String(numberOfDays)}
+                  onValueChange={(v) =>
+                    setNumberOfDays(Number(v) as NumberOfDays)
+                  }
+                >
+                  <SelectTrigger id="number-of-days" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NUMBER_OF_DAYS.map((v) => (
+                      <SelectItem key={v} value={String(v)}>
+                        {v} days
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="theme">Theme</Label>
                 <ThemeSelect id="theme" className="max-w-full" />
               </div>
@@ -298,7 +331,7 @@ export function FloatingButton({
                               <span className="truncate">
                                 {THEMES[theme].name}
                               </span>
-                              <span className="truncate font-commit-mono text-muted-foreground text-xs">
+                              <span className="font-commit-mono text-muted-foreground truncate text-xs">
                                 by {THEMES[theme].author.name}
                               </span>
                               <Check
@@ -325,7 +358,7 @@ export function FloatingButton({
               <a
                 href={
                   pageId
-                    ? `https://app.openstatus.dev/status-pages/${pageId}/components?type=${barType}&value=${cardType}&uptime=${showUptime}&theme=${communityTheme}`
+                    ? `https://app.openstatus.dev/status-pages/${pageId}/components?type=${barType}&value=${cardType}&uptime=${showUptime}&theme=${communityTheme}&days=${numberOfDays}`
                     : "https://app.openstatus.dev/status-pages"
                 }
                 target="_blank"

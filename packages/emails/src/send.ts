@@ -1,7 +1,7 @@
 import type React from "react";
+import { render } from "react-email";
 import { Resend } from "resend";
 
-import { render } from "react-email";
 import { env } from "./env";
 
 export const resend = new Resend(env.RESEND_API_KEY);

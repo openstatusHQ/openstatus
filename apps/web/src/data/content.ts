@@ -1,3 +1,5 @@
+import type { Region } from "@openstatus/regions";
+
 import {
   getBlogPosts,
   getComparePages,
@@ -6,18 +8,15 @@ import {
   getToolsPages,
   getUseCasePages,
 } from "@/content/utils";
-import type { Region } from "@openstatus/regions";
 
 const products = getProductPages();
 
 const productsSection = {
   label: "Products",
-  items: [
-    ...products.map((product) => ({
-      label: product.metadata.title,
-      href: `/${product.slug}`,
-    })),
-  ],
+  items: products.map((product) => ({
+    label: product.metadata.title,
+    href: `/${product.slug}`,
+  })),
 };
 
 const resourcesFooterSection = {
@@ -37,7 +36,7 @@ const resourcesFooterSection = {
     },
     {
       label: "Docs",
-      href: "https://docs.openstatus.dev",
+      href: "/docs",
     },
     {
       label: "Guides",
@@ -74,16 +73,16 @@ const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
+      label: "Docs",
+      href: "/docs",
+    },
+    {
       label: "Customers",
       href: "/customers",
     },
     {
       label: "Use Cases",
       href: "/use-case",
-    },
-    {
-      label: "Docs",
-      href: "https://docs.openstatus.dev",
     },
     {
       label: "Blog",

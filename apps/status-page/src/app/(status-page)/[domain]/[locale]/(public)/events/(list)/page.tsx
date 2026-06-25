@@ -1,5 +1,17 @@
 "use client";
 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+
 import { StatusBlankEvents } from "@/components/status-page/status-blank";
 import {
   StatusEvent,
@@ -14,18 +26,9 @@ import {
   StatusEventTitle,
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
+import { updatesWithImpactChanges } from "@/lib/report-impacts";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { useExtracted } from "next-intl";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
+
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
@@ -99,7 +102,7 @@ export default function Page() {
                         </StatusEventAffected>
                       ) : null}
                       <StatusEventTimelineReport
-                        updates={report.statusReportUpdates}
+                        updates={updatesWithImpactChanges(report)}
                       />
                     </StatusEventContent>
                   </Link>

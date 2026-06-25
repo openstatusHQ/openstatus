@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
+
 import type { Incident } from "@openstatus/db/src/schema";
+
 import { getIncidentDuration } from "./incident";
 
 // Helper to create a partial incident object for testing

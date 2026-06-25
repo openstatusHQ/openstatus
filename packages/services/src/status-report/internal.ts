@@ -1,8 +1,10 @@
-import { and, desc, eq, inArray } from "@openstatus/db";
+import { and, asc, desc, eq, inArray, notInArray } from "@openstatus/db";
 import {
+  type PageComponentImpact,
   pageComponent,
   statusReport,
   statusReportUpdate,
+  statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
@@ -89,6 +91,41 @@ export async function updatePageComponentAssociations(args: {
   }
 }
 
+/**
+ * Drop impact rows across all of a report's updates for components outside
+ * the given membership set — upholds the invariant that every impact row's
+ * component is in the report's membership (folds would resurrect them).
+ */
+export async function pruneImpactRowsOutsideMembership(args: {
+  tx: DB;
+  statusReportId: number;
+  componentIds: ReadonlyArray<number>;
+}): Promise<void> {
+  const { tx, statusReportId, componentIds } = args;
+  const reportUpdateIds = tx
+    .select({ id: statusReportUpdate.id })
+    .from(statusReportUpdate)
+    .where(eq(statusReportUpdate.statusReportId, statusReportId));
+
+  const onReportUpdates = inArray(
+    statusReportUpdateToPageComponents.statusReportUpdateId,
+    reportUpdateIds,
+  );
+
+  await tx
+    .delete(statusReportUpdateToPageComponents)
+    .where(
+      componentIds.length === 0
+        ? onReportUpdates
+        : and(
+            onReportUpdates,
+            notInArray(statusReportUpdateToPageComponents.pageComponentId, [
+              ...componentIds,
+            ]),
+          ),
+    );
+}
+
 /** Load a status report by id, scoped to the workspace. Throws on miss. */
 export async function getReportInWorkspace(args: {
   tx: DB;
@@ -146,6 +183,113 @@ export async function getUpdatesForReport(tx: DB, statusReportId: number) {
     .where(eq(statusReportUpdate.statusReportId, statusReportId))
     .orderBy(desc(statusReportUpdate.date))
     .all();
+}
+
+/** Stable ordering for audit snapshots — diffing is array-order-sensitive. */
+export function sortComponentImpacts<T extends { pageComponentId: number }>(
+  impacts: ReadonlyArray<T>,
+): T[] {
+  return [...impacts].sort((a, b) => a.pageComponentId - b.pageComponentId);
+}
+
+/**
+ * Audit snapshot for an update row + its impact rows. Every emitAudit
+ * before/after must go through this so key name and ordering never drift
+ * between snapshots — `changed_fields` diffs them across verbs.
+ */
+export function withComponentImpacts<
+  Row extends object,
+  Impact extends { pageComponentId: number },
+>(
+  row: Row,
+  impacts: ReadonlyArray<Impact>,
+): Row & { componentImpacts: Impact[] } {
+  return { ...row, componentImpacts: sortComponentImpacts(impacts) };
+}
+
+/** Same contract as withComponentImpacts, for report-level membership snapshots. */
+export function withPageComponentIds<Row extends object>(
+  row: Row,
+  pageComponentIds: ReadonlyArray<number>,
+): Row & { pageComponentIds: number[] } {
+  return {
+    ...row,
+    pageComponentIds: [...pageComponentIds].sort((a, b) => a - b),
+  };
+}
+
+/** Fetch the impact rows a single update set, sorted for snapshots. */
+export async function getComponentImpactsForUpdate(
+  tx: DB,
+  statusReportUpdateId: number,
+): Promise<{ pageComponentId: number; impact: PageComponentImpact }[]> {
+  const rows = await tx
+    .select({
+      pageComponentId: statusReportUpdateToPageComponents.pageComponentId,
+      impact: statusReportUpdateToPageComponents.impact,
+    })
+    .from(statusReportUpdateToPageComponents)
+    .where(
+      eq(
+        statusReportUpdateToPageComponents.statusReportUpdateId,
+        statusReportUpdateId,
+      ),
+    )
+    .all();
+  return sortComponentImpacts(rows);
+}
+
+/** Insert the impact rows an update sets. No-op on empty. */
+export async function insertUpdateComponentImpacts(args: {
+  tx: DB;
+  statusReportUpdateId: number;
+  componentImpacts: ReadonlyArray<{
+    pageComponentId: number;
+    impact: PageComponentImpact;
+  }>;
+}): Promise<void> {
+  const { tx, statusReportUpdateId, componentImpacts } = args;
+  if (componentImpacts.length === 0) return;
+
+  await tx.insert(statusReportUpdateToPageComponents).values(
+    componentImpacts.map(({ pageComponentId, impact }) => ({
+      statusReportUpdateId,
+      pageComponentId,
+      impact,
+    })),
+  );
+}
+
+/**
+ * Current impact per component: the latest update (by `date`, ties by id)
+ * that names it wins. Empty map ⇒ legacy report (no impact rows).
+ */
+export async function getCurrentImpactsForReport(
+  tx: DB,
+  statusReportId: number,
+): Promise<Map<number, PageComponentImpact>> {
+  const rows = await tx
+    .select({
+      pageComponentId: statusReportUpdateToPageComponents.pageComponentId,
+      impact: statusReportUpdateToPageComponents.impact,
+    })
+    .from(statusReportUpdateToPageComponents)
+    .innerJoin(
+      statusReportUpdate,
+      eq(
+        statusReportUpdateToPageComponents.statusReportUpdateId,
+        statusReportUpdate.id,
+      ),
+    )
+    .where(eq(statusReportUpdate.statusReportId, statusReportId))
+    .orderBy(asc(statusReportUpdate.date), asc(statusReportUpdate.id))
+    .all();
+
+  const current = new Map<number, PageComponentImpact>();
+  for (const row of rows) {
+    current.set(row.pageComponentId, row.impact);
+  }
+  return current;
 }
 
 /** Fetch the associated component ids for a report. */

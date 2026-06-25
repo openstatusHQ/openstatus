@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { ContentPagination } from "@/app/(landing)/content-pagination";
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -11,8 +15,6 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -75,22 +77,11 @@ export default async function Blog({
 
   return (
     <section className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
-      <h1>{post.metadata.title}</h1>
+      <JsonLd graph={jsonLDGraph} />
+      <h1>{post.metadata.hero ?? post.metadata.title}</h1>
       <p className="text-lg">{post.metadata.description}</p>
       <CustomMDX source={post.content} />
-      <ContentPagination
-        previousPost={previousPost}
-        nextPost={nextPost}
-        prefix="/compare"
-      />
+      <ContentPagination prev={previousPost} next={nextPost} />
     </section>
   );
 }

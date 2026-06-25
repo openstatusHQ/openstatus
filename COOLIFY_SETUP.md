@@ -260,6 +260,6 @@ To update services:
 
 ## Support
 
-- **Documentation**: [OpenStatus Docs](https://docs.openstatus.dev)
+- **Documentation**: [OpenStatus Docs](https://www.openstatus.dev/docs)
 - **Issues**: [GitHub Issues](https://github.com/openstatusHQ/openstatus/issues)
 - **Community**: [Discord](https://www.openstatus.dev/discord)

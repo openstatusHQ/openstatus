@@ -512,6 +512,34 @@
       "when": 1779967971625,
       "tag": "0072_curvy_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "6",
+      "when": 1780583479806,
+      "tag": "0073_noisy_spyke",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "6",
+      "when": 1780905377183,
+      "tag": "0074_chubby_ronan",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "6",
+      "when": 1781163353139,
+      "tag": "0075_yummy_ken_ellis",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "6",
+      "when": 1781258845086,
+      "tag": "0076_tense_night_thrasher",
+      "breakpoints": true
     }
   ]
 }

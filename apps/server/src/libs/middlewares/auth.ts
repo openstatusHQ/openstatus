@@ -1,10 +1,3 @@
-import { UnkeyCore } from "@unkey/api/core";
-import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
-import type { Context, Next } from "hono";
-
-import { env } from "@/env";
-import { OpenStatusApiError } from "@/libs/errors";
-import type { Variables } from "@/types";
 import { getLogger } from "@logtape/logtape";
 import { db, eq } from "@openstatus/db";
 import {
@@ -17,19 +10,21 @@ import {
   shouldUpdateLastUsed,
   verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
+import { retryRead } from "@openstatus/services";
+import { UnkeyCore } from "@unkey/api/core";
+import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
+import type { Context, Next } from "hono";
+
+import { env } from "@/env";
+import { OpenStatusApiError } from "@/libs/errors";
+import type { Variables } from "@/types";
 
 const logger = getLogger("api-server");
 
-/**
- * Looks up a workspace by ID and validates the data.
- * Throws OpenStatusApiError if workspace is not found or invalid.
- */
 export async function lookupWorkspace(workspaceId: number) {
-  const _workspace = await db
-    .select()
-    .from(workspace)
-    .where(eq(workspace.id, workspaceId))
-    .get();
+  const _workspace = await retryRead(() =>
+    db.select().from(workspace).where(eq(workspace.id, workspaceId)).get(),
+  );
 
   if (!_workspace) {
     throw new OpenStatusApiError({
@@ -159,21 +154,17 @@ export async function validateKey(key: string): Promise<{
     if (key.startsWith("os_")) {
       // 1. Try custom DB first
       const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
-      const customKey = await db
-        .select()
-        .from(apiKey)
-        .where(eq(apiKey.prefix, prefix))
-        .get();
+      const customKey = await retryRead(() =>
+        db.select().from(apiKey).where(eq(apiKey.prefix, prefix)).get(),
+      );
 
       if (customKey) {
-        // Verify hash using bcrypt-compatible verification
         if (!(await verifyApiKeyHash(key, customKey.hashedToken))) {
           return {
             result: { valid: false },
             error: { message: "Invalid API Key" },
           };
         }
-        // Check expiration
         if (customKey.expiresAt && customKey.expiresAt < new Date()) {
           return {
             result: { valid: false },
@@ -181,12 +172,13 @@ export async function validateKey(key: string): Promise<{
           };
         }
 
-        // Update lastUsedAt (debounced)
+        // Best-effort: a failed bookkeeping write must never fail auth.
         if (shouldUpdateLastUsed(customKey.lastUsedAt)) {
           await db
             .update(apiKey)
             .set({ lastUsedAt: new Date() })
-            .where(eq(apiKey.id, customKey.id));
+            .where(eq(apiKey.id, customKey.id))
+            .catch(() => {});
         }
         return {
           result: {

@@ -60,7 +60,7 @@ export function SectionTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-medium text-lg", className)} {...props}>
+    <p className={cn("text-lg font-medium", className)} {...props}>
       {children}
     </p>
   );
@@ -99,7 +99,7 @@ export function SectionGroupTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-bold text-4xl", className)} {...props}>
+    <p className={cn("text-4xl font-bold", className)} {...props}>
       {children}
     </p>
   );

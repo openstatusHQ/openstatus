@@ -34,7 +34,7 @@ For background on why we built the importer, see the [announcement blog post](/b
 
 ## What Gets Imported
 
-Openstatus reads from the [Statuspage REST API](https://developer.statuspage.io/) and maps your data as follows.
+Openstatus reads from the Statuspage REST API and maps your data as follows.
 
 ### Field Mapping
 
@@ -126,14 +126,27 @@ Imported email subscribers are marked as confirmed. Verify that your subscriber 
 
 ### Update DNS for Your Custom Domain
 
-If you use a custom domain for your status page, update your DNS records to point to openstatus instead of Statuspage. Refer to the [openstatus documentation on custom domains](https://docs.openstatus.dev) for the required DNS configuration.
+If you use a custom domain for your status page, update your DNS records to point to openstatus instead of Statuspage. Refer to the [openstatus documentation on custom domains](https://www.openstatus.dev/docs) for the required DNS configuration.
 
 ### Decommission Statuspage
 
 After verifying that everything is working correctly on openstatus, you can cancel your Atlassian Statuspage subscription. Consider keeping the old page in read-only mode for a transition period so that any bookmarked URLs still resolve.
 
+## Video walkthrough
+
+Watch a full migration from Atlassian Statuspage to openstatus in real time.
+
+<ShowcaseYouTube
+  entries={[
+    {
+      href: 'https://www.youtube.com/embed/fsjfnihLjDU',
+      title: 'Migration speedrun: Atlassian Statuspage to openstatus',
+    },
+  ]}
+/>
+
 ## Further Reading
 
 - [Blog: Import from Statuspage, Betterstack, and Instatus](/blog/import-from-statuspage-betterstack-instatus)
-- [Docs: How to Import a Status Page](https://docs.openstatus.dev/tutorial/how-to-import-status-page)
+- [Docs: How to Import a Status Page](https://www.openstatus.dev/docs/guides/how-to-import-status-page)
 - [Top Five Atlassian Statuspage Alternatives](/guides/top-five-atlassian-statuspage-alternatives)

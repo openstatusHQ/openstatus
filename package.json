@@ -1,17 +1,21 @@
 {
+  "name": "openstatus",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/**/*",
+    "packages/config/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "env": "bun env.ts",
-    "lint": "biome lint .",
-    "format": "pnpm biome format . --write && pnpm biome check . --write ",
-    "format:fix": "pnpm biome check --fix --unsafe .",
-    "lint:fix": "pnpm biome lint --write --unsafe .",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "lint:type": "oxlint --type-aware",
+    "format": "oxfmt && oxlint --fix",
+    "format:check": "oxfmt --check && oxlint",
     "lint:turbo": "turbo run lint",
-    "lint:oxc": "oxlint .",
-    "lint:oxc-type": "oxlint . --type-aware --fix --fix-suggestions",
-    "format:oxc": "oxfmt --check",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dev:status-page": "turbo run dev --filter='./apps/status-page' --filter='./packages/db'",
     "dev:dashboard": "turbo run dev --filter='./apps/dashboard' --filter='./packages/db'",
@@ -20,7 +24,6 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@biomejs/biome": "catalog:",
     "@turbo/gen": "catalog:",
     "@types/node": "catalog:",
     "knip": "catalog:",
@@ -30,7 +33,5 @@
     "turbo": "2.9.14",
     "typescript": "catalog:"
   },
-  "packageManager": "pnpm@11.2.1",
-  "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
+  "packageManager": "pnpm@11.2.1"
 }

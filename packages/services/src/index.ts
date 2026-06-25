@@ -11,7 +11,12 @@ export {
   withTransaction,
 } from "./context";
 
-export { isRetryableDbError, withBusyRetry } from "./retry";
+export {
+  isRetryableDbError,
+  isTransientServerError,
+  retryRead,
+  withBusyRetry,
+} from "./retry";
 
 export {
   ConflictError,
@@ -39,10 +44,6 @@ export {
 
 export { matchesScope, requireScope } from "./auth";
 
-export {
-  assertWithinLimit,
-  getPlanLimits,
-  type LimitKey,
-} from "./limits";
+export { assertWithinLimit, getPlanLimits, type LimitKey } from "./limits";
 
 export * from "./types";

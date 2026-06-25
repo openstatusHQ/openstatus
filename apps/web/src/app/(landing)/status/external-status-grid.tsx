@@ -21,13 +21,13 @@ export function ExternalStatusGrid() {
   return (
     <>
       <p
-        className="not-prose my-0! text-muted-foreground text-xs"
+        className="not-prose text-muted-foreground my-0! text-xs"
         role="status"
       >
         Showing {filtered.length} of {services.length} services
       </p>
       {filtered.length === 0 && hasQuery && (
-        <p className="my-0! text-muted-foreground text-sm">
+        <p className="text-muted-foreground my-0! text-sm">
           No services match &ldquo;{q}&rdquo;.
         </p>
       )}
@@ -43,6 +43,7 @@ export function ExternalStatusGrid() {
               indicator={service.indicator}
               status={service.status}
               statusMessage={service.statusMessage || undefined}
+              escalated={service.escalated}
               className="self-start"
             />
           </ContentBoxLink>

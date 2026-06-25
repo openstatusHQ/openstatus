@@ -65,12 +65,12 @@ export function HoverCardTimingContent({
                 className={cn("h-2 w-2 rounded-full")}
                 style={{ backgroundColor: `var(--chart-${index + 1})` }}
               />
-              <div className="font-mono text-accent-foreground uppercase">
+              <div className="text-accent-foreground font-mono uppercase">
                 {key}
               </div>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <div className="font-mono text-muted-foreground">
+              <div className="text-muted-foreground font-mono">
                 {`${new Intl.NumberFormat("en-US", {
                   maximumFractionDigits: 2,
                 }).format((value / (latency || 1)) * 100)}%`}

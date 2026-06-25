@@ -1,5 +1,4 @@
 import { createRoute, z } from "@hono/zod-openapi";
-
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
@@ -9,9 +8,10 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
+
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
 

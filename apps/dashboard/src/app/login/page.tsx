@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-
-import { signIn } from "@/lib/auth";
 import { GitHubIcon } from "@openstatus/icons";
 import { GoogleIcon } from "@openstatus/icons";
 import { Separator } from "@openstatus/ui/components/ui/separator";
+import type { Metadata } from "next";
+import Link from "next/link";
 import type { SearchParams } from "nuqs/server";
+
+import { signIn } from "@/lib/auth";
+
 import { LoginButton } from "./_components/login-button";
 import MagicLinkForm from "./_components/magic-link-form";
 import { searchParamsCache } from "./search-params";
@@ -33,7 +34,7 @@ export default async function Page(props: {
     <div className="my-16 grid w-full max-w-lg gap-6">
       <div className="flex flex-col gap-1 text-center">
         <h1 className="font-cal text-3xl tracking-tight">Sign In</h1>
-        <p className="text-pretty font-commit-mono text-muted-foreground text-sm">
+        <p className="font-commit-mono text-muted-foreground text-sm text-pretty">
           Get started now. No credit card required.
         </p>
       </div>
@@ -68,18 +69,18 @@ export default async function Page(props: {
           </LoginButton>
         </form>
       </div>
-      <p className="mx-auto max-w-md text-pretty px-8 text-center text-muted-foreground text-xs">
+      <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         By clicking continue, you agree to our{" "}
         <Link
           href="https://openstatus.dev/legal/terms"
-          className="underline underline-offset-4 hover:text-primary hover:no-underline"
+          className="hover:text-primary underline underline-offset-4 hover:no-underline"
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           href="https://openstatus.dev/legal/privacy"
-          className="underline underline-offset-4 hover:text-primary hover:no-underline"
+          className="hover:text-primary underline underline-offset-4 hover:no-underline"
         >
           Privacy Policy
         </Link>

@@ -2,14 +2,8 @@ export {
   type AddStatusReportUpdateResult,
   addStatusReportUpdate,
 } from "./add-update";
-export {
-  type CreateStatusReportResult,
-  createStatusReport,
-} from "./create";
-export {
-  deleteStatusReport,
-  deleteStatusReportUpdate,
-} from "./delete";
+export { type CreateStatusReportResult, createStatusReport } from "./create";
+export { deleteStatusReport, deleteStatusReportUpdate } from "./delete";
 export {
   getStatusReport,
   listStatusReports,
@@ -18,13 +12,13 @@ export {
 } from "./list";
 export { notifyStatusReport } from "./notify";
 export { resolveStatusReport } from "./resolve";
-export {
-  updateStatusReport,
-  updateStatusReportUpdate,
-} from "./update";
+export { updateStatusReport, updateStatusReportUpdate } from "./update";
+export { formatComponentImpacts } from "./utils";
 
 export {
   AddStatusReportUpdateInput,
+  type ComponentImpacts,
+  componentImpactsSchema,
   CreateStatusReportInput,
   DeleteStatusReportInput,
   DeleteStatusReportUpdateInput,

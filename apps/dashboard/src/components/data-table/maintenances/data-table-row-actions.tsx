@@ -1,15 +1,16 @@
 "use client";
 
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
-import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
-import { getActions } from "@/data/maintenances.client";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
+import { getActions } from "@/data/maintenances.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 

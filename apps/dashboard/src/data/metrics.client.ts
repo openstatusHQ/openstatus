@@ -1,14 +1,29 @@
 "use client";
 
-import type { MetricCard } from "@/components/metric/metric-card";
-import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay, subDays } from "date-fns";
+
+import type { MetricCard } from "@/components/metric/metric-card";
+import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
+
 import type { RegionMetric } from "./region-metrics";
 
 export const STATUS = ["success", "error", "degraded"] as const;
-export const PERIODS = ["1d", "7d", "14d"] as const;
+export const PERIODS = ["1d", "7d", "14d", "30d", "90d"] as const;
+// 30d/90d require a paid plan; the dropdown gates them for free workspaces.
+export const PAID_PERIODS = ["30d", "90d"] as const;
+
+// longest window a free workspace may view; paid periods snap back to this.
+export const FREE_MAX_PERIOD = "14d" as const;
+
+export type Period = (typeof PERIODS)[number];
+export type PaidPeriod = (typeof PAID_PERIODS)[number];
+
+// widen to string[] so any Period can be tested, not just the paid literals
+export function isPaidPeriod(period: string): period is PaidPeriod {
+  return (PAID_PERIODS as readonly string[]).includes(period);
+}
 export const REGIONS =
   monitorRegions as unknown as (typeof monitorRegions)[number][];
 export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
@@ -329,10 +344,25 @@ export const periodToInterval = {
   "1d": 60,
   "7d": 240,
   "14d": 480,
+  "30d": 1440,
+  "90d": 1440,
 } satisfies Record<(typeof PERIODS)[number], number>;
 
 export const periodToFromDate = {
   "1d": startOfDay(subDays(new Date(), 1)),
   "7d": startOfDay(subDays(new Date(), 7)),
   "14d": startOfDay(subDays(new Date(), 14)),
+  "30d": startOfDay(subDays(new Date(), 30)),
+  "90d": startOfDay(subDays(new Date(), 90)),
 } satisfies Record<(typeof PERIODS)[number], Date>;
+
+// Minimum selectable resolution (minutes) per period. Long windows floor the
+// interval so charts stay readable and queries bounded. Mirrors the server-side
+// clamp in `@openstatus/api` tinybird router — keep the two in sync.
+export const periodToMinInterval = {
+  "1d": 5,
+  "7d": 5,
+  "14d": 5,
+  "30d": 240,
+  "90d": 1440,
+} satisfies Record<(typeof PERIODS)[number], (typeof INTERVALS)[number]>;

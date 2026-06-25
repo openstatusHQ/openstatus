@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { createBetterstackClient } from "./client";
 import {
   MOCK_INCIDENTS,

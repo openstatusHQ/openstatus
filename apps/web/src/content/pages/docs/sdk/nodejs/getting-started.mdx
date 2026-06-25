@@ -1,0 +1,183 @@
+---
+category: SDK
+title: Getting Started
+description: "Install and start using the openstatus Node.js SDK"
+---
+
+
+## Get Your API Key
+
+Before using the SDK, you need an API key:
+
+1. Log in to the [openstatus dashboard](https://www.openstatus.dev/app/login)
+2. Go to **Settings** > **API Keys**
+3. Click **Create API Key** and copy it
+
+<Aside type="tip">Store your API key as an environment variable (`OPENSTATUS_API_KEY`) — never commit it to source control.</Aside>
+
+## Installation
+
+### npm
+
+```bash
+npm install @openstatus/sdk-node
+```
+
+### JSR
+
+```bash
+npx jsr add @openstatus/sdk-node
+```
+
+### Deno
+
+```typescript
+import { createOpenStatusClient } from "jsr:@openstatus/sdk-node";
+```
+
+### Bun
+
+```bash
+bun add @openstatus/sdk-node
+```
+
+## Quick Start
+
+```typescript
+import {
+  createOpenStatusClient,
+  Periodicity,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+// Create an HTTP monitor
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "My API",
+    url: "https://api.example.com/health",
+    periodicity: Periodicity.PERIODICITY_1M,
+    regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
+    active: true,
+  },
+});
+
+console.log(`Monitor created: ${monitor?.id}`);
+
+// List all monitors
+const { httpMonitors, tcpMonitors, dnsMonitors, totalSize } =
+  await client.monitor.v1.MonitorService.listMonitors({});
+
+console.log(`Found ${totalSize} monitors`);
+```
+
+## Runtime Support
+
+The SDK talks to the API over a fetch-based Connect transport (`@connectrpc/connect-web`), so it runs on any runtime with a global `fetch`:
+
+| Runtime            | Version | Module Format |
+|--------------------|---------|---------------|
+| Node.js            | 18+     | ESM and CJS   |
+| Deno               | 2+      | ESM (native)  |
+| Bun                | Latest  | ESM           |
+| Cloudflare Workers | —       | ESM (edge)    |
+
+### Cloudflare Workers and edge runtimes
+
+`@connectrpc/connect-web` sets `redirect: "error"` on every request. Node, Deno, and Bun's `fetch` support that mode, so they need no setup — but Cloudflare Workers (`workerd`) doesn't, so **every** request there fails with `The redirect mode 'error' is not supported`. On Workers, pass a transport with a redirect-normalizing `fetch` (the SDK re-exports `createAuthInterceptor` and the service descriptors for this):
+
+```typescript
+import { createConnectTransport } from "@connectrpc/connect-web";
+import {
+  createAuthInterceptor,
+  createOpenStatusClient,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  transport: createConnectTransport({
+    baseUrl: "https://api.openstatus.dev/rpc",
+    interceptors: [createAuthInterceptor(env.OPENSTATUS_API_KEY)],
+    // workerd does not implement fetch's `redirect: "error"`; normalise it.
+    fetch: (input, init) =>
+      fetch(
+        input,
+        init?.redirect === "error" ? { ...init, redirect: "manual" } : init,
+      ),
+  }),
+});
+```
+
+<Aside type="note">When you pass a `transport`, the `apiKey` and `baseUrl` options are ignored — configure authentication on the transport via `createAuthInterceptor`. For full control you can also import the raw service descriptors (`MonitorService`, `StatusPageService`, …) and call `createClient(MonitorService, transport)` from `@connectrpc/connect`.</Aside>
+
+## Full Workflow Example
+
+A complete example: create a monitor, set up a status page, add the monitor as a component, configure a Slack notification, and check overall status.
+
+```typescript
+import {
+  createOpenStatusClient,
+  NotificationProvider,
+  Periodicity,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+// 1. Check API health
+const health = await client.health.v1.HealthService.check({});
+console.log(`API status: ${health.status}`);
+
+// 2. Create an HTTP monitor
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "Production API",
+    url: "https://api.example.com/health",
+    periodicity: Periodicity.PERIODICITY_1M,
+    regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
+    active: true,
+  },
+});
+
+// 3. Create a status page
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .createStatusPage({
+    title: "Example Status",
+    slug: "example-status",
+    description: "Status page for Example services",
+  });
+
+// 4. Add the monitor as a component
+const { component } = await client.statusPage.v1.StatusPageService
+  .addMonitorComponent({
+    pageId: statusPage!.id,
+    monitorId: monitor!.id,
+    name: "Production API",
+  });
+
+// 5. Set up Slack notifications
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Slack Alerts",
+    provider: NotificationProvider.SLACK,
+    data: {
+      data: {
+        case: "slack",
+        value: { webhookUrl: "https://hooks.slack.com/services/..." },
+      },
+    },
+    monitorIds: [monitor!.id],
+  });
+
+// 6. Check overall status
+const { overallStatus } = await client.statusPage.v1.StatusPageService
+  .getOverallStatus({
+    identifier: { case: "id", value: statusPage!.id },
+  });
+
+console.log(`Overall status: ${overallStatus}`);
+```
