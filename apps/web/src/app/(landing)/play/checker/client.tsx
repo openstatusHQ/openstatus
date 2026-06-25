@@ -263,6 +263,12 @@ export function Form({
                 "The request took too long and was aborted after 10 seconds.",
               className: "text-destructive!",
             });
+          } else {
+            toast.error("Something went wrong", {
+              id: toastId,
+              description: "Please try again.",
+              className: "text-destructive!",
+            });
           }
         }
       }

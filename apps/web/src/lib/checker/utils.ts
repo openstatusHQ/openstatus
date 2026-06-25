@@ -240,6 +240,11 @@ export async function checkRegion(
   const data = checkerSchema.or(errorRequest).safeParse(json);
 
   if (!data.success) {
+    // Neither the success nor the error shape matched — likely checker schema
+    // drift rather than an unreachable target. Surface it so it isn't lost.
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("Unexpected checker response shape:", json);
+    }
     throw new TargetUnreachableError(data.error.message);
   }
 
