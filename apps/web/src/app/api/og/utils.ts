@@ -30,15 +30,3 @@ export const commitMonoRegular = fetch(
 export const commitMonoBold = fetch(
   new URL("../../../public/fonts/CommitMono-700-Regular.otf", import.meta.url),
 ).then((res) => res.arrayBuffer());
-
-export const robotoMonoRegular = fetch(
-  new URL("../../../public/fonts/RobotoMono-Regular.ttf", import.meta.url),
-).then((res) => res.arrayBuffer());
-
-export const robotoMonoMedium = fetch(
-  new URL("../../../public/fonts/RobotoMono-Medium.ttf", import.meta.url),
-).then((res) => res.arrayBuffer());
-
-export const robotoMonoBold = fetch(
-  new URL("../../../public/fonts/RobotoMono-Bold.ttf", import.meta.url),
-).then((res) => res.arrayBuffer());
