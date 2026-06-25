@@ -1,4 +1,3 @@
-import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 import { ImageResponse } from "next/og";
 
 import { isStale } from "@/app/(landing)/status/utils";
@@ -13,11 +12,14 @@ import {
 } from "@/lib/external-service-cache";
 import { cn } from "@/lib/utils";
 
-import { SIZE } from "../utils";
+import {
+  SIZE,
+  robotoMonoBold,
+  robotoMonoMedium,
+  robotoMonoRegular,
+} from "../utils";
 
-// nodejs (not edge): this route pulls in the service reads + Effect retry, which
-// push the bundle past the 2 MB edge limit. Node has no such cap.
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const FOOTER = "openstatus.dev/status";
@@ -80,15 +82,11 @@ const UNKNOWN = {
 };
 
 export async function GET(req: Request) {
-  const fontMonoRegular = await fetch(
-    new URL("../../../../public/fonts/RobotoMono-Regular.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
-  const fontMonoMedium = await fetch(
-    new URL("../../../../public/fonts/RobotoMono-Medium.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
-  const fontMonoBold = await fetch(
-    new URL("../../../../public/fonts/RobotoMono-Bold.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
+  const [fontMonoRegular, fontMonoMedium, fontMonoBold] = await Promise.all([
+    robotoMonoRegular,
+    robotoMonoMedium,
+    robotoMonoBold,
+  ]);
   const logoSvg = await fetch(
     new URL(
       "../../../../../public/assets/logos/OpenStatus-Logo.svg",
