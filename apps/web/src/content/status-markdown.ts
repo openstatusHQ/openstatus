@@ -1,3 +1,13 @@
+import {
+  REPORT_THRESHOLD,
+  REPORT_WINDOW_MINUTES,
+  REPORT_WINDOW_MS,
+} from "@openstatus/api/src/router/effective-status";
+import {
+  getServiceReportCountries,
+  getServiceReportDaily,
+  getServiceReportWindows,
+} from "@openstatus/services/external-service-report";
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 
 import { env } from "@/env";
@@ -23,6 +33,7 @@ type HistoryRow = {
 };
 
 const HISTORY_DAYS = 45;
+const REPORT_COUNTRIES_LIMIT = 5;
 
 function pillLabel(args: { indicator: string; status: string }): string {
   if (args.status === "under_maintenance") return "Maintenance";
@@ -59,6 +70,70 @@ function dayLabel(row: HistoryRow): string {
 function formatIso(ms: number): string {
   if (!ms) return "no data";
   return new Date(ms).toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function countryCount(n: number): string {
+  if (n <= 0) return "";
+  return ` from ${n} ${n === 1 ? "country" : "countries"}`;
+}
+
+function settledRows<T>(result: PromiseSettledResult<T[]>): T[] {
+  if (result.status === "fulfilled") return result.value;
+  console.warn("[status markdown] report query failed:", result.reason);
+  return [];
+}
+
+async function generateReportsMarkdown(args: {
+  serviceId: number;
+  serviceName: string;
+}): Promise<string> {
+  const now = Date.now();
+  const since = new Date(now - REPORT_WINDOW_MS);
+  const dailySince = new Date(now - HISTORY_DAYS * 24 * 60 * 60 * 1000);
+
+  const [windowRes, dailyRes, countryRes] = await Promise.allSettled([
+    getServiceReportWindows({ serviceIds: [args.serviceId], since }),
+    getServiceReportDaily({ serviceId: args.serviceId, since: dailySince }),
+    getServiceReportCountries({
+      serviceId: args.serviceId,
+      since,
+      limit: REPORT_COUNTRIES_LIMIT,
+    }),
+  ]);
+
+  const windowRows = settledRows(windowRes);
+  const dailyRows = settledRows(dailyRes);
+  const countryRows = settledRows(countryRes);
+
+  const windowOk = windowRes.status === "fulfilled";
+  const reporters = windowRows[0]?.reporters ?? 0;
+  const countries = windowRows[0]?.countries ?? 0;
+  const dailyWithReports = dailyRows.filter((r) => r.total > 0);
+  if (reporters === 0 && dailyWithReports.length === 0) return "";
+
+  let md = `## ${args.serviceName} user reports\n\n`;
+  if (windowOk) {
+    if (reporters >= REPORT_THRESHOLD) {
+      md += `Users are reporting problems with ${args.serviceName}: ${reporters} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
+    } else {
+      md += `${reporters} user ${reporters === 1 ? "report" : "reports"} in the last ${REPORT_WINDOW_MINUTES} minutes${countryCount(countries)}.\n\n`;
+    }
+  }
+
+  if (countryRows.length > 0) {
+    md += `Top countries: ${countryRows.map((c) => `${c.country} (${c.total})`).join(", ")}\n\n`;
+  }
+
+  if (dailyWithReports.length > 0) {
+    md += "| Day | Reports | Reporters |\n";
+    md += "| --- | --- | --- |\n";
+    for (const r of dailyWithReports) {
+      md += `| ${r.day} | ${r.total} | ${r.reporters} |\n`;
+    }
+    md += "\n";
+  }
+
+  return md;
 }
 
 export async function generateStatusIndexMarkdown(): Promise<string> {
@@ -182,6 +257,11 @@ export async function generateStatusDetailMarkdown(
     }
   }
   md += "\n";
+
+  md += await generateReportsMarkdown({
+    serviceId: service.id,
+    serviceName: service.name,
+  });
 
   md += "## Links\n\n";
   md += `- HTML page: /status/${service.slug}\n`;
