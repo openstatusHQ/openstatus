@@ -2,6 +2,7 @@ import { COLORS, COLOR_DECIMALS } from "@openstatus/notification-base";
 import { assertSafeUrl } from "@openstatus/utils";
 import { z } from "zod";
 
+import { WEBHOOK_PAYLOAD_VERSION } from "../payload";
 import type { PageUpdate, Subscription } from "../types";
 
 export type WebhookFlavor = "slack" | "discord" | "generic";
@@ -255,10 +256,21 @@ export function buildGenericPayload(
     id: subscription.pageId,
     name: subscription.pageName,
     slug: subscription.pageSlug,
+    url: resolveStatusPageOrigin(subscription),
   };
   const components =
-    pageUpdate.pageComponentsWithId ??
-    pageUpdate.pageComponents.map((name, i) => ({ id: i, name }));
+    pageUpdate.componentsWithImpact ??
+    pageUpdate.pageComponentsWithId?.map((c) => ({
+      ...c,
+      impact: "operational" as const,
+      changed: false,
+    })) ??
+    pageUpdate.pageComponents.map((name, i) => ({
+      id: i,
+      name,
+      impact: "operational" as const,
+      changed: false,
+    }));
   const subscriptionBlock = {
     manage_url: links.manageUrl,
     unsubscribe_url: links.unsubscribeUrl,
@@ -266,6 +278,7 @@ export function buildGenericPayload(
 
   if (pageUpdate.status === "maintenance") {
     return {
+      version: WEBHOOK_PAYLOAD_VERSION,
       type: "maintenance" as const,
       data: {
         maintenance: {
@@ -283,6 +296,7 @@ export function buildGenericPayload(
   }
 
   return {
+    version: WEBHOOK_PAYLOAD_VERSION,
     type: "status_report" as const,
     data: {
       status_report: {

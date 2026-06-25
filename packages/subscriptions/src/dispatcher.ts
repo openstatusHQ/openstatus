@@ -5,6 +5,7 @@ import {
   pageSubscriber,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 
 import { getChannel } from "./channels";
 import type { PageUpdate, Subscription } from "./types";
@@ -16,10 +17,18 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
   const update = await db.query.statusReportUpdate.findFirst({
     where: eq(statusReportUpdate.id, statusReportUpdateId),
     with: {
+      // The delta this update wrote — used to flag `changed` components.
+      statusReportUpdateToPageComponents: true,
       statusReport: {
         with: {
+          // Membership: the full set of components on the report (id + name).
           statusReportsToPageComponents: {
             with: { pageComponent: true },
+          },
+          // All updates' impact rows — current state is reconstructed from the
+          // delta history, not from any single update's rows.
+          statusReportUpdates: {
+            with: { statusReportUpdateToPageComponents: true },
           },
         },
       },
@@ -40,6 +49,24 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     (i) => i.pageComponent,
   );
 
+  const currentImpacts = currentImpactsFromUpdates(
+    update.statusReport.statusReportUpdates.map((u) => ({
+      id: u.id,
+      date: u.date,
+      componentImpacts: u.statusReportUpdateToPageComponents,
+    })),
+  );
+  const changedIds = new Set(
+    update.statusReportUpdateToPageComponents.map((r) => r.pageComponentId),
+  );
+
+  const componentsWithImpact = pageComponents.map((c) => ({
+    id: c.id,
+    name: c.name,
+    impact: currentImpacts.get(c.id) ?? "operational",
+    changed: changedIds.has(c.id),
+  }));
+
   await dispatchPageUpdate({
     id: update.statusReport.id,
     pageId: update.statusReport.pageId,
@@ -54,6 +81,7 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
       id: c.id,
       name: c.name,
     })),
+    componentsWithImpact,
   });
 }
 

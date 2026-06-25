@@ -1,5 +1,7 @@
 // Core types for the subscription system
 
+import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+
 export interface Subscription {
   id: number;
   pageId: number;
@@ -43,6 +45,14 @@ export interface PageUpdate {
   // builders, which key off the fields above.
   updateId?: number; // statusReportUpdate.id (status reports only)
   pageComponentsWithId?: { id: number; name: string }[];
+  // Current impact per component as of this update (not the raw delta), plus a
+  // `changed` flag marking the components this update actually modified.
+  componentsWithImpact?: {
+    id: number;
+    name: string;
+    impact: PageComponentImpact;
+    changed: boolean;
+  }[];
   startsAt?: string; // maintenance only, ISO
   endsAt?: string; // maintenance only, ISO
 }
