@@ -8,7 +8,7 @@ export const WEBHOOK_PAYLOAD_VERSION = "1" as const;
 const componentSchema = z.object({
   id: z.number().int(),
   name: z.string(),
-  impact: pageComponentImpactSchema,
+  impact: pageComponentImpactSchema.nullish(),
 });
 
 const pageSchema = z.object({
@@ -19,8 +19,8 @@ const pageSchema = z.object({
 });
 
 const subscriptionSchema = z.object({
-  manage_url: z.string().nullable(),
-  unsubscribe_url: z.string().nullable(),
+  manage_url: z.string().nullish(),
+  unsubscribe_url: z.string().nullish(),
 });
 
 export const statusReportWebhookSchema = z.object({

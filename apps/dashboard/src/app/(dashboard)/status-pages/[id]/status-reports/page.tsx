@@ -34,7 +34,7 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.statusReport.notify.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({

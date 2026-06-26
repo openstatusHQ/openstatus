@@ -10,7 +10,6 @@ import {
   deleteStatusReportUpdate,
   getStatusReport,
   listStatusReports,
-  notifyStatusReport,
   updateStatusReport,
   updateStatusReportUpdate,
 } from "@openstatus/services/status-report";
@@ -80,8 +79,9 @@ export const statusReportRouter = createTRPCRouter({
             message: input.message,
           },
         });
-        // Notification is a separate, client-driven step (statusReport.notify)
-        // so creation and dispatch stay split.
+        // Notification is a separate, client-driven step
+        // (subscriberNotification.statusReport) so creation and dispatch stay
+        // split — dispatch must run on lambda, this router is Edge-served.
         return { ...initialUpdate, notifySubscribers: input.notifySubscribers };
       } catch (err) {
         toTRPCError(err);
@@ -108,21 +108,6 @@ export const statusReportRouter = createTRPCRouter({
           ...statusReportUpdate,
           notifySubscribers: input.notifySubscribers,
         };
-      } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  notify: protectedProcedure
-    .meta({ track: Events.NotifyReport })
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await notifyStatusReport({
-          ctx: toServiceCtx(ctx),
-          input: { statusReportUpdateId: input.id },
-        });
-        return { success: true };
       } catch (err) {
         toTRPCError(err);
       }

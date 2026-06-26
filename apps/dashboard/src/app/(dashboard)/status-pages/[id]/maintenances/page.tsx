@@ -32,7 +32,7 @@ export default function Page() {
     }),
   );
   const sendMaintenanceUpdateMutation = useMutation(
-    trpc.maintenance.notify.mutationOptions(),
+    trpc.subscriberNotification.maintenance.mutationOptions(),
   );
   const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
