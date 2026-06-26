@@ -36,10 +36,10 @@ export default function Page() {
   );
   const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
-      onSuccess: async (maintenance) => {
+      onSuccess: (maintenance) => {
         refetch();
         if (maintenance.notifySubscribers) {
-          await sendMaintenanceUpdateMutation.mutateAsync({
+          sendMaintenanceUpdateMutation.mutate({
             id: maintenance.id,
           });
         }
