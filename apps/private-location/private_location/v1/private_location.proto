@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+import "private_location/v1/http_monitor.proto";
+import "private_location/v1/tcp_monitor.proto";
+
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
+
+service PrivateLocationService {
+    rpc Monitors(MonitorsRequest) returns (MonitorsResponse) {}
+    // TODO
+    // rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
+    // rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
+}
+
+message MonitorsRequest {}
+
+message MonitorsResponse {
+    repeated HTTPMonitor http_monitors = 1;
+    repeated TCPMonitor tcp_monitors = 2;
+}
+
+
+
+
+enum JobType {
+    JOB_TYPE_UNSPECIFIED = 0;
+    JOB_TYPE_HTTP = 1;
+    JOB_TYPE_TCP = 2;
+}

@@ -77,7 +77,7 @@ export type DBPageSubscriber = {
   updatedAt: Date | null;
   source: "self_signup" | "vendor" | "import";
   name: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   webhookUrl: string | null;
   channelConfig: string | null;
   componentIds?: number[];

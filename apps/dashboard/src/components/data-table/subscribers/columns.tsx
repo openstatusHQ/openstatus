@@ -40,7 +40,9 @@ export const columns: ColumnDef<Subscriber>[] = [
       const flavor =
         sub.channelType === "webhook"
           ? detectFlavorBadge(sub.webhookUrl)
-          : null;
+          : sub.channelType === "slack"
+            ? "Slack"
+            : null;
 
       return (
         <div className="flex items-center gap-2">

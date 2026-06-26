@@ -757,7 +757,7 @@ importers:
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-auth:
         specifier: 'catalog:'
-        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
+        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       next-themes:
         specifier: 'catalog:'
         version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -843,6 +843,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  apps/private-location:
+    devDependencies:
+      '@bufbuild/buf':
+        specifier: 1.57.2
+        version: 1.57.2
 
   apps/screenshot-service:
     dependencies:
@@ -1192,7 +1198,7 @@ importers:
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-auth:
         specifier: 'catalog:'
-        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
+        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       next-intl:
         specifier: 'catalog:'
         version: 4.12.0(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
@@ -1457,7 +1463,7 @@ importers:
         version: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-auth:
         specifier: 'catalog:'
-        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
+        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       next-mdx-remote:
         specifier: 'catalog:'
         version: 6.0.0(@types/react@19.2.15)(react@19.2.6)
@@ -1913,7 +1919,7 @@ importers:
         version: 0.31.10
       next-auth:
         specifier: 'catalog:'
-        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
+        version: 5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -2601,6 +2607,12 @@ importers:
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../utils
+      '@slack/web-api':
+        specifier: 'catalog:'
+        version: 7.16.0
+      '@upstash/redis':
+        specifier: 'catalog:'
+        version: 1.38.0
       effect:
         specifier: 'catalog:'
         version: 3.21.2
@@ -3266,10 +3278,22 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
+  '@bufbuild/buf-darwin-arm64@1.57.2':
+    resolution: {integrity: sha512-ybwjZ8hFpDiSfTY8ltuNulh6e4CYcojZX+joo/VocFb4InRFyF08S+JSO+1ld+nTmJ24ziGwXZTg8qXiiN6qog==}
+    engines: {node: '>=12'}
+    cpu: [arm64]
+    os: [darwin]
+
   '@bufbuild/buf-darwin-arm64@1.69.0':
     resolution: {integrity: sha512-q7086l1PRS0fUn/IYef7WUAq5PEPIxCh3AVZZdObdOAA9C77ES7CYBSTWH3oEJHVElv1KPVVqvGmOC+G78HuXg==}
     engines: {node: '>=12'}
     cpu: [arm64]
+    os: [darwin]
+
+  '@bufbuild/buf-darwin-x64@1.57.2':
+    resolution: {integrity: sha512-uoNjkkyjmJlzQyfPI/mwlutDvu48gFg8pYzlK0RhNshvTWCDo2vXbw1gZSaQnv1xK585N9Axmyjp0K2sYJkaDQ==}
+    engines: {node: '>=12'}
+    cpu: [x64]
     os: [darwin]
 
   '@bufbuild/buf-darwin-x64@1.69.0':
@@ -3278,10 +3302,22 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@bufbuild/buf-linux-aarch64@1.57.2':
+    resolution: {integrity: sha512-JvB9M+GraP7tgYlyKUhF46+pw/hctFyAjcLvPCPxr8Lr9uo3I6uqU8KywE4AuzdFReaZ4wtdF6sUlsfDOo8Geg==}
+    engines: {node: '>=12'}
+    cpu: [arm64]
+    os: [linux]
+
   '@bufbuild/buf-linux-aarch64@1.69.0':
     resolution: {integrity: sha512-4twJF1ehcPRBvgA2g2yIG/3ViZ3SrElqCqGjXHp+U4RfjHV249j8kzVj08mvI1t0kv8Rbm8JECYqkxcYnKyuRA==}
     engines: {node: '>=12'}
     cpu: [arm64]
+    os: [linux]
+
+  '@bufbuild/buf-linux-armv7@1.57.2':
+    resolution: {integrity: sha512-13ZBU/LTboW7B/qjMV6fY6z8q0uyfSpp+y2J+/PAzCrC64ewSTE30pMKFQujMQ05Po0kY5e9yWvTElJcLbzt5w==}
+    engines: {node: '>=12'}
+    cpu: [arm]
     os: [linux]
 
   '@bufbuild/buf-linux-armv7@1.69.0':
@@ -3290,11 +3326,23 @@ packages:
     cpu: [arm]
     os: [linux]
 
+  '@bufbuild/buf-linux-x64@1.57.2':
+    resolution: {integrity: sha512-R28Y6g0kGlM/agtVc8sAjzGhgtbA4JyJYg4w7ZPm/FaVEw2sAYZBsa5uxmMNNOmWopKfd0yr2Pgq8ndfG0QSug==}
+    engines: {node: '>=12'}
+    cpu: [x64]
+    os: [linux]
+
   '@bufbuild/buf-linux-x64@1.69.0':
     resolution: {integrity: sha512-mt/hJesHK62TlsSJPwBpRIC/OzWTlgaRmyjC8QF+T6+IbFwiwz1E3ZBCfNECEa2HW4ma8HbugpJyCBbUSA+z/Q==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [linux]
+
+  '@bufbuild/buf-win32-arm64@1.57.2':
+    resolution: {integrity: sha512-6YlPr2Z0VLae/76raYDEcotN7YGNgn3qaNy7x5idAoNeAr0EK2WsKtlBypK0/fQO3GOrYo0HGM/0SFENXoQKbw==}
+    engines: {node: '>=12'}
+    cpu: [arm64]
+    os: [win32]
 
   '@bufbuild/buf-win32-arm64@1.69.0':
     resolution: {integrity: sha512-IlMSIdCWvllwenbLlrWEH2YHQwCqmONKZYv4MXj56v6TvCWCTbYlaF5ZFP+xFAHToHp1OrFc+rwUqCt7ElBbHg==}
@@ -3302,11 +3350,22 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@bufbuild/buf-win32-x64@1.57.2':
+    resolution: {integrity: sha512-7YKz2RVPQlL+rJYzNL7JK3LpvZUz7wY6hof3QOTNX3sHY6pRD+mtWt/PITTlC3PtyjSKy17wAhbkokC0JErsHw==}
+    engines: {node: '>=12'}
+    cpu: [x64]
+    os: [win32]
+
   '@bufbuild/buf-win32-x64@1.69.0':
     resolution: {integrity: sha512-wpKZLXUF/w85g4ZL9XqQqm33cfw2NRjiidSX5EVFMx4rDp7cnAUv3+PTwZvEPriqJEihnOJ5JCozsxjiWqSX7Q==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [win32]
+
+  '@bufbuild/buf@1.57.2':
+    resolution: {integrity: sha512-N51MOnjROdtBX3fPU2KGdmwfiT1WWXzs8Jw1tMMkyVAmCSahWbObGIPq7e1fw7lR5i0s3bTxQyk3KRmb2/uwNg==}
+    engines: {node: '>=12'}
+    hasBin: true
 
   '@bufbuild/buf@1.69.0':
     resolution: {integrity: sha512-hWk7cW6Z/7g6jpybePaf15QUUFd2+s4lJCeaAkBeo3tWPGoSgNJaJdMqIUy2y99uYy4yMjq9GYmjc5dSrfIn5A==}
@@ -11871,26 +11930,57 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
+  '@bufbuild/buf-darwin-arm64@1.57.2':
+    optional: true
+
   '@bufbuild/buf-darwin-arm64@1.69.0':
+    optional: true
+
+  '@bufbuild/buf-darwin-x64@1.57.2':
     optional: true
 
   '@bufbuild/buf-darwin-x64@1.69.0':
     optional: true
 
+  '@bufbuild/buf-linux-aarch64@1.57.2':
+    optional: true
+
   '@bufbuild/buf-linux-aarch64@1.69.0':
+    optional: true
+
+  '@bufbuild/buf-linux-armv7@1.57.2':
     optional: true
 
   '@bufbuild/buf-linux-armv7@1.69.0':
     optional: true
 
+  '@bufbuild/buf-linux-x64@1.57.2':
+    optional: true
+
   '@bufbuild/buf-linux-x64@1.69.0':
+    optional: true
+
+  '@bufbuild/buf-win32-arm64@1.57.2':
     optional: true
 
   '@bufbuild/buf-win32-arm64@1.69.0':
     optional: true
 
+  '@bufbuild/buf-win32-x64@1.57.2':
+    optional: true
+
   '@bufbuild/buf-win32-x64@1.69.0':
     optional: true
+
+  '@bufbuild/buf@1.57.2':
+    optionalDependencies:
+      '@bufbuild/buf-darwin-arm64': 1.57.2
+      '@bufbuild/buf-darwin-x64': 1.57.2
+      '@bufbuild/buf-linux-aarch64': 1.57.2
+      '@bufbuild/buf-linux-armv7': 1.57.2
+      '@bufbuild/buf-linux-x64': 1.57.2
+      '@bufbuild/buf-win32-arm64': 1.57.2
+      '@bufbuild/buf-win32-x64': 1.57.2
 
   '@bufbuild/buf@1.69.0':
     optionalDependencies:
@@ -18051,7 +18141,7 @@ snapshots:
 
   neverthrow@7.2.0: {}
 
-  next-auth@5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6):
+  next-auth@5.0.0-beta.31(next@16.2.6(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6):
     dependencies:
       '@auth/core': 0.41.2
       next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)

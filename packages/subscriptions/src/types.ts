@@ -11,10 +11,11 @@ export interface Subscription {
   componentIds: number[]; // Empty = entire page
 
   // Only ONE identifier populated based on channelType
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email?: string;
   webhookUrl?: string;
-  channelConfig?: string; // JSON string for headers, secrets, etc.
+  slackChannelId?: string;
+  channelConfig?: string; // JSON string for headers, secrets, slack teamId, etc.
 
   token?: string;
   acceptedAt?: Date;
