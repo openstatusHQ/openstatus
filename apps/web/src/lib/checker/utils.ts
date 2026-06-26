@@ -181,6 +181,10 @@ type CheckRegionRequest = {
 // API Functions
 // ============================================================================
 
+// A timeout / unreachable target is an expected outcome, not a bug. Callers
+// throw this so a route catch can return 400 while keeping it out of Sentry.
+export class TargetUnreachableError extends Error {}
+
 export async function checkRegion(
   props: CheckRegionRequest,
 ): Promise<RegionCheckerResponse> {
@@ -235,12 +239,12 @@ export async function checkRegion(
   const data = checkerSchema.or(errorRequest).safeParse(json);
 
   if (!data.success) {
-    console.error(JSON.stringify(res));
-    console.error(JSON.stringify(json));
-    console.error(
-      `something went wrong with request to ${url} error ${data.error.message}`,
-    );
-    throw new Error(data.error.message);
+    // Neither the success nor the error shape matched — likely checker schema
+    // drift rather than an unreachable target. Surface it so it isn't lost.
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("Unexpected checker response shape:", json);
+    }
+    throw new TargetUnreachableError(data.error.message);
   }
 
   return {
