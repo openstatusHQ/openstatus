@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { WEBHOOK_PAYLOAD_VERSION } from "../payload";
 import type { PageUpdate, Subscription } from "../types";
+import { postWebhookWithRetry } from "./retry";
 
 export type WebhookFlavor = "slack" | "discord" | "generic";
 
@@ -387,19 +388,12 @@ export async function sendWebhookNotifications(
 
       try {
         await assertSafeUrl(subscription.webhookUrl);
-        const response = await fetch(subscription.webhookUrl, {
-          method: "POST",
+        await postWebhookWithRetry({
+          url: subscription.webhookUrl,
           headers,
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(TIMEOUT_MS),
+          timeoutMs: TIMEOUT_MS,
         });
-
-        if (!response.ok) {
-          console.error(
-            `Webhook notification failed for ${redactWebhookUrl(subscription.webhookUrl)}: ${response.status} ${response.statusText}`,
-          );
-          throw new Error(`Webhook returned ${response.status}`);
-        }
       } catch (error) {
         console.error(
           `Failed to send webhook notification to ${redactWebhookUrl(subscription.webhookUrl)}:`,

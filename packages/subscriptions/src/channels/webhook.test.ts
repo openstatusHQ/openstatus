@@ -191,14 +191,15 @@ describe("sendWebhookNotifications", () => {
     expect(headers["X-Custom-Header"]).toBe("my-value");
   });
 
-  test("continues sending to remaining webhooks when one fails", async () => {
-    fetchMock
-      .mockRejectedValueOnce(new Error("Network error"))
-      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+  test("continues sending to remaining webhooks when one keeps failing", async () => {
+    const failUrl = "https://hooks.slack.com/services/T1/B1/fail";
+    fetchMock.mockImplementation(async (url: string) =>
+      url === failUrl
+        ? Promise.reject(new Error("Network error"))
+        : new Response(null, { status: 200 }),
+    );
 
-    const sub1 = makeSub({
-      webhookUrl: "https://hooks.slack.com/services/T1/B1/fail",
-    });
+    const sub1 = makeSub({ webhookUrl: failUrl });
     const sub2 = makeSub({
       webhookUrl: "https://hooks.slack.com/services/T2/B2/succeed",
     });
@@ -207,7 +208,34 @@ describe("sendWebhookNotifications", () => {
       sendWebhookNotifications([sub1, sub2], makeUpdate()),
     ).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const calls = fetchMock.mock.calls.map(([url]: [string]) => url);
+    expect(calls).toContain("https://hooks.slack.com/services/T2/B2/succeed");
+  });
+
+  test("retries transient failures then succeeds", async () => {
+    let attempts = 0;
+    fetchMock.mockImplementation(async () => {
+      attempts += 1;
+      return attempts < 3
+        ? new Response(null, { status: 503, statusText: "Service Unavailable" })
+        : new Response(null, { status: 200 });
+    });
+
+    await expect(
+      sendWebhookNotifications([makeSub()], makeUpdate()),
+    ).resolves.toBeUndefined();
+
+    expect(attempts).toBe(3);
+  });
+
+  test("does not retry non-retryable 4xx responses", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 400, statusText: "Bad Request" }),
+    );
+
+    await sendWebhookNotifications([makeSub()], makeUpdate());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
