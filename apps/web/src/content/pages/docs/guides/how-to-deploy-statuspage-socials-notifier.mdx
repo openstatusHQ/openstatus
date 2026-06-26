@@ -147,7 +147,7 @@ fly deploy
 
 Import the repo (Railway auto-detects the Dockerfile) and add the environment variables in the project dashboard.
 
-> These platforms scale to zero, so the first request after an idle period incurs a ~1–2s cold start. openstatus does not retry webhooks, so a cold start may delay — but won't drop — the first post.
+> These platforms scale to zero, so the first request after an idle period incurs a ~1–2s cold start. That fits inside openstatus' 5s webhook timeout, and failed deliveries are retried up to 3 times with exponential backoff — so a cold start may delay, but won't drop, the first post.
 
 ### 5. Add the webhook subscriber in openstatus
 
