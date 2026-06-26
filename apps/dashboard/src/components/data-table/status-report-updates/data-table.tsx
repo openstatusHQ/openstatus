@@ -49,7 +49,7 @@ export function DataTable({
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.statusReport.notify.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({

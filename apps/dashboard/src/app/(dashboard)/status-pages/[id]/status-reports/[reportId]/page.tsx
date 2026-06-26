@@ -42,7 +42,7 @@ export default function Page() {
   );
 
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.statusReport.notify.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
 
   const createStatusReportUpdateMutation = useMutation(

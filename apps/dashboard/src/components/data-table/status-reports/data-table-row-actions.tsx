@@ -55,7 +55,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const currentImpacts = currentImpactsFromUpdates(row.original.updates);
   const nextStatus = getNextStatus(row.original.status);
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.statusReport.notify.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
