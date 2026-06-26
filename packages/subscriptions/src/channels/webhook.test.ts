@@ -308,12 +308,11 @@ describe("buildGenericPayload", () => {
       date: "2026-04-21T09:59:58Z",
       updateId: 42,
       componentsWithImpact: [
-        { id: 7, name: "API", impact: "major_outage", changed: true },
+        { id: 7, name: "API", impact: "major_outage" },
         {
           id: 8,
           name: "Dashboard",
           impact: "degraded_performance",
-          changed: false,
         },
       ],
     });
@@ -343,12 +342,11 @@ describe("buildGenericPayload", () => {
         url: "https://acme.openstatus.dev",
       },
       components: [
-        { id: 7, name: "API", impact: "major_outage", changed: true },
+        { id: 7, name: "API", impact: "major_outage" },
         {
           id: 8,
           name: "Dashboard",
           impact: "degraded_performance",
-          changed: false,
         },
       ],
     });
@@ -390,10 +388,8 @@ describe("buildGenericPayload", () => {
         slug: "acme",
         url: "https://acme.openstatus.dev",
       },
-      // maintenance has no per-component impact: falls back to operational/unchanged
-      components: [
-        { id: 7, name: "API", impact: "operational", changed: false },
-      ],
+      // maintenance has no per-component impact: falls back to operational
+      components: [{ id: 7, name: "API", impact: "operational" }],
     });
     expect(payload.data.maintenance).not.toHaveProperty("status");
   });
@@ -406,7 +402,7 @@ describe("buildGenericPayload", () => {
         status: "investigating",
         updateId: 42,
         componentsWithImpact: [
-          { id: 7, name: "API", impact: "partial_outage", changed: true },
+          { id: 7, name: "API", impact: "partial_outage" },
         ],
       }),
       sub,

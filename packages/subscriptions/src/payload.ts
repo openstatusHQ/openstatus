@@ -1,4 +1,5 @@
 import { pageComponentImpactSchema } from "@openstatus/db/src/schema/page_components/validation";
+import { statusReportStatusSchema } from "@openstatus/db/src/schema/status_reports/validation";
 import { z } from "zod";
 
 /**
@@ -13,7 +14,6 @@ const componentSchema = z.object({
   id: z.number().int(),
   name: z.string(),
   impact: pageComponentImpactSchema,
-  changed: z.boolean(),
 });
 
 const pageSchema = z.object({
@@ -37,12 +37,7 @@ export const statusReportWebhookSchema = z.object({
       title: z.string(),
       update: z.object({
         id: z.number().int(),
-        status: z.enum([
-          "investigating",
-          "identified",
-          "monitoring",
-          "resolved",
-        ]),
+        status: statusReportStatusSchema,
         message: z.string(),
         created_at: z.string(),
       }),

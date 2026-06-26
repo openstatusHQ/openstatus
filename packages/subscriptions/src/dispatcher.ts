@@ -17,8 +17,6 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
   const update = await db.query.statusReportUpdate.findFirst({
     where: eq(statusReportUpdate.id, statusReportUpdateId),
     with: {
-      // The delta this update wrote — used to flag `changed` components.
-      statusReportUpdateToPageComponents: true,
       statusReport: {
         with: {
           // Membership: the full set of components on the report (id + name).
@@ -56,15 +54,10 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
       componentImpacts: u.statusReportUpdateToPageComponents,
     })),
   );
-  const changedIds = new Set(
-    update.statusReportUpdateToPageComponents.map((r) => r.pageComponentId),
-  );
-
   const componentsWithImpact = pageComponents.map((c) => ({
     id: c.id,
     name: c.name,
     impact: currentImpacts.get(c.id) ?? "operational",
-    changed: changedIds.has(c.id),
   }));
 
   await dispatchPageUpdate({

@@ -263,13 +263,11 @@ export function buildGenericPayload(
     pageUpdate.pageComponentsWithId?.map((c) => ({
       ...c,
       impact: "operational" as const,
-      changed: false,
     })) ??
     pageUpdate.pageComponents.map((name, i) => ({
       id: i,
       name,
       impact: "operational" as const,
-      changed: false,
     }));
   const subscriptionBlock = {
     manage_url: links.manageUrl,
