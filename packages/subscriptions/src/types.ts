@@ -5,15 +5,15 @@ import type { PageComponentImpact } from "@openstatus/db/src/schema/page_compone
 export interface Subscription {
   id: number;
   pageId: number;
-  pageName: string; // For templates
-  pageSlug: string; // For management URLs
-  customDomain?: string | null; // For custom domain URLs
+  pageName: string;
+  pageSlug: string;
+  customDomain?: string | null;
   componentIds: number[]; // Empty = entire page
 
-  // Channel (only ONE identifier populated based on channelType)
+  // Only ONE identifier populated based on channelType
   channelType: "email" | "webhook";
-  email?: string; // For email channel
-  webhookUrl?: string; // For webhook channel
+  email?: string;
+  webhookUrl?: string;
   channelConfig?: string; // JSON string for headers, secrets, etc.
 
   token?: string;
@@ -36,8 +36,8 @@ export interface PageUpdate {
     | "resolved"
     | "maintenance";
   message: string;
-  pageComponentIds: number[]; // For subscription matching
-  pageComponents: string[]; // Component names for display
+  pageComponentIds: number[];
+  pageComponents: string[];
   date: string; // can be single string or "from - to"
 
   // Optional fields consumed by the prepared (staged) generic webhook payload.

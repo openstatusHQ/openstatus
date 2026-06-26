@@ -2,12 +2,7 @@ import { pageComponentImpactSchema } from "@openstatus/db/src/schema/page_compon
 import { statusReportStatusSchema } from "@openstatus/db/src/schema/status_reports/validation";
 import { z } from "zod";
 
-/**
- * Canonical contract for the generic (self-hosted) status-page webhook.
- * Bump WEBHOOK_PAYLOAD_VERSION on any breaking change; the self-hosted
- * `statuspage-socials-notifier` copies these schemas and rejects unknown
- * versions, so the two sides stay decoupled.
- */
+/** Bump on any breaking change — external consumers (statuspage-socials-notifier) pin to this version. */
 export const WEBHOOK_PAYLOAD_VERSION = "1" as const;
 
 const componentSchema = z.object({
