@@ -10,6 +10,7 @@ import {
   deleteStatusReportUpdate,
   getStatusReport,
   listStatusReports,
+  notifyStatusReport,
   updateStatusReport,
   updateStatusReportUpdate,
 } from "@openstatus/services/status-report";
@@ -66,8 +67,9 @@ export const statusReportRouter = createTRPCRouter({
     .input(createStatusReportTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
+        const serviceCtx = toServiceCtx(ctx);
         const { initialUpdate } = await createStatusReport({
-          ctx: toServiceCtx(ctx),
+          ctx: serviceCtx,
           input: {
             title: input.title,
             status: input.status,
@@ -78,8 +80,8 @@ export const statusReportRouter = createTRPCRouter({
             message: input.message,
           },
         });
-        // Preserve the original "return the initial update row with
-        // notifySubscribers merged in" shape the dashboard consumes.
+        // Notification is a separate, client-driven step (statusReport.notify)
+        // so creation and dispatch stay split.
         return { ...initialUpdate, notifySubscribers: input.notifySubscribers };
       } catch (err) {
         toTRPCError(err);
@@ -91,8 +93,9 @@ export const statusReportRouter = createTRPCRouter({
     .input(createStatusReportUpdateTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
+        const serviceCtx = toServiceCtx(ctx);
         const { statusReportUpdate } = await addStatusReportUpdate({
-          ctx: toServiceCtx(ctx),
+          ctx: serviceCtx,
           input: {
             statusReportId: input.statusReportId,
             status: input.status,
@@ -105,6 +108,21 @@ export const statusReportRouter = createTRPCRouter({
           ...statusReportUpdate,
           notifySubscribers: input.notifySubscribers,
         };
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  notify: protectedProcedure
+    .meta({ track: Events.NotifyReport })
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await notifyStatusReport({
+          ctx: toServiceCtx(ctx),
+          input: { statusReportUpdateId: input.id },
+        });
+        return { success: true };
       } catch (err) {
         toTRPCError(err);
       }

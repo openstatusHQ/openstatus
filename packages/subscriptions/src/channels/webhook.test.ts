@@ -161,7 +161,7 @@ describe("sendWebhookNotifications", () => {
     expect(urls).toContain("https://hooks.slack.com/services/T2/B2/bbb");
   });
 
-  test("drops subscriptions with non-Slack/Discord URLs", async () => {
+  test("sends a generic JSON payload to non-Slack/Discord URLs", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
     const generic = makeSub({
       id: 101,
@@ -169,11 +169,61 @@ describe("sendWebhookNotifications", () => {
     });
     const slack = makeSub({ id: 102, webhookUrl: SLACK_URL });
 
-    await sendWebhookNotifications([generic, slack], makeUpdate());
+    await sendWebhookNotifications(
+      [generic, slack],
+      makeUpdate({ updateId: 42 }),
+    );
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe(SLACK_URL);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const byUrl = new Map<string, any>(
+      fetchMock.mock.calls.map(([url, init]: [string, RequestInit]) => [
+        url,
+        JSON.parse(init.body as string),
+      ]),
+    );
+    expect(byUrl.get("https://example.com/webhook").type).toBe("status_report");
+    expect(byUrl.get(SLACK_URL).attachments).toBeDefined();
+  });
+
+  test("the status_report body sent over the wire satisfies webhookPayloadSchema (v1)", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({ webhookUrl: "https://example.com/webhook" });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({
+        status: "investigating",
+        updateId: 42,
+        componentsWithImpact: [
+          { id: 7, name: "API", impact: "partial_outage" },
+        ],
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const sentBody = JSON.parse(init?.body as string);
+    const result = webhookPayloadSchema.safeParse(sentBody);
+    expect(result.success).toBe(true);
+  });
+
+  test("the maintenance body sent over the wire satisfies webhookPayloadSchema (v1)", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({ webhookUrl: "https://example.com/webhook" });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({
+        status: "maintenance",
+        startsAt: "2026-04-22T02:00:00Z",
+        endsAt: "2026-04-22T03:00:00Z",
+        pageComponentsWithId: [{ id: 7, name: "API" }],
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const sentBody = JSON.parse(init?.body as string);
+    const result = webhookPayloadSchema.safeParse(sentBody);
+    expect(result.success).toBe(true);
   });
 
   test("applies custom headers from channelConfig", async () => {
@@ -191,14 +241,15 @@ describe("sendWebhookNotifications", () => {
     expect(headers["X-Custom-Header"]).toBe("my-value");
   });
 
-  test("continues sending to remaining webhooks when one fails", async () => {
-    fetchMock
-      .mockRejectedValueOnce(new Error("Network error"))
-      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+  test("continues sending to remaining webhooks when one keeps failing", async () => {
+    const failUrl = "https://hooks.slack.com/services/T1/B1/fail";
+    fetchMock.mockImplementation(async (url: string) =>
+      url === failUrl
+        ? Promise.reject(new Error("Network error"))
+        : new Response(null, { status: 200 }),
+    );
 
-    const sub1 = makeSub({
-      webhookUrl: "https://hooks.slack.com/services/T1/B1/fail",
-    });
+    const sub1 = makeSub({ webhookUrl: failUrl });
     const sub2 = makeSub({
       webhookUrl: "https://hooks.slack.com/services/T2/B2/succeed",
     });
@@ -207,7 +258,34 @@ describe("sendWebhookNotifications", () => {
       sendWebhookNotifications([sub1, sub2], makeUpdate()),
     ).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const calls = fetchMock.mock.calls.map(([url]: [string]) => url);
+    expect(calls).toContain("https://hooks.slack.com/services/T2/B2/succeed");
+  });
+
+  test("retries transient failures then succeeds", async () => {
+    let attempts = 0;
+    fetchMock.mockImplementation(async () => {
+      attempts += 1;
+      return attempts < 3
+        ? new Response(null, { status: 503, statusText: "Service Unavailable" })
+        : new Response(null, { status: 200 });
+    });
+
+    await expect(
+      sendWebhookNotifications([makeSub()], makeUpdate()),
+    ).resolves.toBeUndefined();
+
+    expect(attempts).toBe(3);
+  });
+
+  test("does not retry non-retryable 4xx responses", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 400, statusText: "Bad Request" }),
+    );
+
+    await sendWebhookNotifications([makeSub()], makeUpdate());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -288,6 +366,49 @@ describe("sendWebhookNotifications (flavor detection)", () => {
     const stringified = init?.body as string;
     expect(stringified).toContain("https://status.partner.com/manage/tok-123");
   });
+
+  test("Slack payload links to the event details and the page origin", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({ pageSlug: "demo", pageName: "Demo" });
+
+    await sendWebhookNotifications([sub], makeUpdate({ id: 99 }));
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    const stringified = init?.body as string;
+    // title stays in a plain_text header block
+    expect(body.attachments[0].blocks[0]).toMatchObject({
+      type: "header",
+      text: { type: "plain_text", text: "Test Incident" },
+    });
+    expect(stringified).toContain(
+      "<https://demo.openstatus.dev/events/report/99|View details>",
+    );
+    expect(stringified).toContain("<https://demo.openstatus.dev|Demo>");
+  });
+
+  test("Discord embed url points at the event; maintenance uses the maintenance path", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: DISCORD_URL,
+      pageSlug: "demo",
+      pageName: "Demo",
+    });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({ id: 7, status: "maintenance" }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.embeds[0].url).toBe(
+      "https://demo.openstatus.dev/events/maintenance/7",
+    );
+    expect(body.embeds[0].fields[1].value).toBe(
+      "[Demo](https://demo.openstatus.dev)",
+    );
+  });
 });
 
 // ─── buildGenericPayload (staged, not yet reachable in production) ────────────
@@ -329,11 +450,12 @@ describe("buildGenericPayload", () => {
     expect(payload.data.status_report).toMatchObject({
       id: 12,
       title: "API degraded",
+      url: "https://acme.openstatus.dev/events/report/12",
       update: {
         id: 42,
         status: "investigating",
         message: "Looking into it.",
-        created_at: "2026-04-21T09:59:58Z",
+        occurred_at: "2026-04-21T09:59:58Z",
       },
       page: {
         id: 42,
@@ -379,6 +501,7 @@ describe("buildGenericPayload", () => {
     expect(payload.data.maintenance).toMatchObject({
       id: 17,
       title: "DB upgrade",
+      url: "https://acme.openstatus.dev/events/maintenance/17",
       message: "Rolling primary.",
       starts_at: "2026-04-22T02:00:00Z",
       ends_at: "2026-04-22T03:00:00Z",
@@ -438,13 +561,22 @@ describe("buildTestPayload", () => {
     expect(payload.embeds).toBeInstanceOf(Array);
   });
 
-  test("generic flavor returns type='test' JSON", () => {
+  test("generic flavor returns enveloped type='test' JSON", () => {
     const payload = buildTestPayload("generic") as {
+      version: string;
       type: string;
-      message: string;
+      data: { test: { message: string; timestamp: string } };
     };
+    expect(payload.version).toBe("1");
     expect(payload.type).toBe("test");
-    expect(typeof payload.message).toBe("string");
+    expect(typeof payload.data.test.message).toBe("string");
+    expect(typeof payload.data.test.timestamp).toBe("string");
+  });
+
+  test("generic output satisfies the canonical webhookPayloadSchema contract", () => {
+    expect(
+      webhookPayloadSchema.safeParse(buildTestPayload("generic")).success,
+    ).toBe(true);
   });
 });
 

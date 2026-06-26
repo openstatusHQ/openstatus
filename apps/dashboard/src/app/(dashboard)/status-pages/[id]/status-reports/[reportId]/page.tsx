@@ -42,14 +42,14 @@ export default function Page() {
   );
 
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.statusReport.notify.mutationOptions(),
   );
 
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
       onSuccess: (update) => {
         if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          sendStatusReportUpdateMutation.mutate({ id: update.id });
         }
         refetch();
         queryClient.invalidateQueries({

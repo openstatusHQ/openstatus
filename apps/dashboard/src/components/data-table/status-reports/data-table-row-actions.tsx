@@ -55,7 +55,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const currentImpacts = currentImpactsFromUpdates(row.original.updates);
   const nextStatus = getNextStatus(row.original.status);
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.statusReport.notify.mutationOptions(),
   );
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
@@ -79,11 +79,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
       onSuccess: (update) => {
-        // TODO: move to server
         if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          sendStatusReportUpdateMutation.mutate({ id: update.id });
         }
-        //
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,

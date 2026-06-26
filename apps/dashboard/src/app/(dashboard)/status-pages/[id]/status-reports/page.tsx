@@ -34,18 +34,16 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.statusReport.notify.mutationOptions(),
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
-      onSuccess: async (statusReport) => {
-        // TODO: move to server
+      onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
-          await sendStatusReportUpdateMutation.mutateAsync({
+          sendStatusReportUpdateMutation.mutate({
             id: statusReport.id,
           });
         }
-        //
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { detectWebhookFlavor } from "@openstatus/subscriptions/client";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -69,12 +70,6 @@ const formSchema = z
           code: "custom",
           path: ["webhookUrl"],
           message: "Please enter a valid URL",
-        });
-      } else if (detectWebhookFlavor(data.webhookUrl) === "generic") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["webhookUrl"],
-          message: "Only Slack and Discord webhook URLs are supported.",
         });
       }
     }
@@ -297,8 +292,15 @@ export function FormSubscriber({
                       />
                     </FormControl>
                     <FormDescription>
-                      Only Slack and Discord webhook URLs are supported for now
-                      - more channels to come.
+                      <span className="mr-0.5">
+                        Slack and Discord URLs receive channel-native messages;
+                        any other URL receives a generic JSON payload.
+                      </span>
+                      {/^https?:\/\//.test(field.value) ? (
+                        <Badge variant="outline" className="capitalize">
+                          {detectWebhookFlavor(field.value)}
+                        </Badge>
+                      ) : null}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
