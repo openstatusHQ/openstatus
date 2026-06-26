@@ -19,10 +19,7 @@ export {
   validateSlackConfig,
 } from "./channels/slack";
 export type { SlackChannelDeps, SlackClient } from "./channels/slack";
-export {
-  buildReplyMessage,
-  buildRootMessage,
-} from "./channels/slack-blocks";
+export { buildReplyMessage, buildRootMessage } from "./channels/slack-blocks";
 export {
   createMemoryAnchorStore,
   createRedisAnchorStore,

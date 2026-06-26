@@ -83,13 +83,21 @@ describe("createSlackSubscriber", () => {
 
   test("re-activates a previously removed channel", async () => {
     await createSlackSubscriber({
-      input: { pageId: PAGE_ID, teamId: TEAM_ID, channelId: CHANNELS.reactivate },
+      input: {
+        pageId: PAGE_ID,
+        teamId: TEAM_ID,
+        channelId: CHANNELS.reactivate,
+      },
     });
     await removeSlackSubscriber({
       input: { pageId: PAGE_ID, channelId: CHANNELS.reactivate },
     });
     const reactivated = await createSlackSubscriber({
-      input: { pageId: PAGE_ID, teamId: TEAM_ID, channelId: CHANNELS.reactivate },
+      input: {
+        pageId: PAGE_ID,
+        teamId: TEAM_ID,
+        channelId: CHANNELS.reactivate,
+      },
     });
 
     expect(reactivated.alreadySubscribed).toBe(false);

@@ -8,10 +8,7 @@ import { WebClient } from "@slack/web-api";
 
 import type { PageUpdate, Subscription } from "../types";
 import { buildReplyMessage, buildRootMessage } from "./slack-blocks";
-import {
-  type SlackAnchorStore,
-  createRedisAnchorStore,
-} from "./slack-store";
+import { type SlackAnchorStore, createRedisAnchorStore } from "./slack-store";
 
 interface SlackPostResult {
   ts?: string;
@@ -64,7 +61,10 @@ async function getBotTokenFromDb(teamId: string): Promise<string | null> {
     .select({ credential: integration.credential })
     .from(integration)
     .where(
-      and(eq(integration.name, "slack-agent"), eq(integration.externalId, teamId)),
+      and(
+        eq(integration.name, "slack-agent"),
+        eq(integration.externalId, teamId),
+      ),
     )
     .get();
   const credential = row?.credential as { botToken?: string } | null;
@@ -183,7 +183,10 @@ export function createSlackChannel(deps: SlackChannelDeps) {
     subscriptions: Subscription[],
     pageUpdate: PageUpdate,
   ): Promise<void> {
-    const byTeam = new Map<string, { sub: Subscription; channelId: string }[]>();
+    const byTeam = new Map<
+      string,
+      { sub: Subscription; channelId: string }[]
+    >();
     for (const sub of subscriptions) {
       if (sub.channelType !== "slack") continue;
       const channelId = sub.slackChannelId;

@@ -77,7 +77,10 @@ export function buildRootMessage(
       type: "section",
       fields: [
         { type: "mrkdwn", text: `*Status*\n${label}` },
-        { type: "mrkdwn", text: `*Page*\n<${origin}|${subscription.pageName}>` },
+        {
+          type: "mrkdwn",
+          text: `*Page*\n<${origin}|${subscription.pageName}>`,
+        },
       ],
     },
   ];
@@ -127,7 +130,9 @@ export function buildReplyMessage(pageUpdate: PageUpdate): SlackReplyMessage {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: pageUpdate.message ? `${heading}\n${pageUpdate.message}` : heading,
+          text: pageUpdate.message
+            ? `${heading}\n${pageUpdate.message}`
+            : heading,
         },
       },
     ],
