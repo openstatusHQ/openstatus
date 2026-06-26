@@ -161,7 +161,7 @@ describe("sendWebhookNotifications", () => {
     expect(urls).toContain("https://hooks.slack.com/services/T2/B2/bbb");
   });
 
-  test("drops subscriptions with non-Slack/Discord URLs", async () => {
+  test("sends a generic JSON payload to non-Slack/Discord URLs", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
     const generic = makeSub({
       id: 101,
@@ -169,11 +169,61 @@ describe("sendWebhookNotifications", () => {
     });
     const slack = makeSub({ id: 102, webhookUrl: SLACK_URL });
 
-    await sendWebhookNotifications([generic, slack], makeUpdate());
+    await sendWebhookNotifications(
+      [generic, slack],
+      makeUpdate({ updateId: 42 }),
+    );
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe(SLACK_URL);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const byUrl = new Map<string, any>(
+      fetchMock.mock.calls.map(([url, init]: [string, RequestInit]) => [
+        url,
+        JSON.parse(init.body as string),
+      ]),
+    );
+    expect(byUrl.get("https://example.com/webhook").type).toBe("status_report");
+    expect(byUrl.get(SLACK_URL).attachments).toBeDefined();
+  });
+
+  test("the status_report body sent over the wire satisfies webhookPayloadSchema (v1)", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({ webhookUrl: "https://example.com/webhook" });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({
+        status: "investigating",
+        updateId: 42,
+        componentsWithImpact: [
+          { id: 7, name: "API", impact: "partial_outage" },
+        ],
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const sentBody = JSON.parse(init?.body as string);
+    const result = webhookPayloadSchema.safeParse(sentBody);
+    expect(result.success).toBe(true);
+  });
+
+  test("the maintenance body sent over the wire satisfies webhookPayloadSchema (v1)", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({ webhookUrl: "https://example.com/webhook" });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({
+        status: "maintenance",
+        startsAt: "2026-04-22T02:00:00Z",
+        endsAt: "2026-04-22T03:00:00Z",
+        pageComponentsWithId: [{ id: 7, name: "API" }],
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const sentBody = JSON.parse(init?.body as string);
+    const result = webhookPayloadSchema.safeParse(sentBody);
+    expect(result.success).toBe(true);
   });
 
   test("applies custom headers from channelConfig", async () => {
@@ -316,6 +366,49 @@ describe("sendWebhookNotifications (flavor detection)", () => {
     const stringified = init?.body as string;
     expect(stringified).toContain("https://status.partner.com/manage/tok-123");
   });
+
+  test("Slack payload links to the event details and the page origin", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({ pageSlug: "demo", pageName: "Demo" });
+
+    await sendWebhookNotifications([sub], makeUpdate({ id: 99 }));
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    const stringified = init?.body as string;
+    // title stays in a plain_text header block
+    expect(body.attachments[0].blocks[0]).toMatchObject({
+      type: "header",
+      text: { type: "plain_text", text: "Test Incident" },
+    });
+    expect(stringified).toContain(
+      "<https://demo.openstatus.dev/events/report/99|View details>",
+    );
+    expect(stringified).toContain("<https://demo.openstatus.dev|Demo>");
+  });
+
+  test("Discord embed url points at the event; maintenance uses the maintenance path", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: DISCORD_URL,
+      pageSlug: "demo",
+      pageName: "Demo",
+    });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({ id: 7, status: "maintenance" }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.embeds[0].url).toBe(
+      "https://demo.openstatus.dev/events/maintenance/7",
+    );
+    expect(body.embeds[0].fields[1].value).toBe(
+      "[Demo](https://demo.openstatus.dev)",
+    );
+  });
 });
 
 // ─── buildGenericPayload (staged, not yet reachable in production) ────────────
@@ -367,7 +460,7 @@ describe("buildGenericPayload", () => {
         id: 42,
         name: "Acme",
         slug: "acme",
-        url: "https://acme.openstatus.dev",
+        url: "https://acme.openstatus.dev/events/report/12",
       },
       components: [
         { id: 7, name: "API", impact: "major_outage" },
@@ -414,7 +507,7 @@ describe("buildGenericPayload", () => {
         id: 42,
         name: "Acme",
         slug: "acme",
-        url: "https://acme.openstatus.dev",
+        url: "https://acme.openstatus.dev/events/maintenance/17",
       },
       // maintenance has no per-component impact: falls back to operational
       components: [{ id: 7, name: "API", impact: "operational" }],

@@ -5,7 +5,6 @@ import {
   pageSubscriberToPageComponent,
   selectPageSubscriberSchema,
 } from "@openstatus/db/src/schema";
-import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { assertSafeUrl } from "@openstatus/utils";
 
 import { emitAudit } from "../audit";
@@ -64,11 +63,6 @@ export async function createPageSubscriber(args: {
   // outside avoids holding the SQLite write lock across a network call.
   if (input.channelType === "webhook") {
     await assertSafeUrl(input.webhookUrl);
-    if (detectWebhookFlavor(input.webhookUrl) === "generic") {
-      throw new ValidationError(
-        "Only Slack and Discord webhook URLs are supported.",
-      );
-    }
   }
 
   return withTransaction(ctx, async (tx) => {

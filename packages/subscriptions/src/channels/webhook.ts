@@ -36,6 +36,16 @@ function resolveStatusPageOrigin(subscription: Subscription): string {
     : `https://${subscription.pageSlug}.openstatus.dev`;
 }
 
+// Deep link to the specific event on the status page, mirroring the path
+// shape used by the Slack app integration (apps/server slack/page-urls.ts).
+function resolveEventUrl(
+  pageUpdate: PageUpdate,
+  subscription: Subscription,
+): string {
+  const kind = pageUpdate.status === "maintenance" ? "maintenance" : "report";
+  return `${resolveStatusPageOrigin(subscription)}/events/${kind}/${pageUpdate.id}`;
+}
+
 function buildManagementLinks(subscription: Subscription) {
   if (!subscription.token) {
     return { manageUrl: null, unsubscribeUrl: null };
@@ -121,6 +131,8 @@ function buildSlackPayload(
   links: ManagementLinks,
 ) {
   const color = statusColor(pageUpdate.status);
+  const eventUrl = resolveEventUrl(pageUpdate, subscription);
+  const pageOrigin = resolveStatusPageOrigin(subscription);
 
   const blocks: Record<string, unknown>[] = [
     {
@@ -140,7 +152,7 @@ function buildSlackPayload(
         },
         {
           type: "mrkdwn",
-          text: `*Page*\n${subscription.pageName}`,
+          text: `*Page*\n<${pageOrigin}|${subscription.pageName}>`,
         },
       ],
     },
@@ -176,17 +188,17 @@ function buildSlackPayload(
     ],
   });
 
+  const footerLinks = [`<${eventUrl}|View details>`];
   if (links.manageUrl && links.unsubscribeUrl) {
-    blocks.push({
-      type: "context",
-      elements: [
-        {
-          type: "mrkdwn",
-          text: `<${links.manageUrl}|Manage> · <${links.unsubscribeUrl}|Unsubscribe>`,
-        },
-      ],
-    });
+    footerLinks.push(
+      `<${links.manageUrl}|Manage>`,
+      `<${links.unsubscribeUrl}|Unsubscribe>`,
+    );
   }
+  blocks.push({
+    type: "context",
+    elements: [{ type: "mrkdwn", text: footerLinks.join(" · ") }],
+  });
 
   return {
     attachments: [
@@ -204,6 +216,8 @@ function buildDiscordPayload(
   links: ManagementLinks,
 ) {
   const color = statusColor(pageUpdate.status);
+  const eventUrl = resolveEventUrl(pageUpdate, subscription);
+  const pageOrigin = resolveStatusPageOrigin(subscription);
 
   const descriptionParts: string[] = [];
   if (pageUpdate.message) descriptionParts.push(pageUpdate.message);
@@ -222,6 +236,7 @@ function buildDiscordPayload(
     embeds: [
       {
         title: pageUpdate.title,
+        url: eventUrl,
         description: descriptionParts.join("\n\n") || undefined,
         color: COLOR_DECIMALS[color],
         fields: [
@@ -232,7 +247,7 @@ function buildDiscordPayload(
           },
           {
             name: "Page",
-            value: subscription.pageName,
+            value: `[${subscription.pageName}](${pageOrigin})`,
             inline: true,
           },
         ],
@@ -245,21 +260,24 @@ function buildDiscordPayload(
 }
 
 /**
- * Prepared (staged) generic webhook payload. Currently unreachable in
- * production — the input gate rejects non-Slack/Discord URLs, and the
- * dispatcher filters the same at send-time. Exported for unit-test coverage
- * so the contract stays green while generic webhooks are held back.
+ * Generic JSON webhook payload, sent to any non-Slack/Discord URL.
+ * Shape is pinned by `webhookPayloadSchema` in `../payload`.
  */
 export function buildGenericPayload(
   pageUpdate: PageUpdate,
   subscription: Subscription,
   links: ManagementLinks,
 ) {
+  const origin = resolveStatusPageOrigin(subscription);
+  const eventPath =
+    pageUpdate.status === "maintenance"
+      ? `events/maintenance/${pageUpdate.id}`
+      : `events/report/${pageUpdate.id}`;
   const page = {
     id: subscription.pageId,
     name: subscription.pageName,
     slug: subscription.pageSlug,
-    url: resolveStatusPageOrigin(subscription),
+    url: `${origin}/${eventPath}`,
   };
   const components =
     pageUpdate.componentsWithImpact ??
@@ -345,18 +363,7 @@ export async function sendWebhookNotifications(
   subscriptions: Subscription[],
   pageUpdate: PageUpdate,
 ) {
-  // Defense-in-depth: the input gate (tRPC + service layer) already rejects
-  // non-Slack/Discord URLs at save time. Drop any that slip through so the
-  // unreachable generic payload never ships to an unapproved destination.
-  const validSubscriptions = subscriptions
-    .filter(hasWebhookUrl)
-    .filter((sub) => {
-      if (detectWebhookFlavor(sub.webhookUrl) !== "generic") return true;
-      console.warn(
-        `Dropping webhook subscription ${sub.id}: generic URLs are not currently supported`,
-      );
-      return false;
-    });
+  const validSubscriptions = subscriptions.filter(hasWebhookUrl);
   if (validSubscriptions.length === 0) return;
 
   await Promise.allSettled(
