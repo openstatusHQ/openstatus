@@ -32,16 +32,14 @@ export default function Page() {
     }),
   );
   const sendMaintenanceUpdateMutation = useMutation(
-    trpc.emailRouter.sendMaintenance.mutationOptions(),
+    trpc.maintenance.notify.mutationOptions(),
   );
   const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
       onSuccess: (maintenance) => {
-        // TODO: move to server
         if (maintenance.notifySubscribers) {
           sendMaintenanceUpdateMutation.mutateAsync({ id: maintenance.id });
         }
-        //
         refetch();
       },
     }),

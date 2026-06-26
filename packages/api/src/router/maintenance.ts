@@ -4,6 +4,7 @@ import {
   createMaintenance,
   deleteMaintenance,
   listMaintenances,
+  notifyMaintenance,
   updateMaintenance,
 } from "@openstatus/services/maintenance";
 import { z } from "zod";
@@ -60,6 +61,20 @@ export const maintenanceRouter = createTRPCRouter({
           },
         });
         return items;
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  notify: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await notifyMaintenance({
+          ctx: toServiceCtx(ctx),
+          input: { maintenanceId: input.id },
+        });
+        return { success: true };
       } catch (err) {
         toTRPCError(err);
       }
