@@ -24,6 +24,15 @@ export async function validateEmailConfig(config: unknown) {
   return { valid: email.success, error: email.error?.message };
 }
 
+// Stable per status-report update / maintenance so Resend dedupes the email
+// retry path. Status reports key off the specific update; maintenance has no
+// update row, so fall back to its id + status.
+function idempotencyKeyFor(pageUpdate: PageUpdate): string {
+  return pageUpdate.updateId != null
+    ? `status-report-update:${pageUpdate.updateId}`
+    : `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+}
+
 function hasEmailAndToken(
   sub: Subscription,
 ): sub is Subscription & { email: string; token: string } {
@@ -76,5 +85,6 @@ export async function sendEmailNotifications(
     message: pageUpdate.message,
     date: pageUpdate.date,
     pageComponents: pageUpdate.pageComponents,
+    idempotencyKey: idempotencyKeyFor(pageUpdate),
   });
 }

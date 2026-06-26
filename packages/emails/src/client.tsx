@@ -161,6 +161,10 @@ export class EmailClient {
       subscribers: Array<{ email: string; token: string }>;
       pageSlug: string;
       customDomain?: string | null;
+      // Base key for Resend idempotency. The per-batch retry below would
+      // otherwise re-send the whole chunk if a request succeeds server-side
+      // but the response is lost. Must be stable across retries.
+      idempotencyKey?: string;
     },
   ) {
     const statusPageBaseUrl = req.customDomain
@@ -176,7 +180,14 @@ export class EmailClient {
       return;
     }
 
-    for (const recipients of chunk(req.subscribers, 100)) {
+    const chunks = chunk(req.subscribers, 100);
+    for (let i = 0; i < chunks.length; i++) {
+      const recipients = chunks[i];
+      // suffix the chunk index so a multi-batch send doesn't collide its
+      // own chunks on a single shared key
+      const batchKey = req.idempotencyKey
+        ? `${req.idempotencyKey}:${i}`
+        : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.batch.send(
@@ -196,6 +207,7 @@ export class EmailClient {
                 ),
               };
             }),
+            batchKey ? { idempotencyKey: batchKey } : undefined,
           ),
         catch: (_unknown) =>
           new Error(
@@ -345,6 +357,7 @@ export class EmailClient {
     from: string;
     to: string;
     pageComponents: string[];
+    idempotencyKey?: string;
   }) {
     const statusPageBaseUrl = req.customDomain
       ? `https://${req.customDomain}`
@@ -359,7 +372,12 @@ export class EmailClient {
       return;
     }
 
-    for (const recipients of chunk(req.subscribers, 100)) {
+    const chunks = chunk(req.subscribers, 100);
+    for (let i = 0; i < chunks.length; i++) {
+      const recipients = chunks[i];
+      const batchKey = req.idempotencyKey
+        ? `${req.idempotencyKey}:${i}`
+        : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.batch.send(
@@ -384,6 +402,7 @@ export class EmailClient {
                 ),
               };
             }),
+            batchKey ? { idempotencyKey: batchKey } : undefined,
           ),
         catch: (_unknown) =>
           new Error(
