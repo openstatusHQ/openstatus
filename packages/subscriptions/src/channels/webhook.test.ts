@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 
+import { webhookPayloadSchema } from "../payload";
 import type { PageUpdate, Subscription } from "../types";
 import {
   buildGenericPayload,
@@ -306,15 +307,24 @@ describe("buildGenericPayload", () => {
       message: "Looking into it.",
       date: "2026-04-21T09:59:58Z",
       updateId: 42,
-      pageComponentsWithId: [{ id: 7, name: "API" }],
+      componentsWithImpact: [
+        { id: 7, name: "API", impact: "major_outage" },
+        {
+          id: 8,
+          name: "Dashboard",
+          impact: "degraded_performance",
+        },
+      ],
     });
 
     const payload = buildGenericPayload(update, sub, links) as {
+      version: string;
       type: string;
       data: { status_report: Record<string, unknown> };
       subscription: { manage_url: string; unsubscribe_url: string };
     };
 
+    expect(payload.version).toBe("1");
     expect(payload.type).toBe("status_report");
     expect(payload.data.status_report).toMatchObject({
       id: 12,
@@ -325,8 +335,20 @@ describe("buildGenericPayload", () => {
         message: "Looking into it.",
         created_at: "2026-04-21T09:59:58Z",
       },
-      page: { id: 42, name: "Acme", slug: "acme" },
-      components: [{ id: 7, name: "API" }],
+      page: {
+        id: 42,
+        name: "Acme",
+        slug: "acme",
+        url: "https://acme.openstatus.dev",
+      },
+      components: [
+        { id: 7, name: "API", impact: "major_outage" },
+        {
+          id: 8,
+          name: "Dashboard",
+          impact: "degraded_performance",
+        },
+      ],
     });
     expect(payload.subscription).toEqual({
       manage_url: links.manageUrl,
@@ -347,10 +369,12 @@ describe("buildGenericPayload", () => {
     });
 
     const payload = buildGenericPayload(update, sub, links) as {
+      version: string;
       type: string;
       data: { maintenance: Record<string, unknown> };
     };
 
+    expect(payload.version).toBe("1");
     expect(payload.type).toBe("maintenance");
     expect(payload.data.maintenance).toMatchObject({
       id: 17,
@@ -358,10 +382,46 @@ describe("buildGenericPayload", () => {
       message: "Rolling primary.",
       starts_at: "2026-04-22T02:00:00Z",
       ends_at: "2026-04-22T03:00:00Z",
-      page: { id: 42, name: "Acme", slug: "acme" },
-      components: [{ id: 7, name: "API" }],
+      page: {
+        id: 42,
+        name: "Acme",
+        slug: "acme",
+        url: "https://acme.openstatus.dev",
+      },
+      // maintenance has no per-component impact: falls back to operational
+      components: [{ id: 7, name: "API", impact: "operational" }],
     });
     expect(payload.data.maintenance).not.toHaveProperty("status");
+  });
+
+  test("output satisfies the canonical webhookPayloadSchema contract", () => {
+    const sub = makeSub({ pageId: 42, pageName: "Acme", pageSlug: "acme" });
+    const report = buildGenericPayload(
+      makeUpdate({
+        id: 12,
+        status: "investigating",
+        updateId: 42,
+        componentsWithImpact: [
+          { id: 7, name: "API", impact: "partial_outage" },
+        ],
+      }),
+      sub,
+      links,
+    );
+    const maintenance = buildGenericPayload(
+      makeUpdate({
+        id: 17,
+        status: "maintenance",
+        startsAt: "2026-04-22T02:00:00Z",
+        endsAt: "2026-04-22T03:00:00Z",
+        pageComponentsWithId: [{ id: 7, name: "API" }],
+      }),
+      sub,
+      links,
+    );
+
+    expect(webhookPayloadSchema.safeParse(report).success).toBe(true);
+    expect(webhookPayloadSchema.safeParse(maintenance).success).toBe(true);
   });
 });
 

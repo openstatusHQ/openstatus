@@ -2,12 +2,14 @@ import { COLORS, COLOR_DECIMALS } from "@openstatus/notification-base";
 import { assertSafeUrl } from "@openstatus/utils";
 import { z } from "zod";
 
+import { WEBHOOK_PAYLOAD_VERSION } from "../payload";
 import type { PageUpdate, Subscription } from "../types";
 
 export type WebhookFlavor = "slack" | "discord" | "generic";
 
 const SLACK_PREFIX = "https://hooks.slack.com/services/";
 const DISCORD_PREFIX = "https://discord.com/api/webhooks/";
+const TIMEOUT_MS = 5000; // 5 seconds
 
 /**
  * Classify a webhook URL by its incoming-webhook origin so we can emit
@@ -60,19 +62,20 @@ function statusColor(status: PageUpdate["status"]): StatusColor {
   }
 }
 
+const webhookConfigSchema = z.object({
+  headers: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        value: z.string(),
+      }),
+    )
+    .optional(),
+  secret: z.string().optional(),
+});
+
 export async function validateWebhookConfig(config: unknown) {
-  const schema = z.object({
-    headers: z
-      .array(
-        z.object({
-          key: z.string().min(1),
-          value: z.string(),
-        }),
-      )
-      .optional(),
-    secret: z.string().optional(),
-  });
-  const result = schema.safeParse(config);
+  const result = webhookConfigSchema.safeParse(config);
   return { valid: result.success, error: result.error?.message };
 }
 
@@ -99,7 +102,7 @@ export async function sendWebhookVerification(
       token: subscription.token,
       verifyUrl,
     }),
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -255,10 +258,19 @@ export function buildGenericPayload(
     id: subscription.pageId,
     name: subscription.pageName,
     slug: subscription.pageSlug,
+    url: resolveStatusPageOrigin(subscription),
   };
   const components =
-    pageUpdate.pageComponentsWithId ??
-    pageUpdate.pageComponents.map((name, i) => ({ id: i, name }));
+    pageUpdate.componentsWithImpact ??
+    pageUpdate.pageComponentsWithId?.map((c) => ({
+      ...c,
+      impact: "operational" as const,
+    })) ??
+    pageUpdate.pageComponents.map((name, i) => ({
+      id: i, // synthetic id: legacy bare-names path has no real pageComponentId
+      name,
+      impact: "operational" as const,
+    }));
   const subscriptionBlock = {
     manage_url: links.manageUrl,
     unsubscribe_url: links.unsubscribeUrl,
@@ -266,6 +278,7 @@ export function buildGenericPayload(
 
   if (pageUpdate.status === "maintenance") {
     return {
+      version: WEBHOOK_PAYLOAD_VERSION,
       type: "maintenance" as const,
       data: {
         maintenance: {
@@ -282,7 +295,12 @@ export function buildGenericPayload(
     };
   }
 
+  if (pageUpdate.updateId == null) {
+    throw new Error("status_report webhook payload requires updateId");
+  }
+
   return {
+    version: WEBHOOK_PAYLOAD_VERSION,
     type: "status_report" as const,
     data: {
       status_report: {
@@ -360,11 +378,9 @@ export async function sendWebhookNotifications(
         "User-Agent": "OpenStatus-Webhooks/1.0",
       };
 
-      if (config.headers) {
-        for (const header of config.headers as {
-          key: string;
-          value: string;
-        }[]) {
+      const parsedConfig = webhookConfigSchema.safeParse(config);
+      if (parsedConfig.success) {
+        for (const header of parsedConfig.data.headers ?? []) {
           headers[header.key] = header.value;
         }
       }
@@ -375,7 +391,7 @@ export async function sendWebhookNotifications(
           method: "POST",
           headers,
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
         });
 
         if (!response.ok) {
@@ -468,7 +484,7 @@ export async function sendTestWebhookRequest(input: {
     method: "POST",
     headers,
     body: JSON.stringify(buildTestPayload(flavor)),
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (!response.ok) {
