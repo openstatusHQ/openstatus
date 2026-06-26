@@ -269,15 +269,12 @@ export function buildGenericPayload(
   links: ManagementLinks,
 ) {
   const origin = resolveStatusPageOrigin(subscription);
-  const eventPath =
-    pageUpdate.status === "maintenance"
-      ? `events/maintenance/${pageUpdate.id}`
-      : `events/report/${pageUpdate.id}`;
+  const eventUrl = resolveEventUrl(pageUpdate, subscription);
   const page = {
     id: subscription.pageId,
     name: subscription.pageName,
     slug: subscription.pageSlug,
-    url: `${origin}/${eventPath}`,
+    url: origin,
   };
   const components =
     pageUpdate.componentsWithImpact ??
@@ -303,6 +300,7 @@ export function buildGenericPayload(
         maintenance: {
           id: pageUpdate.id,
           title: pageUpdate.title,
+          url: eventUrl,
           message: pageUpdate.message,
           starts_at: pageUpdate.startsAt,
           ends_at: pageUpdate.endsAt,
@@ -325,11 +323,12 @@ export function buildGenericPayload(
       status_report: {
         id: pageUpdate.id,
         title: pageUpdate.title,
+        url: eventUrl,
         update: {
           id: pageUpdate.updateId,
           status: pageUpdate.status,
           message: pageUpdate.message,
-          created_at: pageUpdate.date,
+          occurred_at: pageUpdate.date,
         },
         page,
         components,
@@ -456,9 +455,14 @@ export function buildTestPayload(flavor: WebhookFlavor) {
       };
     case "generic":
       return {
-        type: "test",
-        message: "Your openstatus webhook is configured correctly.",
-        timestamp: new Date().toISOString(),
+        version: WEBHOOK_PAYLOAD_VERSION,
+        type: "test" as const,
+        data: {
+          test: {
+            message: "Your openstatus webhook is configured correctly.",
+            timestamp: new Date().toISOString(),
+          },
+        },
       };
   }
 }

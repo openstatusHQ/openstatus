@@ -297,7 +297,7 @@ export function FormSubscriber({
                         any other URL receives a generic JSON payload.
                       </span>
                       {/^https?:\/\//.test(field.value) ? (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="capitalize">
                           {detectWebhookFlavor(field.value)}
                         </Badge>
                       ) : null}

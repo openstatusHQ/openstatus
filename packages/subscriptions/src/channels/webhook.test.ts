@@ -450,17 +450,18 @@ describe("buildGenericPayload", () => {
     expect(payload.data.status_report).toMatchObject({
       id: 12,
       title: "API degraded",
+      url: "https://acme.openstatus.dev/events/report/12",
       update: {
         id: 42,
         status: "investigating",
         message: "Looking into it.",
-        created_at: "2026-04-21T09:59:58Z",
+        occurred_at: "2026-04-21T09:59:58Z",
       },
       page: {
         id: 42,
         name: "Acme",
         slug: "acme",
-        url: "https://acme.openstatus.dev/events/report/12",
+        url: "https://acme.openstatus.dev",
       },
       components: [
         { id: 7, name: "API", impact: "major_outage" },
@@ -500,6 +501,7 @@ describe("buildGenericPayload", () => {
     expect(payload.data.maintenance).toMatchObject({
       id: 17,
       title: "DB upgrade",
+      url: "https://acme.openstatus.dev/events/maintenance/17",
       message: "Rolling primary.",
       starts_at: "2026-04-22T02:00:00Z",
       ends_at: "2026-04-22T03:00:00Z",
@@ -507,7 +509,7 @@ describe("buildGenericPayload", () => {
         id: 42,
         name: "Acme",
         slug: "acme",
-        url: "https://acme.openstatus.dev/events/maintenance/17",
+        url: "https://acme.openstatus.dev",
       },
       // maintenance has no per-component impact: falls back to operational
       components: [{ id: 7, name: "API", impact: "operational" }],
@@ -559,13 +561,22 @@ describe("buildTestPayload", () => {
     expect(payload.embeds).toBeInstanceOf(Array);
   });
 
-  test("generic flavor returns type='test' JSON", () => {
+  test("generic flavor returns enveloped type='test' JSON", () => {
     const payload = buildTestPayload("generic") as {
+      version: string;
       type: string;
-      message: string;
+      data: { test: { message: string; timestamp: string } };
     };
+    expect(payload.version).toBe("1");
     expect(payload.type).toBe("test");
-    expect(typeof payload.message).toBe("string");
+    expect(typeof payload.data.test.message).toBe("string");
+    expect(typeof payload.data.test.timestamp).toBe("string");
+  });
+
+  test("generic output satisfies the canonical webhookPayloadSchema contract", () => {
+    expect(
+      webhookPayloadSchema.safeParse(buildTestPayload("generic")).success,
+    ).toBe(true);
   });
 });
 
