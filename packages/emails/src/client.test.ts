@@ -39,7 +39,11 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   let batchSend: any;
 
   beforeEach(() => {
-    client = new EmailClient({ apiKey: "re_test_123" });
+    // zero backoff so the retry test doesn't wait on the real exponential sleep
+    client = new EmailClient({
+      apiKey: "re_test_123",
+      retryBackoff: "0 millis",
+    });
     batchSend = spyOn(client.client.batch, "send").mockResolvedValue(ok);
   });
 
@@ -107,5 +111,5 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       "status-report-update:7:0",
       "status-report-update:7:0",
     ]);
-  }, 10_000);
+  });
 });

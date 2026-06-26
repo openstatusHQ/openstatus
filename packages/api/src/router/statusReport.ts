@@ -81,7 +81,7 @@ export const statusReportRouter = createTRPCRouter({
           },
         });
         // Notification is a separate, client-driven step (statusReport.notify)
-        // so creation and dispatch stay split — later moving to a queue.
+        // so creation and dispatch stay split.
         return { ...initialUpdate, notifySubscribers: input.notifySubscribers };
       } catch (err) {
         toTRPCError(err);
@@ -114,6 +114,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   notify: protectedProcedure
+    .meta({ track: Events.NotifyReport })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {

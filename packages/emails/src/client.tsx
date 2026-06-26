@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 
-import { Effect, Schedule } from "effect";
+import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
 
@@ -37,9 +37,13 @@ function chunk<T>(array: T[], size: number): T[][] {
 
 export class EmailClient {
   public readonly client: Resend;
+  // Base delay for the per-batch send retry. Overridable so tests can run the
+  // retry path without the real ~1s exponential sleep.
+  private readonly retryBackoff: Duration.DurationInput;
 
-  constructor(opts: { apiKey: string }) {
+  constructor(opts: { apiKey: string; retryBackoff?: Duration.DurationInput }) {
     this.client = new Resend(opts.apiKey);
+    this.retryBackoff = opts.retryBackoff ?? "1000 millis";
   }
 
   public async sendFollowUp(req: { to: string }) {
@@ -221,7 +225,7 @@ export class EmailClient {
         ),
         Effect.retry({
           times: 3,
-          schedule: Schedule.exponential("1000 millis"),
+          schedule: Schedule.exponential(this.retryBackoff),
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -416,7 +420,7 @@ export class EmailClient {
         ),
         Effect.retry({
           times: 3,
-          schedule: Schedule.exponential("1000 millis"),
+          schedule: Schedule.exponential(this.retryBackoff),
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);

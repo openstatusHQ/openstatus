@@ -47,14 +47,14 @@ export default function Page() {
 
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
-      onSuccess: (update) => {
-        if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
-        }
+      onSuccess: async (update) => {
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        if (update?.notifySubscribers) {
+          await sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+        }
       },
     }),
   );

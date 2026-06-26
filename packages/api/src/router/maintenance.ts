@@ -67,6 +67,7 @@ export const maintenanceRouter = createTRPCRouter({
     }),
 
   notify: protectedProcedure
+    .meta({ track: Events.NotifyMaintenance })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {

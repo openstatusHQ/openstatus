@@ -78,10 +78,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   );
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
-      onSuccess: (update) => {
-        if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
-        }
+      onSuccess: async (update) => {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
@@ -95,6 +92,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             period: "7d",
           }),
         });
+        if (update?.notifySubscribers) {
+          await sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+        }
       },
     }),
   );
