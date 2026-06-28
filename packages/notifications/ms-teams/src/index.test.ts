@@ -116,7 +116,7 @@ describe("Microsoft Teams Notifications", () => {
 
   const readMessagePayload = (): MessagePayload => {
     const calls = fetchMock.calls;
-    const init = calls[0][1];
+    const init = calls[0].args[1];
     if (!init || typeof init.body !== "string") {
       throw new Error("expected string body");
     }

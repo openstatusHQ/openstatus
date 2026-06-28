@@ -338,7 +338,9 @@ describe("Tracker", () => {
 
     describe("per-day precedence (maintenance > report > incident > uptime)", () => {
       const DAY = "2024-01-01";
-      const okData = [day(`${DAY} 00:00:00`, 864, 864)];
+      // date-only string so `new Date(day)` anchors to UTC midnight, matching
+      // the UTC fixture dates below regardless of the runner's timezone.
+      const okData = [day(DAY, 864, 864)];
 
       test("maintenance overlapping the day wins", () => {
         const [bucket] = new Tracker({
@@ -396,7 +398,7 @@ describe("Tracker", () => {
 
       test("an incident resolved on a previous day does not affect this bucket", () => {
         const [bucket] = new Tracker({
-          data: [day("2024-01-02 00:00:00", 864, 864)],
+          data: [day("2024-01-02", 864, 864)],
           incidents: [
             createIncident({
               startedAt: new Date("2024-01-01T12:00:00.000Z"),

@@ -9,7 +9,7 @@ import {
   revokeApiKey,
   updateApiKeyLastUsed,
   verifyApiKey,
-} from "..";
+} from "../index.ts";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,

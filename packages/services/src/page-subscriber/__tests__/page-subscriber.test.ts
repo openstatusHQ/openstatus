@@ -23,7 +23,7 @@ import {
   updateSubscriberScope,
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
-} from "..";
+} from "../index.ts";
 import {
   SEEDED_WORKSPACE_FREE_ID,
   SEEDED_WORKSPACE_TEAM_ID,

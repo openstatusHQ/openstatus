@@ -178,8 +178,7 @@ describe("Slack Notifications", () => {
       createMockNotification(),
     );
 
-    // Should not throw - function catches errors internally
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,

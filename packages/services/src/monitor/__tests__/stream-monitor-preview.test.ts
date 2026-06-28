@@ -67,11 +67,13 @@ describe("streamMonitorPreview", () => {
         input: { monitorId: 999_999_999 },
       });
 
-      await expect(async () => {
-        for await (const _ of generator) {
-          // drain
-        }
-      }).toThrow(NotFoundError);
+      await expect(
+        (async () => {
+          for await (const _ of generator) {
+            // drain
+          }
+        })(),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 

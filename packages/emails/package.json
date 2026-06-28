@@ -13,7 +13,7 @@
   },
   "scripts": {
     "dev:email": "email dev",
-    "test": "deno test -A --no-check --unstable-sloppy-imports"
+    "test": "deno test -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",

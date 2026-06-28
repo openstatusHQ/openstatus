@@ -4,7 +4,7 @@
   "description": "Log drains Vercel integration.",
   "main": "src/index.ts",
   "scripts": {
-    "test": "deno test -A --no-check --unstable-sloppy-imports",
+    "test": "deno test -A --no-check --sloppy-imports",
     "tsc": "tsc"
   },
   "dependencies": {

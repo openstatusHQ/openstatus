@@ -14,6 +14,7 @@ export {
   test,
 } from "./runner.ts";
 export { expect } from "jsr:@std/expect";
+export { type MockFn, mock } from "./mock-fn.ts";
 export {
   assertSpyCall,
   assertSpyCalls,

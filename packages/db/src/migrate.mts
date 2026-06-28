@@ -5,6 +5,7 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { env } from "../env.mjs";
 
 async function main() {
+  console.log(env);
   const db = drizzle(
     createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
   );

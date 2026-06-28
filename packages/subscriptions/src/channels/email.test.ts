@@ -1,3 +1,5 @@
+import "../test-preload.ts";
+
 import { EmailClient } from "@openstatus/emails";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
@@ -153,7 +155,7 @@ describe("sendEmailNotifications", () => {
     const sub = makeSub();
     await sendEmailNotifications([sub], makeUpdate({ updateId: 77 }));
 
-    const [args] = sendStatusReportUpdateMock.mock.calls[0];
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
     expect(args.idempotencyKey).toBe("status-report-update:77");
   });
 
@@ -164,7 +166,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ id: 17, updateId: undefined, status: "maintenance" }),
     );
 
-    const [args] = sendStatusReportUpdateMock.mock.calls[0];
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
     expect(args.idempotencyKey).toBe("page-update:17:maintenance");
   });
 });

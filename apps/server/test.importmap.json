@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "@/": "./src/",
+    "@openstatus/upstash": "./src/libs/test/doubles/upstash.mock.ts",
+    "@openstatus/tinybird": "./src/libs/test/doubles/tinybird.mock.ts",
+    "@openstatus/tinybird-real": "../../packages/tinybird/src/index.ts",
+    "@openstatus/subscriptions": "./src/libs/test/doubles/subscriptions.mock.ts",
+    "@openstatus/subscriptions-real": "../../packages/subscriptions/src/index.ts"
+  }
+}

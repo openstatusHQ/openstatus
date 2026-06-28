@@ -5,7 +5,7 @@ import { test } from "@std/testing/bdd";
 import { app } from "../../../../index";
 import { SummarySchema } from "./schema";
 
-test.todo("return the summary of the monitor", async () => {
+test.ignore("return the summary of the monitor", async () => {
   const res = await app.request("/v1/monitor/1/summary", {
     headers: {
       "x-openstatus-key": "1",

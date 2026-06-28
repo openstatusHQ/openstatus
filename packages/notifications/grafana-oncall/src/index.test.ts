@@ -237,7 +237,7 @@ describe("Grafana OnCall Notifications", () => {
       createMockNotification(),
     );
 
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,

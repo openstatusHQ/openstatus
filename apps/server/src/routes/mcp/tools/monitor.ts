@@ -1,7 +1,7 @@
 import type {
   McpServer,
   RegisteredTool,
-} from "@modelcontextprotocol/sdk/server/mcp";
+} from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 import {
   getMonitorStatusTool,

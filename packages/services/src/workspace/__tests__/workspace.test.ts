@@ -8,7 +8,7 @@ import {
   getWorkspaceWithUsage,
   listWorkspaces,
   updateWorkspaceName,
-} from "..";
+} from "../index.ts";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,

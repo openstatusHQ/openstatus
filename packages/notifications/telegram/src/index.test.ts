@@ -22,7 +22,7 @@ describe("Telegram Notifications", () => {
     if (originalEnv) {
       process.env.TELEGRAM_BOT_TOKEN = originalEnv;
     } else {
-      process.env.TELEGRAM_BOT_TOKEN = undefined;
+      delete process.env.TELEGRAM_BOT_TOKEN;
     }
   });
 
@@ -175,7 +175,7 @@ describe("Telegram Notifications", () => {
       createMockNotification(),
     );
 
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -190,14 +190,14 @@ describe("Telegram Notifications", () => {
   });
 
   test("fetch not called when TELEGRAM_BOT_TOKEN is not set", async () => {
-    process.env.TELEGRAM_BOT_TOKEN = undefined;
+    delete process.env.TELEGRAM_BOT_TOKEN;
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
 
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,

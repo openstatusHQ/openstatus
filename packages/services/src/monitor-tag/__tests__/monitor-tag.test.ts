@@ -3,7 +3,7 @@ import { monitorTag } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { listMonitorTags, syncMonitorTags } from "..";
+import { listMonitorTags, syncMonitorTags } from "../index.ts";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,

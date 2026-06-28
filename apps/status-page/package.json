@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "deno test -A --no-check --unstable-sloppy-imports",
+    "test": "deno test -A --no-check --sloppy-imports",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {

@@ -7,8 +7,8 @@
   "author": "",
   "main": "src/index.ts",
   "scripts": {
-    "test": "deno test -A --no-check --unstable-sloppy-imports",
-    "test:watch": "deno test -A --no-check --unstable-sloppy-imports --watch"
+    "test": "deno test -A --no-check --sloppy-imports",
+    "test:watch": "deno test -A --no-check --sloppy-imports --watch"
   },
   "dependencies": {},
   "devDependencies": {

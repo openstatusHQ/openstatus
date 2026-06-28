@@ -3,7 +3,7 @@ import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { deleteMember, listMembers } from "..";
+import { deleteMember, listMembers } from "../index.ts";
 import {
   SEEDED_WORKSPACE_FREE_ID,
   SEEDED_WORKSPACE_TEAM_ID,

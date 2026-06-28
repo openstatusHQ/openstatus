@@ -19,10 +19,10 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
-    "migrate": "deno run -A src/migrate.mts",
+    "migrate": "deno run -A --env-file src/migrate.mts",
     "studio": "drizzle-kit studio",
     "env": "deno run -A env.ts",
-    "seed": "deno run -A src/seed.mts",
+    "seed": "deno run -A --env-file --sloppy-imports  src/seed.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
