@@ -12938,6 +12938,7 @@
           "dependencies": [
             "npm:@jsr/std__expect@^1.0.19",
             "npm:@jsr/std__testing@^1.0.19",
+            "npm:effect@3.21.2",
             "npm:typescript@5.9.3",
             "npm:zod@4.1.13"
           ]

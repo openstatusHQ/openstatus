@@ -1,3 +1,4 @@
+import { UTCDate } from "@date-fns/utc";
 import type { StatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
 
@@ -23,9 +24,10 @@ import { endOfDay, isSameDay, startOfDay } from "date-fns";
  * // => "January 1, 10:00 AM - 3:00 PM"
  */
 export function formatDateRange(from?: Date, to?: Date) {
-  const sameDay = from && to && isSameDay(from, to);
-  const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
-  const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
+  const sameDay = from && to && isSameDay(new UTCDate(from), new UTCDate(to));
+  const isFromStartDay =
+    from && startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = to && endOfDay(new UTCDate(to)).getTime() === to.getTime();
 
   if (sameDay) {
     if (from && to && from.getTime() === to.getTime()) {
@@ -72,6 +74,8 @@ export function formatDate(
     month: "long",
     day: "numeric",
     ...options,
+    // last so callers can't override away from UTC (the "(UTC)" label depends on it)
+    timeZone: "UTC",
   });
 }
 
@@ -87,6 +91,7 @@ export function formatDateShort(date: Date, locale = "en-US") {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -103,6 +108,7 @@ export function formatDateTime(date: Date, locale = "en-US") {
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -117,7 +123,29 @@ export function formatTime(date: Date, locale = "en-US") {
   return date.toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
+}
+
+/**
+ * Returns the start/end of a closed range as separate strings, collapsing the
+ * `to` side to a time-only render when `from` and `to` fall on the same UTC day.
+ * Use `formatDateRange` for open-ended cases (`Until …` / `Since …`).
+ */
+export function formatDateRangeParts(
+  from: Date,
+  to: Date,
+): { from: string; to: string } {
+  if (isSameDay(new UTCDate(from), new UTCDate(to))) {
+    return { from: formatDateTime(from), to: formatTime(to) };
+  }
+  const isFromStartDay =
+    startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
+  if (isFromStartDay && isToEndDay) {
+    return { from: formatDate(from), to: formatDate(to) };
+  }
+  return { from: formatDateTime(from), to: formatDateTime(to) };
 }
 
 import type {
@@ -263,6 +291,9 @@ export const statusColors: Record<StatusType, string> = {
  */
 export const colors = statusColors;
 
+// Timestamps render in UTC; the suffix tells viewers which zone.
+const withUTC = (value: string) => `${value} (UTC)`;
+
 /**
  * Default labels consumed by blocks when no StatusBlocksI18nProvider is mounted.
  * Registry/web preview render with this set; the status-page app overrides via the provider.
@@ -315,19 +346,15 @@ export const defaultStatusBlocksLabels = {
   durationFor: (s: string) => `(for ${s})`,
   durationAcross: (s: string) => `across ${s}`,
 
-  formatDate: (d: Date) => formatDate(d),
+  formatDate: (d: Date) => withUTC(formatDate(d)),
   formatDateShort: (d: Date) => formatDateShort(d),
-  formatDateTime: (d: Date) => formatDateTime(d),
-  formatDateRange: (from?: Date, to?: Date) => formatDateRange(from, to),
+  formatDateTime: (d: Date) => withUTC(formatDateTime(d)),
+  formatDateRange: (from?: Date, to?: Date) => {
+    const range = formatDateRange(from, to);
+    return from || to ? withUTC(range) : range;
+  },
   formatDateRangeParts: (from: Date, to: Date) => {
-    if (isSameDay(from, to)) {
-      return { from: formatDateTime(from), to: formatTime(to) };
-    }
-    const isFromStartDay = startOfDay(from).getTime() === from.getTime();
-    const isToEndDay = endOfDay(to).getTime() === to.getTime();
-    if (isFromStartDay && isToEndDay) {
-      return { from: formatDate(from), to: formatDate(to) };
-    }
-    return { from: formatDateTime(from), to: formatDateTime(to) };
+    const { from: start, to: end } = formatDateRangeParts(from, to);
+    return { from: start, to: withUTC(end) };
   },
 } as const satisfies StatusBlocksLabels;

@@ -60,6 +60,7 @@ export default async function Layout({
           defaultBarType={cfg.type}
           defaultCardType={cfg.value}
           defaultShowUptime={cfg.uptime}
+          defaultNumberOfDays={cfg.days}
           defaultCommunityTheme={cfg.theme}
         >
           {children}

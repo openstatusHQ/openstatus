@@ -122,6 +122,7 @@ export function FormComponentsUpdate() {
         }}
       />
       <FormConfiguration
+        hasMonitorComponents={pageComponents.some((c) => c.type === "monitor")}
         defaultValues={{
           configuration: statusPage.configuration ?? {},
         }}
@@ -144,6 +145,9 @@ export function FormComponentsUpdate() {
                 "absolute") as PageConfiguration["type"],
               theme: (values.configuration.theme ??
                 undefined) as PageConfiguration["theme"],
+              days: (values.configuration.days
+                ? Number(values.configuration.days)
+                : undefined) as PageConfiguration["days"],
             },
           });
         }}

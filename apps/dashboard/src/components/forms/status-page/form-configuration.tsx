@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
@@ -49,7 +50,7 @@ import {
 const schema = z.object({
   configuration: z.record(
     z.string(),
-    z.string().or(z.boolean().nullish()).optional(),
+    z.string().or(z.boolean()).or(z.number()).nullish().optional(),
   ),
 });
 
@@ -59,6 +60,10 @@ const configurationSchema = z
     value: z.enum(["duration", "requests", "manual"]).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
+    days: z
+      .union([z.literal(30), z.literal(45)])
+      .or(z.literal("30").or(z.literal("45")))
+      .nullish(),
   })
   .refine(
     (data) => {
@@ -78,10 +83,12 @@ export function FormConfiguration({
   defaultValues,
   onSubmit,
   configLink,
+  hasMonitorComponents = true,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   configLink: string;
+  hasMonitorComponents?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
@@ -99,6 +106,7 @@ export function FormConfiguration({
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
+  const watchConfigurationDays = form.watch("configuration.days") ?? 45;
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
@@ -147,16 +155,22 @@ export function FormConfiguration({
               </FormCardDescription>
             </FormCardHeader>
             <FormCardSeparator />
-            <FormCardContent className="grid gap-4 sm:grid-cols-3">
+            <FormCardContent
+              className={cn(
+                "grid gap-4 sm:grid-cols-2",
+                !hasMonitorComponents && "pointer-events-none opacity-50",
+              )}
+            >
               <FormField
                 control={form.control}
                 name="configuration.type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bar Type*</FormLabel>
+                    <FormLabel>Bar Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "absolute"}
+                      disabled={!hasMonitorComponents}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full capitalize">
@@ -184,11 +198,14 @@ export function FormConfiguration({
                 name="configuration.value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Card Value*</FormLabel>
+                    <FormLabel>Card Value</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "duration"}
-                      disabled={watchConfigurationType === "manual"}
+                      disabled={
+                        !hasMonitorComponents ||
+                        watchConfigurationType === "manual"
+                      }
                     >
                       <FormControl>
                         <SelectTrigger className="w-full capitalize">
@@ -211,6 +228,38 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
+              <Note className="col-span-full">
+                {hasMonitorComponents ? (
+                  <ul className="list-inside list-disc">
+                    <li>
+                      <span>Bar Type </span>
+                      <span className="font-medium">
+                        {watchConfigurationType}
+                      </span>
+                      : <span>{message.type[watchConfigurationType]}</span>
+                    </li>
+                    <li>
+                      <span>Card Value </span>
+                      <span className="font-medium">
+                        {watchConfigurationValue}
+                      </span>
+                      :{" "}
+                      <span>
+                        {message.value[watchConfigurationValue] ??
+                          message.value.default}
+                      </span>
+                    </li>
+                  </ul>
+                ) : (
+                  <span>
+                    Add a monitor component to your status page to configure how
+                    its bars and cards display data.
+                  </span>
+                )}
+              </Note>
+            </FormCardContent>
+            <FormCardSeparator />
+            <FormCardContent className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="configuration.uptime"
@@ -242,35 +291,52 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <p className="text-foreground/70 col-span-full text-sm">
-                *Configuration settings only apply to monitor components.
-              </p>
+              <FormField
+                control={form.control}
+                name="configuration.days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>History</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={String(field.value ?? 45)}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a range" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {["30", "45"].map((days) => (
+                          <SelectItem key={days} value={days}>
+                            {days} days
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Note className="col-span-full">
                 <ul className="list-inside list-disc">
-                  <li>
-                    <span>Bar Type </span>
-                    <span className="font-medium">
-                      {watchConfigurationType}
-                    </span>
-                    : <span>{message.type[watchConfigurationType]}</span>
-                  </li>
-                  <li>
-                    <span>Card Value </span>
-                    <span className="font-medium">
-                      {watchConfigurationValue}
-                    </span>
-                    :{" "}
-                    <span>
-                      {message.value[watchConfigurationValue] ??
-                        message.value.default}
-                    </span>
-                  </li>
                   <li>
                     <span>Show Uptime </span>
                     <span className="font-medium capitalize">
                       {String(watchConfigurationUptime)}
                     </span>
                     : <span>{message.uptime[watchConfigurationUptime]}</span>
+                  </li>
+                  <li>
+                    <span>History </span>
+                    <span className="font-medium">
+                      {String(watchConfigurationDays)} days
+                    </span>
+                    :{" "}
+                    <span>
+                      shows the last {String(watchConfigurationDays)} days of
+                      component history.
+                    </span>
                   </li>
                 </ul>
               </Note>
@@ -324,7 +390,7 @@ export function FormConfiguration({
 const message = {
   type: {
     manual:
-      "only shares the duration of reports and maintenaces you are setting up - nothing else.",
+      "only shares the duration of reports and maintenances you are setting up - nothing else.",
     absolute:
       "shares the status of your endpoint for the duration of the different statuses.",
   },
@@ -340,13 +406,14 @@ const message = {
   },
 } as const;
 
-// ?type=manual&value=manual&uptime=true&theme=default
+// ?type=manual&value=manual&uptime=true&theme=default&days=45
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
   value: parseAsStringLiteral(["duration", "requests", "manual"]),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
+  days: parseAsStringLiteral(["30", "45"]),
 };
 
 function FormConfigurationDialog({
@@ -359,7 +426,7 @@ function FormConfigurationDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [{ type, value, uptime, theme }, setSearchParams] =
+  const [{ type, value, uptime, theme, days }, setSearchParams] =
     useQueryStates(searchParams);
 
   useEffect(() => {
@@ -394,6 +461,7 @@ function FormConfigurationDialog({
           value: null,
           uptime: null,
           theme: null,
+          days: null,
         });
         setOpen(false);
       } catch (error) {
@@ -418,7 +486,7 @@ function FormConfigurationDialog({
         </DialogHeader>
         <div className="flex flex-col gap-2">
           <pre className="bg-muted/50 font-commit-mono rounded-md border px-3 py-2 text-sm">
-            {JSON.stringify({ type, value, uptime, theme }, null, 2)}
+            {JSON.stringify({ type, value, uptime, theme, days }, null, 2)}
           </pre>
         </div>
         <DialogFooter>
@@ -435,6 +503,9 @@ function FormConfigurationDialog({
                   value: value ?? undefined,
                   uptime: uptime ?? undefined,
                   theme: theme ?? undefined,
+                  // fall back to the page's stored value when the URL omits
+                  // `days` (e.g. links generated before it was added).
+                  days: days ?? defaultValues?.configuration?.days ?? undefined,
                 },
               })
             }

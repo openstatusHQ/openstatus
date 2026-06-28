@@ -22,6 +22,7 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-base": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "effect": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

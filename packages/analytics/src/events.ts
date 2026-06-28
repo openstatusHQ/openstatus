@@ -104,6 +104,10 @@ export const Events = {
     name: "report_update_deleted",
     channel: "report",
   },
+  NotifyReport: {
+    name: "report_notified",
+    channel: "report",
+  },
   CreateMaintenance: {
     name: "maintenance_created",
     channel: "maintenance",
@@ -114,6 +118,10 @@ export const Events = {
   },
   DeleteMaintenance: {
     name: "maintenance_deleted",
+    channel: "maintenance",
+  },
+  NotifyMaintenance: {
+    name: "maintenance_notified",
     channel: "maintenance",
   },
   CreateNotification: {

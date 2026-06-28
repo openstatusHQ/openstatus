@@ -55,13 +55,6 @@ import {
 
 // NOTE: this router is used on status pages only - do not confuse with the page router which is used in the dashboard for the config
 
-/**
- * Right now, we do not allow workspaces to have a custom lookback period.
- * If we decide to allow this in the future, we should move this to the database.
- */
-const WORKSPACES =
-  process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
-
 // Length-independent comparison so a wrong guess can't be timed by length or
 // character. Pure JS (no node:crypto) keeps it usable from the Edge runtime.
 function constantTimeEqual(
@@ -603,6 +596,9 @@ export const statusPageRouter = createTRPCRouter({
         barType: z
           .enum(["absolute", "dominant", "manual"])
           .prefault("dominant"),
+        // preview override for the floating-button config; falls back to the
+        // page's stored `configuration.days` when omitted
+        days: z.union([z.literal(30), z.literal(45)]).optional(),
       }),
     )
     .query(async (opts) => {
@@ -695,9 +691,12 @@ export const statusPageRouter = createTRPCRouter({
         }
       }
 
-      const lookbackPeriod = WORKSPACES.includes(_page.workspaceId ?? 0)
-        ? 30
-        : 45;
+      const parsedConfiguration = pageConfigurationSchema.safeParse(
+        _page.configuration ?? {},
+      );
+      const lookbackPeriod =
+        input.days ??
+        (parsedConfiguration.success ? parsedConfiguration.data.days : 45);
 
       return pageComponents.map((c) => {
         const events = getEvents({

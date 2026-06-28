@@ -1,5 +1,6 @@
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type {
+  AggregateRating,
   BlogPosting,
   BreadcrumbList,
   CollectionPage,
@@ -9,6 +10,7 @@ import type {
   Organization,
   Person,
   Product,
+  Review,
   Service,
   SoftwareApplication,
   TechArticle,
@@ -132,6 +134,35 @@ export const getJsonLDOrganization = (): WithContext<Organization> => {
   };
 };
 
+// Sourced from https://www.trustpilot.com/review/openstatus.dev
+const trustpilotReviews: Review[] = [
+  {
+    "@type": "Review",
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: 5,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    author: {
+      "@type": "Person",
+      name: "Johannes",
+    },
+    datePublished: "2024-06-11",
+    name: "Open source status page which works super well!",
+    reviewBody:
+      "Love that we have an open source alternative for our status page at Formbricks! Great team and execution, big fan of openstatus!",
+  },
+];
+
+const trustpilotAggregateRating: AggregateRating = {
+  "@type": "AggregateRating",
+  ratingValue: 5,
+  bestRating: 5,
+  worstRating: 1,
+  reviewCount: trustpilotReviews.length,
+};
+
 export const getJsonLDProduct = (): WithContext<Product> => {
   return {
     "@context": "https://schema.org",
@@ -153,6 +184,8 @@ export const getJsonLDProduct = (): WithContext<Product> => {
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     })),
+    aggregateRating: trustpilotAggregateRating,
+    review: trustpilotReviews,
   };
 };
 
@@ -186,6 +219,8 @@ export const getJsonLDSoftwareApplication =
         "Open-source",
       ],
       screenshot: `${BASE_URL}/assets/landing/dashboard.png`,
+      aggregateRating: trustpilotAggregateRating,
+      review: trustpilotReviews,
     };
   };
 

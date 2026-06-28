@@ -1,17 +1,60 @@
-import { statusReportStatusSchema } from "@openstatus/db/src/schema";
+import {
+  currentImpactsFromUpdates,
+  statusReportStatusSchema,
+} from "@openstatus/db/src/schema";
 import { z } from "zod";
 
+import type { ServiceContext } from "../context";
 import {
   addStatusReportUpdate,
+  getStatusReport,
   listStatusReports,
   notifyStatusReport,
   resolveStatusReport,
   updateStatusReport,
 } from "../status-report";
 import { createStatusReport } from "../status-report/create";
-import { componentImpactsSchema } from "../status-report/schemas";
+import {
+  type ComponentImpacts,
+  componentImpactsSchema,
+  type StatusReportStatus,
+} from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
 import type { AgentTool } from "./types";
+
+// Agent surfaces send only the impacts that CHANGED (see system prompt). Carry
+// the report's current non-operational impacts into the update so each update's
+// rows are self-contained for the per-update render — and so the confirmation
+// preview shows the full impact, not just the delta.
+async function withCarriedImpacts(
+  ctx: ServiceContext,
+  statusReportId: number,
+  status: StatusReportStatus,
+  componentImpacts: ComponentImpacts | undefined,
+): Promise<ComponentImpacts | undefined> {
+  // resolve clears every still-active component the update doesn't name; carrying
+  // them forward would mark them named and defeat that, so skip carry on resolve.
+  if (status === "resolved") return componentImpacts;
+  const report = await getStatusReport({
+    ctx,
+    input: { id: statusReportId },
+  });
+  const current = currentImpactsFromUpdates(
+    report.updates.map((u) => ({
+      id: u.id,
+      date: u.date,
+      componentImpacts: u.componentImpacts,
+    })),
+  );
+  const merged: ComponentImpacts = [...(componentImpacts ?? [])];
+  const named = new Set(merged.map((ci) => ci.pageComponentId));
+  for (const [pageComponentId, impact] of current) {
+    if (impact !== "operational" && !named.has(pageComponentId)) {
+      merged.push({ pageComponentId, impact });
+    }
+  }
+  return merged.length > 0 ? merged : componentImpacts;
+}
 
 const componentImpactsInputShape = componentImpactsSchema
   .optional()
@@ -315,6 +358,15 @@ export const addStatusReportUpdateTool: AgentTool<
   approval: {
     extraFlags: [{ id: "notify", label: "Notify subscribers" }],
     applyFlags: (input, flags) => ({ ...input, notify: flags.notify ?? false }),
+    prepareDraftInput: async ({ ctx, input }) => ({
+      ...input,
+      componentImpacts: await withCarriedImpacts(
+        ctx,
+        input.statusReportId,
+        input.status,
+        input.componentImpacts,
+      ),
+    }),
     summarize: (input) => ({
       title: `Add Status Report Update (${input.status})`,
       lines: [
@@ -342,7 +394,12 @@ export const addStatusReportUpdateTool: AgentTool<
         statusReportId: input.statusReportId,
         status: input.status,
         message: input.message,
-        componentImpacts: input.componentImpacts,
+        componentImpacts: await withCarriedImpacts(
+          ctx,
+          input.statusReportId,
+          input.status,
+          input.componentImpacts,
+        ),
         date: input.date ? new Date(input.date) : undefined,
       },
     });
