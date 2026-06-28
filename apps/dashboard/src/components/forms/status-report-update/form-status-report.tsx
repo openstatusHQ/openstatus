@@ -100,9 +100,7 @@ export function FormStatusReportUpdateCard({
 }) {
   const { reportId } = useParams<{ id: string; reportId: string }>();
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -115,6 +113,7 @@ export function FormStatusReportUpdateCard({
       notifySubscribers: !!workspace?.limits["status-subscribers"],
     },
   });
+
   const watchMessage = form.watch("message");
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
