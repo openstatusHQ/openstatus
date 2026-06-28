@@ -18,7 +18,7 @@ test("Get Test Workspace", async () => {
   });
 
   const caller = edgeRouter.createCaller(ctx);
-  const result = await caller.workspace.getWorkspace();
+  const result = await caller.workspace.get();
 
   expect(result).toMatchObject({
     id: 1,
@@ -47,7 +47,7 @@ test("by default we get the first workspace", async () => {
   });
 
   const caller = edgeRouter.createCaller(ctx);
-  const result = await caller.workspace.getWorkspace();
+  const result = await caller.workspace.get();
 
   expect(result).toMatchObject({
     id: 1,
