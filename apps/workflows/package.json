@@ -35,7 +35,7 @@
     "@openstatus/utils": "workspace:*",
     "@opentelemetry/resources": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
-    "@sentry/deno": "10.61.0",
+    "@sentry/deno": "catalog:",
     "@upstash/qstash": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",

@@ -37,7 +37,7 @@ catalogs:
       specifier: 1.0.0
       version: 1.0.0
     '@connectrpc/connect':
-      specifier: 2.1.1
+      specifier: ^2.1.1
       version: 2.1.1
     '@connectrpc/connect-node':
       specifier: 2.1.1
@@ -189,6 +189,9 @@ catalogs:
     '@scalar/hono-api-reference':
       specifier: 0.8.10
       version: 0.8.10
+    '@sentry/deno':
+      specifier: 10.61.0
+      version: 10.61.0
     '@sentry/nextjs':
       specifier: 10.53.1
       version: 10.53.1
@@ -498,6 +501,9 @@ catalogs:
     tsup:
       specifier: 7.2.0
       version: 7.2.0
+    turbo:
+      specifier: 2.9.14
+      version: 2.9.14
     tw-animate-css:
       specifier: 1.4.0
       version: 1.4.0
@@ -540,7 +546,7 @@ importers:
         specifier: 'catalog:'
         version: 0.23.0
       turbo:
-        specifier: 2.9.14
+        specifier: 'catalog:'
         version: 2.9.14
       typescript:
         specifier: 'catalog:'
@@ -1673,7 +1679,7 @@ importers:
         specifier: 'catalog:'
         version: 1.41.1
       '@sentry/deno':
-        specifier: 10.61.0
+        specifier: 'catalog:'
         version: 10.61.0
       '@upstash/qstash':
         specifier: 'catalog:'
@@ -2546,7 +2552,7 @@ importers:
         specifier: 'catalog:'
         version: 1.2.0(@bufbuild/protobuf@2.12.0)
       '@connectrpc/connect':
-        specifier: ^2.1.1
+        specifier: 'catalog:'
         version: 2.1.1(@bufbuild/protobuf@2.12.0)
     devDependencies:
       '@bufbuild/buf':

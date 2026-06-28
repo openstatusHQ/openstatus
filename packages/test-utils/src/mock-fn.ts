@@ -6,11 +6,11 @@
 // intentionally NOT provided here — module replacement is done via the
 // `--import-map` flag and test-double modules instead.
 
-// biome-ignore lint/suspicious/noExplicitAny: generic test double
+// oxlint-disable-next-line typescript/no-explicit-any
 type AnyFn = (...args: any[]) => any;
 
 interface MockState {
-  // biome-ignore lint/suspicious/noExplicitAny: recorded call args
+  // oxlint-disable-next-line typescript/no-explicit-any
   calls: any[][];
   results: { type: "return" | "throw"; value: unknown }[];
 }
@@ -34,7 +34,7 @@ export function mock(impl?: AnyFn): MockFn {
   const onceQueue: AnyFn[] = [];
   const state: MockState = { calls: [], results: [] };
 
-  // biome-ignore lint/suspicious/noExplicitAny: variadic test double
+  // oxlint-disable-next-line typescript/no-explicit-any
   const fn = ((...args: any[]) => {
     state.calls.push(args);
     const use = onceQueue.length ? onceQueue.shift() : defaultImpl;

@@ -45,7 +45,7 @@
   "dependencies": {
     "@bufbuild/protobuf": "catalog:",
     "@bufbuild/protovalidate": "catalog:",
-    "@connectrpc/connect": "^2.1.1"
+    "@connectrpc/connect": "catalog:"
   },
   "devDependencies": {
     "@bufbuild/buf": "catalog:",
