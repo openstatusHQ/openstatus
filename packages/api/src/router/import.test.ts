@@ -341,7 +341,7 @@ test("run creates page, components, and groups in DB", async () => {
 
   // Clean up for next tests
   await cleanup();
-}, 15_000);
+});
 
 test("run with existing pageId imports into that page", async () => {
   const result = await caller.import.run({
@@ -374,7 +374,7 @@ test("run with existing pageId imports into that page", async () => {
   expect(matchingComps.length).toBe(MOCK_COMPONENTS.length);
 
   await cleanup();
-}, 15_000);
+});
 
 test("re-run skips already-imported resources (idempotency)", async () => {
   // First run
@@ -410,7 +410,7 @@ test("re-run skips already-imported resources (idempotency)", async () => {
   expect(allGroupsSkipped).toBe(true);
 
   await cleanup();
-}, 15_000);
+});
 
 test("run with includeStatusReports creates status reports", async () => {
   const result = await caller.import.run({
@@ -461,7 +461,7 @@ test("run with includeStatusReports creates status reports", async () => {
   expect(createdMaintIds.length).toBeGreaterThan(0);
 
   await cleanup();
-}, 15_000);
+});
 
 // ---------------------------------------------------------------------------
 // Limit warnings (go through the caller with custom workspace limits to

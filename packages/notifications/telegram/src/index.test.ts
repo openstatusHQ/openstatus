@@ -11,7 +11,6 @@ describe("Telegram Notifications", () => {
 
   beforeEach(() => {
     process.env.TELEGRAM_BOT_TOKEN = "test-bot-token-123";
-    // @ts-expect-error
     fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );

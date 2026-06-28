@@ -32,7 +32,7 @@ export const StatusReportSchema = z.object({
   message: z.string(),
   reportTitle: z.string(),
   pageComponents: z.array(z.string()),
-  unsubscribeUrl: z.url(),
+  unsubscribeUrl: z.url().optional(),
   manageUrl: z.url(),
 });
 

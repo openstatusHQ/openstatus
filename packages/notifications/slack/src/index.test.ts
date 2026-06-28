@@ -15,7 +15,6 @@ describe("Slack Notifications", () => {
   let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
     fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );

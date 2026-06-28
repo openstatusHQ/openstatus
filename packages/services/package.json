@@ -127,6 +127,7 @@
     }
   },
   "scripts": {
+    "check": "deno check --sloppy-imports .",
     "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test -A --no-check --sloppy-imports",
     "tsc": "tsc --noEmit"
   },

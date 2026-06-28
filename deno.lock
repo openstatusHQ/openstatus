@@ -2,10 +2,12 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@^1.0.19": "1.0.19",
+    "jsr:@std/async@^1.4.0": "1.4.0",
     "jsr:@std/data-structures@^1.1.0": "1.1.0",
     "jsr:@std/expect@*": "1.0.19",
+    "jsr:@std/expect@1.0.19": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.14",
-    "jsr:@std/internal@^1.0.13": "1.0.13",
+    "jsr:@std/internal@^1.0.13": "1.0.14",
     "jsr:@std/internal@^1.0.14": "1.0.14",
     "jsr:@std/path@^1.1.4": "1.1.4",
     "jsr:@std/testing@*": "1.0.19",
@@ -21,8 +23,6 @@
     "npm:@bufbuild/protovalidate@1.2.0": "1.2.0_@bufbuild+protobuf@2.12.0",
     "npm:@chronark/zod-bird@1.0.0": "1.0.0_zod@4.1.13",
     "npm:@connectrpc/connect-node@2.1.1": "2.1.1_@bufbuild+protobuf@2.12.0_@connectrpc+connect@2.1.1__@bufbuild+protobuf@2.12.0",
-    "npm:@connectrpc/connect@2.1.1": "2.1.1_@bufbuild+protobuf@2.12.0",
-    "npm:@connectrpc/connect@^2.1.1": "2.1.1_@bufbuild+protobuf@2.12.0",
     "npm:@connectrpc/validate@0.2.0": "0.2.0_@bufbuild+protobuf@2.12.0_@bufbuild+protovalidate@1.2.0__@bufbuild+protobuf@2.12.0_@connectrpc+connect@2.1.1__@bufbuild+protobuf@2.12.0",
     "npm:@date-fns/tz@1.5.0": "1.5.0",
     "npm:@date-fns/utc@2.1.1": "2.1.1",
@@ -175,7 +175,6 @@
     "npm:tailwindcss-animate@1.0.7": "1.0.7_tailwindcss@4.3.0",
     "npm:tailwindcss@4.3.0": "4.3.0",
     "npm:tsup@7.2.0": "7.2.0_postcss@8.5.15_typescript@5.9.3",
-    "npm:turbo@2.9.14": "2.9.14",
     "npm:tw-animate-css@1.4.0": "1.4.0",
     "npm:typescript@5.9.3": "5.9.3",
     "npm:unified@11.0.5": "11.0.5",
@@ -189,6 +188,9 @@
       "dependencies": [
         "jsr:@std/internal@^1.0.12"
       ]
+    },
+    "@std/async@1.4.0": {
+      "integrity": "4d70b008634f571cff9b554090d628c76141c32613aae0ff283fd5fa23d0c379"
     },
     "@std/data-structures@1.1.0": {
       "integrity": "c35ae4ad5d8e41a38573c2fe3e19b18ea2505f63cfea201edcb8720aca1f7f58"
@@ -217,6 +219,7 @@
       "integrity": "f4236172365b216728dc3cc8b5e80a9f4c33083d1e4ede7613d5b25b4014898e",
       "dependencies": [
         "jsr:@std/assert",
+        "jsr:@std/async",
         "jsr:@std/data-structures",
         "jsr:@std/internal@^1.0.14"
       ]
@@ -12287,7 +12290,6 @@
         "npm:oxfmt@0.53.0",
         "npm:oxlint-tsgolint@0.23.0",
         "npm:oxlint@1.68.0",
-        "npm:turbo@2.9.14",
         "npm:typescript@5.9.3"
       ]
     },
@@ -12571,7 +12573,6 @@
             "npm:@logtape/sentry@2.1.1",
             "npm:@opentelemetry/resources@2.7.1",
             "npm:@opentelemetry/semantic-conventions@1.41.1",
-            "npm:@sentry/deno@10.61.0",
             "npm:@upstash/qstash@2.11.0",
             "npm:drizzle-orm@0.45.2",
             "npm:effect@3.21.2",
@@ -12886,7 +12887,7 @@
             "npm:@bufbuild/protobuf@2.12.0",
             "npm:@bufbuild/protoc-gen-es@2.12.0",
             "npm:@bufbuild/protovalidate@1.2.0",
-            "npm:@connectrpc/connect@^2.1.1",
+            "npm:@connectrpc/connect@2.1.1",
             "npm:typescript@5.9.3"
           ]
         }

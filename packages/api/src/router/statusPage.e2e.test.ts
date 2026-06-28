@@ -213,6 +213,7 @@ describe("Confirmation page displays correct information", () => {
     }
 
     const email = subscriber.email;
+    if (!email) throw new Error("Subscriber email not found");
     expect(email).toBe("confirm-page-test@example.com");
 
     // Apply the same masking logic as in the API

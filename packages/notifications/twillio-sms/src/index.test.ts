@@ -15,7 +15,6 @@ describe("Twilio SMS Notifications", () => {
   beforeEach(() => {
     process.env.TWILLIO_ACCOUNT_ID = "test-account-id";
     process.env.TWILLIO_AUTH_TOKEN = "test-auth-token";
-    // @ts-expect-error
     fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );

@@ -1,8 +1,9 @@
 {
-  "extends": "@openstatus/tsconfig/react-library.json",
+  "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "test"],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
+    "module": "ESNext",
     "moduleResolution": "bundler"
   }
 }

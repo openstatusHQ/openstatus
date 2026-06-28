@@ -18,6 +18,7 @@
     "./src/*": "./src/*.ts"
   },
   "scripts": {
+    "check": "deno check --sloppy-imports .",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
     "migrate": "deno run -A --env-file src/migrate.mts",

@@ -1,5 +1,10 @@
 {
-  "extends": "@openstatus/tsconfig/react-library.json",
+  "extends": "@openstatus/tsconfig/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
   "include": [".", "src/env.ts"],
   "exclude": ["dist", "build", "node_modules"]
 }

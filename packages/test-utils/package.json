@@ -10,6 +10,9 @@
     "@std/expect": "jsr:^1.0.19",
     "@std/testing": "jsr:^1.0.19"
   },
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "typescript": "catalog:"

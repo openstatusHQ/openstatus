@@ -1,4 +1,8 @@
-import { type ExpectMatcherContext, expect } from "jsr:@std/expect";
+import { expect } from "jsr:@std/expect";
+
+// @std/expect stopped re-exporting its matcher-context type; these matchers only
+// read `value`, so a minimal local shape is enough.
+type ExpectMatcherContext = { value: unknown };
 
 type MatcherResult = { pass: boolean; message: () => string };
 

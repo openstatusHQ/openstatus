@@ -14,6 +14,7 @@
     "./instatus/fixtures": "./src/providers/instatus/fixtures.ts"
   },
   "scripts": {
+    "check": "deno check --sloppy-imports .",
     "test": "deno test -A --no-check --sloppy-imports",
     "test:watch": "deno test -A --no-check --sloppy-imports --watch",
     "tsc": "tsc --noEmit"

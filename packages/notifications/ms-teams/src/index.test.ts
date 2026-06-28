@@ -42,7 +42,6 @@ describe("Microsoft Teams Notifications", () => {
   let fetchMock: FetchMock;
 
   beforeEach(() => {
-    // @ts-expect-error spyOn typing requires the full `typeof fetch` (incl. preconnect)
     fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
@@ -316,7 +315,6 @@ describe("Microsoft Teams Notifications", () => {
   });
 
   test("Handle fetch error", async () => {
-    // @ts-expect-error see beforeEach
     fetchMock.restore();
     fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
