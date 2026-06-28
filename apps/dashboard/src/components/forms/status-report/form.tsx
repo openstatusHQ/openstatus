@@ -101,9 +101,7 @@ export function FormStatusReport({
   items: CheckboxTreeItem[];
 }) {
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -114,9 +112,10 @@ export function FormStatusReport({
       message: "",
       date: new Date(),
       pageComponents: [],
-      notifySubscribers: true,
+      notifySubscribers: !!workspace?.limits["status-subscribers"],
     },
   });
+
   const watchMessage = form.watch("message");
   const watchPageComponents = form.watch("pageComponents");
   const [isPending, startTransition] = useTransition();
