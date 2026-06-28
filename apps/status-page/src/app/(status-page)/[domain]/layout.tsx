@@ -4,7 +4,6 @@ import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { defaultMetadata, ogMetadata, twitterMetadata } from "../../metadata";
 import { PasswordWrapper } from "../../../components/password-wrapper";
 import {
   FloatingButton,
@@ -14,6 +13,7 @@ import { FloatingTheme } from "../../../components/status-page/floating-theme";
 import { ThemeProvider } from "../../../components/themes/theme-provider";
 import { statusPageAlternates } from "../../../lib/alternates";
 import { getQueryClient, HydrateClient, trpc } from "../../../lib/trpc/server";
+import { defaultMetadata, ogMetadata, twitterMetadata } from "../../metadata";
 
 // Canonical schema — guarantees concrete enum output (never null/undefined).
 

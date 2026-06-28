@@ -1,3 +1,9 @@
+import { db, eq, inArray } from "@openstatus/db";
+import {
+  notification,
+  notificationTrigger,
+  notificationsToMonitors,
+} from "@openstatus/db/src/schema";
 import {
   afterAll,
   afterEach,
@@ -9,13 +15,6 @@ import {
   stub,
   test,
 } from "@openstatus/test-utils";
-
-import { db, eq, inArray } from "@openstatus/db";
-import {
-  notification,
-  notificationTrigger,
-  notificationsToMonitors,
-} from "@openstatus/db/src/schema";
 
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications } from "./alerting";
@@ -73,7 +72,6 @@ afterEach(() => {
 });
 
 describe("triggerNotifications", () => {
-
   afterAll(async () => {
     // Clean up notification triggers created during tests
     await db

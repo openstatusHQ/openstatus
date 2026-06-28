@@ -1,5 +1,4 @@
 import "./test-preload.ts";
-
 import { db, eq } from "@openstatus/db";
 import {
   pageSubscriber,

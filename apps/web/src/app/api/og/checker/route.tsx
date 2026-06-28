@@ -6,7 +6,6 @@ import {
   timestampFormatter,
 } from "../../../../lib/checker/utils";
 import { cn } from "../../../../lib/utils";
-
 import { BasicLayout } from "../_components/basic-layout";
 import {
   SIZE,

@@ -8,7 +8,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { TailwindIndicator } from "../components/tailwind-indicator";
 import { TRPCReactProvider } from "../lib/trpc/client";
-
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
 

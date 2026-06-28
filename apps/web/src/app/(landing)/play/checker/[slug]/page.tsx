@@ -10,13 +10,15 @@ import {
   regionFormatter,
 } from "../../../../../lib/checker/utils";
 import { JsonLd } from "../../../../../lib/metadata/json-ld";
-import { BASE_URL, getPageMetadata } from "../../../../../lib/metadata/shared-metadata";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "../../../../../lib/metadata/structured-data";
-
 import { Table } from "./client";
 
 function formatDate(date: Date) {

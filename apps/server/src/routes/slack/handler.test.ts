@@ -1,12 +1,11 @@
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import crypto from "node:crypto";
 
+import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
 // workspace-resolver / @slack/web-api / agent are swapped for doubles via the
 // test import map; behavior is driven through this shared mutable state.
 import { slackTestState } from "../../libs/test/doubles/slack-test-state.ts";
-
 import { handleSlackEvent } from "./handler";
 import { verifySlackSignature } from "./verify";
 
@@ -425,12 +424,15 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const updateMessages = slackTestState.calls.filter((m) => m.method === "update");
+    const updateMessages = slackTestState.calls.filter(
+      (m) => m.method === "update",
+    );
     expect(updateMessages.length).toBe(0);
   });
 
   test("shows error message when runAgent throws", async () => {
-    slackTestState.runAgentOverride = () => Promise.reject(new Error("agent exploded"));
+    slackTestState.runAgentOverride = () =>
+      Promise.reject(new Error("agent exploded"));
 
     const res = await signAndPost(app, {
       type: "event_callback",
@@ -458,7 +460,8 @@ describe("handleSlackEvent", () => {
   });
 
   test("does not throw when both runAgent and error update fail", async () => {
-    slackTestState.runAgentOverride = () => Promise.reject(new Error("agent exploded"));
+    slackTestState.runAgentOverride = () =>
+      Promise.reject(new Error("agent exploded"));
     slackTestState.updateOverride = () => {
       const err = new Error("An API error occurred: channel_not_found");
       Object.assign(err, {

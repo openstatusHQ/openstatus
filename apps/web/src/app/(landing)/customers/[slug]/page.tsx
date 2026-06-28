@@ -5,7 +5,10 @@ import { CustomMDX } from "../../../../content/mdx";
 import { CustomImage } from "../../../../content/mdx-components/custom-image";
 import { getCustomerPages } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import { BASE_URL, getPageMetadata } from "../../../../lib/metadata/shared-metadata";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,

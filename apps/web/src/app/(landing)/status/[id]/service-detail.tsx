@@ -12,7 +12,6 @@ import {
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 import { api } from "../../../../trpc/rq-client";
-
 import { ExternalServicePill } from "../external-service-pill";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";

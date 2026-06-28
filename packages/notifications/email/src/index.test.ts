@@ -1,5 +1,6 @@
 import "./test-preload.ts";
-
+import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { EmailClient } from "@openstatus/emails/src/client";
 import {
   afterEach,
   assertSpyCalls,
@@ -11,9 +12,6 @@ import {
   test,
 } from "@openstatus/test-utils";
 
-import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { EmailClient } from "@openstatus/emails/src/client";
-
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 // biome-ignore lint/suspicious/noExplicitAny: stub over the EmailClient method
@@ -21,10 +19,8 @@ let sendMonitorAlertMock: Stub<any>;
 
 describe("Email Notifications", () => {
   beforeEach(() => {
-    sendMonitorAlertMock = stub(
-      EmailClient.prototype,
-      "sendMonitorAlert",
-      () => Promise.resolve(),
+    sendMonitorAlertMock = stub(EmailClient.prototype, "sendMonitorAlert", () =>
+      Promise.resolve(),
     );
   });
 

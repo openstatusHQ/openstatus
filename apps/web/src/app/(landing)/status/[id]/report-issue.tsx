@@ -13,7 +13,6 @@ import {
 import { useState } from "react";
 
 import { api } from "../../../../trpc/rq-client";
-
 import { buildSections } from "../external-service-components";
 
 const WHOLE_SERVICE = "all";

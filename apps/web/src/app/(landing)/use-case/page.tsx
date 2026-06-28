@@ -14,7 +14,6 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "../../../lib/metadata/structured-data";
-
 import { ContentList } from "../content-list";
 
 const TITLE = "Use Cases";

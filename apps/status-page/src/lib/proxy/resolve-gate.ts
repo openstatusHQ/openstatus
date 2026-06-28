@@ -4,7 +4,6 @@ import { auth } from "../auth";
 import { createProtectedCookieKey } from "../protected";
 import type { getQueryClient } from "../trpc/server";
 import { trpc } from "../trpc/server";
-
 import {
   evaluateMarkdownGate,
   type MarkdownGateResult,

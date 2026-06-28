@@ -4,7 +4,6 @@ import { statusReport } from "@openstatus/db/src/schema";
 
 import { openApiErrorResponses } from "../../../libs/errors";
 import { notEmpty } from "../../../utils/not-empty";
-
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
 

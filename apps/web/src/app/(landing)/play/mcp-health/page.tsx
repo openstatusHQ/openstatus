@@ -4,7 +4,10 @@ import { CustomMDX } from "../../../../content/mdx";
 import { getToolsPage } from "../../../../content/utils";
 import { getHealthReportById } from "../../../../lib/mcp/health-check";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import { BASE_URL, getPageMetadata } from "../../../../lib/metadata/shared-metadata";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
@@ -12,7 +15,6 @@ import {
   getJsonLDHowTo,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
-
 import {
   AuthChallengeCallout,
   DetailsButtonLink,

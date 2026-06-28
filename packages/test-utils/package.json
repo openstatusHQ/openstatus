@@ -6,12 +6,12 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "devDependencies": {
-    "@openstatus/tsconfig": "workspace:*",
-    "typescript": "catalog:"
-  },
   "dependencies": {
     "@std/expect": "jsr:^1.0.19",
     "@std/testing": "jsr:^1.0.19"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "catalog:"
   }
 }

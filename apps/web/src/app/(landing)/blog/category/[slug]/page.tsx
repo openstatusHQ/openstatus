@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import { ContentCategory } from "../../../content-category";
-import { ContentList } from "../../../content-list";
 import { getBlogPosts } from "../../../../../content/utils";
 import { JsonLd } from "../../../../../lib/metadata/json-ld";
 import {
@@ -16,6 +14,8 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "../../../../../lib/metadata/structured-data";
+import { ContentCategory } from "../../../content-category";
+import { ContentList } from "../../../content-list";
 
 export async function generateMetadata({
   params,

@@ -2,7 +2,10 @@ import { db, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
 
-import { escapeLinkLabel, type OverviewPage } from "../../../../../../content/markdown";
+import {
+  escapeLinkLabel,
+  type OverviewPage,
+} from "../../../../../../content/markdown";
 import { getBaseUrl } from "../../../../../../lib/base-url";
 import { getQueryClient, trpc } from "../../../../../../lib/trpc/server";
 

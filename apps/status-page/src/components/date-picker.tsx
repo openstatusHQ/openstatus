@@ -10,8 +10,8 @@ import { useExtracted } from "next-intl";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { Kbd } from "./common/kbd";
 import { formatDateForInput } from "../lib/formatter";
+import { Kbd } from "./common/kbd";
 
 type DatePickerProps = {
   range: DateRange;

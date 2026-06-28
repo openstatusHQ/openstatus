@@ -41,7 +41,6 @@ import { ThemePalettePicker } from "../../components/themes/theme-palette-picker
 import { ThemeSelect } from "../../components/themes/theme-select";
 import { monitors } from "../../data/monitors";
 import { useTRPC } from "../../lib/trpc/client";
-
 import { searchParamsParsers } from "./search-params";
 
 const MAIN_COLORS = [

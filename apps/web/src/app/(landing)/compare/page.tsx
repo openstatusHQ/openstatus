@@ -15,7 +15,6 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "../../../lib/metadata/structured-data";
-
 import {
   ContentBoxDescription,
   ContentBoxLink,

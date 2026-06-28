@@ -4,7 +4,6 @@ import { page } from "@openstatus/db/src/schema";
 
 import { openApiErrorResponses } from "../../../libs/errors";
 import { notEmpty } from "../../../utils/not-empty";
-
 import type { pagesApi } from "./index";
 import { PageSchema, transformPageData } from "./schema";
 

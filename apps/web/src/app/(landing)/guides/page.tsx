@@ -14,7 +14,6 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
 } from "../../../lib/metadata/structured-data";
-
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 

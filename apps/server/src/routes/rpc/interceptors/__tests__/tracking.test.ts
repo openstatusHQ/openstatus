@@ -1,9 +1,14 @@
-// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
-// are incompatible with bun:test mocks. All runtime behavior is correct.
-import { beforeEach, describe, expect, mock, test } from "@openstatus/test-utils";
-
 import type { Interceptor } from "@connectrpc/connect";
 import { Events } from "@openstatus/analytics";
+// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
+// are incompatible with bun:test mocks. All runtime behavior is correct.
+import {
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  test,
+} from "@openstatus/test-utils";
 
 import { RPC_CONTEXT_KEY } from "../auth";
 import { RPC_EVENT_MAP, trackingInterceptor } from "../tracking";

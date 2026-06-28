@@ -22,7 +22,6 @@ import {
 
 import { regions } from "../../data/regions";
 import { formatMilliseconds } from "../../lib/formatter";
-
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 

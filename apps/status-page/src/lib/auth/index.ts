@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 
 import { getValidCustomDomain } from "../domain";
 import { getQueryClient, trpc } from "../trpc/server";
-
 import { adapter } from "./adapter";
 import { ResendProvider } from "./providers";
 

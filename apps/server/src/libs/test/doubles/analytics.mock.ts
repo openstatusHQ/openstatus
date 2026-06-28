@@ -1,7 +1,11 @@
 // Test double for @openstatus/analytics, swapped in via --import-map. Keeps the
 // real Events/parseInputToProps but replaces setupAnalytics with a spy (exposed
 // on globalThis.__analyticsSpies) so tests assert tracking without OpenPanel.
-export { type EventProps, Events, parseInputToProps } from "@openstatus/analytics-real";
+export {
+  type EventProps,
+  Events,
+  parseInputToProps,
+} from "@openstatus/analytics-real";
 
 import { mock } from "@openstatus/test-utils";
 

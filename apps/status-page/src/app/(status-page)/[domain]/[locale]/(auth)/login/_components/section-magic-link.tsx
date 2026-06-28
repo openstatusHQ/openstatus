@@ -18,9 +18,11 @@ import {
   SectionHeader,
   SectionTitle,
 } from "../../../../../../../components/content/section";
-import { FormEmail, type FormValues } from "../../../../../../../components/forms/form-email";
+import {
+  FormEmail,
+  type FormValues,
+} from "../../../../../../../components/forms/form-email";
 import { generateServerActionPromise } from "../../../../../../../lib/server-actions";
-
 import { signInWithResendAction } from "../actions";
 
 export function SectionMagicLink() {

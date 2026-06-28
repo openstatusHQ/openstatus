@@ -3,9 +3,11 @@ import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import {
+  OpenStatusApiError,
+  openApiErrorResponses,
+} from "../../../libs/errors";
 import { notEmpty } from "../../../utils/not-empty";
-
 import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema, transformPageData } from "./schema";
 

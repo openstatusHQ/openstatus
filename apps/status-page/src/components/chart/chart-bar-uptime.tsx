@@ -13,7 +13,6 @@ import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { formatNumber } from "../../lib/formatter";
-
 import { ChartLegendBadge } from "./chart-legend-badge";
 
 const chartConfig = {

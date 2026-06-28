@@ -9,9 +9,11 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 
-import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import {
+  OpenStatusApiError,
+  openApiErrorResponses,
+} from "../../../libs/errors";
 import { trackMiddleware } from "../../../libs/middlewares";
-
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
 

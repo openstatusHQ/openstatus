@@ -1,12 +1,11 @@
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import crypto from "node:crypto";
 
+import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
 // workspace-resolver / @slack/web-api are swapped for doubles via the test
 // import map; behavior is driven through this shared mutable state.
 import { slackTestState } from "../../libs/test/doubles/slack-test-state.ts";
-
 import { handleSlackInteraction } from "./interactions";
 import { verifySlackSignature } from "./verify";
 
@@ -171,7 +170,9 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "approve_pending-123" }],
     });
     expect(res.status).toBe(200);
-    const ephemeral = slackTestState.calls.find((c) => c.method === "postEphemeral");
+    const ephemeral = slackTestState.calls.find(
+      (c) => c.method === "postEphemeral",
+    );
     expect(ephemeral).toBeDefined();
     expect(ephemeral?.args.text as string).toContain("Only the person");
     expect(redisStore.has("slack:action:pending-123")).toBe(true);

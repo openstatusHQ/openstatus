@@ -5,7 +5,10 @@ import { notFound } from "next/navigation";
 import { CustomMDX } from "../../../../content/mdx";
 import { getUseCasePages } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import { BASE_URL, getPageMetadata } from "../../../../lib/metadata/shared-metadata";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBlogPosting,
@@ -15,7 +18,6 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
-
 import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 

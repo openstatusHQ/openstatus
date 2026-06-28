@@ -51,7 +51,6 @@ import {
   formatPercentage,
 } from "../../../../../../../lib/formatter";
 import { useTRPC } from "../../../../../../../lib/trpc/client";
-
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {

@@ -20,7 +20,10 @@ const DISCORD_URL = "https://discord.com/api/webhooks/1/xxx";
 let fetchMock: Stub<typeof globalThis>;
 
 function setFetch(
-  impl: (input: Request | string | URL, init?: RequestInit) => Promise<Response>,
+  impl: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>,
 ) {
   fetchMock?.restore();
   fetchMock = stub(globalThis, "fetch", impl);
@@ -209,7 +212,9 @@ describe("sendWebhookNotifications", () => {
       makeUpdate({
         status: "investigating",
         updateId: 42,
-        componentsWithImpact: [{ id: 7, name: "API", impact: "partial_outage" }],
+        componentsWithImpact: [
+          { id: 7, name: "API", impact: "partial_outage" },
+        ],
       }),
     );
 
@@ -281,7 +286,10 @@ describe("sendWebhookNotifications", () => {
       attempts += 1;
       return Promise.resolve(
         attempts < 3
-          ? new Response(null, { status: 503, statusText: "Service Unavailable" })
+          ? new Response(null, {
+              status: 503,
+              statusText: "Service Unavailable",
+            })
           : new Response(null, { status: 200 }),
       );
     });
@@ -294,7 +302,9 @@ describe("sendWebhookNotifications", () => {
   });
 
   test("does not retry non-retryable 4xx responses", async () => {
-    resolveFetch(new Response(null, { status: 400, statusText: "Bad Request" }));
+    resolveFetch(
+      new Response(null, { status: 400, statusText: "Bad Request" }),
+    );
 
     await sendWebhookNotifications([makeSub()], makeUpdate());
 
@@ -537,7 +547,9 @@ describe("buildGenericPayload", () => {
         id: 12,
         status: "investigating",
         updateId: 42,
-        componentsWithImpact: [{ id: 7, name: "API", impact: "partial_outage" }],
+        componentsWithImpact: [
+          { id: 7, name: "API", impact: "partial_outage" },
+        ],
       }),
       sub,
       links,

@@ -1,6 +1,6 @@
 import { withPoweredBy } from "../../content/markdown";
-import { computeETag, isNotModified } from "./etag";
 import { markdownCacheControl } from "../proxy/markdown-cache-control";
+import { computeETag, isNotModified } from "./etag";
 
 const MARKDOWN = "text/markdown; charset=utf-8";
 

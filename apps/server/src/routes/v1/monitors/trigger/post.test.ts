@@ -1,7 +1,6 @@
 import { afterEach, expect, mock, test } from "@openstatus/test-utils";
 
 import { app } from "../../../../index";
-
 import { TriggerSchema } from "./schema";
 
 const mockFetch = mock();

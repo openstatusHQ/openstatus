@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { CustomMDX } from "../../../../content/mdx";
 import { getToolingPages } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import { BASE_URL, getPageMetadata } from "../../../../lib/metadata/shared-metadata";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,

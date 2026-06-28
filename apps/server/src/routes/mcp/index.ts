@@ -4,7 +4,6 @@ import { Hono } from "hono";
 import { handleError } from "../../libs/errors";
 import { authMiddleware } from "../../libs/middlewares/auth";
 import type { Variables } from "../../types";
-
 import { toServiceCtx } from "./adapter";
 import { createMcpServer } from "./server";
 

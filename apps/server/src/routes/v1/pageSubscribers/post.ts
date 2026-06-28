@@ -5,9 +5,11 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 
-import { OpenStatusApiError, openApiErrorResponses } from "../../../libs/errors";
+import {
+  OpenStatusApiError,
+  openApiErrorResponses,
+} from "../../../libs/errors";
 import { trackMiddleware } from "../../../libs/middlewares";
-
 import type { pageSubscribersApi } from "./index";
 import { PageSubscriberSchema, ParamsSchema } from "./schema";
 

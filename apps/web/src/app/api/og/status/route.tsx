@@ -5,7 +5,6 @@ import { ImageResponse } from "next/og";
 import { DESCRIPTION, TITLE } from "../../../../lib/metadata/shared-metadata";
 import { cn } from "../../../../lib/utils";
 import { api } from "../../../../trpc/server";
-
 import { SIZE } from "../utils";
 
 export const runtime = "edge";

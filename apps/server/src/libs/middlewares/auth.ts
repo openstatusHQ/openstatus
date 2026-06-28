@@ -16,8 +16,8 @@ import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
 
 import { env } from "../../env";
-import { OpenStatusApiError } from "../errors";
 import type { Variables } from "../../types";
+import { OpenStatusApiError } from "../errors";
 
 const logger = getLogger("api-server");
 

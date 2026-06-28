@@ -3,7 +3,6 @@ import { ImageResponse } from "next/og";
 
 import { env } from "../../../../env";
 import { DESCRIPTION, TITLE } from "../../../../lib/metadata/shared-metadata";
-
 import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
 import { SIZE, calSemiBold, interLight, interRegular } from "../utils";

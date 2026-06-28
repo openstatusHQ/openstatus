@@ -6,7 +6,6 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "../../../lib/metadata/shared-metadata";
-
 import {
   ContentBoxDescription,
   ContentBoxLink,

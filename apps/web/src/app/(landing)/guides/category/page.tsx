@@ -7,7 +7,6 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "../../../../lib/metadata/shared-metadata";
-
 import { ContentBoxLink, ContentBoxTitle } from "../../content-box";
 
 const TITLE = "Guides Categories";

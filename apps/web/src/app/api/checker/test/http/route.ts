@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { checkRegion } from "../../../../../lib/checker/utils";
-
 import { isAnInvalidTestUrl } from "../../utils";
 
 export const runtime = "edge";

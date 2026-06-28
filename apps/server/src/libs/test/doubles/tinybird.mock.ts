@@ -3,7 +3,10 @@
 // re-exporting the real Tinybird/AuditLog/etc. for code that imports them.
 export * from "@openstatus/tinybird-real";
 
-import { tinybirdMockCalls as calls, tinybirdMockData as data } from "./state.ts";
+import {
+  tinybirdMockCalls as calls,
+  tinybirdMockData as data,
+} from "./state.ts";
 
 const empty = () => Promise.resolve({ data: [] });
 

@@ -1,7 +1,6 @@
+import { defaultStatusBlocksLabels as labels } from "@openstatus/ui/components/blocks/status.utils";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
-
-import { defaultStatusBlocksLabels as labels } from "@openstatus/ui/components/blocks/status.utils";
 
 // Status-page timestamps render in UTC, so the user-facing labels carry a
 // trailing "(UTC)" to tell viewers which zone they are reading (see #2302).

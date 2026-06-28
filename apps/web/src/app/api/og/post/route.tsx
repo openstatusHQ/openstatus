@@ -2,7 +2,6 @@
 import { ImageResponse } from "next/og";
 
 import { TITLE } from "../../../../lib/metadata/shared-metadata";
-
 import { BasicLayout } from "../_components/basic-layout";
 import {
   DEFAULT_URL,

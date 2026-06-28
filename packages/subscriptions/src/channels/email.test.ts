@@ -1,5 +1,4 @@
 import "../test-preload.ts";
-
 import { EmailClient } from "@openstatus/emails";
 import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";

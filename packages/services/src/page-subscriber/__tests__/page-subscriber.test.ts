@@ -16,15 +16,6 @@ import {
 } from "@std/testing/bdd";
 
 import {
-  createPageSubscriber,
-  getSubscriberByToken,
-  hasPendingSubscriber,
-  unsubscribeSubscriber,
-  updateSubscriberScope,
-  upsertSelfSignupSubscriber,
-  verifySelfSignupSubscriber,
-} from "../index.ts";
-import {
   SEEDED_WORKSPACE_FREE_ID,
   SEEDED_WORKSPACE_TEAM_ID,
 } from "../../../test/fixtures";
@@ -37,6 +28,15 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import { ForbiddenError } from "../../errors";
+import {
+  createPageSubscriber,
+  getSubscriberByToken,
+  hasPendingSubscriber,
+  unsubscribeSubscriber,
+  updateSubscriberScope,
+  upsertSelfSignupSubscriber,
+  verifySelfSignupSubscriber,
+} from "../index.ts";
 
 // Seeded data we lean on (see packages/db/src/seed.mts):
 //   workspace 1 = team plan, has status-subscribers=true

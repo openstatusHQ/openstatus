@@ -11,7 +11,6 @@ import {
   twitterMetadata,
 } from "../../../lib/metadata/shared-metadata";
 import { HydrateClient, api } from "../../../trpc/rq-server";
-
 import {
   ContentBoxContainer,
   ContentBoxDescription,

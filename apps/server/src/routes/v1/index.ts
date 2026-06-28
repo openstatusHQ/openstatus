@@ -6,7 +6,6 @@ import type { RequestIdVariables } from "hono/request-id";
 
 import { handleZodError } from "../../libs/errors";
 import { authMiddleware, requireWriteScope } from "../../libs/middlewares";
-
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";
