@@ -49,6 +49,25 @@ export function mock(impl?: AnyFn): MockFn {
   }) as MockFn;
 
   fn.mock = state;
+  // Expose the @std/expect mock interface (Symbol.for("@MOCK")) so its
+  // `.toHaveBeenCalled*` matchers recognize this shim, not just `.mock.calls`.
+  Object.defineProperty(fn, Symbol.for("@MOCK"), {
+    get() {
+      return {
+        calls: state.calls.map((args, i) => {
+          const r = state.results[i];
+          return {
+            args,
+            returned: r?.type === "return" ? r.value : undefined,
+            thrown: r?.type === "throw" ? r.value : undefined,
+            timestamp: 0,
+            returns: r?.type === "return",
+            throws: r?.type === "throw",
+          };
+        }),
+      };
+    },
+  });
   fn.mockClear = () => {
     state.calls = [];
     state.results = [];

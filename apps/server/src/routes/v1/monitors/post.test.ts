@@ -123,7 +123,7 @@ test("create a monitor with deprecated regions should return 400", async () => {
 
   expect(res.status).toBe(400);
   expect(errorSchema.success).toBe(true);
-  expect(errorSchema.data?.message).toMatch(
+  expect(errorSchema.data?.message).toContain(
     "Deprecated regions are not allowed: hkg, waw",
   );
 });

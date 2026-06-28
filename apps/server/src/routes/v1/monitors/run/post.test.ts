@@ -7,7 +7,6 @@ import { TriggerResult } from "../schema";
 const mockFetch = mock();
 
 global.fetch = mockFetch as unknown as typeof fetch;
-mock.module("node-fetch", () => mockFetch);
 
 afterEach(() => {
   mockFetch.mockReset();
