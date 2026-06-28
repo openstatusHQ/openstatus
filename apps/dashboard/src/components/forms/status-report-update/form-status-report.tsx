@@ -112,7 +112,7 @@ export function FormStatusReportUpdateCard({
       message: "",
       date: new Date(),
       componentImpacts: undefined,
-      notifySubscribers: true,
+      notifySubscribers: !!workspace?.limits["status-subscribers"],
     },
   });
   const watchMessage = form.watch("message");

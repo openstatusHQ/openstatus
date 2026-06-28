@@ -92,7 +92,7 @@ export function FormMaintenance({
       startDate: new Date(),
       endDate: addDays(new Date(), 1),
       pageComponents: [],
-      notifySubscribers: true,
+      notifySubscribers: !!workspace?.limits["status-subscribers"],
     },
   });
   const watchEndDate = form.watch("endDate");

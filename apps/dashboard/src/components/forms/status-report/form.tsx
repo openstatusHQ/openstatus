@@ -114,7 +114,7 @@ export function FormStatusReport({
       message: "",
       date: new Date(),
       pageComponents: [],
-      notifySubscribers: true,
+      notifySubscribers: !!workspace?.limits["status-subscribers"],
     },
   });
   const watchMessage = form.watch("message");

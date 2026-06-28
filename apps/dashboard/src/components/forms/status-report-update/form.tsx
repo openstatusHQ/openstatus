@@ -99,7 +99,9 @@ export function FormStatusReportUpdate({
       message: defaultValues?.message ?? "",
       date: defaultValues?.date ?? new Date(),
       componentImpacts: defaultValues?.componentImpacts,
-      notifySubscribers: defaultValues?.notifySubscribers ?? true,
+      notifySubscribers:
+        defaultValues?.notifySubscribers ??
+        !!workspace?.limits["status-subscribers"],
     },
   });
   const watchMessage = form.watch("message");
