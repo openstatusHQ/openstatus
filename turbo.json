@@ -48,6 +48,26 @@
     "test": {
       "cache": false
     },
+    "@openstatus/api#test": {
+      "cache": false,
+      "dependsOn": ["@openstatus/db#seed"]
+    },
+    "@openstatus/services#test": {
+      "cache": false,
+      "dependsOn": ["@openstatus/api#test"]
+    },
+    "@openstatus/server#test": {
+      "cache": false,
+      "dependsOn": ["@openstatus/services#test"]
+    },
+    "@openstatus/subscriptions#test": {
+      "cache": false,
+      "dependsOn": ["@openstatus/server#test"]
+    },
+    "@openstatus/workflows#test": {
+      "cache": false,
+      "dependsOn": ["@openstatus/subscriptions#test"]
+    },
     "dx": {
       "cache": false,
       "dependsOn": ["seed"]

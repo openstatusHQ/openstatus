@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./env.mjs": "./env.mjs",
     "./src/schema": "./src/schema/index.ts",
+    "./src/test/factories": "./src/test/factories.ts",
     "./src/schema/api-keys": "./src/schema/api-keys/index.ts",
     "./src/schema/check": "./src/schema/check/index.ts",
     "./src/schema/incidents": "./src/schema/incidents/index.ts",
