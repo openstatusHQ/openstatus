@@ -15,9 +15,9 @@ effective: |
         path: node
         digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
       label:
+        org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.stage: install
         org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
-        org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -100,8 +100,8 @@ effective: |
         path: denoland/deno
         digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
       label:
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
         org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
         org.opencontainers.image.stage: build
       workdir: /app/apps/server
       env:
@@ -131,13 +131,13 @@ effective: |
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.title: OpenStatus Server
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    io.dofigen.version: 2.8.0
     org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    io.dofigen.version: 2.8.0
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Server
     org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
   user:
     user: '1000'
     group: '1000'
@@ -159,14 +159,14 @@ effective: |
     retries: 3
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.0:
-          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
     library:
       node:
         24-slim:
           digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+    denoland:
+      deno:
+        2.9.0:
+          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
 resources:
   dofigen.yml:
     hash: f9fb4559e02833a2518fbd89165716c9584bd11d24e8a6103a98a959b5a6ae0c

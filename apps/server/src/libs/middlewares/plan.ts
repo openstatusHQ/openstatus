@@ -4,7 +4,8 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Context, Next } from "hono";
 
-import type { Variables } from "../../types";
+import type { Variables } from "@/types";
+
 import { OpenStatusApiError } from "../errors";
 
 /**
