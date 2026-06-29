@@ -77,12 +77,15 @@ function buildPlaceholderBarData(): StatusBarData[] {
   });
 }
 
+const MONITOR_KEY = "__monitor";
+
 export type OnboardingStatusPagePreviewProps = {
   slug: string;
   title?: string;
   description?: string;
   components: { name: string }[];
   monitorName?: string | null;
+  monitorTodayBar?: StatusBarData | null;
   themeKey: ThemeKey;
   className?: string;
 };
@@ -93,6 +96,7 @@ export function OnboardingStatusPagePreview({
   description,
   components,
   monitorName,
+  monitorTodayBar,
   themeKey,
   className,
 }: OnboardingStatusPagePreviewProps) {
@@ -112,10 +116,17 @@ export function OnboardingStatusPagePreview({
 
   const themeStyle = useThemeVars(themeKey, mode, mounted);
   const [placeholderBarData] = useState(buildPlaceholderBarData);
+  const monitorBarData = useMemo(
+    () =>
+      monitorTodayBar
+        ? [...placeholderBarData.slice(0, -1), monitorTodayBar]
+        : placeholderBarData,
+    [placeholderBarData, monitorTodayBar],
+  );
 
   const displayTitle = title?.trim() || slug || "My Status Page";
   const allComponents: { key: string; name: string }[] = [
-    ...(monitorName ? [{ key: "__monitor", name: monitorName }] : []),
+    ...(monitorName ? [{ key: MONITOR_KEY, name: monitorName }] : []),
     ...components
       .filter((c) => c.name.trim().length > 0)
       .map((c, i) => ({ key: `c-${i}`, name: c.name })),
@@ -158,25 +169,29 @@ export function OnboardingStatusPagePreview({
             </StatusHeader>
             <StatusBanner status="success" />
             <StatusContent>
-              {allComponents.map((c) => (
-                <StatusComponent key={c.key} variant="success">
-                  <StatusComponentHeader>
-                    <StatusComponentHeaderLeft>
-                      <StatusComponentTitle>{c.name}</StatusComponentTitle>
-                    </StatusComponentHeaderLeft>
-                    <StatusComponentHeaderRight>
-                      <StatusComponentUptime>100%</StatusComponentUptime>
-                      <StatusComponentIcon />
-                    </StatusComponentHeaderRight>
-                  </StatusComponentHeader>
-                  <StatusComponentBody>
-                    <StatusBar
-                      data={placeholderBarData}
-                      container={mounted ? previewRef.current : null}
-                    />
-                  </StatusComponentBody>
-                </StatusComponent>
-              ))}
+              {allComponents.map((c) => {
+                const barData =
+                  c.key === MONITOR_KEY ? monitorBarData : placeholderBarData;
+                return (
+                  <StatusComponent key={c.key} variant="success">
+                    <StatusComponentHeader>
+                      <StatusComponentHeaderLeft>
+                        <StatusComponentTitle>{c.name}</StatusComponentTitle>
+                      </StatusComponentHeaderLeft>
+                      <StatusComponentHeaderRight>
+                        <StatusComponentUptime>100%</StatusComponentUptime>
+                        <StatusComponentIcon />
+                      </StatusComponentHeaderRight>
+                    </StatusComponentHeader>
+                    <StatusComponentBody>
+                      <StatusBar
+                        data={barData}
+                        container={mounted ? previewRef.current : null}
+                      />
+                    </StatusComponentBody>
+                  </StatusComponent>
+                );
+              })}
             </StatusContent>
             <Separator />
             <StatusContent>
