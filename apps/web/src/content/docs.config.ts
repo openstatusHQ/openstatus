@@ -149,6 +149,10 @@ export const docsNav: DocsNavSection[] = [
         label: "How to Set Up the openstatus Slack Agent",
       },
       {
+        slug: "guides/how-to-deploy-statuspage-socials-notifier",
+        label: "How to Auto-Post Status Updates to X and Bluesky",
+      },
+      {
         slug: "guides/how-to-connect-openstatus-to-claude-code",
         label: "How to Connect openstatus to Claude Code",
       },
