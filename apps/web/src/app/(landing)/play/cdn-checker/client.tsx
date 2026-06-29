@@ -59,9 +59,7 @@ export function CdnCheckerProvider({
     useQueryStates(searchParamsParsers);
   const autoRan = useRef(false);
 
-  function runCheck(rawUrl: string) {
-    // bare domains are common input: default to https
-    const url = rawUrl.includes("://") ? rawUrl : `https://${rawUrl}`;
+  function runCheck(url: string) {
     try {
       new URL(url);
     } catch {
@@ -72,7 +70,7 @@ export function CdnCheckerProvider({
     setRows([]);
     setSummary(null);
     setCheckedUrl(url);
-    setSearchParams({ url: rawUrl });
+    setSearchParams({ url });
 
     startTransition(async () => {
       let toastId: string | number | undefined;
