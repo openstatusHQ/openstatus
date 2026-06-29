@@ -14,7 +14,7 @@ import {
 
 import { CdnCheckerProvider, CdnForm } from "./client";
 import { MonitorCta } from "./components/monitor-cta";
-import { ResultsTable } from "./components/results-table";
+import { CacheStatusLegend, ResultsTable } from "./components/results-table";
 import { SummaryCard } from "./components/summary-card";
 
 export function generateMetadata(): Metadata {
@@ -43,6 +43,7 @@ export default function Page() {
       <Suspense>
         <CdnCheckerProvider>
           <CdnForm />
+          <CacheStatusLegend />
           <SummaryCard />
           <ResultsTable />
           <MonitorCta />

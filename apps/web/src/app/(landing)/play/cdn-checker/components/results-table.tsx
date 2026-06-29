@@ -1,7 +1,7 @@
 "use client";
 
 import { CDN_LABELS } from "@openstatus/header-analysis";
-import { regionDict } from "@openstatus/regions";
+import { AVAILABLE_REGIONS, regionDict } from "@openstatus/regions";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import {
 } from "@openstatus/ui/components/ui/dialog";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { CdnRegionResult } from "@/lib/cdn-checker/schema";
@@ -25,18 +26,34 @@ import {
   formatAge,
 } from "../utils";
 
-function CacheStatusPill({
+function CacheStatusIndicator({
   status,
 }: {
   status: CdnRegionResult["cacheStatus"];
 }) {
   return (
-    <span
-      className={cn("text-background text-base", CACHE_STATUS_COLOR[status])}
+    <div
+      className={cn("size-4", CACHE_STATUS_COLOR[status])}
       title={CACHE_STATUS_DESCRIPTION[status]}
-    >
-      {status}
-    </span>
+    />
+  );
+}
+
+export function CacheStatusLegend() {
+  return (
+    <div className="not-prose my-4 flex flex-wrap gap-2">
+      {Object.entries(CACHE_STATUS_COLOR).map(([status, className]) => (
+        <div
+          key={status}
+          className={cn("text-background text-base", className)}
+          title={
+            CACHE_STATUS_DESCRIPTION[status as CdnRegionResult["cacheStatus"]]
+          }
+        >
+          {status}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -112,7 +129,9 @@ const columns: ColumnDef<CdnRegionResult>[] = [
   {
     accessorKey: "cacheStatus",
     header: "Cache",
-    cell: ({ row }) => <CacheStatusPill status={row.original.cacheStatus} />,
+    cell: ({ row }) => (
+      <CacheStatusIndicator status={row.original.cacheStatus} />
+    ),
   },
   {
     accessorKey: "ttfbMs",
@@ -141,8 +160,6 @@ export function ResultsTable() {
   const successRows = rows.filter((row) => row.state === "success");
   const errorRows = rows.filter((row) => row.state === "error");
 
-  if (rows.length === 0) return null;
-
   return (
     <div className="not-prose grid gap-2">
       {errorRows.length > 0 ? (
@@ -157,7 +174,17 @@ export function ResultsTable() {
         columns={columns}
         data={successRows}
         defaultSorting={[{ id: "ttfbMs", desc: false }]}
+        emptyState={
+          <IconCloudProvider
+            provider="globe"
+            className="text-muted-foreground mx-auto size-4"
+          />
+        }
       />
+      <p className="text-muted-foreground text-center text-sm">
+        Results of your check ({rows.length} / {AVAILABLE_REGIONS.length}{" "}
+        regions)
+      </p>
     </div>
   );
 }
