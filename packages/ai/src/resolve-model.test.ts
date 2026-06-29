@@ -2,7 +2,12 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { resolveChatModel } from "./resolve-model";
 
-const ENV_KEYS = ["AI_BASE_URL", "AI_MODEL", "AI_API_KEY", "AI_GATEWAY_API_KEY"];
+const ENV_KEYS = [
+  "AI_BASE_URL",
+  "AI_MODEL",
+  "AI_API_KEY",
+  "AI_GATEWAY_API_KEY",
+];
 
 function clearEnv() {
   for (const key of ENV_KEYS) delete process.env[key];
