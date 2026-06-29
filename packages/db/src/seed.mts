@@ -24,9 +24,13 @@ import {
 import { externalServicesSeed } from "./seed/external-services";
 
 async function main() {
-
-  if (!env.DATABASE_URL.includes("localhost") && !env.DATABASE_URL.includes("127.0.0.1")) {
-    throw new Error(`Refusing to wipe non-local database: DATABASE_URL=${env.DATABASE_URL}`);
+  if (
+    !env.DATABASE_URL.includes("localhost") &&
+    !env.DATABASE_URL.includes("127.0.0.1")
+  ) {
+    throw new Error(
+      `Refusing to wipe non-local database: DATABASE_URL=${env.DATABASE_URL}`,
+    );
   }
 
   const client = createClient({
