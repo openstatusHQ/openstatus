@@ -7,6 +7,7 @@ import { toast } from "sonner";
 export function useStreamChecks() {
   const [results, setResults] = useState<CheckResult[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -29,6 +30,7 @@ export function useStreamChecks() {
       abortRef.current = controller;
       setResults([]);
       setError(null);
+      setIsComplete(false);
       setIsStreaming(true);
 
       try {
@@ -84,6 +86,7 @@ export function useStreamChecks() {
         fail(err instanceof Error ? err.message : "Stream failed");
       } finally {
         setIsStreaming(false);
+        setIsComplete(true);
         abortRef.current = null;
       }
     },
@@ -96,5 +99,5 @@ export function useStreamChecks() {
     };
   }, []);
 
-  return { results, isStreaming, error, start, stop };
+  return { results, isStreaming, isComplete, error, start, stop };
 }
