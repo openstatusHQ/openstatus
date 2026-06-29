@@ -8,7 +8,7 @@
     "env": "deno run -A env.ts",
     "dev": "deno run -A --watch --sloppy-imports src/serve.ts",
     "start": "NODE_ENV=production deno run -A --sloppy-imports src/serve.ts",
-    "test": "deno test -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json",
+    "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json --ignore=src/routes/slack && deno test -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json src/routes/slack",
     "check": "deno check --sloppy-imports src/serve.ts",
     "eval:mcp": "deno run -A --sloppy-imports src/routes/mcp/evals/run.ts"
   },

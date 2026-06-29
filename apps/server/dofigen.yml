@@ -80,7 +80,7 @@ builders:
         target: /app/packages
     # Deno reads `catalog:` from root package.json; consumes pnpm's node_modules (manual).
     # sloppy-imports resolves the codebase's extensionless relative imports.
-    run: deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
+    run: deno compile -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
 
 # Runtime stage
 fromImage: debian:bullseye-slim

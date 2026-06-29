@@ -14,7 +14,7 @@
   "scripts": {
     "check": "deno check --sloppy-imports .",
     "dev:email": "email dev",
-    "test": "deno test -A --no-check --sloppy-imports"
+    "test": "deno test --parallel -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",

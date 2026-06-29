@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "env": "bun env.ts",
+    "env": "deno run -A env.ts",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "deno test -A --no-check --sloppy-imports",
+    "test": "deno test --parallel -A --no-check --sloppy-imports",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {

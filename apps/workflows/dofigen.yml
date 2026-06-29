@@ -78,7 +78,7 @@ builders:
       NODE_ENV: production
     # `deno compile` embeds the @libsql/client native addon into the binary, so no side-car
     # node_modules is needed at runtime (unlike `bun build --compile`).
-    run: deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --output app src/serve.ts
+    run: deno compile -A --sloppy-imports --node-modules-dir=manual --output app src/serve.ts
 
 fromImage: debian:bullseye-slim
 workdir: /app/

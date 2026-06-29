@@ -12,43 +12,14 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    build:
-      fromImage:
-        path: denoland/deno
-        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-      label:
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --output app src/serve.ts
     install:
       fromImage:
         path: node
         digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -120,18 +91,47 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
+    build:
+      fromImage:
+        path: denoland/deno
+        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+      label:
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - deno compile -A --sloppy-imports --node-modules-dir=manual --output app src/serve.ts
   fromImage:
     path: debian
     digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Workflows
+    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -148,20 +148,20 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    library:
-      node:
-        24-slim:
-          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
-      debian:
-        bullseye-slim:
-          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     denoland:
       deno:
         2.9.0:
           digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+      node:
+        24-slim:
+          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
 resources:
   dofigen.yml:
-    hash: 884534f1ee6706da8d3c4edf722e14d8c845d7105eaad2eee13e1b8f2e1e8650
+    hash: da5a8e5da9a5c8a9d97dc40029b6de1bb872790b1e0ff682fa170f839535f0c4
     content: |
       ignore:
         - node_modules
@@ -243,7 +243,7 @@ resources:
             NODE_ENV: production
           # `deno compile` embeds the @libsql/client native addon into the binary, so no side-car
           # node_modules is needed at runtime (unlike `bun build --compile`).
-          run: deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --output app src/serve.ts
+          run: deno compile -A --sloppy-imports --node-modules-dir=manual --output app src/serve.ts
 
       fromImage: debian:bullseye-slim
       workdir: /app/

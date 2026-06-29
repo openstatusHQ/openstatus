@@ -10,42 +10,13 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
-    build:
-      fromImage:
-        path: denoland/deno
-        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-      label:
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
-        org.opencontainers.image.stage: build
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/server/node_modules
-        target: /app/apps/server/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
     install:
       fromImage:
         path: node
         digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.stage: install
         org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       workdir: /app/
       run:
@@ -124,18 +95,47 @@ effective: |
         source: packages/services/package.json
       - target: packages/importers/package.json
         source: packages/importers/package.json
+    build:
+      fromImage:
+        path: denoland/deno
+        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+      label:
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.stage: build
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/server/node_modules
+        target: /app/apps/server/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - deno compile -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
   fromImage:
     path: debian
     digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     io.dofigen.version: 2.8.0
-    org.opencontainers.image.title: OpenStatus Server
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.title: OpenStatus Server
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    org.opencontainers.image.authors: OpenStatus Team
   user:
     user: '1000'
     group: '1000'
@@ -175,7 +175,7 @@ images:
           digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
 resources:
   dofigen.yml:
-    hash: ab17d24ba3dd59475f2af33dd2853dfabaaaee6761eec41a48cda19c126c36a6
+    hash: 6b7f62ef0a580ee130ed635bcc736d4ff4c7545e4cf51b90050055bee286d361
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -259,7 +259,7 @@ resources:
               target: /app/packages
           # Deno reads `catalog:` from root package.json; consumes pnpm's node_modules (manual).
           # sloppy-imports resolves the codebase's extensionless relative imports.
-          run: deno compile -A --no-check --unstable-sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
+          run: deno compile -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
 
       # Runtime stage
       fromImage: debian:bullseye-slim
