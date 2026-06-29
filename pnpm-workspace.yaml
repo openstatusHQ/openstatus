@@ -18,6 +18,7 @@ allowBuilds:
 autoInstallPeers: true
 catalog:
   "@ai-sdk/anthropic": 1.2.12
+  "@ai-sdk/openai-compatible": 2.0.54
   "@ai-sdk/react": 3.0.190
   "@astrojs/check": 0.9.9
   "@astrojs/react": 4.4.2
