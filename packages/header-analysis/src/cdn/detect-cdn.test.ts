@@ -55,6 +55,21 @@ describe("detectCdn", () => {
     expect(result.provider).toBe("netlify");
   });
 
+  test("google cloud cdn: via corroborated by x-goog-cache-status", () => {
+    const result = detectCdn({
+      Via: "1.1 google",
+      "X-Goog-Cache-Status": "hit",
+    });
+    expect(result.provider).toBe("google");
+    expect(result.evidence).toContain("x-goog-cache-status");
+  });
+
+  test("bare `via: 1.1 google` is not a CDN (load balancer / translate proxy)", () => {
+    const result = detectCdn({ Via: "1.1 google" });
+    expect(result.provider).toBeNull();
+    expect(result.evidence).toEqual([]);
+  });
+
   test("outermost proxy wins when stacked (cloudflare in front of vercel)", () => {
     const result = detectCdn({
       "Cf-Ray": "8c9a1b2c3d4e5f6a-FRA",
