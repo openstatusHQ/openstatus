@@ -48,7 +48,7 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --verbose
+pnpm install --frozen-lockfile --verbose
 EOF
 
 # build
@@ -74,7 +74,7 @@ COPY \
     --from=install \
     --link \
     "/app/packages" "/app/packages"
-RUN deno compile -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
+RUN deno compile --bundle --minify -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
 
 # runtime
 FROM debian@sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604 AS runtime
