@@ -3,6 +3,6 @@
   "include": ["src", "*.ts"],
   "compilerOptions": {
     "moduleResolution": "bundler",
-    "types": ["bun-types"]
+    "types": [],
   }
 }

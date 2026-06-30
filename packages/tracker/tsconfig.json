@@ -3,6 +3,6 @@
   "include": ["src", "*.ts"],
   "compilerOptions": {
     "target": "ES2021",
-    "types": ["bun-types"]
+    "types": [],
   }
 }

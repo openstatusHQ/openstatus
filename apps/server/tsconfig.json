@@ -8,7 +8,7 @@
     "moduleResolution": "bundler",
     "jsxImportSource": "react",
     "allowJs": true,
-    "types": ["bun-types"],
+    "types": [],
     "paths": {
       "@/*": ["./src/*"],
       "@modelcontextprotocol/sdk/server/mcp.js": [
