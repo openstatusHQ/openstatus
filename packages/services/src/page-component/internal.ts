@@ -1,5 +1,10 @@
 import { and, eq, inArray, isNull } from "@openstatus/db";
-import { monitor, page } from "@openstatus/db/src/schema";
+import {
+  externalService,
+  externalServiceComponent,
+  monitor,
+  page,
+} from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
 import { ForbiddenError } from "../errors";
@@ -49,5 +54,68 @@ export async function validateMonitorIds(args: {
     .all();
   if (rows.length !== ids.length) {
     throw new ForbiddenError("Invalid monitor IDs.");
+  }
+}
+
+export async function validateExternalRefs(args: {
+  tx: DB;
+  serviceIds: ReadonlyArray<number>;
+  componentRefs: ReadonlyArray<{ serviceId: number; componentId: number }>;
+  // Newly-added service refs additionally must not be soft-deleted, so a fresh
+  // pick can't reference a removed provider. Existing refs only need to exist,
+  // so a provider soft-deleted after being added never blocks saving the page.
+  requireLiveServiceIds?: ReadonlyArray<number>;
+}): Promise<void> {
+  const { tx, serviceIds, componentRefs, requireLiveServiceIds } = args;
+
+  const ids = Array.from(new Set(serviceIds));
+  if (ids.length > 0) {
+    const rows = await tx
+      .select({ id: externalService.id })
+      .from(externalService)
+      .where(inArray(externalService.id, ids))
+      .all();
+    if (rows.length !== ids.length) {
+      throw new ForbiddenError("Invalid external service IDs.");
+    }
+  }
+
+  const liveIds = Array.from(new Set(requireLiveServiceIds ?? []));
+  if (liveIds.length > 0) {
+    const rows = await tx
+      .select({ id: externalService.id })
+      .from(externalService)
+      .where(
+        and(
+          inArray(externalService.id, liveIds),
+          isNull(externalService.deletedAt),
+        ),
+      )
+      .all();
+    if (rows.length !== liveIds.length) {
+      throw new ForbiddenError("Invalid external service IDs.");
+    }
+  }
+
+  const componentIds = Array.from(
+    new Set(componentRefs.map((r) => r.componentId)),
+  );
+  if (componentIds.length > 0) {
+    const rows = await tx
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+      })
+      .from(externalServiceComponent)
+      .where(inArray(externalServiceComponent.id, componentIds))
+      .all();
+    const serviceByComponent = new Map(
+      rows.map((r) => [r.id, r.externalServiceId]),
+    );
+    for (const ref of componentRefs) {
+      if (serviceByComponent.get(ref.componentId) !== ref.serviceId) {
+        throw new ForbiddenError("Invalid external component IDs.");
+      }
+    }
   }
 }

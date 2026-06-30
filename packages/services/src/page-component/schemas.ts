@@ -16,17 +16,38 @@ const componentInput = z
   .object({
     id: z.number().int().optional(),
     monitorId: z.number().int().nullish(),
+    externalServiceId: z.number().int().nullish(),
+    externalServiceComponentId: z.number().int().nullish(),
     order: z.number().int(),
     name: z.string(),
     description: z.string().nullish(),
-    type: z.enum(["monitor", "static"]),
+    type: z.enum(["monitor", "static", "external"]),
   })
   .refine(
-    (c) => (c.type === "monitor" ? c.monitorId != null : c.monitorId == null),
+    (c) => {
+      switch (c.type) {
+        case "monitor":
+          return (
+            c.monitorId != null &&
+            c.externalServiceId == null &&
+            c.externalServiceComponentId == null
+          );
+        case "static":
+          return (
+            c.monitorId == null &&
+            c.externalServiceId == null &&
+            c.externalServiceComponentId == null
+          );
+        case "external":
+          return c.monitorId == null && c.externalServiceId != null;
+        default:
+          return false;
+      }
+    },
     {
-      path: ["monitorId"],
+      path: ["type"],
       message:
-        "Monitor components require a monitorId; static components must not set one.",
+        "monitor requires monitorId; static requires no refs; external requires externalServiceId.",
     },
   );
 

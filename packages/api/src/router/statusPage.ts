@@ -1,6 +1,9 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, asc, eq, inArray, sql } from "@openstatus/db";
 import {
+  type ExternalStatusType,
+  externalIndicatorSeverity,
+  externalIndicatorToStatus,
   maintenance,
   page,
   pageComponent,
@@ -15,6 +18,10 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
+import {
+  type ExternalDailyRow,
+  getPageExternalSection,
+} from "@openstatus/services/external-service";
 import {
   getSubscriberByToken,
   hasPendingSubscriber,
@@ -85,6 +92,52 @@ const gateFieldsSchema = selectPageSchema.pick({
   contactUrl: true,
 });
 
+const EXTERNAL_LOOKBACK_DAYS = 45;
+
+type ExternalComponentBars = {
+  day: string;
+  bar: { status: ExternalStatusType; height: number }[];
+  card: { status: ExternalStatusType; value: string }[];
+  events: never[];
+};
+
+function fillExternalBars(
+  daily: ExternalDailyRow[],
+  days = EXTERNAL_LOOKBACK_DAYS,
+): ExternalComponentBars[] {
+  const byDay = new Map<string, ExternalDailyRow>();
+  for (const row of daily) {
+    const key = row.day.slice(0, 10);
+    const prev = byDay.get(key);
+    if (
+      !prev ||
+      externalIndicatorSeverity(row.worstIndicator) >
+        externalIndicatorSeverity(prev.worstIndicator)
+    ) {
+      byDay.set(key, row);
+    }
+  }
+
+  const out: ExternalComponentBars[] = [];
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setUTCDate(date.getUTCDate() - i);
+    date.setUTCHours(0, 0, 0, 0);
+    const row = byDay.get(date.toISOString().slice(0, 10));
+    const status: ExternalStatusType = row
+      ? externalIndicatorToStatus(row.worstIndicator, row.hadMaintenance > 0)
+      : "empty";
+    out.push({
+      day: date.toISOString(),
+      bar: [{ status, height: 100 }],
+      card: [{ status, value: "" }],
+      events: [],
+    });
+  }
+  return out;
+}
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -142,7 +195,8 @@ export const statusPageRouter = createTRPCRouter({
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
       const pageComponents = selectPageComponentWithMonitorRelation
         .array()
-        .parse(_page.pageComponents);
+        .parse(_page.pageComponents)
+        .filter((c) => c.type !== "external");
 
       const configuration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -440,6 +494,87 @@ export const statusPageRouter = createTRPCRouter({
       });
     }),
 
+  getExternalSection: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) {
+        return { position: null, providers: [], incidents: [] };
+      }
+
+      const _page = await opts.ctx.db
+        .select({ id: page.id })
+        .from(page)
+        .where(
+          sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        )
+        .get();
+
+      if (!_page) {
+        return { position: null, providers: [], incidents: [] };
+      }
+
+      const rows = await opts.ctx.db
+        .select({
+          id: pageComponent.id,
+          name: pageComponent.name,
+          description: pageComponent.description,
+          order: pageComponent.order,
+          externalServiceId: pageComponent.externalServiceId,
+          externalServiceComponentId: pageComponent.externalServiceComponentId,
+        })
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, _page.id),
+            eq(pageComponent.type, "external"),
+          ),
+        )
+        .orderBy(asc(pageComponent.order), asc(pageComponent.id))
+        .all();
+
+      const components = rows
+        .filter(
+          (r): r is typeof r & { externalServiceId: number } =>
+            r.externalServiceId != null,
+        )
+        .map((r) => ({
+          pageComponentId: r.id,
+          name: r.name,
+          description: r.description,
+          order: r.order ?? 0,
+          externalServiceId: r.externalServiceId,
+          externalServiceComponentId: r.externalServiceComponentId,
+        }));
+
+      const section = await getPageExternalSection({
+        ctx: { db: opts.ctx.db },
+        components,
+        days: EXTERNAL_LOOKBACK_DAYS,
+      });
+
+      return {
+        position: section.position,
+        providers: section.providers.map((provider) => ({
+          externalServiceId: provider.externalServiceId,
+          name: provider.name,
+          slug: provider.slug,
+          statusPageUrl: provider.statusPageUrl,
+          status: provider.status,
+          order: provider.order,
+          components: provider.components.map((c) => ({
+            pageComponentId: c.pageComponentId,
+            name: c.name,
+            description: c.description,
+            status: c.status,
+            stale: c.stale,
+            isWholeService: c.isWholeService,
+            data: fillExternalBars(c.daily),
+          })),
+        })),
+        incidents: section.incidents,
+      };
+    }),
+
   getLight: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
@@ -513,7 +648,9 @@ export const statusPageRouter = createTRPCRouter({
         incidents,
         statusReports: _page.statusReports,
         maintenances: _page.maintenances,
-        pageComponents: _page.pageComponents,
+        pageComponents: _page.pageComponents.filter(
+          (c) => c.type !== "external",
+        ),
         pageComponentGroups: _page.pageComponentGroups,
         workspacePlan: _page.workspace.plan,
         whiteLabel,
@@ -857,6 +994,8 @@ export const statusPageRouter = createTRPCRouter({
             name: "API Monitor",
             type: "monitor" as const,
             monitorId: 1,
+            externalServiceId: null,
+            externalServiceComponentId: null,
             order: 1,
             groupId: null,
             groupOrder: null,

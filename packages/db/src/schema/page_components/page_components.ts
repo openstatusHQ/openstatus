@@ -9,6 +9,10 @@ import {
   unique,
 } from "drizzle-orm/sqlite-core";
 
+import {
+  externalService,
+  externalServiceComponent,
+} from "../external_services";
 import { maintenance } from "../maintenances";
 import { monitor } from "../monitors";
 import { pageComponentGroup } from "../page_component_groups";
@@ -33,6 +37,13 @@ export const pageComponent = sqliteTable(
     monitorId: integer("monitor_id").references(() => monitor.id, {
       onDelete: "cascade",
     }),
+    externalServiceId: integer("external_service_id").references(
+      () => externalService.id,
+      { onDelete: "cascade" },
+    ),
+    externalServiceComponentId: integer(
+      "external_service_component_id",
+    ).references(() => externalServiceComponent.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     description: text("description"),
     order: integer("order").default(0),
@@ -56,8 +67,7 @@ export const pageComponent = sqliteTable(
     index("page_component_workspace_id_idx").on(t.workspaceId),
     check(
       "page_component_type_check",
-      //   NOTE: This check ensures that either the component is a monitor or a static component, but not both.
-      sql`${t.type} = 'monitor' AND ${t.monitorId} IS NOT NULL OR ${t.type} = 'static' AND ${t.monitorId} IS NULL`,
+      sql`(${t.type} = 'monitor' AND ${t.monitorId} IS NOT NULL AND ${t.externalServiceId} IS NULL AND ${t.externalServiceComponentId} IS NULL) OR (${t.type} = 'static' AND ${t.monitorId} IS NULL AND ${t.externalServiceId} IS NULL AND ${t.externalServiceComponentId} IS NULL) OR (${t.type} = 'external' AND ${t.monitorId} IS NULL AND ${t.externalServiceId} IS NOT NULL)`,
     ),
   ],
 );
@@ -76,6 +86,14 @@ export const pageComponentRelations = relations(
     monitor: one(monitor, {
       fields: [pageComponent.monitorId],
       references: [monitor.id],
+    }),
+    externalService: one(externalService, {
+      fields: [pageComponent.externalServiceId],
+      references: [externalService.id],
+    }),
+    externalServiceComponent: one(externalServiceComponent, {
+      fields: [pageComponent.externalServiceComponentId],
+      references: [externalServiceComponent.id],
     }),
     group: one(pageComponentGroup, {
       fields: [pageComponent.groupId],

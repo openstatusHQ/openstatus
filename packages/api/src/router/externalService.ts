@@ -113,6 +113,7 @@ async function safeData<T>(
 }
 
 const gridItemSchema = z.object({
+  id: z.number(),
   slug: z.string(),
   name: z.string(),
   url: z.string(),
@@ -279,6 +280,7 @@ export const externalServiceRouter = createTRPCRouter({
         threshold: REPORT_THRESHOLD,
       });
       return {
+        id: s.id,
         slug: s.slug,
         name: s.name,
         url: s.url,
