@@ -4,8 +4,7 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env";
 
-const file =
-  env().NODE_ENV === "development" ? "./dev.db" : "///app/data/replica.db";
+const file = env().NODE_ENV === "development" ? "dev.db" : "replica.db";
 const client = createClient({
   url: `file:${file}`,
   syncUrl: env().DATABASE_URL,
