@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf AS install
+FROM node@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf" \
+    org.opencontainers.image.base.digest="sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc" \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
@@ -45,7 +45,7 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --prod --frozen-lockfile --verbose
+pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
 EOF
 
 # build
@@ -71,15 +71,21 @@ COPY \
     --from=install \
     --link \
     "/app/packages" "/app/packages"
-RUN deno compile -A --sloppy-imports --node-modules-dir=manual --output app src/serve.ts
+RUN <<EOF
+mkdir -p /tmp/sc
+deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
+cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
+mkdir -p /app/data
+EOF
 
 # runtime
-FROM debian@sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604 AS runtime
+FROM registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604" \
-    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
+    org.opencontainers.image.base.digest="sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4" \
     org.opencontainers.image.description="Background job processing and probe scheduling for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus Workflows" \
@@ -91,8 +97,17 @@ COPY \
     --chmod=555 \
     --link \
     "/app/apps/workflows/app" "/app/apps/workflows/"
-USER 0:0
-RUN apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
+COPY \
+    --from=build \
+    --chown=1000:1000 \
+    --link \
+    "/app/data" "/app/data"
 USER 1000:1000
 EXPOSE 3000
+HEALTHCHECK \
+    --interval=1m \
+    --timeout=10s \
+    --start-period=30s \
+    --retries=3 \
+    CMD ["curl", "-f", "http://localhost:3000/ping"]
 ENTRYPOINT ["/app/apps/workflows/app"]
