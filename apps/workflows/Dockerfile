@@ -9,39 +9,103 @@ LABEL \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
+COPY \
+    --link \
+    "pnpm-workspace.yaml" "/app/pnpm-workspace.yaml"
+COPY \
+    --link \
+    "pnpm-lock.yaml" "/app/pnpm-lock.yaml"
+COPY \
+    --link \
+    "package.json" "/app/package.json"
+COPY \
+    --link \
+    "apps/workflows/package.json" "/app/apps/workflows/package.json"
+COPY \
+    --link \
+    "packages/assertions/package.json" "/app/packages/assertions/package.json"
+COPY \
+    --link \
+    "packages/db/package.json" "/app/packages/db/package.json"
+COPY \
+    --link \
+    "packages/emails/package.json" "/app/packages/emails/package.json"
+COPY \
+    --link \
+    "packages/notifications/base/package.json" "/app/packages/notifications/base/package.json"
+COPY \
+    --link \
+    "packages/notifications/discord/package.json" "/app/packages/notifications/discord/package.json"
+COPY \
+    --link \
+    "packages/notifications/email/package.json" "/app/packages/notifications/email/package.json"
+COPY \
+    --link \
+    "packages/notifications/grafana-oncall/package.json" "/app/packages/notifications/grafana-oncall/package.json"
+COPY \
+    --link \
+    "packages/notifications/google-chat/package.json" "/app/packages/notifications/google-chat/package.json"
+COPY \
+    --link \
+    "packages/notifications/ms-teams/package.json" "/app/packages/notifications/ms-teams/package.json"
+COPY \
+    --link \
+    "packages/notifications/ntfy/package.json" "/app/packages/notifications/ntfy/package.json"
+COPY \
+    --link \
+    "packages/notifications/opsgenie/package.json" "/app/packages/notifications/opsgenie/package.json"
+COPY \
+    --link \
+    "packages/notifications/pagerduty/package.json" "/app/packages/notifications/pagerduty/package.json"
+COPY \
+    --link \
+    "packages/notifications/slack/package.json" "/app/packages/notifications/slack/package.json"
+COPY \
+    --link \
+    "packages/notifications/telegram/package.json" "/app/packages/notifications/telegram/package.json"
+COPY \
+    --link \
+    "packages/notifications/bird-whatsapp/package.json" "/app/packages/notifications/bird-whatsapp/package.json"
+COPY \
+    --link \
+    "packages/notifications/twillio-sms/package.json" "/app/packages/notifications/twillio-sms/package.json"
+COPY \
+    --link \
+    "packages/notifications/webhook/package.json" "/app/packages/notifications/webhook/package.json"
+COPY \
+    --link \
+    "packages/importers/package.json" "/app/packages/importers/package.json"
+COPY \
+    --link \
+    "packages/regions/package.json" "/app/packages/regions/package.json"
+COPY \
+    --link \
+    "packages/services/package.json" "/app/packages/services/package.json"
+COPY \
+    --link \
+    "packages/subscriptions/package.json" "/app/packages/subscriptions/package.json"
+COPY \
+    --link \
+    "packages/utils/package.json" "/app/packages/utils/package.json"
+COPY \
+    --link \
+    "packages/tsconfig/package.json" "/app/packages/tsconfig/package.json"
+COPY \
+    --link \
+    "packages/tinybird/package.json" "/app/packages/tinybird/package.json"
+COPY \
+    --link \
+    "packages/upstash/package.json" "/app/packages/upstash/package.json"
+COPY \
+    --link \
+    "packages/theme-store/package.json" "/app/packages/theme-store/package.json"
+COPY \
+    --link \
+    "packages/locales/package.json" "/app/packages/locales/package.json"
+COPY \
+    --link \
+    "packages/status-fetcher/package.json" "/app/packages/status-fetcher/package.json"
 RUN \
-    --mount=type=bind,target=pnpm-workspace.yaml,source=pnpm-workspace.yaml \
-    --mount=type=bind,target=pnpm-lock.yaml,source=pnpm-lock.yaml \
-    --mount=type=bind,target=package.json,source=package.json \
-    --mount=type=bind,target=apps/workflows/package.json,source=apps/workflows/package.json \
-    --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
-    --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
-    --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
-    --mount=type=bind,target=packages/notifications/base/package.json,source=packages/notifications/base/package.json \
-    --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
-    --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
-    --mount=type=bind,target=packages/notifications/grafana-oncall/package.json,source=packages/notifications/grafana-oncall/package.json \
-    --mount=type=bind,target=packages/notifications/google-chat/package.json,source=packages/notifications/google-chat/package.json \
-    --mount=type=bind,target=packages/notifications/ms-teams/package.json,source=packages/notifications/ms-teams/package.json \
-    --mount=type=bind,target=packages/notifications/ntfy/package.json,source=packages/notifications/ntfy/package.json \
-    --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
-    --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
-    --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
-    --mount=type=bind,target=packages/notifications/telegram/package.json,source=packages/notifications/telegram/package.json \
-    --mount=type=bind,target=packages/notifications/bird-whatsapp/package.json,source=packages/notifications/bird-whatsapp/package.json \
-    --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
-    --mount=type=bind,target=packages/notifications/webhook/package.json,source=packages/notifications/webhook/package.json \
-    --mount=type=bind,target=packages/importers/package.json,source=packages/importers/package.json \
-    --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
-    --mount=type=bind,target=packages/services/package.json,source=packages/services/package.json \
-    --mount=type=bind,target=packages/subscriptions/package.json,source=packages/subscriptions/package.json \
-    --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
-    --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
-    --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \
-    --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
-    --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
-    --mount=type=bind,target=packages/locales/package.json,source=packages/locales/package.json \
-    --mount=type=bind,target=packages/status-fetcher/package.json,source=packages/status-fetcher/package.json \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
