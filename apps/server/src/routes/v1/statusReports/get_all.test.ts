@@ -9,7 +9,8 @@ import {
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { StatusReportSchema } from "./schema";
 
 const TEST_PREFIX = "v1-sr-getall-test";

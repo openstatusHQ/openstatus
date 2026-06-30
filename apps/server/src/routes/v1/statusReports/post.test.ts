@@ -7,7 +7,8 @@ import {
 import { expect } from "@std/expect";
 import { beforeEach, test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { StatusReportSchema } from "./schema";
 
 const spies = (globalThis as any).__subscriptionSpies as {

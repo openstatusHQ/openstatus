@@ -2,8 +2,9 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
-import { openApiErrorResponses } from "../../../libs/errors";
-import { notEmpty } from "../../../utils/not-empty";
+import { openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
+
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
 

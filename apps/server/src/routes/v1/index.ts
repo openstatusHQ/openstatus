@@ -4,8 +4,9 @@ import { Scalar } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
-import { handleZodError } from "../../libs/errors";
-import { authMiddleware, requireWriteScope } from "../../libs/middlewares";
+import { handleZodError } from "@/libs/errors";
+import { authMiddleware, requireWriteScope } from "@/libs/middlewares";
+
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";

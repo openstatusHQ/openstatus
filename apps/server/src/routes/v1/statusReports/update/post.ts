@@ -7,12 +7,10 @@ import {
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails/src/client";
 
-import { env } from "../../../../env";
-import {
-  OpenStatusApiError,
-  openApiErrorResponses,
-} from "../../../../libs/errors";
-import { notEmpty } from "../../../../utils/not-empty";
+import { env } from "@/env";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
+
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";

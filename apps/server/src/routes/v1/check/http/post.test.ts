@@ -1,6 +1,6 @@
 import { afterEach, expect, mock, test } from "@openstatus/test-utils";
 
-import { app } from "../../../../index";
+import { app } from "@/index";
 
 const mockFetch = mock();
 

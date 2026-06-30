@@ -2,8 +2,9 @@ import { createRoute } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 
-import { openApiErrorResponses } from "../../../libs/errors";
-import { notEmpty } from "../../../utils/not-empty";
+import { openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
+
 import type { pagesApi } from "./index";
 import { PageSchema, transformPageData } from "./schema";
 

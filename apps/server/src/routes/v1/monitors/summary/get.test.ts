@@ -2,7 +2,8 @@ import { z } from "@hono/zod-openapi";
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
-import { app } from "../../../../index";
+import { app } from "@/index";
+
 import { SummarySchema } from "./schema";
 
 test.ignore("return the summary of the monitor", async () => {

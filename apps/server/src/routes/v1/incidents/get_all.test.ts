@@ -3,7 +3,8 @@ import { incidentTable, monitor } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { IncidentSchema } from "./schema";
 
 const TEST_PREFIX = "v1-incident-getall-test";

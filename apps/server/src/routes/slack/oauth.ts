@@ -9,7 +9,7 @@ import {
 import { installSlackAgent } from "@openstatus/services/integration";
 import type { Context } from "hono";
 
-import { env } from "../../env";
+import { env } from "@/env";
 
 const logger = getLogger(["api-server", "slack", "oauth"]);
 

@@ -3,7 +3,8 @@ import { notification } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { NotificationSchema } from "./schema";
 
 const TEST_PREFIX = "v1-notif-getall-test";

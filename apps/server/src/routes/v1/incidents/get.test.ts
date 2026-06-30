@@ -1,7 +1,8 @@
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { IncidentSchema } from "./schema";
 
 test("return the incident", async () => {

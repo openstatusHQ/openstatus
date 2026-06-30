@@ -5,7 +5,8 @@ import { Hono } from "hono";
 
 // workspace-resolver / @slack/web-api / agent are swapped for doubles via the
 // test import map; behavior is driven through this shared mutable state.
-import { slackTestState } from "../../libs/test/doubles/slack-test-state.ts";
+import { slackTestState } from "@/libs/test/doubles/slack-test-state";
+
 import { handleSlackEvent } from "./handler";
 import { verifySlackSignature } from "./verify";
 

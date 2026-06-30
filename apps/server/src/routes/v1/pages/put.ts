@@ -9,12 +9,10 @@ import {
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 
-import {
-  OpenStatusApiError,
-  openApiErrorResponses,
-} from "../../../libs/errors";
-import { trackMiddleware } from "../../../libs/middlewares";
-import { notEmpty } from "../../../utils/not-empty";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+import { notEmpty } from "@/utils/not-empty";
+
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema, transformPageData } from "./schema";

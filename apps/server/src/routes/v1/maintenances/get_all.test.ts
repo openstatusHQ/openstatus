@@ -8,7 +8,8 @@ import {
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { MaintenanceSchema } from "./schema";
 
 const TEST_PREFIX = "v1-maint-getall-test";

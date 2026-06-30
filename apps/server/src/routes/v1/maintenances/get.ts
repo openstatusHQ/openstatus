@@ -2,11 +2,9 @@ import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema/maintenances";
 
-import {
-  OpenStatusApiError,
-  openApiErrorResponses,
-} from "../../../libs/errors";
-import { notEmpty } from "../../../utils/not-empty";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
+
 import type { maintenancesApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
 

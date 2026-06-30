@@ -3,7 +3,8 @@ import { monitor, page, pageComponent } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { test } from "@std/testing/bdd";
 
-import { app } from "../../../index";
+import { app } from "@/index";
+
 import { PageSchema } from "./schema";
 
 test("create a valid page", async () => {
