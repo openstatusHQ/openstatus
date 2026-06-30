@@ -95,51 +95,34 @@ ghcr.io/openstatushq/openstatus-checker:latest
 #### Requirements
 
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
-- [pnpm](https://pnpm.io/) >= 8.6.2
+- [pnpm](https://pnpm.io/) >= 10.26.0
 - [Bun](https://bun.sh/)
-- [Turso CLI](https://docs.turso.tech/quickstart)
+- [Turso CLI](https://docs.turso.tech/quickstart).
 
-#### Setup
+#### Dashboard
 
-1. Clone the repository
+See [apps/dashboard/README.md](apps/dashboard/README.md) for full steps (env, db, login, troubleshooting).
 
-```sh
-git clone https://github.com/openstatushq/openstatus.git
-```
+#### Status page
 
-2. Install dependencies
+1. Install dependencies
 
-```sh
-pnpm install
-```
+`pnpm install`
 
-3. Initialize the development environment
+2. Run the server
 
-Launch the database in one terminal:
+`pnpm -w dev:status-page`.
 
-```sh
-turso dev --db-file openstatus-dev.db
-```
+#### Web (marketing site)
 
-In another terminal, run the following command:
+1. Install dependencies
 
-```sh
-pnpm dx
-```
+`pnpm install`
 
-4. Launch whatever app you wish to:
+2. Run the server
 
-```sh
-pnpm dev:web
-pnpm dev:status-page
-pnpm dev:dashboard
-```
+`pnpm -w dev:web`.
 
-The above commands will automatically run the libSQL client on `8080` so you might want to kill the turso command from step 3.
-
-5. See the results:
-
-- open [http://localhost:3000](http://localhost:3000) (default port)
 
 ## Tech Stack
 
