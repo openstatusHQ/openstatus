@@ -16,39 +16,42 @@ builders:
     workdir: /app/
     labels:
       org.opencontainers.image.stage: install
-    bind:
-      - pnpm-workspace.yaml
-      - pnpm-lock.yaml
-      - package.json
-      - apps/workflows/package.json
-      - packages/assertions/package.json
-      - packages/db/package.json
-      - packages/emails/package.json
-      - packages/notifications/base/package.json
-      - packages/notifications/discord/package.json
-      - packages/notifications/email/package.json
-      - packages/notifications/grafana-oncall/package.json
-      - packages/notifications/google-chat/package.json
-      - packages/notifications/ms-teams/package.json
-      - packages/notifications/ntfy/package.json
-      - packages/notifications/opsgenie/package.json
-      - packages/notifications/pagerduty/package.json
-      - packages/notifications/slack/package.json
-      - packages/notifications/telegram/package.json
-      - packages/notifications/bird-whatsapp/package.json
-      - packages/notifications/twillio-sms/package.json
-      - packages/notifications/webhook/package.json
-      - packages/importers/package.json
-      - packages/regions/package.json
-      - packages/services/package.json
-      - packages/subscriptions/package.json
-      - packages/utils/package.json
-      - packages/tsconfig/package.json
-      - packages/tinybird/package.json
-      - packages/upstash/package.json
-      - packages/theme-store/package.json
-      - packages/locales/package.json
-      - packages/status-fetcher/package.json
+    # Railway's builder rejects --mount=type=bind (only type=cache is supported), so copy the
+    # manifests into the layer instead of bind-mounting them. Per-file targets preserve the
+    # workspace directory structure (multi-source COPY into a dir would flatten the paths).
+    copy:
+      - pnpm-workspace.yaml /app/pnpm-workspace.yaml
+      - pnpm-lock.yaml /app/pnpm-lock.yaml
+      - package.json /app/package.json
+      - apps/workflows/package.json /app/apps/workflows/package.json
+      - packages/assertions/package.json /app/packages/assertions/package.json
+      - packages/db/package.json /app/packages/db/package.json
+      - packages/emails/package.json /app/packages/emails/package.json
+      - packages/notifications/base/package.json /app/packages/notifications/base/package.json
+      - packages/notifications/discord/package.json /app/packages/notifications/discord/package.json
+      - packages/notifications/email/package.json /app/packages/notifications/email/package.json
+      - packages/notifications/grafana-oncall/package.json /app/packages/notifications/grafana-oncall/package.json
+      - packages/notifications/google-chat/package.json /app/packages/notifications/google-chat/package.json
+      - packages/notifications/ms-teams/package.json /app/packages/notifications/ms-teams/package.json
+      - packages/notifications/ntfy/package.json /app/packages/notifications/ntfy/package.json
+      - packages/notifications/opsgenie/package.json /app/packages/notifications/opsgenie/package.json
+      - packages/notifications/pagerduty/package.json /app/packages/notifications/pagerduty/package.json
+      - packages/notifications/slack/package.json /app/packages/notifications/slack/package.json
+      - packages/notifications/telegram/package.json /app/packages/notifications/telegram/package.json
+      - packages/notifications/bird-whatsapp/package.json /app/packages/notifications/bird-whatsapp/package.json
+      - packages/notifications/twillio-sms/package.json /app/packages/notifications/twillio-sms/package.json
+      - packages/notifications/webhook/package.json /app/packages/notifications/webhook/package.json
+      - packages/importers/package.json /app/packages/importers/package.json
+      - packages/regions/package.json /app/packages/regions/package.json
+      - packages/services/package.json /app/packages/services/package.json
+      - packages/subscriptions/package.json /app/packages/subscriptions/package.json
+      - packages/utils/package.json /app/packages/utils/package.json
+      - packages/tsconfig/package.json /app/packages/tsconfig/package.json
+      - packages/tinybird/package.json /app/packages/tinybird/package.json
+      - packages/upstash/package.json /app/packages/upstash/package.json
+      - packages/theme-store/package.json /app/packages/theme-store/package.json
+      - packages/locales/package.json /app/packages/locales/package.json
+      - packages/status-fetcher/package.json /app/packages/status-fetcher/package.json
 
     # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
     run:
