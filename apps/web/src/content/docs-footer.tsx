@@ -1,7 +1,6 @@
-import { Link } from "@/content/link";
-import { ThemeToggle } from "@/content/theme-toggle";
-
 import { FooterStatus } from "./footer-status";
+import { Link } from "./link";
+import { ThemeToggle } from "./theme-toggle";
 
 export function DocsFooter() {
   return (

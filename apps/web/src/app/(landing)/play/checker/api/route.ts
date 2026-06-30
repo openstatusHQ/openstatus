@@ -3,17 +3,17 @@ import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { after } from "next/server";
 import { z } from "zod";
 
-import { mockCheckRegion } from "@/lib/checker/mock";
+import { mockCheckRegion } from "../../../../../lib/checker/mock";
 import {
   type Method,
   checkRegion,
   getTimingPhases,
   storeBaseCheckerData,
   storeCheckerData,
-} from "@/lib/checker/utils";
-import { getClientIP, ratelimit } from "@/lib/ratelimit";
-import { iteratorToStream, yieldMany } from "@/lib/stream";
-import { wait } from "@/lib/utils";
+} from "../../../../../lib/checker/utils";
+import { getClientIP, ratelimit } from "../../../../../lib/ratelimit";
+import { iteratorToStream, yieldMany } from "../../../../../lib/stream";
+import { wait } from "../../../../../lib/utils";
 
 export const runtime = "edge";
 

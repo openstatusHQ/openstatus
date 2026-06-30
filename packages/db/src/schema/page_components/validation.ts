@@ -10,7 +10,7 @@ import {
 export const selectPageComponentSchema = createSelectSchema(pageComponent);
 
 export const insertPageComponentSchema = createInsertSchema(pageComponent, {
-  name: (schema) => schema.min(1),
+  name: z.string().min(1),
 }).refine(
   (data) => {
     // monitorId must be set when type='monitor'

@@ -50,16 +50,16 @@ builders:
       - packages/locales/package.json
       - packages/status-fetcher/package.json
 
-    # Install dependencies
+    # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
     run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
     cache:
       - /root/.local/share/pnpm/store
 
-  # Stage 4: Build application (compile to binary)
+  # Stage 4: Build application (compile to binary with Deno)
   build:
-    fromImage: oven/bun:1.3.11
+    fromImage: denoland/deno:2.9.0
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: build
@@ -74,35 +74,24 @@ builders:
       - fromBuilder: install
         source: /app/packages
         target: /app/packages
-      #  Should set env to production here
-    # Compile the TypeScript application
     env:
       NODE_ENV: production
-    run: bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
+    # Bundle the app to self-contained JS, EXTERNALISING the 3 packages that can't be inlined:
+    # @libsql/client + libsql (native .node loader) and @google-cloud/tasks (google-proto-files reads
+    # files via CJS __dirname). They ship as a minimal side-car node_modules (deno install, ~46MB,
+    # platform-aware so Fly amd64 works) instead of embedding all node_modules. Binary ~146MB vs ~360MB.
+    run:
+      - mkdir -p /tmp/sc
+      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
+      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
+      - mkdir -p /app/data
 
-  docker:
-    fromImage: oven/bun:1.3.11
-    workdir: /app/apps/workflows
-    copy:
-     - . /app/
-    run: bun run src/build-docker.ts
-
-  libsql:
-    fromImage: oven/bun:1.3.11
-    workdir: /app/
-    copy:
-      - fromBuilder: docker
-        source: /app/apps/build-docker/package.json
-        target: /app/package.json
-    # bun install is hoisted by default -> flat node_modules so the compiled bun binary can
-    # resolve the libsql native addon (@libsql/<platform>) from disk at runtime. No lockfile
-    # is needed (the generated package.json pins one exact version), so a single install does it.
-    run: bun install --production
-
-fromImage: debian:bullseye-slim
+# Runtime: distroless glibc base that already ships curl + CA certs (Deno's HTTPS works on it; no apt needed).
+# Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
+fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
 workdir: /app/
-root:
-  run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
 
 # Metadata labels
 labels:
@@ -112,18 +101,25 @@ labels:
   org.opencontainers.image.vendor: OpenStatus
   org.opencontainers.image.authors: OpenStatus Team
 
-# Copy artifacts from build stages
+# Copy the self-contained compiled binary (native addon embedded by deno compile)
 copy:
   - fromBuilder: build
     source: /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: "555"
-  - fromBuilder: libsql
-    source: /app/node_modules
-    target: /app/packages/db/node_modules
-  - fromBuilder: libsql
-    source: /app/node_modules
-    target: /app/node_modules
+  - fromBuilder: build
+    source: /app/data
+    target: /app/data
+
+user: "1000:1000"
 expose: "3000"
+
+# Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
+healthcheck:
+  interval: 1m
+  timeout: 10s
+  start: 30s
+  retries: 3
+  cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
 entrypoint: /app/apps/workflows/app

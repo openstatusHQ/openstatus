@@ -1,6 +1,6 @@
-import { Footer } from "@/content/footer";
-import { Header } from "@/content/header";
-import { SubNav } from "@/content/sub-nav";
+import { Footer } from "../../content/footer";
+import { Header } from "../../content/header";
+import { SubNav } from "../../content/sub-nav";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

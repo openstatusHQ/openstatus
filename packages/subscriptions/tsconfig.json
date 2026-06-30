@@ -1,12 +1,10 @@
 {
   "extends": "@openstatus/tsconfig/base.json",
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "target": "ES2022",
     "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "types": ["bun"]
+    "jsx": "react-jsx"
   },
   "include": [".", "src"],
   "exclude": ["dist", "build", "node_modules"]

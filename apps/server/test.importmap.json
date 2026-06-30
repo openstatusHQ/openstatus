@@ -1,0 +1,16 @@
+{
+  "imports": {
+    "@/": "./src/",
+    "@openstatus/upstash": "./src/libs/test/doubles/upstash.mock.ts",
+    "@openstatus/tinybird": "./src/libs/test/doubles/tinybird.mock.ts",
+    "@openstatus/tinybird-real": "../../packages/tinybird/src/index.ts",
+    "@openstatus/subscriptions": "./src/libs/test/doubles/subscriptions.mock.ts",
+    "@openstatus/subscriptions-real": "../../packages/subscriptions/src/index.ts",
+    "@openstatus/analytics": "./src/libs/test/doubles/analytics.mock.ts",
+    "@openstatus/analytics-real": "../../packages/analytics/src/index.ts",
+    "./src/routes/slack/page-urls": "./src/libs/test/doubles/page-urls.mock.ts",
+    "./src/routes/slack/workspace-resolver": "./src/libs/test/doubles/workspace-resolver.mock.ts",
+    "./src/routes/slack/agent": "./src/libs/test/doubles/slack-agent.mock.ts",
+    "@slack/web-api": "./src/libs/test/doubles/slack-web-api.mock.ts"
+  }
+}

@@ -1,23 +1,21 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("PagerDuty Notifications", () => {
-  let fetchMock: any = undefined;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    if (fetchMock) {
-      fetchMock.mockRestore();
-    }
+    fetchMock.restore();
   });
 
   const createMockMonitor = () => ({
@@ -70,8 +68,8 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     expect(callArgs[1].method).toBe("POST");
 
@@ -109,9 +107,9 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[0][1].body).toContain("key1");
-    expect(fetchMock.mock.calls[1][1].body).toContain("key2");
+    assertSpyCalls(fetchMock, 2);
+    expect(fetchMock.calls[0].args[1].body).toContain("key1");
+    expect(fetchMock.calls[1].args[1].body).toContain("key2");
   });
 
   test("Send Degraded", async () => {
@@ -132,8 +130,8 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.payload.summary).toBe("API Health Check is degraded");
     expect(body.payload.severity).toBe("warning");
@@ -158,8 +156,8 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     const body = JSON.parse(callArgs[1].body);
     expect(body.routing_key).toBe("my_key");
@@ -173,8 +171,8 @@ describe("PagerDuty Notifications", () => {
     });
 
     expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     expect(callArgs[1].method).toBe("POST");
 
@@ -188,7 +186,8 @@ describe("PagerDuty Notifications", () => {
   });
 
   test("Send Test returns false on error", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -197,11 +196,12 @@ describe("PagerDuty Notifications", () => {
     });
 
     expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -224,6 +224,6 @@ describe("PagerDuty Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 });
