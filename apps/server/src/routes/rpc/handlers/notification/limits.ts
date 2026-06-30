@@ -72,6 +72,8 @@ function providerToDisplayName(provider: NotificationProvider): string {
       return "Webhook";
     case NotificationProvider.WHATSAPP:
       return "WhatsApp";
+    case NotificationProvider.PUSHOVER:
+      return "Pushover";
     default:
       return "Unknown";
   }
