@@ -106,7 +106,7 @@ COPY \
     --link \
     "packages/status-fetcher/package.json" "/app/packages/status-fetcher/package.json"
 RUN \
-    --mount=type=cache,target=/root/.local/share/pnpm/store,id=s/3a5c916e-f3f2-4f35-ba0e-3c8511b6f9a3-/root/.local/share/pnpm/store,sharing=locked \
+    --mount=type=cache,target=/root/.local/share/pnpm/store,id=s/995d9762-a732-446d-808a-498c7c33a8d5-/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
 pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose

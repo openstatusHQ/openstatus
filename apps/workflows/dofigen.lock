@@ -122,7 +122,7 @@ effective: |
       - corepack enable pnpm
       - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
       cache:
-      - id: s/3a5c916e-f3f2-4f35-ba0e-3c8511b6f9a3-/root/.local/share/pnpm/store
+      - id: s/995d9762-a732-446d-808a-498c7c33a8d5-/root/.local/share/pnpm/store
         target: /root/.local/share/pnpm/store
         sharing: locked
     build:
@@ -130,9 +130,9 @@ effective: |
         path: denoland/deno
         digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
       label:
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-        org.opencontainers.image.stage: build
         org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -165,13 +165,13 @@ effective: |
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.title: OpenStatus Workflows
+    io.dofigen.version: 2.8.0
     org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    io.dofigen.version: 2.8.0
+    org.opencontainers.image.title: OpenStatus Workflows
   user:
     user: '1000'
     group: '1000'
@@ -208,7 +208,7 @@ images:
           digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
 resources:
   dofigen.yml:
-    hash: 416be0bdb8fcc1bc717f637b38cfa3b095b5277c947ad7e55d51b98194fdd856
+    hash: c478b25a43ff0cfbc6114251b800a544357c64a503b8ac64805e1077f559c3de
     content: |
       ignore:
         - node_modules
@@ -272,7 +272,7 @@ resources:
           cache:
             # Railway scopes cache mounts per service: the id must be literally
             # s/<service-id>-<target> (env vars aren't allowed in the id).
-            - id: s/3a5c916e-f3f2-4f35-ba0e-3c8511b6f9a3-/root/.local/share/pnpm/store
+            - id: s/995d9762-a732-446d-808a-498c7c33a8d5-/root/.local/share/pnpm/store
               target: /root/.local/share/pnpm/store
               sharing: locked
 
