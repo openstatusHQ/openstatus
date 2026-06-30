@@ -6,7 +6,7 @@ import { createTRPCClient, loggerLink } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 
-import { endingLink } from "@/lib/trpc/shared";
+import { endingLink } from "./shared";
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();

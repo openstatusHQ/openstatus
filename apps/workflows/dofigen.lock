@@ -12,32 +12,52 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    docker:
+    build:
       fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        path: denoland/deno
+        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
       label:
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        org.opencontainers.image.stage: build
       workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
       copy:
       - paths:
         - .
         target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
       run:
-      - bun run src/build-docker.ts
+      - mkdir -p /tmp/sc
+      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
+      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
+      - mkdir -p /app/data
     install:
       fromImage:
         path: node
-        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+        digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
       label:
+        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       workdir: /app/
       run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
       cache:
       - target: /root/.local/share/pnpm/store
       bind:
@@ -105,62 +125,22 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
-    libsql:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      workdir: /app/
-      copy:
-      - fromBuilder: docker
-        paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
-      run:
-      - bun install --production
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
   fromImage:
-    path: debian
-    digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    host: registry.access.redhat.com
+    port: 443
+    path: hi/curl
+    digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
-    org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Workflows
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+  user:
+    user: '1000'
+    group: '1000'
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -168,37 +148,33 @@ effective: |
     - /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: '555'
-  - fromBuilder: libsql
+  - fromBuilder: build
     paths:
-    - /app/node_modules
-    target: /app/packages/db/node_modules
-  - fromBuilder: libsql
-    paths:
-    - /app/node_modules
-    target: /app/node_modules
-  root:
-    run:
-    - apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
+    - /app/data
+    target: /app/data
   entrypoint:
   - /app/apps/workflows/app
   expose:
   - port: 3000
+  healthcheck:
+    cmd: '["curl", "-f", "http://localhost:3000/ping"]'
+    interval: 1m
+    timeout: 10s
+    start: 30s
+    retries: 3
 images:
   docker.io:
+    denoland:
+      deno:
+        2.9.0:
+          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
     library:
       node:
         24-slim:
-          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
-      debian:
-        bullseye-slim:
-          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
-    oven:
-      bun:
-        1.3.11:
-          digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+          digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
 resources:
   dofigen.yml:
-    hash: 9ad08ee36ff20abe093e58fc36235d056b6ed3e22b8ae2f3fb30399e34cdaebe
+    hash: 3d98c3f4837321ccc3810b1644c53d6c17f057fb57ec5d7beafa6b3caef9f59b
     content: |
       ignore:
         - node_modules
@@ -252,16 +228,16 @@ resources:
             - packages/locales/package.json
             - packages/status-fetcher/package.json
 
-          # Install dependencies
+          # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
           run:
             - corepack enable pnpm
-            - pnpm install --prod --frozen-lockfile --verbose
+            - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
           cache:
             - /root/.local/share/pnpm/store
 
-        # Stage 4: Build application (compile to binary)
+        # Stage 4: Build application (compile to binary with Deno)
         build:
-          fromImage: oven/bun:1.3.11
+          fromImage: denoland/deno:2.9.0
           workdir: /app/apps/workflows
           labels:
             org.opencontainers.image.stage: build
@@ -276,35 +252,24 @@ resources:
             - fromBuilder: install
               source: /app/packages
               target: /app/packages
-            #  Should set env to production here
-          # Compile the TypeScript application
           env:
             NODE_ENV: production
-          run: bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
+          # Bundle the app to self-contained JS, EXTERNALISING the 3 packages that can't be inlined:
+          # @libsql/client + libsql (native .node loader) and @google-cloud/tasks (google-proto-files reads
+          # files via CJS __dirname). They ship as a minimal side-car node_modules (deno install, ~46MB,
+          # platform-aware so Fly amd64 works) instead of embedding all node_modules. Binary ~146MB vs ~360MB.
+          run:
+            - mkdir -p /tmp/sc
+            - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+            - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
+            - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+            - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
+            - mkdir -p /app/data
 
-        docker:
-          fromImage: oven/bun:1.3.11
-          workdir: /app/apps/workflows
-          copy:
-           - . /app/
-          run: bun run src/build-docker.ts
-
-        libsql:
-          fromImage: oven/bun:1.3.11
-          workdir: /app/
-          copy:
-            - fromBuilder: docker
-              source: /app/apps/build-docker/package.json
-              target: /app/package.json
-          # bun install is hoisted by default -> flat node_modules so the compiled bun binary can
-          # resolve the libsql native addon (@libsql/<platform>) from disk at runtime. No lockfile
-          # is needed (the generated package.json pins one exact version), so a single install does it.
-          run: bun install --production
-
-      fromImage: debian:bullseye-slim
+      # Runtime: distroless glibc base that already ships curl + CA certs (Deno's HTTPS works on it; no apt needed).
+      # Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
+      fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
       workdir: /app/
-      root:
-        run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
 
       # Metadata labels
       labels:
@@ -314,18 +279,25 @@ resources:
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
 
-      # Copy artifacts from build stages
+      # Copy the self-contained compiled binary (native addon embedded by deno compile)
       copy:
         - fromBuilder: build
           source: /app/apps/workflows/app
           target: /app/apps/workflows/
           chmod: "555"
-        - fromBuilder: libsql
-          source: /app/node_modules
-          target: /app/packages/db/node_modules
-        - fromBuilder: libsql
-          source: /app/node_modules
-          target: /app/node_modules
+        - fromBuilder: build
+          source: /app/data
+          target: /app/data
+
+      user: "1000:1000"
       expose: "3000"
+
+      # Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
+      healthcheck:
+        interval: 1m
+        timeout: 10s
+        start: 30s
+        retries: 3
+        cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
       entrypoint: /app/apps/workflows/app

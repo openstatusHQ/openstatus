@@ -1,14 +1,13 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { sentry } from "@hono/sentry";
 import { db, desc, eq } from "@openstatus/db";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 
-import { handleError } from "@/libs/errors";
-
+import { handleError } from "../../libs/errors";
 import { mcpRoute } from "./index";
 
 /**

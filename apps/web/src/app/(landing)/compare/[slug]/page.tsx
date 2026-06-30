@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { ContentPagination } from "@/app/(landing)/content-pagination";
-import { CustomMDX } from "@/content/mdx";
-import { getComparePages } from "@/content/utils";
-import { JsonLd } from "@/lib/metadata/json-ld";
-import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import { CustomMDX } from "../../../../content/mdx";
+import { getComparePages } from "../../../../content/utils";
+import { JsonLd } from "../../../../lib/metadata/json-ld";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBlogPosting,
@@ -14,7 +16,8 @@ import {
   getJsonLDHowTo,
   getJsonLDOrganization,
   getJsonLDWebPage,
-} from "@/lib/metadata/structured-data";
+} from "../../../../lib/metadata/structured-data";
+import { ContentPagination } from "../../content-pagination";
 
 export const dynamicParams = false;
 

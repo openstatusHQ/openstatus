@@ -3,7 +3,7 @@
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 
-import { Link } from "@/components/common/link";
+import { Link } from "../common/link";
 
 export {
   StatusBlankContainer,

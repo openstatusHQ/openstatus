@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { convertMdxToMarkdown } from "@/content/convert";
+import { convertMdxToMarkdown } from "../../../../content/convert";
 import {
   generateStatusDetailMarkdown,
   generateStatusIndexMarkdown,
-} from "@/content/status-markdown";
-import { resolveContent } from "@/content/utils/resolve";
+} from "../../../../content/status-markdown";
+import { resolveContent } from "../../../../content/utils/resolve";
 
 export const runtime = "nodejs"; // Need fs access for content loading
 

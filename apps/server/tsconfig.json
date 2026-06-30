@@ -8,9 +8,15 @@
     "moduleResolution": "bundler",
     "jsxImportSource": "react",
     "allowJs": true,
-    "types": ["bun-types"],
+    "types": [],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@modelcontextprotocol/sdk/server/mcp.js": [
+        "./node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp.d.ts"
+      ],
+      "@modelcontextprotocol/sdk/types.js": [
+        "./node_modules/@modelcontextprotocol/sdk/dist/esm/types.d.ts"
+      ]
     }
   }
 }

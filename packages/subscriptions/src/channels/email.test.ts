@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, spyOn, test } from "bun:test";
-
+import "../test-preload.ts";
 import { EmailClient } from "@openstatus/emails";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
 import type { PageUpdate, Subscription } from "../types";
 import {
@@ -12,15 +14,8 @@ import {
 // RESEND_API_KEY is set in test-preload.ts (see bunfig.toml) so @openstatus/emails
 // loads successfully and EmailClient prototype methods can be spied on.
 
-const sendPageSubscriptionMock = spyOn(
-  EmailClient.prototype,
-  "sendPageSubscription",
-).mockResolvedValue(undefined);
-
-const sendStatusReportUpdateMock = spyOn(
-  EmailClient.prototype,
-  "sendStatusReportUpdate",
-).mockResolvedValue(undefined);
+let sendPageSubscriptionMock: Stub<EmailClient>;
+let sendStatusReportUpdateMock: Stub<EmailClient>;
 
 function makeSub(overrides: Partial<Subscription> = {}): Subscription {
   return {
@@ -51,8 +46,21 @@ function makeUpdate(overrides: Partial<PageUpdate> = {}): PageUpdate {
 }
 
 beforeEach(() => {
-  sendPageSubscriptionMock.mockClear();
-  sendStatusReportUpdateMock.mockClear();
+  sendPageSubscriptionMock = stub(
+    EmailClient.prototype,
+    "sendPageSubscription",
+    () => Promise.resolve(undefined),
+  );
+  sendStatusReportUpdateMock = stub(
+    EmailClient.prototype,
+    "sendStatusReportUpdate",
+    () => Promise.resolve(undefined),
+  );
+});
+
+afterEach(() => {
+  sendPageSubscriptionMock.restore();
+  sendStatusReportUpdateMock.restore();
 });
 
 // ─── validateEmailConfig ──────────────────────────────────────────────────────
@@ -94,8 +102,8 @@ describe("sendEmailVerification", () => {
     const sub = makeSub({ email: "user@example.com", pageName: "My Page" });
     await sendEmailVerification(sub, "https://example.com/verify/abc");
 
-    expect(sendPageSubscriptionMock).toHaveBeenCalledTimes(1);
-    const [args] = sendPageSubscriptionMock.mock.calls[0];
+    assertSpyCalls(sendPageSubscriptionMock, 1);
+    const [args] = sendPageSubscriptionMock.calls[0].args;
     expect(args.to).toBe("user@example.com");
     expect(args.link).toBe("https://example.com/verify/abc");
     expect(args.page).toBe("My Page");
@@ -107,13 +115,13 @@ describe("sendEmailVerification", () => {
 describe("sendEmailNotifications", () => {
   test("does nothing for an empty subscriptions array", async () => {
     await sendEmailNotifications([], makeUpdate());
-    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
+    assertSpyCalls(sendStatusReportUpdateMock, 0);
   });
 
   test("filters out subscriptions without an email address", async () => {
     const sub = makeSub({ email: undefined });
     await sendEmailNotifications([sub], makeUpdate());
-    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
+    assertSpyCalls(sendStatusReportUpdateMock, 0);
   });
 
   test("calls sendStatusReportUpdate once with all valid subscribers", async () => {
@@ -123,8 +131,8 @@ describe("sendEmailNotifications", () => {
 
     await sendEmailNotifications([sub1, sub2], update);
 
-    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
-    const [args] = sendStatusReportUpdateMock.mock.calls[0];
+    assertSpyCalls(sendStatusReportUpdateMock, 1);
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
     expect(args.subscribers).toHaveLength(2);
     expect(args.subscribers[0].email).toBe("a@example.com");
     expect(args.subscribers[1].email).toBe("b@example.com");
@@ -138,7 +146,7 @@ describe("sendEmailNotifications", () => {
 
     await sendEmailNotifications([sub], update);
 
-    const [args] = sendStatusReportUpdateMock.mock.calls[0];
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
     expect(args.pageComponents).toEqual(["API", "Database"]);
   });
 
@@ -146,7 +154,7 @@ describe("sendEmailNotifications", () => {
     const sub = makeSub();
     await sendEmailNotifications([sub], makeUpdate({ updateId: 77 }));
 
-    const [args] = sendStatusReportUpdateMock.mock.calls[0];
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
     expect(args.idempotencyKey).toBe("status-report-update:77");
   });
 
@@ -157,7 +165,7 @@ describe("sendEmailNotifications", () => {
       makeUpdate({ id: 17, updateId: undefined, status: "maintenance" }),
     );
 
-    const [args] = sendStatusReportUpdateMock.mock.calls[0];
+    const [args] = sendStatusReportUpdateMock.calls[0].args;
     expect(args.idempotencyKey).toBe("page-update:17:maintenance");
   });
 });

@@ -1,23 +1,21 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Google Chat Notifications", () => {
-  let fetchMock: any = undefined;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    if (fetchMock) {
-      fetchMock.mockRestore();
-    }
+    fetchMock.restore();
   });
 
   const createMockMonitor = () => ({
@@ -57,8 +55,8 @@ describe("Google Chat Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(
       "https://google.com/api/webhooks/123456789/abcdefgh",
     );
@@ -87,8 +85,8 @@ describe("Google Chat Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.text).toContain("✅ Recovered");
     expect(body.text).toContain("API Health Check");
@@ -109,8 +107,8 @@ describe("Google Chat Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.text).toContain("⚠️ Degraded");
     expect(body.text).toContain("API Health Check");
@@ -122,8 +120,8 @@ describe("Google Chat Notifications", () => {
     const result = await sendTest(webhookUrl);
 
     expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(webhookUrl);
     const body = JSON.parse(callArgs[1].body);
     expect(body.text).toContain("🧪 Test");
@@ -134,11 +132,12 @@ describe("Google Chat Notifications", () => {
     const result = await sendTest("");
 
     expect(result).toBe(false);
-    expect(fetchMock).not.toHaveBeenCalled();
+    assertSpyCalls(fetchMock, 0);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 

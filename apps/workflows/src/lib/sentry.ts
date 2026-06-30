@@ -1,5 +1,5 @@
 import { FetchError } from "@openstatus/status-fetcher";
-import * as Sentry from "@sentry/bun";
+import * as Sentry from "@sentry/deno";
 
 import { env } from "../env";
 

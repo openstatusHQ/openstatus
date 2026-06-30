@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, test } from "bun:test";
-
 import { and, db, eq, like } from "@openstatus/db";
 import type { ApiConfigType } from "@openstatus/db/src/schema";
 import {
   externalService,
   externalServiceComponent,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterEach, describe, test } from "@std/testing/bdd";
 
 import {
   getExternalComponentBySlug,
