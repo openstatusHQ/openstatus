@@ -9,6 +9,7 @@ import {
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { mock } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -1720,7 +1721,7 @@ describe("StatusPageService.UpdateComponentGroup", () => {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  sendVerification: ReturnType<typeof import("bun:test").mock>;
+  sendVerification: ReturnType<typeof mock>;
 };
 
 describe("StatusPageService.SubscribeToPage", () => {

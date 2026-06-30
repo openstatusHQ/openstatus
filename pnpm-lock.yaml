@@ -37,7 +37,7 @@ catalogs:
       specifier: 1.0.0
       version: 1.0.0
     '@connectrpc/connect':
-      specifier: ^2.1.1
+      specifier: 2.1.1
       version: 2.1.1
     '@connectrpc/connect-node':
       specifier: 2.1.1

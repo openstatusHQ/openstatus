@@ -187,7 +187,7 @@ app.use("*", async (c, next) => {
       // Console logging only for errors in production
       if (env.NODE_ENV !== "production" || c.res.status >= 500) {
         logger.info("request", {
-          request_id: requestId,
+          request_id: reqId,
           method: c.req.method,
           path: c.req.path,
           status_code: c.res.status,

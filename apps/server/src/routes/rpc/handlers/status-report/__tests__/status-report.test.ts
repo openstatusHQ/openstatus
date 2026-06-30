@@ -14,6 +14,7 @@ import {
   PageComponentImpact,
   StatusReportStatus,
 } from "@openstatus/proto/status_report/v1";
+import { mock } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -26,8 +27,8 @@ import {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  dispatchStatusReportUpdate: ReturnType<typeof import("bun:test").mock>;
-  dispatchMaintenanceUpdate: ReturnType<typeof import("bun:test").mock>;
+  dispatchStatusReportUpdate: ReturnType<typeof mock>;
+  dispatchMaintenanceUpdate: ReturnType<typeof mock>;
 };
 
 /**

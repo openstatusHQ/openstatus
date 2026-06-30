@@ -32,7 +32,7 @@ catalog:
   "@bufbuild/protoc-gen-es": 2.12.0
   "@bufbuild/protovalidate": 1.2.0
   "@chronark/zod-bird": 1.0.0
-  "@connectrpc/connect": ^2.1.1
+  "@connectrpc/connect": 2.1.1
   "@connectrpc/connect-node": 2.1.1
   "@connectrpc/validate": 0.2.0
   "@date-fns/tz": 1.5.0

@@ -40,6 +40,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         message="Test message"
         pageComponents={["Monitor 1"]}
         manageUrl={manageUrl}
+        unsubscribeUrl=""
       />,
     );
 
