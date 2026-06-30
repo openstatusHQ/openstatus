@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf AS install
+FROM node@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf" \
+    org.opencontainers.image.base.digest="sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc" \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
@@ -48,7 +48,7 @@ RUN \
     --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     <<EOF
 corepack enable pnpm
-pnpm install --frozen-lockfile --verbose
+pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
 EOF
 
 # build
@@ -74,15 +74,17 @@ COPY \
     --from=install \
     --link \
     "/app/packages" "/app/packages"
-RUN deno compile --bundle --minify -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
+RUN <<EOF
+deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
+EOF
 
 # runtime
-FROM debian@sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604 AS runtime
+FROM registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4 AS runtime
 LABEL \
     io.dofigen.version="2.8.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604" \
-    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
+    org.opencontainers.image.base.digest="sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4" \
     org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus Server" \
@@ -93,12 +95,6 @@ COPY \
     --chmod=555 \
     --link \
     "/app/apps/server/app" "/bin/"
-USER 0:0
-RUN <<EOF
-apt-get update
-apt-get install -y --no-install-recommends curl
-rm -rf /var/lib/apt/lists/*
-EOF
 USER 1000:1000
 EXPOSE 3000
 HEALTHCHECK \
@@ -106,5 +102,5 @@ HEALTHCHECK \
     --timeout=10s \
     --start-period=30s \
     --retries=3 \
-    CMD curl -f http://localhost:3000/ping || exit 1
+    CMD ["curl", "-f", "http://localhost:3000/ping"]
 ENTRYPOINT ["/bin/app"]

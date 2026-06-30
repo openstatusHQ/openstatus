@@ -55,7 +55,7 @@ builders:
       - packages/importers/package.json
     run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --verbose
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
     cache:
       - /root/.local/share/pnpm/store
 
@@ -78,12 +78,15 @@ builders:
       - fromBuilder: install
         source: /app/packages
         target: /app/packages
-    # Deno reads `catalog:` from root package.json; consumes pnpm's node_modules (manual).
-    # sloppy-imports resolves the codebase's extensionless relative imports.
-    run: deno compile -A --sloppy-imports --node-modules-dir=manual --include static/openapi.yaml --include static/openapi-v1.json --output app src/serve.ts
+    # 1) bundle to a self-contained mjs; manual node_modules resolves pnpm catalog: + workspace deps, sloppy-imports the extensionless relative imports.
+    # 2) compile the bundle with node-modules-dir=none so node_modules is NOT embedded — keeps the binary ~110MB instead of ~390MB.
+    run:
+      - deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+      - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
 
-# Runtime stage
-fromImage: debian:bullseye-slim
+# Runtime stage: distroless glibc base that already ships curl (for the healthcheck).
+# Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
+fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
 
 # Metadata labels
 labels:
@@ -100,26 +103,19 @@ copy:
     target: /bin/
     chmod: "555"
 
-# Install curl for health checks
-root:
-  run:
-    - apt-get update
-    - apt-get install -y --no-install-recommends curl
-    - rm -rf /var/lib/apt/lists/*
-
 # Security: run as non-root user
 user: "1000:1000"
 
 # Expose port
 expose: "3000"
 
-# Health check
+# Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
 healthcheck:
   interval: 30s
   timeout: 10s
   start: 30s
   retries: 3
-  cmd: curl -f http://localhost:3000/ping || exit 1
+  cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
 # Start application
 entrypoint: /bin/app
