@@ -26,12 +26,12 @@ import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
-import { getBaseUrl } from "../../lib/base-url";
-import { createProtectedCookieKey } from "../../lib/protected";
 import {
   FormSubscribeEmail,
   type FormValues,
-} from "../forms/form-subscribe-email";
+} from "@/components/forms/form-subscribe-email";
+import { getBaseUrl } from "@/lib/base-url";
+import { createProtectedCookieKey } from "@/lib/protected";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 

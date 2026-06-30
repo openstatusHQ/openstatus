@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
@@ -6,8 +8,6 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";

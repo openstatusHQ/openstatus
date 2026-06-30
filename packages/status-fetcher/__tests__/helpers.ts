@@ -1,4 +1,5 @@
-import { spy } from "@std/testing/mock";
+import { mock } from "bun:test";
+
 import { Cause, Effect, Exit, Option } from "effect";
 
 import type { FetchError } from "../src/fetch";
@@ -13,7 +14,7 @@ import type {
 type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
 export const installMockFetch = (impl: FetchImpl) => {
-  const fn = spy(impl);
+  const fn = mock(impl);
   global.fetch = fn as unknown as typeof fetch;
   return fn;
 };

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "bun:test";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";

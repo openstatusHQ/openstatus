@@ -127,8 +127,7 @@
     }
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
+    "test": "bun test",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -146,8 +145,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
+    "@types/bun": "latest",
     "typescript": "catalog:"
   }
 }

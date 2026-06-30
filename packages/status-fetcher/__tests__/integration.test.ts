@@ -1,5 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "bun:test";
+
 import { Effect } from "effect";
 
 import { fetchers as allFetchers } from "../src/fetchers";

@@ -1,9 +1,10 @@
 import type { Page } from "@openstatus/db/src/schema";
 
-import { auth } from "../auth";
-import { createProtectedCookieKey } from "../protected";
-import type { getQueryClient } from "../trpc/server";
-import { trpc } from "../trpc/server";
+import { auth } from "@/lib/auth";
+import { createProtectedCookieKey } from "@/lib/protected";
+import type { getQueryClient } from "@/lib/trpc/server";
+import { trpc } from "@/lib/trpc/server";
+
 import {
   evaluateMarkdownGate,
   type MarkdownGateResult,

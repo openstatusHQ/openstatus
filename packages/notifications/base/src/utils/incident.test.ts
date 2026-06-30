@@ -1,6 +1,6 @@
+import { describe, expect, it } from "bun:test";
+
 import type { Incident } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 
 import { getIncidentDuration } from "./incident";
 
@@ -22,6 +22,7 @@ function createIncident(overrides: Partial<Incident>): Incident {
 describe("getIncidentDuration", () => {
   it("returns null when incident.startedAt is missing", () => {
     const incident = createIncident({
+      startedAt: null,
       resolvedAt: new Date("2026-01-22T12:00:00Z"),
     });
     expect(getIncidentDuration(incident)).toBe(null);

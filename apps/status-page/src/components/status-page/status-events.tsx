@@ -6,7 +6,7 @@ import {
   StatusEventTimelineReportUpdate as BlockStatusEventTimelineReportUpdate,
 } from "@openstatus/ui/components/blocks/status-events";
 
-import { ProcessMessage } from "../content/process-message";
+import { ProcessMessage } from "@/components/content/process-message";
 
 // Re-export pass-through primitives that don't need glue.
 export {

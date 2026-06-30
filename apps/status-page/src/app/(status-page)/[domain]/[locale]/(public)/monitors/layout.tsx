@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { statusPageAlternatesMetadata } from "../../../../../../lib/alternates-metadata";
+import { statusPageAlternatesMetadata } from "@/lib/alternates-metadata";
 
 export async function generateMetadata({
   params,

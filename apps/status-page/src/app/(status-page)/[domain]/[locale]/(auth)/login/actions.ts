@@ -5,8 +5,8 @@ import { AuthError } from "next-auth";
 import { getExtracted } from "next-intl/server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
-import { signIn } from "../../../../../../lib/auth";
-import { getQueryClient, trpc } from "../../../../../../lib/trpc/server";
+import { signIn } from "@/lib/auth";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 export async function signInWithResendAction(formData: FormData) {
   const t = await getExtracted();

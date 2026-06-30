@@ -1,24 +1,22 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { CustomMDX } from "../../../../../content/mdx";
-import { getToolsPage } from "../../../../../content/utils";
-import { mockCheckAllRegions } from "../../../../../lib/checker/mock";
+import { CustomMDX } from "@/content/mdx";
+import { getToolsPage } from "@/content/utils";
+import { mockCheckAllRegions } from "@/lib/checker/mock";
 import {
   getCheckerDataById,
   latencyFormatter,
   regionFormatter,
-} from "../../../../../lib/checker/utils";
-import { JsonLd } from "../../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../../lib/metadata/shared-metadata";
+} from "@/lib/checker/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
-} from "../../../../../lib/metadata/structured-data";
+} from "@/lib/metadata/structured-data";
+
 import { Table } from "./client";
 
 function formatDate(date: Date) {

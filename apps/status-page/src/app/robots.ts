@@ -3,9 +3,9 @@ import { page } from "@openstatus/db/src/schema";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
-import { getBaseUrl } from "../lib/base-url";
-import { stripHostPort } from "../lib/domain";
-import { resolveRoute } from "../lib/resolve-route";
+import { getBaseUrl } from "@/lib/base-url";
+import { stripHostPort } from "@/lib/domain";
+import { resolveRoute } from "@/lib/resolve-route";
 
 // trpc/db lookup needs Node, matching the sitemap and other content routes.
 export const runtime = "nodejs";

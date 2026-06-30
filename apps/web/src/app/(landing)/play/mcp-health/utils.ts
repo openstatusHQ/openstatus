@@ -1,12 +1,6 @@
-import type {
-  HealthCheckReport,
-  StepResult,
-} from "../../../../lib/mcp/health-check";
+import type { HealthCheckReport, StepResult } from "@/lib/mcp/health-check";
 
-export {
-  STEP_REQUEST_BODIES,
-  type StepKey,
-} from "../../../../lib/mcp/protocol";
+export { STEP_REQUEST_BODIES, type StepKey } from "@/lib/mcp/protocol";
 
 export const VERDICT_LABEL: Record<HealthCheckReport["verdict"], string> = {
   healthy: "GOOD",

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 import { IncidentioFetcher } from "../../src/fetchers/incidentio";
 import type { StatusPageEntry } from "../../src/types";
@@ -112,9 +111,8 @@ describe("IncidentioFetcher", () => {
       expect(result.status).toBe("operational");
       expect(result.description).toBe("All Systems Operational");
       expect(typeof result.updated_at).toBe("number");
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://status.test.com/api/v2/summary.json");
-      expect(call.args[1]).toEqual(
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://status.test.com/api/v2/summary.json",
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -236,9 +234,10 @@ describe("IncidentioFetcher", () => {
 
       await runFetcher(fetcher, entry);
 
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://custom.endpoint.com/summary.json");
-      expect(call.args[1]).toEqual(expect.any(Object));
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://custom.endpoint.com/summary.json",
+        expect.any(Object),
+      );
     });
 
     it("should fail with FetchError on 5xx response", async () => {
@@ -324,11 +323,10 @@ describe("IncidentioFetcher", () => {
 
       const incidents = await runIncidents(fetcher, entry);
 
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe(
+      expect(fetchMock).toHaveBeenCalledWith(
         "https://status.linear.app/api/v2/incidents.json",
+        expect.any(Object),
       );
-      expect(call.args[1]).toEqual(expect.any(Object));
       expect(incidents).toHaveLength(1);
       expect(incidents[0]).toMatchObject({
         providerIncidentId: "INC-1",

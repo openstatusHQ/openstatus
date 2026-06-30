@@ -41,10 +41,10 @@ jobs:
       - name: 📥 Download deps
         run: pnpm install
 
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@v2
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v2
         with:
-          deno-version: v2.x
+          bun-version: latest
 
       - name: 🔥  DX task
         run: pnpm dx

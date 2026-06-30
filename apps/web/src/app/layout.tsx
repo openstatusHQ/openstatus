@@ -1,4 +1,4 @@
-import "../styles/globals.css";
+import "@/styles/globals.css";
 import { OpenPanelComponent } from "@openpanel/nextjs";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
@@ -8,15 +8,15 @@ import LocalFont from "next/font/local";
 import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { ThemeProvider } from "../components/theme-provider";
-import { WebMcpProvider } from "../components/webmcp-provider";
-import { env } from "../env";
+import { ThemeProvider } from "@/components/theme-provider";
+import { WebMcpProvider } from "@/components/webmcp-provider";
+import { env } from "@/env";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "../lib/metadata/shared-metadata";
-import { TRPCReactQueryProvider } from "../trpc/rq-client";
+} from "@/lib/metadata/shared-metadata";
+import { TRPCReactQueryProvider } from "@/trpc/rq-client";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 

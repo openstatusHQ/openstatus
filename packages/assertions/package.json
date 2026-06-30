@@ -6,9 +6,7 @@
   "license": "ISC",
   "author": "",
   "main": "src/index.ts",
-  "scripts": {
-    "check": "deno check --sloppy-imports ."
-  },
+  "scripts": {},
   "dependencies": {
     "jsonpath-plus": "catalog:",
     "zod": "catalog:"

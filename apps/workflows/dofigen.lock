@@ -12,127 +12,122 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
+    docker:
+      fromImage:
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      label:
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
     install:
       fromImage:
         path: node
-        digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+        digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       label:
-        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
       workdir: /app/
-      copy:
-      - paths:
-        - pnpm-workspace.yaml
-        target: /app/pnpm-workspace.yaml
-      - paths:
-        - pnpm-lock.yaml
-        target: /app/pnpm-lock.yaml
-      - paths:
-        - package.json
-        target: /app/package.json
-      - paths:
-        - apps/workflows/package.json
-        target: /app/apps/workflows/package.json
-      - paths:
-        - packages/assertions/package.json
-        target: /app/packages/assertions/package.json
-      - paths:
-        - packages/db/package.json
-        target: /app/packages/db/package.json
-      - paths:
-        - packages/emails/package.json
-        target: /app/packages/emails/package.json
-      - paths:
-        - packages/notifications/base/package.json
-        target: /app/packages/notifications/base/package.json
-      - paths:
-        - packages/notifications/discord/package.json
-        target: /app/packages/notifications/discord/package.json
-      - paths:
-        - packages/notifications/email/package.json
-        target: /app/packages/notifications/email/package.json
-      - paths:
-        - packages/notifications/grafana-oncall/package.json
-        target: /app/packages/notifications/grafana-oncall/package.json
-      - paths:
-        - packages/notifications/google-chat/package.json
-        target: /app/packages/notifications/google-chat/package.json
-      - paths:
-        - packages/notifications/ms-teams/package.json
-        target: /app/packages/notifications/ms-teams/package.json
-      - paths:
-        - packages/notifications/ntfy/package.json
-        target: /app/packages/notifications/ntfy/package.json
-      - paths:
-        - packages/notifications/opsgenie/package.json
-        target: /app/packages/notifications/opsgenie/package.json
-      - paths:
-        - packages/notifications/pagerduty/package.json
-        target: /app/packages/notifications/pagerduty/package.json
-      - paths:
-        - packages/notifications/slack/package.json
-        target: /app/packages/notifications/slack/package.json
-      - paths:
-        - packages/notifications/telegram/package.json
-        target: /app/packages/notifications/telegram/package.json
-      - paths:
-        - packages/notifications/bird-whatsapp/package.json
-        target: /app/packages/notifications/bird-whatsapp/package.json
-      - paths:
-        - packages/notifications/twillio-sms/package.json
-        target: /app/packages/notifications/twillio-sms/package.json
-      - paths:
-        - packages/notifications/webhook/package.json
-        target: /app/packages/notifications/webhook/package.json
-      - paths:
-        - packages/importers/package.json
-        target: /app/packages/importers/package.json
-      - paths:
-        - packages/regions/package.json
-        target: /app/packages/regions/package.json
-      - paths:
-        - packages/services/package.json
-        target: /app/packages/services/package.json
-      - paths:
-        - packages/subscriptions/package.json
-        target: /app/packages/subscriptions/package.json
-      - paths:
-        - packages/utils/package.json
-        target: /app/packages/utils/package.json
-      - paths:
-        - packages/tsconfig/package.json
-        target: /app/packages/tsconfig/package.json
-      - paths:
-        - packages/tinybird/package.json
-        target: /app/packages/tinybird/package.json
-      - paths:
-        - packages/upstash/package.json
-        target: /app/packages/upstash/package.json
-      - paths:
-        - packages/theme-store/package.json
-        target: /app/packages/theme-store/package.json
-      - paths:
-        - packages/locales/package.json
-        target: /app/packages/locales/package.json
-      - paths:
-        - packages/status-fetcher/package.json
-        target: /app/packages/status-fetcher/package.json
       run:
       - corepack enable pnpm
-      - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
+      - pnpm install --prod --frozen-lockfile --verbose
       cache:
-      - id: s/995d9762-a732-446d-808a-498c7c33a8d5-/root/.local/share/pnpm/store
-        target: /root/.local/share/pnpm/store
-        sharing: locked
+      - target: /root/.local/share/pnpm/store
+      bind:
+      - target: pnpm-workspace.yaml
+        source: pnpm-workspace.yaml
+      - target: pnpm-lock.yaml
+        source: pnpm-lock.yaml
+      - target: package.json
+        source: package.json
+      - target: apps/workflows/package.json
+        source: apps/workflows/package.json
+      - target: packages/assertions/package.json
+        source: packages/assertions/package.json
+      - target: packages/db/package.json
+        source: packages/db/package.json
+      - target: packages/emails/package.json
+        source: packages/emails/package.json
+      - target: packages/notifications/base/package.json
+        source: packages/notifications/base/package.json
+      - target: packages/notifications/discord/package.json
+        source: packages/notifications/discord/package.json
+      - target: packages/notifications/email/package.json
+        source: packages/notifications/email/package.json
+      - target: packages/notifications/grafana-oncall/package.json
+        source: packages/notifications/grafana-oncall/package.json
+      - target: packages/notifications/google-chat/package.json
+        source: packages/notifications/google-chat/package.json
+      - target: packages/notifications/ms-teams/package.json
+        source: packages/notifications/ms-teams/package.json
+      - target: packages/notifications/ntfy/package.json
+        source: packages/notifications/ntfy/package.json
+      - target: packages/notifications/opsgenie/package.json
+        source: packages/notifications/opsgenie/package.json
+      - target: packages/notifications/pagerduty/package.json
+        source: packages/notifications/pagerduty/package.json
+      - target: packages/notifications/slack/package.json
+        source: packages/notifications/slack/package.json
+      - target: packages/notifications/telegram/package.json
+        source: packages/notifications/telegram/package.json
+      - target: packages/notifications/bird-whatsapp/package.json
+        source: packages/notifications/bird-whatsapp/package.json
+      - target: packages/notifications/twillio-sms/package.json
+        source: packages/notifications/twillio-sms/package.json
+      - target: packages/notifications/webhook/package.json
+        source: packages/notifications/webhook/package.json
+      - target: packages/importers/package.json
+        source: packages/importers/package.json
+      - target: packages/regions/package.json
+        source: packages/regions/package.json
+      - target: packages/services/package.json
+        source: packages/services/package.json
+      - target: packages/subscriptions/package.json
+        source: packages/subscriptions/package.json
+      - target: packages/utils/package.json
+        source: packages/utils/package.json
+      - target: packages/tsconfig/package.json
+        source: packages/tsconfig/package.json
+      - target: packages/tinybird/package.json
+        source: packages/tinybird/package.json
+      - target: packages/upstash/package.json
+        source: packages/upstash/package.json
+      - target: packages/theme-store/package.json
+        source: packages/theme-store/package.json
+      - target: packages/locales/package.json
+        source: packages/locales/package.json
+      - target: packages/status-fetcher/package.json
+        source: packages/status-fetcher/package.json
+    libsql:
+      fromImage:
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+      workdir: /app/
+      copy:
+      - fromBuilder: docker
+        paths:
+        - /app/apps/build-docker/package.json
+        target: /app/package.json
+      run:
+      - bun install --production
     build:
       fromImage:
-        path: denoland/deno
-        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        path: oven/bun
+        digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.11
         org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        org.opencontainers.image.base.digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -153,28 +148,19 @@ effective: |
         - /app/packages
         target: /app/packages
       run:
-      - mkdir -p /tmp/sc
-      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-      - mkdir -p /app/data
+      - bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
   fromImage:
-    host: registry.access.redhat.com
-    port: 443
-    path: hi/curl
-    digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    path: debian
+    digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
   label:
-    io.dofigen.version: 2.8.0
-    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    org.opencontainers.image.base.digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
     org.opencontainers.image.title: OpenStatus Workflows
-  user:
-    user: '1000'
-    group: '1000'
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.vendor: OpenStatus
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -182,33 +168,37 @@ effective: |
     - /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: '555'
-  - fromBuilder: build
+  - fromBuilder: libsql
     paths:
-    - /app/data
-    target: /app/data
+    - /app/node_modules
+    target: /app/packages/db/node_modules
+  - fromBuilder: libsql
+    paths:
+    - /app/node_modules
+    target: /app/node_modules
+  root:
+    run:
+    - apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
   entrypoint:
   - /app/apps/workflows/app
   expose:
   - port: 3000
-  healthcheck:
-    cmd: '["curl", "-f", "http://localhost:3000/ping"]'
-    interval: 1m
-    timeout: 10s
-    start: 30s
-    retries: 3
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.0:
-          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
     library:
       node:
         24-slim:
-          digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+          digest: sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+      debian:
+        bullseye-slim:
+          digest: sha256:cd1bc32f233a49f1b82149c9edb8ef34fb1e6c45f37211445c51a97603468604
+    oven:
+      bun:
+        1.3.11:
+          digest: sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
 resources:
   dofigen.yml:
-    hash: c478b25a43ff0cfbc6114251b800a544357c64a503b8ac64805e1077f559c3de
+    hash: 9ad08ee36ff20abe093e58fc36235d056b6ed3e22b8ae2f3fb30399e34cdaebe
     content: |
       ignore:
         - node_modules
@@ -228,57 +218,50 @@ resources:
           workdir: /app/
           labels:
             org.opencontainers.image.stage: install
-          # Railway's builder rejects --mount=type=bind (only type=cache is supported), so copy the
-          # manifests into the layer instead of bind-mounting them. Per-file targets preserve the
-          # workspace directory structure (multi-source COPY into a dir would flatten the paths).
-          copy:
-            - pnpm-workspace.yaml /app/pnpm-workspace.yaml
-            - pnpm-lock.yaml /app/pnpm-lock.yaml
-            - package.json /app/package.json
-            - apps/workflows/package.json /app/apps/workflows/package.json
-            - packages/assertions/package.json /app/packages/assertions/package.json
-            - packages/db/package.json /app/packages/db/package.json
-            - packages/emails/package.json /app/packages/emails/package.json
-            - packages/notifications/base/package.json /app/packages/notifications/base/package.json
-            - packages/notifications/discord/package.json /app/packages/notifications/discord/package.json
-            - packages/notifications/email/package.json /app/packages/notifications/email/package.json
-            - packages/notifications/grafana-oncall/package.json /app/packages/notifications/grafana-oncall/package.json
-            - packages/notifications/google-chat/package.json /app/packages/notifications/google-chat/package.json
-            - packages/notifications/ms-teams/package.json /app/packages/notifications/ms-teams/package.json
-            - packages/notifications/ntfy/package.json /app/packages/notifications/ntfy/package.json
-            - packages/notifications/opsgenie/package.json /app/packages/notifications/opsgenie/package.json
-            - packages/notifications/pagerduty/package.json /app/packages/notifications/pagerduty/package.json
-            - packages/notifications/slack/package.json /app/packages/notifications/slack/package.json
-            - packages/notifications/telegram/package.json /app/packages/notifications/telegram/package.json
-            - packages/notifications/bird-whatsapp/package.json /app/packages/notifications/bird-whatsapp/package.json
-            - packages/notifications/twillio-sms/package.json /app/packages/notifications/twillio-sms/package.json
-            - packages/notifications/webhook/package.json /app/packages/notifications/webhook/package.json
-            - packages/importers/package.json /app/packages/importers/package.json
-            - packages/regions/package.json /app/packages/regions/package.json
-            - packages/services/package.json /app/packages/services/package.json
-            - packages/subscriptions/package.json /app/packages/subscriptions/package.json
-            - packages/utils/package.json /app/packages/utils/package.json
-            - packages/tsconfig/package.json /app/packages/tsconfig/package.json
-            - packages/tinybird/package.json /app/packages/tinybird/package.json
-            - packages/upstash/package.json /app/packages/upstash/package.json
-            - packages/theme-store/package.json /app/packages/theme-store/package.json
-            - packages/locales/package.json /app/packages/locales/package.json
-            - packages/status-fetcher/package.json /app/packages/status-fetcher/package.json
+          bind:
+            - pnpm-workspace.yaml
+            - pnpm-lock.yaml
+            - package.json
+            - apps/workflows/package.json
+            - packages/assertions/package.json
+            - packages/db/package.json
+            - packages/emails/package.json
+            - packages/notifications/base/package.json
+            - packages/notifications/discord/package.json
+            - packages/notifications/email/package.json
+            - packages/notifications/grafana-oncall/package.json
+            - packages/notifications/google-chat/package.json
+            - packages/notifications/ms-teams/package.json
+            - packages/notifications/ntfy/package.json
+            - packages/notifications/opsgenie/package.json
+            - packages/notifications/pagerduty/package.json
+            - packages/notifications/slack/package.json
+            - packages/notifications/telegram/package.json
+            - packages/notifications/bird-whatsapp/package.json
+            - packages/notifications/twillio-sms/package.json
+            - packages/notifications/webhook/package.json
+            - packages/importers/package.json
+            - packages/regions/package.json
+            - packages/services/package.json
+            - packages/subscriptions/package.json
+            - packages/utils/package.json
+            - packages/tsconfig/package.json
+            - packages/tinybird/package.json
+            - packages/upstash/package.json
+            - packages/theme-store/package.json
+            - packages/locales/package.json
+            - packages/status-fetcher/package.json
 
-          # Install dependencies (scoped to the workflows subgraph so node_modules — and the binary that embeds it — stays small)
+          # Install dependencies
           run:
             - corepack enable pnpm
-            - pnpm install --prod --frozen-lockfile --filter=@openstatus/workflows... --verbose
+            - pnpm install --prod --frozen-lockfile --verbose
           cache:
-            # Railway scopes cache mounts per service: the id must be literally
-            # s/<service-id>-<target> (env vars aren't allowed in the id).
-            - id: s/995d9762-a732-446d-808a-498c7c33a8d5-/root/.local/share/pnpm/store
-              target: /root/.local/share/pnpm/store
-              sharing: locked
+            - /root/.local/share/pnpm/store
 
-        # Stage 4: Build application (compile to binary with Deno)
+        # Stage 4: Build application (compile to binary)
         build:
-          fromImage: denoland/deno:2.9.0
+          fromImage: oven/bun:1.3.11
           workdir: /app/apps/workflows
           labels:
             org.opencontainers.image.stage: build
@@ -293,24 +276,35 @@ resources:
             - fromBuilder: install
               source: /app/packages
               target: /app/packages
+            #  Should set env to production here
+          # Compile the TypeScript application
           env:
             NODE_ENV: production
-          # Bundle the app to self-contained JS, EXTERNALISING the 3 packages that can't be inlined:
-          # @libsql/client + libsql (native .node loader) and @google-cloud/tasks (google-proto-files reads
-          # files via CJS __dirname). They ship as a minimal side-car node_modules (deno install, ~46MB,
-          # platform-aware so Fly amd64 works) instead of embedding all node_modules. Binary ~146MB vs ~360MB.
-          run:
-            - mkdir -p /tmp/sc
-            - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-            - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-            - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-            - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-            - mkdir -p /app/data
+          run: bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
 
-      # Runtime: distroless glibc base that already ships curl + CA certs (Deno's HTTPS works on it; no apt needed).
-      # Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
-      fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+        docker:
+          fromImage: oven/bun:1.3.11
+          workdir: /app/apps/workflows
+          copy:
+           - . /app/
+          run: bun run src/build-docker.ts
+
+        libsql:
+          fromImage: oven/bun:1.3.11
+          workdir: /app/
+          copy:
+            - fromBuilder: docker
+              source: /app/apps/build-docker/package.json
+              target: /app/package.json
+          # bun install is hoisted by default -> flat node_modules so the compiled bun binary can
+          # resolve the libsql native addon (@libsql/<platform>) from disk at runtime. No lockfile
+          # is needed (the generated package.json pins one exact version), so a single install does it.
+          run: bun install --production
+
+      fromImage: debian:bullseye-slim
       workdir: /app/
+      root:
+        run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl && update-ca-certificates && rm -rf /var/lib/apt/lists/* && mkdir -p /app/data && chown -R 1000:1000 /app/data
 
       # Metadata labels
       labels:
@@ -320,25 +314,18 @@ resources:
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
 
-      # Copy the self-contained compiled binary (native addon embedded by deno compile)
+      # Copy artifacts from build stages
       copy:
         - fromBuilder: build
           source: /app/apps/workflows/app
           target: /app/apps/workflows/
           chmod: "555"
-        - fromBuilder: build
-          source: /app/data
-          target: /app/data
-
-      user: "1000:1000"
+        - fromBuilder: libsql
+          source: /app/node_modules
+          target: /app/packages/db/node_modules
+        - fromBuilder: libsql
+          source: /app/node_modules
+          target: /app/node_modules
       expose: "3000"
-
-      # Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
-      healthcheck:
-        interval: 1m
-        timeout: 10s
-        start: 30s
-        retries: 3
-        cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
       entrypoint: /app/apps/workflows/app

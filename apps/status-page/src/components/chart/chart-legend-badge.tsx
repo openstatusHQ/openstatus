@@ -12,7 +12,7 @@ import * as React from "react";
 import type * as RechartsPrimitive from "recharts";
 import type { Payload } from "recharts/types/component/DefaultLegendContent";
 
-import { getPayloadConfigFromPayload } from "../../lib/chart";
+import { getPayloadConfigFromPayload } from "@/lib/chart";
 
 export function ChartLegendBadge({
   className,

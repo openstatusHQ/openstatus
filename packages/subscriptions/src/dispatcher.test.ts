@@ -1,20 +1,19 @@
-import "./test-preload.ts";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  spyOn,
+  test,
+} from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
-import { expect } from "@std/expect";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  test,
-} from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
 import { dispatchPageUpdate } from "./dispatcher";
 import type { PageUpdate } from "./types";
@@ -22,8 +21,10 @@ import type { PageUpdate } from "./types";
 // RESEND_API_KEY is set in test-preload.ts (see bunfig.toml) so @openstatus/emails
 // loads successfully and EmailClient prototype methods can be spied on.
 
-let sendStatusReportUpdateMock: Stub<EmailClient>;
-let rejectNextSend: Error | null = null;
+const sendStatusReportUpdateMock = spyOn(
+  EmailClient.prototype,
+  "sendStatusReportUpdate",
+).mockResolvedValue(undefined);
 
 // IDs present in the seeded database
 const PAGE_ID = 1; // slug: "status"
@@ -104,23 +105,7 @@ beforeAll(async () => {
 afterAll(cleanAll);
 
 beforeEach(() => {
-  rejectNextSend = null;
-  sendStatusReportUpdateMock = stub(
-    EmailClient.prototype,
-    "sendStatusReportUpdate",
-    () => {
-      if (rejectNextSend) {
-        const error = rejectNextSend;
-        rejectNextSend = null;
-        return Promise.reject(error);
-      }
-      return Promise.resolve(undefined);
-    },
-  );
-});
-
-afterEach(() => {
-  sendStatusReportUpdateMock.restore();
+  sendStatusReportUpdateMock.mockClear();
 });
 
 // ─── dispatchPageUpdate - component filtering ─────────────────────────────────
@@ -131,8 +116,8 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_1] }),
     );
 
-    assertSpyCalls(sendStatusReportUpdateMock, 1);
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
+    const { subscribers } = sendStatusReportUpdateMock.mock.calls[0][0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).toContain(EMAILS.entirePage);
@@ -145,7 +130,7 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_2] }),
     );
 
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const { subscribers } = sendStatusReportUpdateMock.mock.calls[0][0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).toContain(EMAILS.entirePage);
@@ -158,7 +143,7 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_1, COMPONENT_2] }),
     );
 
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const { subscribers } = sendStatusReportUpdateMock.mock.calls[0][0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).toContain(EMAILS.entirePage);
@@ -169,8 +154,8 @@ describe("dispatchPageUpdate - component filtering", () => {
   test("notifies only the entire-page subscriber when update has no affected components", async () => {
     await dispatchPageUpdate(makePageUpdate({ pageComponentIds: [] }));
 
-    assertSpyCalls(sendStatusReportUpdateMock, 1);
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
+    const { subscribers } = sendStatusReportUpdateMock.mock.calls[0][0];
 
     expect(subscribers).toHaveLength(1);
     expect(subscribers[0].email).toBe(EMAILS.entirePage);
@@ -182,7 +167,7 @@ describe("dispatchPageUpdate - component filtering", () => {
       makePageUpdate({ pageComponentIds: [COMPONENT_1] }),
     );
 
-    const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const { subscribers } = sendStatusReportUpdateMock.mock.calls[0][0];
     const emails = subscribers.map((s: { email: string }) => s.email);
 
     expect(emails).not.toContain(EMAILS.component2);
@@ -197,11 +182,11 @@ describe("dispatchPageUpdate - edge cases", () => {
       makePageUpdate({ pageId: 99999, pageComponentIds: [COMPONENT_1] }),
     );
 
-    assertSpyCalls(sendStatusReportUpdateMock, 0);
+    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
   });
 
   test("does not propagate channel failure — resolves even when sendStatusReportUpdate throws", async () => {
-    rejectNextSend = new Error("SMTP failure");
+    sendStatusReportUpdateMock.mockRejectedValueOnce(new Error("SMTP failure"));
 
     await expect(
       dispatchPageUpdate(makePageUpdate({ pageComponentIds: [] })),

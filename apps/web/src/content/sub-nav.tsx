@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
+
 import { CopyDropdownButton } from "./copy-button";
 
 export function SubNav({ className, ...props }: React.ComponentProps<"div">) {

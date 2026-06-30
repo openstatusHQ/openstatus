@@ -35,7 +35,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { ThemeSelect } from "../themes/theme-select";
+import { ThemeSelect } from "@/components/themes/theme-select";
 
 export const IS_DEV = process.env.NODE_ENV === "development";
 

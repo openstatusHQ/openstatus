@@ -1,7 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import crypto from "node:crypto";
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 
 import { verifySlackSignature } from "./verify";

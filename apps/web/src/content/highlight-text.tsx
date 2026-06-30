@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { buildHighlightRegex } from "./utils/search-match";
+import { buildHighlightRegex } from "@/content/utils/search-match";
 
 function escapeHtml(input: string) {
   return input.replace(/[&<>]/g, (c) =>

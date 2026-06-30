@@ -22,7 +22,7 @@ import {
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { env } from "../../../../env";
+import { env } from "@/env";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 

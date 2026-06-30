@@ -1,4 +1,5 @@
-import { afterEach, expect, mock, test } from "@openstatus/test-utils";
+import { expect, test } from "bun:test";
+import { afterEach, mock } from "bun:test";
 
 import { app } from "@/index";
 
@@ -7,6 +8,7 @@ import { TriggerSchema } from "./schema";
 const mockFetch = mock();
 
 global.fetch = mockFetch as unknown as typeof fetch;
+mock.module("node-fetch", () => mockFetch);
 
 afterEach(() => {
   mockFetch.mockReset();

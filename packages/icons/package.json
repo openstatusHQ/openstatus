@@ -5,7 +5,6 @@
   "main": "./src/index.tsx",
   "types": "./src/index.tsx",
   "scripts": {
-    "check": "deno check --sloppy-imports .",
     "lint": "oxlint"
   },
   "dependencies": {

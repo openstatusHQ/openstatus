@@ -1,7 +1,7 @@
+import { expect, test } from "bun:test";
+
 import { and, db, eq, isNull } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 

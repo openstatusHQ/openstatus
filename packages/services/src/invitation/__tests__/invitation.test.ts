@@ -1,8 +1,15 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { invitation, user, usersToWorkspaces } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
+import {
+  acceptInvitation,
+  createInvitation,
+  deleteInvitation,
+  getInvitationByToken,
+  listInvitations,
+} from "..";
 import {
   SEEDED_WORKSPACE_FREE_ID,
   SEEDED_WORKSPACE_TEAM_ID,
@@ -20,13 +27,6 @@ import {
   LimitExceededError,
   NotFoundError,
 } from "../../errors";
-import {
-  acceptInvitation,
-  createInvitation,
-  deleteInvitation,
-  getInvitationByToken,
-  listInvitations,
-} from "../index.ts";
 
 const TEST_PREFIX = "svc-inv-test";
 

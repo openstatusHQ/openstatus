@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
+
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import type Stripe from "stripe";
 
 import { FEATURES, PLANS, buildLimitsFromSubscription } from "./utils";

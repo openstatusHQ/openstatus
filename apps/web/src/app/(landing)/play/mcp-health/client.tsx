@@ -32,9 +32,10 @@ import type {
   HealthCheckReport,
   StepResult,
   ToolInfo,
-} from "../../../../lib/mcp/health-check";
-import { toast } from "../../../../lib/toast";
-import { cn } from "../../../../lib/utils";
+} from "@/lib/mcp/health-check";
+import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+
 import { searchParamsParsers } from "./search-params";
 import {
   STEP_REQUEST_BODIES,

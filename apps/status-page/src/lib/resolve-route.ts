@@ -1,4 +1,5 @@
-import { type Locale, defaultLocale, locales } from "../i18n/config";
+import { type Locale, defaultLocale, locales } from "@/i18n/config";
+
 import { getValidSubdomain } from "./domain";
 
 export type RouteType = "hostname" | "pathname";

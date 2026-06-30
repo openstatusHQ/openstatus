@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test": "bun test",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -17,11 +16,10 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "bun-types": "catalog:",
     "typescript": "catalog:"
   }
 }

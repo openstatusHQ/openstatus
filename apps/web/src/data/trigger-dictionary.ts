@@ -1,5 +1,5 @@
-import type { ValidIcon } from "../components/icons";
-import type { Trigger } from "../lib/monitor/utils";
+import type { ValidIcon } from "@/components/icons";
+import type { Trigger } from "@/lib/monitor/utils";
 
 export const triggerDict = {
   cron: {

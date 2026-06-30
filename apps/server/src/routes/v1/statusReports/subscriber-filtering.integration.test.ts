@@ -1,7 +1,7 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 /**
  * Integration tests for subscriber filtering in status report email queries.

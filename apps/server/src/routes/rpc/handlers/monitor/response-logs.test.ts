@@ -1,6 +1,6 @@
+import { expect, test } from "bun:test";
+
 import { redactSensitiveHeaders } from "@openstatus/services/monitor";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
 
 test("redactSensitiveHeaders returns an empty object when headers are missing", () => {
   expect(redactSensitiveHeaders(null)).toEqual({});

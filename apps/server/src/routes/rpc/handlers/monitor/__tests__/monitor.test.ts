@@ -1,3 +1,12 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "bun:test";
+
 import { and, db, eq } from "@openstatus/db";
 import {
   auditLog,
@@ -5,23 +14,10 @@ import {
   pageComponent,
   privateLocation,
   privateLocationToMonitors,
-  workspace,
 } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
-import {
-  createMonitor,
-  createWorkspace,
-} from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  test,
-} from "@std/testing/bdd";
 
-import { app } from "../../../../../index";
+import { app } from "@/index";
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).
@@ -503,17 +499,20 @@ describe("MonitorService.DeleteMonitor", () => {
   });
 
   test("cannot delete monitor from another workspace", async () => {
-    // Isolated workspace (fresh, unique id) so this never collides with seed
-    // data or another suite mutating workspace 2 in parallel.
-    const otherWorkspace = await createWorkspace();
-    const otherWorkspaceMon = await createMonitor(otherWorkspace.id, {
-      name: `${TEST_PREFIX}-delete-other-ws`,
-      url: "https://other-ws-delete.example.com",
-      periodicity: "1m",
-      active: true,
-      regions: "ams",
-      jobType: "http",
-    });
+    // Create a monitor for workspace 2
+    const otherWorkspaceMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-delete-other-ws`,
+        url: "https://other-ws-delete.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
 
     try {
       // Try to delete with workspace 1's key
@@ -537,7 +536,6 @@ describe("MonitorService.DeleteMonitor", () => {
       expect(stillExists?.deletedAt).toBeNull();
     } finally {
       await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
-      await db.delete(workspace).where(eq(workspace.id, otherWorkspace.id));
     }
   });
 

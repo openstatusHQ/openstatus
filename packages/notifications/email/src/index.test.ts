@@ -1,31 +1,26 @@
-import "./test-preload.ts";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { EmailClient } from "@openstatus/emails/src/client";
-import {
-  afterEach,
-  assertSpyCalls,
-  beforeEach,
-  describe,
-  expect,
-  type Stub,
-  stub,
-  test,
-} from "@openstatus/test-utils";
 
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
-// biome-ignore lint/suspicious/noExplicitAny: stub over the EmailClient method
-let sendMonitorAlertMock: Stub<any>;
+const sendMonitorAlertMock = mock(async (_callArgs) => {});
+
+mock.module("@openstatus/emails/src/client", () => ({
+  EmailClient: mock((_args: { apiKey: string }) => {
+    return {
+      sendMonitorAlert: sendMonitorAlertMock,
+    };
+  }),
+}));
 
 describe("Email Notifications", () => {
   beforeEach(() => {
-    sendMonitorAlertMock = stub(EmailClient.prototype, "sendMonitorAlert", () =>
-      Promise.resolve(),
-    );
+    sendMonitorAlertMock.mockClear();
   });
 
   afterEach(() => {
-    sendMonitorAlertMock.restore();
+    sendMonitorAlertMock.mockClear();
   });
 
   const createMockMonitor = () => ({
@@ -67,8 +62,8 @@ describe("Email Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(sendMonitorAlertMock, 1);
-    const callArgs = sendMonitorAlertMock.calls[0].args[0];
+    expect(sendMonitorAlertMock).toHaveBeenCalledTimes(1);
+    const callArgs = sendMonitorAlertMock.mock.calls[0][0];
     expect(callArgs.name).toBe("API Health Check");
     expect(callArgs.type).toBe("alert");
     expect(callArgs.to).toBe("ping@openstatus.dev");
@@ -93,8 +88,8 @@ describe("Email Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(sendMonitorAlertMock, 1);
-    const callArgs = sendMonitorAlertMock.calls[0].args[0];
+    expect(sendMonitorAlertMock).toHaveBeenCalledTimes(1);
+    const callArgs = sendMonitorAlertMock.mock.calls[0][0];
     expect(callArgs.status).toBeUndefined();
     expect(callArgs.latency).toBe("N/A");
     expect(callArgs.region).toBe("N/A");
@@ -116,8 +111,8 @@ describe("Email Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(sendMonitorAlertMock, 1);
-    const callArgs = sendMonitorAlertMock.calls[0].args[0];
+    expect(sendMonitorAlertMock).toHaveBeenCalledTimes(1);
+    const callArgs = sendMonitorAlertMock.mock.calls[0][0];
     expect(callArgs.type).toBe("recovery");
     expect(callArgs.name).toBe("API Health Check");
     expect(callArgs.to).toBe("ping@openstatus.dev");
@@ -142,8 +137,8 @@ describe("Email Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(sendMonitorAlertMock, 1);
-    const callArgs = sendMonitorAlertMock.calls[0].args[0];
+    expect(sendMonitorAlertMock).toHaveBeenCalledTimes(1);
+    const callArgs = sendMonitorAlertMock.mock.calls[0][0];
     expect(callArgs.type).toBe("degraded");
     expect(callArgs.name).toBe("API Health Check");
     expect(callArgs.status).toBe("503");
@@ -171,6 +166,6 @@ describe("Email Notifications", () => {
     });
 
     // Should not call sendMonitorAlert when data is invalid
-    assertSpyCalls(sendMonitorAlertMock, 0);
+    expect(sendMonitorAlertMock).not.toHaveBeenCalled();
   });
 });

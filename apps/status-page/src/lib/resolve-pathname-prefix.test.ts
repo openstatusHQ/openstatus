@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "bun:test";
 
 import { resolvePathnamePrefix } from "./resolve-pathname-prefix";
 

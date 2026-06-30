@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { db, eq } from "@openstatus/db";
 import {
@@ -19,8 +21,6 @@ import {
   readAuditLog,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import { toServiceCtx } from "../adapter";
 import { registerMaintenanceTools } from "./maintenance";

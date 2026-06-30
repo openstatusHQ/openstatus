@@ -1,27 +1,29 @@
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Telegram Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: any = undefined;
   const originalEnv = process.env.TELEGRAM_BOT_TOKEN;
 
   beforeEach(() => {
     process.env.TELEGRAM_BOT_TOKEN = "test-bot-token-123";
-    fetchMock = stub(globalThis, "fetch", () =>
+    // @ts-expect-error
+    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    if (fetchMock) {
+      fetchMock.mockRestore();
+    }
     if (originalEnv) {
       process.env.TELEGRAM_BOT_TOKEN = originalEnv;
     } else {
-      delete process.env.TELEGRAM_BOT_TOKEN;
+      process.env.TELEGRAM_BOT_TOKEN = undefined;
     }
   });
 
@@ -66,8 +68,8 @@ describe("Telegram Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toContain(
       "https://api.telegram.org/bottest-bot-token-123/sendMessage",
     );
@@ -89,8 +91,8 @@ describe("Telegram Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toContain("error: Connection timeout");
   });
 
@@ -109,8 +111,8 @@ describe("Telegram Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toContain("is up again");
   });
 
@@ -129,8 +131,8 @@ describe("Telegram Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toContain("is degraded");
   });
 
@@ -140,8 +142,8 @@ describe("Telegram Notifications", () => {
     });
 
     expect(result).toBe(true);
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toContain(
       "https://api.telegram.org/bottest-bot-token-123/sendMessage",
     );
@@ -150,8 +152,7 @@ describe("Telegram Notifications", () => {
   });
 
   test("Send Test returns false on error", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
+    fetchMock.mockImplementation(() =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -160,12 +161,11 @@ describe("Telegram Notifications", () => {
     });
 
     expect(result).toBe(false);
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
+    fetchMock.mockImplementation(() =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -174,7 +174,7 @@ describe("Telegram Notifications", () => {
       createMockNotification(),
     );
 
-    await expect(
+    expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -185,18 +185,18 @@ describe("Telegram Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("fetch not called when TELEGRAM_BOT_TOKEN is not set", async () => {
-    delete process.env.TELEGRAM_BOT_TOKEN;
+    process.env.TELEGRAM_BOT_TOKEN = undefined;
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
 
-    await expect(
+    expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -207,6 +207,6 @@ describe("Telegram Notifications", () => {
       }),
     ).rejects.toThrow();
     // Should not call fetch when token is missing
-    assertSpyCalls(fetchMock, 0);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

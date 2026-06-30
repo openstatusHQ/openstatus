@@ -32,6 +32,10 @@ import { env } from "../env";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
+if (process.env.NODE_ENV === "test") {
+  require("../test/preload");
+}
+
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
 async function addDomainToVercel(domain: string) {

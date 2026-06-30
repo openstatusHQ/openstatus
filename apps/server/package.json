@@ -5,12 +5,12 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "env": "deno run -A env.ts",
-    "dev": "deno run -A --watch --sloppy-imports src/serve.ts",
-    "start": "NODE_ENV=production deno run -A --sloppy-imports src/serve.ts",
-    "test": "deno test --parallel -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json --ignore=src/routes/slack && deno test -A --no-check --sloppy-imports --env-file=.env.test --import-map=test.importmap.json src/routes/slack",
-    "check": "deno check --sloppy-imports src/serve.ts",
-    "eval:mcp": "deno run -A --sloppy-imports src/routes/mcp/evals/run.ts"
+    "env": "bun env.ts",
+    "dev": "bun run --hot src/index.ts",
+    "start": "NODE_ENV=production bun run src/index.ts",
+    "test": "bun test",
+    "tsc": "tsc --noEmit",
+    "eval:mcp": "bun run src/routes/mcp/evals/run.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "catalog:",
@@ -52,9 +52,7 @@
     "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@opentelemetry/exporter-logs-otlp-http": "catalog:",
     "@opentelemetry/resources": "catalog:",
-    "@opentelemetry/sdk-logs": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
     "@scalar/hono-api-reference": "catalog:",
     "@slack/web-api": "catalog:",
@@ -71,11 +69,9 @@
   },
   "devDependencies": {
     "@openstatus/locales": "workspace:*",
-    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@types/validator": "catalog:",
+    "bun-types": "catalog:",
     "dotenv": "catalog:"
   }
 }

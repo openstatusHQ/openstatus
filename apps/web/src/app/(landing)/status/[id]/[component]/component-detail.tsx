@@ -2,21 +2,22 @@
 
 import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
 
-import { Grid } from "../../../../../content/mdx-components/grid";
-import { JsonLd } from "../../../../../lib/metadata/json-ld";
-import { BASE_URL } from "../../../../../lib/metadata/shared-metadata";
+import {
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+} from "@/app/(landing)/content-box";
+import { Grid } from "@/content/mdx-components/grid";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { BASE_URL } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDWebPage,
-} from "../../../../../lib/metadata/structured-data";
-import { api } from "../../../../../trpc/rq-client";
-import {
-  ContentBoxDescription,
-  ContentBoxLink,
-  ContentBoxTitle,
-} from "../../../content-box";
+} from "@/lib/metadata/structured-data";
+import { api } from "@/trpc/rq-client";
+
 import { ExternalServicePill } from "../../external-service-pill";
 import { formatRelative } from "../../utils";
 import { HistoryBars } from "../history-bars";

@@ -13,12 +13,12 @@ import { Clock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { useEmbed } from "../../hooks/use-embed";
-import { useTRPC } from "../../lib/trpc/client";
-import { Link } from "../common/link";
-import { TimestampHoverCard } from "../content/timestamp-hover-card";
-import { LocaleSwitcher } from "../locale-switcher";
-import { ThemeSwitcher } from "../themes/theme-switcher";
+import { Link } from "@/components/common/link";
+import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeSwitcher } from "@/components/themes/theme-switcher";
+import { useEmbed } from "@/hooks/use-embed";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function Footer({
   className,

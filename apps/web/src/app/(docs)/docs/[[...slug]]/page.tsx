@@ -5,34 +5,34 @@ import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
-} from "../../../(landing)/content-box";
-import { ContentPagination } from "../../../(landing)/content-pagination";
+} from "@/app/(landing)/content-box";
+import { ContentPagination } from "@/app/(landing)/content-pagination";
 import {
   getDocs,
   getDocsPage,
   getDocsPagination,
   gitLastModified,
   validateDocsNav,
-} from "../../../../content/docs";
-import { DocsFeedback } from "../../../../content/docs-feedback";
-import { DocsSubNav } from "../../../../content/docs-sub-nav";
-import { TableOfContents } from "../../../../content/docs-toc";
+} from "@/content/docs";
+import { DocsFeedback } from "@/content/docs-feedback";
+import { DocsSubNav } from "@/content/docs-sub-nav";
+import { TableOfContents } from "@/content/docs-toc";
 import {
   type DocsNavNode,
   docsNavTree,
   findDocsNode,
   findDocsTrail,
   getDocsContainerSlugs,
-} from "../../../../content/docs.config";
-import { CustomMDX } from "../../../../content/mdx";
-import { Grid } from "../../../../content/mdx-components/grid";
-import { extractHeadings } from "../../../../content/toc";
-import { JsonLd } from "../../../../lib/metadata/json-ld";
+} from "@/content/docs.config";
+import { CustomMDX } from "@/content/mdx";
+import { Grid } from "@/content/mdx-components/grid";
+import { extractHeadings } from "@/content/toc";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
   BASE_URL,
   getPageMetadata,
   getSocialMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+} from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
@@ -41,7 +41,7 @@ import {
   getJsonLDItemList,
   getJsonLDOrganization,
   getJsonLDTechArticle,
-} from "../../../../lib/metadata/structured-data";
+} from "@/lib/metadata/structured-data";
 
 export const dynamicParams = false;
 

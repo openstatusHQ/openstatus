@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { statusPageAlternates } from "./alternates";
-import { getQueryClient, trpc } from "./trpc/server";
+import { statusPageAlternates } from "@/lib/alternates";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 export async function statusPageAlternatesMetadata({
   domain,

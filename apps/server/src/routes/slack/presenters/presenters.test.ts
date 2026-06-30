@@ -1,13 +1,20 @@
+import { describe, expect, mock, test } from "bun:test";
+
 import type { ServiceContext } from "@openstatus/services";
 import { agentTools } from "@openstatus/services/agent-tools";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
-import { describe, expect, test } from "@openstatus/test-utils";
 import { z } from "zod";
 
-// page-urls.ts hits the db; it's swapped for a deterministic double via the
-// test import map (see test.importmap.json).
-import { defaultPresenter } from "./default";
-import { renderToolResult } from "./index";
+// page-urls.ts hits the db; stub before the presenters module loads.
+mock.module("../page-urls", () => ({
+  getPageUrl: (_pageId: number) =>
+    Promise.resolve("https://example.openstatus.dev"),
+  getReportUrl: (_pageId: number, reportId: number) =>
+    Promise.resolve(`https://example.openstatus.dev/events/report/${reportId}`),
+}));
+
+const { defaultPresenter } = await import("./default");
+const { renderToolResult } = await import("./index");
 
 const fakeCtx = {
   workspace: { id: 1 },

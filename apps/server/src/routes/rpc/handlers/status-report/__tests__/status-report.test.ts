@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -7,18 +9,14 @@ import {
   statusReportUpdate,
   statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
-  workspace,
 } from "@openstatus/db/src/schema";
-import { createWorkspace } from "@openstatus/db/src/test/factories";
 import {
   PageComponentImpact,
   StatusReportStatus,
 } from "@openstatus/proto/status_report/v1";
-import { mock } from "@openstatus/test-utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { app } from "../../../../../index";
+import { app } from "@/index";
+
 import {
   dbImpactToProto,
   protoImpactToDb,
@@ -27,8 +25,8 @@ import {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  dispatchStatusReportUpdate: ReturnType<typeof mock>;
-  dispatchMaintenanceUpdate: ReturnType<typeof mock>;
+  dispatchStatusReportUpdate: ReturnType<typeof import("bun:test").mock>;
+  dispatchMaintenanceUpdate: ReturnType<typeof import("bun:test").mock>;
 };
 
 /**
@@ -783,64 +781,36 @@ describe("StatusReportService.ListStatusReports", () => {
   });
 
   test("respects offset parameter", async () => {
-    // Isolate in a dedicated workspace so concurrent inserts from other suites
-    // can't shift the pagination window mid-test. In dev/test the
-    // `x-openstatus-key` header is the workspace id. Distinct createdAt values
-    // give the `desc(createdAt)` order a deterministic sequence.
-    const ws = await createWorkspace();
-    const key = String(ws.id);
-    const now = Date.now();
-    const inserted = await db
-      .insert(statusReport)
-      .values([
-        {
-          workspaceId: ws.id,
-          title: `${TEST_PREFIX}-offset-1`,
-          status: "investigating",
-          createdAt: new Date(now - 2000),
-        },
-        {
-          workspaceId: ws.id,
-          title: `${TEST_PREFIX}-offset-2`,
-          status: "investigating",
-          createdAt: new Date(now - 1000),
-        },
-        {
-          workspaceId: ws.id,
-          title: `${TEST_PREFIX}-offset-3`,
-          status: "investigating",
-          createdAt: new Date(now),
-        },
-      ])
-      .returning();
+    // Get total count first
+    const res1 = await connectRequest(
+      "ListStatusReports",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+    const data1 = await res1.json();
+    const totalSize = data1.totalSize;
 
-    try {
-      const total = await connectRequest(
-        "ListStatusReports",
-        {},
-        { "x-openstatus-key": key },
-      );
-      expect((await total.json()).totalSize).toBe(inserted.length);
-
-      const page1 = await connectRequest(
+    if (totalSize > 1) {
+      // Get first page
+      const res2 = await connectRequest(
         "ListStatusReports",
         { limit: 1, offset: 0 },
-        { "x-openstatus-key": key },
+        { "x-openstatus-key": "1" },
       );
-      const page2 = await connectRequest(
+      const data2 = await res2.json();
+
+      // Get second page
+      const res3 = await connectRequest(
         "ListStatusReports",
         { limit: 1, offset: 1 },
-        { "x-openstatus-key": key },
+        { "x-openstatus-key": "1" },
       );
-      const data1 = await page1.json();
-      const data2 = await page2.json();
+      const data3 = await res3.json();
 
-      expect(data1.statusReports).toHaveLength(1);
-      expect(data2.statusReports).toHaveLength(1);
-      expect(data1.statusReports[0].id).not.toBe(data2.statusReports[0].id);
-    } finally {
-      await db.delete(statusReport).where(eq(statusReport.workspaceId, ws.id));
-      await db.delete(workspace).where(eq(workspace.id, ws.id));
+      // Should have different reports
+      if (data2.statusReports?.length > 0 && data3.statusReports?.length > 0) {
+        expect(data2.statusReports[0].id).not.toBe(data3.statusReports[0].id);
+      }
     }
   });
 

@@ -2,7 +2,7 @@
 
 import { cn } from "@openstatus/ui/lib/utils";
 
-import { ALL_EMBED_SECTIONS, useEmbed } from "../../hooks/use-embed";
+import { ALL_EMBED_SECTIONS, useEmbed } from "@/hooks/use-embed";
 
 export function EmbedShell({
   children,

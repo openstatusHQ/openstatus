@@ -1,3 +1,5 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -9,8 +11,6 @@ import {
   statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {

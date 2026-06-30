@@ -1,6 +1,7 @@
 "use client";
 
-import { api } from "../../../../trpc/rq-client";
+import { api } from "@/trpc/rq-client";
+
 import { ExternalServiceComponents } from "../external-service-components";
 
 export function ServiceComponents({

@@ -1,21 +1,23 @@
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendTest } from "./index";
 
 describe("OpsGenie Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: any = undefined;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", () =>
+    // @ts-expect-error
+    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    if (fetchMock) {
+      fetchMock.mockRestore();
+    }
   });
 
   const createMockMonitor = () => ({
@@ -73,8 +75,8 @@ describe("OpsGenie Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://api.opsgenie.com/v2/alerts");
     expect(callArgs[1].method).toBe("POST");
     expect(callArgs[1].headers["Content-Type"]).toBe("application/json");
@@ -105,8 +107,8 @@ describe("OpsGenie Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://api.eu.opsgenie.com/v2/alerts");
   });
 
@@ -127,16 +129,15 @@ describe("OpsGenie Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.details.severity).toBe("degraded");
     expect(body.message).toBe("API Health Check is degraded");
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
+    fetchMock.mockImplementation(() =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -158,12 +159,11 @@ describe("OpsGenie Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("Send Test returns false on error", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
+    fetchMock.mockImplementation(() =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -173,6 +173,6 @@ describe("OpsGenie Notifications", () => {
     });
 
     expect(result).toBe(false);
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

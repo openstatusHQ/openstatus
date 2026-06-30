@@ -1,7 +1,7 @@
 import { Feed } from "feed";
 import { getAuthor } from "src/data/author";
 
-import { getChangelogPosts } from "../../../../content/utils";
+import { getChangelogPosts } from "@/content/utils";
 
 export async function GET() {
   const feed = new Feed({

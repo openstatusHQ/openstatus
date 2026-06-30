@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "env": "deno run -A env.ts",
+    "env": "bun env.ts",
     "dev": "next dev",
     "build:registry": "turbo run registry:build --filter=@openstatus/ui",
     "build": "pnpm build:registry && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test": "bun test",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -98,8 +98,6 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
     "@tailwindcss/postcss": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

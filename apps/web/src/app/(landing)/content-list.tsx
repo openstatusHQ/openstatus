@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { type MDXData, formatDate } from "../../content/utils";
-import { cn } from "../../lib/utils";
+import { type MDXData, formatDate } from "@/content/utils";
+import { cn } from "@/lib/utils";
 
 export function ContentList({
   data,

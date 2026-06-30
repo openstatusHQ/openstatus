@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { CustomMDX } from "../../../content/mdx";
-import { getMainPages } from "../../../content/utils";
-import { JsonLd } from "../../../lib/metadata/json-ld";
-import { getPageMetadata } from "../../../lib/metadata/shared-metadata";
+import { CustomMDX } from "@/content/mdx";
+import { getMainPages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDFAQPage,
@@ -13,7 +13,7 @@ import {
   getJsonLDProduct,
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
-} from "../../../lib/metadata/structured-data";
+} from "@/lib/metadata/structured-data";
 
 export const dynamicParams = false;
 

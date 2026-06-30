@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
+import { afterEach, describe, expect, test } from "bun:test";
 
 import {
   normalizeUrlForStorage,

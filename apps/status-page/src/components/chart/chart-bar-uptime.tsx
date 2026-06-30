@@ -12,7 +12,8 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-import { formatNumber } from "../../lib/formatter";
+import { formatNumber } from "@/lib/formatter";
+
 import { ChartLegendBadge } from "./chart-legend-badge";
 
 const chartConfig = {
