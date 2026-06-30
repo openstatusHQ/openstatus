@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "license": "MIT",
   "main": "src/index.ts",
-  "scripts": {
-    "check": "deno check --sloppy-imports ."
-  },
   "dependencies": {
     "@chronark/zod-bird": "catalog:",
     "zod": "catalog:"

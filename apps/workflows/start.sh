@@ -2,7 +2,7 @@
 set -e
 
 echo "Running database migrations..."
-cd /app/packages/db && deno run -A src/migrate.mts
+cd /app/packages/db && bun src/migrate.mts
 
 echo "Starting workflows service..."
 cd /app/apps/workflows

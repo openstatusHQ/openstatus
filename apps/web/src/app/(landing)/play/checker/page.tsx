@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 
-import { CustomMDX } from "../../../../content/mdx";
-import { getToolsPage } from "../../../../content/utils";
-import { mockCheckAllRegions } from "../../../../lib/checker/mock";
-import { getCheckerDataById } from "../../../../lib/checker/utils";
-import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { CustomMDX } from "@/content/mdx";
+import { getToolsPage } from "@/content/utils";
+import { mockCheckAllRegions } from "@/lib/checker/mock";
+import { getCheckerDataById } from "@/lib/checker/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDWebPage,
-} from "../../../../lib/metadata/structured-data";
+} from "@/lib/metadata/structured-data";
+
 import {
   CheckerProvider,
   DetailsButtonLink,

@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 
-import { getChangelogPosts } from "../../../../../content/utils";
-import { JsonLd } from "../../../../../lib/metadata/json-ld";
+import { ContentCategory } from "@/app/(landing)/content-category";
+import { ContentList } from "@/app/(landing)/content-list";
+import { getChangelogPosts } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
 import {
   BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "../../../../../lib/metadata/shared-metadata";
+} from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
-} from "../../../../../lib/metadata/structured-data";
-import { ContentCategory } from "../../../content-category";
-import { ContentList } from "../../../content-list";
+} from "@/lib/metadata/structured-data";
 
 export async function generateMetadata({
   params,

@@ -13,11 +13,11 @@ import {
   getToolsPages,
   getUnrelatedPages,
   getUseCasePages,
-} from "../content/utils";
+} from "@/content/utils";
 import {
   cachedListExternalComponentsBySlug,
   cachedListExternalServices,
-} from "../lib/external-service-cache";
+} from "@/lib/external-service-cache";
 
 export const revalidate = 3600;
 

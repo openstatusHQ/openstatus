@@ -2,16 +2,17 @@
 
 import { Suspense } from "react";
 
-import { JsonLd } from "../../../../lib/metadata/json-ld";
-import { BASE_URL } from "../../../../lib/metadata/shared-metadata";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { BASE_URL } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDService,
   getJsonLDWebPage,
-} from "../../../../lib/metadata/structured-data";
-import { api } from "../../../../trpc/rq-client";
+} from "@/lib/metadata/structured-data";
+import { api } from "@/trpc/rq-client";
+
 import { ExternalServicePill } from "../external-service-pill";
 import { formatRelative, getStatusAnswer, isStale } from "../utils";
 import { HistoryBars } from "./history-bars";

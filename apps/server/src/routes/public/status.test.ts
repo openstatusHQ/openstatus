@@ -1,14 +1,15 @@
-import { db, eq } from "@openstatus/db";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "bun:test";
 
-import { app } from "../../index";
+import { db, eq } from "@openstatus/db";
+
+import { app } from "@/index";
 
 const testRedisStore = (globalThis as Record<string, unknown>)
   .__testRedisStore as Map<string, string> | undefined;

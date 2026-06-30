@@ -1,7 +1,7 @@
 import { Tracker as OSTracker, classNames } from "@openstatus/tracker";
 
-import type { ResponseStatusTracker } from "../../../../lib/tb";
-import { cn, formatDate } from "../../../../lib/utils";
+import type { ResponseStatusTracker } from "@/lib/tb";
+import { cn, formatDate } from "@/lib/utils";
 
 interface TrackerProps {
   data: ResponseStatusTracker[];

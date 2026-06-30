@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { ButtonLink } from "../../../content/mdx-components/button-link";
-import { CustomLink } from "../../../content/mdx-components/custom-link";
+import { ButtonLink } from "@/content/mdx-components/button-link";
+import { CustomLink } from "@/content/mdx-components/custom-link";
 import {
   APP_URL,
   BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "../../../lib/metadata/shared-metadata";
-import { HydrateClient, api } from "../../../trpc/rq-server";
+} from "@/lib/metadata/shared-metadata";
+import { HydrateClient, api } from "@/trpc/rq-server";
+
 import {
   ContentBoxContainer,
   ContentBoxDescription,

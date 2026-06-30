@@ -1,3 +1,5 @@
+import { describe, expect, it } from "bun:test";
+
 import type {
   Incident,
   Maintenance,
@@ -5,8 +7,6 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 
 import {
   currentImpactByComponent,

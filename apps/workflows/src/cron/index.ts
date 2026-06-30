@@ -1,5 +1,5 @@
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/bun";
 import { Effect, Schedule } from "effect";
 import { Hono } from "hono";
 

@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "bun:test";
+
 import { render } from "react-email";
 
 import StatusReportEmail from "../emails/status-report";
@@ -40,7 +40,6 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         message="Test message"
         pageComponents={["Monitor 1"]}
         manageUrl={manageUrl}
-        unsubscribeUrl=""
       />,
     );
 

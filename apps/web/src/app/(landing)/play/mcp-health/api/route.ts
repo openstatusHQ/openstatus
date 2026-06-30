@@ -9,8 +9,8 @@ import {
   runMcpHealthCheck,
   storeHealthReport,
   toPersistedReport,
-} from "../../../../../lib/mcp/health-check";
-import { getClientIP, ratelimit } from "../../../../../lib/ratelimit";
+} from "@/lib/mcp/health-check";
+import { getClientIP, ratelimit } from "@/lib/ratelimit";
 
 export const runtime = "edge";
 // Worst-case 16s of step time + metadata fetch + analytics; give some slack.

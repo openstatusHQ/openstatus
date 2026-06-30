@@ -26,7 +26,7 @@ import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
 
-import { Link } from "../../components/common/link";
+import { Link } from "@/components/common/link";
 import {
   Section,
   SectionDescription,
@@ -34,13 +34,14 @@ import {
   SectionGroupHeader,
   SectionHeader,
   SectionTitle,
-} from "../../components/content/section";
-import { recomputeStyles } from "../../components/status-page/floating-button";
-import { StatusComponentStatic } from "../../components/status-page/static/status-component-static";
-import { ThemePalettePicker } from "../../components/themes/theme-palette-picker";
-import { ThemeSelect } from "../../components/themes/theme-select";
-import { monitors } from "../../data/monitors";
-import { useTRPC } from "../../lib/trpc/client";
+} from "@/components/content/section";
+import { recomputeStyles } from "@/components/status-page/floating-button";
+import { StatusComponentStatic } from "@/components/status-page/static/status-component-static";
+import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
+import { ThemeSelect } from "@/components/themes/theme-select";
+import { monitors } from "@/data/monitors";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { searchParamsParsers } from "./search-params";
 
 const MAIN_COLORS = [

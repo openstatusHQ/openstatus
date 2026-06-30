@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "bun:test";
 
 import { app } from "@/index";
 import { createErrorSchema } from "@/libs/errors";
@@ -124,7 +123,7 @@ test("create a monitor with deprecated regions should return 400", async () => {
 
   expect(res.status).toBe(400);
   expect(errorSchema.success).toBe(true);
-  expect(errorSchema.data?.message).toContain(
+  expect(errorSchema.data?.message).toMatch(
     "Deprecated regions are not allowed: hkg, waw",
   );
 });

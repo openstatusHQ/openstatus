@@ -1,7 +1,7 @@
+import { describe, expect, test } from "bun:test";
+
 import { Region } from "@openstatus/proto/monitor/v1";
 import { AVAILABLE_REGIONS, RAILWAY_REGIONS } from "@openstatus/regions";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 
 import {
   regionToString,
@@ -20,17 +20,13 @@ describe("region converter", () => {
       ["railway_asia-southeast1-eqsg3a", Region.RAILWAY_ASIA_SOUTHEAST1],
     ];
 
-    for (const [db, proto] of cases) {
-      test(`stringToRegion(${db}) → enum`, () => {
-        expect(stringToRegion(db)).toBe(proto);
-      });
-    }
+    test.each(cases)("stringToRegion(%s) → enum", (db, proto) => {
+      expect(stringToRegion(db)).toBe(proto);
+    });
 
-    for (const [db, proto] of cases) {
-      test(`regionToString(enum) → ${db}`, () => {
-        expect(regionToString(proto)).toBe(db);
-      });
-    }
+    test.each(cases)("regionToString(enum) → %s", (db, proto) => {
+      expect(regionToString(proto)).toBe(db);
+    });
 
     test("validateRegions accepts all Railway DB codes", () => {
       expect(validateRegions([...RAILWAY_REGIONS])).toEqual([]);

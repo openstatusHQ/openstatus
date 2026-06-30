@@ -1,5 +1,5 @@
-import { CustomMDX } from "../content/mdx";
-import { getUnrelatedPage } from "../content/utils";
+import { CustomMDX } from "@/content/mdx";
+import { getUnrelatedPage } from "@/content/utils";
 
 export default function NotFound() {
   const page = getUnrelatedPage("not-found");

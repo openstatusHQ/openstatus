@@ -2,6 +2,7 @@
   "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts"],
   "compilerOptions": {
-    "target": "ES2021"
+    "target": "ES2021",
+    "types": ["bun-types"]
   }
 }

@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   auditLog,
@@ -9,11 +11,8 @@ import {
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import { mock } from "@openstatus/test-utils";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { app } from "../../../../../index";
+import { app } from "@/index";
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).
@@ -1721,7 +1720,7 @@ describe("StatusPageService.UpdateComponentGroup", () => {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  sendVerification: ReturnType<typeof mock>;
+  sendVerification: ReturnType<typeof import("bun:test").mock>;
 };
 
 describe("StatusPageService.SubscribeToPage", () => {

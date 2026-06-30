@@ -3,7 +3,7 @@ import { lambdaRouter } from "@openstatus/api/src/lambda";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
-import { createOnError, guardTRPCSource } from "../../../../../trpc/shared";
+import { createOnError, guardTRPCSource } from "@/trpc/shared";
 
 // Stripe is incompatible with Edge runtimes due to using Node.js events
 // export const runtime = "edge";

@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { CustomMDX } from "../../../../content/mdx";
-import { getToolingPages } from "../../../../content/utils";
-import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { CustomMDX } from "@/content/mdx";
+import { getToolingPages } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
@@ -15,7 +12,7 @@ import {
   getJsonLDHowTo,
   getJsonLDOrganization,
   getJsonLDWebPage,
-} from "../../../../lib/metadata/structured-data";
+} from "@/lib/metadata/structured-data";
 
 export const dynamicParams = false;
 

@@ -1,4 +1,5 @@
-import { cn } from "../../../../lib/utils";
+import { cn } from "@/lib/utils";
+
 import { Background } from "./background";
 
 export function BasicLayout({

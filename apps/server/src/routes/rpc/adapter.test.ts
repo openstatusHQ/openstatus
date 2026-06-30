@@ -1,3 +1,5 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
@@ -12,8 +14,6 @@ import {
   loadSeededWorkspace,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import { toConnectError, toServiceCtx } from "./adapter";
 

@@ -13,7 +13,8 @@ import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { AxisDomain } from "recharts/types/util/types";
 
-import { formatMilliseconds } from "../../lib/formatter";
+import { formatMilliseconds } from "@/lib/formatter";
+
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 

@@ -8,7 +8,7 @@ import {
 } from "@openstatus/ui/components/ui/chart";
 import { Line, LineChart, XAxis } from "recharts";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 const chartConfig = {
   latency: {

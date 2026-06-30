@@ -1,14 +1,7 @@
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import crypto from "node:crypto";
 
-import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
-
-// workspace-resolver / @slack/web-api are swapped for doubles via the test
-// import map; behavior is driven through this shared mutable state.
-import { slackTestState } from "@/libs/test/doubles/slack-test-state";
-
-import { handleSlackInteraction } from "./interactions";
-import { verifySlackSignature } from "./verify";
 
 const SIGNING_SECRET = "test-signing-secret";
 
@@ -29,13 +22,34 @@ const basePending = {
   createdAt: Date.now(),
 };
 
-function configureSlackDoubles() {
-  slackTestState.calls = [];
-  slackTestState.resolveWorkspace = (teamId: string) =>
-    teamId === "T_KNOWN"
-      ? Promise.resolve({ botToken: "xoxb-fallback" })
-      : Promise.resolve(null);
-}
+mock.module("./workspace-resolver", () => ({
+  resolveWorkspace: (teamId: string) => {
+    if (teamId === "T_KNOWN") {
+      return Promise.resolve({ botToken: "xoxb-fallback" });
+    }
+    return Promise.resolve(null);
+  },
+}));
+
+let slackCalls: Array<{ method: string; args: Record<string, unknown> }> = [];
+
+mock.module("@slack/web-api", () => ({
+  WebClient: class {
+    chat = {
+      update: (args: Record<string, unknown>) => {
+        slackCalls.push({ method: "update", args });
+        return Promise.resolve();
+      },
+      postEphemeral: (args: Record<string, unknown>) => {
+        slackCalls.push({ method: "postEphemeral", args });
+        return Promise.resolve();
+      },
+    };
+  },
+}));
+
+const { handleSlackInteraction } = await import("./interactions");
+const { verifySlackSignature } = await import("./verify");
 
 function createTestApp() {
   const app = new Hono<{ Variables: { slackBody: unknown } }>();
@@ -119,14 +133,14 @@ describe("handleSlackInteraction (dispatch)", () => {
   const app = createTestApp();
 
   beforeEach(() => {
-    configureSlackDoubles();
+    slackCalls = [];
     redisStore.clear();
   });
 
   test("returns ok for non-block_actions", async () => {
     const res = await signAndPost(app, { type: "message_action", actions: [] });
     expect(res.status).toBe(200);
-    expect(slackTestState.calls).toHaveLength(0);
+    expect(slackCalls).toHaveLength(0);
   });
 
   test("returns ok for unknown action_id prefix", async () => {
@@ -139,7 +153,7 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "unknown_action" }],
     });
     expect(res.status).toBe(200);
-    expect(slackTestState.calls).toHaveLength(0);
+    expect(slackCalls).toHaveLength(0);
   });
 
   test("cancel updates message to cancelled", async () => {
@@ -153,7 +167,7 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "cancel_pending-123" }],
     });
     expect(res.status).toBe(200);
-    const cancelCall = slackTestState.calls.find(
+    const cancelCall = slackCalls.find(
       (c) =>
         c.method === "update" && (c.args.text as string).includes("Cancelled"),
     );
@@ -171,9 +185,7 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "approve_pending-123" }],
     });
     expect(res.status).toBe(200);
-    const ephemeral = slackTestState.calls.find(
-      (c) => c.method === "postEphemeral",
-    );
+    const ephemeral = slackCalls.find((c) => c.method === "postEphemeral");
     expect(ephemeral).toBeDefined();
     expect(ephemeral?.args.text as string).toContain("Only the person");
     expect(redisStore.has("slack:action:pending-123")).toBe(true);
@@ -189,7 +201,7 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "approve_unknown-id" }],
     });
     expect(res.status).toBe(200);
-    const expiredCall = slackTestState.calls.find(
+    const expiredCall = slackCalls.find(
       (c) =>
         c.method === "update" && (c.args.text as string).includes("expired"),
     );
@@ -206,7 +218,7 @@ describe("handleSlackInteraction (dispatch)", () => {
       actions: [{ action_id: "approve_some-id" }],
     });
     expect(res.status).toBe(200);
-    expect(slackTestState.calls).toHaveLength(0);
+    expect(slackCalls).toHaveLength(0);
   });
 
   test("approve_flag parses flag=true; approve parses flag=false", async () => {
@@ -242,7 +254,7 @@ describe("registry-runner execution paths", () => {
   const app = createTestApp();
 
   beforeEach(() => {
-    configureSlackDoubles();
+    slackCalls = [];
     redisStore.clear();
   });
 
@@ -257,7 +269,7 @@ describe("registry-runner execution paths", () => {
       actions: [{ action_id: "approve_maint-001" }],
     });
     expect(res.status).toBe(200);
-    const successCall = slackTestState.calls.find(
+    const successCall = slackCalls.find(
       (c) =>
         c.method === "update" &&
         (c.args.text as string).includes(
@@ -281,7 +293,7 @@ describe("registry-runner execution paths", () => {
       actions: [{ action_id: "approve_flag_maint-001" }],
     });
     expect(res.status).toBe(200);
-    const successCall = slackTestState.calls.find(
+    const successCall = slackCalls.find(
       (c) =>
         c.method === "update" &&
         (c.args.text as string).includes("subscribers notified"),
@@ -300,7 +312,7 @@ describe("registry-runner execution paths", () => {
       actions: [{ action_id: "cancel_maint-001" }],
     });
     expect(res.status).toBe(200);
-    const cancelCall = slackTestState.calls.find(
+    const cancelCall = slackCalls.find(
       (c) =>
         c.method === "update" && (c.args.text as string).includes("Cancelled"),
     );
@@ -318,7 +330,7 @@ describe("registry-runner execution paths", () => {
       actions: [{ action_id: "approve_maint-bad" }],
     });
     expect(res.status).toBe(200);
-    const errCall = slackTestState.calls.find(
+    const errCall = slackCalls.find(
       (c) =>
         c.method === "update" &&
         (c.args.text as string).startsWith(":x:") &&
@@ -342,7 +354,7 @@ describe("registry-runner execution paths", () => {
       actions: [{ action_id: "approve_maint-bad-time" }],
     });
     expect(res.status).toBe(200);
-    const errCall = slackTestState.calls.find(
+    const errCall = slackCalls.find(
       (c) => c.method === "update" && (c.args.text as string).startsWith(":x:"),
     );
     expect(errCall).toBeDefined();

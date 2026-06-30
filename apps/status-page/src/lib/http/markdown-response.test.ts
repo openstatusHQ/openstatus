@@ -1,9 +1,8 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "bun:test";
 
-import { withPoweredBy } from "../../content/markdown";
-import { computeETag } from "./etag";
-import { resolveMarkdownResponse } from "./markdown-response";
+import { withPoweredBy } from "@/content/markdown";
+import { computeETag } from "@/lib/http/etag";
+import { resolveMarkdownResponse } from "@/lib/http/markdown-response";
 
 const PUBLIC_CACHE =
   "public, max-age=60, s-maxage=60, stale-while-revalidate=300";

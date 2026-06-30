@@ -1,7 +1,7 @@
 import { notFound, unauthorized } from "next/navigation";
 
-import { auth } from "../../../../../../../lib/auth";
-import { getQueryClient, trpc } from "../../../../../../../lib/trpc/server";
+import { auth } from "@/lib/auth";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 export const revalidate = 60;
 

@@ -1,22 +1,19 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "bun:test";
 
 import { parseXVercelCache } from "./x-vercel-cache";
 
 describe("parseXVercelCache", () => {
-  for (const [value, expectedFragment] of [
+  it.each([
     ["MISS", "The response was not found in the edge cache"],
     ["HIT", "The response was served from the edge cache."],
     ["STALE", "A background request to the origin server"],
     ["PRERENDER", "The response was served from static storage."],
     ["REVALIDATED", "the cache was refreshed"],
-  ]) {
-    it(`describes the documented state ${value}`, () => {
-      const result = parseXVercelCache(value);
-      expect(result.value).toBe(value);
-      expect(result.description).toContain(expectedFragment);
-    });
-  }
+  ])("describes the documented state %p", (value, expectedFragment) => {
+    const result = parseXVercelCache(value);
+    expect(result.value).toBe(value);
+    expect(result.description).toContain(expectedFragment);
+  });
 
   it("matches states case-insensitively", () => {
     const lower = parseXVercelCache("revalidated");

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { beforeEach, test } from "@std/testing/bdd";
+import { beforeEach, expect, test } from "bun:test";
 
 import { app } from "@/index";
 
@@ -316,7 +315,5 @@ test("create a status report update calls dispatchStatusReportUpdate", async () 
   const result = StatusReportUpdateSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
   expect(spies.dispatchStatusReportUpdate.mock.calls.length).toBe(1);
-  expect(typeof spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBe(
-    "number",
-  );
+  expect(spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBeNumber();
 });

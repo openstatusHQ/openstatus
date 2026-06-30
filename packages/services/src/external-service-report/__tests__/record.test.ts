@@ -1,11 +1,11 @@
+import { afterEach, describe, expect, test } from "bun:test";
+
 import { db, eq, inArray, like } from "@openstatus/db";
 import {
   externalService,
   externalServiceComponent,
   externalServiceReport,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
 
 import { NotFoundError } from "../../errors";
 import {

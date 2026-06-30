@@ -8,15 +8,9 @@ import {
   withContext,
 } from "@logtape/logtape";
 import { getOpenTelemetrySink } from "@logtape/otel";
-import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import {
-  BatchLogRecordProcessor,
-  LoggerProvider,
-} from "@opentelemetry/sdk-logs";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/bun";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
@@ -27,7 +21,7 @@ import { cronRouter } from "./cron";
 import { env } from "./env";
 import { incidentRoute } from "./incident";
 
-const { NODE_ENV } = env();
+const { NODE_ENV, PORT } = env();
 
 export type Env = {
   Variables: {
@@ -65,30 +59,18 @@ function shouldSample(event: Record<string, unknown>): boolean {
   return Math.random() < 0.2;
 }
 
-// Build the LoggerProvider with a static OTLP exporter import so `deno bundle`
-// includes it. Letting @logtape/otel create the exporter triggers a dynamic
-// import of a bare specifier, which the compiled --node-modules-dir=none binary
-// can't resolve.
-const loggerProvider = new LoggerProvider({
-  resource: resourceFromAttributes({
-    [ATTR_SERVICE_NAME]: "openstatus-workflows",
+const defaultLogger = getOpenTelemetrySink({
+  serviceName: "openstatus-workflows",
+  otlpExporterConfig: {
+    url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+    headers: {
+      Authorization: `Bearer ${env().AXIOM_TOKEN}`,
+      "X-Axiom-Dataset": env().AXIOM_DATASET,
+    },
+  },
+  additionalResource: resourceFromAttributes({
     [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env().NODE_ENV,
   }),
-  processors: [
-    new BatchLogRecordProcessor(
-      new OTLPLogExporter({
-        url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-        headers: {
-          Authorization: `Bearer ${env().AXIOM_TOKEN}`,
-          "X-Axiom-Dataset": env().AXIOM_DATASET,
-        },
-      }),
-    ),
-  ],
-});
-
-const defaultLogger = getOpenTelemetrySink({
-  loggerProvider,
 });
 
 await configure({
@@ -115,7 +97,7 @@ await configure({
 const logger = getLogger(["workflow"]);
 const otelLogger = getLogger(["workflow-otel"]);
 
-export const app = new Hono<Env>({ strict: false });
+const app = new Hono<Env>({ strict: false });
 
 app.use("*", requestId());
 
@@ -200,3 +182,9 @@ app.route("/incident", incidentRoute);
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
+
+logger.info("Starting server", { port: PORT, environment: NODE_ENV });
+
+const server = { port: PORT, fetch: app.fetch };
+
+export default server;

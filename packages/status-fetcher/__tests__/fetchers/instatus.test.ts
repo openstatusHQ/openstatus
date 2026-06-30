@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, expect, it } from "bun:test";
 
 import { InstatusFetcher } from "../../src/fetchers/instatus";
 import type { StatusPageEntry } from "../../src/types";
@@ -110,9 +109,8 @@ describe("InstatusFetcher", () => {
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://test.instatus.com/summary.json");
-      expect(call.args[1]).toEqual(
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://test.instatus.com/summary.json",
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -232,9 +230,10 @@ describe("InstatusFetcher", () => {
 
       await runFetcher(fetcher, entry);
 
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://custom.endpoint.com/status.json");
-      expect(call.args[1]).toEqual(expect.any(Object));
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://custom.endpoint.com/status.json",
+        expect.any(Object),
+      );
     });
 
     it("should fail with FetchError on non-200 response (after retries)", async () => {

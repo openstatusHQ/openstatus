@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
-import { StatusBlankEvents } from "../../../../../../../components/status-page/status-blank";
+import { StatusBlankEvents } from "@/components/status-page/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -25,9 +25,10 @@ import {
   StatusEventTimelineReport,
   StatusEventTitle,
   StatusEventTitleCheck,
-} from "../../../../../../../components/status-page/status-events";
-import { updatesWithImpactChanges } from "../../../../../../../lib/report-impacts";
-import { useTRPC } from "../../../../../../../lib/trpc/client";
+} from "@/components/status-page/status-events";
+import { updatesWithImpactChanges } from "@/lib/report-impacts";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {

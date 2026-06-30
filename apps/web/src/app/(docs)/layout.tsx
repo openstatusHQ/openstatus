@@ -1,6 +1,6 @@
-import { DocsFooter } from "../../content/docs-footer";
-import { DocsHeader } from "../../content/docs-header";
-import { DocsMobileNav, DocsSidebar } from "../../content/docs-sidebar";
+import { DocsFooter } from "@/content/docs-footer";
+import { DocsHeader } from "@/content/docs-header";
+import { DocsMobileNav, DocsSidebar } from "@/content/docs-sidebar";
 
 export default function DocsLayout({
   children,

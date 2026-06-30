@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { CustomImage } from "../../content/mdx-components/custom-image";
-import { cn } from "../../lib/utils";
+import { CustomImage } from "@/content/mdx-components/custom-image";
+import { cn } from "@/lib/utils";
 
 export function ContentBoxImage({
   className,

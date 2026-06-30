@@ -6,9 +6,7 @@
   "license": "ISC",
   "author": "",
   "main": "index.ts",
-  "scripts": {
-    "check": "deno check --sloppy-imports ."
-  },
+  "scripts": {},
   "dependencies": {
     "date-fns": "catalog:"
   },

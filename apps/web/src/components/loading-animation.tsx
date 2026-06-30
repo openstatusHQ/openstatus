@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 const loadingVariants = cva(
   "direction-alternate animate-pulse rounded-full duration-700",

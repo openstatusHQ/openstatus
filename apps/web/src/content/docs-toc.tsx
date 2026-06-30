@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
+
 import type { TocItem } from "./toc";
 
 function useActiveHeading(items: TocItem[]) {

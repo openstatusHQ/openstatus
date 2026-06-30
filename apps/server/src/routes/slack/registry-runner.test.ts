@@ -1,8 +1,8 @@
+import { describe, expect, test } from "bun:test";
+
 import type { ServiceContext } from "@openstatus/services";
 import { agentTools } from "@openstatus/services/agent-tools";
 import type { AnyAgentTool } from "@openstatus/services/agent-tools";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { z } from "zod";
 
 import {

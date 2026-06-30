@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Fragment } from "react";
 
-import type { MDXData } from "../../content/utils";
+import type { MDXData } from "@/content/utils";
 
 export function ContentCategory({
   data,

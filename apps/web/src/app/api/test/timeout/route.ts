@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { wait } from "../../../../lib/utils";
+import { wait } from "@/lib/utils";
 
 export async function POST() {
   await wait(10_000);

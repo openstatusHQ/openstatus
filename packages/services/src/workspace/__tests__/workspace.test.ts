@@ -1,8 +1,14 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+
 import { eq } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
 
+import {
+  getWorkspace,
+  getWorkspaceWithUsage,
+  listWorkspaces,
+  updateWorkspaceName,
+} from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,
@@ -13,12 +19,6 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError } from "../../errors";
-import {
-  getWorkspace,
-  getWorkspaceWithUsage,
-  listWorkspaces,
-  updateWorkspaceName,
-} from "../index.ts";
 
 let teamCtx: ServiceContext;
 

@@ -1,11 +1,11 @@
+import { beforeEach, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   pageComponent,
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeEach, test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 
@@ -202,9 +202,7 @@ test("create a status report calls dispatchStatusReportUpdate", async () => {
   const result = StatusReportSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
   expect(spies.dispatchStatusReportUpdate.mock.calls.length).toBe(1);
-  expect(typeof spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBe(
-    "number",
-  );
+  expect(spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBeNumber();
 
   if (result.success) {
     await db

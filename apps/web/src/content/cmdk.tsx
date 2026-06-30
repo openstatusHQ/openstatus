@@ -24,8 +24,12 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
-import { CORPUS_LABELS, type Corpus, type SearchResult } from "./search-meta";
-import { buildHighlightRegex } from "./utils/search-match";
+import {
+  CORPUS_LABELS,
+  type Corpus,
+  type SearchResult,
+} from "@/content/search-meta";
+import { buildHighlightRegex } from "@/content/utils/search-match";
 
 type ConfigItem = {
   type: "item";

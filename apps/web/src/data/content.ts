@@ -7,7 +7,7 @@ import {
   getToolingPages,
   getToolsPages,
   getUseCasePages,
-} from "../content/utils";
+} from "@/content/utils";
 
 const products = getProductPages();
 

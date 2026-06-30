@@ -1,5 +1,5 @@
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { ZodError } from "zod";

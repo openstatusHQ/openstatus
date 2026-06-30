@@ -1,6 +1,6 @@
 import { OSTinybird } from "@openstatus/tinybird";
 
-import { env } from "../env";
+import { env } from "@/env";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 

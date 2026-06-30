@@ -2,9 +2,9 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { DateFnsProvider } from "../../../../components/date-fns-provider";
-import { StatusBlocksProvider } from "../../../../components/i18n/status-blocks-provider";
-import { routing } from "../../../../i18n/routing";
+import { DateFnsProvider } from "@/components/date-fns-provider";
+import { StatusBlocksProvider } from "@/components/i18n/status-blocks-provider";
+import { routing } from "@/i18n/routing";
 
 export default async function LocaleLayout({
   children,

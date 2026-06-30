@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
@@ -67,13 +66,11 @@ describe("streamMonitorPreview", () => {
         input: { monitorId: 999_999_999 },
       });
 
-      await expect(
-        (async () => {
-          for await (const _ of generator) {
-            // drain
-          }
-        })(),
-      ).rejects.toThrow(NotFoundError);
+      await expect(async () => {
+        for await (const _ of generator) {
+          // drain
+        }
+      }).toThrow(NotFoundError);
     });
   });
 

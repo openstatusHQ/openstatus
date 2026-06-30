@@ -1,6 +1,6 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+
 import { page, pageComponent } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {

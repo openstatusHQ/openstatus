@@ -1,9 +1,5 @@
 {
-  "extends": "@openstatus/tsconfig/base.json",
+  "extends": "@openstatus/tsconfig/react-library.json",
   "include": [".", "src/env.ts"],
-  "exclude": ["dist", "build", "node_modules"],
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "resolveJsonModule": true
-  }
+  "exclude": ["dist", "build", "node_modules"]
 }

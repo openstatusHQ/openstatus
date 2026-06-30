@@ -1,11 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import {
-  assertSpyCalls,
-  returnsNext,
-  type Stub,
-  stub,
-} from "@std/testing/mock";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 
 import { EmailClient } from "./client";
 
@@ -42,8 +35,8 @@ const fail = { data: null, error: { name: "application_error" } } as any;
 
 describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   let client: EmailClient;
-  // biome-ignore lint/suspicious/noExplicitAny: stub over the Resend batch method
-  let batchSend: Stub<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: bun spy handle
+  let batchSend: any;
 
   beforeEach(() => {
     // zero backoff so the retry test doesn't wait on the real exponential sleep
@@ -51,11 +44,11 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       apiKey: "re_test_123",
       retryBackoff: "0 millis",
     });
-    batchSend = stub(client.client.batch, "send", () => Promise.resolve(ok));
+    batchSend = spyOn(client.client.batch, "send").mockResolvedValue(ok);
   });
 
   afterEach(() => {
-    batchSend.restore();
+    batchSend.mockRestore();
   });
 
   test("passes the base idempotency key suffixed with the batch index", async () => {
@@ -63,8 +56,8 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       baseReq({ idempotencyKey: "status-report-update:5" }),
     );
 
-    assertSpyCalls(batchSend, 1);
-    const options = batchSend.calls[0].args[1];
+    expect(batchSend).toHaveBeenCalledTimes(1);
+    const [, options] = batchSend.mock.calls[0];
     expect(options).toEqual({ idempotencyKey: "status-report-update:5:0" });
   });
 
@@ -76,31 +69,32 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       }),
     );
 
-    assertSpyCalls(batchSend, 3);
-    const keys = batchSend.calls.map((c) => c.args[1]?.idempotencyKey);
+    expect(batchSend).toHaveBeenCalledTimes(3);
+    const keys = batchSend.mock.calls.map(
+      // biome-ignore lint/suspicious/noExplicitAny: positional spy args
+      ([, o]: [unknown, any]) => o?.idempotencyKey,
+    );
     expect(keys).toEqual([
       "status-report-update:9:0",
       "status-report-update:9:1",
       "status-report-update:9:2",
     ]);
-    const sizes = batchSend.calls.map((c) => c.args[0].length);
+    const sizes = batchSend.mock.calls.map(
+      // biome-ignore lint/suspicious/noExplicitAny: positional spy args
+      ([payload]: [any[]]) => payload.length,
+    );
     expect(sizes).toEqual([100, 100, 50]);
   });
 
   test("omits the option entirely when no base key is provided", async () => {
     await client.sendStatusReportUpdate(baseReq());
 
-    const options = batchSend.calls[0].args[1];
+    const [, options] = batchSend.mock.calls[0];
     expect(options).toBeUndefined();
   });
 
   test("reuses the same key across a retry so Resend dedupes the resend", async () => {
-    batchSend.restore();
-    batchSend = stub(
-      client.client.batch,
-      "send",
-      returnsNext([Promise.resolve(fail), Promise.resolve(ok)]),
-    );
+    batchSend.mockResolvedValueOnce(fail).mockResolvedValueOnce(ok);
 
     await client.sendStatusReportUpdate(
       baseReq({ idempotencyKey: "status-report-update:7" }),
@@ -108,8 +102,11 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
 
     // failure → retry: the second attempt must carry the identical key, or
     // Resend would treat the retry as a fresh batch and double-send.
-    assertSpyCalls(batchSend, 2);
-    const keys = batchSend.calls.map((c) => c.args[1]?.idempotencyKey);
+    expect(batchSend).toHaveBeenCalledTimes(2);
+    const keys = batchSend.mock.calls.map(
+      // biome-ignore lint/suspicious/noExplicitAny: positional spy args
+      ([, o]: [unknown, any]) => o?.idempotencyKey,
+    );
     expect(keys).toEqual([
       "status-report-update:7:0",
       "status-report-update:7:0",

@@ -1,8 +1,15 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+
 import { eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
 
+import {
+  createApiKey,
+  listApiKeys,
+  revokeApiKey,
+  updateApiKeyLastUsed,
+  verifyApiKey,
+} from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,
@@ -14,13 +21,6 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
-import {
-  createApiKey,
-  listApiKeys,
-  revokeApiKey,
-  updateApiKeyLastUsed,
-  verifyApiKey,
-} from "../index.ts";
 
 const TEST_PREFIX = "svc-apikey-test";
 

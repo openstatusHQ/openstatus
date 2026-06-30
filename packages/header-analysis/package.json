@@ -7,15 +7,13 @@
   "author": "",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "deno test --parallel -A --no-check --sloppy-imports",
-    "test:watch": "deno test --parallel -A --no-check --sloppy-imports --watch"
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "dependencies": {},
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
+    "@types/bun": "latest",
     "typescript": "catalog:"
   }
 }

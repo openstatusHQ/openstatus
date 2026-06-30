@@ -2,13 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import { CustomMDX } from "../../../../content/mdx";
-import { getBlogPosts } from "../../../../content/utils";
-import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { CustomMDX } from "@/content/mdx";
+import { getBlogPosts } from "@/content/utils";
+import { JsonLd } from "@/lib/metadata/json-ld";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBlogPosting,
@@ -17,7 +14,8 @@ import {
   getJsonLDHowTo,
   getJsonLDOrganization,
   getJsonLDWebPage,
-} from "../../../../lib/metadata/structured-data";
+} from "@/lib/metadata/structured-data";
+
 import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 

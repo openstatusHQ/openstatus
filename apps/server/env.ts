@@ -1,1 +1,2 @@
-await Deno.copyFile("./.env.example", "./.env");
+const file = Bun.file("./.env.example");
+await Bun.write("./.env", file);

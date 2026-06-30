@@ -4,9 +4,14 @@ services:
         build:
          context: ../..
          dockerfile: apps/workflows/Dockerfile
-        env_file:
-            - ../../.env.docker
-
+        environment:
+            - DATABASE_URL=http://host.docker.internal:8081
+            - DATABASE_AUTH_TOKEN=test
+            - RESEND_API_KEY=test
+            - UPSTASH_REDIS_REST_URL=test
+            - UPSTASH_REDIS_REST_TOKEN=test
+            - NODE_ENV=production
+            - GCP_PROJECT_ID=test
         extra_hosts:
           - "host.docker.internal:host-gateway"
 

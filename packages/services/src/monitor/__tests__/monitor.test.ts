@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq, inArray } from "@openstatus/db";
 import {
   monitor,
@@ -5,15 +7,15 @@ import {
   monitorTagsToMonitors,
   notification,
   notificationsToMonitors,
-  selectWorkspaceSchema,
-  workspace,
 } from "@openstatus/db/src/schema";
-import { createWorkspace } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
+  SEEDED_WORKSPACE_FREE_ID,
+  SEEDED_WORKSPACE_TEAM_ID,
+} from "../../../test/fixtures";
+import {
   expectAuditRow,
+  loadSeededWorkspace,
   makeApiKeyCtx,
   makeSystemCtx,
   makeUserCtx,
@@ -33,18 +35,12 @@ const TEST_PREFIX = "svc-monitor-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
-let teamWorkspaceId: number;
-let freeWorkspaceId: number;
 let testTagId: number;
 let testNotificationId: number;
 
 beforeAll(async () => {
-  // Own workspaces per suite — relying on the shared seeded workspace races
-  // sibling suites that wipe its tags/notifications (e.g. monitor-tag).
-  const team = selectWorkspaceSchema.parse(await createWorkspace());
-  const free = selectWorkspaceSchema.parse(await createWorkspace());
-  teamWorkspaceId = team.id;
-  freeWorkspaceId = free.id;
+  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
 
@@ -80,10 +76,6 @@ afterAll(async () => {
   await db
     .delete(notification)
     .where(eq(notification.id, testNotificationId))
-    .catch(() => undefined);
-  await db
-    .delete(workspace)
-    .where(inArray(workspace.id, [teamWorkspaceId, freeWorkspaceId]))
     .catch(() => undefined);
 });
 

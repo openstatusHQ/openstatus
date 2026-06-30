@@ -1,8 +1,4 @@
-import {
-  HydrateClient,
-  getQueryClient,
-  trpc,
-} from "../../../../../../../lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,

@@ -6,7 +6,8 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import Link from "next/link";
 
-import { headerLinks } from "../data/content";
+import { headerLinks } from "@/data/content";
+
 import { CmdK } from "./cmdk";
 import { LogoWithContextMenu } from "./logo-with-context-menu";
 

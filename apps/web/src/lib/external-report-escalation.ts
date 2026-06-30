@@ -10,7 +10,7 @@ import {
 import { OSTinybird, safePipeData } from "@openstatus/tinybird";
 import { unstable_cache } from "next/cache";
 
-import { env } from "../env";
+import { env } from "@/env";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 

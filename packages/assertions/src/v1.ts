@@ -309,7 +309,7 @@ export class HeaderAssertion implements Assertion {
       };
     }
     const { success, message } = evaluateString(
-      req.header[this.schema.key] ?? "",
+      req.header[this.schema.key],
       this.schema.compare,
       this.schema.target,
     );

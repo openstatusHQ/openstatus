@@ -4,7 +4,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import NextLink from "next/link";
 
-import { useEmbed } from "../../hooks/use-embed";
+import { useEmbed } from "@/hooks/use-embed";
 
 export const linkVariants = cva(
   "focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-[3px]",

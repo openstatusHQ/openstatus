@@ -4,16 +4,16 @@ import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { PasswordWrapper } from "../../../components/password-wrapper";
+import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
+import { PasswordWrapper } from "@/components/password-wrapper";
 import {
   FloatingButton,
   StatusPageProvider,
-} from "../../../components/status-page/floating-button";
-import { FloatingTheme } from "../../../components/status-page/floating-theme";
-import { ThemeProvider } from "../../../components/themes/theme-provider";
-import { statusPageAlternates } from "../../../lib/alternates";
-import { getQueryClient, HydrateClient, trpc } from "../../../lib/trpc/server";
-import { defaultMetadata, ogMetadata, twitterMetadata } from "../../metadata";
+} from "@/components/status-page/floating-button";
+import { FloatingTheme } from "@/components/status-page/floating-theme";
+import { ThemeProvider } from "@/components/themes/theme-provider";
+import { statusPageAlternates } from "@/lib/alternates";
+import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 
 // Canonical schema — guarantees concrete enum output (never null/undefined).
 

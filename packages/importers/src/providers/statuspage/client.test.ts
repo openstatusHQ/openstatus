@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, spy } from "@std/testing/mock";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 import { createStatuspageClient } from "./client";
 import {
@@ -14,7 +12,7 @@ import {
 const originalFetch = globalThis.fetch;
 
 function mockFetch(data: unknown, status = 200) {
-  globalThis.fetch = spy(() =>
+  globalThis.fetch = mock(() =>
     Promise.resolve(
       new Response(JSON.stringify(data), {
         status,
@@ -30,7 +28,7 @@ function mockFetch(data: unknown, status = 200) {
  */
 function mockFetchPaginated(data: unknown, status = 200) {
   let callCount = 0;
-  globalThis.fetch = spy(() => {
+  globalThis.fetch = mock(() => {
     callCount++;
     const body = callCount === 1 ? data : [];
     return Promise.resolve(
@@ -119,8 +117,8 @@ describe("StatuspageClient", () => {
   test("getPage calls correct URL path", async () => {
     mockFetch(MOCK_PAGES[0]);
     await client.getPage("sp_page_001");
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    const [url] = fetchMock.calls[0].args as [string, RequestInit];
+    const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.statuspage.io/v1/pages/sp_page_001");
   });
 
@@ -139,9 +137,9 @@ describe("StatuspageClient", () => {
   test("sends correct auth header", async () => {
     mockFetch(MOCK_PAGES);
     await client.getPages();
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
-    assertSpyCalls(fetchMock, 1);
-    const [url, options] = fetchMock.calls[0].args as [string, RequestInit];
+    const fetchMock = globalThis.fetch as ReturnType<typeof mock>;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.statuspage.io/v1/pages");
     expect((options.headers as Record<string, string>).Authorization).toBe(
       "OAuth test-api-key",

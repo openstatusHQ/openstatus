@@ -11,8 +11,8 @@ import {
   StatusBlankDescription,
   StatusBlankLink,
   StatusBlankTitle,
-} from "../../../../../../../components/status-page/status-blank";
-import { useTRPC } from "../../../../../../../lib/trpc/client";
+} from "@/components/status-page/status-blank";
+import { useTRPC } from "@/lib/trpc/client";
 
 export default function UnsubscribePage() {
   const t = useExtracted();

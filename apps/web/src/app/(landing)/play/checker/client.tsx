@@ -25,16 +25,17 @@ import {
   useTransition,
 } from "react";
 
-import { IconCloudProvider } from "../../../../components/icon-cloud-provider";
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
   type Timing,
   is32CharHex,
   latencyFormatter,
   regionCheckerSchema,
   regionFormatter,
-} from "../../../../lib/checker/utils";
-import { toast } from "../../../../lib/toast";
-import { cn, notEmpty } from "../../../../lib/utils";
+} from "@/lib/checker/utils";
+import { toast } from "@/lib/toast";
+import { cn, notEmpty } from "@/lib/utils";
+
 import { searchParamsParsers } from "./search-params";
 import { handleExportCSV } from "./utils";
 

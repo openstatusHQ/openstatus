@@ -5,8 +5,8 @@ import {
   StatusBarEvent,
 } from "@openstatus/ui/components/blocks/status-bar";
 
-import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
-import { Link } from "../common/link";
+import { Link } from "@/components/common/link";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 
 export { StatusBarSkeleton } from "@openstatus/ui/components/blocks/status-bar";
 

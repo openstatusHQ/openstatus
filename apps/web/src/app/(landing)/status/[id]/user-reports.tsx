@@ -9,7 +9,7 @@ import {
 } from "@openstatus/ui/components/ui/chart";
 import { Bar, BarChart, XAxis } from "recharts";
 
-import { api } from "../../../../trpc/rq-client";
+import { api } from "@/trpc/rq-client";
 
 const chartConfig = {
   total: { label: "Reports", color: "var(--color-warning)" },
