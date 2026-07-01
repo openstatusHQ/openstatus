@@ -51,7 +51,7 @@ export const isAuthorizedDomain = (url: string) => {
 const logger = getLogger("workflow");
 
 const client = new CloudTasksClient({
-  fallback: "rest",
+  // fallback: true,
   projectId: env().GCP_PROJECT_ID,
   credentials: {
     client_email: env().GCP_CLIENT_EMAIL,
