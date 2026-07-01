@@ -1,6 +1,3 @@
-import { and, eq, isNull } from "@openstatus/db";
-import { pageSubscriber } from "@openstatus/db/src/schema";
-
 import { type DB, type ServiceContext, getReadDb } from "../context";
 import { HasPendingSubscriberInput } from "./schemas";
 
@@ -18,13 +15,13 @@ export async function hasPendingSubscriber(args: {
   const db = getReadDb({ db: args.db } as ServiceContext);
 
   const existing = await db.query.pageSubscriber.findFirst({
-    where: and(
-      eq(pageSubscriber.email, input.email.toLowerCase()),
-      eq(pageSubscriber.pageId, input.pageId),
-      eq(pageSubscriber.channelType, "email"),
-      isNull(pageSubscriber.unsubscribedAt),
-      isNull(pageSubscriber.acceptedAt),
-    ),
+    where: {
+      email: input.email.toLowerCase(),
+      pageId: input.pageId,
+      channelType: "email",
+      unsubscribedAt: { isNull: true },
+      acceptedAt: { isNull: true },
+    },
   });
   return !!(existing?.expiresAt && existing.expiresAt > new Date());
 }

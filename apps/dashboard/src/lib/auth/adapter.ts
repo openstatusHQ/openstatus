@@ -18,6 +18,7 @@ export const adapter: Adapter = {
     accountsTable: account,
     // @ts-expect-error: problem with type
     sessionsTable: session,
+    // @ts-expect-error: problem with type
     verificationTokensTable: verificationToken,
   }) as Adapter),
   createUser: async (data) => {

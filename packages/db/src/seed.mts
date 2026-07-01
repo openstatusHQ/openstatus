@@ -37,7 +37,7 @@ async function main() {
     url: env.DATABASE_URL,
     authToken: env.DATABASE_AUTH_TOKEN,
   });
-  const db = drizzle(client);
+  const db = drizzle({ client });
 
   // Fresh slate: wipe every table so re-seeding is idempotent and tests never
   // inherit residue from a previous run. `defer_foreign_keys` lets us delete in

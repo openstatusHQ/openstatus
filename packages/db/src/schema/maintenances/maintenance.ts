@@ -1,7 +1,6 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { maintenancesToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
 
@@ -32,15 +31,3 @@ export const maintenance = sqliteTable(
     index("maintenance_workspace_id_idx").on(t.workspaceId),
   ],
 );
-
-export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
-  maintenancesToPageComponents: many(maintenancesToPageComponents),
-  page: one(page, {
-    fields: [maintenance.pageId],
-    references: [page.id],
-  }),
-  workspace: one(workspace, {
-    fields: [maintenance.workspaceId],
-    references: [workspace.id],
-  }),
-}));

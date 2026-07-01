@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { db, eq } from "@openstatus/db";
-import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
+import { db } from "@openstatus/db";
+import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
 // WARNING: make sure to enable the Tinybird client in the env you are running this script in
@@ -27,7 +27,7 @@ async function main() {
 
   // 1. Fetch monitor from database with private locations
   const monitorDataRaw = await db.query.monitor.findFirst({
-    where: eq(monitor.id, Number.parseInt(MONITOR_ID)),
+    where: { id: Number.parseInt(MONITOR_ID) },
     with: {
       privateLocationToMonitors: {
         with: {

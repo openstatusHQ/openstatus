@@ -1,9 +1,4 @@
-import { and, eq } from "@openstatus/db";
-import {
-  invitation,
-  pageSubscriber,
-  selectWorkspaceSchema,
-} from "@openstatus/db/src/schema";
+import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
 import { getChannel } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
@@ -32,10 +27,10 @@ export const emailRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       const subscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.id, opts.input.id),
-          eq(pageSubscriber.token, opts.input.token),
-        ),
+        where: {
+          id: opts.input.id,
+          token: opts.input.token,
+        },
         with: {
           page: {
             with: {
@@ -126,10 +121,10 @@ export const emailRouter = createTRPCRouter({
 
       if (limits.members === "Unlimited" || limits.members > 1) {
         const _invitation = await opts.ctx.db.query.invitation.findFirst({
-          where: and(
-            eq(invitation.id, opts.input.id),
-            eq(invitation.workspaceId, opts.ctx.workspace.id),
-          ),
+          where: {
+            id: opts.input.id,
+            workspaceId: opts.ctx.workspace.id,
+          },
         });
 
         if (!_invitation) return;

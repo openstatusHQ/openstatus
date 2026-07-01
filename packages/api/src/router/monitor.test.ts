@@ -166,7 +166,7 @@ test("monitor.updateTags succeeds for own workspace monitor", async () => {
   await caller.monitor.updateTags({ id: ownMonitorId, tags: [tagId] });
 
   const result = await db.query.monitorTagsToMonitors.findFirst({
-    where: eq(monitorTagsToMonitors.monitorId, ownMonitorId),
+    where: { monitorId: ownMonitorId },
   });
   expect(result).toBeDefined();
   expect(result?.monitorTagId).toBe(tagId);
@@ -198,7 +198,7 @@ test("monitor.updateSchedulingRegions rejects monitor from another workspace", a
 
   // Verify the seed private location association exists before the attack
   const before = await db.query.privateLocationToMonitors.findMany({
-    where: eq(privateLocationToMonitors.monitorId, otherMonitorId),
+    where: { monitorId: otherMonitorId },
   });
   const beforeCount = before.length;
 
@@ -217,7 +217,7 @@ test("monitor.updateSchedulingRegions rejects monitor from another workspace", a
 
   // Verify private location associations were NOT deleted
   const after = await db.query.privateLocationToMonitors.findMany({
-    where: eq(privateLocationToMonitors.monitorId, otherMonitorId),
+    where: { monitorId: otherMonitorId },
   });
   expect(after.length).toBe(beforeCount);
 });
@@ -261,7 +261,7 @@ test("monitor.updateSchedulingRegions succeeds with own workspace privateLocatio
   });
 
   const associations = await db.query.privateLocationToMonitors.findMany({
-    where: eq(privateLocationToMonitors.monitorId, ownMonitorId),
+    where: { monitorId: ownMonitorId },
   });
   const linked = associations.find(
     (a) => a.privateLocationId === ownWorkspacePrivateLocationId,

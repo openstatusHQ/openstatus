@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   check,
   index,
@@ -62,33 +62,6 @@ export const pageComponent = sqliteTable(
   ],
 );
 
-export const pageComponentRelations = relations(
-  pageComponent,
-  ({ one, many }) => ({
-    workspace: one(workspace, {
-      fields: [pageComponent.workspaceId],
-      references: [workspace.id],
-    }),
-    page: one(page, {
-      fields: [pageComponent.pageId],
-      references: [page.id],
-    }),
-    monitor: one(monitor, {
-      fields: [pageComponent.monitorId],
-      references: [monitor.id],
-    }),
-    group: one(pageComponentGroup, {
-      fields: [pageComponent.groupId],
-      references: [pageComponentGroup.id],
-    }),
-    statusReportsToPageComponents: many(statusReportsToPageComponents),
-    statusReportUpdateToPageComponents: many(
-      statusReportUpdateToPageComponents,
-    ),
-    maintenancesToPageComponents: many(maintenancesToPageComponents),
-  }),
-);
-
 export const maintenancesToPageComponents = sqliteTable(
   "maintenance_to_page_component",
   {
@@ -110,20 +83,6 @@ export const maintenancesToPageComponents = sqliteTable(
   ],
 );
 
-export const maintenancesToPageComponentsRelations = relations(
-  maintenancesToPageComponents,
-  ({ one }) => ({
-    maintenance: one(maintenance, {
-      fields: [maintenancesToPageComponents.maintenanceId],
-      references: [maintenance.id],
-    }),
-    pageComponent: one(pageComponent, {
-      fields: [maintenancesToPageComponents.pageComponentId],
-      references: [pageComponent.id],
-    }),
-  }),
-);
-
 export const statusReportsToPageComponents = sqliteTable(
   "status_report_to_page_component",
   {
@@ -143,20 +102,6 @@ export const statusReportsToPageComponents = sqliteTable(
       t.pageComponentId,
     ),
   ],
-);
-
-export const statusReportsToPageComponentsRelations = relations(
-  statusReportsToPageComponents,
-  ({ one }) => ({
-    statusReport: one(statusReport, {
-      fields: [statusReportsToPageComponents.statusReportId],
-      references: [statusReport.id],
-    }),
-    pageComponent: one(pageComponent, {
-      fields: [statusReportsToPageComponents.pageComponentId],
-      references: [pageComponent.id],
-    }),
-  }),
 );
 
 // timeline: the impact each update set per component — the only place impact
@@ -181,18 +126,4 @@ export const statusReportUpdateToPageComponents = sqliteTable(
       t.pageComponentId,
     ),
   ],
-);
-
-export const statusReportUpdateToPageComponentsRelations = relations(
-  statusReportUpdateToPageComponents,
-  ({ one }) => ({
-    statusReportUpdate: one(statusReportUpdate, {
-      fields: [statusReportUpdateToPageComponents.statusReportUpdateId],
-      references: [statusReportUpdate.id],
-    }),
-    pageComponent: one(pageComponent, {
-      fields: [statusReportUpdateToPageComponents.pageComponentId],
-      references: [pageComponent.id],
-    }),
-  }),
 );

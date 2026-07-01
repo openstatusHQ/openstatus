@@ -1,6 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { and, db, eq } from "@openstatus/db";
-import { statusReport } from "@openstatus/db/src/schema";
+import { db } from "@openstatus/db";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
@@ -39,10 +38,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
         statusReportUpdates: true,
         statusReportsToPageComponents: { with: { pageComponent: true } },
       },
-      where: and(
-        eq(statusReport.workspaceId, workspaceId),
-        eq(statusReport.id, Number(id)),
-      ),
+      where: { workspaceId, id: Number(id) },
     });
 
     if (!_statusUpdate) {

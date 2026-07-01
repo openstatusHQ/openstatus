@@ -97,11 +97,11 @@ export async function getPageComponentDailySummary(args: {
       workspaceId: input.workspaceId,
     }),
     db.query.maintenance.findMany({
-      where: (m, { eq }) => eq(m.pageId, input.pageId),
+      where: { pageId: input.pageId },
       with: { maintenancesToPageComponents: { with: { pageComponent: true } } },
     }),
     db.query.statusReport.findMany({
-      where: (r, { eq }) => eq(r.pageId, input.pageId),
+      where: { pageId: input.pageId },
       with: {
         statusReportsToPageComponents: { with: { pageComponent: true } },
         statusReportUpdates: {

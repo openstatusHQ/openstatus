@@ -1,10 +1,6 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
-import { monitor } from "../monitors";
-import { notification } from "../notifications";
-import { page } from "../pages";
-import { usersToWorkspaces } from "../users";
 import { workspacePlans } from "./constants";
 
 export const workspace = sqliteTable(
@@ -33,11 +29,3 @@ export const workspace = sqliteTable(
     unique: unique().on(t.id, t.dsn),
   }),
 );
-
-export const workspaceRelations = relations(workspace, ({ many }) => ({
-  usersToWorkspaces: many(usersToWorkspaces),
-  pages: many(page),
-  monitors: many(monitor),
-  notifications: many(notification),
-  // TODO: add checks or monitorRuns
-}));

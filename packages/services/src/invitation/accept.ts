@@ -56,12 +56,12 @@ export async function acceptInvitation(args: {
     // would appear with one name on the db fetch and another on the
     // relation join.
     const existing = await tx.query.invitation.findFirst({
-      where: and(
-        eq(invitation.id, input.id),
-        eq(invitation.email, input.email),
-        isNull(invitation.acceptedAt),
-        gte(invitation.expiresAt, new Date()),
-      ),
+      where: {
+        id: input.id,
+        email: input.email,
+        acceptedAt: { isNull: true },
+        expiresAt: { gte: new Date() },
+      },
       with: { workspace: true },
     });
 

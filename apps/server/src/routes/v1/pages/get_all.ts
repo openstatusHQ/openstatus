@@ -1,6 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { db, eq } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { db } from "@openstatus/db";
 
 import { openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
@@ -31,7 +30,7 @@ export function registerGetAllPages(api: typeof pagesApi) {
     const workspaceId = c.get("workspace").id;
 
     const _pages = await db.query.page.findMany({
-      where: eq(page.workspaceId, workspaceId),
+      where: { workspaceId },
       with: {
         pageComponents: true,
       },

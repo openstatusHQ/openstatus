@@ -1,4 +1,4 @@
-import { db, eq, schema } from "@openstatus/db";
+import { db, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
 /**
@@ -28,25 +28,21 @@ export async function resolveActiveWorkspace(args: {
   workspaceSlug?: string;
 }): Promise<ResolveActiveWorkspaceResult> {
   const userAndWorkspace = await db.query.user.findFirst({
-    where: eq(schema.user.id, args.userId),
-    with: {
-      usersToWorkspaces: {
-        with: { workspace: true },
-      },
-    },
+    where: { id: args.userId },
+    with: { workspaces: true },
   });
 
   if (!userAndWorkspace) {
     return { ok: false, error: { kind: "user_not_found" } };
   }
 
-  const { usersToWorkspaces, ...userProps } = userAndWorkspace;
+  const { workspaces, ...userProps } = userAndWorkspace;
 
   const activeWorkspace =
-    usersToWorkspaces?.find(({ workspace }) => {
+    workspaces?.find((workspace) => {
       if (args.workspaceSlug) return workspace.slug === args.workspaceSlug;
       return true;
-    })?.workspace ?? usersToWorkspaces?.[0]?.workspace;
+    }) ?? workspaces?.[0];
 
   if (!activeWorkspace) {
     return { ok: false, error: { kind: "workspace_not_found" } };

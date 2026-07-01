@@ -214,10 +214,7 @@ test("statusReport.updateStatus rejects report from another workspace", async ()
 
   // Verify page component associations were NOT deleted
   const associations = await db.query.statusReportsToPageComponents.findMany({
-    where: eq(
-      statusReportsToPageComponents.statusReportId,
-      otherWorkspaceReportId,
-    ),
+    where: { statusReportId: otherWorkspaceReportId },
   });
   expect(associations.length).toBe(1);
 });
@@ -241,7 +238,7 @@ test("statusReport.updateStatus succeeds for own workspace report", async () => 
   updatedReportIds.push(1);
 
   const updated = await db.query.statusReport.findFirst({
-    where: eq(statusReport.id, 1),
+    where: { id: 1 },
   });
   expect(updated?.title).toBe("Updated Title");
 });
@@ -300,7 +297,7 @@ test("statusReport.updateStatus rejects pageComponents from another workspace", 
 
   // Verify the report was NOT modified
   const report = await db.query.statusReport.findFirst({
-    where: eq(statusReport.id, 1),
+    where: { id: 1 },
   });
   expect(report?.title).toBe("Updated Title"); // still the value from the previous test
 });

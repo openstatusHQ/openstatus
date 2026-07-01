@@ -1,6 +1,3 @@
-import { and, eq } from "@openstatus/db";
-import { page, pageSubscriber } from "@openstatus/db/src/schema";
-
 import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { ListPageSubscribersInput } from "./schemas";
@@ -61,24 +58,20 @@ export async function listPageSubscribers(args: {
   const db = getReadDb(ctx);
 
   const pageRow = await db.query.page.findFirst({
-    where: and(
-      eq(page.workspaceId, ctx.workspace.id),
-      eq(page.id, input.pageId),
-    ),
+    where: { workspaceId: ctx.workspace.id, id: input.pageId },
   });
   if (!pageRow) {
     throw new NotFoundError("page", input.pageId);
   }
 
   const subscriptions = await db.query.pageSubscriber.findMany({
-    where: eq(pageSubscriber.pageId, pageRow.id),
+    where: { pageId: pageRow.id },
     with: {
       components: {
         with: { pageComponent: true },
       },
     },
-    orderBy: (subs, { desc, asc }) =>
-      input.order === "asc" ? asc(subs.createdAt) : desc(subs.createdAt),
+    orderBy: { createdAt: input.order === "asc" ? "asc" : "desc" },
   });
 
   return subscriptions.map((sub) => {

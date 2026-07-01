@@ -5,7 +5,6 @@ import {
   page,
   pageComponent,
   pageSubscriber,
-  workspace,
 } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
@@ -29,7 +28,7 @@ beforeAll(async () => {
 
   // Get an existing workspace (use workspace id 1 from seed data)
   const existingWorkspace = await db.query.workspace.findFirst({
-    where: eq(workspace.id, 1),
+    where: { id: 1 },
   });
 
   if (!existingWorkspace) {
@@ -98,7 +97,7 @@ describe("Full unsubscribe flow: subscribe -> verify -> unsubscribe", () => {
 
     // Verify the subscription is now active
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, subscriberToken),
+      where: { token: subscriberToken },
     });
 
     expect(subscriber?.acceptedAt).not.toBeNull();
@@ -133,7 +132,7 @@ describe("Full unsubscribe flow: subscribe -> verify -> unsubscribe", () => {
 
     // Verify the unsubscription
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, subscriberToken),
+      where: { token: subscriberToken },
     });
 
     expect(subscriber?.unsubscribedAt).not.toBeNull();
@@ -194,7 +193,7 @@ describe("Confirmation page displays correct information", () => {
 
   test("Confirmation page displays correct page name", async () => {
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, confirmPageToken),
+      where: { token: confirmPageToken },
       with: {
         page: true,
       },
@@ -205,7 +204,7 @@ describe("Confirmation page displays correct information", () => {
 
   test("Confirmation page displays masked email (first char + *** + @domain)", async () => {
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, confirmPageToken),
+      where: { token: confirmPageToken },
     });
 
     if (!subscriber) {
@@ -279,7 +278,7 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
 
   test("Before clicking confirm, unsubscribedAt is null", async () => {
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, unsubscribeToken),
+      where: { token: unsubscribeToken },
     });
 
     expect(subscriber?.unsubscribedAt).toBeNull();
@@ -297,7 +296,7 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
     const afterUnsubscribe = new Date();
 
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, unsubscribeToken),
+      where: { token: unsubscribeToken },
     });
 
     if (!subscriber) {
@@ -326,7 +325,7 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
   test("Subscriber state transitions correctly through the flow", async () => {
     // Verify the subscriber has completed the full lifecycle
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, unsubscribeToken),
+      where: { token: unsubscribeToken },
     });
 
     // Has been verified (acceptedAt is set)
@@ -456,7 +455,7 @@ describe("Unsubscribed user does not receive new emails", () => {
   test("Unsubscribed users are filtered out even with acceptedAt set", async () => {
     // Verify the unsubscribed user has acceptedAt set
     const unsubscribedUser = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, unsubscribedToken),
+      where: { token: unsubscribedToken },
     });
 
     expect(unsubscribedUser?.acceptedAt).not.toBeNull();
@@ -484,7 +483,7 @@ describe("Unsubscribed user does not receive new emails", () => {
   test("Pending users are filtered out (not verified)", async () => {
     // Verify the pending user has no acceptedAt
     const pendingUser = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, pendingToken),
+      where: { token: pendingToken },
     });
 
     expect(pendingUser?.acceptedAt).toBeNull();
@@ -579,7 +578,7 @@ describe("Re-subscription after unsubscribe flow", () => {
   test("User can complete full subscribe -> unsubscribe -> resubscribe cycle", async () => {
     // Step 1: Verify initial subscription state
     let subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, "resubscribe-test@example.com"),
+      where: { email: "resubscribe-test@example.com" },
     });
 
     if (!subscriber) {
@@ -596,7 +595,7 @@ describe("Re-subscription after unsubscribe flow", () => {
       .where(eq(pageSubscriber.id, subscriber.id));
 
     subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, subscriber.id),
+      where: { id: subscriber.id },
     });
 
     expect(subscriber?.unsubscribedAt).not.toBeNull();
@@ -680,7 +679,7 @@ describe("Invalid token handling", () => {
     const fakeToken = crypto.randomUUID();
 
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, fakeToken),
+      where: { token: fakeToken },
     });
 
     expect(subscriber).toBeUndefined();
@@ -691,7 +690,7 @@ describe("Invalid token handling", () => {
 
     // The database query will still work, just return no results
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, invalidToken),
+      where: { token: invalidToken },
     });
 
     expect(subscriber).toBeUndefined();
@@ -722,7 +721,7 @@ describe("Invalid token handling", () => {
 
     // Query the subscriber
     const found = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, subscriber.token),
+      where: { token: subscriber.token },
     });
 
     expect(found).toBeDefined();

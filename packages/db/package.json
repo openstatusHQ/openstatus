@@ -37,7 +37,6 @@
     "@t3-oss/env-core": "catalog:",
     "bcryptjs": "catalog:",
     "drizzle-orm": "catalog:",
-    "drizzle-zod": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

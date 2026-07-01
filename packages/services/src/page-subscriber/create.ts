@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   pageComponent,
   pageSubscriber,
@@ -98,12 +98,12 @@ export async function createPageSubscriber(args: {
     if (input.channelType === "email") {
       emailLower = input.email.toLowerCase();
       const dup = await tx.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.pageId, input.pageId),
-          eq(pageSubscriber.email, emailLower),
-          eq(pageSubscriber.channelType, "email"),
-          isNull(pageSubscriber.unsubscribedAt),
-        ),
+        where: {
+          pageId: input.pageId,
+          email: emailLower,
+          channelType: "email",
+          unsubscribedAt: { isNull: true },
+        },
       });
       if (dup) {
         throw new ConflictError(
@@ -112,13 +112,14 @@ export async function createPageSubscriber(args: {
       }
     } else {
       webhookUrl = input.webhookUrl;
+      const normalizedWebhookUrl = webhookUrl.toLowerCase();
       const dup = await tx.query.pageSubscriber.findFirst({
-        where: and(
-          eq(pageSubscriber.pageId, input.pageId),
-          sql`LOWER(${pageSubscriber.webhookUrl}) = ${webhookUrl.toLowerCase()}`,
-          eq(pageSubscriber.channelType, "webhook"),
-          isNull(pageSubscriber.unsubscribedAt),
-        ),
+        where: {
+          pageId: input.pageId,
+          RAW: (t) => sql`LOWER(${t.webhookUrl}) = ${normalizedWebhookUrl}`,
+          channelType: "webhook",
+          unsubscribedAt: { isNull: true },
+        },
       });
       if (dup) {
         throw new ConflictError(

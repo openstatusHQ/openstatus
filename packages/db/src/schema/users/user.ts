@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -33,10 +33,6 @@ export const user = sqliteTable("user", {
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
-export const userRelations = relations(user, ({ many }) => ({
-  usersToWorkspaces: many(usersToWorkspaces),
-}));
-
 export const usersToWorkspaces = sqliteTable(
   "users_to_workspaces",
   {
@@ -55,20 +51,6 @@ export const usersToWorkspaces = sqliteTable(
     primaryKey({ columns: [t.userId, t.workspaceId] }),
     index("users_to_workspaces_workspace_id_idx").on(t.workspaceId),
   ],
-);
-
-export const usersToWorkspaceRelations = relations(
-  usersToWorkspaces,
-  ({ one }) => ({
-    workspace: one(workspace, {
-      fields: [usersToWorkspaces.workspaceId],
-      references: [workspace.id],
-    }),
-    user: one(user, {
-      fields: [usersToWorkspaces.userId],
-      references: [user.id],
-    }),
-  }),
 );
 
 // NEXT AUTH TABLES

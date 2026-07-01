@@ -1,4 +1,4 @@
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
 import { auditLog } from "./audit_log";
@@ -218,8 +218,20 @@ export const auditEntrySchema = auditActionSchema.and(
   }),
 );
 
-export const insertAuditLogSchema = createInsertSchema(auditLog);
-export const selectAuditLogSchema = createSelectSchema(auditLog);
+const changedFieldsSchema = z.array(z.string());
+
+export const insertAuditLogSchema = createInsertSchema(auditLog, {
+  before: snapshotSchema,
+  after: snapshotSchema,
+  metadata: metadataSchema,
+  changedFields: changedFieldsSchema,
+});
+export const selectAuditLogSchema = createSelectSchema(auditLog, {
+  before: snapshotSchema.nullable(),
+  after: snapshotSchema.nullable(),
+  metadata: metadataSchema.nullable(),
+  changedFields: changedFieldsSchema.nullable(),
+});
 
 export type AuditAction = z.infer<typeof auditActionSchema>;
 

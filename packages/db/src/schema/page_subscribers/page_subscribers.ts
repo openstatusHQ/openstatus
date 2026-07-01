@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   check,
   integer,
@@ -8,7 +8,6 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import { page } from "../pages";
-import { pageSubscriberToPageComponent } from "./page_subscriber_to_page_component";
 
 export const pageSubscriber = sqliteTable(
   "page_subscriber",
@@ -74,16 +73,5 @@ export const pageSubscriber = sqliteTable(
       "page_subscriber_channel_check",
       sql`(${table.channelType} = 'email' AND ${table.email} IS NOT NULL AND ${table.webhookUrl} IS NULL) OR (${table.channelType} = 'webhook' AND ${table.webhookUrl} IS NOT NULL AND ${table.email} IS NULL)`,
     ),
-  }),
-);
-
-export const pageSubscriberRelation = relations(
-  pageSubscriber,
-  ({ one, many }) => ({
-    page: one(page, {
-      fields: [pageSubscriber.pageId],
-      references: [page.id],
-    }),
-    components: many(pageSubscriberToPageComponent),
   }),
 );

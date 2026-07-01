@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, ne, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   page,
   pageComponent,
@@ -90,14 +90,15 @@ export async function updatePageSubscriberChannel(args: {
         input.webhookUrl !== undefined &&
         input.webhookUrl !== existing.webhookUrl
       ) {
+        const normalizedWebhookUrl = input.webhookUrl.toLowerCase();
         const duplicate = await tx.query.pageSubscriber.findFirst({
-          where: and(
-            eq(pageSubscriber.pageId, input.pageId),
-            sql`LOWER(${pageSubscriber.webhookUrl}) = ${input.webhookUrl.toLowerCase()}`,
-            eq(pageSubscriber.channelType, "webhook"),
-            isNull(pageSubscriber.unsubscribedAt),
-            ne(pageSubscriber.id, input.subscriberId),
-          ),
+          where: {
+            pageId: input.pageId,
+            RAW: (t) => sql`LOWER(${t.webhookUrl}) = ${normalizedWebhookUrl}`,
+            channelType: "webhook",
+            unsubscribedAt: { isNull: true },
+            id: { ne: input.subscriberId },
+          },
         });
         if (duplicate) {
           throw new ConflictError(

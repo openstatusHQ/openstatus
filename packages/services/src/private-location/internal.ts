@@ -1,6 +1,3 @@
-import { and, eq, inArray } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
-
 import type { DB } from "../context";
 import { ForbiddenError } from "../errors";
 
@@ -21,10 +18,7 @@ export async function assertMonitorsInWorkspace(args: {
   const uniqueIds = Array.from(new Set(monitorIds));
 
   const valid = await tx.query.monitor.findMany({
-    where: and(
-      eq(monitor.workspaceId, workspaceId),
-      inArray(monitor.id, uniqueIds),
-    ),
+    where: { workspaceId, id: { in: uniqueIds } },
   });
   if (valid.length !== uniqueIds.length) {
     throw new ForbiddenError("Invalid monitor IDs.");

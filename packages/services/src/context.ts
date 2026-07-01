@@ -1,4 +1,4 @@
-import { SQLiteTransaction, db as defaultDb, is } from "@openstatus/db";
+import { SQLiteAsyncTransaction, db as defaultDb, is } from "@openstatus/db";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
@@ -36,7 +36,7 @@ export const defaultTb = new OSTinybird(process.env.TINY_BIRD_API_KEY ?? "");
 // symbol-based entityKind), which `instanceof` is not under pnpm when multiple
 // resolution paths exist.
 export function isTx(db: DB): db is DrizzleTx {
-  return is(db, SQLiteTransaction);
+  return is(db, SQLiteAsyncTransaction);
 }
 
 export async function withTransaction<T>(

@@ -1,9 +1,7 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { sql } from "@openstatus/db";
 import {
-  maintenance,
   page,
-  pageComponent,
   pageConfigurationSchema,
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
@@ -13,7 +11,6 @@ import {
   selectPublicPageSchemaWithRelation,
   selectStatusReportPageSchema,
   selectWorkspaceSchema,
-  statusReport,
 } from "@openstatus/db/src/schema";
 import {
   getSubscriberByToken,
@@ -102,7 +99,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         with: {
           workspace: true,
           statusReports: {
@@ -447,7 +447,10 @@ export const statusPageRouter = createTRPCRouter({
 
       // Single query with all relations
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         with: {
           workspace: true,
           statusReports: {
@@ -529,7 +532,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         columns: {
           slug: true,
           customDomain: true,
@@ -568,10 +574,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
-        where: and(
-          eq(maintenance.id, opts.input.id),
-          eq(maintenance.pageId, _page.id),
-        ),
+        where: { id: opts.input.id, pageId: _page.id },
         with: {
           maintenancesToPageComponents: {
             with: { pageComponent: { with: { monitor: true } } },
@@ -606,7 +609,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${input.slug} OR lower(${page.customDomain}) = ${input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${input.slug} OR lower(${t.customDomain}) = ${input.slug}`,
+        },
         with: {
           maintenances: {
             with: {
@@ -622,10 +628,7 @@ export const statusPageRouter = createTRPCRouter({
             },
           },
           pageComponents: {
-            where: inArray(
-              pageComponent.id,
-              input.pageComponentIds.map(Number),
-            ),
+            where: { id: { in: input.pageComponentIds.map(Number) } },
             with: {
               monitor: {
                 with: {
@@ -809,10 +812,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const _report = await opts.ctx.db.query.statusReport.findFirst({
-        where: and(
-          eq(statusReport.id, opts.input.id),
-          eq(statusReport.pageId, _page.id),
-        ),
+        where: { id: opts.input.id, pageId: _page.id },
         with: {
           statusReportsToPageComponents: {
             with: { pageComponent: { with: { monitor: true } } },
@@ -919,7 +919,10 @@ export const statusPageRouter = createTRPCRouter({
 
       // NOTE: revalidate the public monitors first
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         with: {
           pageComponents: {
             with: {
@@ -1019,10 +1022,13 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         with: {
           pageComponents: {
-            where: eq(pageComponent.monitorId, opts.input.id),
+            where: { monitorId: opts.input.id },
             with: {
               monitor: true,
             },
@@ -1112,7 +1118,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         with: {
           workspace: true,
         },
@@ -1235,7 +1244,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
       });
 
       if (!_page) {
@@ -1303,7 +1315,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
       });
 
       if (!_page) {
@@ -1342,7 +1357,10 @@ export const statusPageRouter = createTRPCRouter({
     )
     .query(async (opts) => {
       const _page = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        where: {
+          RAW: (t) =>
+            sql`lower(${t.slug}) = ${opts.input.slug} OR lower(${t.customDomain}) = ${opts.input.slug}`,
+        },
         columns: { password: true, accessType: true },
       });
       if (!_page || _page.accessType !== "password") return false;

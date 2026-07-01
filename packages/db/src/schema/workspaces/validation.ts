@@ -1,4 +1,4 @@
-import { createSelectSchema } from "drizzle-zod";
+import { createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
 import { allPlans } from "../plan/config";

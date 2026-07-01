@@ -1,9 +1,4 @@
-import { and, eq, gte, isNull } from "@openstatus/db";
-import {
-  invitation,
-  selectInvitationSchema,
-  usersToWorkspaces,
-} from "@openstatus/db/src/schema";
+import { invitation, selectInvitationSchema } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -44,14 +39,14 @@ export async function createInvitation(args: {
 
     const [memberRows, openInviteRows] = await Promise.all([
       tx.query.usersToWorkspaces.findMany({
-        where: eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
+        where: { workspaceId: ctx.workspace.id },
       }),
       tx.query.invitation.findMany({
-        where: and(
-          eq(invitation.workspaceId, ctx.workspace.id),
-          gte(invitation.expiresAt, new Date()),
-          isNull(invitation.acceptedAt),
-        ),
+        where: {
+          workspaceId: ctx.workspace.id,
+          expiresAt: { gte: new Date() },
+          acceptedAt: { isNull: true },
+        },
       }),
     ]);
 

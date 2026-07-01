@@ -1,6 +1,5 @@
-import { and, eq, inArray, isNull } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
-  page,
   pageComponent,
   pageSubscriber,
   pageSubscriberToPageComponent,
@@ -58,7 +57,7 @@ export async function upsertSelfSignupSubscriber(args: {
 
   const readDb = getReadDb({ db: args.db } as ServiceContext);
   const pageData = await readDb.query.page.findFirst({
-    where: eq(page.id, input.pageId),
+    where: { id: input.pageId },
     with: { workspace: true },
   });
   if (!pageData) {
@@ -90,12 +89,12 @@ export async function upsertSelfSignupSubscriber(args: {
     }
 
     const existing = await tx.query.pageSubscriber.findFirst({
-      where: and(
-        eq(pageSubscriber.email, emailLower),
-        eq(pageSubscriber.pageId, input.pageId),
-        eq(pageSubscriber.channelType, "email"),
-        isNull(pageSubscriber.unsubscribedAt),
-      ),
+      where: {
+        email: emailLower,
+        pageId: input.pageId,
+        channelType: "email",
+        unsubscribedAt: { isNull: true },
+      },
       with: { components: true },
     });
 

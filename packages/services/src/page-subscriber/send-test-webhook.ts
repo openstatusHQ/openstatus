@@ -1,5 +1,3 @@
-import { and, eq } from "@openstatus/db";
-import { pageSubscriber } from "@openstatus/db/src/schema";
 import {
   detectWebhookFlavor,
   sendTestWebhookRequest,
@@ -32,10 +30,7 @@ export async function sendPageSubscriberTestWebhook(args: {
       workspaceId: ctx.workspace.id,
     });
     return tx.query.pageSubscriber.findFirst({
-      where: and(
-        eq(pageSubscriber.id, input.subscriberId),
-        eq(pageSubscriber.pageId, input.pageId),
-      ),
+      where: { id: input.subscriberId, pageId: input.pageId },
     });
   });
 

@@ -132,9 +132,8 @@ catalog:
   date-fns: 3.6.0
   date-fns-tz: 2.0.1
   dotenv: 16.6.1
-  drizzle-kit: 0.31.10
-  drizzle-orm: 0.45.2
-  drizzle-zod: 0.8.3
+  drizzle-kit: 1.0.0-rc.4
+  drizzle-orm: 1.0.0-rc.4
   effect: 3.21.2
   feed: 4.2.2
   glob: 11.0.0

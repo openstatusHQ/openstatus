@@ -1,6 +1,3 @@
-import { eq } from "@openstatus/db";
-import { monitorTag } from "@openstatus/db/src/schema";
-
 import { type DrizzleClient, type ServiceContext, getReadDb } from "../context";
 import { ListMonitorTagsInput } from "./schemas";
 
@@ -25,7 +22,7 @@ export async function listMonitorTags(args: {
   const db = getReadDb(args.ctx) as DrizzleClient;
 
   return db.query.monitorTag.findMany({
-    where: eq(monitorTag.workspaceId, args.ctx.workspace.id),
+    where: { workspaceId: args.ctx.workspace.id },
     with: { monitor: true },
   });
 }

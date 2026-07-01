@@ -14,7 +14,7 @@ export { pageAccessTypes };
 /**
  * Full-form create — matches the legacy `pageRouter.create` input shape
  * (the drizzle insert schema). We type it explicitly because the inferred
- * `z.infer<typeof insertPageSchema>` references drizzle-zod internals that
+ * `z.infer<typeof insertPageSchema>` references drizzle-orm/zod internals that
  * aren't cleanly portable across the workspace boundary.
  */
 export const CreatePageInput = insertPageSchema;

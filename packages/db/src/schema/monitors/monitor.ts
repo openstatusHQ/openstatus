@@ -1,12 +1,7 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { monitorPeriodicity } from "../constants";
-import { incidentTable } from "../incidents/incident";
-import { monitorStatusTable } from "../monitor_status/monitor_status";
-import { monitorTagsToMonitors } from "../monitor_tags";
-import { notificationsToMonitors } from "../notifications";
-import { privateLocationToMonitors } from "../private_locations";
 import { workspace } from "../workspaces/workspace";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 
@@ -71,15 +66,3 @@ export const monitor = sqliteTable(
       .where(sql`${t.deletedAt} IS NULL`),
   ],
 );
-
-export const monitorRelation = relations(monitor, ({ one, many }) => ({
-  monitorTagsToMonitors: many(monitorTagsToMonitors),
-  workspace: one(workspace, {
-    fields: [monitor.workspaceId],
-    references: [workspace.id],
-  }),
-  monitorsToNotifications: many(notificationsToMonitors),
-  incidents: many(incidentTable),
-  monitorStatus: many(monitorStatusTable),
-  privateLocationToMonitors: many(privateLocationToMonitors),
-}));

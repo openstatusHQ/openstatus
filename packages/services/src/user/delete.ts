@@ -65,7 +65,7 @@ export async function deleteAccount(args: {
 
   await withTransaction(ctx, async (tx) => {
     const existing = await tx.query.user.findFirst({
-      where: eq(user.id, userId),
+      where: { id: userId },
     });
 
     // Actor's user id resolved to nothing — anomalous, don't proceed
@@ -73,10 +73,7 @@ export async function deleteAccount(args: {
     if (!existing) throw new NotFoundError("user", userId);
 
     const ownedRows = await tx.query.usersToWorkspaces.findMany({
-      where: and(
-        eq(usersToWorkspaces.userId, userId),
-        eq(usersToWorkspaces.role, "owner"),
-      ),
+      where: { userId, role: "owner" },
       with: { workspace: true },
     });
 
