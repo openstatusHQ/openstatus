@@ -664,20 +664,19 @@ export const statusPageRouter = createTRPCRouter({
       // Manual mode never touches Tinybird. Otherwise race the reads against
       // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
       // whole page to manual mode so bars still render from DB events.
-      const tinybird =
+      const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
-          ? { ok: true as const, data: [null, null, null] as const }
-          : await withTinybirdFallback(() =>
-              Promise.all(
-                Object.entries(proceduresByType).map(([type, procedure]) => {
-                  const monitorIds = monitorsByType[
-                    type as keyof typeof proceduresByType
-                  ].map((c) => c.monitor.id.toString());
-                  if (monitorIds.length === 0) return null;
-                  return procedure({ monitorIds });
-                }),
-              ),
-            );
+          ? Promise.resolve([null, null, null])
+          : Promise.all(
+              Object.entries(proceduresByType).map(([type, procedure]) => {
+                const monitorIds = monitorsByType[
+                  type as keyof typeof proceduresByType
+                ].map((c) => c.monitor.id.toString());
+                if (monitorIds.length === 0) return null;
+                return procedure({ monitorIds });
+              }),
+            ),
+      );
 
       const tinybirdUnhealthy = !tinybird.ok;
       const [statusHttp, statusTcp, statusDns] = tinybird.data ?? [
