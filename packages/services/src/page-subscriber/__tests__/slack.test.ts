@@ -1,16 +1,15 @@
+import { db, eq, inArray } from "@openstatus/db";
+import { pageSubscriber } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { db, eq, inArray } from "@openstatus/db";
-import { pageSubscriber } from "@openstatus/db/src/schema";
-
+import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
+import { expectAuditRow } from "../../../test/helpers";
 import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
   removeSlackSubscriber,
 } from "../index";
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
-import { clearAuditLog, expectAuditRow } from "../../../test/helpers";
 
 // page 1 = slug "status", workspace 1 (team plan, status-subscribers=true).
 const PAGE_ID = 1;
@@ -23,11 +22,14 @@ const CHANNELS = {
   list: "C_SLACK_LIST",
 };
 
+// Scope cleanup to this suite's own slack channels. A workspace-wide
+// clearAuditLog would race sibling suites that share workspace 1 under
+// `deno test --parallel`; our assertions filter by unique entityId, so
+// stale audit rows can't match anyway.
 async function cleanAll() {
   await db
     .delete(pageSubscriber)
     .where(inArray(pageSubscriber.slackChannelId, Object.values(CHANNELS)));
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
 }
 
 beforeAll(cleanAll);

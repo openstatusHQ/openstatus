@@ -159,7 +159,7 @@ export function createSlackChannel(deps: SlackChannelDeps) {
     const reply = buildReplyMessage(pageUpdate);
     const replyRes = await runSlack(sub.id, () =>
       client.postMessage({
-        channel: channelId,
+        channel: anchor.channelId,
         thread_ts: anchor.ts,
         text: reply.text,
         blocks: reply.blocks,
@@ -171,7 +171,7 @@ export function createSlackChannel(deps: SlackChannelDeps) {
     // Re-render the root so its emoji/status track the latest state.
     await runSlack(sub.id, () =>
       client.update({
-        channel: channelId,
+        channel: anchor.channelId,
         ts: anchor.ts,
         text: root.text,
         attachments: root.attachments,
