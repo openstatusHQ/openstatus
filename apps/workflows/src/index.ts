@@ -100,7 +100,7 @@ await configure({
   loggers: [
     {
       category: "workflow",
-      lowestLevel: "debug",
+      lowestLevel: "warning",
       sinks: ["console"],
     },
     {
