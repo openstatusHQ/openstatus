@@ -1,9 +1,8 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import { monitorTag } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { listMonitorTags, syncMonitorTags } from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   clearAuditLog,
@@ -15,6 +14,7 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError } from "../../errors";
+import { listMonitorTags, syncMonitorTags } from "../index.ts";
 
 let teamCtx: ServiceContext;
 

@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { expect } from "@std/expect";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import type { StatusPageEntry } from "../../src/types";
@@ -113,8 +114,11 @@ describe("AtlassianFetcher", () => {
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("Etc/UTC");
       expect(typeof result.updated_at).toBe("number");
-      expect(fetchMock).toHaveBeenCalledWith(
+      const call = fetchMock.calls[fetchMock.calls.length - 1];
+      expect(call.args[0]).toBe(
         "https://www.githubstatus.com/api/v2/summary.json",
+      );
+      expect(call.args[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -234,10 +238,9 @@ describe("AtlassianFetcher", () => {
 
       await runFetcher(fetcher, entry);
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        "https://custom.endpoint.com/status.json",
-        expect.any(Object),
-      );
+      const call = fetchMock.calls[fetchMock.calls.length - 1];
+      expect(call.args[0]).toBe("https://custom.endpoint.com/status.json");
+      expect(call.args[1]).toEqual(expect.any(Object));
     });
 
     it("should fail with FetchError on non-200 response", async () => {
@@ -332,10 +335,11 @@ describe("AtlassianFetcher", () => {
 
       const incidents = await runIncidents(fetcher, entry);
 
-      expect(fetchMock).toHaveBeenCalledWith(
+      const call = fetchMock.calls[fetchMock.calls.length - 1];
+      expect(call.args[0]).toBe(
         "https://www.githubstatus.com/api/v2/incidents.json",
-        expect.any(Object),
       );
+      expect(call.args[1]).toEqual(expect.any(Object));
       expect(incidents).toHaveLength(2);
       expect(incidents[0]).toMatchObject({
         providerIncidentId: "abc",

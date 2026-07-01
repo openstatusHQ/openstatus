@@ -19,8 +19,7 @@ import type {
   WithContext,
 } from "schema-dts";
 
-import type { MDXData } from "@/content/utils";
-
+import type { MDXData } from "../../content/utils";
 import { BASE_URL } from "./shared-metadata";
 
 export const getJsonLDWebPage = (

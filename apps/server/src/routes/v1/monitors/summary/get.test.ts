@@ -1,12 +1,12 @@
-import { expect, test } from "bun:test";
-
 import { z } from "@hono/zod-openapi";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 
 import { SummarySchema } from "./schema";
 
-test.todo("return the summary of the monitor", async () => {
+test.ignore("return the summary of the monitor", async () => {
   const res = await app.request("/v1/monitor/1/summary", {
     headers: {
       "x-openstatus-key": "1",

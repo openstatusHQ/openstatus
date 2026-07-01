@@ -6,7 +6,9 @@
   "license": "ISC",
   "author": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
     "@openpanel/sdk": "catalog:",
     "@t3-oss/env-core": "catalog:",

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Suspense } from "react";
 
-import { Link } from "@/components/common/link";
-import { ThemeProvider } from "@/components/themes/theme-provider";
+import { Link } from "../components/common/link";
+import { ThemeProvider } from "../components/themes/theme-provider";
 
 export default function NotFound() {
   return (

@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import type { NextRequest } from "next/server";
 
-import { env } from "@/env";
+import { env } from "../../../../env";
 
 export async function POST(req: NextRequest) {
   const payload = await req.text();

@@ -8,14 +8,14 @@ import {
   toStatus,
   toSummary,
   toUnresolvedIncidents,
-} from "@/content/status-json";
-import { getBaseUrl } from "@/lib/base-url";
-import { stripHostPort } from "@/lib/domain";
-import { resolveClientIp } from "@/lib/http/client-ip";
-import { computeETag, isNotModified } from "@/lib/http/etag";
-import { resolveGate } from "@/lib/proxy/resolve-gate";
-import { resolveRoute } from "@/lib/resolve-route";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+} from "../../../../content/status-json";
+import { getBaseUrl } from "../../../../lib/base-url";
+import { stripHostPort } from "../../../../lib/domain";
+import { resolveClientIp } from "../../../../lib/http/client-ip";
+import { computeETag, isNotModified } from "../../../../lib/http/etag";
+import { resolveGate } from "../../../../lib/proxy/resolve-gate";
+import { resolveRoute } from "../../../../lib/resolve-route";
+import { getQueryClient, trpc } from "../../../../lib/trpc/server";
 
 // trpc httpBatchLink needs Node, matching the markdown route.
 export const runtime = "nodejs";

@@ -7,7 +7,7 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { Globe } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 export function IconCloudProvider({
   provider,
