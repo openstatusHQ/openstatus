@@ -26,13 +26,31 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     : null;
   const row = route
     ? await db
-        .select({ slug: page.slug, customDomain: page.customDomain })
+        .select({
+          slug: page.slug,
+          customDomain: page.customDomain,
+          allowIndex: page.allowIndex,
+        })
         .from(page)
         .where(
           sql`lower(${page.slug}) = ${route.prefix} OR lower(${page.customDomain}) = ${route.prefix}`,
         )
         .get()
     : undefined;
+
+  // The page owner opted out of indexing: disallow everything and omit the
+  // sitemap so crawlers have nothing to follow.
+  if (row && !row.allowIndex) {
+    return {
+      rules: [
+        {
+          userAgent: "*",
+          disallow: "/",
+        },
+      ],
+    };
+  }
+
   const sitemap = row
     ? `${getBaseUrl({ slug: row.slug, customDomain: row.customDomain ?? undefined })}/sitemap.xml`
     : undefined;
