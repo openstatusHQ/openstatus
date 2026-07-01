@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { MDXData } from "@/content/utils";
+import type { MDXData } from "../../content/utils";
 
 export function ContentPagination({
   prev,

@@ -74,7 +74,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       : undefined;
 
   const actions = [
-    ...(isVendorAdded
+    ...(isVendorAdded && sub.channelType !== "slack"
       ? [
           {
             id: "edit",

@@ -16,6 +16,9 @@ export const subscriberNotificationRouter = createTRPCRouter({
     .meta({ track: Events.NotifyReport })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.workspace.limits["status-subscribers"]) {
+        return { success: false };
+      }
       try {
         await notifyStatusReport({
           ctx: toServiceCtx(ctx),
@@ -31,6 +34,9 @@ export const subscriberNotificationRouter = createTRPCRouter({
     .meta({ track: Events.NotifyMaintenance })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.workspace.limits["status-subscribers"]) {
+        return { success: false };
+      }
       try {
         await notifyMaintenance({
           ctx: toServiceCtx(ctx),

@@ -1,21 +1,20 @@
 import type { Metadata } from "next";
 
-import { components } from "@/content/mdx";
-import { getCustomerPages } from "@/content/utils";
-import { JsonLd } from "@/lib/metadata/json-ld";
+import { components } from "../../../content/mdx";
+import { getCustomerPages } from "../../../content/utils";
+import { JsonLd } from "../../../lib/metadata/json-ld";
 import {
   BASE_URL,
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/lib/metadata/shared-metadata";
+} from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
-} from "@/lib/metadata/structured-data";
-
+} from "../../../lib/metadata/structured-data";
 import {
   ContentBoxDescription,
   ContentBoxLink,

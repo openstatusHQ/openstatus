@@ -23,6 +23,6 @@ INSERT INTO `__new_page_subscriber`("id", "email", "page_id", "channel_type", "w
 DROP TABLE `page_subscriber`;--> statement-breakpoint
 ALTER TABLE `__new_page_subscriber` RENAME TO `page_subscriber`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_page_subscriber_email_page_active` ON `page_subscriber` (`LOWER("email")`,`page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'email';--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_page_subscriber_webhook_page_active` ON `page_subscriber` (`LOWER("webhook_url")`,`page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'webhook';--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_page_subscriber_slack_channel_page_active` ON `page_subscriber` (`slack_channel_id`,`page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'slack';
+CREATE UNIQUE INDEX `idx_page_subscriber_email_page_active` ON `page_subscriber` (LOWER("email"), `page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'email';--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_page_subscriber_webhook_page_active` ON `page_subscriber` (LOWER("webhook_url"), `page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'webhook';--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_page_subscriber_slack_channel_page_active` ON `page_subscriber` (`slack_channel_id`, `page_id`) WHERE "page_subscriber"."unsubscribed_at" IS NULL AND "page_subscriber"."channel_type" = 'slack';

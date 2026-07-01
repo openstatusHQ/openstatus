@@ -1,35 +1,26 @@
-// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
-// are incompatible with bun:test mocks. All runtime behavior is correct.
-import { beforeEach, describe, expect, mock, test } from "bun:test";
-
 import type { Interceptor } from "@connectrpc/connect";
 import { Events } from "@openstatus/analytics";
+// @ts-nocheck — ConnectRPC's deep generic types (AnyFn, UnaryResponse, etc.)
+// are incompatible with bun:test mocks. All runtime behavior is correct.
+import {
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  test,
+} from "@openstatus/test-utils";
 
 import { RPC_CONTEXT_KEY } from "../auth";
 import { RPC_EVENT_MAP, trackingInterceptor } from "../tracking";
 
-// Mock analytics
-const mockTrack = mock(() => Promise.resolve());
-const mockSetupAnalytics = mock((_props: unknown) =>
-  Promise.resolve({ track: mockTrack }),
-);
-
-mock.module("@openstatus/analytics", () => ({
-  Events,
-  parseInputToProps: (json: unknown, props?: string[]) => {
-    if (typeof json !== "object" || json === null || !props) return {};
-    return props.reduce(
-      (acc, prop) => {
-        if (prop in json) {
-          acc[prop] = (json as Record<string, unknown>)[prop];
-        }
-        return acc;
-      },
-      {} as Record<string, unknown>,
-    );
-  },
-  setupAnalytics: (props: unknown) => mockSetupAnalytics(props),
-}));
+// @openstatus/analytics is swapped for a double (test.importmap.json) whose
+// setupAnalytics/track spies are exposed here on globalThis.
+const { track: mockTrack, setupAnalytics: mockSetupAnalytics } = (
+  globalThis as Record<string, unknown>
+).__analyticsSpies as {
+  track: ReturnType<typeof mock>;
+  setupAnalytics: ReturnType<typeof mock>;
+};
 
 type NextFn = Parameters<ReturnType<Interceptor>>[0];
 

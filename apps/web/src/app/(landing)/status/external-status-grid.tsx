@@ -3,9 +3,8 @@
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 
-import { Grid } from "@/content/mdx-components/grid";
-import { api } from "@/trpc/rq-client";
-
+import { Grid } from "../../../content/mdx-components/grid";
+import { api } from "../../../trpc/rq-client";
 import { ContentBoxLink } from "../content-box";
 import { ExternalServicePill } from "./external-service-pill";
 import { filterServices } from "./filter-services";

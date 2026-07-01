@@ -1,9 +1,10 @@
 {
   "name": "@openstatus/workflows",
   "scripts": {
-    "dev": "NODE_ENV=development bun run --hot src/index.ts",
-    "start": "NODE_ENV=production bun run src/index.ts",
-    "test": "bun test"
+    "check": "deno check --sloppy-imports src/serve.ts",
+    "dev": "NODE_ENV=development deno run -A --watch src/serve.ts",
+    "start": "NODE_ENV=production deno run -A src/serve.ts",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@google-cloud/tasks": "catalog:",
@@ -33,9 +34,11 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@opentelemetry/exporter-logs-otlp-http": "catalog:",
     "@opentelemetry/resources": "catalog:",
+    "@opentelemetry/sdk-logs": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
-    "@sentry/bun": "catalog:",
+    "@sentry/deno": "catalog:",
     "@upstash/qstash": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
@@ -44,8 +47,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@types/bun": "latest",
     "typescript": "catalog:"
   }
 }

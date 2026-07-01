@@ -1,9 +1,8 @@
 import { EmailClient } from "@openstatus/emails";
 import Resend from "next-auth/providers/resend";
 
-import { getQueryClient, trpc } from "@/lib/trpc/server";
-
 import { getValidCustomDomain } from "../domain";
+import { getQueryClient, trpc } from "../trpc/server";
 
 export const ResendProvider = Resend({
   apiKey: undefined,

@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "main": "./src/index.ts",
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
     "@upstash/qstash": "catalog:",
     "@upstash/redis": "catalog:"

@@ -5,9 +5,9 @@ import { useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { defaultLocale as globalDefaultLocale } from "@/i18n/config";
-import { resolvePathnamePrefix } from "@/lib/resolve-pathname-prefix";
-import { useTRPC } from "@/lib/trpc/client";
+import { defaultLocale as globalDefaultLocale } from "../i18n/config";
+import { resolvePathnamePrefix } from "../lib/resolve-pathname-prefix";
+import { useTRPC } from "../lib/trpc/client";
 
 export function usePathnamePrefix() {
   const trpc = useTRPC();

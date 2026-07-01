@@ -87,9 +87,7 @@ export function FormStatusReportUpdate({
   allowUnsetImpacts?: boolean;
 }) {
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -99,9 +97,12 @@ export function FormStatusReportUpdate({
       message: defaultValues?.message ?? "",
       date: defaultValues?.date ?? new Date(),
       componentImpacts: defaultValues?.componentImpacts,
-      notifySubscribers: defaultValues?.notifySubscribers ?? true,
+      notifySubscribers:
+        defaultValues?.notifySubscribers ??
+        !!workspace?.limits["status-subscribers"],
     },
   });
+
   const watchMessage = form.watch("message");
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();

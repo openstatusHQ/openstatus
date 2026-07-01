@@ -1,13 +1,3 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-
 import { and, db, eq } from "@openstatus/db";
 import {
   auditLog,
@@ -15,16 +5,16 @@ import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
-
+import { expect } from "@std/expect";
 import {
-  createPageSubscriber,
-  getSubscriberByToken,
-  hasPendingSubscriber,
-  unsubscribeSubscriber,
-  updateSubscriberScope,
-  upsertSelfSignupSubscriber,
-  verifySelfSignupSubscriber,
-} from "..";
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  test,
+} from "@std/testing/bdd";
+
 import {
   SEEDED_WORKSPACE_FREE_ID,
   SEEDED_WORKSPACE_TEAM_ID,
@@ -38,6 +28,15 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import { ForbiddenError } from "../../errors";
+import {
+  createPageSubscriber,
+  getSubscriberByToken,
+  hasPendingSubscriber,
+  unsubscribeSubscriber,
+  updateSubscriberScope,
+  upsertSelfSignupSubscriber,
+  verifySelfSignupSubscriber,
+} from "../index.ts";
 
 // Seeded data we lean on (see packages/db/src/seed.mts):
 //   workspace 1 = team plan, has status-subscribers=true

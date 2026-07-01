@@ -4,7 +4,7 @@ import type { StatusResponse } from "@openstatus/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 export function FooterStatus() {
   const { data } = useQuery({

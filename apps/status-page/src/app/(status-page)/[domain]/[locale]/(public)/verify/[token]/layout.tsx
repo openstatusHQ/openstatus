@@ -10,7 +10,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
-import { useTRPC } from "@/lib/trpc/client";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 
 export default function EventLayout({
   children,

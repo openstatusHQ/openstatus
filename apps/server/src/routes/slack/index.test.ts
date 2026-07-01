@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, test } from "bun:test";
 import crypto from "node:crypto";
 
+import { expect } from "@std/expect";
+import { beforeEach, describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 
 const SIGNING_SECRET = "test-signing-secret";

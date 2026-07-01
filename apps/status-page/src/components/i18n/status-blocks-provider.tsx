@@ -12,7 +12,7 @@ import {
   formatDateRange,
   formatDateRangeParts,
   formatDateTime,
-} from "@/lib/formatter";
+} from "../../lib/formatter";
 
 // Status-page timestamps render in UTC; the suffix tells viewers which zone.
 const withUTC = (value: string) => `${value} (UTC)`;

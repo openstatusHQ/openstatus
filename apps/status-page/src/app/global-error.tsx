@@ -4,7 +4,7 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
-import { Link } from "@/components/common/link";
+import { Link } from "../components/common/link";
 
 export default function GlobalError({
   error,

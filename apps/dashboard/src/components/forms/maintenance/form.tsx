@@ -79,9 +79,7 @@ export function FormMaintenance({
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -92,9 +90,10 @@ export function FormMaintenance({
       startDate: new Date(),
       endDate: addDays(new Date(), 1),
       pageComponents: [],
-      notifySubscribers: true,
+      notifySubscribers: !!workspace?.limits["status-subscribers"],
     },
   });
+
   const watchEndDate = form.watch("endDate");
   const watchMessage = form.watch("message");
   const [isPending, startTransition] = useTransition();

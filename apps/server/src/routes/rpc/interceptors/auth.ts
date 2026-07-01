@@ -7,7 +7,7 @@ import {
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { nanoid } from "nanoid";
 
-import { lookupWorkspace, validateKey } from "@/libs/middlewares/auth";
+import { lookupWorkspace, validateKey } from "../../../libs/middlewares/auth";
 
 /**
  * RPC context containing workspace and request information.

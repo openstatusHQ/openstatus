@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import { db, eq, inArray } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
@@ -7,7 +8,7 @@ import {
   createSlackSubscriber,
   listSlackSubscribersForChannel,
   removeSlackSubscriber,
-} from "..";
+} from "../index";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { clearAuditLog, expectAuditRow } from "../../../test/helpers";
 

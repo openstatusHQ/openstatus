@@ -6,9 +6,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { TRPCReactProvider } from "@/lib/trpc/client";
-
+import { TailwindIndicator } from "../components/tailwind-indicator";
+import { TRPCReactProvider } from "../lib/trpc/client";
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
 

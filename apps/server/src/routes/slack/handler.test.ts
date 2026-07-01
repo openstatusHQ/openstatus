@@ -1,83 +1,19 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test";
 import crypto from "node:crypto";
 
+import { beforeEach, describe, expect, test } from "@openstatus/test-utils";
 import { Hono } from "hono";
 
-import * as agentModule from "./agent";
+// workspace-resolver / @slack/web-api / agent are swapped for doubles via the
+// test import map; behavior is driven through this shared mutable state.
+import { slackTestState } from "@/libs/test/doubles/slack-test-state";
+
+import { handleSlackEvent } from "./handler";
+import { verifySlackSignature } from "./verify";
 
 const SIGNING_SECRET = "test-signing-secret";
 
 process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
 process.env.AI_GATEWAY_API_KEY = "test-key";
-
-mock.module("./workspace-resolver", () => ({
-  resolveWorkspace: (teamId: string) => {
-    if (teamId === "T_KNOWN") {
-      return Promise.resolve({
-        workspace: {
-          id: 1,
-          name: "Test Workspace",
-          slug: "test",
-          plan: "free",
-          limits: {},
-        },
-        botToken: "xoxb-test",
-        botUserId: "UBOT",
-      });
-    }
-    return Promise.resolve(null);
-  },
-}));
-
-let slackMessages: Array<{ method: string; args: Record<string, unknown> }> =
-  [];
-let postMessageOverride:
-  | ((args: Record<string, unknown>) => Promise<{ ts: string }>)
-  | null = null;
-let updateOverride:
-  | ((args: Record<string, unknown>) => Promise<{ ts: string }>)
-  | null = null;
-
-mock.module("@slack/web-api", () => ({
-  WebClient: class {
-    chat = {
-      postMessage: (args: Record<string, unknown>) => {
-        if (postMessageOverride) return postMessageOverride(args);
-        slackMessages.push({ method: "postMessage", args });
-        return Promise.resolve({ ts: "msg.ts" });
-      },
-      update: (args: Record<string, unknown>) => {
-        if (updateOverride) return updateOverride(args);
-        slackMessages.push({ method: "update", args });
-        return Promise.resolve({ ts: "msg.ts" });
-      },
-    };
-    conversations = {
-      replies: () =>
-        Promise.resolve({
-          messages: [{ user: "U1", text: "test message", ts: "1.1" }],
-        }),
-    };
-  },
-}));
-
-let runAgentOverride:
-  | (() => Promise<{ text: string; toolResults: never[] }>)
-  | null = null;
-
-mock.module("./agent", () => ({
-  ...agentModule,
-  runAgent: () => {
-    if (runAgentOverride) return runAgentOverride();
-    return Promise.resolve({
-      text: "Here is my response",
-      toolResults: [],
-    });
-  },
-}));
-
-const { handleSlackEvent } = await import("./handler");
-const { verifySlackSignature } = await import("./verify");
 
 function createTestApp() {
   const app = new Hono<{ Variables: { slackBody: unknown } }>();
@@ -112,10 +48,26 @@ describe("handleSlackEvent", () => {
   const app = createTestApp();
 
   beforeEach(() => {
-    slackMessages = [];
-    postMessageOverride = null;
-    updateOverride = null;
-    runAgentOverride = null;
+    slackTestState.calls = [];
+    slackTestState.postMessageOverride = null;
+    slackTestState.updateOverride = null;
+    slackTestState.runAgentOverride = null;
+    slackTestState.resolveWorkspace = (teamId: string) => {
+      if (teamId === "T_KNOWN") {
+        return Promise.resolve({
+          workspace: {
+            id: 1,
+            name: "Test Workspace",
+            slug: "test",
+            plan: "free",
+            limits: {},
+          },
+          botToken: "xoxb-test",
+          botUserId: "UBOT",
+        });
+      }
+      return Promise.resolve(null);
+    };
   });
 
   test("responds to url_verification challenge", async () => {
@@ -202,11 +154,11 @@ describe("handleSlackEvent", () => {
     await signAndPost(app, body);
     await new Promise((r) => setTimeout(r, 50));
 
-    slackMessages = [];
+    slackTestState.calls = [];
     await signAndPost(app, body);
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores events from unknown teams", async () => {
@@ -225,7 +177,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores message events from bots", async () => {
@@ -244,7 +196,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores channel message without bot mention", async () => {
@@ -264,7 +216,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("processes DM messages without bot mention", async () => {
@@ -285,7 +237,7 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
     // DM should trigger a response (postMessage for "Thinking...")
-    expect(slackMessages.length).toBeGreaterThan(0);
+    expect(slackTestState.calls.length).toBeGreaterThan(0);
   });
 
   test("ignores events without channel", async () => {
@@ -303,7 +255,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores events without timestamp", async () => {
@@ -321,7 +273,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores events without team_id", async () => {
@@ -339,7 +291,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores unsupported event types", async () => {
@@ -354,7 +306,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores channel_join system messages", async () => {
@@ -374,7 +326,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores channel_leave system messages", async () => {
@@ -394,7 +346,7 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("ignores events with no event payload", async () => {
@@ -406,12 +358,12 @@ describe("handleSlackEvent", () => {
 
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 50));
-    expect(slackMessages.length).toBe(0);
+    expect(slackTestState.calls.length).toBe(0);
   });
 
   test("falls back to top-level message on cannot_reply_to_message", async () => {
     let callCount = 0;
-    postMessageOverride = (args: Record<string, unknown>) => {
+    slackTestState.postMessageOverride = (args: Record<string, unknown>) => {
       callCount++;
       if (callCount === 1) {
         const err = new Error("An API error occurred: cannot_reply_to_message");
@@ -421,7 +373,7 @@ describe("handleSlackEvent", () => {
         });
         return Promise.reject(err);
       }
-      slackMessages.push({ method: "postMessage", args });
+      slackTestState.calls.push({ method: "postMessage", args });
       return Promise.resolve({ ts: "fallback.ts" });
     };
 
@@ -441,14 +393,14 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const fallbackPost = slackMessages.find(
+    const fallbackPost = slackTestState.calls.find(
       (m) => m.method === "postMessage" && !m.args.thread_ts,
     );
     expect(fallbackPost).toBeDefined();
   });
 
   test("returns early on non-recoverable postMessage error", async () => {
-    postMessageOverride = () => {
+    slackTestState.postMessageOverride = () => {
       const err = new Error("An API error occurred: channel_not_found");
       Object.assign(err, {
         code: "slack_webapi_platform_error",
@@ -473,12 +425,15 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const updateMessages = slackMessages.filter((m) => m.method === "update");
+    const updateMessages = slackTestState.calls.filter(
+      (m) => m.method === "update",
+    );
     expect(updateMessages.length).toBe(0);
   });
 
   test("shows error message when runAgent throws", async () => {
-    runAgentOverride = () => Promise.reject(new Error("agent exploded"));
+    slackTestState.runAgentOverride = () =>
+      Promise.reject(new Error("agent exploded"));
 
     const res = await signAndPost(app, {
       type: "event_callback",
@@ -496,7 +451,7 @@ describe("handleSlackEvent", () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setTimeout(r, 100));
 
-    const errorUpdate = slackMessages.find(
+    const errorUpdate = slackTestState.calls.find(
       (m) =>
         m.method === "update" &&
         typeof m.args.text === "string" &&
@@ -506,8 +461,9 @@ describe("handleSlackEvent", () => {
   });
 
   test("does not throw when both runAgent and error update fail", async () => {
-    runAgentOverride = () => Promise.reject(new Error("agent exploded"));
-    updateOverride = () => {
+    slackTestState.runAgentOverride = () =>
+      Promise.reject(new Error("agent exploded"));
+    slackTestState.updateOverride = () => {
       const err = new Error("An API error occurred: channel_not_found");
       Object.assign(err, {
         code: "slack_webapi_platform_error",

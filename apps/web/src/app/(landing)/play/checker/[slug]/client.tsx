@@ -19,15 +19,14 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import { useState } from "react";
 
-import { IconCloudProvider } from "@/components/icon-cloud-provider";
+import { IconCloudProvider } from "../../../../../components/icon-cloud-provider";
 import {
   type CachedRegionChecker,
   getTimingPhases,
   regionFormatter,
   timestampFormatter,
-} from "@/lib/checker/utils";
-import { cn } from "@/lib/utils";
-
+} from "../../../../../lib/checker/utils";
+import { cn } from "../../../../../lib/utils";
 import { handleExportCSV } from "../utils";
 
 const STATUS_CODES = {
