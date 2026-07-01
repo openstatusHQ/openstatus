@@ -12,47 +12,13 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    build:
-      fromImage:
-        path: denoland/deno
-        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-      label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
-        org.opencontainers.image.stage: build
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - mkdir -p /tmp/sc
-      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-      - mkdir -p /app/data
     install:
       fromImage:
         path: node
         digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
       label:
-        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.stage: install
+        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app/
       run:
@@ -125,19 +91,53 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
+    build:
+      fromImage:
+        path: denoland/deno
+        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+      label:
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
+        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        org.opencontainers.image.stage: build
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - mkdir -p /tmp/sc
+      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};const lib=v("libsql");Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:lib,"better-sqlite3":"npm:libsql@"+lib,"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
+      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external 'better-sqlite3' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
+      - mkdir -p /app/data
   fromImage:
     host: registry.access.redhat.com
     port: 443
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
     io.dofigen.version: 2.8.0
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
   user:
     user: '1000'
     group: '1000'
@@ -174,7 +174,7 @@ images:
           digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
 resources:
   dofigen.yml:
-    hash: 3d98c3f4837321ccc3810b1644c53d6c17f057fb57ec5d7beafa6b3caef9f59b
+    hash: f867c1863629aad9394b8d9a4cec2bdd234fcd09663a01f5c401bd39ce5b53c2
     content: |
       ignore:
         - node_modules
@@ -254,15 +254,17 @@ resources:
               target: /app/packages
           env:
             NODE_ENV: production
-          # Bundle the app to self-contained JS, EXTERNALISING the 3 packages that can't be inlined:
-          # @libsql/client + libsql (native .node loader) and @google-cloud/tasks (google-proto-files reads
-          # files via CJS __dirname). They ship as a minimal side-car node_modules (deno install, ~46MB,
-          # platform-aware so Fly amd64 works) instead of embedding all node_modules. Binary ~146MB vs ~360MB.
+          # Bundle the app to self-contained JS, EXTERNALISING the packages that can't be inlined:
+          # @libsql/client + libsql + better-sqlite3 (alias of libsql, native .node loader) and
+          # @google-cloud/tasks (google-proto-files reads files via CJS __dirname). They ship as a
+          # minimal side-car node_modules (deno install, platform-aware so Fly amd64 works) instead
+          # of embedding all node_modules. better-sqlite3 is the name drizzle-orm/better-sqlite3
+          # requires; it's aliased to libsql so both resolve to the same native package.
           run:
             - mkdir -p /tmp/sc
-            - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+            - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};const lib=v("libsql");Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:lib,"better-sqlite3":"npm:libsql@"+lib,"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
             - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-            - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+            - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external 'better-sqlite3' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
             - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
             - mkdir -p /app/data
 

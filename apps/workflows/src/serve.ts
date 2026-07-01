@@ -1,5 +1,7 @@
 /// <reference lib="deno.ns" />
 
+import "./lib/native-fetch";
+
 import { getLogger } from "@logtape/logtape";
 
 import { env } from "./env";

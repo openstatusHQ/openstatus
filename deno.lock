@@ -80,6 +80,13 @@
           ]
         }
       },
+      "apps/workflows": {
+        "packageJson": {
+          "dependencies": [
+            "npm:libsql@0.5.29"
+          ]
+        }
+      },
       "packages/api": {
         "packageJson": {
           "dependencies": [
