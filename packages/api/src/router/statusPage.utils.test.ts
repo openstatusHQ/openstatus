@@ -14,6 +14,7 @@ import {
   getEvents,
   getUptime,
   setDataByType,
+  withTinybirdFallback,
 } from "./statusPage.utils";
 
 type StatusData = {
@@ -2077,5 +2078,27 @@ describe("componentImpacts", () => {
       });
       expect(currentImpactByComponent(report).size).toBe(0);
     });
+  });
+});
+
+describe("withTinybirdFallback", () => {
+  it("returns ok with data when the read resolves in time", async () => {
+    const result = await withTinybirdFallback(async () => ({ data: [1, 2] }));
+    expect(result).toEqual({ ok: true, data: { data: [1, 2] } });
+  });
+
+  it("falls back when the read throws", async () => {
+    const result = await withTinybirdFallback(async () => {
+      throw new Error("tinybird down");
+    });
+    expect(result).toEqual({ ok: false, data: null });
+  });
+
+  it("falls back when the read exceeds the timeout", async () => {
+    const result = await withTinybirdFallback(
+      () => new Promise((resolve) => setTimeout(resolve, 50)),
+      10,
+    );
+    expect(result).toEqual({ ok: false, data: null });
   });
 });
