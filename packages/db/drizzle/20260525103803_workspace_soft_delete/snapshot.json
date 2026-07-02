@@ -1,9 +1,7 @@
 {
   "dialect": "sqlite",
   "id": "ba15c244-a5da-4e6b-8ee2-6e87c8d3602a",
-  "prevIds": [
-    "42578321-874d-434e-861b-b6c3ea935250"
-  ],
+  "prevIds": ["42578321-874d-434e-861b-b6c3ea935250"],
   "version": "7",
   "ddl": [
     {
@@ -21,9 +19,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "workspace_pk",
       "table": "workspace",
@@ -310,23 +306,16 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "provider",
-        "provider_account_id"
-      ],
+      "columns": ["provider", "provider_account_id"],
       "nameExplicit": false,
       "name": "account_provider_provider_account_id_pk",
       "table": "account",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -349,9 +338,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "session_token"
-      ],
+      "columns": ["session_token"],
       "nameExplicit": false,
       "name": "session_pk",
       "table": "session",
@@ -378,13 +365,9 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -407,9 +390,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pk",
       "table": "user",
@@ -584,10 +565,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "user_id",
-        "workspace_id"
-      ],
+      "columns": ["user_id", "workspace_id"],
       "nameExplicit": false,
       "name": "users_to_workspaces_user_id_workspace_id_pk",
       "table": "users_to_workspaces",
@@ -608,13 +586,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -623,13 +597,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -672,10 +642,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "identifier",
-        "token"
-      ],
+      "columns": ["identifier", "token"],
       "nameExplicit": false,
       "name": "verification_token_identifier_token_pk",
       "table": "verification_token",
@@ -696,9 +663,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "status_report_pk",
       "table": "status_report",
@@ -807,13 +772,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -822,13 +783,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -851,9 +808,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "status_report_update_pk",
       "table": "status_report_update",
@@ -934,13 +889,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "status_report_id"
-      ],
+      "columns": ["status_report_id"],
       "tableTo": "status_report",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -963,9 +914,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "integration_pk",
       "table": "integration",
@@ -1066,13 +1015,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1095,9 +1040,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "page_pk",
       "table": "page",
@@ -1400,13 +1343,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1429,9 +1368,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "monitor_pk",
       "table": "monitor",
@@ -1692,13 +1629,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -1721,9 +1654,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "page_subscriber_pk",
       "table": "page_subscriber",
@@ -1902,13 +1833,9 @@
       "entityType": "checks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1951,23 +1878,16 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "page_subscriber_id",
-        "page_component_id"
-      ],
+      "columns": ["page_subscriber_id", "page_component_id"],
       "nameExplicit": false,
       "name": "page_subscriber_to_page_component_page_subscriber_id_page_component_id_pk",
       "table": "page_subscriber_to_page_component",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "page_subscriber_id"
-      ],
+      "columns": ["page_subscriber_id"],
       "tableTo": "page_subscriber",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -1976,13 +1896,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_component_id"
-      ],
+      "columns": ["page_component_id"],
       "tableTo": "page_component",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2005,9 +1921,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "notification_pk",
       "table": "notification",
@@ -2098,13 +2012,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -2127,9 +2037,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "notification_trigger_pk",
       "table": "notification_trigger",
@@ -2188,13 +2096,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2203,13 +2107,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "notification_id"
-      ],
+      "columns": ["notification_id"],
       "tableTo": "notification",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2252,10 +2152,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "monitor_id",
-        "notification_id"
-      ],
+      "columns": ["monitor_id", "notification_id"],
       "nameExplicit": false,
       "name": "notifications_to_monitors_monitor_id_notification_id_pk",
       "table": "notifications_to_monitors",
@@ -2276,13 +2173,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2291,13 +2184,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "notification_id"
-      ],
+      "columns": ["notification_id"],
       "tableTo": "notification",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2360,10 +2249,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "monitor_id",
-        "region"
-      ],
+      "columns": ["monitor_id", "region"],
       "nameExplicit": false,
       "name": "monitor_status_monitor_id_region_pk",
       "table": "monitor_status",
@@ -2388,13 +2274,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2417,9 +2299,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "invitation_pk",
       "table": "invitation",
@@ -2534,9 +2414,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "incident_pk",
       "table": "incident",
@@ -2735,13 +2613,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET DEFAULT",
       "nameExplicit": false,
@@ -2750,13 +2624,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -2765,13 +2635,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "acknowledged_by"
-      ],
+      "columns": ["acknowledged_by"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -2780,13 +2646,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "resolved_by"
-      ],
+      "columns": ["resolved_by"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -2809,9 +2671,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "monitor_tag_pk",
       "table": "monitor_tag",
@@ -2892,13 +2752,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2941,10 +2797,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "monitor_id",
-        "monitor_tag_id"
-      ],
+      "columns": ["monitor_id", "monitor_tag_id"],
       "nameExplicit": false,
       "name": "monitor_tag_to_monitor_monitor_id_monitor_tag_id_pk",
       "table": "monitor_tag_to_monitor",
@@ -2965,13 +2818,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -2980,13 +2829,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "monitor_tag_id"
-      ],
+      "columns": ["monitor_tag_id"],
       "tableTo": "monitor_tag",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -3009,9 +2854,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "application_pk",
       "table": "application",
@@ -3106,13 +2949,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -3135,9 +2974,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "maintenance_pk",
       "table": "maintenance",
@@ -3262,13 +3099,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -3277,13 +3110,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -3306,9 +3135,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "check_pk",
       "table": "check",
@@ -3419,13 +3246,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -3448,9 +3271,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "monitor_run_pk",
       "table": "monitor_run",
@@ -3535,13 +3356,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -3550,13 +3367,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -3579,9 +3392,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "private_location_pk",
       "table": "private_location",
@@ -3672,13 +3483,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -3759,13 +3566,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "private_location_id"
-      ],
+      "columns": ["private_location_id"],
       "tableTo": "private_location",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -3774,13 +3577,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -3803,9 +3602,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "monitor_group_pk",
       "table": "monitor_group",
@@ -3900,13 +3697,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -3915,13 +3708,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -3944,9 +3733,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "viewer_pk",
       "table": "viewer",
@@ -4141,23 +3928,16 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "provider",
-        "providerAccountId"
-      ],
+      "columns": ["provider", "providerAccountId"],
       "nameExplicit": false,
       "name": "viewer_accounts_provider_providerAccountId_pk",
       "table": "viewer_accounts",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "viewer",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4180,9 +3960,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "session_token"
-      ],
+      "columns": ["session_token"],
       "nameExplicit": false,
       "name": "viewer_session_pk",
       "table": "viewer_session",
@@ -4209,13 +3987,9 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "viewer",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4238,9 +4012,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "api_key_pk",
       "table": "api_key",
@@ -4413,13 +4185,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4428,13 +4196,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "created_by_id"
-      ],
+      "columns": ["created_by_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4477,10 +4241,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "maintenance_id",
-        "page_component_id"
-      ],
+      "columns": ["maintenance_id", "page_component_id"],
       "nameExplicit": false,
       "name": "maintenance_to_page_component_maintenance_id_page_component_id_pk",
       "table": "maintenance_to_page_component",
@@ -4501,13 +4262,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "maintenance_id"
-      ],
+      "columns": ["maintenance_id"],
       "tableTo": "maintenance",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4516,13 +4273,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_component_id"
-      ],
+      "columns": ["page_component_id"],
       "tableTo": "page_component",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4545,9 +4298,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "page_component_pk",
       "table": "page_component",
@@ -4712,13 +4463,9 @@
       "entityType": "checks"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4727,13 +4474,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4742,13 +4485,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4757,13 +4496,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "group_id"
-      ],
+      "columns": ["group_id"],
       "tableTo": "page_component_groups",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4806,10 +4541,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "status_report_id",
-        "page_component_id"
-      ],
+      "columns": ["status_report_id", "page_component_id"],
       "nameExplicit": false,
       "name": "status_report_to_page_component_status_report_id_page_component_id_pk",
       "table": "status_report_to_page_component",
@@ -4830,13 +4562,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "status_report_id"
-      ],
+      "columns": ["status_report_id"],
       "tableTo": "status_report",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4845,13 +4573,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_component_id"
-      ],
+      "columns": ["page_component_id"],
       "tableTo": "page_component",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4874,9 +4598,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "page_component_groups_pk",
       "table": "page_component_groups",
@@ -4981,13 +4703,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4996,13 +4714,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5025,9 +4739,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "feedback_pk",
       "table": "feedback",
@@ -5148,13 +4860,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5163,13 +4871,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5192,9 +4896,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "audit_log_pk",
       "table": "audit_log",
@@ -5379,9 +5081,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "external_service_pk",
       "table": "external_service",
@@ -5550,9 +5250,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "chat_session_pk",
       "table": "chat_session",
@@ -5651,13 +5349,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5666,13 +5360,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,

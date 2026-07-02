@@ -1,9 +1,7 @@
 {
   "dialect": "sqlite",
   "id": "41c8003d-9f2a-4d3e-9e11-b3d4076fe395",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "version": "7",
   "ddl": [
     {
@@ -21,9 +19,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "incident_pk",
       "table": "incident",
@@ -60,13 +56,9 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -89,9 +81,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "incident_update_pk",
       "table": "incident_update",
@@ -172,13 +162,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "incident_id"
-      ],
+      "columns": ["incident_id"],
       "tableTo": "incident",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -201,9 +187,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "page_pk",
       "table": "page",
@@ -304,13 +288,9 @@
       "entityType": "indexes"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -333,9 +313,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "monitor_pk",
       "table": "monitor",
@@ -432,13 +410,9 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -471,23 +445,16 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "monitor_id",
-        "page_id"
-      ],
+      "columns": ["monitor_id", "page_id"],
       "nameExplicit": true,
       "name": null,
       "table": "monitors_to_pages",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "monitor_id"
-      ],
+      "columns": ["monitor_id"],
       "tableTo": "monitor",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -496,13 +463,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "page_id"
-      ],
+      "columns": ["page_id"],
       "tableTo": "page",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -525,9 +488,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pk",
       "table": "user",
@@ -592,23 +553,16 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "user_id",
-        "workspace_id"
-      ],
+      "columns": ["user_id", "workspace_id"],
       "nameExplicit": true,
       "name": null,
       "table": "users_to_workspaces",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -617,13 +571,9 @@
       "entityType": "fks"
     },
     {
-      "columns": [
-        "workspace_id"
-      ],
+      "columns": ["workspace_id"],
       "tableTo": "workspace",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": false,
@@ -646,9 +596,7 @@
       "entityType": "columns"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "workspace_pk",
       "table": "workspace",
