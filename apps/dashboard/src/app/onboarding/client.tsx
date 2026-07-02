@@ -124,6 +124,7 @@ export function Client() {
   const {
     results: checkResults,
     isStreaming,
+    isComplete: checksComplete,
     start: startChecks,
     stop: stopChecks,
   } = useStreamChecks();
@@ -204,6 +205,7 @@ export function Client() {
             monitorData={monitorData}
             checkResults={checkResults}
             isStreaming={isStreaming}
+            checksComplete={checksComplete}
             onSubmit={async (values) => {
               await createMonitorMutation.mutateAsync({
                 url: values.url,
@@ -235,6 +237,7 @@ export function Client() {
             monitorName={
               monitorData?.url ? safeHostname(monitorData.url) : null
             }
+            checkResults={checkResults}
             isSubmitting={createPageMutation.isPending}
             onSubmit={async (values) => {
               if (!workspace?.id) return;

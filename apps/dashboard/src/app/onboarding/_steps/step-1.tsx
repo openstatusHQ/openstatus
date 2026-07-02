@@ -43,6 +43,7 @@ export function Step1({
   monitorData,
   checkResults,
   isStreaming,
+  checksComplete,
   onSubmit,
   onSkip,
   onContinue,
@@ -55,6 +56,7 @@ export function Step1({
   monitorData: OnboardingMonitor | undefined;
   checkResults: ReturnType<typeof useStreamChecks>["results"];
   isStreaming: boolean;
+  checksComplete: boolean;
   onSubmit: (values: { url: string }) => Promise<void>;
   onSkip: () => void;
   onContinue: () => void;
@@ -82,6 +84,7 @@ export function Step1({
   );
   const allFailed =
     !isStreaming && checkResults.length > 0 && successfulResults.length === 0;
+  const canContinue = checksComplete;
 
   return (
     <>
@@ -111,8 +114,14 @@ export function Step1({
         )}
         <OnboardingActions>
           {isLocked ? (
-            <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
+            <Button onClick={onContinue} disabled={!canContinue}>
+              {isStreaming ? (
+                "Running checks…"
+              ) : (
+                <>
+                  Continue <ArrowRight className="size-3" />
+                </>
+              )}
             </Button>
           ) : (
             <>
