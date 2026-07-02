@@ -29,8 +29,8 @@ export function UptimeExplainer() {
   const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="w-full cursor-pointer rounded-xl">
-        <Card className="gap-0 border-dashed py-0 text-left shadow-none">
+      <CollapsibleTrigger className="w-full cursor-pointer rounded-lg">
+        <Card className="gap-0 rounded-lg border-dashed py-0 text-left shadow-none">
           <CardHeader className="flex flex-row items-start justify-between gap-4 px-3 py-2 select-none">
             <div className="space-y-1">
               <CardTitle className="text-sm">
@@ -55,8 +55,9 @@ export function UptimeExplainer() {
             <CardContent className="space-y-4 px-3 pb-2 text-sm">
               <p className="text-muted-foreground">
                 The calculation mode is set page-wide in the status page
-                settings. Changing it only affects future months — published
-                history is never rewritten.
+                settings and applies to every month shown here. What is frozen
+                monthly are the raw daily check counts — changing the mode
+                re-renders all months from those immutable counts.
               </p>
               <ul className="space-y-2.5">
                 <li>
@@ -81,14 +82,16 @@ export function UptimeExplainer() {
                 <li>
                   <Basis>manual</Basis>{" "}
                   <span className="text-muted-foreground">
-                    — Static components. There is no probe data, so uptime is
-                    derived entirely from reported incidents and maintenance.
+                    — No probe data is considered; uptime is derived entirely
+                    from reported incidents. Static components always work this
+                    way, with their full history kept — reports never expire.
                   </span>
                 </li>
               </ul>
               <p className="text-muted-foreground">
-                If a page has uptime display turned off, snapshots are still
-                recorded but the percentages stay hidden.
+                Months without recorded checks are shown as{" "}
+                <span className="text-foreground font-medium">no data</span> and
+                excluded from totals — they are never counted as downtime.
               </p>
             </CardContent>
           </CollapsibleContent>

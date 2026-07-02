@@ -1,18 +1,20 @@
 import type { PageComponentImpact } from "@openstatus/db/src/schema";
-import {
-  LEGACY_IMPACT_WEIGHT,
-  impactToStatusType,
-  impactUptimeWeight,
-  worstImpact,
-} from "@openstatus/db/src/schema";
+import { impactToStatusType, worstImpact } from "@openstatus/db/src/schema";
 import {
   type Event,
+  MS_PER_DAY,
   type StatusData,
+  type UptimeWindow,
+  dayCoverage,
+  durationDowntimeMs,
+  floorPct,
   getHighestPriorityStatus,
   getWorstVariant,
   isDateWithinEvent,
   reportEventDayImpact,
   reportEventDayStatus,
+  reportsOnlyDowntimeMs,
+  requestsTally,
 } from "@openstatus/services/status-timeline";
 
 export * from "@openstatus/services/status-timeline";
@@ -69,8 +71,6 @@ type UptimeData = {
   }[];
 };
 
-// Constants for time calculations
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const MILLISECONDS_PER_MINUTE = 1000 * 60;
 
 // Helper to format numbers
@@ -170,7 +170,7 @@ function getTotalEventsDurationMs(events: Event[], date: Date): number {
   }, 0);
 
   // Cap at 24 hours per day
-  return Math.min(total, MILLISECONDS_PER_DAY);
+  return Math.min(total, MS_PER_DAY);
 }
 
 export function setDataByType({
@@ -233,13 +233,11 @@ export function setDataByType({
     return [
       {
         status: "success" as const,
-        height:
-          ((MILLISECONDS_PER_DAY - errorSegmentCount) / MILLISECONDS_PER_DAY) *
-          100,
+        height: ((MS_PER_DAY - errorSegmentCount) / MS_PER_DAY) * 100,
       },
       {
         status: "error" as const,
-        height: (errorSegmentCount / MILLISECONDS_PER_DAY) * 100,
+        height: (errorSegmentCount / MS_PER_DAY) * 100,
       },
     ];
   }
@@ -252,8 +250,7 @@ export function setDataByType({
     const errorMs = segments
       .filter((segment) => segment.status === "error")
       .reduce((sum, segment) => sum + segment.count, 0);
-    const errorHeight =
-      (Math.min(errorMs, MILLISECONDS_PER_DAY) / MILLISECONDS_PER_DAY) * 100;
+    const errorHeight = (Math.min(errorMs, MS_PER_DAY) / MS_PER_DAY) * 100;
     const remainingHeight = Math.max(0, 100 - errorHeight);
 
     const highlightSegments = segments.filter(
@@ -641,31 +638,6 @@ export function setDataByType({
   });
 }
 
-type WeightedInterval = { from: number; to: number; weight: number };
-
-// concurrent events describing the same outage must not double-count
-// downtime: per time slice the worst (max) weight wins, mirroring
-// mergeWorstImpactIntervals — summing could push uptime negative
-function mergedDowntimeMs(intervals: WeightedInterval[]): number {
-  const boundaries = [
-    ...new Set(intervals.flatMap((iv) => [iv.from, iv.to])),
-  ].sort((a, b) => a - b);
-
-  let total = 0;
-  for (let i = 0; i + 1 < boundaries.length; i++) {
-    const sliceStart = boundaries[i];
-    const sliceEnd = boundaries[i + 1];
-    let weight = 0;
-    for (const iv of intervals) {
-      if (iv.from <= sliceStart && iv.to >= sliceEnd) {
-        weight = Math.max(weight, iv.weight);
-      }
-    }
-    total += weight * (sliceEnd - sliceStart);
-  }
-  return total;
-}
-
 export function getUptime({
   data,
   events,
@@ -677,81 +649,27 @@ export function getUptime({
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "duration" | "dominant" | "manual";
 }): string {
-  // Clamp event durations to the data lookback window to avoid
-  // events outside the window producing negative uptime values.
-  const timestamps = data.map((d) => new Date(d.day).getTime());
-  const windowStart = timestamps.length > 0 ? Math.min(...timestamps) : 0;
-  const windowEndDate = new Date(
-    timestamps.length > 0 ? Math.max(...timestamps) : Date.now(),
-  );
-  windowEndDate.setUTCHours(23, 59, 59, 999);
-  const windowEnd = windowEndDate.getTime();
-
-  function clampedInterval(
-    from: Date,
-    to: Date | null,
-    weight: number,
-  ): WeightedInterval | null {
-    const start = Math.max(from.getTime(), windowStart);
-    const end = Math.min((to ?? new Date()).getTime(), windowEnd);
-    if (end <= start || weight === 0) return null;
-    return { from: start, to: end, weight };
-  }
-
-  function reportImpactIntervals(event: Event): WeightedInterval[] {
-    return (event.impactIntervals ?? [])
-      .map((iv) =>
-        clampedInterval(iv.from, iv.to, impactUptimeWeight(iv.impact)),
-      )
-      .filter((iv): iv is WeightedInterval => iv !== null);
-  }
-
-  if (barType === "manual") {
-    // NOTE: we want only user events; legacy reports (no impact rows) keep
-    // their full duration as downtime
-    const intervals = events
-      .filter((e) => e.type === "report")
-      .flatMap((e) =>
-        e.impactIntervals
-          ? reportImpactIntervals(e)
-          : (clampedInterval(e.from, e.to, LEGACY_IMPACT_WEIGHT) ?? []),
-      );
-
-    const total = data.length * MILLISECONDS_PER_DAY;
+  if (barType === "manual" || cardType === "duration") {
+    // Clamp event durations to the data lookback window to avoid
+    // events outside the window producing negative uptime values.
+    const timestamps = data.map((d) => new Date(d.day).getTime());
+    const { segments: coverage, totalMs: total } = dayCoverage(timestamps);
     if (total === 0) return "100%";
-    const duration = mergedDowntimeMs(intervals);
-
-    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
+    const windowEndDate = new Date(Math.max(...timestamps));
+    windowEndDate.setUTCHours(23, 59, 59, 999);
+    const window: UptimeWindow = {
+      start: Math.min(...timestamps),
+      end: windowEndDate.getTime(),
+      now: Date.now(),
+    };
+    const duration =
+      barType === "manual"
+        ? reportsOnlyDowntimeMs(events, window, coverage)
+        : durationDowntimeMs(events, window, coverage);
+    return `${floorPct((total - duration) / total)}%`;
   }
 
-  if (cardType === "duration") {
-    // incidents and impact-report downtime share one timeline so an incident
-    // plus a report describing the same outage counts once; legacy reports
-    // stay ignored to preserve pre-impact uptime values
-    const intervals = events.flatMap((e) => {
-      if (e.type === "incident") return clampedInterval(e.from, e.to, 1) ?? [];
-      if (e.type === "report") return reportImpactIntervals(e);
-      return [];
-    });
-
-    const total = data.length * MILLISECONDS_PER_DAY;
-    if (total === 0) return "100%";
-    const duration = mergedDowntimeMs(intervals);
-
-    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
-  }
-
-  const { ok, total } = data.reduce(
-    (acc, item) => ({
-      ok: acc.ok + item.ok + item.degraded,
-      total: acc.total + item.ok + item.degraded + item.error,
-    }),
-    {
-      ok: 0,
-      total: 0,
-    },
-  );
-
+  const { up, total } = requestsTally(data);
   if (total === 0) return "100%";
-  return `${Math.floor((ok / total) * 10000) / 100}%`;
+  return `${floorPct(up / total)}%`;
 }

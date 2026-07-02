@@ -2,15 +2,16 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { cn } from "@/lib/utils";
-
 import {
   type HistoryRow,
-  HISTORY_WINDOW_MONTHS,
-  offsetToFullLabel,
-  offsetToKey,
-  offsetToLabel,
-} from "./data";
+  type HistoryWindow,
+  eventsForMonth,
+  monthKeyToFullLabel,
+  monthKeyToLabel,
+  windowKey,
+} from "@/data/status-page-history";
+import { cn } from "@/lib/utils";
+
 import { TableCellUptime } from "./table-cell-uptime";
 
 const componentColumn: ColumnDef<HistoryRow> = {
@@ -23,7 +24,7 @@ const componentColumn: ColumnDef<HistoryRow> = {
       <div className="flex flex-col">
         <span className="truncate font-medium">{c.name}</span>
         <span className="text-muted-foreground text-xs">
-          {c.kind} · {c.basis}
+          {c.type === "monitor" ? "Monitor" : "Static"}
         </span>
       </div>
     );
@@ -34,49 +35,43 @@ const componentColumn: ColumnDef<HistoryRow> = {
   },
 };
 
-// Slot 24 (oldest) → 1 (current), oldest-first. Ids are stable; labels/buckets slide monthly.
-const monthColumns: ColumnDef<HistoryRow>[] = Array.from(
-  { length: HISTORY_WINDOW_MONTHS },
-  (_, i) => {
-    const offset = HISTORY_WINDOW_MONTHS - i;
+// `months` comes oldest-first from the server; column ids stay slot-based
+// (1 = current) so the window visibility toggle keeps working
+function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
+  return months.map((key, i) => {
+    const offset = months.length - i;
     const isCurrent = offset === 1;
-    const key = offsetToKey(offset);
     return {
       id: String(offset),
-      accessorFn: (row) => row.buckets[key],
+      accessorFn: (row: HistoryRow) => row.months[key],
       header: () => (
         <span className={cn("block text-center", isCurrent && "text-info")}>
-          {offsetToLabel(offset)}
+          {monthKeyToLabel(key)}
         </span>
       ),
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: HistoryRow } }) => (
         <TableCellUptime
-          cell={row.original.buckets[key]}
+          percentage={row.original.months[key] ?? null}
           isCurrent={isCurrent}
-          monthLabel={offsetToFullLabel(offset)}
-          component={row.original.component}
+          monthLabel={monthKeyToFullLabel(key)}
+          events={eventsForMonth(row.original.events, key)}
         />
       ),
       enableSorting: false,
       meta: { cellClassName: "p-1", headerClassName: "text-center" },
     };
-  },
-);
-
-function rolling(row: HistoryRow, window: 6 | 12 | 24): number {
-  return window === 24
-    ? row.rolling24
-    : window === 12
-      ? row.rolling12
-      : row.rolling6;
+  });
 }
 
-function rollingColumn(window: 6 | 12 | 24): ColumnDef<HistoryRow> {
+function rollingColumn(window: HistoryWindow): ColumnDef<HistoryRow> {
   return {
     id: "rolling",
-    accessorFn: (row) => rolling(row, window),
+    accessorFn: (row) => row.rolling[windowKey(window)],
     header: "Total",
-    cell: ({ row }) => `${rolling(row.original, window).toFixed(2)}%`,
+    cell: ({ row }) => {
+      const value = row.original.rolling[windowKey(window)];
+      return value === null ? "–" : `${value.toFixed(2)}%`;
+    },
     enableSorting: false,
     meta: {
       headerClassName: "text-center tabular-nums",
@@ -85,6 +80,9 @@ function rollingColumn(window: 6 | 12 | 24): ColumnDef<HistoryRow> {
   };
 }
 
-export function getColumns(window: 6 | 12 | 24): ColumnDef<HistoryRow>[] {
-  return [componentColumn, ...monthColumns, rollingColumn(window)];
+export function getColumns(
+  months: string[],
+  window: HistoryWindow,
+): ColumnDef<HistoryRow>[] {
+  return [componentColumn, ...monthColumns(months), rollingColumn(window)];
 }
