@@ -72,7 +72,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -97,7 +97,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -152,7 +152,7 @@ services:
             server:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -181,7 +181,7 @@ services:
             server:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:3000/"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -210,7 +210,7 @@ services:
             server:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:3000/"]
             interval: 15s
             timeout: 10s
             retries: 3
