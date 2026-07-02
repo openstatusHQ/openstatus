@@ -1,9 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { describe, test } from "@std/testing/bdd";
 
 import { normalizeCacheStatus } from "./normalize-cache-status";
 
 describe("cloudflare", () => {
-  test.each([
+  for (const [raw, status] of [
     ["HIT", "HIT"],
     ["MISS", "MISS"],
     ["EXPIRED", "EXPIRED"],
@@ -12,31 +13,35 @@ describe("cloudflare", () => {
     ["REVALIDATED", "HIT"],
     ["BYPASS", "BYPASS"],
     ["DYNAMIC", "DYNAMIC"],
-  ] as const)("cf-cache-status: %s -> %s", (raw, status) => {
-    const result = normalizeCacheStatus({ "Cf-Cache-Status": raw });
-    expect(result.status).toBe(status);
-    expect(result.source).toBe("cf-cache-status");
-    expect(result.raw).toBe(raw);
-  });
+  ] as const) {
+    test(`cf-cache-status: ${raw} -> ${status}`, () => {
+      const result = normalizeCacheStatus({ "Cf-Cache-Status": raw });
+      expect(result.status).toBe(status);
+      expect(result.source).toBe("cf-cache-status");
+      expect(result.raw).toBe(raw);
+    });
+  }
 });
 
 describe("vercel", () => {
-  test.each([
+  for (const [raw, status] of [
     ["HIT", "HIT"],
     ["MISS", "MISS"],
     ["STALE", "STALE"],
     ["PRERENDER", "HIT"],
     ["REVALIDATED", "HIT"],
     ["BYPASS", "BYPASS"],
-  ] as const)("x-vercel-cache: %s -> %s", (raw, status) => {
-    const result = normalizeCacheStatus({ "X-Vercel-Cache": raw });
-    expect(result.status).toBe(status);
-    expect(result.source).toBe("x-vercel-cache");
-  });
+  ] as const) {
+    test(`x-vercel-cache: ${raw} -> ${status}`, () => {
+      const result = normalizeCacheStatus({ "X-Vercel-Cache": raw });
+      expect(result.status).toBe(status);
+      expect(result.source).toBe("x-vercel-cache");
+    });
+  }
 });
 
 describe("cloudfront / fastly / akamai (x-cache)", () => {
-  test.each([
+  for (const [raw, status] of [
     ["Hit from cloudfront", "HIT"],
     ["Miss from cloudfront", "MISS"],
     ["RefreshHit from cloudfront", "EXPIRED"],
@@ -50,24 +55,28 @@ describe("cloudfront / fastly / akamai (x-cache)", () => {
     ["TCP_MISS", "MISS"],
     ["TCP_REFRESH_HIT", "EXPIRED"],
     ["TCP_EXPIRED_MISS", "EXPIRED"],
-  ] as const)("x-cache: %s -> %s", (raw, status) => {
-    const result = normalizeCacheStatus({ "X-Cache": raw });
-    expect(result.status).toBe(status);
-    expect(result.source).toBe("x-cache");
-  });
+  ] as const) {
+    test(`x-cache: ${raw} -> ${status}`, () => {
+      const result = normalizeCacheStatus({ "X-Cache": raw });
+      expect(result.status).toBe(status);
+      expect(result.source).toBe("x-cache");
+    });
+  }
 });
 
 describe("rfc 9211 cache-status", () => {
-  test.each([
+  for (const [raw, status] of [
     ['"Netlify Edge"; hit', "HIT"],
     ["ExampleCache; fwd=miss; stored", "MISS"],
     ["ExampleCache; fwd=stale", "EXPIRED"],
     ["ExampleCache; fwd=bypass", "BYPASS"],
-  ] as const)("cache-status: %s -> %s", (raw, status) => {
-    const result = normalizeCacheStatus({ "Cache-Status": raw });
-    expect(result.status).toBe(status);
-    expect(result.source).toBe("cache-status");
-  });
+  ] as const) {
+    test(`cache-status: ${raw} -> ${status}`, () => {
+      const result = normalizeCacheStatus({ "Cache-Status": raw });
+      expect(result.status).toBe(status);
+      expect(result.source).toBe("cache-status");
+    });
+  }
 });
 
 describe("vendor header priority", () => {
