@@ -247,15 +247,14 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-      // no barType gate: incident-driven error is already suppressed per
-      // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitors.some((m) => m.status === "error")
-        ? "error"
-        : monitors.some((m) => m.status === "degraded")
-          ? "degraded"
-          : monitors.some((m) => m.status === "info")
-            ? "info"
-            : "success";
+      // Banner = worst status across ALL page components (monitor + static),
+      // so an active page-component impact surfaces — including on static
+      // components, which the monitor-only reduce dropped. Monitor components
+      // keep their incident/report/maintenance-derived status as the fallback
+      // when no impact is set. No barType gate: incident-driven error is
+      // already suppressed per monitor in manual mode; report-driven error
+      // (major_outage) must show.
+      const status = getWorstVariant(components.map((c) => c.status));
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
