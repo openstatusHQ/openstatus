@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "test": "bun test",
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports",
     "lint": "oxlint",
     "tsc": "tsc --noEmit"
   },
@@ -23,7 +24,9 @@
   "devDependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@types/bun": "latest",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }
