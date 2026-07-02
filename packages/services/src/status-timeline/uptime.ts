@@ -96,7 +96,10 @@ function downtimeIntervals(
       return clampInterval(e.from, e.to, 1, window) ?? [];
     }
     if (e.type !== "report") return [];
-    if (e.impactIntervals) {
+    // empty array falls through: getEvents emits [] for a member component
+    // no update ever impacted — treat like legacy, not like "no downtime"
+    // (mirrors eventWorstImpact's length check in events.ts)
+    if (e.impactIntervals?.length) {
       return e.impactIntervals.flatMap(
         (iv) =>
           clampInterval(

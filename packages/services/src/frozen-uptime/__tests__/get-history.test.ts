@@ -218,7 +218,136 @@ async function insertImpactReport(
   return report;
 }
 
+/** Legacy report: membership + updates but NO per-update impact rows. */
+async function insertLegacyReport(
+  tx: Tx,
+  args: {
+    pageId: number;
+    pageComponentIds: number[];
+    from: Date;
+    to: Date;
+  },
+) {
+  const report = await tx
+    .insert(statusReport)
+    .values({
+      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      pageId: args.pageId,
+      status: "resolved",
+      title: "svc-history-legacy-report",
+    })
+    .returning()
+    .get();
+  for (const pageComponentId of args.pageComponentIds) {
+    await tx.insert(statusReportsToPageComponents).values({
+      statusReportId: report.id,
+      pageComponentId,
+    });
+  }
+  await tx.insert(statusReportUpdate).values({
+    statusReportId: report.id,
+    status: "identified",
+    date: args.from,
+    message: "down",
+  });
+  await tx.insert(statusReportUpdate).values({
+    statusReportId: report.id,
+    status: "resolved",
+    date: args.to,
+    message: "up",
+  });
+  return report;
+}
+
 describe("getUptimeHistory", () => {
+  test("legacy report (no impact rows) counts full duration for static components", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testPage = await insertPage(tx);
+      const createdAt = monthStart(key(1));
+      const component = await insertComponent(tx, {
+        pageId: testPage.id,
+        createdAt,
+      });
+
+      const from = new Date(createdAt.getTime() + 2 * MS_PER_DAY);
+      const twelveHours = 12 * 3_600_000;
+      await insertLegacyReport(tx, {
+        pageId: testPage.id,
+        pageComponentIds: [component.id],
+        from,
+        to: new Date(from.getTime() + twelveHours),
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      const totalMs = monthEnd(key(1)).getTime() - monthStart(key(1)).getTime();
+      const expected =
+        Math.floor(((totalMs - twelveHours) / totalMs) * 10_000) / 100;
+      expect(res.rows[0].months[key(1)]).toBe(expected);
+    });
+  });
+
+  test("report member never named by impact rows still counts full duration (empty projection)", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...userCtx, db: tx };
+      const testPage = await insertPage(tx);
+      const createdAt = monthStart(key(1));
+      const memberOnly = await insertComponent(tx, {
+        pageId: testPage.id,
+        createdAt,
+        name: "member-only",
+      });
+      const impacted = await insertComponent(tx, {
+        pageId: testPage.id,
+        createdAt,
+        name: "impacted",
+      });
+
+      // impact rows name only `impacted`; `memberOnly` joins as plain member,
+      // so its projection is an EMPTY impactIntervals array, not undefined
+      const from = new Date(createdAt.getTime() + 2 * MS_PER_DAY);
+      const twelveHours = 12 * 3_600_000;
+      const report = await insertImpactReport(tx, {
+        pageId: testPage.id,
+        pageComponentId: impacted.id,
+        impact: "partial_outage",
+        from,
+        to: new Date(from.getTime() + twelveHours),
+      });
+      await tx.insert(statusReportsToPageComponents).values({
+        statusReportId: report.id,
+        pageComponentId: memberOnly.id,
+      });
+
+      const res = await getUptimeHistory({
+        ctx,
+        input: { pageId: testPage.id },
+        pipes: makePipes([]),
+        now,
+        sleep: noSleep,
+      });
+
+      const totalMs = monthEnd(key(1)).getTime() - monthStart(key(1)).getTime();
+      const legacyExpected =
+        Math.floor(((totalMs - twelveHours) / totalMs) * 10_000) / 100;
+      const partialExpected =
+        Math.floor(((totalMs - twelveHours / 2) / totalMs) * 10_000) / 100;
+
+      const byName = new Map(res.rows.map((r) => [r.component.name, r]));
+      // empty projection falls through to legacy full-duration downtime
+      expect(byName.get("member-only")?.months[key(1)]).toBe(legacyExpected);
+      // the impacted component keeps its weighted (0.5) interval
+      expect(byName.get("impacted")?.months[key(1)]).toBe(partialExpected);
+    });
+  });
+
   test("requests mode: frozen months + live current/previous, older unfrozen months null", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...userCtx, db: tx };

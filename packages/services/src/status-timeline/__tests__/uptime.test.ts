@@ -167,6 +167,17 @@ describe("durationDowntimeMs", () => {
 });
 
 describe("reportsOnlyDowntimeMs", () => {
+  test("empty impactIntervals falls through to the legacy path, not zero downtime", () => {
+    // getEvents emits [] for a report member the updates never impacted
+    const report: Event = {
+      ...legacyReport(base, base + 2 * HOUR),
+      impactIntervals: [],
+    };
+    expect(reportsOnlyDowntimeMs([report], window)).toBe(2 * HOUR);
+    // duration math keeps ignoring legacy-shaped reports
+    expect(durationDowntimeMs([report], window)).toBe(0);
+  });
+
   test("incidents are ignored, legacy reports count full duration", () => {
     const events = [
       incident(base, base + 5 * HOUR),
