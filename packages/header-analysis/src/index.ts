@@ -4,3 +4,8 @@ export * from "./parser/cf-ray";
 export * from "./parser/fly-request-id";
 export * from "./parser/x-vercel-cache";
 export * from "./parser/x-vercel-id";
+export * from "./cdn/detect-cdn";
+export * from "./cdn/edge-pop";
+export * from "./cdn/get-header";
+export * from "./cdn/infer-topology";
+export * from "./cdn/normalize-cache-status";
