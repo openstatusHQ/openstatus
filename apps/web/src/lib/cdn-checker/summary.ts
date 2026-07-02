@@ -22,8 +22,10 @@ export function computeCdnSummary(rows: CdnRegionResponse[]): CdnSummary {
     if (!row.cdn) continue;
     providerCounts.set(row.cdn, (providerCounts.get(row.cdn) ?? 0) + 1);
   }
-  const majority = [...providerCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-  const cdn = majority ? majority[0] : null;
+  const ranked = [...providerCounts.entries()].sort((a, b) => b[1] - a[1]);
+  // a tie means no true majority: report null instead of an arbitrary winner
+  const hasTie = ranked.length > 1 && ranked[0][1] === ranked[1][1];
+  const cdn = ranked[0] && !hasTie ? ranked[0][0] : null;
 
   const topology = inferTopology(responded, cdn);
 

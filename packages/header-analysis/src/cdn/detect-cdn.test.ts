@@ -22,12 +22,29 @@ describe("detectCdn", () => {
     expect(result.provider).toBe("cloudfront");
   });
 
-  test("fastly via x-served-by", () => {
+  test("fastly via x-served-by corroborated by x-cache", () => {
     const result = detectCdn({
       "X-Served-By": "cache-fra-etou8220141-FRA",
       "X-Cache": "HIT",
     });
     expect(result.provider).toBe("fastly");
+  });
+
+  test("fastly via x-fastly-request-id alone", () => {
+    const result = detectCdn({ "X-Fastly-Request-Id": "abc123" });
+    expect(result.provider).toBe("fastly");
+  });
+
+  test("bare `x-served-by: cache-` is not fastly (generic varnish prefix)", () => {
+    const result = detectCdn({ "X-Served-By": "cache-mia-kmia1234-MIA" });
+    expect(result.provider).toBeNull();
+    expect(result.evidence).toEqual([]);
+  });
+
+  test("bare `x-cache` is not fastly (shared cache header)", () => {
+    const result = detectCdn({ "X-Cache": "HIT" });
+    expect(result.provider).toBeNull();
+    expect(result.evidence).toEqual([]);
   });
 
   test("akamai via x-check-cacheable", () => {

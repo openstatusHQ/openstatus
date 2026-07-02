@@ -41,14 +41,16 @@ export interface CdnDetection {
 type Fingerprint = {
   provider: CdnProvider;
   headers?: string[];
+  /** presence-only signals too generic to be strong (e.g. `x-cache`) */
+  broadHeaders?: string[];
   /** substring match against the given header's value (lowercased) */
   contains?: {
     header: string;
     value: string;
     /**
      * broad signal shared with non-CDN infra (e.g. `via: 1.1 google` is also
-     * sent by Google's load balancer/translate proxy): counts as evidence only
-     * when a non-broad signal corroborates it, never matches on its own
+     * sent by Google's load balancer/translate proxy): never matches on its
+     * own — needs a strong signal or a second broad signal to corroborate
      */
     broad?: boolean;
   }[];
@@ -83,8 +85,11 @@ const FINGERPRINTS: Fingerprint[] = [
   {
     provider: "fastly",
     headers: ["x-fastly-request-id", "fastly-debug-digest"],
+    // `x-served-by: cache-` is a generic Varnish prefix and `x-cache`/`x-timer`
+    // are shared cache headers: any one alone must not claim Fastly
+    broadHeaders: ["x-cache", "x-timer"],
     contains: [
-      { header: "x-served-by", value: "cache-" },
+      { header: "x-served-by", value: "cache-", broad: true },
       { header: "via", value: "fastly" },
     ],
   },
@@ -126,9 +131,10 @@ const FINGERPRINTS: Fingerprint[] = [
 export function detectCdn(headers: Record<string, string>): CdnDetection {
   for (const fingerprint of FINGERPRINTS) {
     const evidence: string[] = [];
-    // broad signals (e.g. `via: 1.1 google`) can't match alone — require a
-    // corroborating strong signal so non-CDN Google infra isn't misdetected
+    // a single broad signal (e.g. `via: 1.1 google`, `x-served-by: cache-`)
+    // can't match alone — require a strong signal or two broad ones agreeing
     let strongMatches = 0;
+    let broadMatches = 0;
 
     for (const name of fingerprint.headers ?? []) {
       if (getHeader(headers, name)) {
@@ -136,15 +142,22 @@ export function detectCdn(headers: Record<string, string>): CdnDetection {
         strongMatches++;
       }
     }
+    for (const name of fingerprint.broadHeaders ?? []) {
+      if (getHeader(headers, name)) {
+        evidence.push(name);
+        broadMatches++;
+      }
+    }
     for (const { header, value, broad } of fingerprint.contains ?? []) {
       const actual = getHeader(headers, header);
       if (actual?.toLowerCase().includes(value)) {
         evidence.push(`${header}: ${actual}`);
-        if (!broad) strongMatches++;
+        if (broad) broadMatches++;
+        else strongMatches++;
       }
     }
 
-    if (strongMatches > 0) {
+    if (strongMatches > 0 || broadMatches >= 2) {
       return { provider: fingerprint.provider, evidence };
     }
   }
