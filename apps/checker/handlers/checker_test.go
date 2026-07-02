@@ -37,7 +37,10 @@ func TestHandler_HTTPCheckerHandler(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.HTTPCheckerHandler)
+		authed := router.Group("/")
+		authed.Use(handlers.AuthMiddleware(h.Secret))
+		authed.Use(handlers.FlyRegionMiddleware(h.CloudProvider, h.Region))
+		authed.POST("/checker/:region", h.HTTPCheckerHandler)
 
 		w := httptest.NewRecorder()
 
@@ -61,7 +64,10 @@ func TestHandler_HTTPCheckerHandler(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.HTTPCheckerHandler)
+		authed := router.Group("/")
+		authed.Use(handlers.AuthMiddleware(h.Secret))
+		authed.Use(handlers.FlyRegionMiddleware(h.CloudProvider, h.Region))
+		authed.POST("/checker/:region", h.HTTPCheckerHandler)
 
 		w := httptest.NewRecorder()
 
@@ -90,7 +96,10 @@ func TestHandler_HTTPCheckerHandler(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.HTTPCheckerHandler)
+		authed := router.Group("/")
+		authed.Use(handlers.AuthMiddleware(h.Secret))
+		authed.Use(handlers.FlyRegionMiddleware(h.CloudProvider, h.Region))
+		authed.POST("/checker/:region", h.HTTPCheckerHandler)
 
 		w := httptest.NewRecorder()
 
