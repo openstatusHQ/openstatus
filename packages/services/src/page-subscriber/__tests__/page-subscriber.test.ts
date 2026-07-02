@@ -130,7 +130,7 @@ describe("upsertSelfSignupSubscriber", () => {
   test("does not create a duplicate row when called again", async () => {
     await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
     const rows = await db.query.pageSubscriber.findMany({
-      where: eq(pageSubscriber.email, email),
+      where: { email },
     });
     expect(rows).toHaveLength(1);
   });
@@ -169,7 +169,7 @@ describe("upsertSelfSignupSubscriber", () => {
     const before = new Date();
     await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, email),
+      where: { email },
     });
     expect(row?.expiresAt?.getTime()).toBeGreaterThan(before.getTime());
   });
@@ -204,7 +204,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.componentIds).toEqual([COMPONENT_1]);
 
     const oldRow = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, initial.id),
+      where: { id: initial.id },
     });
     expect(oldRow?.unsubscribedAt).toBeDefined();
   });
@@ -229,7 +229,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.acceptedAt).toBeNull();
 
     const oldRow = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, pending.id),
+      where: { id: pending.id },
     });
     expect(oldRow?.unsubscribedAt).toBeDefined();
     expect(oldRow?.acceptedAt).toBeNull();
@@ -634,7 +634,7 @@ describe("unsubscribeSubscriber", () => {
     ).resolves.toBeUndefined();
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, token),
+      where: { token },
     });
     expect(row?.unsubscribedAt).toBeDefined();
 

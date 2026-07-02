@@ -1,6 +1,5 @@
 import { getLogger } from "@logtape/logtape";
-import { db, eq } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { db } from "@openstatus/db";
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
@@ -28,7 +27,7 @@ status.get("/:slug", async (c) => {
 
     // Single query with all relations
     const currentPage = await db.query.page.findFirst({
-      where: eq(page.slug, slug),
+      where: { slug },
       with: {
         pageComponents: {
           with: {

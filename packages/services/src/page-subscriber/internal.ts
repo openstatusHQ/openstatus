@@ -1,7 +1,5 @@
-import { and, eq } from "@openstatus/db";
 import {
   type Workspace,
-  page,
   pageSubscriber,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
@@ -20,10 +18,7 @@ export async function loadPageForWorkspace(args: {
   workspaceId: number;
 }) {
   const row = await args.tx.query.page.findFirst({
-    where: and(
-      eq(page.workspaceId, args.workspaceId),
-      eq(page.id, args.pageId),
-    ),
+    where: { workspaceId: args.workspaceId, id: args.pageId },
     with: { workspace: true },
   });
   if (!row) {
@@ -86,7 +81,7 @@ export async function resolveSubscriberByToken(args: {
 }): Promise<ResolvedSubscriber | null> {
   const readDb = getReadDb({ db: args.db } as ServiceContext);
   const subscription = await readDb.query.pageSubscriber.findFirst({
-    where: eq(pageSubscriber.token, args.token),
+    where: { token: args.token },
     with: {
       page: { with: { workspace: true } },
       components: true,

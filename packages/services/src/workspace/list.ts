@@ -1,10 +1,5 @@
-import { db as defaultDb, eq, isNull } from "@openstatus/db";
-import {
-  monitor,
-  selectWorkspaceSchema,
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
+import { db as defaultDb } from "@openstatus/db";
+import { selectWorkspaceSchema } from "@openstatus/db/src/schema";
 
 import type { ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
@@ -37,7 +32,7 @@ export async function getWorkspace(args: {
   const db = ctx.db ?? defaultDb;
 
   const result = await db.query.workspace.findFirst({
-    where: eq(workspace.id, ctx.workspace.id),
+    where: { id: ctx.workspace.id },
   });
 
   // Shouldn't be reachable in practice — `ctx.workspace` was already
@@ -62,13 +57,13 @@ export async function getWorkspaceWithUsage(args: {
   const db = ctx.db ?? defaultDb;
 
   const result = await db.query.workspace.findFirst({
-    where: eq(workspace.id, ctx.workspace.id),
+    where: { id: ctx.workspace.id },
     with: {
       pages: {
         with: { pageComponents: true },
       },
       monitors: {
-        where: isNull(monitor.deletedAt),
+        where: { deletedAt: { isNull: true } },
       },
       notifications: true,
     },
@@ -107,7 +102,7 @@ export async function listWorkspaces(args: {
   const db = args.ctx.db ?? defaultDb;
 
   const rows = await db.query.usersToWorkspaces.findMany({
-    where: eq(usersToWorkspaces.userId, input.userId),
+    where: { userId: input.userId },
     with: { workspace: true },
   });
 

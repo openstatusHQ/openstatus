@@ -1,6 +1,5 @@
-import { and, db as defaultDb, eq, gte, isNull } from "@openstatus/db";
+import { db as defaultDb } from "@openstatus/db";
 import {
-  invitation,
   selectInvitationSchema,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
@@ -25,11 +24,11 @@ export async function listInvitations(args: {
   const db = ctx.db ?? defaultDb;
 
   const rows = await db.query.invitation.findMany({
-    where: and(
-      eq(invitation.workspaceId, ctx.workspace.id),
-      gte(invitation.expiresAt, new Date()),
-      isNull(invitation.acceptedAt),
-    ),
+    where: {
+      workspaceId: ctx.workspace.id,
+      expiresAt: { gte: new Date() },
+      acceptedAt: { isNull: true },
+    },
   });
 
   return rows.map((r) => selectInvitationSchema.parse(r));
@@ -55,12 +54,12 @@ export async function getInvitationByToken(args: {
   const db = args.ctx.db ?? defaultDb;
 
   const result = await db.query.invitation.findFirst({
-    where: and(
-      eq(invitation.token, input.token),
-      isNull(invitation.acceptedAt),
-      gte(invitation.expiresAt, new Date()),
-      eq(invitation.email, input.email),
-    ),
+    where: {
+      token: input.token,
+      acceptedAt: { isNull: true },
+      expiresAt: { gte: new Date() },
+      email: input.email,
+    },
     with: { workspace: true },
   });
 

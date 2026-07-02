@@ -44,7 +44,7 @@ export const triggerNotifications = async ({
   if (incidentId) {
     try {
       incident = await db.query.incidentTable.findFirst({
-        where: eq(schema.incidentTable.id, incidentId),
+        where: { id: incidentId },
       });
     } catch (err) {
       logger.warn("Failed to fetch incident data", {

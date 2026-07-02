@@ -1,7 +1,7 @@
 import { locales } from "@openstatus/locales";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { THEME_KEYS } from "@openstatus/theme-store";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
 import { pageAccessTypes } from "./constants";

@@ -194,7 +194,7 @@ describe("Subscriber state transitions", () => {
   test("should allow re-subscribing after unsubscription", async () => {
     // Get the unsubscribed subscriber
     const unsubscribedSub = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, "unsubscribed-sub@test.com"),
+      where: { email: "unsubscribed-sub@test.com" },
     });
 
     if (!unsubscribedSub) {
@@ -244,7 +244,7 @@ describe("Subscriber state transitions", () => {
 
   test("should track unsubscription timestamp", async () => {
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, "unsubscribed-sub@test.com"),
+      where: { email: "unsubscribed-sub@test.com" },
     });
 
     expect(subscriber?.unsubscribedAt).toBeInstanceOf(Date);

@@ -67,10 +67,7 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
           },
         },
       },
-      where: and(
-        eq(maintenance.id, Number(id)),
-        eq(maintenance.workspaceId, workspaceId),
-      ),
+      where: { id: Number(id), workspaceId },
     });
 
     if (!_maintenance) {

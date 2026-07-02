@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm/sql";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
@@ -44,29 +43,4 @@ export const privateLocationToMonitors = sqliteTable(
     ),
     index("private_location_to_monitor_monitor_id_idx").on(t.monitorId),
   ],
-);
-
-export const privateLocationRelation = relations(
-  privateLocation,
-  ({ many, one }) => ({
-    privateLocationToMonitors: many(privateLocationToMonitors),
-    workspace: one(workspace, {
-      fields: [privateLocation.workspaceId],
-      references: [workspace.id],
-    }),
-  }),
-);
-
-export const privateLocationToMonitorsRelation = relations(
-  privateLocationToMonitors,
-  ({ one }) => ({
-    privateLocation: one(privateLocation, {
-      fields: [privateLocationToMonitors.privateLocationId],
-      references: [privateLocation.id],
-    }),
-    monitor: one(monitor, {
-      fields: [privateLocationToMonitors.monitorId],
-      references: [monitor.id],
-    }),
-  }),
 );

@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { and, db, eq } from "@openstatus/db";
+import { db, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
@@ -45,10 +45,7 @@ export function registerPostStatusReportUpdate(
     const limits = c.get("workspace").limits;
 
     const _statusReport = await db.query.statusReport.findFirst({
-      where: and(
-        eq(statusReport.id, input.statusReportId),
-        eq(statusReport.workspaceId, workspaceId),
-      ),
+      where: { id: input.statusReportId, workspaceId },
       with: {
         statusReportsToPageComponents: {
           with: {

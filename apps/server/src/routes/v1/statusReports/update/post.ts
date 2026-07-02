@@ -91,7 +91,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
 
     if (limits["status-subscribers"] && _statusReport.pageId) {
       const _statusReportWithRelations = await db.query.statusReport.findFirst({
-        where: eq(statusReport.id, Number(id)),
+        where: { id: Number(id) },
         with: {
           statusReportsToPageComponents: {
             with: {
@@ -143,7 +143,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
 
     // Query the full status report with all its relationships
     const fullStatusReport = await db.query.statusReport.findFirst({
-      where: eq(statusReport.id, Number(id)),
+      where: { id: Number(id) },
       with: {
         statusReportUpdates: true,
         statusReportsToPageComponents: {

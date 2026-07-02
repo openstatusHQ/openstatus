@@ -123,10 +123,7 @@ test("privateLocation.update rejects location from another workspace", async () 
 
   // Verify monitor associations were NOT deleted
   const associations = await db.query.privateLocationToMonitors.findMany({
-    where: eq(
-      privateLocationToMonitors.privateLocationId,
-      otherWorkspaceLocationId,
-    ),
+    where: { privateLocationId: otherWorkspaceLocationId },
   });
   expect(associations.length).toBe(1);
 });
@@ -174,7 +171,7 @@ test("privateLocation.new succeeds with own workspace monitors", async () => {
 
   // Verify the monitor association was created
   const associations = await db.query.privateLocationToMonitors.findMany({
-    where: eq(privateLocationToMonitors.privateLocationId, result.id),
+    where: { privateLocationId: result.id },
   });
   expect(associations.length).toBe(1);
   expect(associations[0].monitorId).toBe(ownMonitorId);

@@ -1,12 +1,7 @@
 import type { Locale } from "@openstatus/locales";
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { maintenance } from "../maintenances";
-import { pageComponentGroup } from "../page_component_groups";
-import { pageComponent } from "../page_components";
-import { pageSubscriber } from "../page_subscribers";
-import { statusReport } from "../status_reports";
 import { workspace } from "../workspaces";
 import { pageAccessTypes } from "./constants";
 
@@ -82,15 +77,3 @@ export const page = sqliteTable(
     index("page_workspace_id_idx").on(t.workspaceId),
   ],
 );
-
-export const pageRelations = relations(page, ({ many, one }) => ({
-  maintenances: many(maintenance),
-  statusReports: many(statusReport),
-  workspace: one(workspace, {
-    fields: [page.workspaceId],
-    references: [workspace.id],
-  }),
-  pageSubscribers: many(pageSubscriber),
-  pageComponents: many(pageComponent),
-  pageComponentGroups: many(pageComponentGroup),
-}));

@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -69,29 +69,4 @@ export const notificationsToMonitors = sqliteTable(
     primaryKey({ columns: [t.monitorId, t.notificationId] }),
     index("notifications_to_monitors_notification_id_idx").on(t.notificationId),
   ],
-);
-
-export const notificationsToMonitorsRelation = relations(
-  notificationsToMonitors,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [notificationsToMonitors.monitorId],
-      references: [monitor.id],
-    }),
-    notification: one(notification, {
-      fields: [notificationsToMonitors.notificationId],
-      references: [notification.id],
-    }),
-  }),
-);
-
-export const notificationRelations = relations(
-  notification,
-  ({ one, many }) => ({
-    workspace: one(workspace, {
-      fields: [notification.workspaceId],
-      references: [workspace.id],
-    }),
-    monitor: many(notificationsToMonitors),
-  }),
 );

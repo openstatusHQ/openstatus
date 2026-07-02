@@ -55,10 +55,7 @@ export async function deleteMember(args: {
 
   await withTransaction(ctx, async (tx) => {
     const caller = await tx.query.usersToWorkspaces.findFirst({
-      where: and(
-        eq(usersToWorkspaces.userId, callerId),
-        eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
-      ),
+      where: { userId: callerId, workspaceId: ctx.workspace.id },
     });
 
     if (!caller) {

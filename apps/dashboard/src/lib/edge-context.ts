@@ -1,4 +1,4 @@
-import { asc, db, eq, schema } from "@openstatus/db";
+import { db, schema } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
 
 import { auth } from "@/lib/auth";
@@ -24,10 +24,10 @@ export async function getServiceContextFromRequest(
   // `usersToWorkspaces[0]` is the user's earliest membership instead of
   // whatever order Turso happens to return.
   const userAndWorkspace = await db.query.user.findFirst({
-    where: eq(schema.user.id, userId),
+    where: { id: userId },
     with: {
       usersToWorkspaces: {
-        orderBy: (t) => asc(t.createdAt),
+        orderBy: { createdAt: "asc" },
         with: {
           workspace: true,
         },

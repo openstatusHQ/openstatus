@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -49,25 +49,3 @@ export const monitorTagsToMonitors = sqliteTable(
     index("monitor_tag_to_monitor_monitor_tag_id_idx").on(t.monitorTagId),
   ],
 );
-
-export const monitorTagsToMonitorsRelation = relations(
-  monitorTagsToMonitors,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [monitorTagsToMonitors.monitorId],
-      references: [monitor.id],
-    }),
-    monitorTag: one(monitorTag, {
-      fields: [monitorTagsToMonitors.monitorTagId],
-      references: [monitorTag.id],
-    }),
-  }),
-);
-
-export const monitorTagRelations = relations(monitorTag, ({ one, many }) => ({
-  monitor: many(monitorTagsToMonitors),
-  workspace: one(workspace, {
-    fields: [monitorTag.workspaceId],
-    references: [workspace.id],
-  }),
-}));

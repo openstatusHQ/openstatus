@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "../users";
@@ -38,14 +38,3 @@ export const apiKey = sqliteTable(
     index("api_key_workspace_id_idx").on(table.workspaceId),
   ],
 );
-
-export const apiKeyRelations = relations(apiKey, ({ one }) => ({
-  workspace: one(workspace, {
-    fields: [apiKey.workspaceId],
-    references: [workspace.id],
-  }),
-  createdBy: one(user, {
-    fields: [apiKey.createdById],
-    references: [user.id],
-  }),
-}));

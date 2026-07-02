@@ -1,5 +1,4 @@
-import { type SQL, and, db, eq, inArray } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
+import { db } from "@openstatus/db";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { OSTinybird } from "@openstatus/tinybird";
 import { TRPCError } from "@trpc/server";
@@ -260,13 +259,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {
@@ -302,13 +299,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {
@@ -338,13 +333,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {
@@ -371,13 +364,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (opts.ctx.workspace.plan === "free") {
@@ -412,13 +403,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {
@@ -455,13 +444,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {
@@ -486,13 +473,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-        inArray(monitor.id, opts.input.monitorIds.map(Number)),
-      ];
-
       const _monitors = await db.query.monitor.findMany({
-        where: and(...whereConditions),
+        where: {
+          workspaceId: opts.ctx.workspace.id,
+          id: { in: opts.input.monitorIds.map(Number) },
+        },
       });
 
       if (_monitors.length !== opts.input.monitorIds.length) {
@@ -518,13 +503,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {
@@ -558,13 +541,11 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
       const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
+        where: {
+          id: Number.parseInt(opts.input.monitorId),
+          workspaceId: opts.ctx.workspace.id,
+        },
       });
 
       if (!_monitor) {

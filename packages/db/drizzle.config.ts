@@ -9,6 +9,5 @@ export default {
     url: env.DATABASE_URL,
     authToken: env.DATABASE_AUTH_TOKEN,
   },
-  strict: true,
   dialect: "turso",
 } satisfies Config;

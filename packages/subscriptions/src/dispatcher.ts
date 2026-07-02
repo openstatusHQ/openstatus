@@ -1,10 +1,5 @@
-import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
-import {
-  maintenance,
-  page,
-  pageSubscriber,
-  statusReportUpdate,
-} from "@openstatus/db/src/schema";
+import { db, eq } from "@openstatus/db";
+import { page } from "@openstatus/db/src/schema";
 import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 
 import { getChannel } from "./channels";
@@ -15,7 +10,7 @@ import type { PageUpdate, Subscription } from "./types";
  */
 export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
   const update = await db.query.statusReportUpdate.findFirst({
-    where: eq(statusReportUpdate.id, statusReportUpdateId),
+    where: { id: statusReportUpdateId },
     with: {
       statusReport: {
         with: {
@@ -83,7 +78,7 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
  */
 export async function dispatchMaintenanceUpdate(maintenanceId: number) {
   const maintenanceWithComponents = await db.query.maintenance.findFirst({
-    where: eq(maintenance.id, maintenanceId),
+    where: { id: maintenanceId },
     with: {
       maintenancesToPageComponents: {
         with: { pageComponent: true },
@@ -150,11 +145,11 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
   }
 
   const subscribersWithComponents = await db.query.pageSubscriber.findMany({
-    where: and(
-      eq(pageSubscriber.pageId, pageUpdate.pageId),
-      isNotNull(pageSubscriber.acceptedAt),
-      isNull(pageSubscriber.unsubscribedAt),
-    ),
+    where: {
+      pageId: pageUpdate.pageId,
+      acceptedAt: { isNotNull: true },
+      unsubscribedAt: { isNull: true },
+    },
     with: {
       components: true,
     },

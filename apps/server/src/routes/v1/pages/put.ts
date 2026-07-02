@@ -210,11 +210,11 @@ export function registerPutPage(api: typeof pagesApi) {
         const values = typeof m === "number" ? { monitorId: m } : m;
 
         const _monitor = await db.query.monitor.findFirst({
-          where: and(
-            eq(monitor.id, values.monitorId),
-            eq(monitor.workspaceId, workspaceId),
-            isNull(monitor.deletedAt),
-          ),
+          where: {
+            id: values.monitorId,
+            workspaceId,
+            deletedAt: { isNull: true },
+          },
         });
 
         if (!_monitor) {

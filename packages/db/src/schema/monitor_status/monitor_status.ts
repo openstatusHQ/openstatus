@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -36,14 +36,4 @@ export const monitorStatusTable = sqliteTable(
       ),
     };
   },
-);
-
-export const monitorStatusRelations = relations(
-  monitorStatusTable,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [monitorStatusTable.monitorId],
-      references: [monitor.id],
-    }),
-  }),
 );
