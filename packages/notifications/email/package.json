@@ -16,7 +16,6 @@
     "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "react-dom": "catalog:",
-    "resend": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
