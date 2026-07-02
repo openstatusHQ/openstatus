@@ -30,13 +30,8 @@ type CdnCheckerContextType = {
   runCheck: (url: string) => void;
 };
 
-const CdnCheckerContext = createContext<CdnCheckerContextType>({
-  rows: [],
-  summary: null,
-  checkedUrl: null,
-  isPending: false,
-  runCheck: () => {},
-});
+// null default so out-of-provider usage throws instead of silently no-oping
+const CdnCheckerContext = createContext<CdnCheckerContextType | null>(null);
 
 export function useCdnChecker() {
   const context = useContext(CdnCheckerContext);
@@ -58,6 +53,12 @@ export function CdnCheckerProvider({
   const [{ url: urlParam }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const autoRan = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // cancel the in-flight stream when the provider unmounts
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   function runCheck(url: string) {
     try {
@@ -66,6 +67,11 @@ export function CdnCheckerProvider({
       toast.error("Invalid URL");
       return;
     }
+
+    // abort the previous check so its stale rows can't interleave with ours
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setRows([]);
     setSummary(null);
@@ -84,6 +90,7 @@ export function CdnCheckerProvider({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -162,6 +169,11 @@ export function CdnCheckerProvider({
           }
         }
       } catch (error) {
+        // deliberate abort (new submission or unmount) is not an error
+        if (controller.signal.aborted) {
+          if (toastId !== undefined) toast.dismiss(toastId);
+          return;
+        }
         console.error("Error fetching data:", error);
         toast.error("Something went wrong", {
           id: toastId,

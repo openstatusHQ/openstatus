@@ -62,6 +62,16 @@ describe("computeCdnSummary", () => {
     expect(summary.mixedCdn).toBe(true);
   });
 
+  test("tied providers -> null cdn instead of an arbitrary winner", () => {
+    const rows: CdnRegionResponse[] = [
+      makeRow({ region: "iad", cdn: "cloudflare" }),
+      makeRow({ region: "syd", cdn: "fastly" }),
+    ];
+    const summary = computeCdnSummary(rows);
+    expect(summary.cdn).toBeNull();
+    expect(summary.mixedCdn).toBe(true);
+  });
+
   test("no provider detected -> null cdn, unknown topology", () => {
     const rows: CdnRegionResponse[] = [makeRow({ cdn: null })];
     const summary = computeCdnSummary(rows);
