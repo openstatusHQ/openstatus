@@ -60,6 +60,12 @@ const PLAY = [
     href: "/play/checker",
   },
   {
+    label: "CDN Cache Checker",
+    description:
+      "Check if your CDN is caching, and which edge served each region",
+    href: "/play/cdn-checker",
+  },
+  {
     label: "MCP Server Health Check",
     description: "JSON-RPC ping check for Model Context Protocol servers",
     href: "/play/mcp-health",

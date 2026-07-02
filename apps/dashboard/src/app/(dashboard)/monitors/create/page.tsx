@@ -16,11 +16,56 @@ import {
 } from "@/components/content/section";
 import { FormGeneral } from "@/components/forms/monitor/form-general";
 import { useTRPC } from "@/lib/trpc/client";
+import { headerAssertion } from "@openstatus/assertions";
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "./search-params";
+
+function safeHostname(url: string) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+// prefill from play tools (e.g. /play/cdn-checker): malformed params fall
+// back to an empty form rather than erroring
+function buildPrefill(params: {
+  url: string | null;
+  name: string | null;
+  assertionHeaderKey: string | null;
+  assertionHeaderCompare: string | null;
+  assertionHeaderValue: string | null;
+}): React.ComponentProps<typeof FormGeneral>["defaultValues"] {
+  if (!params.url) return undefined;
+
+  const assertion = headerAssertion.safeParse({
+    type: "header",
+    version: "v1",
+    compare: params.assertionHeaderCompare ?? "eq",
+    key: params.assertionHeaderKey,
+    target: params.assertionHeaderValue,
+  });
+
+  return {
+    active: true,
+    name: params.name ?? safeHostname(params.url),
+    type: "http",
+    method: "GET",
+    url: params.url,
+    headers: [],
+    body: "",
+    assertions: assertion.success ? [assertion.data] : [],
+    skipCheck: false,
+    saveCheck: false,
+  };
+}
 
 export default function Page() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [params] = useQueryStates(searchParamsParsers);
 
   const triggerCheckMutation = useMutation(
     trpc.checker.triggerChecker.mutationOptions({}),
@@ -47,6 +92,7 @@ export default function Page() {
           <SectionTitle>Create Monitor</SectionTitle>
         </SectionHeader>
         <FormGeneral
+          defaultValues={buildPrefill(params)}
           onSubmit={async (data) => {
             await createMonitorMutation.mutateAsync({
               name: data.name,
