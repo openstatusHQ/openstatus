@@ -25,11 +25,13 @@ export async function freezeMonitorMonth(args: {
   const input = FreezeMonitorMonthInput.parse(args.input);
 
   const db = ctx.db ?? defaultDb;
-  await getMonitorInWorkspace({
-    tx: db,
-    id: input.monitorId,
-    workspaceId: ctx.workspace.id,
-  });
+  await withBusyRetry(() =>
+    getMonitorInWorkspace({
+      tx: db,
+      id: input.monitorId,
+      workspaceId: ctx.workspace.id,
+    }),
+  );
   const rows = await withBusyRetry(() =>
     db
       .insert(frozenMonitorUptime)

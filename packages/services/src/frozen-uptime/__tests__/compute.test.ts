@@ -98,6 +98,24 @@ describe("computeMonitorMonth", () => {
     expect(computed?.days.every((d) => d.ok <= 5)).toBe(true);
   });
 
+  test("sums multiple rows for the same day instead of overwriting", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [
+        row("2026-06-10", { ok: 10, degraded: 1 }),
+        row("2026-06-10T12:00:00.000Z", { ok: 5, error: 2 }),
+      ],
+    });
+
+    expect(computed?.days[9]).toEqual({
+      day: "2026-06-10",
+      ok: 15,
+      degraded: 1,
+      error: 2,
+    });
+  });
+
   test("returns null when the monitor has no counts in the month", () => {
     expect(
       computeMonitorMonth({ month: MONTH, monitorId: 77, counts: [] }),

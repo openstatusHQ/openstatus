@@ -47,12 +47,21 @@ export function computeMonitorMonth(args: {
   const { month, monitorId, counts } = args;
   const prefix = month.slice(0, 8); // YYYY-MM-
 
-  const byDay = new Map<string, ComputeCountRow>();
+  // sum rather than overwrite: the pipe aggregates per day today, but a
+  // silent overwrite here would freeze truncated counts permanently
+  const byDay = new Map<
+    string,
+    { ok: number; degraded: number; error: number }
+  >();
   for (const row of counts) {
     if (row.monitorId !== String(monitorId)) continue;
     const day = row.day.slice(0, 10);
     if (!day.startsWith(prefix)) continue;
-    byDay.set(day, row);
+    const acc = byDay.get(day) ?? { ok: 0, degraded: 0, error: 0 };
+    acc.ok += row.ok;
+    acc.degraded += row.degraded;
+    acc.error += row.error;
+    byDay.set(day, acc);
   }
   if (byDay.size === 0) return null;
 
