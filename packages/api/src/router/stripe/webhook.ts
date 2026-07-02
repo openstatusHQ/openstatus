@@ -260,7 +260,7 @@ export const webhookRouter = createTRPCRouter({
       for (const m of activeMonitors.slice(1)) {
         await tx
           .update(monitor)
-          .set({ active: false })
+          .set({ active: false, updatedAt: new Date() })
           .where(eq(monitor.id, m.id))
           .run();
       }
@@ -283,6 +283,7 @@ export const webhookRouter = createTRPCRouter({
             password: null,
             accessType: "public",
             authEmailDomains: null,
+            updatedAt: new Date(),
           })
           .where(eq(page.id, statusPages[0].id))
           .run();
