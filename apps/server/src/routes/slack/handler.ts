@@ -1,6 +1,6 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq } from "@openstatus/db";
-import { integration } from "@openstatus/db/src/schema";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
+import { integration, pageSubscriber } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -109,6 +109,16 @@ async function processEvent(body: SlackEvent) {
           and(
             eq(integration.name, "slack-agent"),
             eq(integration.externalId, teamId),
+          ),
+        );
+      await db
+        .update(pageSubscriber)
+        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(pageSubscriber.channelType, "slack"),
+            isNull(pageSubscriber.unsubscribedAt),
+            sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
           ),
         );
       logger.info("slack integration cleaned up", { teamId });

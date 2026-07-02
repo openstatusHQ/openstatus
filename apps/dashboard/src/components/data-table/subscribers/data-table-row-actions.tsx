@@ -61,19 +61,20 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     statusPage?.pageComponentGroups ?? [],
   );
 
-  const editDefaults = isVendorAdded
-    ? {
-        channelType: sub.channelType,
-        name: sub.name ?? "",
-        email: sub.email ?? "",
-        webhookUrl: sub.webhookUrl ?? "",
-        headers: parseHeaders(sub.channelConfig),
-        componentIds: sub.components.map((c) => c.id),
-      }
-    : undefined;
+  const editDefaults =
+    isVendorAdded && sub.channelType !== "slack"
+      ? {
+          channelType: sub.channelType,
+          name: sub.name ?? "",
+          email: sub.email ?? "",
+          webhookUrl: sub.webhookUrl ?? "",
+          headers: parseHeaders(sub.channelConfig),
+          componentIds: sub.components.map((c) => c.id),
+        }
+      : undefined;
 
   const actions = [
-    ...(isVendorAdded
+    ...(isVendorAdded && sub.channelType !== "slack"
       ? [
           {
             id: "edit",

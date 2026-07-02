@@ -23,6 +23,8 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-base": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@slack/web-api": "catalog:",
+    "@upstash/redis": "catalog:",
     "effect": "catalog:",
     "zod": "catalog:"
   },

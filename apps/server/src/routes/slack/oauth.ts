@@ -19,7 +19,9 @@ const SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access";
 const BOT_SCOPES = [
   "app_mentions:read",
   "channels:history",
+  "channels:join",
   "chat:write",
+  "commands",
   "groups:history",
   "groups:read",
   "groups:write",
