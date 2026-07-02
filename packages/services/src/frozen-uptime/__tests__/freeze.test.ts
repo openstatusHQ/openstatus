@@ -1,5 +1,9 @@
 import { eq } from "@openstatus/db";
-import { frozenMonitorUptime, monitor } from "@openstatus/db/src/schema";
+import {
+  frozenMonitorUptime,
+  monitor,
+  workspace,
+} from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -12,7 +16,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { ForbiddenError } from "../../errors";
+import { ForbiddenError, NotFoundError } from "../../errors";
 import { freezeMonitorMonth } from "../freeze";
 import type { FreezeMonitorMonthInput } from "../schemas";
 
@@ -148,6 +152,42 @@ describe("freezeMonitorMonth", () => {
         .where(eq(frozenMonitorUptime.monitorId, input.monitorId))
         .all();
       expect(persisted.length).toBe(2);
+    });
+  });
+
+  test("rejects a monitor from another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...systemCtx, db: tx };
+      const foreignWorkspace = await tx
+        .insert(workspace)
+        .values({ slug: "svc-frozen-uptime-foreign-ws" })
+        .returning()
+        .get();
+      const foreignMonitor = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: foreignWorkspace.id,
+          active: true,
+          url: "https://example.com",
+          name: "svc-frozen-uptime-foreign-monitor",
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+          jobType: "http",
+        })
+        .returning()
+        .get();
+
+      await expect(
+        freezeMonitorMonth({ ctx, input: makeInput(foreignMonitor.id) }),
+      ).rejects.toThrow(NotFoundError);
+
+      const persisted = await tx
+        .select()
+        .from(frozenMonitorUptime)
+        .where(eq(frozenMonitorUptime.monitorId, foreignMonitor.id))
+        .all();
+      expect(persisted.length).toBe(0);
     });
   });
 

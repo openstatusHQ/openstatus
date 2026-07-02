@@ -7,6 +7,7 @@ import {
 
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
+import { getMonitorInWorkspace } from "../monitor/internal";
 import { withBusyRetry } from "../retry";
 import { FreezeMonitorMonthInput } from "./schemas";
 
@@ -24,6 +25,11 @@ export async function freezeMonitorMonth(args: {
   const input = FreezeMonitorMonthInput.parse(args.input);
 
   const db = ctx.db ?? defaultDb;
+  await getMonitorInWorkspace({
+    tx: db,
+    id: input.monitorId,
+    workspaceId: ctx.workspace.id,
+  });
   const rows = await withBusyRetry(() =>
     db
       .insert(frozenMonitorUptime)

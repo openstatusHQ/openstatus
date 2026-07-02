@@ -35,9 +35,20 @@ export async function handleUptimeFreezeCron(c: Context) {
   })
     .then(async (res) => {
       if (res.failures.length > 0) {
-        await reportBackgroundError(
-          `uptime-freeze ${res.month}: ${res.failures.length} failures (frozen=${res.frozen}, alreadyFrozen=${res.alreadyFrozen}, skipped=${res.skipped}). First: ${res.failures.slice(0, 5).join("; ")}`,
-        );
+        // isolate: a Sentry transport failure must not flip a completed
+        // freeze run into cronFailed via the outer catch
+        try {
+          await reportBackgroundError(
+            `uptime-freeze ${res.month}: ${res.failures.length} failures (frozen=${res.frozen}, alreadyFrozen=${res.alreadyFrozen}, skipped=${res.skipped}). First: ${res.failures.slice(0, 5).join("; ")}`,
+          );
+        } catch (reportError) {
+          logger.warn("uptime-freeze: reportBackgroundError failed: {reason}", {
+            reason:
+              reportError instanceof Error
+                ? reportError.message
+                : String(reportError),
+          });
+        }
       }
       logger.info(
         "uptime-freeze complete: month={month} frozen={frozen} alreadyFrozen={alreadyFrozen} skipped={skipped} failed={failed}",

@@ -207,6 +207,14 @@ export async function runUptimeFreeze(args: {
     onChunkFailure: args.onChunkFailure,
   });
 
+  // avoid an O(pending²) sweep: computeMonitorMonth scans linearly per call
+  const countsByMonitorId = new Map<string, ComputeCountRow[]>();
+  for (const row of counts) {
+    const rows = countsByMonitorId.get(row.monitorId);
+    if (rows) rows.push(row);
+    else countsByMonitorId.set(row.monitorId, [row]);
+  }
+
   const workspaceIds = [...new Set(pending.map((m) => m.workspaceId))];
   const workspaceRows =
     workspaceIds.length > 0
@@ -232,7 +240,11 @@ export async function runUptimeFreeze(args: {
 
     // no counts in the month (paused, created later, or no status pipe for
     // the job type): nothing to freeze — silent, not a failure
-    const computed = computeMonitorMonth({ month, monitorId: m.id, counts });
+    const computed = computeMonitorMonth({
+      month,
+      monitorId: m.id,
+      counts: countsByMonitorId.get(String(m.id)) ?? [],
+    });
     if (!computed) continue;
 
     const ws = workspacesById.get(m.workspaceId);
