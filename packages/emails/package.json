@@ -18,10 +18,10 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
+    "autosendjs": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-email": "catalog:",
-    "resend": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

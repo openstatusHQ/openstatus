@@ -1,10 +1,10 @@
+import { Autosend } from "autosendjs";
 import type React from "react";
-import { render } from "react-email";
-import { Resend } from "resend";
 
+import { toEmailAddress } from "./client";
 import { env } from "./env";
 
-export const resend = new Resend(env.RESEND_API_KEY);
+const client = new Autosend(env.RESEND_API_KEY, { maxRetries: 1 });
 
 export interface Emails {
   react: React.JSX.Element;
@@ -21,35 +21,27 @@ export type EmailHtml = {
   from: string;
   reply_to?: string;
 };
+
 export const sendEmail = async (email: Emails) => {
   if (process.env.NODE_ENV !== "production") return;
-  await resend.emails.send(email);
+  await client.emails.send({
+    from: toEmailAddress(email.from),
+    to: email.to.map((address) => toEmailAddress(address)),
+    subject: email.subject,
+    react: email.react,
+    replyTo: email.reply_to ? toEmailAddress(email.reply_to) : undefined,
+  });
 };
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
   if (process.env.NODE_ENV !== "production") return;
-  await resend.batch.send(emails);
-};
-
-// TODO: delete in favor of sendBatchEmailHtml
-export const sendEmailHtml = async (emails: EmailHtml[]) => {
-  if (process.env.NODE_ENV !== "production") return;
-
-  await fetch("https://api.resend.com/emails/batch", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify(emails),
-  });
-};
-
-export const sendWithRender = async (email: Emails) => {
-  if (process.env.NODE_ENV !== "production") return;
-  const html = await render(email.react);
-  await resend.emails.send({
-    ...email,
-    html,
-  });
+  for (const email of emails) {
+    await client.emails.send({
+      from: toEmailAddress(email.from),
+      to: toEmailAddress(email.to),
+      subject: email.subject,
+      html: email.html,
+      replyTo: email.reply_to ? toEmailAddress(email.reply_to) : undefined,
+    });
+  }
 };

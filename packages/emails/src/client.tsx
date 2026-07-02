@@ -1,8 +1,7 @@
 /** @jsxImportSource react */
 
+import { Autosend } from "autosendjs";
 import { type Duration, Effect, Schedule } from "effect";
-import { render } from "react-email";
-import { Resend } from "resend";
 
 import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
@@ -35,14 +34,25 @@ function chunk<T>(array: T[], size: number): T[][] {
   return result;
 }
 
+// parse a `"Name <email>"` (or bare `"email"`) string into autosend's address object.
+export function toEmailAddress(input: string): {
+  email: string;
+  name?: string;
+} {
+  const match = input.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  return match
+    ? { name: match[1] || undefined, email: match[2] }
+    : { email: input.trim() };
+}
+
 export class EmailClient {
-  public readonly client: Resend;
+  public readonly client: Autosend;
   // Base delay for the per-batch send retry. Overridable so tests can run the
   // retry path without the real ~1s exponential sleep.
   private readonly retryBackoff: Duration.DurationInput;
 
   constructor(opts: { apiKey: string; retryBackoff?: Duration.DurationInput }) {
-    this.client = new Resend(opts.apiKey);
+    this.client = new Autosend(opts.apiKey, { maxRetries: 1 });
     this.retryBackoff = opts.retryBackoff ?? "1000 millis";
   }
 
@@ -53,21 +63,24 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<FollowUpEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
-        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: toEmailAddress(
+          "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
+        ),
+        replyTo: toEmailAddress(
+          "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        ),
         subject: "How's it going with OpenStatus?",
-        to: req.to,
-        html,
+        to: toEmailAddress(req.to),
+        react: <FollowUpEmail />,
       });
 
-      if (!result.error) {
+      if (result.success) {
         console.log(`Sent follow up email to ${req.to}`);
         return;
       }
 
-      throw result.error;
+      throw new Error(result.error);
     } catch (err) {
       console.error(`Error sending follow up email to ${req.to}: ${err}`);
     }
@@ -79,20 +92,19 @@ export class EmailClient {
       return;
     }
 
-    const html = await render(<FollowUpEmail />);
-    const result = await this.client.batch.send(
-      req.to.map((subscriber) => ({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "How's it going with OpenStatus?",
-        to: subscriber,
-        html,
-      })),
-    );
+    const result = await this.client.emails.bulk({
+      from: toEmailAddress(
+        "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      ),
+      subject: "How's it going with OpenStatus?",
+      react: <FollowUpEmail />,
+      recipients: req.to.map((email) => toEmailAddress(email)),
+    });
 
-    if (result.error) {
+    if (!result.success) {
       //  We only throw the error if we are rate limited
-      if (result.error?.name === "rate_limit_exceeded") {
-        throw result.error;
+      if (result.statusCode === 429) {
+        throw new Error(result.error);
       }
       //  Otherwise let's log the error and continue
       console.error(
@@ -111,21 +123,24 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<SlackFeedbackEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: toEmailAddress(
+          "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        ),
+        replyTo: toEmailAddress(
+          "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        ),
         subject: "How's the Slack app working for you?",
-        to: req.to,
-        html,
+        to: toEmailAddress(req.to),
+        react: <SlackFeedbackEmail />,
       });
 
-      if (!result.error) {
+      if (result.success) {
         console.log(`Sent slack feedback email to ${req.to}`);
         return;
       }
 
-      throw result.error;
+      throw new Error(result.error);
     } catch (err) {
       console.error(`Error sending slack feedback email to ${req.to}: ${err}`);
     }
@@ -137,19 +152,18 @@ export class EmailClient {
       return;
     }
 
-    const html = await render(<SlackFeedbackEmail />);
-    const result = await this.client.batch.send(
-      req.to.map((subscriber) => ({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "How's the Slack app working for you?",
-        to: subscriber,
-        html,
-      })),
-    );
+    const result = await this.client.emails.bulk({
+      from: toEmailAddress(
+        "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      ),
+      subject: "How's the Slack app working for you?",
+      react: <SlackFeedbackEmail />,
+      recipients: req.to.map((email) => toEmailAddress(email)),
+    });
 
-    if (result.error) {
-      if (result.error?.name === "rate_limit_exceeded") {
-        throw result.error;
+    if (!result.success) {
+      if (result.statusCode === 429) {
+        throw new Error(result.error);
       }
       console.error(
         `Error sending slack feedback email to ${req.to}: ${result.error}`,
@@ -194,25 +208,28 @@ export class EmailClient {
         : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
-          this.client.batch.send(
-            recipients.map((subscriber) => {
+          this.client.emails.bulk({
+            from: toEmailAddress(
+              `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+            ),
+            subject: statusReportSubject(req),
+            // rendered once with placeholders; autosend substitutes per-recipient dynamicData
+            react: (
+              <StatusReportEmail
+                {...req}
+                unsubscribeUrl="{{unsubscribeUrl}}"
+                manageUrl="{{manageUrl}}"
+              />
+            ),
+            recipients: recipients.map((subscriber) => {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: statusReportSubject(req),
-                to: subscriber.email,
-                react: (
-                  <StatusReportEmail
-                    {...req}
-                    unsubscribeUrl={unsubscribeUrl}
-                    manageUrl={manageUrl}
-                  />
-                ),
+                ...toEmailAddress(subscriber.email),
+                dynamicData: { unsubscribeUrl, manageUrl },
               };
             }),
-            batchKey ? { idempotencyKey: batchKey } : undefined,
-          ),
+          }),
         catch: (_unknown) =>
           new Error(
             `Error sending status report update batch to ${recipients.map(
@@ -221,7 +238,9 @@ export class EmailClient {
           ),
       }).pipe(
         Effect.andThen((result) =>
-          result.error ? Effect.fail(result.error) : Effect.succeed(result),
+          result.success
+            ? Effect.succeed(result)
+            : Effect.fail(new Error(result.error ?? "bulk failed")),
         ),
         Effect.retry({
           times: 3,
@@ -243,24 +262,25 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${
-          req.workspaceName ?? "OpenStatus"
-        } <notifications@notifications.openstatus.dev>`,
+        from: toEmailAddress(
+          `${
+            req.workspaceName ?? "OpenStatus"
+          } <notifications@notifications.openstatus.dev>`,
+        ),
         subject: `You've been invited to join ${
           req.workspaceName ?? "OpenStatus"
         }`,
-        to: req.to,
-        html,
+        to: toEmailAddress(req.to),
+        react: <TeamInvitationEmail {...req} />,
       });
 
-      if (!result.error) {
+      if (result.success) {
         console.log(`Sent team invitation email to ${req.to}`);
         return;
       }
 
-      throw result.error;
+      throw new Error(result.error);
     } catch (err) {
       console.error(`Error sending team invitation email to ${req.to}`, err);
     }
@@ -276,18 +296,20 @@ export class EmailClient {
       // const html = await render(<MonitorAlertEmail {...req} />);
       const html = monitorAlertEmail(req);
       const result = await this.client.emails.send({
-        from: "OpenStatus <notifications@notifications.openstatus.dev>",
+        from: toEmailAddress(
+          "OpenStatus <notifications@notifications.openstatus.dev>",
+        ),
         subject: `${req.name}: ${req.type.toUpperCase()}`,
-        to: req.to,
+        to: toEmailAddress(req.to),
         html,
       });
 
-      if (!result.error) {
+      if (result.success) {
         console.log(`Sent monitor alert email to ${req.to}`);
         return;
       }
 
-      throw result.error;
+      throw new Error(result.error);
     } catch (err) {
       console.error(`Error sending monitor alert to ${req.to}`, err);
       throw err;
@@ -303,20 +325,21 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: toEmailAddress(
+          "Status Page <notifications@notifications.openstatus.dev>",
+        ),
         subject: `Confirm your subscription to ${req.page}`,
-        to: req.to,
-        html,
+        to: toEmailAddress(req.to),
+        react: <PageSubscriptionEmail {...req} />,
       });
 
-      if (!result.error) {
+      if (result.success) {
         console.log(`Sent page subscription email to ${req.to}`);
         return;
       }
 
-      throw result.error;
+      throw new Error(result.error);
     } catch (err) {
       console.error(`Error sending page subscription to ${req.to}`, err);
     }
@@ -332,20 +355,21 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<StatusPageMagicLinkEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "Status Page <notifications@notifications.openstatus.dev>",
+        from: toEmailAddress(
+          "Status Page <notifications@notifications.openstatus.dev>",
+        ),
         subject: `Authenticate to ${req.page}`,
-        to: req.to,
-        html,
+        to: toEmailAddress(req.to),
+        react: <StatusPageMagicLinkEmail {...req} />,
       });
 
-      if (!result.error) {
+      if (result.success) {
         console.log(`Sent status page magic link email to ${req.to}`);
         return;
       }
 
-      throw result.error;
+      throw new Error(result.error);
     } catch (err) {
       console.error(`Error sending status page magic link to ${req.to}`, err);
     }
@@ -384,30 +408,33 @@ export class EmailClient {
         : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
-          this.client.batch.send(
-            recipients.map((subscriber) => {
+          this.client.emails.bulk({
+            from: toEmailAddress(
+              `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+            ),
+            subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
+            // rendered once with placeholders; autosend substitutes per-recipient dynamicData
+            react: (
+              <StatusReportEmail
+                pageTitle={req.pageTitle}
+                reportTitle={req.maintenanceTitle}
+                status="maintenance"
+                date={`${req.from} - ${req.to}`}
+                message={req.message}
+                pageComponents={req.pageComponents}
+                unsubscribeUrl="{{unsubscribeUrl}}"
+                manageUrl="{{manageUrl}}"
+              />
+            ),
+            recipients: recipients.map((subscriber) => {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
-                to: subscriber.email,
-                react: (
-                  <StatusReportEmail
-                    pageTitle={req.pageTitle}
-                    reportTitle={req.maintenanceTitle}
-                    status="maintenance"
-                    date={`${req.from} - ${req.to}`}
-                    message={req.message}
-                    pageComponents={req.pageComponents}
-                    unsubscribeUrl={unsubscribeUrl}
-                    manageUrl={manageUrl}
-                  />
-                ),
+                ...toEmailAddress(subscriber.email),
+                dynamicData: { unsubscribeUrl, manageUrl },
               };
             }),
-            batchKey ? { idempotencyKey: batchKey } : undefined,
-          ),
+          }),
         catch: (_unknown) =>
           new Error(
             `Error sending maintenance notification batch to ${recipients.map(
@@ -416,7 +443,9 @@ export class EmailClient {
           ),
       }).pipe(
         Effect.andThen((result) =>
-          result.error ? Effect.fail(result.error) : Effect.succeed(result),
+          result.success
+            ? Effect.succeed(result)
+            : Effect.fail(new Error(result.error ?? "bulk failed")),
         ),
         Effect.retry({
           times: 3,
