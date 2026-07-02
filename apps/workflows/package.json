@@ -40,9 +40,11 @@
     "@opentelemetry/semantic-conventions": "catalog:",
     "@sentry/deno": "catalog:",
     "@upstash/qstash": "catalog:",
+    "better-sqlite3": "npm:libsql@0.5.29",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "hono": "catalog:",
+    "libsql": "0.5.29",
     "limiter": "catalog:",
     "zod": "catalog:"
   },
