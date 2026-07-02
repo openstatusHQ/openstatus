@@ -9,6 +9,7 @@ import { afterEach, describe, test } from "@std/testing/bdd";
 import {
   type UpsertExternalIncidentInput,
   listExternalIncidentsByComponent,
+  listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
   pruneStaleRawPayloads,
   upsertExternalIncidentsForService,
@@ -592,5 +593,75 @@ describe("pruneStaleRawPayloads", () => {
     expect(byId.get("recent-resolved")?.rawPayloadPurgedAt).toBeNull();
     expect(byId.get("ongoing-old")?.rawPayload).not.toBeNull();
     expect(byId.get("ongoing-old")?.rawPayloadPurgedAt).toBeNull();
+  });
+});
+
+describe("listExternalIncidentsByServiceId since-window", () => {
+  test("keeps ongoing and resolved-in-window, drops resolved-before", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-since` });
+    const now = new Date("2026-06-15T00:00:00.000Z");
+    const since = new Date("2026-06-01T00:00:00.000Z");
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now,
+      incidents: [
+        {
+          providerIncidentId: "ongoing-old",
+          name: "Ongoing since May",
+          status: "investigating",
+          impact: "major",
+          shortlink: "https://stspg.io/ongoing",
+          startedAt: new Date("2026-05-01T00:00:00.000Z"),
+          createdAt: new Date("2026-05-01T00:00:00.000Z"),
+          resolvedAt: null,
+          affectedComponentIds: ["cmp-a"],
+          raw: { id: "ongoing-old" },
+        },
+        {
+          providerIncidentId: "resolved-before",
+          name: "Resolved before window",
+          status: "resolved",
+          impact: "minor",
+          startedAt: new Date("2026-05-01T00:00:00.000Z"),
+          createdAt: new Date("2026-05-01T00:00:00.000Z"),
+          resolvedAt: new Date("2026-05-20T00:00:00.000Z"),
+          affectedComponentIds: [],
+          raw: { id: "resolved-before" },
+        },
+        {
+          providerIncidentId: "resolved-after",
+          name: "Resolved inside window",
+          status: "resolved",
+          impact: "critical",
+          startedAt: new Date("2026-05-25T00:00:00.000Z"),
+          createdAt: new Date("2026-05-25T00:00:00.000Z"),
+          resolvedAt: new Date("2026-06-10T00:00:00.000Z"),
+          affectedComponentIds: ["cmp-b"],
+          raw: { id: "resolved-after" },
+        },
+      ],
+    });
+
+    const windowed = await listExternalIncidentsByServiceId({
+      externalServiceId: serviceId,
+      since,
+    });
+    const ids = new Set(windowed.map((r) => r.providerIncidentId));
+    expect(ids.has("ongoing-old")).toBe(true);
+    expect(ids.has("resolved-after")).toBe(true);
+    expect(ids.has("resolved-before")).toBe(false);
+
+    // affectedComponentIds is returned for server-side per-component bucketing
+    const ongoing = windowed.find(
+      (r) => r.providerIncidentId === "ongoing-old",
+    );
+    expect(ongoing?.affectedComponentIds).toEqual(["cmp-a"]);
+
+    // no `since` returns everything (within the default limit)
+    const all = await listExternalIncidentsByServiceId({
+      externalServiceId: serviceId,
+    });
+    expect(all.length).toBe(3);
   });
 });

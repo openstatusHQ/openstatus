@@ -152,7 +152,7 @@ export function ComponentDetail({
   });
 
   if (!data.found || !data.service || !data.component) return null;
-  const { service, component, history, incidents } = data;
+  const { service, component, history, incidents, overlayIncidents } = data;
 
   const fullName = `${service.name} ${component.name}`;
   const answer = answerFor({
@@ -232,7 +232,7 @@ export function ComponentDetail({
         {component.name} uptime over the last {days} days
       </h2>
       <div className="not-prose">
-        <HistoryBars daily={history} days={days} />
+        <HistoryBars daily={history} days={days} incidents={overlayIncidents} />
       </div>
 
       <h2>{component.name} recent incidents</h2>

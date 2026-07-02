@@ -44,7 +44,7 @@ function jsonLd(args: {
 
 export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
   const [data] = api.externalService.detail.useSuspenseQuery({ slug, days });
-  const { service, latest, history, effective } = data;
+  const { service, latest, history, effective, overlayIncidents } = data;
 
   const indicator = effective.indicator;
   const status = effective.status;
@@ -128,7 +128,7 @@ export function ServiceDetail({ slug, days }: { slug: string; days: number }) {
         {service.name} uptime over the last {days} days
       </h2>
       <div className="not-prose">
-        <HistoryBars daily={history} days={days} />
+        <HistoryBars daily={history} days={days} incidents={overlayIncidents} />
       </div>
 
       <Suspense fallback={null}>
