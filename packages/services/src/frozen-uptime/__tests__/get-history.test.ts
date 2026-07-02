@@ -399,7 +399,7 @@ describe("getUptimeHistory", () => {
       expect(row.months[key(0)]).toBe(100);
       // aged past the TB window without a freeze → no data, never down
       expect(row.months[key(3)]).toBe(null);
-      expect(res.oldestRecord).toBe(key(2));
+      expect(res.createdAt?.getTime()).toBe(testPage.createdAt?.getTime());
     });
   });
 
@@ -572,7 +572,8 @@ describe("getUptimeHistory", () => {
       expect(row.months[key(1)]).toBe(expected);
       // events overlap key(2) not at all and it has no counts → null anyway
       expect(row.months[key(2)]).toBe(null);
-      expect(res.summary["6"].incidents).toBe(3);
+      // reports metric counts status reports only, not checker incidents
+      expect(res.summary["6"].reports).toBe(2);
     });
   });
 

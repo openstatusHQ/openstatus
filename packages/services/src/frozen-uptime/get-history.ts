@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, sql } from "@openstatus/db";
+import { and, eq, gte, inArray } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   pageConfigurationSchema,
@@ -54,11 +54,8 @@ type UptimeHistoryResult = {
   mode: "requests" | "duration" | "manual";
   /** oldest → newest, length HISTORY_MONTHS, last entry = current month */
   months: string[];
-  oldestRecord: string | null;
-  summary: Record<
-    HistoryWindowKey,
-    { uptime: number | null; incidents: number }
-  >;
+  createdAt: Date | null;
+  summary: Record<HistoryWindowKey, { uptime: number | null; reports: number }>;
   rows: UptimeHistoryRow[];
 };
 
@@ -194,12 +191,9 @@ export async function getUptimeHistory(args: {
     ),
   ];
 
-  // the two db reads stay sequential (they may share one transaction); the
-  // independent Tinybird round-trip overlaps them
+  // the frozen-rows read and the independent Tinybird round-trip overlap
   const dbReads = (async () => {
-    if (monitorIds.length === 0) {
-      return { frozenRows: [], oldestMonth: null as string | null };
-    }
+    if (monitorIds.length === 0) return { frozenRows: [] };
     const frozenRows = await db
       .select({
         monitorId: frozenMonitorUptime.monitorId,
@@ -214,20 +208,7 @@ export async function getUptimeHistory(args: {
           gte(frozenMonitorUptime.month, `${months[0]}-01`),
         ),
       );
-    // true oldest snapshot, not oldest-within-window
-    const oldest = await db
-      .select({
-        month: sql<string | null>`min(${frozenMonitorUptime.month})`,
-      })
-      .from(frozenMonitorUptime)
-      .where(
-        and(
-          eq(frozenMonitorUptime.workspaceId, ctx.workspace.id),
-          inArray(frozenMonitorUptime.monitorId, monitorIds),
-        ),
-      )
-      .get();
-    return { frozenRows, oldestMonth: oldest?.month ?? null };
+    return { frozenRows };
   })();
 
   // current month is never frozen, the previous may not be yet (freeze runs
@@ -260,10 +241,8 @@ export async function getUptimeHistory(args: {
     });
   })();
 
-  const [
-    { frozenRows, oldestMonth },
-    { counts: liveCounts, failedMonitorIds: liveFailed },
-  ] = await Promise.all([dbReads, liveReads]);
+  const [{ frozenRows }, { counts: liveCounts, failedMonitorIds: liveFailed }] =
+    await Promise.all([dbReads, liveReads]);
   const frozenByKey = new Map(
     frozenRows.map((r) => [`${r.monitorId}:${r.month.slice(0, 7)}`, r.days]),
   );
@@ -368,11 +347,10 @@ export async function getUptimeHistory(args: {
     };
   });
 
-  // page-level events (no component filter) for the incident metric; shared
-  // monitors dedupe via the type:id key
+  // page-level events (no component filter) for the report metric
   const pageEvents = getEvents({
     maintenances: _page.maintenances,
-    incidents: components.flatMap((c) => c.monitor?.incidents ?? []),
+    incidents: [],
     reports: _page.statusReports,
     pastDays,
   });
@@ -380,12 +358,12 @@ export async function getUptimeHistory(args: {
   const summary = {} as UptimeHistoryResult["summary"];
   for (const w of WINDOWS) {
     const windowStart = monthRange(`${months[months.length - w]}-01`).start;
-    const seen = new Set<string>();
+    const seen = new Set<number>();
     for (const e of pageEvents) {
-      if (e.type === "maintenance") continue;
+      if (e.type !== "report") continue;
       const endMs = e.to?.getTime() ?? nowMs;
       if (e.from.getTime() <= nowMs && endMs >= windowStart) {
-        seen.add(`${e.type}:${e.id}`);
+        seen.add(e.id);
       }
     }
     // components weigh equally — native units (checks vs ms) differ per
@@ -401,14 +379,14 @@ export async function getUptimeHistory(args: {
               (uptimes.reduce((a, b) => a + b, 0) / uptimes.length) * 100,
             ) / 100
           : null,
-      incidents: seen.size,
+      reports: seen.size,
     };
   }
 
   return {
     mode,
     months,
-    oldestRecord: oldestMonth ? oldestMonth.slice(0, 7) : null,
+    createdAt: _page.createdAt,
     summary,
     rows,
   };
