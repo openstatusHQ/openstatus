@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import { monitor, page, pageComponent } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 

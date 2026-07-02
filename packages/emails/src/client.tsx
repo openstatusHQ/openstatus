@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { Autosend } from "autosendjs";
-import { Effect, Schedule } from "effect";
+import { type Duration, Effect, Schedule } from "effect";
 
 import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
@@ -35,7 +35,10 @@ function chunk<T>(array: T[], size: number): T[][] {
 }
 
 // parse a `"Name <email>"` (or bare `"email"`) string into autosend's address object.
-export function toEmailAddress(input: string): { email: string; name?: string } {
+export function toEmailAddress(input: string): {
+  email: string;
+  name?: string;
+} {
   const match = input.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
   return match
     ? { name: match[1] || undefined, email: match[2] }
@@ -44,11 +47,13 @@ export function toEmailAddress(input: string): { email: string; name?: string } 
 
 export class EmailClient {
   public readonly client: Autosend;
+  // Base delay for the per-batch send retry. Overridable so tests can run the
+  // retry path without the real ~1s exponential sleep.
+  private readonly retryBackoff: Duration.DurationInput;
 
-  constructor(opts: { apiKey: string }) {
-    // maxRetries: 1 surfaces a 429 immediately so the cron halt-on-throttle and
-    // the per-method Effect.retry stay in control (no double-retry inside the SDK).
+  constructor(opts: { apiKey: string; retryBackoff?: Duration.DurationInput }) {
     this.client = new Autosend(opts.apiKey, { maxRetries: 1 });
+    this.retryBackoff = opts.retryBackoff ?? "1000 millis";
   }
 
   public async sendFollowUp(req: { to: string }) {
@@ -59,7 +64,9 @@ export class EmailClient {
 
     try {
       const result = await this.client.emails.send({
-        from: toEmailAddress("Thibault Le Ouay Ducasse <welcome@openstatus.dev>"),
+        from: toEmailAddress(
+          "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
+        ),
         replyTo: toEmailAddress(
           "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
         ),
@@ -86,7 +93,9 @@ export class EmailClient {
     }
 
     const result = await this.client.emails.bulk({
-      from: toEmailAddress("Thibault Le Ouay Ducasse <thibault@openstatus.dev>"),
+      from: toEmailAddress(
+        "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      ),
       subject: "How's it going with OpenStatus?",
       react: <FollowUpEmail />,
       recipients: req.to.map((email) => ({ email })),
@@ -144,7 +153,9 @@ export class EmailClient {
     }
 
     const result = await this.client.emails.bulk({
-      from: toEmailAddress("Thibault Le Ouay Ducasse <thibault@openstatus.dev>"),
+      from: toEmailAddress(
+        "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      ),
       subject: "How's the Slack app working for you?",
       react: <SlackFeedbackEmail />,
       recipients: req.to.map((email) => ({ email })),
@@ -168,6 +179,10 @@ export class EmailClient {
       subscribers: Array<{ email: string; token: string }>;
       pageSlug: string;
       customDomain?: string | null;
+      // Base key for Resend idempotency. The per-batch retry below would
+      // otherwise re-send the whole chunk if a request succeeds server-side
+      // but the response is lost. Must be stable across retries.
+      idempotencyKey?: string;
     },
   ) {
     const statusPageBaseUrl = req.customDomain
@@ -183,7 +198,14 @@ export class EmailClient {
       return;
     }
 
-    for (const recipients of chunk(req.subscribers, 100)) {
+    const chunks = chunk(req.subscribers, 100);
+    for (let i = 0; i < chunks.length; i++) {
+      const recipients = chunks[i];
+      // suffix the chunk index so a multi-batch send doesn't collide its
+      // own chunks on a single shared key
+      const batchKey = req.idempotencyKey
+        ? `${req.idempotencyKey}:${i}`
+        : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.emails.bulk({
@@ -222,7 +244,7 @@ export class EmailClient {
         ),
         Effect.retry({
           times: 3,
-          schedule: Schedule.exponential("1000 millis"),
+          schedule: Schedule.exponential(this.retryBackoff),
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -363,6 +385,7 @@ export class EmailClient {
     from: string;
     to: string;
     pageComponents: string[];
+    idempotencyKey?: string;
   }) {
     const statusPageBaseUrl = req.customDomain
       ? `https://${req.customDomain}`
@@ -377,7 +400,12 @@ export class EmailClient {
       return;
     }
 
-    for (const recipients of chunk(req.subscribers, 100)) {
+    const chunks = chunk(req.subscribers, 100);
+    for (let i = 0; i < chunks.length; i++) {
+      const recipients = chunks[i];
+      const batchKey = req.idempotencyKey
+        ? `${req.idempotencyKey}:${i}`
+        : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.emails.bulk({
@@ -421,7 +449,7 @@ export class EmailClient {
         ),
         Effect.retry({
           times: 3,
-          schedule: Schedule.exponential("1000 millis"),
+          schedule: Schedule.exponential(this.retryBackoff),
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);

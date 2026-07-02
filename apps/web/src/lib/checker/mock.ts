@@ -1,7 +1,7 @@
 import type { Region } from "@openstatus/db/src/schema/constants";
 
-import { type RegionChecker, cachedCheckerSchema } from "@/lib/checker/utils";
-import { wait } from "@/lib/utils";
+import { wait } from "../utils";
+import { type RegionChecker, cachedCheckerSchema } from "./utils";
 
 export async function mockCheckRegion(region: Region) {
   const response = data.checks

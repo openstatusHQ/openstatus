@@ -23,7 +23,7 @@ import {
   StatusBlankContainer,
   StatusBlankDescription,
   StatusBlankTitle,
-} from "@/components/status-page/status-blank";
+} from "../status-page/status-blank";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 

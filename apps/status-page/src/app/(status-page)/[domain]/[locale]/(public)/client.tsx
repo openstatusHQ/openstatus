@@ -27,8 +27,8 @@ import { skipToken, useQuery } from "@tanstack/react-query";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
-import { Link } from "@/components/common/link";
-import { useStatusPage } from "@/components/status-page/floating-button";
+import { Link } from "../../../../../components/common/link";
+import { useStatusPage } from "../../../../../components/status-page/floating-button";
 import {
   StatusBanner,
   StatusBannerContainer,
@@ -37,23 +37,23 @@ import {
   StatusBannerTabsContent,
   StatusBannerTabsList,
   StatusBannerTabsTrigger,
-} from "@/components/status-page/status-banner";
+} from "../../../../../components/status-page/status-banner";
 import {
   StatusBar,
   StatusBarSkeleton,
-} from "@/components/status-page/status-bar";
-import { StatusComponentGroup } from "@/components/status-page/status-component-group";
+} from "../../../../../components/status-page/status-bar";
+import { StatusComponentGroup } from "../../../../../components/status-page/status-component-group";
 import {
   StatusEventAffected,
   StatusEventAffectedBadge,
   StatusEventTimelineMaintenance,
   StatusEventTimelineReportUpdate,
-} from "@/components/status-page/status-events";
-import { StatusFeed } from "@/components/status-page/status-feed";
-import { useEmbed } from "@/hooks/use-embed";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { updatesWithImpactChanges } from "@/lib/report-impacts";
-import { useTRPC } from "@/lib/trpc/client";
+} from "../../../../../components/status-page/status-events";
+import { StatusFeed } from "../../../../../components/status-page/status-feed";
+import { useEmbed } from "../../../../../hooks/use-embed";
+import { usePathnamePrefix } from "../../../../../hooks/use-pathname-prefix";
+import { updatesWithImpactChanges } from "../../../../../lib/report-impacts";
+import { useTRPC } from "../../../../../lib/trpc/client";
 
 export function Client() {
   const prefix = usePathnamePrefix();

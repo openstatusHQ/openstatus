@@ -134,7 +134,6 @@ export const SAFE_SUBSCRIPTION_MESSAGES = new Set<string>([
   "Some components do not belong to this page",
   "A subscriber with this email already exists for this page.",
   "A subscriber with this webhook URL already exists for this page.",
-  "Only Slack and Discord webhook URLs are supported.",
   "Subscriber not found",
   "Subscriber is not a webhook channel",
   "Self-signup subscribers manage their own subscription; use the unsubscribe action instead.",

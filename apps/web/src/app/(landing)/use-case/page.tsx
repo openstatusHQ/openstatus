@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 
-import { getUseCasePages } from "@/content/utils";
-import { JsonLd } from "@/lib/metadata/json-ld";
+import { getUseCasePages } from "../../../content/utils";
+import { JsonLd } from "../../../lib/metadata/json-ld";
 import {
   BASE_URL,
   defaultMetadata,
   ogMetadata,
-} from "@/lib/metadata/shared-metadata";
-import { twitterMetadata } from "@/lib/metadata/shared-metadata";
+} from "../../../lib/metadata/shared-metadata";
+import { twitterMetadata } from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
-} from "@/lib/metadata/structured-data";
-
+} from "../../../lib/metadata/structured-data";
 import { ContentList } from "../content-list";
 
 const TITLE = "Use Cases";

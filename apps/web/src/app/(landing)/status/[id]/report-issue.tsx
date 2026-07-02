@@ -12,8 +12,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { useState } from "react";
 
-import { api } from "@/trpc/rq-client";
-
+import { api } from "../../../../trpc/rq-client";
 import { buildSections } from "../external-service-components";
 
 const WHOLE_SERVICE = "all";

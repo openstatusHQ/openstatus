@@ -66,8 +66,9 @@ export const statusReportRouter = createTRPCRouter({
     .input(createStatusReportTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
+        const serviceCtx = toServiceCtx(ctx);
         const { initialUpdate } = await createStatusReport({
-          ctx: toServiceCtx(ctx),
+          ctx: serviceCtx,
           input: {
             title: input.title,
             status: input.status,
@@ -78,8 +79,9 @@ export const statusReportRouter = createTRPCRouter({
             message: input.message,
           },
         });
-        // Preserve the original "return the initial update row with
-        // notifySubscribers merged in" shape the dashboard consumes.
+        // Notification is a separate, client-driven step
+        // (subscriberNotification.statusReport) so creation and dispatch stay
+        // split — dispatch must run on lambda, this router is Edge-served.
         return { ...initialUpdate, notifySubscribers: input.notifySubscribers };
       } catch (err) {
         toTRPCError(err);
@@ -91,8 +93,9 @@ export const statusReportRouter = createTRPCRouter({
     .input(createStatusReportUpdateTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
+        const serviceCtx = toServiceCtx(ctx);
         const { statusReportUpdate } = await addStatusReportUpdate({
-          ctx: toServiceCtx(ctx),
+          ctx: serviceCtx,
           input: {
             statusReportId: input.statusReportId,
             status: input.status,

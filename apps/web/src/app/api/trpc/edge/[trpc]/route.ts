@@ -3,7 +3,7 @@ import { edgeRouter } from "@openstatus/api/src/edge";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
-import { createOnError, guardTRPCSource } from "@/trpc/shared";
+import { createOnError, guardTRPCSource } from "../../../../../trpc/shared";
 
 export const runtime = "edge";
 

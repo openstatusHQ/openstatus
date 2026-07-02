@@ -30,13 +30,13 @@ import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Link } from "@/components/common/link";
+import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
+import { useTRPC } from "../../lib/trpc/client";
+import { Link } from "../common/link";
 import {
   type StatusUpdateType,
   StatusUpdates,
-} from "@/components/status-page/status-updates";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { useTRPC } from "@/lib/trpc/client";
+} from "../status-page/status-updates";
 
 type Page = RouterOutputs["statusPage"]["get"];
 

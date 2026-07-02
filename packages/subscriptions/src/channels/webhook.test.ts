@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
 import { webhookPayloadSchema } from "../payload";
 import type { PageUpdate, Subscription } from "../types";
@@ -15,7 +17,21 @@ import {
 const SLACK_URL = "https://hooks.slack.com/services/T1/B1/XXX";
 const DISCORD_URL = "https://discord.com/api/webhooks/1/xxx";
 
-let fetchMock: any;
+let fetchMock: Stub<typeof globalThis>;
+
+function setFetch(
+  impl: (
+    input: Request | string | URL,
+    init?: RequestInit,
+  ) => Promise<Response>,
+) {
+  fetchMock?.restore();
+  fetchMock = stub(globalThis, "fetch", impl);
+}
+
+function resolveFetch(response: Response) {
+  setFetch(() => Promise.resolve(response));
+}
 
 function makeSub(overrides: Partial<Subscription> = {}): Subscription {
   return {
@@ -46,11 +62,13 @@ function makeUpdate(overrides: Partial<PageUpdate> = {}): PageUpdate {
 }
 
 beforeEach(() => {
-  fetchMock = spyOn(global, "fetch");
+  fetchMock = stub(globalThis, "fetch", () =>
+    Promise.resolve(new Response(null, { status: 200 })),
+  );
 });
 
 afterEach(() => {
-  fetchMock.mockRestore();
+  fetchMock.restore();
 });
 
 // ─── validateWebhookConfig ────────────────────────────────────────────────────
@@ -99,7 +117,7 @@ describe("sendWebhookVerification", () => {
   });
 
   test("resolves when fetch returns 200", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub();
     await expect(
       sendWebhookVerification(sub, "https://example.com/verify/abc"),
@@ -107,7 +125,7 @@ describe("sendWebhookVerification", () => {
   });
 
   test("throws when fetch returns a non-ok status", async () => {
-    fetchMock.mockResolvedValue(
+    resolveFetch(
       new Response(null, { status: 500, statusText: "Server Error" }),
     );
     const sub = makeSub();
@@ -117,15 +135,15 @@ describe("sendWebhookVerification", () => {
   });
 
   test("posts to the correct URL with the expected payload", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub({
       token: "my-token",
       webhookUrl: "https://hooks.example.com/sub",
     });
     await sendWebhookVerification(sub, "https://example.com/verify/my-token");
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const [url, init] = fetchMock.calls[0].args;
     expect(url).toBe("https://hooks.example.com/sub");
     expect(init?.method).toBe("POST");
     const body = JSON.parse(init?.body as string);
@@ -141,11 +159,11 @@ describe("sendWebhookNotifications", () => {
   test("skips subscriptions without a webhookUrl", async () => {
     const sub = makeSub({ webhookUrl: undefined });
     await sendWebhookNotifications([sub], makeUpdate());
-    expect(fetchMock).not.toHaveBeenCalled();
+    assertSpyCalls(fetchMock, 0);
   });
 
   test("sends a POST request to each webhook URL", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub1 = makeSub({
       webhookUrl: "https://hooks.slack.com/services/T1/B1/aaa",
     });
@@ -155,29 +173,79 @@ describe("sendWebhookNotifications", () => {
 
     await sendWebhookNotifications([sub1, sub2], makeUpdate());
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const urls = fetchMock.mock.calls.map(([url]: [string]) => url);
+    assertSpyCalls(fetchMock, 2);
+    const urls = fetchMock.calls.map((c) => c.args[0]);
     expect(urls).toContain("https://hooks.slack.com/services/T1/B1/aaa");
     expect(urls).toContain("https://hooks.slack.com/services/T2/B2/bbb");
   });
 
-  test("drops subscriptions with non-Slack/Discord URLs", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+  test("sends a generic JSON payload to non-Slack/Discord URLs", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
     const generic = makeSub({
       id: 101,
       webhookUrl: "https://example.com/webhook",
     });
     const slack = makeSub({ id: 102, webhookUrl: SLACK_URL });
 
-    await sendWebhookNotifications([generic, slack], makeUpdate());
+    await sendWebhookNotifications(
+      [generic, slack],
+      makeUpdate({ updateId: 42 }),
+    );
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe(SLACK_URL);
+    assertSpyCalls(fetchMock, 2);
+    const byUrl = new Map<string, any>(
+      fetchMock.calls.map((c) => {
+        const [url, init] = c.args as [string, RequestInit];
+        return [url, JSON.parse(init.body as string)];
+      }),
+    );
+    expect(byUrl.get("https://example.com/webhook").type).toBe("status_report");
+    expect(byUrl.get(SLACK_URL).attachments).toBeDefined();
+  });
+
+  test("the status_report body sent over the wire satisfies webhookPayloadSchema (v1)", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({ webhookUrl: "https://example.com/webhook" });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({
+        status: "investigating",
+        updateId: 42,
+        componentsWithImpact: [
+          { id: 7, name: "API", impact: "partial_outage" },
+        ],
+      }),
+    );
+
+    const [, init] = fetchMock.calls[0].args;
+    const sentBody = JSON.parse(init?.body as string);
+    const result = webhookPayloadSchema.safeParse(sentBody);
+    expect(result.success).toBe(true);
+  });
+
+  test("the maintenance body sent over the wire satisfies webhookPayloadSchema (v1)", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({ webhookUrl: "https://example.com/webhook" });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({
+        status: "maintenance",
+        startsAt: "2026-04-22T02:00:00Z",
+        endsAt: "2026-04-22T03:00:00Z",
+        pageComponentsWithId: [{ id: 7, name: "API" }],
+      }),
+    );
+
+    const [, init] = fetchMock.calls[0].args;
+    const sentBody = JSON.parse(init?.body as string);
+    const result = webhookPayloadSchema.safeParse(sentBody);
+    expect(result.success).toBe(true);
   });
 
   test("applies custom headers from channelConfig", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub({
       channelConfig: JSON.stringify({
         headers: [{ key: "X-Custom-Header", value: "my-value" }],
@@ -186,19 +254,20 @@ describe("sendWebhookNotifications", () => {
 
     await sendWebhookNotifications([sub], makeUpdate());
 
-    const [, init] = fetchMock.mock.calls[0];
+    const [, init] = fetchMock.calls[0].args;
     const headers = init?.headers as Record<string, string>;
     expect(headers["X-Custom-Header"]).toBe("my-value");
   });
 
-  test("continues sending to remaining webhooks when one fails", async () => {
-    fetchMock
-      .mockRejectedValueOnce(new Error("Network error"))
-      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+  test("continues sending to remaining webhooks when one keeps failing", async () => {
+    const failUrl = "https://hooks.slack.com/services/T1/B1/fail";
+    setFetch((input) =>
+      String(input) === failUrl
+        ? Promise.reject(new Error("Network error"))
+        : Promise.resolve(new Response(null, { status: 200 })),
+    );
 
-    const sub1 = makeSub({
-      webhookUrl: "https://hooks.slack.com/services/T1/B1/fail",
-    });
+    const sub1 = makeSub({ webhookUrl: failUrl });
     const sub2 = makeSub({
       webhookUrl: "https://hooks.slack.com/services/T2/B2/succeed",
     });
@@ -207,7 +276,39 @@ describe("sendWebhookNotifications", () => {
       sendWebhookNotifications([sub1, sub2], makeUpdate()),
     ).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const calls = fetchMock.calls.map((c) => String(c.args[0]));
+    expect(calls).toContain("https://hooks.slack.com/services/T2/B2/succeed");
+  });
+
+  test("retries transient failures then succeeds", async () => {
+    let attempts = 0;
+    setFetch(() => {
+      attempts += 1;
+      return Promise.resolve(
+        attempts < 3
+          ? new Response(null, {
+              status: 503,
+              statusText: "Service Unavailable",
+            })
+          : new Response(null, { status: 200 }),
+      );
+    });
+
+    await expect(
+      sendWebhookNotifications([makeSub()], makeUpdate()),
+    ).resolves.toBeUndefined();
+
+    expect(attempts).toBe(3);
+  });
+
+  test("does not retry non-retryable 4xx responses", async () => {
+    resolveFetch(
+      new Response(null, { status: 400, statusText: "Bad Request" }),
+    );
+
+    await sendWebhookNotifications([makeSub()], makeUpdate());
+
+    assertSpyCalls(fetchMock, 1);
   });
 });
 
@@ -235,31 +336,31 @@ describe("detectWebhookFlavor", () => {
 
 describe("sendWebhookNotifications (flavor detection)", () => {
   test("emits Slack blocks payload for hooks.slack.com URLs", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub({ webhookUrl: SLACK_URL });
 
     await sendWebhookNotifications([sub], makeUpdate());
 
-    const [, init] = fetchMock.mock.calls[0];
+    const [, init] = fetchMock.calls[0].args;
     const body = JSON.parse(init?.body as string);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].blocks).toBeInstanceOf(Array);
   });
 
   test("emits Discord embed payload for discord.com URLs", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub({ webhookUrl: DISCORD_URL });
 
     await sendWebhookNotifications([sub], makeUpdate());
 
-    const [, init] = fetchMock.mock.calls[0];
+    const [, init] = fetchMock.calls[0].args;
     const body = JSON.parse(init?.body as string);
     expect(body.embeds).toBeInstanceOf(Array);
     expect(body.embeds[0].title).toBe("Test Incident");
   });
 
   test("Slack payload includes manage/unsubscribe links", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub({
       token: "tok-123",
       pageSlug: "demo",
@@ -267,7 +368,7 @@ describe("sendWebhookNotifications (flavor detection)", () => {
 
     await sendWebhookNotifications([sub], makeUpdate());
 
-    const [, init] = fetchMock.mock.calls[0];
+    const [, init] = fetchMock.calls[0].args;
     const stringified = init?.body as string;
     expect(stringified).toContain("https://demo.openstatus.dev/manage/tok-123");
     expect(stringified).toContain(
@@ -276,7 +377,7 @@ describe("sendWebhookNotifications (flavor detection)", () => {
   });
 
   test("Slack payload uses custom domain when present", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     const sub = makeSub({
       token: "tok-123",
       customDomain: "status.partner.com",
@@ -284,9 +385,52 @@ describe("sendWebhookNotifications (flavor detection)", () => {
 
     await sendWebhookNotifications([sub], makeUpdate());
 
-    const [, init] = fetchMock.mock.calls[0];
+    const [, init] = fetchMock.calls[0].args;
     const stringified = init?.body as string;
     expect(stringified).toContain("https://status.partner.com/manage/tok-123");
+  });
+
+  test("Slack payload links to the event details and the page origin", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({ pageSlug: "demo", pageName: "Demo" });
+
+    await sendWebhookNotifications([sub], makeUpdate({ id: 99 }));
+
+    const [, init] = fetchMock.calls[0].args;
+    const body = JSON.parse(init?.body as string);
+    const stringified = init?.body as string;
+    // title stays in a plain_text header block
+    expect(body.attachments[0].blocks[0]).toMatchObject({
+      type: "header",
+      text: { type: "plain_text", text: "Test Incident" },
+    });
+    expect(stringified).toContain(
+      "<https://demo.openstatus.dev/events/report/99|View details>",
+    );
+    expect(stringified).toContain("<https://demo.openstatus.dev|Demo>");
+  });
+
+  test("Discord embed url points at the event; maintenance uses the maintenance path", async () => {
+    resolveFetch(new Response(null, { status: 200 }));
+    const sub = makeSub({
+      webhookUrl: DISCORD_URL,
+      pageSlug: "demo",
+      pageName: "Demo",
+    });
+
+    await sendWebhookNotifications(
+      [sub],
+      makeUpdate({ id: 7, status: "maintenance" }),
+    );
+
+    const [, init] = fetchMock.calls[0].args;
+    const body = JSON.parse(init?.body as string);
+    expect(body.embeds[0].url).toBe(
+      "https://demo.openstatus.dev/events/maintenance/7",
+    );
+    expect(body.embeds[0].fields[1].value).toBe(
+      "[Demo](https://demo.openstatus.dev)",
+    );
   });
 });
 
@@ -329,11 +473,12 @@ describe("buildGenericPayload", () => {
     expect(payload.data.status_report).toMatchObject({
       id: 12,
       title: "API degraded",
+      url: "https://acme.openstatus.dev/events/report/12",
       update: {
         id: 42,
         status: "investigating",
         message: "Looking into it.",
-        created_at: "2026-04-21T09:59:58Z",
+        occurred_at: "2026-04-21T09:59:58Z",
       },
       page: {
         id: 42,
@@ -379,6 +524,7 @@ describe("buildGenericPayload", () => {
     expect(payload.data.maintenance).toMatchObject({
       id: 17,
       title: "DB upgrade",
+      url: "https://acme.openstatus.dev/events/maintenance/17",
       message: "Rolling primary.",
       starts_at: "2026-04-22T02:00:00Z",
       ends_at: "2026-04-22T03:00:00Z",
@@ -438,13 +584,22 @@ describe("buildTestPayload", () => {
     expect(payload.embeds).toBeInstanceOf(Array);
   });
 
-  test("generic flavor returns type='test' JSON", () => {
+  test("generic flavor returns enveloped type='test' JSON", () => {
     const payload = buildTestPayload("generic") as {
+      version: string;
       type: string;
-      message: string;
+      data: { test: { message: string; timestamp: string } };
     };
+    expect(payload.version).toBe("1");
     expect(payload.type).toBe("test");
-    expect(typeof payload.message).toBe("string");
+    expect(typeof payload.data.test.message).toBe("string");
+    expect(typeof payload.data.test.timestamp).toBe("string");
+  });
+
+  test("generic output satisfies the canonical webhookPayloadSchema contract", () => {
+    expect(
+      webhookPayloadSchema.safeParse(buildTestPayload("generic")).success,
+    ).toBe(true);
   });
 });
 
@@ -452,14 +607,14 @@ describe("buildTestPayload", () => {
 
 describe("sendTestWebhookRequest", () => {
   test("POSTs flavor-appropriate payload", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     await sendTestWebhookRequest({
       url: "https://example.com/hook",
       flavor: "generic",
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const [url, init] = fetchMock.calls[0].args;
     expect(url).toBe("https://example.com/hook");
     expect(init?.method).toBe("POST");
     const body = JSON.parse(init?.body as string);
@@ -467,9 +622,7 @@ describe("sendTestWebhookRequest", () => {
   });
 
   test("throws on non-2xx response", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(null, { status: 404, statusText: "Not Found" }),
-    );
+    resolveFetch(new Response(null, { status: 404, statusText: "Not Found" }));
     await expect(
       sendTestWebhookRequest({
         url: "https://example.com/hook",
@@ -479,14 +632,14 @@ describe("sendTestWebhookRequest", () => {
   });
 
   test("passes custom headers", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    resolveFetch(new Response(null, { status: 200 }));
     await sendTestWebhookRequest({
       url: "https://example.com/hook",
       flavor: "generic",
       headers: { "X-Custom": "abc" },
     });
 
-    const [, init] = fetchMock.mock.calls[0];
+    const [, init] = fetchMock.calls[0].args;
     const headers = init?.headers as Record<string, string>;
     expect(headers["X-Custom"]).toBe("abc");
   });

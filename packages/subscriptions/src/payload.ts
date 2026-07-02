@@ -8,7 +8,7 @@ export const WEBHOOK_PAYLOAD_VERSION = "1" as const;
 const componentSchema = z.object({
   id: z.number().int(),
   name: z.string(),
-  impact: pageComponentImpactSchema,
+  impact: pageComponentImpactSchema.nullish(),
 });
 
 const pageSchema = z.object({
@@ -19,8 +19,8 @@ const pageSchema = z.object({
 });
 
 const subscriptionSchema = z.object({
-  manage_url: z.string().nullable(),
-  unsubscribe_url: z.string().nullable(),
+  manage_url: z.string().nullish(),
+  unsubscribe_url: z.string().nullish(),
 });
 
 export const statusReportWebhookSchema = z.object({
@@ -30,11 +30,12 @@ export const statusReportWebhookSchema = z.object({
     status_report: z.object({
       id: z.number().int(),
       title: z.string(),
+      url: z.url(),
       update: z.object({
         id: z.number().int(),
         status: statusReportStatusSchema,
         message: z.string(),
-        created_at: z.string(),
+        occurred_at: z.string(),
       }),
       page: pageSchema,
       components: z.array(componentSchema),
@@ -50,6 +51,7 @@ export const maintenanceWebhookSchema = z.object({
     maintenance: z.object({
       id: z.number().int(),
       title: z.string(),
+      url: z.url(),
       message: z.string(),
       starts_at: z.string().optional(),
       ends_at: z.string().optional(),
@@ -60,9 +62,21 @@ export const maintenanceWebhookSchema = z.object({
   subscription: subscriptionSchema,
 });
 
+export const testWebhookSchema = z.object({
+  version: z.literal(WEBHOOK_PAYLOAD_VERSION),
+  type: z.literal("test"),
+  data: z.object({
+    test: z.object({
+      message: z.string(),
+      timestamp: z.string(),
+    }),
+  }),
+});
+
 export const webhookPayloadSchema = z.discriminatedUnion("type", [
   statusReportWebhookSchema,
   maintenanceWebhookSchema,
+  testWebhookSchema,
 ]);
 
 export type WebhookPayload = z.infer<typeof webhookPayloadSchema>;

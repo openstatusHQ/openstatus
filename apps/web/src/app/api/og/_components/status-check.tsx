@@ -1,6 +1,6 @@
 import type { Tracker } from "@openstatus/tracker";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../../../../lib/utils";
 
 export function StatusCheck({ tracker }: { tracker: Tracker }) {
   const details = tracker.currentDetails;

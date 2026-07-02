@@ -1,9 +1,8 @@
 import { Tracker } from "@openstatus/tracker";
 import { ImageResponse } from "next/og";
 
-import { DESCRIPTION, TITLE } from "@/lib/metadata/shared-metadata";
-import { api } from "@/trpc/server";
-
+import { DESCRIPTION, TITLE } from "../../../../lib/metadata/shared-metadata";
+import { api } from "../../../../trpc/server";
 import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";
 import { SIZE, calSemiBold, interLight, interRegular } from "../utils";

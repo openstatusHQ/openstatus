@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test } from "bun:test";
-
+import { expect } from "@std/expect";
+import { beforeEach, describe, test } from "@std/testing/bdd";
 import type { z } from "zod";
 
 import type { monitorRegionSchema } from "../src/schema/constants";

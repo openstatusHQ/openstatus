@@ -1,15 +1,8 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  jest,
-  spyOn,
-  test,
-} from "bun:test";
-
 import type { Monitor } from "@openstatus/db/src/schema";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
@@ -34,7 +27,7 @@ function createNotification() {
   });
 }
 
-function parseRequestBody(call: ReturnType<typeof spyOn>): {
+function parseRequestBody(call: Stub<typeof globalThis>): {
   messageRequests: Array<{
     receiver: {
       contacts: Array<{ identifierKey: string; identifierValue: string }>;
@@ -47,22 +40,21 @@ function parseRequestBody(call: ReturnType<typeof spyOn>): {
     };
   }>;
 } {
-  const body = (call as ReturnType<typeof spyOn>).mock.calls[0][1]?.body;
+  const body = call.calls[0].args[1]?.body;
   return JSON.parse(body as string);
 }
 
 describe("WhatsApp Notifications (Bird)", () => {
-  let fetchMock: ReturnType<typeof spyOn>;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    fetchMock.restore();
   });
 
   test("sendAlert calls Bird API with alert template", async () => {
@@ -74,11 +66,11 @@ describe("WhatsApp Notifications (Bird)", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const url = fetchMock.mock.calls[0][0] as string;
+    assertSpyCalls(fetchMock, 1);
+    const url = fetchMock.calls[0].args[0] as string;
     expect(url).toMatch(BIRD_URL_PATTERN);
 
-    const options = fetchMock.mock.calls[0][1] as RequestInit;
+    const options = fetchMock.calls[0].args[1] as RequestInit;
     expect(options.headers).toHaveProperty("Authorization");
     expect((options.headers as Record<string, string>).Authorization).toMatch(
       /^AccessKey /,
@@ -115,7 +107,7 @@ describe("WhatsApp Notifications (Bird)", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
     const body = parseRequestBody(fetchMock);
     expect(body.messageRequests[0].template.projectId).toBe(
       "2068001e-330d-4093-8d06-7071e9d34aa1",
@@ -137,7 +129,7 @@ describe("WhatsApp Notifications (Bird)", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
     const body = parseRequestBody(fetchMock);
     expect(body.messageRequests[0].template.projectId).toBe(
       "c9a842d9-cf9e-4a13-8cde-024d57e29143",
@@ -153,7 +145,7 @@ describe("WhatsApp Notifications (Bird)", () => {
   test("sendTest calls Bird API with test template and openstat.us URL", async () => {
     await sendTest({ phoneNumber: "+33623456789" });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
     const body = parseRequestBody(fetchMock);
     expect(body.messageRequests[0].receiver.contacts[0].identifierValue).toBe(
       "+33623456789",

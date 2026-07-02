@@ -1,23 +1,21 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Ntfy Notifications", () => {
-  let fetchMock: any = undefined;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    if (fetchMock) {
-      fetchMock.mockRestore();
-    }
+    fetchMock.restore();
   });
 
   const createMockMonitor = () => ({
@@ -72,8 +70,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://ntfy.sh/my-topic");
     expect(callArgs[1].method).toBe("post");
     expect(callArgs[1].body).toContain("API Health Check");
@@ -96,8 +94,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://ntfy.example.com/my-topic");
   });
 
@@ -116,8 +114,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[1].headers.Authorization).toBe("Bearer test-token-123");
   });
 
@@ -135,8 +133,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[1].body).toContain("error: Connection timeout");
   });
 
@@ -155,8 +153,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[1].body).toContain("is up again");
   });
 
@@ -173,8 +171,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[1].headers.Authorization).toBe("Bearer test-token-123");
   });
 
@@ -193,8 +191,8 @@ describe("Ntfy Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[1].body).toContain("is degraded");
   });
 
@@ -204,8 +202,8 @@ describe("Ntfy Notifications", () => {
     });
 
     expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://ntfy.sh/test-topic");
     expect(callArgs[1].body).toBe("This is a test message from OpenStatus");
     expect(callArgs[1].headers).not.toHaveProperty("Authorization");
@@ -218,8 +216,8 @@ describe("Ntfy Notifications", () => {
     });
 
     expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://ntfy.example.com/test-topic");
   });
 
@@ -230,13 +228,14 @@ describe("Ntfy Notifications", () => {
     });
 
     expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[1].headers.Authorization).toBe("Bearer test-token");
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -257,11 +256,12 @@ describe("Ntfy Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 
   test("Send Test returns false on error", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -270,6 +270,6 @@ describe("Ntfy Notifications", () => {
     });
 
     expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 });

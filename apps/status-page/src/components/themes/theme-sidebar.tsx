@@ -58,8 +58,8 @@ import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
 
-import { searchParamsParsers } from "@/app/(public)/search-params";
-import { recomputeStyles } from "@/components/status-page/floating-button";
+import { searchParamsParsers } from "../../app/(public)/search-params";
+import { recomputeStyles } from "../status-page/floating-button";
 
 type ThemeBuilderColor = {
   label: string;

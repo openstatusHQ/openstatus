@@ -7,7 +7,7 @@ import {
 import { db } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 import { TRPCError, initTRPC } from "@trpc/server";
-import { type NextRequest, after } from "next/server";
+import { type NextRequest, after } from "next/server.js";
 import superjson from "superjson";
 import { ZodError, treeifyError } from "zod";
 

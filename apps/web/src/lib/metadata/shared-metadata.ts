@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import type { MDXData } from "@/content/utils";
+import type { MDXData } from "../../content/utils";
 
 export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE = "The Compliance-First Status Page";

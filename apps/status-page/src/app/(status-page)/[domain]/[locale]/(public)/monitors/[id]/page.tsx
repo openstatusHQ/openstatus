@@ -15,27 +15,27 @@ import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
 
-import { ButtonBack } from "@/components/button/button-back";
-import { ButtonCopyLink } from "@/components/button/button-copy-link";
+import { ButtonBack } from "../../../../../../../components/button/button-back";
+import { ButtonCopyLink } from "../../../../../../../components/button/button-copy-link";
 import {
   ChartAreaPercentiles,
   ChartAreaPercentilesSkeleton,
-} from "@/components/chart/chart-area-percentiles";
+} from "../../../../../../../components/chart/chart-area-percentiles";
 import {
   ChartBarUptime,
   ChartBarUptimeSkeleton,
-} from "@/components/chart/chart-bar-uptime";
+} from "../../../../../../../components/chart/chart-bar-uptime";
 import {
   ChartLineRegions,
   ChartLineRegionsSkeleton,
-} from "@/components/chart/chart-line-regions";
-import { StatusBlankMonitors } from "@/components/status-page/status-blank";
+} from "../../../../../../../components/chart/chart-line-regions";
+import { StatusBlankMonitors } from "../../../../../../../components/status-page/status-blank";
 import {
   StatusChartContent,
   StatusChartDescription,
   StatusChartHeader,
   StatusChartTitle,
-} from "@/components/status-page/status-charts";
+} from "../../../../../../../components/status-page/status-charts";
 import {
   StatusMonitorTabs,
   StatusMonitorTabsContent,
@@ -44,14 +44,13 @@ import {
   StatusMonitorTabsTriggerLabel,
   StatusMonitorTabsTriggerValue,
   StatusMonitorTabsTriggerValueSkeleton,
-} from "@/components/status-page/status-monitor-tabs";
+} from "../../../../../../../components/status-page/status-monitor-tabs";
 import {
   formatMillisecondsRange,
   formatNumber,
   formatPercentage,
-} from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
-
+} from "../../../../../../../lib/formatter";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
