@@ -1,0 +1,6 @@
+/* Needed to fix the import aliases */
+{
+  "imports": {
+    "@/": "./src/",
+  },
+}
