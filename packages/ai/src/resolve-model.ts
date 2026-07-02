@@ -1,4 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type { LanguageModel } from "ai";
 
 // Hosted openstatus.dev defaults, resolved through the Vercel AI Gateway as
@@ -12,8 +13,6 @@ const GATEWAY_MODEL_PAID = "anthropic/claude-sonnet-4.5";
 function readEnv(name: string): string | undefined {
   return process.env[name]?.trim() || undefined;
 }
-
-export type WorkspacePlanTier = "free" | (string & {});
 
 /**
  * Resolve the chat model from environment, provider-agnostic.
@@ -30,7 +29,7 @@ export type WorkspacePlanTier = "free" | (string & {});
 export function resolveChatModel({
   plan,
 }: {
-  plan: WorkspacePlanTier;
+  plan: WorkspacePlan;
 }): LanguageModel | null {
   const baseURL = readEnv("AI_BASE_URL");
   if (baseURL) {

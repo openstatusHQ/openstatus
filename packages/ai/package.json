@@ -21,6 +21,7 @@
     "ai": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/db": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/bun": "latest",
     "typescript": "catalog:"
