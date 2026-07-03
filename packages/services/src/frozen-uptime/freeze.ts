@@ -25,17 +25,19 @@ export async function freezeMonitorMonth(args: {
   const input = FreezeMonitorMonthInput.parse(args.input);
 
   const db = ctx.db ?? defaultDb;
-  await withBusyRetry(() =>
+  const owner = await withBusyRetry(() =>
     getMonitorInWorkspace({
       tx: db,
       id: input.monitorId,
       workspaceId: ctx.workspace.id,
     }),
   );
+  // attribute the row to the monitor's own workspace, not the caller's claim;
+  // the scoped fetch above pins them equal (and non-null)
   const rows = await withBusyRetry(() =>
     db
       .insert(frozenMonitorUptime)
-      .values({ workspaceId: ctx.workspace.id, ...input })
+      .values({ ...input, workspaceId: owner.workspaceId ?? ctx.workspace.id })
       .onConflictDoNothing({
         target: [frozenMonitorUptime.monitorId, frozenMonitorUptime.month],
       })

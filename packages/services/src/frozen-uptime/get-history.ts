@@ -5,7 +5,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type ServiceContext, defaultTb, getReadDb } from "../context";
-import { NotFoundError } from "../errors";
+import { ForbiddenError, NotFoundError } from "../errors";
 import {
   type Event,
   dayCoverage,
@@ -148,6 +148,9 @@ export async function getUptimeHistory(args: {
 }): Promise<UptimeHistoryResult> {
   const { ctx } = args;
   const input = GetUptimeHistoryInput.parse(args.input);
+  if (!ctx.workspace.limits["uptime-history"]) {
+    throw new ForbiddenError("Uptime history is not enabled on this plan.");
+  }
   const db = getReadDb(ctx);
   const now = args.now ?? new Date();
   const nowMs = now.getTime();

@@ -23,7 +23,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
-import { NotFoundError } from "../../errors";
+import { ForbiddenError, NotFoundError } from "../../errors";
 import type { ComputeCountRow } from "../compute";
 import { monthDays } from "../compute";
 import { getUptimeHistory } from "../get-history";
@@ -767,12 +767,37 @@ describe("getUptimeHistory", () => {
     });
   });
 
-  test("workspace scoping: another workspace's page is NotFound", async () => {
+  test("throws ForbiddenError when plan disables uptime-history", async () => {
     await withTestTransaction(async (tx) => {
-      const testPage = await insertPage(tx);
+      // Free plan: limits["uptime-history"] === false. Guard fires before
+      // any page lookup, so a fake id is fine.
       await expect(
         getUptimeHistory({
           ctx: { ...freeCtx, db: tx },
+          input: { pageId: 999_999 },
+          pipes: makePipes([]),
+          now,
+          sleep: noSleep,
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("workspace scoping: another workspace's page is NotFound", async () => {
+    await withTestTransaction(async (tx) => {
+      const testPage = await insertPage(tx);
+      // enable the limit so the scoping check (not the plan gate) is what fires
+      const otherCtx = {
+        ...freeCtx,
+        workspace: {
+          ...freeCtx.workspace,
+          limits: { ...freeCtx.workspace.limits, "uptime-history": true },
+        },
+        db: tx,
+      };
+      await expect(
+        getUptimeHistory({
+          ctx: otherCtx,
           input: { pageId: testPage.id },
           pipes: makePipes([]),
           now,
