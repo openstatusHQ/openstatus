@@ -1,6 +1,7 @@
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
 import { NotFoundError } from "@openstatus/services";
+import { getUptimeHistory } from "@openstatus/services/frozen-uptime";
 import {
   type CreatePageInput,
   // `CreatePageInput` re-exports the drizzle insert schema so routers
@@ -147,6 +148,19 @@ export const pageRouter = createTRPCRouter({
         return await getPage({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  getUptimeHistory: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getUptimeHistory({
+          ctx: toServiceCtx(ctx),
+          input: { pageId: input.id },
         });
       } catch (err) {
         toTRPCError(err);

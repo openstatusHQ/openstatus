@@ -53,6 +53,8 @@ export interface DataTableProps<TData, TValue> {
   setSorting?: React.Dispatch<React.SetStateAction<SortingState>>;
   pagination?: PaginationState;
   setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
+  columnVisibility?: VisibilityState;
+  setColumnVisibility?: React.Dispatch<React.SetStateAction<VisibilityState>>;
 }
 
 export function DataTable<TData, TValue>({
@@ -74,11 +76,13 @@ export function DataTable<TData, TValue>({
   setSorting,
   pagination,
   setPagination,
+  columnVisibility,
+  setColumnVisibility,
 }: DataTableProps<TData, TValue>) {
   // oxlint-disable-next-line typescript/no-explicit-any
   const [globalFilter, setGlobalFilter] = React.useState<any>();
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
+  const [internalColumnVisibility, setInternalColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);
   const [internalPagination, setInternalPagination] =
     React.useState<PaginationState>(defaultPagination);
@@ -94,13 +98,16 @@ export function DataTable<TData, TValue>({
   const setSortingState = setSorting ?? setInternalSorting;
   const paginationState = pagination ?? internalPagination;
   const setPaginationState = setPagination ?? setInternalPagination;
+  const columnVisibilityState = columnVisibility ?? internalColumnVisibility;
+  const setColumnVisibilityState =
+    setColumnVisibility ?? setInternalColumnVisibility;
 
   const table = useReactTable({
     data,
     columns,
     state: {
       sorting: sortingState,
-      columnVisibility,
+      columnVisibility: columnVisibilityState,
       rowSelection,
       pagination: paginationState,
       columnFilters: columnFiltersState,
@@ -110,7 +117,7 @@ export function DataTable<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSortingState,
     onColumnFiltersChange: setColumnFiltersState,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: setColumnVisibilityState,
     onPaginationChange: setPaginationState,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
