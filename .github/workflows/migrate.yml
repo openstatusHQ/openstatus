@@ -1,5 +1,6 @@
 name: Migrate DB
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -25,10 +26,10 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: 🔥 Install bun
-        uses: oven-sh/setup-bun@v2
+      - name: 🦕 Install deno
+        uses: denoland/setup-deno@v2
         with:
-          bun-version: latest
+          deno-version: v2.x
 
       - name: 📥 Download deps
         run: pnpm install
