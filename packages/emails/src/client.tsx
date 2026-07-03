@@ -34,14 +34,14 @@ function chunk<T>(array: T[], size: number): T[][] {
   return result;
 }
 
-// parse a `"Name <email>"` (or bare `"email"`) string into autosend's address object.
+// parse a `"Name <email>"` (or bare `"email"`) literal into autosend's address object. For our own hardcoded from/replyTo literals only — never recipients.
 export function toEmailAddress(input: string): {
   email: string;
   name?: string;
 } {
   const match = input.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
   return match
-    ? { name: match[1] || undefined, email: match[2] }
+    ? { name: match[1] || undefined, email: match[2].trim() }
     : { email: input.trim() };
 }
 
@@ -71,7 +71,7 @@ export class EmailClient {
           "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
         ),
         subject: "How's it going with OpenStatus?",
-        to: toEmailAddress(req.to),
+        to: { email: req.to },
         react: <FollowUpEmail />,
       });
 
@@ -98,7 +98,7 @@ export class EmailClient {
       ),
       subject: "How's it going with OpenStatus?",
       react: <FollowUpEmail />,
-      recipients: req.to.map((email) => toEmailAddress(email)),
+      recipients: req.to.map((email) => ({ email })),
     });
 
     if (!result.success) {
@@ -131,7 +131,7 @@ export class EmailClient {
           "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
         ),
         subject: "How's the Slack app working for you?",
-        to: toEmailAddress(req.to),
+        to: { email: req.to },
         react: <SlackFeedbackEmail />,
       });
 
@@ -158,7 +158,7 @@ export class EmailClient {
       ),
       subject: "How's the Slack app working for you?",
       react: <SlackFeedbackEmail />,
-      recipients: req.to.map((email) => toEmailAddress(email)),
+      recipients: req.to.map((email) => ({ email })),
     });
 
     if (!result.success) {
@@ -225,7 +225,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                ...toEmailAddress(subscriber.email),
+                email: subscriber.email,
                 dynamicData: { unsubscribeUrl, manageUrl },
               };
             }),
@@ -271,7 +271,7 @@ export class EmailClient {
         subject: `You've been invited to join ${
           req.workspaceName ?? "OpenStatus"
         }`,
-        to: toEmailAddress(req.to),
+        to: { email: req.to },
         react: <TeamInvitationEmail {...req} />,
       });
 
@@ -300,7 +300,7 @@ export class EmailClient {
           "OpenStatus <notifications@notifications.openstatus.dev>",
         ),
         subject: `${req.name}: ${req.type.toUpperCase()}`,
-        to: toEmailAddress(req.to),
+        to: { email: req.to },
         html,
       });
 
@@ -330,7 +330,7 @@ export class EmailClient {
           "Status Page <notifications@notifications.openstatus.dev>",
         ),
         subject: `Confirm your subscription to ${req.page}`,
-        to: toEmailAddress(req.to),
+        to: { email: req.to },
         react: <PageSubscriptionEmail {...req} />,
       });
 
@@ -360,7 +360,7 @@ export class EmailClient {
           "Status Page <notifications@notifications.openstatus.dev>",
         ),
         subject: `Authenticate to ${req.page}`,
-        to: toEmailAddress(req.to),
+        to: { email: req.to },
         react: <StatusPageMagicLinkEmail {...req} />,
       });
 
@@ -430,7 +430,7 @@ export class EmailClient {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
-                ...toEmailAddress(subscriber.email),
+                email: subscriber.email,
                 dynamicData: { unsubscribeUrl, manageUrl },
               };
             }),
