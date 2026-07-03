@@ -42,7 +42,13 @@ type UptimeHistoryEvent = Pick<
 >;
 
 type UptimeHistoryRow = {
-  component: { id: number; name: string; type: "monitor" | "static" };
+  component: {
+    id: number;
+    name: string;
+    type: "monitor" | "static";
+    /** for event links, null for static components */
+    monitorId: number | null;
+  };
   /** "YYYY-MM" → percentage; null = no data recorded, NEVER "down" */
   months: Record<string, number | null>;
   rolling: Record<HistoryWindowKey, number | null>;
@@ -331,6 +337,7 @@ export async function getUptimeHistory(args: {
         id: c.id,
         name: c.name,
         type: c.type === "static" ? ("static" as const) : ("monitor" as const),
+        monitorId: c.monitorId,
       },
       months: Object.fromEntries(
         months.map((k) => [k, values.get(k)?.percentage ?? null]),

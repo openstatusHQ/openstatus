@@ -1,10 +1,11 @@
-import { StatusBarEvent } from "@openstatus/ui/components/blocks/status-bar";
+import { formatDateRange } from "@openstatus/ui/components/blocks/status.utils";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@openstatus/ui/components/ui/hover-card";
 import { Separator } from "@openstatus/ui/components/ui/separator";
+import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Fragment } from "react";
@@ -16,14 +17,20 @@ import {
 } from "@/data/status-page-history";
 import { cn } from "@/lib/utils";
 
-// maintenances have no detail route (sheet-edited on the list page);
-// incidents would need the monitor id — left unlinked like the status page
-function eventHref(event: HistoryEvent, pageId: string): string | null {
+// maintenances have no detail route (sheet-edited on the list page)
+function eventHref(
+  event: HistoryEvent,
+  pageId: string,
+  monitorId: number | null,
+): string | null {
   if (event.type === "report") {
     return `/status-pages/${pageId}/status-reports/${event.id}`;
   }
   if (event.type === "maintenance") {
     return `/status-pages/${pageId}/maintenances`;
+  }
+  if (event.type === "incident" && monitorId !== null) {
+    return `/monitors/${monitorId}/incidents`;
   }
   return null;
 }
@@ -44,6 +51,42 @@ const indicatorStyles: Record<UptimeStatus, string> = {
   "no-data": "bg-muted-foreground/30",
 };
 
+const eventIndicatorStyles: Record<HistoryEvent["type"], string> = {
+  incident: "bg-destructive",
+  report: "bg-warning",
+  maintenance: "bg-info",
+};
+
+// local copy of the status-page StatusBarEvent so dashboard tweaks
+// don't leak into the public blocks
+function EventItem({ event }: { event: HistoryEvent }) {
+  if (!event.from) return null;
+  const duration = event.to
+    ? formatDistanceStrict(event.from, event.to)
+    : "ongoing";
+  return (
+    <div className="text-muted-foreground group-hover/event:text-foreground grid gap-0.5">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "size-2.5 shrink-0 rounded-[2px]",
+            eventIndicatorStyles[event.type],
+          )}
+        />
+        <span className="truncate">{event.name}</span>
+      </div>
+      <div className="text-muted-foreground">
+        <span>{formatDateRange(event.from, event.to ?? undefined)}</span>
+        {duration !== "0 seconds" && (
+          <span className="text-muted-foreground/70 ml-1.5 font-mono">
+            {duration}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const statusLabels: Record<UptimeStatus, string> = {
   operational: "Operational",
   degraded: "Degraded",
@@ -57,11 +100,13 @@ export function TableCellUptime({
   isCurrent,
   monthLabel,
   events = [],
+  monitorId = null,
 }: {
   percentage: number | null;
   isCurrent?: boolean;
   monthLabel: string;
   events?: HistoryEvent[];
+  monitorId?: number | null;
 }) {
   const { id: pageId } = useParams<{ id: string }>();
   const cell = cellFromPercentage(percentage, isCurrent);
@@ -81,7 +126,7 @@ export function TableCellUptime({
       </HoverCardTrigger>
       <HoverCardContent
         align="center"
-        className="border-border/50 grid w-auto max-w-[18rem] min-w-[12rem] gap-1.5 rounded-lg p-0 px-2.5 py-1.5 text-xs shadow-xl"
+        className="border-border/50 grid w-auto max-w-[20rem] min-w-[12rem] gap-1.5 rounded-lg p-0 px-2.5 py-1.5 text-xs shadow-xl"
       >
         <div className="flex items-center justify-between gap-4 font-medium">
           <span>{monthLabel}</span>
@@ -111,18 +156,11 @@ export function TableCellUptime({
             <div className="grid gap-1">
               {events.map((event) => {
                 const key = `${event.type}-${event.id}`;
-                const href = eventHref(event, pageId);
-                const node = (
-                  <StatusBarEvent
-                    type={event.type}
-                    name={event.name}
-                    from={event.from}
-                    to={event.to}
-                  />
-                );
+                const href = eventHref(event, pageId, monitorId);
+                const node = <EventItem event={event} />;
                 if (!href) return <Fragment key={key}>{node}</Fragment>;
                 return (
-                  <Link key={key} href={href}>
+                  <Link key={key} href={href} className="group/event">
                     {node}
                   </Link>
                 );

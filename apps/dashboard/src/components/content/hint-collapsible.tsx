@@ -41,7 +41,8 @@ export function HintCollapsibleTrigger({
       )}
       {...props}
     >
-      <div className="space-y-1">{children}</div>
+      {/* spans with display:block — a <button> only allows phrasing content */}
+      <span className="block space-y-1">{children}</span>
       <ChevronDown className="text-muted-foreground mt-0.5 size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
     </CollapsibleTrigger>
   );
@@ -51,14 +52,14 @@ export function HintCollapsibleTitle({
   children,
   className,
   ...props
-}: React.ComponentProps<"p">) {
+}: React.ComponentProps<"span">) {
   return (
-    <p
-      className={cn("text-sm leading-none font-semibold", className)}
+    <span
+      className={cn("block text-sm leading-none font-semibold", className)}
       {...props}
     >
       {children}
-    </p>
+    </span>
   );
 }
 
@@ -66,11 +67,14 @@ export function HintCollapsibleDescription({
   children,
   className,
   ...props
-}: React.ComponentProps<"p">) {
+}: React.ComponentProps<"span">) {
   return (
-    <p className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <span
+      className={cn("text-muted-foreground block text-sm", className)}
+      {...props}
+    >
       {children}
-    </p>
+    </span>
   );
 }
 

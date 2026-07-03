@@ -55,6 +55,7 @@ function monthColumns(months: string[]): ColumnDef<HistoryRow>[] {
           isCurrent={isCurrent}
           monthLabel={monthKeyToFullLabel(key)}
           events={eventsForMonth(row.original.events, key)}
+          monitorId={row.original.component.monitorId}
         />
       ),
       enableSorting: false,
