@@ -3,7 +3,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 
 const noteVariants = cva(
-  "flex items-center gap-2 rounded-xl border [&>svg]:shrink-0 [&>svg]:text-current",
+  "flex items-center gap-2 rounded-lg border [&>svg]:shrink-0 [&>svg]:text-current",
   {
     variants: {
       variant: {

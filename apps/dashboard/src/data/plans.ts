@@ -40,6 +40,10 @@ export const config: Record<
         value: "monitor-values-visibility",
         label: "Toggle numbers visibility",
       },
+      // {
+      //   value: "uptime-history",
+      //   label: "Uptime history (24 months)",
+      // },
       {
         value: "status-subscribers",
         label: "Subscribers",

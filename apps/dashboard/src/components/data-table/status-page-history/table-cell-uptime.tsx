@@ -4,7 +4,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@openstatus/ui/components/ui/hover-card";
-import { Separator } from "@openstatus/ui/components/ui/separator";
 import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -87,14 +86,6 @@ function EventItem({ event }: { event: HistoryEvent }) {
   );
 }
 
-const statusLabels: Record<UptimeStatus, string> = {
-  operational: "Operational",
-  degraded: "Degraded",
-  down: "Down",
-  "in-progress": "In progress",
-  "no-data": "No data",
-};
-
 export function TableCellUptime({
   percentage,
   isCurrent,
@@ -143,7 +134,7 @@ export function TableCellUptime({
                 indicatorStyles[cell.status],
               )}
             />
-            <span>{statusLabels[cell.status]}</span>
+            <span>Uptime</span>
             <span className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
               {cell.percentage.toFixed(2)}
               <span className="text-muted-foreground font-normal">%</span>
@@ -152,7 +143,7 @@ export function TableCellUptime({
         )}
         {events.length > 0 && (
           <>
-            <Separator className="-mx-2.5 w-auto" />
+            <div className="bg-border -mx-2.5 h-px" />
             <div className="grid gap-1">
               {events.map((event) => {
                 const key = `${event.type}-${event.id}`;

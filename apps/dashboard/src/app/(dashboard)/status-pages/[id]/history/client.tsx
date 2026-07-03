@@ -3,10 +3,18 @@
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Info, Lock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
+import { Note, NoteButton } from "@/components/common/note";
+import {
+  BillingOverlay,
+  BillingOverlayButton,
+  BillingOverlayContainer,
+  BillingOverlayDescription,
+} from "@/components/content/billing-overlay";
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -28,6 +36,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { getColumns } from "@/components/data-table/status-page-history/columns";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
   MetricCard,
   MetricCardGroup,
@@ -44,17 +54,29 @@ import {
 } from "@/data/status-page-history";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { buildExampleHistory } from "./examples";
 import { searchParamsParsers } from "./search-params";
 
 export function Client() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const [{ window }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const isLimited = workspace?.limits["uptime-history"] === false;
 
   // one 24-month fetch; the window tabs only toggle column visibility
-  const { data: history } = useQuery(
-    trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+  const { data: liveHistory } = useQuery({
+    ...trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+    enabled: !!workspace && !isLimited,
+  });
+
+  const exampleHistory = useMemo(
+    () => (isLimited ? buildExampleHistory() : null),
+    [isLimited],
   );
+  const history = isLimited ? exampleHistory : liveHistory;
 
   const columns = useMemo(
     () => getColumns(history?.months ?? [], window),
@@ -80,7 +102,7 @@ export function Client() {
             <div>
               <SectionTitle>History</SectionTitle>
               <SectionDescription>
-                Long-term uptime, frozen as immutable monthly snapshots.
+                Long-term uptime, build from your page's components.
               </SectionDescription>
             </div>
             <Tabs
@@ -97,6 +119,8 @@ export function Client() {
             </Tabs>
           </SectionHeaderRow>
         </SectionHeader>
+      </Section>
+      <Section>
         <MetricCardGroup className="md:grid-cols-4 lg:grid-cols-4">
           <MetricCard variant="success">
             <MetricCardHeader>
@@ -133,7 +157,32 @@ export function Client() {
             </MetricCardValue>
           </MetricCard>
         </MetricCardGroup>
-        {hasAnyData ? (
+        {isLimited ? (
+          <BillingOverlayContainer>
+            <div className="overflow-x-auto">
+              <DataTable
+                columns={columns}
+                data={history.rows}
+                columnVisibility={columnVisibility}
+                defaultPagination={{ pageIndex: 0, pageSize: 100 }}
+              />
+            </div>
+            <BillingOverlay>
+              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
+                <Lock />
+                Upgrade
+              </BillingOverlayButton>
+              <BillingOverlayDescription>
+                Keep an overview of your uptime history for the last 24 months.
+              </BillingOverlayDescription>
+            </BillingOverlay>
+            <UpgradeDialog
+              open={openDialog}
+              onOpenChange={setOpenDialog}
+              limit="uptime-history"
+            />
+          </BillingOverlayContainer>
+        ) : hasAnyData ? (
           <div className="overflow-x-auto">
             <DataTable
               columns={columns}
@@ -215,6 +264,15 @@ export function Client() {
             </p>
           </HintCollapsibleContent>
         </HintCollapsible>
+        {!isLimited ? (
+          <Note>
+            <Info />
+            If there are any missing months, please contact us.
+            <FormDialogSupportContact>
+              <NoteButton variant="default">Request Backfill</NoteButton>
+            </FormDialogSupportContact>
+          </Note>
+        ) : null}
       </Section>
     </SectionGroup>
   );
