@@ -239,7 +239,7 @@ export function FormGeneral({
                   </FormControl>
                   <FormMessage />
                   <FormDescription>
-                    Displayed on the status page.
+                    Internal name, not visible to the public.
                   </FormDescription>
                 </FormItem>
               )}

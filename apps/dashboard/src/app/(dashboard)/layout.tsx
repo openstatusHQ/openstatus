@@ -2,7 +2,9 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@openstatus/ui/components/ui/sidebar";
+import { cookies } from "next/headers";
 
+import { DismissedNotesProvider } from "@/components/common/note-dismissible";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import {
   LEFT_SIDEBAR_COOKIE,
@@ -16,17 +18,24 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const defaultOpen = await getSidebarDefaultOpen(LEFT_SIDEBAR_COOKIE, true);
+  const cookieStore = await cookies();
+  const dismissedNotes = cookieStore
+    .getAll()
+    .filter((c) => c.name.startsWith("note_") && c.value === "false")
+    .map((c) => c.name);
 
   return (
-    <HydrateSidebar>
-      <SidebarProvider
-        defaultOpen={defaultOpen}
-        cookieName={LEFT_SIDEBAR_COOKIE}
-      >
-        <AppSidebar />
-        <SidebarInset>{children}</SidebarInset>
-      </SidebarProvider>
-    </HydrateSidebar>
+    <DismissedNotesProvider dismissed={dismissedNotes}>
+      <HydrateSidebar>
+        <SidebarProvider
+          defaultOpen={defaultOpen}
+          cookieName={LEFT_SIDEBAR_COOKIE}
+        >
+          <AppSidebar />
+          <SidebarInset>{children}</SidebarInset>
+        </SidebarProvider>
+      </HydrateSidebar>
+    </DismissedNotesProvider>
   );
 }
 

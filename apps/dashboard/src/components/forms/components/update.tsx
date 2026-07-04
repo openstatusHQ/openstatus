@@ -1,7 +1,7 @@
 "use client";
 
 import type { PageConfiguration } from "@openstatus/db/src/schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ import { FormImport, type ImportFormValues } from "./form-import";
 export function FormComponentsUpdate() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [formKey, setFormKey] = useState(0);
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -37,6 +38,10 @@ export function FormComponentsUpdate() {
         // placeholders, causing the server's diff to treat real rows as
         // "removed" (delete) and placeholders as "new" (create).
         await Promise.all([refetch(), refetchComponents()]);
+        // NOTE: invalidate workspace to update the usage (getting-started checklist)
+        queryClient.invalidateQueries({
+          queryKey: trpc.workspace.get.queryKey(),
+        });
         setFormKey((k) => k + 1);
       },
     }),
@@ -52,6 +57,10 @@ export function FormComponentsUpdate() {
     trpc.import.run.mutationOptions({
       onSuccess: async () => {
         await Promise.all([refetch(), refetchComponents(), refetchMonitors()]);
+        // NOTE: invalidate workspace to update the usage (getting-started checklist)
+        queryClient.invalidateQueries({
+          queryKey: trpc.workspace.get.queryKey(),
+        });
         setFormKey((k) => k + 1);
       },
     }),

@@ -8,7 +8,8 @@ import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 
-import { Note, NoteButton } from "@/components/common/note";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   BillingOverlay,
   BillingOverlayButton,
@@ -265,13 +266,13 @@ export function Client() {
           </HintCollapsibleContent>
         </HintCollapsible>
         {!isLimited ? (
-          <Note>
+          <NoteDismissible>
             <Info />
             If there are any missing months, please contact us.
             <FormDialogSupportContact>
               <NoteButton variant="default">Request Backfill</NoteButton>
             </FormDialogSupportContact>
-          </Note>
+          </NoteDismissible>
         ) : null}
       </Section>
     </SectionGroup>

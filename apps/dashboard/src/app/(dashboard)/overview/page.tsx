@@ -5,7 +5,8 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { Bot, List, Search } from "lucide-react";
 import Link from "next/link";
 
-import { Note, NoteButton } from "@/components/common/note";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -131,13 +132,13 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Note>
+      <NoteDismissible cookieKey="note_overview_slack_agent">
         <Bot />
         Use our Slack agent to manage your status pages and incidents.
         <NoteButton variant="default" asChild>
           <Link href="/agents">Learn more</Link>
         </NoteButton>
-      </Note>
+      </NoteDismissible>
       <Section>
         <SectionHeader>
           <SectionTitle>Overview</SectionTitle>
@@ -168,29 +169,16 @@ export default function Page() {
       </Section>
       <Section>
         <SectionHeader>
-          <SectionTitle>Incidents</SectionTitle>
+          <SectionTitle>Status Reports</SectionTitle>
           <SectionDescription>
-            Incidents over the last 7 days.
+            Status reports over the last 7 days.
           </SectionDescription>
-        </SectionHeader>
-        {incidents.length > 0 ? (
-          <DataTable columns={incidentsColumns} data={incidents} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No incidents found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Reports</SectionTitle>
-          <SectionDescription>Reports over the last 7 days.</SectionDescription>
         </SectionHeader>
         {statusReports.length > 0 ? (
           <DataTableStatusReports statusReports={statusReports} />
         ) : (
           <EmptyStateContainer>
-            <EmptyStateTitle>No reports found</EmptyStateTitle>
+            <EmptyStateTitle>No status reports found</EmptyStateTitle>
           </EmptyStateContainer>
         )}
       </Section>
@@ -206,6 +194,21 @@ export default function Page() {
         ) : (
           <EmptyStateContainer>
             <EmptyStateTitle>No maintenances found</EmptyStateTitle>
+          </EmptyStateContainer>
+        )}
+      </Section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Incidents</SectionTitle>
+          <SectionDescription>
+            Monitor incidents over the last 7 days.
+          </SectionDescription>
+        </SectionHeader>
+        {incidents.length > 0 ? (
+          <DataTable columns={incidentsColumns} data={incidents} />
+        ) : (
+          <EmptyStateContainer>
+            <EmptyStateTitle>No Monitor incidents found</EmptyStateTitle>
           </EmptyStateContainer>
         )}
       </Section>

@@ -7,7 +7,8 @@ import NextLink from "next/link";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
-import { Note, NoteButton } from "@/components/common/note";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   Section,
   SectionDescription,
@@ -60,7 +61,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Note>
+      <NoteDismissible cookieKey="note_status_reports_component_impacts">
         <Gauge />
         Status reports now support per-component impacts.
         <NoteButton variant="default" asChild>
@@ -71,7 +72,7 @@ export default function Page() {
             Learn more
           </NextLink>
         </NoteButton>
-      </Note>
+      </NoteDismissible>
       <Section>
         <SectionHeaderRow>
           <SectionHeader>

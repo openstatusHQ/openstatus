@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Palette } from "lucide-react";
 import Link from "next/link";
 
-import { Note, NoteButton } from "@/components/common/note";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   SectionDescription,
   SectionGroup,
@@ -25,7 +26,7 @@ export function Client() {
 
   return (
     <SectionGroup>
-      <Note>
+      <NoteDismissible cookieKey="note_status_pages_themes">
         <Palette />
         Create your own custom themes for your status pages.
         <NoteButton variant="default" asChild>
@@ -33,7 +34,7 @@ export function Client() {
             Learn more
           </Link>
         </NoteButton>
-      </Note>
+      </NoteDismissible>
       <SectionHeader>
         <SectionTitle>Status Pages</SectionTitle>
         <SectionDescription>

@@ -1,5 +1,5 @@
 import { eq } from "@openstatus/db";
-import { workspace } from "@openstatus/db/src/schema";
+import { statusReport, workspace } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -57,6 +57,7 @@ describe("getWorkspaceWithUsage", () => {
         "notifications",
         "pages",
         "pageComponents",
+        "statusReports",
         "checks",
       ] as const) {
         const value = result.usage[key];
@@ -66,6 +67,20 @@ describe("getWorkspaceWithUsage", () => {
         }
       }
       expect(result.usage.checks).toBe(0);
+    });
+  });
+
+  test("counts workspace-scoped status reports", async () => {
+    await withTestTransaction(async (tx) => {
+      await tx.insert(statusReport).values({
+        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        status: "investigating",
+        title: "svc-ws-test-status-report",
+      });
+      const result = await getWorkspaceWithUsage({
+        ctx: { ...teamCtx, db: tx },
+      });
+      expect(result.usage.statusReports).toBeGreaterThanOrEqual(1);
     });
   });
 });
