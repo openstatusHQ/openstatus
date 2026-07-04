@@ -266,7 +266,7 @@ export function Client() {
           </HintCollapsibleContent>
         </HintCollapsible>
         {!isLimited ? (
-          <NoteDismissible cookieKey="status-page-history-missing-months">
+          <NoteDismissible cookieKey="note_status_page_history_missing_months">
             <Info />
             If there are any missing months, please contact us.
             <FormDialogSupportContact>

@@ -27,7 +27,8 @@ export function NoteDismissible({
   children,
   ...props
 }: React.ComponentProps<typeof Note> & {
-  cookieKey: string;
+  // the layout seeds dismissed state only for cookies matching this prefix
+  cookieKey: `note_${string}`;
 }) {
   const dismissed = useContext(DismissedNotesContext);
   // no config: the hook's number `expires` builds an invalid cookie (session-only); the bare setter uses a valid 1y expiry
