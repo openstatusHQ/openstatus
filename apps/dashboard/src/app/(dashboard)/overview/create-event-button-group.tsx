@@ -14,11 +14,7 @@ import { useRef } from "react";
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 
-export function CreateEventButtonGroup({
-  unresolvedPageIds,
-}: {
-  unresolvedPageIds?: number[];
-}) {
+export function CreateEventButtonGroup() {
   // the maintenance sheet lives outside the dropdown — a trigger inside
   // DropdownMenuContent unmounts (and closes the sheet) when the menu closes
   const maintenanceButtonRef = useRef<HTMLButtonElement>(null);
@@ -26,7 +22,7 @@ export function CreateEventButtonGroup({
   return (
     <div>
       <ButtonGroup>
-        <FormSheetStatusReportCreate unresolvedPageIds={unresolvedPageIds}>
+        <FormSheetStatusReportCreate>
           <Button data-section="action" variant="outline" size="sm">
             <Plus />
             Create Status Report

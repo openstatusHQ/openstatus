@@ -11,7 +11,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   EmptyStateContainer,
@@ -37,16 +37,17 @@ import { useTRPC } from "@/lib/trpc/client";
  */
 export function FormSheetStatusReportCreate({
   children,
-  unresolvedPageIds = [],
 }: {
   children: React.ReactNode;
-  unresolvedPageIds?: number[];
 }) {
   const [open, setOpen] = useState(false);
   const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
+  const { data: statusReports } = useQuery(
+    trpc.statusReport.list.queryOptions({}),
+  );
 
   const pageId =
     pages?.length === 1 ? pages[0].id : (selectedPageId ?? undefined);
@@ -78,8 +79,12 @@ export function FormSheetStatusReportCreate({
     }),
   );
 
-  const hasUnresolvedIssue =
-    pageId !== undefined && unresolvedPageIds.includes(pageId);
+  const unresolvedReport =
+    pageId !== undefined
+      ? statusReports?.find(
+          (r) => r.pageId === pageId && r.status !== "resolved",
+        )
+      : undefined;
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
@@ -114,7 +119,7 @@ export function FormSheetStatusReportCreate({
             <Separator />
           </>
         ) : null}
-        {hasUnresolvedIssue ? (
+        {unresolvedReport ? (
           <>
             <p className="text-warning px-4 py-4 text-sm">
               An unresolved report already exists for this page. Consider adding

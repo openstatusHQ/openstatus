@@ -36,7 +36,7 @@ export type IncidentStatus = keyof typeof incidentStatusConfig;
 export const maintenanceStatusConfig = {
   scheduled: { label: "Scheduled", color: "text-info/80" },
   "in-progress": { label: "In Progress", color: "text-info/80" },
-  completed: { label: "Completed", color: "text-muted-foreground/80" },
+  completed: { label: "Completed", color: "text-info/80" },
 } as const;
 
 export type MaintenanceStatus = keyof typeof maintenanceStatusConfig;
@@ -157,13 +157,6 @@ export function buildOverviewData(
   const openIncidents = incidents.filter((i) => !i.resolvedAt);
   const openReports = statusReports.filter((r) => r.status !== "resolved");
   const activeMaintenances = maintenances.filter((m) => m.to >= now);
-  const unresolvedPageIds = Array.from(
-    new Set(
-      openReports
-        .map((r) => r.pageId)
-        .filter((id): id is number => id !== null),
-    ),
-  );
 
   const metrics: OverviewMetric[] = [
     {
@@ -204,7 +197,6 @@ export function buildOverviewData(
     needsAttention,
     upcomingMaintenances,
     recentlyResolved,
-    unresolvedPageIds,
     metrics,
   };
 }

@@ -127,7 +127,7 @@ export const columns: ColumnDef<OverviewEvent>[] = [
     id: "startedAt",
     accessorFn: (row) => getStartedAt(row),
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Started At" />
+      <DataTableColumnHeader column={column} title="Start" />
     ),
     cell: ({ row }) => <TableCellDate value={row.getValue("startedAt")} />,
     enableHiding: false,
@@ -138,7 +138,7 @@ export const columns: ColumnDef<OverviewEvent>[] = [
   {
     id: "endsAt",
     accessorFn: (row) => getResolvedAt(row),
-    header: "Ends At",
+    header: "End",
     cell: ({ row }) => <TableCellDate value={row.getValue("endsAt")} />,
     enableSorting: false,
     meta: {

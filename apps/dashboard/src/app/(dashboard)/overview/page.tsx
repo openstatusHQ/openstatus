@@ -33,10 +33,6 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { CreateEventButtonGroup } from "./create-event-button-group";
 
-// FIXME: the page is server side
-// whenever I change the maintenances, the page is not updated
-// we need to move the queryClient to the layout and prefetch the data there
-
 export default function Page() {
   const trpc = useTRPC();
 
@@ -52,19 +48,14 @@ export default function Page() {
   if (!monitors || !pages || !incidents || !statusReports || !maintenances)
     return null;
 
-  const {
-    needsAttention,
-    upcomingMaintenances,
-    recentlyResolved,
-    unresolvedPageIds,
-    metrics,
-  } = buildOverviewData({
-    monitors,
-    pages,
-    incidents,
-    statusReports,
-    maintenances,
-  });
+  const { needsAttention, upcomingMaintenances, recentlyResolved, metrics } =
+    buildOverviewData({
+      monitors,
+      pages,
+      incidents,
+      statusReports,
+      maintenances,
+    });
 
   return (
     <SectionGroup>
@@ -83,7 +74,7 @@ export default function Page() {
               Welcome to your OpenStatus dashboard.
             </SectionDescription>
           </SectionHeader>
-          <CreateEventButtonGroup unresolvedPageIds={unresolvedPageIds} />
+          {pages.length > 0 ? <CreateEventButtonGroup /> : null}
         </SectionHeaderRow>
         <MetricCardGroup>
           {metrics.map((metric) => {
@@ -131,7 +122,7 @@ export default function Page() {
         ) : (
           <EmptyStateContainer>
             <EmptyStateTitle>
-              All clear — nothing needs your attention
+              All clear - nothing needs your attention
             </EmptyStateTitle>
           </EmptyStateContainer>
         )}
@@ -154,9 +145,10 @@ export default function Page() {
       ) : null}
       <Section>
         <SectionHeader>
-          <SectionTitle>Recently Resolved</SectionTitle>
+          <SectionTitle>Recent Activity</SectionTitle>
           <SectionDescription>
-            Incidents, reports and maintenances from the last 7 days.
+            Resolved incidents and reports, and completed maintenances from the
+            last 7 days.
           </SectionDescription>
         </SectionHeader>
         {recentlyResolved.length > 0 ? (
@@ -168,7 +160,7 @@ export default function Page() {
           />
         ) : (
           <EmptyStateContainer>
-            <EmptyStateTitle>No recently resolved events</EmptyStateTitle>
+            <EmptyStateTitle>No recent activity</EmptyStateTitle>
           </EmptyStateContainer>
         )}
       </Section>
