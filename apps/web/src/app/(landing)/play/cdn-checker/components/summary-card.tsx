@@ -1,7 +1,6 @@
 "use client";
 
 import { CDN_LABELS } from "@openstatus/header-analysis";
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
 
 import { regionFormatter } from "@/lib/checker/utils";
 import { cn } from "@/lib/utils";
@@ -19,21 +18,9 @@ function ratioColor(cached: number, responded: number) {
 }
 
 export function SummaryCard() {
-  const { summary, isPending, rows } = useCdnChecker();
+  const { summary } = useCdnChecker();
 
-  if (!summary) {
-    if (isPending || rows.length > 0) {
-      return (
-        <div className="border-border text-muted-foreground border p-4">
-          Probing{" "}
-          {rows.length > 0
-            ? `${rows.length} of ${AVAILABLE_REGIONS.length} regions...`
-            : "..."}
-        </div>
-      );
-    }
-    return null;
-  }
+  if (!summary) return null;
 
   const {
     cachedRegions,
