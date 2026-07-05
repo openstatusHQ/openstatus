@@ -35,12 +35,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
-// `ignoreAlreadyInUse` makes re-adding a domain the page already owns a no-op
-// (Vercel rejects adds for domains already on the project).
-async function addDomainToVercel(
-  domain: string,
-  opts?: { ignoreAlreadyInUse?: boolean },
-) {
+async function addDomainToVercel(domain: string) {
   const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
     {
@@ -56,9 +51,6 @@ async function addDomainToVercel(
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     const code = error?.error?.code;
-    if (code === "domain_already_in_use" && opts?.ignoreAlreadyInUse) {
-      return error;
-    }
     console.error("Failed to add domain to Vercel:", { domain, error });
     throw toDomainError(domain, code);
   }
@@ -286,19 +278,14 @@ export const pageRouter = createTRPCRouter({
         });
         const newDomain = input.customDomain;
 
-        if (newDomain && !oldDomain) {
+        // unchanged saves must be a no-op — re-adding an existing domain fails on Vercel
+        if (newDomain === oldDomain) return;
+
+        if (newDomain) {
           await addDomainToVercel(newDomain);
-        } else if (oldDomain && newDomain && newDomain !== oldDomain) {
-          await addDomainToVercel(newDomain);
+        }
+        if (oldDomain) {
           await removeDomainFromVercel(oldDomain);
-        } else if (oldDomain && newDomain === "") {
-          await removeDomainFromVercel(oldDomain);
-        } else if (newDomain) {
-          // Unchanged domain re-save: ensure it exists on Vercel without
-          // failing when it already does.
-          await addDomainToVercel(newDomain, { ignoreAlreadyInUse: true });
-        } else {
-          return;
         }
 
         await updatePageCustomDomain({

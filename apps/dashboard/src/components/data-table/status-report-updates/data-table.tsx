@@ -25,7 +25,12 @@ import { ProcessMessage } from "@/components/content/process-message";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { icons } from "@/data/icons";
-import { colors, getNextStatus } from "@/data/status-report-updates.client";
+import {
+  colors,
+  defaultComponentImpacts,
+  getNextStatus,
+  toCreateStatusReportUpdateInput,
+} from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +50,9 @@ export function DataTable({
 }) {
   const reportHasImpacts = updates.some((u) => u.componentImpacts.length > 0);
   const currentImpacts = currentImpactsFromUpdates(updates);
+  const nextStatus = getNextStatus(
+    updates[updates.length - 1]?.status ?? "investigating",
+  );
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -88,33 +96,22 @@ export function DataTable({
               <Tooltip>
                 <FormSheetStatusReportUpdate
                   defaultValues={{
-                    status: getNextStatus(
-                      updates[updates.length - 1]?.status ?? "investigating",
-                    ),
-                    componentImpacts: components.map((c) => ({
-                      pageComponentId: c.id,
-                      impact: currentImpacts.get(c.id) ?? "operational",
-                    })),
+                    status: nextStatus,
+                    componentImpacts: defaultComponentImpacts({
+                      components,
+                      currentImpacts,
+                      nextStatus,
+                    }),
                   }}
                   components={components}
                   onSubmit={async (values) => {
-                    // a legacy report stays legacy unless the operator
-                    // actively sets a non-operational impact
-                    const sendImpacts =
-                      reportHasImpacts ||
-                      values.componentImpacts?.some(
-                        (ci) => ci.impact !== "operational",
-                      );
-                    await createStatusReportUpdateMutation.mutateAsync({
-                      statusReportId: reportId,
-                      message: values.message,
-                      status: values.status,
-                      componentImpacts: sendImpacts
-                        ? values.componentImpacts
-                        : undefined,
-                      date: values.date,
-                      notifySubscribers: values.notifySubscribers,
-                    });
+                    await createStatusReportUpdateMutation.mutateAsync(
+                      toCreateStatusReportUpdateInput({
+                        statusReportId: reportId,
+                        values,
+                        reportHasImpacts,
+                      }),
+                    );
                   }}
                 >
                   <TooltipTrigger asChild>

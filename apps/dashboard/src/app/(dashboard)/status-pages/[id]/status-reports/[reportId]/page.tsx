@@ -27,8 +27,10 @@ import {
 } from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import {
+  defaultComponentImpacts,
   getNextStatus,
   impactsEqual,
+  toCreateStatusReportUpdateInput,
 } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -104,36 +106,24 @@ export default function Page() {
           <FormSheetStatusReportUpdate
             defaultValues={{
               status: nextStatus,
-              componentImpacts: statusReport.pageComponents.map((c) => ({
-                pageComponentId: c.id,
-                impact:
-                  nextStatus === "resolved"
-                    ? "operational"
-                    : (currentImpacts.get(c.id) ?? "operational"),
-              })),
+              componentImpacts: defaultComponentImpacts({
+                components: statusReport.pageComponents,
+                currentImpacts,
+                nextStatus,
+              }),
             }}
             components={statusReport.pageComponents.map((c) => ({
               id: c.id,
               name: c.name,
             }))}
             onSubmit={async (values: FormValues) => {
-              // a legacy report stays legacy unless the operator actively
-              // sets a non-operational impact — never silently flip it green
-              const sendImpacts =
-                reportHasImpacts ||
-                values.componentImpacts?.some(
-                  (ci) => ci.impact !== "operational",
-                );
-              await createStatusReportUpdateMutation.mutateAsync({
-                statusReportId: statusReport.id,
-                message: values.message,
-                status: values.status,
-                componentImpacts: sendImpacts
-                  ? values.componentImpacts
-                  : undefined,
-                date: values.date,
-                notifySubscribers: values.notifySubscribers,
-              });
+              await createStatusReportUpdateMutation.mutateAsync(
+                toCreateStatusReportUpdateInput({
+                  statusReportId: statusReport.id,
+                  values,
+                  reportHasImpacts,
+                }),
+              );
             }}
           >
             <Button size="sm">

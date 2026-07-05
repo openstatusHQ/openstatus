@@ -204,4 +204,8 @@ export const Events = {
     name: "mcp_health_check",
     channel: "checker",
   },
+  CdnChecker: {
+    name: "cdn_checker",
+    channel: "checker",
+  },
 } as const satisfies Record<string, EventProps>;

@@ -28,22 +28,24 @@ export function FormComponentsUpdate() {
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
+  // Remount the form after save. Newly-added components/groups get
+  // `Date.now()` placeholder ids (see `form-components.tsx`). The
+  // server returns real ids, but RHF only reads `defaultValues` on
+  // mount — without a remount the next save would round-trip the
+  // placeholders, causing the server's diff to treat real rows as
+  // "removed" (delete) and placeholders as "new" (create).
+  const refetchAndRemount = async (...refetches: Promise<unknown>[]) => {
+    await Promise.all(refetches);
+    // invalidate workspace to update the usage (getting-started checklist)
+    queryClient.invalidateQueries({
+      queryKey: trpc.workspace.get.queryKey(),
+    });
+    setFormKey((k) => k + 1);
+  };
+
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
-      onSuccess: async () => {
-        // Remount the form after save. Newly-added components/groups get
-        // `Date.now()` placeholder ids (see `form-components.tsx`). The
-        // server returns real ids, but RHF only reads `defaultValues` on
-        // mount — without a remount the next save would round-trip the
-        // placeholders, causing the server's diff to treat real rows as
-        // "removed" (delete) and placeholders as "new" (create).
-        await Promise.all([refetch(), refetchComponents()]);
-        // NOTE: invalidate workspace to update the usage (getting-started checklist)
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
-        });
-        setFormKey((k) => k + 1);
-      },
+      onSuccess: () => refetchAndRemount(refetch(), refetchComponents()),
     }),
   );
 
@@ -55,14 +57,8 @@ export function FormComponentsUpdate() {
 
   const importMutation = useMutation(
     trpc.import.run.mutationOptions({
-      onSuccess: async () => {
-        await Promise.all([refetch(), refetchComponents(), refetchMonitors()]);
-        // NOTE: invalidate workspace to update the usage (getting-started checklist)
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
-        });
-        setFormKey((k) => k + 1);
-      },
+      onSuccess: () =>
+        refetchAndRemount(refetch(), refetchComponents(), refetchMonitors()),
     }),
   );
 

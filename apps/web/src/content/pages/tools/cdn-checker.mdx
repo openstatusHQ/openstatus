@@ -1,0 +1,99 @@
+---
+title: "CDN Cache Checker"
+publishedAt: "2026-06-07"
+author: "Thibault Le Ouay Ducasse"
+description: "Check if your CDN is actually caching from 28 regions worldwide. See cache HIT/MISS per region, which edge served you, and which CDN a website uses."
+category: "Product"
+faq:
+  - question: "What is a CDN cache checker?"
+    answer: "A CDN cache checker tests whether your CDN is serving content from its edge cache instead of your origin server. OpenStatus requests your URL from 28 regions worldwide and reads the cache headers (cf-cache-status, x-cache, x-vercel-cache, age) to report HIT, MISS, EXPIRED, STALE, BYPASS or DYNAMIC per region."
+  - question: "Why does my CDN return MISS in some regions?"
+    answer: "CDN caches are regional: each edge location keeps its own copy. A MISS in a region usually means no user has requested the asset from that edge recently, the TTL expired, or your cache rules exclude it. The first request from a region is always a MISS — run the check again to confirm whether the edge cached the response."
+  - question: "How do I know what CDN a website is using?"
+    answer: "CDNs add identifying response headers. Cloudflare adds cf-ray and cf-cache-status, Amazon CloudFront adds x-amz-cf-id and x-amz-cf-pop, Fastly adds x-served-by, Vercel adds x-vercel-id. The CDN Cache Checker fingerprints these headers automatically and shows the detected provider."
+  - question: "What is the difference between anycast and unicast CDNs?"
+    answer: "With anycast, every edge location announces the same IP address and the network routes users to the nearest one. With unicast or GeoDNS, DNS hands out different IP addresses per region. Anycast typically fails over faster; GeoDNS gives the provider more routing control. The checker infers the topology from the responses."
+---
+
+## Start monitoring your cache
+
+<Grid cols={3}>
+  <div>
+
+**Cache status per region**
+
+See HIT, MISS, EXPIRED, STALE or DYNAMIC for every region — read straight from your CDN's response headers, not guessed from latency.
+
+  </div>
+  <div>
+
+**CDN detection & edge PoP**
+
+Identify which CDN serves a website and which edge location (PoP) answered each region, with anycast vs unicast topology inference.
+
+  </div>
+  <div>
+
+**Monitor it continuously**
+
+Turn a one-off check into a monitor with an assertion on the cache header — get alerted the moment a region stops caching.
+
+  </div>
+</Grid>
+
+### How CDN caching works
+
+A CDN keeps copies of your content on edge servers close to your users. When a request arrives, the edge either serves its cached copy (a **HIT**) or forwards the request to your origin (a **MISS**) and usually stores the response for next time.
+
+Caches are regional: a HIT in Frankfurt says nothing about Tokyo. That is why checking from a single location — or only from your own machine — routinely hides cold or misconfigured regions. This tool runs the same request from 28 regions at once and reads the cache headers from every response.
+
+### Reading cache headers: HIT vs MISS vs EXPIRED vs STALE
+
+Each provider reports cache state in its own header. The checker normalizes them into one status:
+
+| Status | Meaning |
+| --- | --- |
+| `HIT` | Served from the edge cache. |
+| `MISS` | Not in cache — fetched from origin. The next request should be a HIT. |
+| `EXPIRED` | Found in cache but past its TTL — revalidated against origin. |
+| `STALE` | Served from cache while revalidating in the background (`stale-while-revalidate`). |
+| `BYPASS` | Caching explicitly skipped, e.g. a `no-cache` rule or cookie. |
+| `DYNAMIC` | Not eligible for caching (often HTML or API responses). |
+| `UNKNOWN` | No cache headers detected — there may be no CDN at all. |
+
+The vendor headers behind it:
+
+| CDN | Header | Example |
+| --- | --- | --- |
+| Cloudflare | `cf-cache-status` | `HIT` |
+| Amazon CloudFront | `x-cache` | `Hit from cloudfront` |
+| Fastly / Varnish | `x-cache` | `HIT, MISS` |
+| Akamai | `x-cache` | `TCP_HIT` |
+| Vercel | `x-vercel-cache` | `STALE` |
+| RFC 9211 (Netlify, …) | `cache-status` | `"Netlify Edge"; hit` |
+| Generic | `age` + `cache-control` | `age: 842` |
+
+### Anycast vs unicast
+
+If every region receives a response from the same edge IP, the CDN is using **anycast**: one IP announced from all locations, routed by the network to the nearest edge (Cloudflare, Fastly). If regions resolve to different IPs, the CDN uses **unicast/GeoDNS**: DNS decides per region (CloudFront, Akamai). Neither is wrong — anycast tends to fail over faster, GeoDNS gives finer routing control — but knowing which one you run matters when debugging regional anomalies.
+
+### Check cache headers from your terminal
+
+For a quick single-location check, inspect the headers with cURL:
+
+```bash
+curl -sI https://example.com/asset.js | grep -iE 'cf-cache-status|x-cache|x-vercel-cache|age|cache-control'
+```
+
+Need a more complex request? Build it with the [cURL Builder](/play/curl). Want latency instead of cache state? Use the [Global Speed Checker](/play/checker).
+
+---
+
+With OpenStatus, you can:
+
+- Verify your CDN serves cache HITs from every region after a config change.
+- Debug `cf-cache-status: MISS` and origin load spikes region by region.
+- Detect which CDN a website uses and which edge PoP answered.
+- Monitor cache status continuously with header assertions and get alerted when caching breaks.
+
+If you'd like to request additional test regions or providers, feel free to contact us at [ping@openstatus.dev](mailto:ping@openstatus.dev).

@@ -175,6 +175,7 @@ type CheckRegionRequest = {
   method?: Method;
   headers?: { value: string; key: string }[];
   body?: string;
+  signal?: AbortSignal;
 };
 
 // ============================================================================
@@ -184,7 +185,7 @@ type CheckRegionRequest = {
 export async function checkRegion(
   props: CheckRegionRequest,
 ): Promise<RegionCheckerResponse> {
-  const { url, region, method, headers, body } = props;
+  const { url, region, method, headers, body, signal } = props;
   const regionInfo = regionDict[region];
 
   let endpoint = "";
@@ -227,6 +228,7 @@ export async function checkRegion(
       ),
       body: body ? body : undefined,
     }),
+    signal,
     next: { revalidate: 0 },
   });
 
