@@ -35,7 +35,12 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
-async function addDomainToVercel(domain: string) {
+// `ignoreAlreadyInUse` makes re-adding a domain the page already owns a no-op
+// (Vercel rejects adds for domains already on the project).
+async function addDomainToVercel(
+  domain: string,
+  opts?: { ignoreAlreadyInUse?: boolean },
+) {
   const response = await fetch(
     `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
     {
@@ -50,15 +55,44 @@ async function addDomainToVercel(domain: string) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
+    const code = error?.error?.code;
+    if (code === "domain_already_in_use" && opts?.ignoreAlreadyInUse) {
+      return error;
+    }
     console.error("Failed to add domain to Vercel:", { domain, error });
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Failed to add custom domain. Please try again. If it continues, contact support.",
-    });
+    throw toDomainError(domain, code);
   }
 
   return response.json();
+}
+
+// Vercel messages leak internal project details, so map known codes to our own copy.
+function toDomainError(domain: string, code?: string): TRPCError {
+  switch (code) {
+    case "domain_already_in_use":
+      return new TRPCError({
+        code: "CONFLICT",
+        message: `The domain '${domain}' is already in use by another status page. Remove it there first or contact support.`,
+      });
+    case "invalid_domain":
+    case "not_found":
+      return new TRPCError({
+        code: "BAD_REQUEST",
+        message: `The domain '${domain}' is invalid.`,
+      });
+    case "forbidden":
+    case "domain_taken":
+      return new TRPCError({
+        code: "FORBIDDEN",
+        message: `The domain '${domain}' belongs to another team on our hosting provider. Contact support if you own it.`,
+      });
+    default:
+      return new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          "Failed to add custom domain. Please try again. If it continues, contact support.",
+      });
+  }
 }
 
 async function removeDomainFromVercel(domain: string) {
@@ -260,7 +294,9 @@ export const pageRouter = createTRPCRouter({
         } else if (oldDomain && newDomain === "") {
           await removeDomainFromVercel(oldDomain);
         } else if (newDomain) {
-          await addDomainToVercel(newDomain);
+          // Unchanged domain re-save: ensure it exists on Vercel without
+          // failing when it already does.
+          await addDomainToVercel(newDomain, { ignoreAlreadyInUse: true });
         } else {
           return;
         }
