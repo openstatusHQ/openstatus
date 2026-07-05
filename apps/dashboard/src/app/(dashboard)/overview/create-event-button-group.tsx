@@ -41,7 +41,7 @@ export function CreateEventButtonGroup() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => maintenanceButtonRef.current?.click()}
+              onSelect={() => maintenanceButtonRef.current?.click()}
             >
               <Plus className="text-muted-foreground" />
               Create Maintenance

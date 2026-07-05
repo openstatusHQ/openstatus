@@ -72,6 +72,7 @@ export function NoteButtonClose({
 }: Omit<React.ComponentProps<typeof Button>, "children">) {
   return (
     <Button
+      type="button"
       variant="ghost"
       size="icon-sm"
       aria-label="Close"

@@ -4,15 +4,19 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useState } from "react";
 
-import { DialogConfirmIncident } from "@/components/data-table/incidents/dialog-confirm";
+import {
+  DialogConfirmIncident,
+  type IncidentConfirmType,
+} from "@/components/data-table/incidents/dialog-confirm";
 
 type Incident = RouterOutputs["incident"]["list"][number];
 
 export function IncidentActionCell({ incident }: { incident: Incident }) {
-  const [open, setOpen] = useState(false);
+  // capture the action at click time so a background refetch can't flip it mid-dialog
+  const [type, setType] = useState<IncidentConfirmType | null>(null);
 
   if (incident.resolvedAt) return null;
-  const type = incident.acknowledgedAt ? "resolve" : "acknowledge";
+  const nextAction = incident.acknowledgedAt ? "resolve" : "acknowledge";
 
   return (
     <>
@@ -22,16 +26,18 @@ export function IncidentActionCell({ incident }: { incident: Incident }) {
         className="h-7"
         onClick={(e) => {
           e.stopPropagation();
-          setOpen(true);
+          setType(nextAction);
         }}
       >
-        {type === "acknowledge" ? "Acknowledge" : "Resolve"}
+        {nextAction === "acknowledge" ? "Acknowledge" : "Resolve"}
       </Button>
       <DialogConfirmIncident
         incident={incident}
         type={type}
-        open={open}
-        onOpenChange={setOpen}
+        open={type !== null}
+        onOpenChange={(open) => {
+          if (!open) setType(null);
+        }}
       />
     </>
   );

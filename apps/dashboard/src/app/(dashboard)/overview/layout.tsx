@@ -18,21 +18,10 @@ export default async function Layout({
 
   await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
   await queryClient.prefetchQuery(trpc.page.list.queryOptions());
-  await queryClient.prefetchQuery(
-    trpc.incident.list.queryOptions({
-      period: "7d",
-    }),
-  );
-  await queryClient.prefetchQuery(
-    trpc.statusReport.list.queryOptions({
-      period: "7d",
-    }),
-  );
-  await queryClient.prefetchQuery(
-    trpc.maintenance.list.queryOptions({
-      period: "7d",
-    }),
-  );
+  // inputs must match page.tsx's queries exactly — a differing input misses the cache
+  await queryClient.prefetchQuery(trpc.incident.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.statusReport.list.queryOptions({}));
+  await queryClient.prefetchQuery(trpc.maintenance.list.queryOptions());
 
   return (
     <HydrateClient>
