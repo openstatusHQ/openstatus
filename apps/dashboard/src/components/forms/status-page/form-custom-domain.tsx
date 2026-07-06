@@ -8,6 +8,11 @@ import {
   FormItem,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { isTRPCClientError } from "@trpc/client";
 import { Lock } from "lucide-react";
@@ -17,11 +22,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@openstatus/ui/components/ui/input-group";
 import { Link } from "@/components/common/link";
 import DomainConfiguration from "@/components/domains/domain-configuration";
 import { useDomainStatus } from "@/components/domains/use-domain-status";
@@ -110,7 +110,9 @@ export function FormCustomDomain({
                 <FormItem>
                   <Label>Domain</Label>
                   <InputGroup>
-                    <InputGroupAddon align="inline-start">https://</InputGroupAddon>
+                    <InputGroupAddon align="inline-start">
+                      https://
+                    </InputGroupAddon>
                     <InputGroupInput
                       placeholder="status.openstatus.dev"
                       disabled={locked}

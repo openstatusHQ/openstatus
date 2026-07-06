@@ -12,6 +12,11 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -22,11 +27,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@openstatus/ui/components/ui/input-group";
 import {
   FormCard,
   FormCardContent,

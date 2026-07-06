@@ -14,6 +14,11 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -30,11 +35,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@openstatus/ui/components/ui/input-group";
 import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { useTRPC } from "@/lib/trpc/client";
 
