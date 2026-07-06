@@ -22,8 +22,11 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import {
   FormCard,
   FormCardContent,
@@ -193,11 +196,12 @@ export function FormGeneral({
                 <FormItem>
                   <FormLabel>Slug</FormLabel>
                   <FormControl>
-                    <InputWithAddons
-                      placeholder="status"
-                      trailing=".openstatus.dev"
-                      {...field}
-                    />
+                    <InputGroup>
+                      <InputGroupInput placeholder="status" {...field} />
+                      <InputGroupAddon align="inline-end">
+                        .openstatus.dev
+                      </InputGroupAddon>
+                    </InputGroup>
                   </FormControl>
                   <FormMessage />
                   <FormDescription>

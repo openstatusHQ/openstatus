@@ -30,8 +30,11 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { ThemePickerPopover } from "@/components/forms/status-page/theme-picker";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -172,11 +175,12 @@ export function CreatePageForm({
             <FormItem>
               <FormLabel>Slug</FormLabel>
               <FormControl>
-                <InputWithAddons
-                  placeholder="status"
-                  trailing=".openstatus.dev"
-                  {...field}
-                />
+                <InputGroup>
+                  <InputGroupInput placeholder="status" {...field} />
+                  <InputGroupAddon align="inline-end">
+                    .openstatus.dev
+                  </InputGroupAddon>
+                </InputGroup>
               </FormControl>
               <FormMessage />
               <FormDescription>
