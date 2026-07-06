@@ -195,14 +195,14 @@ export function FormGeneral({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Slug</FormLabel>
-                  <FormControl>
-                    <InputGroup>
+                  <InputGroup>
+                    <FormControl>
                       <InputGroupInput placeholder="status" {...field} />
-                      <InputGroupAddon align="inline-end">
-                        .openstatus.dev
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </FormControl>
+                    </FormControl>
+                    <InputGroupAddon align="inline-end">
+                      .openstatus.dev
+                    </InputGroupAddon>
+                  </InputGroup>
                   <FormMessage />
                   <FormDescription>
                     Choose a unique subdomain for your status page (minimum 3
