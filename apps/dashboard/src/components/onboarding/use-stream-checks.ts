@@ -4,6 +4,10 @@ import type { CheckResult } from "@openstatus/services/monitor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+// Bound the run so a stalled stream (hung fetch/prime) can never leave the
+// step-1 gate disabled. Comfortably above the server's 10s per-region cap.
+const STREAM_TIMEOUT_MS = 20_000;
+
 export function useStreamChecks() {
   const [results, setResults] = useState<CheckResult[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -32,6 +36,7 @@ export function useStreamChecks() {
       setError(null);
       setIsComplete(false);
       setIsStreaming(true);
+      const timeout = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
 
       try {
         const res = await fetch("/api/onboarding/checks", {
@@ -85,6 +90,7 @@ export function useStreamChecks() {
         if ((err as Error)?.name === "AbortError") return;
         fail(err instanceof Error ? err.message : "Stream failed");
       } finally {
+        clearTimeout(timeout);
         setIsStreaming(false);
         setIsComplete(true);
         abortRef.current = null;

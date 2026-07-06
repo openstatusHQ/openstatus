@@ -115,12 +115,12 @@ export function Step1({
         <OnboardingActions>
           {isLocked ? (
             <Button onClick={onContinue} disabled={!canContinue}>
-              {isStreaming ? (
-                "Running checks…"
-              ) : (
+              {canContinue ? (
                 <>
                   Continue <ArrowRight className="size-3" />
                 </>
+              ) : (
+                "Running checks…"
               )}
             </Button>
           ) : (
