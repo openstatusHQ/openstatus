@@ -109,9 +109,17 @@ describe("generateCustomCssTemplate", () => {
   test("lists every supported css var in both blocks", () => {
     const template = generateCustomCssTemplate(THEMES.default);
     for (const name of THEME_VAR_NAMES) {
-      const occurrences = template.split(`  ${name}: `).length - 1;
+      const occurrences = template.split(`${name}: `).length - 1;
       expect(occurrences).toBe(2);
     }
+  });
+
+  test("comments out vars the theme leaves unset", () => {
+    // the default theme defines no chart colors — an empty `--chart-1: ;`
+    // would override the global default if the template were saved as-is
+    const template = generateCustomCssTemplate(THEMES.default);
+    expect(template).toContain("/* --chart-1: ; */");
+    expect(template).not.toContain("--chart-1: ;\n");
   });
 
   test("pre-fills values from the given theme", () => {

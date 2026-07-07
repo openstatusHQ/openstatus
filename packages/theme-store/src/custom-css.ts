@@ -89,14 +89,17 @@ export function validateCustomCss(customCss: string): CustomCssValidation {
 
 /**
  * A `:root` / `.dark` skeleton listing every supported CSS variable,
- * pre-filled with the given theme's values (empty where the theme has none).
- * Used as the editor placeholder in the dashboard.
+ * pre-filled with the given theme's values (commented out where the theme
+ * has none). Used as the editor placeholder in the dashboard.
  */
 export function generateCustomCssTemplate(theme?: ThemeDefinition): string {
   const block = (vars: ThemeDefinition["light"]) =>
-    THEME_VAR_NAMES.map((name) => `  ${name}: ${vars?.[name] ?? ""};`).join(
-      "\n",
-    );
+    THEME_VAR_NAMES.map((name) => {
+      const value = vars?.[name];
+      // vars the theme leaves unset are commented out — a saved empty
+      // `--x: ;` would override the global default with an empty value
+      return value ? `  ${name}: ${value};` : `  /* ${name}: ; */`;
+    }).join("\n");
   return `:root {\n${block(theme?.light ?? {})}\n}\n\n.dark {\n${block(
     theme?.dark ?? {},
   )}\n}`;
