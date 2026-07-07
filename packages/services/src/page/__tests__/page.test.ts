@@ -262,7 +262,7 @@ describe("updatePageLocales", () => {
 });
 
 describe("updatePageCustomCss", () => {
-  test("happy path sanitizes css + audit", async () => {
+  test("happy path stores css + audit", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const p = await newPage({
@@ -271,14 +271,14 @@ describe("updatePageCustomCss", () => {
       });
       await updatePageCustomCss({
         ctx,
-        input: { id: p.id, customCss: ":root { --primary: red; } </style>" },
+        input: { id: p.id, customCss: "  :root { --primary: red; }\n" },
       });
       const row = await tx
         .select()
         .from(pageTable)
         .where(eq(pageTable.id, p.id))
         .get();
-      expect(row?.customCss).toBe(":root { --primary: red; } /style>");
+      expect(row?.customCss).toBe(":root { --primary: red; }");
       await expectAuditRow({
         workspaceId: teamCtx.workspace.id,
         action: "page.update",
@@ -286,6 +286,30 @@ describe("updatePageCustomCss", () => {
         entityId: p.id,
         db: tx,
       });
+    });
+  });
+
+  test("rejects css with a style-tag breakout ('<')", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        updatePageCustomCss({
+          ctx,
+          input: { id: 1, customCss: ":root { --x: 1; } </style>" },
+        }),
+      ).rejects.toThrow("must not contain the '<' character");
+    });
+  });
+
+  test("rejects css with unbalanced braces", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        updatePageCustomCss({
+          ctx,
+          input: { id: 1, customCss: ":root { --primary: red;" },
+        }),
+      ).rejects.toThrow("unbalanced curly braces");
     });
   });
 

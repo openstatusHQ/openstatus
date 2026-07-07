@@ -22,21 +22,45 @@ export type CustomCssValidation =
   | { valid: false; errors: string[] };
 
 // Comments and quoted strings may legitimately contain braces — drop them
-// before checking balance.
+// before checking balance. Single manual pass: an equivalent lazy regex is
+// quadratic on inputs with many unclosed "/*" (CodeQL js/polynomial-redos).
 function stripCommentsAndStrings(css: string): string {
-  return css
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, "");
+  let out = "";
+  let i = 0;
+  while (i < css.length) {
+    const char = css[i];
+    if (char === "/" && css[i + 1] === "*") {
+      const end = css.indexOf("*/", i + 2);
+      i = end === -1 ? css.length : end + 2;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      let j = i + 1;
+      while (j < css.length && css[j] !== char) {
+        if (css[j] === "\\") j++;
+        j++;
+      }
+      i = j + 1;
+      continue;
+    }
+    out += char;
+    i++;
+  }
+  return out;
 }
 
 /** Structural validation for user-authored custom CSS; empty input is valid. */
 export function validateCustomCss(customCss: string): CustomCssValidation {
   const errors: string[] = [];
 
+  // early return keeps the structural scan bounded to MAX_LENGTH input
   if (customCss.length > CUSTOM_CSS_MAX_LENGTH) {
-    errors.push(
-      `Custom CSS must be at most ${CUSTOM_CSS_MAX_LENGTH} characters.`,
-    );
+    return {
+      valid: false,
+      errors: [
+        `Custom CSS must be at most ${CUSTOM_CSS_MAX_LENGTH} characters.`,
+      ],
+    };
   }
 
   if (customCss.includes("<")) {
