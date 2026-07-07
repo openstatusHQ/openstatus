@@ -171,9 +171,15 @@ describe("dispatchPageUpdate - component filtering", () => {
 
     assertSpyCalls(sendStatusReportUpdateMock, 1);
     const { subscribers } = sendStatusReportUpdateMock.calls[0].args[0];
+    const emails = subscribers.map((s: { email: string }) => s.email);
 
-    expect(subscribers).toHaveLength(1);
-    expect(subscribers[0].email).toBe(EMAILS.entirePage);
+    // Assert only against this suite's own subscribers — package test suites
+    // run in parallel against the same seeded page, so an exact count over
+    // all recipients races with concurrently inserted subscribers.
+    const ownEmails = emails.filter((e: string) =>
+      Object.values(EMAILS).includes(e),
+    );
+    expect(ownEmails).toEqual([EMAILS.entirePage]);
   });
 
   test("does not notify component subscribers when update affects a different component", async () => {
