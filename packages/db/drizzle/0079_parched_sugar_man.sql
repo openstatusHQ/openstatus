@@ -1,1 +1,0 @@
-ALTER TABLE `page` ADD `custom_theme` text;

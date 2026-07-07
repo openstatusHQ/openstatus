@@ -91,14 +91,18 @@ export function parseThemeVarsText(text: string): {
     const line = rawLine.trim();
     if (line.length === 0) continue;
     if (line.startsWith("/*") && line.endsWith("*/")) continue;
-    const match = line.match(/^(--[\w-]+)\s*:\s*(.+?);?$/);
-    if (!match) {
+    // manual split instead of a lazy regex over the whole line — the regex
+    // form backtracks quadratically on hostile input (CodeQL js/polynomial-redos)
+    const colonIndex = line.indexOf(":");
+    const name = colonIndex === -1 ? "" : line.slice(0, colonIndex).trimEnd();
+    let value = colonIndex === -1 ? "" : line.slice(colonIndex + 1).trim();
+    if (value.endsWith(";")) value = value.slice(0, -1).trimEnd();
+    if (!/^--[\w-]+$/.test(name) || value.length === 0) {
       errors.push(
         `Invalid declaration "${line}". Expected e.g. --primary: hsl(24 94% 50%);`,
       );
       continue;
     }
-    const [, name = "", value = ""] = match;
     const entryErrors = validateVarEntry(name, value);
     if (entryErrors.length > 0) {
       errors.push(...entryErrors);
