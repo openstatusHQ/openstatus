@@ -12,7 +12,7 @@ export {
 export {
   updatePageAppearance,
   updatePageConfiguration,
-  updatePageCustomCss,
+  updatePageCustomTheme,
   updatePageCustomDomain,
   updatePageGeneral,
   updatePageLinks,
@@ -30,7 +30,7 @@ export {
   pageAccessTypes,
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
-  UpdatePageCustomCssInput,
+  UpdatePageCustomThemeInput,
   UpdatePageCustomDomainInput,
   UpdatePageGeneralInput,
   UpdatePageLinksInput,

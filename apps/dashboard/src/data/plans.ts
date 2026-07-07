@@ -57,8 +57,8 @@ export const config: Record<
         label: "White Label",
       },
       {
-        value: "custom-css",
-        label: "Custom CSS",
+        value: "custom-theme",
+        label: "Custom Theme",
       },
     ],
   },

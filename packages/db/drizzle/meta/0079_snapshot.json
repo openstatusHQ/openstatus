@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "3e335317-9536-49a5-ab7c-24efd170e609",
+  "id": "c98a9824-888c-4b13-9731-b1932b03b717",
   "prevId": "80571dfe-ab0e-4531-823b-33173cedf9a2",
   "tables": {
     "workspace": {
@@ -847,8 +847,8 @@
           "autoincrement": false,
           "default": "'system'"
         },
-        "custom_css": {
-          "name": "custom_css",
+        "custom_theme": {
+          "name": "custom_theme",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

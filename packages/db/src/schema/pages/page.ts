@@ -1,4 +1,5 @@
 import type { Locale } from "@openstatus/locales";
+import type { CustomTheme } from "@openstatus/theme-store";
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
@@ -30,9 +31,9 @@ export const page = sqliteTable(
       .notNull()
       .default("system"),
 
-    // Raw CSS appended after the theme styles — takes precedence over the
-    // configured theme vars. Gated by the "custom-css" plan limit.
-    customCss: text("custom_css"),
+    // Per-mode CSS variable overrides ({ light, dark }) merged over the
+    // configured theme vars. Gated by the "custom-theme" plan limit.
+    customTheme: text("custom_theme", { mode: "json" }).$type<CustomTheme>(),
 
     // Password protecting the status page - no specific restriction on password
     password: text("password", { length: 256 }),

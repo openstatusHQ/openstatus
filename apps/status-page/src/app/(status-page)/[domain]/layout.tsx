@@ -45,13 +45,13 @@ export default async function Layout({
     <HydrateClient>
       <style
         id="theme-styles"
-        // custom css (already plan-gated + sanitized server-side) is appended
-        // after the theme so it wins the cascade: custom-css > theme
+        // custom theme vars (already plan-gated + validated server-side) are
+        // merged over the selected theme: custom-theme > theme
         // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: generatePageStyles({
             themeKey: cfg.theme,
-            customCss: page.customCss,
+            customTheme: page.customTheme,
           }),
         }}
       />
@@ -67,6 +67,7 @@ export default async function Layout({
           defaultShowUptime={cfg.uptime}
           defaultNumberOfDays={cfg.days}
           defaultCommunityTheme={cfg.theme}
+          customTheme={page.customTheme}
         >
           {children}
           <FloatingButton

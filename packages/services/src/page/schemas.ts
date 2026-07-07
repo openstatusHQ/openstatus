@@ -7,11 +7,11 @@ import {
 } from "@openstatus/db/src/schema/pages/validation";
 import { locales } from "@openstatus/locales";
 import {
-  CUSTOM_CSS_MAX_LENGTH,
-  sanitizeCustomCss,
+  hasCustomTheme,
+  sanitizeCustomTheme,
   THEME_KEYS,
   type ThemeKey,
-  validateCustomCss,
+  validateCustomTheme,
 } from "@openstatus/theme-store";
 import { z } from "zod";
 
@@ -146,16 +146,20 @@ export type UpdatePageAppearanceInput = z.infer<
   typeof UpdatePageAppearanceInput
 >;
 
-export const UpdatePageCustomCssInput = z.object({
+const themeVarsInput = z.record(z.string(), z.string());
+
+export const UpdatePageCustomThemeInput = z.object({
   id: z.number().int(),
-  // Sanitized at the boundary so a stored value can never break out of the
-  // inline <style> tag the status page renders it into. Empty / whitespace
-  // input clears the column.
-  customCss: z
-    .string()
-    .max(CUSTOM_CSS_MAX_LENGTH)
+  // Validated + sanitized at the boundary: only supported var names and
+  // values that can't break out of the inline <style> tag the status page
+  // renders them into. Empty / nullish input clears the column.
+  customTheme: z
+    .object({
+      light: themeVarsInput.optional(),
+      dark: themeVarsInput.optional(),
+    })
     .superRefine((value, ctx) => {
-      const result = validateCustomCss(value);
+      const result = validateCustomTheme(value);
       if (!result.valid) {
         for (const message of result.errors) {
           ctx.addIssue({ code: "custom", message });
@@ -164,12 +168,13 @@ export const UpdatePageCustomCssInput = z.object({
     })
     .nullish()
     .transform((v) => {
-      if (v == null) return null;
-      const sanitized = sanitizeCustomCss(v);
-      return sanitized.length > 0 ? sanitized : null;
+      if (v == null || !hasCustomTheme(v)) return null;
+      return sanitizeCustomTheme(v);
     }),
 });
-export type UpdatePageCustomCssInput = z.input<typeof UpdatePageCustomCssInput>;
+export type UpdatePageCustomThemeInput = z.input<
+  typeof UpdatePageCustomThemeInput
+>;
 
 export const UpdatePageLinksInput = z.object({
   id: z.number().int(),

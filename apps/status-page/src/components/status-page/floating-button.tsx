@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  type CustomTheme,
   THEMES,
   THEME_KEYS,
   type ThemeDefinition,
   generateThemeStyles,
+  hasCustomTheme,
+  sanitizeCustomTheme,
 } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -84,6 +87,7 @@ export function StatusPageProvider({
   defaultShowUptime = true,
   defaultNumberOfDays = 45,
   defaultCommunityTheme = "default",
+  customTheme,
 }: {
   children: React.ReactNode;
   defaultCardType?: CardType;
@@ -91,6 +95,7 @@ export function StatusPageProvider({
   defaultShowUptime?: boolean;
   defaultNumberOfDays?: NumberOfDays;
   defaultCommunityTheme?: CommunityTheme;
+  customTheme?: CustomTheme | null;
 }) {
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
@@ -108,9 +113,16 @@ export function StatusPageProvider({
 
   useEffect(() => {
     if (isMounted) {
-      recomputeStyles(communityTheme);
+      // keep the page's custom vars applied — without them this rewrite
+      // clobbers the server-rendered overrides on hydration
+      recomputeStyles(
+        communityTheme,
+        hasCustomTheme(customTheme)
+          ? sanitizeCustomTheme(customTheme)
+          : undefined,
+      );
     }
-  }, [communityTheme, isMounted]);
+  }, [communityTheme, isMounted, customTheme]);
 
   return (
     <StatusPageContext.Provider

@@ -30,7 +30,7 @@ import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
 import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
 import {
-  updatePageCustomCss,
+  updatePageCustomTheme,
   updatePageGeneral,
   updatePageLocales,
 } from "../update";
@@ -261,24 +261,33 @@ describe("updatePageLocales", () => {
   });
 });
 
-describe("updatePageCustomCss", () => {
-  test("happy path stores css + audit", async () => {
+describe("updatePageCustomTheme", () => {
+  test("happy path stores sanitized vars + audit", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const p = await newPage({
         ctx,
-        input: { title: "Css", slug: uniqueSlug("css") },
+        input: { title: "Theme", slug: uniqueSlug("theme") },
       });
-      await updatePageCustomCss({
+      await updatePageCustomTheme({
         ctx,
-        input: { id: p.id, customCss: "  :root { --primary: red; }\n" },
+        input: {
+          id: p.id,
+          customTheme: {
+            light: { "--primary": " red " },
+            dark: { "--primary": "pink" },
+          },
+        },
       });
       const row = await tx
         .select()
         .from(pageTable)
         .where(eq(pageTable.id, p.id))
         .get();
-      expect(row?.customCss).toBe(":root { --primary: red; }");
+      expect(row?.customTheme).toEqual({
+        light: { "--primary": "red" },
+        dark: { "--primary": "pink" },
+      });
       await expectAuditRow({
         workspaceId: teamCtx.workspace.id,
         action: "page.update",
@@ -289,62 +298,68 @@ describe("updatePageCustomCss", () => {
     });
   });
 
-  test("rejects css with a style-tag breakout ('<')", async () => {
+  test("rejects unknown css variables", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       await expect(
-        updatePageCustomCss({
+        updatePageCustomTheme({
           ctx,
-          input: { id: 1, customCss: ":root { --x: 1; } </style>" },
+          input: { id: 1, customTheme: { light: { "--nope": "red" } } },
         }),
-      ).rejects.toThrow("must not contain the '<' character");
+      ).rejects.toThrow("Unknown CSS variable");
     });
   });
 
-  test("rejects css with unbalanced braces", async () => {
+  test("rejects values with style-tag breakout characters", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       await expect(
-        updatePageCustomCss({
+        updatePageCustomTheme({
           ctx,
-          input: { id: 1, customCss: ":root { --primary: red;" },
+          input: {
+            id: 1,
+            customTheme: { light: { "--primary": "red;} </style>" } },
+          },
         }),
-      ).rejects.toThrow("unbalanced curly braces");
+      ).rejects.toThrow("unsupported characters");
     });
   });
 
-  test("empty css clears the column", async () => {
+  test("empty custom theme clears the column", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...teamCtx, db: tx };
       const p = await newPage({
         ctx,
-        input: { title: "Css Clear", slug: uniqueSlug("css-clear") },
+        input: { title: "Theme Clear", slug: uniqueSlug("theme-clear") },
       });
-      await updatePageCustomCss({
+      await updatePageCustomTheme({
         ctx,
-        input: { id: p.id, customCss: ".dark { --x: 1; }" },
+        input: { id: p.id, customTheme: { dark: { "--primary": "pink" } } },
       });
-      await updatePageCustomCss({ ctx, input: { id: p.id, customCss: "  " } });
+      await updatePageCustomTheme({
+        ctx,
+        input: { id: p.id, customTheme: { light: {}, dark: {} } },
+      });
       const row = await tx
         .select()
         .from(pageTable)
         .where(eq(pageTable.id, p.id))
         .get();
-      expect(row?.customCss).toBeNull();
+      expect(row?.customTheme).toBeNull();
     });
   });
 
-  test("rejects when plan lacks custom-css", async () => {
+  test("rejects when plan lacks custom-theme", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...freeCtx, db: tx };
       const p = await newPage({
         ctx,
-        input: { title: "Free Css", slug: uniqueSlug("free-css") },
+        input: { title: "Free Theme", slug: uniqueSlug("free-theme") },
       });
       await expect(
-        updatePageCustomCss({
+        updatePageCustomTheme({
           ctx,
-          input: { id: p.id, customCss: ":root { --primary: red; }" },
+          input: { id: p.id, customTheme: { light: { "--primary": "red" } } },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
     });
@@ -361,9 +376,9 @@ describe("updatePageCustomCss", () => {
         db: tx,
       };
       await expect(
-        updatePageCustomCss({
+        updatePageCustomTheme({
           ctx: readOnlyCtx,
-          input: { id: 1, customCss: ":root { --primary: red; }" },
+          input: { id: 1, customTheme: { light: { "--primary": "red" } } },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });

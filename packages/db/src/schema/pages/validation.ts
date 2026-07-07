@@ -112,8 +112,18 @@ export const pageConfigurationSchema = z.object({
 });
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
+// Loose { light, dark } var maps — write paths enforce the supported var
+// names / safe values; `.catch(null)` degrades corrupt stored json to "no
+// overrides" instead of tanking every page read.
+const themeVarsSchema = z.record(z.string(), z.string());
+export const customThemeSchema = z.object({
+  light: themeVarsSchema.optional(),
+  dark: themeVarsSchema.optional(),
+});
+
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().prefault(""),
+  customTheme: customThemeSchema.nullish().catch(null),
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   authEmailDomains: stringToArray.prefault([]),

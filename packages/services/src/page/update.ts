@@ -13,7 +13,7 @@ import {
 import {
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
-  UpdatePageCustomCssInput,
+  UpdatePageCustomThemeInput,
   UpdatePageCustomDomainInput,
   UpdatePageGeneralInput,
   UpdatePageLinksInput,
@@ -209,16 +209,16 @@ export async function updatePageAppearance(args: {
   });
 }
 
-export async function updatePageCustomCss(args: {
+export async function updatePageCustomTheme(args: {
   ctx: ServiceContext;
-  input: UpdatePageCustomCssInput;
+  input: UpdatePageCustomThemeInput;
 }): Promise<void> {
   const { ctx } = args;
   requireScope(ctx, "write");
-  const input = UpdatePageCustomCssInput.parse(args.input);
+  const input = UpdatePageCustomThemeInput.parse(args.input);
 
-  if (!ctx.workspace.limits["custom-css"]) {
-    throw new LimitExceededError("custom-css", 0);
+  if (!ctx.workspace.limits["custom-theme"]) {
+    throw new LimitExceededError("custom-theme", 0);
   }
 
   await withTransaction(ctx, async (tx) => {
@@ -230,7 +230,7 @@ export async function updatePageCustomCss(args: {
 
     const updated = await tx
       .update(page)
-      .set({ customCss: input.customCss, updatedAt: new Date() })
+      .set({ customTheme: input.customTheme, updatedAt: new Date() })
       .where(eq(page.id, existing.id))
       .returning()
       .get();

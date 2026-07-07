@@ -9,8 +9,8 @@ import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { FormAppearance } from "./form-appearance";
-import { FormCustomCss } from "./form-custom-css";
 import { FormCustomDomain } from "./form-custom-domain";
+import { FormCustomTheme } from "./form-custom-theme";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
@@ -73,8 +73,8 @@ export function FormStatusPageUpdate() {
     }),
   );
 
-  const updateCustomCssMutation = useMutation(
-    trpc.page.updateCustomCss.mutationOptions({
+  const updateCustomThemeMutation = useMutation(
+    trpc.page.updateCustomTheme.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -166,16 +166,14 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      <FormCustomCss
-        locked={workspace.limits["custom-css"] === false}
+      <FormCustomTheme
+        locked={workspace.limits["custom-theme"] === false}
         themeKey={statusPage.configuration?.theme ?? "default"}
-        defaultValues={{
-          customCss: statusPage.customCss ?? "",
-        }}
+        defaultValue={statusPage.customTheme}
         onSubmit={async (values) => {
-          await updateCustomCssMutation.mutateAsync({
+          await updateCustomThemeMutation.mutateAsync({
             id: Number.parseInt(id),
-            customCss: values.customCss,
+            customTheme: values.customTheme,
           });
         }}
       />
