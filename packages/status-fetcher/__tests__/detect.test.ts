@@ -106,6 +106,25 @@ describe("detectProvider", () => {
     expect(fetchMock.calls.length).toBe(3);
   });
 
+  it("accepts pair label drift: short-circuits even when the page is served by the api-identical peer", async () => {
+    // Migrated atlassian → incident.io (or vice versa): the pair probe still
+    // validates the current label, so detection ends without consulting the
+    // html markers that would reveal the drift. Locked-in trade-off.
+    const fetchMock = route({
+      "/api/v2/summary.json": () => json(atlassianBody),
+      "/": () => html('<script src="https://assets.incident.io/app.js">'),
+    });
+    const result = await Effect.runPromise(
+      detectProvider({
+        statusPageUrl: PAGE_URL,
+        currentProvider: "atlassian-statuspage",
+      }),
+    );
+    expect(result.currentProviderValidated).toBe(true);
+    expect(result.matches).toEqual([]);
+    expect(fetchMock.calls.length).toBe(3);
+  });
+
   it("tiebreaks the ambiguous pair to atlassian via html marker", async () => {
     route({
       "/api/v2/summary.json": () => json(atlassianBody),
