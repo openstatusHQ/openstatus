@@ -168,6 +168,7 @@ export function FormStatusPageUpdate() {
       />
       <FormCustomCss
         locked={workspace.limits["custom-css"] === false}
+        themeKey={statusPage.configuration?.theme ?? "default"}
         defaultValues={{
           customCss: statusPage.customCss ?? "",
         }}

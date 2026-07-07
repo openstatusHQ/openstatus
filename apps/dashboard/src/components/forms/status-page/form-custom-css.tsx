@@ -1,5 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CUSTOM_CSS_MAX_LENGTH } from "@openstatus/theme-store";
+import {
+  generateCustomCssTemplate,
+  THEMES,
+  validateCustomCss,
+} from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -31,17 +35,15 @@ import {
   FormCardUpgrade,
 } from "@/components/forms/form-card";
 
-const PLACEHOLDER = `:root {
-  --primary: oklch(0.55 0.2 250);
-  --radius: 0;
-}
-
-.dark {
-  --primary: oklch(0.7 0.15 250);
-}`;
-
 const schema = z.object({
-  customCss: z.string().max(CUSTOM_CSS_MAX_LENGTH),
+  customCss: z.string().superRefine((value, ctx) => {
+    const result = validateCustomCss(value);
+    if (!result.valid) {
+      for (const message of result.errors) {
+        ctx.addIssue({ code: "custom", message });
+      }
+    }
+  }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -50,11 +52,18 @@ export function FormCustomCss({
   defaultValues,
   onSubmit,
   locked,
+  themeKey,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   locked?: boolean;
+  themeKey?: string;
 }) {
+  // placeholder lists every supported css var, pre-filled with the values of
+  // the page's currently selected theme
+  const placeholder = generateCustomCssTemplate(
+    THEMES[themeKey ?? "default"] ?? THEMES.default,
+  );
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -106,8 +115,8 @@ export function FormCustomCss({
                   <FormLabel>CSS</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder={PLACEHOLDER}
-                      className="min-h-40 font-mono text-sm"
+                      placeholder={placeholder}
+                      className="min-h-60 font-mono text-sm"
                       {...field}
                     />
                   </FormControl>

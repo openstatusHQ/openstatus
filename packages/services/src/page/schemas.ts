@@ -11,6 +11,7 @@ import {
   sanitizeCustomCss,
   THEME_KEYS,
   type ThemeKey,
+  validateCustomCss,
 } from "@openstatus/theme-store";
 import { z } from "zod";
 
@@ -153,6 +154,14 @@ export const UpdatePageCustomCssInput = z.object({
   customCss: z
     .string()
     .max(CUSTOM_CSS_MAX_LENGTH)
+    .superRefine((value, ctx) => {
+      const result = validateCustomCss(value);
+      if (!result.valid) {
+        for (const message of result.errors) {
+          ctx.addIssue({ code: "custom", message });
+        }
+      }
+    })
     .nullish()
     .transform((v) => {
       if (v == null) return null;
