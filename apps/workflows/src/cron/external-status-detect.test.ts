@@ -4,6 +4,7 @@ import { describe, expect, test } from "@openstatus/test-utils";
 
 import {
   PROBE_TTL_MS,
+  clearProbeStamp,
   decideDetectionAction,
   isSuspicious,
   shouldProbe,
@@ -31,6 +32,13 @@ describe("shouldProbe", () => {
     expect(shouldProbe("a", 1000 + PROBE_TTL_MS - 1, map)).toBe(false);
     expect(shouldProbe("a", 1000 + PROBE_TTL_MS, map)).toBe(true);
     expect(shouldProbe("b", 1000, map)).toBe(true);
+  });
+
+  test("clearProbeStamp refunds the TTL", () => {
+    const map = new Map<string, number>();
+    expect(shouldProbe("a", 1000, map)).toBe(true);
+    clearProbeStamp("a", map);
+    expect(shouldProbe("a", 1001, map)).toBe(true);
   });
 });
 

@@ -31,10 +31,12 @@ import { env } from "../env";
 import {
   reportBackgroundError,
   reportDetectionStory,
+  reportDetectionWriteFailure,
   reportFetchFailure,
   runSentryCron,
 } from "../lib/sentry";
 import {
+  clearProbeStamp,
   decideDetectionAction,
   isSuspicious,
   shouldProbe,
@@ -449,6 +451,7 @@ type DetectCounts = {
   applied: number;
   configFixed: number;
   suggested: number;
+  failed: number;
 };
 
 function collectDetectItems(
@@ -530,6 +533,8 @@ function applyDetection(args: {
           "external-status detect: write failed for slug={slug}: {message}",
           { slug: entry.id, message: e.message },
         );
+        reportDetectionWriteFailure({ slug: entry.id, error: e });
+        clearProbeStamp(entry.id);
         // The merged story never fired; keep the triggering failure visible.
         if (error) {
           reportFetchFailure({ phase: "status", slug: entry.id, error });
@@ -618,12 +623,14 @@ function summarizeDetect(outcomes: DetectOutcome[]): DetectCounts {
   let applied = 0;
   let configFixed = 0;
   let suggested = 0;
+  let failed = 0;
   for (const o of outcomes) {
     if (o.kind === "applied") applied++;
     else if (o.kind === "config-fixed") configFixed++;
     else if (o.kind === "suggested") suggested++;
+    else if (o.kind === "error") failed++;
   }
-  return { probed: outcomes.length, applied, configFixed, suggested };
+  return { probed: outcomes.length, applied, configFixed, suggested, failed };
 }
 
 export async function runExternalStatusTick(): Promise<{
@@ -699,12 +706,13 @@ export async function handleExternalStatusCron(c: Context) {
       Effect.tap((res) =>
         Effect.sync(() => {
           logger.info(
-            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped), detect={detProbed} probed ({detApplied} applied, {detCfg} config-fixed, {detSuggested} suggested)",
+            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped), detect={detProbed} probed ({detApplied} applied, {detCfg} config-fixed, {detSuggested} suggested, {detFailed} failed)",
             {
               detProbed: res.detect.probed,
               detApplied: res.detect.applied,
               detCfg: res.detect.configFixed,
               detSuggested: res.detect.suggested,
+              detFailed: res.detect.failed,
               statusOk: res.status.successCount,
               statusTotal: res.status.total,
               statusFail: res.status.failureCount,

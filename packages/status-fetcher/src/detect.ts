@@ -154,6 +154,9 @@ export const detectProvider = (args: {
         return r.probe.candidates.map((c) => ({ ...c, endpoint: r.endpoint }));
       });
 
+    // Deliberate trade-off: a validating current provider ends detection, so
+    // atlassian↔incidentio label drift goes unflagged — the APIs are identical
+    // and fetching works, only the public label may lag.
     if (candidates.some((c) => c.provider === args.currentProvider)) {
       return {
         currentProviderValidated: true,

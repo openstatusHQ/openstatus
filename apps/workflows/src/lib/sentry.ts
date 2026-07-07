@@ -97,6 +97,15 @@ export function reportDetectionStory(args: {
   });
 }
 
+export function reportDetectionWriteFailure(args: {
+  slug: string;
+  error: Error;
+}): void {
+  Sentry.captureException(args.error, {
+    tags: { cron: "external-status", phase: "detect", slug: args.slug },
+  });
+}
+
 // Fires inside the per-service fetch loop, so no flush here — the tick's
 // cronCompleted/cronFailed path flushes once the tick settles.
 export function reportFetchFailure(args: {

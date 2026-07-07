@@ -116,6 +116,8 @@ const doFetch = (
     ),
   );
 
+// The body read gets its own timeout: `doFetch`'s only covers up to headers,
+// so a stalled body stream would otherwise hang callers forever.
 const fetchBody = <T>(
   opts: FetchBaseOptions,
   defaultHeaders: Record<string, string>,
@@ -123,7 +125,20 @@ const fetchBody = <T>(
 ): Effect.Effect<T, FetchError> =>
   doFetch(opts, defaultHeaders).pipe(
     Effect.retry(retryPolicy),
-    Effect.flatMap(read),
+    Effect.flatMap((response) =>
+      read(response).pipe(
+        Effect.timeoutFail({
+          duration: opts.timeout ?? DEFAULT_TIMEOUT,
+          onTimeout: () =>
+            buildFetchError(opts, {
+              kind: "timeout",
+              cause: new Error(
+                `body read timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+              ),
+            }),
+        }),
+      ),
+    ),
   );
 
 const JSON_HEADERS = {

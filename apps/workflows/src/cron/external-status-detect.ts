@@ -21,6 +21,14 @@ export function shouldProbe(
   return true;
 }
 
+// refunds the TTL after a failed write so the next tick retries
+export function clearProbeStamp(
+  slug: string,
+  map: Map<string, number> = lastProbeAt,
+): void {
+  map.delete(slug);
+}
+
 export function isSuspicious(err: FetchError): boolean {
   if (err.kind === "parse") return true;
   return (

@@ -239,6 +239,24 @@ describe("fetchText", () => {
   });
 });
 
+describe("fetchBody timeouts", () => {
+  it("times out a stalled body read", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: () => new Promise<string>(() => {}),
+        json: async () => ({}),
+      } as Response),
+    );
+    const exit = await Effect.runPromiseExit(
+      fetchText({ url: TEST_URL, timeout: "20 millis" }),
+    );
+    expect(expectFailure(exit).kind).toBe("timeout");
+  });
+});
+
 describe("fetchTextWithUrl", () => {
   it("returns text and the final URL after redirects", async () => {
     installMockFetch(() =>

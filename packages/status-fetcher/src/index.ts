@@ -1,6 +1,6 @@
 export * from "./types";
 export * from "./utils";
-export { FetchError, fetchTextWithUrl } from "./fetch";
+export { FetchError } from "./fetch";
 export type { FetchErrorKind } from "./fetch";
 export * from "./detect";
 export { fetchers } from "./fetchers";
