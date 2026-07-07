@@ -1,0 +1,1 @@
+ALTER TABLE `page` ADD `custom_css` text;

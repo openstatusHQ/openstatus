@@ -40,6 +40,7 @@ export const limitsSchema = z.object({
   "ip-restriction": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),
   "no-index": z.boolean().prefault(false),
+  "custom-css": z.boolean().prefault(false),
   /**
    * Notification limits
    */

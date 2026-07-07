@@ -7,11 +7,14 @@
   "author": "",
   "main": "src/index.ts",
   "scripts": {
-    "check": "deno check --sloppy-imports ."
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports"
   },
   "dependencies": {},
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "typescript": "catalog:"
   }
 }

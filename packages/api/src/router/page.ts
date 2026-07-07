@@ -9,6 +9,7 @@ import {
   CreatePageInput as CreatePageInputSchema,
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
+  UpdatePageCustomCssInput,
   UpdatePageCustomDomainInput,
   createPage,
   deletePage,
@@ -20,6 +21,7 @@ import {
   pageAccessTypes,
   updatePageAppearance,
   updatePageConfiguration,
+  updatePageCustomCss,
   updatePageCustomDomain,
   updatePageGeneral,
   updatePageLinks,
@@ -340,6 +342,20 @@ export const pageRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageAppearance({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateCustomCss: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(UpdatePageCustomCssInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageCustomCss({
           ctx: toServiceCtx(ctx),
           input,
         });

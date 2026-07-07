@@ -9,6 +9,7 @@ import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { FormAppearance } from "./form-appearance";
+import { FormCustomCss } from "./form-custom-css";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
@@ -69,6 +70,12 @@ export function FormStatusPageUpdate() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
+    }),
+  );
+
+  const updateCustomCssMutation = useMutation(
+    trpc.page.updateCustomCss.mutationOptions({
+      onSuccess: () => refetch(),
     }),
   );
 
@@ -156,6 +163,18 @@ export function FormStatusPageUpdate() {
             configuration: {
               theme: values.configuration.theme as ThemeKey,
             },
+          });
+        }}
+      />
+      <FormCustomCss
+        locked={workspace.limits["custom-css"] === false}
+        defaultValues={{
+          customCss: statusPage.customCss ?? "",
+        }}
+        onSubmit={async (values) => {
+          await updateCustomCssMutation.mutateAsync({
+            id: Number.parseInt(id),
+            customCss: values.customCss,
           });
         }}
       />

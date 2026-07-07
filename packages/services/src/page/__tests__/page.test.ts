@@ -1,5 +1,9 @@
 import { db, eq } from "@openstatus/db";
-import { monitor, pageComponent } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  page as pageTable,
+  pageComponent,
+} from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -25,7 +29,11 @@ import {
 import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
 import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
-import { updatePageGeneral, updatePageLocales } from "../update";
+import {
+  updatePageCustomCss,
+  updatePageGeneral,
+  updatePageLocales,
+} from "../update";
 
 const TEST_PREFIX = "svc-page-test";
 
@@ -249,6 +257,91 @@ describe("updatePageLocales", () => {
           input: { id: p.id, defaultLocale: "en", locales: ["en"] },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("updatePageCustomCss", () => {
+  test("happy path sanitizes css + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Css", slug: uniqueSlug("css") },
+      });
+      await updatePageCustomCss({
+        ctx,
+        input: { id: p.id, customCss: ":root { --primary: red; } </style>" },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customCss).toBe(":root { --primary: red; } /style>");
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("empty css clears the column", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Css Clear", slug: uniqueSlug("css-clear") },
+      });
+      await updatePageCustomCss({
+        ctx,
+        input: { id: p.id, customCss: ".dark { --x: 1; }" },
+      });
+      await updatePageCustomCss({ ctx, input: { id: p.id, customCss: "  " } });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customCss).toBeNull();
+    });
+  });
+
+  test("rejects when plan lacks custom-css", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free Css", slug: uniqueSlug("free-css") },
+      });
+      await expect(
+        updatePageCustomCss({
+          ctx,
+          input: { id: p.id, customCss: ":root { --primary: red; }" },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updatePageCustomCss({
+          ctx: readOnlyCtx,
+          input: { id: 1, customCss: ":root { --primary: red; }" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

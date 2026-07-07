@@ -6,7 +6,12 @@ import {
   slugSchema,
 } from "@openstatus/db/src/schema/pages/validation";
 import { locales } from "@openstatus/locales";
-import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
+import {
+  CUSTOM_CSS_MAX_LENGTH,
+  sanitizeCustomCss,
+  THEME_KEYS,
+  type ThemeKey,
+} from "@openstatus/theme-store";
 import { z } from "zod";
 
 export { pageAccessTypes };
@@ -139,6 +144,23 @@ export const UpdatePageAppearanceInput = z.object({
 export type UpdatePageAppearanceInput = z.infer<
   typeof UpdatePageAppearanceInput
 >;
+
+export const UpdatePageCustomCssInput = z.object({
+  id: z.number().int(),
+  // Sanitized at the boundary so a stored value can never break out of the
+  // inline <style> tag the status page renders it into. Empty / whitespace
+  // input clears the column.
+  customCss: z
+    .string()
+    .max(CUSTOM_CSS_MAX_LENGTH)
+    .nullish()
+    .transform((v) => {
+      if (v == null) return null;
+      const sanitized = sanitizeCustomCss(v);
+      return sanitized.length > 0 ? sanitized : null;
+    }),
+});
+export type UpdatePageCustomCssInput = z.input<typeof UpdatePageCustomCssInput>;
 
 export const UpdatePageLinksInput = z.object({
   id: z.number().int(),

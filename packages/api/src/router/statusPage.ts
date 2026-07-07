@@ -389,6 +389,8 @@ export const statusPageRouter = createTRPCRouter({
         .sort((a, b) => a.order - b.order);
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
+      // stored custom css stops applying when the plan no longer includes it
+      const customCss = ws.data?.limits["custom-css"] ? _page.customCss : null;
 
       const statusReports = _page.statusReports.sort((a, b) => {
         // Sort reports without updates to the beginning
@@ -425,6 +427,7 @@ export const statusPageRouter = createTRPCRouter({
 
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
+        customCss,
         monitors,
         monitorGroups,
         trackers,
@@ -507,9 +510,12 @@ export const statusPageRouter = createTRPCRouter({
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
+      // stored custom css stops applying when the plan no longer includes it
+      const customCss = ws.data?.limits["custom-css"] ? _page.customCss : null;
 
       return selectPublicPageLightSchemaWithRelation.parse({
         ..._page,
+        customCss,
         monitors,
         incidents,
         statusReports: _page.statusReports,

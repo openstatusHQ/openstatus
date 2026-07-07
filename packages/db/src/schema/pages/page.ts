@@ -30,6 +30,10 @@ export const page = sqliteTable(
       .notNull()
       .default("system"),
 
+    // Raw CSS appended after the theme styles — takes precedence over the
+    // configured theme vars. Gated by the "custom-css" plan limit.
+    customCss: text("custom_css"),
+
     // Password protecting the status page - no specific restriction on password
     password: text("password", { length: 256 }),
     // @deprecated: instead, use accessType

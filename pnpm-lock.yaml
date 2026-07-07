@@ -2787,6 +2787,12 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@std/expect':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__expect@1.0.19'
+      '@std/testing':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__testing@1.0.19'
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

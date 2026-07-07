@@ -1,5 +1,5 @@
 import { pageConfigurationSchema } from "@openstatus/db/src/schema";
-import { generateThemeStyles } from "@openstatus/theme-store";
+import { generatePageStyles } from "@openstatus/theme-store";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -45,9 +45,14 @@ export default async function Layout({
     <HydrateClient>
       <style
         id="theme-styles"
+        // custom css (already plan-gated + sanitized server-side) is appended
+        // after the theme so it wins the cascade: custom-css > theme
         // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
-          __html: generateThemeStyles(cfg.theme),
+          __html: generatePageStyles({
+            themeKey: cfg.theme,
+            customCss: page.customCss,
+          }),
         }}
       />
       <ThemeProvider

@@ -1,4 +1,6 @@
+export * from "./custom-css";
 export * from "./types";
+import { hasCustomCss, sanitizeCustomCss } from "./custom-css";
 import { DRACULA_THEME } from "./dracula";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
@@ -51,4 +53,22 @@ export function generateThemeStyles(
         ${darkVars}
       }
     `;
+}
+
+/**
+ * Styles for a status page: the configured theme, with the page's custom CSS
+ * appended after it so custom declarations win the cascade (custom-css > theme).
+ */
+export function generatePageStyles({
+  themeKey,
+  customCss,
+  overrides,
+}: {
+  themeKey?: string;
+  customCss?: string | null;
+  overrides?: Partial<ThemeDefinition>;
+}) {
+  const themeStyles = generateThemeStyles(themeKey, overrides);
+  if (!hasCustomCss(customCss)) return themeStyles;
+  return `${themeStyles}\n${sanitizeCustomCss(customCss)}`;
 }
