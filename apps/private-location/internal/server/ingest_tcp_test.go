@@ -35,6 +35,7 @@ func TestIngestTCP_DBError(t *testing.T) {
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{})
 	req.Header().Set("openstatus-token", "token123")
 	req.Msg.Id = "monitor1"
+	req.Msg.MonitorId = "monitor1"
 	req.Msg.Timestamp = 1234567890
 	resp, err := h.IngestTCP(context.Background(), req)
 	if err == nil {
@@ -74,6 +75,7 @@ func TestIngestTCP_ValidationError_InvalidTimestamp(t *testing.T) {
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
 		Id:        "tcp-123",
+		MonitorId: "5",
 		Timestamp: 0,
 	})
 	req.Header().Set("openstatus-token", "my-secret-key")
@@ -95,6 +97,7 @@ func TestIngestTCP_ValidationError_NegativeLatency(t *testing.T) {
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
 		Id:        "tcp-123",
+		MonitorId: "5",
 		Latency:   -100,
 		Timestamp: 1234567890,
 	})
