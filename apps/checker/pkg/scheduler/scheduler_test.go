@@ -65,6 +65,10 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	httpMonitor := &v1.HTTPMonitor{Id: "http1", Url: "http://openstat.us", Periodicity: "10s"}
 	tcpMonitor := &v1.TCPMonitor{Id: "tcp1", Uri: "openstatus:80", Periodicity: "10s"}
 
+	// Regression guard: the tasks scheduler never populates TaskContext.Context,
+	// so jobs must pass a non-nil context to the connect client or IngestTCP panics.
+	var tcpIngestCtxNonNil atomic.Bool
+
 	client := &mockClient{
 		MonitorsFunc: func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
 			return connect.NewResponse(&v1.MonitorsResponse{
@@ -76,6 +80,9 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 			return connect.NewResponse(&v1.IngestHTTPResponse{}), nil
 		},
 		IngestTCPFunc: func(ctx context.Context, req *connect.Request[v1.IngestTCPRequest]) (*connect.Response[v1.IngestTCPResponse], error) {
+			if ctx != nil {
+				tcpIngestCtxNonNil.Store(true)
+			}
 			return connect.NewResponse(&v1.IngestTCPResponse{}), nil
 		},
 
@@ -100,6 +107,9 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	}
 	if !jobRunner.TCPJobCalled.Load() == true {
 		t.Errorf("expected TCPJob to be called")
+	}
+	if !tcpIngestCtxNonNil.Load() {
+		t.Errorf("expected IngestTCP to receive a non-nil context")
 	}
 
 	// Remove monitors and ensure jobs are stopped

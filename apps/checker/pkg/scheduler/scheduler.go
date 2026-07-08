@@ -116,12 +116,13 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
 
 					monitor := m
+					c := context.Background()
 					log.Printf("Starting TCP job for monitor %s (%s)", monitor.Id, monitor.Uri)
-					data, err := mm.JobRunner.TCPJob(ctx.Context, monitor)
+					data, err := mm.JobRunner.TCPJob(c, monitor)
 					if err != nil {
 						log.Printf("TCP monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
 					}
-					resp, ingestErr := mm.Client.IngestTCP(ctx.Context, &connect.Request[v1.IngestTCPRequest]{
+					resp, ingestErr := mm.Client.IngestTCP(c, &connect.Request[v1.IngestTCPRequest]{
 						Msg: &v1.IngestTCPRequest{
 							MonitorId:     monitor.Id,
 							Id:            data.ID,
@@ -167,12 +168,13 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
 
 					monitor := m
+					c := context.Background()
 					log.Printf("Starting TCP job for monitor %s (%s)", monitor.Id, monitor.Uri)
-					_, err := mm.JobRunner.DNSJob(ctx.Context, monitor)
+					_, err := mm.JobRunner.DNSJob(c, monitor)
 					if err != nil {
 						log.Printf("TCP monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
 					}
-					resp, ingestErr := mm.Client.IngestDNS(ctx.Context, &connect.Request[v1.IngestDNSRequest]{
+					resp, ingestErr := mm.Client.IngestDNS(c, &connect.Request[v1.IngestDNSRequest]{
 						Msg: &v1.IngestDNSRequest{
 							MonitorId: monitor.Id,
 
