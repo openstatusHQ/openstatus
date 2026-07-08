@@ -25,6 +25,32 @@ const calSans = LocalFont({
   variable: "--font-cal",
 });
 
+const commitMono = LocalFont({
+  src: [
+    {
+      path: "../public/fonts/CommitMono-400-Regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/CommitMono-400-Italic.otf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/CommitMono-700-Regular.otf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/CommitMono-700-Italic.otf",
+      weight: "700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-commit-mono",
+});
+
 export const metadata: Metadata = {
   ...defaultMetadata,
   twitter: {
@@ -45,7 +71,7 @@ export default function RootLayout({
       <body
         className={`${
           inter.className
-        } ${inter.variable} ${calSans.variable} antialiased`}
+        } ${inter.variable} ${calSans.variable} ${commitMono.variable} antialiased`}
       >
         <PlausibleProvider domain="openstatus.dev">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
