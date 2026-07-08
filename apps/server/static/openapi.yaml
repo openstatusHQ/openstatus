@@ -2745,6 +2745,14 @@ components:
             - "null"
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: |-
+            Per-mode CSS variable overrides merged over the theme (optional).
+             Only supported variable names are accepted. Requires the custom-theme plan feature.
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
@@ -2758,6 +2766,48 @@ components:
       title: CreateStatusPageResponse
       additionalProperties: false
       description: CreateStatusPageResponse is the response after creating a status page.
+    openstatus.status_page.v1.CustomTheme:
+      type: object
+      properties:
+        light:
+          type: object
+          title: light
+          additionalProperties:
+            type: string
+            title: value
+          description: 'CSS variable overrides applied in light mode, keyed by variable name (e.g. "--primary": "hsl(24 94% 50%)").'
+        dark:
+          type: object
+          title: dark
+          additionalProperties:
+            type: string
+            title: value
+          description: CSS variable overrides applied in dark mode, keyed by variable name.
+      title: CustomTheme
+      additionalProperties: false
+      description: CustomTheme holds per-mode CSS variable overrides merged over the page theme.
+    openstatus.status_page.v1.CustomTheme.DarkEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: DarkEntry
+      additionalProperties: false
+    openstatus.status_page.v1.CustomTheme.LightEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: LightEntry
+      additionalProperties: false
     openstatus.status_page.v1.DeleteComponentGroupRequest:
       type: object
       properties:
@@ -3419,6 +3469,12 @@ components:
           type: string
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (only set when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: Per-mode CSS variable overrides merged over the theme (only set when configured).
       title: StatusPage
       additionalProperties: false
       description: StatusPage represents a full status page with all details.
@@ -3734,6 +3790,14 @@ components:
             - "null"
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: |-
+            New per-mode CSS variable overrides (optional). Omit to keep the current
+             value; send an empty message to clear. Requires the custom-theme plan feature.
       title: UpdateStatusPageRequest
       additionalProperties: false
       description: UpdateStatusPageRequest is the request to update a status page.

@@ -45,10 +45,8 @@ enum OverallStatus {
 
 // CustomTheme holds per-mode CSS variable overrides merged over the page theme.
 message CustomTheme {
-  // CSS variable overrides applied in light mode, keyed by variable name.
-  map<string, string> light = 1 [
-    (gnostic.openapi.v3.property) = {example: {yaml: "{\"--primary\": \"hsl(24 94% 50%)\"}"}}
-  ];
+  // CSS variable overrides applied in light mode, keyed by variable name (e.g. "--primary": "hsl(24 94% 50%)").
+  map<string, string> light = 1;
 
   // CSS variable overrides applied in dark mode, keyed by variable name.
   map<string, string> dark = 2;
