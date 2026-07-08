@@ -42,7 +42,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		return nil, NewValidationError(err)
 	}
 
-	ic, err := h.getIngestContext(ctx, token, req.Msg.Id)
+	ic, err := h.getIngestContext(ctx, token, req.Msg.MonitorId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

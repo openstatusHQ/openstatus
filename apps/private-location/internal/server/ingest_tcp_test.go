@@ -116,7 +116,8 @@ func TestIngestTCP_MonitorNotExist(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(http.DefaultClient, ""))
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
-		Id:        "nonexistent-monitor",
+		Id:        "tcp-123",
+		MonitorId: "nonexistent-monitor",
 		Timestamp: 1234567890,
 	})
 	req.Header().Set("openstatus-token", "my-secret-key")
@@ -137,7 +138,8 @@ func TestIngestTCP_MonitorExist(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
-		Id:            "5",
+		Id:            "tcp-result-1",
+		MonitorId:     "5",
 		Timestamp:     1234567890,
 		Latency:       50,
 		CronTimestamp: 1234567800,
@@ -159,7 +161,8 @@ func TestIngestTCP_WithError(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
-		Id:            "5",
+		Id:            "tcp-result-2",
+		MonitorId:     "5",
 		Timestamp:     1234567890,
 		Latency:       0,
 		CronTimestamp: 1234567800,
