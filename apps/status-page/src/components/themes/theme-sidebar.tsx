@@ -4,7 +4,7 @@ import {
   Check,
   ChevronDown,
   Copy,
-  PanelRightIcon,
+  PanelRight,
   RotateCcw,
 } from "@openstatus/icons";
 import {
@@ -444,7 +444,7 @@ export function SidebarTrigger({
           }}
           {...props}
         >
-          <PanelRightIcon />
+          <PanelRight />
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
       </TooltipTrigger>

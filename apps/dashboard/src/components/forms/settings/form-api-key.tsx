@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Check, Copy } from "@openstatus/icons";
+import { Calendar as CalendarIcon, Check, Copy } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogContent,

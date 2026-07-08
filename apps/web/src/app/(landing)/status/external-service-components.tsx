@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, ChevronRightIcon } from "@openstatus/icons";
+import { ChevronDown, ChevronRight } from "@openstatus/icons";
 import { StatusBar } from "@openstatus/ui/components/blocks/status-bar";
 import type {
   StatusBarData,
@@ -240,9 +240,9 @@ function SectionBlock({
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left">
         <span className="flex items-center gap-2 text-sm font-medium">
           {open ? (
-            <ChevronDownIcon className="size-4 shrink-0" />
+            <ChevronDown className="size-4 shrink-0" />
           ) : (
-            <ChevronRightIcon className="size-4 shrink-0" />
+            <ChevronRight className="size-4 shrink-0" />
           )}
           {label}
           <span className="text-muted-foreground">

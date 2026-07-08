@@ -1,5 +1,5 @@
 import {
-  BellIcon,
+  Bell,
   Cog,
   Mail,
   MessageCircle,
@@ -112,7 +112,7 @@ export const config = {
     form: FormPagerDuty,
   },
   ntfy: {
-    icon: BellIcon, // TODO: add svg icon
+    icon: Bell, // TODO: add svg icon
     label: "Ntfy",
     form: FormNtfy,
   },

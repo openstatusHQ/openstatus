@@ -2,7 +2,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
-import { Check, MinusIcon, PlusIcon } from "@openstatus/icons";
+import { Check, Minus, Plus } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -261,7 +261,7 @@ function QuantityControl({
           onClick={() => setValue(value - 1)}
           disabled={value <= 0}
         >
-          <MinusIcon />
+          <Minus />
         </Button>
         <Input
           type="number"
@@ -276,7 +276,7 @@ function QuantityControl({
           size="icon"
           onClick={() => setValue(value + 1)}
         >
-          <PlusIcon />
+          <Plus />
         </Button>
       </ButtonGroup>
     </div>

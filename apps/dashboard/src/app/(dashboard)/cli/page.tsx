@@ -1,7 +1,7 @@
 import {
   FileDown,
   FileJson,
-  Key,
+  Key as KeyIcon,
   LogIn,
   Megaphone,
   PanelTop,
@@ -54,7 +54,7 @@ const installs = [
   },
   {
     title: "Add API Key",
-    icon: Key,
+    icon: KeyIcon,
     description: (
       <>
         Or set it as an environment variable. Create an API key in your

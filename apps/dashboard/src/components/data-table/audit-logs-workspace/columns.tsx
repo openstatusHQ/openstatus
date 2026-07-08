@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { KeyIcon, MailIcon, ServerIcon } from "@openstatus/icons";
+import { Key as KeyIcon, Mail, Server as ServerIcon } from "@openstatus/icons";
 import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 import {
   Avatar,
@@ -95,7 +95,7 @@ export const columns: ColumnDef<AuditLog>[] = [
           return (
             <div className="flex items-center gap-2">
               <div className="bg-muted-foreground/10 flex size-6 items-center justify-center rounded-md">
-                <MailIcon className="text-muted-foreground size-4" />
+                <Mail className="text-muted-foreground size-4" />
               </div>
               <span className="text-muted-foreground">Subscriber</span>
             </div>

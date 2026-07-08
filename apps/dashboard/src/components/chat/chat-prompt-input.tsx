@@ -1,4 +1,4 @@
-import { CornerDownLeftIcon, SquareIcon, XIcon } from "@openstatus/icons";
+import { CornerDownLeft, Square, X } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   InputGroup,
@@ -85,11 +85,11 @@ export function ChatPromptInput({ onSubmit, onStop, status }: Props) {
                 {status === "submitted" ? (
                   <Spinner />
                 ) : status === "streaming" ? (
-                  <SquareIcon className="size-4" />
+                  <Square className="size-4" />
                 ) : status === "error" ? (
-                  <XIcon className="size-4" />
+                  <X className="size-4" />
                 ) : (
-                  <CornerDownLeftIcon className="size-4" />
+                  <CornerDownLeft className="size-4" />
                 )}
               </Button>
             </InputGroupAddon>

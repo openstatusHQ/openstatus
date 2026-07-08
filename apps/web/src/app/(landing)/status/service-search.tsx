@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchIcon } from "@openstatus/icons";
+import { Search as SearchIcon } from "@openstatus/icons";
 import {
   InputGroup,
   InputGroupAddon,

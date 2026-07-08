@@ -1,4 +1,4 @@
-import { BracesIcon, ChevronDownIcon, TableIcon } from "@openstatus/icons";
+import { Braces, ChevronDown, Table } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Collapsible,
@@ -191,7 +191,7 @@ function ToolDisclosure({
                     tabIndex={open ? 0 : -1}
                     className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
                   >
-                    <TableIcon />
+                    <Table />
                   </TabsTrigger>
                   <TabsTrigger
                     value="raw"
@@ -199,13 +199,13 @@ function ToolDisclosure({
                     tabIndex={open ? 0 : -1}
                     className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
                   >
-                    <BracesIcon />
+                    <Braces />
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
           ) : null}
-          <ChevronDownIcon
+          <ChevronDown
             className={cn(
               "text-muted-foreground size-4 shrink-0 transition-transform",
               open && "rotate-180",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Search, X } from "@openstatus/icons";
+import { Loader2, Search as SearchIcon, X as XIcon } from "@openstatus/icons";
 import {
   Command,
   CommandEmpty,
@@ -310,7 +310,7 @@ export function CmdK({
         onClick={() => setOpen(true)}
       >
         <span className="text-muted-foreground truncate">
-          Search<span className="text-xs">...</span>
+          SearchIcon<span className="text-xs">...</span>
         </span>
         <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
           <span className="text-xs">⌘</span>K
@@ -324,7 +324,7 @@ export function CmdK({
           }}
           className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl lg:max-w-2xl xl:max-w-3xl"
         >
-          <DialogTitle className="sr-only">Search</DialogTitle>
+          <DialogTitle className="sr-only">SearchIcon</DialogTitle>
           <Command
             onKeyDown={(e) => {
               // e.key === "Escape" ||
@@ -343,7 +343,7 @@ export function CmdK({
               {loading || fetching ? (
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-50" />
               ) : (
-                <Search className="h-4 w-4 shrink-0 opacity-50" />
+                <SearchIcon className="h-4 w-4 shrink-0 opacity-50" />
               )}
               {page ? (
                 <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 border px-1.5 py-0.5 text-xs">
@@ -354,7 +354,7 @@ export function CmdK({
                     className="opacity-60 hover:opacity-100"
                     onClick={() => setPages([])}
                   >
-                    <X className="h-3 w-3" />
+                    <XIcon className="h-3 w-3" />
                   </button>
                 </span>
               ) : scope === "all" ? (

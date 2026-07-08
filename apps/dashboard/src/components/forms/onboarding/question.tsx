@@ -5,7 +5,7 @@ import {
   Check,
   MoreHorizontal,
   Newspaper,
-  Search,
+  Search as SearchIcon,
   Sparkles,
   Users,
 } from "@openstatus/icons";
@@ -40,7 +40,7 @@ import { z } from "zod";
 import { Note } from "@/components/common/note";
 
 const sources = [
-  { id: "search-engine", title: "Search Engine", icon: Search },
+  { id: "search-engine", title: "Search Engine", icon: SearchIcon },
   { id: "github", title: "GitHub", icon: GitHubIcon },
   { id: "linkedin", title: "LinkedIn", icon: LinkedInIcon },
   { id: "bluesky", title: "Bluesky", icon: BlueskyIcon },
