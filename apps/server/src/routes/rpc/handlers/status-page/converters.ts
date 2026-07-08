@@ -1,5 +1,6 @@
 import type { Locale } from "@openstatus/locales";
 import type {
+  CustomTheme,
   PageComponent,
   PageComponentGroup,
   PageSubscriber,
@@ -18,6 +19,10 @@ import {
   Locale as ProtoLocale,
   SubscriberSource,
 } from "@openstatus/proto/status_page/v1";
+import {
+  type CustomTheme as DbCustomTheme,
+  hasCustomTheme,
+} from "@openstatus/theme-store";
 
 /**
  * Database types
@@ -40,6 +45,7 @@ type DBPage = {
   defaultLocale: Locale;
   locales: Locale[] | null;
   allowIndex: boolean;
+  customTheme?: DbCustomTheme | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -304,6 +310,26 @@ export function dbPageToProto(page: DBPage): StatusPage {
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
     allowIndex: page.allowIndex ?? true,
     allowedIpRanges: page.allowedIpRanges ?? "",
+    customTheme: dbCustomThemeToProto(page.customTheme),
+  };
+}
+
+export function dbCustomThemeToProto(
+  customTheme: DbCustomTheme | null | undefined,
+): CustomTheme | undefined {
+  if (!hasCustomTheme(customTheme)) return undefined;
+  // ThemeVars values are `string | undefined`; proto maps require `string`.
+  const pick = (vars?: Record<string, string | undefined>) => {
+    const out: Record<string, string> = {};
+    for (const [name, value] of Object.entries(vars ?? {})) {
+      if (typeof value === "string") out[name] = value;
+    }
+    return out;
+  };
+  return {
+    $typeName: "openstatus.status_page.v1.CustomTheme" as const,
+    light: pick(customTheme.light),
+    dark: pick(customTheme.dark),
   };
 }
 

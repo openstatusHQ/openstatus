@@ -67,6 +67,9 @@ beforeAll(async () => {
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = 1`,
   );
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."custom-theme"', json('true')) WHERE id = 1`,
+  );
 
   // Clean up any existing test data
   await db
@@ -427,6 +430,45 @@ describe("StatusPageService.CreateStatusPage", () => {
       await db.delete(page).where(eq(page.id, firstPage.id));
     }
   });
+
+  test("creates a status page with a custom theme", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-custom-theme`,
+        slug: `${TEST_PREFIX}-custom-theme-slug`,
+        customTheme: { light: { "--primary": "hsl(24 94% 50%)" } },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.customTheme?.light).toEqual({
+      "--primary": "hsl(24 94% 50%)",
+    });
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("returns 403 when creating with custom theme on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-custom-theme-denied`,
+        slug: `${TEST_PREFIX}-custom-theme-denied-slug`,
+        customTheme: { light: { "--primary": "red" } },
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+
+    const data = await res.json();
+    expect(data.message).toContain("Upgrade for custom theme");
+  });
 });
 
 describe("StatusPageService.GetStatusPage", () => {
@@ -704,6 +746,90 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .update(page)
       .set({ defaultLocale: "en", locales: null })
       .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("updates and clears the custom theme", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: {
+          light: { "--primary": "hsl(24 94% 50%)" },
+          dark: { "--background": "oklch(0.2 0 0)" },
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.customTheme?.light).toEqual({
+      "--primary": "hsl(24 94% 50%)",
+    });
+    expect(data.statusPage.customTheme?.dark).toEqual({
+      "--background": "oklch(0.2 0 0)",
+    });
+
+    // Empty message clears the stored overrides
+    const clearRes = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: {},
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(clearRes.status).toBe(200);
+
+    const clearData = await clearRes.json();
+    expect(clearData.statusPage.customTheme).toBeUndefined();
+  });
+
+  test("rejects unknown custom theme variables", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: { light: { "--not-a-var": "red" } },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 403 when updating custom theme on free plan", async () => {
+    const freePage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-free-theme`,
+        slug: `${TEST_PREFIX}-free-theme-slug`,
+        description: "",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(freePage.id),
+          customTheme: { light: { "--primary": "red" } },
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403);
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade for custom theme");
+    } finally {
+      await db.delete(page).where(eq(page.id, freePage.id));
+    }
   });
 });
 

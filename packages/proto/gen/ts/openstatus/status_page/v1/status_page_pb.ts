@@ -11,7 +11,35 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_page/v1/status_page.proto.
  */
 export const file_openstatus_status_page_v1_status_page: GenFile = /*@__PURE__*/
-  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIv4ECgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWhI5Cg5kZWZhdWx0X2xvY2FsZRgOIAEoDjIhLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTG9jYWxlEjIKB2xvY2FsZXMYDyADKA4yIS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkxvY2FsZRIQCghwYXNzd29yZBgQIAEoCRIaChJhdXRoX2VtYWlsX2RvbWFpbnMYESADKAkSEwoLYWxsb3dfaW5kZXgYEiABKAgSGQoRYWxsb3dlZF9pcF9yYW5nZXMYEyABKAkiqQEKEVN0YXR1c1BhZ2VTdW1tYXJ5EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBHNsdWcYAyABKAkSEQoJcHVibGlzaGVkGAQgASgIEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCRIwCg1jdXN0b21fZG9tYWluGAcgASgJQhm6RxY6FBISc3RhdHVzLmV4YW1wbGUuY29tKsABCg5QYWdlQWNjZXNzVHlwZRIgChxQQUdFX0FDQ0VTU19UWVBFX1VOU1BFQ0lGSUVEEAASGwoXUEFHRV9BQ0NFU1NfVFlQRV9QVUJMSUMQARInCiNQQUdFX0FDQ0VTU19UWVBFX1BBU1NXT1JEX1BST1RFQ1RFRBACEiIKHlBBR0VfQUNDRVNTX1RZUEVfQVVUSEVOVElDQVRFRBADEiIKHlBBR0VfQUNDRVNTX1RZUEVfSVBfUkVTVFJJQ1RFRBAEKmkKCVBhZ2VUaGVtZRIaChZQQUdFX1RIRU1FX1VOU1BFQ0lGSUVEEAASFQoRUEFHRV9USEVNRV9TWVNURU0QARIUChBQQUdFX1RIRU1FX0xJR0hUEAISEwoPUEFHRV9USEVNRV9EQVJLEAMqTQoGTG9jYWxlEhYKEkxPQ0FMRV9VTlNQRUNJRklFRBAAEg0KCUxPQ0FMRV9FThABEg0KCUxPQ0FMRV9GUhACEg0KCUxPQ0FMRV9ERRADKuwBCg1PdmVyYWxsU3RhdHVzEh4KGk9WRVJBTExfU1RBVFVTX1VOU1BFQ0lGSUVEEAASHgoaT1ZFUkFMTF9TVEFUVVNfT1BFUkFUSU9OQUwQARIbChdPVkVSQUxMX1NUQVRVU19ERUdSQURFRBACEiEKHU9WRVJBTExfU1RBVFVTX1BBUlRJQUxfT1VUQUdFEAMSHwobT1ZFUkFMTF9TVEFUVVNfTUFKT1JfT1VUQUdFEAQSHgoaT1ZFUkFMTF9TVEFUVVNfTUFJTlRFTkFOQ0UQBRIaChZPVkVSQUxMX1NUQVRVU19VTktOT1dOEAZCWlpYZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxO3N0YXR1c3BhZ2V2MWIGcHJvdG8z", [file_gnostic_openapi_v3_annotations]);
+  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIpMCCgtDdXN0b21UaGVtZRJpCgVsaWdodBgBIAMoCzIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3VzdG9tVGhlbWUuTGlnaHRFbnRyeUInukckOiISIHsiLS1wcmltYXJ5IjogImhzbCgyNCA5NCUgNTAlKSJ9Ej4KBGRhcmsYAiADKAsyMC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkN1c3RvbVRoZW1lLkRhcmtFbnRyeRosCgpMaWdodEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaKwoJRGFya0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi0gUKClN0YXR1c1BhZ2USCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSHgoEc2x1ZxgEIAEoCUIQukcNOgsSCWFjbWUtY29ycBIwCg1jdXN0b21fZG9tYWluGAUgASgJQhm6RxY6FBISc3RhdHVzLmV4YW1wbGUuY29tEhEKCXB1Ymxpc2hlZBgGIAEoCBI+CgthY2Nlc3NfdHlwZRgHIAEoDjIpLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuUGFnZUFjY2Vzc1R5cGUSMwoFdGhlbWUYCCABKA4yJC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VUaGVtZRIUCgxob21lcGFnZV91cmwYCSABKAkSEwoLY29udGFjdF91cmwYCiABKAkSDAoEaWNvbhgLIAEoCRIvCgpjcmVhdGVkX2F0GAwgASgJQhu6Rxg6FhIUMjAyNC0wMS0xNVQwOTowMDowMFoSLwoKdXBkYXRlZF9hdBgNIAEoCUIbukcYOhYSFDIwMjQtMDYtMjBUMTQ6MzA6MDBaEjkKDmRlZmF1bHRfbG9jYWxlGA4gASgOMiEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5Mb2NhbGUSMgoHbG9jYWxlcxgPIAMoDjIhLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTG9jYWxlEhAKCHBhc3N3b3JkGBAgASgJEhoKEmF1dGhfZW1haWxfZG9tYWlucxgRIAMoCRITCgthbGxvd19pbmRleBgSIAEoCBIZChFhbGxvd2VkX2lwX3JhbmdlcxgTIAEoCRJBCgxjdXN0b21fdGhlbWUYFCABKAsyJi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkN1c3RvbVRoZW1lSACIAQFCDwoNX2N1c3RvbV90aGVtZSKpAQoRU3RhdHVzUGFnZVN1bW1hcnkSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEc2x1ZxgDIAEoCRIRCglwdWJsaXNoZWQYBCABKAgSEgoKY3JlYXRlZF9hdBgFIAEoCRISCgp1cGRhdGVkX2F0GAYgASgJEjAKDWN1c3RvbV9kb21haW4YByABKAlCGbpHFjoUEhJzdGF0dXMuZXhhbXBsZS5jb20qwAEKDlBhZ2VBY2Nlc3NUeXBlEiAKHFBBR0VfQUNDRVNTX1RZUEVfVU5TUEVDSUZJRUQQABIbChdQQUdFX0FDQ0VTU19UWVBFX1BVQkxJQxABEicKI1BBR0VfQUNDRVNTX1RZUEVfUEFTU1dPUkRfUFJPVEVDVEVEEAISIgoeUEFHRV9BQ0NFU1NfVFlQRV9BVVRIRU5USUNBVEVEEAMSIgoeUEFHRV9BQ0NFU1NfVFlQRV9JUF9SRVNUUklDVEVEEAQqaQoJUGFnZVRoZW1lEhoKFlBBR0VfVEhFTUVfVU5TUEVDSUZJRUQQABIVChFQQUdFX1RIRU1FX1NZU1RFTRABEhQKEFBBR0VfVEhFTUVfTElHSFQQAhITCg9QQUdFX1RIRU1FX0RBUksQAypNCgZMb2NhbGUSFgoSTE9DQUxFX1VOU1BFQ0lGSUVEEAASDQoJTE9DQUxFX0VOEAESDQoJTE9DQUxFX0ZSEAISDQoJTE9DQUxFX0RFEAMq7AEKDU92ZXJhbGxTdGF0dXMSHgoaT1ZFUkFMTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIeChpPVkVSQUxMX1NUQVRVU19PUEVSQVRJT05BTBABEhsKF09WRVJBTExfU1RBVFVTX0RFR1JBREVEEAISIQodT1ZFUkFMTF9TVEFUVVNfUEFSVElBTF9PVVRBR0UQAxIfChtPVkVSQUxMX1NUQVRVU19NQUpPUl9PVVRBR0UQBBIeChpPVkVSQUxMX1NUQVRVU19NQUlOVEVOQU5DRRAFEhoKFk9WRVJBTExfU1RBVFVTX1VOS05PV04QBkJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM", [file_gnostic_openapi_v3_annotations]);
+
+/**
+ * CustomTheme holds per-mode CSS variable overrides merged over the page theme.
+ *
+ * @generated from message openstatus.status_page.v1.CustomTheme
+ */
+export type CustomTheme = Message<"openstatus.status_page.v1.CustomTheme"> & {
+  /**
+   * CSS variable overrides applied in light mode, keyed by variable name.
+   *
+   * @generated from field: map<string, string> light = 1;
+   */
+  light: { [key: string]: string };
+
+  /**
+   * CSS variable overrides applied in dark mode, keyed by variable name.
+   *
+   * @generated from field: map<string, string> dark = 2;
+   */
+  dark: { [key: string]: string };
+};
+
+/**
+ * Describes the message openstatus.status_page.v1.CustomTheme.
+ * Use `create(CustomThemeSchema)` to create a new message.
+ */
+export const CustomThemeSchema: GenMessage<CustomTheme> = /*@__PURE__*/
+  messageDesc(file_openstatus_status_page_v1_status_page, 0);
 
 /**
  * StatusPage represents a full status page with all details.
@@ -151,6 +179,13 @@ export type StatusPage = Message<"openstatus.status_page.v1.StatusPage"> & {
    * @generated from field: string allowed_ip_ranges = 19;
    */
   allowedIpRanges: string;
+
+  /**
+   * Per-mode CSS variable overrides merged over the theme (only set when configured).
+   *
+   * @generated from field: optional openstatus.status_page.v1.CustomTheme custom_theme = 20;
+   */
+  customTheme?: CustomTheme | undefined;
 };
 
 /**
@@ -158,7 +193,7 @@ export type StatusPage = Message<"openstatus.status_page.v1.StatusPage"> & {
  * Use `create(StatusPageSchema)` to create a new message.
  */
 export const StatusPageSchema: GenMessage<StatusPage> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_page_v1_status_page, 0);
+  messageDesc(file_openstatus_status_page_v1_status_page, 1);
 
 /**
  * StatusPageSummary represents metadata for a status page (used in list responses).
@@ -221,7 +256,7 @@ export type StatusPageSummary = Message<"openstatus.status_page.v1.StatusPageSum
  * Use `create(StatusPageSummarySchema)` to create a new message.
  */
 export const StatusPageSummarySchema: GenMessage<StatusPageSummary> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_page_v1_status_page, 1);
+  messageDesc(file_openstatus_status_page_v1_status_page, 2);
 
 /**
  * PageAccessType defines who can access the status page.

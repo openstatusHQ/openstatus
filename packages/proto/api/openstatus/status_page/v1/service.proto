@@ -186,6 +186,10 @@ message CreateStatusPageRequest {
 
   // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
   optional string allowed_ip_ranges = 15;
+
+  // Per-mode CSS variable overrides merged over the theme (optional).
+  // Only supported variable names are accepted. Requires the custom-theme plan feature.
+  optional CustomTheme custom_theme = 16;
 }
 
 // CreateStatusPageResponse is the response after creating a status page.
@@ -286,6 +290,10 @@ message UpdateStatusPageRequest {
 
   // Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
   optional string allowed_ip_ranges = 16;
+
+  // New per-mode CSS variable overrides (optional). Omit to keep the current
+  // value; send an empty message to clear. Requires the custom-theme plan feature.
+  optional CustomTheme custom_theme = 17;
 }
 
 // UpdateStatusPageResponse is the response after updating a status page.
