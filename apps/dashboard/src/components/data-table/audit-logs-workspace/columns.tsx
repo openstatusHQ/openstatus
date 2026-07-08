@@ -1,7 +1,8 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons";
+import { KeyIcon, MailIcon, ServerIcon } from "@openstatus/icons";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 import {
   Avatar,
   AvatarFallback,
@@ -9,7 +10,6 @@ import {
 } from "@openstatus/ui/components/ui/avatar";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
-import { KeyIcon, MailIcon, ServerIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 

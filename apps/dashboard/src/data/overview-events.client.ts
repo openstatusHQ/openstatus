@@ -6,7 +6,7 @@ import {
   PanelTop,
   Siren,
   Wrench,
-} from "lucide-react";
+} from "@openstatus/icons";
 
 type Incident = RouterOutputs["incident"]["list"][number];
 type StatusReport = RouterOutputs["statusReport"]["list"][number];

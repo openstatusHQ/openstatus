@@ -1,7 +1,7 @@
 "use client";
 
+import { PanelTop } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { PanelTop } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";

@@ -1,3 +1,4 @@
+import { Book } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -5,7 +6,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { Book } from "lucide-react";
 
 import { NavFeedback } from "@/components/nav/nav-feedback";
 

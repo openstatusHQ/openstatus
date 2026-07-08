@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2, Search, X } from "@openstatus/icons";
 import {
   Command,
   CommandEmpty,
@@ -19,7 +20,6 @@ import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
-import { Loader2, Search, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";

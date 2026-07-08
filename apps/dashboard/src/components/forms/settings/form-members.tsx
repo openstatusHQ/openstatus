@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -17,7 +18,6 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
-import { Lock } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

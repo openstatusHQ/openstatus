@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +10,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
-import { Check } from "lucide-react";
 import {
   parseAsNumberLiteral,
   parseAsStringLiteral,

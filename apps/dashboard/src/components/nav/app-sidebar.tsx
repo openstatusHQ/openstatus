@@ -1,6 +1,15 @@
 "use client";
 
 import {
+  Activity,
+  Bell,
+  Bot,
+  Cog,
+  LayoutGrid,
+  MessageSquare,
+  PanelTop,
+} from "@openstatus/icons";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -15,15 +24,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import {
-  Activity,
-  Bell,
-  Bot,
-  Cog,
-  LayoutGrid,
-  MessageSquare,
-  PanelTop,
-} from "lucide-react";
 import * as React from "react";
 
 import { Kbd } from "@/components/common/kbd";

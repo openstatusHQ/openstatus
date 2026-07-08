@@ -1,6 +1,6 @@
 "use client";
 
-import { Terminal } from "lucide-react";
+import { Terminal } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 

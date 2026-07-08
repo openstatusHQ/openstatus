@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Copy } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,6 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { isTRPCClientError } from "@trpc/client";
-import { Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 

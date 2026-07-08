@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Activity,
   ArrowRight,
@@ -10,7 +9,8 @@ import {
   LayoutGrid,
   PanelTop,
   UserPlus,
-} from "lucide-react";
+} from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import Link from "next/link";
 import { useMemo } from "react";
 

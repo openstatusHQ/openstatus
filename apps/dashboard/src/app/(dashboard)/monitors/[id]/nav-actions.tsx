@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { deserialize } from "@openstatus/assertions";
+import { Zap } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -11,7 +12,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Zap } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

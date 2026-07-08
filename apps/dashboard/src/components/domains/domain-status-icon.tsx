@@ -1,7 +1,7 @@
 "use client";
 
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
-import { AlertTriangle, Check, LoaderCircle, X } from "lucide-react";
+import { AlertTriangle, Check, LoaderCircle, X } from "@openstatus/icons";
 
 export function DomainStatusIcon({
   status,

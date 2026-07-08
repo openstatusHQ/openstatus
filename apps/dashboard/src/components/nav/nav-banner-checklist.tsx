@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUpRight, CircleCheck, CircleDashed, X } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -8,7 +9,6 @@ import {
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, CircleCheck, CircleDashed, X } from "lucide-react";
 
 import { Link } from "@/components/common/link";
 import { useTRPC } from "@/lib/trpc/client";

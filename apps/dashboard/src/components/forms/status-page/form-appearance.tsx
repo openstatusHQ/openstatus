@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowUpRight, Laptop, Moon, Sun } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -18,7 +19,6 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
-import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

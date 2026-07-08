@@ -1,9 +1,9 @@
 "use client";
 
+import { Info, Lock } from "@openstatus/icons";
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Info, Lock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";

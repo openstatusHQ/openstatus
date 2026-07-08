@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelTop } from "lucide-react";
+import { PanelTop } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 

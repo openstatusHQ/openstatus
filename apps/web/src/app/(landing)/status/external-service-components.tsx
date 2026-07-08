@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDownIcon, ChevronRightIcon } from "@openstatus/icons";
 import { StatusBar } from "@openstatus/ui/components/blocks/status-bar";
 import type {
   StatusBarData,
@@ -12,7 +13,6 @@ import {
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
 import { cn } from "@openstatus/ui/lib/utils";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ExternalServicePill } from "./external-service-pill";

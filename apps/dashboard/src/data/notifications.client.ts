@@ -1,22 +1,22 @@
 import {
-  DiscordIcon,
-  GoogleIcon,
-  GrafanaIcon,
-  MicrosoftTeamsIcon,
-  TelegramIcon,
-  WhatsappIcon,
-} from "@openstatus/icons";
-import { OpsGenieIcon } from "@openstatus/icons";
-import { PagerDutyIcon } from "@openstatus/icons";
-import { SlackIcon } from "@openstatus/icons";
-import {
   BellIcon,
   Cog,
   Mail,
   MessageCircle,
   Trash2,
   Webhook,
-} from "lucide-react";
+} from "@openstatus/icons";
+import {
+  DiscordIcon,
+  GoogleIcon,
+  GrafanaIcon,
+  MicrosoftTeamsIcon,
+  TelegramIcon,
+  WhatsappIcon,
+} from "@openstatus/icons/brand";
+import { OpsGenieIcon } from "@openstatus/icons/brand";
+import { PagerDutyIcon } from "@openstatus/icons/brand";
+import { SlackIcon } from "@openstatus/icons/brand";
 
 import { FormDiscord } from "@/components/forms/notifications/form-discord";
 import { FormEmail } from "@/components/forms/notifications/form-email";

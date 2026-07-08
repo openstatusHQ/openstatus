@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  Check,
+  Copy,
+  type LucideIcon,
+  MoreHorizontal,
+  Trash2,
+} from "@openstatus/icons";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,13 +32,6 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  Copy,
-  type LucideIcon,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
 import type * as React from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";

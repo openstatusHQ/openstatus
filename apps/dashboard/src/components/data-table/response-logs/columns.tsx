@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Clock, Workflow } from "@openstatus/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -9,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Clock, Workflow } from "lucide-react";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { HoverCardTiming } from "@/components/common/hover-card-timing";

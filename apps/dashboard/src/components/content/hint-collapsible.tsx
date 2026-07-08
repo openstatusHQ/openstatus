@@ -1,11 +1,11 @@
 "use client";
 
+import { ChevronDown } from "@openstatus/icons";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 

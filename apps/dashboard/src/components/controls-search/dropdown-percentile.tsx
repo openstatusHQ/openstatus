@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
 import { PERCENTILES } from "@/data/metrics.client";

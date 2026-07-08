@@ -1,12 +1,12 @@
 "use client";
 
+import { ArrowUpRight, Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   ButtonGroup,
   ButtonGroupText,
 } from "@openstatus/ui/components/ui/button-group";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { ArrowUpRight, Check, Copy } from "lucide-react";
 
 import {
   SHELL_CONTENT_COLUMN,

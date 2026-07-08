@@ -4,6 +4,17 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  Check,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Link2,
+  Link2Off,
+  Plug,
+  Plus,
+  Trash2,
+} from "@openstatus/icons";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -50,17 +61,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Link2,
-  Link2Off,
-  Plug,
-  Plus,
-  Trash2,
-} from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";

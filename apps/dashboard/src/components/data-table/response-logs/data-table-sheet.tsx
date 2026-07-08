@@ -2,10 +2,10 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
 
 import {
   DataTableSheet,

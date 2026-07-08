@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, ScanEye } from "lucide-react";
+import { Cog, ScanEye } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 

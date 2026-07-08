@@ -1,3 +1,4 @@
+import { CornerDownLeftIcon, SquareIcon, XIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   InputGroup,
@@ -5,7 +6,6 @@ import {
   InputGroupTextarea,
 } from "@openstatus/ui/components/ui/input-group";
 import { Spinner } from "@openstatus/ui/components/ui/spinner";
-import { CornerDownLeftIcon, SquareIcon, XIcon } from "lucide-react";
 import {
   type FormEvent,
   type KeyboardEvent,

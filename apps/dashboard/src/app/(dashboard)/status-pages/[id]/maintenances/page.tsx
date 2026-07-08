@@ -1,8 +1,8 @@
 "use client";
 
+import { Plus } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";

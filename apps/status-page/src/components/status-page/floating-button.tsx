@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ChevronsUpDown, Settings } from "@openstatus/icons";
 import {
   type CustomTheme,
   THEMES,
@@ -33,7 +34,6 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, ChevronsUpDown, Settings } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";

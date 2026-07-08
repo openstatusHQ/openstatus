@@ -1,12 +1,12 @@
 import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { getRegionInfo } from "@openstatus/regions";
 import {
   CircleAlert,
   CircleCheck,
   CircleMinus,
   Send,
   Siren,
-} from "lucide-react";
+} from "@openstatus/icons";
+import { getRegionInfo } from "@openstatus/regions";
 
 import { formatMilliseconds } from "@/lib/formatter";
 

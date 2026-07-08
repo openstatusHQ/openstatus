@@ -1,5 +1,6 @@
 "use client";
 
+import { Palette } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
@@ -8,7 +9,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import { Palette } from "lucide-react";
 
 export function ThemePalettePicker() {
   const { toggleSidebar } = useSidebar();

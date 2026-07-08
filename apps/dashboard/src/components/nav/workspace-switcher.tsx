@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronsUpDown, Plus } from "@openstatus/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,6 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsUpDown, Plus } from "lucide-react";
 
 import { Link } from "@/components/common/link";
 import { useTRPC } from "@/lib/trpc/client";

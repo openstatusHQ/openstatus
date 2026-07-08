@@ -1,6 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Key,
+  Lock,
+  LockOpen,
+  ShieldAlert,
+  ShieldUser,
+} from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -19,7 +26,6 @@ import {
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Key, Lock, LockOpen, ShieldAlert, ShieldUser } from "lucide-react";
 import { useTransition } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";

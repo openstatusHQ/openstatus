@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, SlidersHorizontal } from "lucide-react";
+import { Cog, SlidersHorizontal } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 

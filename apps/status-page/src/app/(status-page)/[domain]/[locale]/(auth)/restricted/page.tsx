@@ -1,7 +1,7 @@
 "use client";
 
+import { ShieldAlert } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 

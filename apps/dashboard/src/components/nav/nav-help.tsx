@@ -1,7 +1,14 @@
 "use client";
 
-import { DiscordIcon } from "@openstatus/icons";
-import { GitHubIcon } from "@openstatus/icons";
+import {
+  Book,
+  Braces,
+  CalendarClock,
+  HelpCircle,
+  LifeBuoy,
+} from "@openstatus/icons";
+import { DiscordIcon } from "@openstatus/icons/brand";
+import { GitHubIcon } from "@openstatus/icons/brand";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,13 +24,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import {
-  Book,
-  Braces,
-  CalendarClock,
-  HelpCircle,
-  LifeBuoy,
-} from "lucide-react";
 import Link from "next/link";
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Inbox } from "@openstatus/icons";
 import {
   StatusUpdates as BlockStatusUpdates,
   StatusUpdatesContent,
@@ -21,7 +22,6 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";

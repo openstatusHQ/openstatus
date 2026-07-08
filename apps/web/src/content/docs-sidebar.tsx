@@ -1,5 +1,6 @@
 "use client";
 
+import { Menu } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Drawer,
@@ -7,7 +8,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@openstatus/ui/components/ui/drawer";
-import { Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";

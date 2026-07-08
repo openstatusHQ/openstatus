@@ -1,5 +1,5 @@
-import { GitHubIcon } from "@openstatus/icons";
-import { GoogleIcon } from "@openstatus/icons";
+import { GitHubIcon } from "@openstatus/icons/brand";
+import { GoogleIcon } from "@openstatus/icons/brand";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import type { Metadata } from "next";
 import Link from "next/link";

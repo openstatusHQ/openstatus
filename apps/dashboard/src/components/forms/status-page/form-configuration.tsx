@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowUpRight } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -27,7 +28,6 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { ArrowUpRight } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
 import { useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";

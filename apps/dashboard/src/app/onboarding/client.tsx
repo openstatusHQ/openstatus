@@ -1,8 +1,8 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Activity, PanelTop, Rocket } from "@openstatus/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, PanelTop, Rocket } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";

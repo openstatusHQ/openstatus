@@ -1,10 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Pencil, Send } from "@openstatus/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
-import { Pencil, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 

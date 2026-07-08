@@ -13,6 +13,7 @@ import {
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { monitorMethods } from "@openstatus/db/src/schema";
+import { Globe, Network, Plus, Server, X } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +55,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Globe, Network, Plus, Server, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

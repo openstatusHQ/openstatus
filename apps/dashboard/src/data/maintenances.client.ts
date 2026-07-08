@@ -1,4 +1,4 @@
-import { Cog, Trash2 } from "lucide-react";
+import { Cog, Trash2 } from "@openstatus/icons";
 
 export const actions = [
   {

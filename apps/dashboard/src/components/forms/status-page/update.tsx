@@ -1,6 +1,6 @@
+import { Info } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";

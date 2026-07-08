@@ -1,6 +1,6 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
 import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
-import { Cog, Trash2 } from "lucide-react";
+import { Cog, Trash2 } from "@openstatus/icons";
 
 import type { FormValues as StatusReportUpdateFormValues } from "@/components/forms/status-report-update/form";
 

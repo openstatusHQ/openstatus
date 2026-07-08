@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@openstatus/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

@@ -3,6 +3,13 @@
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Check,
+  ChevronsUpDown,
+  GripVertical,
+  Plus,
+  Trash2,
+} from "@openstatus/icons";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -42,13 +49,6 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  ChevronsUpDown,
-  GripVertical,
-  Plus,
-  Trash2,
-} from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";

@@ -1,4 +1,4 @@
-import { Activity, Cog, LayoutGrid, PanelTop } from "lucide-react";
+import { Activity, Cog, LayoutGrid, PanelTop } from "@openstatus/icons";
 import Link from "next/link";
 
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";

@@ -6,6 +6,7 @@ import {
   getAddonPriceConfig,
   getPriceConfig,
 } from "@openstatus/db/src/schema/plan/utils";
+import { Check } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -20,7 +21,6 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Fragment, useState, useTransition } from "react";
 

@@ -1,4 +1,4 @@
-import { Filter, Zap } from "lucide-react";
+import { Filter, Zap } from "@openstatus/icons";
 
 export const actions = [
   {

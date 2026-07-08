@@ -1,5 +1,5 @@
+import { BookOpen } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { BookOpen } from "lucide-react";
 
 import {
   SHELL_CONTENT_COLUMN,

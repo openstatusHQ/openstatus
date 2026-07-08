@@ -1,8 +1,8 @@
 "use client";
 
+import { ArrowDown, CheckCircle, ListFilter } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
-import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
 

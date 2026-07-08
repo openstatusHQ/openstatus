@@ -1,11 +1,11 @@
 "use client";
 
+import { SearchIcon } from "@openstatus/icons";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@openstatus/ui/components/ui/input-group";
-import { SearchIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { AlertTriangle, RefreshCw } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   TableBody,
@@ -16,7 +17,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 import { getColumns } from "@/components/data-table/response-logs/columns";

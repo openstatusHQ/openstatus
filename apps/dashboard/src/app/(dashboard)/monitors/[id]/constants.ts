@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
-import { Cog, LayoutGrid, Logs, Siren } from "lucide-react";
+import type { LucideIcon } from "@openstatus/icons";
+import { Cog, LayoutGrid, Logs, Siren } from "@openstatus/icons";
 
 export const MONITOR_TABS: {
   value: string;

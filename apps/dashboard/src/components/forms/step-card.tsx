@@ -1,3 +1,4 @@
+import { Check } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Card,
@@ -7,7 +8,6 @@ import {
 } from "@openstatus/ui/components/ui/card";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
-import { Check } from "lucide-react";
 
 export type StepCardVariant = NonNullable<
   VariantProps<typeof stepCardVariants>["variant"]

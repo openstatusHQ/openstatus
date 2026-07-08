@@ -2,12 +2,20 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Check,
+  MoreHorizontal,
+  Newspaper,
+  Search,
+  Sparkles,
+  Users,
+} from "@openstatus/icons";
+import {
   BlueskyIcon,
   GitHubIcon,
   LinkedInIcon,
   XIcon,
   YouTubeIcon,
-} from "@openstatus/icons";
+} from "@openstatus/icons/brand";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -24,14 +32,6 @@ import {
   RadioGroupItem,
 } from "@openstatus/ui/components/ui/radio-group";
 import { cn } from "@openstatus/ui/lib/utils";
-import {
-  Check,
-  MoreHorizontal,
-  Newspaper,
-  Search,
-  Sparkles,
-  Users,
-} from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

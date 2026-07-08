@@ -1,5 +1,6 @@
 "use client";
 
+import { TrendingUp } from "@openstatus/icons";
 import {
   Status,
   StatusContent,
@@ -9,7 +10,6 @@ import {
 } from "@openstatus/ui/components/blocks/status-layout";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";

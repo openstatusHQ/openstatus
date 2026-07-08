@@ -1,8 +1,8 @@
 "use client";
 
+import { Gauge, Plus } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gauge, Plus } from "lucide-react";
 import NextLink from "next/link";
 import { useParams } from "next/navigation";
 

@@ -1,8 +1,8 @@
 "use client";
 
+import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
 import { z } from "zod";
 
 import {

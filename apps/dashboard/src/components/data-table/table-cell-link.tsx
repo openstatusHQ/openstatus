@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight } from "@openstatus/icons";
 
 import { Link } from "@/components/common/link";
 import { cn } from "@/lib/utils";

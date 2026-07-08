@@ -6,7 +6,7 @@ import {
   Network,
   Server,
   Trash2,
-} from "lucide-react";
+} from "@openstatus/icons";
 
 export const monitorTypes = [
   {

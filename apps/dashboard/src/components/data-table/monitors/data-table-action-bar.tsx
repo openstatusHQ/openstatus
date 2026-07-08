@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Check, CheckCircle2, Copy, Trash2 } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,6 @@ import { SelectTrigger } from "@radix-ui/react-select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Table } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
-import { Check, CheckCircle2, Copy, Trash2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 

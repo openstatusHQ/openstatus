@@ -71,8 +71,8 @@ import {
   Workflow,
   Youtube,
   Zap,
-} from "lucide-react";
-import type { LucideIcon, LucideProps } from "lucide-react";
+} from "@openstatus/icons";
+import type { LucideIcon, LucideProps } from "@openstatus/icons";
 
 export type Icon = LucideIcon;
 export type IconProps = LucideProps;

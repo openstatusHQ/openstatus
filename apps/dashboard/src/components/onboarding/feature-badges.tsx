@@ -1,6 +1,5 @@
 "use client";
 
-import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons";
 import {
   ArrowUpRight,
   Bell,
@@ -17,7 +16,8 @@ import {
   UserPlus,
   Users,
   Zap,
-} from "lucide-react";
+} from "@openstatus/icons";
+import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 import Link from "next/link";
 
 import { QuestionForm } from "@/components/forms/onboarding/question";

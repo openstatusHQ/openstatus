@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreHorizontal, Plus } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -20,7 +21,6 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";

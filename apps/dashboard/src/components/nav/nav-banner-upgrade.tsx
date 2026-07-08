@@ -1,5 +1,6 @@
 "use client";
 
+import { Rocket, X } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -9,7 +10,6 @@ import {
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { Rocket, X } from "lucide-react";
 import { useState } from "react";
 
 import { useTRPC } from "@/lib/trpc/client";

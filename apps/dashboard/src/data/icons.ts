@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, AlertCircle, Search, SearchCheck } from "lucide-react";
+import { Activity, AlertCircle, Search, SearchCheck } from "@openstatus/icons";
 
 export const status = {
   resolved: SearchCheck,

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Inbox, LoaderCircle } from "@openstatus/icons";
 import {
   Form,
   FormControl,
@@ -15,7 +16,6 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { Inbox, LoaderCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";

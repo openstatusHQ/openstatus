@@ -1,3 +1,5 @@
+import type { LucideIcon } from "@openstatus/icons";
+import { ChevronRight, MoreHorizontal } from "@openstatus/icons";
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,8 +30,6 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import type { LucideIcon } from "lucide-react";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 

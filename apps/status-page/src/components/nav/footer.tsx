@@ -1,5 +1,6 @@
 "use client";
 
+import { Clock } from "@openstatus/icons";
 import {
   StatusPageFooter,
   StatusPageFooterActions,
@@ -9,7 +10,6 @@ import {
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Clock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 

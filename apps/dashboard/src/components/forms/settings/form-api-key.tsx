@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarIcon, Check, Copy } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -44,7 +45,6 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format, parse } from "date-fns";
-import { CalendarIcon, Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

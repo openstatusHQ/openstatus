@@ -1,7 +1,7 @@
 "use client";
 
+import { MessageSquare } from "@openstatus/icons";
 import { skipToken, useQuery } from "@tanstack/react-query";
-import { MessageSquare } from "lucide-react";
 
 import { useChatSessionContext } from "@/components/chat/chat-session-context";
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";

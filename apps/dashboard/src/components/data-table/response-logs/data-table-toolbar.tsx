@@ -1,9 +1,9 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Activity, MapPin, TriangleAlert, X } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
-import { Activity, MapPin, TriangleAlert, X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { regions } from "@/data/regions";

@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  ChevronsUpDown,
+  CreditCard,
+  Laptop,
+  LogOut,
+  Moon,
+  Sparkles,
+  Sun,
+  User,
+} from "@openstatus/icons";
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -25,16 +35,6 @@ import {
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ChevronsUpDown,
-  CreditCard,
-  Laptop,
-  LogOut,
-  Moon,
-  Sparkles,
-  Sun,
-  User,
-} from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";

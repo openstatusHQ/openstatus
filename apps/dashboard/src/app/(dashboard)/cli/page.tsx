@@ -1,10 +1,4 @@
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import {
   FileDown,
   FileJson,
   Key,
@@ -12,7 +6,13 @@ import {
   Megaphone,
   PanelTop,
   Terminal,
-} from "lucide-react";
+} from "@openstatus/icons";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
 import React from "react";
 
 import { Code } from "@/components/common/code";

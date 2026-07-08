@@ -1,3 +1,4 @@
+import { BracesIcon, ChevronDownIcon, TableIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Collapsible,
@@ -12,7 +13,6 @@ import {
   type UITools,
   getToolName,
 } from "ai";
-import { BracesIcon, ChevronDownIcon, TableIcon } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ChangesTable } from "@/components/common/changes-table";

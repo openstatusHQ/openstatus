@@ -1,7 +1,7 @@
 "use client";
 
+import { Check, Copy } from "@openstatus/icons";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 

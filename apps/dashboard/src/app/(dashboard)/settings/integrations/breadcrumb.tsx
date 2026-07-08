@@ -1,6 +1,6 @@
 "use client";
 
-import { Blocks, Cog } from "lucide-react";
+import { Blocks, Cog } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 

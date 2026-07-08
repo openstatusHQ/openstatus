@@ -1,6 +1,6 @@
+import { Loader2 } from "@openstatus/icons";
 import { QRCode } from "@openstatus/ui/components/ui/qr-code";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
 
 export default function TelegramQRCode({
   chatType,

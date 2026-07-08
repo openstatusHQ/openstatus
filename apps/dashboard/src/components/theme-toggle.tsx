@@ -1,5 +1,6 @@
 "use client";
 
+import { Laptop, Moon, Sun } from "@openstatus/icons";
 import {
   Select,
   SelectContent,
@@ -8,7 +9,6 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import type * as React from "react";
 import { useState } from "react";

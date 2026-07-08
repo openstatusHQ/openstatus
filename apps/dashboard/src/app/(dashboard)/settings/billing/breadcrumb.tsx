@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, CreditCard } from "lucide-react";
+import { Cog, CreditCard } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 

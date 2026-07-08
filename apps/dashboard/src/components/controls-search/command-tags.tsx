@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
@@ -16,7 +17,6 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Check } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 import { useTRPC } from "@/lib/trpc/client";

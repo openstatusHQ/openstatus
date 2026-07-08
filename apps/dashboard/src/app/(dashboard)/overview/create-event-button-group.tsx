@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, Plus } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import {
@@ -8,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
-import { ChevronDown, Plus } from "lucide-react";
 import { useRef } from "react";
 
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";

@@ -1,5 +1,6 @@
 "use client";
 
+import type { LucideIcon } from "@openstatus/icons";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +9,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@openstatus/ui/components/ui/breadcrumb";
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react";
 

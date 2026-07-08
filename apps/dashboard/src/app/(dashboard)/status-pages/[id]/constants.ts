@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@openstatus/icons";
 import {
   CalendarDays,
   Cog,
@@ -6,7 +6,7 @@ import {
   LayoutTemplate,
   Megaphone,
   Users,
-} from "lucide-react";
+} from "@openstatus/icons";
 
 export const STATUS_PAGE_TABS: {
   value: string;

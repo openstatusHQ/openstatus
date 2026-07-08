@@ -1,9 +1,9 @@
 "use client";
 
 import { deserialize } from "@openstatus/assertions";
+import { Logs } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";

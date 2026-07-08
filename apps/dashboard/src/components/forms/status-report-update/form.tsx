@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
 import { pageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
+import { CalendarIcon, ClockIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -38,7 +39,6 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
-import { CalendarIcon, ClockIcon } from "lucide-react";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

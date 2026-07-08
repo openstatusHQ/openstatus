@@ -1,8 +1,8 @@
 "use client";
 
+import { ArrowRight } from "@openstatus/icons";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";

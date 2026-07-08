@@ -1,8 +1,8 @@
 "use client";
 
+import { Lock } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
-import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";

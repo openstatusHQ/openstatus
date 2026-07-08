@@ -2,6 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Braces, TableProperties } from "@openstatus/icons";
 import { getRegionInfo } from "@openstatus/regions";
 import {
   Table,
@@ -17,7 +18,6 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Braces, TableProperties } from "lucide-react";
 
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { BlockWrapper } from "@/components/content/block-wrapper";

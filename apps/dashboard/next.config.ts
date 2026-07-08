@@ -1,8 +1,24 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+// ICON_SET=nucleo swaps the icon set at resolution time (see packages/icons)
+const useNucleoIcons = process.env.ICON_SET === "nucleo";
+
 const nextConfig: NextConfig = {
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
+  experimental: {
+    // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
+    optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
+  },
+  turbopack: useNucleoIcons
+    ? { resolveAlias: { "@openstatus/icons": "@openstatus/icons/nucleo" } }
+    : undefined,
+  webpack: (config) => {
+    if (useNucleoIcons) {
+      config.resolve.alias["@openstatus/icons$"] = "@openstatus/icons/nucleo";
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       new URL("https://openstatus.dev/**"),

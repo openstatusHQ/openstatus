@@ -1,8 +1,8 @@
 "use client";
 
+import { ArrowRight } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 import {

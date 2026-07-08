@@ -1,3 +1,4 @@
+import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
@@ -14,7 +15,6 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DialogProps } from "@radix-ui/react-dialog";
-import { Check, Copy } from "lucide-react";
 
 import { Link } from "@/components/common/link";
 

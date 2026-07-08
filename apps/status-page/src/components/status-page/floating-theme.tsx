@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ChevronsUpDown, Palette } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, ChevronsUpDown, Palette } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
 

@@ -1,7 +1,7 @@
 "use client";
 
+import { Palette } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Palette } from "lucide-react";
 import Link from "next/link";
 
 import { NoteButton } from "@/components/common/note";

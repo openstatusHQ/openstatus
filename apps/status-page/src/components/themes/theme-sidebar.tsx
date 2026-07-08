@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  Check,
+  ChevronDown,
+  Copy,
+  PanelRightIcon,
+  RotateCcw,
+} from "@openstatus/icons";
+import {
   THEMES,
   type Theme,
   type ThemeKey,
@@ -47,13 +54,6 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useDebounceCallback } from "@openstatus/ui/hooks/use-debounce-callback";
 import { cn } from "@openstatus/ui/lib/utils";
-import {
-  Check,
-  ChevronDown,
-  Copy,
-  PanelRightIcon,
-  RotateCcw,
-} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
