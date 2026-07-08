@@ -22,9 +22,6 @@
     var(--font-sans), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-cal: var(--font-calsans);
-  --font-mono:
-    var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, 'Liberation Mono', 'Courier New', monospace;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -45,6 +42,10 @@
       height: 0;
     }
   }
+}
+
+@theme inline {
+  --font-mono: var(--font-commit-mono);
 }
 
 @utility container {
