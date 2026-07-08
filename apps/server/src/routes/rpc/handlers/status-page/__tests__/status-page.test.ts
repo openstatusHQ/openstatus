@@ -787,6 +787,73 @@ describe("StatusPageService.UpdateStatusPage", () => {
     expect(clearData.statusPage.customTheme).toBeUndefined();
   });
 
+  test("keeps the custom theme when the field is omitted or null", async () => {
+    await db
+      .update(page)
+      .set({ customTheme: { light: { "--primary": "red" } } })
+      .where(eq(page.id, testPageToUpdateId));
+
+    try {
+      // Omitted field — unrelated update must not touch the stored theme
+      const omitRes = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          title: `${TEST_PREFIX}-page-to-update`,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(omitRes.status).toBe(200);
+
+      const omitData = await omitRes.json();
+      expect(omitData.statusPage.customTheme?.light).toEqual({
+        "--primary": "red",
+      });
+
+      // Explicit null — proto3 JSON treats null as absent, so it keeps too
+      const nullRes = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          customTheme: null,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(nullRes.status).toBe(200);
+
+      const nullData = await nullRes.json();
+      expect(nullData.statusPage.customTheme?.light).toEqual({
+        "--primary": "red",
+      });
+    } finally {
+      await db
+        .update(page)
+        .set({ customTheme: null })
+        .where(eq(page.id, testPageToUpdateId));
+    }
+  });
+
+  test("rejects unsafe custom theme values", async () => {
+    for (const value of [
+      "</style><script>alert(1)</script>",
+      "red;} body { background: red",
+      "",
+    ]) {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          customTheme: { light: { "--primary": value } },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+    }
+  });
+
   test("rejects unknown custom theme variables", async () => {
     const res = await connectRequest(
       "UpdateStatusPage",

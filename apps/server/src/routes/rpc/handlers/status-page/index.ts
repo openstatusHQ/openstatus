@@ -251,9 +251,6 @@ function validateAllowedIpRanges(ranges: string): string[] {
   return normalized;
 }
 
-/**
- * Helper to get a component by ID with workspace scope.
- */
 // Proto map values arrive unvalidated; check var names / safe values at the
 // handler so callers get a readable InvalidArgument instead of the service's
 // raw zod message.
@@ -272,6 +269,9 @@ function validateProtoCustomTheme(customTheme: CustomTheme): {
   return input;
 }
 
+/**
+ * Helper to get a component by ID with workspace scope.
+ */
 async function getComponentById(id: number, workspaceId: number) {
   return db
     .select()
@@ -482,7 +482,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           throw err;
         });
 
-        if (customThemeInput) {
+        if (customThemeInput !== undefined) {
           await updatePageCustomTheme({
             ctx: txCtx,
             input: { id: row.id, customTheme: customThemeInput },
@@ -492,9 +492,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         return row;
       });
 
-      const result = customThemeInput
-        ? await getPage({ ctx: sCtx, input: { id: created.id } })
-        : created;
+      const result =
+        customThemeInput !== undefined
+          ? await getPage({ ctx: sCtx, input: { id: created.id } })
+          : created;
       return { statusPage: dbPageToProto(serviceToConverterPage(result)) };
     } catch (err) {
       toConnectError(err);
