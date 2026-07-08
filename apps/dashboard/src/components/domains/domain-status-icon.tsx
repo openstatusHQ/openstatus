@@ -1,7 +1,7 @@
 "use client";
 
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
-import { AlertTriangle, Check, LoaderCircle, X } from "@openstatus/icons";
+import { TriangleAlert, Check, LoaderCircle, X } from "@openstatus/icons";
 
 export function DomainStatusIcon({
   status,
@@ -21,7 +21,7 @@ export function DomainStatusIcon({
     </div>
   ) : status === "Pending Verification" ? (
     <div className="bg-warning flex size-6 items-center justify-center rounded-full">
-      <AlertTriangle className="text-background size-3" />
+      <TriangleAlert className="text-background size-3" />
     </div>
   ) : (
     <div className="bg-destructive flex size-6 items-center justify-center rounded-full">

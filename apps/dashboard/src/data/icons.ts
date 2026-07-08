@@ -1,10 +1,10 @@
 "use client";
 
-import { Activity, AlertCircle, Search, SearchCheck } from "@openstatus/icons";
+import { Activity, CircleAlert, Search, SearchCheck } from "@openstatus/icons";
 
 export const status = {
   resolved: SearchCheck,
-  investigating: AlertCircle,
+  investigating: CircleAlert,
   identified: Search,
   monitoring: Activity,
 } as const;

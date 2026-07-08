@@ -1,6 +1,10 @@
 "use client";
 
-import { Loader2, Search as SearchIcon, X as XIcon } from "@openstatus/icons";
+import {
+  LoaderCircle,
+  Search as SearchIcon,
+  X as XIcon,
+} from "@openstatus/icons";
 import {
   Command,
   CommandEmpty,
@@ -341,7 +345,7 @@ export function CmdK({
               cmdk-input-wrapper=""
             >
               {loading || fetching ? (
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-50" />
+                <LoaderCircle className="h-4 w-4 shrink-0 animate-spin opacity-50" />
               ) : (
                 <SearchIcon className="h-4 w-4 shrink-0 opacity-50" />
               )}

@@ -5,7 +5,7 @@ import {
   Megaphone,
   PanelTop,
   Siren,
-  Wrench,
+  Hammer,
 } from "@openstatus/icons";
 
 type Incident = RouterOutputs["incident"]["list"][number];
@@ -20,7 +20,7 @@ export type OverviewEvent =
 export const eventTypeConfig = {
   incident: { label: "Incident", icon: Siren },
   report: { label: "Status Report", icon: Megaphone },
-  maintenance: { label: "Maintenance", icon: Wrench },
+  maintenance: { label: "Maintenance", icon: Hammer },
 } as const;
 
 export type OverviewEventType = keyof typeof eventTypeConfig;

@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { AlertTriangle, RefreshCw } from "@openstatus/icons";
+import { TriangleAlert, RefreshCw } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   TableBody,
@@ -73,7 +73,7 @@ export function OnboardingChecksTable({
         )}
         {...props}
       >
-        <AlertTriangle className="text-destructive size-5" />
+        <TriangleAlert className="text-destructive size-5" />
         <div className="space-y-1">
           <p className="text-foreground text-sm font-medium">
             Couldn&apos;t reach {url ? <code>{url}</code> : "your URL"}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Menu, MessageCircleMore } from "@openstatus/icons";
+import { Menu, MessageCircle } from "@openstatus/icons";
 import { StatusPageGetInTouchIcon } from "@openstatus/ui/components/blocks/status-page-get-in-touch";
 import {
   StatusPageHeader,
@@ -152,7 +152,7 @@ export function Header({
           {page?.contactUrl ? (
             <StatusPageGetInTouchIcon>
               <a href={page.contactUrl} target="_blank" rel="noreferrer">
-                <MessageCircleMore />
+                <MessageCircle />
                 <span className="sr-only">{t("Get in touch")}</span>
               </a>
             </StatusPageGetInTouchIcon>

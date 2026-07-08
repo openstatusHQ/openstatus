@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Check, CheckCircle2, Copy, Trash2 } from "@openstatus/icons";
+import { Check, CircleCheck, Copy, Trash2 } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -142,7 +142,7 @@ export function MonitorDataTableActionBar({
         >
           <SelectTrigger asChild>
             <DataTableActionBarAction size="icon" tooltip="Update status">
-              <CheckCircle2 />
+              <CircleCheck />
             </DataTableActionBarAction>
           </SelectTrigger>
           <SelectContent align="center">
