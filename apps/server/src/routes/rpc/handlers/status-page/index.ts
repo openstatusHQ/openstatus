@@ -422,12 +422,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         checkNoIndexLimit(limits);
       }
 
-      let customThemeInput:
-        | ReturnType<typeof validateProtoCustomTheme>
-        | undefined;
+      let customTheme: ReturnType<typeof validateProtoCustomTheme> | undefined;
       if (req.customTheme !== undefined) {
         checkCustomThemeLimit(limits);
-        customThemeInput = validateProtoCustomTheme(req.customTheme);
+        customTheme = validateProtoCustomTheme(req.customTheme);
       }
 
       // `published` relies on DB default (false). The service's
@@ -439,64 +437,47 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       // parse time. The service destructures it and uses
       // `ctx.workspace.id` on insert (so the input value is ignored),
       // but the zod parse fires first and rejects without the field.
-      // Wrap create + custom-theme write in one transaction so a rejected
-      // theme write can't leave a page created without it.
-      const created = await withTransaction(sCtx, async (tx) => {
-        const txCtx = { ...sCtx, db: tx };
-        const row = await createPage({
-          ctx: txCtx,
-          input: {
-            workspaceId: sCtx.workspace.id,
-            title: req.title,
-            description: req.description ?? "",
-            slug: req.slug,
-            customDomain,
-            icon,
-            forceTheme,
-            accessType,
-            password,
-            authEmailDomains,
-            allowedIpRanges,
-            homepageUrl: req.homepageUrl ?? null,
-            contactUrl: req.contactUrl ?? null,
-            defaultLocale,
-            locales,
-            allowIndex,
-          },
-        }).catch((err) => {
-          // Same handler-layer remap as the `i18n` pre-check above —
-          // preserve `PermissionDenied` (403) for "plan quota reached"
-          // on `status-pages`. The service throws `LimitExceededError`
-          // which the Connect adapter maps to `ResourceExhausted`
-          // (429), but the gRPC contract here is 403 for "upgrade
-          // required".
-          if (
-            err instanceof LimitExceededError &&
-            err.message.startsWith("status-pages")
-          ) {
-            throw new ConnectError(
-              "Upgrade for more status pages.",
-              Code.PermissionDenied,
-            );
-          }
-          throw err;
-        });
-
-        if (customThemeInput !== undefined) {
-          await updatePageCustomTheme({
-            ctx: txCtx,
-            input: { id: row.id, customTheme: customThemeInput },
-          });
+      const created = await createPage({
+        ctx: sCtx,
+        input: {
+          workspaceId: sCtx.workspace.id,
+          title: req.title,
+          description: req.description ?? "",
+          slug: req.slug,
+          customDomain,
+          icon,
+          forceTheme,
+          accessType,
+          password,
+          authEmailDomains,
+          allowedIpRanges,
+          homepageUrl: req.homepageUrl ?? null,
+          contactUrl: req.contactUrl ?? null,
+          defaultLocale,
+          locales,
+          allowIndex,
+          customTheme,
+        },
+      }).catch((err) => {
+        // Same handler-layer remap as the `i18n` pre-check above —
+        // preserve `PermissionDenied` (403) for "plan quota reached"
+        // on `status-pages`. The service throws `LimitExceededError`
+        // which the Connect adapter maps to `ResourceExhausted`
+        // (429), but the gRPC contract here is 403 for "upgrade
+        // required".
+        if (
+          err instanceof LimitExceededError &&
+          err.message.startsWith("status-pages")
+        ) {
+          throw new ConnectError(
+            "Upgrade for more status pages.",
+            Code.PermissionDenied,
+          );
         }
-
-        return row;
+        throw err;
       });
 
-      const result =
-        customThemeInput !== undefined
-          ? await getPage({ ctx: sCtx, input: { id: created.id } })
-          : created;
-      return { statusPage: dbPageToProto(serviceToConverterPage(result)) };
+      return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
     } catch (err) {
       toConnectError(err);
     }

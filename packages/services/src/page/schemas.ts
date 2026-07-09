@@ -2,17 +2,12 @@ import { insertPageSchema } from "@openstatus/db/src/schema";
 import { pageAccessTypes } from "@openstatus/db/src/schema/pages/constants";
 import {
   customDomainSchema,
+  customThemeWriteSchema,
   pageConfigurationSchema,
   slugSchema,
 } from "@openstatus/db/src/schema/pages/validation";
 import { locales } from "@openstatus/locales";
-import {
-  hasCustomTheme,
-  sanitizeCustomTheme,
-  THEME_KEYS,
-  type ThemeKey,
-  validateCustomTheme,
-} from "@openstatus/theme-store";
+import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { z } from "zod";
 
 export { pageAccessTypes };
@@ -46,6 +41,10 @@ export type CreatePageInput = {
   contactUrl?: string | null;
   configuration?: Record<string, unknown> | null;
   monitors?: Array<{ monitorId: number }>;
+  customTheme?: {
+    light?: Record<string, string>;
+    dark?: Record<string, string>;
+  } | null;
 };
 
 /** Minimal create — the onboarding / `new` path with no monitors. */
@@ -146,31 +145,9 @@ export type UpdatePageAppearanceInput = z.infer<
   typeof UpdatePageAppearanceInput
 >;
 
-const themeVarsInput = z.record(z.string(), z.string());
-
 export const UpdatePageCustomThemeInput = z.object({
   id: z.number().int(),
-  // Validated + sanitized at the boundary: only supported var names and
-  // values that can't break out of the inline <style> tag the status page
-  // renders them into. Empty / nullish input clears the column.
-  customTheme: z
-    .object({
-      light: themeVarsInput.optional(),
-      dark: themeVarsInput.optional(),
-    })
-    .superRefine((value, ctx) => {
-      const result = validateCustomTheme(value);
-      if (!result.valid) {
-        for (const message of result.errors) {
-          ctx.addIssue({ code: "custom", message });
-        }
-      }
-    })
-    .nullish()
-    .transform((v) => {
-      if (v == null || !hasCustomTheme(v)) return null;
-      return sanitizeCustomTheme(v);
-    }),
+  customTheme: customThemeWriteSchema,
 });
 export type UpdatePageCustomThemeInput = z.input<
   typeof UpdatePageCustomThemeInput
