@@ -51,7 +51,12 @@ export async function listPages(args: {
     .select()
     .from(page)
     .where(eq(page.workspaceId, ctx.workspace.id))
-    .orderBy(input.order === "asc" ? asc(page.createdAt) : desc(page.createdAt))
+    // id tiebreaker: createdAt ties would make offset pagination unstable
+    .orderBy(
+      ...(input.order === "asc"
+        ? [asc(page.createdAt), asc(page.id)]
+        : [desc(page.createdAt), desc(page.id)]),
+    )
     .all();
   if (pageRows.length === 0) return [];
 
