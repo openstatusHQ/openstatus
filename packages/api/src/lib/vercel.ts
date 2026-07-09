@@ -58,7 +58,7 @@ function toDomainError(domain: string, code?: string): TRPCError {
 
 export async function removeDomainFromVercel(domain: string) {
   const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${env.TEAM_ID_VERCEL}`,
+    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(domain)}?teamId=${env.TEAM_ID_VERCEL}`,
     {
       headers: {
         Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
