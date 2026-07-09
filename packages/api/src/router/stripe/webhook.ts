@@ -15,6 +15,7 @@ import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
+import { removeDomainFromVercel } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { buildLimitsFromSubscription } from "./utils";
@@ -223,6 +224,8 @@ export const webhookRouter = createTRPCRouter({
       return;
     }
 
+    let customDomains: string[] = [];
+
     const _workspace = await opts.ctx.db.transaction(async (tx) => {
       const _workspace = await tx
         .update(workspace)
@@ -266,10 +269,14 @@ export const webhookRouter = createTRPCRouter({
       }
 
       const statusPages = await tx
-        .select({ id: page.id })
+        .select({ id: page.id, customDomain: page.customDomain })
         .from(page)
         .where(eq(page.workspaceId, workspaceId))
         .orderBy(asc(page.createdAt));
+
+      customDomains = statusPages
+        .map((p) => p.customDomain)
+        .filter((domain) => domain !== "");
 
       for (const p of statusPages.slice(1)) {
         await tx.delete(page).where(eq(page.id, p.id)).run();
@@ -329,6 +336,17 @@ export const webhookRouter = createTRPCRouter({
         code: "BAD_REQUEST",
         message: "Workspace not found",
       });
+    }
+
+    // Free plan has no custom-domain feature — release the domains on Vercel
+    // so they stop routing to the status page. Best-effort after commit: the
+    // downgrade must not fail (and get retried by Stripe) on a Vercel error.
+    for (const domain of customDomains) {
+      try {
+        await removeDomainFromVercel(domain);
+      } catch (_e) {
+        // already logged inside removeDomainFromVercel
+      }
     }
 
     const workspaceId = _workspace[0].id;
