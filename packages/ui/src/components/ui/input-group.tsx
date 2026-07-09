@@ -134,12 +134,14 @@ function InputGroupInput({
 }: React.ComponentProps<"input">) {
   return (
     <Input
+      {...props}
+      // after the spread so FormControl's Slot-injected data-slot can't
+      // clobber it — the group's focus/error selectors depend on it
       data-slot="input-group-control"
       className={cn(
         "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
         className,
       )}
-      {...props}
     />
   );
 }
@@ -150,12 +152,12 @@ function InputGroupTextarea({
 }: React.ComponentProps<"textarea">) {
   return (
     <Textarea
+      {...props}
       data-slot="input-group-control"
       className={cn(
         "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
         className,
       )}
-      {...props}
     />
   );
 }
