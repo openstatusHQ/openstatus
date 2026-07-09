@@ -58,10 +58,27 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await deletePage({
-          ctx: toServiceCtx(ctx),
+        const sCtx = toServiceCtx(ctx);
+        const customDomain = await getPageCustomDomain({
+          ctx: sCtx,
           input: { id: input.id },
         });
+        await deletePage({
+          ctx: sCtx,
+          input: { id: input.id },
+        });
+        // best-effort: the page is gone either way, a leaked Vercel
+        // attachment is recoverable while a failed delete is not
+        if (customDomain) {
+          try {
+            await removeDomainFromVercelIfUnused(ctx.db, customDomain);
+          } catch (err) {
+            console.error("Failed to release domain from Vercel:", {
+              domain: customDomain,
+              error: err,
+            });
+          }
+        }
       } catch (err) {
         if (err instanceof NotFoundError) return;
         toTRPCError(err);
@@ -205,8 +222,10 @@ export const pageRouter = createTRPCRouter({
         });
         const newDomain = input.customDomain;
 
-        // unchanged saves must be a no-op — re-adding an existing domain fails on Vercel
-        if (newDomain === oldDomain) return;
+        // unchanged saves must be a no-op — re-adding an existing domain
+        // fails on Vercel; case-insensitive since DNS is and the schema
+        // doesn't lowercase, so a case-only re-save must not re-add either
+        if (newDomain.toLowerCase() === oldDomain.toLowerCase()) return;
 
         if (newDomain) {
           await addDomainToVercel(newDomain);

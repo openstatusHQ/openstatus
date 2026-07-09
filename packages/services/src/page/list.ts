@@ -47,16 +47,13 @@ export async function listPages(args: {
   const input = ListPagesInput.parse(args.input);
   const db = getReadDb(ctx);
 
+  const dir = input.order === "asc" ? asc : desc;
   const pageRows = await db
     .select()
     .from(page)
     .where(eq(page.workspaceId, ctx.workspace.id))
     // id tiebreaker: createdAt ties would make offset pagination unstable
-    .orderBy(
-      ...(input.order === "asc"
-        ? [asc(page.createdAt), asc(page.id)]
-        : [desc(page.createdAt), desc(page.id)]),
-    )
+    .orderBy(dir(page.createdAt), dir(page.id))
     .all();
   if (pageRows.length === 0) return [];
 

@@ -6,15 +6,22 @@ import { env } from "../env";
 
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
+export async function vercelFetch(path: string, init?: RequestInit) {
+  return fetch(`https://api.vercel.com${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  });
+}
+
 export async function addDomainToVercel(domain: string) {
-  const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
+  const response = await vercelFetch(
+    `/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
     {
       body: JSON.stringify({ name: domain }),
-      headers: {
-        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-        "Content-Type": "application/json",
-      },
       method: "POST",
     },
   );
@@ -91,14 +98,9 @@ export async function removeDomainFromVercelIfUnused(
 }
 
 export async function removeDomainFromVercel(domain: string) {
-  const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(domain)}?teamId=${env.TEAM_ID_VERCEL}`,
-    {
-      headers: {
-        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-      },
-      method: "DELETE",
-    },
+  const response = await vercelFetch(
+    `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${encodeURIComponent(domain)}?teamId=${env.TEAM_ID_VERCEL}`,
+    { method: "DELETE" },
   );
 
   if (!response.ok) {

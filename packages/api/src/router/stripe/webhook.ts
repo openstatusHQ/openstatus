@@ -224,134 +224,139 @@ export const webhookRouter = createTRPCRouter({
       return;
     }
 
-    let customDomains: string[] = [];
-
-    const _workspace = await opts.ctx.db.transaction(async (tx) => {
-      const _workspace = await tx
-        .update(workspace)
-        .set({
-          subscriptionId: null,
-          plan: "free",
-          paidUntil: null,
-          endsAt: null,
-          limits: JSON.stringify(getLimits("free")),
-        })
-        .where(eq(workspace.stripeId, customerId))
-        .returning();
-
-      if (!_workspace.length) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Workspace not found",
-        });
-      }
-
-      const workspaceId = _workspace[0].id;
-
-      const activeMonitors = await tx
-        .select({ id: monitor.id })
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.workspaceId, workspaceId),
-            eq(monitor.active, true),
-            isNull(monitor.deletedAt),
-          ),
-        )
-        .orderBy(asc(monitor.createdAt));
-
-      for (const m of activeMonitors.slice(1)) {
-        await tx
-          .update(monitor)
-          .set({ active: false, updatedAt: new Date() })
-          .where(eq(monitor.id, m.id))
-          .run();
-      }
-
-      const statusPages = await tx
-        .select({ id: page.id, customDomain: page.customDomain })
-        .from(page)
-        .where(eq(page.workspaceId, workspaceId))
-        .orderBy(asc(page.createdAt));
-
-      customDomains = statusPages
-        .map((p) => p.customDomain)
-        .filter((domain) => domain !== "");
-
-      for (const p of statusPages.slice(1)) {
-        await tx.delete(page).where(eq(page.id, p.id)).run();
-      }
-
-      if (statusPages.length > 0) {
-        await tx
-          .update(page)
+    const { workspaces, customDomains } = await opts.ctx.db.transaction(
+      async (tx) => {
+        const _workspace = await tx
+          .update(workspace)
           .set({
-            customDomain: "",
-            password: null,
-            accessType: "public",
-            authEmailDomains: null,
-            updatedAt: new Date(),
+            subscriptionId: null,
+            plan: "free",
+            paidUntil: null,
+            endsAt: null,
+            limits: JSON.stringify(getLimits("free")),
           })
-          .where(eq(page.id, statusPages[0].id))
-          .run();
-      }
+          .where(eq(workspace.stripeId, customerId))
+          .returning();
 
-      const notifications = await tx
-        .select({ id: notification.id, provider: notification.provider })
-        .from(notification)
-        .where(eq(notification.workspaceId, workspaceId))
-        .orderBy(asc(notification.createdAt));
+        if (!_workspace.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Workspace not found",
+          });
+        }
 
-      const keepNotification =
-        notifications.find((n) => n.provider === "email") ?? notifications[0];
+        const workspaceId = _workspace[0].id;
 
-      for (const n of notifications.filter(
-        (n) => n.id !== keepNotification?.id,
-      )) {
-        await tx.delete(notification).where(eq(notification.id, n.id)).run();
-      }
+        const activeMonitors = await tx
+          .select({ id: monitor.id })
+          .from(monitor)
+          .where(
+            and(
+              eq(monitor.workspaceId, workspaceId),
+              eq(monitor.active, true),
+              isNull(monitor.deletedAt),
+            ),
+          )
+          .orderBy(asc(monitor.createdAt));
 
-      // Remove all non-owner members from the workspace
-      await tx
-        .delete(usersToWorkspaces)
-        .where(
-          and(
-            eq(usersToWorkspaces.workspaceId, workspaceId),
-            ne(usersToWorkspaces.role, "owner"),
+        for (const m of activeMonitors.slice(1)) {
+          await tx
+            .update(monitor)
+            .set({ active: false, updatedAt: new Date() })
+            .where(eq(monitor.id, m.id))
+            .run();
+        }
+
+        const statusPages = await tx
+          .select({ id: page.id, customDomain: page.customDomain })
+          .from(page)
+          .where(eq(page.workspaceId, workspaceId))
+          .orderBy(asc(page.createdAt));
+
+        const customDomains = [
+          ...new Set(
+            statusPages
+              .map((p) => p.customDomain)
+              .filter((domain) => domain !== ""),
           ),
-        )
-        .run();
+        ];
 
-      // Remove all pending invitations for the workspace
-      await tx
-        .delete(invitation)
-        .where(eq(invitation.workspaceId, workspaceId))
-        .run();
+        for (const p of statusPages.slice(1)) {
+          await tx.delete(page).where(eq(page.id, p.id)).run();
+        }
 
-      return _workspace;
-    });
+        if (statusPages.length > 0) {
+          await tx
+            .update(page)
+            .set({
+              customDomain: "",
+              password: null,
+              accessType: "public",
+              authEmailDomains: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(page.id, statusPages[0].id))
+            .run();
+        }
 
-    if (!_workspace[0]) {
+        const notifications = await tx
+          .select({ id: notification.id, provider: notification.provider })
+          .from(notification)
+          .where(eq(notification.workspaceId, workspaceId))
+          .orderBy(asc(notification.createdAt));
+
+        const keepNotification =
+          notifications.find((n) => n.provider === "email") ?? notifications[0];
+
+        for (const n of notifications.filter(
+          (n) => n.id !== keepNotification?.id,
+        )) {
+          await tx.delete(notification).where(eq(notification.id, n.id)).run();
+        }
+
+        // Remove all non-owner members from the workspace
+        await tx
+          .delete(usersToWorkspaces)
+          .where(
+            and(
+              eq(usersToWorkspaces.workspaceId, workspaceId),
+              ne(usersToWorkspaces.role, "owner"),
+            ),
+          )
+          .run();
+
+        // Remove all pending invitations for the workspace
+        await tx
+          .delete(invitation)
+          .where(eq(invitation.workspaceId, workspaceId))
+          .run();
+
+        return { workspaces: _workspace, customDomains };
+      },
+    );
+
+    if (!workspaces[0]) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Workspace not found",
       });
     }
 
-    // Free plan has no custom-domain feature — release the domains on Vercel
-    // so they stop routing to the status page. Best-effort after commit: the
-    // downgrade must not fail (and get retried by Stripe) on a Vercel error.
-    // This workspace's pages are already cleared, so any page still holding
-    // the domain belongs to another workspace and keeps it on Vercel.
+    // Free plan has no custom-domain feature — release each domain on Vercel
+    // unless another workspace's page still holds it. Best-effort after
+    // commit: a Vercel error must not fail the webhook into Stripe retries.
     for (const domain of customDomains) {
       try {
         await removeDomainFromVercelIfUnused(opts.ctx.db, domain);
-      } catch (_e) {
-        // already logged inside removeDomainFromVercel
+      } catch (err) {
+        console.error("Failed to release domain from Vercel:", {
+          domain,
+          error: err,
+        });
       }
     }
 
-    const workspaceId = _workspace[0].id;
+    const workspaceId = workspaces[0].id;
     const customer = await stripe.customers.retrieve(customerId);
 
     if (!customer.deleted && customer.email) {
