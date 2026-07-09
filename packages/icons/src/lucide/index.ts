@@ -101,6 +101,7 @@ export {
   ShieldUser,
   Eye as Show,
   PanelRight as Sidebar,
+  PanelLeft as SidebarLeft,
   Zap as Speed,
   PanelTop as StatusPage,
   Square as Stop,

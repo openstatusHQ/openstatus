@@ -7,15 +7,16 @@ import {
   Settings,
   Overview,
   Chat,
+  SidebarLeft,
   StatusPage,
 } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarTrigger,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
 import {
@@ -130,7 +131,17 @@ export function AppSidebarTrigger() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <SidebarTrigger />
+          <Button
+            data-sidebar="trigger"
+            data-slot="sidebar-trigger"
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={toggleSidebar}
+          >
+            <SidebarLeft />
+            <span className="sr-only">Toggle Sidebar</span>
+          </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
           <p className="mr-px inline-flex items-center">

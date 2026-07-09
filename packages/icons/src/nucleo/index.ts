@@ -100,6 +100,7 @@ export { Shield } from "./shield";
 export { ShieldUser } from "./shield-user";
 export { Show } from "./show";
 export { Sidebar } from "./sidebar";
+export { SidebarLeft } from "./sidebar-left";
 export { Speed } from "./speed";
 export { StatusPage } from "./status-page";
 export { Stop } from "./stop";
