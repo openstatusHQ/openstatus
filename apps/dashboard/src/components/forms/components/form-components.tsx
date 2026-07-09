@@ -442,7 +442,7 @@ export function FormComponents({
             className="border-x border-transparent px-2"
             onDelete={handleDeleteComponent}
             // FIXME: this is used to show an input instead of the name when dragging a component
-            // fieldNamePrefix={ 0 }
+            // fieldNamePrefix={`components.${index}`}
           />
         );
       }
@@ -719,7 +719,7 @@ interface ComponentRowProps extends Omit<
   component: PageComponent;
   form: UseFormReturn<FormValues>;
   onDelete: (componentId: number) => void;
-  /** The form field name prefix, e.g.  145  or  146  */
+  /** The form field name prefix, e.g. "components.0" or "groups.0.components.1" */
   fieldNamePrefix?: string;
 }
 
