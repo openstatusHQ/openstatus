@@ -248,8 +248,6 @@ export function Client() {
             onClick={() => {
               // NOTE: we use it to display the 'floating-theme' component
               sessionStorage.setItem("community-theme", "true");
-              // The proxy doesn't rewrite on the themes subdomain, so the
-              // locale segment must be explicit to match /[domain]/[locale]
               window.location.href = `/status/${defaultLocale}`;
             }}
           >
