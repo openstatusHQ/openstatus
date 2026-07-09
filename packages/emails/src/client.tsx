@@ -8,6 +8,8 @@ import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PlanDowngradeEmail from "../emails/plan-downgrade";
+import type { PlanDowngradeProps } from "../emails/plan-downgrade";
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
@@ -264,6 +266,39 @@ export class EmailClient {
     } catch (err) {
       console.error(`Error sending team invitation email to ${req.to}`, err);
     }
+  }
+
+  public async sendPlanDowngrade(req: PlanDowngradeProps & { to: string[] }) {
+    if (req.to.length === 0) return;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Sending plan downgrade emails to ${req.to.join(", ")}`);
+      return;
+    }
+
+    const html = await render(<PlanDowngradeEmail {...req} />);
+
+    for (const recipients of chunk(req.to, 100)) {
+      const result = await this.client.batch.send(
+        recipients.map((member) => ({
+          from: "OpenStatus <notifications@notifications.openstatus.dev>",
+          subject: `Your workspace has been downgraded to the ${req.newPlan} plan`,
+          to: member,
+          html,
+        })),
+      );
+
+      if (result.error) {
+        if (result.error?.name === "rate_limit_exceeded") {
+          throw result.error;
+        }
+        console.error(
+          `Error sending plan downgrade emails to ${recipients}: ${result.error}`,
+        );
+      }
+    }
+
+    console.log(`Sent plan downgrade emails to ${req.to.join(", ")}`);
   }
 
   public async sendMonitorAlert(req: MonitorAlertProps & { to: string }) {

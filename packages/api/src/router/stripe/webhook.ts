@@ -11,13 +11,17 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { getLimits } from "@openstatus/db/src/schema/plan/utils";
+import { EmailClient } from "@openstatus/emails";
 import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
+import { env } from "../../env";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { buildLimitsFromSubscription } from "./utils";
+
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 // An unsupported price is a permanent misconfiguration; surface it as a 400 so
 // Stripe stops retrying instead of hammering the endpoint on a 5xx.
@@ -112,6 +116,27 @@ export const webhookRouter = createTRPCRouter({
 
     const newPlan = built.plan;
     if (newPlan !== oldPlan) {
+      const planOrder = ["free", "starter", "team", "scale"] as const;
+      const oldIndex = planOrder.indexOf(oldPlan ?? "free");
+      const newIndex = planOrder.indexOf(newPlan ?? "free");
+
+      if (newIndex < oldIndex) {
+        const members = await opts.ctx.db
+          .select({ email: user.email })
+          .from(usersToWorkspaces)
+          .innerJoin(user, eq(usersToWorkspaces.userId, user.id))
+          .where(eq(usersToWorkspaces.workspaceId, result.id));
+
+        await emailClient.sendPlanDowngrade({
+          to: members
+            .map((m) => m.email)
+            .filter((email): email is string => Boolean(email)),
+          workspaceName: ws.name,
+          oldPlan,
+          newPlan,
+        });
+      }
+
       const customer = await stripe.customers.retrieve(customerId);
       if (!customer.deleted && customer.email) {
         const userResult = await opts.ctx.db
@@ -120,10 +145,6 @@ export const webhookRouter = createTRPCRouter({
           .where(eq(user.email, customer.email))
           .get();
         if (!userResult) return;
-
-        const planOrder = ["free", "starter", "team", "scale"] as const;
-        const oldIndex = planOrder.indexOf(oldPlan ?? "free");
-        const newIndex = planOrder.indexOf(newPlan ?? "free");
 
         const event =
           newIndex > oldIndex
@@ -223,106 +244,120 @@ export const webhookRouter = createTRPCRouter({
       return;
     }
 
-    const _workspace = await opts.ctx.db.transaction(async (tx) => {
-      const _workspace = await tx
-        .update(workspace)
-        .set({
-          subscriptionId: null,
-          plan: "free",
-          paidUntil: null,
-          endsAt: null,
-          limits: JSON.stringify(getLimits("free")),
-        })
-        .where(eq(workspace.stripeId, customerId))
-        .returning();
-
-      if (!_workspace.length) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Workspace not found",
-        });
-      }
-
-      const workspaceId = _workspace[0].id;
-
-      const activeMonitors = await tx
-        .select({ id: monitor.id })
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.workspaceId, workspaceId),
-            eq(monitor.active, true),
-            isNull(monitor.deletedAt),
-          ),
-        )
-        .orderBy(asc(monitor.createdAt));
-
-      for (const m of activeMonitors.slice(1)) {
-        await tx
-          .update(monitor)
-          .set({ active: false, updatedAt: new Date() })
-          .where(eq(monitor.id, m.id))
-          .run();
-      }
-
-      const statusPages = await tx
-        .select({ id: page.id })
-        .from(page)
-        .where(eq(page.workspaceId, workspaceId))
-        .orderBy(asc(page.createdAt));
-
-      for (const p of statusPages.slice(1)) {
-        await tx.delete(page).where(eq(page.id, p.id)).run();
-      }
-
-      if (statusPages.length > 0) {
-        await tx
-          .update(page)
+    const { _workspace, memberEmails } = await opts.ctx.db.transaction(
+      async (tx) => {
+        const _workspace = await tx
+          .update(workspace)
           .set({
-            customDomain: "",
-            password: null,
-            accessType: "public",
-            authEmailDomains: null,
-            updatedAt: new Date(),
+            subscriptionId: null,
+            plan: "free",
+            paidUntil: null,
+            endsAt: null,
+            limits: JSON.stringify(getLimits("free")),
           })
-          .where(eq(page.id, statusPages[0].id))
+          .where(eq(workspace.stripeId, customerId))
+          .returning();
+
+        if (!_workspace.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Workspace not found",
+          });
+        }
+
+        const workspaceId = _workspace[0].id;
+
+        const activeMonitors = await tx
+          .select({ id: monitor.id })
+          .from(monitor)
+          .where(
+            and(
+              eq(monitor.workspaceId, workspaceId),
+              eq(monitor.active, true),
+              isNull(monitor.deletedAt),
+            ),
+          )
+          .orderBy(asc(monitor.createdAt));
+
+        for (const m of activeMonitors.slice(1)) {
+          await tx
+            .update(monitor)
+            .set({ active: false, updatedAt: new Date() })
+            .where(eq(monitor.id, m.id))
+            .run();
+        }
+
+        const statusPages = await tx
+          .select({ id: page.id })
+          .from(page)
+          .where(eq(page.workspaceId, workspaceId))
+          .orderBy(asc(page.createdAt));
+
+        for (const p of statusPages.slice(1)) {
+          await tx.delete(page).where(eq(page.id, p.id)).run();
+        }
+
+        if (statusPages.length > 0) {
+          await tx
+            .update(page)
+            .set({
+              customDomain: "",
+              password: null,
+              accessType: "public",
+              authEmailDomains: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(page.id, statusPages[0].id))
+            .run();
+        }
+
+        const notifications = await tx
+          .select({ id: notification.id, provider: notification.provider })
+          .from(notification)
+          .where(eq(notification.workspaceId, workspaceId))
+          .orderBy(asc(notification.createdAt));
+
+        const keepNotification =
+          notifications.find((n) => n.provider === "email") ?? notifications[0];
+
+        for (const n of notifications.filter(
+          (n) => n.id !== keepNotification?.id,
+        )) {
+          await tx.delete(notification).where(eq(notification.id, n.id)).run();
+        }
+
+        // Collect member emails before non-owner members are removed below
+        const members = await tx
+          .select({ email: user.email })
+          .from(usersToWorkspaces)
+          .innerJoin(user, eq(usersToWorkspaces.userId, user.id))
+          .where(eq(usersToWorkspaces.workspaceId, workspaceId));
+
+        // Remove all non-owner members from the workspace
+        await tx
+          .delete(usersToWorkspaces)
+          .where(
+            and(
+              eq(usersToWorkspaces.workspaceId, workspaceId),
+              ne(usersToWorkspaces.role, "owner"),
+            ),
+          )
           .run();
-      }
 
-      const notifications = await tx
-        .select({ id: notification.id, provider: notification.provider })
-        .from(notification)
-        .where(eq(notification.workspaceId, workspaceId))
-        .orderBy(asc(notification.createdAt));
+        // Remove all pending invitations for the workspace
+        await tx
+          .delete(invitation)
+          .where(eq(invitation.workspaceId, workspaceId))
+          .run();
 
-      const keepNotification =
-        notifications.find((n) => n.provider === "email") ?? notifications[0];
-
-      for (const n of notifications.filter(
-        (n) => n.id !== keepNotification?.id,
-      )) {
-        await tx.delete(notification).where(eq(notification.id, n.id)).run();
-      }
-
-      // Remove all non-owner members from the workspace
-      await tx
-        .delete(usersToWorkspaces)
-        .where(
-          and(
-            eq(usersToWorkspaces.workspaceId, workspaceId),
-            ne(usersToWorkspaces.role, "owner"),
-          ),
-        )
-        .run();
-
-      // Remove all pending invitations for the workspace
-      await tx
-        .delete(invitation)
-        .where(eq(invitation.workspaceId, workspaceId))
-        .run();
-
-      return _workspace;
-    });
+        return {
+          _workspace,
+          memberEmails: members
+            .map((m) => m.email)
+            .filter((email): email is string => Boolean(email)),
+        };
+      },
+    );
 
     if (!_workspace[0]) {
       throw new TRPCError({
@@ -332,6 +367,13 @@ export const webhookRouter = createTRPCRouter({
     }
 
     const workspaceId = _workspace[0].id;
+
+    await emailClient.sendPlanDowngrade({
+      to: memberEmails,
+      workspaceName: _workspace[0].name,
+      newPlan: "free",
+    });
+
     const customer = await stripe.customers.retrieve(customerId);
 
     if (!customer.deleted && customer.email) {
