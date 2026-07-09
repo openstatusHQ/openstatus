@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown, Palette } from "@openstatus/icons";
+import { Check, Expand, Theme } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -54,7 +54,7 @@ export function FloatingTheme({ className }: { className?: string }) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button size="icon" className="size-12 rounded-full">
-            <Palette className="size-5" />
+            <Theme className="size-5" />
             <span className="sr-only">Open theme settings</span>
           </Button>
         </PopoverTrigger>
@@ -83,7 +83,7 @@ export function FloatingTheme({ className }: { className?: string }) {
                     <span className="truncate">
                       {THEMES[communityTheme].name}
                     </span>
-                    <ChevronsUpDown className="opacity-50" />
+                    <Expand className="opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="p-0">

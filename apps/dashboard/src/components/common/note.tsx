@@ -1,4 +1,4 @@
-import { X } from "@openstatus/icons";
+import { Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
@@ -79,7 +79,7 @@ export function NoteButtonClose({
       className={cn("text-muted-foreground -mr-1 shrink-0", className)}
       {...props}
     >
-      <X />
+      <Close />
     </Button>
   );
 }

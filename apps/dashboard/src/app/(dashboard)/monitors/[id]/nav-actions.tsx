@@ -2,7 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import { deserialize } from "@openstatus/assertions";
-import { Zap } from "@openstatus/icons";
+import { Speed } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -187,7 +187,7 @@ export function NavActions() {
               type="button"
               onClick={testAction}
             >
-              <Zap className="text-muted-foreground group-hover:text-foreground" />
+              <Speed className="text-muted-foreground group-hover:text-foreground" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Test Monitor</TooltipContent>

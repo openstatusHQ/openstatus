@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Pencil, Send } from "@openstatus/icons";
+import { Edit, Send } from "@openstatus/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
@@ -79,7 +79,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           {
             id: "edit",
             label: "Edit",
-            icon: Pencil,
+            icon: Edit,
             variant: "default" as const,
             onClick: () => setEditOpen(true),
           },

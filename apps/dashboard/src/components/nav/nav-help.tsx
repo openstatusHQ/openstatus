@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Book,
-  Braces,
-  CalendarClock,
-  HelpCircle,
-  LifeBuoy,
-} from "@openstatus/icons";
+import { Docs, Api, Schedule, Help, Support } from "@openstatus/icons";
 import { DiscordIcon } from "@openstatus/icons/brand";
 import { GitHubIcon } from "@openstatus/icons/brand";
 import {
@@ -41,7 +35,7 @@ export function NavHelp() {
                   className="font-commit-mono tracking-tight"
                   tooltip="Get Help"
                 >
-                  <HelpCircle />
+                  <Help />
                   <span>Get Help</span>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -56,7 +50,7 @@ export function NavHelp() {
                 </DropdownMenuLabel>
                 <FormDialogSupportContact>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <LifeBuoy />
+                    <Support />
                     Support
                   </DropdownMenuItem>
                 </FormDialogSupportContact>
@@ -66,7 +60,7 @@ export function NavHelp() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Book /> Docs
+                    <Docs /> Docs
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -75,7 +69,7 @@ export function NavHelp() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <Braces /> API Reference
+                    <Api /> API Reference
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -84,7 +78,7 @@ export function NavHelp() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <CalendarClock /> Book a Call
+                    <Schedule /> Book a Call
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

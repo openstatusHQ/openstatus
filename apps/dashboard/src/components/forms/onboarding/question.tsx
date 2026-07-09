@@ -3,11 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Check,
-  MoreHorizontal,
-  Newspaper,
+  More,
+  Blog,
   Search as SearchIcon,
-  Sparkles,
-  Users,
+  AI,
+  Team,
 } from "@openstatus/icons";
 import {
   BlueskyIcon,
@@ -45,11 +45,11 @@ const sources = [
   { id: "linkedin", title: "LinkedIn", icon: LinkedInIcon },
   { id: "bluesky", title: "Bluesky", icon: BlueskyIcon },
   { id: "twitter", title: "X / Twitter", icon: XIcon },
-  { id: "ai-chat", title: "AI Chat", icon: Sparkles },
-  { id: "recommendation", title: "Friend / Colleague", icon: Users },
+  { id: "ai-chat", title: "AI Chat", icon: AI },
+  { id: "recommendation", title: "Friend / Colleague", icon: Team },
   { id: "youtube", title: "YouTube", icon: YouTubeIcon },
-  { id: "blog", title: "Blog / Article", icon: Newspaper },
-  { id: "other", title: "Other", icon: MoreHorizontal },
+  { id: "blog", title: "Blog / Article", icon: Blog },
+  { id: "other", title: "Other", icon: More },
 ] as const;
 
 const schema = z.object({

@@ -1,4 +1,4 @@
-import { Braces, ChevronDown, Table } from "@openstatus/icons";
+import { Api, ChevronDown, Table } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Collapsible,
@@ -199,7 +199,7 @@ function ToolDisclosure({
                     tabIndex={open ? 0 : -1}
                     className="h-[18px] px-1 [&_svg:not([class*='size-'])]:size-3"
                   >
-                    <Braces />
+                    <Api />
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TriangleAlert } from "@openstatus/icons";
+import { Warning } from "@openstatus/icons";
 import {
   BetterstackIcon,
   InstatusIcon,
@@ -379,7 +379,7 @@ export function FormImport({
                 </div>
                 {previewMutation.data.errors.length > 0 ? (
                   <Note color="error" size="sm">
-                    <TriangleAlert />
+                    <Warning />
                     <p className="text-sm">
                       {previewMutation.data.errors.join(" ")}
                     </p>

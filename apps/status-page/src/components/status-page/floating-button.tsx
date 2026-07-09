@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown, Cog } from "@openstatus/icons";
+import { Check, Expand, Settings } from "@openstatus/icons";
 import {
   type CustomTheme,
   THEMES,
@@ -203,7 +203,7 @@ export function FloatingButton({
             variant="secondary"
             className="size-12 rounded-full border"
           >
-            <Cog className="size-5" />
+            <Settings className="size-5" />
             <span className="sr-only">Open status page settings</span>
           </Button>
         </PopoverTrigger>
@@ -320,7 +320,7 @@ export function FloatingButton({
                       <span className="truncate">
                         {THEMES[communityTheme].name}
                       </span>
-                      <ChevronsUpDown className="opacity-50" />
+                      <Expand className="opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="p-0">

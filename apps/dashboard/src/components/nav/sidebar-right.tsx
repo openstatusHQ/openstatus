@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelRight } from "@openstatus/icons";
+import { Sidebar as SidebarIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sidebar,
@@ -123,7 +123,7 @@ export function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelRight />
+      <SidebarIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelTop } from "@openstatus/icons";
+import { StatusPage } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 
@@ -31,7 +31,7 @@ export function Breadcrumb() {
           type: "link",
           label: "Status Pages",
           href: "/status-pages",
-          icon: PanelTop,
+          icon: StatusPage,
         },
         {
           type: "link",

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, Plus } from "@openstatus/icons";
+import { Expand, Add } from "@openstatus/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +72,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
                   </span>
                 </div>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <Expand className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -104,7 +104,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2" asChild>
               <Link href="/settings/general">
-                <Plus />
+                <Add />
                 <div className="font-commit-mono text-muted-foreground tracking-tight">
                   Add team member
                 </div>

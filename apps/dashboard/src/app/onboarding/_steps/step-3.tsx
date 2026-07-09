@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  Activity,
-  ArrowRight,
-  Bell,
+  Monitor,
+  Next,
+  Notification,
   Calendar,
-  CreditCard,
-  LayoutGrid,
-  PanelTop,
-  UserPlus,
+  Billing,
+  Overview,
+  StatusPage,
+  Invite,
 } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import Link from "next/link";
@@ -55,20 +55,20 @@ export function Step3({
 
     const priority: Link[] = [];
     if (monitorSkipped) {
-      priority.push({ name: "Monitors", href: "/monitors", icon: Activity });
+      priority.push({ name: "Monitors", href: "/monitors", icon: Monitor });
     }
     if (pageSkipped) {
       priority.push({
         name: "Status Pages",
         href: "/status-pages",
-        icon: PanelTop,
+        icon: StatusPage,
       });
     }
     const filler: Link[] = [
-      { name: "Invite team", href: "/settings/general", icon: UserPlus },
-      { name: "Notifiers", href: "/notifications", icon: Bell },
-      { name: "Overview", href: "/overview", icon: LayoutGrid },
-      { name: "Billing", href: "/settings/billing", icon: CreditCard },
+      { name: "Invite team", href: "/settings/general", icon: Invite },
+      { name: "Notifiers", href: "/notifications", icon: Notification },
+      { name: "Overview", href: "/overview", icon: Overview },
+      { name: "Billing", href: "/settings/billing", icon: Billing },
     ];
     return [...priority, ...filler].slice(0, 4);
   }, [monitorSkipped, pageSkipped]);
@@ -99,7 +99,7 @@ export function Step3({
           <OnboardingActions className="flex-wrap">
             <Button asChild>
               <Link href="/overview">
-                Continue <ArrowRight className="size-3" />
+                Continue <Next className="size-3" />
               </Link>
             </Button>
             <Button variant="ghost" asChild>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, CircleCheck, ListFilter } from "@openstatus/icons";
+import { ArrowDown, Success, ListFilter } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
@@ -33,7 +33,7 @@ import { searchParamsParsers } from "./search-params";
 
 const icons = {
   default: {
-    active: CircleCheck,
+    active: Success,
     inactive: ListFilter,
   },
   p95: {

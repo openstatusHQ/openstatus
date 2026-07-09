@@ -1,6 +1,6 @@
 "use client";
 
-import { Gauge, Plus } from "@openstatus/icons";
+import { Impact, Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import NextLink from "next/link";
@@ -62,7 +62,7 @@ export default function Page() {
   return (
     <SectionGroup>
       <NoteDismissible cookieKey="note_status_reports_component_impacts">
-        <Gauge />
+        <Impact />
         Status reports now support per-component impacts.
         <NoteButton variant="default" asChild>
           <NextLink
@@ -130,7 +130,7 @@ export default function Page() {
               }}
             >
               <Button data-section="action" size="sm">
-                <Plus />
+                <Add />
                 Create Status Report
               </Button>
             </FormSheetStatusReport>

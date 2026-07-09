@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot } from "@openstatus/icons";
+import { Agent } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -60,7 +60,7 @@ export default function Page() {
   return (
     <SectionGroup>
       <NoteDismissible cookieKey="note_overview_slack_agent">
-        <Bot />
+        <Agent />
         Use our Slack agent to manage your status pages and incidents.
         <NoteButton variant="default" asChild>
           <Link href="/agents">Learn more</Link>

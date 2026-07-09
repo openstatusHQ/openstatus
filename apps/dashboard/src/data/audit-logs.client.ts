@@ -1,28 +1,22 @@
 import type { PrivateLocation } from "@openstatus/db/src/schema";
-import {
-  CircleAlert,
-  CircleCheck,
-  CircleMinus,
-  Send,
-  Siren,
-} from "@openstatus/icons";
+import { Alert, Success, Failed, Send, Incident } from "@openstatus/icons";
 import { getRegionInfo } from "@openstatus/regions";
 
 import { formatMilliseconds } from "@/lib/formatter";
 
 export const config = {
   "incident.created": {
-    icon: Siren,
+    icon: Incident,
     color: "text-destructive",
     title: "Incident Created",
   },
   "incident.resolved": {
-    icon: CircleCheck,
+    icon: Success,
     color: "text-success",
     title: "Incident Resolved",
   },
   "monitor.failed": {
-    icon: CircleMinus,
+    icon: Failed,
     color: "text-destructive",
     title: "Monitor Failed",
   },
@@ -32,12 +26,12 @@ export const config = {
     title: "Notification Sent",
   },
   "monitor.recovered": {
-    icon: CircleCheck,
+    icon: Success,
     color: "text-success",
     title: "Monitor Recovered",
   },
   "monitor.degraded": {
-    icon: CircleAlert,
+    icon: Alert,
     color: "text-warning",
     title: "Monitor Degraded",
   },

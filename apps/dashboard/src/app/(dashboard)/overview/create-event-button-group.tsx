@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Plus } from "@openstatus/icons";
+import { ChevronDown, Add } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import {
@@ -24,7 +24,7 @@ export function CreateEventButtonGroup() {
       <ButtonGroup>
         <FormSheetStatusReportCreate>
           <Button data-section="action" variant="outline" size="sm">
-            <Plus />
+            <Add />
             Create Status Report
           </Button>
         </FormSheetStatusReportCreate>
@@ -43,7 +43,7 @@ export function CreateEventButtonGroup() {
             <DropdownMenuItem
               onSelect={() => maintenanceButtonRef.current?.click()}
             >
-              <Plus className="text-muted-foreground" />
+              <Add className="text-muted-foreground" />
               Create Maintenance
             </DropdownMenuItem>
           </DropdownMenuContent>

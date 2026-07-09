@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "@openstatus/icons";
+import { Add, Delete } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -109,7 +109,7 @@ export function FormMonitorTag({
               size="sm"
               onClick={() => append({ name: "", color: "#00008B" })}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Add className="mr-2 h-4 w-4" />
               Add Tag
             </Button>
           </div>
@@ -151,7 +151,7 @@ export function FormMonitorTag({
                 size="icon"
                 onClick={() => remove(index)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Delete className="h-4 w-4" />
               </Button>
             </div>
           ))}

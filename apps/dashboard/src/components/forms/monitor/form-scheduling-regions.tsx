@@ -5,7 +5,7 @@ import {
   type Region,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
-import { CircleX, Globe, Info } from "@openstatus/icons";
+import { Error, Globe, Info } from "@openstatus/icons";
 import {
   formatRegionCode,
   groupByContinent,
@@ -174,7 +174,7 @@ export function FormSchedulingRegions({
             />
             {!periodicity.includes(watchPeriodicity) ? (
               <Note color="error">
-                <CircleX />
+                <Error />
                 The periodicity you are selecting is not allowed for your plan.
                 <NoteButton type="button" onClick={() => setOpenDialog(true)}>
                   Upgrade your plan

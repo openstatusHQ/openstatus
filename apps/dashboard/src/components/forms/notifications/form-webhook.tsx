@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, X } from "@openstatus/icons";
+import { Add, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
@@ -226,7 +226,7 @@ export function FormWebhook({
                   aria-label="Remove header"
                   onClick={() => remove(index)}
                 >
-                  <X />
+                  <Close />
                 </Button>
               </div>
             ))}
@@ -237,7 +237,7 @@ export function FormWebhook({
                 type="button"
                 onClick={() => append({ key: "", value: "" })}
               >
-                <Plus />
+                <Add />
                 Add Header
               </Button>
             </div>

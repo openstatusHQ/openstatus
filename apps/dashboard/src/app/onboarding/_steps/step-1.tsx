@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight } from "@openstatus/icons";
+import { Next } from "@openstatus/icons";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMemo } from "react";
@@ -112,7 +112,7 @@ export function Step1({
         <OnboardingActions>
           {isLocked ? (
             <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
+              Continue <Next className="size-3" />
             </Button>
           ) : (
             <>

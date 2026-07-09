@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Activity,
-  Bell,
-  Bot,
-  Cog,
-  LayoutGrid,
-  MessageCircle,
-  PanelTop,
+  Monitor,
+  Notification,
+  Agent,
+  Settings,
+  Overview,
+  Chat,
+  StatusPage,
 } from "@openstatus/icons";
 import {
   Sidebar,
@@ -49,37 +49,37 @@ const data = {
     {
       name: "Overview",
       url: "/overview",
-      icon: LayoutGrid,
+      icon: Overview,
     },
     {
       name: "Status Pages",
       url: "/status-pages",
-      icon: PanelTop,
+      icon: StatusPage,
     },
     {
       name: "Monitors",
       url: "/monitors",
-      icon: Activity,
+      icon: Monitor,
     },
     {
       name: "Notifications",
       url: "/notifications",
-      icon: Bell,
+      icon: Notification,
     },
     {
       name: "Settings",
       url: "/settings/general",
-      icon: Cog,
+      icon: Settings,
     },
     {
       name: "Assistant",
       url: "/chat",
-      icon: MessageCircle,
+      icon: Chat,
     },
     {
       name: "Slack agent",
       url: "/agents",
-      icon: Bot,
+      icon: Agent,
     },
   ],
 };

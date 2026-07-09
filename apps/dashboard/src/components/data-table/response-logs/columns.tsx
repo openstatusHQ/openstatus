@@ -2,7 +2,7 @@
 
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { Clock, Workflow } from "@openstatus/icons";
+import { Clock, ApiTrigger } from "@openstatus/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -122,7 +122,7 @@ export function getColumns(
       cell: ({ row }) => {
         const value = row.getValue("trigger");
         if (value === "cron" || value === "api") {
-          const Icon = value === "cron" ? Clock : Workflow;
+          const Icon = value === "cron" ? Clock : ApiTrigger;
           const label = value === "cron" ? "Scheduled" : "API";
           return (
             <TooltipProvider>

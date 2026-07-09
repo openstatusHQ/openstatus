@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Plus } from "@openstatus/icons";
+import { More, Add } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -109,7 +109,7 @@ export function NavMonitors() {
                     setOpenMobile(false);
                   }}
                 >
-                  <Plus className="text-muted-foreground" />
+                  <Add className="text-muted-foreground" />
                   <span className="sr-only">Create Monitor</span>
                 </SidebarMenuAction>
               </TooltipTrigger>
@@ -201,7 +201,7 @@ export function NavMonitors() {
                   align={isMobile ? "end" : "start"}
                 >
                   <SidebarMenuAction showOnHover>
-                    <MoreHorizontal />
+                    <More />
                     <span className="sr-only">More</span>
                   </SidebarMenuAction>
                 </QuickActions>

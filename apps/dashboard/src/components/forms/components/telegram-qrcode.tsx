@@ -1,4 +1,4 @@
-import { LoaderCircle } from "@openstatus/icons";
+import { Loading } from "@openstatus/icons";
 import { QRCode } from "@openstatus/ui/components/ui/qr-code";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 
@@ -35,7 +35,7 @@ export default function TelegramQRCode({
           "Generating QR Code..."
         ) : isPolling ? (
           <>
-            <LoaderCircle className="h-3 w-3 animate-spin" />
+            <Loading className="h-3 w-3 animate-spin" />
             {chatType === "private"
               ? "Retrieving your account..."
               : "Waiting for group connection..."}

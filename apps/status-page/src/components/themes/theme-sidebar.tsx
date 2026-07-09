@@ -4,8 +4,8 @@ import {
   Check,
   ChevronDown,
   Copy,
-  PanelRight,
-  RotateCcw,
+  Sidebar as SidebarIcon,
+  Reset,
 } from "@openstatus/icons";
 import {
   THEMES,
@@ -199,7 +199,7 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 onClick={() => setNewTheme(THEMES[t])}
               >
                 <span className="sr-only">Reset</span>
-                <RotateCcw />
+                <Reset />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="left">
@@ -444,7 +444,7 @@ export function SidebarTrigger({
           }}
           {...props}
         >
-          <PanelRight />
+          <SidebarIcon />
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
       </TooltipTrigger>

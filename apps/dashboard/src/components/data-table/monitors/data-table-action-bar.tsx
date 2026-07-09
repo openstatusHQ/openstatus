@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Check, CircleCheck, Copy, Trash2 } from "@openstatus/icons";
+import { Check, Success, Copy, Delete as DeleteIcon } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -142,7 +142,7 @@ export function MonitorDataTableActionBar({
         >
           <SelectTrigger asChild>
             <DataTableActionBarAction size="icon" tooltip="Update status">
-              <CircleCheck />
+              <Success />
             </DataTableActionBarAction>
           </SelectTrigger>
           <SelectContent align="center">
@@ -166,7 +166,7 @@ export function MonitorDataTableActionBar({
               tooltip="Delete monitors"
               isPending={isPending || deleteMonitorsMutation.isPending}
             >
-              <Trash2 />
+              <DeleteIcon />
             </DataTableActionBarAction>
           </AlertDialogTrigger>
           <AlertDialogContent

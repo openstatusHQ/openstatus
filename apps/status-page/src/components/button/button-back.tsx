@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "@openstatus/icons";
+import { Back } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useExtracted } from "next-intl";
@@ -21,7 +21,7 @@ export function ButtonBack({
       {...props}
     >
       <Link href={href}>
-        <ArrowLeft />
+        <Back />
         {t("Back")}
       </Link>
     </Button>

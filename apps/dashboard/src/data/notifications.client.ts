@@ -1,9 +1,9 @@
 import {
-  Bell,
-  Cog,
-  Mail,
-  MessageCircle,
-  Trash2,
+  Notification,
+  Settings,
+  Email,
+  Chat,
+  Delete,
   Webhook,
 } from "@openstatus/icons";
 import {
@@ -36,13 +36,13 @@ export const actions = [
   {
     id: "edit",
     label: "Settings",
-    icon: Cog,
+    icon: Settings,
     variant: "default" as const,
   },
   {
     id: "delete",
     label: "Delete",
-    icon: Trash2,
+    icon: Delete,
     variant: "destructive" as const,
   },
 ] as const;
@@ -77,12 +77,12 @@ export const config = {
     form: FormDiscord,
   },
   email: {
-    icon: Mail,
+    icon: Email,
     label: "Email",
     form: FormEmail,
   },
   sms: {
-    icon: MessageCircle,
+    icon: Chat,
     label: "SMS",
     form: FormSms,
   },
@@ -112,7 +112,7 @@ export const config = {
     form: FormPagerDuty,
   },
   ntfy: {
-    icon: Bell, // TODO: add svg icon
+    icon: Notification, // TODO: add svg icon
     label: "Ntfy",
     form: FormNtfy,
   },

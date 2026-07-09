@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "@openstatus/icons";
+import { Close } from "@openstatus/icons";
 import {
   Form,
   FormControl,
@@ -99,7 +99,7 @@ export function CreateMonitorForm({
                           inputRef.current?.focus();
                         }}
                       >
-                        <X />
+                        <Close />
                       </InputGroupButton>
                     </InputGroupAddon>
                   ) : null}

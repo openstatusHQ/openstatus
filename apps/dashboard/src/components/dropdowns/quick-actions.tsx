@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Check,
-  Copy,
-  type IconType,
-  MoreHorizontal,
-  Trash2,
-} from "@openstatus/icons";
+import { Check, Copy, type IconType, More, Delete } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -105,7 +99,7 @@ export function QuickActions({
               className={className ?? "data-[state=open]:bg-accent h-7 w-7"}
               {...props}
             >
-              <MoreHorizontal />
+              <More />
             </Button>
           )}
         </DropdownMenuTrigger>
@@ -136,7 +130,7 @@ export function QuickActions({
               {actions?.length ? <DropdownMenuSeparator /> : null}
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem variant="destructive">
-                  <Trash2 className="text-muted-foreground" />
+                  <Delete className="text-muted-foreground" />
                   Delete
                 </DropdownMenuItem>
               </AlertDialogTrigger>

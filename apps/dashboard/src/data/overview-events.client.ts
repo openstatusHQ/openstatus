@@ -1,11 +1,11 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
-  Activity,
+  Monitor,
   type IconType,
-  Megaphone,
-  PanelTop,
-  Siren,
-  Hammer,
+  Report,
+  StatusPage,
+  Incident as IncidentIcon,
+  Maintenance as MaintenanceIcon,
 } from "@openstatus/icons";
 
 type Incident = RouterOutputs["incident"]["list"][number];
@@ -18,9 +18,9 @@ export type OverviewEvent =
   | { type: "maintenance"; maintenance: Maintenance };
 
 export const eventTypeConfig = {
-  incident: { label: "Incident", icon: Siren },
-  report: { label: "Status Report", icon: Megaphone },
-  maintenance: { label: "Maintenance", icon: Hammer },
+  incident: { label: "Incident", icon: IncidentIcon },
+  report: { label: "Status Report", icon: Report },
+  maintenance: { label: "Maintenance", icon: MaintenanceIcon },
 } as const;
 
 export type OverviewEventType = keyof typeof eventTypeConfig;
@@ -164,14 +164,14 @@ export function buildOverviewData(
       value: monitors.length,
       href: "/monitors",
       variant: "default",
-      icon: Activity,
+      icon: Monitor,
     },
     {
       title: "Status Pages",
       value: pages.length,
       href: "/status-pages",
       variant: "default",
-      icon: PanelTop,
+      icon: StatusPage,
     },
     {
       title: "Open Incidents",

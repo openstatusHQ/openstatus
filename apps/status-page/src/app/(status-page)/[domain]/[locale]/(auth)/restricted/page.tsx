@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldAlert } from "@openstatus/icons";
+import { Restricted } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useExtracted } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -21,7 +21,7 @@ export default function RestrictedPage() {
 
   return (
     <div className="m-auto flex flex-col items-center justify-center gap-4 p-4 text-center">
-      <ShieldAlert className="text-muted-foreground h-12 w-12" />
+      <Restricted className="text-muted-foreground h-12 w-12" />
       <h1 className="text-2xl font-semibold">{t("Access Restricted")}</h1>
       <p className="text-muted-foreground">
         {t(

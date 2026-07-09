@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AudioLines, Inbox, LoaderCircle, Mic } from "@openstatus/icons";
+import { AudioLines, Inbox, Loading, Mic } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -227,7 +227,7 @@ export function NavFeedback() {
                 disabled={feedbackMutation.isPending}
               >
                 {feedbackMutation.isPending ? (
-                  <LoaderCircle className="size-4 animate-spin" />
+                  <Loading className="size-4 animate-spin" />
                 ) : (
                   <>
                     Send

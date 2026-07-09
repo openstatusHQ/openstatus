@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "@openstatus/icons";
+import { Add } from "@openstatus/icons";
 import {
   skipToken,
   useMutation,
@@ -86,7 +86,7 @@ export function Sidebar() {
         onClick: () => router.push("/chat"),
         children: (
           <>
-            <Plus />
+            <Add />
             <span>New chat</span>
           </>
         ),

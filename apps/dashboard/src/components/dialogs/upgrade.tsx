@@ -2,7 +2,7 @@ import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getPlansForLimit } from "@openstatus/db/src/schema/plan/utils";
-import { CalendarClock } from "@openstatus/icons";
+import { Schedule } from "@openstatus/icons";
 import {
   Dialog,
   DialogContent,
@@ -83,7 +83,7 @@ export function UpgradeDialog(
         ) : null}
         {restrictTo.length === 0 ? (
           <Note>
-            <CalendarClock />
+            <Schedule />
             Please contact us to upgrade your plan.
             <NoteButton variant="outline" asChild>
               <a

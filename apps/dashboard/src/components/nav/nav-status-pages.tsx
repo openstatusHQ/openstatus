@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Plus } from "@openstatus/icons";
+import { More, Add } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -93,7 +93,7 @@ export function NavStatusPages() {
                     setOpenMobile(false);
                   }}
                 >
-                  <Plus className="text-muted-foreground" />
+                  <Add className="text-muted-foreground" />
                   <span className="sr-only">Create Status Page</span>
                 </SidebarMenuAction>
               </TooltipTrigger>
@@ -171,7 +171,7 @@ export function NavStatusPages() {
                   align={isMobile ? "end" : "start"}
                 >
                   <SidebarMenuAction showOnHover>
-                    <MoreHorizontal />
+                    <More />
                     <span className="sr-only">More</span>
                   </SidebarMenuAction>
                 </QuickActions>

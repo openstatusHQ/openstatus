@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  Blocks,
-  Cog,
-  CreditCard,
+  Integrations,
+  Settings,
+  Billing,
   Globe,
-  ScanEye,
-  User,
+  AuditLog,
+  Account,
 } from "@openstatus/icons";
 
 import { NavTabs } from "@/components/nav/nav-tabs";
@@ -18,25 +18,25 @@ export function Tabs() {
         {
           value: "general",
           label: "General",
-          icon: Cog,
+          icon: Settings,
           href: "/settings/general",
         },
         {
           value: "account",
           label: "Account",
-          icon: User,
+          icon: Account,
           href: "/settings/account",
         },
         {
           value: "billing",
           label: "Billing",
-          icon: CreditCard,
+          icon: Billing,
           href: "/settings/billing",
         },
         {
           value: "integrations",
           label: "Integrations",
-          icon: Blocks,
+          icon: Integrations,
           href: "/settings/integrations",
         },
         {
@@ -48,7 +48,7 @@ export function Tabs() {
         {
           value: "audit-logs",
           label: "Audit Logs",
-          icon: ScanEye,
+          icon: AuditLog,
           href: "/settings/audit-logs",
         },
       ]}

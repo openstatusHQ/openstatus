@@ -1,6 +1,6 @@
 "use client";
 
-import { Palette } from "@openstatus/icons";
+import { Theme } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
@@ -16,7 +16,7 @@ export function ThemePalettePicker() {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button size="icon" variant="outline" onClick={toggleSidebar}>
-          <Palette className="size-4" />
+          <Theme className="size-4" />
         </Button>
       </TooltipTrigger>
       <TooltipContent className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { Book } from "@openstatus/icons";
+import { Docs } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -22,7 +22,7 @@ export function NavActions() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Book className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
+                <Docs className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>
           </TooltipTrigger>

@@ -1,7 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Activity, MapPin, TriangleAlert, X } from "@openstatus/icons";
+import { Monitor, Region, Warning, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
 
@@ -31,7 +31,7 @@ export function ResponseLogsDataTableToolbar({
               label: code.code.toString(),
               value: code.code.toString(),
             }))}
-            icon={Activity}
+            icon={Monitor}
           />
         )}
         {table.getColumn("region") && (
@@ -42,7 +42,7 @@ export function ResponseLogsDataTableToolbar({
               label: region.location,
               value: region.code,
             }))}
-            icon={MapPin}
+            icon={Region}
           />
         )}
         {table.getColumn("error") && (
@@ -53,7 +53,7 @@ export function ResponseLogsDataTableToolbar({
               { label: "Yes", value: "true" },
               { label: "No", value: "false" },
             ]}
-            icon={TriangleAlert}
+            icon={Warning}
           />
         )}
         {isFiltered && (
@@ -63,7 +63,7 @@ export function ResponseLogsDataTableToolbar({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X />
+            <Close />
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity } from "@openstatus/icons";
+import { Monitor } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 
@@ -25,7 +25,7 @@ export function Breadcrumb() {
   return (
     <NavBreadcrumb
       items={[
-        { type: "link", label: "Monitors", href: "/monitors", icon: Activity },
+        { type: "link", label: "Monitors", href: "/monitors", icon: Monitor },
         {
           type: "link",
           label: monitor.name,

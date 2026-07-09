@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Plus, X } from "@openstatus/icons";
+import { Lock, Add, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -151,7 +151,7 @@ export function FormOtel({
                           field.onChange(newHeaders);
                         }}
                       >
-                        <X />
+                        <Close />
                       </Button>
                     </div>
                   ))}
@@ -168,7 +168,7 @@ export function FormOtel({
                         ]);
                       }}
                     >
-                      <Plus />
+                      <Add />
                       Add Header
                     </Button>
                   </div>
