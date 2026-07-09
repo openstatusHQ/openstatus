@@ -244,8 +244,14 @@ export const webhookRouter = createTRPCRouter({
       return;
     }
 
-    const { _workspace, memberEmails } = await opts.ctx.db.transaction(
+    const { _workspace, memberEmails, oldPlan } = await opts.ctx.db.transaction(
       async (tx) => {
+        const existing = await tx
+          .select({ plan: workspace.plan })
+          .from(workspace)
+          .where(eq(workspace.stripeId, customerId))
+          .get();
+
         const _workspace = await tx
           .update(workspace)
           .set({
@@ -355,6 +361,7 @@ export const webhookRouter = createTRPCRouter({
           memberEmails: members
             .map((m) => m.email)
             .filter((email): email is string => Boolean(email)),
+          oldPlan: existing?.plan ?? "free",
         };
       },
     );
@@ -368,11 +375,15 @@ export const webhookRouter = createTRPCRouter({
 
     const workspaceId = _workspace[0].id;
 
-    await emailClient.sendPlanDowngrade({
-      to: memberEmails,
-      workspaceName: _workspace[0].name,
-      newPlan: "free",
-    });
+    // Stripe can redeliver the event; only notify on an actual plan change
+    if (oldPlan !== "free") {
+      await emailClient.sendPlanDowngrade({
+        to: memberEmails,
+        workspaceName: _workspace[0].name,
+        oldPlan,
+        newPlan: "free",
+      });
+    }
 
     const customer = await stripe.customers.retrieve(customerId);
 

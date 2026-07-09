@@ -282,6 +282,7 @@ export class EmailClient {
       const result = await this.client.batch.send(
         recipients.map((member) => ({
           from: "OpenStatus <notifications@notifications.openstatus.dev>",
+          replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
           subject: `Your workspace has been downgraded to the ${req.newPlan} plan`,
           to: member,
           html,
