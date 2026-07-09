@@ -3,7 +3,7 @@
 import {
   Check,
   Copy,
-  type LucideIcon,
+  type IconType,
   MoreHorizontal,
   Trash2,
 } from "@openstatus/icons";
@@ -42,7 +42,7 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   actions?: {
     id: string;
     label: string;
-    icon: LucideIcon;
+    icon: IconType;
     variant: "default" | "destructive";
     onClick?: () => Promise<void> | void;
   }[];

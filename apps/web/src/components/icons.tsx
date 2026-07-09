@@ -22,7 +22,7 @@ import {
   Webhook,
   Zap,
 } from "@openstatus/icons";
-import type { LucideIcon, LucideProps } from "@openstatus/icons";
+import type { IconType, IconProps } from "@openstatus/icons";
 import {
   BlueskyIcon,
   DiscordIcon,
@@ -31,8 +31,8 @@ import {
   XIcon,
 } from "@openstatus/icons/brand";
 
-export type Icon = LucideIcon;
-export type IconProps = LucideProps;
+export type Icon = IconType;
+export type { IconProps };
 export type ValidIcon = keyof typeof Icons;
 
 export const Icons = {

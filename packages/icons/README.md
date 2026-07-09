@@ -10,4 +10,4 @@ Single import surface for icons across the openstatus apps.
 Both sets must export identical names — enforced by `src/parity.ts` at compile time.
 
 Nucleo icons are used under the [Nucleo license](https://nucleoapp.com/license)
-(max 100 icons in open-source projects, with copyright notice).
+(max 100 icons in open-source projects, with copyright notice). With the approval from [Sebastiano Guerriero](https://x.com/guerriero_se), we have the authorization to add up to 140-150 icons.

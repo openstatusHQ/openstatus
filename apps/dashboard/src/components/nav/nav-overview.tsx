@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "@openstatus/icons";
+import type { IconType } from "@openstatus/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -22,7 +22,7 @@ export function NavOverview({
   items: {
     name: string;
     url: string;
-    icon: LucideIcon;
+    icon: IconType;
   }[];
 }) {
   const pathname = usePathname();

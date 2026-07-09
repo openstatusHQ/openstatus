@@ -1,7 +1,7 @@
 import type { RouterOutputs } from "@openstatus/api";
 import {
   Activity,
-  type LucideIcon,
+  type IconType,
   Megaphone,
   PanelTop,
   Siren,
@@ -111,7 +111,7 @@ export type OverviewMetric = {
   value: number;
   href?: string;
   variant: "default" | "destructive" | "warning" | "info";
-  icon: LucideIcon;
+  icon: IconType;
 };
 
 export function buildOverviewData(

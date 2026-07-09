@@ -1,4 +1,4 @@
-import type { LucideIcon } from "@openstatus/icons";
+import type { IconType } from "@openstatus/icons";
 import { ChevronRight, MoreHorizontal } from "@openstatus/icons";
 import {
   Collapsible,
@@ -48,7 +48,7 @@ export type SidebarMetadataListItem = {
   /** Trailing meta on the row (e.g. "2m ago"). */
   meta?: React.ReactNode;
   /** Optional small leading icon. */
-  icon?: LucideIcon;
+  icon?: IconType;
   /** Click target — renders as `next/link` when set. */
   href?: string;
   /** Marks this row as the current selection. */
@@ -57,7 +57,7 @@ export type SidebarMetadataListItem = {
   actions?: {
     id: string;
     label: string;
-    icon: LucideIcon;
+    icon: IconType;
     variant: "default" | "destructive";
     onClick?: () => Promise<void> | void;
   }[];

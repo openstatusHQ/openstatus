@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "@openstatus/icons";
+import type { IconType } from "@openstatus/icons";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,12 +18,12 @@ interface NavBreadcrumbProps {
         type: "link";
         label: string;
         href: string;
-        icon?: LucideIcon;
+        icon?: IconType;
       }
     | {
         type: "page";
         label: string;
-        icon?: LucideIcon;
+        icon?: IconType;
       }
   )[];
 }

@@ -84,7 +84,7 @@ export default function Page() {
                   <MetricCardTitle className="truncate">
                     {metric.title}
                   </MetricCardTitle>
-                  <metric.icon className="size-4" />
+                  <metric.icon className="size-4 shrink-0" />
                 </MetricCardHeader>
                 <MetricCardValue>{metric.value}</MetricCardValue>
               </>

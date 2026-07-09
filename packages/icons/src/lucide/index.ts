@@ -1,6 +1,6 @@
 // Single import surface for icons across all openstatus apps.
 // The nucleo set mirrors these names; see ../nucleo/index.ts.
-export type { LucideIcon, LucideProps } from "lucide-react";
+export type { IconProps, IconType } from "../types";
 export {
   Activity,
   ArrowDown,
@@ -18,7 +18,6 @@ export {
   Braces,
   Calendar,
   CalendarClock,
-  CalendarDays,
   Check,
   ChevronDown,
   ChevronRight,
@@ -75,7 +74,6 @@ export {
   Megaphone,
   Menu,
   MessageCircle,
-  MessageSquare,
   Mic,
   Minus,
   Moon,
@@ -103,7 +101,6 @@ export {
   ShieldAlert,
   ShieldUser,
   Siren,
-  SlidersHorizontal,
   Sparkles,
   Square,
   Sun,

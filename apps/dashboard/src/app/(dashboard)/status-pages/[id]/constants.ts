@@ -1,6 +1,5 @@
-import type { LucideIcon } from "@openstatus/icons";
+import type { IconType } from "@openstatus/icons";
 import {
-  CalendarDays,
   Cog,
   Hammer,
   LayoutTemplate,
@@ -11,7 +10,7 @@ import {
 export const STATUS_PAGE_TABS: {
   value: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconType;
 }[] = [
   { value: "status-reports", label: "Status Reports", icon: Megaphone },
   { value: "maintenances", label: "Maintenances", icon: Hammer },

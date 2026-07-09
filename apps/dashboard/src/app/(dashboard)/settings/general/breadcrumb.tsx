@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, SlidersHorizontal } from "@openstatus/icons";
+import { Cog } from "@openstatus/icons";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 
@@ -14,7 +14,7 @@ export function Breadcrumb() {
           icon: Cog,
           href: "/settings/general",
         },
-        { type: "page", label: "General", icon: SlidersHorizontal },
+        { type: "page", label: "General", icon: Cog },
       ]}
     />
   );

@@ -6,7 +6,7 @@ import {
   Bot,
   Cog,
   LayoutGrid,
-  MessageSquare,
+  MessageCircle,
   PanelTop,
 } from "@openstatus/icons";
 import {
@@ -74,7 +74,7 @@ const data = {
     {
       name: "Assistant",
       url: "/chat",
-      icon: MessageSquare,
+      icon: MessageCircle,
     },
     {
       name: "Slack agent",

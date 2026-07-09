@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, type LucideIcon } from "@openstatus/icons";
+import { ChevronRight, type IconType } from "@openstatus/icons";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,7 +24,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: LucideIcon;
+    icon?: IconType;
     isActive?: boolean;
     items?: {
       title: string;

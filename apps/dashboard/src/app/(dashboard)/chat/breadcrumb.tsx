@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare } from "@openstatus/icons";
+import { MessageCircle } from "@openstatus/icons";
 import { skipToken, useQuery } from "@tanstack/react-query";
 
 import { useChatSessionContext } from "@/components/chat/chat-session-context";
@@ -21,7 +21,7 @@ export function Breadcrumb() {
   if (sessionId === undefined) {
     return (
       <NavBreadcrumb
-        items={[{ type: "page", label: "Assistant", icon: MessageSquare }]}
+        items={[{ type: "page", label: "Assistant", icon: MessageCircle }]}
       />
     );
   }
@@ -33,7 +33,7 @@ export function Breadcrumb() {
           type: "link",
           label: "Assistant",
           href: "/chat",
-          icon: MessageSquare,
+          icon: MessageCircle,
         },
         { type: "page", label: session?.title ?? "New chat" },
       ]}
