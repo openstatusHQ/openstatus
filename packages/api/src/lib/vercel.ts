@@ -7,14 +7,16 @@ import { env } from "../env";
 // Vercel domain helpers — transport-layer external integrations that
 // don't belong in the service layer.
 export async function vercelFetch(path: string, init?: RequestInit) {
-  return fetch(`https://api.vercel.com${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  // Headers normalizes all RequestInit.headers forms (plain object,
+  // Headers instance, entries array) so caller headers are never dropped
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`);
+  }
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(`https://api.vercel.com${path}`, { ...init, headers });
 }
 
 export async function addDomainToVercel(domain: string) {
