@@ -15,7 +15,7 @@ import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
-import { removeDomainFromVercel } from "../../lib/vercel";
+import { removeDomainFromVercelIfUnused } from "../../lib/vercel";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { buildLimitsFromSubscription } from "./utils";
@@ -341,9 +341,11 @@ export const webhookRouter = createTRPCRouter({
     // Free plan has no custom-domain feature — release the domains on Vercel
     // so they stop routing to the status page. Best-effort after commit: the
     // downgrade must not fail (and get retried by Stripe) on a Vercel error.
+    // This workspace's pages are already cleared, so any page still holding
+    // the domain belongs to another workspace and keeps it on Vercel.
     for (const domain of customDomains) {
       try {
-        await removeDomainFromVercel(domain);
+        await removeDomainFromVercelIfUnused(opts.ctx.db, domain);
       } catch (_e) {
         // already logged inside removeDomainFromVercel
       }

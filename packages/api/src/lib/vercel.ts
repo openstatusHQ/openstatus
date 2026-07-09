@@ -1,3 +1,5 @@
+import { and, db as defaultDb, ne, sql } from "@openstatus/db";
+import { page } from "@openstatus/db/src/schema";
 import { TRPCError } from "@trpc/server";
 
 import { env } from "../env";
@@ -54,6 +56,38 @@ function toDomainError(domain: string, code?: string): TRPCError {
           "Failed to add custom domain. Please try again. If it continues, contact support.",
       });
   }
+}
+
+// customDomain has no unique constraint, so another workspace's page may
+// hold the same domain — detaching it from Vercel would take their status
+// page down. Only remove once no page row (minus excludePageId) references it.
+export async function removeDomainFromVercelIfUnused(
+  db: typeof defaultDb,
+  domain: string,
+  opts?: { excludePageId?: number },
+) {
+  const holder = await db
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${domain.toLowerCase()}`,
+        opts?.excludePageId !== undefined
+          ? ne(page.id, opts.excludePageId)
+          : undefined,
+      ),
+    )
+    .get();
+
+  if (holder) {
+    console.warn("Skipping Vercel domain removal, still in use:", {
+      domain,
+      pageId: holder.id,
+    });
+    return null;
+  }
+
+  return removeDomainFromVercel(domain);
 }
 
 export async function removeDomainFromVercel(domain: string) {

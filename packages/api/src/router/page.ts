@@ -31,7 +31,10 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { addDomainToVercel, removeDomainFromVercel } from "../lib/vercel";
+import {
+  addDomainToVercel,
+  removeDomainFromVercelIfUnused,
+} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -209,7 +212,11 @@ export const pageRouter = createTRPCRouter({
           await addDomainToVercel(newDomain);
         }
         if (oldDomain) {
-          await removeDomainFromVercel(oldDomain);
+          // this page's row still holds oldDomain until the update below,
+          // so exclude it — any other holder keeps the domain on Vercel
+          await removeDomainFromVercelIfUnused(ctx.db, oldDomain, {
+            excludePageId: input.id,
+          });
         }
 
         await updatePageCustomDomain({
