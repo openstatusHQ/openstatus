@@ -57,7 +57,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					monitor := m
 					c := context.Background()
 					log.Printf("Starting job for monitor %s (%s)", monitor.Id, monitor.Url)
-					data, err := mm.JobRunner.HTTPJob(c, monitor)
+					data, err := mm.JobRunner.HTTPJob(c, monitor, res.Msg.Region)
 
 					if err != nil {
 						log.Printf("Monitor check failed for %s (%s): %v", monitor.Id, monitor.Url, err)
@@ -118,7 +118,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					monitor := m
 					c := context.Background()
 					log.Printf("Starting TCP job for monitor %s (%s)", monitor.Id, monitor.Uri)
-					data, err := mm.JobRunner.TCPJob(c, monitor)
+					data, err := mm.JobRunner.TCPJob(c, monitor, res.Msg.Region)
 					if err != nil {
 						log.Printf("TCP monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
 					}

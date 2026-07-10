@@ -8,7 +8,9 @@ import (
 	"github.com/cenkalti/backoff/v5"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
+	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
 // AssertionResult tracks the results of running assertions
@@ -33,7 +35,7 @@ type TCPPrivateRegionData struct {
 
 // runAssertions performs all configured assertions for TCP and returns their results
 
-func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error) {
+func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region string) (*TCPPrivateRegionData, error) {
 	retry := monitor.Retry
 	if retry == 0 {
 		retry = 3
@@ -44,7 +46,10 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivat
 		degradedAfter = *monitor.DegradedAt
 	}
 
+	req := tcpCheckerRequest(monitor)
+
 	var called int
+	var lastResult checker.TCPResponse
 
 	op := func() (*TCPPrivateRegionData, error) {
 		called++
@@ -59,6 +64,8 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivat
 				return nil, fmt.Errorf("failed to generate UUID: %w", uuidErr)
 			}
 
+			lastResult = checker.TCPResponse{Error: 1}
+
 			return &TCPPrivateRegionData{
 				ID:            id.String(),
 				Latency:       0,
@@ -72,6 +79,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivat
 		}
 
 		latency := res.TCPDone - res.TCPStart
+		lastResult = checker.TCPResponse{Latency: latency, Timing: res}
 
 		var requestStatus = "active"
 
@@ -107,8 +115,33 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivat
 		backoff.WithMaxTries(uint(retry)),
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
 	)
+
+	recordTCPOtel(ctx, req, lastResult, region, err != nil)
+
 	if err != nil {
 		return nil, fmt.Errorf("TCP job failed after %d retries: %w", retry, err)
 	}
 	return resp, nil
+}
+
+func tcpCheckerRequest(monitor *v1.TCPMonitor) request.TCPCheckerRequest {
+	req := request.TCPCheckerRequest{URI: monitor.Uri}
+	if otelCfg := monitor.GetOtelConfig(); otelCfg.GetEndpoint() != "" {
+		req.OtelConfig.Endpoint = otelCfg.GetEndpoint()
+		req.OtelConfig.Headers = headersToMap(otelCfg.GetHeaders())
+	}
+
+	return req
+}
+
+func recordTCPOtel(ctx context.Context, req request.TCPCheckerRequest, result checker.TCPResponse, region string, failed bool) {
+	if req.OtelConfig.Endpoint == "" {
+		return
+	}
+
+	if failed {
+		result.Error = 1
+	}
+
+	otel.RecordTCPMetrics(ctx, req, result, region)
 }

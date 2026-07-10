@@ -21,16 +21,36 @@ type mockJobRunner struct {
 	TCPJobCalled  atomic.Bool
 	DNSJobCalled  atomic.Bool
 	mu            sync.Mutex
+	httpRegion    string
+	tcpRegion     string
 }
 
-func (m *mockJobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*job.HttpPrivateRegionData, error) {
+func (m *mockJobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*job.HttpPrivateRegionData, error) {
 	m.HTTPJobCalled.Store(true)
+	m.mu.Lock()
+	m.httpRegion = region
+	m.mu.Unlock()
 	return &job.HttpPrivateRegionData{}, nil
 }
-func (m *mockJobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*job.TCPPrivateRegionData, error) {
+func (m *mockJobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region string) (*job.TCPPrivateRegionData, error) {
 
 	m.TCPJobCalled.Store(true)
+	m.mu.Lock()
+	m.tcpRegion = region
+	m.mu.Unlock()
 	return &job.TCPPrivateRegionData{}, nil
+}
+
+func (m *mockJobRunner) HTTPRegion() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.httpRegion
+}
+
+func (m *mockJobRunner) TCPRegion() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.tcpRegion
 }
 
 func (m *mockJobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*job.DNSPrivateRegionData, error) {
@@ -38,6 +58,7 @@ func (m *mockJobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*jo
 	m.TCPJobCalled.Store(true)
 	return &job.DNSPrivateRegionData{}, nil
 }
+
 // mockClient implements v1.PrivateLocationServiceClient for testing
 type mockClient struct {
 	MonitorsFunc   func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error)
@@ -64,6 +85,7 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 
 	httpMonitor := &v1.HTTPMonitor{Id: "http1", Url: "http://openstat.us", Periodicity: "10s"}
 	tcpMonitor := &v1.TCPMonitor{Id: "tcp1", Uri: "openstatus:80", Periodicity: "10s"}
+	const wantRegion = "frankfurt-dc1"
 
 	// Regression guard: the tasks scheduler never populates TaskContext.Context,
 	// so jobs must pass a non-nil context to the connect client or IngestTCP panics.
@@ -74,6 +96,7 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 			return connect.NewResponse(&v1.MonitorsResponse{
 				HttpMonitors: []*v1.HTTPMonitor{httpMonitor},
 				TcpMonitors:  []*v1.TCPMonitor{tcpMonitor},
+				Region:       wantRegion,
 			}), nil
 		},
 		IngestHTTPFunc: func(ctx context.Context, req *connect.Request[v1.IngestHTTPRequest]) (*connect.Response[v1.IngestHTTPResponse], error) {
@@ -85,7 +108,6 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 			}
 			return connect.NewResponse(&v1.IngestTCPResponse{}), nil
 		},
-
 	}
 	jobRunner := &mockJobRunner{}
 
@@ -107,6 +129,12 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	}
 	if !jobRunner.TCPJobCalled.Load() == true {
 		t.Errorf("expected TCPJob to be called")
+	}
+	if got := jobRunner.HTTPRegion(); got != wantRegion {
+		t.Errorf("expected HTTPJob to receive region %q, got %q", wantRegion, got)
+	}
+	if got := jobRunner.TCPRegion(); got != wantRegion {
+		t.Errorf("expected TCPJob to receive region %q, got %q", wantRegion, got)
 	}
 	if !tcpIngestCtxNonNil.Load() {
 		t.Errorf("expected IngestTCP to receive a non-nil context")

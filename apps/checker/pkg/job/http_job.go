@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
@@ -53,7 +54,7 @@ func ProtoStringAssertionToComparator(assertion v1.StringComparator) (request.St
 	return "", fmt.Errorf("unknown comparator type: %v", assertion)
 }
 
-func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
+func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*HttpPrivateRegionData, error) {
 
 	retry := monitor.Retry
 	if retry == 0 {
@@ -110,8 +111,13 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 		FollowRedirects: monitor.FollowRedirects,
 		Headers:         headers,
 	}
+	if otelCfg := monitor.GetOtelConfig(); otelCfg.GetEndpoint() != "" {
+		req.OtelConfig.Endpoint = otelCfg.GetEndpoint()
+		req.OtelConfig.Headers = headersToMap(otelCfg.GetHeaders())
+	}
 
 	var called int
+	var lastRes checker.Response
 
 	op := func() (*HttpPrivateRegionData, error) {
 		called++
@@ -119,6 +125,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 		if err != nil {
 			return nil, fmt.Errorf("unable to ping: %w", err)
 		}
+		lastRes = res
 
 		timingBytes, err := json.Marshal(res.Timing)
 		if err != nil {
@@ -212,6 +219,9 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 			}
 		} else {
 			data.Error = 1
+			// Mark the recorded response as errored so OTel emits the error counter
+			// for non-2xx / failed assertions, matching the public checker.
+			lastRes.Error = "Error"
 			if called < int(retry) {
 				return nil, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 			}
@@ -221,6 +231,14 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 	}
 
 	resp, err := backoff.Retry(ctx, op, backoff.WithMaxTries(uint(retry)), backoff.WithBackOff(backoff.NewExponentialBackOff()))
+
+	if req.OtelConfig.Endpoint != "" {
+		if err != nil && lastRes.Error == "" {
+			lastRes.Error = err.Error()
+		}
+		otel.RecordHTTPMetrics(ctx, req, lastRes, region)
+	}
+
 	if err != nil {
 		return nil, err
 	}

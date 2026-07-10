@@ -23,6 +23,7 @@ message MonitorsResponse {
     repeated HTTPMonitor http_monitors = 1;
     repeated TCPMonitor tcp_monitors = 2;
     repeated DNSMonitor dns_monitors = 3;
+    string region = 4;
 }
 
 

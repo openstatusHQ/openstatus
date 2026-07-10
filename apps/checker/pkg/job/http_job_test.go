@@ -23,7 +23,7 @@ func TestHTTPJob_Success(t *testing.T) {
 		Retry:   2,
 	}
 
-	data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor)
+	data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -44,7 +44,7 @@ func TestHTTPJob_Failure(t *testing.T) {
 		Retry:   1,
 	}
 
-	data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor)
+	data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
