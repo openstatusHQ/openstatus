@@ -52,10 +52,10 @@ pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
 EOF
 
 # build
-FROM denoland/deno@sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29 AS build
+FROM denoland/deno@sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29" \
-    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.0" \
+    org.opencontainers.image.base.digest="sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62" \
+    org.opencontainers.image.base.name="docker.io/denoland/deno:2.9.2" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server

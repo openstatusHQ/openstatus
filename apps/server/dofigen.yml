@@ -61,7 +61,7 @@ builders:
 
   # Stage 2: Build application (compile to binary with Deno)
   build:
-    fromImage: denoland/deno:2.9.0
+    fromImage: denoland/deno:2.9.2
     workdir: /app/apps/server
     labels:
       org.opencontainers.image.stage: build

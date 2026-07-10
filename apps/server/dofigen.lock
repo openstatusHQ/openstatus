@@ -98,10 +98,10 @@ effective: |
     build:
       fromImage:
         path: denoland/deno
-        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
+        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
         org.opencontainers.image.stage: build
       workdir: /app/apps/server
       env:
@@ -165,11 +165,11 @@ images:
           digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
     denoland:
       deno:
-        2.9.0:
-          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        2.9.2:
+          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
 resources:
   dofigen.yml:
-    hash: f9fb4559e02833a2518fbd89165716c9584bd11d24e8a6103a98a959b5a6ae0c
+    hash: d8a858f3f4bdbe9af0e1a15adf3fbc311b5e88611b33d76463701651ed0905d6
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -234,7 +234,7 @@ resources:
 
         # Stage 2: Build application (compile to binary with Deno)
         build:
-          fromImage: denoland/deno:2.9.0
+          fromImage: denoland/deno:2.9.2
           workdir: /app/apps/server
           labels:
             org.opencontainers.image.stage: build
