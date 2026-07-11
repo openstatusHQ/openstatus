@@ -65,6 +65,8 @@ export async function runImport(args: {
     statuspagePageId: input.statuspagePageId,
     betterstackStatusPageId: input.betterstackStatusPageId,
     instatusPageId: input.instatusPageId,
+    checklyAccountId: input.checklyAccountId,
+    checklyStatusPageId: input.checklyStatusPageId,
     workspaceId: ctx.workspace.id,
     pageId: input.pageId,
   });

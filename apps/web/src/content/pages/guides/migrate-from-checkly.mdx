@@ -1,0 +1,183 @@
+---
+title: "How to Migrate from Checkly to openstatus"
+description: "Step-by-step guide to import your Checkly checks as monitors, plus status pages, components, incidents, and maintenance windows into openstatus."
+author: "openstatus"
+publishedAt: "2026-07-11"
+category: "alternative"
+faq:
+  - question: "Can I import my Checkly checks into openstatus?"
+    answer: "Yes. openstatus imports your Checkly API and URL checks as HTTP monitors — including the request URL, method, headers, body, check frequency, and run locations. TCP, ICMP, DNS, and SSL checks are imported when a target can be derived."
+  - question: "Which Checkly check types are supported?"
+    answer: "API and URL checks import as HTTP monitors. TCP, ICMP, DNS, and SSL map to their openstatus job types. Browser, Playwright, multi-step, heartbeat, gRPC, traceroute, and AI checks have no HTTP-family equivalent and are skipped with a reason in the preview."
+  - question: "What credentials do I need?"
+    answer: "Two values: a Checkly API key (User Settings → API keys) and your Checkly account ID (Account Settings → General). Checkly requires the account ID on every API request, so both are mandatory."
+  - question: "How are Checkly locations mapped to openstatus?"
+    answer: "Checkly's AWS-region locations are mapped to the nearest openstatus probe: us-east-1 → iad, us-west-2 → sea, eu-west-1 → lhr, eu-central-1 → fra, ap-southeast-1 → sin, ap-southeast-2 → syd, and so on. Unmapped locations fall back to iad."
+  - question: "Do Checkly status-page services become monitored components?"
+    answer: "They import as static components. Checkly's status-page services are abstract entities that don't reference a specific check via the API, so openstatus can't auto-link them to imported monitors. You can link a monitor to any component after import."
+  - question: "Can I run the import multiple times?"
+    answer: "Monitors, components, and component groups are deduplicated — the importer checks for existing resources before creating new ones. Incidents and maintenances are always created as new entries, so re-running will produce duplicates for those."
+howto:
+  totalTime: "PT2M"
+  steps:
+    - name: "Get your Checkly API key and account ID"
+      text: "In Checkly, go to User Settings → API keys and create a key. Then open Account Settings → General and copy your account ID. You need both."
+    - name: "Preview the import"
+      text: "In your openstatus dashboard, go to Status Pages, select a status page, open the Components tab, and scroll to the Import section. Select Checkly, paste your API key and account ID, then click Preview."
+    - name: "Run the import"
+      text: "Review the preview summary showing monitors, components, incidents, and maintenances. Toggle what to include and click Import."
+---
+
+Openstatus provides a built-in importer that migrates your Checkly checks, status page, components, incidents, and maintenance windows in a single operation. The entire process takes under two minutes.
+
+This guide covers what gets imported, how Checkly fields map to openstatus, and the steps to run the import from the openstatus dashboard.
+
+For the announcement and background on why openstatus built cross-provider import, see the [blog post](/blog/import-from-statuspage-betterstack-instatus).
+
+## What gets imported
+
+The Checkly importer reads from the Checkly public API (`api.checklyhq.com`) and maps resources to their openstatus equivalents. Below is a breakdown of every resource type, the fields that carry over, and known caveats.
+
+### Monitors
+
+Openstatus imports your Checkly **checks** as monitors. Each check type is mapped to an openstatus job type; check types with no HTTP-family equivalent are skipped and listed in the preview with a reason.
+
+| Checkly check type | openstatus job type | Notes |
+| --- | --- | --- |
+| `API`, `URL` | `http` | Full request is carried over (URL, method, headers, body) |
+| `TCP` | `tcp` | Imported when a target host is available |
+| `ICMP` | `icmp` | Imported when a target host is available |
+| `DNS` | `dns` | Imported when a target host is available |
+| `SSL` | `ssl` | Imported when a target host is available |
+| `BROWSER`, `PLAYWRIGHT`, `MULTI_STEP`, `HEARTBEAT`, `GRPC`, `TRACEROUTE`, `AGENTIC` | — | Skipped — no openstatus monitor equivalent |
+
+For each imported check, the following fields carry over:
+
+| Checkly field | openstatus field | Notes |
+| --- | --- | --- |
+| `request.url` | `url` | The target endpoint |
+| `name` | `name` | Display name for the monitor |
+| `request.method` | `method` | Uppercased (e.g., `get` becomes `GET`) |
+| `request.headers` | `headers` | Array of `{key, value}` stored as JSON |
+| `request.body` | `body` | Copied as-is |
+| `maxResponseTime` | `timeout` | The hard timeout in milliseconds (defaults to 45s) |
+| `frequency` | `periodicity` | Snapped to nearest supported value (see below) |
+| `locations` | `regions` | Mapped to openstatus probe locations (see below) |
+| `activated` / `muted` | `active` | A check is active when it is activated and not muted |
+
+#### Region mapping
+
+Checkly runs checks from AWS regions. Openstatus maps each to the nearest probe location:
+
+| Checkly location | openstatus region | Location |
+| --- | --- | --- |
+| `us-east-1`, `us-east-2` | `iad` | Virginia, US |
+| `us-west-1` | `sjc` | San Jose, US |
+| `us-west-2` | `sea` | Seattle, US |
+| `ca-central-1` | `yul` | Montreal, CA |
+| `eu-west-1`, `eu-west-2` | `lhr` | London, UK |
+| `eu-west-3` | `cdg` | Paris, FR |
+| `eu-central-1` | `fra` | Frankfurt, DE |
+| `eu-north-1` | `arn` | Stockholm, SE |
+| `ap-south-1` | `bom` | Mumbai, IN |
+| `ap-southeast-1` | `sin` | Singapore |
+| `ap-southeast-2` | `syd` | Sydney, AU |
+| `ap-northeast-1`, `ap-northeast-2` | `nrt` | Tokyo, JP |
+| `sa-east-1` | `gru` | São Paulo, BR |
+| `af-south-1` | `jnb` | Johannesburg, ZA |
+
+If no locations match, the importer defaults to `iad`.
+
+#### Frequency mapping
+
+Checkly frequencies are expressed in minutes. Openstatus supports a fixed set of intervals, and each Checkly frequency is snapped to the nearest one:
+
+| Checkly frequency | openstatus periodicity |
+| --- | --- |
+| sub-minute (`0`) | `30s` |
+| 1–2 min | `1m` |
+| 5 min | `5m` |
+| 10–15 min | `10m` |
+| 30 min | `30m` |
+| 60 min or longer | `1h` |
+
+Openstatus schedules at most once per hour, so longer Checkly frequencies (120 min and up) snap down to `1h`.
+
+### Status page
+
+The importer reads your Checkly status pages and imports the first one it finds. If you have multiple status pages, pass a specific status page ID to target the one you want.
+
+| Checkly field | openstatus field |
+| --- | --- |
+| `name` | `title` |
+| `url` | `slug` |
+| `customDomain` | `customDomain` |
+| `description` | `description` |
+| `logo` | `icon` |
+| `isPrivate` | `published` (inverted) |
+
+### Component groups
+
+Each **card** on your Checkly status page becomes a component group in openstatus, preserving its name. Component groups are deduplicated on subsequent imports.
+
+### Components
+
+The **services** inside each card become openstatus components. Checkly services are abstract status-page entities that do not reference a specific check through the API, so they import as **static** components (manual status management, no linked monitor). Their name and ordering are preserved, and each component is placed under the group for its card.
+
+After import, you can open any component and link it to one of your imported monitors to drive its status automatically.
+
+### Incidents
+
+Incidents are read from the Checkly status-page incidents API and converted into openstatus status reports. Each incident's `incidentUpdates` become individual update entries on the report, and the incident's affected services are linked to the corresponding components.
+
+| Checkly status | openstatus status |
+| --- | --- |
+| `INVESTIGATING` | `investigating` |
+| `IDENTIFIED` | `identified` |
+| `MONITORING` | `monitoring` |
+| `RESOLVED` | `resolved` |
+
+Incidents and their updates are always created as new entries. Re-running the import will produce duplicates.
+
+### Maintenances
+
+Checkly maintenance windows are imported as openstatus maintenances. The `startsAt` and `endsAt` fields define the maintenance window, and the description carries over as the message. Checkly ties maintenance windows to checks by tag rather than to status-page services, so imported maintenances are not linked to specific components.
+
+Maintenances are always created as new entries. Re-running the import will produce duplicates.
+
+### Subscribers
+
+Checkly does not expose status-page subscribers through its API. Subscriber import is **not available**. After completing the import, re-invite subscribers from the openstatus dashboard.
+
+## Step-by-step walkthrough
+
+### Step 1: Get your Checkly API key and account ID
+
+Log into Checkly and open **User Settings > API keys**. Create a key and copy it. Then open **Account Settings > General** and copy your **account ID**. Checkly sends the account ID on every API request, so both values are required.
+
+### Step 2: Open the importer and preview
+
+In the openstatus dashboard, go to **Status Pages** and select a status page (or create one first). Open the **Components** tab and scroll down to the **Import** section. Select **Checkly** as the provider.
+
+Paste your Checkly API key and account ID. If you have multiple Checkly status pages, enter the status page ID to target a specific one. Otherwise, the importer will use the first status page it finds.
+
+Click **Preview**. The importer validates your credentials and fetches a summary of all resources that will be imported. The preview displays counts for monitors, components, component groups, incidents, and maintenances — and lists any checks that were skipped because their type has no openstatus equivalent. Toggle individual resource types on or off as needed.
+
+Click **Import** to start the migration. The import typically completes in under a minute.
+
+## After the import
+
+Once the import finishes, there are a few things to verify:
+
+- **Skipped checks.** Review the preview's skipped list — Browser, Playwright, and multi-step checks are not imported. Recreate any critical ones as HTTP monitors or synthetic checks.
+- **Monitor regions and frequency.** Confirm the mapped regions and periodicities match your expectations, and adjust any that were snapped to a different value than intended.
+- **Component links.** Imported status-page components are static. Link each one to the corresponding imported monitor so its status updates automatically.
+- **Incidents and maintenances.** Review a sample of imported incidents to ensure the update timelines look correct.
+- **DNS and custom domain.** If your Checkly status page used a custom domain, update your DNS records to point to openstatus. See the [docs guide](https://www.openstatus.dev/docs/guides/how-to-import-status-page) for instructions on configuring custom domains.
+- **Subscribers.** Re-invite your subscribers from the openstatus dashboard. Checkly does not expose subscriber data via its API, so this step must be done manually.
+
+## Further reading
+
+- [Import from Statuspage, Better Stack, and Instatus](/blog/import-from-statuspage-betterstack-instatus) — blog announcement covering cross-provider import.
+- [How to Import a Status Page](https://www.openstatus.dev/docs/guides/how-to-import-status-page) — docs guide with detailed instructions and screenshots.
+- [What is Synthetic Monitoring](/guides/what-is-synthetic-monitoring) — background on the monitoring model openstatus and Checkly share.

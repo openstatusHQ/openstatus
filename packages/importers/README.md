@@ -9,6 +9,7 @@ Migrate monitors, status pages, components, incidents, and subscribers from thir
 | **Atlassian Statuspage** | Status pages, components, component groups, incidents (as status reports), scheduled maintenances, email subscribers | OAuth API key |
 | **Better Stack Uptime** | Monitors (HTTP checks), status pages, component groups (from sections + monitor groups), incidents (as status reports), maintenances | Bearer API token |
 | **Instatus** | Status pages, component groups, components, incidents (as status reports), maintenances, email subscribers | API key |
+| **Checkly** | Monitors (from checks), status pages, cards (as component groups), services (as static components), incidents (as status reports), maintenance windows | API key + account ID |
 
 ## Architecture
 

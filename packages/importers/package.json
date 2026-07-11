@@ -11,7 +11,9 @@
     "./betterstack": "./src/providers/betterstack/index.ts",
     "./betterstack/fixtures": "./src/providers/betterstack/fixtures.ts",
     "./instatus": "./src/providers/instatus/index.ts",
-    "./instatus/fixtures": "./src/providers/instatus/fixtures.ts"
+    "./instatus/fixtures": "./src/providers/instatus/fixtures.ts",
+    "./checkly": "./src/providers/checkly/index.ts",
+    "./checkly/fixtures": "./src/providers/checkly/fixtures.ts"
   },
   "scripts": {
     "check": "deno check --sloppy-imports .",

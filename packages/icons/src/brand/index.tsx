@@ -15,6 +15,7 @@ export * from "./ms-teams";
 export * from "./statuspage";
 export * from "./betterstack";
 export * from "./instatus";
+export * from "./checkly";
 export * from "./modelcontextprotocol";
 export * from "./x";
 export * from "./linkedin";

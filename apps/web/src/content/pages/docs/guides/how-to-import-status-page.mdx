@@ -15,11 +15,12 @@ Migrating away from your current status page provider does not have to mean star
 
 ## Supported providers
 
-openstatus currently supports importing from three providers:
+openstatus currently supports importing from four providers:
 
 - **[Atlassian Statuspage](/guides/migrate-from-atlassian-statuspage)** — the most widely used hosted status page solution.
 - **[Better Stack](/guides/migrate-from-betterstack)** — monitoring and status page platform (formerly Better Uptime).
 - **[Instatus](/guides/migrate-from-instatus)** — a modern status page service with component-level tracking.
+- **[Checkly](/guides/migrate-from-checkly)** — synthetic monitoring platform; imports checks as monitors alongside status pages, components, incidents, and maintenances.
 
 Each link above points to a provider-specific migration guide with detailed instructions on API key generation and data mapping.
 
@@ -34,6 +35,7 @@ Where to find your API key varies by provider. See the provider-specific guides 
 - **Statuspage** — organisation-level API key in your Atlassian account settings.
 - **Better Stack** — API token from the Better Stack dashboard under Integrations.
 - **Instatus** — API key from your Instatus workspace settings.
+- **Checkly** — API key from User Settings → API keys, plus your account ID from Account Settings → General (both required).
 </Aside>
 
 ### 2. Open the import page
@@ -76,7 +78,7 @@ Click **Import** to start the process. The import runs in phases:
 2. **Incidents** — historical and active incidents, including updates and component impact.
 3. **Maintenances** — scheduled and completed maintenance windows.
 4. **Subscribers** — email subscribers (where supported by the source provider).
-5. **Monitors** — existing monitoring checks (Better Stack only).
+5. **Monitors** — existing monitoring checks (Better Stack and Checkly).
 
 A progress indicator shows the current phase and any errors encountered. When the import finishes, you are redirected to your status page configuration with all imported data in place.
 
@@ -85,20 +87,21 @@ A progress indicator shows the current phase and any errors encountered. When th
 
 Not every provider exposes the same data. The table below summarizes what openstatus imports from each source:
 
-| Resource | Statuspage | Better Stack | Instatus |
-|---|---|---|---|
-| Status page | Yes | Yes | Yes |
-| Components and groups | Yes | Yes | Yes |
-| Incidents | Yes | Yes | Yes |
-| Maintenances | Yes | Yes | Yes |
-| Subscribers | Yes (email only) | No | Yes (email only) |
-| Monitors | No | Yes | No |
+| Resource | Statuspage | Better Stack | Instatus | Checkly |
+|---|---|---|---|---|
+| Status page | Yes | Yes | Yes | Yes |
+| Components and groups | Yes | Yes | Yes | Yes |
+| Incidents | Yes | Yes | Yes | Yes |
+| Maintenances | Yes | Yes | Yes | Yes |
+| Subscribers | Yes (email only) | No | Yes (email only) | No |
+| Monitors | No | Yes | No | Yes |
 
 <Aside type="tip">
 For a detailed breakdown of how each resource type is mapped, see the provider-specific migration guides:
 [Atlassian Statuspage](/guides/migrate-from-atlassian-statuspage),
 [Better Stack](/guides/migrate-from-betterstack),
-[Instatus](/guides/migrate-from-instatus).
+[Instatus](/guides/migrate-from-instatus),
+[Checkly](/guides/migrate-from-checkly).
 </Aside>
 
 ## After import
@@ -144,3 +147,4 @@ Running the import a second time does not deduplicate incidents or maintenances.
 - [Migrate from Atlassian Statuspage](/guides/migrate-from-atlassian-statuspage)
 - [Migrate from Better Stack](/guides/migrate-from-betterstack)
 - [Migrate from Instatus](/guides/migrate-from-instatus)
+- [Migrate from Checkly](/guides/migrate-from-checkly)

@@ -169,6 +169,8 @@ export function FormComponentsUpdate() {
             betterstackStatusPageId:
               values.betterstackStatusPageId ?? undefined,
             instatusPageId: values.instatusPageId ?? undefined,
+            checklyAccountId: values.checklyAccountId ?? undefined,
+            checklyStatusPageId: values.checklyStatusPageId ?? undefined,
             options: {
               includeStatusReports: values.includeStatusReports,
               includeSubscribers: values.includeSubscribers,

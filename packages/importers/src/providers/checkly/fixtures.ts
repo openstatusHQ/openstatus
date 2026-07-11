@@ -1,0 +1,167 @@
+import type {
+  ChecklyCheck,
+  ChecklyIncident,
+  ChecklyMaintenanceWindow,
+  ChecklyStatusPage,
+} from "./api-types";
+
+export const MOCK_CHECKS: ChecklyCheck[] = [
+  {
+    id: "chk_api_001",
+    name: "API Health Check",
+    checkType: "API",
+    frequency: 5,
+    activated: true,
+    muted: false,
+    shouldFail: false,
+    locations: ["us-east-1", "eu-west-1"],
+    privateLocations: [],
+    tags: ["production", "api"],
+    groupId: "grp_core",
+    degradedResponseTime: 3000,
+    maxResponseTime: 20000,
+    request: {
+      method: "GET",
+      url: "https://api.acmecorp.com/health",
+      headers: [{ key: "X-Env", value: "prod" }],
+      body: "",
+      bodyType: "NONE",
+      followRedirects: true,
+    },
+  },
+  {
+    id: "chk_url_002",
+    name: "Marketing Site",
+    checkType: "URL",
+    frequency: 1,
+    activated: true,
+    muted: false,
+    shouldFail: false,
+    locations: ["us-west-2"],
+    privateLocations: [],
+    tags: ["production"],
+    groupId: null,
+    maxResponseTime: 30000,
+    request: {
+      method: "GET",
+      url: "https://www.acmecorp.com",
+      headers: [],
+      body: "",
+      bodyType: "NONE",
+      followRedirects: true,
+    },
+  },
+  {
+    id: "chk_browser_003",
+    name: "Checkout Flow (Browser)",
+    checkType: "BROWSER",
+    frequency: 10,
+    activated: true,
+    muted: false,
+    shouldFail: false,
+    locations: ["us-east-1"],
+    privateLocations: [],
+    tags: ["e2e"],
+    groupId: null,
+  },
+  {
+    id: "chk_paused_004",
+    name: "Legacy Endpoint",
+    checkType: "API",
+    frequency: 60,
+    activated: false,
+    muted: true,
+    shouldFail: false,
+    locations: ["ap-southeast-1"],
+    privateLocations: [],
+    tags: [],
+    groupId: null,
+    maxResponseTime: 15000,
+    request: {
+      method: "POST",
+      url: "https://api.acmecorp.com/legacy",
+      headers: [],
+      body: '{"ping":true}',
+      bodyType: "JSON",
+      followRedirects: false,
+    },
+  },
+];
+
+export const MOCK_STATUS_PAGES: ChecklyStatusPage[] = [
+  {
+    id: "sp_001",
+    name: "Acme Status",
+    url: "acmecorp",
+    customDomain: "status.acmecorp.com",
+    description: "Live status of Acme services",
+    logo: "https://acmecorp.com/logo.png",
+    favicon: null,
+    isPrivate: false,
+    cards: [
+      {
+        id: "card_api",
+        name: "API Services",
+        services: [
+          { id: "svc_api", name: "Public API", accountId: "acc_1" },
+          { id: "svc_auth", name: "Authentication", accountId: "acc_1" },
+        ],
+      },
+      {
+        id: "card_web",
+        name: "Web",
+        services: [{ id: "svc_web", name: "Website", accountId: "acc_1" }],
+      },
+    ],
+  },
+];
+
+export const MOCK_INCIDENTS: ChecklyIncident[] = [
+  {
+    id: "inc_001",
+    name: "API elevated error rates",
+    severity: "MAJOR",
+    lastUpdateStatus: "RESOLVED",
+    services: [{ id: "svc_api", name: "Public API", accountId: "acc_1" }],
+    incidentUpdates: [
+      {
+        id: "iu_001",
+        status: "INVESTIGATING",
+        description: "We are investigating elevated error rates.",
+        created_at: "2024-06-10T14:05:00.000Z",
+      },
+      {
+        id: "iu_002",
+        status: "RESOLVED",
+        description: "The issue has been resolved.",
+        created_at: "2024-06-10T16:30:00.000Z",
+      },
+    ],
+    created_at: "2024-06-10T14:00:00.000Z",
+    updated_at: "2024-06-10T16:30:00.000Z",
+  },
+  {
+    id: "inc_002",
+    name: "Website degraded",
+    severity: "MINOR",
+    lastUpdateStatus: "MONITORING",
+    services: [{ id: "svc_web", name: "Website", accountId: "acc_1" }],
+    incidentUpdates: [],
+    created_at: "2024-06-11T09:00:00.000Z",
+  },
+];
+
+export const MOCK_MAINTENANCE_WINDOWS: ChecklyMaintenanceWindow[] = [
+  {
+    id: "mw_001",
+    name: "Database upgrade",
+    description: "Scheduled database maintenance",
+    tags: ["production"],
+    startsAt: "2024-06-15T02:00:00.000Z",
+    endsAt: "2024-06-15T06:00:00.000Z",
+    repeatUnit: null,
+    repeatInterval: null,
+    repeatEndsAt: null,
+    created_at: "2024-06-01T00:00:00.000Z",
+  },
+];
