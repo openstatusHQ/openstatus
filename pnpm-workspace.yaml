@@ -112,7 +112,6 @@ catalog:
   "@turbo/gen": 1.13.4
   "@types/bcryptjs": 3.0.0
   "@types/dom-speech-recognition": 0.0.6
-  "@types/luxon": 3.7.1
   "@types/node": 24.12.4
   "@types/react": 19.2.15
   "@types/react-dom": 19.2.3
@@ -144,11 +143,10 @@ catalog:
   hono-rate-limiter: 0.4.2
   ip-cidr: 4.0.2
   isomorphic-dompurify: 3.14.0
-  jsonpath-plus: 7.2.0
+  jsonpath-plus: 10.4.0
   knip: 5.88.1
   limiter: 3.0.0
   lucide-react: 0.525.0
-  luxon: 3.7.2
   nanoid: 5.1.11
   nanoid-dictionary: 5.0.0
   next: 16.2.6

@@ -74,7 +74,6 @@
     "cmdk": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
-    "luxon": "catalog:",
     "next": "catalog:",
     "qr-code-styling": "catalog:",
     "radix-ui": "catalog:",
@@ -89,7 +88,6 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/luxon": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
