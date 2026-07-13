@@ -1,4 +1,4 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
 import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";

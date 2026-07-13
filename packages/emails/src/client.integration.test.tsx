@@ -1,4 +1,4 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
