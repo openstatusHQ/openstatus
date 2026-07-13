@@ -138,6 +138,25 @@ describe("Novu Notifications", () => {
     assertSpyCalls(fetchMock, 1);
   });
 
+  test("Send Test returns true on success", async () => {
+    const result = await sendTest({
+      apiKey: "test-secret-key",
+      workflowId: "monitor-alert",
+      subscriberId: "sub-123",
+      region: "us",
+    });
+
+    expect(result).toBe(true);
+    assertSpyCalls(fetchMock, 1);
+    const [url, init] = fetchMock.calls[0].args;
+    expect(url).toBe("https://api.novu.co/v1/events/trigger");
+    expect(init.headers.Authorization).toBe("ApiKey test-secret-key");
+    const body = JSON.parse(init.body);
+    expect(body.name).toBe("monitor-alert");
+    expect(body.to.subscriberId).toBe("sub-123");
+    expect(body.payload.type).toBe("test");
+  });
+
   test("Send Test returns false on error", async () => {
     fetchMock.restore();
     fetchMock = stub(globalThis, "fetch", () =>

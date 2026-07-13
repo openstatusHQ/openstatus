@@ -181,7 +181,7 @@ Triggers a [Novu](https://novu.co) workflow on each status change. Your workflow
 **Configuration:**
 
 - **API key** (required) — a Novu **secret** API key from `Settings → API Keys`. Sent as `Authorization: ApiKey <key>`.
-- **Workflow identifier** (required) — the workflow to trigger (its `name` in the event body).
+- **Workflow identifier** (required) — the workflow's trigger identifier (its slug/ID in the Novu UI), sent as the `name` field of the trigger event — not a human-readable display name.
 - **Subscriber ID** (required) — the Novu subscriber that receives the notification.
 - **Region** (required) — `us` (`api.novu.co`) or `eu` (`eu.api.novu.co`). Must match your Novu account's region.
 

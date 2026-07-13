@@ -181,7 +181,7 @@ message NovuData {
   // Novu subscriber id to notify.
   string subscriber_id = 3 [(buf.validate.field).string.min_len = 1];
   // Novu API region: "us" (api.novu.co) or "eu" (eu.api.novu.co).
-  string region = 4;
+  string region = 4 [(buf.validate.field).string = {in: ["us", "eu"]}];
 }
 
 // NotificationData is a union of provider-specific configuration.

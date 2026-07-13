@@ -22,7 +22,7 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { useTransition } from "react";
+import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -31,6 +31,7 @@ import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -69,11 +70,17 @@ export function FormNovu({
     },
   });
   const [isPending, startTransition] = useTransition();
+  const { setIsDirty } = useFormSheetDirty();
   const trpc = useTRPC();
 
   const sendTestMutation = useMutation(
     trpc.notification.sendTest.mutationOptions(),
   );
+
+  const formIsDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    setIsDirty(formIsDirty);
+  }, [formIsDirty, setIsDirty]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;

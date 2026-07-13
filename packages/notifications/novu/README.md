@@ -32,5 +32,7 @@ Each trigger sends this `payload`, available to the Novu workflow's templates:
 | `latency`     | observed latency in ms (if any)                |
 | `cronTimestamp` | check timestamp                              |
 
-An `Idempotency-Key` (`<monitorId>-<cronTimestamp>-<type>`) is sent so retried
-triggers for the same state transition are de-duplicated by Novu.
+An `Idempotency-Key` (`<monitorId>-<cronTimestamp>-<type>`) is sent with every
+trigger so retried triggers for the same state transition can be de-duplicated.
+Note: API-level idempotency may need to be enabled for your Novu organization
+for this to take effect.
