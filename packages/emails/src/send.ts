@@ -4,7 +4,6 @@ import { render } from "react-email";
 import { Resend } from "resend";
 
 import { env } from "./env";
-import { chunk } from "./utils";
 
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
@@ -18,16 +17,15 @@ function chunk<T>(array: T[], size: number): T[][] {
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const smtpTransporter = env.SMTP_HOST
   ? nodemailer.createTransport({
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT, 10) || 587 : 587,
-      auth:
-        env.SMTP_USER && env.SMTP_PASS
-          ? {
-              user: env.SMTP_USER,
-              pass: env.SMTP_PASS,
-            }
-          : undefined,
-    })
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT ? Number.parseInt(env.SMTP_PORT, 10) || 587 : 587,
+    auth: env.SMTP_USER && env.SMTP_PASS
+      ? {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
+      }
+      : undefined,
+  })
   : null;
 
 if (
@@ -89,7 +87,7 @@ export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
             subject: email.subject,
             html: email.html,
             replyTo: email.reply_to,
-          }),
+          })
         ),
       );
     }

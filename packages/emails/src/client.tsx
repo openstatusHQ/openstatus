@@ -47,13 +47,17 @@ export class EmailClient {
   // Base delay for the per-batch send retry. Overridable so tests can run the
   // retry path without the real ~1s exponential sleep.
   private readonly retryBackoff: Duration.DurationInput;
+  // True when an apiKey was explicitly passed in — forces real send paths
+  // regardless of NODE_ENV (used by tests).
+  private readonly forceSend: boolean;
 
   constructor(opts?: {
     apiKey?: string;
     retryBackoff?: Duration.DurationInput;
   }) {
     this.retryBackoff = opts?.retryBackoff ?? "1000 millis";
-    if (process.env.NODE_ENV !== "production") return;
+    this.forceSend = !!opts?.apiKey;
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) return;
 
     if (env.SMTP_HOST) {
       this.type = "smtp";
@@ -153,7 +157,7 @@ export class EmailClient {
   }
 
   public async sendFollowUp(req: { to: string }) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending follow up email to ${req.to}`);
       return;
     }
@@ -175,7 +179,7 @@ export class EmailClient {
   }
 
   public async sendFollowUpBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending follow up emails to ${req.to.join(", ")}`);
       return;
     }
@@ -207,7 +211,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedback(req: { to: string }) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending slack feedback email to ${req.to}`);
       return;
     }
@@ -229,7 +233,7 @@ export class EmailClient {
   }
 
   public async sendSlackFeedbackBatched(req: { to: string[] }) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending slack feedback emails to ${req.to.join(", ")}`);
       return;
     }
@@ -275,7 +279,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(
         `Sending status report update emails to ${req.subscribers.map((s) => s.email).join(", ")}`,
       );
@@ -332,7 +336,7 @@ export class EmailClient {
   }
 
   public async sendTeamInvitation(req: TeamInvitationProps & { to: string }) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending team invitation email to ${req.to}`);
       return;
     }
@@ -353,7 +357,7 @@ export class EmailClient {
   }
 
   public async sendMonitorAlert(req: MonitorAlertProps & { to: string }) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending monitor alert email to ${req.to}`);
       return;
     }
@@ -379,7 +383,7 @@ export class EmailClient {
   public async sendPageSubscription(
     req: PageSubscriptionProps & { to: string },
   ) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending page subscription email to ${req.to}`);
       return;
     }
@@ -402,7 +406,7 @@ export class EmailClient {
   public async sendStatusPageMagicLink(
     req: StatusPageMagicLinkProps & { to: string },
   ) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(`Sending status page magic link email to ${req.to}`);
       console.log(`>>> Magic Link: ${req.link}`);
       return;
@@ -439,7 +443,7 @@ export class EmailClient {
       ? `https://${req.customDomain}`
       : `https://${req.pageSlug}.openstatus.dev`;
 
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && !this.forceSend) {
       console.log(
         `Sending maintenance notification emails to ${req.subscribers.map((s) => s.email).join(", ")}`,
       );
