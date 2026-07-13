@@ -17,6 +17,7 @@ const LIMITED_PROVIDERS = new Set([
   NotificationProvider.OPSGENIE,
   NotificationProvider.GRAFANA_ONCALL,
   NotificationProvider.WHATSAPP,
+  NotificationProvider.NOVU,
 ]);
 
 /**
@@ -36,6 +37,8 @@ function providerToLimitKey(
       return "grafana-oncall";
     case NotificationProvider.WHATSAPP:
       return "whatsapp";
+    case NotificationProvider.NOVU:
+      return "novu";
     default:
       return null;
   }
@@ -56,6 +59,8 @@ function providerToDisplayName(provider: NotificationProvider): string {
       return "Grafana OnCall";
     case NotificationProvider.MS_TEAMS:
       return "Microsoft Teams";
+    case NotificationProvider.NOVU:
+      return "Novu";
     case NotificationProvider.NTFY:
       return "Ntfy";
     case NotificationProvider.PAGERDUTY:

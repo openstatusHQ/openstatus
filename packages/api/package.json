@@ -28,6 +28,7 @@
     "@openstatus/notification-google-chat": "workspace:*",
     "@openstatus/notification-grafana-oncall": "workspace:*",
     "@openstatus/notification-ms-teams": "workspace:*",
+    "@openstatus/notification-novu": "workspace:*",
     "@openstatus/notification-ntfy": "workspace:*",
     "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",

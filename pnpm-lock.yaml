@@ -958,6 +958,9 @@ importers:
       '@openstatus/notification-ms-teams':
         specifier: workspace:*
         version: link:../../packages/notifications/ms-teams
+      '@openstatus/notification-novu':
+        specifier: workspace:*
+        version: link:../../packages/notifications/novu
       '@openstatus/notification-ntfy':
         specifier: workspace:*
         version: link:../../packages/notifications/ntfy
@@ -1639,6 +1642,9 @@ importers:
       '@openstatus/notification-ms-teams':
         specifier: workspace:*
         version: link:../../packages/notifications/ms-teams
+      '@openstatus/notification-novu':
+        specifier: workspace:*
+        version: link:../../packages/notifications/novu
       '@openstatus/notification-ntfy':
         specifier: workspace:*
         version: link:../../packages/notifications/ntfy
@@ -1810,6 +1816,9 @@ importers:
       '@openstatus/notification-ms-teams':
         specifier: workspace:*
         version: link:../notifications/ms-teams
+      '@openstatus/notification-novu':
+        specifier: workspace:*
+        version: link:../notifications/novu
       '@openstatus/notification-ntfy':
         specifier: workspace:*
         version: link:../notifications/ntfy
@@ -2319,6 +2328,34 @@ importers:
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../../utils
+      zod:
+        specifier: 'catalog:'
+        version: 4.1.13
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@std/expect':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__expect@1.0.19'
+      '@std/testing':
+        specifier: jsr:^1.0.19
+        version: '@jsr/std__testing@1.0.19'
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.4
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/notifications/novu:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@openstatus/notification-base':
+        specifier: workspace:*
+        version: link:../base
       zod:
         specifier: 'catalog:'
         version: 4.1.13

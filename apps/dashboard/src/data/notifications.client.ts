@@ -3,6 +3,7 @@ import {
   GoogleIcon,
   GrafanaIcon,
   MicrosoftTeamsIcon,
+  NovuIcon,
   TelegramIcon,
   WhatsappIcon,
 } from "@openstatus/icons";
@@ -23,6 +24,7 @@ import { FormEmail } from "@/components/forms/notifications/form-email";
 import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
 import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
 import { FormMsTeams } from "@/components/forms/notifications/form-ms-teams";
+import { FormNovu } from "@/components/forms/notifications/form-novu";
 import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
 import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
@@ -110,6 +112,11 @@ export const config = {
     icon: PagerDutyIcon,
     label: "PagerDuty",
     form: FormPagerDuty,
+  },
+  novu: {
+    icon: NovuIcon,
+    label: "Novu",
+    form: FormNovu,
   },
   ntfy: {
     icon: BellIcon, // TODO: add svg icon

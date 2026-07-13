@@ -50,6 +50,7 @@ export const limitsSchema = z.object({
   opsgenie: z.boolean().prefault(false),
   "grafana-oncall": z.boolean().prefault(false),
   whatsapp: z.boolean().prefault(false),
+  novu: z.boolean().prefault(false),
   sms: z.boolean().prefault(false),
   "sms-limit": z.number().prefault(0),
   "notification-channels": z.number().prefault(1),

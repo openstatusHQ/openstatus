@@ -67,6 +67,14 @@ export const opsgenieDataSchema = z.object({
 export const telegramDataSchema = z.object({
   telegram: z.object({ chatId: z.string() }),
 });
+export const novuDataSchema = z.object({
+  novu: z.object({
+    apiKey: z.string(),
+    workflowId: z.string(),
+    subscriberId: z.string(),
+    region: z.enum(["us", "eu"]).prefault("us"),
+  }),
+});
 
 export const grafanaOncallDataSchema = z.object({
   "grafana-oncall": z.object({
@@ -89,6 +97,7 @@ export const NotificationDataSchema = z.union([
   emailDataSchema,
   grafanaOncallDataSchema,
   msTeamsDataSchema,
+  novuDataSchema,
   ntfyDataSchema,
   opsgenieDataSchema,
   pagerdutyDataSchema,
@@ -131,6 +140,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("ms-teams"),
         data: msTeamsDataSchema,
+      }).shape,
+    ),
+    insertNotificationSchema.extend(
+      z.object({
+        provider: z.literal("novu"),
+        data: novuDataSchema,
       }).shape,
     ),
     insertNotificationSchema.extend(

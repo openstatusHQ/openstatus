@@ -134,6 +134,10 @@ export const config: Record<
         label: "WhatsApp",
       },
       {
+        value: "novu",
+        label: "Novu",
+      },
+      {
         value: "notification-channels",
         label: "Number of notification channels",
       },

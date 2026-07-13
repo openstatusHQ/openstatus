@@ -36,6 +36,7 @@ export function dbProviderToProto(
     "google-chat": NotificationProvider.GOOGLE_CHAT,
     "grafana-oncall": NotificationProvider.GRAFANA_ONCALL,
     "ms-teams": NotificationProvider.MS_TEAMS,
+    novu: NotificationProvider.NOVU,
     ntfy: NotificationProvider.NTFY,
     pagerduty: NotificationProvider.PAGERDUTY,
     opsgenie: NotificationProvider.OPSGENIE,
@@ -60,6 +61,7 @@ export function getExpectedDataCase(
     [NotificationProvider.GOOGLE_CHAT]: "googleChat",
     [NotificationProvider.GRAFANA_ONCALL]: "grafanaOncall",
     [NotificationProvider.MS_TEAMS]: "msTeams",
+    [NotificationProvider.NOVU]: "novu",
     [NotificationProvider.NTFY]: "ntfy",
     [NotificationProvider.PAGERDUTY]: "pagerduty",
     [NotificationProvider.OPSGENIE]: "opsgenie",
@@ -117,6 +119,7 @@ export function protoProviderToDb(
     [NotificationProvider.GOOGLE_CHAT]: "google-chat",
     [NotificationProvider.GRAFANA_ONCALL]: "grafana-oncall",
     [NotificationProvider.MS_TEAMS]: "ms-teams",
+    [NotificationProvider.NOVU]: "novu",
     [NotificationProvider.NTFY]: "ntfy",
     [NotificationProvider.PAGERDUTY]: "pagerduty",
     [NotificationProvider.OPSGENIE]: "opsgenie",
@@ -203,6 +206,20 @@ export function dbDataToProto(
             value: {
               $typeName: "openstatus.notification.v1.MsTeamsData",
               webhookUrl: data["ms-teams"].webhookUrl,
+            },
+          };
+        }
+        break;
+      case "novu":
+        if (data.novu) {
+          protoData.data = {
+            case: "novu",
+            value: {
+              $typeName: "openstatus.notification.v1.NovuData",
+              apiKey: data.novu.apiKey,
+              workflowId: data.novu.workflowId,
+              subscriberId: data.novu.subscriberId,
+              region: data.novu.region ?? "us",
             },
           };
         }
@@ -346,6 +363,15 @@ export function protoDataToDb(
     case "msTeams":
       return JSON.stringify({
         "ms-teams": { webhookUrl: data.data.value.webhookUrl },
+      });
+    case "novu":
+      return JSON.stringify({
+        novu: {
+          apiKey: data.data.value.apiKey,
+          workflowId: data.data.value.workflowId,
+          subscriberId: data.data.value.subscriberId,
+          region: data.data.value.region === "eu" ? "eu" : "us",
+        },
       });
     case "ntfy":
       return JSON.stringify({

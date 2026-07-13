@@ -7,6 +7,7 @@ import {
   googleChatDataSchema,
   grafanaOncallDataSchema,
   msTeamsDataSchema,
+  novuDataSchema,
   ntfyDataSchema,
   opsgenieDataSchema,
   pagerdutyDataSchema,
@@ -87,6 +88,7 @@ const PLAN_GATED_PROVIDERS = [
   "opsgenie",
   "grafana-oncall",
   "whatsapp",
+  "novu",
 ] as const satisfies ReadonlyArray<NotificationProvider>;
 
 type PlanGatedProvider = (typeof PLAN_GATED_PROVIDERS)[number];
@@ -118,6 +120,7 @@ const providerDataSchemas = {
   "google-chat": googleChatDataSchema,
   "grafana-oncall": grafanaOncallDataSchema,
   "ms-teams": msTeamsDataSchema,
+  novu: novuDataSchema,
   ntfy: ntfyDataSchema,
   opsgenie: opsgenieDataSchema,
   pagerduty: pagerdutyDataSchema,

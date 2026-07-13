@@ -4,6 +4,7 @@ export const notificationProvider = [
   "google-chat",
   "grafana-oncall",
   "ms-teams",
+  "novu",
   "ntfy",
   "pagerduty",
   "opsgenie",

@@ -31,6 +31,11 @@ import {
   sendRecovery as sendMsTeamsRecovery,
 } from "@openstatus/notification-ms-teams";
 import {
+  sendAlert as sendNovuAlert,
+  sendDegraded as sendNovuDegraded,
+  sendRecovery as sendNovuRecovery,
+} from "@openstatus/notification-novu";
+import {
   sendAlert as sendNtfyAlert,
   sendDegraded as sendNtfyDegraded,
   sendRecovery as sendNtfyRecovery,
@@ -99,6 +104,11 @@ export const providerToFunction: Record<NotificationProvider, Notif> = {
     sendAlert: sendMsTeamsAlert,
     sendRecovery: sendMsTeamsRecovery,
     sendDegraded: sendMsTeamsDegraded,
+  },
+  novu: {
+    sendAlert: sendNovuAlert,
+    sendRecovery: sendNovuRecovery,
+    sendDegraded: sendNovuDegraded,
   },
   ntfy: {
     sendAlert: sendNtfyAlert,

@@ -37,6 +37,8 @@ enum NotificationProvider {
   NOTIFICATION_PROVIDER_WHATSAPP = 12;
   // Microsoft Teams notification.
   NOTIFICATION_PROVIDER_MS_TEAMS = 13;
+  // Novu (novu.co) notification infrastructure.
+  NOTIFICATION_PROVIDER_NOVU = 14;
 }
 
 // DiscordData contains configuration for Discord notifications.
@@ -170,6 +172,18 @@ message MsTeamsData {
   ];
 }
 
+// NovuData contains configuration for Novu (novu.co) notifications.
+message NovuData {
+  // Novu secret API key.
+  string api_key = 1 [(buf.validate.field).string.min_len = 1];
+  // Novu workflow trigger identifier.
+  string workflow_id = 2 [(buf.validate.field).string.min_len = 1];
+  // Novu subscriber id to notify.
+  string subscriber_id = 3 [(buf.validate.field).string.min_len = 1];
+  // Novu API region: "us" (api.novu.co) or "eu" (eu.api.novu.co).
+  string region = 4;
+}
+
 // NotificationData is a union of provider-specific configuration.
 message NotificationData {
   oneof data {
@@ -199,5 +213,7 @@ message NotificationData {
     WhatsappData whatsapp = 12;
     // Microsoft Teams configuration.
     MsTeamsData ms_teams = 13;
+    // Novu configuration.
+    NovuData novu = 14;
   }
 }
