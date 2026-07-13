@@ -174,6 +174,36 @@ Sends notifications to an Ntfy topic.
 - **Custom server URL** (optional) — the URL of a custom Ntfy server if not using the default.
 - **Bearer token** (optional) — an authentication token for accessing the Ntfy server.
 
+### Novu
+
+Triggers a [Novu](https://novu.co) workflow on each status change. Your workflow then fans the event out to any channel Novu supports (email, SMS, push, chat, in-app). Available on paid plans.
+
+**Configuration:**
+
+- **API key** (required) — a Novu **secret** API key from `Settings → API Keys`. Sent as `Authorization: ApiKey <key>`.
+- **Workflow identifier** (required) — the workflow to trigger (its `name` in the event body).
+- **Subscriber ID** (required) — the Novu subscriber that receives the notification.
+- **Region** (required) — `us` (`api.novu.co`) or `eu` (`eu.api.novu.co`). Must match your Novu account's region.
+
+#### Workflow payload
+
+Each trigger sends the following `payload`, available to your Novu workflow's templates (e.g. `{{payload.monitorName}} is {{payload.status}}`):
+
+| Field           | Description                                    |
+| :-------------- | :--------------------------------------------- |
+| `type`          | `alert`, `degraded`, or `recovery`.            |
+| `status`        | `down`, `degraded`, or `recovered`.            |
+| `monitorId`     | Unique identifier of the monitor.              |
+| `monitorName`   | Name of the monitor.                           |
+| `monitorUrl`    | The URL being monitored.                       |
+| `statusCode`    | (Optional) Last observed HTTP status code.     |
+| `message`       | (Optional) Error or context message.           |
+| `regions`       | Regions that observed the transition.          |
+| `latency`       | (Optional) Observed latency in milliseconds.   |
+| `cronTimestamp` | Timestamp of the check that triggered the event. |
+
+An `Idempotency-Key` (`<monitorId>-<cronTimestamp>-<type>`) is sent with every trigger, so retried events for the same status change are de-duplicated by Novu.
+
 ## Related resources
 
 - **[Incident reference](/docs/reference/incident)** — information about incident creation and management.
