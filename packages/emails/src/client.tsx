@@ -194,7 +194,11 @@ export class EmailClient {
       console.log(`Sent follow up emails to ${req.to}`);
       return;
     } catch (err) {
-      if (this.type === "resend" && err instanceof Error && err.name === "rate_limit_exceeded") {
+      if (
+        this.type === "resend" &&
+        err instanceof Error &&
+        err.name === "rate_limit_exceeded"
+      ) {
         throw err;
       }
       console.error(`Error sending follow up emails to ${req.to}: ${err}`);
@@ -244,7 +248,11 @@ export class EmailClient {
       console.log(`Sent slack feedback emails to ${req.to}`);
       return;
     } catch (err) {
-      if (this.type === "resend" && err instanceof Error && err.name === "rate_limit_exceeded") {
+      if (
+        this.type === "resend" &&
+        err instanceof Error &&
+        err.name === "rate_limit_exceeded"
+      ) {
         throw err;
       }
       console.error(`Error sending slack feedback email to ${req.to}: ${err}`);

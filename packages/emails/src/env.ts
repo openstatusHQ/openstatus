@@ -5,7 +5,11 @@ export const env = createEnv({
   server: {
     RESEND_API_KEY: z.string().min(1).optional(),
     SMTP_HOST: z.string().min(1).optional(),
-    SMTP_PORT: z.string().regex(/^\d+$/).refine(n => +n >= 1 && +n <= 65535).optional(),
+    SMTP_PORT: z
+      .string()
+      .regex(/^\d+$/)
+      .refine((n) => +n >= 1 && +n <= 65535)
+      .optional(),
     SMTP_USER: z.string().min(1).optional(),
     SMTP_PASS: z.string().min(1).optional(),
     SMTP_FROM: z.string().min(1).optional(),
