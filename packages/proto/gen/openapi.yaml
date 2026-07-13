@@ -1976,6 +1976,15 @@ components:
             - msTeams
         - type: object
           properties:
+            novu:
+              title: novu
+              description: Novu configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.NovuData'
+          title: novu
+          required:
+            - novu
+        - type: object
+          properties:
             ntfy:
               title: ntfy
               description: Ntfy configuration.
@@ -2067,6 +2076,7 @@ components:
         - NOTIFICATION_PROVIDER_WEBHOOK
         - NOTIFICATION_PROVIDER_WHATSAPP
         - NOTIFICATION_PROVIDER_MS_TEAMS
+        - NOTIFICATION_PROVIDER_NOVU
       description: NotificationProvider represents the supported notification channel types.
     openstatus.notification.v1.NotificationSummary:
       type: object
@@ -2099,6 +2109,34 @@ components:
       title: NotificationSummary
       additionalProperties: false
       description: NotificationSummary represents a notification channel summary for list responses.
+    openstatus.notification.v1.NovuData:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          title: api_key
+          minLength: 1
+          description: Novu secret API key.
+        workflowId:
+          type: string
+          title: workflow_id
+          minLength: 1
+          description: Novu workflow trigger identifier.
+        subscriberId:
+          type: string
+          title: subscriber_id
+          minLength: 1
+          description: Novu subscriber id to notify.
+        region:
+          type: string
+          title: region
+          enum:
+            - us
+            - eu
+          description: 'Novu API region: "us" (api.novu.co) or "eu" (eu.api.novu.co).'
+      title: NovuData
+      additionalProperties: false
+      description: NovuData contains configuration for Novu (novu.co) notifications.
     openstatus.notification.v1.NtfyData:
       type: object
       properties:
