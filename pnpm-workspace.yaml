@@ -138,7 +138,6 @@ catalog:
   drizzle-zod: 0.8.3
   effect: 3.21.2
   feed: 4.2.2
-  glob: 11.0.0
   gray-matter: 4.0.3
   hono: 4.12.21
   hono-rate-limiter: 0.4.2

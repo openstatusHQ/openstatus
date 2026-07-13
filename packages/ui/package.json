@@ -93,7 +93,6 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "glob": "catalog:",
     "shadcn": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
