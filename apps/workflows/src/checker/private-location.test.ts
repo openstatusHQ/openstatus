@@ -131,7 +131,11 @@ describe("updateStatusPrivate", () => {
     mockEmailSendDegraded = stub(providerToFunction.email, "sendDegraded", () =>
       Promise.resolve(),
     ) as AnyStub;
-    stubs.push(mockEmailSendAlert, mockEmailSendRecovery, mockEmailSendDegraded);
+    stubs.push(
+      mockEmailSendAlert,
+      mockEmailSendRecovery,
+      mockEmailSendDegraded,
+    );
   });
 
   afterEach(async () => {
