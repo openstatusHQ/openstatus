@@ -80,5 +80,14 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceHTTP, ic.Region.ID)
 
+	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
+		RequestStatus: data.RequestStatus,
+		Message:       data.Message,
+		Latency:       data.Latency,
+		CronTimestamp: data.CronTimestamp,
+		StatusCode:    data.StatusCode,
+		ErrorFlag:     data.Error,
+	})
+
 	return connect.NewResponse(&private_locationv1.IngestHTTPResponse{}), nil
 }

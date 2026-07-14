@@ -125,6 +125,7 @@ services:
         environment:
             - DB_URL=http://libsql:8080
             - TINYBIRD_URL=http://tinybird-local:7181
+            - WORKFLOWS_URL=http://workflows:3000
             - GIN_MODE=release
             - PORT=8080
         depends_on:
