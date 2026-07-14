@@ -66,6 +66,14 @@ export function getCheckerPayload(
   }
 }
 
+// Bounds outbound checker fetches so a slow check can't pin API requests open
+// indefinitely: the monitor's own timeout plus a buffer for checker overhead.
+export function getCheckerTimeout(
+  monitor: z.infer<typeof selectMonitorSchema>,
+): number {
+  return (monitor.timeout ?? 45_000) + 15_000;
+}
+
 export function getCheckerUrl(
   monitor: z.infer<typeof selectMonitorSchema>,
   opts: { trigger?: "api" | "cron"; data?: boolean } = {
