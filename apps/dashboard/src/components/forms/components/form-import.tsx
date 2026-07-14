@@ -128,6 +128,10 @@ export function FormImport({
       form.setError("apiKey", { message: "API key is required" });
       return;
     }
+    if (watchProvider === "checkly" && !form.getValues("checklyAccountId")) {
+      form.setError("checklyAccountId", { message: "Account ID is required" });
+      return;
+    }
     previewMutation.mutate({
       provider: watchProvider,
       apiKey: watchApiKey,
@@ -390,6 +394,7 @@ export function FormImport({
                           <FormControl>
                             <Input placeholder="e.g. 1a2b3c4d-..." {...field} />
                           </FormControl>
+                          <FormMessage />
                           <FormDescription>
                             Your Checkly account ID. Found in Checkly under
                             Account Settings → General.

@@ -45,7 +45,7 @@ const FREQUENCY_MAP: Record<number, string> = {
 // (120/180/720/1440 min) snap down to the nearest supported bucket.
 export function mapFrequency(minutes: number): string {
   if (FREQUENCY_MAP[minutes]) return FREQUENCY_MAP[minutes];
-  const supported = [0, 1, 5, 10, 30, 60];
+  const supported = Object.keys(FREQUENCY_MAP).map(Number);
   let closest = supported[0];
   for (const s of supported) {
     if (Math.abs(s - minutes) < Math.abs(closest - minutes)) closest = s;
@@ -114,7 +114,9 @@ export function mapCheck(check: ChecklyCheck, workspaceId: number) {
     jobType: mapCheckType(check.checkType) ?? "http",
     periodicity: mapFrequency(check.frequency),
     status: "active" as const,
-    active: check.activated && !check.muted,
+    // Checkly `muted` only silences alerts — the check keeps running — so it
+    // must not disable the monitor; only `activated` controls whether it runs.
+    active: check.activated,
     regions: mapRegions(check.locations),
     url: req?.url ?? "",
     name: check.name,
