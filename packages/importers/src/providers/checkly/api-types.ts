@@ -168,7 +168,9 @@ export const ChecklyIncidentSchema = z.object({
 export type ChecklyIncident = z.infer<typeof ChecklyIncidentSchema>;
 
 export const ChecklyMaintenanceWindowSchema = z.object({
-  id: z.string(),
+  // Checkly returns a numeric id for maintenance windows (unlike its
+  // string-id resources); coerce so downstream sourceId stays a string.
+  id: z.union([z.string(), z.number()]).transform((v) => String(v)),
   name: z.string(),
   description: z.string().nullish(),
   tags: z

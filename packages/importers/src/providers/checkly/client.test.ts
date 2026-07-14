@@ -71,6 +71,14 @@ describe("ChecklyClient", () => {
     expect(windows[0].name).toBe("Database upgrade");
   });
 
+  // Live Checkly returns a numeric maintenance-window id; it must coerce to a
+  // string so downstream sourceId matches the tRPC import contract.
+  test("getMaintenanceWindows coerces a numeric id to a string", async () => {
+    mockFetchSequence([[{ ...MOCK_MAINTENANCE_WINDOWS[0], id: 12345 }]]);
+    const windows = await client.getMaintenanceWindows();
+    expect(windows[0].id).toBe("12345");
+  });
+
   test("sends both auth headers and correct path", async () => {
     mockFetchSequence([MOCK_CHECKS]);
     await client.getChecks();
