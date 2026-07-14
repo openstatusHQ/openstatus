@@ -561,6 +561,13 @@
       "when": 1783447957125,
       "tag": "0079_fixed_spencer_smythe",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "6",
+      "when": 1784059243113,
+      "tag": "0080_soft_norman_osborn",
+      "breakpoints": true
     }
   ]
 }
