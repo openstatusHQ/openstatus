@@ -158,14 +158,16 @@ export const selectPageComponentWithMonitorRelation = selectPageComponentSchema
     group: selectPageComponentGroupSchema.nullish(),
   })
   // the component owns the public-facing monitor name/description; externalName
-  // is cleared so downstream `externalName || name` transforms keep the override
+  // is cleared so downstream `externalName || name` transforms keep the override.
+  // description falls back to the monitor's own: pre-existing components were
+  // never backfilled and carry NULL.
   .transform(({ monitor, ...component }) => ({
     ...component,
     monitor: monitor
       ? {
           ...monitor,
           name: component.name,
-          description: component.description ?? "",
+          description: component.description || monitor.description,
           externalName: null,
         }
       : monitor,
