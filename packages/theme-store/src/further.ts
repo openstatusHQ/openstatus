@@ -22,7 +22,7 @@ export const FURTHER_THEME = {
     "--accent": "oklch(97.91% 0.0041 91.45)",
     "--accent-foreground": "oklch(23.12% 0.0098 88.79)",
 
-    "--success": "oklch(62% 0.07 165)",
+    "--success": "oklch(51.12% 0.0703 160.73)",
     "--destructive": "oklch(57.7% 0.245 27.325)",
     "--warning": "oklch(77% 0.16 70)",
     "--info": "oklch(57.37% 0.1946 257.86)",
