@@ -1,13 +1,12 @@
 "use client";
 
 import type { AppRouter } from "@openstatus/api";
-import * as Sentry from "@sentry/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createTRPCClient, loggerLink } from "@trpc/client";
+import { createTRPCClient } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 
-import { endingLink } from "@/lib/trpc/shared";
+import { endingLink, sentryLoggerLink } from "@/lib/trpc/shared";
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();
@@ -42,24 +41,7 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [
-        loggerLink({
-          enabled: (opts) =>
-            process.env.NODE_ENV === "development" ||
-            (opts.direction === "down" && opts.result instanceof Error),
-          // Report the real error to Sentry directly instead of letting
-          // captureConsoleIntegration scrape tRPC's styled console.error format string.
-          logger: (opts) => {
-            if (opts.direction === "down" && opts.result instanceof Error) {
-              Sentry.captureException(opts.result, {
-                extra: { path: opts.path, input: opts.input },
-              });
-              return;
-            }
-            if (process.env.NODE_ENV === "development") {
-              console.log(opts);
-            }
-          },
-        }),
+        sentryLoggerLink(),
         endingLink({
           headers: {
             "x-trpc-source": "client",

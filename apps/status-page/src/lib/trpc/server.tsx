@@ -1,9 +1,8 @@
 import "server-only";
 import type { AppRouter } from "@openstatus/api";
-import * as Sentry from "@sentry/nextjs";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { createTRPCClient, loggerLink } from "@trpc/client";
+import { createTRPCClient } from "@trpc/client";
 import {
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
@@ -12,7 +11,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 
 import { makeQueryClient } from "./query-client";
-import { endingLink } from "./shared";
+import { endingLink, sentryLoggerLink } from "./shared";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -22,24 +21,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
   queryClient: getQueryClient,
   client: createTRPCClient({
     links: [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-        // Report the real error to Sentry directly instead of letting
-        // captureConsoleIntegration scrape tRPC's styled console.error format string.
-        logger: (opts) => {
-          if (opts.direction === "down" && opts.result instanceof Error) {
-            Sentry.captureException(opts.result, {
-              extra: { path: opts.path, input: opts.input },
-            });
-            return;
-          }
-          if (process.env.NODE_ENV === "development") {
-            console.log(opts);
-          }
-        },
-      }),
+      sentryLoggerLink(),
       endingLink({
         headers: {
           "x-trpc-source": "server",

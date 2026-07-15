@@ -1,7 +1,34 @@
 import type { AppRouter } from "@openstatus/api";
+import * as Sentry from "@sentry/nextjs";
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, loggerLink } from "@trpc/client";
 import superjson from "superjson";
+
+/**
+ * tRPC logger link that reports failed queries to Sentry directly instead of
+ * letting captureConsoleIntegration scrape tRPC's styled console.error format
+ * string (which surfaces as noise like "%c << query #1 %c...%c %O").
+ */
+export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
+  loggerLink<AppRouter>({
+    enabled: (opts) =>
+      process.env.NODE_ENV === "development" ||
+      (opts.direction === "down" && opts.result instanceof Error),
+    logger: (opts) => {
+      if (opts.direction === "down" && opts.result instanceof Error) {
+        Sentry.captureException(opts.result, {
+          extra: { path: opts.path, input: opts.input },
+        });
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[tRPC error]", opts.path, opts.result);
+        }
+        return;
+      }
+      if (process.env.NODE_ENV === "development") {
+        console.log(opts);
+      }
+    },
+  });
 
 /**
  * Shared onError handler for tRPC route handlers.
