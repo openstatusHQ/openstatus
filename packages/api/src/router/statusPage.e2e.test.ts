@@ -1151,6 +1151,13 @@ describe("statusPage exposes page component names, not internal monitor names", 
     expect(monitorItem?.description).toBe(componentDescription);
     expect(monitorItem?.name).not.toBe(internalName);
     expect(monitorItem?.name).not.toBe(legacyExternalName);
+
+    // the nested monitor relation must agree with the flat monitors array
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === publicNameMonitorId,
+    );
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
   });
 
   test("getLight returns the page component name and description", async () => {
@@ -1163,6 +1170,28 @@ describe("statusPage exposes page component names, not internal monitor names", 
 
     expect(monitorItem?.name).toBe(componentName);
     expect(monitorItem?.description).toBe(componentDescription);
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === publicNameMonitorId,
+    );
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("getUptime returns the page component name on the nested monitor", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getUptime({
+      slug: publicNameSlug,
+      pageComponentIds: [String(publicNameComponentId)],
+    });
+
+    const component = result?.find(
+      (c) => c.pageComponentId === publicNameComponentId,
+    );
+
+    expect(component?.name).toBe(componentName);
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
   });
 
   test("getMonitor returns the page component name and description", async () => {

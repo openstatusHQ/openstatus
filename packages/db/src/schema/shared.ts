@@ -148,19 +148,28 @@ const trackersSchema = z
   )
   .prefault([]);
 
-export const selectPageComponentWithMonitorRelation =
-  selectPageComponentSchema.extend({
+export const selectPageComponentWithMonitorRelation = selectPageComponentSchema
+  .extend({
     monitor: selectPublicMonitorBaseSchema
       .extend({
         incidents: selectIncidentSchema.array().nullish(),
       })
-      .transform((data) => ({
-        ...data,
-        name: data.externalName || data.name,
-      }))
       .nullish(),
     group: selectPageComponentGroupSchema.nullish(),
-  });
+  })
+  // the component owns the public-facing monitor name/description; externalName
+  // is cleared so downstream `externalName || name` transforms keep the override
+  .transform(({ monitor, ...component }) => ({
+    ...component,
+    monitor: monitor
+      ? {
+          ...monitor,
+          name: component.name,
+          description: component.description ?? "",
+          externalName: null,
+        }
+      : monitor,
+  }));
 
 export type PageComponentWithMonitorRelation = z.infer<
   typeof selectPageComponentWithMonitorRelation

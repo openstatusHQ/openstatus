@@ -239,11 +239,6 @@ export const statusPageRouter = createTRPCRouter({
                 : "success"));
         return {
           ...c.monitor,
-          // the page component carries the public-facing name/description;
-          // clear externalName so the schema transform keeps the override
-          name: c.name,
-          description: c.description ?? "",
-          externalName: null,
           status,
           events,
           monitorGroupId: c.groupId,
@@ -1048,8 +1043,6 @@ export const statusPageRouter = createTRPCRouter({
 
         return {
           ...selectPublicMonitorSchema.parse(c.monitor),
-          name: c.name,
-          description: c.description ?? "",
           data,
         };
       });
@@ -1080,12 +1073,11 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-      const _component = monitorComponents.find(
+      const _monitor = monitorComponents.find(
         (c) => c.monitor.id === opts.input.id,
-      );
-      const _monitor = _component?.monitor;
+      )?.monitor;
 
-      if (!_component || !_monitor) return null;
+      if (!_monitor) return null;
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
@@ -1142,8 +1134,6 @@ export const statusPageRouter = createTRPCRouter({
 
       return {
         ...selectPublicMonitorSchema.parse(_monitor),
-        name: _component.name,
-        description: _component.description ?? "",
         data: {
           latency,
           regions,
