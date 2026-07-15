@@ -2955,6 +2955,27 @@ components:
       title: GetPageComponentDailySummaryResponse
       additionalProperties: false
       description: GetPageComponentDailySummaryResponse is the response containing per-component summaries.
+    openstatus.status_page.v1.GetPageComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to retrieve (required).
+      title: GetPageComponentRequest
+      additionalProperties: false
+      description: GetPageComponentRequest is the request to fetch a single component by ID.
+    openstatus.status_page.v1.GetPageComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The requested component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: GetPageComponentResponse
+      additionalProperties: false
+      description: GetPageComponentResponse is the response containing the component.
     openstatus.status_page.v1.GetStatusPageContentRequest:
       type: object
       oneOf:
@@ -5613,6 +5634,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponentDailySummary:
     get:
       tags:

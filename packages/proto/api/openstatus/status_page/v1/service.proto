@@ -46,6 +46,14 @@ service StatusPageService {
   // UpdateComponent updates an existing component.
   rpc UpdateComponent(UpdateComponentRequest) returns (UpdateComponentResponse);
 
+  // GetPageComponent retrieves a single component by ID.
+  rpc GetPageComponent(GetPageComponentRequest) returns (GetPageComponentResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components."
+    };
+  }
+
   // CreateComponentGroup creates a new component group.
   rpc CreateComponentGroup(CreateComponentGroupRequest) returns (CreateComponentGroupResponse);
 
@@ -418,6 +426,18 @@ message UpdateComponentRequest {
 // UpdateComponentResponse is the response after updating a component.
 message UpdateComponentResponse {
   // The updated component.
+  PageComponent component = 1;
+}
+
+// GetPageComponentRequest is the request to fetch a single component by ID.
+message GetPageComponentRequest {
+  // ID of the component to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetPageComponentResponse is the response containing the component.
+message GetPageComponentResponse {
+  // The requested component.
   PageComponent component = 1;
 }
 

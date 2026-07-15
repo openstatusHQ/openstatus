@@ -543,6 +543,96 @@ describe("StatusPageService.GetStatusPage", () => {
   });
 });
 
+describe("StatusPageService.GetPageComponent", () => {
+  test("returns component by ID", async () => {
+    const res = await connectRequest(
+      "GetPageComponent",
+      { id: String(testComponentId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("component");
+    expect(data.component.id).toBe(String(testComponentId));
+    expect(data.component.name).toBe(`${TEST_PREFIX}-component`);
+    expect(data.component.pageId).toBe(String(testPageId));
+    expect(data.component.type).toBe("PAGE_COMPONENT_TYPE_STATIC");
+    expect(data.component.monitorId).toBe("");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetPageComponent", {
+      id: String(testComponentId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("returns 404 for non-existent component", async () => {
+    const res = await connectRequest(
+      "GetPageComponent",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when ID is empty", async () => {
+    const res = await connectRequest(
+      "GetPageComponent",
+      { id: "" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 404 for component in different workspace", async () => {
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-other-workspace-component`,
+        slug: `${TEST_PREFIX}-other-workspace-component-slug`,
+        description: "Other workspace page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    const otherComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 2,
+        pageId: otherPage.id,
+        type: "static",
+        name: `${TEST_PREFIX}-other-workspace-component`,
+        description: "Other workspace component",
+        order: 100,
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetPageComponent",
+        { id: String(otherComponent.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.id, otherComponent.id));
+      await db.delete(page).where(eq(page.id, otherPage.id));
+    }
+  });
+});
+
 describe("StatusPageService.ListStatusPages", () => {
   test("returns status pages for authenticated workspace", async () => {
     const res = await connectRequest(

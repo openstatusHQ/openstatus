@@ -1183,6 +1183,21 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     };
   },
 
+  async getPageComponent(req, ctx) {
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const id = req.id?.trim();
+      if (!id) throw pageComponentNotFoundError(req.id);
+
+      const component = await getComponentById(Number(id), rpcCtx.workspace.id);
+      if (!component) throw pageComponentNotFoundError(id);
+
+      return { component: dbComponentToProto(component) };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
   // ==========================================================================
   // Component Groups
   // ==========================================================================
