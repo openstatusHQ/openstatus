@@ -55,6 +55,9 @@ export function useDomainStatus(domain?: string) {
     if (verificationJson?.verified) {
       status = "Valid Configuration";
     }
+    // config check failed (e.g. Vercel outage) — don't report healthy
+  } else if (configJson?.error) {
+    status = "Unknown Error";
   } else if (configJson?.misconfigured) {
     status = "Invalid Configuration";
   } else {

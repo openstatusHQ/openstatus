@@ -41,13 +41,19 @@ export const domainResponseSchema = z.object({
     .optional(),
 });
 
+const vercelErrorSchema = z
+  .object({
+    code: z.string(),
+    message: z.string(),
+  })
+  .optional();
+
 const domainResponseWithErrorSchema = domainResponseSchema.extend({
-  error: z
-    .object({
-      code: z.string(),
-      message: z.string(),
-    })
-    .optional(),
+  error: vercelErrorSchema,
+});
+
+const domainConfigWithErrorSchema = domainConfigResponseSchema.extend({
+  error: vercelErrorSchema,
 });
 
 export type DomainVerificationResponse = z.infer<typeof domainResponseSchema>;
@@ -91,9 +97,11 @@ export const domainRouter = createTRPCRouter({
       );
       const json = await parseVercelJson(data);
       if (json === null) {
-        return null;
+        return domainConfigWithErrorSchema.parse({
+          error: { code: "internal_error", message: "Unexpected response" },
+        });
       }
-      const result = domainConfigResponseSchema.parse(json);
+      const result = domainConfigWithErrorSchema.parse(json);
       return result;
     }),
   verifyDomain: protectedProcedure
