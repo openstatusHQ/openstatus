@@ -15,6 +15,7 @@ import {
 import { FormGeneral } from "./form-general";
 import { FormNotifiers } from "./form-notifiers";
 import { FormOtel } from "./form-otel";
+import { FormProxy } from "./form-proxy";
 import { FormResponseTime } from "./form-response-time";
 import { FormRetry, RETRY_DEFAULT } from "./form-retry";
 import { FormSchedulingRegions } from "./form-scheduling-regions";
@@ -69,6 +70,11 @@ export function FormMonitorUpdate() {
   );
   const updateFollowRedirectsMutation = useMutation(
     trpc.monitor.updateFollowRedirects.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+  const updateProxyMutation = useMutation(
+    trpc.monitor.updateProxy.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -222,6 +228,21 @@ export function FormMonitorUpdate() {
             followRedirects: values.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
           })
         }
+      />
+      <FormProxy
+        defaultValues={{
+          proxyUrl: monitor.proxyUrl ?? "",
+          proxyRegion: monitor.proxyRegion ?? "",
+          proxyHeaders: monitor.proxyHeaders ?? [],
+        }}
+        onSubmit={async (values) => {
+          await updateProxyMutation.mutateAsync({
+            id: Number.parseInt(id),
+            proxyUrl: values.proxyUrl,
+            proxyRegion: values.proxyRegion,
+            proxyHeaders: values.proxyHeaders,
+          });
+        }}
       />
       <FormOtel
         locked={workspace.limits.otel === false}

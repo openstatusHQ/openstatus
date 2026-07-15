@@ -24,6 +24,7 @@ import {
   updateMonitorGeneral,
   updateMonitorNotifiers,
   updateMonitorOtel,
+  updateMonitorProxy,
   updateMonitorPublic,
   updateMonitorResponseTime,
   updateMonitorRetry,
@@ -222,6 +223,32 @@ export const monitorRouter = createTRPCRouter({
             id: input.id,
             otelEndpoint: input.otelEndpoint,
             otelHeaders: input.otelHeaders,
+          },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateProxy: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
+    .input(
+      z.object({
+        id: z.number(),
+        proxyUrl: z.string(),
+        proxyRegion: z.string().optional(),
+        proxyHeaders: z.array(headerPair).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updateMonitorProxy({
+          ctx: toServiceCtx(ctx),
+          input: {
+            id: input.id,
+            proxyUrl: input.proxyUrl,
+            proxyRegion: input.proxyRegion,
+            proxyHeaders: input.proxyHeaders,
           },
         });
       } catch (err) {

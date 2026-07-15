@@ -56,6 +56,17 @@ export const monitor = sqliteTable(
       true,
     ),
 
+    // Optional user-provided proxy that performs the check from its own
+    // location (e.g. a serverless function in a region without a probe)
+    proxyUrl: text("proxy_url", { length: 2048 }),
+
+    // Custom region label stored with proxied results; when empty the
+    // region reported by the proxy response is used
+    proxyRegion: text("proxy_region", { length: 256 }),
+
+    // Headers sent to the proxy itself (e.g. authentication)
+    proxyHeaders: text("proxy_headers"),
+
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),

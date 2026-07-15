@@ -15,6 +15,7 @@ import {
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorOtelInput,
+  UpdateMonitorProxyInput,
   UpdateMonitorPublicInput,
   UpdateMonitorResponseTimeInput,
   UpdateMonitorRetryInput,
@@ -146,6 +147,40 @@ export async function updateMonitorOtel(args: {
       .set({
         otelEndpoint: input.otelEndpoint,
         otelHeaders: headersToDbJson(input.otelHeaders),
+        updatedAt: new Date(),
+      })
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
+    await emitAudit(tx, ctx, {
+      action: "monitor.update",
+      entityType: "monitor",
+      entityId: existing.id,
+      before: existing,
+      after: updated,
+    });
+  });
+}
+
+export async function updateMonitorProxy(args: {
+  ctx: ServiceContext;
+  input: UpdateMonitorProxyInput;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdateMonitorProxyInput.parse(args.input);
+  await withTransaction(ctx, async (tx) => {
+    const existing = await getMonitorInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+    const updated = await tx
+      .update(monitor)
+      .set({
+        proxyUrl: input.proxyUrl,
+        proxyRegion: input.proxyRegion,
+        proxyHeaders: headersToDbJson(input.proxyHeaders),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))

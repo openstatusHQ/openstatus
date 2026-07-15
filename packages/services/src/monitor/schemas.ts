@@ -79,6 +79,14 @@ export const UpdateMonitorOtelInput = z.object({
 });
 export type UpdateMonitorOtelInput = z.infer<typeof UpdateMonitorOtelInput>;
 
+export const UpdateMonitorProxyInput = z.object({
+  id: z.number().int(),
+  proxyUrl: z.string(),
+  proxyRegion: z.string().optional(),
+  proxyHeaders: z.array(headerPair).optional(),
+});
+export type UpdateMonitorProxyInput = z.infer<typeof UpdateMonitorProxyInput>;
+
 export const UpdateMonitorPublicInput = z.object({
   id: z.number().int(),
   public: z.boolean(),

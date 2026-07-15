@@ -270,6 +270,9 @@ const createCronTask = async (
       retry: row.retry || 3,
       followRedirects:
         row.followRedirects === null ? true : row.followRedirects,
+      proxyUrl: row.proxyUrl || undefined,
+      proxyRegion: row.proxyRegion || undefined,
+      proxyHeaders: row.proxyUrl ? row.proxyHeaders : undefined,
     };
   }
   if (row.jobType === "tcp") {

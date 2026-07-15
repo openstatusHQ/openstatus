@@ -55,7 +55,7 @@ HTTP monitors can be checked *through* a user-provided proxy instead of directly
 
 This is useful for regions where no probe is available (e.g. mainland China, Middle East) — a tiny serverless function deployed there is enough, no server required.
 
-To enable it, add the following fields to the HTTP checker request:
+To enable it, configure the proxy in the monitor settings (dashboard → monitor → Check Proxy) or add the following fields to the HTTP checker request:
 
 ```jsonc
 {
