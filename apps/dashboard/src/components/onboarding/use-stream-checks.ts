@@ -8,23 +8,22 @@ import { toast } from "sonner";
 // step-1 gate disabled. Comfortably above the server's 10s per-region cap.
 const STREAM_TIMEOUT_MS = 20_000;
 
+export type StreamChecksStatus = "idle" | "streaming" | "completed";
+
 export function useStreamChecks() {
   const [results, setResults] = useState<CheckResult[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [status, setStatus] = useState<StreamChecksStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const fail = useCallback((message: string) => {
     setError(message);
-    setIsStreaming(false);
     toast.error(message);
   }, []);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setIsStreaming(false);
   }, []);
 
   const start = useCallback(
@@ -34,8 +33,7 @@ export function useStreamChecks() {
       abortRef.current = controller;
       setResults([]);
       setError(null);
-      setIsComplete(false);
-      setIsStreaming(true);
+      setStatus("streaming");
       const timeout = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
 
       try {
@@ -91,8 +89,7 @@ export function useStreamChecks() {
         fail(err instanceof Error ? err.message : "Stream failed");
       } finally {
         clearTimeout(timeout);
-        setIsStreaming(false);
-        setIsComplete(true);
+        setStatus("completed");
         abortRef.current = null;
       }
     },
@@ -105,5 +102,5 @@ export function useStreamChecks() {
     };
   }, []);
 
-  return { results, isStreaming, isComplete, error, start, stop };
+  return { results, status, error, start, stop };
 }

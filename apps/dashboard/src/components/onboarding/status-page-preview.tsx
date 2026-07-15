@@ -124,6 +124,15 @@ export function OnboardingStatusPagePreview({
     [placeholderBarData, monitorTodayBar],
   );
 
+  // deriveTodayBar never emits "empty"; the guard only narrows the type for
+  // the blocks, which reject it.
+  const monitorCard = monitorTodayBar?.card[0];
+  const liveStatus =
+    monitorCard && monitorCard.status !== "empty"
+      ? monitorCard.status
+      : "success";
+  const liveUptime = monitorCard?.value ?? "100%";
+
   const displayTitle = title?.trim() || slug || "My Status Page";
   const allComponents: { key: string; name: string }[] = [
     ...(monitorName ? [{ key: MONITOR_KEY, name: monitorName }] : []),
@@ -160,26 +169,31 @@ export function OnboardingStatusPagePreview({
           </StatusPageHeaderContent>
         </StatusPageHeader>
         <StatusPageMain>
-          <Status variant="success" className="gap-6">
+          <Status variant={liveStatus} className="gap-6">
             <StatusHeader>
               <StatusTitle>{displayTitle}</StatusTitle>
               {description ? (
                 <StatusDescription>{description}</StatusDescription>
               ) : null}
             </StatusHeader>
-            <StatusBanner status="success" />
+            <StatusBanner status={liveStatus} />
             <StatusContent>
               {allComponents.map((c) => {
-                const barData =
-                  c.key === MONITOR_KEY ? monitorBarData : placeholderBarData;
+                const isMonitor = c.key === MONITOR_KEY;
+                const barData = isMonitor ? monitorBarData : placeholderBarData;
                 return (
-                  <StatusComponent key={c.key} variant="success">
+                  <StatusComponent
+                    key={c.key}
+                    variant={isMonitor ? liveStatus : "success"}
+                  >
                     <StatusComponentHeader>
                       <StatusComponentHeaderLeft>
                         <StatusComponentTitle>{c.name}</StatusComponentTitle>
                       </StatusComponentHeaderLeft>
                       <StatusComponentHeaderRight>
-                        <StatusComponentUptime>100%</StatusComponentUptime>
+                        <StatusComponentUptime>
+                          {isMonitor ? liveUptime : "100%"}
+                        </StatusComponentUptime>
                         <StatusComponentIcon />
                       </StatusComponentHeaderRight>
                     </StatusComponentHeader>

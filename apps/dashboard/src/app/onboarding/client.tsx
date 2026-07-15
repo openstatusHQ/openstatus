@@ -123,8 +123,7 @@ export function Client() {
 
   const {
     results: checkResults,
-    isStreaming,
-    isComplete: checksComplete,
+    status: checksStatus,
     start: startChecks,
     stop: stopChecks,
   } = useStreamChecks();
@@ -204,8 +203,7 @@ export function Client() {
             isSubmitting={createMonitorMutation.isPending}
             monitorData={monitorData}
             checkResults={checkResults}
-            isStreaming={isStreaming}
-            checksComplete={checksComplete}
+            checksStatus={checksStatus}
             onSubmit={async (values) => {
               await createMonitorMutation.mutateAsync({
                 url: values.url,
