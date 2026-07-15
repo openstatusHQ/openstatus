@@ -2,13 +2,13 @@ package checker_test
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -63,6 +63,61 @@ func TestHttpViaProxy(t *testing.T) {
 		assert.Equal(t, "OK", res.Body)
 		assert.Equal(t, "nginx", res.Headers["Server"])
 		assert.Equal(t, int64(1700000000000), res.Timestamp)
+	})
+
+	t.Run("POST without Content-Type defaults to application/json like the direct checker", func(t *testing.T) {
+		proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var proxyReq checker.ProxyRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&proxyReq))
+			assert.Equal(t, "application/json", proxyReq.Headers["Content-Type"])
+			assert.Equal(t, `{"hello":"world"}`, proxyReq.Body)
+			assert.Empty(t, proxyReq.BodyEncoding)
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(checker.ProxyResponse{Status: 200, Latency: 1})
+		}))
+		defer proxy.Close()
+
+		_, err := checker.HttpViaProxy(context.Background(), proxy.Client(), request.HttpCheckerRequest{
+			URL:      "https://openstat.us",
+			Method:   http.MethodPost,
+			Body:     `{"hello":"world"}`,
+			ProxyURL: proxy.URL,
+		})
+
+		require.NoError(t, err)
+	})
+
+	t.Run("binary data URL body is shipped as base64 like the direct checker decodes it", func(t *testing.T) {
+		proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var proxyReq checker.ProxyRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&proxyReq))
+			assert.Equal(t, "base64", proxyReq.BodyEncoding)
+
+			decoded, err := base64.StdEncoding.DecodeString(proxyReq.Body)
+			require.NoError(t, err)
+			assert.Equal(t, []byte("binary-payload"), decoded)
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(checker.ProxyResponse{Status: 200, Latency: 1})
+		}))
+		defer proxy.Close()
+
+		dataURL := "data:application/octet-stream;base64," +
+			base64.StdEncoding.EncodeToString([]byte("binary-payload"))
+
+		_, err := checker.HttpViaProxy(context.Background(), proxy.Client(), request.HttpCheckerRequest{
+			URL:      "https://openstat.us",
+			Method:   http.MethodPost,
+			Body:     dataURL,
+			ProxyURL: proxy.URL,
+			Headers: []struct {
+				Key   string `json:"key"`
+				Value string `json:"value"`
+			}{{Key: "Content-Type", Value: "application/octet-stream"}},
+		})
+
+		require.NoError(t, err)
 	})
 
 	t.Run("target unreachable from the proxy is not a proxy error", func(t *testing.T) {

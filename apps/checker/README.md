@@ -78,10 +78,13 @@ The checker sends a `POST` request to `proxyUrl` with `Content-Type: application
   "method": "GET",
   "headers": { "X-Api-Key": "..." }, // monitor headers, to send to the target
   "body": "", // request body for the target
+  "bodyEncoding": "", // "base64" when body carries binary data — decode it before sending to the target
   "timeout": 30000, // ms — the proxy should enforce this on the target
   "followRedirects": true
 }
 ```
+
+For POST monitors, `headers` includes the same default `Content-Type: application/json` the direct checker applies when none is configured. Binary monitors (`Content-Type: application/octet-stream`) get their body shipped as plain base64 with `"bodyEncoding": "base64"`.
 
 The proxy must answer `200 OK` with `Content-Type: application/json`:
 
@@ -127,9 +130,14 @@ export default {
       const res = await fetch(check.url, {
         method: check.method,
         headers: check.headers,
-        body: ["GET", "HEAD"].includes(check.method) ? undefined : check.body,
+        body: ["GET", "HEAD"].includes(check.method)
+          ? undefined
+          : check.bodyEncoding === "base64"
+            ? Uint8Array.from(atob(check.body), (c) => c.charCodeAt(0))
+            : check.body,
         redirect: check.followRedirects ? "follow" : "manual",
         signal: AbortSignal.timeout(check.timeout),
+      });
       });
       const body = await res.text();
       return Response.json({

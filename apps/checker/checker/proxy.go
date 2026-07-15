@@ -3,6 +3,7 @@ package checker
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,12 +20,15 @@ import (
 // measured result back, so the recorded latency reflects the proxy's vantage
 // point (e.g. a serverless function running in a region without a probe).
 type ProxyRequest struct {
-	Headers         map[string]string `json:"headers,omitempty"`
-	URL             string            `json:"url"`
-	Method          string            `json:"method"`
-	Body            string            `json:"body,omitempty"`
-	Timeout         int64             `json:"timeout"`
-	FollowRedirects bool              `json:"followRedirects"`
+	Headers map[string]string `json:"headers,omitempty"`
+	URL     string            `json:"url"`
+	Method  string            `json:"method"`
+	Body    string            `json:"body,omitempty"`
+	// BodyEncoding is "base64" when Body carries binary data; the proxy must
+	// decode it before sending it to the target. Empty means plain text.
+	BodyEncoding    string `json:"bodyEncoding,omitempty"`
+	Timeout         int64  `json:"timeout"`
+	FollowRedirects bool   `json:"followRedirects"`
 }
 
 // ProxyResponse is what the checker expects back from the proxy.
@@ -56,12 +60,31 @@ func HttpViaProxy(ctx context.Context, client *http.Client, inputData request.Ht
 			headers[header.Key] = header.Value
 		}
 	}
+	// mirror the direct checker's default POST Content-Type
+	if inputData.Method == http.MethodPost && headers["Content-Type"] == "" {
+		headers["Content-Type"] = "application/json"
+	}
+
+	// mirror the direct checker's binary body handling: a base64 data URL is
+	// decoded before hitting the target, so ship it to the proxy as base64
+	// instead of the raw data URL text
+	reqBody := inputData.Body
+	bodyEncoding := ""
+	if inputData.Method == http.MethodPost && headers["Content-Type"] == "application/octet-stream" {
+		decoded, err := decodeBase64Body(inputData.Body)
+		if err != nil {
+			return Response{}, fmt.Errorf("error while decoding base64: %w", err)
+		}
+		reqBody = base64.StdEncoding.EncodeToString(decoded)
+		bodyEncoding = "base64"
+	}
 
 	payload, err := json.Marshal(ProxyRequest{
 		URL:             inputData.URL,
 		Method:          inputData.Method,
 		Headers:         headers,
-		Body:            inputData.Body,
+		Body:            reqBody,
+		BodyEncoding:    bodyEncoding,
 		Timeout:         inputData.Timeout,
 		FollowRedirects: inputData.FollowRedirects,
 	})

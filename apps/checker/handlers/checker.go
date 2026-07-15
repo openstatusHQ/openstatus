@@ -137,6 +137,11 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		var res checker.Response
 		var err error
 		if req.ProxyURL != "" {
+			// reset before each attempt so a retry cannot keep a stale
+			// auto-detected region from a previous proxy response
+			if req.ProxyRegion == "" {
+				region = h.Region
+			}
 			res, err = checker.HttpViaProxy(ctx, requestClient, req)
 			// auto-detect the region when it is not pinned on the monitor
 			if err == nil && req.ProxyRegion == "" && res.Region != "" {
