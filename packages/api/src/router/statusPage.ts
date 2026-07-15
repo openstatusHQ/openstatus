@@ -239,6 +239,11 @@ export const statusPageRouter = createTRPCRouter({
                 : "success"));
         return {
           ...c.monitor,
+          // the page component carries the public-facing name/description;
+          // clear externalName so the schema transform keeps the override
+          name: c.name,
+          description: c.description ?? "",
+          externalName: null,
           status,
           events,
           monitorGroupId: c.groupId,
@@ -497,7 +502,11 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = monitorComponents
         .map((c) => ({
           ...c.monitor,
-          name: c.monitor?.externalName ?? c.monitor?.name ?? "",
+          // the page component carries the public-facing name/description;
+          // clear externalName so the schema transform keeps the override
+          name: c.name,
+          description: c.description ?? "",
+          externalName: null,
         }))
         .sort((a, b) => {
           const aComp = monitorComponents.find((m) => m.monitor?.id === a.id);
@@ -1039,6 +1048,8 @@ export const statusPageRouter = createTRPCRouter({
 
         return {
           ...selectPublicMonitorSchema.parse(c.monitor),
+          name: c.name,
+          description: c.description ?? "",
           data,
         };
       });
@@ -1069,11 +1080,12 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-      const _monitor = monitorComponents.find(
+      const _component = monitorComponents.find(
         (c) => c.monitor.id === opts.input.id,
-      )?.monitor;
+      );
+      const _monitor = _component?.monitor;
 
-      if (!_monitor) return null;
+      if (!_component || !_monitor) return null;
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
@@ -1130,6 +1142,8 @@ export const statusPageRouter = createTRPCRouter({
 
       return {
         ...selectPublicMonitorSchema.parse(_monitor),
+        name: _component.name,
+        description: _component.description ?? "",
         data: {
           latency,
           regions,
