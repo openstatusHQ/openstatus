@@ -499,10 +499,10 @@ export const statusPageRouter = createTRPCRouter({
           ...c.monitor,
           // the page component carries the public-facing name/description;
           // clear externalName so the schema transform keeps the override.
-          // description falls back to the monitor's own: pre-existing
-          // components were never backfilled and carry NULL.
+          // description: NULL means never backfilled → fall back to the
+          // monitor's own; "" is a deliberately cleared field → stays blank.
           name: c.name,
-          description: c.description || c.monitor?.description || "",
+          description: c.description ?? c.monitor?.description ?? "",
           externalName: null,
         }))
         .sort((a, b) => {

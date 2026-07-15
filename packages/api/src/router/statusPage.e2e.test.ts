@@ -1065,6 +1065,8 @@ describe("statusPage exposes page component names, not internal monitor names", 
   let publicNameComponentId: number;
   let noDescriptionMonitorId: number;
   let noDescriptionComponentId: number;
+  let clearedDescriptionMonitorId: number;
+  let clearedDescriptionComponentId: number;
 
   const internalName = "Internal Monitor Name";
   const internalDescription = "Internal monitor description";
@@ -1162,6 +1164,37 @@ describe("statusPage exposes page component names, not internal monitor names", 
       .returning()
       .get();
     noDescriptionComponentId = noDescriptionComponent.id;
+
+    // mirrors a deliberately cleared field: the dashboard stores ""
+    const clearedDescriptionMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "Cleared Description Component Monitor",
+        description: "Internal description that must stay hidden",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    clearedDescriptionMonitorId = clearedDescriptionMonitor.id;
+
+    const clearedDescriptionComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: clearedDescriptionMonitorId,
+        name: "Cleared Description Component",
+        description: "",
+        order: 2,
+      })
+      .returning()
+      .get();
+    clearedDescriptionComponentId = clearedDescriptionComponent.id;
   });
 
   afterAll(async () => {
@@ -1171,8 +1204,14 @@ describe("statusPage exposes page component names, not internal monitor names", 
     await db
       .delete(pageComponent)
       .where(eq(pageComponent.id, noDescriptionComponentId));
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, clearedDescriptionComponentId));
     await db.delete(monitor).where(eq(monitor.id, publicNameMonitorId));
     await db.delete(monitor).where(eq(monitor.id, noDescriptionMonitorId));
+    await db
+      .delete(monitor)
+      .where(eq(monitor.id, clearedDescriptionMonitorId));
     await db.delete(page).where(eq(page.id, publicNamePageId));
   });
 
@@ -1234,6 +1273,27 @@ describe("statusPage exposes page component names, not internal monitor names", 
       (m) => m.id === noDescriptionMonitorId,
     );
     expect(lightItem?.description).toBe(fallbackDescription);
+  });
+
+  test("keeps a deliberately cleared component description blank", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === clearedDescriptionMonitorId,
+    );
+    expect(monitorItem?.description).toBe("");
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === clearedDescriptionMonitorId,
+    );
+    expect(component?.monitor?.description).toBe("");
+
+    const light = await caller.statusPage.getLight({ slug: publicNameSlug });
+    const lightItem = light?.monitors.find(
+      (m) => m.id === clearedDescriptionMonitorId,
+    );
+    expect(lightItem?.description).toBe("");
   });
 
   test("getUptime returns the page component name on the nested monitor", async () => {
