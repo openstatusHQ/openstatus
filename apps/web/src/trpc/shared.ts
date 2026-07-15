@@ -8,6 +8,9 @@ import superjson from "superjson";
  * tRPC logger link that reports failed queries to Sentry directly instead of
  * letting captureConsoleIntegration scrape tRPC's styled console.error format
  * string (which surfaces as noise like "%c << query #1 %c...%c %O").
+ *
+ * Only the operation `path` is attached — never `input`, which can carry
+ * secrets (page passwords, subscriber tokens, emails).
  */
 export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
   loggerLink<AppRouter>({
@@ -17,7 +20,7 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
     logger: (opts) => {
       if (opts.direction === "down" && opts.result instanceof Error) {
         Sentry.captureException(opts.result, {
-          extra: { path: opts.path, input: opts.input },
+          extra: { path: opts.path },
         });
         if (process.env.NODE_ENV === "development") {
           console.warn("[tRPC error]", opts.path, opts.result);
