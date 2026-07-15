@@ -1209,9 +1209,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
       .where(eq(pageComponent.id, clearedDescriptionComponentId));
     await db.delete(monitor).where(eq(monitor.id, publicNameMonitorId));
     await db.delete(monitor).where(eq(monitor.id, noDescriptionMonitorId));
-    await db
-      .delete(monitor)
-      .where(eq(monitor.id, clearedDescriptionMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, clearedDescriptionMonitorId));
     await db.delete(page).where(eq(page.id, publicNamePageId));
   });
 
