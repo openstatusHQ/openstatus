@@ -17,6 +17,20 @@ export async function vercelFetch(path: string, init?: RequestInit) {
   });
 }
 
+// Vercel can return non-JSON bodies (plain-text error pages during outages,
+// rate limits) — never let JSON.parse bubble up as an INTERNAL_SERVER_ERROR.
+export async function parseVercelJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    console.error("Vercel returned a non-JSON response:", {
+      status: response.status,
+      url: response.url,
+    });
+    return null;
+  }
+}
+
 export async function addDomainToVercel(domain: string) {
   const response = await vercelFetch(
     `/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,

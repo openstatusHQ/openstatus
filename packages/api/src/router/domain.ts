@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { env } from "../env";
-import { vercelFetch } from "../lib/vercel";
+import { parseVercelJson, vercelFetch } from "../lib/vercel";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const domainConfigResponseSchema = z.object({
@@ -41,6 +41,15 @@ export const domainResponseSchema = z.object({
     .optional(),
 });
 
+const domainResponseWithErrorSchema = domainResponseSchema.extend({
+  error: z
+    .object({
+      code: z.string(),
+      message: z.string(),
+    })
+    .optional(),
+});
+
 export type DomainVerificationResponse = z.infer<typeof domainResponseSchema>;
 export type DomainConfigResponse = z.infer<typeof domainConfigResponseSchema>;
 export type DomainResponse = z.infer<typeof domainResponseSchema>;
@@ -61,17 +70,13 @@ export const domainRouter = createTRPCRouter({
       const data = await vercelFetch(
         `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}?teamId=${env.TEAM_ID_VERCEL}`,
       );
-      const json = await data.json();
-      const result = domainResponseSchema
-        .extend({
-          error: z
-            .object({
-              code: z.string(),
-              message: z.string(),
-            })
-            .optional(),
-        })
-        .parse(json);
+      const json = await parseVercelJson(data);
+      if (json === null) {
+        return domainResponseWithErrorSchema.parse({
+          error: { code: "internal_error", message: "Unexpected response" },
+        });
+      }
+      const result = domainResponseWithErrorSchema.parse(json);
       console.log({ result });
       return result;
     }),
@@ -84,7 +89,10 @@ export const domainRouter = createTRPCRouter({
       const data = await vercelFetch(
         `/v6/domains/${opts.input.domain}/config?teamId=${env.TEAM_ID_VERCEL}`,
       );
-      const json = await data.json();
+      const json = await parseVercelJson(data);
+      if (json === null) {
+        return null;
+      }
       const result = domainConfigResponseSchema.parse(json);
       return result;
     }),
@@ -98,7 +106,10 @@ export const domainRouter = createTRPCRouter({
         `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}/verify?teamId=${env.TEAM_ID_VERCEL}`,
         { method: "POST" },
       );
-      const json = await data.json();
+      const json = await parseVercelJson(data);
+      if (json === null) {
+        return null;
+      }
       const result = domainResponseSchema.parse(json);
       return result;
     }),
