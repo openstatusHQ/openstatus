@@ -1,6 +1,9 @@
 import { and, db, eq } from "@openstatus/db";
 import {
+  monitor,
+  notification,
   notificationTrigger,
+  notificationsToMonitors,
   privateLocation,
   privateLocationMonitorStatus,
   privateLocationToMonitors,
@@ -26,8 +29,12 @@ import { providerToFunction } from "./utils";
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
 type AnyStub = Stub<any>;
 
-const TEST_MONITOR_ID = 1; // seed: workspace 1, active, linked to email notification 1
-const INACTIVE_MONITOR_ID = 2; // seed: active = false
+// Dedicated fixtures, not seed monitor 1: other suites (api/server maintenance
+// tests) put seed monitor 1 under active maintenance on the shared CI database,
+// which makes updateStatusPrivate suppress notifications and drop the write.
+const TEST_MONITOR_ID = 9101;
+const INACTIVE_MONITOR_ID = 9102;
+const TEST_NOTIFICATION_ID = 9101;
 const TEST_LOCATION_ID = 9001;
 const UNATTACHED_LOCATION_ID = 9002;
 
@@ -75,6 +82,49 @@ describe("updateStatusPrivate", () => {
 
   beforeAll(async () => {
     await db
+      .insert(monitor)
+      .values([
+        {
+          id: TEST_MONITOR_ID,
+          workspaceId: 1,
+          active: true,
+          url: "https://private-location.test",
+          name: "Private Location Test Monitor",
+          periodicity: "1m",
+          regions: "ams",
+        },
+        {
+          id: INACTIVE_MONITOR_ID,
+          workspaceId: 1,
+          active: false,
+          url: "https://private-location-inactive.test",
+          name: "Private Location Inactive Monitor",
+          periodicity: "1m",
+          regions: "ams",
+        },
+      ])
+      .onConflictDoNothing()
+      .run();
+    await db
+      .insert(notification)
+      .values({
+        id: TEST_NOTIFICATION_ID,
+        provider: "email",
+        name: "private location test notification",
+        data: '{"email":"ping@openstatus.dev"}',
+        workspaceId: 1,
+      })
+      .onConflictDoNothing()
+      .run();
+    await db
+      .insert(notificationsToMonitors)
+      .values({
+        monitorId: TEST_MONITOR_ID,
+        notificationId: TEST_NOTIFICATION_ID,
+      })
+      .onConflictDoNothing()
+      .run();
+    await db
       .insert(privateLocation)
       .values({
         id: TEST_LOCATION_ID,
@@ -113,6 +163,16 @@ describe("updateStatusPrivate", () => {
       .delete(privateLocation)
       .where(eq(privateLocation.id, TEST_LOCATION_ID))
       .run();
+    await db
+      .delete(notificationsToMonitors)
+      .where(eq(notificationsToMonitors.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(notification)
+      .where(eq(notification.id, TEST_NOTIFICATION_ID))
+      .run();
+    await db.delete(monitor).where(eq(monitor.id, TEST_MONITOR_ID)).run();
+    await db.delete(monitor).where(eq(monitor.id, INACTIVE_MONITOR_ID)).run();
   });
 
   beforeEach(() => {
