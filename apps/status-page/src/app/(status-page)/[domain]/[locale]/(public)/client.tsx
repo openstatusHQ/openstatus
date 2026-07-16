@@ -9,6 +9,8 @@ import {
   StatusComponentHeaderLeft,
   StatusComponentHeaderRight,
   StatusComponentIcon,
+  StatusComponentLatency,
+  StatusComponentLatencySkeleton,
   StatusComponentStatus,
   StatusComponentTitle,
   StatusComponentUptime,
@@ -50,6 +52,7 @@ import {
   StatusEventTimelineReportUpdate,
 } from "../../../../../components/status-page/status-events";
 import { StatusFeed } from "../../../../../components/status-page/status-feed";
+import { latencyByMonitorId } from "../../../../../data/metrics.client";
 import { useEmbed } from "../../../../../hooks/use-embed";
 import { usePathnamePrefix } from "../../../../../hooks/use-pathname-prefix";
 import { updatesWithImpactChanges } from "../../../../../lib/report-impacts";
@@ -116,6 +119,36 @@ export function Client() {
         : skipToken,
     ),
   );
+
+  // Non-blocking latency read for the per-monitor "p75 ms" tracker chip. Reuses
+  // the public monitors query (already registers the multi-latency pipe) so the
+  // tracker rows never wait on it — the chip fills in once resolved.
+  const { data: monitorsLatency, isFetching: isLatencyFetching } = useQuery(
+    trpc.statusPage.getMonitors.queryOptions(
+      componentsVisible && pageInitial && pageInitial.pageComponents.length > 0
+        ? { slug: domain }
+        : skipToken,
+    ),
+  );
+  const latencyMap = useMemo(
+    () => latencyByMonitorId(monitorsLatency, "p75"),
+    [monitorsLatency],
+  );
+  const latencyPending = !monitorsLatency && isLatencyFetching;
+
+  // Only public monitors get a chip: private monitors aren't in `getMonitors`
+  // (value never arrives) and static components have no monitor.
+  const buildLatency = (
+    row: NonNullable<typeof uptimeData>[number] | undefined,
+  ) => {
+    if (!row?.monitor?.public) return undefined;
+    const monitorId = row.monitor.id.toString();
+    return {
+      isLoading: latencyPending,
+      value: latencyMap.get(monitorId),
+      href: `${prefix ? `/${prefix}` : ""}/monitors/${monitorId}`,
+    };
+  };
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
@@ -279,9 +312,10 @@ export function Client() {
             {page.trackers.map((tracker) => {
               if (tracker.type === "component") {
                 const component = tracker.component;
-                const { data, uptime } =
-                  uptimeData?.find((u) => u.pageComponentId === component.id) ??
-                  {};
+                const uptimeRow = uptimeData?.find(
+                  (u) => u.pageComponentId === component.id,
+                );
+                const { data, uptime } = uptimeRow ?? {};
 
                 return (
                   <ComponentCard
@@ -293,6 +327,7 @@ export function Client() {
                     uptime={uptime}
                     showUptime={showUptime}
                     isLoading={isLoading}
+                    latency={buildLatency(uptimeRow)}
                   />
                 );
               }
@@ -305,10 +340,10 @@ export function Client() {
                   defaultOpen={tracker.defaultOpen}
                 >
                   {tracker.components.map((component) => {
-                    const { data, uptime } =
-                      uptimeData?.find(
-                        (u) => u.pageComponentId === component.id,
-                      ) ?? {};
+                    const uptimeRow = uptimeData?.find(
+                      (u) => u.pageComponentId === component.id,
+                    );
+                    const { data, uptime } = uptimeRow ?? {};
 
                     return (
                       <ComponentCard
@@ -320,6 +355,7 @@ export function Client() {
                         uptime={uptime}
                         showUptime={showUptime}
                         isLoading={isLoading}
+                        latency={buildLatency(uptimeRow)}
                       />
                     );
                   })}
@@ -377,6 +413,7 @@ function ComponentCard({
   uptime,
   showUptime,
   isLoading,
+  latency,
 }: {
   name: string;
   description?: string | null;
@@ -385,12 +422,24 @@ function ComponentCard({
   uptime?: string;
   showUptime?: boolean;
   isLoading?: boolean;
+  latency?: { isLoading: boolean; value?: string; href: string };
 }) {
   return (
     <StatusComponent variant={status}>
       <StatusComponentHeader>
         <StatusComponentHeaderLeft>
           <StatusComponentTitle>{name}</StatusComponentTitle>
+          {latency ? (
+            latency.value ? (
+              <Link href={latency.href} variant="unstyled">
+                <StatusComponentLatency>
+                  {latency.value} p75
+                </StatusComponentLatency>
+              </Link>
+            ) : latency.isLoading ? (
+              <StatusComponentLatencySkeleton />
+            ) : null
+          ) : null}
           <StatusComponentDescription>{description}</StatusComponentDescription>
         </StatusComponentHeaderLeft>
         <StatusComponentHeaderRight>
