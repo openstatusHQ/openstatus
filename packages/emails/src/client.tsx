@@ -26,6 +26,19 @@ export function statusReportSubject(req: {
     : req.reportTitle;
 }
 
+// Deterministic Resend rejections: retrying the identical request can never
+// succeed (e.g. 409 invalid_idempotent_request when a key is reused with a
+// different body), it only burns the backoff and re-logs the error.
+const NON_RETRYABLE_RESEND_ERRORS = new Set<string>([
+  "invalid_idempotent_request",
+  "invalid_idempotency_key",
+  "validation_error",
+]);
+
+function isRetryableSendError(error: { name: string }): boolean {
+  return !NON_RETRYABLE_RESEND_ERRORS.has(error.name);
+}
+
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
   const result: T[][] = [];
@@ -226,6 +239,7 @@ export class EmailClient {
         Effect.retry({
           times: 3,
           schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -421,6 +435,7 @@ export class EmailClient {
         Effect.retry({
           times: 3,
           schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
