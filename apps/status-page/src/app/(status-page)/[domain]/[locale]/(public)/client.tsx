@@ -431,7 +431,11 @@ function ComponentCard({
           <StatusComponentTitle>{name}</StatusComponentTitle>
           {latency ? (
             latency.value ? (
-              <Link href={latency.href} variant="unstyled" className="shrink-0">
+              <Link
+                href={latency.href}
+                variant="unstyled"
+                className="shrink-0 rounded-md focus-visible:ring-inset"
+              >
                 <StatusComponentLatency>
                   <span className="text-muted-foreground/70">Last day</span>
                   <span className="text-foreground">{latency.value}</span>
