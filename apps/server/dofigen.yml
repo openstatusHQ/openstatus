@@ -79,9 +79,10 @@ builders:
         source: /app/packages
         target: /app/packages
     # 1) bundle to a self-contained mjs; manual node_modules resolves pnpm catalog: + workspace deps, sloppy-imports the extensionless relative imports.
+    #    no --minify: it makes deno 2.9 drop its createRequire shim, so CJS deps requiring node: builtins throw "Dynamic require of ... is not supported".
     # 2) compile the bundle with node-modules-dir=none so node_modules is NOT embedded — keeps the binary ~110MB instead of ~390MB.
     run:
-      - deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+      - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
       - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
 
 # Runtime stage: distroless glibc base that already ships curl (for the healthcheck).

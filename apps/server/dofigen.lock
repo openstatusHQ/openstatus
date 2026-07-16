@@ -15,8 +15,8 @@ effective: |
         path: node
         digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
       label:
-        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.stage: install
       workdir: /app/
       run:
@@ -100,8 +100,8 @@ effective: |
         path: denoland/deno
         digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       label:
-        org.opencontainers.image.stage: build
         org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
+        org.opencontainers.image.stage: build
         org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       workdir: /app/apps/server
       env:
@@ -123,7 +123,7 @@ effective: |
         - /app/packages
         target: /app/packages
       run:
-      - deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+      - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
       - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
   fromImage:
     host: registry.access.redhat.com
@@ -131,13 +131,13 @@ effective: |
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.title: OpenStatus Server
-    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
   user:
     user: '1000'
     group: '1000'
@@ -159,17 +159,17 @@ effective: |
     retries: 3
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.2:
-          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
     library:
       node:
         24-slim:
           digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+    denoland:
+      deno:
+        2.9.2:
+          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
 resources:
   dofigen.yml:
-    hash: d8a858f3f4bdbe9af0e1a15adf3fbc311b5e88611b33d76463701651ed0905d6
+    hash: e62db1a487a23f2bce5f3353470c8923b67cd6b5a1a78bef29bc448bd3571094
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -252,9 +252,10 @@ resources:
               source: /app/packages
               target: /app/packages
           # 1) bundle to a self-contained mjs; manual node_modules resolves pnpm catalog: + workspace deps, sloppy-imports the extensionless relative imports.
+          #    no --minify: it makes deno 2.9 drop its createRequire shim, so CJS deps requiring node: builtins throw "Dynamic require of ... is not supported".
           # 2) compile the bundle with node-modules-dir=none so node_modules is NOT embedded — keeps the binary ~110MB instead of ~390MB.
           run:
-            - deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+            - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
             - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
 
       # Runtime stage: distroless glibc base that already ships curl (for the healthcheck).
