@@ -155,6 +155,9 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
       isNotNull(pageSubscriber.acceptedAt),
       isNull(pageSubscriber.unsubscribedAt),
     ),
+    // Deterministic order so the email idempotency fingerprint is stable
+    // across dispatches; id breaks same-second createdAt ties.
+    orderBy: (subs, { asc }) => [asc(subs.createdAt), asc(subs.id)],
     with: {
       components: true,
     },
