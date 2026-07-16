@@ -559,7 +559,9 @@ describe("StatusPageService.GetPageComponent", () => {
     expect(data.component.name).toBe(`${TEST_PREFIX}-component`);
     expect(data.component.pageId).toBe(String(testPageId));
     expect(data.component.type).toBe("PAGE_COMPONENT_TYPE_STATIC");
-    expect(data.component.monitorId).toBe("");
+    // proto3 omits default-valued scalars from JSON, so an unset monitor
+    // arrives as either "" or undefined.
+    expect(data.component.monitorId ?? "").toBe("");
   });
 
   test("returns 401 when no auth key provided", async () => {
