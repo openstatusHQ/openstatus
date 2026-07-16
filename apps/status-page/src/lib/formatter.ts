@@ -13,6 +13,7 @@ export function formatMilliseconds(ms: number) {
   return `${Intl.NumberFormat("en-US", {
     style: "unit",
     unit: "millisecond",
+    maximumFractionDigits: 0,
   }).format(ms)}`;
 }
 
