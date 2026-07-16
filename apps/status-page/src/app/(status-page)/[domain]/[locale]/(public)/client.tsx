@@ -437,7 +437,7 @@ function ComponentCard({
                 className="shrink-0 rounded-md focus-visible:ring-inset"
               >
                 <StatusComponentLatency>
-                  <span className="text-muted-foreground/70">Last day</span>
+                  <span className="text-muted-foreground/70">last day</span>
                   <span className="text-foreground">{latency.value}</span>
                   <span>p75</span>
                 </StatusComponentLatency>
