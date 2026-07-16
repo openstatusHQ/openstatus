@@ -3,9 +3,10 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import type { TRPCError } from "@trpc/server";
 
 // tRPC error codes that should not be reported to Sentry (expected client errors)
-const IGNORED_TRPC_CODES = [
+const IGNORED_TRPC_CODES: TRPCError["code"][] = [
   "BAD_REQUEST",
   "UNAUTHORIZED",
   "FORBIDDEN",
@@ -15,13 +16,14 @@ const IGNORED_TRPC_CODES = [
   "TOO_MANY_REQUESTS",
 ];
 
-// Duck-typed: `instanceof TRPCError` is unreliable here because the thrown
-// error comes from a different bundle than this config's `@trpc/server` copy.
-function isIgnoredTRPCError(err: unknown): boolean {
+// Match by name + code rather than `instanceof TRPCError`: the thrown error
+// comes from the app bundle, whose `@trpc/server` class identity differs from
+// the copy this instrumentation config would import at runtime.
+function isIgnoredTRPCError(err: unknown): err is TRPCError {
   return (
     err instanceof Error &&
     err.name === "TRPCError" &&
-    IGNORED_TRPC_CODES.includes((err as { code?: string }).code ?? "")
+    IGNORED_TRPC_CODES.includes((err as TRPCError).code)
   );
 }
 
