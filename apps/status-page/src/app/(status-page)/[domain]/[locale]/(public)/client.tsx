@@ -431,13 +431,13 @@ function ComponentCard({
           <StatusComponentTitle>{name}</StatusComponentTitle>
           {latency ? (
             latency.value ? (
-              <Link href={latency.href} variant="unstyled">
+              <Link href={latency.href} variant="unstyled" className="shrink-0">
                 <StatusComponentLatency>
                   {latency.value} p75
                 </StatusComponentLatency>
               </Link>
             ) : latency.isLoading ? (
-              <StatusComponentLatencySkeleton />
+              <StatusComponentLatencySkeleton className="shrink-0" />
             ) : null
           ) : null}
           <StatusComponentDescription>{description}</StatusComponentDescription>
