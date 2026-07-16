@@ -5,7 +5,11 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { TargetUnreachableError } from "@/lib/checker/utils";
+import {
+  CHECKER_REQUEST_TIMEOUT_MS,
+  TargetUnreachableError,
+  isTimeoutError,
+} from "@/lib/checker/utils";
 
 import { TCPResponse, tcpPayload } from "./schema";
 
@@ -45,18 +49,27 @@ export async function POST(request: Request) {
 }
 async function checkTCP(url: string, region: Region) {
   //
-  const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
-    headers: {
-      Authorization: `Basic ${process.env.CRON_SECRET}`,
-      "Content-Type": "application/json",
-      "fly-prefer-region": region,
-    },
-    method: "POST",
-    body: JSON.stringify({
-      uri: url,
-    }),
-    next: { revalidate: 0 },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
+      headers: {
+        Authorization: `Basic ${process.env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": region,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        uri: url,
+      }),
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (isTimeoutError(e)) {
+      throw new TargetUnreachableError("checker request timed out");
+    }
+    throw e;
+  }
 
   const json = await res.json();
 

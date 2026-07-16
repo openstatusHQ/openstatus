@@ -185,6 +185,14 @@ type CheckRegionRequest = {
 // throw this so a route catch can return 400 while keeping it out of Sentry.
 export class TargetUnreachableError extends Error {}
 
+// Bound the upstream checker request below the client's 10s abort so a stalled
+// checker can't keep the route running to the platform limit.
+export const CHECKER_REQUEST_TIMEOUT_MS = 9_000;
+
+export function isTimeoutError(e: unknown): boolean {
+  return e instanceof Error && e.name === "TimeoutError";
+}
+
 export async function checkRegion(
   props: CheckRegionRequest,
 ): Promise<RegionCheckerResponse> {
@@ -212,27 +220,36 @@ export async function checkRegion(
       break;
   }
 
-  const res = await fetch(endpoint, {
-    headers: {
-      Authorization: `Basic ${process.env.CRON_SECRET}`,
-      "Content-Type": "application/json",
-      ...regionHeader,
-    },
-    method: "POST",
-    body: JSON.stringify({
-      url,
-      method: method || "GET",
-      headers: headers?.reduce(
-        (acc, { key, value }) => {
-          if (!key) return acc; // key === "" is an invalid header
-          return { ...acc, [key]: value };
-        },
-        {} as Record<string, string>,
-      ),
-      body: body ? body : undefined,
-    }),
-    next: { revalidate: 0 },
-  });
+  let res: Response;
+  try {
+    res = await fetch(endpoint, {
+      headers: {
+        Authorization: `Basic ${process.env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        ...regionHeader,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        url,
+        method: method || "GET",
+        headers: headers?.reduce(
+          (acc, { key, value }) => {
+            if (!key) return acc; // key === "" is an invalid header
+            return { ...acc, [key]: value };
+          },
+          {} as Record<string, string>,
+        ),
+        body: body ? body : undefined,
+      }),
+      next: { revalidate: 0 },
+      signal: AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (isTimeoutError(e)) {
+      throw new TargetUnreachableError("checker request timed out");
+    }
+    throw e;
+  }
 
   const json = await res.json();
 
