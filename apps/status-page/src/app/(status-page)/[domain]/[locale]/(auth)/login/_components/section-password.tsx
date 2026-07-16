@@ -11,10 +11,10 @@ import {
   SectionDescription,
   SectionHeader,
   SectionTitle,
-} from "@/components/content/section";
-import { FormPassword } from "@/components/forms/form-password";
-import { createProtectedCookieKey } from "@/lib/protected";
-import { useTRPC } from "@/lib/trpc/client";
+} from "../../../../../../../components/content/section";
+import { FormPassword } from "../../../../../../../components/forms/form-password";
+import { createProtectedCookieKey } from "../../../../../../../lib/protected";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 
 export function SectionPassword() {
   const t = useExtracted();

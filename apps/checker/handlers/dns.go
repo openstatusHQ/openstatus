@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
+	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 
@@ -222,6 +223,10 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 	}
 
+	if req.OtelConfig.Endpoint != "" {
+		otelOS.RecordDNSMetrics(ctx, req, latency, err != nil || !isSuccessful, h.Region)
+	}
+
 	event, f := c.Get("event")
 	if f {
 		t := event.(map[string]any)
@@ -340,6 +345,10 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		} else {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal assertions")
 		}
+	}
+
+	if req.OtelConfig.Endpoint != "" {
+		otelOS.RecordDNSMetrics(ctx, req, latency, err != nil || !isSuccessful, h.Region)
 	}
 
 	if err != nil {

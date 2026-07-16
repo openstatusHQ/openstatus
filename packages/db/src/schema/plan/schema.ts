@@ -31,6 +31,7 @@ export const limitsSchema = z.object({
   "page-components": z.number().prefault(3),
   maintenance: z.boolean().prefault(true),
   "monitor-values-visibility": z.boolean().prefault(true),
+  "uptime-history": z.boolean().prefault(false),
   "status-subscribers": z.boolean().prefault(false),
   "custom-domain": z.boolean().prefault(false),
   i18n: z.boolean().prefault(false),
@@ -39,6 +40,7 @@ export const limitsSchema = z.object({
   "ip-restriction": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),
   "no-index": z.boolean().prefault(false),
+  "custom-theme": z.boolean().prefault(false),
   /**
    * Notification limits
    */

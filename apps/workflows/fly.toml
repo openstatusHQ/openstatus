@@ -11,8 +11,8 @@ primary_region = 'ams'
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 2
-  memory_mb = 1024
+  cpus = 6
+  memory_mb = 1536
 
 [http_service]
   internal_port = 3000

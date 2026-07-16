@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { and, db, desc, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
@@ -238,9 +238,9 @@ describe("installSlackAgent", () => {
       // shape as create/update — proves delete-path symmetry.
       const deleteRow = all.find((r) => r.action === "integration.delete");
       expect(
-        (deleteRow?.before as Record<string, unknown> | null)
+        typeof (deleteRow?.before as Record<string, unknown> | null)
           ?.credentialFingerprint,
-      ).toBeTypeOf("string");
+      ).toBe("string");
     });
   });
 

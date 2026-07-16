@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 
-import { components } from "@/content/mdx";
-import { getGuides } from "@/content/utils";
+import { components } from "../../../../content/mdx";
+import { getGuides } from "../../../../content/utils";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/lib/metadata/shared-metadata";
-
+} from "../../../../lib/metadata/shared-metadata";
 import { ContentBoxLink, ContentBoxTitle } from "../../content-box";
 
 const TITLE = "Guides Categories";

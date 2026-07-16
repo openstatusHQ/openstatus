@@ -120,7 +120,9 @@ export const columns: ColumnDef<StatusReport>[] = [
       const impact = row.getValue<PageComponentImpact | null>("impact");
       const config = impact ? impactConfig[impact] : untriagedImpact;
       return (
-        <div className={cn("font-mono", config.color)}>{config.label}</div>
+        <div className={cn("max-w-[120px] truncate font-mono", config.color)}>
+          {config.label}
+        </div>
       );
     },
     enableSorting: false,

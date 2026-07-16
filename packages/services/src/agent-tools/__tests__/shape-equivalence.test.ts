@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import { loadSeededWorkspace, makeUserCtx } from "../../../test/helpers";

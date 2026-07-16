@@ -1,8 +1,38 @@
 import type { AppRouter } from "@openstatus/api";
+import * as Sentry from "@sentry/nextjs";
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink, loggerLink } from "@trpc/client";
 import type { TRPCError } from "@trpc/server";
 import superjson from "superjson";
+
+/**
+ * tRPC logger link that reports failed queries to Sentry directly instead of
+ * letting captureConsoleIntegration scrape tRPC's styled console.error format
+ * string (which surfaces as noise like "%c << query #1 %c...%c %O").
+ *
+ * Only the operation `path` is attached — never `input`, which can carry
+ * secrets (page passwords, subscriber tokens, emails).
+ */
+export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
+  loggerLink<AppRouter>({
+    enabled: (opts) =>
+      process.env.NODE_ENV === "development" ||
+      (opts.direction === "down" && opts.result instanceof Error),
+    logger: (opts) => {
+      if (opts.direction === "down" && opts.result instanceof Error) {
+        Sentry.captureException(opts.result, {
+          extra: { path: opts.path },
+        });
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[tRPC error]", opts.path, opts.result);
+        }
+        return;
+      }
+      if (process.env.NODE_ENV === "development") {
+        console.log(opts);
+      }
+    },
+  });
 
 /**
  * Shared onError handler for tRPC route handlers.
@@ -48,37 +78,18 @@ const getBaseUrl = () => {
   return "http://localhost:3000"; // Local dev and Docker (internal calls)
 };
 
-const lambdas = ["stripeRouter", "emailRouter"];
-
-export const endingLink = (opts?: {
-  fetch?: typeof fetch;
-  headers?: HTTPHeaders | (() => HTTPHeaders | Promise<HTTPHeaders>);
-}) =>
-  ((runtime) => {
-    const sharedOpts = {
+// The whole tRPC surface is served from a single Node.js endpoint — there is
+// no longer an Edge/Node split, so all calls go to one link.
+export const endingLink =
+  (opts?: {
+    fetch?: typeof fetch;
+    headers?: HTTPHeaders | (() => HTTPHeaders | Promise<HTTPHeaders>);
+  }): TRPCLink<AppRouter> =>
+  (runtime) =>
+    httpBatchLink({
       headers: opts?.headers,
       fetch: opts?.fetch,
       transformer: superjson,
-      // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
-    } satisfies Partial<HTTPBatchLinkOptions<any>>;
-
-    const edgeLink = httpBatchLink({
-      ...sharedOpts,
-      url: `${getBaseUrl()}/api/trpc/edge`,
-    })(runtime);
-    const lambdaLink = httpBatchLink({
-      ...sharedOpts,
       url: `${getBaseUrl()}/api/trpc/lambda`,
-    })(runtime);
-
-    return (ctx) => {
-      const path = ctx.op.path.split(".") as [string, ...string[]];
-      const endpoint = lambdas.includes(path[0]) ? "lambda" : "edge";
-
-      const newCtx = {
-        ...ctx,
-        op: { ...ctx.op, path: path.join(".") },
-      };
-      return endpoint === "edge" ? edgeLink(newCtx) : lambdaLink(newCtx);
-    };
-  }) satisfies TRPCLink<AppRouter>;
+      // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
+    } satisfies Partial<HTTPBatchLinkOptions<any>>)(runtime);

@@ -175,6 +175,7 @@ type CheckRegionRequest = {
   method?: Method;
   headers?: { value: string; key: string }[];
   body?: string;
+  signal?: AbortSignal;
 };
 
 // ============================================================================
@@ -196,7 +197,7 @@ export function isTimeoutError(e: unknown): boolean {
 export async function checkRegion(
   props: CheckRegionRequest,
 ): Promise<RegionCheckerResponse> {
-  const { url, region, method, headers, body } = props;
+  const { url, region, method, headers, body, signal } = props;
   const regionInfo = regionDict[region];
 
   let endpoint = "";
@@ -242,7 +243,7 @@ export async function checkRegion(
         body: body ? body : undefined,
       }),
       next: { revalidate: 0 },
-      signal: AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
+      signal: signal ?? AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
     });
   } catch (e) {
     if (isTimeoutError(e)) {

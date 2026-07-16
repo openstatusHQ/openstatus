@@ -7,7 +7,8 @@ import NextLink from "next/link";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
-import { Note, NoteButton } from "@/components/common/note";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   Section,
   SectionDescription,
@@ -34,18 +35,16 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
-      onSuccess: async (statusReport) => {
-        // TODO: move to server
+      onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
-          await sendStatusReportUpdateMutation.mutateAsync({
+          sendStatusReportUpdateMutation.mutate({
             id: statusReport.id,
           });
         }
-        //
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
@@ -62,7 +61,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Note>
+      <NoteDismissible cookieKey="note_status_reports_component_impacts">
         <Gauge />
         Status reports now support per-component impacts.
         <NoteButton variant="default" asChild>
@@ -73,7 +72,7 @@ export default function Page() {
             Learn more
           </NextLink>
         </NoteButton>
-      </Note>
+      </NoteDismissible>
       <Section>
         <SectionHeaderRow>
           <SectionHeader>

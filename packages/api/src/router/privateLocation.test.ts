@@ -1,25 +1,61 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
-
-import { db, eq } from "@openstatus/db";
+import { db, eq, inArray } from "@openstatus/db";
 import {
   privateLocation,
   privateLocationToMonitors,
+  workspace,
 } from "@openstatus/db/src/schema";
+import {
+  createMonitor,
+  createWorkspace,
+} from "@openstatus/db/src/test/factories";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
 
+// Passing both `user` and `workspace` trips the NODE_ENV=test escape hatch in
+// the authed middleware, so the caller is scoped to ownWorkspaceId instead of
+// resolving the seeded workspace for the session user.
+function callerFor() {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal user for test
+    user: { id: 1 },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: ownWorkspaceId },
+  });
+  return edgeRouter.createCaller(ctx);
+}
+
+// Own workspaces/monitors per suite — sharing the seeded monitor 5 / workspace
+// 3 races sibling suites that read or mutate that monitor's associations.
+let ownWorkspaceId: number;
+let otherWorkspaceId: number;
+let ownMonitorId: number;
+let otherMonitorId: number;
 let otherWorkspaceLocationId: number;
 let ownWorkspaceLocationId: number;
 
 beforeAll(async () => {
+  const own = await createWorkspace();
+  const other = await createWorkspace();
+  ownWorkspaceId = own.id;
+  otherWorkspaceId = other.id;
+
+  const ownMonitor = await createMonitor(own.id);
+  const otherMonitor = await createMonitor(other.id);
+  ownMonitorId = ownMonitor.id;
+  otherMonitorId = otherMonitor.id;
+
   const otherLoc = await db
     .insert(privateLocation)
     .values({
-      workspaceId: 3,
+      workspaceId: other.id,
       name: "Other workspace location",
-      token: "test-token-idor",
+      token: `test-token-idor-${otherWorkspaceId}`,
     })
     .returning()
     .get();
@@ -29,16 +65,16 @@ beforeAll(async () => {
     .insert(privateLocationToMonitors)
     .values({
       privateLocationId: otherWorkspaceLocationId,
-      monitorId: 5,
+      monitorId: otherMonitorId,
     })
     .run();
 
   const ownLoc = await db
     .insert(privateLocation)
     .values({
-      workspaceId: 1,
+      workspaceId: own.id,
       name: "Own workspace location",
-      token: "test-token-own",
+      token: `test-token-own-${ownWorkspaceId}`,
     })
     .returning()
     .get();
@@ -49,29 +85,29 @@ afterAll(async () => {
   await db
     .delete(privateLocationToMonitors)
     .where(
-      eq(privateLocationToMonitors.privateLocationId, otherWorkspaceLocationId),
-    );
+      inArray(privateLocationToMonitors.privateLocationId, [
+        otherWorkspaceLocationId,
+        ownWorkspaceLocationId,
+      ]),
+    )
+    .catch(() => undefined);
   await db
     .delete(privateLocation)
-    .where(eq(privateLocation.id, otherWorkspaceLocationId));
-  await db
-    .delete(privateLocationToMonitors)
     .where(
-      eq(privateLocationToMonitors.privateLocationId, ownWorkspaceLocationId),
-    );
+      inArray(privateLocation.id, [
+        otherWorkspaceLocationId,
+        ownWorkspaceLocationId,
+      ]),
+    )
+    .catch(() => undefined);
   await db
-    .delete(privateLocation)
-    .where(eq(privateLocation.id, ownWorkspaceLocationId));
+    .delete(workspace)
+    .where(inArray(workspace.id, [ownWorkspaceId, otherWorkspaceId]))
+    .catch(() => undefined);
 });
 
 test("privateLocation.update rejects location from another workspace", async () => {
-  const ctx = createInnerTRPCContext({
-    req: undefined,
-    session: { user: { id: "1" } },
-    // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1 },
-  });
-  const caller = edgeRouter.createCaller(ctx);
+  const caller = callerFor();
 
   try {
     await caller.privateLocation.update({
@@ -96,18 +132,12 @@ test("privateLocation.update rejects location from another workspace", async () 
 });
 
 test("privateLocation.update succeeds for own workspace location", async () => {
-  const ctx = createInnerTRPCContext({
-    req: undefined,
-    session: { user: { id: "1" } },
-    // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1 },
-  });
-  const caller = edgeRouter.createCaller(ctx);
+  const caller = callerFor();
 
   const result = await caller.privateLocation.update({
     id: ownWorkspaceLocationId,
     name: "Updated Location Name",
-    monitors: [1],
+    monitors: [ownMonitorId],
   });
 
   expect(result).toBeDefined();
@@ -115,19 +145,13 @@ test("privateLocation.update succeeds for own workspace location", async () => {
 });
 
 test("privateLocation.new rejects monitors from another workspace", async () => {
-  const ctx = createInnerTRPCContext({
-    req: undefined,
-    session: { user: { id: "1" } },
-    // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1 },
-  });
-  const caller = edgeRouter.createCaller(ctx);
+  const caller = callerFor();
 
   try {
     await caller.privateLocation.new({
       name: "Injected Location",
       token: "test-token-inject",
-      monitors: [5], // monitor 5 belongs to workspace 3
+      monitors: [otherMonitorId],
     });
     throw new Error("Should have thrown");
   } catch (e) {
@@ -137,18 +161,12 @@ test("privateLocation.new rejects monitors from another workspace", async () => 
 });
 
 test("privateLocation.new succeeds with own workspace monitors", async () => {
-  const ctx = createInnerTRPCContext({
-    req: undefined,
-    session: { user: { id: "1" } },
-    // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1 },
-  });
-  const caller = edgeRouter.createCaller(ctx);
+  const caller = callerFor();
 
   const result = await caller.privateLocation.new({
     name: "Valid Location",
     token: "test-token-valid-new",
-    monitors: [1], // monitor 1 belongs to workspace 1
+    monitors: [ownMonitorId],
   });
 
   expect(result).toBeDefined();
@@ -159,7 +177,7 @@ test("privateLocation.new succeeds with own workspace monitors", async () => {
     where: eq(privateLocationToMonitors.privateLocationId, result.id),
   });
   expect(associations.length).toBe(1);
-  expect(associations[0].monitorId).toBe(1);
+  expect(associations[0].monitorId).toBe(ownMonitorId);
 
   // Cleanup
   await db
@@ -169,19 +187,13 @@ test("privateLocation.new succeeds with own workspace monitors", async () => {
 });
 
 test("privateLocation.update rejects monitors from another workspace", async () => {
-  const ctx = createInnerTRPCContext({
-    req: undefined,
-    session: { user: { id: "1" } },
-    // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1 },
-  });
-  const caller = edgeRouter.createCaller(ctx);
+  const caller = callerFor();
 
   try {
     await caller.privateLocation.update({
       id: ownWorkspaceLocationId,
       name: "Updated Location Name",
-      monitors: [5], // monitor 5 belongs to workspace 3
+      monitors: [otherMonitorId],
     });
     throw new Error("Should have thrown");
   } catch (e) {

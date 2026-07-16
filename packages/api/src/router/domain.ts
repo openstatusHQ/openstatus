@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { env } from "../env";
+import { vercelFetch } from "../lib/vercel";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const domainConfigResponseSchema = z.object({
@@ -57,15 +58,8 @@ export const domainRouter = createTRPCRouter({
       if (!opts.input.domain) {
         return null;
       }
-      const data = await fetch(
-        `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}?teamId=${env.TEAM_ID_VERCEL}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        },
+      const data = await vercelFetch(
+        `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}?teamId=${env.TEAM_ID_VERCEL}`,
       );
       const json = await data.json();
       const result = domainResponseSchema
@@ -87,15 +81,8 @@ export const domainRouter = createTRPCRouter({
       if (!opts.input.domain) {
         return null;
       }
-      const data = await fetch(
-        `https://api.vercel.com/v6/domains/${opts.input.domain}/config?teamId=${env.TEAM_ID_VERCEL}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        },
+      const data = await vercelFetch(
+        `/v6/domains/${opts.input.domain}/config?teamId=${env.TEAM_ID_VERCEL}`,
       );
       const json = await data.json();
       const result = domainConfigResponseSchema.parse(json);
@@ -107,15 +94,9 @@ export const domainRouter = createTRPCRouter({
       if (!opts.input.domain) {
         return null;
       }
-      const data = await fetch(
-        `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}/verify?teamId=${env.TEAM_ID_VERCEL}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        },
+      const data = await vercelFetch(
+        `/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}/verify?teamId=${env.TEAM_ID_VERCEL}`,
+        { method: "POST" },
       );
       const json = await data.json();
       const result = domainResponseSchema.parse(json);

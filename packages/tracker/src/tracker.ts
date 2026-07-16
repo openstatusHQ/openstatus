@@ -11,7 +11,7 @@ import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 import { endOfDay, isSameDay, startOfDay } from "./utils";
 
-type Monitor = {
+export type Monitor = {
   count: number;
   ok: number;
   day: string;

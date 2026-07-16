@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { statusPageAlternatesMetadata } from "@/lib/alternates-metadata";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { statusPageAlternatesMetadata } from "../../../../../../../../../lib/alternates-metadata";
+import {
+  HydrateClient,
+  getQueryClient,
+  trpc,
+} from "../../../../../../../../../lib/trpc/server";
 
 export async function generateMetadata({
   params,

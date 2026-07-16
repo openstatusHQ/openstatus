@@ -8,11 +8,6 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "../index";
 import { ParamsSchema, SummarySchema } from "./schema";
 
-// TODO: is there another better way to mock Redis/Tinybird?
-if (process.env.NODE_ENV === "test") {
-  require("@/libs/test/preload");
-}
-
 const getMonitorStats = createRoute({
   method: "get",
   tags: ["monitor"],

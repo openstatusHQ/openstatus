@@ -10,6 +10,13 @@ export {
 export { hasPendingSubscriber } from "./has-pending";
 export { listPageSubscribers, type PageSubscriberListItem } from "./list";
 export { sendPageSubscriberTestWebhook } from "./send-test-webhook";
+export {
+  createSlackSubscriber,
+  listSlackSubscribersForChannel,
+  removeSlackSubscriber,
+  type SlackSubscriberResult,
+  type SlackSubscriptionSummary,
+} from "./slack";
 export { unsubscribeSubscriber } from "./unsubscribe";
 export { updatePageSubscriberChannel } from "./update";
 export { updateSubscriberScope } from "./update-scope";
@@ -20,10 +27,13 @@ export {
 export { type VerifyResult, verifySelfSignupSubscriber } from "./verify";
 export {
   CreatePageSubscriberInput,
+  CreateSlackSubscriberInput,
   DeletePageSubscriberInput,
   GetSubscriberByTokenInput,
   HasPendingSubscriberInput,
   ListPageSubscribersInput,
+  ListSlackSubscribersInput,
+  RemoveSlackSubscriberInput,
   SendPageSubscriberTestWebhookInput,
   UnsubscribeSubscriberInput,
   UpdatePageSubscriberChannelInput,

@@ -1,4 +1,8 @@
-import type { AnyAgentTool, ExtraFlag } from "@openstatus/services/agent-tools";
+import type {
+  AnyAgentTool,
+  ExtraFlag,
+  SummaryLine,
+} from "@openstatus/services/agent-tools";
 
 interface TextObject {
   type: "plain_text" | "mrkdwn";
@@ -87,16 +91,90 @@ export function parseActionId(actionId: string): ParsedActionId | undefined {
   return undefined;
 }
 
+/** Escape `& < >` so Slack renders them as literal mrkdwn text. */
+function escapeText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/** Escape a string for use as Slack mrkdwn link text (`<url|text>`). */
+function escapeLinkText(text: string): string {
+  return escapeText(text).replace(/\|/g, "❘");
+}
+
+/**
+ * Data resolvers the Slack surface injects so `buildConfirmationBlocks` can
+ * turn `SummaryLineRef` descriptors into names. Resolution needs DB access,
+ * which the edge-safe services layer that produces the refs must not do.
+ */
+export interface RefResolvers {
+  /** Page id → dashboard link, or null when the page no longer exists. */
+  page: (pageId: number) => Promise<{ title: string; url: string } | null>;
+  /** Page-component ids → their names (missing ids simply absent). */
+  componentNames: (ids: number[]) => Promise<Map<number, string>>;
+}
+
+async function renderLine(
+  line: SummaryLine,
+  resolvers?: RefResolvers,
+): Promise<string> {
+  const ref = line.ref;
+  if (ref && resolvers) {
+    try {
+      switch (ref.kind) {
+        case "page": {
+          const link = await resolvers.page(ref.pageId);
+          if (link) {
+            return `*Page:* <${link.url}|${escapeLinkText(link.title)}>`;
+          }
+          break;
+        }
+        case "components": {
+          const names = await resolvers.componentNames(ref.componentIds);
+          const value = ref.componentIds
+            .map((id) => nameOrId(names, id))
+            .join(", ");
+          return `*${line.label}:* ${value}`;
+        }
+        case "componentImpacts": {
+          const names = await resolvers.componentNames(
+            ref.impacts.map((i) => i.pageComponentId),
+          );
+          const value = ref.impacts
+            .map((i) => `${nameOrId(names, i.pageComponentId)} → ${i.impact}`)
+            .join(", ");
+          return `*${line.label}:* ${value}`;
+        }
+      }
+    } catch {
+      // A transient name/link lookup failure degrades just this line to its
+      // raw id value below, rather than aborting the whole confirmation card.
+    }
+  }
+  return `*${line.label}:* ${escapeText(line.value)}`;
+}
+
+function nameOrId(names: Map<number, string>, id: number): string {
+  const name = names.get(id);
+  return name ? escapeText(name) : String(id);
+}
+
 /**
  * Build the Block Kit confirmation card from a tool's `approval.summarize()`.
- * Two affirmative buttons when an extraFlag exists; one otherwise.
+ * Two affirmative buttons when an extraFlag exists; one otherwise. When a
+ * summary line carries a `ref` and `resolvers` are supplied, raw ids are
+ * replaced by entity names (a dashboard link for pages, component names for
+ * component ids).
  */
-export function buildConfirmationBlocks(args: {
+export async function buildConfirmationBlocks(args: {
   actionId: string;
   tool: AnyAgentTool;
   input: unknown;
-}): Block[] {
-  const { actionId, tool, input } = args;
+  resolvers?: RefResolvers;
+}): Promise<Block[]> {
+  const { actionId, tool, input, resolvers } = args;
   if (!tool.approval) {
     throw new Error(
       `slack blocks: tool "${tool.name}" has no approval metadata`,
@@ -105,7 +183,9 @@ export function buildConfirmationBlocks(args: {
   const summary = tool.approval.summarize(input);
   const flag: ExtraFlag | undefined = tool.approval.extraFlags?.[0];
 
-  const lines = summary.lines.map((l) => `*${l.label}:* ${l.value}`).join("\n");
+  const lines = (
+    await Promise.all(summary.lines.map((l) => renderLine(l, resolvers)))
+  ).join("\n");
 
   const buttons: ButtonElement[] = [
     {
@@ -137,7 +217,10 @@ export function buildConfirmationBlocks(args: {
   return [
     {
       type: "section",
-      text: { type: "mrkdwn", text: `*${summary.title}*\n\n${lines}` },
+      text: {
+        type: "mrkdwn",
+        text: `*${escapeText(summary.title)}*\n\n${lines}`,
+      },
     },
     { type: "divider" },
     { type: "actions", elements: buttons },
@@ -149,5 +232,7 @@ export function getConfirmationText(args: {
   input: unknown;
 }): string {
   if (!args.tool.approval) return `Confirm ${args.tool.name}`;
-  return args.tool.approval.summarize(args.input).title;
+  // Rendered as the message `text` field, which Slack parses as mrkdwn — escape
+  // so an LLM/user-controlled title can't inject a link or other markup.
+  return escapeText(args.tool.approval.summarize(args.input).title);
 }

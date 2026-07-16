@@ -4,6 +4,7 @@ import {
   sendEmailVerification,
   validateEmailConfig,
 } from "./email";
+import { sendSlackNotifications, validateSlackConfig } from "./slack";
 import {
   sendWebhookNotifications,
   sendWebhookVerification,
@@ -26,6 +27,13 @@ export function getChannel(channelType: string): SubscriptionChannel | null {
         sendNotifications: sendWebhookNotifications,
         sendVerification: sendWebhookVerification,
         validateConfig: validateWebhookConfig,
+      };
+    }
+    case "slack": {
+      return {
+        id: "slack",
+        sendNotifications: sendSlackNotifications,
+        validateConfig: validateSlackConfig,
       };
     }
     default:

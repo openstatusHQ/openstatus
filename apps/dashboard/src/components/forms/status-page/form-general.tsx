@@ -12,6 +12,11 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -22,8 +27,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
 import {
   FormCard,
   FormCardContent,
@@ -192,13 +195,14 @@ export function FormGeneral({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Slug</FormLabel>
-                  <FormControl>
-                    <InputWithAddons
-                      placeholder="status"
-                      trailing=".openstatus.dev"
-                      {...field}
-                    />
-                  </FormControl>
+                  <InputGroup>
+                    <FormControl>
+                      <InputGroupInput placeholder="status" {...field} />
+                    </FormControl>
+                    <InputGroupAddon align="inline-end">
+                      .openstatus.dev
+                    </InputGroupAddon>
+                  </InputGroup>
                   <FormMessage />
                   <FormDescription>
                     Choose a unique subdomain for your status page (minimum 3

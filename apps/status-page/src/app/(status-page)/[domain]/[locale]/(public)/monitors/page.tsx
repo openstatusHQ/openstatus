@@ -18,9 +18,9 @@ import { useParams } from "next/navigation";
 import {
   ChartAreaPercentiles,
   ChartAreaPercentilesSkeleton,
-} from "@/components/chart/chart-area-percentiles";
-import { StatusBlankMonitors } from "@/components/status-page/status-blank";
-import { useTRPC } from "@/lib/trpc/client";
+} from "../../../../../../components/chart/chart-area-percentiles";
+import { StatusBlankMonitors } from "../../../../../../components/status-page/status-blank";
+import { useTRPC } from "../../../../../../lib/trpc/client";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { env } from "@/env";
 
+import { handleSlackCommand } from "./commands";
 import { handleSlackEvent } from "./handler";
 import { handleSlackInteraction } from "./interactions";
 import { handleSlackInstall, handleSlackOAuthCallback } from "./oauth";
@@ -28,5 +29,6 @@ slack.get("/oauth/callback", handleSlackOAuthCallback);
 
 slack.post("/events", verifySlackSignature, handleSlackEvent);
 slack.post("/interactions", verifySlackSignature, handleSlackInteraction);
+slack.post("/commands", verifySlackSignature, handleSlackCommand);
 
 export { slack as slackRoute };

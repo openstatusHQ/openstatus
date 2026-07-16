@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { toastAction } from "@/lib/toast";
+import { toastAction } from "../lib/toast";
 
 type Rating = "up" | "down";
 

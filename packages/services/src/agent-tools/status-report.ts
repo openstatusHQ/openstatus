@@ -20,7 +20,7 @@ import {
   type StatusReportStatus,
 } from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
-import type { AgentTool } from "./types";
+import type { AgentTool, SummaryLine } from "./types";
 
 // Agent surfaces send only the impacts that CHANGED (see system prompt). Carry
 // the report's current non-operational impacts into the update so each update's
@@ -243,12 +243,20 @@ export const createStatusReportTool: AgentTool<
       lines: [
         { label: "Title", value: input.title },
         { label: "Status", value: input.status },
-        { label: "Page ID", value: String(input.pageId) },
+        {
+          label: "Page ID",
+          value: String(input.pageId),
+          ref: { kind: "page", pageId: input.pageId },
+        },
         ...(input.pageComponentIds?.length
           ? [
               {
                 label: "Components",
                 value: input.pageComponentIds.join(", "),
+                ref: {
+                  kind: "components" as const,
+                  componentIds: input.pageComponentIds,
+                },
               },
             ]
           : []),
@@ -259,6 +267,10 @@ export const createStatusReportTool: AgentTool<
                 value: formatComponentImpacts(input.componentImpacts).join(
                   ", ",
                 ),
+                ref: {
+                  kind: "componentImpacts" as const,
+                  impacts: input.componentImpacts,
+                },
               },
             ]
           : []),
@@ -379,6 +391,10 @@ export const addStatusReportUpdateTool: AgentTool<
                 value: formatComponentImpacts(input.componentImpacts).join(
                   ", ",
                 ),
+                ref: {
+                  kind: "componentImpacts" as const,
+                  impacts: input.componentImpacts,
+                },
               },
             ]
           : []),
@@ -473,7 +489,7 @@ export const updateStatusReportTool: AgentTool<
   outputSchema: UpdateStatusReportOutput,
   approval: {
     summarize: (input) => {
-      const lines: { label: string; value: string }[] = [
+      const lines: SummaryLine[] = [
         { label: "Report ID", value: String(input.statusReportId) },
       ];
       if (input.title) lines.push({ label: "New Title", value: input.title });
@@ -488,6 +504,14 @@ export const updateStatusReportTool: AgentTool<
           value: input.pageComponentIds.length
             ? input.pageComponentIds.join(", ")
             : "(clear all)",
+          ...(input.pageComponentIds.length
+            ? {
+                ref: {
+                  kind: "components" as const,
+                  componentIds: input.pageComponentIds,
+                },
+              }
+            : {}),
         });
       }
       return {

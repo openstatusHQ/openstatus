@@ -1,7 +1,7 @@
 {
-  "extends": "@openstatus/tsconfig/nextjs.json",
+  "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts"],
   "compilerOptions": {
-    "types": ["bun-types"]
+    "resolveJsonModule": true
   }
 }

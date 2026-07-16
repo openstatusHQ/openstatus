@@ -1,7 +1,7 @@
 "use client";
 
 import type { PageConfiguration } from "@openstatus/db/src/schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ import { FormImport, type ImportFormValues } from "./form-import";
 export function FormComponentsUpdate() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [formKey, setFormKey] = useState(0);
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -27,18 +28,24 @@ export function FormComponentsUpdate() {
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
+  // Remount the form after save. Newly-added components/groups get
+  // `Date.now()` placeholder ids (see `form-components.tsx`). The
+  // server returns real ids, but RHF only reads `defaultValues` on
+  // mount — without a remount the next save would round-trip the
+  // placeholders, causing the server's diff to treat real rows as
+  // "removed" (delete) and placeholders as "new" (create).
+  const refetchAndRemount = async (...refetches: Promise<unknown>[]) => {
+    await Promise.all(refetches);
+    // invalidate workspace to update the usage (getting-started checklist)
+    queryClient.invalidateQueries({
+      queryKey: trpc.workspace.get.queryKey(),
+    });
+    setFormKey((k) => k + 1);
+  };
+
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
-      onSuccess: async () => {
-        // Remount the form after save. Newly-added components/groups get
-        // `Date.now()` placeholder ids (see `form-components.tsx`). The
-        // server returns real ids, but RHF only reads `defaultValues` on
-        // mount — without a remount the next save would round-trip the
-        // placeholders, causing the server's diff to treat real rows as
-        // "removed" (delete) and placeholders as "new" (create).
-        await Promise.all([refetch(), refetchComponents()]);
-        setFormKey((k) => k + 1);
-      },
+      onSuccess: () => refetchAndRemount(refetch(), refetchComponents()),
     }),
   );
 
@@ -50,10 +57,8 @@ export function FormComponentsUpdate() {
 
   const importMutation = useMutation(
     trpc.import.run.mutationOptions({
-      onSuccess: async () => {
-        await Promise.all([refetch(), refetchComponents(), refetchMonitors()]);
-        setFormKey((k) => k + 1);
-      },
+      onSuccess: () =>
+        refetchAndRemount(refetch(), refetchComponents(), refetchMonitors()),
     }),
   );
 

@@ -9,6 +9,7 @@ import {
 import {
   type ExternalIncidentListItem,
   listExternalIncidentsByComponent,
+  listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
 } from "@openstatus/services/external-service-incident";
 import {
@@ -192,6 +193,7 @@ const componentItemSchema = z.object({
   indicator: z.string(),
   status: z.string(),
   history: z.array(historyRowSchema),
+  incidents: z.array(incidentSchema),
 });
 
 const componentDetailSchema = z.object({
@@ -216,6 +218,7 @@ const componentDetailSchema = z.object({
     .nullable(),
   history: z.array(historyRowSchema),
   incidents: z.array(incidentSchema),
+  overlayIncidents: z.array(incidentSchema),
 });
 
 type HistoryTbRow = {
@@ -245,6 +248,24 @@ function toIncidentDTO(i: ExternalIncidentListItem) {
     createdAt: i.createdAt.toISOString(),
     resolvedAt: i.resolvedAt?.toISOString() ?? null,
   };
+}
+
+// Window for overlaying incidents onto the bars: the visible `days` plus a
+// one-day pad so an incident starting just before the first bar still buckets.
+function overlaySince(days: number): Date {
+  return new Date(Date.now() - (days + 1) * 24 * 60 * 60 * 1000);
+}
+
+// An untagged incident (empty affected_component_ids) is service-wide, so it
+// applies to every component; otherwise it must name this upstream component.
+function incidentAffectsComponent(
+  i: ExternalIncidentListItem,
+  upstreamComponentId: string,
+): boolean {
+  return (
+    i.affectedComponentIds.length === 0 ||
+    i.affectedComponentIds.includes(upstreamComponentId)
+  );
 }
 
 export const externalServiceRouter = createTRPCRouter({
@@ -306,6 +327,7 @@ export const externalServiceRouter = createTRPCRouter({
         history: z.array(historyRowSchema),
         effective: effectiveSchema,
         reports: z.object({ reporters: z.number(), threshold: z.number() }),
+        overlayIncidents: z.array(incidentSchema),
       }),
     )
     .query(async ({ input }) => {
@@ -322,20 +344,28 @@ export const externalServiceRouter = createTRPCRouter({
       const days = input.days ?? DEFAULT_HISTORY_DAYS;
       const since = new Date(Date.now() - REPORT_WINDOW_MS);
 
-      const [latestRows, historyRows, reportRows] = await Promise.all([
-        safeData(
-          tb.externalStatusLatest({ ids: slugChain }),
-          "externalStatusLatest",
-        ),
-        safeData(
-          tb.externalStatusHistory({ ids: slugChain, days }),
-          "externalStatusHistory",
-        ),
-        safeRows(
-          getServiceReportWindows({ serviceIds: [service.id], since }),
-          "getServiceReportWindows (detail)",
-        ),
-      ]);
+      const [latestRows, historyRows, reportRows, overlayIncidentRows] =
+        await Promise.all([
+          safeData(
+            tb.externalStatusLatest({ ids: slugChain }),
+            "externalStatusLatest",
+          ),
+          safeData(
+            tb.externalStatusHistory({ ids: slugChain, days }),
+            "externalStatusHistory",
+          ),
+          safeRows(
+            getServiceReportWindows({ serviceIds: [service.id], since }),
+            "getServiceReportWindows (detail)",
+          ),
+          safeRows(
+            listExternalIncidentsByServiceId({
+              externalServiceId: service.id,
+              since: overlaySince(days),
+            }),
+            "listExternalIncidentsByServiceId (detail)",
+          ),
+        ]);
 
       const newest = [...latestRows].sort(
         (a, b) => b.last_fetched_at - a.last_fetched_at,
@@ -373,6 +403,7 @@ export const externalServiceRouter = createTRPCRouter({
         history: historyRows.map(toHistoryRow),
         effective,
         reports: { reporters, threshold },
+        overlayIncidents: overlayIncidentRows.map(toIncidentDTO),
       };
     }),
 
@@ -424,22 +455,30 @@ export const externalServiceRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        const { supported, components } = await listExternalComponentsBySlug({
-          slug: input.slug,
-        });
-        if (!supported || components.length === 0) {
+        const { supported, components, service } =
+          await listExternalComponentsBySlug({ slug: input.slug });
+        if (!supported || !service || components.length === 0) {
           return { supported, components: [] };
         }
 
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const componentIds = components.map((c) => String(c.id));
-        const historyRows = await safeData(
-          tb.externalStatusComponentHistory({
-            component_ids: componentIds,
-            days,
-          }),
-          "externalStatusComponentHistory",
-        );
+        const [historyRows, serviceIncidents] = await Promise.all([
+          safeData(
+            tb.externalStatusComponentHistory({
+              component_ids: componentIds,
+              days,
+            }),
+            "externalStatusComponentHistory",
+          ),
+          safeRows(
+            listExternalIncidentsByServiceId({
+              externalServiceId: service.id,
+              since: overlaySince(days),
+            }),
+            "listExternalIncidentsByServiceId (components)",
+          ),
+        ]);
 
         const historyByComponent = new Map<string, typeof historyRows>();
         for (const row of historyRows) {
@@ -462,6 +501,11 @@ export const externalServiceRouter = createTRPCRouter({
             history: (historyByComponent.get(String(c.id)) ?? []).map(
               toHistoryRow,
             ),
+            incidents: serviceIncidents
+              .filter((inc) =>
+                incidentAffectsComponent(inc, c.upstreamComponentId),
+              )
+              .map(toIncidentDTO),
           })),
         };
       } catch (err) {
@@ -489,6 +533,7 @@ export const externalServiceRouter = createTRPCRouter({
         component: null,
         history: [],
         incidents: [],
+        overlayIncidents: [],
       };
       try {
         const { service, component } = await getExternalComponentBySlug({
@@ -499,24 +544,32 @@ export const externalServiceRouter = createTRPCRouter({
 
         const days = input.days ?? DEFAULT_HISTORY_DAYS;
         const since = new Date(Date.now() - REPORT_WINDOW_MS);
-        const [historyRows, incidents, reportRows] = await Promise.all([
-          safeData(
-            tb.externalStatusComponentHistory({
-              component_ids: [String(component.id)],
-              days,
+        const [historyRows, incidents, reportRows, overlayServiceIncidents] =
+          await Promise.all([
+            safeData(
+              tb.externalStatusComponentHistory({
+                component_ids: [String(component.id)],
+                days,
+              }),
+              "externalStatusComponentHistory (component)",
+            ),
+            listExternalIncidentsByComponent({
+              externalServiceId: service.id,
+              upstreamComponentId: component.upstreamComponentId,
+              limit: INCIDENTS_LIMIT,
             }),
-            "externalStatusComponentHistory (component)",
-          ),
-          listExternalIncidentsByComponent({
-            externalServiceId: service.id,
-            upstreamComponentId: component.upstreamComponentId,
-            limit: INCIDENTS_LIMIT,
-          }),
-          safeRows(
-            getComponentReportWindows({ serviceId: service.id, since }),
-            "getComponentReportWindows (component)",
-          ),
-        ]);
+            safeRows(
+              getComponentReportWindows({ serviceId: service.id, since }),
+              "getComponentReportWindows (component)",
+            ),
+            safeRows(
+              listExternalIncidentsByServiceId({
+                externalServiceId: service.id,
+                since: overlaySince(days),
+              }),
+              "listExternalIncidentsByServiceId (component)",
+            ),
+          ]);
 
         const reporters =
           reportRows.find((r) => r.componentId === component.id)?.reporters ??
@@ -550,6 +603,11 @@ export const externalServiceRouter = createTRPCRouter({
           },
           history: historyRows.map(toHistoryRow),
           incidents: incidents.map(toIncidentDTO),
+          overlayIncidents: overlayServiceIncidents
+            .filter((inc) =>
+              incidentAffectsComponent(inc, component.upstreamComponentId),
+            )
+            .map(toIncidentDTO),
         };
       } catch (err) {
         console.warn(

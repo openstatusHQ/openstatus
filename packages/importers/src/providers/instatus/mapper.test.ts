@@ -1,4 +1,5 @@
-import { describe, expect, it } from "bun:test";
+import { expect } from "@std/expect";
+import { describe, it } from "@std/testing/bdd";
 
 import {
   MOCK_COMPONENTS,
@@ -112,14 +113,16 @@ describe("mapComponent", () => {
 });
 
 describe("mapIncidentStatus", () => {
-  it.each([
+  for (const [input, expected] of [
     ["INVESTIGATING", "investigating"],
     ["IDENTIFIED", "identified"],
     ["MONITORING", "monitoring"],
     ["RESOLVED", "resolved"],
-  ] as const)("maps %s to %s", (input, expected) => {
-    expect(mapIncidentStatus(input)).toBe(expected);
-  });
+  ] as const) {
+    it(`maps ${input} to ${expected}`, () => {
+      expect(mapIncidentStatus(input)).toBe(expected);
+    });
+  }
 
   it("defaults to investigating for unknown status", () => {
     expect(mapIncidentStatus("UNKNOWN")).toBe("investigating");

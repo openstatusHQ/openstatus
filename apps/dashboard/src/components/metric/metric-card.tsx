@@ -4,6 +4,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
 import type React from "react";
 
 const metricCardVariants = cva(
@@ -16,6 +17,7 @@ const metricCardVariants = cva(
         destructive: "border-destructive/80 bg-destructive/10",
         success: "border-success/80 bg-success/10",
         warning: "border-warning/80 bg-warning/10",
+        info: "border-info/80 bg-info/10",
       },
     },
     defaultVariants: {
@@ -71,6 +73,7 @@ export function MetricCardHeader({
         "group-data-[variant=destructive]:text-destructive",
         "group-data-[variant=success]:text-success",
         "group-data-[variant=warning]:text-warning",
+        "group-data-[variant=info]:text-info",
         className,
       )}
       {...props}
@@ -183,6 +186,27 @@ export function MetricCardButton({
   );
 }
 
+export function MetricCardLink({
+  children,
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<typeof Link> &
+  VariantProps<typeof metricCardVariants>) {
+  return (
+    <Link
+      data-variant={variant}
+      className={cn(
+        metricCardVariants({ variant, className }),
+        metricCardButtonVariants(),
+      )}
+      {...props}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function MetricCardSkeleton({
   className,
   ...props
@@ -193,6 +217,7 @@ export function MetricCardSkeleton({
         "group-data-[variant=destructive]:bg-destructive/50",
         "group-data-[variant=success]:bg-success/50",
         "group-data-[variant=warning]:bg-warning/50",
+        "group-data-[variant=info]:bg-info/50",
         className,
       )}
       {...props}

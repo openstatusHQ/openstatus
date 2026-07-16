@@ -2,6 +2,8 @@ import type { StatusReportStatus } from "@openstatus/db/src/schema";
 import type { PageComponentImpact } from "@openstatus/db/src/schema/page_components/constants";
 import { Cog, Trash2 } from "lucide-react";
 
+import type { FormValues as StatusReportUpdateFormValues } from "@/components/forms/status-report-update/form";
+
 export const impactConfig = {
   operational: {
     label: "Operational",
@@ -104,4 +106,46 @@ export function getNextStatus(currentStatus: string): StatusReportStatus {
   return (
     statusProgression[currentStatus as StatusReportStatus] ?? "investigating"
   );
+}
+
+export function defaultComponentImpacts({
+  components,
+  currentImpacts,
+  nextStatus,
+}: {
+  components: { id: number }[];
+  currentImpacts: Map<number, PageComponentImpact>;
+  nextStatus: StatusReportStatus;
+}): NonNullable<StatusReportUpdateFormValues["componentImpacts"]> {
+  return components.map((c) => ({
+    pageComponentId: c.id,
+    impact:
+      nextStatus === "resolved"
+        ? "operational"
+        : (currentImpacts.get(c.id) ?? "operational"),
+  }));
+}
+
+// a legacy report stays legacy unless the operator actively sets a
+// non-operational impact — never silently flip it green
+export function toCreateStatusReportUpdateInput({
+  statusReportId,
+  values,
+  reportHasImpacts,
+}: {
+  statusReportId: number;
+  values: StatusReportUpdateFormValues;
+  reportHasImpacts: boolean;
+}) {
+  const sendImpacts =
+    reportHasImpacts ||
+    values.componentImpacts?.some((ci) => ci.impact !== "operational");
+  return {
+    statusReportId,
+    message: values.message,
+    status: values.status,
+    componentImpacts: sendImpacts ? values.componentImpacts : undefined,
+    date: values.date,
+    notifySubscribers: values.notifySubscribers,
+  };
 }

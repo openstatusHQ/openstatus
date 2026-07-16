@@ -24,9 +24,35 @@ import {
 import { externalServicesSeed } from "./seed/external-services";
 
 async function main() {
-  const db = drizzle(
-    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
+  if (
+    !env.DATABASE_URL.includes("localhost") &&
+    !env.DATABASE_URL.includes("127.0.0.1")
+  ) {
+    throw new Error(
+      `Refusing to wipe non-local database: DATABASE_URL=${env.DATABASE_URL}`,
+    );
+  }
+
+  const client = createClient({
+    url: env.DATABASE_URL,
+    authToken: env.DATABASE_AUTH_TOKEN,
+  });
+  const db = drizzle(client);
+
+  // Fresh slate: wipe every table so re-seeding is idempotent and tests never
+  // inherit residue from a previous run. `defer_foreign_keys` lets us delete in
+  // any order within the transaction (all tables end empty, so FKs hold at commit).
+  const tables = await client.execute(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__drizzle_migrations'",
   );
+  await client.batch(
+    [
+      "PRAGMA defer_foreign_keys=ON",
+      ...tables.rows.map((row) => `DELETE FROM "${row.name}"`),
+    ],
+    "write",
+  );
+
   console.log("Seeding database ");
   await db
     .insert(workspace)

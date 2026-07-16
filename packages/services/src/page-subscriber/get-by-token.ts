@@ -23,7 +23,7 @@ export type SubscriberByTokenResult = {
   pageName: string;
   pageSlug: string;
   customDomain: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email?: string;
   webhookUrl?: string;
   acceptedAt: Date | null;

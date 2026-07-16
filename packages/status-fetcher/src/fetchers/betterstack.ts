@@ -5,7 +5,7 @@ import { type FetchError, fetchJson } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { urlHostnameEndsWith } from "../utils";
 
-const betterStackResponseSchema = z.object({
+export const betterStackResponseSchema = z.object({
   data: z.object({
     id: z.string(),
     type: z.literal("status_page"),

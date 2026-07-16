@@ -1,4 +1,4 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
 import type * as React from "react";
 import { Container, Img, Link, Section } from "react-email";

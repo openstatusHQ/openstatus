@@ -45,6 +45,10 @@
       "import": "./src/status-timeline/index.ts",
       "types": "./src/status-timeline/index.ts"
     },
+    "./frozen-uptime": {
+      "import": "./src/frozen-uptime/index.ts",
+      "types": "./src/frozen-uptime/index.ts"
+    },
     "./workspace": {
       "import": "./src/workspace/index.ts",
       "types": "./src/workspace/index.ts"
@@ -127,7 +131,8 @@
     }
   },
   "scripts": {
-    "test": "bun test",
+    "check": "deno check --sloppy-imports .",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
@@ -145,7 +150,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/bun": "latest",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "typescript": "catalog:"
   }
 }

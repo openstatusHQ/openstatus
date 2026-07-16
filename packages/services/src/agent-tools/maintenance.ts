@@ -167,7 +167,11 @@ export const createMaintenanceTool: AgentTool<
       title: `Schedule Maintenance: ${input.title}`,
       lines: [
         { label: "Title", value: input.title },
-        { label: "Page ID", value: String(input.pageId) },
+        {
+          label: "Page ID",
+          value: String(input.pageId),
+          ref: { kind: "page", pageId: input.pageId },
+        },
         { label: "From", value: formatMaintenanceDate(input.from) },
         { label: "To", value: formatMaintenanceDate(input.to) },
         ...(input.pageComponentIds?.length
@@ -175,6 +179,10 @@ export const createMaintenanceTool: AgentTool<
               {
                 label: "Components",
                 value: input.pageComponentIds.join(", "),
+                ref: {
+                  kind: "components" as const,
+                  componentIds: input.pageComponentIds,
+                },
               },
             ]
           : []),

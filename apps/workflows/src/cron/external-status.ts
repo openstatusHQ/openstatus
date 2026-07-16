@@ -2,6 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import { db } from "@openstatus/db";
 import { listExternalServices } from "@openstatus/services/external-service";
 import type { ExternalServiceRow } from "@openstatus/services/external-service";
+import { applyDetectedProvider } from "@openstatus/services/external-service";
 import {
   type UpsertExternalComponentInput,
   upsertExternalComponentsForService,
@@ -10,7 +11,11 @@ import {
   type UpsertExternalIncidentInput,
   upsertExternalIncidentsForService,
 } from "@openstatus/services/external-service-incident";
-import { FetchError, fetchers } from "@openstatus/status-fetcher";
+import {
+  FetchError,
+  detectProvider,
+  fetchers,
+} from "@openstatus/status-fetcher";
 import type {
   NormalizedComponent,
   NormalizedIncident,
@@ -25,9 +30,17 @@ import type { Context } from "hono";
 import { env } from "../env";
 import {
   reportBackgroundError,
+  reportDetectionStory,
+  reportDetectionWriteFailure,
   reportFetchFailure,
   runSentryCron,
 } from "../lib/sentry";
+import {
+  clearProbeStamp,
+  decideDetectionAction,
+  isSuspicious,
+  shouldProbe,
+} from "./external-status-detect";
 
 const logger = getLogger(["workflow", "external-status"]);
 
@@ -126,7 +139,7 @@ type PhaseCounts = {
 type StatusPhaseOutcome =
   | { kind: "ok"; snapshot: Snapshot }
   | { kind: "no-fetcher"; slug: string }
-  | { kind: "fail"; slug: string; reason: string };
+  | { kind: "fail"; slug: string; reason: string; error: FetchError };
 
 type IncidentPhaseOutcome =
   | { kind: "ok"; slug: string; count: number }
@@ -164,10 +177,14 @@ function runStatusPhase(
             snapshot: buildSnapshot({ entry, result, fetchedAt }),
           }),
         ),
+        // Failure reporting is deferred: the detect step after this phase
+        // either merges it into a detection story or reports it plain.
         Effect.catchAll((err: FetchError) =>
-          Effect.sync<StatusPhaseOutcome>(() => {
-            reportFetchFailure({ phase: "status", slug: entry.id, error: err });
-            return { kind: "fail", slug: entry.id, reason: err.message };
+          Effect.succeed<StatusPhaseOutcome>({
+            kind: "fail",
+            slug: entry.id,
+            reason: err.message,
+            error: err,
           }),
         ),
       );
@@ -413,10 +430,214 @@ function buildTriplets(services: ExternalServiceRow[]): Triplet[] {
   });
 }
 
+const DETECT_CONCURRENCY = 3;
+
+type DetectItem = { triplet: Triplet; error?: FetchError };
+
+type DetectOutcome = {
+  kind:
+    | "applied"
+    | "config-fixed"
+    | "suggested"
+    | "transient"
+    | "none"
+    | "skipped"
+    | "error";
+  slug: string;
+};
+
+type DetectCounts = {
+  probed: number;
+  applied: number;
+  configFixed: number;
+  suggested: number;
+  failed: number;
+};
+
+function collectDetectItems(
+  triplets: Triplet[],
+  statusOutcomes: StatusPhaseOutcome[],
+  now: number,
+): DetectItem[] {
+  const items: DetectItem[] = [];
+  statusOutcomes.forEach((outcome, i) => {
+    const triplet = triplets[i];
+    if (!triplet) return;
+    if (outcome.kind === "no-fetcher") {
+      if (shouldProbe(triplet.entry.id, now)) items.push({ triplet });
+      return;
+    }
+    if (outcome.kind !== "fail") return;
+    if (isSuspicious(outcome.error) && shouldProbe(triplet.entry.id, now)) {
+      items.push({ triplet, error: outcome.error });
+    } else {
+      reportFetchFailure({
+        phase: "status",
+        slug: outcome.slug,
+        error: outcome.error,
+      });
+    }
+  });
+  return items;
+}
+
+function applyDetection(args: {
+  triplet: Triplet;
+  error?: FetchError;
+  provider: ExternalServiceRow["provider"];
+  outcome: "applied" | "config-fixed";
+  evidence: string[];
+  tickStartedAt: Date;
+}): Effect.Effect<DetectOutcome> {
+  const { triplet, error, provider, outcome, evidence, tickStartedAt } = args;
+  const { row, entry } = triplet;
+  return Effect.tryPromise({
+    try: () =>
+      applyDetectedProvider({
+        ctx: { db },
+        input: {
+          serviceId: row.id,
+          expected: {
+            provider: row.provider,
+            apiConfig: row.apiConfig ?? null,
+          },
+          set: { provider, apiConfig: null },
+        },
+        now: tickStartedAt,
+      }),
+    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+  }).pipe(
+    Effect.map(({ updated }): DetectOutcome => {
+      if (!updated) {
+        logger.warn(
+          "external-status detect: concurrent edit, write skipped for slug={slug}",
+          { slug: entry.id },
+        );
+        return { kind: "skipped", slug: entry.id };
+      }
+      reportDetectionStory({
+        slug: entry.id,
+        currentProvider: row.provider,
+        fetchError: error,
+        outcome:
+          outcome === "applied"
+            ? { kind: "applied", provider }
+            : { kind: "config-cleared" },
+        evidence,
+      });
+      return { kind: outcome, slug: entry.id };
+    }),
+    Effect.catchAll((e) =>
+      Effect.sync((): DetectOutcome => {
+        logger.warn(
+          "external-status detect: write failed for slug={slug}: {message}",
+          { slug: entry.id, message: e.message },
+        );
+        reportDetectionWriteFailure({ slug: entry.id, error: e });
+        clearProbeStamp(entry.id);
+        // The merged story never fired; keep the triggering failure visible.
+        if (error) {
+          reportFetchFailure({ phase: "status", slug: entry.id, error });
+        }
+        return { kind: "error", slug: entry.id };
+      }),
+    ),
+  );
+}
+
+function detectAndAct(
+  item: DetectItem,
+  tickStartedAt: Date,
+): Effect.Effect<DetectOutcome> {
+  const { triplet, error } = item;
+  const { row, entry } = triplet;
+  return detectProvider({
+    statusPageUrl: entry.status_page_url,
+    currentProvider: row.provider,
+    entryId: entry.id,
+  }).pipe(
+    Effect.flatMap((result) => {
+      const action = decideDetectionAction(result, row);
+      switch (action.kind) {
+        case "apply":
+          return applyDetection({
+            triplet,
+            error,
+            provider: action.provider,
+            outcome: "applied",
+            evidence: action.evidence,
+            tickStartedAt,
+          });
+        case "clear-config":
+          return applyDetection({
+            triplet,
+            error,
+            provider: row.provider,
+            outcome: "config-fixed",
+            evidence: action.evidence,
+            tickStartedAt,
+          });
+        case "suggest":
+          return Effect.sync((): DetectOutcome => {
+            reportDetectionStory({
+              slug: entry.id,
+              currentProvider: row.provider,
+              fetchError: error,
+              outcome: { kind: "suggest", suggestion: action.suggestion },
+              evidence: action.evidence,
+            });
+            return { kind: "suggested", slug: entry.id };
+          });
+        case "noop":
+          return Effect.sync((): DetectOutcome => {
+            if (action.reason === "no-evidence") {
+              reportDetectionStory({
+                slug: entry.id,
+                currentProvider: row.provider,
+                fetchError: error,
+                outcome: { kind: "none" },
+                evidence: action.evidence,
+              });
+              return { kind: "none", slug: entry.id };
+            }
+            if (error) {
+              reportFetchFailure({ phase: "status", slug: entry.id, error });
+            }
+            return { kind: "transient", slug: entry.id };
+          });
+      }
+    }),
+  );
+}
+
+function runDetectPhase(
+  items: DetectItem[],
+  tickStartedAt: Date,
+): Effect.Effect<DetectOutcome[]> {
+  return Effect.forEach(items, (item) => detectAndAct(item, tickStartedAt), {
+    concurrency: DETECT_CONCURRENCY,
+  });
+}
+
+function summarizeDetect(outcomes: DetectOutcome[]): DetectCounts {
+  let applied = 0;
+  let configFixed = 0;
+  let suggested = 0;
+  let failed = 0;
+  for (const o of outcomes) {
+    if (o.kind === "applied") applied++;
+    else if (o.kind === "config-fixed") configFixed++;
+    else if (o.kind === "suggested") suggested++;
+    else if (o.kind === "error") failed++;
+  }
+  return { probed: outcomes.length, applied, configFixed, suggested, failed };
+}
+
 export async function runExternalStatusTick(): Promise<{
   status: PhaseCounts;
   incidents: PhaseCounts;
   components: PhaseCounts;
+  detect: DetectCounts;
 }> {
   const services = await listExternalServices({ ctx: { db } });
 
@@ -450,7 +671,21 @@ export async function runExternalStatusTick(): Promise<{
     await tb.publishExternalStatusComponent(components.snapshots);
   }
 
-  return { status: status.counts, incidents, components: components.counts };
+  // After the publishes: a slow probe fleet must not delay or drop the
+  // snapshots the tick already fetched.
+  const detectItems = collectDetectItems(triplets, statusOutcomes, Date.now());
+  const detectOutcomes =
+    detectItems.length > 0
+      ? await Effect.runPromise(runDetectPhase(detectItems, tickStartedAt))
+      : [];
+  const detect = summarizeDetect(detectOutcomes);
+
+  return {
+    status: status.counts,
+    incidents,
+    components: components.counts,
+    detect,
+  };
 }
 
 export async function handleExternalStatusCron(c: Context) {
@@ -471,8 +706,13 @@ export async function handleExternalStatusCron(c: Context) {
       Effect.tap((res) =>
         Effect.sync(() => {
           logger.info(
-            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped)",
+            "external-status tick complete: status={statusOk}/{statusTotal} ({statusFail} failures, {statusSkip} skipped), incidents={incOk}/{incTotal} ({incFail} failures, {incSkip} skipped), components={compOk}/{compTotal} ({compFail} failures, {compSkip} skipped), detect={detProbed} probed ({detApplied} applied, {detCfg} config-fixed, {detSuggested} suggested, {detFailed} failed)",
             {
+              detProbed: res.detect.probed,
+              detApplied: res.detect.applied,
+              detCfg: res.detect.configFixed,
+              detSuggested: res.detect.suggested,
+              detFailed: res.detect.failed,
               statusOk: res.status.successCount,
               statusTotal: res.status.total,
               statusFail: res.status.failureCount,

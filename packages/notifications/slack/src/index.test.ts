@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { COLORS } from "@openstatus/notification-base";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import {
   sendAlert,
@@ -11,19 +12,16 @@ import {
 } from "./index";
 
 describe("Slack Notifications", () => {
-  let fetchMock: any = undefined;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    if (fetchMock) {
-      fetchMock.mockRestore();
-    }
+    fetchMock.restore();
   });
 
   const createMockMonitor = () => ({
@@ -63,8 +61,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe("https://hooks.slack.com/services/url");
     expect(callArgs[1].method).toBe("POST");
 
@@ -90,8 +88,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments[0].color).toBe(COLORS.red);
     expect(body.attachments[0].blocks[3].fields[0].text).toContain("Unknown");
@@ -112,8 +110,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].color).toBe(COLORS.green);
@@ -135,8 +133,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].color).toBe(COLORS.yellow);
@@ -148,8 +146,8 @@ describe("Slack Notifications", () => {
 
     await sendTestSlackMessage(webhookUrl);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(webhookUrl);
 
     const body = JSON.parse(callArgs[1].body);
@@ -159,16 +157,18 @@ describe("Slack Notifications", () => {
   });
 
   test("Send Test Slack Message throws error on empty webhookUrl", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
     expect(sendTestSlackMessage("")).rejects.toThrow();
-    expect(fetchMock).toHaveBeenCalledTimes(0);
+    assertSpyCalls(fetchMock, 0);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -177,8 +177,7 @@ describe("Slack Notifications", () => {
       createMockNotification(),
     );
 
-    // Should not throw - function catches errors internally
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -189,6 +188,6 @@ describe("Slack Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 });

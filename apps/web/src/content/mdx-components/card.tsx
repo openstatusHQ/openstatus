@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type React from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 export function CardGrid({ children }: { children: React.ReactNode }) {
   return <div className="my-4 grid gap-4 sm:grid-cols-2">{children}</div>;

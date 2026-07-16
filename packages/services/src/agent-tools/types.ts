@@ -47,7 +47,25 @@ export type ExtraFlag = {
   default?: boolean;
 };
 
-export type SummaryLine = { label: string; value: string };
+/**
+ * Structured reference a rendering surface can resolve into entity names
+ * (e.g. a dashboard link, or component names in place of ids), replacing the
+ * raw `value`. Kept as a descriptor — resolution needs DB access, which the
+ * edge-safe services layer must not do.
+ */
+export type SummaryLineRef =
+  | { kind: "page"; pageId: number }
+  | { kind: "components"; componentIds: number[] }
+  | {
+      kind: "componentImpacts";
+      impacts: readonly { pageComponentId: number; impact: string }[];
+    };
+
+export type SummaryLine = {
+  label: string;
+  value: string;
+  ref?: SummaryLineRef;
+};
 
 export type ApprovalMeta<TInput> = {
   /**

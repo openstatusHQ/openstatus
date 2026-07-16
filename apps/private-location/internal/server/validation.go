@@ -32,8 +32,8 @@ func ValidateIngestHTTPRequest(req *private_locationv1.IngestHTTPRequest) error 
 
 // ValidateIngestTCPRequest validates a TCP ingest request
 func ValidateIngestTCPRequest(req *private_locationv1.IngestTCPRequest) error {
-	if req.Id == "" {
-		return ErrEmptyID
+	if req.MonitorId == "" {
+		return ErrEmptyMonitorID
 	}
 	if req.Latency < 0 {
 		return ErrInvalidLatency
@@ -46,8 +46,8 @@ func ValidateIngestTCPRequest(req *private_locationv1.IngestTCPRequest) error {
 
 // ValidateIngestDNSRequest validates a DNS ingest request
 func ValidateIngestDNSRequest(req *private_locationv1.IngestDNSRequest) error {
-	if req.Id == "" {
-		return ErrEmptyID
+	if req.MonitorId == "" {
+		return ErrEmptyMonitorID
 	}
 	if req.Latency < 0 {
 		return ErrInvalidLatency

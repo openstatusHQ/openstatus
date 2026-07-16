@@ -2,6 +2,7 @@ import { insertPageSchema } from "@openstatus/db/src/schema";
 import { pageAccessTypes } from "@openstatus/db/src/schema/pages/constants";
 import {
   customDomainSchema,
+  customThemeWriteSchema,
   pageConfigurationSchema,
   slugSchema,
 } from "@openstatus/db/src/schema/pages/validation";
@@ -40,6 +41,10 @@ export type CreatePageInput = {
   contactUrl?: string | null;
   configuration?: Record<string, unknown> | null;
   monitors?: Array<{ monitorId: number }>;
+  customTheme?: {
+    light?: Record<string, string>;
+    dark?: Record<string, string>;
+  } | null;
 };
 
 /** Minimal create — the onboarding / `new` path with no monitors. */
@@ -138,6 +143,14 @@ export const UpdatePageAppearanceInput = z.object({
 });
 export type UpdatePageAppearanceInput = z.infer<
   typeof UpdatePageAppearanceInput
+>;
+
+export const UpdatePageCustomThemeInput = z.object({
+  id: z.number().int(),
+  customTheme: customThemeWriteSchema,
+});
+export type UpdatePageCustomThemeInput = z.input<
+  typeof UpdatePageCustomThemeInput
 >;
 
 export const UpdatePageLinksInput = z.object({

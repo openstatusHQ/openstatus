@@ -7,7 +7,7 @@ import { endTime, setMetric, startTime } from "hono/timing";
 const logger = getLogger("api-server");
 import { Status, Tracker } from "@openstatus/tracker";
 
-import { redis } from "@/libs/clients";
+import { redis } from "../../libs/clients";
 
 // TODO: include ratelimiting
 

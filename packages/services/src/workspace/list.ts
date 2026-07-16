@@ -24,6 +24,7 @@ export type WorkspaceUsage = {
   notifications: number;
   pages: number;
   pageComponents: number;
+  statusReports: number;
   checks: number;
 };
 
@@ -71,6 +72,7 @@ export async function getWorkspaceWithUsage(args: {
         where: isNull(monitor.deletedAt),
       },
       notifications: true,
+      statusReports: { columns: { id: true } },
     },
   });
 
@@ -86,6 +88,7 @@ export async function getWorkspaceWithUsage(args: {
     pages: result.pages?.length ?? 0,
     pageComponents:
       result.pages?.flatMap((page) => page.pageComponents)?.length ?? 0,
+    statusReports: result.statusReports?.length ?? 0,
     // Parity with the legacy router — checks usage was previously commented
     // out pending a real source and left as 0. Preserved here.
     checks: 0,

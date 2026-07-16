@@ -14,7 +14,7 @@ import type {
 import { SEVERITY_LEVELS } from "../types";
 import { inferStatus, urlHostnameEndsWith } from "../utils";
 
-const atlassianResponseSchema = z.object({
+export const atlassianResponseSchema = z.object({
   page: z.object({
     id: z.string(),
     name: z.string(),

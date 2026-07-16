@@ -1,6 +1,12 @@
 export { createPage, newPage } from "./create";
 export { deletePage } from "./delete";
 export {
+  type MaintenanceContent,
+  type StatusPageContent,
+  type StatusReportContent,
+  getStatusPageContent,
+} from "./get-content";
+export {
   getPage,
   getPageBySlug,
   getPageCustomDomain,
@@ -12,6 +18,7 @@ export {
 export {
   updatePageAppearance,
   updatePageConfiguration,
+  updatePageCustomTheme,
   updatePageCustomDomain,
   updatePageGeneral,
   updatePageLinks,
@@ -29,6 +36,7 @@ export {
   pageAccessTypes,
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
+  UpdatePageCustomThemeInput,
   UpdatePageCustomDomainInput,
   UpdatePageGeneralInput,
   UpdatePageLinksInput,

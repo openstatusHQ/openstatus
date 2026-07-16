@@ -1,15 +1,15 @@
-import { convertMdxToMarkdown } from "@/content/convert";
+import { convertMdxToMarkdown } from "../../../content/convert";
 import {
   PRODUCT_CONTEXT_MARKDOWN,
   PRODUCT_SUMMARY,
-} from "@/content/llms-context";
+} from "../../../content/llms-context";
 import {
   type MDXData,
   getHomePage,
   getProductPages,
   getToolingPages,
   getUnrelatedPages,
-} from "@/content/utils";
+} from "../../../content/utils";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;

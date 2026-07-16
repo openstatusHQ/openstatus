@@ -13,6 +13,7 @@ import {
 import {
   UpdatePageAppearanceInput,
   UpdatePageConfigurationInput,
+  UpdatePageCustomThemeInput,
   UpdatePageCustomDomainInput,
   UpdatePageGeneralInput,
   UpdatePageLinksInput,
@@ -194,6 +195,42 @@ export async function updatePageAppearance(args: {
         },
         updatedAt: new Date(),
       })
+      .where(eq(page.id, existing.id))
+      .returning()
+      .get();
+
+    await emitAudit(tx, ctx, {
+      action: "page.update",
+      entityType: "page",
+      entityId: existing.id,
+      before: existing,
+      after: updated,
+    });
+  });
+}
+
+export async function updatePageCustomTheme(args: {
+  ctx: ServiceContext;
+  input: UpdatePageCustomThemeInput;
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "write");
+  const input = UpdatePageCustomThemeInput.parse(args.input);
+
+  if (!ctx.workspace.limits["custom-theme"]) {
+    throw new LimitExceededError("custom-theme", 0);
+  }
+
+  await withTransaction(ctx, async (tx) => {
+    const existing = await getPageInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+
+    const updated = await tx
+      .update(page)
+      .set({ customTheme: input.customTheme, updatedAt: new Date() })
       .where(eq(page.id, existing.id))
       .returning()
       .get();

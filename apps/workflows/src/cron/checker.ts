@@ -1,5 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
 import {
   and,
@@ -51,7 +51,7 @@ export const isAuthorizedDomain = (url: string) => {
 const logger = getLogger("workflow");
 
 const client = new CloudTasksClient({
-  fallback: "rest",
+  // fallback: true,
   projectId: env().GCP_PROJECT_ID,
   credentials: {
     client_email: env().GCP_CLIENT_EMAIL,

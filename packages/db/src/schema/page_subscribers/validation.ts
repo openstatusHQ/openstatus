@@ -22,6 +22,15 @@ export const webhookChannelConfigSchema = z.object({
   secret: z.string().optional(),
 });
 
+// Channel config schema for slack. The bot token is resolved from the
+// integration row by teamId at send time, never stored here.
+export const slackChannelConfigSchema = z.object({
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+  channelName: z.string().optional(),
+});
+export type SlackChannelConfig = z.infer<typeof slackChannelConfigSchema>;
+
 export const subscriberSourceSchema = z
   .enum(["self_signup", "vendor", "import"])
   .default("self_signup");
@@ -73,11 +82,40 @@ export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable(),
   }),
+  // Slack channel
+  z.object({
+    id: z.number(),
+    pageId: z.number(),
+    channelType: z.literal("slack"),
+    email: z.null(),
+    webhookUrl: z.null(),
+    slackChannelId: z.string(),
+    channelConfig: z
+      .string()
+      .nullable()
+      .transform((str) => {
+        if (!str) return null;
+        try {
+          return JSON.parse(str);
+        } catch {
+          return null;
+        }
+      })
+      .pipe(slackChannelConfigSchema.nullable()),
+    source: subscriberSourceSchema,
+    name: z.string().nullable(),
+    token: z.string().nullable(),
+    acceptedAt: z.date().nullable(),
+    expiresAt: z.date().nullable(),
+    unsubscribedAt: z.date().nullable(),
+    createdAt: z.date().nullable(),
+    updatedAt: z.date().nullable(),
+  }),
 ]);
 
 export type InsertPageSubscriber = z.infer<typeof insertPageSubscriberSchema>;
 export type PageSubscriber = z.infer<typeof selectPageSubscriberSchema>;
-export type ChannelType = "email" | "webhook";
+export type ChannelType = "email" | "webhook" | "slack";
 export type SubscriberSource = z.infer<typeof subscriberSourceSchema>;
 export type EmailSubscriber = Extract<
   z.infer<typeof pageSubscriberSchema>,
@@ -86,4 +124,8 @@ export type EmailSubscriber = Extract<
 export type WebhookSubscriber = Extract<
   z.infer<typeof pageSubscriberSchema>,
   { channelType: "webhook" }
+>;
+export type SlackSubscriber = Extract<
+  z.infer<typeof pageSubscriberSchema>,
+  { channelType: "slack" }
 >;

@@ -1,7 +1,11 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
-import { monitor, pageComponent } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  page as pageTable,
+  pageComponent,
+} from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
   SEEDED_WORKSPACE_FREE_ID,
@@ -25,7 +29,11 @@ import {
 import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
 import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
-import { updatePageGeneral, updatePageLocales } from "../update";
+import {
+  updatePageCustomTheme,
+  updatePageGeneral,
+  updatePageLocales,
+} from "../update";
 
 const TEST_PREFIX = "svc-page-test";
 
@@ -249,6 +257,130 @@ describe("updatePageLocales", () => {
           input: { id: p.id, defaultLocale: "en", locales: ["en"] },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("updatePageCustomTheme", () => {
+  test("happy path stores sanitized vars + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Theme", slug: uniqueSlug("theme") },
+      });
+      await updatePageCustomTheme({
+        ctx,
+        input: {
+          id: p.id,
+          customTheme: {
+            light: { "--primary": " red " },
+            dark: { "--primary": "pink" },
+          },
+        },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customTheme).toEqual({
+        light: { "--primary": "red" },
+        dark: { "--primary": "pink" },
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects unknown css variables", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        updatePageCustomTheme({
+          ctx,
+          input: { id: 1, customTheme: { light: { "--nope": "red" } } },
+        }),
+      ).rejects.toThrow("Unknown CSS variable");
+    });
+  });
+
+  test("rejects values with style-tag breakout characters", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        updatePageCustomTheme({
+          ctx,
+          input: {
+            id: 1,
+            customTheme: { light: { "--primary": "red;} </style>" } },
+          },
+        }),
+      ).rejects.toThrow("unsupported characters");
+    });
+  });
+
+  test("empty custom theme clears the column", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Theme Clear", slug: uniqueSlug("theme-clear") },
+      });
+      await updatePageCustomTheme({
+        ctx,
+        input: { id: p.id, customTheme: { dark: { "--primary": "pink" } } },
+      });
+      await updatePageCustomTheme({
+        ctx,
+        input: { id: p.id, customTheme: { light: {}, dark: {} } },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customTheme).toBeNull();
+    });
+  });
+
+  test("rejects when plan lacks custom-theme", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free Theme", slug: uniqueSlug("free-theme") },
+      });
+      await expect(
+        updatePageCustomTheme({
+          ctx,
+          input: { id: p.id, customTheme: { light: { "--primary": "red" } } },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updatePageCustomTheme({
+          ctx: readOnlyCtx,
+          input: { id: 1, customTheme: { light: { "--primary": "red" } } },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

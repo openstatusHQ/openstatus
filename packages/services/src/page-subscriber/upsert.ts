@@ -26,7 +26,7 @@ export type UpsertSelfSignupResult = {
   pageName: string;
   pageSlug: string;
   customDomain: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email: string;
   token: string | null;
   acceptedAt: Date | null;

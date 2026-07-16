@@ -1,5 +1,3 @@
-import { expect } from "bun:test";
-
 import { and, db, desc, eq, inArray } from "@openstatus/db";
 import {
   type Scope,
@@ -10,6 +8,7 @@ import {
   selectWorkspaceSchema,
   workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
 
 import type { Actor, DB, DrizzleTx, ServiceContext } from "../src/context";
 import type { Workspace } from "../src/types";

@@ -2,7 +2,7 @@ import "server-only";
 import type { AppRouter } from "@openstatus/api";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { createTRPCClient, loggerLink } from "@trpc/client";
+import { createTRPCClient } from "@trpc/client";
 import {
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
@@ -11,7 +11,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 
 import { makeQueryClient } from "./query-client";
-import { endingLink } from "./shared";
+import { endingLink, sentryLoggerLink } from "./shared";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -21,11 +21,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
   queryClient: getQueryClient,
   client: createTRPCClient({
     links: [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-      }),
+      sentryLoggerLink(),
       endingLink({
         headers: {
           "x-trpc-source": "server",

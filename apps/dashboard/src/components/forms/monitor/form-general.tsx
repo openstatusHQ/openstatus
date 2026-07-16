@@ -239,7 +239,8 @@ export function FormGeneral({
                   </FormControl>
                   <FormMessage />
                   <FormDescription>
-                    Displayed on the status page.
+                    Internal name for your monitor. This will be used to
+                    identify the monitor in the dashboard.
                   </FormDescription>
                 </FormItem>
               )}

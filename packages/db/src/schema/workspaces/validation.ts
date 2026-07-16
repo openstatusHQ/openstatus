@@ -56,6 +56,7 @@ export const selectWorkspaceSchema = createSelectSchema(workspace)
         notifications: z.number().prefault(0),
         pages: z.number().prefault(0),
         pageComponents: z.number().prefault(0),
+        statusReports: z.number().prefault(0),
         // checks: z.number().default(0),
       })
       .nullish(),

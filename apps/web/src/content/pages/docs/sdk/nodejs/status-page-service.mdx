@@ -4,7 +4,7 @@ title: Status Page Service
 description: "Manage status pages, components, groups, and subscribers with the openstatus Node.js SDK"
 ---
 
-Manage status pages, components, component groups, and subscribers. The Status Page Service provides 18 RPC methods.
+Manage status pages, components, component groups, and subscribers. The Status Page Service provides 20 RPC methods.
 
 ## Status Page CRUD
 
@@ -222,6 +222,26 @@ console.log(`Overall: ${OverallStatus[overallStatus]}`);
 for (const { componentId, status } of componentStatuses) {
   console.log(`  ${componentId}: ${OverallStatus[status]}`);
 }
+```
+
+## Get Status Page Overview
+
+Get everything about a single status page in one authenticated call: the page, its rendering configuration, components, groups, active status reports, maintenances, and the computed overall and per-component statuses. Workspace-scoped by `id` only (no public slug access). Uptime time-series is not included — use Get Page Component Daily Summary for that.
+
+```typescript
+import { createOpenStatusClient, OverallStatus } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const overview = await client.statusPage.v1.StatusPageService
+  .getStatusPageOverview({ id: "page_123" });
+
+console.log(`Page: ${overview.statusPage?.title}`);
+console.log(`Theme: ${overview.configuration?.themeKey}`);
+console.log(`Components: ${overview.components.length}`);
+console.log(`Overall: ${OverallStatus[overview.overallStatus]}`);
 ```
 
 ## Get Page Component Daily Summary

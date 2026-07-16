@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   auditLog,
@@ -11,8 +9,11 @@ import {
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { mock } from "@openstatus/test-utils";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { app } from "@/index";
+import { app } from "../../../../../index";
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).
@@ -65,6 +66,9 @@ beforeAll(async () => {
   );
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."status-subscribers"', json('true')) WHERE id = 1`,
+  );
+  await db.run(
+    sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."custom-theme"', json('true')) WHERE id = 1`,
   );
 
   // Clean up any existing test data
@@ -426,6 +430,45 @@ describe("StatusPageService.CreateStatusPage", () => {
       await db.delete(page).where(eq(page.id, firstPage.id));
     }
   });
+
+  test("creates a status page with a custom theme", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-custom-theme`,
+        slug: `${TEST_PREFIX}-custom-theme-slug`,
+        customTheme: { light: { "--primary": "hsl(24 94% 50%)" } },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.customTheme?.light).toEqual({
+      "--primary": "hsl(24 94% 50%)",
+    });
+
+    // Clean up
+    await db.delete(page).where(eq(page.id, Number(data.statusPage.id)));
+  });
+
+  test("returns 403 when creating with custom theme on free plan", async () => {
+    const res = await connectRequest(
+      "CreateStatusPage",
+      {
+        title: `${TEST_PREFIX}-custom-theme-denied`,
+        slug: `${TEST_PREFIX}-custom-theme-denied-slug`,
+        customTheme: { light: { "--primary": "red" } },
+      },
+      { "x-openstatus-key": "2" },
+    );
+
+    expect(res.status).toBe(403);
+
+    const data = await res.json();
+    expect(data.message).toContain("Upgrade for custom theme");
+  });
 });
 
 describe("StatusPageService.GetStatusPage", () => {
@@ -703,6 +746,157 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .update(page)
       .set({ defaultLocale: "en", locales: null })
       .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("updates and clears the custom theme", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: {
+          light: { "--primary": "hsl(24 94% 50%)" },
+          dark: { "--background": "oklch(0.2 0 0)" },
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.customTheme?.light).toEqual({
+      "--primary": "hsl(24 94% 50%)",
+    });
+    expect(data.statusPage.customTheme?.dark).toEqual({
+      "--background": "oklch(0.2 0 0)",
+    });
+
+    // Empty message clears the stored overrides
+    const clearRes = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: {},
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(clearRes.status).toBe(200);
+
+    const clearData = await clearRes.json();
+    expect(clearData.statusPage.customTheme).toBeUndefined();
+  });
+
+  test("keeps the custom theme when the field is omitted or null", async () => {
+    await db
+      .update(page)
+      .set({ customTheme: { light: { "--primary": "red" } } })
+      .where(eq(page.id, testPageToUpdateId));
+
+    try {
+      // Omitted field — unrelated update must not touch the stored theme
+      const omitRes = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          title: `${TEST_PREFIX}-page-to-update`,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(omitRes.status).toBe(200);
+
+      const omitData = await omitRes.json();
+      expect(omitData.statusPage.customTheme?.light).toEqual({
+        "--primary": "red",
+      });
+
+      // Explicit null — proto3 JSON treats null as absent, so it keeps too
+      const nullRes = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          customTheme: null,
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(nullRes.status).toBe(200);
+
+      const nullData = await nullRes.json();
+      expect(nullData.statusPage.customTheme?.light).toEqual({
+        "--primary": "red",
+      });
+    } finally {
+      await db
+        .update(page)
+        .set({ customTheme: null })
+        .where(eq(page.id, testPageToUpdateId));
+    }
+  });
+
+  test("rejects unsafe custom theme values", async () => {
+    for (const value of [
+      "</style><script>alert(1)</script>",
+      "red;} body { background: red",
+      "",
+    ]) {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(testPageToUpdateId),
+          customTheme: { light: { "--primary": value } },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(400);
+    }
+  });
+
+  test("rejects unknown custom theme variables", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        customTheme: { light: { "--not-a-var": "red" } },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 403 when updating custom theme on free plan", async () => {
+    const freePage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-free-theme`,
+        slug: `${TEST_PREFIX}-free-theme-slug`,
+        description: "",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateStatusPage",
+        {
+          id: String(freePage.id),
+          customTheme: { light: { "--primary": "red" } },
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403);
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade for custom theme");
+    } finally {
+      await db.delete(page).where(eq(page.id, freePage.id));
+    }
   });
 });
 
@@ -1720,7 +1914,7 @@ describe("StatusPageService.UpdateComponentGroup", () => {
 
 const subscriptionSpies = (globalThis as Record<string, unknown>)
   .__subscriptionSpies as {
-  sendVerification: ReturnType<typeof import("bun:test").mock>;
+  sendVerification: ReturnType<typeof mock>;
 };
 
 describe("StatusPageService.SubscribeToPage", () => {
@@ -2650,6 +2844,246 @@ describe("StatusPageService.GetOverallStatus", () => {
         .delete(statusReportsToPageComponents)
         .where(eq(statusReportsToPageComponents.statusReportId, report.id));
       await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
+  });
+});
+
+describe("StatusPageService.GetStatusPageOverview", () => {
+  test("returns full overview by id", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.id).toBe(String(testPageId));
+    expect(data).toHaveProperty("configuration");
+    expect(data).toHaveProperty("components");
+    expect(data).toHaveProperty("overallStatus");
+    expect(data).toHaveProperty("componentStatuses");
+  });
+
+  test("returns configuration defaults when unset", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-default-config`,
+        slug: `${TEST_PREFIX}-overview-default-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+      expect(data.configuration.barType).toBe("PAGE_BAR_TYPE_ABSOLUTE");
+      expect(data.configuration.showUptime).toBe(true);
+      expect(data.configuration.themeKey).toBe("default");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("maps stored configuration values", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-custom-config`,
+        slug: `${TEST_PREFIX}-overview-custom-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+        configuration: {
+          value: "duration",
+          type: "manual",
+          uptime: false,
+          theme: "dracula",
+        },
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_DURATION");
+      expect(data.configuration.barType).toBe("PAGE_BAR_TYPE_MANUAL");
+      // proto3 JSON omits a false bool (the default), so it reads back as undefined
+      expect(data.configuration.showUptime ?? false).toBe(false);
+      expect(data.configuration.themeKey).toBe("dracula");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("falls back to default configuration for invalid stored values", async () => {
+    const createdPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-overview-bad-config`,
+        slug: `${TEST_PREFIX}-overview-bad-config-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+        configuration: { value: "latency", theme: "removed-theme-xyz" },
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(createdPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.configuration.metricType).toBe("PAGE_METRIC_TYPE_REQUESTS");
+      expect(data.configuration.themeKey).toBe("default");
+    } finally {
+      await db.delete(page).where(eq(page.id, createdPage.id));
+    }
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetStatusPageOverview", {
+      id: String(testPageId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("returns 404 for non-existent page", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for a page in another workspace", async () => {
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-overview-other-ws`,
+        slug: `${TEST_PREFIX}-overview-other-ws-slug`,
+        description: "",
+        customDomain: "",
+        published: true,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(otherPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(page).where(eq(page.id, otherPage.id));
+    }
+  });
+
+  test("rejects slug identifier (id required)", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { slug: testPageSlug },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("reflects degraded status from an active report", async () => {
+    const report = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        title: `${TEST_PREFIX}-overview-report`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    await db.insert(statusReportsToPageComponents).values({
+      statusReportId: report.id,
+      pageComponentId: testComponentId,
+    });
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageOverview",
+        { id: String(testPageId) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.overallStatus).toBe("OVERALL_STATUS_DEGRADED");
+      const reported = data.statusReports.find(
+        (r: { title: string }) => r.title === `${TEST_PREFIX}-overview-report`,
+      );
+      expect(reported).toBeDefined();
+    } finally {
+      await db
+        .delete(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, report.id));
+      await db.delete(statusReport).where(eq(statusReport.id, report.id));
+    }
+  });
+
+  test("excludes uptime time-series buckets", async () => {
+    const res = await connectRequest(
+      "GetStatusPageOverview",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(Array.isArray(data.components)).toBe(true);
+    expect(data.components.length).toBeGreaterThan(0);
+    for (const component of data.components) {
+      expect(component).not.toHaveProperty("buckets");
     }
   });
 });

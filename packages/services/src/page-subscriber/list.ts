@@ -34,7 +34,7 @@ function webhookUrlForList(
 
 export type PageSubscriberListItem = {
   id: number;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email: string | null;
   webhookUrl: string | null;
   channelConfig: string | null;

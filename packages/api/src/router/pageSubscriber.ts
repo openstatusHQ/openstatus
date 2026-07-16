@@ -13,7 +13,6 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -30,11 +29,7 @@ const webhookHeadersSchema = z
   .max(20)
   .optional();
 
-const supportedWebhookUrlSchema = z
-  .url()
-  .refine((url) => detectWebhookFlavor(url) !== "generic", {
-    message: "Only Slack and Discord webhook URLs are supported.",
-  });
+const supportedWebhookUrlSchema = z.url();
 
 // Public (status-page-facing) procedures use the same allow-list as
 // the protected procedures going through `toTRPCError`. Single source

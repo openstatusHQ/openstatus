@@ -75,7 +75,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -103,7 +103,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
+            test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -125,6 +125,7 @@ services:
         environment:
             - DB_URL=http://libsql:8080
             - TINYBIRD_URL=http://tinybird-local:7181
+            - WORKFLOWS_URL=http://workflows:3000
             - GIN_MODE=release
             - PORT=8080
         depends_on:
