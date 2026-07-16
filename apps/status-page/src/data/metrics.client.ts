@@ -325,7 +325,8 @@ export function latencyByMonitorId(
         .filter((value): value is number => value != null) ?? [];
     if (points.length === 0) continue;
     const avg = points.reduce((sum, value) => sum + value, 0) / points.length;
-    map.set(monitor.id.toString(), formatMilliseconds(avg));
+    // compact chip: drop the unit space ("117 ms" -> "117ms")
+    map.set(monitor.id.toString(), formatMilliseconds(avg).replace(" ", ""));
   }
   return map;
 }
