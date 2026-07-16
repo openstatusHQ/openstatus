@@ -166,7 +166,9 @@ describe("sendEmailNotifications", () => {
     );
 
     const [args] = sendStatusReportUpdateMock.calls[0].args;
-    expect(args.idempotencyKey).toMatch(/^page-update:17:maintenance:[0-9a-z]+$/);
+    expect(args.idempotencyKey).toMatch(
+      /^page-update:17:maintenance:[0-9a-z]+$/,
+    );
   });
 
   test("keeps the same key for an identical re-dispatch", async () => {
