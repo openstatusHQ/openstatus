@@ -26,6 +26,7 @@ import {
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { skipToken, useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
@@ -64,6 +65,7 @@ export function Client() {
   const { cardType, barType, showUptime, numberOfDays } = useStatusPage();
   const embed = useEmbed();
   const trpc = useTRPC();
+  const t = useExtracted();
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
@@ -144,6 +146,7 @@ export function Client() {
     if (!row?.monitor?.public) return undefined;
     const monitorId = row.monitor.id.toString();
     return {
+      label: t("last day"),
       isLoading: latencyPending,
       value: latencyMap.get(monitorId),
       href: `${prefix ? `/${prefix}` : ""}/monitors/${monitorId}`,
@@ -422,7 +425,7 @@ function ComponentCard({
   uptime?: string;
   showUptime?: boolean;
   isLoading?: boolean;
-  latency?: { isLoading: boolean; value?: string; href: string };
+  latency?: { label: string; isLoading: boolean; value?: string; href: string };
 }) {
   return (
     <StatusComponent variant={status}>
@@ -437,7 +440,9 @@ function ComponentCard({
                 className="shrink-0 rounded-md focus-visible:ring-inset"
               >
                 <StatusComponentLatency>
-                  <span className="text-muted-foreground/70">last day</span>
+                  <span className="text-muted-foreground/70">
+                    {latency.label}
+                  </span>
                   <span className="text-foreground">{latency.value}</span>
                   <span>p75</span>
                 </StatusComponentLatency>
