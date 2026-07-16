@@ -156,7 +156,7 @@ export function StatusComponentHeaderLeft({
   return (
     <div
       data-slot="status-component-header-left"
-      className={cn("flex items-center gap-2", className)}
+      className={cn("flex items-center gap-2 truncate", className)}
       {...props}
     >
       {children}
