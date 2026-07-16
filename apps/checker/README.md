@@ -138,7 +138,6 @@ export default {
         redirect: check.followRedirects ? "follow" : "manual",
         signal: AbortSignal.timeout(check.timeout),
       });
-      });
       const body = await res.text();
       return Response.json({
         status: res.status,
