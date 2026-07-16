@@ -3,14 +3,27 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 import * as Sentry from "@sentry/nextjs";
-import { TRPCError } from "@trpc/server";
 
 // tRPC error codes that should not be reported to Sentry (expected client errors)
-const IGNORED_TRPC_CODES: TRPCError["code"][] = [
-  "UNAUTHORIZED",
-  "NOT_FOUND",
+const IGNORED_TRPC_CODES = [
   "BAD_REQUEST",
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "NOT_FOUND",
+  "CONFLICT",
+  "PRECONDITION_FAILED",
+  "TOO_MANY_REQUESTS",
 ];
+
+// Duck-typed: `instanceof TRPCError` is unreliable here because the thrown
+// error comes from a different bundle than this config's `@trpc/server` copy.
+function isIgnoredTRPCError(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    err.name === "TRPCError" &&
+    IGNORED_TRPC_CODES.includes((err as { code?: string }).code ?? "")
+  );
+}
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -23,10 +36,7 @@ Sentry.init({
   integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
 
   beforeSend(event, hint) {
-    if (
-      hint.originalException instanceof TRPCError &&
-      IGNORED_TRPC_CODES.includes(hint.originalException.code)
-    ) {
+    if (isIgnoredTRPCError(hint.originalException)) {
       return null;
     }
     return event;
