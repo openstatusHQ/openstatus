@@ -6,6 +6,8 @@ import {
   formatDateRange,
   formatDateRangeParts,
   formatDateTime,
+  formatMilliseconds,
+  formatMillisecondsRange,
   formatTime,
 } from "./formatter";
 
@@ -57,6 +59,36 @@ describe("formatter UTC rendering", () => {
     test("does not shift a late-UTC time into the next day's hours", () => {
       expect(formatTime(new Date("2024-01-15T23:30:00Z"))).toBe("11:30 PM");
     });
+  });
+});
+
+describe("formatMilliseconds", () => {
+  test("renders sub-second values with the millisecond unit", () => {
+    expect(formatMilliseconds(111)).toBe("111 ms");
+  });
+
+  test("converts values above 1000ms to seconds", () => {
+    expect(formatMilliseconds(1500)).toBe("1.5 sec");
+  });
+});
+
+describe("formatMillisecondsRange", () => {
+  // Regression: both endpoints below 1000ms must stay in milliseconds — the
+  // `min` side was previously divided by 1000, rendering 111ms as "0.111".
+  test("keeps both endpoints in milliseconds when both are below 1000", () => {
+    expect(formatMillisecondsRange(111, 155)).toBe("111 - 155 ms");
+  });
+
+  test("does not divide the min endpoint by 1000 for sub-second ranges", () => {
+    expect(formatMillisecondsRange(111, 155)).not.toContain("0.111");
+  });
+
+  test("shares the seconds unit when both endpoints exceed 1000", () => {
+    expect(formatMillisecondsRange(1500, 2300)).toBe("1.5 - 2.3 sec");
+  });
+
+  test("formats each endpoint with its own unit for a mixed range", () => {
+    expect(formatMillisecondsRange(500, 1500)).toBe("500 ms - 1.5 sec");
   });
 });
 

@@ -17,10 +17,17 @@ export function formatMilliseconds(ms: number) {
 }
 
 export function formatMillisecondsRange(min: number, max: number) {
-  if ((min > 1000 && max > 1000) || (min < 1000 && max < 1000)) {
-    return `${formatNumber(min / 1000)} - ${formatMilliseconds(max)}`;
+  // Both above 1000ms: share the seconds unit, so only `max` carries it.
+  if (min > 1000 && max > 1000) {
+    return `${formatNumber(min / 1000, { maximumFractionDigits: 2 })} - ${formatMilliseconds(max)}`;
   }
 
+  // Both below 1000ms: share the milliseconds unit, so only `max` carries it.
+  if (min < 1000 && max < 1000) {
+    return `${formatNumber(min)} - ${formatMilliseconds(max)}`;
+  }
+
+  // Mixed: format each endpoint with its own unit.
   return `${formatMilliseconds(min)} - ${formatMilliseconds(max)}`;
 }
 
