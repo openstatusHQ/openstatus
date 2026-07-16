@@ -2,7 +2,6 @@ import type { AppRouter } from "@openstatus/api";
 import * as Sentry from "@sentry/nextjs";
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink, loggerLink } from "@trpc/client";
-import type { TRPCError } from "@trpc/server";
 import superjson from "superjson";
 
 /**
@@ -33,31 +32,6 @@ export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
       }
     },
   });
-
-// Expected client errors (4xx). These are not bugs, so we don't log them —
-// captureConsoleIntegration would otherwise ship every console.error to Sentry.
-const EXPECTED_TRPC_CODES = new Set<TRPCError["code"]>([
-  "BAD_REQUEST",
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-  "NOT_FOUND",
-  "CONFLICT",
-  "PRECONDITION_FAILED",
-  "TOO_MANY_REQUESTS",
-]);
-
-/**
- * Shared onError handler for tRPC route handlers. Only genuine server errors
- * are logged; expected client errors are dropped so Sentry's console
- * integration doesn't report them as noise.
- */
-export function createOnError(label: string) {
-  return ({ error }: { error: Pick<TRPCError, "code" | "message"> }) => {
-    if (EXPECTED_TRPC_CODES.has(error.code)) return;
-    console.log(`Error in tRPC handler (${label})`);
-    console.error(error);
-  };
-}
 
 /**
  * Filter out requests that don't come from our tRPC clients.
