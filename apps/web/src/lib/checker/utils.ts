@@ -221,6 +221,10 @@ export async function checkRegion(
       break;
   }
 
+  // A caller-supplied signal is the caller's to interpret (it inspects the raw
+  // TimeoutError); only our own default bound maps to TargetUnreachableError.
+  const usingDefaultTimeout = !signal;
+
   let res: Response;
   try {
     res = await fetch(endpoint, {
@@ -246,7 +250,7 @@ export async function checkRegion(
       signal: signal ?? AbortSignal.timeout(CHECKER_REQUEST_TIMEOUT_MS),
     });
   } catch (e) {
-    if (isTimeoutError(e)) {
+    if (usingDefaultTimeout && isTimeoutError(e)) {
       throw new TargetUnreachableError("checker request timed out");
     }
     throw e;
