@@ -44,6 +44,7 @@ export function dbProviderToProto(
     telegram: NotificationProvider.TELEGRAM,
     webhook: NotificationProvider.WEBHOOK,
     whatsapp: NotificationProvider.WHATSAPP,
+    pushover: NotificationProvider.PUSHOVER,
   };
   return mapping[provider] ?? NotificationProvider.UNSPECIFIED;
 }
@@ -68,6 +69,7 @@ export function getExpectedDataCase(
     [NotificationProvider.TELEGRAM]: "telegram",
     [NotificationProvider.WEBHOOK]: "webhook",
     [NotificationProvider.WHATSAPP]: "whatsapp",
+    [NotificationProvider.PUSHOVER]: "pushover",
   };
   return mapping[provider];
 }
@@ -125,6 +127,7 @@ export function protoProviderToDb(
     [NotificationProvider.TELEGRAM]: "telegram",
     [NotificationProvider.WEBHOOK]: "webhook",
     [NotificationProvider.WHATSAPP]: "whatsapp",
+    [NotificationProvider.PUSHOVER]: "pushover",
   };
   const mapped = mapping[provider];
   if (!mapped) {
@@ -309,6 +312,19 @@ export function dbDataToProto(
           };
         }
         break;
+      case "pushover":
+        if (data.pushover) {
+          protoData.data = {
+            case: "pushover",
+            value: {
+              $typeName: "openstatus.notification.v1.PushoverData",
+              token: data.pushover.token,
+              user: data.pushover.user,
+              priority: Number(data.pushover.priority ?? 0),
+            },
+          };
+        }
+        break;
     }
 
     return protoData;
@@ -384,6 +400,14 @@ export function protoDataToDb(
       });
     case "whatsapp":
       return JSON.stringify({ whatsapp: data.data.value.phoneNumber });
+    case "pushover":
+      return JSON.stringify({
+        pushover: {
+          token: data.data.value.token,
+          user: data.data.value.user,
+          priority: data.data.value.priority,
+        },
+      });
     default:
       return "{}";
   }

@@ -1,0 +1,20 @@
+{
+  "name": "@openstatus/notification-pushover",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "bun test",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@openstatus/db": "workspace:*",
+    "@openstatus/notification-base": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "bun-types": "catalog:",
+    "typescript": "catalog:"
+  }
+}
