@@ -3,6 +3,7 @@ import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendMsTeamsTest } from "@openstatus/notification-ms-teams";
+import { sendTest as sendNovuTest } from "@openstatus/notification-novu";
 import { sendTest as sendNtfyTest } from "@openstatus/notification-ntfy";
 import { sendTest as sendOpsgenieTest } from "@openstatus/notification-opsgenie";
 import { sendTest as sendPagerDutyTest } from "@openstatus/notification-pagerduty";
@@ -141,6 +142,24 @@ export async function sendTestNotification(
           apiKey: data.data.value.apiKey,
           region: data.data.value.region === OpsgenieRegion.EU ? "eu" : "us",
         });
+        return { success: true };
+      }
+
+      case NotificationProvider.NOVU: {
+        if (data.data.case !== "novu") {
+          throw invalidNotificationDataError(
+            "Expected novu data for Novu provider",
+          );
+        }
+        const success = await sendNovuTest({
+          apiKey: data.data.value.apiKey,
+          workflowId: data.data.value.workflowId,
+          subscriberId: data.data.value.subscriberId,
+          region: data.data.value.region === "eu" ? "eu" : "us",
+        });
+        if (!success) {
+          throw testNotificationFailedError("Novu trigger failed");
+        }
         return { success: true };
       }
 

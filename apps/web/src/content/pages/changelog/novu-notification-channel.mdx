@@ -1,0 +1,16 @@
+---
+title: "Send alerts to Novu"
+description: "Trigger a Novu workflow on every monitor status change and fan out to any channel Novu supports."
+image: "/assets/changelog/novu.png"
+publishedAt: "2026-07-13"
+author: "Moulik Aggarwal"
+category: "integrations"
+---
+
+You can now connect [Novu](https://novu.co) as a notification channel. When a monitor goes down, degrades, or recovers, openstatus triggers one of your Novu workflows — which then fans the event out to any channel Novu supports: email, SMS, push, chat, or in-app.
+
+Add it from **Settings → Notifications → Novu** with your Novu **secret API key**, a **workflow identifier**, a **subscriber id**, and your **region** (`us` or `eu`). Use **Send Test** to confirm the wiring before attaching it to your monitors.
+
+Each trigger carries a structured payload (monitor name, URL, status, status code, latency, regions, and more) that your Novu workflow templates can reference directly.
+
+Novu is available on paid plans. See the [notification reference](https://www.openstatus.dev/docs/reference/notification/#novu) for the full payload and configuration details.

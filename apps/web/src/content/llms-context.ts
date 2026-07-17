@@ -30,7 +30,7 @@ Annual billing gives 2 months free (Starter $300/yr, Pro $1,000/yr, Scale $5,000
 - **API Monitoring** — Assertions, thresholds, status code checks, header and body validation
 - **Monitoring as Code** — Define monitors in YAML, manage via CLI or GitHub Actions
 - **Private Locations** — 8.5MB Docker image for monitoring internal services behind firewalls
-- **Alerting** — Email, Slack, Discord, webhook, WhatsApp, SMS, PagerDuty, OpsGenie, Grafana OnCall
+- **Alerting** — Email, Slack, Discord, webhook, WhatsApp, SMS, PagerDuty, OpsGenie, Grafana OnCall, Novu
 - **OpenTelemetry** — Export synthetic check metrics to any OTLP endpoint
 - **SDK** — Node.js SDK on JSR (@openstatus/sdk-node)
 - **MCP server** — Streamable-HTTP MCP at https://api.openstatus.dev/mcp for status reports, maintenance windows, and monitor reads

@@ -5,6 +5,7 @@ import {
   grafanaOncallDataSchema,
   msTeamsDataSchema,
   notificationProvider,
+  novuDataSchema,
   ntfyDataSchema,
   opsgenieDataSchema,
   pagerdutyDataSchema,
@@ -19,6 +20,7 @@ import { sendTestDiscordMessage as sendDiscordTest } from "@openstatus/notificat
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendMsTeamsTest } from "@openstatus/notification-ms-teams";
+import { sendTest as sendNovuTest } from "@openstatus/notification-novu";
 import { sendTest as sendNtfyTest } from "@openstatus/notification-ntfy";
 import { sendTest as sendOpsGenieTest } from "@openstatus/notification-opsgenie";
 import {
@@ -270,6 +272,24 @@ export const notificationRouter = createTRPCRouter({
         }
 
         await sendNtfyTest(_data.data.ntfy);
+        return;
+      }
+      if (opts.input.provider === "novu") {
+        const _data = novuDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+
+        const success = await sendNovuTest(_data.data.novu);
+        if (!success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Novu trigger failed. Check your API key and workflow id.",
+          });
+        }
         return;
       }
       if (opts.input.provider === "pagerduty") {

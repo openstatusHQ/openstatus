@@ -5,6 +5,7 @@ export * from "./grafana";
 export * from "./pagerduty";
 export * from "./slack";
 export * from "./opsgenie";
+export * from "./novu";
 export * from "./fly";
 export * from "./railway";
 export * from "./koyeb";
