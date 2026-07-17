@@ -92,6 +92,15 @@ import {
 } from "@/components/ui/sortable";
 import { cn } from "@/lib/utils";
 
+import { type ThirdPartyEntry, ThirdPartyPicker } from "./third-party-picker";
+
+function externalKey(c: {
+  externalServiceId?: number | null;
+  externalServiceComponentId?: number | null;
+}): string {
+  return `${c.externalServiceId}:${c.externalServiceComponentId ?? "all"}`;
+}
+
 type PageComponent = RouterOutputs["pageComponent"]["list"][number];
 type Monitor = RouterOutputs["monitor"]["list"][number];
 type Workspace = RouterOutputs["workspace"]["get"];
@@ -105,10 +114,12 @@ type ComponentGroup = {
 const componentSchema = z.object({
   id: z.number(),
   monitorId: z.number().nullish(),
+  externalServiceId: z.number().nullish(),
+  externalServiceComponentId: z.number().nullish(),
   order: z.number(),
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string().optional(),
-  type: z.enum(["monitor", "static"]),
+  type: z.enum(["monitor", "static", "external"]),
 });
 
 const schema = z.object({
@@ -126,15 +137,19 @@ const schema = z.object({
   ),
 });
 
+type ComponentFormData = {
+  id: number;
+  order: number;
+  name?: string;
+  type?: "monitor" | "static" | "external";
+  monitorId?: number | null;
+  externalServiceId?: number | null;
+  externalServiceComponentId?: number | null;
+};
+
 const getSortedComponents = (
   components: PageComponent[],
-  componentData: {
-    id: number;
-    order: number;
-    name?: string;
-    type?: "monitor" | "static";
-    monitorId?: number | null;
-  }[],
+  componentData: ComponentFormData[],
   monitors: Monitor[],
 ) => {
   const orderMap = new Map(componentData?.map((c) => [c.id, c.order]) ?? []);
@@ -157,6 +172,8 @@ const getSortedComponents = (
         name: c.name ?? "",
         type: c.type ?? "static",
         monitorId: c.monitorId ?? null,
+        externalServiceId: c.externalServiceId ?? null,
+        externalServiceComponentId: c.externalServiceComponentId ?? null,
         monitor: monitor ?? null,
         groupId: null,
         groupOrder: null,
@@ -176,25 +193,13 @@ const getSortedComponents = (
 
 const getSortedItems = (
   components: PageComponent[],
-  componentData: {
-    id: number;
-    order: number;
-    name?: string;
-    type?: "monitor" | "static";
-    monitorId?: number | null;
-  }[],
+  componentData: ComponentFormData[],
   groups: Array<{
     id: number;
     order: number;
     name: string;
     defaultOpen: boolean;
-    components: Array<{
-      id: number;
-      order: number;
-      name?: string;
-      type?: "monitor" | "static";
-      monitorId?: number | null;
-    }>;
+    components: ComponentFormData[];
   }>,
   monitors: Monitor[],
 ): (PageComponent | ComponentGroup)[] => {
@@ -219,6 +224,8 @@ const getSortedItems = (
         name: c.name ?? "",
         type: c.type ?? "static",
         monitorId: c.monitorId ?? null,
+        externalServiceId: c.externalServiceId ?? null,
+        externalServiceComponentId: c.externalServiceComponentId ?? null,
         monitor: monitor ?? null,
         groupId: null,
         groupOrder: null,
@@ -290,6 +297,34 @@ export function FormComponents({
   const watchComponents = form.watch("components");
   const watchGroups = form.watch("groups");
   const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
+  const [thirdPartyOpen, setThirdPartyOpen] = useState(false);
+
+  const existingExternalKeys = new Set(
+    [
+      ...(watchComponents ?? []),
+      ...(watchGroups ?? []).flatMap((g) => g.components),
+    ]
+      .filter((c) => c.type === "external")
+      .map(externalKey),
+  );
+
+  const handleAddThirdParty = useCallback(
+    (entries: ThirdPartyEntry[]) => {
+      const current = form.getValues("components") ?? [];
+      const additions = entries.map((entry, i) => ({
+        id: Date.now() + i,
+        monitorId: null,
+        externalServiceId: entry.externalServiceId,
+        externalServiceComponentId: entry.externalServiceComponentId,
+        order: current.length + i,
+        name: entry.name,
+        description: "",
+        type: "external" as const,
+      }));
+      form.setValue("components", [...current, ...additions]);
+    },
+    [form],
+  );
   const [data, setData] = useState<(PageComponent | ComponentGroup)[]>(
     getSortedItems(
       allPageComponents,
@@ -348,6 +383,8 @@ export function FormComponents({
           return {
             id: item.id,
             monitorId: item.monitorId,
+            externalServiceId: item.externalServiceId,
+            externalServiceComponentId: item.externalServiceComponentId,
             order: index,
             name: existingComponent?.name ?? item.name,
             description: existingComponent?.description ?? "",
@@ -619,7 +656,13 @@ export function FormComponents({
                               </Command>
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
-                          <DropdownMenuItem disabled>
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              if (!validateLimit()) return;
+                              setThirdPartyOpen(true);
+                            }}
+                          >
                             <Plug className="text-muted-foreground" />
                             Add Third-Party Component
                           </DropdownMenuItem>
@@ -707,6 +750,12 @@ export function FormComponents({
         limit="page-components"
         open={openUpgradeDialog}
         onOpenChange={setOpenUpgradeDialog}
+      />
+      <ThirdPartyPicker
+        open={thirdPartyOpen}
+        onOpenChange={setThirdPartyOpen}
+        onAdd={handleAddThirdParty}
+        existingKeys={existingExternalKeys}
       />
     </>
   );
@@ -803,7 +852,12 @@ function ComponentRow({
           )}
         </div>
         <div className="text-muted-foreground flex items-center gap-2 self-center text-sm">
-          {component.monitor && component.type === "monitor" ? (
+          {component.type === "external" ? (
+            <span className="text-muted-foreground flex items-center gap-2 text-sm">
+              <Plug className="size-4 shrink-0" />{" "}
+              <span className="truncate">Third-party</span>
+            </span>
+          ) : component.monitor && component.type === "monitor" ? (
             <Link
               href={`/monitors/${component.monitorId}/overview`}
               onClick={(e) => e.stopPropagation()}
@@ -921,6 +975,34 @@ function ComponentGroupRow({
   const watchComponents = form.watch("components");
   const watchGroups = form.watch("groups");
   const [data, setData] = useState<PageComponent[]>(group.components);
+  const [thirdPartyOpen, setThirdPartyOpen] = useState(false);
+
+  const existingExternalKeys = new Set(
+    [...watchComponents, ...watchGroups.flatMap((g) => g.components)]
+      .filter((c) => c.type === "external")
+      .map(externalKey),
+  );
+
+  const handleAddThirdParty = useCallback(
+    (entries: ThirdPartyEntry[]) => {
+      const current = form.getValues(`groups.${groupIndex}.components`) ?? [];
+      const additions = entries.map((entry, i) => ({
+        id: Date.now() + i,
+        monitorId: null,
+        externalServiceId: entry.externalServiceId,
+        externalServiceComponentId: entry.externalServiceComponentId,
+        order: current.length + i,
+        name: entry.name,
+        description: "",
+        type: "external" as const,
+      }));
+      form.setValue(`groups.${groupIndex}.components`, [
+        ...current,
+        ...additions,
+      ]);
+    },
+    [form, groupIndex],
+  );
 
   // Calculate taken monitor IDs (in main list or other groups)
   const takenMonitorIds = new Set([
@@ -948,6 +1030,8 @@ function ComponentGroupRow({
           return {
             id: c.id,
             monitorId: c.monitorId,
+            externalServiceId: c.externalServiceId,
+            externalServiceComponentId: c.externalServiceComponentId,
             order: index,
             name: existingComponent?.name ?? c.name,
             description: existingComponent?.description ?? "",
@@ -1137,7 +1221,13 @@ function ComponentGroupRow({
                         </Command>
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
-                    <DropdownMenuItem disabled>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        if (!validateLimit()) return;
+                        setThirdPartyOpen(true);
+                      }}
+                    >
                       <Plug className="text-muted-foreground" />
                       Add Third-Party Component
                     </DropdownMenuItem>
@@ -1258,6 +1348,12 @@ function ComponentGroupRow({
           )}
         </Sortable>
       </div>
+      <ThirdPartyPicker
+        open={thirdPartyOpen}
+        onOpenChange={setThirdPartyOpen}
+        onAdd={handleAddThirdParty}
+        existingKeys={existingExternalKeys}
+      />
     </SortableItem>
   );
 }

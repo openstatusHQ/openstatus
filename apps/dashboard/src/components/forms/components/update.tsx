@@ -83,6 +83,8 @@ export function FormComponentsUpdate() {
       components: componentsInGroup.map((c) => ({
         id: c.id,
         monitorId: c.monitorId,
+        externalServiceId: c.externalServiceId,
+        externalServiceComponentId: c.externalServiceComponentId,
         order: c.groupOrder ?? 0,
         name: c.name,
         description: c.description ?? "",
@@ -96,6 +98,8 @@ export function FormComponentsUpdate() {
     components: standaloneComponents.map((c) => ({
       id: c.id,
       monitorId: c.monitorId,
+      externalServiceId: c.externalServiceId,
+      externalServiceComponentId: c.externalServiceComponentId,
       order: c.order ?? 0,
       name: c.name,
       description: c.description ?? "",

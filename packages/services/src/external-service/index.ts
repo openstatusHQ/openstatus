@@ -10,3 +10,12 @@ export {
   type ApplyDetectedProviderInput,
   applyDetectedProvider,
 } from "./update-provider";
+export {
+  type ExternalDailyRow,
+  type ExternalPageComponentInput,
+  type ExternalSectionComponent,
+  type ExternalSectionIncident,
+  type ExternalSectionProvider,
+  type PageExternalSection,
+  getPageExternalSection,
+} from "./status-page";
