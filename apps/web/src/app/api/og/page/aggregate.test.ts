@@ -5,6 +5,7 @@ import {
   type ComponentUptime,
   aggregatePageDays,
   aggregateUptime,
+  safeIconUrl,
   stateContext,
 } from "./aggregate";
 
@@ -121,6 +122,45 @@ describe("aggregateUptime", () => {
   test("returns null when an uptime value is unparsable", () => {
     expect(
       aggregateUptime([monitor("n/a", []), monitor("100%", [])]),
+    ).toBeNull();
+  });
+});
+
+describe("safeIconUrl", () => {
+  const BLOB = "https://abc123.public.blob.vercel-storage.com/acme/icon.png";
+
+  test("returns null for missing or non-URL values", () => {
+    expect(safeIconUrl(null)).toBeNull();
+    expect(safeIconUrl(undefined)).toBeNull();
+    expect(safeIconUrl("")).toBeNull();
+    expect(safeIconUrl("favicon.ico")).toBeNull();
+  });
+
+  test("accepts raster icons on the upload storage host", () => {
+    expect(safeIconUrl(BLOB)).toBe(BLOB);
+    expect(safeIconUrl(`${BLOB}?v=1`)).toBe(`${BLOB}?v=1`);
+  });
+
+  test("rejects non-https URLs even on the allowed host", () => {
+    expect(
+      safeIconUrl("http://abc123.public.blob.vercel-storage.com/x.png"),
+    ).toBeNull();
+  });
+
+  test("rejects other hosts, including lookalike suffixes", () => {
+    expect(safeIconUrl("https://evil.com/icon.png")).toBeNull();
+    expect(safeIconUrl("https://server:3000/internal.png")).toBeNull();
+    expect(
+      safeIconUrl("https://x.public.blob.vercel-storage.com.evil.com/a.png"),
+    ).toBeNull();
+  });
+
+  test("rejects non-raster paths on the allowed host", () => {
+    expect(
+      safeIconUrl("https://abc123.public.blob.vercel-storage.com/icon.svg"),
+    ).toBeNull();
+    expect(
+      safeIconUrl("https://abc123.public.blob.vercel-storage.com/favicon.ico"),
     ).toBeNull();
   });
 });

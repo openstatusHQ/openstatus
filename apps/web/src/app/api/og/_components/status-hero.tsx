@@ -1,6 +1,6 @@
 import type { StatusVariant } from "@openstatus/tracker";
 
-import type { DayCell } from "../page/aggregate";
+import { type DayCell, safeIconUrl } from "../page/aggregate";
 import { UptimeBars, ogColors } from "./uptime-bars";
 
 const variantContent: Record<
@@ -63,10 +63,7 @@ export function StatusHero({
   days: DayCell[];
 }) {
   const content = variantContent[variant];
-  // satori only decodes raster formats — .svg/.ico icons render as a blank box
-  const showImage = Boolean(
-    icon?.startsWith("http") && /\.(png|jpe?g|webp|gif)(\?|$)/i.test(icon),
-  );
+  const iconUrl = safeIconUrl(icon);
 
   return (
     <div
@@ -90,9 +87,9 @@ export function StatusHero({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {showImage && icon ? (
+          {iconUrl ? (
             <img
-              src={icon}
+              src={iconUrl}
               width={52}
               height={52}
               style={{ borderRadius: 12 }}
@@ -113,7 +110,7 @@ export function StatusHero({
                 fontSize: 30,
               }}
             >
-              {(title[0] ?? "?").toUpperCase()}
+              {(Array.from(title)[0] ?? "?").toUpperCase()}
             </div>
           )}
           <span style={{ fontSize: 26, fontWeight: 500, letterSpacing: -0.26 }}>
