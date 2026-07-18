@@ -112,6 +112,26 @@ export function stateContext(
   return null;
 }
 
+// satori fetches the icon server-side during render — restrict to our upload
+// storage so a stored URL can't be used as an SSRF primitive, and to raster
+// formats since satori renders .svg/.ico as blank boxes
+const ALLOWED_ICON_HOSTS = [/\.public\.blob\.vercel-storage\.com$/i];
+const RASTER_ICON = /\.(png|jpe?g|webp|gif)$/i;
+
+export function safeIconUrl(icon: string | null | undefined): string | null {
+  if (!icon) return null;
+  let url: URL;
+  try {
+    url = new URL(icon);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+  if (!ALLOWED_ICON_HOSTS.some((host) => host.test(url.hostname))) return null;
+  if (!RASTER_ICON.test(url.pathname)) return null;
+  return url.toString();
+}
+
 export function aggregateUptime(components: ComponentUptime[]): string | null {
   const monitors = components.filter((c) => c.type === "monitor");
   if (monitors.length === 0) return null;
