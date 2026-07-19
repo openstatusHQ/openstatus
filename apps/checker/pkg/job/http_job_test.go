@@ -2,6 +2,8 @@ package job_test
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/openstatushq/openstatus/apps/checker/pkg/job"
@@ -144,4 +146,55 @@ func TestProtoNumberAssertionToComparator(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestHTTPJob_HeaderAssertions ensures that header assertions influence the
+// request status for the private location scheduler, matching the behaviour of
+// the public checker. Regression test for a bug where the result of
+// HeaderEvaluate was discarded, so a failing header assertion was still
+// reported as a success.
+func TestHTTPJob_HeaderAssertions(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Custom", "actual")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	newMonitor := func(target string) *v1.HTTPMonitor {
+		return &v1.HTTPMonitor{
+			Url:     srv.URL,
+			Method:  "GET",
+			Timeout: 10000,
+			Retry:   1,
+			HeaderAssertions: []*v1.HeaderAssertion{
+				{
+					Key:        "X-Custom",
+					Comparator: v1.StringComparator_STRING_COMPARATOR_EQUAL,
+					Target:     target,
+				},
+			},
+		}
+	}
+
+	t.Run("failing header assertion marks request as error", func(t *testing.T) {
+		monitor := newMonitor("expected")
+
+		data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		assert.Equal(t, "error", data.RequestStatus)
+		assert.Equal(t, uint8(1), data.Error)
+	})
+
+	t.Run("passing header assertion keeps request successful", func(t *testing.T) {
+		monitor := newMonitor("actual")
+
+		data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		assert.Equal(t, "success", data.RequestStatus)
+		assert.Equal(t, uint8(0), data.Error)
+	})
 }
