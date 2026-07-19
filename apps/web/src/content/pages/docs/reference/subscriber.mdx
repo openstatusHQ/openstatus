@@ -37,6 +37,206 @@ Status page administrators can manage their subscriber lists, including:
 - **Adding/removing subscribers** — manually adding or removing subscribers.
 - **Communication** — sending ad-hoc notifications to the subscriber list (if supported by the platform).
 
+## Adding subscribers from the dashboard
+
+Beyond public self-subscription, administrators can add subscribers directly from the dashboard. This is useful for onboarding partners, internal teams, or automation that should receive updates without going through the public opt-in flow. Each manually added subscriber uses one of two channels:
+
+- **Email** — delivers updates to a contact address. By adding an email here you confirm the contact has consented to receive status updates; no confirmation email is sent.
+- **Webhook** — POSTs each update to a URL. Slack and Discord URLs receive channel-native messages; any other URL receives a generic JSON payload.
+
+For both channels, you can optionally:
+
+- **Set a display label** — shown in place of the raw destination in the dashboard (e.g. `Supabase #incidents`).
+- **Scope to page components** — leave empty to notify for the entire page, or select specific components to only notify on matching reports.
+
+![openstatus](/assets/logos/openstatus.jpeg)
+
+## Webhook subscribers
+
+A webhook subscriber receives a POST request for every status report and scheduled maintenance update. openstatus inspects the destination URL and emits a payload tailored to it.
+
+### Slack
+
+A URL starting with `https://hooks.slack.com/services/` is treated as a Slack incoming webhook. The payload uses Slack [Block Kit](https://api.slack.com/block-kit) attachments — a colored header (red/yellow/green/blue by status), status and page fields, the update message, affected components, and footer links to view, manage, and unsubscribe.
+
+### Discord
+
+A URL starting with `https://discord.com/api/webhooks/` is treated as a Discord webhook. The payload uses a Discord embed with a status-colored sidebar, a title linking to the event, status and page fields, the update message, affected components, and manage/unsubscribe links.
+
+### Generic
+
+Any other URL receives a versioned, channel-agnostic JSON payload. Use this to forward updates into your own systems. The body is shaped as:
+
+```json
+{
+  "version": "1",
+  "type": "status_report",
+  "data": {
+    "status_report": {
+      "id": 123,
+      "title": "Database connectivity issues",
+      "url": "https://acme.openstatus.dev/events/report/123",
+      "update": {
+        "id": 456,
+        "status": "investigating",
+        "message": "We are investigating elevated error rates.",
+        "occurred_at": "2026-06-26T10:00:00.000Z"
+      },
+      "page": {
+        "id": 1,
+        "name": "Acme Status",
+        "slug": "acme",
+        "url": "https://acme.openstatus.dev"
+      },
+      "components": [
+        { "id": 7, "name": "API", "impact": "major_outage" }
+      ]
+    }
+  },
+  "subscription": {
+    "manage_url": "https://acme.openstatus.dev/manage/<token>",
+    "unsubscribe_url": "https://acme.openstatus.dev/unsubscribe/<token>"
+  }
+}
+```
+
+`page.url` is the canonical status page origin, while `status_report.url` (and `maintenance.url` below) is the deep link to that specific event. Each entry in `components` carries an `impact`, which may be `null` when no impact is associated with the component for this update.
+
+Scheduled maintenance is delivered with `type: "maintenance"` and a `data.maintenance` object carrying `starts_at` / `ends_at` in place of the `update` block. The `version` field is bumped on any breaking change, so pin to it when consuming the payload.
+
+The **Send test** action emits the same envelope with `type: "test"` and a `data.test` object — use the `type` discriminator to ignore it (it carries no real event):
+
+```json
+{
+  "version": "1",
+  "type": "test",
+  "data": {
+    "test": {
+      "message": "Your openstatus webhook is configured correctly.",
+      "timestamp": "2026-06-26T10:38:00.132Z"
+    }
+  }
+}
+```
+
+You can attach **custom request headers** to every webhook request — for example, a shared secret or an authorization token your receiver verifies.
+
+#### Timeout and retries
+
+Each webhook request is given **5 seconds** to complete. If your endpoint has not responded within that window, the request is aborted and treated as a failed attempt.
+
+Failed attempts are retried with **jittered exponential backoff** (≈200 ms base delay), up to **3 retries** (4 attempts total). Only transient failures are retried:
+
+- **Network errors and timeouts** (no HTTP response).
+- **`5xx` responses** — a server-side error on your end that may clear.
+- **`429 Too Many Requests`** — your endpoint asked us to back off.
+
+Any other `4xx` response (e.g. `400`, `401`, `404`) is treated as a permanent client error and is **not** retried, since replaying the same request would fail again. Make your receiver **idempotent** — a retried delivery is identical to the original, so deduplicate on the update `id` if you act on each request.
+
+#### Example: post updates to X / Bluesky
+
+[`statuspage-socials-notifier`](https://github.com/openstatusHQ/statuspage-socials-notifier) is a reference receiver that consumes the generic payload and cross-posts each update to your X (Twitter) and Bluesky accounts. Point a generic webhook subscriber at its endpoint to mirror your status page on social media — it doubles as a worked example of validating and handling the payload.
+
+#### Validating the payload
+
+The payload shape is defined in [`packages/subscriptions/src/payload.ts`](https://github.com/openstatusHQ/openstatus/blob/main/packages/subscriptions/src/payload.ts). Copy this zod schema to validate incoming requests in your own receiver:
+
+```ts
+import { z } from "zod";
+
+export const WEBHOOK_PAYLOAD_VERSION = "1" as const;
+
+const impactSchema = z.enum([
+  "operational",
+  "degraded_performance",
+  "partial_outage",
+  "major_outage",
+]);
+
+const statusSchema = z.enum([
+  "investigating",
+  "identified",
+  "monitoring",
+  "resolved",
+]);
+
+const componentSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  impact: impactSchema.nullish(),
+});
+
+const pageSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  slug: z.string(),
+  url: z.url(),
+});
+
+const subscriptionSchema = z.object({
+  manage_url: z.string().nullish(),
+  unsubscribe_url: z.string().nullish(),
+});
+
+const statusReportWebhookSchema = z.object({
+  version: z.literal(WEBHOOK_PAYLOAD_VERSION),
+  type: z.literal("status_report"),
+  data: z.object({
+    status_report: z.object({
+      id: z.number().int(),
+      title: z.string(),
+      url: z.url(),
+      update: z.object({
+        id: z.number().int(),
+        status: statusSchema,
+        message: z.string(),
+        occurred_at: z.string(),
+      }),
+      page: pageSchema,
+      components: z.array(componentSchema),
+    }),
+  }),
+  subscription: subscriptionSchema,
+});
+
+const maintenanceWebhookSchema = z.object({
+  version: z.literal(WEBHOOK_PAYLOAD_VERSION),
+  type: z.literal("maintenance"),
+  data: z.object({
+    maintenance: z.object({
+      id: z.number().int(),
+      title: z.string(),
+      url: z.url(),
+      message: z.string(),
+      starts_at: z.string().optional(),
+      ends_at: z.string().optional(),
+      page: pageSchema,
+      components: z.array(componentSchema),
+    }),
+  }),
+  subscription: subscriptionSchema,
+});
+
+const testWebhookSchema = z.object({
+  version: z.literal(WEBHOOK_PAYLOAD_VERSION),
+  type: z.literal("test"),
+  data: z.object({
+    test: z.object({
+      message: z.string(),
+      timestamp: z.string(),
+    }),
+  }),
+});
+
+export const webhookPayloadSchema = z.discriminatedUnion("type", [
+  statusReportWebhookSchema,
+  maintenanceWebhookSchema,
+  testWebhookSchema,
+]);
+
+export type WebhookPayload = z.infer<typeof webhookPayloadSchema>;
+```
+
 ## Related resources
 
 - **[Status page reference](/docs/reference/status-page)** — detailed information on managing and configuring status pages.

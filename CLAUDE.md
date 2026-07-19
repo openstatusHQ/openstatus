@@ -101,7 +101,7 @@ pnpm test
 
 -   **Monorepo:** The project is organized as a monorepo using pnpm workspaces. All applications and packages are located in the `apps/` and `packages/` directories, respectively.
 -   **Build System:** Turborepo is used to manage the build process. The `turbo.json` file defines the build pipeline and dependencies between tasks.
--   **Linting and Formatting:** The project uses Biome for linting and formatting. The configuration can be found in the `biome.jsonc` file.
+-   **Linting and Formatting:** The project uses oxlint for linting and oxfmt for formatting. The configuration can be found in `oxlint.config.ts` and `oxfmt.config.ts`.
 -   **Code Generation:** The project uses `drizzle-kit` for database schema migrations.
 -   **API:** The backend API is built using Hono and tRPC. The API is documented using OpenAPI.
 

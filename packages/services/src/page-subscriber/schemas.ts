@@ -38,6 +38,33 @@ export type CreatePageSubscriberInput = z.infer<
   typeof CreatePageSubscriberInput
 >;
 
+export const CreateSlackSubscriberInput = z.object({
+  pageId: z.number().int().positive(),
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+  channelName: z.string().max(255).optional(),
+});
+export type CreateSlackSubscriberInput = z.infer<
+  typeof CreateSlackSubscriberInput
+>;
+
+export const RemoveSlackSubscriberInput = z.object({
+  pageId: z.number().int().positive(),
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+});
+export type RemoveSlackSubscriberInput = z.infer<
+  typeof RemoveSlackSubscriberInput
+>;
+
+export const ListSlackSubscribersInput = z.object({
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+});
+export type ListSlackSubscribersInput = z.infer<
+  typeof ListSlackSubscribersInput
+>;
+
 export const UpdatePageSubscriberChannelInput = z.object({
   subscriberId: z.number().int().positive(),
   pageId: z.number().int().positive(),

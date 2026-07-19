@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
+
+message Headers {
+    string key = 1;
+    string value = 2;
+}
+
+message OtelConfig {
+    string endpoint = 1;
+    repeated Headers headers = 2;
+}

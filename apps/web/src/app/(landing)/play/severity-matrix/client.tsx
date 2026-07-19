@@ -7,7 +7,7 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { Slider } from "@openstatus/ui/components/ui/slider";
 import { useState } from "react";
 
-import { Details } from "@/content/mdx-components/details";
+import { Details } from "../../../../content/mdx-components/details";
 
 type SeverityLevel = "SEV0" | "SEV1" | "SEV2" | "SEV3";
 

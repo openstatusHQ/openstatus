@@ -1,6 +1,5 @@
 import { Events } from "@openstatus/analytics";
 import {
-  getWorkspace,
   getWorkspaceWithUsage,
   listWorkspaces,
   updateWorkspaceName,
@@ -11,14 +10,6 @@ import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const workspaceRouter = createTRPCRouter({
-  getWorkspace: protectedProcedure.query(async ({ ctx }) => {
-    try {
-      return await getWorkspace({ ctx: toServiceCtx(ctx) });
-    } catch (err) {
-      toTRPCError(err);
-    }
-  }),
-
   get: protectedProcedure.query(async ({ ctx }) => {
     try {
       return await getWorkspaceWithUsage({ ctx: toServiceCtx(ctx) });

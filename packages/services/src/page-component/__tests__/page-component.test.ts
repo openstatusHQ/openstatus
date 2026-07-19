@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-
 import { and, db, eq, inArray } from "@openstatus/db";
 import {
   monitor,
@@ -7,6 +5,8 @@ import {
   pageComponent,
   pageComponentGroup,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
   SEEDED_WORKSPACE_FREE_ID,

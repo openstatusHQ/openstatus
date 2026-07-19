@@ -42,7 +42,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		return nil, NewValidationError(err)
 	}
 
-	ic, err := h.getIngestContext(ctx, token, req.Msg.Id)
+	ic, err := h.getIngestContext(ctx, token, req.Msg.MonitorId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -58,12 +58,10 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 	}
 
 	records := make(map[string][]string)
-	for _, record := range req.Msg.Records {
+	for recordType, record := range req.Msg.Records {
 		r := []string{}
-		for _, value := range record.GetRecord() {
-			r = append(r, value)
-		}
-		records[record.String()] = r
+		r = append(r, record.GetRecord()...)
+		records[recordType] = r
 	}
 
 	recordsJSON, err := json.Marshal(records)

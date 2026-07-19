@@ -38,6 +38,7 @@ import {
   getWorstVariant,
   isMonitorComponent,
   setDataByType,
+  withTinybirdFallback,
 } from "./statusPage.utils";
 import {
   getMetricsLatencyMultiProcedure,
@@ -388,6 +389,10 @@ export const statusPageRouter = createTRPCRouter({
         .sort((a, b) => a.order - b.order);
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
+      // stored custom theme stops applying when the plan no longer includes it
+      const customTheme = ws.data?.limits["custom-theme"]
+        ? _page.customTheme
+        : null;
 
       const statusReports = _page.statusReports.sort((a, b) => {
         // Sort reports without updates to the beginning
@@ -424,6 +429,7 @@ export const statusPageRouter = createTRPCRouter({
 
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
+        customTheme,
         monitors,
         monitorGroups,
         trackers,
@@ -491,7 +497,13 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = monitorComponents
         .map((c) => ({
           ...c.monitor,
-          name: c.monitor?.externalName ?? c.monitor?.name ?? "",
+          // the page component carries the public-facing name/description;
+          // clear externalName so the schema transform keeps the override.
+          // description: NULL means never backfilled → fall back to the
+          // monitor's own; "" is a deliberately cleared field → stays blank.
+          name: c.name,
+          description: c.description ?? c.monitor?.description ?? "",
+          externalName: null,
         }))
         .sort((a, b) => {
           const aComp = monitorComponents.find((m) => m.monitor?.id === a.id);
@@ -506,9 +518,14 @@ export const statusPageRouter = createTRPCRouter({
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
+      // stored custom theme stops applying when the plan no longer includes it
+      const customTheme = ws.data?.limits["custom-theme"]
+        ? _page.customTheme
+        : null;
 
       return selectPublicPageLightSchemaWithRelation.parse({
         ..._page,
+        customTheme,
         monitors,
         incidents,
         statusReports: _page.statusReports,
@@ -660,16 +677,29 @@ export const statusPageRouter = createTRPCRouter({
         dns: getStatusProcedure("45d", "dns"),
       };
 
-      const [statusHttp, statusTcp, statusDns] = await Promise.all(
-        Object.entries(proceduresByType).map(([type, procedure]) => {
-          const monitorIds = monitorsByType[
-            type as keyof typeof proceduresByType
-          ].map((c) => c.monitor.id.toString());
-          if (monitorIds.length === 0) return null;
-          // NOTE: if manual mode, don't fetch data from tinybird
-          return input.barType === "manual" ? null : procedure({ monitorIds });
-        }),
+      // Manual mode never touches Tinybird. Otherwise race the reads against
+      // the fallback budget: a slow (>5s) or erroring Tinybird degrades the
+      // whole page to manual mode so bars still render from DB events.
+      const tinybird = await withTinybirdFallback(() =>
+        input.barType === "manual"
+          ? Promise.resolve([null, null, null])
+          : Promise.all(
+              Object.entries(proceduresByType).map(([type, procedure]) => {
+                const monitorIds = monitorsByType[
+                  type as keyof typeof proceduresByType
+                ].map((c) => c.monitor.id.toString());
+                if (monitorIds.length === 0) return null;
+                return procedure({ monitorIds });
+              }),
+            ),
       );
+
+      const tinybirdUnhealthy = !tinybird.ok;
+      const [statusHttp, statusTcp, statusDns] = tinybird.data ?? [
+        null,
+        null,
+        null,
+      ];
 
       const statusDataByMonitorId = new Map<
         string,
@@ -713,6 +743,7 @@ export const statusPageRouter = createTRPCRouter({
           c.type === "monitor" &&
           c.monitor &&
           input.barType !== "manual" &&
+          !tinybirdUnhealthy &&
           process.env.NOOP_UPTIME !== "true";
 
         let filledData: StatusData[];
@@ -734,10 +765,11 @@ export const statusPageRouter = createTRPCRouter({
           });
         }
 
-        // Static components always use manual mode since they don't have real monitoring data
-        const effectiveBarType = c.type === "static" ? "manual" : input.barType;
-        const effectiveCardType =
-          c.type === "static" ? "manual" : input.cardType;
+        // Static components have no monitoring data; a degraded Tinybird forces
+        // every component into manual mode so bars/cards still render.
+        const forceManual = c.type === "static" || tinybirdUnhealthy;
+        const effectiveBarType = forceManual ? "manual" : input.barType;
+        const effectiveCardType = forceManual ? "manual" : input.cardType;
 
         const processedData = setDataByType({
           events,
@@ -951,19 +983,24 @@ export const statusPageRouter = createTRPCRouter({
         dns: getMetricsLatencyMultiProcedure("1d", "dns"),
       };
 
+      // Slow/erroring Tinybird → empty latency data so the page still renders.
+      const metrics = await withTinybirdFallback(() =>
+        Promise.all(
+          Object.entries(proceduresByType).map(([type, procedure]) => {
+            const monitorIds = monitorsByType[
+              type as keyof typeof proceduresByType
+            ].map((c) => c.monitor.id.toString());
+            if (monitorIds.length === 0) return null;
+            return procedure({ monitorIds });
+          }),
+        ),
+      );
+
       const [
         metricsLatencyMultiHttp,
         metricsLatencyMultiTcp,
         metricsLatencyMultiDns,
-      ] = await Promise.all(
-        Object.entries(proceduresByType).map(([type, procedure]) => {
-          const monitorIds = monitorsByType[
-            type as keyof typeof proceduresByType
-          ].map((c) => c.monitor.id.toString());
-          if (monitorIds.length === 0) return null;
-          return procedure({ monitorIds });
-        }),
-      );
+      ] = metrics.data ?? [null, null, null];
 
       const metricsDataByMonitorId = new Map<
         string,
@@ -1069,24 +1106,33 @@ export const statusPageRouter = createTRPCRouter({
       const fromDate = startOfDay(subDays(new Date(), 7)).toISOString();
       const toDate = endOfDay(new Date()).toISOString();
 
-      const [latency, regions, uptime] = await Promise.all([
-        await proceduresByType[type].latency({
-          monitorId: _monitor.id.toString(),
-          fromDate,
-          toDate,
-        }),
-        await proceduresByType[type].regions({
-          monitorId: _monitor.id.toString(),
-          fromDate,
-          toDate,
-        }),
-        await proceduresByType[type].uptime({
-          monitorId: _monitor.id.toString(),
-          interval: 240,
-          fromDate,
-          toDate,
-        }),
-      ]);
+      // Slow/erroring Tinybird → empty chart data so the page still renders.
+      const metrics = await withTinybirdFallback(() =>
+        Promise.all([
+          proceduresByType[type].latency({
+            monitorId: _monitor.id.toString(),
+            fromDate,
+            toDate,
+          }),
+          proceduresByType[type].regions({
+            monitorId: _monitor.id.toString(),
+            fromDate,
+            toDate,
+          }),
+          proceduresByType[type].uptime({
+            monitorId: _monitor.id.toString(),
+            interval: 240,
+            fromDate,
+            toDate,
+          }),
+        ]),
+      );
+
+      const [latency, regions, uptime] = metrics.data ?? [
+        { data: [] },
+        { data: [] },
+        { data: [] },
+      ];
 
       return {
         ...selectPublicMonitorSchema.parse(_monitor),

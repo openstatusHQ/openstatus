@@ -1,6 +1,6 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
-import { Effect, Schedule } from "effect";
+import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
 
@@ -17,6 +17,28 @@ import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
 
+export function statusReportSubject(req: {
+  status: StatusReportProps["status"];
+  reportTitle: string;
+}): string {
+  return req.status === "resolved"
+    ? `RESOLVED: ${req.reportTitle}`
+    : req.reportTitle;
+}
+
+// Deterministic Resend rejections: retrying the identical request can never
+// succeed (e.g. 409 invalid_idempotent_request when a key is reused with a
+// different body), it only burns the backoff and re-logs the error.
+const NON_RETRYABLE_RESEND_ERRORS = new Set<string>([
+  "invalid_idempotent_request",
+  "invalid_idempotency_key",
+  "validation_error",
+]);
+
+function isRetryableSendError(error: { name: string }): boolean {
+  return !NON_RETRYABLE_RESEND_ERRORS.has(error.name);
+}
+
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
   const result: T[][] = [];
@@ -28,9 +50,13 @@ function chunk<T>(array: T[], size: number): T[][] {
 
 export class EmailClient {
   public readonly client: Resend;
+  // Base delay for the per-batch send retry. Overridable so tests can run the
+  // retry path without the real ~1s exponential sleep.
+  private readonly retryBackoff: Duration.DurationInput;
 
-  constructor(opts: { apiKey: string }) {
+  constructor(opts: { apiKey: string; retryBackoff?: Duration.DurationInput }) {
     this.client = new Resend(opts.apiKey);
+    this.retryBackoff = opts.retryBackoff ?? "1000 millis";
   }
 
   public async sendFollowUp(req: { to: string }) {
@@ -152,6 +178,10 @@ export class EmailClient {
       subscribers: Array<{ email: string; token: string }>;
       pageSlug: string;
       customDomain?: string | null;
+      // Base key for Resend idempotency. The per-batch retry below would
+      // otherwise re-send the whole chunk if a request succeeds server-side
+      // but the response is lost. Must be stable across retries.
+      idempotencyKey?: string;
     },
   ) {
     const statusPageBaseUrl = req.customDomain
@@ -167,7 +197,14 @@ export class EmailClient {
       return;
     }
 
-    for (const recipients of chunk(req.subscribers, 100)) {
+    const chunks = chunk(req.subscribers, 100);
+    for (let i = 0; i < chunks.length; i++) {
+      const recipients = chunks[i];
+      // suffix the chunk index so a multi-batch send doesn't collide its
+      // own chunks on a single shared key
+      const batchKey = req.idempotencyKey
+        ? `${req.idempotencyKey}:${i}`
+        : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.batch.send(
@@ -176,7 +213,7 @@ export class EmailClient {
               const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-                subject: req.reportTitle,
+                subject: statusReportSubject(req),
                 to: subscriber.email,
                 react: (
                   <StatusReportEmail
@@ -187,6 +224,7 @@ export class EmailClient {
                 ),
               };
             }),
+            batchKey ? { idempotencyKey: batchKey } : undefined,
           ),
         catch: (_unknown) =>
           new Error(
@@ -200,7 +238,8 @@ export class EmailClient {
         ),
         Effect.retry({
           times: 3,
-          schedule: Schedule.exponential("1000 millis"),
+          schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -336,6 +375,7 @@ export class EmailClient {
     from: string;
     to: string;
     pageComponents: string[];
+    idempotencyKey?: string;
   }) {
     const statusPageBaseUrl = req.customDomain
       ? `https://${req.customDomain}`
@@ -350,7 +390,12 @@ export class EmailClient {
       return;
     }
 
-    for (const recipients of chunk(req.subscribers, 100)) {
+    const chunks = chunk(req.subscribers, 100);
+    for (let i = 0; i < chunks.length; i++) {
+      const recipients = chunks[i];
+      const batchKey = req.idempotencyKey
+        ? `${req.idempotencyKey}:${i}`
+        : undefined;
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.batch.send(
@@ -375,6 +420,7 @@ export class EmailClient {
                 ),
               };
             }),
+            batchKey ? { idempotencyKey: batchKey } : undefined,
           ),
         catch: (_unknown) =>
           new Error(
@@ -388,7 +434,8 @@ export class EmailClient {
         ),
         Effect.retry({
           times: 3,
-          schedule: Schedule.exponential("1000 millis"),
+          schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);

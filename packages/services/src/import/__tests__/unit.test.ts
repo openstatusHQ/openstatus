@@ -1,10 +1,10 @@
-import { beforeAll, describe, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import { monitor, pageComponent } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { ImportSummary } from "@openstatus/importers";
+import { expect } from "@std/expect";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import { addLimitWarnings, clampPeriodicity, computePhaseStatus } from "../";
 import { withTestTransaction } from "../../../test/helpers";

@@ -10,6 +10,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
+import { FormCustomTheme } from "./form-custom-theme";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
@@ -69,6 +70,12 @@ export function FormStatusPageUpdate() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
+    }),
+  );
+
+  const updateCustomThemeMutation = useMutation(
+    trpc.page.updateCustomTheme.mutationOptions({
+      onSuccess: () => refetch(),
     }),
   );
 
@@ -156,6 +163,17 @@ export function FormStatusPageUpdate() {
             configuration: {
               theme: values.configuration.theme as ThemeKey,
             },
+          });
+        }}
+      />
+      <FormCustomTheme
+        locked={workspace.limits["custom-theme"] === false}
+        themeKey={statusPage.configuration?.theme ?? "default"}
+        defaultValue={statusPage.customTheme}
+        onSubmit={async (values) => {
+          await updateCustomThemeMutation.mutateAsync({
+            id: Number.parseInt(id),
+            customTheme: values.customTheme,
           });
         }}
       />

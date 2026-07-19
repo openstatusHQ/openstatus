@@ -2,22 +2,21 @@
 
 import { REPORT_WINDOW_MINUTES } from "@openstatus/api/src/router/effective-status";
 
-import {
-  ContentBoxDescription,
-  ContentBoxLink,
-  ContentBoxTitle,
-} from "@/app/(landing)/content-box";
-import { Grid } from "@/content/mdx-components/grid";
-import { JsonLd } from "@/lib/metadata/json-ld";
-import { BASE_URL } from "@/lib/metadata/shared-metadata";
+import { Grid } from "../../../../../content/mdx-components/grid";
+import { JsonLd } from "../../../../../lib/metadata/json-ld";
+import { BASE_URL } from "../../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDWebPage,
-} from "@/lib/metadata/structured-data";
-import { api } from "@/trpc/rq-client";
-
+} from "../../../../../lib/metadata/structured-data";
+import { api } from "../../../../../trpc/rq-client";
+import {
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+} from "../../../content-box";
 import { ExternalServicePill } from "../../external-service-pill";
 import { formatRelative } from "../../utils";
 import { HistoryBars } from "../history-bars";
@@ -153,7 +152,7 @@ export function ComponentDetail({
   });
 
   if (!data.found || !data.service || !data.component) return null;
-  const { service, component, history, incidents } = data;
+  const { service, component, history, incidents, overlayIncidents } = data;
 
   const fullName = `${service.name} ${component.name}`;
   const answer = answerFor({
@@ -233,7 +232,7 @@ export function ComponentDetail({
         {component.name} uptime over the last {days} days
       </h2>
       <div className="not-prose">
-        <HistoryBars daily={history} days={days} />
+        <HistoryBars daily={history} days={days} incidents={overlayIncidents} />
       </div>
 
       <h2>{component.name} recent incidents</h2>

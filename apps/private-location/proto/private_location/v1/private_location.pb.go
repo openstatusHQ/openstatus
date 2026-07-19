@@ -9,7 +9,6 @@ package v1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -63,6 +62,7 @@ type MonitorsResponse struct {
 	HttpMonitors  []*HTTPMonitor         `protobuf:"bytes,1,rep,name=http_monitors,json=httpMonitors,proto3" json:"http_monitors,omitempty"`
 	TcpMonitors   []*TCPMonitor          `protobuf:"bytes,2,rep,name=tcp_monitors,json=tcpMonitors,proto3" json:"tcp_monitors,omitempty"`
 	DnsMonitors   []*DNSMonitor          `protobuf:"bytes,3,rep,name=dns_monitors,json=dnsMonitors,proto3" json:"dns_monitors,omitempty"`
+	Region        string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -116,6 +116,13 @@ func (x *MonitorsResponse) GetDnsMonitors() []*DNSMonitor {
 		return x.DnsMonitors
 	}
 	return nil
+}
+
+func (x *MonitorsResponse) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
 }
 
 type IngestTCPRequest struct {
@@ -654,12 +661,13 @@ var File_private_location_v1_private_location_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\n" +
-	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a%private_location/v1/dns_monitor.proto\x1a&private_location/v1/http_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
-	"\x0fMonitorsRequest\"\xe1\x01\n" +
+	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a%private_location/v1/dns_monitor.proto\x1a&private_location/v1/http_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
+	"\x0fMonitorsRequest\"\xf9\x01\n" +
 	"\x10MonitorsResponse\x12E\n" +
 	"\rhttp_monitors\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\fhttpMonitors\x12B\n" +
 	"\ftcp_monitors\x18\x02 \x03(\v2\x1f.private_location.v1.TCPMonitorR\vtcpMonitors\x12B\n" +
-	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\"\x9e\x02\n" +
+	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\x12\x16\n" +
+	"\x06region\x18\x04 \x01(\tR\x06region\"\x9e\x02\n" +
 	"\x10IngestTCPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
 	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +

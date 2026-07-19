@@ -1,19 +1,19 @@
 import { pageConfigurationSchema } from "@openstatus/db/src/schema";
-import { generateThemeStyles } from "@openstatus/theme-store";
+import { generatePageStyles } from "@openstatus/theme-store";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
-import { PasswordWrapper } from "@/components/password-wrapper";
+import { PasswordWrapper } from "../../../components/password-wrapper";
 import {
   FloatingButton,
   StatusPageProvider,
-} from "@/components/status-page/floating-button";
-import { FloatingTheme } from "@/components/status-page/floating-theme";
-import { ThemeProvider } from "@/components/themes/theme-provider";
-import { statusPageAlternates } from "@/lib/alternates";
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
+} from "../../../components/status-page/floating-button";
+import { FloatingTheme } from "../../../components/status-page/floating-theme";
+import { ThemeProvider } from "../../../components/themes/theme-provider";
+import { statusPageAlternates } from "../../../lib/alternates";
+import { getQueryClient, HydrateClient, trpc } from "../../../lib/trpc/server";
+import { defaultMetadata, ogMetadata, twitterMetadata } from "../../metadata";
 
 // Canonical schema — guarantees concrete enum output (never null/undefined).
 
@@ -45,9 +45,14 @@ export default async function Layout({
     <HydrateClient>
       <style
         id="theme-styles"
+        // custom theme vars (already plan-gated + validated server-side) are
+        // merged over the selected theme: custom-theme > theme
         // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
-          __html: generateThemeStyles(cfg.theme),
+          __html: generatePageStyles({
+            themeKey: cfg.theme,
+            customTheme: page.customTheme,
+          }),
         }}
       />
       <ThemeProvider
@@ -62,6 +67,7 @@ export default async function Layout({
           defaultShowUptime={cfg.uptime}
           defaultNumberOfDays={cfg.days}
           defaultCommunityTheme={cfg.theme}
+          customTheme={page.customTheme}
         >
           {children}
           <FloatingButton

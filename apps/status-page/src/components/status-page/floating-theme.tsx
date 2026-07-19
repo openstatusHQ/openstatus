@@ -21,8 +21,7 @@ import { Check, ChevronsUpDown, Palette } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
 
-import { ThemeSelect } from "@/components/themes/theme-select";
-
+import { ThemeSelect } from "../themes/theme-select";
 import { useStatusPage } from "./floating-button";
 
 export const COMMUNITY_THEME = THEME_KEYS;

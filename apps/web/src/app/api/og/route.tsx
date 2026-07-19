@@ -1,8 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
 
-import { OG_DESCRIPTION, TITLE } from "@/lib/metadata/shared-metadata";
-
+import { OG_DESCRIPTION, TITLE } from "../../../lib/metadata/shared-metadata";
 import { SIZE } from "./utils";
 
 export const runtime = "edge";

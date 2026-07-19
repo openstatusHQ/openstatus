@@ -20,9 +20,9 @@ import {
 import { useLocale } from "next-intl";
 import { useCallback, useMemo } from "react";
 
-import { Link } from "@/components/common/link";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import type { Locale as AppLocale } from "@/i18n/config";
+import { usePathnamePrefix } from "../../hooks/use-pathname-prefix";
+import type { Locale as AppLocale } from "../../i18n/config";
+import { Link } from "../common/link";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 type ReportInput = Page["statusReports"][number];

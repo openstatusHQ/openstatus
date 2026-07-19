@@ -16,7 +16,7 @@ export type VerifyResult = {
   pageName: string;
   pageSlug: string;
   customDomain: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email: string | null;
   webhookUrl?: string | null;
   token: string | null;

@@ -1,5 +1,5 @@
-import { type MDXData, formatDate } from "@/content/utils";
-import { getAuthor } from "@/data/author";
+import { type MDXData, formatDate } from "../../content/utils";
+import { getAuthor } from "../../data/author";
 
 export function ContentMetadata({ data }: { data: MDXData }) {
   return (

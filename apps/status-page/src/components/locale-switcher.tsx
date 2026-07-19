@@ -13,7 +13,7 @@ import {
   defaultLocale as globalDefaultLocale,
   localeTranslations,
   locales,
-} from "@/i18n/config";
+} from "../i18n/config";
 
 export function LocaleSwitcher({
   className,

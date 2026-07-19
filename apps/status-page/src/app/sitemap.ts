@@ -3,10 +3,10 @@ import { page } from "@openstatus/db/src/schema";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
-import { getBaseUrl } from "@/lib/base-url";
-import { stripHostPort } from "@/lib/domain";
-import { resolveRoute } from "@/lib/resolve-route";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { getBaseUrl } from "../lib/base-url";
+import { stripHostPort } from "../lib/domain";
+import { resolveRoute } from "../lib/resolve-route";
+import { getQueryClient, trpc } from "../lib/trpc/server";
 
 // One sitemap per host: a custom domain must never enumerate other tenants'
 // pages. trpc httpBatchLink needs Node, matching the other content routes.

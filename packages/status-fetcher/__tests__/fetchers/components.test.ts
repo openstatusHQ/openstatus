@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { expect } from "@std/expect";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import { IncidentioFetcher } from "../../src/fetchers/incidentio";
@@ -81,10 +82,11 @@ function itNormalizes(
 
     const components = await runComponents(fetcher, entry);
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    const call = fetchMock.calls[fetchMock.calls.length - 1];
+    expect(call.args[0]).toBe(
       `${entry.status_page_url}/api/v2/components.json`,
-      expect.any(Object),
     );
+    expect(call.args[1]).toEqual(expect.any(Object));
 
     // group container "grp" is excluded; only the three leaves remain
     expect(components).toHaveLength(3);

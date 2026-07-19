@@ -32,6 +32,7 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "lint": {},
+    "check": {},
     "dev": {
       "cache": false
     },

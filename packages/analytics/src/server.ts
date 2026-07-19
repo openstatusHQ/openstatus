@@ -3,15 +3,24 @@ import { OpenPanel, type TrackProperties } from "@openpanel/sdk";
 import { env } from "../env";
 import type { EventProps } from "./events";
 
-const op = new OpenPanel({
-  clientId: env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
-  clientSecret: env.OPENPANEL_CLIENT_SECRET,
-});
+// Lazily instantiate so importing this module has no side effects — a top-level
+// `new OpenPanel()` runs the node SDK at import time, which breaks bundling the
+// tRPC context into the Edge runtime.
+let client: OpenPanel | undefined;
 
-op.setGlobalProperties({
-  env: process.env.VERCEL_ENV || process.env.NODE_ENV || "localhost",
-  // app_version
-});
+function getClient() {
+  if (!client) {
+    client = new OpenPanel({
+      clientId: env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
+      clientSecret: env.OPENPANEL_CLIENT_SECRET,
+    });
+    client.setGlobalProperties({
+      env: process.env.VERCEL_ENV || process.env.NODE_ENV || "localhost",
+      // app_version
+    });
+  }
+  return client;
+}
 
 export type IdentifyProps = {
   userId?: string;
@@ -28,6 +37,8 @@ export async function setupAnalytics(props: IdentifyProps) {
   if (process.env.NODE_ENV !== "production") {
     return noop();
   }
+
+  const op = getClient();
 
   if (props.location) {
     op.api.addHeader("x-client-ip", props.location);

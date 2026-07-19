@@ -8,8 +8,6 @@ import { z } from "zod";
 
 import { getServiceContextFromRequest } from "@/lib/edge-context";
 
-export const runtime = "edge";
-
 const SERVICE_ERROR_STATUS: Record<ServiceErrorCode, number> = {
   NOT_FOUND: 404,
   FORBIDDEN: 403,

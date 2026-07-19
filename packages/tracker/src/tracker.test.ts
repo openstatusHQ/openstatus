@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
-
 import type {
   Incident,
   Maintenance,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { describe, test } from "@std/testing/bdd";
 
 import { blacklistDates } from "./blacklist";
 import { classNames, statusDetails } from "./config";
@@ -149,10 +149,12 @@ describe("Tracker", () => {
       ["0% → Major Outage", 100, 0, Status.MajorOutage],
     ];
 
-    test.each(cases)("%s", (_label, count, ok, expected) => {
-      const tracker = new Tracker({ data: [day("2024-01-01", count, ok)] });
-      expect(tracker.currentStatus).toBe(expected);
-    });
+    for (const [label, count, ok, expected] of cases) {
+      test(label, () => {
+        const tracker = new Tracker({ data: [day("2024-01-01", count, ok)] });
+        expect(tracker.currentStatus).toBe(expected);
+      });
+    }
 
     // NOTE: the lower boundary is `> 30`, while the other two are `>=`. So
     // exactly 30% uptime is Major (not Partial) Outage. Pinning current
@@ -336,7 +338,9 @@ describe("Tracker", () => {
 
     describe("per-day precedence (maintenance > report > incident > uptime)", () => {
       const DAY = "2024-01-01";
-      const okData = [day(`${DAY} 00:00:00`, 864, 864)];
+      // date-only string so `new Date(day)` anchors to UTC midnight, matching
+      // the UTC fixture dates below regardless of the runner's timezone.
+      const okData = [day(DAY, 864, 864)];
 
       test("maintenance overlapping the day wins", () => {
         const [bucket] = new Tracker({
@@ -394,7 +398,7 @@ describe("Tracker", () => {
 
       test("an incident resolved on a previous day does not affect this bucket", () => {
         const [bucket] = new Tracker({
-          data: [day("2024-01-02 00:00:00", 864, 864)],
+          data: [day("2024-01-02", 864, 864)],
           incidents: [
             createIncident({
               startedAt: new Date("2024-01-01T12:00:00.000Z"),

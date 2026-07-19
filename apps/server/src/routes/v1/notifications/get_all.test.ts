@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 

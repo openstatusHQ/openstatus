@@ -1,12 +1,3 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -17,6 +8,14 @@ import {
   statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  test,
+} from "@std/testing/bdd";
 
 import {
   SEEDED_WORKSPACE_FREE_ID,

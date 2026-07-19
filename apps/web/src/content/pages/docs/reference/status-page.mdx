@@ -79,6 +79,75 @@ Visitors from outside the allowed ranges are redirected to a static "Access Rest
 
 Allows you to upload a custom favicon that will appear in browser tabs and bookmarks for your status page. SVG files are sanitized server-side and must be under 100KB.
 
+### Theme
+
+**Type:** Enum (optional, defaults to `default`)
+
+Selects one of the community themes for your status page. Browse and preview them in the [Theme Explorer](https://themes.openstatus.dev), or [contribute your own](/docs/guides/how-to-create-status-page-theme).
+
+### Custom theme
+
+**Type:** Per-mode CSS variable overrides (Pro and Scale plans)
+
+Overrides individual CSS variables of the selected theme, separately for light and dark mode. Custom values take precedence over the theme; every variable you leave unset falls back to the theme's value.
+
+**Configuration:** in the dashboard, the editor provides a *Light* and a *Dark* tab. Each accepts one declaration per line:
+
+```css
+--primary: oklch(0.6 0.1 250);
+--radius: 0.5rem;
+```
+
+Values accept any valid CSS value (colors in `oklch`, `hsl`, hex, lengths, etc.). The characters `<`, `{`, `}` and `;` are not allowed inside a value.
+
+#### Supported CSS variables
+
+**Base** — the [shadcn/ui](https://ui.shadcn.com/docs/theming) color tokens used across the page:
+
+| Variable | Description |
+|---|---|
+| `--radius` | Corner radius of cards, buttons and inputs (e.g. `0.625rem`) |
+| `--background` | Page background |
+| `--foreground` | Default text color |
+| `--card` | Card background |
+| `--card-foreground` | Card text color |
+| `--popover` | Popover/dropdown background |
+| `--popover-foreground` | Popover/dropdown text color |
+| `--primary` | Primary buttons and accents |
+| `--primary-foreground` | Text on primary elements |
+| `--secondary` | Secondary buttons and surfaces |
+| `--secondary-foreground` | Text on secondary elements |
+| `--muted` | Muted surfaces |
+| `--muted-foreground` | Muted/secondary text |
+| `--accent` | Hover and highlight surfaces |
+| `--accent-foreground` | Text on accent surfaces |
+| `--border` | Border color |
+| `--input` | Input border color |
+| `--ring` | Focus ring color |
+
+**Status colors** — used for component and system status indicators:
+
+| Variable | Description |
+|---|---|
+| `--success` | Operational status (green) |
+| `--warning` | Degraded status (yellow) |
+| `--info` | Monitoring/maintenance status (blue) |
+| `--destructive` | Outage/error status (red) |
+
+**Charts** — differentiate the response-time percentiles on the public monitor charts:
+
+| Variable | Description |
+|---|---|
+| `--chart-1` | First percentile series |
+| `--chart-2` | Second percentile series |
+| `--chart-3` | Third percentile series |
+| `--chart-4` | Fourth percentile series |
+| `--chart-5` | Fifth percentile series |
+
+**Regions** — differentiate the monitoring regions on the public monitor charts. Optional; the defaults cover all regions:
+
+`--rainbow-1`, `--rainbow-2`, `--rainbow-3`, `--rainbow-4`, `--rainbow-5`, `--rainbow-6`, `--rainbow-7`, `--rainbow-8`, `--rainbow-9`, `--rainbow-10`, `--rainbow-11`, `--rainbow-12`, `--rainbow-13`, `--rainbow-14`, `--rainbow-15`, `--rainbow-16`, `--rainbow-17`
+
 ### JSON feed
 
 **Type:** Read-only endpoint

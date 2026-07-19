@@ -114,9 +114,7 @@ export function FormApiKey() {
     },
   });
 
-  const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: apiKeys = [], refetch } = useQuery(
     trpc.apiKeyRouter.getAll.queryOptions(),
   );

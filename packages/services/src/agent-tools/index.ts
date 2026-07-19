@@ -53,6 +53,7 @@ export type {
   InferAgentToolInput,
   InferAgentToolOutput,
   SummaryLine,
+  SummaryLineRef,
 } from "./types";
 export {
   type AgentSystemPromptOptions,

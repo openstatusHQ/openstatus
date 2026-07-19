@@ -6,7 +6,6 @@ import {
   pageSubscriberToPageComponent,
   selectPageSubscriberSchema,
 } from "@openstatus/db/src/schema";
-import { detectWebhookFlavor } from "@openstatus/subscriptions";
 import { assertSafeUrl } from "@openstatus/utils";
 
 import { emitAudit } from "../audit";
@@ -40,14 +39,9 @@ export async function updatePageSubscriberChannel(args: {
 
   // `assertSafeUrl` does a DNS lookup to block private/internal targets;
   // keep it outside the tx so we don't hold the SQLite write lock across
-  // a network call. Flavor check is pure and stays here for symmetry.
+  // a network call.
   if (input.webhookUrl !== undefined) {
     await assertSafeUrl(input.webhookUrl);
-    if (detectWebhookFlavor(input.webhookUrl) === "generic") {
-      throw new ValidationError(
-        "Only Slack and Discord webhook URLs are supported.",
-      );
-    }
   }
 
   await withTransaction(ctx, async (tx) => {

@@ -28,8 +28,10 @@ export default async function Layout({
   await fetchQueryOrNotFound(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
-  await queryClient.prefetchQuery(trpc.notification.list.queryOptions());
-  await queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions());
+  await Promise.all([
+    queryClient.prefetchQuery(trpc.notification.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
+  ]);
 
   return (
     <HydrateClient>

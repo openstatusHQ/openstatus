@@ -23,6 +23,7 @@
     "@hookform/resolvers": "catalog:",
     "@libsql/client": "catalog:",
     "@openpanel/nextjs": "catalog:",
+    "@openstatus/ai": "workspace:*",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
     "@openstatus/assertions": "workspace:*",

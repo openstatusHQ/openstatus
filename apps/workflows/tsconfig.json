@@ -3,7 +3,6 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "lib": ["ES2022"],
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "bundler"

@@ -67,5 +67,7 @@ export type StatusBarData = {
     isAggregated?: boolean;
     /** Overrides the type-derived dot color (e.g. the day's worst report impact). */
     status?: Exclude<StatusType, "empty">;
+    /** External link for the event (e.g. an upstream incident page). */
+    shortlink?: string;
   }[];
 };

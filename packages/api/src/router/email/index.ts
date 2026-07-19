@@ -5,14 +5,11 @@ import {
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
-import { notifyMaintenance } from "@openstatus/services/maintenance";
-import { notifyStatusReport } from "@openstatus/services/status-report";
 import { getChannel } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "../../env";
-import { toServiceCtx, toTRPCError } from "../../service-adapter";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -120,40 +117,6 @@ export const emailRouter = createTRPCRouter({
       );
 
       return { success: true };
-    }),
-
-  /**
-   * PROTECTED: Send status report update notifications via dispatcher
-   */
-  sendStatusReport: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      try {
-        await notifyStatusReport({
-          ctx: toServiceCtx(opts.ctx),
-          input: { statusReportUpdateId: opts.input.id },
-        });
-        return { success: true };
-      } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  /**
-   * PROTECTED: Send maintenance notifications via dispatcher
-   */
-  sendMaintenance: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      try {
-        await notifyMaintenance({
-          ctx: toServiceCtx(opts.ctx),
-          input: { maintenanceId: opts.input.id },
-        });
-        return { success: true };
-      } catch (err) {
-        toTRPCError(err);
-      }
     }),
 
   sendTeamInvitation: protectedProcedure

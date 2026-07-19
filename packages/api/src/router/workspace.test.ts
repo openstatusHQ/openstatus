@@ -1,4 +1,5 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
@@ -18,7 +19,7 @@ test("Get Test Workspace", async () => {
   });
 
   const caller = edgeRouter.createCaller(ctx);
-  const result = await caller.workspace.getWorkspace();
+  const result = await caller.workspace.get();
 
   expect(result).toMatchObject({
     id: 1,
@@ -47,7 +48,7 @@ test("by default we get the first workspace", async () => {
   });
 
   const caller = edgeRouter.createCaller(ctx);
-  const result = await caller.workspace.getWorkspace();
+  const result = await caller.workspace.get();
 
   expect(result).toMatchObject({
     id: 1,

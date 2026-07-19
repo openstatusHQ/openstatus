@@ -1,23 +1,21 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
 
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Grafana OnCall Notifications", () => {
-  let fetchMock: any = undefined;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
   });
 
   afterEach(() => {
-    if (fetchMock) {
-      fetchMock.mockRestore();
-    }
+    fetchMock.restore();
   });
 
   const createMockMonitor = () => ({
@@ -57,8 +55,8 @@ describe("Grafana OnCall Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(
       "https://oncall.example.com/integrations/v1/webhook/abc123",
     );
@@ -89,8 +87,8 @@ describe("Grafana OnCall Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.message).toBe("Status code: 503");
   });
@@ -110,8 +108,8 @@ describe("Grafana OnCall Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(
       "https://oncall.example.com/integrations/v1/webhook/abc123",
     );
@@ -138,8 +136,8 @@ describe("Grafana OnCall Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(
       "https://oncall.example.com/integrations/v1/webhook/abc123",
     );
@@ -158,8 +156,8 @@ describe("Grafana OnCall Notifications", () => {
     const result = await sendTest({ webhookUrl });
 
     expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(webhookUrl);
     expect(callArgs[1].method).toBe("POST");
 
@@ -172,7 +170,8 @@ describe("Grafana OnCall Notifications", () => {
   });
 
   test("Send Test returns false on network error", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -181,11 +180,12 @@ describe("Grafana OnCall Notifications", () => {
     });
 
     expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 
   test("Send Test returns false on non-ok response", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(new Response(null, { status: 401 })),
     );
 
@@ -194,11 +194,12 @@ describe("Grafana OnCall Notifications", () => {
     });
 
     expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 
   test("Send Alert throws on non-ok response", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.resolve(
         new Response(null, {
           status: 500,
@@ -225,7 +226,8 @@ describe("Grafana OnCall Notifications", () => {
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 
@@ -234,7 +236,7 @@ describe("Grafana OnCall Notifications", () => {
       createMockNotification(),
     );
 
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -245,6 +247,6 @@ describe("Grafana OnCall Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    assertSpyCalls(fetchMock, 1);
   });
 });

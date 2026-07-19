@@ -5,6 +5,7 @@ import {
   pageSubscriber,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
 
 import { getChannel } from "./channels";
 import type { PageUpdate, Subscription } from "./types";
@@ -18,8 +19,14 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     with: {
       statusReport: {
         with: {
+          // Membership: the full set of components on the report (id + name).
           statusReportsToPageComponents: {
             with: { pageComponent: true },
+          },
+          // All updates' impact rows — current state is reconstructed from the
+          // delta history, not from any single update's rows.
+          statusReportUpdates: {
+            with: { statusReportUpdateToPageComponents: true },
           },
         },
       },
@@ -40,6 +47,19 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     (i) => i.pageComponent,
   );
 
+  const currentImpacts = currentImpactsFromUpdates(
+    update.statusReport.statusReportUpdates.map((u) => ({
+      id: u.id,
+      date: u.date,
+      componentImpacts: u.statusReportUpdateToPageComponents,
+    })),
+  );
+  const componentsWithImpact = pageComponents.map((c) => ({
+    id: c.id,
+    name: c.name,
+    impact: currentImpacts.get(c.id) ?? "operational",
+  }));
+
   await dispatchPageUpdate({
     id: update.statusReport.id,
     pageId: update.statusReport.pageId,
@@ -54,6 +74,7 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
       id: c.id,
       name: c.name,
     })),
+    componentsWithImpact,
   });
 }
 
@@ -134,6 +155,9 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
       isNotNull(pageSubscriber.acceptedAt),
       isNull(pageSubscriber.unsubscribedAt),
     ),
+    // Deterministic order so the email idempotency fingerprint is stable
+    // across dispatches; id breaks same-second createdAt ties.
+    orderBy: (subs, { asc }) => [asc(subs.createdAt), asc(subs.id)],
     with: {
       components: true,
     },
@@ -146,9 +170,10 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
       pageName: pageData.name,
       pageSlug: pageData.slug,
       customDomain: pageData.customDomain,
-      channelType: sub.channelType as "email" | "webhook",
+      channelType: sub.channelType as "email" | "webhook" | "slack",
       email: sub.email ?? undefined,
       webhookUrl: sub.webhookUrl ?? undefined,
+      slackChannelId: sub.slackChannelId ?? undefined,
       channelConfig: sub.channelConfig ?? undefined,
       token: sub.token ?? undefined,
       acceptedAt: sub.acceptedAt ?? undefined,

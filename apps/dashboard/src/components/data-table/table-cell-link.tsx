@@ -19,7 +19,7 @@ export function TableCellLink({
     return (
       <Link
         className={cn(
-          "group/link flex w-full items-center justify-between gap-2 hover:underline",
+          "group/link flex w-full items-center justify-between gap-2 rounded-lg hover:underline",
           className,
         )}
         {...externalProps}

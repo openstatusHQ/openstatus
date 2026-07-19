@@ -120,6 +120,28 @@ func TestRecordErrorCounter(t *testing.T) {
 	assert.Equal(t, int64(1), sum.DataPoints[0].Value)
 }
 
+// --- recordStatusCounter tests ---
+
+func TestRecordStatusCounter(t *testing.T) {
+	meter, reader := newTestMeter(t)
+	ctx := context.Background()
+	att := metric.WithAttributes(attribute.String("region", "us-east-1"))
+
+	recordStatusCounter(ctx, meter, att)
+
+	rm := collectMetrics(t, reader)
+	require.Len(t, rm.ScopeMetrics, 1)
+	require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
+
+	m := rm.ScopeMetrics[0].Metrics[0]
+	assert.Equal(t, "openstatus.status", m.Name)
+
+	sum, ok := m.Data.(metricdata.Sum[int64])
+	require.True(t, ok, "expected Sum[int64] data type")
+	require.Len(t, sum.DataPoints, 1)
+	assert.Equal(t, int64(1), sum.DataPoints[0].Value)
+}
+
 // --- setupOTelSDK tests ---
 
 func TestSetupOTelSDK(t *testing.T) {
@@ -290,4 +312,43 @@ func TestRecordTCPMetrics_SetupFailure(t *testing.T) {
 
 	// Must not panic — same nil pointer guard as HTTP.
 	RecordTCPMetrics(context.Background(), req, result, "us-east-1")
+}
+
+// --- RecordDNSMetrics tests ---
+
+func TestRecordDNSMetrics_Success(t *testing.T) {
+	server := newOTLPTestServer(t)
+
+	req := request.DNSCheckerRequest{
+		URI:       "example.com",
+		MonitorID: "mon-3",
+	}
+	req.OtelConfig.Endpoint = server.URL
+
+	// Should not panic.
+	RecordDNSMetrics(context.Background(), req, 30, false, "us-east-1")
+}
+
+func TestRecordDNSMetrics_Error(t *testing.T) {
+	server := newOTLPTestServer(t)
+
+	req := request.DNSCheckerRequest{
+		URI:       "example.com",
+		MonitorID: "mon-3",
+	}
+	req.OtelConfig.Endpoint = server.URL
+
+	// Should record error counter and not panic.
+	RecordDNSMetrics(context.Background(), req, 0, true, "us-east-1")
+}
+
+func TestRecordDNSMetrics_SetupFailure(t *testing.T) {
+	req := request.DNSCheckerRequest{
+		URI:       "example.com",
+		MonitorID: "mon-3",
+	}
+	req.OtelConfig.Endpoint = "://invalid"
+
+	// Must not panic — same nil pointer guard as HTTP.
+	RecordDNSMetrics(context.Background(), req, 30, false, "us-east-1")
 }

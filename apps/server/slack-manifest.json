@@ -1,0 +1,65 @@
+{
+  "display_information": {
+    "name": "openstatus",
+    "description": "Manage incidents and status pages directly from Slack.",
+    "background_color": "#000000",
+    "long_description": "openstatus brings incident management into your team's Slack workspace. Mention the bot in any channel to create, update, and resolve status reports — no context switching required.\n\n  How it works:\n  :one: Describe the issue by mentioning @openstatus in any channel or thread\n  :two: The assistant reads the conversation, queries your status pages, and drafts a status update\n  :three: Review the proposed action and click Approve, Approve & Notify, or Cancel\n\n  What you can do:\n  :white_check_mark: Create status reports from natural conversation\n  :white_check_mark: Post progress updates as incidents evolve\n  :white_check_mark: Resolve incidents when the issue is fixed\n  :white_check_mark: Notify your status page subscribers with one click\n  :white_check_mark: Edit report titles and affected components\n\n  The assistant understands context — tag it in an ongoing thread and it will synthesize the discussion into a clear, public-facing status update. It infers incident status automatically: \"we found the root cause\" becomes Identified, \"it's fixed\" becomes Resolved.\n\n  AI disclaimer: openstatus uses large language models (LLMs) to summarize conversations, draft status updates, and infer incident status. AI-generated content may sometimes be inaccurate, incomplete, or misleading. Always review every draft before approving it — nothing is posted to your status page until you explicitly confirm. Only the person who triggered the action can approve it, and you can edit or cancel any draft."
+  },
+  "features": {
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": false,
+      "messages_tab_read_only_enabled": true
+    },
+    "bot_user": {
+      "display_name": "openstatus",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/openstatus",
+        "url": "https://api.openstatus.dev/slack/commands",
+        "description": "Manage this channel's status page subscriptions",
+        "usage_hint": "subscribe | unsubscribe | subscriptions | help",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "redirect_urls": ["https://api.openstatus.dev/slack/oauth/callback"],
+    "scopes": {
+      "user": ["groups:write"],
+      "user_optional": ["groups:write"],
+      "bot": [
+        "app_mentions:read",
+        "channels:history",
+        "channels:join",
+        "chat:write",
+        "commands",
+        "groups:history",
+        "groups:read",
+        "groups:write"
+      ]
+    },
+    "pkce_enabled": false
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://api.openstatus.dev/slack/events",
+      "bot_events": [
+        "app_home_opened",
+        "app_mention",
+        "message.channels",
+        "message.groups"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://api.openstatus.dev/slack/interactions"
+    },
+    "org_deploy_enabled": true,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false,
+    "is_mcp_enabled": false
+  }
+}

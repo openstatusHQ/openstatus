@@ -1,16 +1,29 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq } from "@openstatus/db";
-import { integration } from "@openstatus/db/src/schema";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
+import { integration, pageSubscriber } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
 
 import { runAgent } from "./agent";
-import { buildConfirmationBlocks, getConfirmationText } from "./blocks";
+import {
+  buildConfirmationBlocks,
+  getConfirmationText,
+  type RefResolvers,
+} from "./blocks";
 import { findByThread, replace, store } from "./confirmation-store";
 import type { PendingPayload } from "./confirmation-store";
+import { publishHomeView } from "./home";
+import { getComponentNames, getPageDashboardLink } from "./page-urls";
 import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
 import { resolveWorkspace } from "./workspace-resolver";
+
+function makeRefResolvers(workspaceId: number): RefResolvers {
+  return {
+    page: (pageId) => getPageDashboardLink(workspaceId, pageId),
+    componentNames: (ids) => getComponentNames(workspaceId, ids),
+  };
+}
 
 const logger = getLogger("api-server");
 
@@ -39,6 +52,7 @@ const slackEventSchema = z.object({
       ts: z.string().optional(),
       thread_ts: z.string().optional(),
       bot_id: z.string().optional(),
+      tab: z.string().optional(),
     })
     .optional(),
   event_id: z.string().optional(),
@@ -111,7 +125,32 @@ async function processEvent(body: SlackEvent) {
             eq(integration.externalId, teamId),
           ),
         );
+      await db
+        .update(pageSubscriber)
+        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(pageSubscriber.channelType, "slack"),
+            isNull(pageSubscriber.unsubscribedAt),
+            sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
+          ),
+        );
       logger.info("slack integration cleaned up", { teamId });
+    }
+    return;
+  }
+
+  if (event.type === "app_home_opened") {
+    if (event.tab && event.tab !== "home") return;
+    const teamId = body.team_id;
+    const userId = event.user;
+    if (!teamId || !userId) return;
+    const resolved = await resolveWorkspace(teamId);
+    if (!resolved) return;
+    try {
+      await publishHomeView(new WebClient(resolved.botToken), userId);
+    } catch (err) {
+      logger.error("slack failed to publish home view", { error: err, teamId });
     }
     return;
   }
@@ -131,6 +170,12 @@ async function processEvent(body: SlackEvent) {
   const teamId = body.team_id;
   if (!teamId || !event.channel || !event.ts) return;
 
+  // A single mention arrives as BOTH an `app_mention` and a `message.*` event
+  // (distinct event_ids, same message ts), so the event_id dedup above doesn't
+  // catch the pair. Dedup on the message identity so we only respond once.
+  // Runs before the first `await` so concurrent deliveries can't both pass.
+  if (dedup(`msg:${event.channel}:${event.ts}`)) return;
+
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) {
     logger.warn("slack integration not found", { teamId });
@@ -141,8 +186,8 @@ async function processEvent(body: SlackEvent) {
   const botUserId = resolved.botUserId;
   const threadTs = event.thread_ts ?? event.ts;
 
-  if (event.type === "message" && event.channel_type !== "im") {
-    if (!event.text?.includes(`<@${botUserId}>`)) return;
+  if (event.type === "message" && !event.text?.includes(`<@${botUserId}>`)) {
+    return;
   }
 
   logger.info("slack event received", {
@@ -342,10 +387,11 @@ async function handleConfirmation(
   if (existing) {
     await replace(existing.id, payload);
 
-    const blocks = buildConfirmationBlocks({
+    const blocks = await buildConfirmationBlocks({
       actionId: existing.id,
       tool,
       input: draft.displayInput,
+      resolvers: makeRefResolvers(workspaceId),
     });
     await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
     await slack.chat.update({
@@ -365,10 +411,11 @@ async function handleConfirmation(
       payload,
     });
 
-    const blocks = buildConfirmationBlocks({
+    const blocks = await buildConfirmationBlocks({
       actionId,
       tool,
       input: draft.displayInput,
+      resolvers: makeRefResolvers(workspaceId),
     });
     await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
   }

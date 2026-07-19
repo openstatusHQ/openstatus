@@ -10,10 +10,10 @@ primary_region = "ams"
 [build]
   dockerfile = "./Dockerfile"
 
-[[vm]]
-  cpu_kind = "shared"
-  cpus = 1
-  memory_mb = 512
+  [[vm]]
+    cpu_kind = "shared"
+    cpus = 4
+    memory_mb = 1024
 
 [http_service]
   internal_port = 3000

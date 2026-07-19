@@ -10,12 +10,12 @@ import {
   generateReport,
   matchMarkdownRoute,
   parseMarkdownPath,
-} from "@/content/markdown";
-import { getBaseUrl } from "@/lib/base-url";
-import { resolveClientIp } from "@/lib/http/client-ip";
-import { resolveMarkdownResponse } from "@/lib/http/markdown-response";
-import { type GatePage, resolveGate } from "@/lib/proxy/resolve-gate";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+} from "../../../../content/markdown";
+import { getBaseUrl } from "../../../../lib/base-url";
+import { resolveClientIp } from "../../../../lib/http/client-ip";
+import { resolveMarkdownResponse } from "../../../../lib/http/markdown-response";
+import { type GatePage, resolveGate } from "../../../../lib/proxy/resolve-gate";
+import { getQueryClient, trpc } from "../../../../lib/trpc/server";
 
 // Match the feed route: getQueryClient/httpBatchLink needs Node, not Edge.
 export const runtime = "nodejs";

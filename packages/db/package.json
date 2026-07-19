@@ -4,13 +4,27 @@
   "description": "",
   "author": "OpenStatus",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env.mjs": "./env.mjs",
+    "./src/schema": "./src/schema/index.ts",
+    "./src/test/factories": "./src/test/factories.ts",
+    "./src/schema/api-keys": "./src/schema/api-keys/index.ts",
+    "./src/schema/check": "./src/schema/check/index.ts",
+    "./src/schema/incidents": "./src/schema/incidents/index.ts",
+    "./src/schema/maintenances": "./src/schema/maintenances/index.ts",
+    "./src/schema/page_components": "./src/schema/page_components/index.ts",
+    "./src/schema/workspaces": "./src/schema/workspaces/index.ts",
+    "./src/*": "./src/*.ts"
+  },
   "scripts": {
+    "check": "deno check --sloppy-imports .",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",
-    "migrate": "bun src/migrate.mts",
+    "migrate": "deno run -A --env-file src/migrate.mts",
     "studio": "drizzle-kit studio",
-    "env": "bun env.ts",
-    "seed": "bun src/seed.mts",
+    "env": "deno run -A env.ts",
+    "seed": "deno run -A --env-file --sloppy-imports  src/seed.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
@@ -28,6 +42,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "@types/bcryptjs": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",

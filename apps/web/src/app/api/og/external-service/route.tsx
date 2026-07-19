@@ -2,21 +2,21 @@ import { readFile } from "node:fs/promises";
 
 import { ImageResponse } from "next/og";
 
-import { isStale } from "@/app/(landing)/status/utils";
+import { isStale } from "../../../(landing)/status/utils";
 import {
   getComponentEscalation,
   getServiceEscalation,
-} from "@/lib/external-report-escalation";
+} from "../../../../lib/external-report-escalation";
 import {
   cachedGetExternalComponentBySlug,
   cachedGetExternalServiceBySlug,
   cachedListExternalServices,
-} from "@/lib/external-service-cache";
-import { cn } from "@/lib/utils";
+} from "../../../../lib/external-service-cache";
+import { cn } from "../../../../lib/utils";
+import { SIZE } from "../utils";
 
-// nodejs (not edge): the external-service reads pull in Effect (via retryRead),
-// which crowds the 2 MB edge bundle. Node has no such cap; assets are read from
-// disk since `fetch` can't load the file:// URLs `import.meta.url` resolves to.
+// nodejs (not edge): this route pulls in the service reads + Effect retry, which
+// push the bundle past the 2 MB edge limit. Node has no such cap.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

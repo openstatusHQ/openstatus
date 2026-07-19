@@ -177,6 +177,41 @@ Now that the services are running, you can access the dashboard and perform the 
   />
   
 
+## Configuring the AI assistant (optional)
+
+openstatus ships an in-dashboard AI assistant. It is **off by default** when self-hosting — the chat endpoint returns `503 "Chat is not configured"` until you point it at a model provider. Configure **one** of the two options below in your `.env.docker` (root) — or `apps/dashboard/.env` for a manual setup — then restart the dashboard.
+
+### Option 1: OpenAI-compatible endpoint (bring your own model)
+
+Use any OpenAI-compatible API — [NVIDIA NIM](https://build.nvidia.com/), vLLM, Ollama, OpenRouter, LM Studio, or a private gateway. This is the recommended path for self-hosting: the model and key stay on your own infrastructure.
+
+```env
+AI_BASE_URL=https://integrate.api.nvidia.com/v1
+AI_API_KEY=nvapi-xxxxx
+AI_MODEL=meta/llama-3.1-70b-instruct
+```
+
+- `AI_BASE_URL` — the provider's OpenAI-compatible base URL (usually ends in `/v1`). Setting it enables this option.
+- `AI_API_KEY` — optional. Leave empty for keyless local gateways such as Ollama.
+- `AI_MODEL` — the model id to use. It **must support tool / function calling** — the assistant manages your monitors and status pages through tools, so a model without tool support cannot act.
+
+A fully local, keyless setup with Ollama:
+
+```env
+AI_BASE_URL=http://localhost:11434/v1
+AI_MODEL=llama3.1
+```
+
+### Option 2: Vercel AI Gateway
+
+If you use the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway), set a single key. The model is chosen automatically (a smaller model for free workspaces, a stronger one for paid).
+
+```env
+AI_GATEWAY_API_KEY=your-gateway-key
+```
+
+When both are configured, `AI_BASE_URL` takes priority over the gateway.
+
 ## Service architecture
 
 openstatus consists of multiple services running together:

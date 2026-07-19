@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { spy } from "@std/testing/mock";
 
 import { createInstatusClient } from "./client";
 import {
@@ -12,7 +14,7 @@ import {
 const originalFetch = globalThis.fetch;
 
 function mockFetch(data: unknown, status = 200) {
-  globalThis.fetch = mock(() =>
+  globalThis.fetch = spy(() =>
     Promise.resolve(
       new Response(JSON.stringify(data), {
         status,
@@ -25,7 +27,7 @@ function mockFetch(data: unknown, status = 200) {
 
 function mockFetchPaginated(data: unknown, status = 200) {
   let callCount = 0;
-  globalThis.fetch = mock(() => {
+  globalThis.fetch = spy(() => {
     callCount++;
     const body = callCount === 1 ? data : [];
     return Promise.resolve(
@@ -107,8 +109,8 @@ describe("InstatusClient", () => {
   test("sends correct Bearer auth header", async () => {
     mockFetchPaginated(MOCK_PAGES);
     await client.getPages();
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof mock>;
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
+    const [url, options] = fetchMock.calls[0].args as [string, RequestInit];
     expect(url).toBe("https://api.instatus.com/v2/pages?page=1&per_page=100");
     expect((options.headers as Record<string, string>).Authorization).toBe(
       "Bearer test-api-key",
@@ -124,7 +126,7 @@ describe("InstatusClient", () => {
     }));
 
     let callCount = 0;
-    globalThis.fetch = mock(() => {
+    globalThis.fetch = spy(() => {
       callCount++;
       // First call: 100 items (= per_page), second call: empty array
       const body = callCount === 1 ? items : [];
@@ -145,8 +147,8 @@ describe("InstatusClient", () => {
   test("uses v1 for incidents and v2 for other endpoints", async () => {
     mockFetchPaginated(MOCK_INCIDENTS);
     await client.getIncidents("in_page_001");
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof mock>;
-    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof spy>;
+    const [url] = fetchMock.calls[0].args as [string, RequestInit];
     expect(url).toContain("/v1/in_page_001/incidents");
   });
 });

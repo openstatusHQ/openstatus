@@ -1,7 +1,7 @@
-import { beforeEach, expect, test } from "bun:test";
-
 import { db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { beforeEach, test } from "@std/testing/bdd";
 
 import { app } from "@/index";
 
@@ -245,7 +245,9 @@ test("create a maintenance calls dispatchMaintenanceUpdate", async () => {
   const result = MaintenanceSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
   expect(spies.dispatchMaintenanceUpdate.mock.calls.length).toBe(1);
-  expect(spies.dispatchMaintenanceUpdate.mock.calls[0][0]).toBeNumber();
+  expect(typeof spies.dispatchMaintenanceUpdate.mock.calls[0][0]).toBe(
+    "number",
+  );
 
   if (result.success) {
     await db.delete(maintenance).where(eq(maintenance.id, result.data.id));

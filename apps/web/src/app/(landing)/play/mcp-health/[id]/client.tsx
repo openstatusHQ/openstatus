@@ -1,7 +1,6 @@
 "use client";
 
-import type { HealthCheckReport } from "@/lib/mcp/health-check";
-
+import type { HealthCheckReport } from "../../../../../lib/mcp/health-check";
 import { ResultTableStatic, ToolsTableView, VerdictBarStatic } from "../client";
 
 export function Table({ data }: { data: HealthCheckReport }) {

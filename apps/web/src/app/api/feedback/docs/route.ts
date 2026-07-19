@@ -1,8 +1,8 @@
 import { redis } from "@openstatus/upstash";
 import { z } from "zod";
 
-import { getClientIP, ratelimit } from "@/lib/ratelimit";
-import { hashIP } from "@/lib/utils";
+import { getClientIP, ratelimit } from "../../../../lib/ratelimit";
+import { hashIP } from "../../../../lib/utils";
 
 export const runtime = "edge";
 

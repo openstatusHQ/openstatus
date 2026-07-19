@@ -6,7 +6,9 @@
   "license": "ISC",
   "author": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
     "@openstatus/regions": "workspace:*",
@@ -14,6 +16,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "typescript": "catalog:"
   }
 }

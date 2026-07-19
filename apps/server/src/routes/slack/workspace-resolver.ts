@@ -1,4 +1,4 @@
-import { and, db, eq } from "@openstatus/db";
+import { and, db, desc, eq } from "@openstatus/db";
 import {
   integration,
   selectWorkspaceSchema,
@@ -32,6 +32,10 @@ export async function resolveWorkspace(
         eq(integration.externalId, teamId),
       ),
     )
+    // Slack keeps one live token per (app, team); a reinstall invalidates all
+    // earlier ones. If the team is linked to several workspaces, the newest row
+    // is the only one holding a valid token.
+    .orderBy(desc(integration.updatedAt))
     .get();
 
   if (!row?.workspaceId) return null;

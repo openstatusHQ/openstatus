@@ -1,14 +1,8 @@
-import { beforeAll, describe, expect, test } from "bun:test";
-
 import { eq } from "@openstatus/db";
-import { workspace } from "@openstatus/db/src/schema";
+import { statusReport, workspace } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import {
-  getWorkspace,
-  getWorkspaceWithUsage,
-  listWorkspaces,
-  updateWorkspaceName,
-} from "..";
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,
@@ -19,6 +13,12 @@ import {
 } from "../../../test/helpers";
 import type { ServiceContext } from "../../context";
 import { ForbiddenError } from "../../errors";
+import {
+  getWorkspace,
+  getWorkspaceWithUsage,
+  listWorkspaces,
+  updateWorkspaceName,
+} from "../index.ts";
 
 let teamCtx: ServiceContext;
 
@@ -46,7 +46,7 @@ describe("getWorkspaceWithUsage", () => {
       expect(result.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
 
       // Iterate the usage object *before* any `toMatchObject` call —
-      // bun:test's `toMatchObject` implementation mutates the received
+      // the `toMatchObject` implementation mutates the received
       // object in place, replacing number fields with the
       // `expect.any(Number)` asymmetric-matcher stub on the expected
       // side. Subsequent reads of `result.usage.<key>` then return the
@@ -57,6 +57,7 @@ describe("getWorkspaceWithUsage", () => {
         "notifications",
         "pages",
         "pageComponents",
+        "statusReports",
         "checks",
       ] as const) {
         const value = result.usage[key];
@@ -66,6 +67,20 @@ describe("getWorkspaceWithUsage", () => {
         }
       }
       expect(result.usage.checks).toBe(0);
+    });
+  });
+
+  test("counts workspace-scoped status reports", async () => {
+    await withTestTransaction(async (tx) => {
+      await tx.insert(statusReport).values({
+        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        status: "investigating",
+        title: "svc-ws-test-status-report",
+      });
+      const result = await getWorkspaceWithUsage({
+        ctx: { ...teamCtx, db: tx },
+      });
+      expect(result.usage.statusReports).toBeGreaterThanOrEqual(1);
     });
   });
 });

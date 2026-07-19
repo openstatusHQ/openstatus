@@ -1,5 +1,5 @@
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import * as Sentry from "@sentry/bun";
+import * as Sentry from "@sentry/deno";
 import { Effect, Schedule } from "effect";
 import { Hono } from "hono";
 
@@ -16,6 +16,7 @@ import {
   StepPaused,
   workflowStepSchema,
 } from "./monitor";
+import { handleUptimeFreezeCron } from "./uptime-freeze";
 
 const app = new Hono({ strict: false });
 
@@ -91,6 +92,10 @@ app.get("/external-status", async (c) => {
 
 app.get("/external-incidents-prune", async (c) => {
   return handleExternalIncidentsPruneCron(c);
+});
+
+app.get("/uptime-freeze", async (c) => {
+  return handleUptimeFreezeCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {

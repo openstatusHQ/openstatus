@@ -5,7 +5,7 @@ import { type FetchError, fetchJson } from "../fetch";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { urlHostnameEndsWith } from "../utils";
 
-const instatusResponseSchema = z.object({
+export const instatusResponseSchema = z.object({
   activeIncidents: z.array(z.unknown()),
   activeMaintenances: z.array(z.unknown()),
   status: z.object({

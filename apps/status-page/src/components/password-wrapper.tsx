@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect } from "react";
 
-import { createProtectedCookieKey } from "@/lib/protected";
+import { createProtectedCookieKey } from "../lib/protected";
 
 export function PasswordWrapper({ children }: { children?: React.ReactNode }) {
   const [password, setPassword] = useQueryState("pw", parseAsString);

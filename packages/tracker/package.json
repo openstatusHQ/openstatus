@@ -7,7 +7,8 @@
   "author": "",
   "main": "src/index.ts",
   "scripts": {
-    "test": "bun test"
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
@@ -16,7 +17,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "bun-types": "catalog:",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
     "typescript": "catalog:"
   }
 }

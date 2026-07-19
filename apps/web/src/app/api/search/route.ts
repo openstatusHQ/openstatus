@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { PAGE_TYPES } from "@/content/utils";
-import { searchCorpus } from "@/content/utils/search-index";
+import { PAGE_TYPES } from "../../../content/utils";
+import { searchCorpus } from "../../../content/utils/search-index";
 
 const SearchSchema = z.object({
   p: z.enum(PAGE_TYPES).nullish(),

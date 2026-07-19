@@ -1,5 +1,3 @@
-import { beforeAll, describe, expect, test } from "bun:test";
-
 import { eq } from "@openstatus/db";
 import {
   page,
@@ -10,6 +8,8 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import type { PhaseResult } from "@openstatus/importers";
+import { expect } from "@std/expect";
+import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
