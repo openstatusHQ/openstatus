@@ -13,7 +13,6 @@ import {
   cachedListExternalServices,
 } from "../../../../lib/external-service-cache";
 import { cn } from "../../../../lib/utils";
-import { SIZE } from "../utils";
 
 // nodejs (not edge): this route pulls in the service reads + Effect retry, which
 // push the bundle past the 2 MB edge limit. Node has no such cap.
