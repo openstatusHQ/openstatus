@@ -52,13 +52,11 @@ async function seedTeamWorkspace(tx: DrizzleTx) {
   const ownerUserId = 900_001;
   const memberAId = 900_002;
   const memberBId = 900_003;
-  await tx
-    .insert(user)
-    .values([
-      { id: ownerUserId, tenantId: "svc-downgrade-owner" },
-      { id: memberAId, tenantId: "svc-downgrade-member-a" },
-      { id: memberBId, tenantId: "svc-downgrade-member-b" },
-    ]);
+  await tx.insert(user).values([
+    { id: ownerUserId, tenantId: "svc-downgrade-owner" },
+    { id: memberAId, tenantId: "svc-downgrade-member-a" },
+    { id: memberBId, tenantId: "svc-downgrade-member-b" },
+  ]);
   await tx.insert(usersToWorkspaces).values([
     { workspaceId: ws.id, userId: ownerUserId, role: "owner" },
     { workspaceId: ws.id, userId: memberAId, role: "member" },
@@ -418,9 +416,9 @@ describe("downgradeWorkspaceToFree", () => {
         db: tx,
       };
 
-      await expect(
-        downgradeWorkspaceToFree({ ctx }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(downgradeWorkspaceToFree({ ctx })).rejects.toBeInstanceOf(
+        ForbiddenError,
+      );
     });
   });
 });
