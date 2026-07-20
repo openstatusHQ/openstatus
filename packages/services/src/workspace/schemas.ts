@@ -1,5 +1,5 @@
-import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
 import { workspacePlanSchema } from "@openstatus/db/src/schema";
+import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
 import { z } from "zod";
 
 export const GetWorkspaceInput = z.object({}).strict();

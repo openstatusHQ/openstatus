@@ -1,4 +1,4 @@
-import { and, eq } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import {
   invitation,
   monitor,

@@ -10,8 +10,8 @@ import type { DB, ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
-  type GetWorkspaceWithUsageInput,
   GetWorkspaceByStripeIdInput,
+  type GetWorkspaceWithUsageInput,
   ListWorkspacesInput,
 } from "./schemas";
 
