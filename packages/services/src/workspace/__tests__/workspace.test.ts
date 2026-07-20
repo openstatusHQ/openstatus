@@ -1,5 +1,10 @@
 import { eq } from "@openstatus/db";
-import { statusReport, workspace } from "@openstatus/db/src/schema";
+import {
+  selectWorkspaceSchema,
+  statusReport,
+  workspace,
+} from "@openstatus/db/src/schema";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -8,16 +13,20 @@ import {
   expectAuditRow,
   loadSeededWorkspace,
   makeApiKeyCtx,
+  makeSystemCtx,
   makeUserCtx,
+  readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import { ForbiddenError } from "../../errors";
 import {
   getWorkspace,
+  getWorkspaceByStripeId,
   getWorkspaceWithUsage,
   listWorkspaces,
   updateWorkspaceName,
+  updateWorkspacePlan,
 } from "../index.ts";
 
 let teamCtx: ServiceContext;
@@ -152,6 +161,180 @@ describe("updateWorkspaceName", () => {
         actorType: "user",
         db: tx,
       });
+    });
+  });
+});
+
+describe("getWorkspaceByStripeId", () => {
+  test("resolves the workspace for a known stripe customer id", async () => {
+    await withTestTransaction(async (tx) => {
+      const inserted = await tx
+        .insert(workspace)
+        .values({
+          slug: "svc-ws-by-stripe",
+          name: "Stripe Lookup",
+          plan: "team",
+          stripeId: "cus_svc_ws_by_stripe",
+          limits: JSON.stringify(getLimits("team")),
+        })
+        .returning()
+        .get();
+
+      const result = await getWorkspaceByStripeId({
+        input: { stripeId: "cus_svc_ws_by_stripe" },
+        db: tx,
+      });
+      expect(result?.id).toBe(inserted.id);
+      expect(typeof result?.limits).toBe("object");
+    });
+  });
+
+  test("returns null when no workspace maps to the customer", async () => {
+    await withTestTransaction(async (tx) => {
+      const result = await getWorkspaceByStripeId({
+        input: { stripeId: "cus_does_not_exist" },
+        db: tx,
+      });
+      expect(result).toBeNull();
+    });
+  });
+});
+
+async function insertPlanWorkspace(
+  tx: DrizzleTx,
+  opts: { plan: "free" | "starter" | "team" | "scale"; slug: string },
+) {
+  const row = await tx
+    .insert(workspace)
+    .values({
+      slug: opts.slug,
+      name: opts.slug,
+      plan: opts.plan,
+      stripeId: `cus_${opts.slug}`,
+      subscriptionId: `sub_${opts.slug}`,
+      limits: JSON.stringify(getLimits(opts.plan)),
+    })
+    .returning()
+    .get();
+  return selectWorkspaceSchema.parse(row);
+}
+
+describe("updateWorkspacePlan", () => {
+  test("writes the new plan + limits and audits the change", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = await insertPlanWorkspace(tx, {
+        plan: "team",
+        slug: "svc-plan-downgrade",
+      });
+      const ctx = {
+        ...makeSystemCtx(ws, { job: "stripe-subscription-updated" }),
+        db: tx,
+      };
+
+      await updateWorkspacePlan({
+        ctx,
+        input: {
+          plan: "starter",
+          subscriptionId: "sub_new",
+          paidUntil: new Date("2027-01-01T00:00:00Z"),
+          endsAt: new Date("2027-01-01T00:00:00Z"),
+          limits: getLimits("starter"),
+        },
+      });
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, ws.id))
+        .get();
+      expect(after?.plan).toBe("starter");
+      expect(after?.subscriptionId).toBe("sub_new");
+      // Compare parsed content, not the raw string — the verb persists
+      // `limitsSchema`-canonicalised JSON (key order differs from the
+      // config object returned by `getLimits`).
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("starter"));
+
+      await expectAuditRow({
+        workspaceId: ws.id,
+        action: "workspace.update",
+        entityType: "workspace",
+        entityId: ws.id,
+        actorType: "system",
+        db: tx,
+      });
+
+      const [audit] = await readAuditLog({
+        workspaceId: ws.id,
+        entityType: "workspace",
+        entityId: ws.id,
+        db: tx,
+      });
+      expect(audit?.changedFields).toContain("plan");
+      // No `reason` passed → no metadata stamped.
+      expect(audit?.metadata).toBeNull();
+    });
+  });
+
+  test("stamps reason / from / to metadata when a reason is given", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = await insertPlanWorkspace(tx, {
+        plan: "free",
+        slug: "svc-plan-checkout",
+      });
+      const ctx = {
+        ...makeSystemCtx(ws, { job: "stripe-session-completed" }),
+        db: tx,
+      };
+
+      await updateWorkspacePlan({
+        ctx,
+        input: {
+          plan: "team",
+          subscriptionId: "sub_checkout",
+          paidUntil: new Date("2027-01-01T00:00:00Z"),
+          endsAt: new Date("2027-01-01T00:00:00Z"),
+          limits: getLimits("team"),
+          reason: "checkout_session_completed",
+        },
+      });
+
+      const [audit] = await readAuditLog({
+        workspaceId: ws.id,
+        entityType: "workspace",
+        entityId: ws.id,
+        db: tx,
+      });
+      expect(audit?.metadata).toMatchObject({
+        reason: "checkout_session_completed",
+        from: "free",
+        to: "team",
+      });
+    });
+  });
+
+  test("rejects a read-only api key actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ws = await insertPlanWorkspace(tx, {
+        plan: "team",
+        slug: "svc-plan-readonly",
+      });
+      const ctx = {
+        ...makeApiKeyCtx(ws, { keyId: "k-read", userId: 1, scopes: ["read"] }),
+        db: tx,
+      };
+
+      await expect(
+        updateWorkspacePlan({
+          ctx,
+          input: {
+            plan: "starter",
+            subscriptionId: null,
+            paidUntil: null,
+            endsAt: null,
+            limits: getLimits("starter"),
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

@@ -31,7 +31,11 @@ import {
 } from "@openstatus/services/monitor";
 
 import { env } from "../../../../env";
-import { getCheckerPayload, getCheckerUrl } from "../../../../libs/checker";
+import {
+  getCheckerPayload,
+  getCheckerTimeout,
+  getCheckerUrl,
+} from "../../../../libs/checker";
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
 import {
@@ -566,6 +570,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           },
           method: "POST",
           body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(getCheckerTimeout(row)),
         });
       }),
     );

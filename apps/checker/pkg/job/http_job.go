@@ -158,7 +158,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 					Target:     assertion.Target,
 					Key:        assertion.Key,
 				}
-				assert.HeaderEvaluate(string(headersAsString))
+				isSuccessful = isSuccessful && assert.HeaderEvaluate(string(headersAsString))
 			}
 		}
 

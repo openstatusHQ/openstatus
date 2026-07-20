@@ -3,16 +3,15 @@ import {
   monitor,
   notification,
   notificationsToMonitors,
+  selectWorkspaceSchema,
+  workspace,
 } from "@openstatus/db/src/schema";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
+import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  cleanQuotaGatedTables,
   expectAuditRow,
   loadSeededWorkspace,
   makeApiKeyCtx,
@@ -37,17 +36,34 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
 
+// Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
+// negative-path tests (`notification-channels: 1`). The shared seeded free
+// workspace (#2) is written concurrently by the apps/server RPC suites under
+// parallel test execution, which intermittently exhausts the quota and fails
+// the wrong assertion. An isolated workspace removes that cross-suite race;
+// every test writes inside a rolled-back transaction, so its committed
+// notification count stays at zero for the whole suite.
+const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
+
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
 
-  // Clear quota-gated rows on the free workspace so
-  // `notification-channels: 1` (free plan) can actually be exercised
-  // by negative-path tests — any leftover row from prior runs tripped
-  // `LimitExceededError` before the intended assertion fired.
-  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
+    .catch(() => undefined);
+  const freeRow = await db
+    .insert(workspace)
+    .values({
+      slug: FREE_WS_SLUG,
+      name: `${TEST_PREFIX}-free`,
+      plan: "free",
+      limits: JSON.stringify(getLimits("free")),
+    })
+    .returning()
+    .get();
+  freeCtx = makeUserCtx(selectWorkspaceSchema.parse(freeRow), { userId: 2 });
 
   const monitorRow = await db
     .insert(monitor)
@@ -69,6 +85,10 @@ afterAll(async () => {
   await db
     .delete(monitor)
     .where(eq(monitor.id, teamMonitorId))
+    .catch(() => undefined);
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
     .catch(() => undefined);
 });
 
@@ -326,7 +346,7 @@ describe("updateNotification", () => {
       const [inserted] = await tx
         .insert(notification)
         .values({
-          workspaceId: SEEDED_WORKSPACE_FREE_ID,
+          workspaceId: freeCtx.workspace.id,
           name: `${TEST_PREFIX}-downgrade-gate`,
           provider: "pagerduty",
           data: JSON.stringify({

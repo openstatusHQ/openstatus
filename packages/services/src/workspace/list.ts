@@ -6,10 +6,11 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
-import type { ServiceContext } from "../context";
+import type { DB, ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
 import {
+  GetWorkspaceByStripeIdInput,
   type GetWorkspaceWithUsageInput,
   ListWorkspacesInput,
 } from "./schemas";
@@ -95,6 +96,28 @@ export async function getWorkspaceWithUsage(args: {
   };
 
   return { ...selectWorkspaceSchema.parse(result), usage };
+}
+
+/**
+ * Resolve a workspace by its Stripe customer id. Runs before a
+ * `ctx.workspace` exists (the Stripe webhook only holds the customer id),
+ * so it takes an optional `db`/tx rather than a `ServiceContext`. Returns
+ * `null` when no workspace maps to the customer — an expected case (an
+ * event for a customer we don't own), which the caller maps to its own
+ * error rather than a thrown `NotFoundError`.
+ */
+export async function getWorkspaceByStripeId(args: {
+  input: GetWorkspaceByStripeIdInput;
+  db?: DB;
+}): Promise<Workspace | null> {
+  const { stripeId } = GetWorkspaceByStripeIdInput.parse(args.input);
+  const db = args.db ?? defaultDb;
+
+  const row = await db.query.workspace.findFirst({
+    where: eq(workspace.stripeId, stripeId),
+  });
+
+  return row ? selectWorkspaceSchema.parse(row) : null;
 }
 
 /**

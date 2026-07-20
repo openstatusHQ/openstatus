@@ -559,7 +559,9 @@ describe("StatusPageService.GetPageComponent", () => {
     expect(data.component.name).toBe(`${TEST_PREFIX}-component`);
     expect(data.component.pageId).toBe(String(testPageId));
     expect(data.component.type).toBe("PAGE_COMPONENT_TYPE_STATIC");
-    expect(data.component.monitorId).toBe("");
+    // proto3 omits default-valued scalars from JSON, so an unset monitor
+    // arrives as either "" or undefined.
+    expect(data.component.monitorId ?? "").toBe("");
   });
 
   test("returns 401 when no auth key provided", async () => {
@@ -3652,8 +3654,6 @@ describe("StatusPageService.UpdateStatusPage — new fields", () => {
 });
 
 describe("StatusPageService — new fields limit enforcement (workspace 2 / free plan)", () => {
-  let ws2PageId: number;
-
   test("returns 403 when creating with custom_domain on free plan", async () => {
     const res = await connectRequest(
       "CreateStatusPage",
@@ -3698,37 +3698,55 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
     expect(res.status).toBe(403);
   });
 
+  // Each update test creates and deletes its OWN page rather than sharing a
+  // `ws2PageId` across the block: the services suites clear workspace-2 pages
+  // (`cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID)`) on committed rows in
+  // parallel, so a page persisted across several tests can vanish mid-block
+  // and turn the expected 403 into a 404. Mirrors the IP-restriction block.
   test("returns 403 when updating with custom_domain on free plan", async () => {
     const ws2Page = await db
       .insert(page)
       .values({
         workspaceId: 2,
-        title: `${TEST_PREFIX}-limit-update-ws2`,
-        slug: `${TEST_PREFIX}-limit-update-ws2-slug`,
+        title: `${TEST_PREFIX}-limit-update-ws2-cd`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-cd-slug`,
         description: "Free plan page",
         customDomain: "",
       })
       .returning()
       .get();
-    ws2PageId = ws2Page.id;
 
     const res = await connectRequest(
       "UpdateStatusPage",
       {
-        id: String(ws2PageId),
+        id: String(ws2Page.id),
         customDomain: "status.freeplan.com",
       },
       { "x-openstatus-key": "2" },
     );
 
     expect(res.status).toBe(403);
+
+    await db.delete(page).where(eq(page.id, ws2Page.id));
   });
 
   test("returns 403 when updating with PASSWORD_PROTECTED on free plan", async () => {
+    const ws2Page = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-limit-update-ws2-pw`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-pw-slug`,
+        description: "Free plan page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
     const res = await connectRequest(
       "UpdateStatusPage",
       {
-        id: String(ws2PageId),
+        id: String(ws2Page.id),
         accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
         password: "secret",
       },
@@ -3736,13 +3754,27 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
     );
 
     expect(res.status).toBe(403);
+
+    await db.delete(page).where(eq(page.id, ws2Page.id));
   });
 
   test("returns 403 when updating with AUTHENTICATED on free plan", async () => {
+    const ws2Page = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-limit-update-ws2-auth`,
+        slug: `${TEST_PREFIX}-limit-update-ws2-auth-slug`,
+        description: "Free plan page",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
     const res = await connectRequest(
       "UpdateStatusPage",
       {
-        id: String(ws2PageId),
+        id: String(ws2Page.id),
         accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
         authEmailDomains: ["example.com"],
       },
@@ -3751,7 +3783,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
 
     expect(res.status).toBe(403);
 
-    await db.delete(page).where(eq(page.id, ws2PageId));
+    await db.delete(page).where(eq(page.id, ws2Page.id));
   });
 });
 

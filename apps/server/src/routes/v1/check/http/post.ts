@@ -92,6 +92,8 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
             }, {}),
             body: input.body ? input.body : undefined,
           }),
+          // No per-check timeout in the input schema; bound with the checker default.
+          signal: AbortSignal.timeout(60_000),
         });
         currentFetch.push(r);
       }
