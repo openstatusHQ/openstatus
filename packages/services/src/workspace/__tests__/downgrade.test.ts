@@ -94,6 +94,7 @@ async function seedTeamWorkspace(tx: DrizzleTx) {
       customDomain: "status.acme.test",
       password: "hunter2",
       accessType: "password",
+      allowIndex: false,
       createdAt: OLDEST,
     })
     .returning()
@@ -279,6 +280,8 @@ describe("downgradeWorkspaceToFree", () => {
       expect(kept?.customDomain).toBe("");
       expect(kept?.password).toBeNull();
       expect(kept?.accessType).toBe("public");
+      // no-index is paid-only — the survivor must become indexable again.
+      expect(kept?.allowIndex).toBe(true);
 
       await expectAuditRow({
         workspaceId: s.ws.id,

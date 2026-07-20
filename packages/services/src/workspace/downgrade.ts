@@ -104,6 +104,9 @@ export async function downgradeWorkspaceToFree(args: {
 
     // Strip the surviving page's paid-only access features. Both verbs
     // no-op (no audit row) when the field is already at its free value.
+    // `allowIndex: true` restores the free default — the `no-index`
+    // feature (hiding a page from search engines) is paid-only, so a
+    // survivor that had `allowIndex=false` must become indexable again.
     const keptPage = statusPages[0];
     if (keptPage) {
       await updatePageCustomDomain({
@@ -117,6 +120,7 @@ export async function downgradeWorkspaceToFree(args: {
           accessType: "public",
           password: null,
           authEmailDomains: null,
+          allowIndex: true,
         },
       });
     }
