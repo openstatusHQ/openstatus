@@ -1,10 +1,11 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
-import { user, workspace } from "@openstatus/db/src/schema";
+import { user } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
 import {
   downgradeWorkspaceToFree,
   getWorkspaceByStripeId,
+  updateWorkspacePlan,
 } from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
@@ -78,17 +79,24 @@ export const webhookRouter = createTRPCRouter({
       return;
     }
 
-    await opts.ctx.db
-      .update(workspace)
-      .set({
+    // No `reason` metadata: `customer.subscription.updated` fires on trivial
+    // changes too, so let the audit no-op-skip drop rows where nothing
+    // tracked changed. The `stripe-subscription-updated` actor id still
+    // identifies the source on the rows that do land.
+    await updateWorkspacePlan({
+      ctx: {
+        workspace: ws,
+        actor: { type: "system", job: "stripe-subscription-updated" },
+        db: opts.ctx.db,
+      },
+      input: {
         plan: built.plan,
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
-        limits: JSON.stringify(built.limits),
-      })
-      .where(eq(workspace.id, ws.id))
-      .run();
+        limits: built.limits,
+      },
+    });
 
     const allActive = await stripe.subscriptions.list({
       customer: customerId,
@@ -170,17 +178,21 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    await opts.ctx.db
-      .update(workspace)
-      .set({
+    await updateWorkspacePlan({
+      ctx: {
+        workspace: ws,
+        actor: { type: "system", job: "stripe-session-completed" },
+        db: opts.ctx.db,
+      },
+      input: {
         plan: built.plan,
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
-        limits: JSON.stringify(built.limits),
-      })
-      .where(eq(workspace.id, ws.id))
-      .run();
+        limits: built.limits,
+        reason: "checkout_session_completed",
+      },
+    });
 
     const customer = await stripe.customers.retrieve(customerId);
     if (!customer.deleted && customer.email) {
