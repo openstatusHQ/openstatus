@@ -17,11 +17,15 @@ export const memberRowSnapshot = z.object({
 });
 
 /**
- * Delete a single membership row (workspace-scoped) and emit
- * `member.delete` inside the caller's transaction. No authorization guard
- * — callers enforce their own: `deleteMember` requires an owner actor,
- * the Stripe downgrade cascade runs as `system`. Idempotent on the target
- * row: a missing membership deletes nothing and emits no audit row.
+ * Shared delete+audit body for a single membership row — the sole place
+ * the `member.delete` write lives. `deleteMember` wraps this with its
+ * owner-actor / self-removal guards; the Stripe downgrade cascade calls it
+ * directly as a `system` actor. This is an extraction, not a duplicate:
+ * the guard-bearing entry point (`deleteMember`) delegates here so the two
+ * callers can't drift on the workspace-scoping or the audit snapshot.
+ *
+ * No authorization guard of its own — callers own that. Idempotent on the
+ * target row: a missing membership deletes nothing and emits no audit row.
  */
 export async function removeMemberInWorkspace(args: {
   tx: DB;

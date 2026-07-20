@@ -13,6 +13,13 @@ export type GetWorkspaceWithUsageInput = z.infer<
 export const ListWorkspacesInput = z.object({ userId: z.number().int() });
 export type ListWorkspacesInput = z.infer<typeof ListWorkspacesInput>;
 
+export const GetWorkspaceByStripeIdInput = z.object({
+  stripeId: z.string().min(1),
+});
+export type GetWorkspaceByStripeIdInput = z.infer<
+  typeof GetWorkspaceByStripeIdInput
+>;
+
 export const UpdateWorkspaceNameInput = z.object({
   name: z.string().min(1),
 });

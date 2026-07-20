@@ -1,12 +1,11 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
-import {
-  selectWorkspaceSchema,
-  user,
-  workspace,
-} from "@openstatus/db/src/schema";
+import { user, workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
-import { downgradeWorkspaceToFree } from "@openstatus/services/workspace";
+import {
+  downgradeWorkspaceToFree,
+  getWorkspaceByStripeId,
+} from "@openstatus/services/workspace";
 import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
@@ -58,19 +57,17 @@ export const webhookRouter = createTRPCRouter({
         ? subscription.customer
         : subscription.customer.id;
 
-    const result = await opts.ctx.db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.stripeId, customerId))
-      .get();
-    if (!result) {
+    const ws = await getWorkspaceByStripeId({
+      input: { stripeId: customerId },
+      db: opts.ctx.db,
+    });
+    if (!ws) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Workspace not found",
       });
     }
 
-    const ws = selectWorkspaceSchema.parse(result);
     const oldPlan = ws.plan;
 
     const built = buildFromSubscriptionOrThrow(subscription);
@@ -90,7 +87,7 @@ export const webhookRouter = createTRPCRouter({
         paidUntil: new Date(subscription.current_period_end * 1000),
         limits: JSON.stringify(built.limits),
       })
-      .where(eq(workspace.id, result.id))
+      .where(eq(workspace.id, ws.id))
       .run();
 
     const allActive = await stripe.subscriptions.list({
@@ -130,7 +127,7 @@ export const webhookRouter = createTRPCRouter({
         const analytics = await setupAnalytics({
           userId: `usr_${userResult.id}`,
           email: userResult.email || undefined,
-          workspaceId: String(result.id),
+          workspaceId: String(ws.id),
           plan: newPlan,
         });
         await analytics.track(event);
@@ -153,12 +150,11 @@ export const webhookRouter = createTRPCRouter({
         ? subscription.customer
         : subscription.customer.id;
 
-    const result = await opts.ctx.db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.stripeId, customerId))
-      .get();
-    if (!result) {
+    const ws = await getWorkspaceByStripeId({
+      input: { stripeId: customerId },
+      db: opts.ctx.db,
+    });
+    if (!ws) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Workspace not found",
@@ -183,7 +179,7 @@ export const webhookRouter = createTRPCRouter({
         paidUntil: new Date(subscription.current_period_end * 1000),
         limits: JSON.stringify(built.limits),
       })
-      .where(eq(workspace.id, result.id))
+      .where(eq(workspace.id, ws.id))
       .run();
 
     const customer = await stripe.customers.retrieve(customerId);
@@ -198,7 +194,7 @@ export const webhookRouter = createTRPCRouter({
       const analytics = await setupAnalytics({
         userId: `usr_${userResult.id}`,
         email: userResult.email || undefined,
-        workspaceId: String(result.id),
+        workspaceId: String(ws.id),
         plan: built.plan,
       });
       await analytics.track(Events.UpgradeWorkspace);
@@ -220,20 +216,17 @@ export const webhookRouter = createTRPCRouter({
       return;
     }
 
-    const workspaceRow = await opts.ctx.db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.stripeId, customerId))
-      .get();
+    const ws = await getWorkspaceByStripeId({
+      input: { stripeId: customerId },
+      db: opts.ctx.db,
+    });
 
-    if (!workspaceRow) {
+    if (!ws) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Workspace not found",
       });
     }
-
-    const ws = selectWorkspaceSchema.parse(workspaceRow);
 
     // System actor — no user is attributable to an involuntary Stripe
     // cancellation. The service verb runs the whole trim in one audited

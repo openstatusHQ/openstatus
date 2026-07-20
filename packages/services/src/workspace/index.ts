@@ -1,5 +1,6 @@
 export {
   getWorkspace,
+  getWorkspaceByStripeId,
   getWorkspaceWithUsage,
   listWorkspaces,
   type WorkspaceUsage,
@@ -8,6 +9,7 @@ export {
 export { downgradeWorkspaceToFree } from "./downgrade";
 export { updateWorkspaceName, updateWorkspacePlan } from "./update";
 export {
+  GetWorkspaceByStripeIdInput,
   GetWorkspaceInput,
   GetWorkspaceWithUsageInput,
   ListWorkspacesInput,

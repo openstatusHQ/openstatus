@@ -1,5 +1,6 @@
 import { eq } from "@openstatus/db";
 import { statusReport, workspace } from "@openstatus/db/src/schema";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -15,6 +16,7 @@ import type { ServiceContext } from "../../context";
 import { ForbiddenError } from "../../errors";
 import {
   getWorkspace,
+  getWorkspaceByStripeId,
   getWorkspaceWithUsage,
   listWorkspaces,
   updateWorkspaceName,
@@ -152,6 +154,41 @@ describe("updateWorkspaceName", () => {
         actorType: "user",
         db: tx,
       });
+    });
+  });
+});
+
+describe("getWorkspaceByStripeId", () => {
+  test("resolves the workspace for a known stripe customer id", async () => {
+    await withTestTransaction(async (tx) => {
+      const inserted = await tx
+        .insert(workspace)
+        .values({
+          slug: "svc-ws-by-stripe",
+          name: "Stripe Lookup",
+          plan: "team",
+          stripeId: "cus_svc_ws_by_stripe",
+          limits: JSON.stringify(getLimits("team")),
+        })
+        .returning()
+        .get();
+
+      const result = await getWorkspaceByStripeId({
+        input: { stripeId: "cus_svc_ws_by_stripe" },
+        db: tx,
+      });
+      expect(result?.id).toBe(inserted.id);
+      expect(typeof result?.limits).toBe("object");
+    });
+  });
+
+  test("returns null when no workspace maps to the customer", async () => {
+    await withTestTransaction(async (tx) => {
+      const result = await getWorkspaceByStripeId({
+        input: { stripeId: "cus_does_not_exist" },
+        db: tx,
+      });
+      expect(result).toBeNull();
     });
   });
 });
