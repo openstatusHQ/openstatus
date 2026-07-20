@@ -194,7 +194,10 @@ describe("downgradeWorkspaceToFree", () => {
       expect(after?.subscriptionId).toBeNull();
       expect(after?.paidUntil).toBeNull();
       expect(after?.endsAt).toBeNull();
-      expect(after?.limits).toBe(JSON.stringify(getLimits("free")));
+      // Compare parsed content, not the raw string — the verb persists
+      // `limitsSchema`-canonicalised JSON (key order differs from the
+      // config object returned by `getLimits`).
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("free"));
 
       await expectAuditRow({
         workspaceId: s.ws.id,

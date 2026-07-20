@@ -249,7 +249,10 @@ describe("updateWorkspacePlan", () => {
         .get();
       expect(after?.plan).toBe("starter");
       expect(after?.subscriptionId).toBe("sub_new");
-      expect(after?.limits).toBe(JSON.stringify(getLimits("starter")));
+      // Compare parsed content, not the raw string — the verb persists
+      // `limitsSchema`-canonicalised JSON (key order differs from the
+      // config object returned by `getLimits`).
+      expect(JSON.parse(after?.limits ?? "{}")).toEqual(getLimits("starter"));
 
       await expectAuditRow({
         workspaceId: ws.id,
