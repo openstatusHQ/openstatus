@@ -99,7 +99,7 @@ const notificationActions = [
 const userActions = [action("user.delete", "user", intId)] as const;
 
 const workspaceActions = [
-  action("workspace.update", "workspace", intId),
+  action("workspace.update", "workspace", intId, { optionalMetadata: true }),
 ] as const;
 
 const maintenanceActions = [

@@ -5,10 +5,12 @@ export {
   type WorkspaceUsage,
   type WorkspaceWithUsage,
 } from "./list";
-export { updateWorkspaceName } from "./update";
+export { downgradeWorkspaceToFree } from "./downgrade";
+export { updateWorkspaceName, updateWorkspacePlan } from "./update";
 export {
   GetWorkspaceInput,
   GetWorkspaceWithUsageInput,
   ListWorkspacesInput,
   UpdateWorkspaceNameInput,
+  UpdateWorkspacePlanInput,
 } from "./schemas";
