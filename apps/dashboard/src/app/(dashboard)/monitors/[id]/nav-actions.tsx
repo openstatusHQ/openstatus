@@ -25,10 +25,13 @@ import { useTRPC } from "@/lib/trpc/client";
 type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
 type TestDNS = RouterOutputs["checker"]["testDns"];
+type TestICMP = RouterOutputs["checker"]["testIcmp"];
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
-  const [test, setTest] = useState<TestTCP | TestHTTP | TestDNS | null>(null);
+  const [test, setTest] = useState<
+    TestTCP | TestHTTP | TestDNS | TestICMP | null
+  >(null);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const router = useRouter();
@@ -65,6 +68,7 @@ export function NavActions() {
   const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
   const testDnsMutation = useMutation(trpc.checker.testDns.mutationOptions());
+  const testIcmpMutation = useMutation(trpc.checker.testIcmp.mutationOptions());
 
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
@@ -147,6 +151,22 @@ export function NavActions() {
             return error.message;
           }
           return "DNS test failed";
+        },
+      });
+    } else if (monitor?.jobType === "icmp") {
+      const promise = testIcmpMutation.mutateAsync({ url: monitor.url });
+
+      toast.promise(promise, {
+        loading: "Testing ICMP request...",
+        success: (data) => {
+          setTest(data);
+          return "ICMP test completed successfully";
+        },
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "ICMP test failed";
         },
       });
     }

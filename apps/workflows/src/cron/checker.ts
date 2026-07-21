@@ -28,6 +28,7 @@ import { regionDict } from "@openstatus/regions";
 import {
   type DNSPayloadSchema,
   type httpPayloadSchema,
+  type icmpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
@@ -244,6 +245,7 @@ const createCronTask = async (
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
     | z.infer<typeof DNSPayloadSchema>
+    | z.infer<typeof icmpPayloadSchema>
     | null = null;
 
   //
@@ -300,6 +302,26 @@ const createCronTask = async (
       cronTimestamp: timestamp,
       status: status,
       assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
+    };
+  }
+
+  if (row.jobType === "icmp") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      uri: row.url,
+      cronTimestamp: timestamp,
+      status: status,
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
       trigger: "cron",

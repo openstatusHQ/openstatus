@@ -4,6 +4,7 @@ import {
   CopyPlus,
   Globe,
   Network,
+  Radio,
   Server,
   Trash2,
 } from "lucide-react";
@@ -23,6 +24,11 @@ export const monitorTypes = [
     id: "dns",
     label: "DNS",
     icon: Server,
+  },
+  {
+    id: "icmp",
+    label: "ICMP",
+    icon: Radio,
   },
 ] as const;
 

@@ -6,6 +6,8 @@ export {
   type TcpPayload,
   DNSPayloadSchema,
   type DNSPayload,
+  icmpPayloadSchema,
+  type IcmpPayload,
 } from "./payloads";
 export {
   MONITOR_METHODS,

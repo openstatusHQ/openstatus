@@ -69,3 +69,23 @@ export const DNSPayloadSchema = z.object({
 });
 
 export type DNSPayload = z.infer<typeof DNSPayloadSchema>;
+
+export const icmpPayloadSchema = z.object({
+  status: z.enum(MONITOR_STATUSES),
+  workspaceId: z.string(),
+  uri: z.string(),
+  monitorId: z.string(),
+  cronTimestamp: z.number(),
+  timeout: z.number().prefault(45000),
+  degradedAfter: z.number().nullable(),
+  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
+  otelConfig: z
+    .object({
+      endpoint: z.string(),
+      headers: z.record(z.string(), z.string()),
+    })
+    .optional(),
+  retry: z.number().prefault(3),
+});
+
+export type IcmpPayload = z.infer<typeof icmpPayloadSchema>;

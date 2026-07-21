@@ -76,6 +76,8 @@ describe("mapMonitorType", () => {
     expect(mapMonitorType("tcp")).toBe("tcp");
     expect(mapMonitorType("udp")).toBe("udp");
     expect(mapMonitorType("dns")).toBe("dns");
+    expect(mapMonitorType("ping")).toBe("icmp");
+    expect(mapMonitorType("ping_icmp")).toBe("icmp");
   });
 
   test("defaults to http for unknown types", () => {

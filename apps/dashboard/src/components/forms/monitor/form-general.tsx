@@ -54,7 +54,7 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Globe, Network, Plus, Server, X } from "lucide-react";
+import { Globe, Network, Plus, Radio, Server, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -72,7 +72,7 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-const TYPES = ["http", "tcp", "dns"] as const;
+const TYPES = ["http", "tcp", "dns", "icmp"] as const;
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 const DNS_ASSERTION_TYPES = dnsRecords;
 
@@ -273,13 +273,14 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-5"
                       disabled={!!defaultValues?.type}
                     >
                       {[
                         { value: "http", icon: Globe, label: "HTTP" },
                         { value: "tcp", icon: Network, label: "TCP" },
                         { value: "dns", icon: Server, label: "DNS" },
+                        { value: "icmp", icon: Radio, label: "ICMP" },
                       ].map((type) => {
                         return (
                           <Tooltip key={type.value}>
@@ -718,6 +719,48 @@ export function FormGeneral({
                     IPv6:{" "}
                     <span className="text-foreground font-mono">
                       [2001:db8:85a3:8d3:1319:8a2e:370:7348]:443
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </FormCardContent>
+          )}
+          {watchType === "icmp" && (
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Host</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1.1.1.1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      The host to ping. Supports a domain, IPv4, or IPv6 address
+                      (no port).
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+              <div className="text-muted-foreground col-span-full text-sm">
+                Examples:
+                <ul className="list-inside list-disc">
+                  <li>
+                    Domain:{" "}
+                    <span className="text-foreground font-mono">
+                      openstatus.dev
+                    </span>
+                  </li>
+                  <li>
+                    IPv4:{" "}
+                    <span className="text-foreground font-mono">1.1.1.1</span>
+                  </li>
+                  <li>
+                    IPv6:{" "}
+                    <span className="text-foreground font-mono">
+                      2001:4860:4860::8888
                     </span>
                   </li>
                 </ul>

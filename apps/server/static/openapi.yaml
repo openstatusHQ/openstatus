@@ -1161,6 +1161,95 @@ components:
       title: Headers
       additionalProperties: false
       description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ICMPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - Ping Gateway
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          examples:
+            - 1.1.1.1
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: URI to monitor in format "host or IP" (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: ICMPMonitor
+      additionalProperties: false
+      description: ICMPMonitor defines the configuration for a ICMP monitor.
     openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest:
       type: object
       properties:
@@ -1265,6 +1354,12 @@ components:
             $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
           title: dns_monitors
           description: DNS monitors in the workspace.
+        icmpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+          title: icmp_monitors
+          description: ICMP monitors in the workspace.
         totalSize:
           type: integer
           title: total_size
@@ -1294,6 +1389,15 @@ components:
           title: http
           required:
             - http
+        - type: object
+          properties:
+            icmp:
+              title: icmp
+              description: ICMP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.ICMPMonitor'
+          title: icmp
+          required:
+            - icmp
         - type: object
           properties:
             tcp:

@@ -108,6 +108,23 @@ type TCPCheckerRequest struct {
 	} `json:"otelConfig"`
 }
 
+type ICMPCheckerRequest struct {
+	Status        string `json:"status"`
+	WorkspaceID   string `json:"workspaceId"`
+	URI           string `json:"uri"`
+	MonitorID     string `json:"monitorId"`
+	Trigger       string `json:"trigger,omitempty"`
+	RequestId     int64  `json:"requestId,omitempty"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	Timeout       int64  `json:"timeout"`
+	DegradedAfter int64  `json:"degradedAfter,omitempty"`
+	Retry         int64  `json:"retry,omitempty"`
+	OtelConfig    struct {
+		Endpoint string            `json:"endpoint"`
+		Headers  map[string]string `json:"headers,omitempty"`
+	} `json:"otelConfig"`
+}
+
 type TCPRequest struct {
 	WorkspaceID   string `json:"workspaceId"`
 	URL           string `json:"url"`
