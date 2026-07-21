@@ -23,14 +23,22 @@ type mockJobRunner struct {
 	mu            sync.Mutex
 	httpRegion    string
 	tcpRegion     string
+	httpMonitor   *v1.HTTPMonitor
 }
 
 func (m *mockJobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*job.HttpPrivateRegionData, error) {
 	m.HTTPJobCalled.Store(true)
 	m.mu.Lock()
 	m.httpRegion = region
+	m.httpMonitor = monitor
 	m.mu.Unlock()
 	return &job.HttpPrivateRegionData{}, nil
+}
+
+func (m *mockJobRunner) HTTPMonitor() *v1.HTTPMonitor {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.httpMonitor
 }
 func (m *mockJobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region string) (*job.TCPPrivateRegionData, error) {
 
@@ -157,4 +165,76 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 		t.Errorf("expected TCP job to be removed")
 	}
 
+}
+
+// runScheduledTask executes an already scheduled task synchronously, so a test
+// can observe the monitor config its closure captured without waiting for the
+// interval to elapse.
+func runScheduledTask(t *testing.T, s *tasks.Scheduler, id string) {
+	t.Helper()
+
+	task, err := s.Lookup(id)
+	if err != nil {
+		t.Fatalf("expected a task scheduled for %s: %v", id, err)
+	}
+	if err := task.FuncWithTaskContext(tasks.TaskContext{}); err != nil {
+		t.Fatalf("task %s returned an error: %v", id, err)
+	}
+}
+
+func TestMonitorManager_ReschedulesOnConfigChange(t *testing.T) {
+	ctx := t.Context()
+
+	// Long periodicity: the task only runs when the test invokes it.
+	withoutHeader := &v1.HTTPMonitor{Id: "http1", Url: "https://openstat.us", Periodicity: "1h"}
+	unchanged := &v1.HTTPMonitor{Id: "http1", Url: "https://openstat.us", Periodicity: "1h"}
+	withHeader := &v1.HTTPMonitor{
+		Id: "http1", Url: "https://openstat.us", Periodicity: "1h",
+		Headers: []*v1.Headers{{Key: "X-Auth-Token", Value: "secret"}},
+	}
+
+	current := withoutHeader
+	client := &mockClient{
+		MonitorsFunc: func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
+			return connect.NewResponse(&v1.MonitorsResponse{
+				HttpMonitors: []*v1.HTTPMonitor{current},
+				Region:       "frankfurt-dc1",
+			}), nil
+		},
+		IngestHTTPFunc: func(ctx context.Context, req *connect.Request[v1.IngestHTTPRequest]) (*connect.Response[v1.IngestHTTPResponse], error) {
+			return connect.NewResponse(&v1.IngestHTTPResponse{}), nil
+		},
+	}
+	jobRunner := &mockJobRunner{}
+
+	s := tasks.New()
+	defer s.Stop()
+
+	mm := &scheduler.MonitorManager{Client: client, JobRunner: jobRunner, Scheduler: s}
+
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "http1")
+	if got := jobRunner.HTTPMonitor(); got != withoutHeader {
+		t.Fatalf("expected the job to run with the fetched monitor, got %v", got)
+	}
+
+	// Same config, fresh pointer: rescheduling here would reset the interval timer.
+	current = unchanged
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "http1")
+	if got := jobRunner.HTTPMonitor(); got != withoutHeader {
+		t.Errorf("expected an unchanged monitor to keep its task, got a rescheduled one")
+	}
+
+	current = withHeader
+	mm.UpdateMonitors(ctx)
+	runScheduledTask(t, mm.Scheduler, "http1")
+
+	got := jobRunner.HTTPMonitor()
+	if got != withHeader {
+		t.Fatalf("expected the job to run with the updated monitor, got %v", got)
+	}
+	if len(got.Headers) != 1 || got.Headers[0].Key != "X-Auth-Token" || got.Headers[0].Value != "secret" {
+		t.Errorf("expected the added header to reach the job, got %v", got.Headers)
+	}
 }
