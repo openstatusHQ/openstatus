@@ -1,11 +1,11 @@
-import { eq } from "@openstatus/db";
+import { db, eq } from "@openstatus/db";
 import {
   page,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
@@ -15,6 +15,7 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import type { DB, ServiceContext } from "../../context";
+import { addStatusReportUpdate } from "../add-update";
 import { deleteStatusReportUpdate } from "../delete";
 import { deriveReportStatus, recomputeReportStatus } from "../derive-status";
 import type { StatusReportStatus } from "../schemas";
@@ -23,10 +24,34 @@ import { updateStatusReportUpdate } from "../update";
 const TEST_PREFIX = "svc-derive-status-test";
 
 let teamCtx: ServiceContext;
+let testPageId: number;
 
+// the page is created outside a transaction and shared by every test —
+// inserting it inside each one lengthens the write lock and starves the
+// other suites running in parallel (SQLITE_BUSY)
 beforeAll(async () => {
   const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
   teamCtx = makeUserCtx(team, { userId: 1 });
+
+  const pageRow = await db
+    .insert(page)
+    .values({
+      workspaceId: team.id,
+      title: `${TEST_PREFIX}-page`,
+      description: "test page",
+      slug: `${TEST_PREFIX}-page-slug`,
+      customDomain: "",
+    })
+    .returning()
+    .get();
+  testPageId = pageRow.id;
+});
+
+afterAll(async () => {
+  await db
+    .delete(page)
+    .where(eq(page.id, testPageId))
+    .catch(() => undefined);
 });
 
 const u = (id: number, status: StatusReportStatus, iso: string) => ({
@@ -137,30 +162,16 @@ describe("deriveReportStatus (pure)", () => {
 
 const STALE_UPDATED_AT = new Date("2020-01-01T00:00:00Z");
 
-let seedCounter = 0;
-
 async function seedReport(
   tx: DB,
   workspaceId: number,
   status: StatusReportStatus,
 ) {
-  const n = seedCounter++;
-  const pageRow = await tx
-    .insert(page)
-    .values({
-      workspaceId,
-      title: `${TEST_PREFIX}-page-${n}`,
-      description: "p",
-      slug: `${TEST_PREFIX}-page-slug-${n}`,
-      customDomain: "",
-    })
-    .returning()
-    .get();
-  const report = await tx
+  return tx
     .insert(statusReport)
     .values({
       workspaceId,
-      pageId: pageRow.id,
+      pageId: testPageId,
       title: `${TEST_PREFIX}-report`,
       status,
       // far in the past: `updatedAt` is second-precision, so a same-second
@@ -169,7 +180,6 @@ async function seedReport(
     })
     .returning()
     .get();
-  return report;
 }
 
 async function addUpdate(
@@ -354,6 +364,58 @@ describe("recomputeReportStatus (DB)", () => {
       const row = rows.find((r) => r.action === "status_report_update.update");
       expect(row).toBeDefined();
       expect(row?.metadata).toEqual({ statusReportId: report.id });
+    });
+  });
+
+  test("adding a back-dated update does not become the report status", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(
+        tx,
+        teamCtx.workspace.id,
+        "investigating",
+      );
+      await addUpdate(tx, report.id, "resolved", "2026-01-05T00:00:00Z");
+      await recomputeReportStatus(tx, report.id);
+
+      // filed late, dated before the resolve
+      await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "identified",
+          message: "backfilled detail",
+          date: new Date("2026-01-02T00:00:00Z"),
+        },
+      });
+
+      expect(await readStatus(tx, report.id)).toBe("resolved");
+    });
+  });
+
+  test("adding a newer update still advances the report status", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(
+        tx,
+        teamCtx.workspace.id,
+        "investigating",
+      );
+      await addUpdate(tx, report.id, "investigating", "2026-01-01T00:00:00Z");
+      await recomputeReportStatus(tx, report.id);
+
+      const { statusReport: bumped } = await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "monitoring",
+          message: "moved on",
+          date: new Date("2026-01-04T00:00:00Z"),
+        },
+      });
+
+      expect(bumped.status).toBe("monitoring");
+      expect(await readStatus(tx, report.id)).toBe("monitoring");
     });
   });
 
