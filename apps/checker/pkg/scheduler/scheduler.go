@@ -207,6 +207,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				_, err := mm.JobRunner.DNSJob(c, monitor)
 				if err != nil {
 					log.Printf("DNS monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
+					return err
 				}
 				resp, ingestErr := mm.Client.IngestDNS(c, &connect.Request[v1.IngestDNSRequest]{
 					Msg: &v1.IngestDNSRequest{
