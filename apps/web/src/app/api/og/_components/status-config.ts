@@ -1,5 +1,18 @@
-import type { StatusDetails, StatusVariant } from "./types";
-import { Status } from "./types";
+import { Status } from "@openstatus/services/status-page";
+
+export type StatusVariant =
+  | "up"
+  | "degraded"
+  | "down"
+  | "empty"
+  | "incident"
+  | "maintenance";
+
+export type StatusDetails = {
+  long: string;
+  short: string;
+  variant: StatusVariant;
+};
 
 export const statusDetails: Record<Status, StatusDetails> = {
   [Status.Operational]: {
@@ -39,8 +52,6 @@ export const statusDetails: Record<Status, StatusDetails> = {
   },
 };
 
-// TODO: include more variants especially for the '< 10 min' incidents e.g.
-// REMINDER: add `@openstatus/tracker/src/**/*.ts into tailwindcss content prop */
 export const classNames: Record<StatusVariant, string> = {
   up: "bg-status-operational/90 data-[state=open]:bg-status-operational border-status-operational",
   degraded:
@@ -52,3 +63,28 @@ export const classNames: Record<StatusVariant, string> = {
   maintenance:
     "bg-status-monitoring/90 data-[state=open]:bg-status-monitoring border-status-monitoring",
 };
+
+/** Dates where OpenStatus itself failed to collect data. */
+const blacklistDates: Record<string, string> = {
+  "Fri Aug 25 2023":
+    "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
+  "Sat Aug 26 2023":
+    "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
+  "Wed Oct 18 2023":
+    "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
+};
+
+function isSameDay(date1: Date, date2: Date) {
+  return (
+    date1.getDate() === date2.getDate() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getFullYear() === date2.getFullYear()
+  );
+}
+
+export function isInBlacklist(day: Date) {
+  const el = Object.keys(blacklistDates).find((date) =>
+    isSameDay(new Date(date), day),
+  );
+  return el ? blacklistDates[el] : undefined;
+}

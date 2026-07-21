@@ -1,4 +1,4 @@
-import { Tracker } from "@openstatus/tracker";
+import { derivePageStatus } from "@openstatus/services/status-page";
 import { ImageResponse } from "next/og";
 
 import { DESCRIPTION, TITLE } from "../../../../lib/metadata/shared-metadata";
@@ -26,15 +26,15 @@ export async function GET(req: Request) {
   const description = page ? "" : DESCRIPTION;
 
   // REMINDER: if password protected, we keep the status 'operational' by default, hiding the actual status
-  const tracker = new Tracker({
-    incidents: _protected ? undefined : page?.incidents,
-    statusReports: _protected ? undefined : page?.statusReports,
-    maintenances: _protected ? undefined : page?.maintenances,
+  const status = derivePageStatus({
+    incidents: _protected ? [] : (page?.incidents ?? []),
+    statusReports: _protected ? [] : (page?.statusReports ?? []),
+    maintenances: _protected ? [] : (page?.maintenances ?? []),
   });
 
   return new ImageResponse(
     <BasicLayout title={title} description={description} tw="py-24 px-24">
-      <StatusCheck tracker={tracker} />
+      <StatusCheck status={status} />
     </BasicLayout>,
     {
       ...SIZE,

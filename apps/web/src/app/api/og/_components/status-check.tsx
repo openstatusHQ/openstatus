@@ -1,11 +1,11 @@
-import type { Tracker } from "@openstatus/tracker";
+import type { Status } from "@openstatus/services/status-page";
 
 import { cn } from "../../../../lib/utils";
+import { statusDetails } from "./status-config";
 
-export function StatusCheck({ tracker }: { tracker: Tracker }) {
-  const details = tracker.currentDetails;
+export function StatusCheck({ status }: { status: Status }) {
+  const details = statusDetails[status];
 
-  // FIXME: move icons into @openstatus/tracker lib
   function getVariant() {
     switch (details.variant) {
       case "maintenance":
