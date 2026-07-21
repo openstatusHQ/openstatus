@@ -65,6 +65,7 @@ export async function deleteStatusReportUpdate(args: {
       entityType: "status_report_update",
       entityId: existing.id,
       before: existing,
+      metadata: { statusReportId: existing.statusReportId },
     });
   });
 }
