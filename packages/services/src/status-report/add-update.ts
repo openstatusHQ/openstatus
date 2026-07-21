@@ -106,7 +106,9 @@ export async function addStatusReportUpdate(args: {
     });
 
     // derived, not assigned — a back-dated update must not win
-    const updatedReport = await recomputeReportStatus(tx, report.id);
+    const updatedReport = await recomputeReportStatus(tx, report.id, {
+      touchIfLatestIs: newUpdate.id,
+    });
 
     if (!updatedReport) {
       throw new InternalServiceError(

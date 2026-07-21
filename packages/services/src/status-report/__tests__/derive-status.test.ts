@@ -468,6 +468,90 @@ describe("recomputeReportStatus (DB)", () => {
     });
   });
 
+  test("a same-status update still bumps the report's updatedAt", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(tx, teamCtx.workspace.id, "monitoring");
+      await addUpdate(tx, report.id, "monitoring", "2026-01-02T00:00:00Z");
+
+      await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "monitoring",
+          message: "still working on it",
+          date: new Date("2026-01-03T00:00:00Z"),
+        },
+      });
+
+      const after = await readRow(tx, report.id);
+      expect(after?.status).toBe("monitoring");
+      // RSS/Atom consumers would miss the update otherwise
+      expect(after?.updatedAt?.getTime()).toBeGreaterThan(
+        STALE_UPDATED_AT.getTime(),
+      );
+    });
+  });
+
+  test("a back-dated same-status update does not bump updatedAt", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(tx, teamCtx.workspace.id, "monitoring");
+      await addUpdate(tx, report.id, "monitoring", "2026-01-05T00:00:00Z");
+
+      await addStatusReportUpdate({
+        ctx,
+        input: {
+          statusReportId: report.id,
+          status: "monitoring",
+          message: "backfilled detail",
+          date: new Date("2026-01-02T00:00:00Z"),
+        },
+      });
+
+      const after = await readRow(tx, report.id);
+      expect(after?.updatedAt?.getTime()).toBe(STALE_UPDATED_AT.getTime());
+    });
+  });
+
+  test("deleting the latest update re-derives the report status", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(tx, teamCtx.workspace.id, "resolved");
+      await addUpdate(tx, report.id, "investigating", "2026-01-02T00:00:00Z");
+      const doomed = await addUpdate(
+        tx,
+        report.id,
+        "resolved",
+        "2026-01-03T00:00:00Z",
+      );
+
+      await deleteStatusReportUpdate({ ctx, input: { id: doomed.id } });
+
+      expect(await readStatus(tx, report.id)).toBe("investigating");
+    });
+  });
+
+  test("deleting a non-latest update leaves the report status alone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const report = await seedReport(tx, teamCtx.workspace.id, "resolved");
+      const doomed = await addUpdate(
+        tx,
+        report.id,
+        "investigating",
+        "2026-01-02T00:00:00Z",
+      );
+      await addUpdate(tx, report.id, "resolved", "2026-01-03T00:00:00Z");
+
+      await deleteStatusReportUpdate({ ctx, input: { id: doomed.id } });
+
+      const after = await readRow(tx, report.id);
+      expect(after?.status).toBe("resolved");
+      expect(after?.updatedAt?.getTime()).toBe(STALE_UPDATED_AT.getTime());
+    });
+  });
+
   test("persisted column agrees with the pure function on the same rows", async () => {
     await withTestTransaction(async (tx) => {
       const report = await seedReport(

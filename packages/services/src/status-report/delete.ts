@@ -4,6 +4,7 @@ import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { recomputeReportStatus } from "./derive-status";
 import { getReportInWorkspace, getReportUpdateInWorkspace } from "./internal";
 import {
   DeleteStatusReportInput,
@@ -59,6 +60,9 @@ export async function deleteStatusReportUpdate(args: {
     await tx
       .delete(statusReportUpdate)
       .where(eq(statusReportUpdate.id, existing.id));
+
+    // deleting the latest update hands the status back to the one before it
+    await recomputeReportStatus(tx, existing.statusReportId);
 
     await emitAudit(tx, ctx, {
       action: "status_report_update.delete",

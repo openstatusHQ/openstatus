@@ -19,6 +19,12 @@ type DerivableUpdate = {
 export function deriveReportStatus(
   updates: ReadonlyArray<DerivableUpdate>,
 ): StatusReportStatus | null {
+  return findLatestUpdate(updates)?.status ?? null;
+}
+
+function findLatestUpdate(
+  updates: ReadonlyArray<DerivableUpdate>,
+): DerivableUpdate | null {
   let latest: DerivableUpdate | null = null;
   for (const update of updates) {
     if (
@@ -29,7 +35,7 @@ export function deriveReportStatus(
       latest = update;
     }
   }
-  return latest?.status ?? null;
+  return latest;
 }
 
 /**
@@ -40,6 +46,10 @@ export function deriveReportStatus(
 export async function recomputeReportStatus(
   tx: DB,
   statusReportId: number,
+  options?: {
+    /** Bump `updatedAt` even if the status is unchanged, when this update is the latest one. */
+    touchIfLatestIs?: number;
+  },
 ): Promise<StatusReport | null> {
   const rows = await tx
     .select({
@@ -52,8 +62,8 @@ export async function recomputeReportStatus(
     .orderBy(asc(statusReportUpdate.date), asc(statusReportUpdate.id))
     .all();
 
-  const derived = deriveReportStatus(rows);
-  if (derived === null) return null;
+  const latest = findLatestUpdate(rows);
+  if (latest === null) return null;
 
   const current = await tx
     .select()
@@ -62,13 +72,18 @@ export async function recomputeReportStatus(
     .get();
   if (!current) return null;
 
+  const isNewLatest =
+    options?.touchIfLatestIs !== undefined &&
+    options.touchIfLatestIs === latest.id;
+
   // no-op edits (message, impacts) must not bump updatedAt — the RSS/Atom
-  // feed dates and sorts items by it
-  if (current.status === derived) return current;
+  // feed dates and sorts items by it. A new latest update always counts,
+  // even when it repeats the current status.
+  if (current.status === latest.status && !isNewLatest) return current;
 
   return tx
     .update(statusReport)
-    .set({ status: derived, updatedAt: new Date() })
+    .set({ status: latest.status, updatedAt: new Date() })
     .where(eq(statusReport.id, statusReportId))
     .returning()
     .get();
