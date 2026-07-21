@@ -674,9 +674,6 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
-      '@openstatus/tracker':
-        specifier: workspace:*
-        version: link:../../packages/tracker
       '@openstatus/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1139,9 +1136,6 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
-      '@openstatus/tracker':
-        specifier: workspace:*
-        version: link:../../packages/tracker
       '@openstatus/ui':
         specifier: workspace:*
         version: link:../../packages/ui

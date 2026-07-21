@@ -1,62 +1,18 @@
 import type { PageComponentImpact } from "@openstatus/db/src/schema";
 import { impactToStatusType, worstImpact } from "@openstatus/db/src/schema";
+
 import {
   type Event,
   MS_PER_DAY,
   type StatusData,
-  type UptimeWindow,
-  dayCoverage,
-  durationDowntimeMs,
-  floorPct,
   getHighestPriorityStatus,
   getWorstVariant,
   isDateWithinEvent,
   reportEventDayImpact,
   reportEventDayStatus,
-  reportsOnlyDowntimeMs,
-  requestsTally,
-} from "@openstatus/services/status-timeline";
+} from "../status-timeline";
 
-export * from "@openstatus/services/status-timeline";
-
-// Status pages must render even when Tinybird is degraded. Read latency above
-// this budget is treated as an outage and the page falls back to manual mode.
-export const TINYBIRD_FALLBACK_TIMEOUT_MS = 5_000;
-
-// Discriminated result of a guarded Tinybird read: `ok: true` carries the data,
-// `ok: false` (timeout or error) carries `null` and signals manual-mode fallback.
-export type TinybirdResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; data: null };
-
-// Races a Tinybird read against the fallback budget. `ok: false` (timeout or
-// thrown error) signals the caller to serve manual mode — DB-authored events
-// only — instead of hanging or 500ing on Tinybird.
-export async function withTinybirdFallback<T>(
-  fetch: () => Promise<T>,
-  timeoutMs = TINYBIRD_FALLBACK_TIMEOUT_MS,
-): Promise<TinybirdResult<T>> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    const data = await Promise.race([
-      fetch(),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error("tinybird timeout")),
-          timeoutMs,
-        );
-      }),
-    ]);
-    return { ok: true, data };
-  } catch (err) {
-    console.error("[status-page] tinybird unhealthy, using manual mode:", err);
-    return { ok: false, data: null };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-type UptimeData = {
+export type UptimeData = {
   day: string;
   events: Event[];
   bar: {
@@ -636,40 +592,4 @@ export function setDataByType({
       card: cardData,
     };
   });
-}
-
-export function getUptime({
-  data,
-  events,
-  barType,
-  cardType,
-}: {
-  data: StatusData[];
-  events: Event[];
-  barType: "absolute" | "dominant" | "manual";
-  cardType: "requests" | "duration" | "dominant" | "manual";
-}): string {
-  if (barType === "manual" || cardType === "duration") {
-    // Clamp event durations to the data lookback window to avoid
-    // events outside the window producing negative uptime values.
-    const timestamps = data.map((d) => new Date(d.day).getTime());
-    const { segments: coverage, totalMs: total } = dayCoverage(timestamps);
-    if (total === 0) return "100%";
-    const windowEndDate = new Date(Math.max(...timestamps));
-    windowEndDate.setUTCHours(23, 59, 59, 999);
-    const window: UptimeWindow = {
-      start: Math.min(...timestamps),
-      end: windowEndDate.getTime(),
-      now: Date.now(),
-    };
-    const duration =
-      barType === "manual"
-        ? reportsOnlyDowntimeMs(events, window, coverage)
-        : durationDowntimeMs(events, window, coverage);
-    return `${floorPct((total - duration) / total)}%`;
-  }
-
-  const { up, total } = requestsTally(data);
-  if (total === 0) return "100%";
-  return `${floorPct(up / total)}%`;
 }

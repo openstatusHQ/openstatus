@@ -45,6 +45,10 @@
       "import": "./src/status-timeline/index.ts",
       "types": "./src/status-timeline/index.ts"
     },
+    "./status-page": {
+      "import": "./src/status-page/index.ts",
+      "types": "./src/status-page/index.ts"
+    },
     "./frozen-uptime": {
       "import": "./src/frozen-uptime/index.ts",
       "types": "./src/frozen-uptime/index.ts"

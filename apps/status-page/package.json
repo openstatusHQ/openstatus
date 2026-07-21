@@ -33,7 +33,6 @@
     "@openstatus/react": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "@openstatus/tracker": "workspace:*",
     "@openstatus/ui": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@radix-ui/react-dropdown-menu": "catalog:",
