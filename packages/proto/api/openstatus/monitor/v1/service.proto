@@ -6,6 +6,7 @@ import "buf/validate/validate.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/icmp_monitor.proto";
 import "openstatus/monitor/v1/monitor.proto";
 import "openstatus/monitor/v1/tcp_monitor.proto";
 
@@ -220,6 +221,9 @@ message ListMonitorsResponse {
   // DNS monitors in the workspace.
   repeated DNSMonitor dns_monitors = 3;
 
+  // ICMP monitors in the workspace.
+  repeated ICMPMonitor icmp_monitors = 5;
+
   // Total number of monitors across all types.
   int32 total_size = 4;
 }
@@ -257,6 +261,8 @@ message MonitorConfig {
     TCPMonitor tcp = 2;
     // DNS monitor configuration.
     DNSMonitor dns = 3;
+    // ICMP monitor configuration.
+    ICMPMonitor icmp = 4;
   }
 }
 

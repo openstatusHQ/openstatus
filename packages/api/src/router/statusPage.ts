@@ -669,12 +669,14 @@ export const statusPageRouter = createTRPCRouter({
         http: monitors.filter((c) => c.monitor.jobType === "http"),
         tcp: monitors.filter((c) => c.monitor.jobType === "tcp"),
         dns: monitors.filter((c) => c.monitor.jobType === "dns"),
+        icmp: monitors.filter((c) => c.monitor.jobType === "icmp"),
       };
 
       const proceduresByType = {
         http: getStatusProcedure("45d", "http"),
         tcp: getStatusProcedure("45d", "tcp"),
         dns: getStatusProcedure("45d", "dns"),
+        icmp: getStatusProcedure("45d", "icmp"),
       };
 
       // Manual mode never touches Tinybird. Otherwise race the reads against
@@ -682,7 +684,7 @@ export const statusPageRouter = createTRPCRouter({
       // whole page to manual mode so bars still render from DB events.
       const tinybird = await withTinybirdFallback(() =>
         input.barType === "manual"
-          ? Promise.resolve([null, null, null])
+          ? Promise.resolve([null, null, null, null])
           : Promise.all(
               Object.entries(proceduresByType).map(([type, procedure]) => {
                 const monitorIds = monitorsByType[
@@ -695,7 +697,8 @@ export const statusPageRouter = createTRPCRouter({
       );
 
       const tinybirdUnhealthy = !tinybird.ok;
-      const [statusHttp, statusTcp, statusDns] = tinybird.data ?? [
+      const [statusHttp, statusTcp, statusDns, statusIcmp] = tinybird.data ?? [
+        null,
         null,
         null,
         null,
@@ -706,10 +709,16 @@ export const statusPageRouter = createTRPCRouter({
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
       >();
 
       // Consolidate status data from all monitor types into the map
-      for (const statusResult of [statusHttp, statusTcp, statusDns]) {
+      for (const statusResult of [
+        statusHttp,
+        statusTcp,
+        statusDns,
+        statusIcmp,
+      ]) {
         if (statusResult?.data) {
           statusResult.data.forEach((status) => {
             const monitorId = status.monitorId;
@@ -975,12 +984,14 @@ export const statusPageRouter = createTRPCRouter({
         http: publicMonitors.filter((c) => c.monitor.jobType === "http"),
         tcp: publicMonitors.filter((c) => c.monitor.jobType === "tcp"),
         dns: publicMonitors.filter((c) => c.monitor.jobType === "dns"),
+        icmp: publicMonitors.filter((c) => c.monitor.jobType === "icmp"),
       };
 
       const proceduresByType = {
         http: getMetricsLatencyMultiProcedure("1d", "http"),
         tcp: getMetricsLatencyMultiProcedure("1d", "tcp"),
         dns: getMetricsLatencyMultiProcedure("1d", "dns"),
+        icmp: getMetricsLatencyMultiProcedure("1d", "icmp"),
       };
 
       // Slow/erroring Tinybird → empty latency data so the page still renders.
@@ -1000,13 +1011,15 @@ export const statusPageRouter = createTRPCRouter({
         metricsLatencyMultiHttp,
         metricsLatencyMultiTcp,
         metricsLatencyMultiDns,
-      ] = metrics.data ?? [null, null, null];
+        metricsLatencyMultiIcmp,
+      ] = metrics.data ?? [null, null, null, null];
 
       const metricsDataByMonitorId = new Map<
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["icmp"]>>["data"]
       >();
 
       if (metricsLatencyMultiHttp?.data) {
@@ -1031,6 +1044,16 @@ export const statusPageRouter = createTRPCRouter({
 
       if (metricsLatencyMultiDns?.data) {
         metricsLatencyMultiDns.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      if (metricsLatencyMultiIcmp?.data) {
+        metricsLatencyMultiIcmp.data.forEach((metric) => {
           const monitorId = metric.monitorId;
           if (!metricsDataByMonitorId.has(monitorId)) {
             metricsDataByMonitorId.set(monitorId, []);
@@ -1083,7 +1106,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_monitor.public) return null;
       if (_monitor.deletedAt) return null;
 
-      const type = _monitor.jobType as "http" | "tcp";
+      const type = _monitor.jobType as "http" | "tcp" | "dns" | "icmp";
 
       const proceduresByType = {
         http: {
@@ -1100,6 +1123,11 @@ export const statusPageRouter = createTRPCRouter({
           latency: getMetricsLatencyProcedure("7d", "dns"),
           regions: getMetricsRegionsProcedure("7d", "dns"),
           uptime: getUptimeProcedure("7d", "dns"),
+        },
+        icmp: {
+          latency: getMetricsLatencyProcedure("7d", "icmp"),
+          regions: getMetricsRegionsProcedure("7d", "icmp"),
+          uptime: getUptimeProcedure("7d", "icmp"),
         },
       };
 

@@ -169,6 +169,31 @@ func RecordDNSMetrics(ctx context.Context, req request.DNSCheckerRequest, latenc
 	})
 }
 
+func RecordICMPMetrics(ctx context.Context, req request.ICMPCheckerRequest, result checker.ICMPResponse, region string) {
+	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
+		att := metric.WithAttributes(
+			attribute.String("openstatus.probes", region),
+			attribute.String("openstatus.target", req.URI),
+		)
+
+		if result.Error == 1 {
+			recordErrorCounter(ctx, meter, att)
+			return
+		}
+
+		recordStatusCounter(ctx, meter, att)
+
+		if err := recordGauge(ctx, meter, "openstatus.icmp.request.duration", "Duration of the check", float64(result.Latency), att); err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.request.duration").Msg("Error creating gauge")
+		}
+
+		packetLoss := float64(result.PacketsSent-result.PacketsReceived) / float64(result.PacketsSent) * 100
+		if err := recordGauge(ctx, meter, "openstatus.icmp.packet.loss", "Packet loss percentage", packetLoss, att); err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.icmp.packet.loss").Msg("Error creating gauge")
+		}
+	})
+}
+
 func RecordTCPMetrics(ctx context.Context, req request.TCPCheckerRequest, result checker.TCPResponse, region string) {
 	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
 		att := metric.WithAttributes(

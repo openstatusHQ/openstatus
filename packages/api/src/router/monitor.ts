@@ -34,7 +34,7 @@ import { z } from "zod";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { testDns, testHttp, testTcp } from "./checker";
+import { testDns, testHttp, testIcmp, testTcp } from "./checker";
 
 // tRPC-side input schemas. These preserve the existing wire contract exactly.
 
@@ -337,6 +337,8 @@ export const monitorRouter = createTRPCRouter({
                 (a) => a.type === "dnsRecord",
               ),
             });
+          } else if (input.jobType === "icmp") {
+            await testIcmp({ url: input.url, region: "ams" });
           }
         }
 
@@ -401,6 +403,8 @@ export const monitorRouter = createTRPCRouter({
                 (a) => a.type === "dnsRecord",
               ),
             });
+          } else if (input.jobType === "icmp") {
+            await testIcmp({ url: input.url, region: "ams" });
           }
         }
 

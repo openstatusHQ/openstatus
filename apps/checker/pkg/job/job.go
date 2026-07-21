@@ -31,6 +31,7 @@ type JobRunner interface {
 	TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region string) (*TCPPrivateRegionData, error)
 	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*HttpPrivateRegionData, error)
 	DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivateRegionData, error)
+	ICMPJob(ctx context.Context, monitor *v1.ICMPMonitor, region string) (*ICMPPrivateRegionData, error)
 }
 
 type jobRunner struct{}

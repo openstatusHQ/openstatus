@@ -119,7 +119,7 @@ export function FormMonitorUpdate() {
     <FormCardGroup>
       <FormGeneral
         defaultValues={{
-          type: monitor.jobType as "http" | "tcp",
+          type: monitor.jobType as "http" | "tcp" | "dns" | "icmp",
           url: monitor.url,
           name: monitor.name,
           method: monitor.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",

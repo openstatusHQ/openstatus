@@ -1,0 +1,98 @@
+---
+category: Reference
+title: ICMP Monitor Reference
+description: Complete technical specification for ICMP (ping) monitoring.
+---
+
+An ICMP monitor sends ICMP echo requests ("pings") to a host to verify that it is reachable and to measure round-trip latency. This is useful for monitoring hosts that expose no TCP or HTTP service, such as routers, gateways, and bare network endpoints.
+
+Each check sends **3 echo requests** spaced ~100ms apart. The check is considered up as long as **at least one** reply is received; it fails only when all three packets are lost. The reported latency is the **average** round-trip time of the replies received, and packet loss is recorded per check.
+
+**Use cases:**
+
+- Router, gateway, and firewall reachability.
+- Baseline network latency and packet-loss tracking.
+- Monitoring IoT and network devices without an application-layer service.
+
+## Configuration
+
+### Host
+
+**Type:** String (required)
+**Format:** Hostname or IP address, without a port
+
+The host to ping. Both IPv4 and IPv6 targets are supported — the resolved address family selects the protocol automatically.
+
+**Examples:**
+- `openstatus.dev`
+- `1.1.1.1`
+- `2001:4860:4860::8888`
+
+### Regions
+
+**Type:** Array of strings (required)
+**Format:** Region identifiers (e.g., `iad`, `jnb`)
+
+The geographical regions from which the ping is sent. See the [Location Reference](/docs/reference/location) for the full list of regions and the IPs to allowlist.
+
+### Frequency
+
+**Type:** String (required)
+**Format:** Duration string (e.g., `30s`, `1m`, `1h`)
+
+The interval at which the ICMP monitor pings the target host. Supported frequencies:
+- `30 seconds`
+- `1 minute`
+- `5 minutes`
+- `10 minutes`
+- `30 minutes`
+- `1 hour`
+
+### Response time thresholds
+
+#### Timeout
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The total budget for the whole check (all three echo requests). Each packet waits at most the remaining budget for a reply.
+
+#### Degraded
+
+**Type:** Duration (optional)
+
+The average latency after which a check is considered to be in a degraded performance state, giving early warning of network slowdowns.
+
+### Retry
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor retries a fully failed check (all packets lost) before reporting a definitive error.
+
+### OpenTelemetry
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
+#### OTLP endpoint
+
+**Type:** String (optional)
+**Protocol:** HTTP only
+
+The OTLP endpoint URL where collected metrics — including latency and packet loss — are exported. Only HTTP endpoints are supported.
+
+#### OTLP headers
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint, commonly used for authentication or tenant identification.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
+
+## Related resources
+
+- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
+- **[CLI reference](/docs/reference/cli-reference)** — manage monitors programmatically from the command line.

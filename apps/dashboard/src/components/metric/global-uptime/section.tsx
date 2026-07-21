@@ -37,7 +37,7 @@ export function GlobalUptimeSection({
   regions,
 }: {
   monitorId: string;
-  jobType: "http" | "tcp";
+  jobType: "http" | "tcp" | "dns" | "icmp";
   period: (typeof PERIODS)[number];
   regions: string[] | undefined;
 }) {

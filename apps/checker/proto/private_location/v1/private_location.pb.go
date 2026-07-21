@@ -62,6 +62,7 @@ type MonitorsResponse struct {
 	HttpMonitors  []*HTTPMonitor         `protobuf:"bytes,1,rep,name=http_monitors,json=httpMonitors,proto3" json:"http_monitors,omitempty"`
 	TcpMonitors   []*TCPMonitor          `protobuf:"bytes,2,rep,name=tcp_monitors,json=tcpMonitors,proto3" json:"tcp_monitors,omitempty"`
 	DnsMonitors   []*DNSMonitor          `protobuf:"bytes,3,rep,name=dns_monitors,json=dnsMonitors,proto3" json:"dns_monitors,omitempty"`
+	IcmpMonitors  []*ICMPMonitor         `protobuf:"bytes,5,rep,name=icmp_monitors,json=icmpMonitors,proto3" json:"icmp_monitors,omitempty"`
 	Region        string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -114,6 +115,13 @@ func (x *MonitorsResponse) GetTcpMonitors() []*TCPMonitor {
 func (x *MonitorsResponse) GetDnsMonitors() []*DNSMonitor {
 	if x != nil {
 		return x.DnsMonitors
+	}
+	return nil
+}
+
+func (x *MonitorsResponse) GetIcmpMonitors() []*ICMPMonitor {
+	if x != nil {
+		return x.IcmpMonitors
 	}
 	return nil
 }
@@ -657,16 +665,201 @@ func (*IngestDNSResponse) Descriptor() ([]byte, []int) {
 	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{8}
 }
 
+type IngestICMPRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MonitorId       string                 `protobuf:"bytes,2,opt,name=monitorId,proto3" json:"monitorId,omitempty"`
+	Latency         int64                  `protobuf:"varint,3,opt,name=latency,proto3" json:"latency,omitempty"`
+	LatencyMin      int64                  `protobuf:"varint,4,opt,name=latencyMin,proto3" json:"latencyMin,omitempty"`
+	LatencyMax      int64                  `protobuf:"varint,5,opt,name=latencyMax,proto3" json:"latencyMax,omitempty"`
+	PacketsSent     int64                  `protobuf:"varint,6,opt,name=packetsSent,proto3" json:"packetsSent,omitempty"`
+	PacketsReceived int64                  `protobuf:"varint,7,opt,name=packetsReceived,proto3" json:"packetsReceived,omitempty"`
+	Timestamp       int64                  `protobuf:"varint,8,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	CronTimestamp   int64                  `protobuf:"varint,9,opt,name=cronTimestamp,proto3" json:"cronTimestamp,omitempty"`
+	Uri             string                 `protobuf:"bytes,10,opt,name=uri,proto3" json:"uri,omitempty"`
+	Message         string                 `protobuf:"bytes,11,opt,name=message,proto3" json:"message,omitempty"`
+	RequestStatus   string                 `protobuf:"bytes,12,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Error           int64                  `protobuf:"varint,13,opt,name=error,proto3" json:"error,omitempty"`
+	Timing          string                 `protobuf:"bytes,14,opt,name=timing,proto3" json:"timing,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *IngestICMPRequest) Reset() {
+	*x = IngestICMPRequest{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestICMPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestICMPRequest) ProtoMessage() {}
+
+func (x *IngestICMPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestICMPRequest.ProtoReflect.Descriptor instead.
+func (*IngestICMPRequest) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *IngestICMPRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *IngestICMPRequest) GetMonitorId() string {
+	if x != nil {
+		return x.MonitorId
+	}
+	return ""
+}
+
+func (x *IngestICMPRequest) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetLatencyMin() int64 {
+	if x != nil {
+		return x.LatencyMin
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetLatencyMax() int64 {
+	if x != nil {
+		return x.LatencyMax
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetPacketsSent() int64 {
+	if x != nil {
+		return x.PacketsSent
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetPacketsReceived() int64 {
+	if x != nil {
+		return x.PacketsReceived
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetCronTimestamp() int64 {
+	if x != nil {
+		return x.CronTimestamp
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetUri() string {
+	if x != nil {
+		return x.Uri
+	}
+	return ""
+}
+
+func (x *IngestICMPRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *IngestICMPRequest) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *IngestICMPRequest) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *IngestICMPRequest) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
+type IngestICMPResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestICMPResponse) Reset() {
+	*x = IngestICMPResponse{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestICMPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestICMPResponse) ProtoMessage() {}
+
+func (x *IngestICMPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestICMPResponse.ProtoReflect.Descriptor instead.
+func (*IngestICMPResponse) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{10}
+}
+
 var File_private_location_v1_private_location_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\n" +
-	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a%private_location/v1/dns_monitor.proto\x1a&private_location/v1/http_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
-	"\x0fMonitorsRequest\"\xf9\x01\n" +
+	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a%private_location/v1/dns_monitor.proto\x1a&private_location/v1/http_monitor.proto\x1a&private_location/v1/icmp_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
+	"\x0fMonitorsRequest\"\xc0\x02\n" +
 	"\x10MonitorsResponse\x12E\n" +
 	"\rhttp_monitors\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\fhttpMonitors\x12B\n" +
 	"\ftcp_monitors\x18\x02 \x03(\v2\x1f.private_location.v1.TCPMonitorR\vtcpMonitors\x12B\n" +
-	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\x12\x16\n" +
+	"\fdns_monitors\x18\x03 \x03(\v2\x1f.private_location.v1.DNSMonitorR\vdnsMonitors\x12E\n" +
+	"\ricmp_monitors\x18\x05 \x03(\v2 .private_location.v1.ICMPMonitorR\ficmpMonitors\x12\x16\n" +
 	"\x06region\x18\x04 \x01(\tR\x06region\"\x9e\x02\n" +
 	"\x10IngestTCPRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
@@ -717,13 +910,36 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\fRecordsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
 	"\x05value\x18\x02 \x01(\v2\x1c.private_location.v1.RecordsR\x05value:\x028\x01\"\x13\n" +
-	"\x11IngestDNSResponse2\x90\x03\n" +
+	"\x11IngestDNSResponse\"\xab\x03\n" +
+	"\x11IngestICMPRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
+	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
+	"\alatency\x18\x03 \x01(\x03R\alatency\x12\x1e\n" +
+	"\n" +
+	"latencyMin\x18\x04 \x01(\x03R\n" +
+	"latencyMin\x12\x1e\n" +
+	"\n" +
+	"latencyMax\x18\x05 \x01(\x03R\n" +
+	"latencyMax\x12 \n" +
+	"\vpacketsSent\x18\x06 \x01(\x03R\vpacketsSent\x12(\n" +
+	"\x0fpacketsReceived\x18\a \x01(\x03R\x0fpacketsReceived\x12\x1c\n" +
+	"\ttimestamp\x18\b \x01(\x03R\ttimestamp\x12$\n" +
+	"\rcronTimestamp\x18\t \x01(\x03R\rcronTimestamp\x12\x10\n" +
+	"\x03uri\x18\n" +
+	" \x01(\tR\x03uri\x12\x18\n" +
+	"\amessage\x18\v \x01(\tR\amessage\x12$\n" +
+	"\rrequestStatus\x18\f \x01(\tR\rrequestStatus\x12\x14\n" +
+	"\x05error\x18\r \x01(\x03R\x05error\x12\x16\n" +
+	"\x06timing\x18\x0e \x01(\tR\x06timing\"\x14\n" +
+	"\x12IngestICMPResponse2\xf1\x03\n" +
 	"\x16PrivateLocationService\x12Y\n" +
 	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00\x12\\\n" +
 	"\tIngestTCP\x12%.private_location.v1.IngestTCPRequest\x1a&.private_location.v1.IngestTCPResponse\"\x00\x12_\n" +
 	"\n" +
 	"IngestHTTP\x12&.private_location.v1.IngestHTTPRequest\x1a'.private_location.v1.IngestHTTPResponse\"\x00\x12\\\n" +
-	"\tIngestDNS\x12%.private_location.v1.IngestDNSRequest\x1a&.private_location.v1.IngestDNSResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
+	"\tIngestDNS\x12%.private_location.v1.IngestDNSRequest\x1a&.private_location.v1.IngestDNSResponse\"\x00\x12_\n" +
+	"\n" +
+	"IngestICMP\x12&.private_location.v1.IngestICMPRequest\x1a'.private_location.v1.IngestICMPResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (
 	file_private_location_v1_private_location_proto_rawDescOnce sync.Once
@@ -737,7 +953,7 @@ func file_private_location_v1_private_location_proto_rawDescGZIP() []byte {
 	return file_private_location_v1_private_location_proto_rawDescData
 }
 
-var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_private_location_v1_private_location_proto_goTypes = []any{
 	(*MonitorsRequest)(nil),    // 0: private_location.v1.MonitorsRequest
 	(*MonitorsResponse)(nil),   // 1: private_location.v1.MonitorsResponse
@@ -748,30 +964,36 @@ var file_private_location_v1_private_location_proto_goTypes = []any{
 	(*Records)(nil),            // 6: private_location.v1.Records
 	(*IngestDNSRequest)(nil),   // 7: private_location.v1.IngestDNSRequest
 	(*IngestDNSResponse)(nil),  // 8: private_location.v1.IngestDNSResponse
-	nil,                        // 9: private_location.v1.IngestDNSRequest.RecordsEntry
-	(*HTTPMonitor)(nil),        // 10: private_location.v1.HTTPMonitor
-	(*TCPMonitor)(nil),         // 11: private_location.v1.TCPMonitor
-	(*DNSMonitor)(nil),         // 12: private_location.v1.DNSMonitor
+	(*IngestICMPRequest)(nil),  // 9: private_location.v1.IngestICMPRequest
+	(*IngestICMPResponse)(nil), // 10: private_location.v1.IngestICMPResponse
+	nil,                        // 11: private_location.v1.IngestDNSRequest.RecordsEntry
+	(*HTTPMonitor)(nil),        // 12: private_location.v1.HTTPMonitor
+	(*TCPMonitor)(nil),         // 13: private_location.v1.TCPMonitor
+	(*DNSMonitor)(nil),         // 14: private_location.v1.DNSMonitor
+	(*ICMPMonitor)(nil),        // 15: private_location.v1.ICMPMonitor
 }
 var file_private_location_v1_private_location_proto_depIdxs = []int32{
-	10, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
-	11, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
-	12, // 2: private_location.v1.MonitorsResponse.dns_monitors:type_name -> private_location.v1.DNSMonitor
-	9,  // 3: private_location.v1.IngestDNSRequest.records:type_name -> private_location.v1.IngestDNSRequest.RecordsEntry
-	6,  // 4: private_location.v1.IngestDNSRequest.RecordsEntry.value:type_name -> private_location.v1.Records
-	0,  // 5: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
-	2,  // 6: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
-	4,  // 7: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
-	7,  // 8: private_location.v1.PrivateLocationService.IngestDNS:input_type -> private_location.v1.IngestDNSRequest
-	1,  // 9: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
-	3,  // 10: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
-	5,  // 11: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
-	8,  // 12: private_location.v1.PrivateLocationService.IngestDNS:output_type -> private_location.v1.IngestDNSResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	12, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
+	13, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
+	14, // 2: private_location.v1.MonitorsResponse.dns_monitors:type_name -> private_location.v1.DNSMonitor
+	15, // 3: private_location.v1.MonitorsResponse.icmp_monitors:type_name -> private_location.v1.ICMPMonitor
+	11, // 4: private_location.v1.IngestDNSRequest.records:type_name -> private_location.v1.IngestDNSRequest.RecordsEntry
+	6,  // 5: private_location.v1.IngestDNSRequest.RecordsEntry.value:type_name -> private_location.v1.Records
+	0,  // 6: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
+	2,  // 7: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
+	4,  // 8: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
+	7,  // 9: private_location.v1.PrivateLocationService.IngestDNS:input_type -> private_location.v1.IngestDNSRequest
+	9,  // 10: private_location.v1.PrivateLocationService.IngestICMP:input_type -> private_location.v1.IngestICMPRequest
+	1,  // 11: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
+	3,  // 12: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
+	5,  // 13: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
+	8,  // 14: private_location.v1.PrivateLocationService.IngestDNS:output_type -> private_location.v1.IngestDNSResponse
+	10, // 15: private_location.v1.PrivateLocationService.IngestICMP:output_type -> private_location.v1.IngestICMPResponse
+	11, // [11:16] is the sub-list for method output_type
+	6,  // [6:11] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_private_location_v1_private_location_proto_init() }
@@ -781,6 +1003,7 @@ func file_private_location_v1_private_location_proto_init() {
 	}
 	file_private_location_v1_dns_monitor_proto_init()
 	file_private_location_v1_http_monitor_proto_init()
+	file_private_location_v1_icmp_monitor_proto_init()
 	file_private_location_v1_tcp_monitor_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -788,7 +1011,7 @@ func file_private_location_v1_private_location_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_private_location_v1_private_location_proto_rawDesc), len(file_private_location_v1_private_location_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

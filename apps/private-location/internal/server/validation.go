@@ -58,6 +58,20 @@ func ValidateIngestDNSRequest(req *private_locationv1.IngestDNSRequest) error {
 	return nil
 }
 
+// ValidateIngestICMPRequest validates an ICMP ingest request
+func ValidateIngestICMPRequest(req *private_locationv1.IngestICMPRequest) error {
+	if req.MonitorId == "" {
+		return ErrEmptyMonitorID
+	}
+	if req.Latency < 0 {
+		return ErrInvalidLatency
+	}
+	if req.Timestamp <= 0 {
+		return ErrInvalidTimestamp
+	}
+	return nil
+}
+
 // NewValidationError creates a Connect error for validation failures
 func NewValidationError(err error) *connect.Error {
 	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("validation error: %w", err))

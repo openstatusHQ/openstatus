@@ -47,6 +47,7 @@ const FREE_PLAN_KEY = "2";
 let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
+let testIcmpMonitorId: number;
 let testMonitorToDeleteId: number;
 let testMonitorWithStatusId: number;
 
@@ -110,6 +111,7 @@ beforeAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-icmp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
   await db
     .delete(monitor)
@@ -181,6 +183,23 @@ beforeAll(async () => {
     .get();
   testDnsMonitorId = dnsMon.id;
 
+  // Create test ICMP monitor
+  const icmpMon = await db
+    .insert(monitor)
+    .values({
+      workspaceId: 1,
+      name: `${TEST_PREFIX}-icmp`,
+      url: "1.1.1.1",
+      periodicity: "10m",
+      active: true,
+      regions: "ams",
+      jobType: "icmp",
+      timeout: 5000,
+    })
+    .returning()
+    .get();
+  testIcmpMonitorId = icmpMon.id;
+
   // Create monitor to be deleted
   const deleteMon = await db
     .insert(monitor)
@@ -232,6 +251,7 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-icmp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
   await db
     .delete(monitor)
@@ -332,6 +352,28 @@ describe("MonitorService.ListMonitors", () => {
     expect(dnsMon.uri).toBe("example.com");
     expect(dnsMon.periodicity).toBe("PERIODICITY_10M");
     expect(dnsMon.recordAssertions).toBeDefined();
+  });
+
+  test("returns ICMP monitors with correct structure", async () => {
+    const res = await connectRequest(
+      "ListMonitors",
+      { limit: 100 },
+      {
+        "x-openstatus-key": "1",
+      },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const icmpMonitors = data.icmpMonitors || [];
+    const icmpMon = icmpMonitors.find(
+      (m: { id: string }) => m.id === String(testIcmpMonitorId),
+    );
+
+    expect(icmpMon).toBeDefined();
+    expect(icmpMon.uri).toBe("1.1.1.1");
+    expect(icmpMon.periodicity).toBe("PERIODICITY_10M");
   });
 
   test("returns 401 when no auth key provided", async () => {

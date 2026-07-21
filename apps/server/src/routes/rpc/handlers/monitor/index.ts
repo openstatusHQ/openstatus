@@ -9,6 +9,7 @@ import type {
   GetMonitorSummaryResponse,
   HTTPMonitor,
   HTTPResponseLogPagination,
+  ICMPMonitor,
   ListMonitorHTTPResponseLogsResponse,
   MonitorConfig,
   MonitorService,
@@ -42,6 +43,7 @@ import {
   MONITOR_DEFAULTS,
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
+  dbMonitorToIcmpProto,
   dbMonitorToTcpProto,
   dnsAssertionsToDbJson,
   headersToDbJson,
@@ -631,6 +633,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const httpMonitors: HTTPMonitor[] = [];
     const tcpMonitors: TCPMonitor[] = [];
     const dnsMonitors: DNSMonitor[] = [];
+    const icmpMonitors: ICMPMonitor[] = [];
 
     for (const m of monitors) {
       // Parse through schema to transform fields
@@ -649,6 +652,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         case "dns":
           dnsMonitors.push(dbMonitorToDnsProto(parsed.data));
           break;
+        case "icmp":
+          icmpMonitors.push(dbMonitorToIcmpProto(parsed.data));
+          break;
       }
     }
 
@@ -656,6 +662,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       httpMonitors,
       tcpMonitors,
       dnsMonitors,
+      icmpMonitors,
       totalSize: totalCount,
     };
   },
@@ -721,10 +728,16 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           config: { case: "dns", value: dbMonitorToDnsProto(monitorData) },
         };
         break;
+      case "icmp":
+        monitorConfig = {
+          $typeName: "openstatus.monitor.v1.MonitorConfig",
+          config: { case: "icmp", value: dbMonitorToIcmpProto(monitorData) },
+        };
+        break;
       default:
         throw monitorTypeMismatchError(
           req.id,
-          "http, tcp, or dns",
+          "http, tcp, dns, or icmp",
           monitorData.jobType,
         );
     }
