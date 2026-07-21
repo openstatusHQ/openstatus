@@ -15,6 +15,7 @@ type Step = {
   icon: LucideIcon;
   title: string;
   description: string;
+  status: string;
 };
 
 const steps: Step[] = [
@@ -23,18 +24,21 @@ const steps: Step[] = [
     title: "Add your monitors",
     description:
       "Connect your websites and APIs in seconds. Set your check frequency and regions.",
+    status: "Monitoring active",
   },
   {
     icon: Bell,
     title: "Get notified instantly",
     description:
       "Receive alerts via email, Slack, or SMS the moment downtime is detected.",
+    status: "Alerts enabled",
   },
   {
     icon: Globe,
     title: "Share your status",
     description:
       "Publish a beautiful public status page to keep your users informed.",
+    status: "Page published",
   },
 ];
 
@@ -62,18 +66,23 @@ export function HowItWorks() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-9 hidden items-center justify-between px-[16.6%] md:flex"
         >
-          <div className="h-px w-full border-t border-border border-dashed" />
+          <div className="h-px w-full border-t border-green-500/30 border-dashed" />
         </div>
 
         {steps.map((step, index) => {
           const Icon = step.icon;
           return (
             <div key={step.title} className="relative flex flex-col">
-              <Card className="relative h-full bg-background transition-colors hover:border-foreground/20">
+              <Card className="relative h-full overflow-hidden bg-background transition-colors hover:border-green-500/40">
+                {/* Green accent bar along the top */}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-0 h-0.5 bg-green-500"
+                />
                 {/* Numbered badge */}
                 <span
                   aria-hidden="true"
-                  className="-top-3 -right-3 absolute flex h-8 w-8 items-center justify-center rounded-full border bg-background font-medium text-muted-foreground text-sm shadow-sm"
+                  className="-top-3 -right-3 absolute flex h-8 w-8 items-center justify-center rounded-full border border-green-500/30 bg-green-500/10 font-medium text-green-600 text-sm shadow-sm dark:text-green-400"
                 >
                   {index + 1}
                 </span>
@@ -81,17 +90,30 @@ export function HowItWorks() {
                   <span
                     className={cn(
                       "mb-2 flex h-11 w-11 items-center justify-center rounded-lg",
-                      "bg-muted text-foreground",
+                      "border border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400",
                     )}
                   >
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <CardTitle className="text-lg">{step.title}</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    {step.title}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-3">
                   <CardDescription className="text-pretty leading-relaxed">
                     {step.description}
                   </CardDescription>
+                  {/* Small operational-style status detail */}
+                  <span className="inline-flex items-center gap-1.5 font-medium text-green-600 text-xs dark:text-green-400">
+                    <span
+                      aria-hidden="true"
+                      className="relative flex h-2 w-2"
+                    >
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                    </span>
+                    {step.status}
+                  </span>
                 </CardContent>
               </Card>
             </div>
