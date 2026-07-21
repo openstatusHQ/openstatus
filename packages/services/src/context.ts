@@ -30,6 +30,14 @@ export type ServiceContext = {
   tb?: OSTinybird;
 };
 
+// Unauthenticated surfaces (public status endpoints) have no workspace or actor
+// to scope by, so they can't satisfy ServiceContext. Reads only — a verb taking
+// this must not mutate, since there is no actor to attribute an audit row to.
+export type PublicServiceContext = Pick<
+  ServiceContext,
+  "db" | "tb" | "requestId"
+>;
+
 export const defaultTb = new OSTinybird(process.env.TINY_BIRD_API_KEY ?? "");
 
 // drizzle's `is()` helper is identity-safe across module copies (uses a
@@ -55,7 +63,7 @@ export async function withTransaction<T>(
  * `ctx.db ?? defaultDb` pattern, kept as a helper so service files don't
  * import `defaultDb` just to write the same expression.
  */
-export function getReadDb(ctx: ServiceContext): DB {
+export function getReadDb(ctx: Pick<ServiceContext, "db">): DB {
   return ctx.db ?? defaultDb;
 }
 

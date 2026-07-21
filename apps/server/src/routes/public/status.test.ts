@@ -31,7 +31,7 @@ import {
  * - Correctly identifies ongoing incidents
  * - Correctly identifies unresolved status reports
  * - Correctly identifies ongoing maintenances
- * - Returns correct status based on the Tracker logic
+ * - Returns correct status based on `currentStatus` in @openstatus/services
  */
 
 const TEST_PREFIX = "status-test";
@@ -325,6 +325,42 @@ describe("Status Route: Status report detection", () => {
       .delete(statusReport)
       .where(eq(statusReport.id, testStatusReportId));
     testStatusReportId = 0;
+  });
+
+  // Pins the public payload against ACTIVE_REPORT_STATUSES in
+  // page/get-content.ts, which counts "monitoring" as active. This endpoint
+  // must not — doing so would flip every embedded badge to degraded.
+  test("ignores status reports in 'monitoring'", async () => {
+    if (testStatusReportId) {
+      await db
+        .delete(statusReport)
+        .where(eq(statusReport.id, testStatusReportId))
+        .catch(() => {});
+      testStatusReportId = 0;
+    }
+
+    const monitoringReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: testPageId,
+        title: "Monitoring Status Report",
+        status: "monitoring",
+      })
+      .returning()
+      .get();
+
+    const res = await app.request(`/public/status/${TEST_PREFIX}-page`);
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.status).toBe("operational");
+
+    // Clean up
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, monitoringReport.id));
   });
 
   test("ignores resolved status reports", async () => {

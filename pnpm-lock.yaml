@@ -991,9 +991,6 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
-      '@openstatus/tracker':
-        specifier: workspace:*
-        version: link:../../packages/tracker
       '@openstatus/upstash':
         specifier: workspace:*
         version: link:../../packages/upstash
