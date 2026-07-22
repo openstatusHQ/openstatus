@@ -45,9 +45,13 @@ export function HowItWorks() {
       className="not-prose bg-muted/40 rounded-2xl border px-6 py-16 sm:px-10 sm:py-20"
     >
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+        <span className="inline-flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 ring-1 ring-green-500/20 dark:text-green-400">
+          <span className="size-1.5 rounded-full bg-green-500" aria-hidden="true" />
+          Get started
+        </span>
         <h2
           id="how-it-works-heading"
-          className="text-foreground text-3xl font-semibold tracking-tight text-balance sm:text-4xl"
+          className="text-foreground mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl"
         >
           How it works
         </h2>
@@ -64,14 +68,14 @@ export function HowItWorks() {
 
           return (
             <li key={step.title} className="relative flex">
-              <Card className="w-full text-center">
+              <Card className="w-full text-center transition-colors hover:border-green-500/40">
                 <CardHeader className="flex flex-col items-center gap-4">
                   <div className="relative">
-                    <div className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-full">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-green-500/10 text-green-600 ring-1 ring-green-500/20 dark:text-green-400">
                       <Icon className="size-7" aria-hidden="true" />
                     </div>
                     <span
-                      className="bg-primary text-primary-foreground absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full text-xs font-semibold"
+                      className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-green-600 text-xs font-semibold text-white dark:bg-green-500 dark:text-black"
                       aria-hidden="true"
                     >
                       {index + 1}
@@ -96,7 +100,7 @@ export function HowItWorks() {
                     "pointer-events-none absolute top-1/2 right-0 hidden translate-x-1/2 -translate-y-1/2 md:flex md:items-center",
                   )}
                 >
-                  <span className="border-border h-0 w-8 border-t border-dashed" />
+                  <span className="h-0 w-8 border-t border-dashed border-green-500/50" />
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -104,7 +108,7 @@ export function HowItWorks() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-muted-foreground size-4 -ml-1"
+                    className="-ml-1 size-4 text-green-500/70"
                   >
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
