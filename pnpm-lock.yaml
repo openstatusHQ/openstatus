@@ -264,6 +264,9 @@ catalogs:
     '@types/node':
       specifier: 24.12.4
       version: 24.12.4
+    '@types/nodemailer':
+      specifier: 8.0.0
+      version: 8.0.0
     '@types/react':
       specifier: 19.2.15
       version: 19.2.15
@@ -387,6 +390,9 @@ catalogs:
     node-html-parser:
       specifier: 6.1.13
       version: 6.1.13
+    nodemailer:
+      specifier: 8.0.10
+      version: 8.0.10
     nuqs:
       specifier: 2.8.9
       version: 2.8.9
@@ -1063,7 +1069,7 @@ importers:
         version: link:../../packages/tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -1268,7 +1274,7 @@ importers:
         version: link:../../packages/tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -1557,7 +1563,7 @@ importers:
         version: link:../../packages/tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -1739,7 +1745,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -1894,7 +1900,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -1968,7 +1974,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -1996,6 +2002,9 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 3.21.2
+      nodemailer:
+        specifier: 'catalog:'
+        version: 8.0.10
       react:
         specifier: 'catalog:'
         version: 19.2.6
@@ -2017,13 +2026,16 @@ importers:
         version: 6.1.5(@opentelemetry/api@1.9.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.4
+      '@types/nodemailer':
+        specifier: 'catalog:'
+        version: 8.0.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.15
@@ -2051,7 +2063,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2089,7 +2101,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2124,7 +2136,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2155,7 +2167,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2186,7 +2198,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2266,7 +2278,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2297,7 +2309,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2328,7 +2340,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2359,7 +2371,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2396,7 +2408,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2439,7 +2451,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2476,7 +2488,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2504,7 +2516,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2538,7 +2550,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2572,7 +2584,7 @@ importers:
         version: link:../../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2690,7 +2702,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2712,7 +2724,7 @@ importers:
     devDependencies:
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2749,7 +2761,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2761,7 +2773,7 @@ importers:
     dependencies:
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2780,7 +2792,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2811,7 +2823,7 @@ importers:
         version: link:../utils
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -2842,7 +2854,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -3057,7 +3069,7 @@ importers:
         version: link:../tsconfig
       '@std/expect':
         specifier: jsr:^1.0.19
-        version: '@jsr/std__expect@1.0.19'
+        version: '@jsr/std__expect@1.0.20'
       '@std/testing':
         specifier: jsr:^1.0.19
         version: '@jsr/std__testing@1.0.19'
@@ -3137,8 +3149,8 @@ packages:
     resolution: {integrity: sha512-XmXYVs8CzJ1Aj79noVbn2weUO/XWtRyURpGqx7aU7DOXlUQhR0WKOQNF0okh7PCeY37vxf7kU3v57OAkEPm3ww==}
     hasBin: true
 
-  '@apm-js-collab/tracing-hooks@0.10.0':
-    resolution: {integrity: sha512-2/Z3NTewJTruUkmsSnBC5bJlLNUd9keuD1OLlTEpim4FyLhm6m2Rnfv+wrFdUvFfhmH8CRdiDZBqBrn+wyaGuA==}
+  '@apm-js-collab/tracing-hooks@0.10.1':
+    resolution: {integrity: sha512-w2OWXR7FWrKqSziuE9+QclaZrStxO/8+OwbXM635s/zs0Eez1Qo3ivSPdB2WsaPY/iznKTytONPx/PitD7IXcA==}
 
   '@asamuzakjp/css-color@5.1.11':
     resolution: {integrity: sha512-KVw6qIiCTUQhByfTd78h2yD1/00waTmm9uy/R7Ck/ctUyAPj+AEDLkQIdJW0T8+qGgj3j5bpNKK7Q3G+LedJWg==}
@@ -4509,14 +4521,14 @@ packages:
   '@jsr/std__assert@1.0.19':
     resolution: {integrity: sha512-pEj6RPkGbqlgRmyKwATp4cUs6+ijxtdrv3bq8v1d2I2CEcMEyPaO8cVKro61wGRDH4cNg8Zx6haztvK/9m7gkA==, tarball: https://npm.jsr.io/~/11/@jsr/std__assert/1.0.19.tgz}
 
-  '@jsr/std__async@1.4.0':
-    resolution: {integrity: sha512-epQ5wsMrnAxeVtzmO9VviX14siVOSvF2o5dAm9qa6ajdWnWrrQ/oup7/Z2ctAOaxSOJbDWrfhgsenzHsODAogw==, tarball: https://npm.jsr.io/~/11/@jsr/std__async/1.4.0.tgz}
+  '@jsr/std__async@1.5.0':
+    resolution: {integrity: sha512-I2Qekl1oQYM+dpI2RQUCKi1TBuaA7Od3LNzxcqls9s1e2ytiZyREL4403qHJ6UbLNAwbqO2ZhdWAWDUQAajyiA==, tarball: https://npm.jsr.io/~/11/@jsr/std__async/1.5.0.tgz}
 
-  '@jsr/std__data-structures@1.1.0':
-    resolution: {integrity: sha512-V/Lrzz3ZBT2ps09SbUuQKIDQ0Ac7qTTloCFNNF7r2MNoIzdz3xsW9+Vd+ZzgXFKdm46+XqBmkv0lpW/HzgRQfg==, tarball: https://npm.jsr.io/~/11/@jsr/std__data-structures/1.1.0.tgz}
+  '@jsr/std__data-structures@1.1.1':
+    resolution: {integrity: sha512-ceWGRdAPq3oD2If4k/JvgL/bskN5VohnM6wINlJhYLz4yCW9cmHFcGsrhRgh9HbD9xhXi9sEQoiHQG5B9caHEg==, tarball: https://npm.jsr.io/~/11/@jsr/std__data-structures/1.1.1.tgz}
 
-  '@jsr/std__expect@1.0.19':
-    resolution: {integrity: sha512-t8BEISf1666L7dGDIG1nriYh0TQKoU+8mrx93zz+Kj40eov9wNKjKCX96x17p8I8bDcHby4wSv+7jy4+9W6IPg==, tarball: https://npm.jsr.io/~/11/@jsr/std__expect/1.0.19.tgz}
+  '@jsr/std__expect@1.0.20':
+    resolution: {integrity: sha512-AkDNshk9qIKP7OzRcSZ9qb4txPJVOxd2mDWl0XtU19eZecIzcNrxrG9gnz1j5t+U+vm6AEHkjMdwnvIfFQsJ7g==, tarball: https://npm.jsr.io/~/11/@jsr/std__expect/1.0.20.tgz}
 
   '@jsr/std__fs@1.0.24':
     resolution: {integrity: sha512-UunW2Rg++9sA74NJnYMGTsMVQgoFRAwPP02wRRohL0PQBNorbyxHiyCMRaxYQCtLepTLkC4nUyMtcwrGKqTR6g==, tarball: https://npm.jsr.io/~/11/@jsr/std__fs/1.0.24.tgz}
@@ -4524,8 +4536,8 @@ packages:
   '@jsr/std__internal@1.0.14':
     resolution: {integrity: sha512-JT8b/t40WcR9q0GDwRZUooY7aXeXnFal8iidE/5TckdAFtvpVAsaJ71/Xgf1SfoChs41s6CZkuCYM8toaNgdvA==, tarball: https://npm.jsr.io/~/11/@jsr/std__internal/1.0.14.tgz}
 
-  '@jsr/std__path@1.1.5':
-    resolution: {integrity: sha512-3z/0rfvMEz6qiiaZ3quFpEv8BbWQgcpd+ASX29WEdecyJsdPN9uViQf1VxIua265cmGCdICk0WghMjGFoNZ5Ig==, tarball: https://npm.jsr.io/~/11/@jsr/std__path/1.1.5.tgz}
+  '@jsr/std__path@1.1.6':
+    resolution: {integrity: sha512-H1Cmg6z8jFyIsQbVV+vZB4eOx4k6Qg8lyUM6l7nZysj5MZumg89kb0M1bsPBTGQis3fw6mJFkJELo5+AK6oCFA==, tarball: https://npm.jsr.io/~/11/@jsr/std__path/1.1.6.tgz}
 
   '@jsr/std__testing@1.0.19':
     resolution: {integrity: sha512-maQIRFWIcTTWB7ITYIVbql1Q3KA9AsgR4/Ep2SfEq65V2SxQq52iLcFxuvX0azRp1leBCb8mBUXZr389SajY7Q==, tarball: https://npm.jsr.io/~/11/@jsr/std__testing/1.0.19.tgz}
@@ -4969,6 +4981,10 @@ packages:
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
+  '@opentelemetry/semantic-conventions@1.38.0':
+    resolution: {integrity: sha512-kocjix+/sSggfJhwXqClZ3i9Y/MI0fp7b+g7kCRm6psy2dsf8uApTRclwG18h8Avm7C9+fnt+O36PspJ/OzoWg==}
+    engines: {node: '>=14'}
 
   '@opentelemetry/semantic-conventions@1.41.1':
     resolution: {integrity: sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA==}
@@ -7189,8 +7205,14 @@ packages:
   '@types/mysql@2.15.27':
     resolution: {integrity: sha512-YfWiV16IY0OeBfBCk8+hXKmdTKrKlwKN1MNKAPBu5JYxLwBEZl7QzeEpGnlZb3VMGJrrGmB84gXiH+ofs/TezA==}
 
+  '@types/node@24.10.1':
+    resolution: {integrity: sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==}
+
   '@types/node@24.12.4':
     resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
+
+  '@types/nodemailer@8.0.0':
+    resolution: {integrity: sha512-fyf8jWULsCo0d0BuoQ75i6IeoHs47qcqxWc7yUdUcV0pOZGjUTTOvwdG1PRXUDqN/8A64yQdQdnA2pZgcdi+cA==}
 
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
@@ -8065,6 +8087,10 @@ packages:
     resolution: {integrity: sha512-MVUtAugQMOff5RnBy2d9N31iG0lNwg1qAoAOn7pOK5wf94WIaE3My2p3uwTQuvS2AcqchkcR3bHByjaM0mmi7Q==}
     engines: {node: '>=20'}
 
+  dotenv@16.3.1:
+    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
+    engines: {node: '>=12'}
+
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
@@ -8263,8 +8289,8 @@ packages:
   es-module-lexer@1.7.0:
     resolution: {integrity: sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA==}
 
-  es-module-lexer@2.1.0:
-    resolution: {integrity: sha512-n27zTYMjYu1aj4MjCWzSP7G9r75utsaoc8m61weK+W8JMBGGQybd43GstCXZ3WNmSFtGT9wi59qQTW6mhTR5LQ==}
+  es-module-lexer@2.3.1:
+    resolution: {integrity: sha512-shc1dbU90Yl/xq1QrC7QRtfcwURZuVRfPhZbDoldJ1cn1gzDvBaBWlv0eFolj5+0znnPJz5TXLxsN77X/12KTA==}
 
   es-object-atoms@1.1.1:
     resolution: {integrity: sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==}
@@ -8385,6 +8411,10 @@ packages:
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
+
+  eventsource-parser@3.0.6:
+    resolution: {integrity: sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg==}
+    engines: {node: '>=18.0.0'}
 
   eventsource-parser@3.0.8:
     resolution: {integrity: sha512-70QWGkr4snxr0OXLRWsFLeRBIRPuQOvt4s8QYjmUlmlkyTZkRqS7EDVRZtzU3TiyDbXSzaOeF0XUKy8PchzukQ==}
@@ -8758,6 +8788,10 @@ packages:
     resolution: {integrity: sha512-AAtFqgADyrmbDijcRTT/HJfwqfvhalya2Zo+MgfdrMPas3zSMD8SU03cv+ZsYwRU1swv7zgVt0shwN059yzhjw==}
     peerDependencies:
       hono: ^4.1.1
+
+  hono@4.11.8:
+    resolution: {integrity: sha512-eVkB/CYCCei7K2WElZW9yYQFWssG0DhaDhVvr7wy5jJ22K+ck8fWW0EsLpB0sITUTvPnc97+rrbQqIr5iqiy9Q==}
+    engines: {node: '>=16.9.0'}
 
   hono@4.12.21:
     resolution: {integrity: sha512-uV63apnb0kyPtAUwoWgaGh9HyIFcv8lgmzPZSiTBQAFOFGIzka5EZ1dZocmGnn0XdX0+XTqJ6Tqv7selMuGLRQ==}
@@ -9615,6 +9649,11 @@ packages:
   nanoid-dictionary@5.0.0:
     resolution: {integrity: sha512-/iCyQHwt36XkaIvSE9fcC8p6DiMPCZMTSMj9UT56Cv6T7f5CuxvOMhpNncaNieQ4z4d32p7ruEtAfRsb7Ya8Gw==}
 
+  nanoid@3.3.11:
+    resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
   nanoid@3.3.12:
     resolution: {integrity: sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -9622,6 +9661,11 @@ packages:
 
   nanoid@5.1.11:
     resolution: {integrity: sha512-v+KEsUv2ps74PaSKv0gHTxTCgMXOIfBEbaqa6w6ISIGC7ZsvHN4N9oJ8d4cmf0n5oTzQz2SLmThbQWhjd/8eKg==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
+  nanoid@5.1.6:
+    resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -9746,6 +9790,10 @@ packages:
 
   node-releases@2.0.27:
     resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
+
+  nodemailer@8.0.10:
+    resolution: {integrity: sha512-BLFuSth7QtHOkBzyqTehWWyub0NTRDuK2Q2SQfnGLsrJnzyU+Yeh4WpV1eZGuARFj1xQJHIdnTuJZLP+b9R1GQ==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -10098,6 +10146,10 @@ packages:
 
   postcss@8.5.15:
     resolution: {integrity: sha512-FfR8sjd4em2T6fb3I2MwAJU7HWVMr9zba+enmQeeWFfCbm+UOC/0X4DS8XtpUTMwWMGbjKYP7xjfNekzyGmB3A==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.5.6:
+    resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -10871,6 +10923,9 @@ packages:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
+  tailwind-merge@3.3.1:
+    resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
+
   tailwind-merge@3.6.0:
     resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
 
@@ -10930,6 +10985,10 @@ packages:
 
   tinycolor2@1.6.0:
     resolution: {integrity: sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==}
+
+  tinyexec@1.0.2:
+    resolution: {integrity: sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg==}
+    engines: {node: '>=18'}
 
   tinyexec@1.1.2:
     resolution: {integrity: sha512-dAqSqE/RabpBKI8+h26GfLq6Vb3JVXs30XYQjdMjaj/c2tS8IYYMbIzP599KtRj7c57/wYApb3QjgRgXmrCukA==}
@@ -11408,6 +11467,11 @@ packages:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
 
+  yaml@2.8.1:
+    resolution: {integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
   yaml@2.9.0:
     resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
     engines: {node: '>= 14.6'}
@@ -11542,12 +11606,12 @@ snapshots:
       ansis: 4.2.0
       fzf: 0.5.2
       package-manager-detector: 1.6.0
-      tinyexec: 1.1.2
+      tinyexec: 1.0.2
 
   '@apm-js-collab/code-transformer-bundler-plugins@0.5.0':
     dependencies:
       '@apm-js-collab/code-transformer': 0.15.0
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.1
       magic-string: 0.30.21
       module-details-from-path: 1.0.4
 
@@ -11560,7 +11624,7 @@ snapshots:
       semifies: 1.0.0
       source-map: 0.6.1
 
-  '@apm-js-collab/tracing-hooks@0.10.0':
+  '@apm-js-collab/tracing-hooks@0.10.1':
     dependencies:
       '@apm-js-collab/code-transformer': 0.15.0
       debug: 4.4.3
@@ -12675,9 +12739,9 @@ snapshots:
       pkce-challenge: 5.0.1
       zod: 4.1.13
 
-  '@hono/node-server@1.19.9(hono@4.12.21)':
+  '@hono/node-server@1.19.9(hono@4.11.8)':
     dependencies:
-      hono: 4.12.21
+      hono: 4.11.8
 
   '@hono/sentry@1.2.2(hono@4.12.21)':
     dependencies:
@@ -12902,39 +12966,39 @@ snapshots:
     dependencies:
       '@jsr/std__internal': 1.0.14
 
-  '@jsr/std__async@1.4.0':
+  '@jsr/std__async@1.5.0':
     dependencies:
-      '@jsr/std__data-structures': 1.1.0
+      '@jsr/std__data-structures': 1.1.1
 
-  '@jsr/std__data-structures@1.1.0':
+  '@jsr/std__data-structures@1.1.1':
     dependencies:
       '@jsr/std__assert': 1.0.19
 
-  '@jsr/std__expect@1.0.19':
+  '@jsr/std__expect@1.0.20':
     dependencies:
       '@jsr/std__assert': 1.0.19
       '@jsr/std__internal': 1.0.14
-      '@jsr/std__path': 1.1.5
+      '@jsr/std__path': 1.1.6
 
   '@jsr/std__fs@1.0.24':
     dependencies:
       '@jsr/std__internal': 1.0.14
-      '@jsr/std__path': 1.1.5
+      '@jsr/std__path': 1.1.6
 
   '@jsr/std__internal@1.0.14': {}
 
-  '@jsr/std__path@1.1.5':
+  '@jsr/std__path@1.1.6':
     dependencies:
       '@jsr/std__internal': 1.0.14
 
   '@jsr/std__testing@1.0.19':
     dependencies:
       '@jsr/std__assert': 1.0.19
-      '@jsr/std__async': 1.4.0
-      '@jsr/std__data-structures': 1.1.0
+      '@jsr/std__async': 1.5.0
+      '@jsr/std__data-structures': 1.1.1
       '@jsr/std__fs': 1.0.24
       '@jsr/std__internal': 1.0.14
-      '@jsr/std__path': 1.1.5
+      '@jsr/std__path': 1.1.6
 
   '@libsql/client@0.17.4':
     dependencies:
@@ -13007,7 +13071,7 @@ snapshots:
       '@opentelemetry/otlp-exporter-base': 0.208.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-logs': 0.208.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.41.1
+      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@logtape/sentry@2.1.1(@logtape/logtape@2.1.1)(@sentry/core@10.61.0)':
     dependencies:
@@ -13052,17 +13116,17 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.12.21)
+      '@hono/node-server': 1.19.9(hono@4.11.8)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
       cors: 2.8.5
       cross-spawn: 7.0.6
       eventsource: 3.0.7
-      eventsource-parser: 3.0.8
+      eventsource-parser: 3.0.6
       express: 5.2.1
       express-rate-limit: 8.2.1(express@5.2.1)
-      hono: 4.12.21
+      hono: 4.11.8
       jose: 6.1.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -13074,17 +13138,17 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@4.1.13)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.12.21)
+      '@hono/node-server': 1.19.9(hono@4.11.8)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
       cors: 2.8.5
       cross-spawn: 7.0.6
       eventsource: 3.0.7
-      eventsource-parser: 3.0.8
+      eventsource-parser: 3.0.6
       express: 5.2.1
       express-rate-limit: 8.2.1(express@5.2.1)
-      hono: 4.12.21
+      hono: 4.11.8
       jose: 6.1.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -13215,7 +13279,7 @@ snapshots:
   '@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/semantic-conventions': 1.41.1
+      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/exporter-logs-otlp-grpc@0.208.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -13464,7 +13528,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.41.1
+      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/sdk-logs@0.208.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -13484,7 +13548,7 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.2.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.2.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.41.1
+      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -13492,6 +13556,8 @@ snapshots:
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.41.1
+
+  '@opentelemetry/semantic-conventions@1.38.0': {}
 
   '@opentelemetry/semantic-conventions@1.41.1': {}
 
@@ -14745,7 +14811,7 @@ snapshots:
   '@scalar/types@0.1.16':
     dependencies:
       '@scalar/openapi-types': 0.2.3
-      nanoid: 5.1.11
+      nanoid: 5.1.6
       zod: 3.24.1
 
   '@schummar/icu-type-parser@1.21.5': {}
@@ -14790,7 +14856,7 @@ snapshots:
       '@babel/core': 7.28.5
       '@sentry/babel-plugin-component-annotate': 5.3.0
       '@sentry/cli': 2.58.5
-      dotenv: 16.6.1
+      dotenv: 16.3.1
       find-up: 5.0.0
       glob: 13.0.6
       magic-string: 0.30.21
@@ -14951,7 +15017,7 @@ snapshots:
     dependencies:
       '@apm-js-collab/code-transformer': 0.15.0
       '@apm-js-collab/code-transformer-bundler-plugins': 0.5.0
-      '@apm-js-collab/tracing-hooks': 0.10.0
+      '@apm-js-collab/tracing-hooks': 0.10.1
       '@sentry/conventions': 0.12.0
       '@sentry/core': 10.61.0
       magic-string: 0.30.21
@@ -15023,7 +15089,7 @@ snapshots:
     dependencies:
       '@slack/logger': 4.0.1
       '@slack/types': 2.21.1
-      '@types/node': 24.12.4
+      '@types/node': 24.10.1
       '@types/retry': 0.12.0
       axios: 1.16.1
       eventemitter3: 5.0.1
@@ -15487,9 +15553,17 @@ snapshots:
     dependencies:
       '@types/node': 24.12.4
 
+  '@types/node@24.10.1':
+    dependencies:
+      undici-types: 7.16.0
+
   '@types/node@24.12.4':
     dependencies:
       undici-types: 7.16.0
+
+  '@types/nodemailer@8.0.0':
+    dependencies:
+      '@types/node': 24.12.4
 
   '@types/parse-json@4.0.2': {}
 
@@ -16361,6 +16435,8 @@ snapshots:
     dependencies:
       type-fest: 5.2.0
 
+  dotenv@16.3.1: {}
+
   dotenv@16.6.1: {}
 
   dotenv@17.2.4: {}
@@ -16475,7 +16551,7 @@ snapshots:
 
   es-module-lexer@1.7.0: {}
 
-  es-module-lexer@2.1.0: {}
+  es-module-lexer@2.3.1: {}
 
   es-object-atoms@1.1.1:
     dependencies:
@@ -16667,11 +16743,13 @@ snapshots:
 
   events@3.3.0: {}
 
+  eventsource-parser@3.0.6: {}
+
   eventsource-parser@3.0.8: {}
 
   eventsource@3.0.7:
     dependencies:
-      eventsource-parser: 3.0.8
+      eventsource-parser: 3.0.6
 
   execa@5.1.1:
     dependencies:
@@ -17186,6 +17264,8 @@ snapshots:
     dependencies:
       hono: 4.12.21
 
+  hono@4.11.8: {}
+
   hono@4.12.21: {}
 
   html-encoding-sniffer@6.0.0(@noble/hashes@1.8.0):
@@ -17594,7 +17674,7 @@ snapshots:
       typescript: 5.9.3
       unbash: 2.2.0
       yaml: 2.9.0
-      zod: 4.4.3
+      zod: 4.1.13
 
   launder@1.7.1:
     dependencies:
@@ -18278,9 +18358,13 @@ snapshots:
 
   nanoid-dictionary@5.0.0: {}
 
+  nanoid@3.3.11: {}
+
   nanoid@3.3.12: {}
 
   nanoid@5.1.11: {}
+
+  nanoid@5.1.6: {}
 
   negotiator@0.6.3: {}
 
@@ -18406,6 +18490,8 @@ snapshots:
 
   node-releases@2.0.27: {}
 
+  nodemailer@8.0.10: {}
+
   normalize-path@3.0.0: {}
 
   npm-run-path@4.0.1:
@@ -18479,7 +18565,7 @@ snapshots:
 
   openapi3-ts@4.5.0:
     dependencies:
-      yaml: 2.9.0
+      yaml: 2.8.1
 
   ora@4.1.1:
     dependencies:
@@ -18775,7 +18861,7 @@ snapshots:
   postcss-load-config@4.0.2(postcss@8.5.15)(ts-node@10.9.2(@swc/core@1.15.18)(@types/node@24.12.4)(typescript@5.9.3)):
     dependencies:
       lilconfig: 3.1.3
-      yaml: 2.9.0
+      yaml: 2.8.1
     optionalDependencies:
       postcss: 8.5.15
       ts-node: 10.9.2(@swc/core@1.15.18)(@types/node@24.12.4)(typescript@5.9.3)
@@ -18792,13 +18878,19 @@ snapshots:
 
   postcss@8.4.31:
     dependencies:
-      nanoid: 3.3.12
+      nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
   postcss@8.5.15:
     dependencies:
       nanoid: 3.3.12
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
+
+  postcss@8.5.6:
+    dependencies:
+      nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -19411,7 +19503,7 @@ snapshots:
       is-plain-object: 5.0.0
       launder: 1.7.1
       parse-srcset: 1.0.2
-      postcss: 8.5.15
+      postcss: 8.5.6
 
   sax@1.4.3: {}
 
@@ -19509,12 +19601,12 @@ snapshots:
       node-fetch: 3.3.2
       open: 11.0.0
       ora: 8.2.0
-      postcss: 8.5.15
+      postcss: 8.5.6
       postcss-selector-parser: 7.1.1
       prompts: 2.4.2
       recast: 0.23.11
       stringify-object: 5.0.0
-      tailwind-merge: 3.6.0
+      tailwind-merge: 3.3.1
       ts-morph: 26.0.0
       tsconfig-paths: 4.2.0
       validate-npm-package-name: 7.0.2
@@ -19769,7 +19861,7 @@ snapshots:
 
   stripe@13.11.0:
     dependencies:
-      '@types/node': 24.12.4
+      '@types/node': 24.10.1
       qs: 6.14.0
 
   strnum@2.3.0: {}
@@ -19849,6 +19941,8 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
+  tailwind-merge@3.3.1: {}
+
   tailwind-merge@3.6.0: {}
 
   tailwindcss-animate@1.0.7(tailwindcss@4.3.0):
@@ -19901,6 +19995,8 @@ snapshots:
   tiny-invariant@1.3.3: {}
 
   tinycolor2@1.6.0: {}
+
+  tinyexec@1.0.2: {}
 
   tinyexec@1.1.2: {}
 
@@ -20232,7 +20328,7 @@ snapshots:
   vfile-matter@5.0.1:
     dependencies:
       vfile: 6.0.3
-      yaml: 2.9.0
+      yaml: 2.8.1
 
   vfile-message@3.1.4:
     dependencies:
@@ -20409,6 +20505,8 @@ snapshots:
   yallist@3.1.1: {}
 
   yaml@1.10.2: {}
+
+  yaml@2.8.1: {}
 
   yaml@2.9.0: {}
 

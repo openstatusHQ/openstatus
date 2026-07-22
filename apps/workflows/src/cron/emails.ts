@@ -9,7 +9,7 @@ import { EmailClient } from "@openstatus/emails";
 
 import { env } from "../env";
 
-const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
+const email = new EmailClient();
 
 export async function sendFollowUpEmails() {
   const date1 = new Date();

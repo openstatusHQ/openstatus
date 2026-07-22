@@ -9,8 +9,6 @@ import {
 
 import { EmailClient } from "./client";
 
-// sendStatusReportUpdate early-returns in development; force the real send path.
-process.env.NODE_ENV = "test";
 
 function makeSubscribers(n: number) {
   return Array.from({ length: n }, (_, i) => ({
@@ -56,7 +54,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
       apiKey: "re_test_123",
       retryBackoff: "0 millis",
     });
-    batchSend = stub(client.client.batch, "send", () => Promise.resolve(ok));
+    batchSend = stub(client.client!.batch, "send", () => Promise.resolve(ok));
   });
 
   afterEach(() => {
@@ -102,7 +100,7 @@ describe("EmailClient.sendStatusReportUpdate - idempotency & chunking", () => {
   test("reuses the same key across a retry so Resend dedupes the resend", async () => {
     batchSend.restore();
     batchSend = stub(
-      client.client.batch,
+      client.client!.batch,
       "send",
       returnsNext([Promise.resolve(fail), Promise.resolve(ok)]),
     );
