@@ -36,17 +36,17 @@ export function HowItWorks() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="not-prose -mx-4 my-8 bg-muted/40 px-4 py-12 sm:py-16"
+      className="not-prose -mx-4 my-6 bg-muted/40 px-4 py-8 font-sans sm:py-10"
     >
       {/* Section header */}
-      <div className="mb-10 text-center sm:mb-12">
+      <div className="mb-6 text-center sm:mb-8">
         <h2
           id="how-it-works-heading"
-          className="text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+          className="text-balance text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
         >
           How it works
         </h2>
-        <p className="mt-3 text-balance text-sm text-muted-foreground sm:text-base">
+        <p className="mt-2 text-balance text-sm text-muted-foreground">
           Get up and running in minutes — no configuration overhead.
         </p>
       </div>
@@ -56,7 +56,7 @@ export function HowItWorks() {
         {/* Desktop connector line */}
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 top-8 hidden items-center px-[calc(16.67%+1rem)] md:flex"
+          className="absolute inset-x-0 top-7 hidden items-center px-[calc(16.67%+1rem)] md:flex"
         >
           <div className="h-px flex-1 border-t border-dashed border-border" />
           <svg
@@ -76,7 +76,7 @@ export function HowItWorks() {
           </svg>
         </div>
 
-        <ol className="relative grid gap-4 md:grid-cols-3 md:gap-6">
+        <ol className="relative grid gap-3 md:grid-cols-3 md:gap-4">
           {steps.map((step) => {
             const Icon = step.icon;
             return (
@@ -90,9 +90,9 @@ export function HowItWorks() {
                     aria-hidden="true"
                     className="absolute left-1/2 top-full mt-0 flex -translate-x-1/2 flex-col items-center py-1 md:hidden"
                   >
-                    <div className="h-4 w-px border-l border-dashed border-border" />
+                    <div className="h-3 w-px border-l border-dashed border-border" />
                     <svg
-                      className="h-2.5 w-2.5 text-muted-foreground"
+                      className="h-2 w-2 text-muted-foreground"
                       viewBox="0 0 12 12"
                       fill="none"
                     >
@@ -102,22 +102,22 @@ export function HowItWorks() {
                 )}
 
                 {/* Card */}
-                <div className="relative flex w-full flex-col items-center rounded-lg border border-border bg-background p-6 shadow-xs transition-shadow hover:shadow-sm">
+                <div className="relative flex w-full flex-col items-center rounded-lg border border-border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm">
                   {/* Numbered badge */}
                   <span
                     aria-hidden="true"
-                    className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-semibold tabular-nums text-muted-foreground"
+                    className="absolute right-2.5 top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[9px] font-semibold tabular-nums text-muted-foreground"
                   >
                     {step.number}
                   </span>
 
                   {/* Icon */}
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-muted">
-                    <Icon className="h-5 w-5 text-foreground" aria-hidden="true" />
+                  <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted">
+                    <Icon className="h-4 w-4 text-foreground" aria-hidden="true" />
                   </div>
 
                   {/* Text */}
-                  <h3 className="mb-2 text-sm font-semibold text-foreground">
+                  <h3 className="mb-1 text-sm font-semibold text-foreground">
                     {step.title}
                   </h3>
                   <p className="text-xs leading-relaxed text-muted-foreground">
