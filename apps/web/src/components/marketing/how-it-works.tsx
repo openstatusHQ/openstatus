@@ -102,25 +102,25 @@ export function HowItWorks() {
                 )}
 
                 {/* Card */}
-                <div className="relative flex w-full flex-col items-center rounded-lg border border-border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm">
+                <div className="relative flex w-full flex-col items-center gap-1 rounded-lg border border-border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm">
                   {/* Numbered badge */}
                   <span
                     aria-hidden="true"
-                    className="absolute right-2.5 top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[9px] font-semibold tabular-nums text-muted-foreground"
+                    className="absolute right-2.5 top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-muted font-mono text-[9px] font-semibold tabular-nums text-muted-foreground"
                   >
                     {step.number}
                   </span>
 
                   {/* Icon */}
-                  <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted">
                     <Icon className="h-4 w-4 text-foreground" aria-hidden="true" />
                   </div>
 
                   {/* Text */}
-                  <h3 className="mb-1 text-sm font-semibold text-foreground">
+                  <h3 className="font-mono text-sm font-semibold text-foreground">
                     {step.title}
                   </h3>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
+                  <p className="font-sans text-xs leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
                 </div>
