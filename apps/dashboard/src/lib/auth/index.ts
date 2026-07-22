@@ -7,17 +7,27 @@ import NextAuth from "next-auth";
 import { headers } from "next/headers";
 
 import { adapter } from "./adapter";
-import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
+import {
+  GitHubProvider,
+  GoogleProvider,
+  OIDCProvider,
+  ResendProvider,
+} from "./providers";
 
 export type { DefaultSession };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // debug: true,
   adapter,
-  providers:
-    process.env.NODE_ENV === "development" || process.env.SELF_HOST === "true"
-      ? [GitHubProvider, GoogleProvider, ResendProvider]
-      : [GitHubProvider, GoogleProvider],
+  providers: [
+    GitHubProvider,
+    GoogleProvider,
+    ...(process.env.AUTH_OIDC_ISSUER ? [OIDCProvider] : []),
+    ...(process.env.NODE_ENV === "development" ||
+    process.env.SELF_HOST === "true"
+      ? [ResendProvider]
+      : []),
+  ],
   callbacks: {
     async redirect({ url, baseUrl }) {
       // Allow relative URLs, but not protocol-relative `//evil.com` which the
@@ -68,6 +78,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .set({
             name: params.profile.name,
             photoUrl: String(params.profile.avatar_url),
+            updatedAt: new Date(),
+          })
+          .where(eq(user.id, Number(params.user.id)))
+          .run();
+      }
+
+      if (params.account?.provider === "oidc") {
+        if (!params.profile) return true;
+        if (Number.isNaN(Number(params.user.id))) return true;
+
+        const fullName = [params.profile.given_name, params.profile.family_name]
+          .filter(Boolean)
+          .join(" ");
+
+        await db
+          .update(user)
+          .set({
+            firstName: params.profile.given_name,
+            lastName: params.profile.family_name || "",
+            photoUrl: params.profile.picture,
+            name: fullName || params.profile.name,
             updatedAt: new Date(),
           })
           .where(eq(user.id, Number(params.user.id)))
