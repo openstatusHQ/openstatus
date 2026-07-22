@@ -36,17 +36,17 @@ export function HowItWorks() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="not-prose -mx-4 my-0 bg-muted/40 px-4 py-6 sm:py-8"
+      className="not-prose -mx-4 my-0 bg-muted/40 px-4 py-5 sm:py-6"
     >
       {/* Section header */}
-      <div className="mb-6 text-center sm:mb-8">
+      <div className="mb-4 text-center">
         <h2
           id="how-it-works-heading"
           className="font-mono text-balance text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
         >
           How it works
         </h2>
-        <p className="mt-1.5 font-sans text-balance text-sm text-muted-foreground">
+        <p className="mt-1 font-sans text-balance text-sm text-muted-foreground">
           Get up and running in minutes — no configuration overhead.
         </p>
       </div>
@@ -102,7 +102,7 @@ export function HowItWorks() {
                 )}
 
                 {/* Card */}
-                <div className="relative flex h-full w-full flex-col items-center gap-1 rounded-lg border border-border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm">
+                <div className="relative flex h-full w-full flex-col items-center justify-between rounded-lg border border-border bg-background p-5 shadow-xs transition-shadow hover:shadow-sm">
                   {/* Numbered badge */}
                   <span
                     aria-hidden="true"
@@ -111,16 +111,18 @@ export function HowItWorks() {
                     {step.number}
                   </span>
 
-                  {/* Icon */}
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted">
-                    <Icon className="h-4 w-4 text-foreground" aria-hidden="true" />
+                  {/* Top: icon + title tightly grouped */}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted">
+                      <Icon className="h-4 w-4 text-foreground" aria-hidden="true" />
+                    </div>
+                    <h3 className="font-mono text-sm font-semibold text-foreground">
+                      {step.title}
+                    </h3>
                   </div>
 
-                  {/* Text */}
-                  <h3 className="font-mono text-sm font-semibold text-foreground">
-                    {step.title}
-                  </h3>
-                  <p className="font-sans text-xs leading-relaxed text-muted-foreground">
+                  {/* Bottom: description anchored below */}
+                  <p className="mt-2 font-sans text-xs leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
                 </div>
