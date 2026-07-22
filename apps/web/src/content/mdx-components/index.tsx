@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 
+import { HowItWorks } from "../../components/marketing/how-it-works";
+import { TrustedBy } from "../../components/marketing/trusted-by";
 import { LatencyChartTable } from "../latency-chart-table";
 import { Aside } from "./aside";
 import { ButtonLink } from "./button-link";
@@ -45,4 +47,6 @@ export const components = {
   PricingTabs,
   Subtle,
   Suspense: Suspense,
+  HowItWorks,
+  TrustedBy,
 };
