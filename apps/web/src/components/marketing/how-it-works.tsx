@@ -36,17 +36,17 @@ export function HowItWorks() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="not-prose -mx-4 my-6 bg-muted/40 px-4 py-8 font-sans sm:py-10"
+      className="not-prose -mx-4 my-0 bg-muted/40 px-4 py-6 sm:py-8"
     >
       {/* Section header */}
       <div className="mb-6 text-center sm:mb-8">
         <h2
           id="how-it-works-heading"
-          className="text-balance text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
+          className="font-mono text-balance text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
         >
           How it works
         </h2>
-        <p className="mt-2 text-balance text-sm text-muted-foreground">
+        <p className="mt-1.5 font-sans text-balance text-sm text-muted-foreground">
           Get up and running in minutes — no configuration overhead.
         </p>
       </div>
@@ -82,7 +82,7 @@ export function HowItWorks() {
             return (
               <li
                 key={step.number}
-                className="relative flex flex-col items-center text-center"
+                className="relative flex flex-col items-stretch text-center"
               >
                 {/* Mobile step connector */}
                 {step.number < steps.length && (
@@ -102,7 +102,7 @@ export function HowItWorks() {
                 )}
 
                 {/* Card */}
-                <div className="relative flex w-full flex-col items-center gap-1 rounded-lg border border-border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm">
+                <div className="relative flex h-full w-full flex-col items-center gap-1 rounded-lg border border-border bg-background p-4 shadow-xs transition-shadow hover:shadow-sm">
                   {/* Numbered badge */}
                   <span
                     aria-hidden="true"
