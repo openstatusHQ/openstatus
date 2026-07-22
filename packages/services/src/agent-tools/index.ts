@@ -14,6 +14,7 @@ import {
 import { listNotificationsTool } from "./notification";
 import { listStatusPagesTool } from "./page";
 import { listPageComponentsTool } from "./page-component";
+import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -37,6 +38,7 @@ export {
 export { listNotificationsTool } from "./notification";
 export { listStatusPagesTool } from "./page";
 export { listPageComponentsTool } from "./page-component";
+export { listPrivateLocationsTool } from "./private-location";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
@@ -87,6 +89,7 @@ export const agentTools = {
   list_response_logs: listResponseLogsTool,
   get_response_log: getResponseLogTool,
   list_notifications: listNotificationsTool,
+  list_private_locations: listPrivateLocationsTool,
   list_audit_logs: listAuditLogsTool,
   get_audit_log: getAuditLogTool,
   search_docs: searchDocsTool,

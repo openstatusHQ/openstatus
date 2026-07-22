@@ -14,12 +14,8 @@ import { assertMonitorsInWorkspace } from "./internal";
 import { UpdatePrivateLocationInput } from "./schemas";
 
 /**
- * Replace the name and monitor associations of a private location.
- *
- * `updatedAt` is set explicitly — same as the legacy router.
- * Associations are bulk-replaced: delete-all followed by insert-all for
- * the new set. The delete is unconditional inside the workspace-scoped
- * tx, so there's no opportunity for a stale row to leak through.
+ * Patch a private location. Omitted fields are left untouched; passing an
+ * empty `monitors` array clears every association.
  */
 export async function updatePrivateLocation(args: {
   ctx: ServiceContext;
@@ -32,7 +28,9 @@ export async function updatePrivateLocation(args: {
   // The pivot table has no UNIQUE (private_location_id, monitor_id)
   // constraint, so duplicate input ids would silently produce duplicate
   // FK rows. Dedupe before insert; the audit snapshot follows suit.
-  const monitorIds = Array.from(new Set(input.monitors));
+  const monitorIds = input.monitors
+    ? Array.from(new Set(input.monitors))
+    : undefined;
 
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.privateLocation.findFirst({
@@ -49,15 +47,21 @@ export async function updatePrivateLocation(args: {
       throw new NotFoundError("private_location", input.id);
     }
 
-    await assertMonitorsInWorkspace({
-      tx,
-      workspaceId: ctx.workspace.id,
-      monitorIds,
-    });
+    if (monitorIds) {
+      await assertMonitorsInWorkspace({
+        tx,
+        workspaceId: ctx.workspace.id,
+        monitorIds,
+      });
+    }
 
     const row = await tx
       .update(privateLocation)
-      .set({ name: input.name, updatedAt: new Date() })
+      .set(
+        input.name !== undefined
+          ? { name: input.name, updatedAt: new Date() }
+          : { updatedAt: new Date() },
+      )
       .where(
         and(
           eq(privateLocation.id, input.id),
@@ -74,37 +78,40 @@ export async function updatePrivateLocation(args: {
     // undefined`. Re-throw NotFound so the failure mode stays sane.
     if (!row) throw new NotFoundError("private_location", input.id);
 
-    await tx
-      .delete(privateLocationToMonitors)
-      .where(eq(privateLocationToMonitors.privateLocationId, row.id));
+    if (monitorIds) {
+      await tx
+        .delete(privateLocationToMonitors)
+        .where(eq(privateLocationToMonitors.privateLocationId, row.id));
 
-    if (monitorIds.length > 0) {
-      await tx.insert(privateLocationToMonitors).values(
-        monitorIds.map((monitorId) => ({
-          privateLocationId: row.id,
-          monitorId,
-        })),
-      );
+      if (monitorIds.length > 0) {
+        await tx.insert(privateLocationToMonitors).values(
+          monitorIds.map((monitorId) => ({
+            privateLocationId: row.id,
+            monitorId,
+          })),
+        );
+      }
     }
 
     const { privateLocationToMonitors: beforeLinks, ...beforeRow } = existing;
     const beforeParsed = selectPrivateLocationSchema.parse(beforeRow);
     const afterParsed = selectPrivateLocationSchema.parse(row);
 
+    const beforeMonitorIds = beforeLinks
+      .map((l) => l.monitorId)
+      .filter((id): id is number => id !== null)
+      .sort((a, b) => a - b);
+
     await emitAudit(tx, ctx, {
       action: "private_location.update",
       entityType: "private_location",
       entityId: afterParsed.id,
-      before: {
-        ...beforeParsed,
-        monitorIds: beforeLinks
-          .map((l) => l.monitorId)
-          .filter((id): id is number => id !== null)
-          .sort((a, b) => a - b),
-      },
+      before: { ...beforeParsed, monitorIds: beforeMonitorIds },
       after: {
         ...afterParsed,
-        monitorIds: [...monitorIds].sort((a, b) => a - b),
+        monitorIds: monitorIds
+          ? [...monitorIds].sort((a, b) => a - b)
+          : beforeMonitorIds,
       },
     });
 

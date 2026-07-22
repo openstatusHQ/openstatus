@@ -2325,6 +2325,233 @@ components:
       title: WhatsappData
       additionalProperties: false
       description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.private_location.v1.CreatePrivateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - eu-west-agent
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the private location (required, 1-256 characters).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location should run (optional).
+      title: CreatePrivateLocationRequest
+      additionalProperties: false
+      description: CreatePrivateLocationRequest is the request to create a new private location.
+    openstatus.private_location.v1.CreatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The created private location, including its generated agent token.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: CreatePrivateLocationResponse
+      additionalProperties: false
+      description: CreatePrivateLocationResponse is the response after creating a private location.
+    openstatus.private_location.v1.DeletePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to delete (required).
+      title: DeletePrivateLocationRequest
+      additionalProperties: false
+      description: DeletePrivateLocationRequest is the request to delete a private location.
+    openstatus.private_location.v1.DeletePrivateLocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeletePrivateLocationResponse
+      additionalProperties: false
+      description: DeletePrivateLocationResponse is the response after deleting a private location.
+    openstatus.private_location.v1.GetPrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to retrieve (required).
+      title: GetPrivateLocationRequest
+      additionalProperties: false
+      description: GetPrivateLocationRequest is the request to get a private location by ID.
+    openstatus.private_location.v1.GetPrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The requested private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: GetPrivateLocationResponse
+      additionalProperties: false
+      description: GetPrivateLocationResponse is the response containing the private location.
+    openstatus.private_location.v1.ListPrivateLocationsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of private locations to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of private locations to skip for pagination (defaults to 0).
+      title: ListPrivateLocationsRequest
+      additionalProperties: false
+      description: ListPrivateLocationsRequest is the request to list private locations.
+    openstatus.private_location.v1.ListPrivateLocationsResponse:
+      type: object
+      properties:
+        privateLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationSummary'
+          title: private_locations
+          description: List of private locations.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of private locations in the workspace.
+      title: ListPrivateLocationsResponse
+      additionalProperties: false
+      description: ListPrivateLocationsResponse is the response containing private location summaries.
+    openstatus.private_location.v1.PrivateLocation:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        token:
+          type: string
+          title: token
+          description: |-
+            Agent credential. Generated by the server on creation and used by the
+             agent to authenticate; treat it as a secret.
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+      title: PrivateLocation
+      additionalProperties: false
+      description: PrivateLocation represents a self-hosted checker agent with full details.
+    openstatus.private_location.v1.PrivateLocationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        monitorCount:
+          type: integer
+          title: monitor_count
+          format: int32
+          description: Number of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+      title: PrivateLocationSummary
+      additionalProperties: false
+      description: |-
+        PrivateLocationSummary represents metadata for a private location (used in
+         list responses). The agent token is intentionally omitted.
+    openstatus.private_location.v1.UpdatePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: New display name for the private location (optional).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: New list of monitor IDs. Only applied when update_monitor_ids is true.
+        updateMonitorIds:
+          type:
+            - boolean
+            - "null"
+          title: update_monitor_ids
+          description: |-
+            When true, monitor_ids replaces the current associations (an empty list
+             clears all). When false or unset, monitor_ids is ignored and existing
+             associations are preserved.
+      title: UpdatePrivateLocationRequest
+      additionalProperties: false
+      description: UpdatePrivateLocationRequest is the request to update a private location.
+    openstatus.private_location.v1.UpdatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The updated private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: UpdatePrivateLocationResponse
+      additionalProperties: false
+      description: UpdatePrivateLocationResponse is the response after updating a private location.
     openstatus.status_page.v1.AddMonitorComponentRequest:
       type: object
       properties:
@@ -4381,6 +4608,10 @@ tags:
       notified automatically when maintenance is created.
   - name: HealthService
     description: Health check endpoint for load balancer probes. No authentication required.
+  - name: PrivateLocationService
+    description: |-
+      PrivateLocationService provides CRUD operations for private locations —
+       self-hosted checker agents that run monitors from your own network.
 paths:
   /rpc/openstatus.health.v1.HealthService/Check:
     get:
@@ -5400,6 +5631,196 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/CreatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: CreatePrivateLocation
+      description: Creates a private location. The agent token is generated by the server and returned in the response - it cannot be supplied by the caller. Use the token to configure the agent so it can pull its monitors and report results.
+      operationId: PrivateLocationService_CreatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/DeletePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: DeletePrivateLocation
+      description: DeletePrivateLocation removes a private location.
+      operationId: PrivateLocationService_DeletePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/GetPrivateLocation:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/ListPrivateLocations:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/UpdatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: UpdatePrivateLocation
+      description: UpdatePrivateLocation updates a private location.
+      operationId: PrivateLocationService_UpdatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
     post:
       tags:

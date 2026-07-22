@@ -15,7 +15,11 @@ export const privateLocationRouter = createTRPCRouter({
     .input(ListPrivateLocationsInput.optional())
     .query(async ({ ctx, input }) => {
       try {
-        return await listPrivateLocations({ ctx: toServiceCtx(ctx), input });
+        const { items } = await listPrivateLocations({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+        return items;
       } catch (err) {
         toTRPCError(err);
       }

@@ -28,6 +28,9 @@ export async function createPrivateLocation(args: {
   requireScope(ctx, "write");
   const input = CreatePrivateLocationInput.parse(args.input);
 
+  // Callers that can't mint their own credential (the public API) omit it.
+  const token = input.token ?? crypto.randomUUID();
+
   // The pivot table has no UNIQUE (private_location_id, monitor_id)
   // constraint, so duplicate input ids would silently produce duplicate
   // FK rows. Dedupe before insert; the audit snapshot follows suit.
@@ -44,7 +47,7 @@ export async function createPrivateLocation(args: {
       .insert(privateLocation)
       .values({
         name: input.name,
-        token: input.token,
+        token,
         workspaceId: ctx.workspace.id,
       })
       .returning()
