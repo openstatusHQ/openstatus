@@ -1,12 +1,12 @@
 "use client";
 
+import { Search } from "@openstatus/icons";
 import { Kbd } from "@openstatus/ui/components/ui/kbd";
 import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { Search } from "@openstatus/icons";
 
 import { useCommandMenu } from "@/components/command-menu/provider";
 

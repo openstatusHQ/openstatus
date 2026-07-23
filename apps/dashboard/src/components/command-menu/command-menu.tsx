@@ -1,5 +1,6 @@
 "use client";
 
+import { Close, Dark, Light, Search } from "@openstatus/icons";
 import {
   Command,
   CommandEmpty,
@@ -15,7 +16,6 @@ import {
 } from "@openstatus/ui/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
-import { Close, Dark, Light, Search } from "@openstatus/icons";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
