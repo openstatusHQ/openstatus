@@ -20,6 +20,7 @@ import { ChevronsUpDown, Plus } from "lucide-react";
 
 import { Link } from "@/components/common/link";
 import { useTRPC } from "@/lib/trpc/client";
+import { switchWorkspace } from "@/lib/workspace-cookie";
 
 interface WorkspaceSwitcherProps {
   className?: string;
@@ -33,11 +34,6 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
   const { data: workspaces } = useQuery(trpc.workspace.list.queryOptions());
 
   if (!workspace) return null;
-
-  function handleClick(slug: string) {
-    document.cookie = `workspace-slug=${slug}; path=/;`;
-    window.location.href = "/overview";
-  }
 
   return (
     <SidebarMenu>
@@ -88,7 +84,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
               <DropdownMenuItem
                 key={workspace.id}
                 onClick={() => {
-                  handleClick(workspace.slug);
+                  switchWorkspace(workspace.slug);
                   setOpenMobile(false);
                 }}
                 className="gap-2 p-2"

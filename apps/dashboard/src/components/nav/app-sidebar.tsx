@@ -15,15 +15,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import {
-  Activity,
-  Bell,
-  Bot,
-  Cog,
-  LayoutGrid,
-  MessageSquare,
-  PanelTop,
-} from "lucide-react";
 import * as React from "react";
 
 import { Kbd } from "@/components/common/kbd";
@@ -32,6 +23,7 @@ import { NavOverview } from "@/components/nav/nav-overview";
 import { NavStatusPages } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
+import { NAV } from "@/config/nav";
 
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
@@ -46,41 +38,21 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   overview: [
-    {
-      name: "Overview",
-      url: "/overview",
-      icon: LayoutGrid,
-    },
+    { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
     {
       name: "Status Pages",
-      url: "/status-pages",
-      icon: PanelTop,
+      url: NAV.statusPages.href,
+      icon: NAV.statusPages.icon,
     },
-    {
-      name: "Monitors",
-      url: "/monitors",
-      icon: Activity,
-    },
+    { name: "Monitors", url: NAV.monitors.href, icon: NAV.monitors.icon },
     {
       name: "Notifications",
-      url: "/notifications",
-      icon: Bell,
+      url: NAV.notifications.href,
+      icon: NAV.notifications.icon,
     },
-    {
-      name: "Settings",
-      url: "/settings/general",
-      icon: Cog,
-    },
-    {
-      name: "Assistant",
-      url: "/chat",
-      icon: MessageSquare,
-    },
-    {
-      name: "Slack agent",
-      url: "/agents",
-      icon: Bot,
-    },
+    { name: "Settings", url: NAV.settings.href, icon: NAV.settings.icon },
+    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
+    { name: "Slack agent", url: NAV.agents.href, icon: NAV.agents.icon },
   ],
 };
 

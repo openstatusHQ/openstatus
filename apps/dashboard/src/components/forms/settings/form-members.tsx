@@ -83,7 +83,7 @@ export function FormMembers({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="team-members">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Team</FormCardTitle>

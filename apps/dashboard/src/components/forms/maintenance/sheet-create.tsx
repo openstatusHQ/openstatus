@@ -37,10 +37,16 @@ import { useTRPC } from "@/lib/trpc/client";
  */
 export function FormSheetMaintenanceCreate({
   children,
+  open: controlledOpen,
+  onOpenChange,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -75,7 +81,9 @@ export function FormSheetMaintenanceCreate({
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Maintenance</FormSheetTitle>

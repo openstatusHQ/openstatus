@@ -9,15 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { ChevronDown, Plus } from "lucide-react";
-import { useRef } from "react";
+import { useState } from "react";
 
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 
 export function CreateEventButtonGroup() {
-  // the maintenance sheet lives outside the dropdown — a trigger inside
-  // DropdownMenuContent unmounts (and closes the sheet) when the menu closes
-  const maintenanceButtonRef = useRef<HTMLButtonElement>(null);
+  const [maintenanceOpen, setMaintenanceOpen] = useState(false);
 
   return (
     <div>
@@ -40,20 +38,17 @@ export function CreateEventButtonGroup() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => maintenanceButtonRef.current?.click()}
-            >
+            <DropdownMenuItem onSelect={() => setMaintenanceOpen(true)}>
               <Plus className="text-muted-foreground" />
               Create Maintenance
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </ButtonGroup>
-      <FormSheetMaintenanceCreate>
-        <button ref={maintenanceButtonRef} type="button" className="sr-only">
-          Open sheet
-        </button>
-      </FormSheetMaintenanceCreate>
+      <FormSheetMaintenanceCreate
+        open={maintenanceOpen}
+        onOpenChange={setMaintenanceOpen}
+      />
     </div>
   );
 }

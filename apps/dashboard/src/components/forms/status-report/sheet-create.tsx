@@ -11,7 +11,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   EmptyStateContainer,
@@ -37,10 +37,16 @@ import { useTRPC } from "@/lib/trpc/client";
  */
 export function FormSheetStatusReportCreate({
   children,
+  open: controlledOpen,
+  onOpenChange,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [selectedPageId, setSelectedPageId] = useState<number | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -88,7 +94,9 @@ export function FormSheetStatusReportCreate({
 
   return (
     <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      {children ? (
+        <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      ) : null}
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Status Report</FormSheetTitle>

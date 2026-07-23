@@ -27,7 +27,7 @@ export function FormSlug({ defaultValues }: { defaultValues?: FormValues }) {
   console.log({ defaultValues, schema });
 
   return (
-    <FormCard>
+    <FormCard id="workspace-slug">
       <FormCardHeader>
         <FormCardTitle>Slug</FormCardTitle>
         <FormCardDescription>

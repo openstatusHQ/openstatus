@@ -1,7 +1,5 @@
 "use client";
 
-import { DiscordIcon } from "@openstatus/icons";
-import { GitHubIcon } from "@openstatus/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,16 +15,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import {
-  Book,
-  Braces,
-  CalendarClock,
-  HelpCircle,
-  LifeBuoy,
-} from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import Link from "next/link";
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
+import { HELP_LINKS, HELP_SUPPORT } from "@/config/help";
 
 export function NavHelp() {
   const { isMobile } = useSidebar();
@@ -56,57 +49,18 @@ export function NavHelp() {
                 </DropdownMenuLabel>
                 <FormDialogSupportContact>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <LifeBuoy />
-                    Support
+                    <HELP_SUPPORT.icon />
+                    {HELP_SUPPORT.label}
                   </DropdownMenuItem>
                 </FormDialogSupportContact>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://www.openstatus.dev/docs"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Book /> Docs
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://api.openstatus.dev/openapi"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Braces /> API Reference
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://openstatus.dev/cal"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <CalendarClock /> Book a Call
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://openstatus.dev/discord"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <DiscordIcon />
-                    Community
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="https://openstatus.dev/github"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <GitHubIcon />
-                    GitHub
-                  </Link>
-                </DropdownMenuItem>
+                {HELP_LINKS.map((item) => (
+                  <DropdownMenuItem key={item.label} asChild>
+                    <Link href={item.href} target="_blank" rel="noreferrer">
+                      <item.icon />
+                      {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

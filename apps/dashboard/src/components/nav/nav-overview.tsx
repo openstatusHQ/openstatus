@@ -12,6 +12,8 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NavSearch } from "@/components/nav/nav-search";
+
 function topSegment(url: string) {
   return url.split("/")[1] ?? "";
 }
@@ -32,6 +34,7 @@ export function NavOverview({
     <SidebarGroup>
       <SidebarGroupLabel>Workspace</SidebarGroupLabel>
       <SidebarMenu>
+        <NavSearch />
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton
