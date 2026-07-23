@@ -20,7 +20,10 @@ export function monitorsGroup(
       label: m.name,
       description: m.url,
       keywords: [m.name, m.url],
-      action: { type: "push", page: { type: "monitor", id: m.id, name: m.name } },
+      action: {
+        type: "push",
+        page: { type: "monitor", id: m.id, name: m.name },
+      },
     })),
   };
 }
@@ -80,7 +83,10 @@ export function maintenancesGroup(
       keywords: [m.title, pageTitleById.get(m.pageId ?? -1) ?? ""].filter(
         Boolean,
       ) as string[],
-      action: { type: "navigate", href: `/status-pages/${m.pageId}/maintenances` },
+      action: {
+        type: "navigate",
+        href: `/status-pages/${m.pageId}/maintenances`,
+      },
     })),
   };
 }

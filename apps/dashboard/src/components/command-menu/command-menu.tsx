@@ -42,7 +42,12 @@ import {
 } from "./groups/static";
 import { statusPageScopeGroups } from "./groups/status-page-scope";
 import { useCommandMenu } from "./provider";
-import type { CommandAction, CommandMenuGroup, CommandPage, CommandSheet } from "./types";
+import type {
+  CommandAction,
+  CommandMenuGroup,
+  CommandPage,
+  CommandSheet,
+} from "./types";
 import { pageLabel } from "./types";
 import { useCommandMenuData } from "./use-command-menu-data";
 

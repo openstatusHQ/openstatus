@@ -60,7 +60,10 @@ export function statusPageScopeGroups({
         label: m.title,
         description: m.from.toLocaleString(),
         keywords: [m.title],
-        action: { type: "navigate", href: `/status-pages/${page.id}/maintenances` },
+        action: {
+          type: "navigate",
+          href: `/status-pages/${page.id}/maintenances`,
+        },
       })),
     },
     {

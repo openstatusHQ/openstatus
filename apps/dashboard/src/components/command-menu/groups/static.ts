@@ -1,9 +1,9 @@
+import { Dark, Light } from "@openstatus/icons";
 import { AtSign, KeyRound, Palette, Pencil, Plus, Users } from "lucide-react";
 
 import { HELP_LINKS, HELP_SUPPORT } from "@/config/help";
 import { NAV_MENU_ITEMS } from "@/config/nav";
 import { SETTINGS_TABS } from "@/config/settings";
-import { Dark, Light } from "@openstatus/icons";
 
 import type { CommandMenuGroup, CommandMenuItem } from "../types";
 
