@@ -26,8 +26,13 @@ const STALE = new Date(NOW.getTime() - STALE_THRESHOLD_MS - 60 * 1000);
 // biome-ignore lint/suspicious/noExplicitAny: email stub
 type AnyStub = Stub<any>;
 
-async function seedLocation(status: "active" | "error", lastSeenAt: Date | null) {
-  await db.delete(privateLocation).where(eq(privateLocation.id, TEST_LOCATION_ID));
+async function seedLocation(
+  status: "active" | "error",
+  lastSeenAt: Date | null,
+) {
+  await db
+    .delete(privateLocation)
+    .where(eq(privateLocation.id, TEST_LOCATION_ID));
   await db
     .insert(privateLocation)
     .values({
@@ -61,8 +66,12 @@ describe("runPrivateLocationHealth", () => {
 
   afterEach(async () => {
     mockEmail.restore();
-    await db.delete(auditLog).where(eq(auditLog.entityId, String(TEST_LOCATION_ID)));
-    await db.delete(privateLocation).where(eq(privateLocation.id, TEST_LOCATION_ID));
+    await db
+      .delete(auditLog)
+      .where(eq(auditLog.entityId, String(TEST_LOCATION_ID)));
+    await db
+      .delete(privateLocation)
+      .where(eq(privateLocation.id, TEST_LOCATION_ID));
   });
 
   test("active + stale → error + email", async () => {
@@ -73,7 +82,9 @@ describe("runPrivateLocationHealth", () => {
     expect((await readStatus())?.status).toBe("error");
     assertSpyCalls(mockEmail, 1);
     expect(mockEmail.calls[0].args[0].status).toBe("error");
-    expect(mockEmail.calls[0].args[0].locationName).toBe("health-test-location");
+    expect(mockEmail.calls[0].args[0].locationName).toBe(
+      "health-test-location",
+    );
   });
 
   test("error + fresh → active + email", async () => {
