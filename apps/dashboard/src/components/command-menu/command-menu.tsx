@@ -1,11 +1,9 @@
 "use client";
 
-import { Close, Dark, Light, Search } from "@openstatus/icons";
+import { Close, Search } from "@openstatus/icons";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
-  CommandItem,
   CommandList,
   CommandLoading,
 } from "@openstatus/ui/components/ui/command";
@@ -14,7 +12,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@openstatus/ui/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -25,65 +22,29 @@ import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-rep
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { scrollToHash, useScrollToHash } from "@/hooks/use-scroll-to-hash";
-import { useTRPC } from "@/lib/trpc/client";
 import { switchWorkspace } from "@/lib/workspace-cookie";
 
+import { GroupView } from "./group-view";
 import {
-  type CommandLink,
-  type CommandPage,
-  type CommandSheet,
-  type CommandSheetAction,
-  CREATE_ACTIONS,
-  CREATE_LINKS,
-  HELP_LINK_ITEMS,
-  HELP_SUPPORT_ACTION,
-  NAVIGATION,
-  pageLabel,
-  SETTINGS,
-} from "./config";
+  maintenancesGroup,
+  monitorsGroup,
+  statusPagesGroup,
+  statusReportsGroup,
+  workspacesGroup,
+} from "./groups/entities";
+import { monitorScopeGroups } from "./groups/monitor-scope";
+import {
+  createGroup,
+  helpGroup,
+  navigationGroup,
+  settingsGroup,
+  themeGroup,
+} from "./groups/static";
+import { statusPageScopeGroups } from "./groups/status-page-scope";
 import { useCommandMenu } from "./provider";
-import { MonitorScope } from "./scopes/monitor";
-import { StatusPageScope } from "./scopes/status-page";
-
-const IDLE_CAP = 5;
-
-function LinkItem({
-  item,
-  onSelect,
-}: {
-  item: CommandLink;
-  onSelect: (item: CommandLink) => void;
-}) {
-  return (
-    <CommandItem
-      value={item.label}
-      keywords={item.keywords}
-      onSelect={() => onSelect(item)}
-    >
-      <item.icon />
-      <span>{item.label}</span>
-    </CommandItem>
-  );
-}
-
-function ActionItem({
-  action,
-  onSelect,
-}: {
-  action: CommandSheetAction;
-  onSelect: () => void;
-}) {
-  return (
-    <CommandItem
-      value={action.label}
-      keywords={action.keywords}
-      onSelect={onSelect}
-    >
-      <action.icon />
-      <span>{action.label}</span>
-    </CommandItem>
-  );
-}
+import type { CommandAction, CommandMenuGroup, CommandPage, CommandSheet } from "./types";
+import { pageLabel } from "./types";
+import { useCommandMenuData } from "./use-command-menu-data";
 
 export function CommandMenu() {
   const { open, setOpen } = useCommandMenu();
@@ -97,32 +58,10 @@ export function CommandMenu() {
 
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-  const trpc = useTRPC();
 
   useScrollToHash();
 
-  // `enabled: open` keeps the always-mounted palette from fetching on every
-  // dashboard load; data stays cached once fetched.
-  const { data: monitors } = useQuery(
-    trpc.monitor.list.queryOptions(undefined, { enabled: open }),
-  );
-  const { data: statusPages } = useQuery(
-    trpc.page.list.queryOptions(undefined, { enabled: open }),
-  );
-  const { data: workspaces } = useQuery(
-    trpc.workspace.list.queryOptions(undefined, { enabled: open }),
-  );
-  const { data: workspace } = useQuery(
-    trpc.workspace.get.queryOptions(undefined, { enabled: open }),
-  );
-  // Inputs match the overview/create-sheet queries so create mutations
-  // invalidate this cache entry too.
-  const { data: statusReports } = useQuery(
-    trpc.statusReport.list.queryOptions({}, { enabled: open }),
-  );
-  const { data: maintenances } = useQuery(
-    trpc.maintenance.list.queryOptions(undefined, { enabled: open }),
-  );
+  const data = useCommandMenuData({ open });
 
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
 
@@ -164,15 +103,6 @@ export function CommandMenu() {
     if (hashIndex !== -1) scrollToHash(href.slice(hashIndex + 1));
   };
 
-  const selectLink = (item: CommandLink) => {
-    if (item.external) {
-      window.open(item.href, "_blank", "noreferrer");
-      setOpen(false);
-      return;
-    }
-    navigate(item.href);
-  };
-
   const openSheet = (next: CommandSheet) => {
     setOpen(false);
     // Defer so the palette Dialog releases focus + scroll lock before the
@@ -180,36 +110,52 @@ export function CommandMenu() {
     setTimeout(() => setActiveSheet(next), 0);
   };
 
-  const idleCap = <T,>(items: T[]) =>
-    search ? items : items.slice(0, IDLE_CAP);
+  const dispatch = (action: CommandAction) => {
+    switch (action.type) {
+      case "navigate":
+        navigate(action.href);
+        break;
+      case "external":
+        window.open(action.href, "_blank", "noreferrer");
+        setOpen(false);
+        break;
+      case "sheet":
+        openSheet(action.sheet);
+        break;
+      case "push":
+        pushPage(action.page);
+        break;
+      case "run":
+        // Intentionally leaves the palette open (theme toggle, workspace switch).
+        action.run();
+        break;
+    }
+  };
 
-  const otherWorkspaces =
-    workspaces?.filter((w) => w.slug !== workspace?.slug) ?? [];
-
-  // Unresolved reports first; within each partition keep server order (desc).
-  const sortedStatusReports = statusReports
-    ? [
-        ...statusReports.filter((r) => r.status !== "resolved"),
-        ...statusReports.filter((r) => r.status === "resolved"),
-      ]
-    : undefined;
-
-  // Upcoming/active maintenances first, then past (server order desc).
-  // Orphans without a page are skipped — no route to navigate to.
-  const now = Date.now();
-  const withPage = maintenances?.filter((m) => m.pageId !== null);
-  const sortedMaintenances = withPage
-    ? [
-        ...withPage.filter((m) => m.to.getTime() >= now),
-        ...withPage.filter((m) => m.to.getTime() < now),
-      ]
-    : undefined;
-
-  const pageTitleById = new Map(statusPages?.map((p) => [p.id, p.title]) ?? []);
+  const groups: CommandMenuGroup[] = page
+    ? page.type === "monitor"
+      ? monitorScopeGroups(page)
+      : statusPageScopeGroups({
+          page,
+          statusReports: data.statusReports,
+          maintenances: data.maintenances,
+        })
+    : [
+        monitorsGroup(data.monitors),
+        statusPagesGroup(data.statusPages),
+        statusReportsGroup(data.sortedStatusReports),
+        maintenancesGroup(data.sortedMaintenances, data.pageTitleById),
+        navigationGroup(),
+        createGroup(),
+        settingsGroup(),
+        workspacesGroup(data.otherWorkspaces, switchWorkspace),
+        helpGroup(),
+        ...(mounted ? [themeGroup(resolvedTheme, setTheme)] : []),
+      ].filter((g): g is CommandMenuGroup => g !== null);
 
   const reportForUpdate =
     activeSheet?.sheet === "status-report-update"
-      ? statusReports?.find((r) => r.id === activeSheet.reportId)
+      ? data.statusReports?.find((r) => r.id === activeSheet.reportId)
       : undefined;
 
   return (
@@ -264,224 +210,17 @@ export function CommandMenu() {
                 unbounded — the style prop can't silently fail */}
             <CommandList style={{ maxHeight: "min(400px, 65vh)" }}>
               <CommandEmpty>No results found.</CommandEmpty>
-
-              {page?.type === "monitor" ? (
-                <MonitorScope page={page} navigate={navigate} />
-              ) : page?.type === "status-page" ? (
-                <StatusPageScope
-                  page={page}
-                  statusReports={statusReports}
-                  maintenances={maintenances}
-                  navigate={navigate}
-                  onCreateStatusReport={() =>
-                    openSheet({ sheet: "status-report", pageId: page.id })
-                  }
-                  onCreateMaintenance={() =>
-                    openSheet({ sheet: "maintenance", pageId: page.id })
-                  }
-                  onAddReportUpdate={(reportId) =>
-                    openSheet({ sheet: "status-report-update", reportId })
-                  }
+              {!page && data.monitors === undefined ? (
+                <CommandLoading>Loading…</CommandLoading>
+              ) : null}
+              {groups.map((group) => (
+                <GroupView
+                  key={group.heading}
+                  group={group}
+                  search={search}
+                  onAction={dispatch}
                 />
-              ) : (
-                <>
-                  {monitors === undefined ? (
-                    <CommandLoading>Loading…</CommandLoading>
-                  ) : null}
-
-                  {monitors && monitors.length > 0 ? (
-                    <CommandGroup heading="Monitors">
-                      {idleCap(monitors).map((m) => (
-                        <CommandItem
-                          key={m.id}
-                          value={`monitor-${m.id}`}
-                          keywords={[m.name, m.url]}
-                          onSelect={() =>
-                            pushPage({
-                              type: "monitor",
-                              id: m.id,
-                              name: m.name,
-                            })
-                          }
-                        >
-                          <div className="grid min-w-0">
-                            <span className="truncate">{m.name}</span>
-                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
-                              {m.url}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-
-                  {statusPages && statusPages.length > 0 ? (
-                    <CommandGroup heading="Status Pages">
-                      {idleCap(statusPages).map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={`status-page-${p.id}`}
-                          keywords={[p.title, p.slug, p.customDomain].filter(
-                            Boolean,
-                          )}
-                          onSelect={() =>
-                            pushPage({
-                              type: "status-page",
-                              id: p.id,
-                              title: p.title,
-                            })
-                          }
-                        >
-                          <div className="grid min-w-0">
-                            <span className="truncate">{p.title}</span>
-                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
-                              {p.slug}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-
-                  {sortedStatusReports && sortedStatusReports.length > 0 ? (
-                    <CommandGroup heading="Status Reports">
-                      {idleCap(sortedStatusReports).map((r) => (
-                        <CommandItem
-                          key={r.id}
-                          value={`status-report-${r.id}`}
-                          keywords={[r.title, r.status, r.page.title]}
-                          onSelect={() =>
-                            navigate(
-                              `/status-pages/${r.pageId}/status-reports/${r.id}`,
-                            )
-                          }
-                        >
-                          <div className="grid min-w-0">
-                            <span className="truncate">{r.title}</span>
-                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
-                              {r.status} · {r.page.title}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-
-                  {sortedMaintenances && sortedMaintenances.length > 0 ? (
-                    <CommandGroup heading="Maintenances">
-                      {idleCap(sortedMaintenances).map((m) => (
-                        <CommandItem
-                          key={m.id}
-                          value={`maintenance-${m.id}`}
-                          keywords={[
-                            m.title,
-                            pageTitleById.get(m.pageId ?? -1) ?? "",
-                          ].filter(Boolean)}
-                          onSelect={() =>
-                            navigate(`/status-pages/${m.pageId}/maintenances`)
-                          }
-                        >
-                          <div className="grid min-w-0">
-                            <span className="truncate">{m.title}</span>
-                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
-                              {m.from.toLocaleString()}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-
-                  <CommandGroup heading="Navigation">
-                    {NAVIGATION.map((item) => (
-                      <LinkItem
-                        key={item.href}
-                        item={item}
-                        onSelect={selectLink}
-                      />
-                    ))}
-                  </CommandGroup>
-
-                  <CommandGroup heading="Create">
-                    {CREATE_LINKS.map((item) => (
-                      <LinkItem
-                        key={item.href}
-                        item={item}
-                        onSelect={selectLink}
-                      />
-                    ))}
-                    {CREATE_ACTIONS.map((action) => (
-                      <ActionItem
-                        key={action.sheet}
-                        action={action}
-                        onSelect={() => openSheet({ sheet: action.sheet })}
-                      />
-                    ))}
-                  </CommandGroup>
-
-                  <CommandGroup heading="Settings">
-                    {SETTINGS.map((item) => (
-                      <LinkItem
-                        key={item.href}
-                        item={item}
-                        onSelect={selectLink}
-                      />
-                    ))}
-                  </CommandGroup>
-
-                  {otherWorkspaces.length > 0 ? (
-                    <CommandGroup heading="Workspace">
-                      {otherWorkspaces.map((w) => (
-                        <CommandItem
-                          key={w.id}
-                          value={`workspace-${w.id}`}
-                          keywords={[w.name || "Untitled Workspace", w.slug]}
-                          onSelect={() => switchWorkspace(w.slug)}
-                        >
-                          <span className="truncate">
-                            {w.name || "Untitled Workspace"}
-                          </span>
-                          <span className="text-muted-foreground font-commit-mono truncate text-xs">
-                            {w.slug}
-                          </span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-
-                  <CommandGroup heading="Get Help">
-                    <ActionItem
-                      action={HELP_SUPPORT_ACTION}
-                      onSelect={() => openSheet({ sheet: "support" })}
-                    />
-                    {HELP_LINK_ITEMS.map((item) => (
-                      <LinkItem
-                        key={item.href}
-                        item={item}
-                        onSelect={selectLink}
-                      />
-                    ))}
-                  </CommandGroup>
-
-                  {mounted ? (
-                    <CommandGroup heading="Theme">
-                      <CommandItem
-                        value="toggle-theme"
-                        keywords={["dark", "light", "appearance"]}
-                        onSelect={() =>
-                          setTheme(resolvedTheme === "dark" ? "light" : "dark")
-                        }
-                      >
-                        {resolvedTheme === "dark" ? <Light /> : <Dark />}
-                        <span>
-                          Switch to{" "}
-                          {resolvedTheme === "dark" ? "light" : "dark"} theme
-                        </span>
-                      </CommandItem>
-                    </CommandGroup>
-                  ) : null}
-                </>
-              )}
+              ))}
             </CommandList>
           </Command>
         </DialogContent>
