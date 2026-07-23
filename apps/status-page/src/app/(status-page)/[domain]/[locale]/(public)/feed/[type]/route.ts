@@ -1,17 +1,10 @@
+import { statusLabel } from "@openstatus/utils";
 import { Feed } from "feed";
 import { notFound, unauthorized } from "next/navigation";
 
 import { auth } from "../../../../../../../lib/auth";
 import { getBaseUrl } from "../../../../../../../lib/base-url";
 import { getQueryClient, trpc } from "../../../../../../../lib/trpc/server";
-
-const STATUS_LABELS = {
-  investigating: "Investigating",
-  identified: "Identified",
-  monitoring: "Monitoring",
-  resolved: "Resolved",
-  maintenance: "Maintenance",
-} as const;
 
 export const revalidate = 60;
 
@@ -90,7 +83,7 @@ export async function GET(
       const maintenanceUrl = `${baseUrl}/events/maintenance/${maintenance.id}`;
       feed.addItem({
         id: maintenanceUrl,
-        title: `Maintenance - ${maintenance.title}`,
+        title: `${statusLabel("maintenance")} - ${maintenance.title}`,
         link: maintenanceUrl,
         description: maintenance.message,
         date: maintenance.updatedAt ?? maintenance.createdAt ?? new Date(),
@@ -99,10 +92,10 @@ export async function GET(
 
     for (const statusReport of page.statusReports ?? []) {
       const statusReportUrl = `${baseUrl}/events/report/${statusReport.id}`;
-      const status = STATUS_LABELS[statusReport.status] ?? statusReport.status;
+      const status = statusLabel(statusReport.status);
       const statusReportUpdates = (statusReport.statusReportUpdates ?? [])
         .map((update) => {
-          const updateStatus = STATUS_LABELS[update.status] ?? update.status;
+          const updateStatus = statusLabel(update.status);
           return `${updateStatus}: ${update.message}.`;
         })
         .join("\n\n");

@@ -13,6 +13,6 @@ const STATUS_LABEL: Record<PageUpdateStatus, string> = {
   maintenance: "Planned Maintenance",
 };
 
-export function statusLabel(status: PageUpdateStatus | (string & {})): string {
-  return STATUS_LABEL[status as PageUpdateStatus] ?? status;
+export function statusLabel(status: PageUpdateStatus): string {
+  return STATUS_LABEL[status];
 }
