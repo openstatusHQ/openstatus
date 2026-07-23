@@ -1,6 +1,5 @@
 "use client";
 
-import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { DiscordIcon } from "@openstatus/icons";
 import { GitHubIcon } from "@openstatus/icons";
 import {
@@ -26,6 +25,8 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import Link from "next/link";
+
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 
 export function NavHelp() {
   const { isMobile } = useSidebar();
@@ -61,7 +62,7 @@ export function NavHelp() {
                 </FormDialogSupportContact>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="https://docs.openstatus.dev"
+                    href="https://www.openstatus.dev/docs"
                     target="_blank"
                     rel="noreferrer"
                   >

@@ -1,0 +1,20 @@
+---
+title: "MCP Server"
+description: "Connect Claude, Cursor, and any MCP-compatible client directly to your openstatus workspace."
+publishedAt: "2026-05-05"
+image: "/assets/changelog/mcp-server.png"
+author: "openstatus"
+category: "integrations"
+---
+
+Openstatus now ships an MCP server — bring your status pages and incidents into Claude, Cursor, or any MCP-compatible client.
+
+Point your client at `https://api.openstatus.dev/mcp` with an `x-openstatus-key` header and your assistant can:
+
+- **List status pages** — pull workspace context before acting.
+- **Create, update, and resolve status reports** — drive incidents from chat.
+- **Schedule maintenance windows** — without leaving your editor.
+
+Every mutation requires an explicit `notify` choice, and every call is attributed to your API key in the audit log — so AI actions stay traceable.
+
+Head to the [MCP server reference](/docs/reference/mcp-server) for setup snippets and the full tool list.

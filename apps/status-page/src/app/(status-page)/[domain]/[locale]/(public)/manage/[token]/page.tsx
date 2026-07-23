@@ -1,24 +1,5 @@
 "use client";
 
-import { ButtonBack } from "@/components/button/button-back";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { FormManageSubscription } from "@/components/forms/form-manage-subscription";
-import {
-  StatusBlankContainer,
-  StatusBlankContent,
-  StatusBlankDescription,
-  StatusBlankLink,
-  StatusBlankTitle,
-} from "@/components/status-page/status-blank";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +17,26 @@ import { isTRPCClientError } from "@trpc/client";
 import { useExtracted, useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+
+import { ButtonBack } from "../../../../../../../components/button/button-back";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "../../../../../../../components/forms/form-card";
+import { FormManageSubscription } from "../../../../../../../components/forms/form-manage-subscription";
+import {
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankDescription,
+  StatusBlankLink,
+  StatusBlankTitle,
+} from "../../../../../../../components/status-page/status-blank";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 
 export default function VerifyPage() {
   const t = useExtracted();

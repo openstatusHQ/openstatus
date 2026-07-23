@@ -1,0 +1,12 @@
+---
+title: "API Key Scopes"
+description: "Issue read-only or read-write API keys to keep agents and integrations on a tight leash."
+image: "/assets/changelog/api-key-scopes.png"
+publishedAt: "2026-05-08"
+category: "company"
+author: "openstatus"
+---
+
+API keys now carry a `read` or `write` scope. Read-only keys can list and inspect resources but cannot mutate anything — useful for dashboards, read replicas, and AI agents you don't fully trust.
+
+Pick a scope when creating a key in `Settings → API Keys`. Existing keys keep full access; rotate them to scope down.

@@ -1,6 +1,5 @@
 "use client";
 
-import { STATUS } from "@/data/metrics.client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +12,8 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { Check } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+
+import { STATUS } from "@/data/metrics.client";
 
 const parseStatus = parseAsStringLiteral(STATUS);
 
@@ -28,7 +29,7 @@ export function DropdownStatus() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
             Request Status
           </DropdownMenuLabel>
           {STATUS.map((item) => (

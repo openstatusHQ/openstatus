@@ -2,6 +2,7 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import type { UseFormReturn } from "react-hook-form";
+
 import type { FormValues } from "../notifications/form-telegram";
 import { TelegramManualInput } from "./telegram-manual-input";
 import TelegramQRCode from "./telegram-qrcode";
@@ -68,7 +69,7 @@ export function TelegramQRConnection({
           <Label>Private Chat ID</Label>
           <Input value={privateChatId} readOnly className="bg-muted" />
           {userName && (
-            <div className="font-medium text-green-600 text-sm">
+            <div className="text-sm font-medium text-green-600">
               {`Connected to: ${userName}`}
             </div>
           )}

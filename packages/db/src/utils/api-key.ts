@@ -1,5 +1,6 @@
-// biome-ignore lint/style/useNodejsImportProtocol: <explanation>
+// oxlint-disable-next-line unicorn/prefer-node-protocol
 import crypto from "crypto";
+
 import bcrypt from "bcryptjs";
 
 /**

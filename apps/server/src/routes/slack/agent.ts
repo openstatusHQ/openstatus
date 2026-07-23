@@ -1,7 +1,18 @@
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import type { ServiceContext } from "@openstatus/services";
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
-import { createTools } from "./tools";
+
+import { buildSlackTools } from "./registry-runner";
+import { buildSystemPrompt } from "./system-prompt";
+
+// Vercel AI Gateway model id. Override via SLACK_AGENT_MODEL when rolling
+// out a new Sonnet version. Dotted format (`4.6`, not `4-6`) is what the
+// gateway accepts — see `apps/dashboard/src/app/api/chat/route.ts`.
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4.6";
+// `||` (not `??`) so empty / whitespace-only env values fall back to the
+// default rather than being passed through to `generateText`.
+const MODEL = process.env.SLACK_AGENT_MODEL?.trim() || DEFAULT_MODEL;
 
 interface SlackThreadMessage {
   user?: string;
@@ -12,52 +23,6 @@ interface SlackThreadMessage {
 interface AgentResult {
   text: string;
   toolResults: Array<{ toolName: string; result: unknown }>;
-}
-
-export function buildSystemPrompt(workspaceName: string): string {
-  const now = new Date().toISOString();
-  return `You are the OpenStatus assistant for workspace "${workspaceName}".
-The current date and time is: ${now} (UTC).
-You help teams create and manage status reports and maintenance windows through Slack.
-
-IMPORTANT: You have NO knowledge of this workspace's data. NEVER guess or make up IDs (page IDs, component IDs, report IDs). You MUST call the appropriate tool first to get real data.
-- Questions about pages or components -> call listStatusPages FIRST
-- Questions about reports -> call listStatusReports FIRST
-- Questions about maintenances -> call listMaintenances FIRST
-- Creating a report -> you MUST call listStatusPages first to get the real pageId, then call createStatusReport with that pageId
-- Scheduling maintenance -> you MUST call listStatusPages first to get the real pageId, then call createMaintenance with that pageId
-- NEVER pass a pageId you did not receive from listStatusPages. Guessing a pageId WILL cause an error.
-
-Capabilities:
-- Create status reports on status pages (createStatusReport)
-- Publish progress updates to existing reports (addStatusReportUpdate)
-- Edit report metadata like title or components (updateStatusReport)
-- List active status reports and status pages
-- Schedule maintenance windows (createMaintenance)
-- List upcoming maintenance windows (listMaintenances)
-
-Lifecycle: createStatusReport once -> addStatusReportUpdate repeatedly -> resolved.
-- "provide an update", "we found the cause", "resolve it" -> addStatusReportUpdate
-- "rename the report", "add a component" -> updateStatusReport (metadata only)
-
-Guidelines:
-- If multiple status pages exist, ask which one to use. If only one, use it automatically.
-- Infer the status from conversation context:
-  "we have an incident" -> investigating
-  "we found the root cause" -> identified
-  "we're watching it" -> monitoring
-  "it's fixed" -> resolved
-- Draft professional status page updates. Don't repeat the user verbatim.
-- When tagged in a thread, synthesize the full thread into a status report draft.
-- Status progression: investigating -> identified -> monitoring -> resolved
-- Be concise. Use Slack mrkdwn formatting (*bold*, _italic_).
-- For any mutation, always call the tool so the user sees a confirmation.
-
-Maintenance scheduling:
-- Parse natural language dates into ISO 8601 format. Convert relative dates like "next Friday from 2-3 PM" into proper ISO 8601 timestamps.
-- If the user doesn't specify a timezone, default to UTC and mention that in your response.
-- The "from" time must be before the "to" time.
-- Write a professional maintenance message describing what will happen during the window.`;
 }
 
 function convertThreadToMessages(
@@ -86,8 +51,17 @@ export async function runAgent(
   thread: SlackThreadMessage[],
   botUserId: string,
   userText?: string,
+  origin?: { slackUserId: string; teamId: string | undefined },
 ): Promise<AgentResult> {
-  const tools = createTools(workspace);
+  const ctx: ServiceContext = {
+    workspace,
+    actor: {
+      type: "slack",
+      teamId: origin?.teamId ?? "",
+      slackUserId: origin?.slackUserId ?? "",
+    },
+  };
+  const tools = buildSlackTools(ctx);
   let messages = convertThreadToMessages(thread, botUserId);
 
   if (messages.length === 0 && userText) {
@@ -102,7 +76,7 @@ export async function runAgent(
   }
 
   const result = await generateText({
-    model: "anthropic/claude-sonnet-4.5",
+    model: MODEL,
     system: buildSystemPrompt(workspace.name ?? "Unknown"),
     messages,
     tools,

@@ -1,0 +1,71 @@
+---
+title: "API"
+publishedAt: "2026-04-29"
+author: "Maximilian Kaske"
+description: "A typed JSON-over-HTTP API powered by ConnectRPC — every endpoint the dashboard uses, with a fully typed Node SDK on top."
+category: "Product"
+faq:
+  - question: "Should I use the SDK or call the API directly?"
+    answer: "Use the Node SDK if you're writing TypeScript or JavaScript — it handles auth, retries, and types for every endpoint. Call the API directly via curl or your language's HTTP client if you're outside the JS ecosystem; ConnectRPC means responses are plain JSON over HTTP."
+  - question: "Is the API REST or RPC?"
+    answer: "It's ConnectRPC — JSON over HTTP, but with a typed RPC contract instead of REST conventions. Every method is a POST to /rpc/openstatus.v1.<Service>/<Method>. You can call it from curl exactly like you'd call a REST endpoint."
+  - question: "How do I authenticate?"
+    answer: "Pass the x-openstatus-key header on every request. Generate a key from Settings → API Tokens — the same key works for the CLI, Terraform provider, and MCP server."
+  - question: "Do you publish an OpenAPI spec?"
+    answer: "Yes. The full schema is browsable at api.openstatus.dev/openapi and is the source of truth for the Node SDK and any generated clients."
+---
+
+The openstatus API is a typed, JSON-over-HTTP layer powered by [ConnectRPC](/blog/migrating-from-zod-openapi-to-connectrpc). Every action the dashboard performs is reachable from the API — same workspace, same audit log, same single API key.
+
+## Quickstart
+
+```bash
+curl https://api.openstatus.dev/rpc/openstatus.v1.MonitorService/ListMonitors \
+  -H "x-openstatus-key: os_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Generate a key from **Settings → API Tokens**.
+
+## What you can do
+
+- Manage monitors, status pages, status reports, maintenance windows, and notification channels.
+- Build dashboards or in-app integrations on top of typed JSON responses.
+- Use a single key across the API, CLI, Terraform, and MCP server.
+- Inspect the full schema in the [OpenAPI explorer](https://api.openstatus.dev/openapi).
+
+## Node SDK
+
+The [openstatus Node SDK](https://github.com/openstatusHQ/sdk-node) is a fully typed TypeScript and JavaScript client for the API — no hand-written `fetch` calls, no codegen step. Works in Node and Deno.
+
+```bash
+npm i @openstatus/sdk-node
+```
+
+```ts
+import { Openstatus } from "@openstatus/sdk-node";
+
+const client = new Openstatus({ apiKey: process.env.OPENSTATUS_API_KEY });
+
+const monitors = await client.monitors.list();
+await client.statusReports.create({ /* ... */ });
+```
+
+[Reach out](mailto:ping@openstatus.dev) if you want us to port it to another language.
+
+## Auth & audit
+
+Pass `x-openstatus-key` on every request. The token is the same one the CLI, Terraform provider, and MCP server share.
+
+Every mutation lands in the audit log under `actor_type = 'api'`, so you can trace any change back to a key, a user, and a transport.
+
+## Other surfaces
+
+- Want a terminal interface or YAML config? See the [CLI](/tooling/cli).
+- Managing infrastructure in HCL? Use the [Terraform provider](/tooling/terraform).
+- Want Claude or ChatGPT to call your workspace? See the [MCP server](/tooling/mcp-server).
+
+## Reference
+
+Full schema and methods in the [API reference](https://api.openstatus.dev/openapi). SDK docs at [jsr.io/@openstatus/sdk-node](https://jsr.io/@openstatus/sdk-node).

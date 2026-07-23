@@ -92,3 +92,22 @@ export function toCapitalize(inputString: string) {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join("");
 }
+
+// pseudonymize a value (e.g. an IP) before it reaches storage: HMAC with a
+// server secret so the digest can't be brute-forced back (the IPv4 space is tiny).
+export async function hashIP(ip: string): Promise<string> {
+  const secret = process.env.FEEDBACK_IP_SALT ?? process.env.CRON_SECRET ?? "";
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(ip));
+  return [...new Uint8Array(sig)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 32);
+}

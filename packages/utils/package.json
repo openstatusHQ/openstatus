@@ -2,18 +2,22 @@
   "name": "@openstatus/utils",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
     "@openstatus/assertions": "workspace:*",
     "@openstatus/regions": "workspace:*",
-    "zod": "4.1.13"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "typescript": "catalog:"
+  }
 }

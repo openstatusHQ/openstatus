@@ -104,6 +104,10 @@ export const Events = {
     name: "report_update_deleted",
     channel: "report",
   },
+  NotifyReport: {
+    name: "report_notified",
+    channel: "report",
+  },
   CreateMaintenance: {
     name: "maintenance_created",
     channel: "maintenance",
@@ -114,6 +118,10 @@ export const Events = {
   },
   DeleteMaintenance: {
     name: "maintenance_deleted",
+    channel: "maintenance",
+  },
+  NotifyMaintenance: {
+    name: "maintenance_notified",
     channel: "maintenance",
   },
   CreateNotification: {
@@ -127,6 +135,18 @@ export const Events = {
   DeleteNotification: {
     name: "notification_deleted",
     channel: "notification",
+  },
+  CreatePrivateLocation: {
+    name: "private_location_created",
+    channel: "private_location",
+  },
+  UpdatePrivateLocation: {
+    name: "private_location_updated",
+    channel: "private_location",
+  },
+  DeletePrivateLocation: {
+    name: "private_location_deleted",
+    channel: "private_location",
   },
   AcknowledgeIncident: {
     name: "incident_acknowledged",
@@ -190,6 +210,14 @@ export const Events = {
   },
   GlobalSpeedChecker: {
     name: "global_speed_checker",
+    channel: "checker",
+  },
+  MCPHealthCheck: {
+    name: "mcp_health_check",
+    channel: "checker",
+  },
+  CdnChecker: {
+    name: "cdn_checker",
     channel: "checker",
   },
 } as const satisfies Record<string, EventProps>;

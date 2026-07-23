@@ -1,8 +1,7 @@
-import type { AdapterUser } from "next-auth/adapters";
-import * as randomWordSlugs from "random-word-slugs";
-
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import type { AdapterUser } from "next-auth/adapters";
+import * as randomWordSlugs from "random-word-slugs";
 
 export async function createUser(data: AdapterUser) {
   const newUser = await db

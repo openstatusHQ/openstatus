@@ -1,33 +1,41 @@
 "use client";
 
-import { ButtonBack } from "@/components/button/button-back";
-import { ButtonCopyLink } from "@/components/button/button-copy-link";
-import {
-  ChartAreaPercentiles,
-  ChartAreaPercentilesSkeleton,
-} from "@/components/chart/chart-area-percentiles";
-import {
-  ChartBarUptime,
-  ChartBarUptimeSkeleton,
-} from "@/components/chart/chart-bar-uptime";
-import {
-  ChartLineRegions,
-  ChartLineRegionsSkeleton,
-} from "@/components/chart/chart-line-regions";
 import {
   Status,
   StatusContent,
   StatusDescription,
   StatusHeader,
   StatusTitle,
-} from "@/components/status-page/status";
-import { StatusBlankMonitors } from "@/components/status-page/status-blank";
+} from "@openstatus/ui/components/blocks/status-layout";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { TrendingUp } from "lucide-react";
+import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { useMemo } from "react";
+
+import { ButtonBack } from "../../../../../../../components/button/button-back";
+import { ButtonCopyLink } from "../../../../../../../components/button/button-copy-link";
+import {
+  ChartAreaPercentiles,
+  ChartAreaPercentilesSkeleton,
+} from "../../../../../../../components/chart/chart-area-percentiles";
+import {
+  ChartBarUptime,
+  ChartBarUptimeSkeleton,
+} from "../../../../../../../components/chart/chart-bar-uptime";
+import {
+  ChartLineRegions,
+  ChartLineRegionsSkeleton,
+} from "../../../../../../../components/chart/chart-line-regions";
+import { StatusBlankMonitors } from "../../../../../../../components/status-page/status-blank";
 import {
   StatusChartContent,
   StatusChartDescription,
   StatusChartHeader,
   StatusChartTitle,
-} from "@/components/status-page/status-charts";
+} from "../../../../../../../components/status-page/status-charts";
 import {
   StatusMonitorTabs,
   StatusMonitorTabsContent,
@@ -36,20 +44,13 @@ import {
   StatusMonitorTabsTriggerLabel,
   StatusMonitorTabsTriggerValue,
   StatusMonitorTabsTriggerValueSkeleton,
-} from "@/components/status-page/status-monitor-tabs";
+} from "../../../../../../../components/status-page/status-monitor-tabs";
 import {
   formatMillisecondsRange,
   formatNumber,
   formatPercentage,
-} from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { TrendingUp } from "lucide-react";
-import { useExtracted } from "next-intl";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import { useMemo } from "react";
+} from "../../../../../../../lib/formatter";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {

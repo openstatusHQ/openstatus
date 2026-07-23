@@ -1,22 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { EmptyStateContainer } from "@/components/content/empty-state";
-import { DataTable } from "@/components/data-table/settings/api-key/data-table";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
@@ -51,17 +34,39 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/components/ui/popover";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/components/ui/radio-group";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { CalendarIcon, Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import { EmptyStateContainer } from "@/components/content/empty-state";
+import { DataTable } from "@/components/data-table/settings/api-key/data-table";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
 
 // we should prefetch the api key on the server (layout)
 
@@ -69,6 +74,19 @@ const schema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   expiresAt: z.string().optional(),
+  // Single-value radio. The wire format on the create-key API is
+  // an array (`scopes: Scope[]`) so per-resource scopes can land
+  // additively later, but the v1 dashboard surface only ever picks
+  // one of two options — flat enum here, lift to array on submit.
+  //
+  // Duplicates `apiKeySettableScopes` from `@openstatus/db` — the
+  // dashboard's client bundle can't reach into the db package
+  // (drizzle pulls in node-only deps via the schema barrel). The
+  // services input schema validates whatever the form sends, so
+  // drift here surfaces as a parse error on submit, not a silent
+  // mismatch. Keep this list in sync with
+  // `packages/db/src/schema/api-keys/constants.ts`.
+  scope: z.enum(["read", "write"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -89,12 +107,14 @@ export function FormApiKey() {
       name: "",
       description: "",
       expiresAt: "",
+      // Default Read-only: AI agents are the most common new use
+      // case for keys, and read-only is the safer starting point.
+      // CI/CD users actively pick "Read & write."
+      scope: "read",
     },
   });
 
-  const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions(),
-  );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: apiKeys = [], refetch } = useQuery(
     trpc.apiKeyRouter.getAll.queryOptions(),
   );
@@ -124,6 +144,7 @@ export function FormApiKey() {
           name: values.name.trim(),
           description: values.description?.trim() || undefined,
           expiresAt: values.expiresAt ? new Date(values.expiresAt) : undefined,
+          scopes: [values.scope],
         });
         toast.promise(promise, {
           loading: "Creating...",
@@ -179,19 +200,20 @@ export function FormApiKey() {
             <Button size="sm">Create</Button>
           </DialogTrigger>
           <DialogContent
+            className="max-h-[80vh] overflow-y-auto"
             onCloseAutoFocus={(event) => {
               event.preventDefault();
               document.body.style.pointerEvents = "";
             }}
           >
+            <DialogHeader>
+              <DialogTitle>Create API Key</DialogTitle>
+              <DialogDescription>
+                Create a new API key to access your workspace data.
+              </DialogDescription>
+            </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(createAction)}>
-                <DialogHeader>
-                  <DialogTitle>Create API Key</DialogTitle>
-                  <DialogDescription>
-                    Create a new API key to access your workspace data.
-                  </DialogDescription>
-                </DialogHeader>
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
@@ -225,11 +247,52 @@ export function FormApiKey() {
                   />
                   <FormField
                     control={form.control}
+                    name="scope"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Access</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="gap-3 sm:grid-cols-2"
+                          >
+                            <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
+                              <RadioGroupItem value="read" className="mt-1" />
+                              <div className="space-y-0.5">
+                                <div className="text-sm font-medium">
+                                  Read-only
+                                </div>
+                                <div className="text-muted-foreground text-xs">
+                                  Recommended for AI agents and read-only
+                                  dashboards.
+                                </div>
+                              </div>
+                            </label>
+                            <label className="hover:bg-muted/40 has-[[aria-checked=true]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-3">
+                              <RadioGroupItem value="write" className="mt-1" />
+                              <div className="space-y-0.5">
+                                <div className="text-sm font-medium">
+                                  Read &amp; write
+                                </div>
+                                <div className="text-muted-foreground text-xs">
+                                  Required for CI/CD and automation.
+                                </div>
+                              </div>
+                            </label>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="expiresAt"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Expiration Date</FormLabel>
-                        <Popover>
+                        <Popover modal>
                           <FormControl>
                             <PopoverTrigger asChild>
                               <Button
@@ -237,7 +300,7 @@ export function FormApiKey() {
                                 variant="outline"
                                 size="sm"
                                 className={cn(
-                                  "w-[240px] pl-3 text-left font-normal",
+                                  "w-full pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground",
                                 )}
                               >
@@ -257,18 +320,16 @@ export function FormApiKey() {
                             <Calendar
                               mode="single"
                               selected={
-                                field.value ? new Date(field.value) : undefined
+                                field.value
+                                  ? parse(field.value, "yyyy-MM-dd", new Date())
+                                  : undefined
                               }
                               onSelect={(date) => {
                                 if (!date) {
                                   field.onChange("");
                                   return;
                                 }
-                                // Convert to ISO string and take only the date part (YYYY-MM-DD)
-                                const dateString = date
-                                  .toISOString()
-                                  .split("T")[0];
-                                field.onChange(dateString);
+                                field.onChange(format(date, "yyyy-MM-dd"));
                               }}
                               disabled={(date) => {
                                 const today = new Date();

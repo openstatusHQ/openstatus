@@ -1,14 +1,37 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import { useStatusPage } from "@/components/status-page/floating-button";
+import {
+  StatusComponent,
+  StatusComponentBody,
+  StatusComponentDescription,
+  StatusComponentFooter,
+  StatusComponentHeader,
+  StatusComponentHeaderLeft,
+  StatusComponentHeaderRight,
+  StatusComponentIcon,
+  StatusComponentLatency,
+  StatusComponentLatencySkeleton,
+  StatusComponentStatus,
+  StatusComponentTitle,
+  StatusComponentUptime,
+  StatusComponentUptimeSkeleton,
+} from "@openstatus/ui/components/blocks/status-component";
 import {
   Status,
   StatusContent,
   StatusDescription,
   StatusHeader,
   StatusTitle,
-} from "@/components/status-page/status";
+} from "@openstatus/ui/components/blocks/status-layout";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { cn } from "@openstatus/ui/lib/utils";
+import { skipToken, useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import { notFound, useParams } from "next/navigation";
+import { useMemo } from "react";
+
+import { Link } from "../../../../../components/common/link";
+import { useStatusPage } from "../../../../../components/status-page/floating-button";
 import {
   StatusBanner,
   StatusBannerContainer,
@@ -17,31 +40,32 @@ import {
   StatusBannerTabsContent,
   StatusBannerTabsList,
   StatusBannerTabsTrigger,
-} from "@/components/status-page/status-banner";
+} from "../../../../../components/status-page/status-banner";
+import {
+  StatusBar,
+  StatusBarSkeleton,
+} from "../../../../../components/status-page/status-bar";
+import { StatusComponentGroup } from "../../../../../components/status-page/status-component-group";
 import {
   StatusEventAffected,
   StatusEventAffectedBadge,
   StatusEventTimelineMaintenance,
   StatusEventTimelineReportUpdate,
-} from "@/components/status-page/status-events";
-import { StatusFeed } from "@/components/status-page/status-feed";
-import { StatusMonitor } from "@/components/status-page/status-monitor";
-import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
-import { useEmbed } from "@/hooks/use-embed";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { useTRPC } from "@/lib/trpc/client";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { cn } from "@openstatus/ui/lib/utils";
-import { skipToken, useQuery } from "@tanstack/react-query";
-import { notFound, useParams } from "next/navigation";
-import { useMemo } from "react";
+} from "../../../../../components/status-page/status-events";
+import { StatusFeed } from "../../../../../components/status-page/status-feed";
+import { latencyByMonitorId } from "../../../../../data/metrics.client";
+import { useEmbed } from "../../../../../hooks/use-embed";
+import { usePathnamePrefix } from "../../../../../hooks/use-pathname-prefix";
+import { updatesWithImpactChanges } from "../../../../../lib/report-impacts";
+import { useTRPC } from "../../../../../lib/trpc/client";
 
 export function Client() {
   const prefix = usePathnamePrefix();
   const { domain } = useParams<{ domain: string }>();
-  const { cardType, barType, showUptime } = useStatusPage();
+  const { cardType, barType, showUptime, numberOfDays } = useStatusPage();
   const embed = useEmbed();
   const trpc = useTRPC();
+  const t = useExtracted();
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
@@ -92,10 +116,42 @@ export function Client() {
             ),
             cardType,
             barType,
+            days: numberOfDays,
           }
         : skipToken,
     ),
   );
+
+  // Non-blocking latency read for the per-monitor "p75 ms" tracker chip. Reuses
+  // the public monitors query (already registers the multi-latency pipe) so the
+  // tracker rows never wait on it — the chip fills in once resolved.
+  const { data: monitorsLatency, isFetching: isLatencyFetching } = useQuery(
+    trpc.statusPage.getMonitors.queryOptions(
+      componentsVisible && pageInitial && pageInitial.pageComponents.length > 0
+        ? { slug: domain }
+        : skipToken,
+    ),
+  );
+  const latencyMap = useMemo(
+    () => latencyByMonitorId(monitorsLatency, "p75"),
+    [monitorsLatency],
+  );
+  const latencyPending = !monitorsLatency && isLatencyFetching;
+
+  // Only public monitors get a chip: private monitors aren't in `getMonitors`
+  // (value never arrives) and static components have no monitor.
+  const buildLatency = (
+    row: NonNullable<typeof uptimeData>[number] | undefined,
+  ) => {
+    if (!row?.monitor?.public) return undefined;
+    const monitorId = row.monitor.id.toString();
+    return {
+      label: t("last day"),
+      isLoading: latencyPending,
+      value: latencyMap.get(monitorId),
+      href: `${prefix ? `/${prefix}` : ""}/monitors/${monitorId}`,
+    };
+  };
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
@@ -259,57 +315,54 @@ export function Client() {
             {page.trackers.map((tracker) => {
               if (tracker.type === "component") {
                 const component = tracker.component;
-
-                // Fetch uptime data by component ID
-                const { data, uptime } =
-                  uptimeData?.find((u) => u.pageComponentId === component.id) ??
-                  {};
+                const uptimeRow = uptimeData?.find(
+                  (u) => u.pageComponentId === component.id,
+                );
+                const { data, uptime } = uptimeRow ?? {};
 
                 return (
-                  <StatusMonitor
+                  <ComponentCard
                     key={`component-${component.id}`}
+                    name={component.name}
+                    description={component.description}
                     status={component.status}
                     data={data}
-                    monitor={{
-                      name: component.name,
-                      description: component.description,
-                    }}
                     uptime={uptime}
                     showUptime={showUptime}
                     isLoading={isLoading}
+                    latency={buildLatency(uptimeRow)}
                   />
                 );
               }
 
               return (
-                <StatusTrackerGroup
+                <StatusComponentGroup
                   key={`group-${tracker.groupId}`}
                   title={tracker.groupName}
                   status={tracker.status}
                   defaultOpen={tracker.defaultOpen}
                 >
                   {tracker.components.map((component) => {
-                    const { data, uptime } =
-                      uptimeData?.find(
-                        (u) => u.pageComponentId === component.id,
-                      ) ?? {};
+                    const uptimeRow = uptimeData?.find(
+                      (u) => u.pageComponentId === component.id,
+                    );
+                    const { data, uptime } = uptimeRow ?? {};
 
                     return (
-                      <StatusMonitor
+                      <ComponentCard
                         key={`component-${component.id}`}
+                        name={component.name}
+                        description={component.description}
                         status={component.status}
                         data={data}
-                        monitor={{
-                          name: component.name,
-                          description: component.description,
-                        }}
                         uptime={uptime}
                         showUptime={showUptime}
                         isLoading={isLoading}
+                        latency={buildLatency(uptimeRow)}
                       />
                     );
                   })}
-                </StatusTrackerGroup>
+                </StatusComponentGroup>
               );
             })}
           </StatusContent>
@@ -318,17 +371,20 @@ export function Client() {
         <StatusContent className="group-data-[hide-feed=true]/embed:hidden">
           <StatusFeed
             statusReports={page.statusReports
-              .filter((report) =>
-                page.lastEvents.some(
-                  (event) => event.id === report.id && event.type === "report",
-                ),
+              .filter(
+                (report) =>
+                  report.statusReportUpdates.length > 0 &&
+                  page.lastEvents.some(
+                    (event) =>
+                      event.id === report.id && event.type === "report",
+                  ),
               )
               .map((report) => ({
                 ...report,
                 affected: report.statusReportsToPageComponents.map(
                   (component) => component.pageComponent.name,
                 ),
-                updates: report.statusReportUpdates,
+                updates: updatesWithImpactChanges(report),
               }))}
             maintenances={page.maintenances
               .filter((maintenance) =>
@@ -347,5 +403,75 @@ export function Client() {
         </StatusContent>
       </Status>
     </div>
+  );
+}
+
+type ComponentCardData = NonNullable<Parameters<typeof StatusBar>[0]["data"]>;
+
+function ComponentCard({
+  name,
+  description,
+  status,
+  data,
+  uptime,
+  showUptime,
+  isLoading,
+  latency,
+}: {
+  name: string;
+  description?: string | null;
+  status: "success" | "degraded" | "error" | "info";
+  data?: ComponentCardData;
+  uptime?: string;
+  showUptime?: boolean;
+  isLoading?: boolean;
+  latency?: { label: string; isLoading: boolean; value?: string; href: string };
+}) {
+  return (
+    <StatusComponent variant={status}>
+      <StatusComponentHeader>
+        <StatusComponentHeaderLeft>
+          <StatusComponentTitle>{name}</StatusComponentTitle>
+          {latency ? (
+            latency.value ? (
+              <Link
+                href={latency.href}
+                variant="unstyled"
+                className="shrink-0 rounded-md focus-visible:ring-inset"
+              >
+                <StatusComponentLatency>
+                  <span className="text-muted-foreground/70">
+                    {latency.label}
+                  </span>
+                  <span className="text-foreground">{latency.value}</span>
+                  <span>p75</span>
+                </StatusComponentLatency>
+              </Link>
+            ) : latency.isLoading ? (
+              <StatusComponentLatencySkeleton className="shrink-0" />
+            ) : null
+          ) : null}
+          <StatusComponentDescription>{description}</StatusComponentDescription>
+        </StatusComponentHeaderLeft>
+        <StatusComponentHeaderRight>
+          {showUptime ? (
+            <>
+              {isLoading ? (
+                <StatusComponentUptimeSkeleton />
+              ) : (
+                <StatusComponentUptime>{uptime}</StatusComponentUptime>
+              )}
+              <StatusComponentIcon />
+            </>
+          ) : (
+            <StatusComponentStatus />
+          )}
+        </StatusComponentHeaderRight>
+      </StatusComponentHeader>
+      <StatusComponentBody>
+        {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data ?? []} />}
+        <StatusComponentFooter data={data ?? []} isLoading={isLoading} />
+      </StatusComponentBody>
+    </StatusComponent>
   );
 }

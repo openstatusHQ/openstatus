@@ -1,6 +1,11 @@
-import { sql } from "drizzle-orm";
-import { relations } from "drizzle-orm";
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { relations, sql } from "drizzle-orm";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
 import { user } from "../users/user";
@@ -56,11 +61,10 @@ export const incidentTable = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (table) => {
-    return {
-      unique: unique().on(table.monitorId, table.startedAt),
-    };
-  },
+  (table) => [
+    unique().on(table.monitorId, table.startedAt),
+    index("incident_workspace_id_idx").on(table.workspaceId),
+  ],
 );
 
 export const incidentRelations = relations(incidentTable, ({ one }) => ({

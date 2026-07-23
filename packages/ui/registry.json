@@ -2,46 +2,23 @@
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "openstatus",
   "homepage": "https://openstatus.dev",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "style": "default",
-  "tailwind": {
-    "config": {
-      "theme": {
-        "extend": {
-          "colors": {
-            "success": "hsl(var(--success))",
-            "success-foreground": "hsl(var(--success-foreground))",
-            "warning": "hsl(var(--warning))",
-            "warning-foreground": "hsl(var(--warning-foreground))",
-            "destructive": "hsl(var(--destructive))",
-            "destructive-foreground": "hsl(var(--destructive-foreground))",
-            "info": "hsl(var(--info))",
-            "info-foreground": "hsl(var(--info-foreground))"
-          }
-        }
-      }
-    }
-  },
   "cssVars": {
+    "theme": {
+      "color-success": "var(--success)",
+      "color-warning": "var(--warning)",
+      "color-info": "var(--info)"
+    },
     "light": {
-      "success": "142.1 76.2% 36.3%",
-      "success-foreground": "355.7 100% 97.3%",
-      "warning": "38 92% 50%",
-      "warning-foreground": "48 96% 89%",
-      "destructive": "0 84.2% 60.2%",
-      "destructive-foreground": "0 0% 98%",
-      "info": "221.2 83.2% 53.3%",
-      "info-foreground": "210 40% 98%"
+      "success": "oklch(0.72 0.19 150)",
+      "warning": "oklch(0.77 0.16 70)",
+      "info": "oklch(0.62 0.19 260)"
     },
     "dark": {
-      "success": "142.1 70.6% 45.3%",
-      "success-foreground": "144.9 80.4% 10%",
-      "warning": "38 92% 50%",
-      "warning-foreground": "48 96% 89%",
-      "destructive": "0 72.2% 50.6%",
-      "destructive-foreground": "0 85.7% 97.3%",
-      "info": "217.2 91.2% 59.8%",
-      "info-foreground": "222.2 47.4% 11.2%"
+      "success": "oklch(0.72 0.19 150)",
+      "warning": "oklch(0.77 0.16 70)",
+      "info": "oklch(0.62 0.19 260)"
     }
   },
   "items": [
@@ -91,6 +68,23 @@
       "title": "Status Utilities",
       "description": "Utility functions for status formatting and display",
       "dependencies": ["date-fns"],
+      "cssVars": {
+        "theme": {
+          "color-success": "var(--success)",
+          "color-warning": "var(--warning)",
+          "color-info": "var(--info)"
+        },
+        "light": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        },
+        "dark": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        }
+      },
       "files": [
         {
           "path": "src/components/blocks/status.utils.ts",
@@ -106,6 +100,23 @@
       "description": "Unified status icon component with variants for different contexts",
       "registryDependencies": ["status-types"],
       "dependencies": ["lucide-react"],
+      "cssVars": {
+        "theme": {
+          "color-success": "var(--success)",
+          "color-warning": "var(--warning)",
+          "color-info": "var(--info)"
+        },
+        "light": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        },
+        "dark": {
+          "success": "oklch(0.72 0.19 150)",
+          "warning": "oklch(0.77 0.16 70)",
+          "info": "oklch(0.62 0.19 260)"
+        }
+      },
       "files": [
         {
           "path": "src/components/blocks/status-icon.tsx",
@@ -142,6 +153,20 @@
       ]
     },
     {
+      "name": "status-i18n",
+      "type": "registry:block",
+      "title": "Status Blocks i18n Provider",
+      "description": "React context for supplying translated labels and locale-aware date formatters to status blocks. Optional — blocks fall back to defaultStatusBlocksLabels (en-US) when no provider is mounted.",
+      "registryDependencies": ["status-types", "status-utils"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-i18n.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-i18n.tsx"
+        }
+      ]
+    },
+    {
       "name": "status-timestamp",
       "type": "registry:block",
       "title": "Status Timestamp",
@@ -152,7 +177,12 @@
         "use-copy-to-clipboard",
         "use-media-query"
       ],
-      "dependencies": ["date-fns", "@date-fns/utc@2.1.0", "lucide-react"],
+      "dependencies": [
+        "@radix-ui/react-hover-card",
+        "date-fns",
+        "@date-fns/utc@2.1.0",
+        "lucide-react"
+      ],
       "files": [
         {
           "path": "src/components/blocks/status-timestamp.tsx",
@@ -171,6 +201,7 @@
         "status-types",
         "status-utils",
         "status-timestamp",
+        "status-i18n",
         "tabs"
       ],
       "files": [
@@ -189,6 +220,8 @@
       "registryDependencies": [
         "status-icon",
         "status-types",
+        "status-utils",
+        "status-i18n",
         "skeleton",
         "tooltip",
         "use-media-query"
@@ -229,11 +262,13 @@
         "status-types",
         "status-utils",
         "status-timestamp",
+        "status-i18n",
         "badge",
+        "hover-card",
         "separator",
         "tooltip"
       ],
-      "dependencies": ["date-fns", "lucide-react"],
+      "dependencies": ["@radix-ui/react-slot", "date-fns", "lucide-react"],
       "files": [
         {
           "path": "src/components/blocks/status-events.tsx",
@@ -250,6 +285,7 @@
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-i18n",
         "hover-card",
         "separator",
         "skeleton",
@@ -265,11 +301,40 @@
       ]
     },
     {
+      "name": "status-calendar",
+      "type": "registry:block",
+      "title": "Status Calendar",
+      "description": "Monthly calendar view of status history with per-day markers and event hover cards",
+      "registryDependencies": [
+        "status-types",
+        "status-i18n",
+        "status-bar",
+        "button",
+        "hover-card",
+        "separator",
+        "skeleton",
+        "use-media-query"
+      ],
+      "dependencies": ["date-fns", "lucide-react", "react-day-picker@8"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-calendar.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-calendar.tsx"
+        }
+      ]
+    },
+    {
       "name": "status-feed",
       "type": "registry:block",
       "title": "Status Feed",
       "description": "Unified feed component combining status reports and maintenance events",
-      "registryDependencies": ["status-blank", "status-events", "status-types"],
+      "registryDependencies": [
+        "status-blank",
+        "status-events",
+        "status-types",
+        "status-i18n"
+      ],
       "files": [
         {
           "path": "src/components/blocks/status-feed.tsx",
@@ -279,13 +344,142 @@
       ]
     },
     {
+      "name": "status-theme-switcher",
+      "type": "registry:block",
+      "title": "Status Theme Switcher",
+      "description": "Agnostic light/dark/system theme switcher. Caller owns the value and onValueChange wiring (next-themes, form state, etc.)",
+      "registryDependencies": [
+        "status-i18n",
+        "status-types",
+        "button",
+        "dropdown-menu",
+        "skeleton"
+      ],
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-theme-switcher.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-theme-switcher.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-locale-switcher",
+      "type": "registry:block",
+      "title": "Status Locale Switcher",
+      "description": "Agnostic locale picker. Caller owns value, onValueChange, and label resolution — no next-intl, router, or locale detection",
+      "registryDependencies": ["button", "dropdown-menu", "skeleton"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-locale-switcher.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-locale-switcher.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-updates",
+      "type": "registry:block",
+      "title": "Status Updates",
+      "description": "Popover with copy-link primitives for RSS, Atom, JSON, Slack, and SSH subscription channels. Flat exports — caller composes layout (tabs, sections, etc.)",
+      "registryDependencies": [
+        "status-i18n",
+        "use-copy-to-clipboard",
+        "button",
+        "input",
+        "popover",
+        "separator"
+      ],
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-updates.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-updates.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-page-get-in-touch",
+      "type": "registry:block",
+      "title": "Status Page Get-in-Touch",
+      "description": "Two flat button primitives (icon + text) with tooltip chrome for the contact link in a status page header",
+      "registryDependencies": ["status-i18n", "button", "tooltip"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-page-get-in-touch.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-page-get-in-touch.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-page-header",
+      "type": "registry:block",
+      "title": "Status Page Header",
+      "description": "Presentation-only header chrome (brand, nav, actions). Routing-agnostic — apps inject their own Link component via asChild",
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-page-header.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-page-header.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-page-footer",
+      "type": "registry:block",
+      "title": "Status Page Footer",
+      "description": "Presentation-only footer chrome (powered-by, action cluster). Embed/white-label gating, switchers, and tRPC fetch stay in the wrapping app",
+      "registryDependencies": ["status-i18n"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-page-footer.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-page-footer.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-page-shell",
+      "type": "registry:block",
+      "title": "Status Page Shell",
+      "description": "Outer chrome wrappers (StatusPageShell + StatusPageMain) around header / main / footer. Routing-agnostic with embed-aware Tailwind classes that activate only when an ancestor sets data-embed",
+      "files": [
+        {
+          "path": "src/components/blocks/status-page-shell.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-page-shell.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-chrome",
+      "type": "registry:block",
+      "title": "Status Page Chrome",
+      "description": "Full status page chrome — shell, header, footer, get-in-touch, status-updates, theme + locale switchers. Combine with status-essentials or status-complete for the body",
+      "registryDependencies": [
+        "status-i18n",
+        "status-page-shell",
+        "status-page-header",
+        "status-page-footer",
+        "status-page-get-in-touch",
+        "status-updates",
+        "status-theme-switcher",
+        "status-locale-switcher"
+      ]
+    },
+    {
       "name": "status-complete",
       "type": "registry:block",
       "title": "Status Page (Complete)",
-      "description": "Complete status page components including all primitives, displays, and interactive elements",
+      "description": "Complete status page components including all primitives, displays, interactive elements, and chrome (header / footer / switchers)",
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-i18n",
         "status-icon",
         "status-layout",
         "status-blank",
@@ -294,7 +488,15 @@
         "status-component-group",
         "status-events",
         "status-bar",
-        "status-feed"
+        "status-calendar",
+        "status-feed",
+        "status-page-shell",
+        "status-page-header",
+        "status-page-footer",
+        "status-page-get-in-touch",
+        "status-updates",
+        "status-theme-switcher",
+        "status-locale-switcher"
       ]
     },
     {
@@ -305,6 +507,7 @@
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-i18n",
         "status-icon",
         "status-layout",
         "status-banner",

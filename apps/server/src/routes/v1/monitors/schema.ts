@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-
 import {
   numberCompare,
   recordCompare,
@@ -170,6 +169,7 @@ export const MonitorSchema = z
     headers: z
       .preprocess(
         (val) => {
+          if (val == null) return [];
           try {
             if (Array.isArray(val)) return val;
             if (String(val).length > 0) {
@@ -195,6 +195,7 @@ export const MonitorSchema = z
       }),
     assertions: z
       .preprocess((val) => {
+        if (val == null) return [];
         try {
           if (Array.isArray(val)) return val;
           if (String(val).length > 0) {

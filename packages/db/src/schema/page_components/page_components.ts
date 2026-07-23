@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -12,9 +13,9 @@ import { maintenance } from "../maintenances";
 import { monitor } from "../monitors";
 import { pageComponentGroup } from "../page_component_groups";
 import { page } from "../pages";
-import { statusReport } from "../status_reports";
+import { statusReport, statusReportUpdate } from "../status_reports";
 import { workspace } from "../workspaces";
-import { pageComponentTypes } from "./constants";
+import { pageComponentImpact, pageComponentTypes } from "./constants";
 
 export const pageComponent = sqliteTable(
   "page_component",
@@ -52,6 +53,7 @@ export const pageComponent = sqliteTable(
       t.pageId,
       t.monitorId,
     ),
+    index("page_component_workspace_id_idx").on(t.workspaceId),
     check(
       "page_component_type_check",
       //   NOTE: This check ensures that either the component is a monitor or a static component, but not both.
@@ -80,6 +82,9 @@ export const pageComponentRelations = relations(
       references: [pageComponentGroup.id],
     }),
     statusReportsToPageComponents: many(statusReportsToPageComponents),
+    statusReportUpdateToPageComponents: many(
+      statusReportUpdateToPageComponents,
+    ),
     maintenancesToPageComponents: many(maintenancesToPageComponents),
   }),
 );
@@ -97,9 +102,12 @@ export const maintenancesToPageComponents = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.maintenanceId, t.pageComponentId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.maintenanceId, t.pageComponentId] }),
+    index("maintenance_to_page_component_page_component_id_idx").on(
+      t.pageComponentId,
+    ),
+  ],
 );
 
 export const maintenancesToPageComponentsRelations = relations(
@@ -129,9 +137,12 @@ export const statusReportsToPageComponents = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.statusReportId, t.pageComponentId] }),
-  }),
+  (t) => [
+    primaryKey({ columns: [t.statusReportId, t.pageComponentId] }),
+    index("status_report_to_page_component_page_component_id_idx").on(
+      t.pageComponentId,
+    ),
+  ],
 );
 
 export const statusReportsToPageComponentsRelations = relations(
@@ -143,6 +154,44 @@ export const statusReportsToPageComponentsRelations = relations(
     }),
     pageComponent: one(pageComponent, {
       fields: [statusReportsToPageComponents.pageComponentId],
+      references: [pageComponent.id],
+    }),
+  }),
+);
+
+// timeline: the impact each update set per component — the only place impact
+// is stored. `status_report_to_page_component` stays the membership source.
+export const statusReportUpdateToPageComponents = sqliteTable(
+  "status_report_update_to_page_component",
+  {
+    statusReportUpdateId: integer("status_report_update_id")
+      .notNull()
+      .references(() => statusReportUpdate.id, { onDelete: "cascade" }),
+    pageComponentId: integer("page_component_id")
+      .notNull()
+      .references(() => pageComponent.id, { onDelete: "cascade" }),
+    impact: text("impact", { enum: pageComponentImpact }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [
+    primaryKey({ columns: [t.statusReportUpdateId, t.pageComponentId] }),
+    index("status_report_update_to_page_component_page_component_id_idx").on(
+      t.pageComponentId,
+    ),
+  ],
+);
+
+export const statusReportUpdateToPageComponentsRelations = relations(
+  statusReportUpdateToPageComponents,
+  ({ one }) => ({
+    statusReportUpdate: one(statusReportUpdate, {
+      fields: [statusReportUpdateToPageComponents.statusReportUpdateId],
+      references: [statusReportUpdate.id],
+    }),
+    pageComponent: one(pageComponent, {
+      fields: [statusReportUpdateToPageComponents.pageComponentId],
       references: [pageComponent.id],
     }),
   }),

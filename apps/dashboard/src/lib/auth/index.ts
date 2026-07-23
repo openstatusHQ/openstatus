@@ -1,12 +1,11 @@
-import type { DefaultSession } from "next-auth";
-import NextAuth from "next-auth";
-
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
-
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
+import type { DefaultSession } from "next-auth";
+import NextAuth from "next-auth";
 import { headers } from "next/headers";
+
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
 
@@ -20,6 +19,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       ? [GitHubProvider, GoogleProvider, ResendProvider]
       : [GitHubProvider, GoogleProvider],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow relative URLs, but not protocol-relative `//evil.com` which the
+      // browser would resolve off-origin.
+      if (url.startsWith("/") && !url.startsWith("//")) {
+        return `${baseUrl}${url}`;
+      }
+      // Same-origin absolute URLs only — compare parsed origins, not a string
+      // prefix, so `https://<baseUrl>.evil.com` cannot pass as trusted.
+      // Preserves the original callback URL so invite links keep working.
+      try {
+        if (new URL(url).origin === new URL(baseUrl).origin) {
+          return url;
+        }
+      } catch {
+        // malformed url — fall through to baseUrl
+      }
+      return baseUrl;
+    },
     async signIn(params) {
       // We keep updating the user info when we loggin in
 

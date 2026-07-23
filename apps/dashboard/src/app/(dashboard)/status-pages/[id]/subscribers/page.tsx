@@ -1,5 +1,12 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Lock, Plus } from "lucide-react";
+import { notFound, useParams } from "next/navigation";
+import { useState } from "react";
+
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -16,19 +23,18 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-
 import { Section } from "@/components/content/section";
 import { columns } from "@/components/data-table/subscribers/columns";
+import { SubscribersDataTableToolbar } from "@/components/data-table/subscribers/data-table-toolbar";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useState } from "react";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 
@@ -39,11 +45,14 @@ const EXAMPLES = [
     createdAt: new Date(),
     pageId: 1,
     channelType: "email",
+    source: "self_signup",
+    name: null,
     acceptedAt: new Date(),
     unsubscribedAt: null,
     components: [],
     isEntirePage: true,
     webhookUrl: null,
+    channelConfig: null,
   },
   {
     id: 2,
@@ -51,41 +60,104 @@ const EXAMPLES = [
     createdAt: new Date(),
     pageId: 1,
     channelType: "email",
+    source: "self_signup",
+    name: null,
     acceptedAt: new Date(),
     unsubscribedAt: null,
     components: [],
     isEntirePage: true,
     webhookUrl: null,
+    channelConfig: null,
   },
 ] satisfies Subscriber[];
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
+  const pageId = Number(id);
+  if (!Number.isInteger(pageId) || pageId <= 0) notFound();
   const [openDialog, setOpenDialog] = useState(false);
+  const [openAdd, setOpenAdd] = useState(false);
   const trpc = useTRPC();
-  const { data: page } = useQuery(
-    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-  const { data: subscribers } = useQuery(
-    trpc.pageSubscriber.list.queryOptions({ pageId: Number.parseInt(id) }),
+  const { data: page } = useQuery(trpc.page.get.queryOptions({ id: pageId }));
+  const { data: subscribers, refetch } = useQuery(
+    trpc.pageSubscriber.list.queryOptions({ pageId }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: components } = useQuery(
+    trpc.pageComponent.list.queryOptions({ pageId }),
+  );
+
+  const createAction = useMutation(
+    trpc.pageSubscriber.createSubscription.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
 
   if (!workspace) return null;
+
+  const isLimited = workspace.limits["status-subscribers"] === false;
+  const items = toCheckboxTreeItems(
+    components ?? [],
+    page?.pageComponentGroups ?? [],
+  );
 
   return (
     <SectionGroup>
       <Section>
-        <SectionHeader>
-          <SectionTitle>{page?.title}</SectionTitle>
-          <SectionDescription>List of all subscribers.</SectionDescription>
-        </SectionHeader>
+        <SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>{page?.title}</SectionTitle>
+            <SectionDescription>List of all subscribers.</SectionDescription>
+          </SectionHeader>
+          <div>
+            {isLimited ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpenDialog(true)}
+              >
+                <Lock /> Add subscriber
+              </Button>
+            ) : (
+              <FormSheetSubscriber
+                open={openAdd}
+                onOpenChange={setOpenAdd}
+                items={items}
+                onSubmit={async (values) => {
+                  if (values.channelType === "email") {
+                    await createAction.mutateAsync({
+                      pageId,
+                      channelType: "email",
+                      email: values.email,
+                      name: values.name || null,
+                      componentIds: values.componentIds,
+                    });
+                  } else {
+                    await createAction.mutateAsync({
+                      pageId,
+                      channelType: "webhook",
+                      webhookUrl: values.webhookUrl,
+                      name: values.name || null,
+                      headers: values.headers,
+                      componentIds: values.componentIds,
+                    });
+                  }
+                }}
+              >
+                <Button variant="outline" size="sm">
+                  <Plus /> Add subscriber
+                </Button>
+              </FormSheetSubscriber>
+            )}
+          </div>
+        </SectionHeaderRow>
       </Section>
       <Section>
-        {workspace.limits["status-subscribers"] === false ? (
+        {isLimited ? (
           <BillingOverlayContainer>
             <DataTable
               columns={columns}
+              toolbarComponent={SubscribersDataTableToolbar}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>
@@ -96,7 +168,7 @@ export default function Page() {
               <BillingOverlayDescription>
                 Keep your users in the loop with status page updates.{" "}
                 <Link
-                  href="https://docs.openstatus.dev/reference/subscriber/"
+                  href="https://www.openstatus.dev/docs/reference/subscriber/"
                   rel="noreferrer"
                   target="_blank"
                 >
@@ -112,12 +184,18 @@ export default function Page() {
             />
           </BillingOverlayContainer>
         ) : subscribers?.length ? (
-          <DataTable columns={columns} data={subscribers} />
+          <DataTable
+            columns={columns}
+            data={subscribers}
+            toolbarComponent={SubscribersDataTableToolbar}
+            paginationComponent={DataTablePaginationSimple}
+            defaultColumnFilters={[{ id: "status", value: ["active"] }]}
+          />
         ) : (
           <EmptyStateContainer>
             <EmptyStateTitle>No subscribers</EmptyStateTitle>
             <EmptyStateDescription>
-              No emails have been subscribed to this status page.
+              Nobody has been subscribed to this status page.
             </EmptyStateDescription>
           </EmptyStateContainer>
         )}

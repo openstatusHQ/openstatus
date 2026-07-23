@@ -1,12 +1,13 @@
 import { FREE_FLY_REGIONS } from "@openstatus/regions";
 import { z } from "zod";
+
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 
 // REMINDER: this is not a database table but just a schema for the limits of the plan
 // default values are set to the free plan limits
 
 export const limitsSchema = z.object({
-  version: z.undefined(),
+  version: z.undefined().optional(),
   /**
    * Monitor limits
    */
@@ -30,6 +31,7 @@ export const limitsSchema = z.object({
   "page-components": z.number().prefault(3),
   maintenance: z.boolean().prefault(true),
   "monitor-values-visibility": z.boolean().prefault(true),
+  "uptime-history": z.boolean().prefault(false),
   "status-subscribers": z.boolean().prefault(false),
   "custom-domain": z.boolean().prefault(false),
   i18n: z.boolean().prefault(false),
@@ -38,6 +40,7 @@ export const limitsSchema = z.object({
   "ip-restriction": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),
   "no-index": z.boolean().prefault(false),
+  "custom-theme": z.boolean().prefault(false),
   /**
    * Notification limits
    */
@@ -70,7 +73,6 @@ export type Limits = z.infer<typeof limitsSchema>;
 const priceSchema = z.object({
   USD: z.number(),
   EUR: z.number(),
-  INR: z.number(),
 });
 
 export type Price = z.infer<typeof priceSchema>;
@@ -101,14 +103,7 @@ export const addonsSchema = z.partialRecord(
 
 export type Addons = z.infer<typeof addonsSchema>;
 
-/**
- * Enforces that addon keys in Limits must be set to false in plan configs
- * (since addons can only be enabled by purchasing them)
- */
-export type PlanLimits = {
-  [K in keyof Limits]: K extends keyof Addons
-    ? Limits[K] extends boolean
-      ? false // Force addon boolean fields to false
-      : Limits[K] // Non-boolean fields stay as-is
-    : Limits[K]; // Non-addon fields stay as-is
-};
+// Addon flags can be true at the plan level when the plan bundles the addon
+// by default (e.g. Scale includes white-label / magic-link / IP restriction).
+// Otherwise they default to false and are flipped on via the addon purchase flow.
+export type PlanLimits = Limits;

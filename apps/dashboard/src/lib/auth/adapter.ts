@@ -1,6 +1,4 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import type { Adapter } from "next-auth/adapters";
-
 import { db } from "@openstatus/db";
 import {
   account,
@@ -8,11 +6,12 @@ import {
   user,
   verificationToken,
 } from "@openstatus/db/src/schema";
+import type { Adapter } from "next-auth/adapters";
 
 import { createUser, getUser } from "./helpers";
 
 export const adapter: Adapter = {
-  ...DrizzleAdapter(db, {
+  ...(DrizzleAdapter(db, {
     // @ts-expect-error: problem with type
     usersTable: user,
     // @ts-expect-error: problem with type
@@ -20,7 +19,7 @@ export const adapter: Adapter = {
     // @ts-expect-error: problem with type
     sessionsTable: session,
     verificationTokensTable: verificationToken,
-  }),
+  }) as Adapter),
   createUser: async (data) => {
     const user = await createUser(data);
     return {

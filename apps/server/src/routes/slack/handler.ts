@@ -1,14 +1,29 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq } from "@openstatus/db";
-import { integration } from "@openstatus/db/src/schema";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
+import { integration, pageSubscriber } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
+
 import { runAgent } from "./agent";
-import { buildConfirmationBlocks } from "./blocks";
+import {
+  buildConfirmationBlocks,
+  getConfirmationText,
+  type RefResolvers,
+} from "./blocks";
 import { findByThread, replace, store } from "./confirmation-store";
-import type { PendingAction } from "./confirmation-store";
+import type { PendingPayload } from "./confirmation-store";
+import { publishHomeView } from "./home";
+import { getComponentNames, getPageDashboardLink } from "./page-urls";
+import { getRegistryTool, isSlackToolDraft } from "./registry-runner";
 import { resolveWorkspace } from "./workspace-resolver";
+
+function makeRefResolvers(workspaceId: number): RefResolvers {
+  return {
+    page: (pageId) => getPageDashboardLink(workspaceId, pageId),
+    componentNames: (ids) => getComponentNames(workspaceId, ids),
+  };
+}
 
 const logger = getLogger("api-server");
 
@@ -37,6 +52,7 @@ const slackEventSchema = z.object({
       ts: z.string().optional(),
       thread_ts: z.string().optional(),
       bot_id: z.string().optional(),
+      tab: z.string().optional(),
     })
     .optional(),
   event_id: z.string().optional(),
@@ -109,7 +125,32 @@ async function processEvent(body: SlackEvent) {
             eq(integration.externalId, teamId),
           ),
         );
+      await db
+        .update(pageSubscriber)
+        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(pageSubscriber.channelType, "slack"),
+            isNull(pageSubscriber.unsubscribedAt),
+            sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
+          ),
+        );
       logger.info("slack integration cleaned up", { teamId });
+    }
+    return;
+  }
+
+  if (event.type === "app_home_opened") {
+    if (event.tab && event.tab !== "home") return;
+    const teamId = body.team_id;
+    const userId = event.user;
+    if (!teamId || !userId) return;
+    const resolved = await resolveWorkspace(teamId);
+    if (!resolved) return;
+    try {
+      await publishHomeView(new WebClient(resolved.botToken), userId);
+    } catch (err) {
+      logger.error("slack failed to publish home view", { error: err, teamId });
     }
     return;
   }
@@ -129,6 +170,12 @@ async function processEvent(body: SlackEvent) {
   const teamId = body.team_id;
   if (!teamId || !event.channel || !event.ts) return;
 
+  // A single mention arrives as BOTH an `app_mention` and a `message.*` event
+  // (distinct event_ids, same message ts), so the event_id dedup above doesn't
+  // catch the pair. Dedup on the message identity so we only respond once.
+  // Runs before the first `await` so concurrent deliveries can't both pass.
+  if (dedup(`msg:${event.channel}:${event.ts}`)) return;
+
   const resolved = await resolveWorkspace(teamId);
   if (!resolved) {
     logger.warn("slack integration not found", { teamId });
@@ -139,8 +186,8 @@ async function processEvent(body: SlackEvent) {
   const botUserId = resolved.botUserId;
   const threadTs = event.thread_ts ?? event.ts;
 
-  if (event.type === "message" && event.channel_type !== "im") {
-    if (!event.text?.includes(`<@${botUserId}>`)) return;
+  if (event.type === "message" && !event.text?.includes(`<@${botUserId}>`)) {
+    return;
   }
 
   logger.info("slack event received", {
@@ -226,6 +273,7 @@ async function processEvent(body: SlackEvent) {
       thread,
       botUserId,
       event.text,
+      { slackUserId: event.user ?? "", teamId },
     );
 
     logger.info("slack agent completed", {
@@ -235,12 +283,13 @@ async function processEvent(body: SlackEvent) {
       toolCalls: result.toolResults.map((tr) => tr.toolName),
     });
 
-    const confirmationResult = result.toolResults.find(
-      (tr) =>
-        tr.result &&
-        typeof tr.result === "object" &&
-        "needsConfirmation" in tr.result &&
-        (tr.result as { needsConfirmation: boolean }).needsConfirmation,
+    // One pending action per thread (see findByThread/replace below).
+    // If the model emits multiple destructive drafts in a single step we
+    // only honour the first; the carrier's thread index can't represent
+    // a queue, and forcing the user to confirm twice in a row is worse
+    // UX than asking them to re-issue the second request.
+    const confirmationResult = result.toolResults.find((tr) =>
+      isSlackToolDraft(tr.result),
     );
 
     if (confirmationResult) {
@@ -256,7 +305,7 @@ async function processEvent(body: SlackEvent) {
         threadTs,
         thinkingTs,
         event.user ?? "",
-        resolved.workspace,
+        resolved.workspace.id,
         resolved.botToken,
         confirmationResult,
       );
@@ -303,69 +352,71 @@ async function handleConfirmation(
   threadTs: string,
   thinkingTs: string,
   userId: string,
-  workspace: { id: number; limits: PendingAction["limits"] },
+  workspaceId: number,
   botToken: string,
   confirmationResult: { toolName: string; result: unknown },
 ) {
-  const { params } = confirmationResult.result as {
-    needsConfirmation: boolean;
-    params: Record<string, unknown>;
-  };
-
-  const actionType =
-    confirmationResult.toolName as PendingAction["action"]["type"];
-  const action = { type: actionType, params } as PendingAction["action"];
-
-  const existing = await findByThread(threadTs);
-  if (existing) {
-    await replace(existing.id, action);
-
-    const blocks = buildConfirmationBlocks(existing.id, action);
-    await slack.chat.update({
-      channel,
-      ts: thinkingTs,
-      text: getConfirmationText(action),
-      blocks,
+  if (!isSlackToolDraft(confirmationResult.result)) return;
+  const draft = confirmationResult.result;
+  const tool = getRegistryTool(draft.toolName);
+  if (!tool) {
+    logger.error("slack: registry tool not found", {
+      toolName: draft.toolName,
     });
     await slack.chat.update({
       channel,
+      ts: thinkingTs,
+      text: ":x: Something went wrong. Please try again.",
+    });
+    return;
+  }
+
+  const payload: PendingPayload = {
+    toolName: draft.toolName,
+    input: draft.input,
+  };
+  const text = getConfirmationText({ tool, input: draft.displayInput });
+
+  // findByThread + replace isn't atomic on its own — two concurrent
+  // events on the same thread could both see `existing` and race on
+  // replace. Atomicity here relies on the `dedup` map at the top of this
+  // file suppressing duplicate event_ids, plus Slack's own per-thread
+  // event throttling. Cross-process dedup is *not* covered; see note in
+  // processedEvents.
+  const existing = await findByThread(threadTs);
+  if (existing) {
+    await replace(existing.id, payload);
+
+    const blocks = await buildConfirmationBlocks({
+      actionId: existing.id,
+      tool,
+      input: draft.displayInput,
+      resolvers: makeRefResolvers(workspaceId),
+    });
+    await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
+    await slack.chat.update({
+      channel,
       ts: existing.messageTs,
-      text: getConfirmationText(action),
+      text,
       blocks,
     });
   } else {
     const actionId = await store({
-      workspaceId: workspace.id,
-      limits: workspace.limits,
+      workspaceId,
       botToken,
       channelId: channel,
       threadTs,
       messageTs: thinkingTs,
       userId,
-      action,
+      payload,
     });
 
-    const blocks = buildConfirmationBlocks(actionId, action);
-    await slack.chat.update({
-      channel,
-      ts: thinkingTs,
-      text: getConfirmationText(action),
-      blocks,
+    const blocks = await buildConfirmationBlocks({
+      actionId,
+      tool,
+      input: draft.displayInput,
+      resolvers: makeRefResolvers(workspaceId),
     });
-  }
-}
-
-function getConfirmationText(action: PendingAction["action"]): string {
-  switch (action.type) {
-    case "createStatusReport":
-      return `Create Status Report: ${action.params.title}`;
-    case "addStatusReportUpdate":
-      return `Add Status Report Update (${action.params.status})`;
-    case "updateStatusReport":
-      return `Update Status Report${action.params.title ? `: ${action.params.title}` : ""}`;
-    case "resolveStatusReport":
-      return "Resolve Status Report";
-    case "createMaintenance":
-      return `Schedule Maintenance: ${action.params.title}`;
+    await slack.chat.update({ channel, ts: thinkingTs, text, blocks });
   }
 }

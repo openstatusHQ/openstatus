@@ -1,5 +1,13 @@
 "use client";
 
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import type {
+  StatusBarData,
+  StatusEventType,
+  StatusReportImpact,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
+import { statusColors } from "@openstatus/ui/components/blocks/status.utils";
 import {
   HoverCard,
   HoverCardContent,
@@ -10,17 +18,7 @@ import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import { useCallback, useEffect, useRef, useState, forwardRef } from "react";
-import {
-  statusColors,
-  formatDateRange,
-  requestStatusLabels,
-} from "@openstatus/ui/components/blocks/status.utils";
-import type {
-  StatusBarData,
-  StatusEventType,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 
 interface StatusBarProps {
   data: StatusBarData[];
@@ -36,6 +34,13 @@ interface StatusBarProps {
     data: StatusBarData["events"][number],
     index: number,
   ) => React.ReactNode;
+  /**
+   * Optional Radix Portal container for the day hover-card. Defaults to
+   * `document.body`. Pass a ref when the bar is rendered inside a scoped
+   * subtree (e.g. a status-page preview that overrides `--radius` and other
+   * CSS vars on a wrapper) so the portaled card inherits the same context.
+   */
+  container?: HTMLElement | null;
 }
 
 interface UseStatusBarProps {
@@ -113,7 +118,7 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [interactionType, setInteractionType] = useState<InteractionType>(null);
   const buttonRefs = useRef<(HTMLElement | null)[]>([]);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Clear hover timeout on unmount
@@ -150,11 +155,16 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
     }
   }, []);
 
+  const interactionTypeRef = useRef<InteractionType>(null);
+  useEffect(() => {
+    interactionTypeRef.current = interactionType;
+  }, [interactionType]);
+
   const handleClick = useCallback(
     (index: number) => {
       clearHoverTimeout();
       setActiveIndex((prev) => {
-        if (prev === index) {
+        if (prev === index && interactionTypeRef.current === "pin") {
           setInteractionType(null);
           return null;
         }
@@ -422,7 +432,9 @@ export function StatusBar({
   renderCard,
   renderBar,
   renderEvent,
+  container,
 }: StatusBarProps) {
+  const labels = useStatusBlocksLabels();
   const isTouch = useMediaQuery("(hover: none)");
   const { activeIndex, interactionType, containerRef, handlers, setButtonRef } =
     useStatusBar({
@@ -436,7 +448,7 @@ export function StatusBar({
       className="flex h-[50px] w-full items-end gap-px"
       data-slot="status-bar"
       role="toolbar"
-      aria-label="Status tracker"
+      aria-label={labels.ariaStatusTracker}
     >
       {data.map((item, index) => {
         const isActive = activeIndex === index;
@@ -456,6 +468,7 @@ export function StatusBar({
             renderCard={renderCard}
             renderBar={renderBar}
             renderEvent={renderEvent}
+            container={container}
           />
         );
       })}
@@ -475,6 +488,7 @@ interface StatusBarItemProps {
   renderCard?: StatusBarProps["renderCard"];
   renderBar?: StatusBarProps["renderBar"];
   renderEvent?: StatusBarProps["renderEvent"];
+  container?: StatusBarProps["container"];
 }
 
 const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
@@ -490,15 +504,17 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
       renderCard,
       renderBar,
       renderEvent,
+      container,
     },
     ref,
   ) => {
+    const labels = useStatusBlocksLabels();
     return (
       <HoverCard openDelay={0} closeDelay={0} open={isActive}>
         <HoverCardTrigger asChild>
           <div
             ref={ref}
-            className="group relative flex h-full flex-1 cursor-pointer flex-col outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80 rounded-full"
+            className="group focus-visible:ring-ring/50 relative flex h-full flex-1 cursor-pointer flex-col rounded-full outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] aria-pressed:opacity-80"
             onClick={() => handlers.onClick(index)}
             onFocus={() => handlers.onFocus(index)}
             onBlur={handlers.onBlur}
@@ -507,7 +523,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
             onKeyDown={(e) => handlers.onKeyDown(e, index)}
             tabIndex={isLastItem && !isActive ? 0 : isActive ? 0 : -1}
             role="button"
-            aria-label={`Day ${index + 1} status`}
+            aria-label={labels.ariaDayStatus(index + 1)}
             aria-pressed={isPinned}
             aria-expanded={isActive}
             data-slot="status-bar-item"
@@ -539,6 +555,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
           side="top"
           align="center"
           className="w-auto min-w-40 p-0"
+          container={container}
           onMouseEnter={handlers.onHoverCardEnter}
           onMouseLeave={handlers.onHoverCardLeave}
           onPointerDownOutside={(e) => {
@@ -562,10 +579,10 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
 );
 StatusBarItem.displayName = "StatusBarItem";
 
-interface StatusBarCardProps {
+export interface StatusBarCardProps {
   item: StatusBarData;
-  isPinned: boolean;
-  isTouch: boolean;
+  isPinned?: boolean;
+  isTouch?: boolean;
   renderCard?: StatusBarProps["renderCard"];
   renderEvent?: StatusBarProps["renderEvent"];
 }
@@ -588,37 +605,39 @@ interface StatusBarCardProps {
  * @param renderCard - Optional custom renderer for status items
  * @param renderEvent - Optional custom renderer for events
  */
-function StatusBarCard({
+export function StatusBarCard({
   item,
-  isPinned,
-  isTouch,
+  isPinned = false,
+  isTouch = false,
   renderCard,
   renderEvent,
 }: StatusBarCardProps) {
+  const labels = useStatusBlocksLabels();
   return (
     <div data-slot="status-bar-card">
       <div className="p-2 text-xs">
-        {new Date(item.day).toLocaleDateString("default", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })}
+        {labels.formatDateShort(new Date(item.day))}
       </div>
-      <Separator />
-      <div className="space-y-1 p-2 text-sm">
-        {item.card.map((cardItem, cardIndex) => {
-          if (renderCard) {
-            return renderCard(cardItem, cardIndex);
-          }
-          return (
-            <StatusBarContent
-              key={`${item.day}-card-${cardIndex}`}
-              status={cardItem.status}
-              value={cardItem.value}
-            />
-          );
-        })}
-      </div>
+      {item.card.length > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-1 p-2 text-sm">
+            {item.card.map((cardItem, cardIndex) => {
+              if (renderCard) {
+                return renderCard(cardItem, cardIndex);
+              }
+              return (
+                <StatusBarContent
+                  key={`${item.day}-card-${cardIndex}`}
+                  status={cardItem.status}
+                  value={cardItem.value}
+                  impact={cardItem.impact}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
       {item.events.length > 0 && (
         <>
           <Separator />
@@ -634,6 +653,8 @@ function StatusBarCard({
                   name={event.name}
                   from={event.from}
                   to={event.to}
+                  isAggregated={event.isAggregated}
+                  status={event.status}
                 />
               );
             })}
@@ -643,9 +664,9 @@ function StatusBarCard({
       {isPinned && !isTouch && (
         <>
           <Separator />
-          <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
-            <span>Click again to unpin</span>
-            <kbd className="ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded border border-input bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <div className="text-muted-foreground flex cursor-pointer items-center p-2 text-xs">
+            <span>{labels.clickAgainToUnpin}</span>
+            <kbd className="border-input bg-background text-muted-foreground ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded border px-1.5 font-mono text-[10px] font-medium">
               Esc
             </kbd>
           </div>
@@ -679,7 +700,7 @@ export function StatusBarSkeleton({
 }: React.ComponentProps<typeof Skeleton>) {
   return (
     <Skeleton
-      className={cn("h-[50px] w-full rounded-none bg-muted", className)}
+      className={cn("bg-muted h-[50px] w-full rounded-none", className)}
       {...props}
     />
   );
@@ -705,10 +726,13 @@ StatusBarSkeleton.displayName = "StatusBarSkeleton";
 function StatusBarContent({
   status,
   value,
+  impact,
 }: {
   status: StatusType;
   value: string;
+  impact?: StatusReportImpact;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <div className="flex items-baseline gap-4" data-slot="status-bar-content">
       <div className="flex items-center gap-2">
@@ -718,9 +742,13 @@ function StatusBarContent({
             backgroundColor: statusColors[status],
           }}
         />
-        <div className="text-sm">{requestStatusLabels[status]}</div>
+        <div className="text-sm">
+          {impact
+            ? labels.componentImpact[impact]
+            : labels.requestStatus[status]}
+        </div>
       </div>
-      <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
+      <div className="text-muted-foreground ml-auto font-mono text-xs tracking-tight">
         {value}
       </div>
     </div>
@@ -737,10 +765,9 @@ StatusBarContent.displayName = "StatusBarContent";
  * - Date range (formatted as "Since", "Until", or "Jan 15 - Jan 16")
  * - Duration (formatted as "2 hours", "ongoing", or "across 3 days" for multiple incidents)
  *
- * The component automatically determines the status color based on the event type:
- * - incident → error (red)
- * - report → degraded (yellow)
- * - maintenance → info (blue)
+ * The component automatically determines the status color based on the event type
+ * (incident → error, report → degraded, maintenance → info) unless an explicit
+ * `status` is passed, e.g. the day's worst report impact.
  *
  * Returns null if no start date is provided.
  *
@@ -782,23 +809,30 @@ export function StatusBarEvent({
   from,
   to,
   type,
+  isAggregated,
+  status: statusProp,
 }: {
   name: string;
   from?: Date | null;
   to?: Date | null;
   type: StatusEventType;
+  isAggregated?: boolean;
+  /** Overrides the type-derived dot color (e.g. the day's worst report impact). */
+  status?: Exclude<StatusType, "empty">;
 }) {
+  const labels = useStatusBlocksLabels();
   if (!from) return null;
 
   const status =
-    type === "incident" ? "error" : type === "report" ? "degraded" : "info";
+    statusProp ??
+    (type === "incident" ? "error" : type === "report" ? "degraded" : "info");
 
   return (
     <div className="group relative text-sm" data-slot="status-bar-event">
       {/* NOTE: this is to make the text truncate based on the width of the sibling element */}
       {/* REMINDER: height needs to be equal the text height */}
       <div className="h-4 w-full" />
-      <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
+      <div className="text-muted-foreground hover:text-foreground absolute inset-0">
         <div className="flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 shrink-0 rounded-sm"
@@ -809,10 +843,10 @@ export function StatusBarEvent({
           <div className="truncate">{name}</div>
         </div>
       </div>
-      <div className="mt-1 text-muted-foreground text-xs">
-        {formatDateRange(from, to ?? undefined)}{" "}
-        <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {formatDuration({ from, to, name, type })}
+      <div className="text-muted-foreground mt-1 text-xs">
+        {labels.formatDateRange(from, to ?? undefined)}{" "}
+        <span className="text-muted-foreground/70 ml-1.5 font-mono">
+          {formatDuration({ from, to, name, type, isAggregated, labels })}
         </span>
       </div>
     </div>
@@ -823,28 +857,27 @@ StatusBarEvent.displayName = "StatusBarEvent";
 /**
  * formatDuration - Internal helper for formatting event durations
  *
- * Formats the duration of an event based on start/end dates and event name:
+ * Formats the duration of an event based on start/end dates:
  * - No start date: returns null
  * - No end date: returns "ongoing"
- * - Multiple incidents (detected by "Downtime (" in name): returns "across {duration}"
+ * - Aggregated incidents (isAggregated): returns "across {duration}"
  * - Zero seconds duration: returns null (hides duration)
  * - Otherwise: returns formatted duration (e.g., "2 hours", "3 days")
  *
- * @param from - Event start date
- * @param to - Event end date
- * @param name - Event name (used to detect multiple incident aggregations)
  * @returns Formatted duration string or null
  */
 const formatDuration = ({
   from,
   to,
-  name,
-}: React.ComponentProps<typeof StatusBarEvent>) => {
+  isAggregated,
+  labels,
+}: React.ComponentProps<typeof StatusBarEvent> & {
+  labels: ReturnType<typeof useStatusBlocksLabels>;
+}) => {
   if (!from) return null;
-  if (!to) return "ongoing";
+  if (!to) return labels.ongoing;
   const duration = formatDistanceStrict(from, to);
-  const isMultipleIncidents = name.includes("Downtime (");
-  if (isMultipleIncidents) return `across ${duration}`;
+  if (isAggregated) return labels.durationAcross(duration);
   if (duration === "0 seconds") return null;
   return duration;
 };

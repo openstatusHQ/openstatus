@@ -1,17 +1,18 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
+
 import {
   StatusBlankContainer,
   StatusBlankContent,
   StatusBlankDescription,
   StatusBlankLink,
   StatusBlankTitle,
-} from "@/components/status-page/status-blank";
-import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useExtracted } from "next-intl";
-import { useParams } from "next/navigation";
+} from "../../../../../../../components/status-page/status-blank";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 
 export default function UnsubscribePage() {
   const t = useExtracted();

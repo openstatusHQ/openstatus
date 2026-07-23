@@ -1,19 +1,6 @@
 "use client";
 
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Label,
-  ReferenceLine,
-  XAxis,
-  YAxis,
-} from "recharts";
-
-import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
-import { periodToFromDate } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
-import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
@@ -23,6 +10,24 @@ import {
 } from "@openstatus/ui/components/ui/chart";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Label,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import {
+  type PERCENTILES,
+  type PERIODS,
+  mapLatency,
+} from "@/data/metrics.client";
+import { periodToFromDate } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
@@ -45,7 +50,7 @@ export function ChartAreaLatency({
   monitorId: string;
   degradedAfter: number | null;
   percentile: (typeof PERCENTILES)[number];
-  period: "1d" | "7d" | "14d";
+  period: (typeof PERIODS)[number];
   type: "http" | "tcp";
   regions: string[] | undefined;
 }) {

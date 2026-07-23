@@ -1,10 +1,12 @@
 "use client";
 
-import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
-import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { PanelTop } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
+
+import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { STATUS_PAGE_TABS } from "./constants";
 
 export function Breadcrumb() {

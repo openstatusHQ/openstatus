@@ -1,4 +1,4 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
 import {
   Body,
@@ -12,8 +12,9 @@ import {
   Row,
   Section,
   Text,
-} from "@react-email/components";
+} from "react-email";
 import { z } from "zod";
+
 import { Layout } from "./_components/layout";
 import { colors, styles } from "./_components/styles";
 

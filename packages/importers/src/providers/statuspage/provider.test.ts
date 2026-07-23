@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
+
 import {
   MOCK_COMPONENTS,
   MOCK_COMPONENT_GROUPS,

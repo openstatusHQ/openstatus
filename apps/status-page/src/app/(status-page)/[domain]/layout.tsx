@@ -1,28 +1,21 @@
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
-import { PasswordWrapper } from "@/components/password-wrapper";
-import {
-  FloatingButton,
-  StatusPageProvider,
-} from "@/components/status-page/floating-button";
-import { FloatingTheme } from "@/components/status-page/floating-theme";
-import { ThemeProvider } from "@/components/themes/theme-provider";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import {
-  THEME_KEYS,
-  type ThemeKey,
-  generateThemeStyles,
-} from "@openstatus/theme-store";
+import { pageConfigurationSchema } from "@openstatus/db/src/schema";
+import { generatePageStyles } from "@openstatus/theme-store";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { z } from "zod";
 
-const schema = z.object({
-  value: z.enum(["duration", "requests", "manual"]).prefault("duration"),
-  type: z.enum(["absolute", "manual"]).prefault("absolute"),
-  uptime: z.coerce.boolean().prefault(true),
-  theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]).prefault("default"),
-});
+import { PasswordWrapper } from "../../../components/password-wrapper";
+import {
+  FloatingButton,
+  StatusPageProvider,
+} from "../../../components/status-page/floating-button";
+import { FloatingTheme } from "../../../components/status-page/floating-theme";
+import { ThemeProvider } from "../../../components/themes/theme-provider";
+import { statusPageAlternates } from "../../../lib/alternates";
+import { getQueryClient, HydrateClient, trpc } from "../../../lib/trpc/server";
+import { defaultMetadata, ogMetadata, twitterMetadata } from "../../metadata";
+
+// Canonical schema — guarantees concrete enum output (never null/undefined).
 
 export default async function Layout({
   children,
@@ -39,16 +32,27 @@ export default async function Layout({
 
   if (!page) return notFound();
 
-  const validation = schema.safeParse(page?.configuration);
-  const communityTheme = validation.data?.theme;
+  // safeParse + fallback so a stale enum value in stored config (e.g. removed
+  // theme key) doesn't crash the layout.
+  const cfgResult = pageConfigurationSchema.safeParse(
+    page?.configuration ?? {},
+  );
+  const cfg = cfgResult.success
+    ? cfgResult.data
+    : pageConfigurationSchema.parse({});
 
   return (
     <HydrateClient>
       <style
         id="theme-styles"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // custom theme vars (already plan-gated + validated server-side) are
+        // merged over the selected theme: custom-theme > theme
+        // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
-          __html: generateThemeStyles(communityTheme),
+          __html: generatePageStyles({
+            themeKey: cfg.theme,
+            customTheme: page.customTheme,
+          }),
         }}
       />
       <ThemeProvider
@@ -58,10 +62,12 @@ export default async function Layout({
         disableTransitionOnChange
       >
         <StatusPageProvider
-          defaultBarType={validation.data?.type}
-          defaultCardType={validation.data?.value}
-          defaultShowUptime={validation.data?.uptime}
-          defaultCommunityTheme={validation.data?.theme}
+          defaultBarType={cfg.type}
+          defaultCardType={cfg.value}
+          defaultShowUptime={cfg.uptime}
+          defaultNumberOfDays={cfg.days}
+          defaultCommunityTheme={cfg.theme}
+          customTheme={page.customTheme}
         >
           {children}
           <FloatingButton
@@ -112,11 +118,10 @@ export async function generateMetadata({
     icons: page?.icon?.toLowerCase().endsWith(".svg")
       ? { icon: { url: page.icon, type: "image/svg+xml" } }
       : page?.icon,
-    alternates: {
-      canonical: page?.customDomain
-        ? `https://${page.customDomain}`
-        : `https://${page.slug}.openstatus.dev`,
-    },
+    alternates: statusPageAlternates({
+      slug: page.slug,
+      customDomain: page.customDomain,
+    }),
     twitter: {
       ...twitterMetadata,
       images: [`/api/og/page?slug=${page?.slug}`],

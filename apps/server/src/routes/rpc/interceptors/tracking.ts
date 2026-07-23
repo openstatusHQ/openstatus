@@ -99,6 +99,20 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
   "openstatus.notification.v1.NotificationService/DeleteNotification": {
     event: Events.DeleteNotification,
   },
+
+  // PrivateLocationService
+  "openstatus.private_location.v1.PrivateLocationService/CreatePrivateLocation":
+    {
+      event: Events.CreatePrivateLocation,
+    },
+  "openstatus.private_location.v1.PrivateLocationService/UpdatePrivateLocation":
+    {
+      event: Events.UpdatePrivateLocation,
+    },
+  "openstatus.private_location.v1.PrivateLocationService/DeletePrivateLocation":
+    {
+      event: Events.DeletePrivateLocation,
+    },
 };
 
 /**

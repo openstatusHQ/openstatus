@@ -1,0 +1,131 @@
+---
+category: Reference
+title: DNS Monitor Reference
+description: Complete technical specification for DNS record monitoring
+---
+
+A DNS monitor verifies the availability and correctness of DNS records. It performs periodic lookups for specified DNS record types against a target domain or subdomain from various geographical locations.
+
+**Use cases:**
+
+- Validating domain name resolution.
+- Monitoring changes to critical DNS records (e.g., A, CNAME, MX).
+- Ensuring proper load balancing via DNS (when combined with multi-region checks).
+- Detecting unauthorised DNS alterations.
+
+## Configuration
+
+### URI
+
+**Type:** String (required)
+**Format:** Domain name or subdomain
+
+The fully qualified domain name or subdomain to be monitored.
+
+**Examples:**
+- `openstat.us`
+- `api.example.com`
+- `mail.example.org`
+
+### Record types
+
+The monitor supports fetching and validating the following DNS record types:
+
+- `A` (address record) — maps a domain name to an IPv4 address.
+- `AAAA` (IPv6 address record) — maps a domain name to an IPv6 address.
+- `CNAME` (canonical name record) — maps an alias domain name to another canonical domain name.
+- `MX` (mail exchange record) — specifies the mail servers responsible for accepting email messages on behalf of a domain name.
+- `NS` (name server record) — delegates a domain or subdomain to a set of authoritative name servers.
+- `TXT` (text record) — carries arbitrary human-readable text and is also used for purposes like SPF, DKIM, DMARC, and site verification.
+
+### Regions
+
+The geographical locations from which the DNS monitoring checks are performed. This allows for verification of DNS propagation and performance across different networks. See the [Location Reference](/docs/reference/location) for the full list of regions and the IPs to allowlist.
+
+### Frequency
+
+The interval at which the DNS checks are performed. Supported frequencies:
+- 30 seconds
+- 1 minute
+- 5 minutes
+- 10 minutes
+- 30 minutes
+- 1 hour
+
+### Response time thresholds
+
+#### Timeout
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The maximum duration to wait for a DNS response. If the lookup exceeds this time, the check is considered failed.
+
+#### Degraded
+
+**Type:** Duration (optional)
+
+The duration after which a DNS response is considered degraded. This indicates a performance issue without being a complete failure.
+
+### Retry
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor will retry a failed DNS lookup before reporting a definitive failure. For example: `3`
+
+### Assertions
+
+Assertions let you validate the records returned by a DNS lookup. A check fails if any assertion does not match.
+
+**Limits:** up to 10 assertions per monitor.
+
+#### Record assertions
+
+Validate the values returned for a specific DNS record type.
+
+**Supported record types:** `A`, `AAAA`, `CNAME`, `MX`, `TXT`.
+
+> `NS` records can be looked up but cannot be asserted on.
+
+**Comparisons:**
+
+- `Equal` — the returned record value must exactly match the specified target.
+- `Not Equal` — the returned record value must not exactly match the specified target.
+- `Contains` — the returned record value must include the specified target string.
+- `Not Contains` — the returned record value must not include the specified target string.
+
+**Example use cases:**
+
+- Verify an `A` record resolves to your expected IP after a DNS change.
+- Confirm a `CNAME` still points at your CDN provider.
+- Check that an `MX` record contains the expected mail host.
+- Detect drift in `TXT` records (SPF, DKIM, DMARC, site verification).
+
+### OpenTelemetry
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
+#### OTLP endpoint
+
+**Type:** String (optional)
+**Protocol:** HTTP only
+
+The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported.
+
+**Example:** `https://otlp.example.com/v1/metrics`
+
+#### OTLP headers
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
+
+## Related resources
+
+- **[CLI reference](/docs/reference/cli-reference)** — manage monitors as code using the openstatus CLI.

@@ -1,4 +1,10 @@
+export * from "./custom-theme";
 export * from "./types";
+import {
+  type CustomTheme,
+  hasCustomTheme,
+  sanitizeCustomTheme,
+} from "./custom-theme";
 import { DRACULA_THEME } from "./dracula";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
@@ -51,4 +57,21 @@ export function generateThemeStyles(
         ${darkVars}
       }
     `;
+}
+
+/**
+ * Styles for a status page: the configured theme with the page's custom
+ * theme vars merged over it (custom-theme > theme).
+ */
+export function generatePageStyles({
+  themeKey,
+  customTheme,
+}: {
+  themeKey?: string;
+  customTheme?: CustomTheme | null;
+}) {
+  const overrides = hasCustomTheme(customTheme)
+    ? sanitizeCustomTheme(customTheme)
+    : undefined;
+  return generateThemeStyles(themeKey, overrides);
 }

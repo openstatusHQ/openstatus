@@ -1,0 +1,277 @@
+---
+category: SDK
+title: PHP SDK
+description: "Interact with openstatus programmatically from your PHP applications"
+---
+
+
+The openstatus PHP SDK lets you manage monitors, status pages, status reports, maintenance windows, and notifications directly from your PHP applications. Request and response messages are strongly typed, generated from the openstatus protobuf schemas.
+
+The SDK is open source and developed in its own repository, [openstatusHQ/sdk-php](https://github.com/openstatusHQ/sdk-php), and published on [Packagist](https://packagist.org/packages/openstatus/sdk-php).
+
+## Features
+
+- **HTTP, TCP, and DNS monitoring** — monitor websites, APIs, database connections, and DNS records from 28 locations worldwide.
+- **Status pages** — create and manage public status pages with monitor-based or static components, grouping, and subscribers.
+- **Status reports and maintenance** — manage incident reports with update timelines and schedule planned maintenance windows.
+- **Notifications** — configure Slack, Discord, Email, PagerDuty, Opsgenie, Telegram, and webhook channels.
+- **Type-safe** — strongly-typed messages generated from the openstatus protobuf schemas; no proto toolchain needed.
+- **PSR-18 transport** — bring your own HTTP client, or use the bundled Guzzle implementation.
+
+## Get Your API Key
+
+Before using the SDK, you need an API key:
+
+1. Log in to the [openstatus dashboard](https://www.openstatus.dev/app/login)
+2. Go to **Settings** > **API Keys**
+3. Click **Create API Key** and copy it
+
+<Aside type="tip">Store your API key as an environment variable (`OPENSTATUS_API_KEY`) — never commit it to source control.</Aside>
+
+## Installation
+
+Requires PHP 8.4 or later.
+
+```bash
+composer require openstatus/sdk-php
+```
+
+## Quick Start
+
+```php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Openstatus\Monitor\V1\CreateHTTPMonitorRequest;
+use Openstatus\Monitor\V1\HTTPMethod;
+use Openstatus\Monitor\V1\HTTPMonitor;
+use Openstatus\Monitor\V1\ListMonitorsRequest;
+use Openstatus\Monitor\V1\NumberComparator;
+use Openstatus\Monitor\V1\Periodicity;
+use Openstatus\Monitor\V1\Region;
+use Openstatus\Monitor\V1\StatusCodeAssertion;
+use Openstatus\Sdk\ClientOptions;
+use Openstatus\Sdk\OpenstatusClient;
+
+$client = new OpenstatusClient(new ClientOptions(
+    apiKey: getenv('OPENSTATUS_API_KEY') ?: null,
+));
+
+// Create a monitor
+$response = $client->monitor->v1->monitorService->createHTTPMonitor(
+    new CreateHTTPMonitorRequest([
+        'monitor' => new HTTPMonitor([
+            'name' => 'My API',
+            'url' => 'https://api.example.com/health',
+            'periodicity' => Periodicity::PERIODICITY_1M,
+            'method' => HTTPMethod::HTTP_METHOD_GET,
+            'regions' => [
+                Region::REGION_FLY_AMS,
+                Region::REGION_FLY_IAD,
+                Region::REGION_FLY_SYD,
+            ],
+            'active' => true,
+            'status_code_assertions' => [
+                new StatusCodeAssertion([
+                    'comparator' => NumberComparator::NUMBER_COMPARATOR_EQUAL,
+                    'target' => 200,
+                ]),
+            ],
+        ]),
+    ]),
+);
+
+$monitor = $response->getMonitor();
+printf("Monitor created: %s\n", $monitor?->getId() ?? 'unknown');
+
+// List all monitors
+$list = $client->monitor->v1->monitorService->listMonitors(new ListMonitorsRequest());
+printf("Found %d monitors\n", $list->getTotalSize());
+```
+
+## Authentication
+
+All API requests require an API key. Configure the client once and every service call reuses it:
+
+```php
+use Openstatus\Sdk\ClientOptions;
+use Openstatus\Sdk\OpenstatusClient;
+
+$client = new OpenstatusClient(new ClientOptions(
+    apiKey: getenv('OPENSTATUS_API_KEY') ?: null,
+));
+```
+
+If `apiKey` is not passed in `ClientOptions`, the SDK falls back to the `OPENSTATUS_API_KEY` environment variable. The same applies to `baseUrl` / `OPENSTATUS_API_URL`.
+
+| Variable             | Description             | Default                          |
+|----------------------|-------------------------|----------------------------------|
+| `OPENSTATUS_API_KEY` | Your openstatus API key | Required for authenticated calls |
+| `OPENSTATUS_API_URL` | Custom API endpoint     | `https://api.openstatus.dev`     |
+
+Every service method also accepts an optional array of headers as a second argument, merged into the request — useful for tracing IDs or one-off overrides:
+
+```php
+$client->monitor->v1->monitorService->listMonitors(
+    new ListMonitorsRequest(),
+    ['x-trace-id' => 'trace-abc'],
+);
+```
+
+## Services
+
+The client exposes one service per domain. All examples below assume:
+
+```php
+$client = new OpenstatusClient(new ClientOptions(
+    apiKey: getenv('OPENSTATUS_API_KEY') ?: null,
+));
+```
+
+| Service | Accessor | Purpose |
+|---------|----------|---------|
+| Monitor | `$client->monitor->v1->monitorService` | Manage HTTP, TCP, and DNS monitors; trigger checks; read status, summaries, and response logs. |
+| Health | `$client->health->v1->healthService` | Liveness check for the API. No authentication required. |
+| Status Report | `$client->statusReport->v1->statusReportService` | Manage incident reports and their update timelines. |
+| Status Page | `$client->statusPage->v1->statusPageService` | Manage status pages, components, component groups, and subscribers. |
+| Maintenance | `$client->maintenance->v1->maintenanceService` | Schedule and manage planned maintenance windows. |
+| Notification | `$client->notification->v1->notificationService` | Configure notification channels and check usage limits. |
+
+### Creating a monitor with assertions
+
+Assertions are evaluated against each check response. All matching assertions must pass for a check to be successful.
+
+```php
+use Openstatus\Monitor\V1\BodyAssertion;
+use Openstatus\Monitor\V1\HeaderAssertion;
+use Openstatus\Monitor\V1\NumberComparator;
+use Openstatus\Monitor\V1\StatusCodeAssertion;
+use Openstatus\Monitor\V1\StringComparator;
+
+$statusCode = new StatusCodeAssertion([
+    'comparator' => NumberComparator::NUMBER_COMPARATOR_EQUAL,
+    'target' => 200,
+]);
+
+$body = new BodyAssertion([
+    'comparator' => StringComparator::STRING_COMPARATOR_CONTAINS,
+    'target' => 'ok',
+]);
+
+$header = new HeaderAssertion([
+    'key' => 'content-type',
+    'comparator' => StringComparator::STRING_COMPARATOR_EQUAL,
+    'target' => 'application/json',
+]);
+```
+
+### Creating a status page
+
+```php
+use Openstatus\Status_page\V1\CreateStatusPageRequest;
+use Openstatus\Status_page\V1\PageTheme;
+use Openstatus\Status_page\V1\StatusPage;
+
+$client->statusPage->v1->statusPageService->createStatusPage(new CreateStatusPageRequest([
+    'page' => new StatusPage([
+        'title' => 'Acme Status',
+        'slug' => 'acme',
+        'theme' => PageTheme::PAGE_THEME_LIGHT,
+    ]),
+]));
+```
+
+## Working with enums
+
+All enums emitted by the protobuf compiler are plain classes with `const int` values. Getters return `int`; use the static `name()` helper to convert to a string.
+
+```php
+use Openstatus\Monitor\V1\HTTPMethod;
+use Openstatus\Monitor\V1\Periodicity;
+
+HTTPMethod::HTTP_METHOD_GET;                    // int 1
+HTTPMethod::name(HTTPMethod::HTTP_METHOD_GET);  // "HTTP_METHOD_GET"
+Periodicity::PERIODICITY_1M;                    // int 2
+```
+
+<Aside type="note">int64 fields (timestamps, percentiles, nanosecond latencies) may return `int|string` from getters because the generator falls back to strings on 32-bit platforms. On 64-bit PHP the value is always an `int`. Cast with `(int)` if you need to be safe across both platforms.</Aside>
+
+## Error Handling
+
+All Connect RPC errors raise `Openstatus\Sdk\Exception\OpenstatusException` or a subclass. The exception carries the Connect error code, HTTP status, parsed `details` array, and raw response body.
+
+```php
+use Openstatus\Sdk\Exception\AuthenticationException;
+use Openstatus\Sdk\Exception\InvalidArgumentException;
+use Openstatus\Sdk\Exception\NotFoundException;
+use Openstatus\Sdk\Exception\OpenstatusException;
+use Openstatus\Sdk\Exception\RateLimitException;
+
+try {
+    $client->monitor->v1->monitorService->createHTTPMonitor($req);
+} catch (AuthenticationException $e) {
+    // 401 / "unauthenticated"
+} catch (NotFoundException $e) {
+    // 404 / "not_found"
+} catch (InvalidArgumentException $e) {
+    // 400 / "invalid_argument" — inspect $e->details() for field violations
+    foreach ($e->details() as $detail) {
+        printf("%s: %s\n", $detail->type, $detail->value);
+    }
+} catch (RateLimitException $e) {
+    // 429 / "resource_exhausted"
+} catch (OpenstatusException $e) {
+    printf("code=%s http=%d body=%s\n", $e->connectCode(), $e->httpStatus(), $e->rawBody());
+}
+```
+
+## Framework Integration
+
+### Symfony
+
+Register the client as a service in `config/services.yaml`:
+
+```yaml
+services:
+    Openstatus\Sdk\ClientOptions:
+        arguments:
+            $apiKey: '%env(OPENSTATUS_API_KEY)%'
+
+    Openstatus\Sdk\OpenstatusClient:
+        arguments:
+            $options: '@Openstatus\Sdk\ClientOptions'
+```
+
+Then inject `OpenstatusClient` into any controller or service.
+
+### Laravel
+
+In a service provider's `register()` method:
+
+```php
+$this->app->singleton(\Openstatus\Sdk\OpenstatusClient::class, function (): \Openstatus\Sdk\OpenstatusClient {
+    return new \Openstatus\Sdk\OpenstatusClient(new \Openstatus\Sdk\ClientOptions(
+        apiKey: env('OPENSTATUS_API_KEY'),
+    ));
+});
+```
+
+Resolve it from the container with `app(\Openstatus\Sdk\OpenstatusClient::class)`.
+
+### Custom PSR-18 client
+
+Bring your own HTTP client (Symfony HttpClient, Saloon, Mock, etc.) — anything implementing `Psr\Http\Client\ClientInterface`:
+
+```php
+$client = new OpenstatusClient(new ClientOptions(
+    apiKey: getenv('OPENSTATUS_API_KEY') ?: null,
+    httpClient: $myPsr18Client,
+));
+```
+
+## Resources
+
+- [openstatusHQ/sdk-php on GitHub](https://github.com/openstatusHQ/sdk-php)
+- [openstatus/sdk-php on Packagist](https://packagist.org/packages/openstatus/sdk-php)
+- [API Reference](https://api.openstatus.dev/openapi)

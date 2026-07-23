@@ -3,6 +3,7 @@ import { getLogger } from "@logtape/logtape";
 import type { ErrorCode } from "@openstatus/error";
 
 import { OpenStatusApiError } from "@/libs/errors";
+
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");

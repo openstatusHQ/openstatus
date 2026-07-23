@@ -1,12 +1,3 @@
-import { Code } from "@/components/common/code";
-import { Link } from "@/components/common/link";
-import {
-  SectionDescription,
-  SectionGroup,
-  SectionHeader,
-  SectionTitle,
-} from "@/components/content/section";
-import { Section } from "@/components/content/section";
 import {
   Tabs,
   TabsContent,
@@ -23,6 +14,16 @@ import {
   Terminal,
 } from "lucide-react";
 import React from "react";
+
+import { Code } from "@/components/common/code";
+import { Link } from "@/components/common/link";
+import {
+  SectionDescription,
+  SectionGroup,
+  SectionHeader,
+  SectionTitle,
+} from "@/components/content/section";
+import { Section } from "@/components/content/section";
 
 const OS = ["macOs", "Windows", "Linux"] as const;
 
@@ -182,7 +183,7 @@ export default function Page() {
             Get started with the CLI to export and manage your monitors in your
             code.{" "}
             <Link
-              href="https://docs.openstatus.dev/reference/cli-reference/"
+              href="https://www.openstatus.dev/docs/reference/cli-reference/"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -209,7 +210,7 @@ export default function Page() {
                 return (
                   <div key={i} className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
-                      <p className="flex items-center gap-2 font-medium text-sm">
+                      <p className="flex items-center gap-2 text-sm font-medium">
                         <step.icon className="size-4" />
                         {step.title}
                       </p>
@@ -244,7 +245,7 @@ export default function Page() {
           <SectionDescription>
             We have a few more commands to run. Check the{" "}
             <Link
-              href="https://docs.openstatus.dev/reference/cli-reference/"
+              href="https://www.openstatus.dev/docs/reference/cli-reference/"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -289,7 +290,7 @@ export default function Page() {
             </Link>{" "}
             page or our{" "}
             <Link
-              href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action/"
+              href="https://www.openstatus.dev/docs/guides/how-to-run-synthetic-test-github-action/"
               target="_blank"
               rel="noopener noreferrer"
             >

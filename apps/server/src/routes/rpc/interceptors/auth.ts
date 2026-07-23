@@ -4,10 +4,10 @@ import {
   type Interceptor,
   createContextKey,
 } from "@connectrpc/connect";
-import type { Workspace } from "@openstatus/db/src/schema";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { nanoid } from "nanoid";
 
-import { lookupWorkspace, validateKey } from "@/libs/middlewares/auth";
+import { lookupWorkspace, validateKey } from "../../../libs/middlewares/auth";
 
 /**
  * RPC context containing workspace and request information.
@@ -16,6 +16,14 @@ import { lookupWorkspace, validateKey } from "@/libs/middlewares/auth";
 export interface RpcContext {
   workspace: Workspace;
   requestId: string;
+  /**
+   * Resolved API key identity. `id` is the stable key identifier (audit
+   * `actor_id`); `createdById` is the openstatus user who created the
+   * key (`api_key.created_by_id`, audit `actor_user_id`).
+   * `scopes` carries the access-control scopes for the resolved key —
+   * `requireScope` reads them inside service write verbs.
+   */
+  apiKey: { id: string; createdById?: number; scopes: Scope[] };
 }
 
 /**
@@ -69,10 +77,18 @@ export function authInterceptor(): Interceptor {
     // Generate request ID if not provided
     const requestId = req.header.get("x-request-id") ?? nanoid();
 
-    // Store context for handlers to access
+    // Store context for handlers to access. `keyId` falls back to a
+    // workspace-scoped placeholder when `validateKey` couldn't capture
+    // a stable id (shouldn't happen post-migration, but keeps this
+    // safe).
     const rpcContext: RpcContext = {
       workspace,
       requestId,
+      apiKey: {
+        id: result.keyId ?? `ws:${workspace.id}`,
+        createdById: result.createdById,
+        scopes: result.scopes ?? ["write"],
+      },
     };
 
     // Set context using ConnectRPC's context values

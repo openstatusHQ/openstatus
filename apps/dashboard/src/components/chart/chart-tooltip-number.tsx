@@ -50,9 +50,9 @@ export function ChartTooltipNumberRaw({
         style={style}
       />
       <span>{label}</span>
-      <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
+      <div className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
         {value}
-        <span className="font-normal text-muted-foreground">ms</span>
+        <span className="text-muted-foreground font-normal">ms</span>
       </div>
     </>
   );

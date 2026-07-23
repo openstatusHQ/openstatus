@@ -1,9 +1,8 @@
-import type { NextRequest } from "next/server";
-
 import { and, count, eq, gte, inArray, lte } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { invitation, user, usersToWorkspaces } from "@openstatus/db/src/schema";
 import { TeamInviteReminderEmail, sendEmail } from "@openstatus/emails";
+import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");

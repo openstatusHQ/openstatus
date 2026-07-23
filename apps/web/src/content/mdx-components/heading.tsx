@@ -11,9 +11,22 @@ export function slugify(str: string) {
     .replace(/--+/g, "-"); // Replace multiple - with single -
 }
 
+function flattenChildren(children: React.ReactNode): string {
+  if (children == null || typeof children === "boolean") return "";
+  if (typeof children === "string" || typeof children === "number")
+    return String(children);
+  if (Array.isArray(children)) return children.map(flattenChildren).join("");
+  if (React.isValidElement(children))
+    return flattenChildren(
+      (children.props as { children?: React.ReactNode }).children,
+    );
+  return "";
+}
+
 export function createHeading(level: number) {
   const Heading = ({ children }: { children: React.ReactNode }) => {
-    const slug = slugify(children?.toString() ?? "");
+    const text = flattenChildren(children);
+    const slug = slugify(text);
     return React.createElement(
       `h${level}`,
       { id: slug },
@@ -22,7 +35,7 @@ export function createHeading(level: number) {
           href: `#${slug}`,
           key: `link-${slug}`,
           className: "anchor",
-          "aria-label": `Link to section: ${children?.toString()}`,
+          "aria-label": `Link to section: ${text}`,
         }),
       ],
       children,

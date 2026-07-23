@@ -1,12 +1,15 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import { calculateTiming } from "@openstatus/tinybird/src/schema";
+
 import {
   DataTableSheet,
   DataTableSheetContent,
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import type { RouterOutputs } from "@openstatus/api";
+
 import { DataTableBasics } from "./data-table-basics";
 
 type TestTCP = RouterOutputs["checker"]["testTcp"];
@@ -56,13 +59,7 @@ function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
         headers: data.headers,
         region: data.region,
         latency: data.latency,
-        timing: {
-          dns: data.timing.dnsDone - data.timing.dnsStart,
-          connect: data.timing.connectDone - data.timing.connectStart,
-          tls: data.timing.tlsHandshakeDone - data.timing.tlsHandshakeStart,
-          ttfb: data.timing.firstByteDone - data.timing.firstByteStart,
-          transfer: data.timing.transferDone - data.timing.transferStart,
-        },
+        timing: calculateTiming(data.timing),
         url: monitor.url,
         workspaceId: String(monitor.workspaceId),
         error: false,

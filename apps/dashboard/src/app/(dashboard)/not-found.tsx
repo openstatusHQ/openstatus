@@ -1,6 +1,7 @@
-import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 import { Activity, Cog, LayoutGrid, PanelTop } from "lucide-react";
 import Link from "next/link";
+
+import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 
 const quickLinks = [
   { name: "Overview", href: "/overview", icon: LayoutGrid },
@@ -12,11 +13,11 @@ const quickLinks = [
 export default function NotFound() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center p-4 md:p-8">
-      <div className="mx-auto w-full max-w-md rounded-lg border border-border bg-sidebar">
+      <div className="border-border bg-sidebar mx-auto w-full max-w-md rounded-lg border">
         <div className="flex flex-col gap-6 p-6 sm:p-8">
           <div className="flex flex-col gap-1 text-center">
-            <p className="font-mono text-destructive">404 Not found</p>
-            <h2 className="font-cal text-2xl text-foreground">
+            <p className="text-destructive font-mono">404 Not found</p>
+            <h2 className="font-cal text-foreground text-2xl">
               Page not found
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -25,7 +26,7 @@ export default function NotFound() {
             </p>
           </div>
           <WorkspaceSwitcher
-            className="rounded-md border border-border bg-background"
+            className="border-border bg-background rounded-md border"
             side="bottom"
           />
           <div className="grid gap-2 sm:grid-cols-2">
@@ -33,7 +34,7 @@ export default function NotFound() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 font-commit-mono text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="border-border bg-background font-commit-mono text-muted-foreground hover:bg-accent hover:text-accent-foreground flex items-center gap-2 rounded-md border px-4 py-2 text-sm transition-colors"
               >
                 <link.icon className="h-4 w-4" />
                 {link.name}

@@ -1,0 +1,86 @@
+---
+title: "A Hosted Uptime Kuma Alternative"
+description: "Love Uptime Kuma but tired of running it yourself? openstatus is the open-source, managed, multi-region alternative — unlimited monitors, a status page, and no VPS to babysit. Self-host it too, if you want."
+author: "openstatus"
+publishedAt: "2026-06-19"
+category: "alternative"
+faq:
+  - question: "Is openstatus a hosted version of Uptime Kuma?"
+    answer: "Not literally — they're separate projects — but openstatus fills the same need without the self-hosting. Both are open-source uptime monitors with status pages. The key difference: Uptime Kuma runs on a single server you maintain, while openstatus is a managed, multi-region service. You can still self-host openstatus if you want full control."
+  - question: "What's the main limitation of Uptime Kuma?"
+    answer: "Uptime Kuma checks from a single location — the server you run it on. If that server has a network blip, you get false alerts; if it goes down, your monitoring goes down with it. It also can't tell you whether an outage is regional, because there's only one vantage point. A managed, multi-region tool solves both."
+  - question: "Can I keep Uptime Kuma and use openstatus too?"
+    answer: "Yes. Some teams run Uptime Kuma internally for homelab or internal services and use openstatus for external, multi-region checks and a public status page. They complement each other."
+  - question: "Is openstatus free like Uptime Kuma?"
+    answer: "Uptime Kuma is free to run if you cover your own hosting. openstatus has a permanent free plan for the managed service (1 monitor, 6 regions), paid plans from $30/month, and is also free to self-host under AGPL-3.0."
+---
+
+## You like Uptime Kuma. You're just tired of running it.
+
+Uptime Kuma is a great piece of software. It's open-source, the UI is clean, it does HTTP, TCP, DNS, and more, and it gives you a status page — all for the cost of a VPS. For a homelab or a side project, it's hard to beat.
+
+The friction shows up when the thing you use to know your service is down is itself something you have to keep up:
+
+- **It runs from one location.** Your Kuma instance has a single network vantage point. A blip on its host looks identical to a real outage, so you get false alerts — and a genuinely regional outage is invisible, because there's nothing to compare against.
+- **It's a single point of failure.** If the box running Uptime Kuma goes down, your monitoring goes down with it. The monitor that's supposed to wake you up is asleep.
+- **You're on the hook for upkeep.** Patches, database growth, backups, the occasional migration. It's not much, until it's the week everything else is on fire too.
+
+None of this means Kuma is wrong. It means at a certain point you want the same idea — open-source, monitors plus a status page — without operating it yourself.
+
+## openstatus: the managed, multi-region take on the same idea
+
+[openstatus](https://openstatus.dev) is an open-source synthetic monitoring and status page platform. The overlap with Uptime Kuma is deliberate: open-source, uptime checks, a built-in status page. The difference is operational.
+
+| | Uptime Kuma | openstatus |
+| --- | --- | --- |
+| Hosting | Self-hosted only | Managed cloud **or** self-host |
+| Check locations | Single (your server) | 28 regions, checked in parallel |
+| Resilience | Single point of failure | Distributed, managed infrastructure |
+| Status page | Yes | Yes (custom domains, subscribers) |
+| Monitoring as code | No | Terraform, CLI, MCP server |
+| Open-source | Yes (MIT) | Yes (AGPL-3.0) |
+| Upkeep | You | Us (or you, if self-hosting) |
+
+The point that matters most: openstatus checks from **28 regions at once**. A failure has to show up across multiple continents before it alerts, which kills the single-location false positives Kuma can't avoid — and tells you immediately whether an outage is global or just one region.
+
+And if your reason for choosing Uptime Kuma was *"I want to own it"*, you don't have to give that up. openstatus is open-source and self-hostable too — the checker runs as a small Docker image. You can start on the managed cloud and move to self-hosted later, or run both.
+
+## When to stay on Uptime Kuma
+
+Be honest with yourself here — Kuma is the right call when:
+
+- You're monitoring **internal or homelab** services and a single location is fine
+- You want **zero recurring cost** and already have a server to run it on
+- You enjoy running your own infrastructure and want **total control**
+
+## When to switch to openstatus
+
+- You need **multi-region** checks to trust your alerts and catch regional outages
+- You don't want your monitor to be a **single point of failure**
+- You'd rather **not maintain** the monitoring infrastructure yourself
+- You want **monitoring as code** (Terraform), a CLI, or an MCP server for AI agents
+- You still want **open-source** — just managed
+
+## Moving from Uptime Kuma to openstatus
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Recreate your monitors** in the dashboard, or define them as code with the [Terraform provider](/docs/reference/terraform) and CLI
+3. **Rebuild your status page** — add components, custom domain, and let users subscribe
+4. **Point your alerts** at Slack, Discord, Email, PagerDuty, OpsGenie, and more
+
+Most Kuma setups are small enough to move in well under an hour.
+
+## Related Resources
+
+- [Uptime Kuma vs openstatus](/compare/uptime-kuma) — full head-to-head
+- [Best Open-Source Status Page Tools in 2026](/guides/best-opensource-status-page-2026)
+- [What Is Uptime Monitoring?](/guides/what-is-uptime-monitoring)
+- [Status Pages for Open-Source Projects](/use-case/open-source)
+
+---
+
+Open-source monitoring, without the VPS to babysit
+
+<ButtonLink href="https://app.openstatus.dev?ref=guide-hosted-uptime-kuma">Try openstatus free</ButtonLink>
+
+---

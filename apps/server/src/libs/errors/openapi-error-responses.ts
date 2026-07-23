@@ -1,4 +1,5 @@
 import type { RouteConfig } from "@hono/zod-openapi";
+
 import { createErrorSchema } from "./utils";
 
 export const openApiErrorResponses = {

@@ -1,13 +1,12 @@
 "use client";
 
-import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
-
+import type { RouterOutputs } from "@openstatus/api";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
+import type { Table } from "@tanstack/react-table";
+import { Tag, X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
-import type { RouterOutputs } from "@openstatus/api";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 type MonitorTag = RouterOutputs["monitorTag"]["list"][number];
@@ -40,6 +39,7 @@ export function MonitorDataTableToolbar({
               label: tag.name,
               value: tag.id,
             }))}
+            icon={Tag}
           />
         )}
         {isFiltered && (

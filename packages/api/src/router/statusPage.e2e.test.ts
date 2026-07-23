@@ -1,6 +1,14 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
-import { page, pageSubscriber, workspace } from "@openstatus/db/src/schema";
+import {
+  incidentTable,
+  monitor,
+  page,
+  pageComponent,
+  pageSubscriber,
+  workspace,
+} from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
 /**
  * End-to-end integration tests for the full unsubscribe flow.
@@ -205,6 +213,7 @@ describe("Confirmation page displays correct information", () => {
     }
 
     const email = subscriber.email;
+    if (!email) throw new Error("Subscriber email not found");
     expect(email).toBe("confirm-page-test@example.com");
 
     // Apply the same masking logic as in the API
@@ -922,5 +931,393 @@ describe("statusPage.get endpoint validation", () => {
       expect(monitor).toHaveProperty("id");
       expect(monitor).toHaveProperty("name");
     }
+  });
+});
+
+describe("statusPage.get gates incidents by barType (calendar manual mode)", () => {
+  const barTypeSlug = "bar-type-incident-gating-test-page";
+  let barTypePageId: number;
+  let barTypeMonitorId: number;
+  let barTypeIncidentId: number;
+  let barTypeComponentId: number;
+
+  async function getPage(barType?: "absolute" | "manual") {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+    const caller = edgeRouter.createCaller(ctx);
+    return caller.statusPage.get({ slug: barTypeSlug, barType });
+  }
+
+  function monitorIncidents(result: Awaited<ReturnType<typeof getPage>>) {
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === barTypeMonitorId,
+    );
+    return component?.monitor?.incidents ?? [];
+  }
+
+  beforeAll(async () => {
+    await db.delete(page).where(eq(page.slug, barTypeSlug));
+
+    // Page is stored as "manual" so we can also assert the default (no explicit
+    // barType arg) resolves from the page configuration.
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Bar Type Incident Gating Page",
+        description: "Verifies incident gating in statusPage.get",
+        slug: barTypeSlug,
+        customDomain: "",
+        configuration: {
+          type: "manual",
+          value: "requests",
+          uptime: true,
+          theme: "default",
+        },
+      })
+      .returning()
+      .get();
+    barTypePageId = testPage.id;
+
+    const testMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "Bar Type Test Monitor",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+      })
+      .returning()
+      .get();
+    barTypeMonitorId = testMonitor.id;
+
+    const testIncident = await db
+      .insert(incidentTable)
+      .values({
+        monitorId: barTypeMonitorId,
+        workspaceId: 1,
+        title: "Bar Type Test Incident",
+        startedAt: new Date(),
+      })
+      .returning()
+      .get();
+    barTypeIncidentId = testIncident.id;
+
+    const testComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: barTypePageId,
+        type: "monitor",
+        monitorId: barTypeMonitorId,
+        name: "Bar Type Test Component",
+        order: 0,
+      })
+      .returning()
+      .get();
+    barTypeComponentId = testComponent.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, barTypeComponentId));
+    await db
+      .delete(incidentTable)
+      .where(eq(incidentTable.id, barTypeIncidentId));
+    await db.delete(monitor).where(eq(monitor.id, barTypeMonitorId));
+    await db.delete(page).where(eq(page.id, barTypePageId));
+  });
+
+  test("barType 'absolute' keeps monitor incidents", async () => {
+    const result = await getPage("absolute");
+    const incidents = monitorIncidents(result);
+
+    expect(incidents.length).toBe(1);
+    expect(incidents[0].id).toBe(barTypeIncidentId);
+  });
+
+  test("barType 'manual' strips monitor incidents", async () => {
+    const result = await getPage("manual");
+
+    expect(monitorIncidents(result)).toEqual([]);
+  });
+
+  test("defaults to the page configuration when barType is omitted", async () => {
+    // Stored configuration is "manual", so incidents must be stripped without
+    // an explicit barType — this is the initial-load path the calendar uses.
+    const result = await getPage();
+
+    expect(monitorIncidents(result)).toEqual([]);
+  });
+});
+
+describe("statusPage exposes page component names, not internal monitor names", () => {
+  const publicNameSlug = "public-component-name-test-page";
+  let publicNamePageId: number;
+  let publicNameMonitorId: number;
+  let publicNameComponentId: number;
+  let noDescriptionMonitorId: number;
+  let noDescriptionComponentId: number;
+  let clearedDescriptionMonitorId: number;
+  let clearedDescriptionComponentId: number;
+
+  const internalName = "Internal Monitor Name";
+  const internalDescription = "Internal monitor description";
+  const legacyExternalName = "Legacy External Name";
+  const componentName = "Public Component Name";
+  const componentDescription = "Public component description";
+  const fallbackDescription = "Monitor description used as fallback";
+
+  async function createCaller() {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+    return edgeRouter.createCaller(ctx);
+  }
+
+  beforeAll(async () => {
+    await db.delete(page).where(eq(page.slug, publicNameSlug));
+
+    const testPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Public Component Name Page",
+        description: "Verifies public naming in statusPage procedures",
+        slug: publicNameSlug,
+        customDomain: "",
+      })
+      .returning()
+      .get();
+    publicNamePageId = testPage.id;
+
+    // externalName is set on purpose: the legacy `externalName || name`
+    // schema transform must not override the page component name.
+    const testMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: internalName,
+        externalName: legacyExternalName,
+        description: internalDescription,
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    publicNameMonitorId = testMonitor.id;
+
+    const testComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: publicNameMonitorId,
+        name: componentName,
+        description: componentDescription,
+        order: 0,
+      })
+      .returning()
+      .get();
+    publicNameComponentId = testComponent.id;
+
+    // mirrors pre-existing components: description was never backfilled (NULL)
+    const noDescriptionMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "No Description Component Monitor",
+        description: fallbackDescription,
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    noDescriptionMonitorId = noDescriptionMonitor.id;
+
+    const noDescriptionComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: noDescriptionMonitorId,
+        name: "No Description Component",
+        order: 1,
+      })
+      .returning()
+      .get();
+    noDescriptionComponentId = noDescriptionComponent.id;
+
+    // mirrors a deliberately cleared field: the dashboard stores ""
+    const clearedDescriptionMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: "Cleared Description Component Monitor",
+        description: "Internal description that must stay hidden",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: true,
+      })
+      .returning()
+      .get();
+    clearedDescriptionMonitorId = clearedDescriptionMonitor.id;
+
+    const clearedDescriptionComponent = await db
+      .insert(pageComponent)
+      .values({
+        workspaceId: 1,
+        pageId: publicNamePageId,
+        type: "monitor",
+        monitorId: clearedDescriptionMonitorId,
+        name: "Cleared Description Component",
+        description: "",
+        order: 2,
+      })
+      .returning()
+      .get();
+    clearedDescriptionComponentId = clearedDescriptionComponent.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, publicNameComponentId));
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, noDescriptionComponentId));
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, clearedDescriptionComponentId));
+    await db.delete(monitor).where(eq(monitor.id, publicNameMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, noDescriptionMonitorId));
+    await db.delete(monitor).where(eq(monitor.id, clearedDescriptionMonitorId));
+    await db.delete(page).where(eq(page.id, publicNamePageId));
+  });
+
+  test("get returns the page component name and description", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === publicNameMonitorId,
+    );
+
+    expect(monitorItem?.name).toBe(componentName);
+    expect(monitorItem?.description).toBe(componentDescription);
+    expect(monitorItem?.name).not.toBe(internalName);
+    expect(monitorItem?.name).not.toBe(legacyExternalName);
+
+    // the nested monitor relation must agree with the flat monitors array
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === publicNameMonitorId,
+    );
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("getLight returns the page component name and description", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getLight({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === publicNameMonitorId,
+    );
+
+    expect(monitorItem?.name).toBe(componentName);
+    expect(monitorItem?.description).toBe(componentDescription);
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === publicNameMonitorId,
+    );
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("falls back to the monitor description when the component has none", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === noDescriptionMonitorId,
+    );
+    expect(monitorItem?.description).toBe(fallbackDescription);
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === noDescriptionMonitorId,
+    );
+    expect(component?.monitor?.description).toBe(fallbackDescription);
+
+    const light = await caller.statusPage.getLight({ slug: publicNameSlug });
+    const lightItem = light?.monitors.find(
+      (m) => m.id === noDescriptionMonitorId,
+    );
+    expect(lightItem?.description).toBe(fallbackDescription);
+  });
+
+  test("keeps a deliberately cleared component description blank", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.get({ slug: publicNameSlug });
+
+    const monitorItem = result?.monitors.find(
+      (m) => m.id === clearedDescriptionMonitorId,
+    );
+    expect(monitorItem?.description).toBe("");
+
+    const component = result?.pageComponents.find(
+      (c) => c.monitorId === clearedDescriptionMonitorId,
+    );
+    expect(component?.monitor?.description).toBe("");
+
+    const light = await caller.statusPage.getLight({ slug: publicNameSlug });
+    const lightItem = light?.monitors.find(
+      (m) => m.id === clearedDescriptionMonitorId,
+    );
+    expect(lightItem?.description).toBe("");
+  });
+
+  test("getUptime returns the page component name on the nested monitor", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getUptime({
+      slug: publicNameSlug,
+      pageComponentIds: [String(publicNameComponentId)],
+    });
+
+    const component = result?.find(
+      (c) => c.pageComponentId === publicNameComponentId,
+    );
+
+    expect(component?.name).toBe(componentName);
+    expect(component?.monitor?.name).toBe(componentName);
+    expect(component?.monitor?.description).toBe(componentDescription);
+  });
+
+  test("getMonitor returns the page component name and description", async () => {
+    const caller = await createCaller();
+    const result = await caller.statusPage.getMonitor({
+      slug: publicNameSlug,
+      id: publicNameMonitorId,
+    });
+
+    expect(result?.name).toBe(componentName);
+    expect(result?.description).toBe(componentDescription);
   });
 });

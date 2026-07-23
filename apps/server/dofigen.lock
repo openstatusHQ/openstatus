@@ -12,20 +12,23 @@ effective: |
   builders:
     install:
       fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        path: node
+        digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
       workdir: /app/
       run:
-      - bun install --production --frozen-lockfile --verbose
+      - corepack enable pnpm
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
       cache:
-      - target: /root/.bun/install/cache
+      - target: /root/.local/share/pnpm/store
       bind:
-      - target: bunfig.toml
-        source: bunfig.toml
+      - target: pnpm-workspace.yaml
+        source: pnpm-workspace.yaml
+      - target: pnpm-lock.yaml
+        source: pnpm-lock.yaml
       - target: package.json
         source: package.json
       - target: apps/server/package.json
@@ -48,6 +51,8 @@ effective: |
         source: packages/notifications/grafana-oncall/package.json
       - target: packages/notifications/google-chat/package.json
         source: packages/notifications/google-chat/package.json
+      - target: packages/notifications/ms-teams/package.json
+        source: packages/notifications/ms-teams/package.json
       - target: packages/notifications/ntfy/package.json
         source: packages/notifications/ntfy/package.json
       - target: packages/notifications/opsgenie/package.json
@@ -58,8 +63,8 @@ effective: |
         source: packages/notifications/slack/package.json
       - target: packages/notifications/telegram/package.json
         source: packages/notifications/telegram/package.json
-      - target: packages/notifications/twillio-whatsapp/package.json
-        source: packages/notifications/twillio-whatsapp/package.json
+      - target: packages/notifications/bird-whatsapp/package.json
+        source: packages/notifications/bird-whatsapp/package.json
       - target: packages/notifications/twillio-sms/package.json
         source: packages/notifications/twillio-sms/package.json
       - target: packages/notifications/webhook/package.json
@@ -86,14 +91,18 @@ effective: |
         source: packages/theme-store/package.json
       - target: packages/locales/package.json
         source: packages/locales/package.json
+      - target: packages/services/package.json
+        source: packages/services/package.json
+      - target: packages/importers/package.json
+        source: packages/importers/package.json
     build:
       fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        path: denoland/deno
+        digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
         org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -105,20 +114,30 @@ effective: |
         paths:
         - /app/node_modules
         target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/server/node_modules
+        target: /app/apps/server/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
       run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
+      - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+      - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
   fromImage:
-    path: debian
-    digest: sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652
+    host: registry.access.redhat.com
+    port: 443
+    path: hi/curl
+    digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    io.dofigen.version: 2.7.0
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.base.digest: sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.title: OpenStatus Server
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    io.dofigen.version: 2.8.0
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
   user:
     user: '1000'
     group: '1000'
@@ -128,17 +147,12 @@ effective: |
     - /app/apps/server/app
     target: /bin/
     chmod: '555'
-  root:
-    run:
-    - apt-get update
-    - apt-get install -y --no-install-recommends curl
-    - rm -rf /var/lib/apt/lists/*
   entrypoint:
   - /bin/app
   expose:
   - port: 3000
   healthcheck:
-    cmd: curl -f http://localhost:3000/ping || exit 1
+    cmd: '["curl", "-f", "http://localhost:3000/ping"]'
     interval: 30s
     timeout: 10s
     start: 30s
@@ -146,16 +160,16 @@ effective: |
 images:
   docker.io:
     library:
-      debian:
-        bullseye-slim:
-          digest: sha256:4333240150a6924f878e05ec2c998aec95238010e0e4d2fec6161c90128c4652
-    oven:
-      bun:
-        1.3.6:
-          digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+      node:
+        24-slim:
+          digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+    denoland:
+      deno:
+        2.9.2:
+          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
 resources:
   dofigen.yml:
-    hash: 733fba04030ad149a064b72cece51b1e515655e1b723263c61c881e301e388da
+    hash: e62db1a487a23f2bce5f3353470c8923b67cd6b5a1a78bef29bc448bd3571094
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -172,12 +186,13 @@ resources:
       builders:
         # Stage 1: Install production dependencies
         install:
-          fromImage: oven/bun:1.3.6
+          fromImage: node:24-slim
           workdir: /app/
           labels:
             org.opencontainers.image.stage: install
           bind:
-            - bunfig.toml
+            - pnpm-workspace.yaml
+            - pnpm-lock.yaml
             - package.json
             - apps/server/package.json
             - packages/analytics/package.json
@@ -189,12 +204,13 @@ resources:
             - packages/notifications/email/package.json
             - packages/notifications/grafana-oncall/package.json
             - packages/notifications/google-chat/package.json
+            - packages/notifications/ms-teams/package.json
             - packages/notifications/ntfy/package.json
             - packages/notifications/opsgenie/package.json
             - packages/notifications/pagerduty/package.json
             - packages/notifications/slack/package.json
             - packages/notifications/telegram/package.json
-            - packages/notifications/twillio-whatsapp/package.json
+            - packages/notifications/bird-whatsapp/package.json
             - packages/notifications/twillio-sms/package.json
             - packages/notifications/webhook/package.json
             - packages/error/package.json
@@ -208,13 +224,17 @@ resources:
             - packages/assertions/package.json
             - packages/theme-store/package.json
             - packages/locales/package.json
-          run: bun install --production --frozen-lockfile --verbose
+            - packages/services/package.json
+            - packages/importers/package.json
+          run:
+            - corepack enable pnpm
+            - pnpm install --prod --frozen-lockfile --filter=@openstatus/server... --verbose
           cache:
-            - /root/.bun/install/cache
+            - /root/.local/share/pnpm/store
 
-        # Stage 2: Build application (compile to binary)
+        # Stage 2: Build application (compile to binary with Deno)
         build:
-          fromImage: oven/bun:1.3.6
+          fromImage: denoland/deno:2.9.2
           workdir: /app/apps/server
           labels:
             org.opencontainers.image.stage: build
@@ -225,10 +245,22 @@ resources:
             - fromBuilder: install
               source: /app/node_modules
               target: /app/node_modules
-          run: bun build --compile --sourcemap src/index.ts --outfile=app
+            - fromBuilder: install
+              source: /app/apps/server/node_modules
+              target: /app/apps/server/node_modules
+            - fromBuilder: install
+              source: /app/packages
+              target: /app/packages
+          # 1) bundle to a self-contained mjs; manual node_modules resolves pnpm catalog: + workspace deps, sloppy-imports the extensionless relative imports.
+          #    no --minify: it makes deno 2.9 drop its createRequire shim, so CJS deps requiring node: builtins throw "Dynamic require of ... is not supported".
+          # 2) compile the bundle with node-modules-dir=none so node_modules is NOT embedded — keeps the binary ~110MB instead of ~390MB.
+          run:
+            - deno bundle --platform=deno --sloppy-imports --node-modules-dir=manual --output src/_serve.bundle.mjs src/serve.ts
+            - deno compile --no-check -A --node-modules-dir=none --include static/openapi.yaml --include static/openapi-v1.json --output app src/_serve.bundle.mjs
 
-      # Runtime stage
-      fromImage: debian:bullseye-slim
+      # Runtime stage: distroless glibc base that already ships curl (for the healthcheck).
+      # Pinned to the multi-arch index digest of hi/curl:latest — dofigen mis-resolves this registry's tag to an unpullable digest.
+      fromImage: registry.access.redhat.com/hi/curl@sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
 
       # Metadata labels
       labels:
@@ -245,26 +277,19 @@ resources:
           target: /bin/
           chmod: "555"
 
-      # Install curl for health checks
-      root:
-        run:
-          - apt-get update
-          - apt-get install -y --no-install-recommends curl
-          - rm -rf /var/lib/apt/lists/*
-
       # Security: run as non-root user
       user: "1000:1000"
 
       # Expose port
       expose: "3000"
 
-      # Health check
+      # Health check — exec form (JSON array) because the base has no shell for CMD-SHELL
       healthcheck:
         interval: 30s
         timeout: 10s
         start: 30s
         retries: 3
-        cmd: curl -f http://localhost:3000/ping || exit 1
+        cmd: '["curl", "-f", "http://localhost:3000/ping"]'
 
       # Start application
       entrypoint: /bin/app

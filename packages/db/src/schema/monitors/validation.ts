@@ -1,7 +1,6 @@
+import * as assertions from "@openstatus/assertions";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-
-import * as assertions from "@openstatus/assertions";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
@@ -12,7 +11,7 @@ export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 
 // TODO: shared function
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+// oxlint-disable-next-line eslint/no-unused-vars
 function stringToArrayProcess<T>(_string: T) {}
 
 const regionsToArraySchema = z.preprocess((val) => {
@@ -44,7 +43,8 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.prefault("10m"),
   status: monitorStatusSchema.prefault("active"),
   jobType: monitorJobTypesSchema.prefault("http"),
-  timeout: z.number().prefault(45),
+  // milliseconds, matches the column default
+  timeout: z.number().prefault(45_000),
   followRedirects: z.boolean().prefault(true),
   retry: z.number().prefault(3),
   regions: regionsToArraySchema.prefault([]),

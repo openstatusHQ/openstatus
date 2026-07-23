@@ -1,16 +1,5 @@
 "use client";
 
-import type * as React from "react";
-import { useState, useTransition } from "react";
-
-import {
-  Check,
-  Copy,
-  type LucideIcon,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +25,15 @@ import { Input } from "@openstatus/ui/components/ui/input";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { isTRPCClientError } from "@trpc/client";
+import {
+  Check,
+  Copy,
+  type LucideIcon,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
+import type * as React from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface QuickActionsProps extends React.ComponentProps<typeof Button> {
@@ -51,8 +49,9 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   deleteAction?: {
     /**
      * The value that must be typed to confirm deletion. Also used in the dialog title.
+     * If omitted, no type-to-confirm step is shown.
      */
-    confirmationValue: string;
+    confirmationValue?: string;
     submitAction?: () => Promise<void>;
   };
 }
@@ -103,7 +102,7 @@ export function QuickActions({
             <Button
               variant="ghost"
               size="icon"
-              className={className ?? "h-7 w-7 data-[state=open]:bg-accent"}
+              className={className ?? "data-[state=open]:bg-accent h-7 w-7"}
               {...props}
             >
               <MoreHorizontal />
@@ -154,14 +153,16 @@ export function QuickActions({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you sure about deleting `{deleteAction?.confirmationValue}`?
+            {deleteAction?.confirmationValue
+              ? `Are you sure about deleting \`${deleteAction.confirmationValue}\`?`
+              : "Are you sure?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently remove the entry
             from the database.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {deleteAction?.confirmationValue && (
+        {deleteAction?.confirmationValue ? (
           <form id="form-alert-dialog" className="space-y-1.5">
             <p className="text-muted-foreground text-sm">
               Type{" "}
@@ -183,13 +184,13 @@ export function QuickActions({
             </p>
             <Input value={value} onChange={(e) => setValue(e.target.value)} />
           </form>
-        )}
+        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
+            className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs"
             disabled={
               (deleteAction?.confirmationValue &&
                 value !== deleteAction?.confirmationValue) ||

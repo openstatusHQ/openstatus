@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-
 import { statusReportStatus } from "@openstatus/db/src/schema";
 
 export const ParamsSchema = z.object({

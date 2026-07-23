@@ -2,17 +2,19 @@
   "name": "@openstatus/assertions",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.ts",
-  "scripts": {},
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
-    "jsonpath-plus": "7.2.0"
+    "jsonpath-plus": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3",
-    "zod": "4.1.13"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "typescript": "catalog:"
+  }
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useTelegramConnection } from "@/hooks/use-telegram-connection";
 import {
   Tabs,
   TabsContent,
@@ -8,6 +7,9 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import type { UseFormReturn } from "react-hook-form";
+
+import { useTelegramConnection } from "@/hooks/use-telegram-connection";
+
 import type { FormValues } from "../notifications/form-telegram";
 import { TelegramManualInput } from "./telegram-manual-input";
 import { TelegramQRConnection } from "./telegram-qr-connection";

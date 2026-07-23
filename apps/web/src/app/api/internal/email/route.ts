@@ -1,5 +1,3 @@
-import type { NextRequest } from "next/server";
-
 import { and, eq, gte, inArray, lte } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
@@ -12,6 +10,7 @@ import {
   SlackFeedbackEmail,
   sendEmail,
 } from "@openstatus/emails";
+import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");

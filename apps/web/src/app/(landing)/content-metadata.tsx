@@ -1,9 +1,9 @@
-import { type MDXData, formatDate } from "@/content/utils";
-import { getAuthor } from "@/data/author";
+import { type MDXData, formatDate } from "../../content/utils";
+import { getAuthor } from "../../data/author";
 
 export function ContentMetadata({ data }: { data: MDXData }) {
   return (
-    <p className="flex flex-wrap items-center gap-2.5 divide-x divide-border text-muted-foreground">
+    <p className="divide-border text-muted-foreground flex flex-wrap items-center gap-2.5 divide-x">
       {formatDate(data.metadata.publishedAt)} | by{" "}
       <Author author={data.metadata.author} /> | [{data.metadata.category}]
     </p>

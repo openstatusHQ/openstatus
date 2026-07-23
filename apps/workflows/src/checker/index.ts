@@ -1,21 +1,23 @@
-import { Hono } from "hono";
-import { z } from "zod";
-
+import { getLogger } from "@logtape/logtape";
 import { and, db, eq, inArray, isNull, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
   monitorStatusSchema,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
+import { Hono } from "hono";
+import { z } from "zod";
 
-import { getLogger } from "@logtape/logtape";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { env } from "../env";
 import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
+import { updateStatusPrivate } from "./private-location";
 
 export const checkerRoute = new Hono<Env>();
+
+checkerRoute.post("/updateStatusPrivate", updateStatusPrivate);
 
 const payloadSchema = z.object({
   monitorId: z.string(),

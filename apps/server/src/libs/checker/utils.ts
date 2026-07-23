@@ -1,4 +1,3 @@
-import { OpenStatusApiError } from "@/libs/errors";
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
@@ -8,6 +7,8 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+
+import { OpenStatusApiError } from "@/libs/errors";
 
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,
@@ -65,6 +66,14 @@ export function getCheckerPayload(
           "Invalid jobType, currently only 'http' and 'tcp' are supported",
       });
   }
+}
+
+// Bounds outbound checker fetches so a slow check can't pin API requests open
+// indefinitely: the monitor's own timeout plus a buffer for checker overhead.
+export function getCheckerTimeout(
+  monitor: z.infer<typeof selectMonitorSchema>,
+): number {
+  return (monitor.timeout ?? 45_000) + 15_000;
 }
 
 export function getCheckerUrl(

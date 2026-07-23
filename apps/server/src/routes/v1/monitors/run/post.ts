@@ -1,9 +1,14 @@
-import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
-import { openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { getLogger } from "@logtape/logtape";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
+
+import { env } from "@/env";
+import {
+  getCheckerPayload,
+  getCheckerTimeout,
+  getCheckerUrl,
+} from "@/libs/checker";
+import { openApiErrorResponses } from "@/libs/errors";
 
 const logger = getLogger("api-server");
 import { db } from "@openstatus/db/src/db";
@@ -13,6 +18,7 @@ import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_sta
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import { HTTPException } from "hono/http-exception";
+
 import type { monitorsApi } from "..";
 import { ParamsSchema, TriggerResult } from "../schema";
 import { QuerySchema } from "./schema";
@@ -143,11 +149,23 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         },
         method: "POST",
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(getCheckerTimeout(row)),
       });
       allResult.push(result);
     }
 
     if (noWait) {
+      // The promises keep running after the response; an uncaught rejection
+      // here would crash the Deno process, so swallow and log failures.
+      for (const result of allResult) {
+        result.catch((error: unknown) => {
+          logger.warn("Checker request failed", {
+            monitor_id: id,
+            workspace_id: workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      }
       return c.json([], 200);
     }
 

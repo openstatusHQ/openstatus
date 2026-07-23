@@ -8,3 +8,5 @@ services:
             - 3000:3000
         image: server
         command: .
+        env_file:
+            - ../../.env.docker

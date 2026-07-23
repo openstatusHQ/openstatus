@@ -1,0 +1,70 @@
+---
+category: Reference
+title: Location Reference
+description: Complete technical specification for Location monitoring
+---
+
+openstatus monitors your endpoints from multiple global locations to ensure accurate uptime and latency reporting. Locations span several infrastructure providers (Fly.io, Railway, and Koyeb), so IP availability varies: Fly.io regions expose both IPv4 and IPv6 addresses, Railway regions are IPv4-only, and Koyeb does not provide static IPs.
+
+You can use these locations to:
+
+- Configure region-specific checks.
+- Allowlist monitoring IPs in your firewall.
+- Understand where requests originate during synthetic monitoring.
+
+### Fly.io regions and monitoring IPs
+
+Below is the complete list of regions used for monitoring, along with their associated IPv4 and IPv6 addresses.
+
+| Region code | Location name      | IPv4 address      | IPv6 address                   |
+|-------------|-------------------|-------------------|-------------------------------|
+| ams         | Amsterdam         | 209.71.64.1       | 2a09:8280:e601:1:0:22:b79b:0  |
+| arn         | Stockholm         | 209.71.98.189     | 2a09:8280:e602:1:0:22:b79b:0  |
+| bom         | Mumbai            | 209.71.68.172     | 2a09:8280:e605:1:0:22:b79b:0  |
+| cdg         | Paris             | 209.71.86.183     | 2a09:8280:e607:1:0:22:b79b:0  |
+| dfw         | Dallas            | 209.71.71.89      | 2a09:8280:e609:1:0:22:b79b:0  |
+| ewr         | Newark            | 209.71.69.221     | 2a09:8280:e610:1:0:22:b79b:0  |
+| fra         | Frankfurt         | 209.71.90.204     | 2a09:8280:e612:1:0:22:b79b:0  |
+| gru         | São Paulo         | 209.71.94.28      | 2a09:8280:e615:1:0:22:b79b:0  |
+| iad         | Washington, D.C.  | 209.71.81.6       | 2a09:8280:e618:1:0:22:b79b:0  |
+| jnb         | Johannesburg      | 209.71.83.120     | 2a09:8280:e620:1:0:22:b79b:0  |
+| lax         | Los Angeles       | 209.71.91.96      | 2a09:8280:e621:1:0:22:b79b:0  |
+| lhr         | London            | 209.71.85.82      | 2a09:8280:e622:1:0:22:b79b:0  |
+| nrt         | Tokyo             | 209.71.88.150     | 2a09:8280:e625:1:0:22:b79b:0  |
+| ord         | Chicago           | 209.71.89.1       | 2a09:8280:e626:1:0:22:b79b:0  |
+| sin         | Singapore         | 209.71.80.112     | 2a09:8280:e632:1:0:22:b79b:0  |
+| sjc         | San Jose          | 209.71.101.37     | 2a09:8280:e633:1:0:22:b79b:0  |
+| syd         | Sydney            | 209.71.97.108     | 2a09:8280:e634:1:0:22:b79b:0  |
+| yyz         | Toronto           | 209.71.99.51      | 2a09:8280:e637:1:0:22:b79b:0  |
+
+
+## Railway regions and monitoring IPs
+
+Below is the complete list of Railway regions used for monitoring, along with their associated IPv4 addresses.
+
+| Region code              | Location name     | IPv4 address      |
+|--------------------------|------------------|-------------------|
+| europe-west4-drams3a     | Europe West      | 208.77.244.15     |
+| asia-southeast1-eqsg3a   | Asia Southeast   | 208.77.246.15     |
+| us-east4-eqdc4a          | US East          | 162.220.234.15    |
+| us-west2                 | US West          | 162.220.232.99    |
+
+## Koyeb regions
+
+Koyeb does not provide static IP addresses for their regions, so IPs are not available for allowlisting. For details, see Koyeb's [documentation](https://www.koyeb.com/docs/faqs/general#i-want-to-restrict-access-to-a-database-or-other-application-by-ip-address-what-ip-addresses-does-koyeb-use).
+
+| Region code  | Location name           |
+|--------------|-------------------------|
+| koyeb_fra    | Frankfurt, Germany      |
+| koyeb_par    | Paris, France           |
+| koyeb_sfo    | San Francisco, USA      |
+| koyeb_sin    | Singapore               |
+| koyeb_tyo    | Tokyo, Japan            |
+| koyeb_was    | Washington, USA         |
+
+---
+
+**Note:**  
+
+- Where available, IPv4 and IPv6 addresses are provided for allowlisting and diagnostics (Fly.io regions only; Railway is IPv4-only and Koyeb has no static IPs).
+- Location names are for reference and may be used in the dashboard UI.

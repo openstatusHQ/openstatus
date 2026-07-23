@@ -1,8 +1,9 @@
+import readline from "node:readline";
+
 import { db, eq } from "@openstatus/db";
 import { type WorkspacePlan, workspace } from "@openstatus/db/src/schema";
-import { env } from "../env";
 
-import readline from "node:readline";
+import { env } from "../env";
 
 // Function to prompt user for confirmation
 const askConfirmation = async (question: string): Promise<boolean> => {
@@ -95,19 +96,27 @@ async function main() {
   const lastTwoWeeks = calculatePastTimestamp(14);
   const lastThreeMonths = calculatePastTimestamp(90);
   const lastYear = calculatePastTimestamp(365);
-  // const _lastTwoYears = calculatePastTimestamp(730);
+  const lastTwoYears = calculatePastTimestamp(730);
 
   const starters = await getWorkspaceIdsByPlan("starter");
   const teams = await getWorkspaceIdsByPlan("team");
-  // const pros = await getWorkspaceIdsByPlan("pro");
+  const scales = await getWorkspaceIdsByPlan("scale");
 
   // all other workspaces, we need to 'reverse' the deletion here to NOT include those workspaces
-  const rest = [...starters, ...teams];
+  const rest = [...starters, ...teams, ...scales];
 
-  deleteLogs(lastTwoWeeks, rest, true);
-  deleteLogs(lastThreeMonths, starters);
-  deleteLogs(lastYear, teams);
-  // deleteLogs(lastYear, pros);
+  if (rest.length > 0) {
+    await deleteLogs(lastTwoWeeks, rest, true);
+  }
+  if (starters.length > 0) {
+    await deleteLogs(lastThreeMonths, starters);
+  }
+  if (teams.length > 0) {
+    await deleteLogs(lastYear, teams);
+  }
+  if (scales.length > 0) {
+    await deleteLogs(lastTwoYears, scales);
+  }
 }
 
 /**

@@ -1,5 +1,8 @@
-import { expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { test } from "@std/testing/bdd";
+
 import { app } from "@/index";
+
 import { MaintenanceSchema } from "./schema";
 
 test("update the maintenance", async () => {
@@ -94,7 +97,7 @@ test("update only the message", async () => {
   expect(result.data?.message).toBe("Only Message Updated");
 });
 
-test.todo("update only the dates", async () => {
+test.ignore("update only the dates", async () => {
   const from = new Date();
   const to = new Date(from.getTime() + 7200000); // 2 hours later
 
@@ -118,7 +121,7 @@ test.todo("update only the dates", async () => {
   expect(result.data?.to).toEqual(to);
 });
 
-test.todo(
+test.ignore(
   "update maintenance with `from` date after `to` date should return 400",
   async () => {
     const to = new Date();
@@ -159,7 +162,7 @@ test("remove all maintenance monitors", async () => {
   expect(result.data?.monitorIds?.length).toBe(0);
 });
 
-test.todo("empty body should return 400", async () => {
+test.ignore("empty body should return 400", async () => {
   const res = await app.request("/v1/maintenance/1", {
     method: "PUT",
     headers: {

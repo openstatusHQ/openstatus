@@ -1,7 +1,5 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-
 import {
   type ChartConfig,
   ChartContainer,
@@ -9,6 +7,8 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { cn } from "@openstatus/ui/lib/utils";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {

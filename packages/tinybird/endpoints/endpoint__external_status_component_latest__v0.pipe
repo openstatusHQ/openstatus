@@ -1,0 +1,16 @@
+TAGS "external_status_component"
+
+NODE latest
+SQL >
+
+    %
+    SELECT
+        component_id,
+        argMax(indicator, fetched_at) AS indicator,
+        argMax(status, fetched_at) AS status,
+        max(fetched_at) AS last_fetched_at
+    FROM external_status_component__v0
+    WHERE component_id IN {{ Array(component_ids, 'String') }}
+    GROUP BY component_id
+
+TYPE ENDPOINT

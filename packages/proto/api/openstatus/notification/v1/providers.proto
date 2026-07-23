@@ -35,6 +35,8 @@ enum NotificationProvider {
   NOTIFICATION_PROVIDER_WEBHOOK = 11;
   // WhatsApp notification.
   NOTIFICATION_PROVIDER_WHATSAPP = 12;
+  // Microsoft Teams notification.
+  NOTIFICATION_PROVIDER_MS_TEAMS = 13;
 }
 
 // DiscordData contains configuration for Discord notifications.
@@ -159,6 +161,15 @@ message WhatsappData {
   string phone_number = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// MsTeamsData contains configuration for Microsoft Teams notifications.
+message MsTeamsData {
+  // Microsoft Teams webhook URL (Power Automate Workflows).
+  string webhook_url = 1 [
+    (buf.validate.field).string.uri = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "https://prod-00.westeurope.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke"}}
+  ];
+}
+
 // NotificationData is a union of provider-specific configuration.
 message NotificationData {
   oneof data {
@@ -186,5 +197,7 @@ message NotificationData {
     WebhookData webhook = 11;
     // WhatsApp configuration.
     WhatsappData whatsapp = 12;
+    // Microsoft Teams configuration.
+    MsTeamsData ms_teams = 13;
   }
 }

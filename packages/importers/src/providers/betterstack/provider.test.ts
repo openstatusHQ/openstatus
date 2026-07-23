@@ -1,4 +1,7 @@
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { spy } from "@std/testing/mock";
+
 import {
   MOCK_INCIDENTS,
   MOCK_MONITORS,
@@ -23,7 +26,7 @@ function makePaginated(data: unknown[]) {
 }
 
 function setupMockFetch() {
-  globalThis.fetch = mock((url: string) => {
+  globalThis.fetch = spy((url: string) => {
     const path = new URL(url as string).pathname;
     let body: unknown;
 
@@ -85,7 +88,7 @@ describe("BetterstackProvider", () => {
   });
 
   test("validate returns friendly 401 error", async () => {
-    globalThis.fetch = mock(() =>
+    globalThis.fetch = spy(() =>
       Promise.resolve(
         new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,

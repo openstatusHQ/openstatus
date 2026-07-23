@@ -8,20 +8,30 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./client": {
+      "import": "./src/client.ts",
+      "types": "./src/client.ts"
     }
   },
   "scripts": {
-    "test": "bun test"
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/notification-base": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "zod": "4.1.13"
+    "@slack/web-api": "catalog:",
+    "@upstash/redis": "catalog:",
+    "effect": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/bun": "latest",
-    "typescript": "5.9.3"
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "typescript": "catalog:"
   }
 }

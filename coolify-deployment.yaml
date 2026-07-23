@@ -86,7 +86,6 @@ x-common-variables: &common-env # Database Configuration
   # Development & Testing
   TURBO_ENV_MODE: ${TURBO_ENV_MODE:-loose}
   PLAYGROUND_UNKEY_API_KEY: ${PLAYGROUND_UNKEY_API_KEY:-}
-  WORKSPACES_LOOKBACK_30: ${WORKSPACES_LOOKBACK_30:-}
   WORKSPACES_HIDE_URL: ${WORKSPACES_HIDE_URL:-}
 
   # Common Settings

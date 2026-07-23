@@ -1,0 +1,108 @@
+---
+title: "Why Is My Monitor Failing? A Troubleshooting Guide"
+description: "Your monitor says your site is down, but it loads fine in your browser. Here's how to tell a real outage from a false positive, the common causes, and how to fix each one."
+author: "openstatus"
+publishedAt: "2026-06-19"
+category: "fundamentals"
+faq:
+  - question: "Why does my monitor say my site is down when it loads fine for me?"
+    answer: "Almost always one of three things: the check is failing from a region you can't see from your browser, your firewall or bot-protection is blocking the probe's IP, or a single probe location had a transient network blip. Load the site from a different network and region, then check whether the failure is reported from one region or several — a single-region failure is usually a false positive."
+  - question: "What is a false positive in uptime monitoring?"
+    answer: "A false positive is an alert that fires when nothing was actually wrong — typically because a single probe location hit a transient network issue, a rate limit, or a bot-detection rule. The fix is to require multiple regions to fail before alerting, so isolated probe-side problems are ignored."
+  - question: "How do I stop getting false alerts?"
+    answer: "Require multi-region confirmation before alerting, set a realistic timeout (network round-trips from distant regions take longer than local requests), allowlist your monitor's probe IPs in your WAF and rate limiter, and make sure your assertions aren't too strict. openstatus retries a failing check before counting it as down, and only alerts once more than 50% of a monitor's regions agree the check has failed."
+  - question: "Why is my monitor failing intermittently?"
+    answer: "Intermittent failures usually point to rate limiting, an overloaded origin under certain traffic, bot-protection challenges that fire occasionally, DNS issues, or a timeout set too aggressively. Look at which regions fail and whether failures cluster at specific times or request volumes."
+  - question: "Could my monitor be failing because of SSL?"
+    answer: "Yes. An expired, misconfigured, or incomplete certificate chain causes checks to fail even when the server responds — browsers and probes both reject invalid certificates. If the failure started abruptly on a specific date, an expired certificate is a prime suspect."
+---
+
+Your phone buzzes: a monitor is down. You open the site in your browser and it loads instantly. So which is lying — the monitor, or your browser?
+
+Usually neither. The monitor is checking from a place, in a way, and with rules that differ from what your browser does. This guide walks through how to tell a real outage from a false positive, and the common causes for each.
+
+## First: is it a real outage or a false positive?
+
+Before debugging anything, answer one question — **how many regions are reporting the failure?**
+
+- **One region fails, the rest pass** → almost always a false positive. A transient network issue on the probe side, not your service. This is exactly why monitoring from a single location is unreliable.
+- **Multiple regions on different continents fail** → take it seriously. Something is genuinely wrong, even if it loads from your machine.
+
+Your browser is a single vantage point on a good network — it tells you very little about what a user in another region experiences. Trust the cross-region signal, not your own refresh.
+
+## Common causes of a failing monitor
+
+### 1. Bot protection or WAF blocking the probe
+
+Cloudflare, AWS WAF, and similar tools can challenge or block automated traffic — and monitoring requests look automated. The site loads for you and fails for the probe because the probe got a challenge page or a `403`.
+
+**Fix:** Allowlist your monitor's probe IP ranges in your WAF and bot-protection rules. Confirm you're asserting on the response you actually expect (a challenge page often returns a `200` with the wrong body).
+
+### 2. Rate limiting
+
+Frequent checks, or checks from several regions at once, can trip a rate limiter — especially if the monitored endpoint is also taking real traffic. Failures that appear under load or at specific times point here.
+
+**Fix:** Allowlist probe IPs, or monitor a dedicated health endpoint that isn't rate-limited.
+
+### 3. Timeout set too low
+
+A request from a region on the other side of the world takes longer than one from your laptop down the street. If your timeout is tuned to local latency, distant regions will "fail" on slow-but-working responses.
+
+**Fix:** Set a timeout that accounts for real cross-region round-trip time. If only your most distant regions fail, the timeout is the likely culprit.
+
+### 4. SSL/TLS certificate problems
+
+An expired certificate, a misconfigured or incomplete chain, or a hostname mismatch causes checks to fail even though the server is up. If the failure started abruptly on a specific date, suspect an expired certificate first.
+
+**Fix:** Check the certificate's expiry and chain. Monitor certificate expiry so you're warned before it bites.
+
+### 5. DNS issues
+
+If the monitor can't resolve your domain — or resolves it to the wrong place — every check fails before a single byte of HTTP is exchanged. DNS propagation, a lapsed record, or a registrar problem all show up this way.
+
+**Fix:** Verify the domain resolves correctly from multiple resolvers. A dedicated DNS monitor catches resolution problems your HTTP monitor only reports as a generic failure.
+
+### 6. Assertions that are too strict
+
+If your monitor asserts on an exact response body or a specific header, a harmless change — a new whitespace, a reworded message, an added field — fails the check even though the endpoint is healthy.
+
+**Fix:** Assert on what actually signals health: the status code, and a stable substring rather than the entire body.
+
+### 7. Redirects not followed
+
+If your endpoint now returns a `301`/`302` and the monitor isn't set to follow redirects, it records the redirect as a non-`200` failure.
+
+**Fix:** Enable follow-redirects, or point the monitor at the final URL.
+
+### 8. The IP allowlist you forgot about
+
+Internal services, staging, and APIs behind an allowlist will reject the probe outright. The service is up; the probe just isn't on the guest list.
+
+**Fix:** Allowlist probe IPs, or use a [private location](/docs/concepts/private-locations) so the check runs inside your network.
+
+## How openstatus reduces false positives
+
+The single biggest source of false alerts is the single-location check. openstatus addresses it by design:
+
+- **Multi-region by default** — checks run from up to 28 regions, in parallel.
+- **Retry before counting a failure** — a failing check is retried before it's recorded as down, so a one-off network hiccup never reaches the alerting stage.
+- **Majority confirmation before alerting** — more than 50% of the regions running a monitor have to fail before it pages you. An isolated probe-side blip in one or two regions is ignored.
+- **The right check type** — HTTP, TCP, and DNS monitors so resolution and connectivity problems are reported as what they are, not as a vague failure.
+- **Assertions and thresholds** — assert on status, latency, headers, or body so "healthy" means what you decide it means.
+
+A monitor that cries wolf gets muted, and a muted monitor is worse than no monitor. The goal isn't to alert on every blip — it's to alert when something is genuinely, reproducibly wrong.
+
+## Related Resources
+
+- [What Is Uptime Monitoring?](/guides/what-is-uptime-monitoring)
+- [Why Uptime Percentage Is Misleading](/guides/why-uptime-percentage-is-misleading)
+- [HTTP Headers for Monitoring](/guides/http-headers)
+- [What Is Synthetic Monitoring?](/guides/what-is-synthetic-monitoring)
+
+---
+
+**openstatus checks from up to 28 regions and only alerts when they agree** — fewer false positives, real outages caught fast. Open-source, free to start.
+
+<ButtonLink href="https://app.openstatus.dev?ref=guide-monitor-failing">Try openstatus free</ButtonLink>
+
+---

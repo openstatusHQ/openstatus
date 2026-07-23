@@ -1,5 +1,11 @@
 "use client";
 
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
+import type {
+  StatusBarData,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
@@ -9,15 +15,9 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
-import { formatDistanceToNowStrict } from "date-fns";
-import { InfoIcon } from "lucide-react";
+import { formatDistanceToNowStrict, subDays } from "date-fns";
+import { ArrowUpRight, InfoIcon } from "lucide-react";
 import { useState } from "react";
-import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
-import type {
-  StatusBarData,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
-import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
 
 // ============================================================================
 // Layout Components
@@ -118,7 +118,7 @@ export function StatusComponentHeader({
   return (
     <div
       data-slot="status-component-header"
-      className={cn("flex items-center justify-between", className)}
+      className={cn("flex items-center justify-between gap-2", className)}
       {...props}
     >
       {children}
@@ -156,7 +156,7 @@ export function StatusComponentHeaderLeft({
   return (
     <div
       data-slot="status-component-header-left"
-      className={cn("flex items-center gap-2", className)}
+      className={cn("flex min-w-0 items-center gap-2 truncate", className)}
       {...props}
     >
       {children}
@@ -268,7 +268,7 @@ export function StatusComponentTitle({
     <div
       data-slot="status-component-title"
       className={cn(
-        "truncate font-medium font-mono text-base text-foreground leading-5",
+        "text-foreground truncate font-mono text-base leading-5 font-medium",
         className,
       )}
       {...props}
@@ -327,7 +327,7 @@ export function StatusComponentDescription({
           className="rounded-full"
           {...props}
         >
-          <InfoIcon className="size-4 text-muted-foreground" />
+          <InfoIcon className="text-muted-foreground size-4" />
         </TooltipTrigger>
         <TooltipContent>
           <p>{children}</p>
@@ -410,16 +410,17 @@ export function StatusComponentFooter({
   data: StatusBarData[];
   isLoading?: boolean;
 }) {
+  const labels = useStatusBlocksLabels();
   return (
     <div
       data-slot="status-component-footer"
-      className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none"
+      className="text-muted-foreground flex flex-row items-center justify-between font-mono text-xs leading-none"
     >
       <div>
         {isLoading ? (
           <Skeleton className="h-3 w-18" />
         ) : data.length > 0 ? (
-          formatDistanceToNowStrict(new Date(data[0].day), {
+          formatDistanceToNowStrict(subDays(new Date(), data.length), {
             unit: "day",
             addSuffix: true,
           })
@@ -427,7 +428,7 @@ export function StatusComponentFooter({
           "-"
         )}
       </div>
-      <div>today</div>
+      <div>{labels.today}</div>
     </div>
   );
 }
@@ -462,7 +463,7 @@ export function StatusComponentUptime({
     <div
       data-slot="status-component-uptime"
       className={cn(
-        "font-mono text-foreground/80 text-sm leading-none",
+        "text-foreground/80 font-mono text-sm leading-none",
         className,
       )}
       {...props}
@@ -498,6 +499,50 @@ export function StatusComponentUptimeSkeleton({
 }: React.ComponentProps<typeof Skeleton>) {
   return <Skeleton className={cn("h-4 w-16", className)} {...props} />;
 }
+
+/**
+ * StatusComponentLatency - Latency chip shown next to the monitor title.
+ *
+ * Presentational only; wrap in the app's link primitive to navigate to the
+ * monitor page. The caller supplies the label text (e.g. "92ms p75").
+ *
+ * @see StatusComponentLatencySkeleton - For loading state
+ */
+export function StatusComponentLatency({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="status-component-latency"
+      className={cn(
+        "text-muted-foreground flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-xs leading-none",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <ArrowUpRight className="size-3" />
+    </div>
+  );
+}
+StatusComponentLatency.displayName = "StatusComponentLatency";
+
+/**
+ * StatusComponentLatencySkeleton - Loading skeleton sized to the latency chip.
+ *
+ * @see StatusComponentLatency - For the actual chip
+ */
+export function StatusComponentLatencySkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
+  return (
+    <Skeleton className={cn("h-5 w-16 rounded-md", className)} {...props} />
+  );
+}
+StatusComponentLatencySkeleton.displayName = "StatusComponentLatencySkeleton";
 
 /**
  * StatusComponentStatus - Automatic status label display
@@ -540,6 +585,7 @@ export function StatusComponentStatus({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const labels = useStatusBlocksLabels();
   return (
     <div
       data-slot="status-component-status"
@@ -554,16 +600,16 @@ export function StatusComponentStatus({
       {...props}
     >
       <span className="hidden group-data-[variant=success]/component:block">
-        {systemStatusLabels.success.short}
+        {labels.systemStatus.success.short}
       </span>
       <span className="hidden group-data-[variant=degraded]/component:block">
-        {systemStatusLabels.degraded.short}
+        {labels.systemStatus.degraded.short}
       </span>
       <span className="hidden group-data-[variant=error]/component:block">
-        {systemStatusLabels.error.short}
+        {labels.systemStatus.error.short}
       </span>
       <span className="hidden group-data-[variant=info]/component:block">
-        {systemStatusLabels.info.short}
+        {labels.systemStatus.info.short}
       </span>
     </div>
   );

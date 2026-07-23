@@ -30,7 +30,7 @@ export default function TelegramQRCode({
       ) : token ? (
         <QRCode data={qrURL} className="overflow-hidden rounded-md" />
       ) : null}
-      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         {isLoading ? (
           "Generating QR Code..."
         ) : isPolling ? (

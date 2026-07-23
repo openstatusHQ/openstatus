@@ -1,5 +1,12 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { Check, Copy } from "lucide-react";
+
 import {
   DataTableSheet,
   DataTableSheetContent,
@@ -7,12 +14,7 @@ import {
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import type { RouterOutputs } from "@openstatus/api";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
+
 import { DataTableBasics } from "./data-table-basics";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
@@ -21,10 +23,12 @@ export function Sheet({
   data,
   privateLocations,
   onClose,
+  showCopyUrl = true,
 }: {
   data: ResponseLog | null;
   privateLocations?: PrivateLocation[];
   onClose: () => void;
+  showCopyUrl?: boolean;
 }) {
   const { copy, isCopied } = useCopyToClipboard();
   if (!data) return null;
@@ -36,22 +40,26 @@ export function Sheet({
           <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
         </DataTableSheetHeader>
         <DataTableBasics data={data} privateLocations={privateLocations} />
-        <Separator />
-        <DataTableSheetFooter>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                copy(window.location.href, {
-                  withToast: false,
-                });
-              }
-            }}
-          >
-            Copy Request Log URL
-            {isCopied ? <Check /> : <Copy />}
-          </Button>
-        </DataTableSheetFooter>
+        {showCopyUrl ? (
+          <>
+            <Separator />
+            <DataTableSheetFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    copy(window.location.href, {
+                      withToast: false,
+                    });
+                  }
+                }}
+              >
+                Copy Request Log URL
+                {isCopied ? <Check /> : <Copy />}
+              </Button>
+            </DataTableSheetFooter>
+          </>
+        ) : null}
       </DataTableSheetContent>
     </DataTableSheet>
   );

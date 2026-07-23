@@ -1,12 +1,13 @@
+import { appRouter, createTRPCContext } from "@openstatus/api";
+import { createTRPCOnError } from "@openstatus/api/src/trpc-errors";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
-import { createOnError, guardTRPCSource } from "@/trpc/shared";
-import { createTRPCContext } from "@openstatus/api";
-import { lambdaRouter } from "@openstatus/api/src/lambda";
+import { guardTRPCSource } from "../../../../../trpc/shared";
 
-// Stripe is incompatible with Edge runtimes due to using Node.js events
-// export const runtime = "edge";
+// Runs on the Node.js runtime (Vercel Fluid compute). The whole tRPC surface
+// is served here — several routers pull Node-only deps (@slack/web-api, email
+// and notification SDKs) that are not Edge-safe.
 
 const handler = (req: NextRequest) => {
   const blocked = guardTRPCSource(req);
@@ -14,10 +15,10 @@ const handler = (req: NextRequest) => {
 
   return fetchRequestHandler({
     endpoint: "/api/trpc/lambda",
-    router: lambdaRouter,
+    router: appRouter,
     req: req,
     createContext: () => createTRPCContext({ req }),
-    onError: createOnError("lambda"),
+    onError: createTRPCOnError("lambda"),
   });
 };
 

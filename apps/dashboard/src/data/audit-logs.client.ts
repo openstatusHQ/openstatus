@@ -1,4 +1,3 @@
-import { formatMilliseconds } from "@/lib/formatter";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { getRegionInfo } from "@openstatus/regions";
 import {
@@ -8,6 +7,8 @@ import {
   Send,
   Siren,
 } from "lucide-react";
+
+import { formatMilliseconds } from "@/lib/formatter";
 
 export const config = {
   "incident.created": {

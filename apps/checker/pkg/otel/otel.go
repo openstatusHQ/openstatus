@@ -103,6 +103,16 @@ func recordErrorCounter(ctx context.Context, meter metric.Meter, att metric.Meas
 	counter.Add(ctx, 1, att)
 }
 
+func recordStatusCounter(ctx context.Context, meter metric.Meter, att metric.MeasurementOption) {
+	counter, err := meter.Int64Counter("openstatus.status", metric.WithDescription("Status of the check"))
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Error setting up counter")
+		return
+	}
+
+	counter.Add(ctx, 1, att)
+}
+
 func RecordHTTPMetrics(ctx context.Context, req request.HttpCheckerRequest, result checker.Response, region string) {
 	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
 		att := metric.WithAttributes(
@@ -116,12 +126,7 @@ func RecordHTTPMetrics(ctx context.Context, req request.HttpCheckerRequest, resu
 			return
 		}
 
-		status, err := meter.Int64Counter("openstatus.status", metric.WithDescription("Status of the check"))
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("Error setting up counter")
-		}
-
-		status.Add(ctx, 1, att)
+		recordStatusCounter(ctx, meter, att)
 
 		timings := []struct {
 			name        string
@@ -144,6 +149,26 @@ func RecordHTTPMetrics(ctx context.Context, req request.HttpCheckerRequest, resu
 	})
 }
 
+func RecordDNSMetrics(ctx context.Context, req request.DNSCheckerRequest, latency int64, isError bool, region string) {
+	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
+		att := metric.WithAttributes(
+			attribute.String("openstatus.probes", region),
+			attribute.String("openstatus.target", req.URI),
+		)
+
+		if isError {
+			recordErrorCounter(ctx, meter, att)
+			return
+		}
+
+		recordStatusCounter(ctx, meter, att)
+
+		if err := recordGauge(ctx, meter, "openstatus.dns.request.duration", "Duration of the check", float64(latency), att); err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("metric", "openstatus.dns.request.duration").Msg("Error creating gauge")
+		}
+	})
+}
+
 func RecordTCPMetrics(ctx context.Context, req request.TCPCheckerRequest, result checker.TCPResponse, region string) {
 	withMeter(ctx, req.OtelConfig.Endpoint, req.OtelConfig.Headers, func(meter metric.Meter) {
 		att := metric.WithAttributes(
@@ -155,6 +180,8 @@ func RecordTCPMetrics(ctx context.Context, req request.TCPCheckerRequest, result
 			recordErrorCounter(ctx, meter, att)
 			return
 		}
+
+		recordStatusCounter(ctx, meter, att)
 
 		timings := []struct {
 			name        string

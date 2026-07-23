@@ -2,6 +2,7 @@
   "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts"],
   "compilerOptions": {
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["bun"]
   }
 }

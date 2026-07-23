@@ -2,16 +2,18 @@
   "name": "@openstatus/locales",
   "version": "1.0.0",
   "description": "Shared locale registry for OpenStatus",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.ts",
-  "scripts": {},
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
-    "date-fns": "3.6.0"
+    "date-fns": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "typescript": "catalog:"
+  }
 }

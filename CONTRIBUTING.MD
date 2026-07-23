@@ -23,6 +23,8 @@ If you have ideas for new features or improvements, you can submit a GitHub issu
 
 ## Submitting Changes
 
+For local dashboard setup, see [apps/dashboard/README.md](apps/dashboard/README.md).
+
 To contribute code changes, follow these steps:
 
 1. Fork the repository and create a new branch for your changes.

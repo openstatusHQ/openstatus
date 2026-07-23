@@ -1,7 +1,8 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
-import { Container, Img, Link, Section } from "@react-email/components";
 import type * as React from "react";
+import { Container, Img, Link, Section } from "react-email";
+
 import { Footer } from "./footer";
 import { styles } from "./styles";
 

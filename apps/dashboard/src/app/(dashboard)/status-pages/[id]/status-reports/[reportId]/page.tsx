@@ -1,5 +1,11 @@
 "use client";
 
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -15,14 +21,18 @@ import {
 import { FormCardGroup } from "@/components/forms/form-card";
 import { FormSheetWithDirtyProtection } from "@/components/forms/form-sheet";
 import type { FormValues } from "@/components/forms/status-report-update/form";
-import { FormStatusReportUpdateCard } from "@/components/forms/status-report-update/form-status-report";
+import {
+  FormStatusReportUpdateCard,
+  type FormValues as UpdateCardFormValues,
+} from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
-import { getNextStatus } from "@/data/status-report-updates.client";
+import {
+  defaultComponentImpacts,
+  getNextStatus,
+  impactsEqual,
+  toCreateStatusReportUpdateInput,
+} from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { reportId } = useParams<{ id: string; reportId: string }>();
@@ -34,14 +44,14 @@ export default function Page() {
   );
 
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
 
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
       onSuccess: (update) => {
         if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          sendStatusReportUpdateMutation.mutate({ id: update.id });
         }
         refetch();
         queryClient.invalidateQueries({
@@ -69,6 +79,12 @@ export default function Page() {
     .map((component) => component.name)
     .join(", ");
 
+  const reportHasImpacts = statusReport.updates.some(
+    (u) => u.componentImpacts.length > 0,
+  );
+  const currentImpacts = currentImpactsFromUpdates(statusReport.updates);
+  const nextStatus = getNextStatus(statusReport.status);
+
   return (
     <SectionGroup>
       <Section>
@@ -89,16 +105,25 @@ export default function Page() {
           <EmptyStateDescription>Status Page Report</EmptyStateDescription>
           <FormSheetStatusReportUpdate
             defaultValues={{
-              status: getNextStatus(statusReport.status),
+              status: nextStatus,
+              componentImpacts: defaultComponentImpacts({
+                components: statusReport.pageComponents,
+                currentImpacts,
+                nextStatus,
+              }),
             }}
+            components={statusReport.pageComponents.map((c) => ({
+              id: c.id,
+              name: c.name,
+            }))}
             onSubmit={async (values: FormValues) => {
-              await createStatusReportUpdateMutation.mutateAsync({
-                statusReportId: statusReport.id,
-                message: values.message,
-                status: values.status,
-                date: values.date,
-                notifySubscribers: values.notifySubscribers,
-              });
+              await createStatusReportUpdateMutation.mutateAsync(
+                toCreateStatusReportUpdateInput({
+                  statusReportId: statusReport.id,
+                  values,
+                  reportHasImpacts,
+                }),
+              );
             }}
           >
             <Button size="sm">
@@ -115,17 +140,33 @@ export default function Page() {
                 id={`update-form-${update.id}`}
                 index={index}
                 update={update}
+                components={statusReport.pageComponents.map((c) => ({
+                  id: c.id,
+                  name: c.name,
+                }))}
                 defaultValues={{
                   status: update.status,
                   message: update.message,
                   date: update.date,
+                  componentImpacts: update.componentImpacts.map((ci) => ({
+                    pageComponentId: ci.pageComponentId,
+                    impact: ci.impact,
+                  })),
                 }}
-                onSubmit={async (values: FormValues) => {
+                onSubmit={async (values: UpdateCardFormValues) => {
                   await updateStatusReportUpdateMutation.mutateAsync({
                     id: update.id,
                     statusReportId: statusReport.id,
                     message: values.message,
                     status: values.status,
+                    // replace-set semantics: only send when actually edited,
+                    // so untouched (incl. legacy) updates keep their rows
+                    componentImpacts: impactsEqual(
+                      values.componentImpacts ?? [],
+                      update.componentImpacts,
+                    )
+                      ? undefined
+                      : values.componentImpacts,
                     date: values.date,
                   });
                 }}

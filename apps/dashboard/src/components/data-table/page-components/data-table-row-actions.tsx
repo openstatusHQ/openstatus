@@ -1,11 +1,12 @@
 "use client";
 
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/page-components.client";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/page-components.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 type PageComponent = RouterOutputs["pageComponent"]["list"][number];
 

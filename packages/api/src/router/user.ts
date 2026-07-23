@@ -1,78 +1,27 @@
-import { and, eq, isNull, ne } from "@openstatus/db";
-import {
-  account,
-  session,
-  user,
-  usersToWorkspaces,
-} from "@openstatus/db/src/schema";
+import { deleteAccount, getUser } from "@openstatus/services/user";
 
-import { TRPCError } from "@trpc/server";
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
-  get: protectedProcedure.query(async (opts) => {
-    return await opts.ctx.db
-      .select()
-      .from(user)
-      .where(and(eq(user.id, opts.ctx.user.id), isNull(user.deletedAt)))
-      .get();
+  get: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      return await getUser({
+        ctx: toServiceCtx(ctx),
+        input: { userId: ctx.user.id },
+      });
+    } catch (err) {
+      toTRPCError(err);
+    }
   }),
 
-  deleteAccount: protectedProcedure.mutation(async (opts) => {
-    const userId = opts.ctx.user.id;
-
-    // Check if user owns any workspace with a paid plan
-    const ownedWorkspaces = await opts.ctx.db.query.usersToWorkspaces.findMany({
-      where: and(
-        eq(usersToWorkspaces.userId, userId),
-        eq(usersToWorkspaces.role, "owner"),
-      ),
-      with: {
-        workspace: true,
-      },
-    });
-
-    const hasPaidWorkspace = ownedWorkspaces.some(
-      ({ workspace }) => workspace.plan && workspace.plan !== "free",
-    );
-
-    if (hasPaidWorkspace) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message:
-          "You must cancel your subscription before deleting your account.",
-      });
+  deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
+    try {
+      // `userId` is derived from `ctx.actor` inside the service — no
+      // input needed.
+      await deleteAccount({ ctx: toServiceCtx(ctx) });
+    } catch (err) {
+      toTRPCError(err);
     }
-
-    await opts.ctx.db.transaction(async (tx) => {
-      // Remove from non-owned workspaces
-      await tx
-        .delete(usersToWorkspaces)
-        .where(
-          and(
-            eq(usersToWorkspaces.userId, userId),
-            ne(usersToWorkspaces.role, "owner"),
-          ),
-        );
-
-      // Delete sessions
-      await tx.delete(session).where(eq(session.userId, userId));
-
-      // Delete OAuth accounts
-      await tx.delete(account).where(eq(account.userId, userId));
-
-      // Soft delete user
-      await tx
-        .update(user)
-        .set({
-          deletedAt: new Date(),
-          email: "",
-          firstName: "",
-          lastName: "",
-          photoUrl: "",
-          name: "",
-        })
-        .where(eq(user.id, userId));
-    });
   }),
 });

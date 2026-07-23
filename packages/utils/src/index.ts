@@ -12,6 +12,7 @@ export {
   MONITOR_STATUSES,
   MONITOR_JOB_TYPES,
 } from "./constants";
+export { yieldMany, iteratorToStream } from "./stream";
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0

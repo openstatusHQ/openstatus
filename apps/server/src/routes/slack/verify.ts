@@ -1,5 +1,6 @@
-import { env } from "@/env";
 import { createMiddleware } from "hono/factory";
+
+import { env } from "@/env";
 
 export const verifySlackSignature = createMiddleware<{
   Variables: { slackBody: unknown };
@@ -58,7 +59,12 @@ export const verifySlackSignature = createMiddleware<{
   } else if (contentType.includes("application/x-www-form-urlencoded")) {
     const params = new URLSearchParams(rawBody);
     const payload = params.get("payload");
-    c.set("slackBody", payload ? JSON.parse(payload) : {});
+    // Interactions arrive as a `payload` field; slash commands arrive as the
+    // flat form fields themselves.
+    c.set(
+      "slackBody",
+      payload ? JSON.parse(payload) : Object.fromEntries(params),
+    );
   }
 
   await next();

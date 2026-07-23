@@ -1,6 +1,14 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { expect } from "@std/expect";
+import { beforeEach, describe, it } from "@std/testing/bdd";
+
 import { InstatusFetcher } from "../../src/fetchers/instatus";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("InstatusFetcher", () => {
   let fetcher: InstatusFetcher;
@@ -89,21 +97,22 @@ describe("InstatusFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
-      expect(global.fetch).toHaveBeenCalledWith(
-        "https://test.instatus.com/summary.json",
+      const call = fetchMock.calls[fetchMock.calls.length - 1];
+      expect(call.args[0]).toBe("https://test.instatus.com/summary.json");
+      expect(call.args[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -136,14 +145,14 @@ describe("InstatusFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("Service Degraded");
@@ -173,14 +182,14 @@ describe("InstatusFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("Under Maintenance");
@@ -214,22 +223,21 @@ describe("InstatusFetcher", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await fetcher.fetch(entry);
+      await runFetcher(fetcher, entry);
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        "https://custom.endpoint.com/status.json",
-        expect.any(Object),
-      );
+      const call = fetchMock.calls[fetchMock.calls.length - 1];
+      expect(call.args[0]).toBe("https://custom.endpoint.com/status.json");
+      expect(call.args[1]).toEqual(expect.any(Object));
     });
 
-    it("should throw error on non-200 response", async () => {
+    it("should fail with FetchError on non-200 response (after retries)", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -239,7 +247,7 @@ describe("InstatusFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 500,
@@ -247,12 +255,12 @@ describe("InstatusFetcher", () => {
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
-        "HTTP 500: Internal Server Error",
-      );
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(500);
     });
 
-    it("should throw error on invalid JSON schema", async () => {
+    it("should fail with FetchError on invalid JSON schema", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -262,14 +270,16 @@ describe("InstatusFetcher", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({ invalid: "data" }),
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.cause).toBeInstanceOf(Error);
     });
   });
 });

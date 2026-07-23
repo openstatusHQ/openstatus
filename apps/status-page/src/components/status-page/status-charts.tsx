@@ -40,7 +40,7 @@ export function StatusChartTitle({
   return (
     <div
       data-slot="status-chart-title"
-      className={cn("font-medium text-base text-foreground", className)}
+      className={cn("text-foreground text-base font-medium", className)}
       {...props}
     >
       {children}

@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { count, eq, schema } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
@@ -8,8 +7,6 @@ import {
   workspace,
   workspacePlans,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import {
   addons,
@@ -18,6 +15,8 @@ import {
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
 import type { Stripe } from "stripe";
+import { z } from "zod";
+
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
@@ -91,6 +90,7 @@ export const stripeRouter = createTRPCRouter({
   getCheckoutSession: protectedProcedure
     .input(
       z.object({
+        currency: z.string(),
         workspaceSlug: z.string(),
         plan: z.enum(workspacePlans),
         interval: z.enum(billingIntervals).default("monthly"),
@@ -99,7 +99,6 @@ export const stripeRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
       const result = await opts.ctx.db
         .select()
@@ -151,6 +150,7 @@ export const stripeRouter = createTRPCRouter({
       const priceId = getPriceIdForPlan(opts.input.plan, opts.input.interval);
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
+        currency: opts.input.currency,
         customer: stripeId,
         customer_update: {
           name: "auto",
@@ -289,8 +289,6 @@ export const stripeRouter = createTRPCRouter({
         opts.input.feature,
         newValue,
       );
-
-      console.log("new Limits");
 
       await opts.ctx.db
         .update(workspace)

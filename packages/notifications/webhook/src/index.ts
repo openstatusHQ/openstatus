@@ -1,5 +1,6 @@
 import type { NotificationContext } from "@openstatus/notification-base";
 import { assertSafeUrl, transformHeaders } from "@openstatus/utils";
+
 import { PayloadSchema, WebhookSchema } from "./schema";
 
 export const sendAlert = async ({

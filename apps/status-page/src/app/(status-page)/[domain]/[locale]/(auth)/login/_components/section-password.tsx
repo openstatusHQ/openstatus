@@ -1,19 +1,20 @@
 "use client";
 
-import {
-  Section,
-  SectionDescription,
-  SectionHeader,
-  SectionTitle,
-} from "@/components/content/section";
-import { FormPassword } from "@/components/forms/form-password";
-import { createProtectedCookieKey } from "@/lib/protected";
-import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation } from "@tanstack/react-query";
 import { useExtracted } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+
+import {
+  Section,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "../../../../../../../components/content/section";
+import { FormPassword } from "../../../../../../../components/forms/form-password";
+import { createProtectedCookieKey } from "../../../../../../../lib/protected";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 
 export function SectionPassword() {
   const t = useExtracted();
@@ -27,7 +28,7 @@ export function SectionPassword() {
   );
 
   return (
-    <Section className="m-auto w-full max-w-lg rounded-lg border bg-card p-4">
+    <Section className="bg-card m-auto w-full max-w-lg rounded-lg border p-4">
       <SectionHeader>
         <SectionTitle>{t("Protected Page")}</SectionTitle>
         <SectionDescription>

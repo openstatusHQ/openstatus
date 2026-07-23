@@ -1,13 +1,12 @@
-import { expect, test } from "bun:test";
+import { afterEach, expect, mock, test } from "@openstatus/test-utils";
 
-import { afterEach, mock } from "bun:test";
 import { app } from "@/index";
+
 import { TriggerResult } from "../schema";
 
 const mockFetch = mock();
 
 global.fetch = mockFetch as unknown as typeof fetch;
-mock.module("node-fetch", () => mockFetch);
 
 afterEach(() => {
   mockFetch.mockReset();
@@ -143,7 +142,7 @@ test("run TCP monitor with valid id should return 200", async () => {
   }
 });
 
-test.todo(
+test.ignore(
   "run monitor with multiple regions should return array of results",
   async () => {
     mockFetch.mockReturnValue(

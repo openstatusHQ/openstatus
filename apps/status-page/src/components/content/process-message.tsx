@@ -19,14 +19,14 @@ export function ProcessMessage({ value }: { value: string }) {
         ul: (props: HTMLAttributes<HTMLUListElement>) => {
           return (
             <ul
-              className="list-inside list-disc marker:text-muted-foreground/50"
+              className="marker:text-muted-foreground/50 list-inside list-disc"
               {...props}
             />
           );
         },
         ol: (_props: HTMLAttributes<HTMLOListElement>) => {
           return (
-            <ol className="list-inside list-decimal marker:text-muted-foreground/50" />
+            <ol className="marker:text-muted-foreground/50 list-inside list-decimal" />
           );
         },
         a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => {
@@ -34,7 +34,7 @@ export function ProcessMessage({ value }: { value: string }) {
             <a
               target="_blank"
               rel="noreferrer"
-              className="rounded-sm underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="focus-visible:ring-ring/50 rounded-sm underline outline-none focus-visible:ring-[3px]"
               {...props}
             />
           );

@@ -1,6 +1,18 @@
 "use client";
 
-import { StatusBlankEvents } from "@/components/status-page/status-blank";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+
+import { StatusBlankEvents } from "../../../../../../../components/status-page/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -13,19 +25,9 @@ import {
   StatusEventTimelineReport,
   StatusEventTitle,
   StatusEventTitleCheck,
-} from "@/components/status-page/status-events";
-import { useTRPC } from "@/lib/trpc/client";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { useExtracted } from "next-intl";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
+} from "../../../../../../../components/status-page/status-events";
+import { updatesWithImpactChanges } from "../../../../../../../lib/report-impacts";
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
@@ -99,8 +101,7 @@ export default function Page() {
                         </StatusEventAffected>
                       ) : null}
                       <StatusEventTimelineReport
-                        updates={report.statusReportUpdates}
-                        reportId={report.id}
+                        updates={updatesWithImpactChanges(report)}
                       />
                     </StatusEventContent>
                   </Link>

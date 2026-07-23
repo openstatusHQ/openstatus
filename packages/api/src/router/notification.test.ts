@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";
@@ -18,7 +19,7 @@ beforeAll(async () => {
       provider: "email",
       name: "workspace 2 idor test notification",
       data: '{"email":"test@openstatus.dev"}',
-      workspaceId: 2,
+      workspaceId: 3,
     })
     .returning()
     .get();

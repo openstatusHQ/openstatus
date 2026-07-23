@@ -1,6 +1,7 @@
 "use client";
 
-import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -9,19 +10,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-
-import { Link } from "@/components/common/link";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
-import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
@@ -29,6 +19,15 @@ import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { CheckboxTree } from "@/components/ui/checkbox-tree";
+import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   name: z.string(),
@@ -162,7 +161,7 @@ export function FormDiscord({
                 <FormDescription>
                   Enter the webhook URL to your Discord channel.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/reference/notification/#discord"
+                    href="https://www.openstatus.dev/docs/reference/notification/#discord"
                     rel="noreferrer"
                     target="_blank"
                   >
@@ -195,39 +194,22 @@ export function FormDiscord({
                 <FormDescription>
                   Select the monitors you want to notify.
                 </FormDescription>
-                <div className="grid gap-3">
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        id="all"
-                        checked={field.value?.length === monitors.length}
-                        onCheckedChange={(checked) => {
-                          field.onChange(
-                            checked ? monitors.map((m) => m.id) : [],
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <Label htmlFor="all">Select all</Label>
-                  </div>
-                  {monitors.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id={String(item.id)}
-                          checked={field.value?.includes(item.id)}
-                          onCheckedChange={(checked) => {
-                            const newValue = checked
-                              ? [...(field.value || []), item.id]
-                              : field.value?.filter((id) => id !== item.id);
-                            field.onChange(newValue);
-                          }}
-                        />
-                      </FormControl>
-                      <Label htmlFor={String(item.id)}>{item.name}</Label>
-                    </div>
-                  ))}
-                </div>
+                <FormControl>
+                  <CheckboxTree
+                    items={[
+                      {
+                        id: -1,
+                        label: "Select all",
+                        children: monitors.map((m) => ({
+                          id: m.id,
+                          label: m.name,
+                        })),
+                      },
+                    ]}
+                    value={field.value ?? []}
+                    onValueChange={field.onChange}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

@@ -1,6 +1,9 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { COLOR_DECIMALS } from "@openstatus/notification-base";
+import { expect } from "@std/expect";
+import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
+import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
+
 import {
   sendAlert,
   sendDegraded,
@@ -8,21 +11,18 @@ import {
   sendTestDiscordMessage,
 } from "./index";
 
+const ok = (): Promise<Response> =>
+  Promise.resolve(new Response(null, { status: 200 }));
+
 describe("Discord Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  let fetchMock: any = undefined;
+  let fetchMock: Stub<typeof globalThis>;
 
   beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = stub(globalThis, "fetch", ok);
   });
 
   afterEach(() => {
-    if (fetchMock) {
-      fetchMock.mockRestore();
-    }
+    fetchMock.restore();
   });
 
   const createMockMonitor = () => ({
@@ -62,8 +62,8 @@ describe("Discord Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(
       "https://discord.com/api/webhooks/123456789/abcdefgh",
     );
@@ -94,8 +94,8 @@ describe("Discord Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is recovered");
@@ -118,8 +118,8 @@ describe("Discord Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is degraded");
@@ -131,8 +131,8 @@ describe("Discord Notifications", () => {
     const webhookUrl = "https://discord.com/api/webhooks/123456789/abcdefgh";
     await sendTestDiscordMessage(webhookUrl);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
+    assertSpyCalls(fetchMock, 1);
+    const callArgs = fetchMock.calls[0].args;
     expect(callArgs[0]).toBe(webhookUrl);
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
@@ -141,11 +141,12 @@ describe("Discord Notifications", () => {
 
   test("Send Test Discord Message with empty webhookUrl", async () => {
     expect(sendTestDiscordMessage("")).rejects.toThrow();
-    expect(fetchMock).not.toHaveBeenCalled();
+    assertSpyCalls(fetchMock, 0);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.mockImplementation(() =>
+    fetchMock.restore();
+    fetchMock = stub(globalThis, "fetch", () =>
       Promise.reject(new Error("Network error")),
     );
 

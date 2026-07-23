@@ -1,8 +1,10 @@
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { workspace } from "@openstatus/db/src/schema/workspaces";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+
 import type { whoamiApi } from ".";
 import { WorkspaceSchema } from "./schema";
 
@@ -28,6 +30,7 @@ const getRoute = createRoute({
 export function registerGetWhoami(api: typeof whoamiApi) {
   return api.openapi(getRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
+    const apiKey = c.get("apiKey");
 
     const _workspace = await db
       .select()
@@ -42,7 +45,21 @@ export function registerGetWhoami(api: typeof whoamiApi) {
       });
     }
 
-    const data = WorkspaceSchema.parse(_workspace);
+    // Filter `'*'` out of the public response. The schema's enum would
+    // otherwise reject the parse — we don't expose super-admin scope
+    // even when the actor holds it.
+    const publicScopes = apiKey.scopes.filter(
+      (s): s is "read" | "write" => s === "read" || s === "write",
+    );
+
+    const data = WorkspaceSchema.parse({
+      ..._workspace,
+      actor: {
+        type: "apiKey",
+        keyId: apiKey.id,
+        scopes: publicScopes,
+      },
+    });
     return c.json(data, 200);
   });
 }

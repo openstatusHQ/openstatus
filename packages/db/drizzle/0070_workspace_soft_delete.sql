@@ -1,0 +1,20 @@
+ALTER TABLE `workspace` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `users_to_workspaces` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `status_report` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `integration` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `page` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `notification` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `invitation` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `incident` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `monitor_tag` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `application` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `maintenance` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `check` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `monitor_run` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `private_location` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `monitor_group` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `api_key` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `page_component` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `page_component_groups` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `feedback` ADD `deleted_at` integer;--> statement-breakpoint
+ALTER TABLE `chat_session` ADD `deleted_at` integer;

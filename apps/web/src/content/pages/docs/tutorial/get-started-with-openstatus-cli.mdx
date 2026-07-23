@@ -1,0 +1,160 @@
+---
+category: Tutorials
+title: Get Started with openstatus CLI
+description: "Step-by-step tutorial to install and use the openstatus CLI for monitoring as code"
+---
+
+
+| | |
+|---|---|
+| **Time** | ~10 minutes |
+| **Level** | Intermediate |
+| **Prerequisites** | openstatus account, command-line experience, API token from your workspace (Settings → API) |
+
+In this tutorial, you'll use the openstatus CLI to manage your monitors as code. This lets you version-control your monitoring configuration, automate deployments, and implement GitOps workflows.
+
+By the end you'll have the openstatus CLI installed on your system, your monitors exported to a YAML configuration file, and a working sense of the monitoring-as-code workflow.
+
+<Image
+  src="/docs/tutorial/get-started-with-openstatus-cli/CLI.png"
+  alt="openstatus CLI in action showing monitor management"
+/>
+
+## Installation
+
+Install the openstatus CLI to manage your monitors directly from code.
+
+### macOS
+
+Using Homebrew (recommended):
+```bash
+brew install openstatusHQ/cli/openstatus --cask
+```
+
+Or using the install script:
+```bash
+curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash
+```
+
+### Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash
+```
+
+### Windows
+
+```powershell
+iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.ps1 | iex
+```
+
+### Verify installation
+
+Run the following command to confirm the CLI is installed:
+
+```bash
+openstatus --version
+```
+
+You should see output like:
+
+```
+openstatus version x.x.x
+```
+
+## Configure API authentication
+
+1. In your openstatus dashboard, go to **Settings → API Keys**.
+2. Click **Create API Key** and copy the value — you won't see it again after closing the dialog.
+3. Make it available to the CLI as an environment variable:
+
+```bash
+# macOS / Linux
+export OPENSTATUS_API_TOKEN=<your-api-token>
+```
+
+```powershell
+# Windows PowerShell
+$env:OPENSTATUS_API_TOKEN="<your-api-token>"
+```
+
+<Aside>Add the export to your shell profile (`~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish`) to persist across sessions. You can also pass the token per-command with `-t <your-api-token>` instead.</Aside>
+
+<Aside type="note">The CLI reads `OPENSTATUS_API_TOKEN`. The openstatus SDKs (Node.js, Python, PHP) read the same API key value from `OPENSTATUS_API_KEY` instead — you can set both to the same value if you use both tools.</Aside>
+
+## Import existing monitors
+
+Start by importing your existing monitors from your workspace to a YAML file:
+
+```bash
+openstatus monitors import
+```
+
+You should see output confirming the import:
+
+```
+Successfully imported X monitors to openstatus.yaml
+```
+
+This creates an `openstatus.yaml` file containing all your current monitors. This file becomes your single source of truth for monitoring configuration.
+
+**Checkpoint:** Open the `openstatus.yaml` file and verify it contains your monitors. You should see entries with your monitor names and URLs.
+
+## Manage monitors as code
+
+Now you can add, remove, or update monitors in the YAML file and apply your changes:
+
+```bash
+openstatus monitors apply
+```
+
+The CLI will show you a diff of changes before applying them, ensuring you're aware of what will be modified.
+
+## What you've accomplished
+
+- Installed the openstatus CLI
+- Configured API authentication
+- Imported monitors to a YAML file
+- Learned the monitoring-as-code workflow
+
+## Troubleshooting
+
+### "command not found: openstatus"
+
+**Cause:** The CLI binary is not in your PATH.
+
+**Fix (macOS/Homebrew):**
+```bash
+brew reinstall openstatusHQ/cli/openstatus --cask
+```
+
+**Fix (install script):** Ensure `~/.local/bin` is in your PATH:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### "unauthorized" or "invalid token" error
+
+**Cause:** Your API token is missing or incorrect.
+
+**Fix:**
+1. Verify the token is set: `echo $OPENSTATUS_API_TOKEN`
+2. Regenerate the token in your workspace settings (Settings → API)
+3. Make sure there are no extra spaces or newlines in the token value
+
+### "no monitors found" on import
+
+**Cause:** Your workspace has no monitors, or the token belongs to a different workspace.
+
+**Fix:** Create at least one monitor in the dashboard first, then retry the import.
+
+## What's next
+
+- **[Monitor your MCP server](/docs/guides/how-to-monitor-mcp-server)** — example of CLI-based monitor configuration.
+- **[Run synthetic tests in GitHub Actions](/docs/guides/how-to-run-synthetic-test-github-action)** — automate monitoring in your pipeline.
+
+### Learn more
+
+- **[Monitoring-as-code concept](/docs/concept/uptime-monitoring-as-code)** — why manage monitors as code.
+- **[CLI reference](/docs/reference/cli-reference)** — all available commands.
+- **[YAML configuration examples](https://github.com/openstatusHQ/cli-template)** — sample configurations.

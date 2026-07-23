@@ -1,10 +1,13 @@
 "use client";
 
-import { FormComponents } from "@/components/forms/components/form-components";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import type { PageConfiguration } from "@openstatus/db/src/schema";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+
+import { FormComponents } from "@/components/forms/components/form-components";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { FormCardGroup } from "../form-card";
 import { FormConfiguration } from "../status-page/form-configuration";
 import { FormImport, type ImportFormValues } from "./form-import";
@@ -12,6 +15,7 @@ import { FormImport, type ImportFormValues } from "./form-import";
 export function FormComponentsUpdate() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [formKey, setFormKey] = useState(0);
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -24,12 +28,24 @@ export function FormComponentsUpdate() {
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
+  // Remount the form after save. Newly-added components/groups get
+  // `Date.now()` placeholder ids (see `form-components.tsx`). The
+  // server returns real ids, but RHF only reads `defaultValues` on
+  // mount — without a remount the next save would round-trip the
+  // placeholders, causing the server's diff to treat real rows as
+  // "removed" (delete) and placeholders as "new" (create).
+  const refetchAndRemount = async (...refetches: Promise<unknown>[]) => {
+    await Promise.all(refetches);
+    // invalidate workspace to update the usage (getting-started checklist)
+    queryClient.invalidateQueries({
+      queryKey: trpc.workspace.get.queryKey(),
+    });
+    setFormKey((k) => k + 1);
+  };
+
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
-      onSuccess: () => {
-        refetch();
-        refetchComponents();
-      },
+      onSuccess: () => refetchAndRemount(refetch(), refetchComponents()),
     }),
   );
 
@@ -41,10 +57,8 @@ export function FormComponentsUpdate() {
 
   const importMutation = useMutation(
     trpc.import.run.mutationOptions({
-      onSuccess: async () => {
-        await Promise.all([refetch(), refetchComponents(), refetchMonitors()]);
-        setFormKey((k) => k + 1);
-      },
+      onSuccess: () =>
+        refetchAndRemount(refetch(), refetchComponents(), refetchMonitors()),
     }),
   );
 
@@ -108,25 +122,37 @@ export function FormComponentsUpdate() {
           await updateComponentsMutation.mutateAsync({
             pageId: Number.parseInt(id),
             components: values.components,
-            groups: values.groups.map(({ id: _groupId, ...rest }) => rest),
+            groups: values.groups,
           });
         }}
       />
       <FormConfiguration
+        hasMonitorComponents={pageComponents.some((c) => c.type === "monitor")}
         defaultValues={{
           configuration: statusPage.configuration ?? {},
         }}
         onSubmit={async (values) => {
           await updatePageConfigurationMutation.mutateAsync({
             id: Number.parseInt(id),
+            // `FormConfiguration` keeps its internal values loose
+            // (strings from radios/selects). Casts use `PageConfiguration`
+            // derived from the service input so the enum members stay in
+            // sync with `pageConfigurationSchema` — an invalid submit
+            // surfaces as a zod error from the router.
             configuration: {
               uptime:
                 typeof values.configuration.uptime === "boolean"
                   ? values.configuration.uptime
                   : values.configuration.uptime === "true",
-              value: values.configuration.value ?? "duration",
-              type: values.configuration.type ?? "absolute",
-              theme: values.configuration.theme ?? undefined,
+              value: (values.configuration.value ??
+                "duration") as PageConfiguration["value"],
+              type: (values.configuration.type ??
+                "absolute") as PageConfiguration["type"],
+              theme: (values.configuration.theme ??
+                undefined) as PageConfiguration["theme"],
+              days: (values.configuration.days
+                ? Number(values.configuration.days)
+                : undefined) as PageConfiguration["days"],
             },
           });
         }}

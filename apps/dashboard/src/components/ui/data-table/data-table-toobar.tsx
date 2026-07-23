@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
-import { DataTableViewOptions } from "@/components/ui/data-table/data-table-view-options";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Input } from "@openstatus/ui/components/ui/input";
-
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import { DataTableViewOptions } from "@/components/ui/data-table/data-table-view-options";
 
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;

@@ -17,20 +17,20 @@ export function DevelopmentIndicator() {
 
   return (
     <Portal.Root>
-      <div className="pointer-events-none fixed inset-0 z-[9999] border-2 border-destructive" />
+      <div className="border-destructive pointer-events-none fixed inset-0 z-[9999] border-2" />
       <div className="fixed inset-x-0 bottom-0 z-[9999] select-none">
         <div className="flex items-center justify-center">
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger>
-                <div className="w-fit rounded-t bg-destructive px-2 py-1 font-mono text-background text-xs">
+                <div className="bg-destructive text-background w-fit rounded-t px-2 py-1 font-mono text-xs">
                   In Beta
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
                 {!isMobile ? (
                   <p>
-                    Press <Kbd className="-me-0 ms-0">F</Kbd> key to provide
+                    Press <Kbd className="ms-0 -me-0">F</Kbd> key to provide
                     feedback.
                   </p>
                 ) : (

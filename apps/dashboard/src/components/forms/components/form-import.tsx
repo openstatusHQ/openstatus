@@ -1,16 +1,5 @@
 "use client";
 
-import { Note } from "@/components/common/note";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BetterstackIcon,
@@ -42,6 +31,19 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   provider: z.enum(["statuspage", "betterstack", "instatus"]),
@@ -189,7 +191,7 @@ export function FormImport({
                       defaultValue={field.value}
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
-                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                      <FormItem className="border-input has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]">
                         <FormControl>
                           <RadioGroupItem
                             value="statuspage"
@@ -197,14 +199,14 @@ export function FormImport({
                           />
                         </FormControl>
                         <StatuspageIcon
-                          className="size-4 shrink-0 text-foreground"
+                          className="text-foreground size-4 shrink-0"
                           aria-hidden="true"
                         />
-                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                        <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
                           Atlassian Statuspage
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                      <FormItem className="border-input has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]">
                         <FormControl>
                           <RadioGroupItem
                             value="betterstack"
@@ -212,14 +214,14 @@ export function FormImport({
                           />
                         </FormControl>
                         <BetterstackIcon
-                          className="size-4 shrink-0 text-foreground"
+                          className="text-foreground size-4 shrink-0"
                           aria-hidden="true"
                         />
-                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                        <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
                           Better Stack
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                      <FormItem className="border-input has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]">
                         <FormControl>
                           <RadioGroupItem
                             value="instatus"
@@ -227,14 +229,14 @@ export function FormImport({
                           />
                         </FormControl>
                         <InstatusIcon
-                          className="size-4 shrink-0 text-foreground"
+                          className="text-foreground size-4 shrink-0"
                           aria-hidden="true"
                         />
-                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                        <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
                           Instatus
                         </FormLabel>
                       </FormItem>
-                      <div className="col-span-1 self-end text-muted-foreground text-xs sm:place-self-end">
+                      <div className="text-muted-foreground col-span-1 self-end text-xs sm:place-self-end">
                         Missing a provider?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
                       </div>
@@ -271,10 +273,21 @@ export function FormImport({
                       <FormMessage />
                       <FormDescription>
                         {watchProvider === "betterstack"
-                          ? "Your Better Stack API token. Found in Better Stack \u2192 API tokens."
+                          ? "Your Better Stack API token. Found in Better Stack > API tokens."
                           : watchProvider === "instatus"
                             ? "Your Instatus API key. Found in your Instatus account under Settings > API."
-                            : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}
+                            : "Your Statuspage API key. Found in your Statuspage account under Manage Account > API."}{" "}
+                        <Link
+                          href={
+                            watchProvider === "betterstack"
+                              ? "https://openstatus.dev/guides/migrate-from-betterstack"
+                              : watchProvider === "instatus"
+                                ? "https://openstatus.dev/guides/migrate-from-instatus"
+                                : "https://openstatus.dev/guides/migrate-from-atlassian-statuspage"
+                          }
+                        >
+                          Full migration guide.
+                        </Link>
                       </FormDescription>
                     </FormItem>
                   )}

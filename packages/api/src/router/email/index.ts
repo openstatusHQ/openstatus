@@ -1,20 +1,14 @@
-import { z } from "zod";
-
 import { and, eq } from "@openstatus/db";
 import {
   invitation,
-  maintenance,
   pageSubscriber,
   selectWorkspaceSchema,
-  statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
-import {
-  dispatchMaintenanceUpdate,
-  dispatchStatusReportUpdate,
-  getChannel,
-} from "@openstatus/subscriptions";
+import { getChannel } from "@openstatus/subscriptions";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { env } from "../../env";
 import {
   createTRPCRouter,
@@ -121,75 +115,6 @@ export const emailRouter = createTRPCRouter({
         },
         verifyUrl,
       );
-
-      return { success: true };
-    }),
-
-  /**
-   * PROTECTED: Send status report update notifications via dispatcher
-   */
-  sendStatusReport: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
-
-      if (!limits["status-subscribers"]) {
-        return;
-      }
-
-      const update = await opts.ctx.db.query.statusReportUpdate.findFirst({
-        where: eq(statusReportUpdate.id, opts.input.id),
-        with: {
-          statusReport: true,
-        },
-      });
-
-      if (!update?.statusReport) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Status report update not found",
-        });
-      }
-
-      if (update.statusReport.workspaceId !== opts.ctx.workspace.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Status report does not belong to your workspace",
-        });
-      }
-
-      await dispatchStatusReportUpdate(opts.input.id);
-
-      return { success: true };
-    }),
-
-  /**
-   * PROTECTED: Send maintenance notifications via dispatcher
-   */
-  sendMaintenance: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
-
-      if (!limits["status-subscribers"]) {
-        return;
-      }
-
-      const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
-        where: and(
-          eq(maintenance.id, opts.input.id),
-          eq(maintenance.workspaceId, opts.ctx.workspace.id),
-        ),
-      });
-
-      if (!_maintenance) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Maintenance not found",
-        });
-      }
-
-      await dispatchMaintenanceUpdate(opts.input.id);
 
       return { success: true };
     }),

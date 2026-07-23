@@ -1,0 +1,28 @@
+TAGS "external_status"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDate(toTimeZone(fromUnixTimestamp64Milli(fetched_at), 'UTC')) AS day,
+        id,
+        argMaxState(
+            indicator,
+            toUInt8(
+                multiIf(
+                    indicator = 'critical', 3,
+                    indicator = 'major', 2,
+                    indicator = 'minor', 1,
+                    0
+                )
+            )
+        ) AS worst_indicator,
+        maxState(toUInt8(status = 'under_maintenance')) AS had_maintenance,
+        sumState(toUInt32(1)) AS snapshot_count
+    FROM external_status__v1
+    GROUP BY
+        day,
+        id
+
+TYPE materialized
+DATASOURCE mv__external_status_daily__v0

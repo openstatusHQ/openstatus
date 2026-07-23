@@ -1,9 +1,10 @@
-import { beforeEach, expect, test } from "bun:test";
+import { expect } from "@std/expect";
+import { beforeEach, test } from "@std/testing/bdd";
 
 import { app } from "@/index";
+
 import { StatusReportUpdateSchema } from "./schema";
 
-// biome-ignore lint/suspicious/noExplicitAny: test utility
 const spies = (globalThis as any).__subscriptionSpies as {
   dispatchStatusReportUpdate: {
     mockClear: () => void;
@@ -315,5 +316,7 @@ test("create a status report update calls dispatchStatusReportUpdate", async () 
   const result = StatusReportUpdateSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
   expect(spies.dispatchStatusReportUpdate.mock.calls.length).toBe(1);
-  expect(spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBeNumber();
+  expect(typeof spies.dispatchStatusReportUpdate.mock.calls[0][0]).toBe(
+    "number",
+  );
 });

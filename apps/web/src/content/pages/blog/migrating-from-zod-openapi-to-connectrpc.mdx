@@ -9,8 +9,6 @@ category: "engineering"
 
 **TL;DR:** Two APIs. Double the bugs. Double the work. We maintain tRPC for ourselves and REST for everyone else. We're unifying them with ConnectRPC—a schema-first API that's type-safe *and* curl-able. Here's how we're doing it, and how AI is accelerating the migration.
 
----
-
 ## The Problem: Two APIs, Double the Work
 
 Here's a confession: we weren't dogfooding our own public API.
@@ -25,8 +23,6 @@ The result? The "Split Stack" problem:
 This debt compounds. We needed to merge them—but we didn't want to sacrifice tRPC's DX or REST's accessibility.
 
 The answer wasn't REST. It wasn't GraphQL. It was **ConnectRPC**.
-
----
 
 ## Why ConnectRPC Won
 
@@ -159,8 +155,6 @@ With OpenAPI, your docs and implementation can drift apart silently. With Protob
 This matters even more now that AI agents are consuming APIs. They work better with structured schemas than with prose documentation. For more on this idea, see Boris Tane's [Ship types, not docs](https://shiptypes.com?ref=openstatus.dev).
 
 
-
----
 
 ## How We Built It: Hono + ConnectRPC
 
@@ -317,8 +311,6 @@ export function authInterceptor(): Interceptor {
 
 For validation, we use `@connectrpc/validate` which runs protovalidate constraints automatically. See the full implementation in [our repo](https://github.com/openstatushq/openstatus/tree/main/apps/server/src/routes/rpc).
 
----
-
 ## Before and After: Validation Moves to the Schema
 
 **Before (zod-openapi):** Validation defined in TypeScript, separate from the OpenAPI spec.
@@ -390,8 +382,6 @@ async createHTTPMonitor(req, ctx) {
 
 The difference: validation constraints live in the proto schema and execute at runtime via protovalidate.
 
----
-
 ## The Payoff: Auto-Generated Hooks with Full Type Inference
 
 With `@connectrpc/connect-query`, we get TanStack Query hooks generated from the proto schema:
@@ -453,8 +443,6 @@ export default async function MonitorsPage() {
 
 Full type safety. Auto-generated hooks. The same API your users consume.
 
----
-
 ## How AI Helped Us Ship Faster
 
 In early 2026, we treated this migration as a test case for AI-assisted development.
@@ -469,8 +457,6 @@ The result? **AI is exceptionally good at schema work.**
 4. Write the interceptor patterns
 
 We shifted from "writing boilerplate" to "reviewing code." What we estimated at months is now tracking to finish in weeks.
-
----
 
 ## Testing: Just HTTP
 
@@ -508,8 +494,6 @@ describe("MonitorService", () => {
   });
 });
 ```
-
----
 
 ## What's Next
 

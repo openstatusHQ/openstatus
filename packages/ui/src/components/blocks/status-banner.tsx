@@ -1,3 +1,9 @@
+"use client";
+
+import { useStatusBlocksLabels } from "@openstatus/ui/components/blocks/status-i18n";
+import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
+import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
+import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
 import {
   Tabs,
   TabsContent,
@@ -5,10 +11,6 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
-import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
-import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
-import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
-import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
 
 /**
  * StatusBanner - Complete banner component with integrated icon, message, and timestamp
@@ -62,7 +64,7 @@ export function StatusBanner({
     >
       <StatusBannerIcon className="flex-shrink-0" />
       <div className="flex flex-1 flex-wrap items-center justify-between gap-2">
-        <StatusBannerMessage className="font-semibold text-xl" />
+        <StatusBannerMessage className="text-xl font-semibold" />
         <StatusTimestamp date={new Date()} className="text-xs" />
       </div>
     </StatusBannerContainer>
@@ -153,19 +155,20 @@ export function StatusBannerMessage({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const labels = useStatusBlocksLabels();
   return (
     <div className={cn(className)} {...props}>
       <span className="hidden group-data-[status=success]/status-banner:block">
-        {systemStatusLabels.success.long}
+        {labels.systemStatus.success.long}
       </span>
       <span className="hidden group-data-[status=degraded]/status-banner:block">
-        {systemStatusLabels.degraded.long}
+        {labels.systemStatus.degraded.long}
       </span>
       <span className="hidden group-data-[status=error]/status-banner:block">
-        {systemStatusLabels.error.long}
+        {labels.systemStatus.error.long}
       </span>
       <span className="hidden group-data-[status=info]/status-banner:block">
-        {systemStatusLabels.info.long}
+        {labels.systemStatus.info.long}
       </span>
     </div>
   );
@@ -206,7 +209,7 @@ export function StatusBannerTitle({
   return (
     <div
       className={cn(
-        "px-3 py-2 font-medium text-background",
+        "text-background px-3 py-2 font-medium",
         "group-data-[status=success]/status-banner:bg-success",
         "group-data-[status=degraded]/status-banner:bg-warning",
         "group-data-[status=error]/status-banner:bg-destructive",
@@ -449,7 +452,7 @@ export function StatusBannerTabsTrigger({
       className={cn(
         "font-mono",
         "rounded-none border-none focus-visible:ring-inset",
-        "h-full text-foreground data-[state=active]:text-background dark:text-foreground dark:data-[state=active]:text-background",
+        "text-foreground data-[state=active]:text-background dark:text-foreground dark:data-[state=active]:text-background h-full",
         "data-[state=active]:data-[status=success]:bg-success data-[status=success]:bg-success/50 dark:data-[state=active]:data-[status=success]:bg-success dark:data-[status=success]:bg-success/50",
         "data-[state=active]:data-[status=degraded]:bg-warning data-[status=degraded]:bg-warning/50 dark:data-[state=active]:data-[status=degraded]:bg-warning dark:data-[status=degraded]:bg-warning/50",
         "data-[state=active]:data-[status=error]:bg-destructive data-[status=error]:bg-destructive/50 dark:data-[state=active]:data-[status=error]:bg-destructive dark:data-[status=error]:bg-destructive/50",

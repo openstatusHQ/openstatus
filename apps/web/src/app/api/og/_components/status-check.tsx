@@ -1,6 +1,6 @@
 import type { Tracker } from "@openstatus/tracker";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../../../../lib/utils";
 
 export function StatusCheck({ tracker }: { tracker: Tracker }) {
   const details = tracker.currentDetails;
@@ -43,7 +43,7 @@ export function StatusCheck({ tracker }: { tracker: Tracker }) {
     <div tw="flex flex-col justify-center items-center w-full">
       <div
         tw={cn(
-          "flex text-white rounded-full p-3 border-2 mb-2",
+          "mb-2 flex rounded-full border-2 p-3 text-white",
           getClassName(),
         )}
       >

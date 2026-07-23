@@ -1,6 +1,14 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { expect } from "@std/expect";
+import { beforeEach, describe, it } from "@std/testing/bdd";
+
 import { HtmlScraperFetcher } from "../../src/fetchers/html";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("HtmlScraperFetcher", () => {
   let fetcher: HtmlScraperFetcher;
@@ -72,21 +80,22 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      const fetchMock = installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("UTC");
       expect(typeof result.updated_at).toBe("number");
-      expect(global.fetch).toHaveBeenCalledWith(
-        "https://status.test.com",
+      const call = fetchMock.calls[fetchMock.calls.length - 1];
+      expect(call.args[0]).toBe("https://status.test.com");
+      expect(call.args[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "Mozilla/5.0 (compatible; OpenStatus-Bot/1.0)",
@@ -114,14 +123,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("operational");
@@ -147,14 +156,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("All systems operational");
@@ -179,14 +188,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("minor");
       expect(result.description).toBe("Service Degraded");
@@ -211,14 +220,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("minor");
       expect(result.description).toBe("Partial Service Outage");
@@ -243,14 +252,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("Major Outage in Progress");
@@ -275,14 +284,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("major");
       expect(result.description).toBe("System Down");
@@ -307,20 +316,20 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.severity).toBe("none");
       expect(result.description).toBe("Unknown");
     });
 
-    it("should throw error on non-200 response", async () => {
+    it("should fail with FetchError on non-200 response", async () => {
       const entry: StatusPageEntry = {
         id: "test",
         name: "Test",
@@ -331,14 +340,16 @@ describe("HtmlScraperFetcher", () => {
         api_config: { type: "html-scraper" },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: false,
           status: 404,
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow("HTTP 404:");
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      expect(err.httpStatus).toBe(404);
     });
 
     it("should trim whitespace from description", async () => {
@@ -364,14 +375,14 @@ describe("HtmlScraperFetcher", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => mockHtml,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
 
       expect(result.description).toBe("All Systems Operational");
     });

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "../../../../lib/utils";
 
 export function Background({
   children,
@@ -10,7 +10,7 @@ export function Background({
   return (
     <div
       tw={cn(
-        "relative flex flex-col bg-white items-center justify-center w-full h-full",
+        "relative flex h-full w-full flex-col items-center justify-center bg-white",
         tw,
       )}
     >

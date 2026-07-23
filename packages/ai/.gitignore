@@ -1,0 +1,5 @@
+# Type-check only package — never commit emitted output
+*.js
+*.d.ts
+*.d.ts.map
+*.tsbuildinfo

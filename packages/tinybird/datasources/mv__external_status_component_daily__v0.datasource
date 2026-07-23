@@ -1,0 +1,12 @@
+# Data Source created from Pipe 'mv__external_status_component_daily__v0'
+
+SCHEMA >
+    `day` Date,
+    `component_id` String,
+    `worst_indicator` AggregateFunction(argMax, String, UInt8),
+    `had_maintenance` AggregateFunction(max, UInt8),
+    `snapshot_count` AggregateFunction(sum, UInt32)
+
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(day)"
+ENGINE_SORTING_KEY "component_id, day"

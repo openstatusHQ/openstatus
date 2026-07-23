@@ -26,3 +26,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Scoped to the onboarding status-page preview so `rounded-full` collapses
+   * to 0 when the active theme sets `--radius: 0` (every theme except the
+   * Rounded one). Mirrors the global override in
+   * `apps/status-page/src/app/globals.css` so the preview matches the real
+   * page's rendering. The `* 99999999` dance avoids `infinity * 1px` issues
+   * when `--radius` is 0. */
+  [data-status-preview] .rounded-full {
+    border-radius: calc(var(--radius) * 99999999);
+  }
+  [data-status-preview] .rounded-b-full {
+    border-bottom-left-radius: calc(var(--radius) * 99999999);
+    border-bottom-right-radius: calc(var(--radius) * 99999999);
+  }
+  [data-status-preview] .rounded-t-full {
+    border-top-left-radius: calc(var(--radius) * 99999999);
+    border-top-right-radius: calc(var(--radius) * 99999999);
+  }
+}

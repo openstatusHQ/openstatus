@@ -40,6 +40,10 @@ export const config: Record<
         value: "monitor-values-visibility",
         label: "Toggle numbers visibility",
       },
+      // {
+      //   value: "uptime-history",
+      //   label: "Uptime history (24 months)",
+      // },
       {
         value: "status-subscribers",
         label: "Subscribers",
@@ -51,6 +55,10 @@ export const config: Record<
       {
         value: "white-label",
         label: "White Label",
+      },
+      {
+        value: "custom-theme",
+        label: "Custom Theme",
       },
     ],
   },
@@ -141,7 +149,6 @@ export const config: Record<
       {
         value: "audit-log",
         label: "Audit log",
-        badge: "Planned",
       },
     ],
   },

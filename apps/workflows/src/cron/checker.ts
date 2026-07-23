@@ -1,9 +1,6 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
-import { Effect, Either, Schedule } from "effect";
-import pLimit from "p-limit";
-import { z } from "zod";
-
+import type { google } from "@google-cloud/tasks/build/protos";
+import { getLogger } from "@logtape/logtape";
 import {
   and,
   eq,
@@ -22,16 +19,12 @@ import {
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
-import { db } from "../lib/db";
-
-import { getSentry } from "@hono/sentry";
-import { getLogger } from "@logtape/logtape";
-import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type DNSPayloadSchema,
   getCheckerBaseUrl,
@@ -40,8 +33,11 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import type { Context } from "hono";
+import { Effect, Either, Schedule } from "effect";
+import { z } from "zod";
+
 import { env } from "../env";
+import { db } from "../lib/db";
 
 type TaskInput = {
   row: z.infer<typeof selectMonitorSchema>;
@@ -83,11 +79,9 @@ function getCloudTasksClient() {
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
-  c: Context,
-) {
+): Promise<{ success: number; failed: number }> {
   if (isSelfHost() || !hasCloudTaskConfig()) {
-    await sendCheckerTasksDirect(periodicity, c);
-    return;
+    return sendCheckerTasksDirect(periodicity);
   }
 
   const client = getCloudTasksClient();
@@ -146,7 +140,7 @@ export async function sendCheckerTasks(
 
   if (monitors.data.length === 0) {
     logger.info("No monitors to check", { periodicity });
-    return;
+    return { success: 0, failed: 0 };
   }
 
   // Batch fetch all monitor statuses in a single query (N+1 fix)
@@ -258,17 +252,14 @@ export async function sendCheckerTasks(
       failed_count: failed,
       success_count: success,
     });
-    getSentry(c).captureMessage(
-      `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
-      "error",
-    );
   }
+
+  return { success, failed };
 }
 
 async function sendCheckerTasksDirect(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
-  c: Context,
-) {
+): Promise<{ success: number; failed: number }> {
   const timestamp = Date.now();
   const selfHostRegion = env().CHECKER_REGION;
 
@@ -311,8 +302,6 @@ async function sendCheckerTasksDirect(
   });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
-  const allResult = [];
-  const limit = pLimit(10);
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
@@ -348,27 +337,17 @@ async function sendCheckerTasksDirect(
     statusByMonitor.set(parsed.data.monitorId, list);
   }
 
+  const taskInputs: {
+    row: z.infer<typeof selectMonitorSchema>;
+    timestamp: number;
+    status: MonitorStatus;
+  }[] = [];
   for (const row of monitors.data) {
     const statuses = statusByMonitor.get(row.id);
-    if (!statuses) {
-      allResult.push(
-        limit(() =>
-          dispatchCheckerTaskDirect({ row, timestamp, status: "active" }),
-        ),
-      );
-      continue;
-    }
-    const status =
-      statuses.find((m) => selfHostRegion === m.region)?.status || "active";
-    allResult.push(
-      limit(() =>
-        dispatchCheckerTaskDirect({
-          row,
-          timestamp,
-          status,
-        }),
-      ),
-    );
+    const status = statuses
+      ? statuses.find((m) => selfHostRegion === m.region)?.status || "active"
+      : "active";
+    taskInputs.push({ row, timestamp, status });
   }
 
   if (periodicity === "30s") {
@@ -377,23 +356,40 @@ async function sendCheckerTasksDirect(
     );
   }
 
-  const allRequests = await Promise.allSettled(allResult);
+  const results = await Effect.runPromise(
+    Effect.forEach(
+      taskInputs,
+      (input) =>
+        Effect.tryPromise({
+          try: () => dispatchCheckerTaskDirect(input),
+          catch: (err) =>
+            new Error(
+              `Failed dispatching direct checker task for monitor ${input.row.id}`,
+              { cause: err },
+            ),
+        }).pipe(Effect.either),
+      { concurrency: 10 },
+    ),
+  );
 
-  const success = allRequests.filter((r) => r.status === "fulfilled").length;
-  const failed = allRequests.filter((r) => r.status === "rejected").length;
+  const success = results.filter(Either.isRight).length;
+  const failed = results.filter(Either.isLeft).length;
 
   logger.info("Completed direct self-host checker run", {
     periodicity,
-    total_tasks: allResult.length,
+    total_tasks: taskInputs.length,
     success_count: success,
     failed_count: failed,
   });
   if (failed > 0) {
-    getSentry(c).captureMessage(
-      `direct sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
-      "error",
-    );
+    logger.error("Direct self-host checker run had failures", {
+      periodicity,
+      failed_count: failed,
+      success_count: success,
+    });
   }
+
+  return { success, failed };
 }
 
 function buildCheckerPayload({

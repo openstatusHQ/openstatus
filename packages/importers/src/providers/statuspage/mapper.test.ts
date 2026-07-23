@@ -1,4 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { expect } from "@std/expect";
+import { describe, it } from "@std/testing/bdd";
+
 import {
   MOCK_COMPONENTS,
   MOCK_COMPONENT_GROUPS,
@@ -108,10 +110,23 @@ describe("mapIncidentToStatusReport", () => {
     expect(lastUpdate.message).toContain("---\n\n**Postmortem**\n\n");
     expect(lastUpdate.message).toContain("## Summary");
   });
+
+  it("maps per-update component impacts from affected_components", () => {
+    const result = mapIncidentToStatusReport(MOCK_INCIDENTS[0], 1, 10);
+    expect(result.updates[0].componentImpacts).toEqual([
+      { sourceComponentId: "sp_comp_001", impact: "major_outage" },
+    ]);
+    expect(result.updates[2].componentImpacts).toEqual([
+      { sourceComponentId: "sp_comp_001", impact: "degraded_performance" },
+    ]);
+    expect(result.updates[3].componentImpacts).toEqual([
+      { sourceComponentId: "sp_comp_001", impact: "operational" },
+    ]);
+  });
 });
 
 describe("mapIncidentUpdateStatus", () => {
-  it.each([
+  for (const [input, expected] of [
     ["investigating", "investigating"],
     ["identified", "identified"],
     ["monitoring", "monitoring"],
@@ -120,9 +135,11 @@ describe("mapIncidentUpdateStatus", () => {
     ["in_progress", "investigating"],
     ["verifying", "monitoring"],
     ["completed", "resolved"],
-  ] as const)("maps %s to %s", (input, expected) => {
-    expect(mapIncidentUpdateStatus(input)).toBe(expected);
-  });
+  ] as const) {
+    it(`maps ${input} to ${expected}`, () => {
+      expect(mapIncidentUpdateStatus(input)).toBe(expected);
+    });
+  }
 });
 
 describe("mapIncidentToMaintenance", () => {

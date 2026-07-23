@@ -1,10 +1,8 @@
 import "server-only";
-
 import type { AppRouter } from "@openstatus/api";
-
 import { HydrationBoundary } from "@tanstack/react-query";
 import { dehydrate } from "@tanstack/react-query";
-import { TRPCClientError, createTRPCClient, loggerLink } from "@trpc/client";
+import { TRPCClientError, createTRPCClient } from "@trpc/client";
 import {
   type ResolverDef,
   type TRPCQueryOptions,
@@ -13,8 +11,9 @@ import {
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+
 import { makeQueryClient } from "./query-client";
-import { endingLink } from "./shared";
+import { endingLink, sentryLoggerLink } from "./shared";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -24,16 +23,14 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
   queryClient: getQueryClient,
   client: createTRPCClient({
     links: [
-      loggerLink({
-        enabled: (opts) =>
-          process.env.NODE_ENV === "development" ||
-          (opts.direction === "down" && opts.result instanceof Error),
-      }),
+      sentryLoggerLink(),
       endingLink({
         headers: {
           "x-trpc-source": "server",
         },
-        fetch: async (url, options) => {
+        // `typeof fetch` carries a `preconnect` static (React 19 typings) that
+        // tRPC's link will never invoke — cast the call-signature wrapper.
+        fetch: (async (url, options) => {
           const cookieStore = await cookies();
           console.log("[dashboard trpc server] fetch", {
             hasSessionToken:
@@ -48,7 +45,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
               cookie: cookieStore.toString(),
             },
           });
-        },
+        }) as typeof fetch,
       }),
     ],
   }),
@@ -64,21 +61,21 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   );
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+// oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
 export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   queryOptions: T,
 ) {
   const queryClient = getQueryClient();
 
   if (queryOptions.queryKey[1]?.type === "infinite") {
-    // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+    // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
     void queryClient.prefetchInfiniteQuery(queryOptions as any);
   } else {
     void queryClient.prefetchQuery(queryOptions);
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+// oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
 export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   queryOptionsArray: T[],
 ) {
@@ -86,7 +83,7 @@ export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
 
   for (const queryOptions of queryOptionsArray) {
     if (queryOptions.queryKey[1]?.type === "infinite") {
-      // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
+      // oxlint-disable-next-line typescript/no-explicit-any -- FIXME: remove any
       void queryClient.prefetchInfiniteQuery(queryOptions as any);
     } else {
       void queryClient.prefetchQuery(queryOptions);

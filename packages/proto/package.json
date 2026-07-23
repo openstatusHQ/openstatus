@@ -32,9 +32,14 @@
     "./notification/v1": {
       "import": "./gen/ts/openstatus/notification/v1/index.ts",
       "types": "./gen/ts/openstatus/notification/v1/index.ts"
+    },
+    "./private_location/v1": {
+      "import": "./gen/ts/openstatus/private_location/v1/index.ts",
+      "types": "./gen/ts/openstatus/private_location/v1/index.ts"
     }
   },
   "scripts": {
+    "check": "deno check --sloppy-imports .",
     "buf:openapi": "buf generate --path api/openstatus --template buf.gen.openapi.yaml && bun scripts/clean-openapi.ts",
     "buf:ts": "buf generate --path api/openstatus --template buf.gen.ts.yaml",
     "buf:go": "buf generate --path internal/private_location --template buf.gen.go.yaml",
@@ -43,14 +48,14 @@
     "clean": "rm -rf gen/ts"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "2.10.2",
-    "@bufbuild/protovalidate": "^1.1.1",
-    "@connectrpc/connect": "^2.1.1"
+    "@bufbuild/protobuf": "catalog:",
+    "@bufbuild/protovalidate": "catalog:",
+    "@connectrpc/connect": "catalog:"
   },
   "devDependencies": {
-    "@bufbuild/buf": "1.57.2",
-    "@bufbuild/protoc-gen-es": "2.10.2",
+    "@bufbuild/buf": "catalog:",
+    "@bufbuild/protoc-gen-es": "catalog:",
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
+    "typescript": "catalog:"
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -10,6 +10,22 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
+import { Form } from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import Image from "next/image";
+import { useEffect, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 import {
   FormCard,
@@ -21,22 +37,17 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Form } from "@openstatus/ui/components/ui/form";
-import { Input } from "@openstatus/ui/components/ui/input";
-import { Textarea } from "@openstatus/ui/components/ui/textarea";
-import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import Image from "next/image";
-import { useEffect, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
 
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";
+
+// Keep in sync with `slugSchema` in
+// `packages/db/src/schema/pages/validation.ts`. We can't import that on the
+// client because `@openstatus/db` is server-only. Slugs are stored lowercase
+// (subdomains are case-insensitive), so we restrict input client-side too.
+const SLUG_PATTERN = /^[a-z0-9-]+$/;
+const SLUG_PATTERN_MESSAGE =
+  "Only use digits (0-9), hyphen (-) or lowercase characters (a-z).";
 
 function formatSlug(title: string) {
   return title
@@ -47,7 +58,10 @@ function formatSlug(title: string) {
 
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
-  slug: z.string().min(3, "Slug is required"),
+  slug: z
+    .string()
+    .min(3, "Slug is required")
+    .regex(SLUG_PATTERN, SLUG_PATTERN_MESSAGE),
   icon: z.string().optional(),
   description: z.string().optional(),
 });
@@ -181,13 +195,14 @@ export function FormGeneral({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Slug</FormLabel>
-                  <FormControl>
-                    <InputWithAddons
-                      placeholder="status"
-                      trailing=".openstatus.dev"
-                      {...field}
-                    />
-                  </FormControl>
+                  <InputGroup>
+                    <FormControl>
+                      <InputGroupInput placeholder="status" {...field} />
+                    </FormControl>
+                    <InputGroupAddon align="inline-end">
+                      .openstatus.dev
+                    </InputGroupAddon>
+                  </InputGroup>
                   <FormMessage />
                   <FormDescription>
                     Choose a unique subdomain for your status page (minimum 3
@@ -206,7 +221,7 @@ export function FormGeneral({
                     <div className="flex items-center space-x-2">
                       {watchIcon ? (
                         <>
-                          <div className="size-[36px] overflow-hidden rounded-md border bg-muted">
+                          <div className="bg-muted size-[36px] overflow-hidden rounded-md border">
                             <Image
                               src={watchIcon}
                               width={36}

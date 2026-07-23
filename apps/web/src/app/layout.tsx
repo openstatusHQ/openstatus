@@ -1,27 +1,54 @@
-import "@/styles/globals.css";
-
+import "../styles/globals.css";
 import { OpenPanelComponent } from "@openpanel/nextjs";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
+import PlausibleProvider from "next-plausible";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
+import Script from "next/script";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { env } from "@/env";
+import { ThemeProvider } from "../components/theme-provider";
+import { WebMcpProvider } from "../components/webmcp-provider";
+import { env } from "../env";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/lib/metadata/shared-metadata";
-import { TRPCReactQueryProvider } from "@/trpc/rq-client";
-import { Toaster } from "@openstatus/ui/components/ui/sonner";
-import PlausibleProvider from "next-plausible";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+} from "../lib/metadata/shared-metadata";
+import { TRPCReactQueryProvider } from "../trpc/rq-client";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const calSans = LocalFont({
   src: "../public/fonts/CalSans-SemiBold.ttf",
   variable: "--font-cal",
+});
+
+const commitMono = LocalFont({
+  src: [
+    {
+      path: "../public/fonts/CommitMono-400-Regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/CommitMono-400-Italic.otf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/CommitMono-700-Regular.otf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/CommitMono-700-Italic.otf",
+      weight: "700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-commit-mono",
 });
 
 export const metadata: Metadata = {
@@ -44,13 +71,13 @@ export default function RootLayout({
       <body
         className={`${
           inter.className
-          // biome-ignore lint/nursery/useSortedClasses: <explanation>
-        } ${calSans.variable}`}
+        } ${inter.variable} ${calSans.variable} ${commitMono.variable} antialiased`}
       >
         <PlausibleProvider domain="openstatus.dev">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <NuqsAdapter>
               <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
+              <WebMcpProvider />
             </NuqsAdapter>
           </ThemeProvider>
         </PlausibleProvider>
@@ -84,6 +111,7 @@ export default function RootLayout({
           }}
           richColors
         />
+        <Script src="https://ui.sh/ui-picker.js" />
       </body>
     </html>
   );

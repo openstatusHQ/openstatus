@@ -1,4 +1,4 @@
-export const workspacePlans = ["free", "starter", "team"] as const;
+export const workspacePlans = ["free", "starter", "team", "scale"] as const;
 export const workspaceRole = ["owner", "admin", "member"] as const;
 
 export const workspacePlanHierarchy: Record<
@@ -8,4 +8,5 @@ export const workspacePlanHierarchy: Record<
   free: 0,
   starter: 1,
   team: 2,
+  scale: 3,
 };

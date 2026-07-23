@@ -1,12 +1,13 @@
+import type { Region } from "@openstatus/regions";
+
 import {
   getBlogPosts,
-  getChangelogPosts,
   getComparePages,
   getProductPages,
+  getToolingPages,
   getToolsPages,
   getUseCasePages,
-} from "@/content/utils";
-import type { Region } from "@openstatus/regions";
+} from "../content/utils";
 
 const products = getProductPages();
 
@@ -26,12 +27,16 @@ const resourcesFooterSection = {
       href: "/blog",
     },
     {
+      label: "Customers",
+      href: "/customers",
+    },
+    {
       label: "Pricing",
       href: "/pricing",
     },
     {
       label: "Docs",
-      href: "https://docs.openstatus.dev",
+      href: "/docs",
     },
     {
       label: "Guides",
@@ -52,22 +57,32 @@ const useCases = getUseCasePages();
 
 const useCasesSection = {
   label: "Use Cases",
-  items: useCases.map((page) => ({
-    label: page.metadata.title,
-    href: `/use-case/${page.slug}`,
-  })),
+  items: useCases
+    .sort(
+      (a, b) =>
+        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+    )
+    .slice(0, 6)
+    .map((page) => ({
+      label: page.metadata.title,
+      href: `/use-case/${page.slug}`,
+    })),
 };
 
 const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
-      label: "Use Cases",
-      href: "/use-case",
+      label: "Docs",
+      href: "/docs",
     },
     {
-      label: "Docs",
-      href: "https://docs.openstatus.dev",
+      label: "Customers",
+      href: "/customers",
+    },
+    {
+      label: "Use Cases",
+      href: "/use-case",
     },
     {
       label: "Blog",
@@ -78,8 +93,8 @@ const resourcesHeaderSection = {
       href: "/changelog",
     },
     {
-      label: "Global Speed Checker",
-      href: "/play/checker",
+      label: "Tooling",
+      href: "/tooling",
     },
     {
       label: "Compare",
@@ -94,6 +109,10 @@ const companySection = {
     {
       label: "About",
       href: "/about",
+    },
+    {
+      label: "Customers",
+      href: "/customers",
     },
     {
       label: "Changelog",
@@ -132,18 +151,12 @@ const blogSection = {
     })),
 };
 
-const changelogSection = {
-  label: "Changelog",
-  items: getChangelogPosts()
-    .sort(
-      (a, b) =>
-        b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
-    )
-    .slice(0, 6)
-    .map((post) => ({
-      label: post.metadata.title,
-      href: `/changelog/${post.slug}`,
-    })),
+const toolingSection = {
+  label: "Tooling",
+  items: getToolingPages().map((page) => ({
+    label: page.metadata.title,
+    href: `/tooling/${page.slug}`,
+  })),
 };
 
 const compareSection = {
@@ -160,9 +173,7 @@ const toolsSection = {
   label: "Tools",
   items: [
     ...getToolsPages()
-      .filter(
-        (page) => !["checker-slug", "severity-matrix"].includes(page.slug),
-      )
+      .filter((page) => !["severity-matrix"].includes(page.slug))
       .map((page) => ({
         label: page.metadata.title,
         href: `/play/${page.slug}`,
@@ -215,12 +226,10 @@ const communitySection = {
 export const playSection = {
   label: "Play",
   items: [
-    ...getToolsPages()
-      .filter((page) => page.slug !== "checker-slug")
-      .map((page) => ({
-        label: page.metadata.title,
-        href: `/play/${page.slug}`,
-      })),
+    ...getToolsPages().map((page) => ({
+      label: page.metadata.title,
+      href: `/play/${page.slug}`,
+    })),
     {
       label: "Theme Explorer",
       href: "https://themes.openstatus.dev",
@@ -256,14 +265,14 @@ export const headerLinks = [productsSection, resourcesHeaderSection];
 
 export const footerLinks = [
   productsSection,
-  useCasesSection,
+  toolingSection,
   resourcesFooterSection,
-  companySection,
   compareSection,
+  useCasesSection,
   blogSection,
-  changelogSection,
   toolsSection,
   communitySection,
+  companySection,
 ];
 
 // --------------------------------

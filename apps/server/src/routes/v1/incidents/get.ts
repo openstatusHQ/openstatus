@@ -1,9 +1,9 @@
 import { createRoute } from "@hono/zod-openapi";
-
 import { and, db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+
 import type { incidentsApi } from "./index";
 import { IncidentSchema, ParamsSchema } from "./schema";
 

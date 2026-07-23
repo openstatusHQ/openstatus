@@ -1,0 +1,21 @@
+TAGS "external_status"
+
+NODE history
+SQL >
+
+    %
+    SELECT
+        day,
+        id,
+        argMaxMerge(worst_indicator) AS worst_indicator,
+        maxMerge(had_maintenance) AS had_maintenance,
+        sumMerge(snapshot_count) AS snapshot_count
+    FROM mv__external_status_daily__v0
+    WHERE id IN {{ Array(ids, 'String') }}
+    {% if defined(days) %}
+        AND day >= today() - INTERVAL {{ Int16(days, 45) }} DAY
+    {% end %}
+    GROUP BY day, id
+    ORDER BY day ASC
+
+TYPE ENDPOINT

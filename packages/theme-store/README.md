@@ -21,7 +21,9 @@ Community themes are predefined color schemes that users can apply to their stat
 
 ## Creating a New Theme
 
-Want to contribute a theme? 
+Want to contribute a theme?
+
+> **Tip:** If you use AI agents, install the [`openstatus-theme` skill](https://github.com/openstatusHQ/skills/tree/main/skills/openstatus-theme) with `npx skills add openstatushq/skills --skill openstatus-theme` to get guided help through palette design, accessibility checks, file scaffolding, and PR submission.
 
 We only support themes via GitHub contributions to keep a certain version control. You can:
 

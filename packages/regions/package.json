@@ -2,16 +2,18 @@
   "name": "@openstatus/regions",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.ts",
-  "scripts": {},
+  "scripts": {
+    "check": "deno check --sloppy-imports ."
+  },
   "dependencies": {
-    "zod": "4.1.13"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "typescript": "catalog:"
+  }
 }

@@ -1,24 +1,28 @@
 "use client";
 
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  Section,
-  SectionDescription,
-  SectionHeader,
-  SectionTitle,
-} from "@/components/content/section";
-import { FormEmail, type FormValues } from "@/components/forms/form-email";
-import { generateServerActionPromise } from "@/lib/server-actions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { flushSync } from "react-dom";
+
+import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "../../../../../../../components/content/empty-state";
+import {
+  Section,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "../../../../../../../components/content/section";
+import {
+  FormEmail,
+  type FormValues,
+} from "../../../../../../../components/forms/form-email";
+import { generateServerActionPromise } from "../../../../../../../lib/server-actions";
 import { signInWithResendAction } from "../actions";
 
 export function SectionMagicLink() {
@@ -54,7 +58,7 @@ export function SectionMagicLink() {
   }
 
   return (
-    <Section className="m-auto w-full max-w-lg rounded-lg border bg-card p-4">
+    <Section className="bg-card m-auto w-full max-w-lg rounded-lg border p-4">
       <SectionHeader>
         <SectionTitle>{t("Authenticate")}</SectionTitle>
         <SectionDescription>

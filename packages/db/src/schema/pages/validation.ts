@@ -1,13 +1,22 @@
 import { locales } from "@openstatus/locales";
 import type { ThemeKey } from "@openstatus/theme-store";
-import { THEME_KEYS } from "@openstatus/theme-store";
+import {
+  hasCustomTheme,
+  sanitizeCustomTheme,
+  THEME_KEYS,
+  validateCustomTheme,
+} from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { pageAccessTypes } from "./constants";
 import { page } from "./page";
 
-const slugSchema = z
+// Exported so `@openstatus/services` can reuse the canonical rules in
+// its own `NewPageInput` / `UpdatePage*Input` schemas without
+// duplicating the regex. Keep these as the single source of truth for
+// slug and custom-domain shape validation.
+export const slugSchema = z
   .string()
   .regex(
     /^[A-Za-z0-9-]+$/,
@@ -16,7 +25,7 @@ const slugSchema = z
   .min(3)
   .toLowerCase();
 
-const customDomainSchema = z
+export const customDomainSchema = z
   .string()
   .regex(
     /^(?!https?:\/\/|www.)([a-zA-Z0-9]+(.[a-zA-Z0-9]+)+.*)$/,
@@ -30,6 +39,33 @@ const stringToArray = z.preprocess((val) => {
   }
   return [];
 }, z.array(z.string()));
+
+// Loose { light, dark } var maps — write paths enforce the supported var
+// names / safe values; `.catch(null)` degrades corrupt stored json to "no
+// overrides" instead of tanking every page read.
+const themeVarsSchema = z.record(z.string(), z.string());
+export const customThemeSchema = z.object({
+  light: themeVarsSchema.optional(),
+  dark: themeVarsSchema.optional(),
+});
+
+// Strict write-side counterpart: only supported var names and values that
+// can't break out of the inline <style> tag the status page renders them
+// into. Empty / nullish input clears the column.
+export const customThemeWriteSchema = customThemeSchema
+  .superRefine((value, ctx) => {
+    const result = validateCustomTheme(value);
+    if (!result.valid) {
+      for (const message of result.errors) {
+        ctx.addIssue({ code: "custom", message });
+      }
+    }
+  })
+  .nullish()
+  .transform((v) => {
+    if (v == null || !hasCustomTheme(v)) return null;
+    return sanitizeCustomTheme(v);
+  });
 
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: customDomainSchema.prefault(""),
@@ -63,6 +99,7 @@ export const insertPageSchema = createInsertSchema(page, {
       .nullish(),
     defaultLocale: z.enum(locales).optional().prefault("en"),
     locales: z.array(z.enum(locales)).nullable().optional(),
+    customTheme: customThemeWriteSchema,
   })
   .refine(
     (data) => {
@@ -77,21 +114,40 @@ export const insertPageSchema = createInsertSchema(page, {
     },
   );
 
+// NOTE: every field uses `.nullish().transform(v => v ?? <default>)` so the
+// OUTPUT is always a concrete enum value — never `null`/`undefined`. `.prefault`
+// alone only handles `undefined`; without the transform a stored `null` (which
+// the write path permits) leaks through and tanks downstream consumers that
+// expect a strict enum (e.g. the status-page layout falling back to "absolute"
+// barType and rendering manual-mode bars as empty).
 export const pageConfigurationSchema = z.object({
   value: z
     .enum(["duration", "requests", "manual"])
     .nullish()
-    .prefault("requests"),
-  type: z.enum(["absolute", "manual"]).nullish().prefault("absolute"),
-  uptime: z.coerce.boolean().nullish().prefault(true),
+    .transform((v) => v ?? "requests"),
+  type: z
+    .enum(["absolute", "manual"])
+    .nullish()
+    .transform((v) => v ?? "absolute"),
+  uptime: z.coerce
+    .boolean()
+    .nullish()
+    .transform((v) => v ?? true),
   theme: z
     .enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]])
     .nullish()
-    .prefault("default"),
+    .transform((v) => v ?? "default"),
+  // number of uptime bars rendered on the status page; only 30 or 45 supported
+  days: z
+    .union([z.literal(30), z.literal(45)])
+    .nullish()
+    .transform((v) => v ?? 45),
 });
+export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().prefault(""),
+  customTheme: customThemeSchema.nullish().catch(null),
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   authEmailDomains: stringToArray.prefault([]),

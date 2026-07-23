@@ -21,14 +21,10 @@ export function getPlanConfig(plan: WorkspacePlan | null) {
 
 export function getCurrency({
   continent,
-  country,
 }: {
   continent: string;
   country: string;
 }) {
-  if (country === "IN") {
-    return "INR";
-  }
   if (continent === "EU") {
     return "EUR";
   }
@@ -38,7 +34,6 @@ export function getCurrency({
 type PriceObject = {
   USD: number;
   EUR: number;
-  INR: number;
 };
 
 type PriceConfig = {
@@ -88,7 +83,7 @@ export function getPlansForLimit(
   limit: keyof Limits,
 ): WorkspacePlan[] {
   const currentLimitValue = allPlans[currentPlan].limits[limit];
-  const planOrder: WorkspacePlan[] = ["free", "starter", "team"];
+  const planOrder: WorkspacePlan[] = ["free", "starter", "team", "scale"];
 
   // Get plans that come after the current plan
   const availablePlans = planOrder.filter((plan) => {

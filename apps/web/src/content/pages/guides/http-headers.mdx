@@ -23,8 +23,6 @@ Header-Name: header-value
 
 Header names are case-insensitive; values are not.
 
----
-
 ## Request Headers
 
 **`Accept`**
@@ -81,8 +79,6 @@ Identifies the client—browser, SDK, or monitoring tool.
 User-Agent: OpenStatus-Monitor/1.0
 ```
 
----
-
 ## Response Headers
 
 **`Cache-Control`**
@@ -116,8 +112,6 @@ Instructs the client to store a cookie with given attributes.
 Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict
 ```
 
----
-
 ## Security Headers
 
 **`Content-Security-Policy`**
@@ -144,8 +138,6 @@ Protects against clickjacking by controlling iframe embedding.
 X-Frame-Options: DENY
 ```
 
----
-
 ## Proxy and Infrastructure Headers
 
 Set by reverse proxies, load balancers, and CDNs—not your origin server.
@@ -160,8 +152,6 @@ Set by reverse proxies, load balancers, and CDNs—not your origin server.
 | `X-RateLimit-Limit` | Maximum requests allowed in a window |
 | `X-RateLimit-Remaining` | Requests remaining in the current window |
 | `X-RateLimit-Reset` | Unix timestamp when the rate limit resets |
-
----
 
 ## Cloud Provider Headers
 
@@ -193,8 +183,6 @@ Each provider injects its own headers. Recognizing them tells you which layer ha
 ### Railway / Koyeb
 
 Both proxy requests through standard infrastructure. Expect `X-Forwarded-*` headers; request IDs may appear as `X-Request-Id` or `X-Correlation-Id` depending on your app framework.
-
----
 
 ## Why This Matters for Monitoring
 

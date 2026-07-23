@@ -1,6 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-
 import "@openstatus/analytics/env";
 import "@openstatus/db/env.mjs";
 
@@ -19,12 +18,11 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: z.string(),
     GCP_PRIVATE_KEY: z.string(),
     CRON_SECRET: z.string(),
-    EXTERNAL_API_URL: z.url(),
     CLICKHOUSE_URL: z.string(),
     CLICKHOUSE_USERNAME: z.string(),
     CLICKHOUSE_PASSWORD: z.string(),
     PAGERDUTY_APP_ID: z.string().optional(),
-    SLACK_SUPPORT_WEBHOOK_URL: z.string().optional(),
+    SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
@@ -52,12 +50,11 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: process.env.GCP_CLIENT_EMAIL,
     GCP_PRIVATE_KEY: process.env.GCP_PRIVATE_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
-    EXTERNAL_API_URL: process.env.EXTERNAL_API_URL,
     CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
     CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
     CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
     PAGERDUTY_APP_ID: process.env.PAGERDUTY_APP_ID,
-    SLACK_SUPPORT_WEBHOOK_URL: process.env.SLACK_SUPPORT_WEBHOOK_URL,
+    SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
   },
   skipValidation: true,
 });

@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-
+import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
@@ -11,7 +11,7 @@ import {
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
-import { Events } from "@openstatus/analytics";
+
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema, transformPageData } from "./schema";

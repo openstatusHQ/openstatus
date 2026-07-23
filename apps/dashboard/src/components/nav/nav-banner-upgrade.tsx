@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,6 +11,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Rocket, X } from "lucide-react";
 import { useState } from "react";
+
+import { useTRPC } from "@/lib/trpc/client";
+
 import { UpgradeDialog } from "../dialogs/upgrade";
 
 export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
@@ -22,7 +24,7 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
   if (!workspace) return null;
 
   return (
-    <SidebarGroup className="rounded-lg border bg-background group-data-[collapsible=icon]:hidden">
+    <SidebarGroup className="bg-background rounded-lg border group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>OpenStatus Pro</span>
         <SidebarMenuAction
@@ -34,7 +36,7 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
       </SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem className="flex items-center gap-2 text-sm">
-          <Rocket className="shrink-0 text-info" size={12} />
+          <Rocket className="text-info shrink-0" size={12} />
           <span>
             Unlock custom domains, teams, 1 min. checks, subscriptions and more.
           </span>

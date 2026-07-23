@@ -1,16 +1,17 @@
-import { TRPCError, initTRPC } from "@trpc/server";
-import { type NextRequest, after } from "next/server";
-import superjson from "superjson";
-import { ZodError, treeifyError } from "zod";
-
 import {
   type EventProps,
   type IdentifyProps,
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
-import { db, eq, schema } from "@openstatus/db";
+import { db } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
+import { TRPCError, initTRPC } from "@trpc/server";
+import { type NextRequest, after } from "next/server.js";
+import superjson from "superjson";
+import { ZodError, treeifyError } from "zod";
+
+import { resolveActiveWorkspace } from "./auth/resolve-active-workspace";
 
 // Generic session type that works with both User and Viewer
 type Session = {
@@ -149,66 +150,51 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  // /**
-  //  * Attach `user` and `workspace` | `activeWorkspace` infos to context by
-  //  * comparing the `user.tenantId` to clerk's `auth.userId`
-  //  */
-  const userAndWorkspace = await db.query.user.findFirst({
-    where: eq(schema.user.id, Number(ctx.session.user.id)),
-    with: {
-      usersToWorkspaces: {
-        with: {
-          workspace: true,
-        },
-      },
-    },
-  });
-
-  const { usersToWorkspaces, ...userProps } = userAndWorkspace || {};
-
-  /**
-   * We need to include the active "workspace-slug" cookie in the request found in the
-   * `/app/[workspaceSlug]/.../`routes. We pass them either via middleware if it's a
-   * server request or via the client cookie, set via `<WorspaceClientCookie />`
-   * if it's a client request.
-   *
-   * REMINDER: We only need the client cookie because of client side mutations.
-   */
-  const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
-
-  // if (!workspaceSlug) {
-  //   throw new TRPCError({
-  //     code: "UNAUTHORIZED",
-  //     message: "Workspace Slug Not Found",
-  //   });
-  // }
-
-  // NOTE: if no workspace slug fit (cookie manipulation), use the first workspace
-  const activeWorkspace =
-    usersToWorkspaces?.find(({ workspace }) => {
-      // If there is a workspace slug in the cookie, use it to find the workspace
-      if (workspaceSlug) return workspace.slug === workspaceSlug;
-      return true;
-    })?.workspace ?? usersToWorkspaces?.[0]?.workspace;
-
-  if (!activeWorkspace) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Workspace Not Found",
+  // Test escape hatch: when NODE_ENV=test and the caller already
+  // populated `workspace` + `user` on the inner context (via
+  // `createInnerTRPCContext` in a test helper), trust it and skip the
+  // DB round-trip. Without this, router-level limit tests that pass
+  // an override `workspace.limits` object see it immediately replaced
+  // by the seeded team-plan workspace below — the override never
+  // reaches the service and the test asserts against the wrong plan.
+  if (
+    process.env.NODE_ENV === "test" &&
+    ctx.workspace != null &&
+    ctx.user != null
+  ) {
+    return opts.next({
+      ctx: { ...ctx, user: ctx.user, workspace: ctx.workspace },
     });
   }
 
-  if (activeWorkspace.slug !== workspaceSlug) {
+  /**
+   * The active "workspace-slug" cookie is set in the dashboard middleware
+   * for server requests and in `<WorkspaceClientCookie />` for client
+   * requests; we read the same cookie either way.
+   */
+  const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
+
+  const resolved = await resolveActiveWorkspace({
+    userId: Number(ctx.session.user.id),
+    workspaceSlug,
+  });
+
+  if (!resolved.ok) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message:
+        resolved.error.kind === "user_not_found"
+          ? "User Not Found"
+          : "Workspace Not Found",
+    });
+  }
+
+  const { user, workspace } = resolved.value;
+
+  if (workspace.slug !== workspaceSlug) {
     // properly set the workspace slug cookie
-    ctx.req?.cookies.set("workspace-slug", activeWorkspace.slug);
+    ctx.req?.cookies.set("workspace-slug", workspace.slug);
   }
-
-  if (!userProps) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
-  }
-
-  const user = schema.selectUserSchema.parse(userProps);
-  const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
 
   const result = await opts.next({ ctx: { ...ctx, user, workspace } });
 

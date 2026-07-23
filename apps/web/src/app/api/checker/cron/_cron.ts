@@ -1,8 +1,4 @@
-import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
-import type { NextRequest } from "next/server";
-import { z } from "zod";
-
+import { CloudTasksClient, type protos } from "@google-cloud/tasks";
 import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
@@ -12,19 +8,21 @@ import {
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
-
-import { env } from "@/env";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
+
+import { env } from "../../../../env";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -41,7 +39,7 @@ export const isAuthorizedDomain = (url: string) => {
 
 export const cron = async ({
   periodicity,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  // oxlint-disable-next-line eslint/no-unused-vars
   req,
 }: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
   const client = new CloudTasksClient({
@@ -250,7 +248,7 @@ const createCronTask = async ({
   if (regionInfo.provider === "railway") {
     regionHeader = { "railway-region": region.replace("railway_", "") };
   }
-  const newTask: google.cloud.tasks.v2beta3.ITask = {
+  const newTask: protos.google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
       headers: {
         "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing

@@ -1,5 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { Info } from "lucide-react";
+import { useParams } from "next/navigation";
+
 import { Link } from "@/components/common/link";
 import { Note } from "@/components/common/note";
 import {
@@ -18,9 +22,6 @@ import { columns } from "@/components/data-table/incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();

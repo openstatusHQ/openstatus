@@ -1,0 +1,33 @@
+CREATE INDEX `users_to_workspaces_workspace_id_idx` ON `users_to_workspaces` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `status_report_workspace_created_idx` ON `status_report` (`workspace_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `status_report_page_id_idx` ON `status_report` (`page_id`);--> statement-breakpoint
+CREATE INDEX `status_report_update_status_report_id_idx` ON `status_report_update` (`status_report_id`);--> statement-breakpoint
+CREATE INDEX `integration_workspace_id_idx` ON `integration` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `page_lower_slug_idx` ON `page` (LOWER("slug"));--> statement-breakpoint
+CREATE INDEX `page_lower_custom_domain_idx` ON `page` (LOWER("custom_domain"));--> statement-breakpoint
+CREATE INDEX `page_workspace_id_idx` ON `page` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `monitor_workspace_id_active_idx` ON `monitor` (`workspace_id`) WHERE "monitor"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE INDEX `notification_workspace_id_idx` ON `notification` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `notifications_to_monitors_notification_id_idx` ON `notifications_to_monitors` (`notification_id`);--> statement-breakpoint
+CREATE INDEX `invitation_workspace_id_idx` ON `invitation` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `incident_workspace_id_idx` ON `incident` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `monitor_tag_workspace_id_idx` ON `monitor_tag` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `monitor_tag_to_monitor_monitor_tag_id_idx` ON `monitor_tag_to_monitor` (`monitor_tag_id`);--> statement-breakpoint
+CREATE INDEX `application_workspace_id_idx` ON `application` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `maintenance_page_id_idx` ON `maintenance` (`page_id`);--> statement-breakpoint
+CREATE INDEX `maintenance_workspace_id_idx` ON `maintenance` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `check_workspace_id_idx` ON `check` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `monitor_run_workspace_id_idx` ON `monitor_run` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `monitor_run_monitor_id_idx` ON `monitor_run` (`monitor_id`);--> statement-breakpoint
+CREATE INDEX `private_location_workspace_id_idx` ON `private_location` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `private_location_to_monitor_private_location_id_idx` ON `private_location_to_monitor` (`private_location_id`);--> statement-breakpoint
+CREATE INDEX `private_location_to_monitor_monitor_id_idx` ON `private_location_to_monitor` (`monitor_id`);--> statement-breakpoint
+CREATE INDEX `monitor_group_workspace_id_idx` ON `monitor_group` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `monitor_group_page_id_idx` ON `monitor_group` (`page_id`);--> statement-breakpoint
+CREATE INDEX `api_key_workspace_id_idx` ON `api_key` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `maintenance_to_page_component_page_component_id_idx` ON `maintenance_to_page_component` (`page_component_id`);--> statement-breakpoint
+CREATE INDEX `page_component_workspace_id_idx` ON `page_component` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `status_report_to_page_component_page_component_id_idx` ON `status_report_to_page_component` (`page_component_id`);--> statement-breakpoint
+CREATE INDEX `page_component_groups_page_id_idx` ON `page_component_groups` (`page_id`);--> statement-breakpoint
+CREATE INDEX `page_component_groups_workspace_id_idx` ON `page_component_groups` (`workspace_id`);--> statement-breakpoint
+CREATE INDEX `feedback_workspace_id_idx` ON `feedback` (`workspace_id`);

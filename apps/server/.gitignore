@@ -1,1 +1,5 @@
 node_modules
+app
+src/_serve.bundle.mjs
+.deno_compile_bundle_*.mjs
+app.tmp-*

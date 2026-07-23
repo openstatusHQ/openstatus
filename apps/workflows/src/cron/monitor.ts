@@ -1,5 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { google } from "@google-cloud/tasks/build/protos";
 import {
   and,
   db,
@@ -11,7 +11,7 @@ import {
   or,
   schema,
 } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import { selectWorkspaceSchema, user } from "@openstatus/db/src/schema";
 import {
   monitorDeactivationEmail,
   monitorPausedEmail,
@@ -20,10 +20,12 @@ import {
   type EmailHtml,
   sendBatchEmailHtml,
 } from "@openstatus/emails/src/send";
+import { bulkUpdateMonitors } from "@openstatus/services/monitor";
 import { Redis } from "@openstatus/upstash";
 import { isSelfHost } from "@openstatus/utils";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
+
 import { env } from "../env";
 
 const redis = Redis.fromEnv();
@@ -307,18 +309,28 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       return;
     }
 
-    const userWorkspace = await getUserWorkspace(userId);
-    if (userWorkspace) {
-      await db
-        .update(schema.monitor)
-        .set({ active: false })
+    const workspace = await getUserWorkspace(userId);
+    if (workspace) {
+      const activeMonitors = await db
+        .select({ id: schema.monitor.id })
+        .from(schema.monitor)
         .where(
           and(
-            eq(schema.monitor.workspaceId, userWorkspace.workspaceId),
+            eq(schema.monitor.workspaceId, workspace.id),
             eq(schema.monitor.active, true),
             isNull(schema.monitor.deletedAt),
           ),
-        );
+        )
+        .all();
+      if (activeMonitors.length > 0) {
+        await bulkUpdateMonitors({
+          ctx: {
+            workspace,
+            actor: { type: "system", job: "monitor-auto-pause" },
+          },
+          input: { ids: activeMonitors.map((m) => m.id), active: false },
+        });
+      }
     }
 
     const currentUser = await getUser(userId);
@@ -460,8 +472,8 @@ async function sendWorkflowEmail({
 }
 
 async function getUserWorkspace(userId: number) {
-  return db
-    .select({ workspaceId: schema.workspace.id })
+  const row = await db
+    .select({ workspace: schema.workspace })
     .from(schema.user)
     .innerJoin(
       schema.usersToWorkspaces,
@@ -478,4 +490,5 @@ async function getUserWorkspace(userId: number) {
       ),
     )
     .get();
+  return row ? selectWorkspaceSchema.parse(row.workspace) : undefined;
 }

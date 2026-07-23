@@ -1,18 +1,17 @@
 "use client";
 
-import {
-  FormSubscribeEmail,
-  type FormValues,
-} from "@/components/forms/form-subscribe-email";
-import { getBaseUrl } from "@/lib/base-url";
 import type { RouterOutputs } from "@openstatus/api";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Input } from "@openstatus/ui/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@openstatus/ui/components/ui/popover";
+  StatusUpdates as BlockStatusUpdates,
+  StatusUpdatesContent,
+  StatusUpdatesJson,
+  StatusUpdatesRss,
+  StatusUpdatesSection,
+  StatusUpdatesSlack,
+  StatusUpdatesSsh,
+  StatusUpdatesTrigger,
+} from "@openstatus/ui/components/blocks/status-updates";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
   Tabs,
@@ -20,28 +19,40 @@ import {
   TabsList,
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
-import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, Copy, Inbox } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
+import { useParams } from "next/navigation";
 import { useState } from "react";
+
+import { getBaseUrl } from "../../lib/base-url";
+import { createProtectedCookieKey } from "../../lib/protected";
+import {
+  FormSubscribeEmail,
+  type FormValues,
+} from "../forms/form-subscribe-email";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
-function getUpdateLink(type: "rss" | "json" | "atom", page?: Page | null) {
+function getUpdateLink(
+  type: "rss" | "json" | "atom",
+  page?: Page | null,
+  password?: string,
+) {
   const baseUrl = getBaseUrl({
     slug: page?.slug,
     customDomain: page?.customDomain,
   });
 
   return `${baseUrl}/feed/${type}${
-    page?.accessType === "password" ? `?pw=${page?.password}` : ""
+    page?.accessType === "password" && password
+      ? `?pw=${encodeURIComponent(password)}`
+      : ""
   }`;
 }
-
-// TODO: use domain instead of openstatus subdomain if available
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   types?: StatusUpdateType[];
@@ -58,22 +69,23 @@ export function StatusUpdates({
 }: StatusUpdatesProps) {
   const t = useExtracted();
   const [success, setSuccess] = useState(false);
+  const params = useParams();
+  const domain = typeof params.domain === "string" ? params.domain : "";
+  // The password lives in the cookie this browser set at login — not in the
+  // page payload, which intentionally omits it.
+  const [password] = useCookieState(createProtectedCookieKey(domain));
 
   if (types.length === 0) return null;
 
+  const rssUrl = getUpdateLink("rss", page, password);
+  const atomUrl = getUpdateLink("atom", page, password);
+  const jsonUrl = getUpdateLink("json", page, password);
+  const sshCommand = `ssh ${page?.slug}@ssh.openstatus.dev`;
+
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          className={cn(className)}
-          {...props}
-        >
-          {t("Get updates")}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 overflow-hidden p-0">
+    <BlockStatusUpdates>
+      <StatusUpdatesTrigger className={cn(className)} {...props} />
+      <StatusUpdatesContent>
         <Tabs defaultValue={types[0]}>
           <TabsList className="w-full rounded-none border-b">
             {types.includes("email") ? (
@@ -97,12 +109,12 @@ export function StatusUpdates({
               <SuccessMessage />
             ) : (
               <>
-                <div className="flex flex-col gap-2">
-                  <p className="px-2 text-sm">
-                    {t(
-                      "Get email notifications whenever a report has been created or resolved",
-                    )}
-                  </p>
+                <StatusUpdatesSection
+                  description={t(
+                    "Get email notifications whenever a report has been created or resolved",
+                  )}
+                  className="py-0 pt-2"
+                >
                   <FormSubscribeEmail
                     id="email-form"
                     page={page}
@@ -111,112 +123,31 @@ export function StatusUpdates({
                       setSuccess(true);
                     }}
                   />
-                </div>
+                </StatusUpdatesSection>
                 <Separator />
                 <div className="px-2 pb-2">
                   <Button className="w-full" type="submit" form="email-form">
                     {t("Subscribe")}
                   </Button>
-                </div>{" "}
+                </div>
               </>
             )}
           </TabsContent>
-          <TabsContent value="rss" className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2 px-2">
-              <p className="text-sm">{t("Get the RSS feed")}</p>
-              <CopyInputButton
-                className="w-full"
-                id="rss"
-                value={getUpdateLink("rss", page)}
-              />
-            </div>
-            <Separator />
-            <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">{t("Get the Atom feed")}</p>
-              <CopyInputButton
-                className="w-full"
-                id="atom"
-                value={getUpdateLink("atom", page)}
-              />
-            </div>
+          <TabsContent value="rss">
+            <StatusUpdatesRss rssUrl={rssUrl} atomUrl={atomUrl} />
           </TabsContent>
-          <TabsContent value="json" className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">{t("Get the JSON updates")}</p>
-              <CopyInputButton
-                className="w-full"
-                id="json"
-                value={getUpdateLink("json", page)}
-              />
-            </div>
+          <TabsContent value="json">
+            <StatusUpdatesJson url={jsonUrl} />
           </TabsContent>
-          <TabsContent value="ssh" className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">{t("Get status via SSH")}</p>
-              <CopyInputButton
-                className="w-full"
-                id="ssh"
-                value={`ssh ${page?.slug}@ssh.openstatus.dev`}
-              />
-            </div>
+          <TabsContent value="ssh">
+            <StatusUpdatesSsh command={sshCommand} />
           </TabsContent>
-          <TabsContent value="slack" className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2 px-2 pb-2">
-              <p className="text-sm">
-                {t(
-                  "For status updates in Slack, paste the text below into any channel.",
-                )}
-              </p>
-              <CopyInputButton
-                className="w-full"
-                id="slack"
-                value={`/feed subscribe ${getUpdateLink("rss", page)}`}
-              />
-            </div>
+          <TabsContent value="slack">
+            <StatusUpdatesSlack rssUrl={rssUrl} />
           </TabsContent>
         </Tabs>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function CopyInputButton({
-  value,
-  onClick,
-  ...props
-}: React.ComponentProps<typeof Input> & {
-  value: string;
-}) {
-  const t = useExtracted();
-  const { copy, isCopied } = useCopyToClipboard();
-  return (
-    <div className="relative w-full">
-      <Input
-        placeholder={value}
-        readOnly
-        onClick={(e) => {
-          copy(value, {
-            successMessage: t("Link copied to clipboard"),
-            withToast: true,
-          });
-          onClick?.(e);
-        }}
-        {...props}
-      />
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() =>
-          copy(value, {
-            successMessage: t("Link copied to clipboard"),
-          })
-        }
-        className="-translate-y-1/2 absolute top-1/2 right-2 size-6"
-      >
-        {isCopied ? <Check /> : <Copy />}
-        <span className="sr-only">{t("Copy Link")}</span>
-      </Button>
-    </div>
+      </StatusUpdatesContent>
+    </BlockStatusUpdates>
   );
 }
 
@@ -226,7 +157,7 @@ function SuccessMessage() {
     <div className="flex flex-col items-center justify-center gap-1 p-3">
       <Inbox className="size-4 shrink-0" />
       <p className="text-center font-medium">{t("Check your inbox!")}</p>
-      <p className="text-center text-muted-foreground text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         {t("Validate your email to receive updates and you are all set.")}
       </p>
     </div>

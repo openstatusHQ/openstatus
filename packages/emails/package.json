@@ -2,29 +2,35 @@
   "name": "@openstatus/emails",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/index.ts",
-  "scripts": {
-    "dev:email": "email dev",
-    "test": "bun test"
-  },
   "keywords": [],
-  "author": "",
   "license": "ISC",
+  "author": "",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/client": "./src/client.tsx",
+    "./src/*": "./src/*.ts"
+  },
+  "scripts": {
+    "check": "deno check --sloppy-imports .",
+    "dev:email": "email dev",
+    "test": "deno test --parallel -A --no-check --sloppy-imports"
+  },
   "dependencies": {
-    "@react-email/components": "1.0.3",
-    "@react-email/render": "2.0.1",
-    "@t3-oss/env-core": "0.13.10",
-    "effect": "3.19.12",
-    "react-email": "5.1.1",
-    "resend": "6.6.0",
-    "zod": "4.1.13"
+    "@t3-oss/env-core": "catalog:",
+    "effect": "catalog:",
+    "react": "catalog:",
+    "react-email": "catalog:",
+    "resend": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@react-email/preview-server": "5.1.1",
-    "@types/node": "22.10.2",
-    "@types/react": "19.2.2",
-    "react": "19.2.3",
-    "typescript": "5.9.3"
+    "@react-email/ui": "catalog:",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
   }
 }

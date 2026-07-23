@@ -1,13 +1,14 @@
 "use client";
 
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/status-pages.client";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/status-pages.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 type StatusPage = RouterOutputs["page"]["list"][number];
 

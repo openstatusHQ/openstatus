@@ -1,0 +1,157 @@
+{
+  "name": "@openstatus/services",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./status-report": {
+      "import": "./src/status-report/index.ts",
+      "types": "./src/status-report/index.ts"
+    },
+    "./status-report/utils": {
+      "import": "./src/status-report/utils.ts",
+      "types": "./src/status-report/utils.ts"
+    },
+    "./maintenance": {
+      "import": "./src/maintenance/index.ts",
+      "types": "./src/maintenance/index.ts"
+    },
+    "./incident": {
+      "import": "./src/incident/index.ts",
+      "types": "./src/incident/index.ts"
+    },
+    "./monitor": {
+      "import": "./src/monitor/index.ts",
+      "types": "./src/monitor/index.ts"
+    },
+    "./notification": {
+      "import": "./src/notification/index.ts",
+      "types": "./src/notification/index.ts"
+    },
+    "./page-component": {
+      "import": "./src/page-component/index.ts",
+      "types": "./src/page-component/index.ts"
+    },
+    "./page": {
+      "import": "./src/page/index.ts",
+      "types": "./src/page/index.ts"
+    },
+    "./status-timeline": {
+      "import": "./src/status-timeline/index.ts",
+      "types": "./src/status-timeline/index.ts"
+    },
+    "./frozen-uptime": {
+      "import": "./src/frozen-uptime/index.ts",
+      "types": "./src/frozen-uptime/index.ts"
+    },
+    "./workspace": {
+      "import": "./src/workspace/index.ts",
+      "types": "./src/workspace/index.ts"
+    },
+    "./user": {
+      "import": "./src/user/index.ts",
+      "types": "./src/user/index.ts"
+    },
+    "./invitation": {
+      "import": "./src/invitation/index.ts",
+      "types": "./src/invitation/index.ts"
+    },
+    "./api-key": {
+      "import": "./src/api-key/index.ts",
+      "types": "./src/api-key/index.ts"
+    },
+    "./chat-session": {
+      "import": "./src/chat-session/index.ts",
+      "types": "./src/chat-session/index.ts"
+    },
+    "./agent-tools": {
+      "import": "./src/agent-tools/index.ts",
+      "types": "./src/agent-tools/index.ts"
+    },
+    "./import": {
+      "import": "./src/import/index.ts",
+      "types": "./src/import/index.ts"
+    },
+    "./audit": {
+      "import": "./src/audit/index.ts",
+      "types": "./src/audit/index.ts"
+    },
+    "./auth": {
+      "import": "./src/auth/index.ts",
+      "types": "./src/auth/index.ts"
+    },
+    "./member": {
+      "import": "./src/member/index.ts",
+      "types": "./src/member/index.ts"
+    },
+    "./monitor-tag": {
+      "import": "./src/monitor-tag/index.ts",
+      "types": "./src/monitor-tag/index.ts"
+    },
+    "./integration": {
+      "import": "./src/integration/index.ts",
+      "types": "./src/integration/index.ts"
+    },
+    "./private-location": {
+      "import": "./src/private-location/index.ts",
+      "types": "./src/private-location/index.ts"
+    },
+    "./page-subscriber": {
+      "import": "./src/page-subscriber/index.ts",
+      "types": "./src/page-subscriber/index.ts"
+    },
+    "./external-service": {
+      "import": "./src/external-service/index.ts",
+      "types": "./src/external-service/index.ts"
+    },
+    "./external-service-incident": {
+      "import": "./src/external-service-incident/index.ts",
+      "types": "./src/external-service-incident/index.ts"
+    },
+    "./external-service-component": {
+      "import": "./src/external-service-component/index.ts",
+      "types": "./src/external-service-component/index.ts"
+    },
+    "./external-service-report": {
+      "import": "./src/external-service-report/index.ts",
+      "types": "./src/external-service-report/index.ts"
+    },
+    "./test/helpers": {
+      "import": "./test/helpers.ts",
+      "types": "./test/helpers.ts"
+    },
+    "./test/fixtures": {
+      "import": "./test/fixtures.ts",
+      "types": "./test/fixtures.ts"
+    }
+  },
+  "scripts": {
+    "check": "deno check --sloppy-imports .",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openstatus/assertions": "workspace:*",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/importers": "workspace:*",
+    "@openstatus/locales": "workspace:*",
+    "@openstatus/regions": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
+    "@openstatus/theme-store": "workspace:*",
+    "@openstatus/tinybird": "workspace:*",
+    "@openstatus/utils": "workspace:*",
+    "effect": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "typescript": "catalog:"
+  }
+}

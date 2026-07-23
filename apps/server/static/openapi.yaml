@@ -8,7 +8,7 @@ info:
     url: https://www.openstatus.dev
 externalDocs:
   description: OpenStatus Documentation
-  url: https://docs.openstatus.dev
+  url: https://www.openstatus.dev/docs
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -609,6 +609,32 @@ components:
       title: DeleteMonitorResponse
       additionalProperties: false
       description: DeleteMonitorResponse is the response after deleting a monitor.
+    openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to get a response log for (required).
+        logId:
+          type: string
+          title: log_id
+          minLength: 1
+          description: Response log ID to retrieve (required).
+      title: GetMonitorHTTPResponseLogRequest
+      additionalProperties: false
+      description: GetMonitorHTTPResponseLogRequest is the request to get one response log.
+    openstatus.monitor.v1.GetMonitorHTTPResponseLogResponse:
+      type: object
+      properties:
+        log:
+          title: log
+          description: Response log details.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogDetail'
+      title: GetMonitorHTTPResponseLogResponse
+      additionalProperties: false
+      description: GetMonitorHTTPResponseLogResponse is the response containing one response log.
     openstatus.monitor.v1.GetMonitorRequest:
       type: object
       properties:
@@ -911,6 +937,189 @@ components:
       title: HTTPMonitor
       additionalProperties: false
       description: HTTPMonitor defines the configuration for an HTTP monitor.
+    openstatus.monitor.v1.HTTPResponseLogDetail:
+      type: object
+      properties:
+        log:
+          title: log
+          description: Compact response log fields.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogListItem'
+        url:
+          type: string
+          title: url
+          description: Checked URL.
+        error:
+          type: boolean
+          title: error
+          description: Whether the check errored.
+        message:
+          type:
+            - string
+            - "null"
+          title: message
+          description: Error message, when present.
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+          description: Redacted response headers.
+        assertions:
+          type:
+            - string
+            - "null"
+          title: assertions
+          description: Serialized assertions used for the check.
+      title: HTTPResponseLogDetail
+      additionalProperties: false
+      description: HTTPResponseLogDetail contains full response log debugging data.
+    openstatus.monitor.v1.HTTPResponseLogDetail.HeadersEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: HeadersEntry
+      additionalProperties: false
+    openstatus.monitor.v1.HTTPResponseLogListItem:
+      type: object
+      properties:
+        id:
+          type:
+            - string
+            - "null"
+          title: id
+          description: Response log ID.
+        latency:
+          type: integer
+          title: latency
+          format: int32
+          description: Latency in milliseconds.
+        statusCode:
+          type:
+            - integer
+            - "null"
+          title: status_code
+          format: int32
+          description: HTTP status code.
+        monitorId:
+          type: string
+          title: monitor_id
+          description: Monitor ID.
+        requestStatus:
+          title: request_status
+          description: Request status classification.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogRequestStatus'
+        region:
+          title: region
+          description: Region where the check ran.
+          $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+        cronTimestamp:
+          type:
+            - integer
+            - string
+          title: cron_timestamp
+          format: int64
+          description: Cron bucket timestamp in Unix milliseconds.
+        trigger:
+          title: trigger
+          description: Check trigger.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogTrigger'
+        timestamp:
+          type:
+            - integer
+            - string
+          title: timestamp
+          format: int64
+          description: Response timestamp in Unix milliseconds.
+        timing:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogTiming'
+            - type: "null"
+          title: timing
+          description: Timing phases.
+      title: HTTPResponseLogListItem
+      additionalProperties: false
+      description: HTTPResponseLogListItem is a compact response log entry.
+    openstatus.monitor.v1.HTTPResponseLogPagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          title: limit
+          format: int32
+          description: Requested page size.
+        offset:
+          type: integer
+          title: offset
+          format: int32
+          description: Requested offset.
+        hasMore:
+          type: boolean
+          title: has_more
+          description: Whether more logs are available.
+        nextOffset:
+          type:
+            - integer
+            - "null"
+          title: next_offset
+          format: int32
+          description: Next offset if more logs are available.
+      title: HTTPResponseLogPagination
+      additionalProperties: false
+      description: HTTPResponseLogPagination contains offset pagination metadata.
+    openstatus.monitor.v1.HTTPResponseLogRequestStatus:
+      type: string
+      title: HTTPResponseLogRequestStatus
+      enum:
+        - HTTP_RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED
+        - HTTP_RESPONSE_LOG_REQUEST_STATUS_SUCCESS
+        - HTTP_RESPONSE_LOG_REQUEST_STATUS_ERROR
+        - HTTP_RESPONSE_LOG_REQUEST_STATUS_DEGRADED
+      description: HTTPResponseLogRequestStatus is the result classification for an HTTP response log.
+    openstatus.monitor.v1.HTTPResponseLogTiming:
+      type: object
+      properties:
+        dns:
+          type: integer
+          title: dns
+          format: int32
+          description: DNS lookup duration.
+        connect:
+          type: integer
+          title: connect
+          format: int32
+          description: TCP connection duration.
+        tls:
+          type: integer
+          title: tls
+          format: int32
+          description: TLS handshake duration.
+        ttfb:
+          type: integer
+          title: ttfb
+          format: int32
+          description: Time to first byte duration.
+        transfer:
+          type: integer
+          title: transfer
+          format: int32
+          description: Response transfer duration.
+      title: HTTPResponseLogTiming
+      additionalProperties: false
+      description: HTTPResponseLogTiming contains calculated timing phases in milliseconds.
+    openstatus.monitor.v1.HTTPResponseLogTrigger:
+      type: string
+      title: HTTPResponseLogTrigger
+      enum:
+        - HTTP_RESPONSE_LOG_TRIGGER_UNSPECIFIED
+        - HTTP_RESPONSE_LOG_TRIGGER_CRON
+        - HTTP_RESPONSE_LOG_TRIGGER_API
+      description: HTTPResponseLogTrigger describes what started the monitor check.
     openstatus.monitor.v1.HeaderAssertion:
       type: object
       properties:
@@ -952,6 +1161,66 @@ components:
       title: Headers
       additionalProperties: false
       description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to list response logs for (required).
+        fromTimestamp:
+          type:
+            - integer
+            - string
+            - "null"
+          title: from_timestamp
+          format: int64
+          description: Start of the response log window as Unix milliseconds within the 14-day retention window.
+        toTimestamp:
+          type:
+            - integer
+            - string
+            - "null"
+          title: to_timestamp
+          format: int64
+          description: End of the response log window as Unix milliseconds within the 14-day retention window.
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of logs to return (1-100, defaults to 25).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of logs to skip for pagination (defaults to 0).
+      title: ListMonitorHTTPResponseLogsRequest
+      additionalProperties: false
+      description: ListMonitorHTTPResponseLogsRequest is the request to list response logs within the 14-day HTTP response-log window.
+    openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogListItem'
+          title: logs
+          description: Response logs.
+        pagination:
+          title: pagination
+          description: Pagination metadata.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPResponseLogPagination'
+      title: ListMonitorHTTPResponseLogsResponse
+      additionalProperties: false
+      description: ListMonitorHTTPResponseLogsResponse is the response containing response logs.
     openstatus.monitor.v1.ListMonitorsRequest:
       type: object
       properties:
@@ -1608,6 +1877,19 @@ components:
       title: ListNotificationsResponse
       additionalProperties: false
       description: ListNotificationsResponse is the response containing notification channels.
+    openstatus.notification.v1.MsTeamsData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          examples:
+            - https://prod-00.westeurope.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke
+          title: webhook_url
+          format: uri
+          description: Microsoft Teams webhook URL (Power Automate Workflows).
+      title: MsTeamsData
+      additionalProperties: false
+      description: MsTeamsData contains configuration for Microsoft Teams notifications.
     openstatus.notification.v1.Notification:
       type: object
       properties:
@@ -1683,6 +1965,15 @@ components:
           title: grafana_oncall
           required:
             - grafanaOncall
+        - type: object
+          properties:
+            msTeams:
+              title: ms_teams
+              description: Microsoft Teams configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.MsTeamsData'
+          title: ms_teams
+          required:
+            - msTeams
         - type: object
           properties:
             ntfy:
@@ -1775,6 +2066,7 @@ components:
         - NOTIFICATION_PROVIDER_TELEGRAM
         - NOTIFICATION_PROVIDER_WEBHOOK
         - NOTIFICATION_PROVIDER_WHATSAPP
+        - NOTIFICATION_PROVIDER_MS_TEAMS
       description: NotificationProvider represents the supported notification channel types.
     openstatus.notification.v1.NotificationSummary:
       type: object
@@ -2033,6 +2325,233 @@ components:
       title: WhatsappData
       additionalProperties: false
       description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.private_location.v1.CreatePrivateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - eu-west-agent
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the private location (required, 1-256 characters).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location should run (optional).
+      title: CreatePrivateLocationRequest
+      additionalProperties: false
+      description: CreatePrivateLocationRequest is the request to create a new private location.
+    openstatus.private_location.v1.CreatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The created private location, including its generated agent token.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: CreatePrivateLocationResponse
+      additionalProperties: false
+      description: CreatePrivateLocationResponse is the response after creating a private location.
+    openstatus.private_location.v1.DeletePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to delete (required).
+      title: DeletePrivateLocationRequest
+      additionalProperties: false
+      description: DeletePrivateLocationRequest is the request to delete a private location.
+    openstatus.private_location.v1.DeletePrivateLocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeletePrivateLocationResponse
+      additionalProperties: false
+      description: DeletePrivateLocationResponse is the response after deleting a private location.
+    openstatus.private_location.v1.GetPrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to retrieve (required).
+      title: GetPrivateLocationRequest
+      additionalProperties: false
+      description: GetPrivateLocationRequest is the request to get a private location by ID.
+    openstatus.private_location.v1.GetPrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The requested private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: GetPrivateLocationResponse
+      additionalProperties: false
+      description: GetPrivateLocationResponse is the response containing the private location.
+    openstatus.private_location.v1.ListPrivateLocationsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of private locations to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of private locations to skip for pagination (defaults to 0).
+      title: ListPrivateLocationsRequest
+      additionalProperties: false
+      description: ListPrivateLocationsRequest is the request to list private locations.
+    openstatus.private_location.v1.ListPrivateLocationsResponse:
+      type: object
+      properties:
+        privateLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationSummary'
+          title: private_locations
+          description: List of private locations.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of private locations in the workspace.
+      title: ListPrivateLocationsResponse
+      additionalProperties: false
+      description: ListPrivateLocationsResponse is the response containing private location summaries.
+    openstatus.private_location.v1.PrivateLocation:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        token:
+          type: string
+          title: token
+          description: |-
+            Agent credential. Generated by the server on creation and used by the
+             agent to authenticate; treat it as a secret.
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+      title: PrivateLocation
+      additionalProperties: false
+      description: PrivateLocation represents a self-hosted checker agent with full details.
+    openstatus.private_location.v1.PrivateLocationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        monitorCount:
+          type: integer
+          title: monitor_count
+          format: int32
+          description: Number of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+      title: PrivateLocationSummary
+      additionalProperties: false
+      description: |-
+        PrivateLocationSummary represents metadata for a private location (used in
+         list responses). The agent token is intentionally omitted.
+    openstatus.private_location.v1.UpdatePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: New display name for the private location (optional).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: New list of monitor IDs. Only applied when update_monitor_ids is true.
+        updateMonitorIds:
+          type:
+            - boolean
+            - "null"
+          title: update_monitor_ids
+          description: |-
+            When true, monitor_ids replaces the current associations (an empty list
+             clears all). When false or unset, monitor_ids is ignored and existing
+             associations are preserved.
+      title: UpdatePrivateLocationRequest
+      additionalProperties: false
+      description: UpdatePrivateLocationRequest is the request to update a private location.
+    openstatus.private_location.v1.UpdatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The updated private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: UpdatePrivateLocationResponse
+      additionalProperties: false
+      description: UpdatePrivateLocationResponse is the response after updating a private location.
     openstatus.status_page.v1.AddMonitorComponentRequest:
       type: object
       properties:
@@ -2133,6 +2652,122 @@ components:
       title: AddStaticComponentResponse
       additionalProperties: false
       description: AddStaticComponentResponse is the response after adding a static component.
+    openstatus.status_page.v1.ComponentDayBucket:
+      type: object
+      properties:
+        day:
+          type: string
+          title: day
+          description: Day in RFC 3339 format (UTC midnight).
+        count:
+          type:
+            - integer
+            - string
+          title: count
+          format: int64
+          description: Total checks that day.
+        ok:
+          type:
+            - integer
+            - string
+          title: ok
+          format: int64
+          description: Successful checks.
+        degraded:
+          type:
+            - integer
+            - string
+          title: degraded
+          format: int64
+          description: Degraded checks.
+        error:
+          type:
+            - integer
+            - string
+          title: error
+          format: int64
+          description: Failed checks.
+        status:
+          title: status
+          description: Convenience resolved status for the day.
+          $ref: '#/components/schemas/openstatus.status_page.v1.ComponentDayStatus'
+        impact:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_report.v1.PageComponentImpact'
+            - type: "null"
+          title: impact
+          description: Worst status-report impact overlapping the day (absent when none).
+      title: ComponentDayBucket
+      additionalProperties: false
+      description: ComponentDayBucket is one day of status data for a component.
+    openstatus.status_page.v1.ComponentDayStatus:
+      type: string
+      title: ComponentDayStatus
+      enum:
+        - COMPONENT_DAY_STATUS_UNSPECIFIED
+        - COMPONENT_DAY_STATUS_OPERATIONAL
+        - COMPONENT_DAY_STATUS_DEGRADED
+        - COMPONENT_DAY_STATUS_DOWN
+        - COMPONENT_DAY_STATUS_MAINTENANCE
+        - COMPONENT_DAY_STATUS_EMPTY
+      description: ComponentDayStatus is the resolved status of a component on a given day.
+    openstatus.status_page.v1.ComponentEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Identifier of the underlying event.
+        name:
+          type: string
+          title: name
+          description: Human-readable name (incident "Downtime", maintenance / report title).
+        type:
+          title: type
+          description: Kind of event.
+          $ref: '#/components/schemas/openstatus.status_page.v1.ComponentEventType'
+        status:
+          title: status
+          description: Projected status this event contributes.
+          $ref: '#/components/schemas/openstatus.status_page.v1.ComponentEventStatus'
+        from:
+          type: string
+          title: from
+          description: Start time (RFC 3339).
+        to:
+          type:
+            - string
+            - "null"
+          title: to
+          description: End time (RFC 3339); absent while the event is ongoing.
+        impact:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_report.v1.PageComponentImpact'
+            - type: "null"
+          title: impact
+          description: Worst impact over the event (reports only; absent otherwise).
+      title: ComponentEvent
+      additionalProperties: false
+      description: ComponentEvent is a single incident / maintenance / report affecting a component.
+    openstatus.status_page.v1.ComponentEventStatus:
+      type: string
+      title: ComponentEventStatus
+      enum:
+        - COMPONENT_EVENT_STATUS_UNSPECIFIED
+        - COMPONENT_EVENT_STATUS_OPERATIONAL
+        - COMPONENT_EVENT_STATUS_DEGRADED
+        - COMPONENT_EVENT_STATUS_DOWN
+        - COMPONENT_EVENT_STATUS_MAINTENANCE
+      description: ComponentEventStatus is the projected status an event contributes.
+    openstatus.status_page.v1.ComponentEventType:
+      type: string
+      title: ComponentEventType
+      enum:
+        - COMPONENT_EVENT_TYPE_UNSPECIFIED
+        - COMPONENT_EVENT_TYPE_MAINTENANCE
+        - COMPONENT_EVENT_TYPE_INCIDENT
+        - COMPONENT_EVENT_TYPE_REPORT
+      description: ComponentEventType is the kind of timeline event affecting a component.
     openstatus.status_page.v1.ComponentStatus:
       type: object
       properties:
@@ -2180,6 +2815,58 @@ components:
       title: CreateComponentGroupResponse
       additionalProperties: false
       description: CreateComponentGroupResponse is the response after creating a component group.
+    openstatus.status_page.v1.CreatePageSubscriptionRequest:
+      type: object
+      allOf:
+        - properties:
+            pageId:
+              type: string
+              title: page_id
+              minLength: 1
+              description: ID of the status page (required).
+            name:
+              type:
+                - string
+                - "null"
+              title: name
+              maxLength: 255
+              description: Optional human-readable label.
+            componentIds:
+              type: array
+              items:
+                type: string
+              title: component_ids
+              description: Component scope. Empty = entire page.
+        - oneOf:
+            - type: object
+              properties:
+                emailChannel:
+                  title: email_channel
+                  $ref: '#/components/schemas/openstatus.status_page.v1.EmailChannel'
+              title: email_channel
+              required:
+                - emailChannel
+            - type: object
+              properties:
+                webhookChannel:
+                  title: webhook_channel
+                  $ref: '#/components/schemas/openstatus.status_page.v1.WebhookChannel'
+              title: webhook_channel
+              required:
+                - webhookChannel
+      title: CreatePageSubscriptionRequest
+      additionalProperties: false
+      description: CreatePageSubscriptionRequest is the request to add a vendor-managed subscriber to a status page.
+    openstatus.status_page.v1.CreatePageSubscriptionResponse:
+      type: object
+      properties:
+        subscriber:
+          title: subscriber
+          description: The created subscriber.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+      title: CreatePageSubscriptionResponse
+      additionalProperties: false
+      description: CreatePageSubscriptionResponse is the response after creating a vendor-managed subscription.
     openstatus.status_page.v1.CreateStatusPageRequest:
       type: object
       properties:
@@ -2285,6 +2972,14 @@ components:
             - "null"
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: |-
+            Per-mode CSS variable overrides merged over the theme (optional).
+             Only supported variable names are accepted. Requires the custom-theme plan feature.
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
@@ -2298,6 +2993,48 @@ components:
       title: CreateStatusPageResponse
       additionalProperties: false
       description: CreateStatusPageResponse is the response after creating a status page.
+    openstatus.status_page.v1.CustomTheme:
+      type: object
+      properties:
+        light:
+          type: object
+          title: light
+          additionalProperties:
+            type: string
+            title: value
+          description: 'CSS variable overrides applied in light mode, keyed by variable name (e.g. "--primary": "hsl(24 94% 50%)").'
+        dark:
+          type: object
+          title: dark
+          additionalProperties:
+            type: string
+            title: value
+          description: CSS variable overrides applied in dark mode, keyed by variable name.
+      title: CustomTheme
+      additionalProperties: false
+      description: CustomTheme holds per-mode CSS variable overrides merged over the page theme.
+    openstatus.status_page.v1.CustomTheme.DarkEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: DarkEntry
+      additionalProperties: false
+    openstatus.status_page.v1.CustomTheme.LightEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: LightEntry
+      additionalProperties: false
     openstatus.status_page.v1.DeleteComponentGroupRequest:
       type: object
       properties:
@@ -2340,6 +3077,17 @@ components:
       title: DeleteStatusPageResponse
       additionalProperties: false
       description: DeleteStatusPageResponse is the response after deleting a status page.
+    openstatus.status_page.v1.EmailChannel:
+      type: object
+      properties:
+        email:
+          type: string
+          title: email
+          format: email
+          description: Email address of the subscriber (required).
+      title: EmailChannel
+      additionalProperties: false
+      description: EmailChannel carries the email-channel fields for CreatePageSubscription.
     openstatus.status_page.v1.GetOverallStatusRequest:
       type: object
       oneOf:
@@ -2380,6 +3128,81 @@ components:
       title: GetOverallStatusResponse
       additionalProperties: false
       description: GetOverallStatusResponse is the response containing the overall status and individual component statuses.
+    openstatus.status_page.v1.GetPageComponentDailySummaryRequest:
+      type: object
+      allOf:
+        - properties:
+            componentIds:
+              type: array
+              items:
+                type: string
+                minLength: 1
+              title: component_ids
+              description: Restrict the result to these component ids (optional, defaults to all components).
+            days:
+              type:
+                - integer
+                - "null"
+              title: days
+              maximum: 45
+              minimum: 1
+              format: int32
+              description: Number of days to return (1-45, defaults to 45 if unspecified).
+        - oneOf:
+            - type: object
+              properties:
+                id:
+                  type: string
+                  title: id
+                  description: ID of the status page.
+              title: id
+              required:
+                - id
+            - type: object
+              properties:
+                slug:
+                  type: string
+                  title: slug
+                  description: Slug of the status page.
+              title: slug
+              required:
+                - slug
+      title: GetPageComponentDailySummaryRequest
+      additionalProperties: false
+      description: GetPageComponentDailySummaryRequest is the request for per-component daily summaries.
+    openstatus.status_page.v1.GetPageComponentDailySummaryResponse:
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentDailySummary'
+          title: components
+          description: Per-component daily summaries, in page order.
+      title: GetPageComponentDailySummaryResponse
+      additionalProperties: false
+      description: GetPageComponentDailySummaryResponse is the response containing per-component summaries.
+    openstatus.status_page.v1.GetPageComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to retrieve (required).
+      title: GetPageComponentRequest
+      additionalProperties: false
+      description: GetPageComponentRequest is the request to fetch a single component by ID.
+    openstatus.status_page.v1.GetPageComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The requested component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: GetPageComponentResponse
+      additionalProperties: false
+      description: GetPageComponentResponse is the response containing the component.
     openstatus.status_page.v1.GetStatusPageContentRequest:
       type: object
       oneOf:
@@ -2438,6 +3261,65 @@ components:
       title: GetStatusPageContentResponse
       additionalProperties: false
       description: GetStatusPageContentResponse is the response containing the full status page content.
+    openstatus.status_page.v1.GetStatusPageOverviewRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page (required, workspace-scoped).
+      title: GetStatusPageOverviewRequest
+      additionalProperties: false
+      description: GetStatusPageOverviewRequest requests the full overview of a status page by id.
+    openstatus.status_page.v1.GetStatusPageOverviewResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The status page details.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+        configuration:
+          title: configuration
+          description: Rich rendering configuration of the page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageConfiguration'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          title: components
+          description: Components on the status page.
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          title: groups
+          description: Component groups on the status page.
+        statusReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          title: status_reports
+          description: Active and recent status reports.
+        maintenances:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+          title: maintenances
+          description: Scheduled maintenances.
+        overallStatus:
+          title: overall_status
+          description: Aggregated status across all components.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+        componentStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentStatus'
+          title: component_statuses
+          description: Status of individual components.
+      title: GetStatusPageOverviewResponse
+      additionalProperties: false
+      description: GetStatusPageOverviewResponse bundles all data for a single status page.
     openstatus.status_page.v1.GetStatusPageRequest:
       type: object
       properties:
@@ -2581,6 +3463,14 @@ components:
         - PAGE_ACCESS_TYPE_AUTHENTICATED
         - PAGE_ACCESS_TYPE_IP_RESTRICTED
       description: PageAccessType defines who can access the status page.
+    openstatus.status_page.v1.PageBarType:
+      type: string
+      title: PageBarType
+      enum:
+        - PAGE_BAR_TYPE_UNSPECIFIED
+        - PAGE_BAR_TYPE_ABSOLUTE
+        - PAGE_BAR_TYPE_MANUAL
+      description: PageBarType mirrors page.configuration.type (how the status bar is computed).
     openstatus.status_page.v1.PageComponent:
       type: object
       properties:
@@ -2633,6 +3523,42 @@ components:
       title: PageComponent
       additionalProperties: false
       description: PageComponent represents a component displayed on a status page.
+    openstatus.status_page.v1.PageComponentDailySummary:
+      type: object
+      properties:
+        componentId:
+          type: string
+          title: component_id
+          description: ID of the component.
+        type:
+          title: type
+          description: Component type (monitor or static).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentType'
+        monitorId:
+          type:
+            - string
+            - "null"
+          title: monitor_id
+          description: Monitor id backing the component (absent for static components).
+        name:
+          type: string
+          title: name
+          description: Display name of the component.
+        buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentDayBucket'
+          title: buckets
+          description: Per-day buckets, oldest first.
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentEvent'
+          title: events
+          description: Events affecting the component within the window.
+      title: PageComponentDailySummary
+      additionalProperties: false
+      description: PageComponentDailySummary is the per-day buckets + event timeline for one component.
     openstatus.status_page.v1.PageComponentGroup:
       type: object
       properties:
@@ -2671,6 +3597,44 @@ components:
         - PAGE_COMPONENT_TYPE_MONITOR
         - PAGE_COMPONENT_TYPE_STATIC
       description: PageComponentType defines the type of a component on a status page.
+    openstatus.status_page.v1.PageConfiguration:
+      type: object
+      properties:
+        metricType:
+          title: metric_type
+          description: Which metric the status bars represent (configuration.value).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageMetricType'
+        barType:
+          title: bar_type
+          description: How the status bar is computed (configuration.type).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageBarType'
+        showUptime:
+          type: boolean
+          title: show_uptime
+          description: Whether to show the uptime percentage (configuration.uptime).
+        themeKey:
+          type: string
+          title: theme_key
+          description: |-
+            Theme key from the theme store (configuration.theme), e.g. "default".
+             Free-form string rather than an enum because the theme catalog is dynamic.
+        days:
+          type: integer
+          title: days
+          format: int32
+          description: 'Number of uptime-bar days rendered on the page (configuration.days): 30 or 45.'
+      title: PageConfiguration
+      additionalProperties: false
+      description: PageConfiguration is the rich rendering config stored in page.configuration.
+    openstatus.status_page.v1.PageMetricType:
+      type: string
+      title: PageMetricType
+      enum:
+        - PAGE_METRIC_TYPE_UNSPECIFIED
+        - PAGE_METRIC_TYPE_DURATION
+        - PAGE_METRIC_TYPE_REQUESTS
+        - PAGE_METRIC_TYPE_MANUAL
+      description: PageMetricType mirrors page.configuration.value (which metric the status bars represent).
     openstatus.status_page.v1.PageSubscriber:
       type: object
       properties:
@@ -2685,7 +3649,7 @@ components:
         email:
           type: string
           title: email
-          description: Email address of the subscriber.
+          description: Email address of the subscriber (empty for webhook channels).
         acceptedAt:
           type: string
           title: accepted_at
@@ -2702,6 +3666,38 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the subscription was last updated (RFC 3339 format).
+        source:
+          title: source
+          description: How the subscription was created. Vendor-added rows skip verification.
+          $ref: '#/components/schemas/openstatus.status_page.v1.SubscriberSource'
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          description: 'Optional human-readable label (e.g. "Supabase #incidents").'
+        channelType:
+          type: string
+          title: channel_type
+          description: 'Channel type: "email" or "webhook".'
+        webhookUrl:
+          type:
+            - string
+            - "null"
+          title: webhook_url
+          description: Webhook URL (populated only for channel_type = "webhook").
+        channelConfig:
+          type:
+            - string
+            - "null"
+          title: channel_config
+          description: JSON-encoded channel config (e.g. custom headers). Populated for webhook channels.
+        componentIds:
+          type: array
+          items:
+            type: string
+          title: component_ids
+          description: IDs of components this subscription is scoped to. Empty = entire page.
       title: PageSubscriber
       additionalProperties: false
       description: PageSubscriber represents a subscriber to a status page.
@@ -2826,6 +3822,12 @@ components:
           type: string
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (only set when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: Per-mode CSS variable overrides merged over the theme (only set when configured).
       title: StatusPage
       additionalProperties: false
       description: StatusPage represents a full status page with all details.
@@ -2893,6 +3895,15 @@ components:
       title: SubscribeToPageResponse
       additionalProperties: false
       description: SubscribeToPageResponse is the response after subscribing to a status page.
+    openstatus.status_page.v1.SubscriberSource:
+      type: string
+      title: SubscriberSource
+      enum:
+        - SUBSCRIBER_SOURCE_UNSPECIFIED
+        - SUBSCRIBER_SOURCE_SELF_SIGNUP
+        - SUBSCRIBER_SOURCE_VENDOR
+        - SUBSCRIBER_SOURCE_IMPORT
+      description: SubscriberSource indicates how the subscription was created.
     openstatus.status_page.v1.UnsubscribeFromPageRequest:
       type: object
       allOf:
@@ -3132,6 +4143,14 @@ components:
             - "null"
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: |-
+            New per-mode CSS variable overrides (optional). Omit to keep the current
+             value; send an empty message to clear. Requires the custom-theme plan feature.
       title: UpdateStatusPageRequest
       additionalProperties: false
       description: UpdateStatusPageRequest is the request to update a status page.
@@ -3145,6 +4164,38 @@ components:
       title: UpdateStatusPageResponse
       additionalProperties: false
       description: UpdateStatusPageResponse is the response after updating a status page.
+    openstatus.status_page.v1.WebhookChannel:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          maxLength: 2048
+          minLength: 1
+          format: uri
+          description: Webhook URL (required). Payload flavor (Slack / Discord / generic) is auto-detected from the URL prefix.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.WebhookChannelHeader'
+          title: headers
+          description: Optional custom HTTP headers attached to every dispatch.
+      title: WebhookChannel
+      additionalProperties: false
+      description: WebhookChannel carries the webhook-channel fields for CreatePageSubscription.
+    openstatus.status_page.v1.WebhookChannelHeader:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+        value:
+          type: string
+          title: value
+      title: WebhookChannelHeader
+      additionalProperties: false
+      description: WebhookChannelHeader is a single custom HTTP header.
     openstatus.status_report.v1.AddStatusReportUpdateRequest:
       type: object
       properties:
@@ -3175,6 +4226,15 @@ components:
             - "null"
           title: notify
           description: Whether to notify subscribers about this update (optional, defaults to false).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: |-
+            Per-component impacts this update sets (optional). Components named here
+             are added to the report's affected set; omitted components keep their
+             prior impact.
       title: AddStatusReportUpdateRequest
       additionalProperties: false
       description: AddStatusReportUpdateRequest is the request to add a new update to a status report.
@@ -3188,6 +4248,20 @@ components:
       title: AddStatusReportUpdateResponse
       additionalProperties: false
       description: AddStatusReportUpdateResponse is the response after adding an update to a status report.
+    openstatus.status_report.v1.ComponentImpact:
+      type: object
+      properties:
+        pageComponentId:
+          type: string
+          title: page_component_id
+          description: ID of the affected page component.
+        impact:
+          title: impact
+          description: Impact set for the component.
+          $ref: '#/components/schemas/openstatus.status_report.v1.PageComponentImpact'
+      title: ComponentImpact
+      additionalProperties: false
+      description: ComponentImpact pairs a page component with the impact an update set for it.
     openstatus.status_report.v1.CreateStatusReportRequest:
       type: object
       properties:
@@ -3233,6 +4307,15 @@ components:
             - "null"
           title: notify
           description: Whether to notify subscribers about this status report (optional, defaults to false).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: |-
+            Per-component impacts set by the initial update (optional). When provided,
+             the named components are added to the report's affected set. Omitting this
+             field creates a legacy report without impact tracking.
       title: CreateStatusReportRequest
       additionalProperties: false
       description: CreateStatusReportRequest is the request to create a new status report.
@@ -3334,6 +4417,18 @@ components:
       title: ListStatusReportsResponse
       additionalProperties: false
       description: ListStatusReportsResponse is the response containing status report summaries.
+    openstatus.status_report.v1.PageComponentImpact:
+      type: string
+      title: PageComponentImpact
+      enum:
+        - PAGE_COMPONENT_IMPACT_UNSPECIFIED
+        - PAGE_COMPONENT_IMPACT_OPERATIONAL
+        - PAGE_COMPONENT_IMPACT_DEGRADED_PERFORMANCE
+        - PAGE_COMPONENT_IMPACT_PARTIAL_OUTAGE
+        - PAGE_COMPONENT_IMPACT_MAJOR_OUTAGE
+      description: |-
+        PageComponentImpact is the per-component impact a status report update sets.
+         UNSPECIFIED means the caller doesn't speak impact (legacy) — it is NOT operational.
     openstatus.status_report.v1.StatusReport:
       type: object
       properties:
@@ -3437,6 +4532,12 @@ components:
           type: string
           title: created_at
           description: Timestamp when the update was created (RFC 3339 format).
+        componentImpacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.ComponentImpact'
+          title: component_impacts
+          description: Per-component impacts this update set (empty for legacy reports).
       title: StatusReportUpdate
       additionalProperties: false
       description: StatusReportUpdate represents a single update entry in a status report timeline.
@@ -3507,6 +4608,10 @@ tags:
       notified automatically when maintenance is created.
   - name: HealthService
     description: Health check endpoint for load balancer probes. No authentication required.
+  - name: PrivateLocationService
+    description: |-
+      PrivateLocationService provides CRUD operations for private locations —
+       self-hosted checker agents that run monitors from your own network.
 paths:
   /rpc/openstatus.health.v1.HealthService/Check:
     get:
@@ -3902,6 +5007,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/GetMonitorHTTPResponseLog:
+    get:
+      tags:
+        - MonitorService
+      summary: GetMonitorHTTPResponseLog
+      description: GetMonitorHTTPResponseLog returns one response log for an HTTP monitor.
+      operationId: MonitorService_GetMonitorHTTPResponseLog.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorHTTPResponseLogResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: GetMonitorHTTPResponseLog
+      description: GetMonitorHTTPResponseLog returns one response log for an HTTP monitor.
+      operationId: MonitorService_GetMonitorHTTPResponseLog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorHTTPResponseLogRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorHTTPResponseLogResponse'
   /rpc/openstatus.monitor.v1.MonitorService/GetMonitorStatus:
     get:
       tags:
@@ -4006,6 +5163,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/ListMonitorHTTPResponseLogs:
+    get:
+      tags:
+        - MonitorService
+      summary: ListMonitorHTTPResponseLogs
+      description: ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
+      operationId: MonitorService_ListMonitorHTTPResponseLogs.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: ListMonitorHTTPResponseLogs
+      description: ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
+      operationId: MonitorService_ListMonitorHTTPResponseLogs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorHTTPResponseLogsResponse'
   /rpc/openstatus.monitor.v1.MonitorService/ListMonitors:
     get:
       tags:
@@ -4422,6 +5631,196 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/CreatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: CreatePrivateLocation
+      description: Creates a private location. The agent token is generated by the server and returned in the response - it cannot be supplied by the caller. Use the token to configure the agent so it can pull its monitors and report results.
+      operationId: PrivateLocationService_CreatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/DeletePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: DeletePrivateLocation
+      description: DeletePrivateLocation removes a private location.
+      operationId: PrivateLocationService_DeletePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/GetPrivateLocation:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/ListPrivateLocations:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/UpdatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: UpdatePrivateLocation
+      description: UpdatePrivateLocation updates a private location.
+      operationId: PrivateLocationService_UpdatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
     post:
       tags:
@@ -4500,6 +5899,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/CreatePageSubscription:
+    post:
+      tags:
+        - StatusPageService
+      summary: 'CreatePageSubscription: operator-added subscriber (email or webhook), no verification.'
+      description: Operator-added subscriber (email or webhook) with no verification flow — the partner starts receiving notifications immediately. Supports Slack and Discord webhook URLs in addition to email. A management token is still generated so the subscriber can self-manage (update scope, unsubscribe) without operator involvement. Use this for vendor/partner integrations where consent is established out-of-band; use SubscribeToPage for subscriber-initiated signups that require double opt-in.
+      operationId: StatusPageService_CreatePageSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.CreatePageSubscriptionRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.CreatePageSubscriptionResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/CreateStatusPage:
     post:
       tags:
@@ -4630,6 +6055,110 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponentDailySummary:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetPageComponentDailySummary
+      description: 'Returns per-component daily status buckets (ok/degraded/error/count plus a resolved status) merged with the incident, maintenance, and status-report timeline over the last N days (max 45). Suitable as a single source of truth for status-bar and uptime-calendar rendering. Supports two access paths: by id (authenticated, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      operationId: StatusPageService_GetPageComponentDailySummary.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetPageComponentDailySummary
+      description: 'Returns per-component daily status buckets (ok/degraded/error/count plus a resolved status) merged with the incident, maintenance, and status-report timeline over the last N days (max 45). Suitable as a single source of truth for status-bar and uptime-calendar rendering. Supports two access paths: by id (authenticated, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      operationId: StatusPageService_GetPageComponentDailySummary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentDailySummaryResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPage:
     get:
       tags:
@@ -4734,6 +6263,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageOverview:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageOverview
+      description: 'Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that.'
+      operationId: StatusPageService_GetStatusPageOverview.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageOverview
+      description: 'Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that.'
+      operationId: StatusPageService_GetStatusPageOverview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages:
     get:
       tags:
@@ -4868,8 +6449,8 @@ paths:
     post:
       tags:
         - StatusPageService
-      summary: SubscribeToPage
-      description: Subscribes an email address to receive notifications from a status page. If the email was previously unsubscribed, the subscription is reactivated instead of creating a duplicate.
+      summary: 'SubscribeToPage: end-user email self-signup with double opt-in verification.'
+      description: End-user email self-signup with double opt-in verification. A verification email is sent and the subscription activates only after the recipient confirms. If the email was previously unsubscribed, the existing row is reactivated instead of a duplicate being created. Use this for subscriber-initiated signups on the public status page; use CreatePageSubscription for operator-initiated (vendor) subscriptions that should skip verification.
       operationId: StatusPageService_SubscribeToPage
       requestBody:
         content:

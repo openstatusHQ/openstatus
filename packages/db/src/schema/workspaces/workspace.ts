@@ -4,6 +4,7 @@ import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 import { monitor } from "../monitors";
 import { notification } from "../notifications";
 import { page } from "../pages";
+import { statusReport } from "../status_reports";
 import { usersToWorkspaces } from "../users";
 import { workspacePlans } from "./constants";
 
@@ -39,5 +40,6 @@ export const workspaceRelations = relations(workspace, ({ many }) => ({
   pages: many(page),
   monitors: many(monitor),
   notifications: many(notification),
+  statusReports: many(statusReport),
   // TODO: add checks or monitorRuns
 }));

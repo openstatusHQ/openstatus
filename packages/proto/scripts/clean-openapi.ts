@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-// biome-ignore lint: only  a script
+// oxlint-disable-next-line typescript/no-non-null-assertion
 const OPENAPI_PATH = join(dirname(import.meta.dirname!), "gen", "openapi.yaml");
 
 const CONNECT_PARAMS = new Set([
@@ -98,7 +98,7 @@ writeFileSync(OPENAPI_PATH, cleaned);
 
 // Copy cleaned spec to server static directory
 const serverOpenAPIPath = join(
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
+  // oxlint-disable-next-line typescript/no-non-null-assertion
   dirname(import.meta.dirname!),
   "..",
   "..",

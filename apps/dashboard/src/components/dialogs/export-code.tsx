@@ -1,4 +1,3 @@
-import { Link } from "@/components/common/link";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
@@ -16,6 +15,8 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { Check, Copy } from "lucide-react";
+
+import { Link } from "@/components/common/link";
 
 // TODL: make it dynamic
 const YML = `openstatus-marketing:
@@ -48,7 +49,7 @@ export function ExportCodeDialog(props: DialogProps) {
             <TabsTrigger value="terraform">Terraform</TabsTrigger>
           </TabsList>
           <TabsContent value="yml" className="space-y-2">
-            <pre className="relative rounded border bg-muted p-2 text-xs">
+            <pre className="bg-muted relative rounded border p-2 text-xs">
               {YML}
               <Button
                 variant="outline"
@@ -69,7 +70,7 @@ export function ExportCodeDialog(props: DialogProps) {
             </p>
           </TabsContent>
           <TabsContent value="terraform" className="space-y-2">
-            <pre className="relative rounded border bg-muted p-2 text-xs">
+            <pre className="bg-muted relative rounded border p-2 text-xs">
               TODO:
             </pre>
             {/* TODO: only showcase if there are any assertions */}

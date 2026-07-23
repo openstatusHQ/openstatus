@@ -1,3 +1,4 @@
+import { UTCDate } from "@date-fns/utc";
 import { endOfDay, isSameDay, startOfDay } from "date-fns";
 
 export function formatMilliseconds(ms: number) {
@@ -12,14 +13,22 @@ export function formatMilliseconds(ms: number) {
   return `${Intl.NumberFormat("en-US", {
     style: "unit",
     unit: "millisecond",
+    maximumFractionDigits: 0,
   }).format(ms)}`;
 }
 
 export function formatMillisecondsRange(min: number, max: number) {
-  if ((min > 1000 && max > 1000) || (min < 1000 && max < 1000)) {
-    return `${formatNumber(min / 1000)} - ${formatMilliseconds(max)}`;
+  // Both above 1000ms: share the seconds unit, so only `max` carries it.
+  if (min > 1000 && max > 1000) {
+    return `${formatNumber(min / 1000, { maximumFractionDigits: 2 })} - ${formatMilliseconds(max)}`;
   }
 
+  // Both below 1000ms: share the milliseconds unit, so only `max` carries it.
+  if (min < 1000 && max < 1000) {
+    return `${formatNumber(min)} - ${formatMilliseconds(max)}`;
+  }
+
+  // Mixed: format each endpoint with its own unit.
   return `${formatMilliseconds(min)} - ${formatMilliseconds(max)}`;
 }
 
@@ -41,6 +50,9 @@ export function formatNumber(
 
 // TODO: think of supporting custom formats
 
+// All status-page timestamps render in UTC for consistency across viewers; the
+// StatusTimestamp hover card surfaces the viewer's local timezone on demand.
+
 export function formatDate(
   date: Date,
   options?: Intl.DateTimeFormatOptions & { locale?: string },
@@ -51,6 +63,8 @@ export function formatDate(
     month: "long",
     day: "numeric",
     ...rest,
+    // last so callers can't override away from UTC (the "(UTC)" label depends on it)
+    timeZone: "UTC",
   });
 }
 
@@ -60,6 +74,7 @@ export function formatDateTime(date: Date, locale?: string) {
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -67,13 +82,46 @@ export function formatTime(date: Date, locale?: string) {
   return date.toLocaleTimeString(locale, {
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 }
 
+/**
+ * Returns the start/end of a closed range as separate strings, collapsing the
+ * `to` side to a time-only render when `from` and `to` fall on the same day.
+ * Use `formatDateRange` for open-ended cases (`Until …` / `Since …`).
+ */
+export function formatDateRangeParts(
+  from: Date,
+  to: Date,
+  locale?: string,
+): { from: string; to: string } {
+  if (isSameDay(new UTCDate(from), new UTCDate(to))) {
+    return {
+      from: formatDateTime(from, locale),
+      to: formatTime(to, locale),
+    };
+  }
+  const isFromStartDay =
+    startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = endOfDay(new UTCDate(to)).getTime() === to.getTime();
+  if (isFromStartDay && isToEndDay) {
+    return {
+      from: formatDate(from, { locale }),
+      to: formatDate(to, { locale }),
+    };
+  }
+  return {
+    from: formatDateTime(from, locale),
+    to: formatDateTime(to, locale),
+  };
+}
+
 export function formatDateRange(from?: Date, to?: Date, locale?: string) {
-  const sameDay = from && to && isSameDay(from, to);
-  const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
-  const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
+  const sameDay = from && to && isSameDay(new UTCDate(from), new UTCDate(to));
+  const isFromStartDay =
+    from && startOfDay(new UTCDate(from)).getTime() === from.getTime();
+  const isToEndDay = to && endOfDay(new UTCDate(to)).getTime() === to.getTime();
 
   if (sameDay) {
     if (from.getTime() === to.getTime()) {

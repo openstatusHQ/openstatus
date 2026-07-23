@@ -1,3 +1,4 @@
+import type { ComponentImpact, UpdateComponentImpact } from "../../types";
 import type {
   BetterstackIncident,
   BetterstackMonitor,
@@ -189,6 +190,26 @@ const REPORT_STATUS_MAP: Record<string, StatusReportStatus> = {
   maintenance: "monitoring",
 };
 
+// maintenance counts as available; unknown values are dropped, not guessed
+const COMPONENT_IMPACT_MAP: Record<string, ComponentImpact> = {
+  operational: "operational",
+  resolved: "operational",
+  downtime: "major_outage",
+  degraded: "degraded_performance",
+  maintenance: "operational",
+};
+
+function mapAffectedResourcesToImpacts(
+  resources: { status_page_resource_id: string; status: string }[],
+): UpdateComponentImpact[] {
+  return resources.flatMap((r) => {
+    const impact = COMPONENT_IMPACT_MAP[r.status.toLowerCase()];
+    return impact
+      ? [{ sourceComponentId: r.status_page_resource_id, impact }]
+      : [];
+  });
+}
+
 export function mapReportAggregateState(
   state: string | null,
 ): StatusReportStatus {
@@ -217,6 +238,9 @@ export function mapReportToStatusReport(
       status: aggregateStatus,
       message: u.attributes.message ?? "",
       date: new Date(u.attributes.published_at),
+      componentImpacts: mapAffectedResourcesToImpacts(
+        u.attributes.affected_resources,
+      ),
     };
   });
 
@@ -226,6 +250,9 @@ export function mapReportToStatusReport(
       status: mapReportAggregateState(report.attributes.aggregate_state),
       message: report.attributes.title,
       date: new Date(report.attributes.starts_at),
+      componentImpacts: mapAffectedResourcesToImpacts(
+        report.attributes.affected_resources,
+      ),
     });
   }
 

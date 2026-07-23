@@ -1,17 +1,23 @@
 {
   "name": "@openstatus/react",
   "version": "0.0.3",
+  "keywords": [
+    "monitoring",
+    "openstatus",
+    "react"
+  ],
+  "homepage": "https://github.com/openstatusHQ/openstatus#readme",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/openstatusHQ/openstatus.git"
   },
-  "keywords": ["openstatus", "react", "monitoring"],
-  "homepage": "https://github.com/openstatusHQ/openstatus#readme",
+  "files": [
+    "./dist/**"
+  ],
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "module": "./dist/index.mjs",
-  "files": ["./dist/**"],
-  "license": "MIT",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "tsup --watch && pnpm run dev:tailwind",
     "dev:tailwind": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css --watch",
@@ -20,12 +26,12 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@tailwindcss/cli": "4.1.8",
-    "@types/node": "20.8.0",
-    "@types/react": "18.3.3",
-    "tailwindcss": "4.1.8",
-    "tsup": "7.2.0",
-    "typescript": "5.9.3"
+    "@tailwindcss/cli": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "tailwindcss": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
     "react": "^18.0.0"

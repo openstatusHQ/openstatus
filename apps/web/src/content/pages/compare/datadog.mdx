@@ -1,0 +1,95 @@
+---
+title: "Datadog Synthetics vs openstatus"
+publishedAt: "2026-06-19"
+author: "openstatus"
+description: "Looking for a Datadog Synthetics alternative without the enterprise bill? openstatus does uptime and API monitoring from 28 regions with a built-in status page, open source, from $30/month — flat, no per-run fees."
+category: "company"
+faq:
+  - question: "Is openstatus a good Datadog Synthetics alternative?"
+    answer: "Yes, for uptime and API monitoring with a status page. Openstatus runs HTTP, TCP, and DNS checks from 28 regions with flat pricing and a built-in status page, and it's open-source. Datadog Synthetics is far more powerful for browser-based, multi-step synthetic tests inside a full observability platform — but its per-run, per-seat pricing climbs steeply, and it has no standalone free tier for synthetics."
+  - question: "Why is openstatus cheaper than Datadog Synthetics?"
+    answer: "Datadog prices synthetic tests per run and per location, so frequent checks across multiple regions add up fast — published comparisons cite thousands of dollars a month for high-frequency uptime checks. Openstatus uses flat pricing: paid plans start at $30/month for 20 monitors across 28 regions with no per-run fees and unlimited team members."
+  - question: "Does openstatus include a status page?"
+    answer: "Yes. Openstatus includes a branded public status page with custom domains, maintenance windows, and subscriber notifications on every plan. Datadog offers a status page product, but it's a separate part of the platform and assumes you're already a Datadog customer."
+  - question: "When should I stay on Datadog Synthetics?"
+    answer: "If you need browser-based, scripted multi-step synthetic tests tightly correlated with APM traces, logs, and metrics in one platform, Datadog is the stronger choice. Openstatus is the better fit when you mainly need uptime and API checks plus a status page without the platform cost."
+---
+
+## Looking for a Datadog Synthetics alternative?
+
+**TL;DR:** Openstatus does uptime and API monitoring from 28 regions with a built-in status page, open-source code, and flat $30/month pricing. Datadog Synthetics is more powerful for scripted browser tests inside a full observability platform — but you pay per run, per seat, and per location.
+
+If your Datadog Synthetics bill is climbing because uptime checks are priced per run, openstatus is the alternative to weigh. It covers HTTP, TCP, and DNS monitoring from 28 global regions, bundles a status page, and charges a flat rate with no per-check metering.
+
+Openstatus and Datadog solve different scopes of the same problem. Openstatus is a focused **uptime monitoring and status page** tool — it tells you when your endpoints are down or slow and lets you communicate that to users. Datadog Synthetics is one module of a sprawling **observability platform** that correlates synthetic tests with APM, logs, RUM, and infrastructure metrics.
+
+For teams that want straightforward uptime and API monitoring with predictable pricing and a public status page, openstatus is the leaner fit. For teams already standardized on Datadog who need scripted browser journeys tied into traces and logs, Datadog's depth is hard to match — at a price.
+
+## Feature Comparison
+
+| Feature                       | openstatus       | Datadog Synthetics    |
+| ----------------------------- | ---------------- | --------------------- |
+| Pricing model                 | Flat             | Per run / per seat    |
+| Standalone free tier          | Yes              | No                    |
+| Multi-region                  | 28 regions       | Many (managed + private) |
+| Status Page                   | Yes (built-in)   | Separate product      |
+| Open-source                   | Yes (AGPL-3.0)   | No                    |
+| Self-hostable                 | Yes              | No                    |
+| Monitoring as code            | Yes (Terraform)  | Yes (Terraform)       |
+| CLI                           | Yes              | Yes                   |
+| OpenTelemetry exporter        | Yes              | Native (Datadog)      |
+| Browser / multi-step synthetics | No             | Yes                   |
+| APM / logs / RUM correlation  | No               | Yes                   |
+
+## Pricing Comparison
+
+|                | openstatus              | Datadog Synthetics            |
+| -------------- | ----------------------- | ----------------------------- |
+| Free plan      | 1 monitor, 6 regions    | None (platform trial only)    |
+| Model          | Flat per plan           | Per API/browser test run      |
+| Entry paid     | $30/mo (20 monitors)    | Usage-based, scales with runs |
+| Status page    | Included                | Separate product              |
+| Team members   | Unlimited on paid plans | Per-seat                      |
+
+Datadog's per-run pricing is efficient for occasional, scripted checks but expensive for the high-frequency, multi-region uptime monitoring most teams actually want. Published comparisons put monitoring 50 endpoints every minute from three locations in the thousands of dollars per month on Datadog. Openstatus runs that workload on flat pricing.
+
+## When to Choose openstatus
+
+- You mainly need **uptime and API monitoring**, not scripted browser flows
+- You want a **built-in status page** for incident communication
+- You want **flat, predictable pricing** without per-run metering
+- You prefer **open-source** software or need to self-host
+- You want **monitoring as code**, a CLI, and OpenTelemetry export
+
+## When to Choose Datadog Synthetics
+
+- You need **browser-based, multi-step synthetic tests** (login, checkout, search)
+- You want synthetics **correlated with APM traces, logs, and RUM** in one place
+- You're **already standardized on Datadog** and budget isn't the constraint
+
+## Switching from Datadog Synthetics to openstatus
+
+If your Datadog Synthetics usage is mostly HTTP/API uptime checks rather than scripted browser tests, migrating is simple:
+
+1. **Sign up** for a free openstatus account
+2. **Recreate your API checks** in the dashboard or as code via the [Terraform provider](/docs/reference/terraform) and CLI
+3. **Move alerting** to openstatus channels — Slack, Discord, PagerDuty, OpsGenie, and more
+4. **Publish a status page** — included with every openstatus plan
+
+If you depend on Datadog's browser synthetics and trace correlation, keep those in Datadog and use openstatus for cost-efficient uptime monitoring and your public status page.
+
+## Related Resources
+
+- [Checkly vs openstatus](/compare/checkly) — another synthetic-monitoring comparison
+- [What Is Synthetic Monitoring?](/guides/what-is-synthetic-monitoring)
+- [What Is Uptime Monitoring?](/guides/what-is-uptime-monitoring)
+- [Status Pages for API Providers](/use-case/api-providers)
+- [Pricing](/pricing)
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=compare-datadog">Get Started Free</ButtonLink>
+
+---

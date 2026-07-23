@@ -1,10 +1,19 @@
-import { describe, expect, it, mock } from "bun:test";
+import { expect } from "@std/expect";
+import { describe, it } from "@std/testing/bdd";
+import { Exit } from "effect";
+
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";
 import { CustomApiFetcher } from "../../src/fetchers/custom";
 import { HtmlScraperFetcher } from "../../src/fetchers/html";
 import { InstatusFetcher } from "../../src/fetchers/instatus";
 import type { StatusPageEntry } from "../../src/types";
+import {
+  expectFetchError,
+  installMockFetch,
+  runFetcher,
+  runFetcherExit,
+} from "../helpers";
 
 describe("Fetcher Edge Cases", () => {
   describe("Network Errors", () => {
@@ -19,9 +28,14 @@ describe("Fetcher Edge Cases", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() => Promise.reject(new Error("Network error")));
+      installMockFetch(() => Promise.reject(new Error("Network error")));
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow("Network error");
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      if (!(err.cause instanceof Error)) {
+        throw new Error("expected Error cause");
+      }
+      expect(err.cause.message).toContain("Network error");
     });
 
     it("should handle timeout errors", async () => {
@@ -35,9 +49,10 @@ describe("Fetcher Edge Cases", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() => Promise.reject(new Error("Request timeout")));
+      installMockFetch(() => Promise.reject(new Error("Request timeout")));
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow("Request timeout");
+      const exit = await runFetcherExit(fetcher, entry);
+      expect(Exit.isFailure(exit)).toBe(true);
     });
   });
 
@@ -53,7 +68,7 @@ describe("Fetcher Edge Cases", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => {
@@ -62,7 +77,12 @@ describe("Fetcher Edge Cases", () => {
         } as unknown as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow("Invalid JSON");
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      if (!(err.cause instanceof Error)) {
+        throw new Error("expected Error cause");
+      }
+      expect(err.cause.message).toContain("Invalid JSON");
     });
 
     it("should handle missing required fields in BetterStack response", async () => {
@@ -76,7 +96,6 @@ describe("Fetcher Edge Cases", () => {
         industry: ["saas"],
       };
 
-      // Missing data.attributes
       const malformedResponse = {
         data: {
           id: "123",
@@ -84,14 +103,15 @@ describe("Fetcher Edge Cases", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => malformedResponse,
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      expect(Exit.isFailure(exit)).toBe(true);
     });
 
     it("should handle empty response", async () => {
@@ -105,14 +125,15 @@ describe("Fetcher Edge Cases", () => {
         industry: ["saas"],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({}),
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      expect(Exit.isFailure(exit)).toBe(true);
     });
   });
 
@@ -137,19 +158,20 @@ describe("Fetcher Edge Cases", () => {
           updated_at: "2024-02-16T12:00:00.000Z",
         },
         status: {
-          indicator: "unknown", // Invalid value
+          indicator: "unknown",
           description: "Unknown Status",
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      expect(Exit.isFailure(exit)).toBe(true);
     });
 
     it("should handle unknown status type in Instatus", async () => {
@@ -168,7 +190,7 @@ describe("Fetcher Edge Cases", () => {
         activeMaintenances: [],
         status: {
           text: "Unknown",
-          type: "UNKNOWN", // Invalid type
+          type: "UNKNOWN",
         },
         page: {
           name: "Test",
@@ -177,14 +199,15 @@ describe("Fetcher Edge Cases", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      expect(Exit.isFailure(exit)).toBe(true);
     });
   });
 
@@ -203,15 +226,14 @@ describe("Fetcher Edge Cases", () => {
 
       const malformedHtml = "<html><body><div class='status'>Unclosed div";
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => malformedHtml,
         } as Response),
       );
 
-      // Should not throw, but return Unknown
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
       expect(result.description).toBe("Unknown");
       expect(result.severity).toBe("none");
       expect(result.status).toBe("operational");
@@ -229,14 +251,14 @@ describe("Fetcher Edge Cases", () => {
         api_config: { type: "html-scraper" },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => "",
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
       expect(result.description).toBe("Unknown");
       expect(result.severity).toBe("none");
     });
@@ -262,14 +284,14 @@ describe("Fetcher Edge Cases", () => {
         </html>
       `;
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           text: async () => htmlWithNoStatus,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
       expect(result.description).toBe("Unknown");
     });
   });
@@ -284,10 +306,15 @@ describe("Fetcher Edge Cases", () => {
         status_page_url: "https://status.test.com",
         provider: "custom",
         industry: ["saas"],
-        api_config: { type: "custom" }, // Missing endpoint
+        api_config: { type: "custom" },
       };
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      if (!(err.cause instanceof Error)) {
+        throw new Error("expected Error cause");
+      }
+      expect(err.cause.message).toContain(
         "Custom API requires explicit endpoint configuration",
       );
     });
@@ -308,14 +335,19 @@ describe("Fetcher Edge Cases", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => ({}),
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow(
+      const exit = await runFetcherExit(fetcher, entry);
+      const err = expectFetchError(exit);
+      if (!(err.cause instanceof Error)) {
+        throw new Error("expected Error cause");
+      }
+      expect(err.cause.message).toContain(
         "AWS parser not implemented - uses RSS feeds",
       );
     });
@@ -337,14 +369,14 @@ describe("Fetcher Edge Cases", () => {
 
       const minimalResponse = { status: "ok" };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => minimalResponse,
         } as Response),
       );
 
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
       expect(result.severity).toBe("none");
       expect(result.status).toBe("operational");
     });
@@ -362,7 +394,7 @@ describe("Fetcher Edge Cases", () => {
       { code: 503, text: "Service Unavailable" },
     ];
 
-    testCases.forEach(({ code, text }) => {
+    for (const { code, text } of testCases) {
       it(`should handle ${code} ${text}`, async () => {
         const fetcher = new AtlassianFetcher();
         const entry: StatusPageEntry = {
@@ -374,7 +406,7 @@ describe("Fetcher Edge Cases", () => {
           industry: ["saas"],
         };
 
-        global.fetch = mock(() =>
+        installMockFetch(() =>
           Promise.resolve({
             ok: false,
             status: code,
@@ -382,9 +414,11 @@ describe("Fetcher Edge Cases", () => {
           } as Response),
         );
 
-        await expect(fetcher.fetch(entry)).rejects.toThrow(`${code}`);
+        const exit = await runFetcherExit(fetcher, entry);
+        const err = expectFetchError(exit);
+        expect(err.httpStatus).toBe(code);
       });
-    });
+    }
   });
 
   describe("Date/Timestamp Edge Cases", () => {
@@ -405,7 +439,7 @@ describe("Fetcher Edge Cases", () => {
           name: "Test",
           url: "https://status.test.com",
           timezone: "UTC",
-          updated_at: "not-a-date", // Invalid date
+          updated_at: "not-a-date",
         },
         status: {
           indicator: "none",
@@ -413,14 +447,15 @@ describe("Fetcher Edge Cases", () => {
         },
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      await expect(fetcher.fetch(entry)).rejects.toThrow();
+      const exit = await runFetcherExit(fetcher, entry);
+      expect(Exit.isFailure(exit)).toBe(true);
     });
 
     it("should handle Slack API with string timestamp", async () => {
@@ -446,15 +481,14 @@ describe("Fetcher Edge Cases", () => {
         active_incidents: [],
       };
 
-      global.fetch = mock(() =>
+      installMockFetch(() =>
         Promise.resolve({
           ok: true,
           json: async () => mockResponse,
         } as Response),
       );
 
-      // Should handle string timestamps by parsing them
-      const result = await fetcher.fetch(entry);
+      const result = await runFetcher(fetcher, entry);
       expect(result.severity).toBe("none");
       expect(result.status).toBe("operational");
       expect(typeof result.updated_at).toBe("number");

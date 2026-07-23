@@ -6,10 +6,11 @@ import {
   StatusDescription,
   StatusHeader,
   StatusTitle,
-} from "@/components/status-page/status";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/blocks/status-layout";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+
+import { useTRPC } from "../../../../../../../lib/trpc/client";
 
 export default function UnsubscribeLayout({
   children,

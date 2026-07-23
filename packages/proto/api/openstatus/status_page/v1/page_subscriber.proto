@@ -4,6 +4,17 @@ package openstatus.status_page.v1;
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
 
+// SubscriberSource indicates how the subscription was created.
+enum SubscriberSource {
+  SUBSCRIBER_SOURCE_UNSPECIFIED = 0;
+  // Created by the user themselves via the status-page subscribe form.
+  SUBSCRIBER_SOURCE_SELF_SIGNUP = 1;
+  // Created by the page vendor (dashboard user), skipping verification.
+  SUBSCRIBER_SOURCE_VENDOR = 2;
+  // Imported from a third-party provider (Atlassian Statuspage, Better Stack, Instatus).
+  SUBSCRIBER_SOURCE_IMPORT = 3;
+}
+
 // PageSubscriber represents a subscriber to a status page.
 message PageSubscriber {
   // Unique identifier for the subscriber.
@@ -12,7 +23,7 @@ message PageSubscriber {
   // ID of the status page the user is subscribed to.
   string page_id = 2;
 
-  // Email address of the subscriber.
+  // Email address of the subscriber (empty for webhook channels).
   string email = 3;
 
   // Timestamp when the subscription was accepted/confirmed (RFC 3339 format, optional).
@@ -26,4 +37,22 @@ message PageSubscriber {
 
   // Timestamp when the subscription was last updated (RFC 3339 format).
   string updated_at = 7;
+
+  // How the subscription was created. Vendor-added rows skip verification.
+  SubscriberSource source = 8;
+
+  // Optional human-readable label (e.g. "Supabase #incidents").
+  optional string name = 9;
+
+  // Channel type: "email" or "webhook".
+  string channel_type = 10;
+
+  // Webhook URL (populated only for channel_type = "webhook").
+  optional string webhook_url = 11;
+
+  // JSON-encoded channel config (e.g. custom headers). Populated for webhook channels.
+  optional string channel_config = 12;
+
+  // IDs of components this subscription is scoped to. Empty = entire page.
+  repeated string component_ids = 13;
 }

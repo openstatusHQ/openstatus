@@ -1,6 +1,5 @@
 "use client";
 
-import { PERCENTILES } from "@/data/metrics.client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +12,8 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { Check } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+
+import { PERCENTILES } from "@/data/metrics.client";
 
 const parsePercentile = parseAsStringLiteral(PERCENTILES).withDefault("p50");
 
@@ -31,7 +32,7 @@ export function DropdownPercentile() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
             Percentile
           </DropdownMenuLabel>
           {PERCENTILES.map((item) => (

@@ -3,6 +3,7 @@
 import {
   cpSync,
   existsSync,
+  globSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -10,7 +11,6 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { globSync } from "glob";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,10 +34,10 @@ cpSync(SRC_DIR, join(DIST_DIR, "src"), { recursive: true });
 
 // Transform imports in all TypeScript/TSX files
 console.log("✨ Transforming imports from @openstatus/ui to @...");
-const files = globSync("**/*.{ts,tsx}", {
-  cwd: join(DIST_DIR, "src"),
-  absolute: true,
-});
+const srcDir = join(DIST_DIR, "src");
+const files = globSync(["**/*.ts", "**/*.tsx"], { cwd: srcDir }).map((file) =>
+  join(srcDir, file),
+);
 
 let transformCount = 0;
 for (const file of files) {
@@ -94,16 +94,26 @@ if (existsSync(registryJsonPath)) {
 
   console.log(`🔗 Using registry base URL: ${baseUrl}`);
 
-  // Transform registryDependencies for all items
+  // Transform registryDependencies for all items.
+  //
+  // Any dep that names another local registry item gets rewritten to a full
+  // URL pointing at our hosted registry; everything else is assumed to be a
+  // shadcn upstream component and left alone. Driving this off the registry's
+  // own item names (rather than a `status-*` / `use-*` prefix check) avoids
+  // silently mis-routing chrome blocks like `theme-switcher` /
+  // `locale-switcher`.
   if (registryJson.items) {
+    const localItemNames = new Set(
+      registryJson.items.map((i) => i.name).filter(Boolean),
+    );
+
     for (const item of registryJson.items) {
       if (
         item.registryDependencies &&
         Array.isArray(item.registryDependencies)
       ) {
         item.registryDependencies = item.registryDependencies.map((dep) => {
-          // Prefix custom OpenStatus components (status-* and use-*) with full URL
-          if (dep.startsWith("status-") || dep.startsWith("use-")) {
+          if (localItemNames.has(dep)) {
             return `${baseUrl}/${dep}.json`;
           }
           // Leave shadcn components unprefixed

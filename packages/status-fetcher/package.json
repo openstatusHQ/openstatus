@@ -2,6 +2,8 @@
   "name": "@openstatus/status-fetcher",
   "version": "0.1.0",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
     "./fetchers": "./src/fetchers/index.ts",
@@ -9,15 +11,18 @@
     "./types": "./src/types.ts"
   },
   "scripts": {
-    "test": "bun test",
-    "test:watch": "bun test --watch",
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test:watch": "deno test --parallel -A --no-check --sloppy-imports --watch",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "4.1.13",
-    "node-html-parser": "6.1.12"
+    "effect": "catalog:",
+    "node-html-parser": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19"
   }
 }

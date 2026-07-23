@@ -5,6 +5,7 @@ import {
   buildCommonMessageData,
 } from "@openstatus/notification-base";
 import { assertSafeUrl } from "@openstatus/utils";
+
 import {
   type DiscordEmbed,
   buildAlertEmbed,

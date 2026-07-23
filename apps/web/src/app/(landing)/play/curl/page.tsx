@@ -1,13 +1,18 @@
-import { CustomMDX } from "@/content/mdx";
-import { getToolsPage } from "@/content/utils";
-import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import type { Metadata } from "next";
+
+import { CustomMDX } from "../../../../content/mdx";
+import { getToolsPage } from "../../../../content/utils";
+import { JsonLd } from "../../../../lib/metadata/json-ld";
+import {
+  BASE_URL,
+  getPageMetadata,
+} from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDWebPage,
-} from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+} from "../../../../lib/metadata/structured-data";
 import { Form } from "./client";
 
 export function generateMetadata(): Metadata {
@@ -30,15 +35,8 @@ export default function Page() {
 
   return (
     <section className="prose dark:prose-invert max-w-none">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
-        }}
-      />
-      <h1>{page.metadata.title}</h1>
+      <JsonLd graph={jsonLDGraph} />
+      <h1>{page.metadata.hero ?? page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
       <Form />
       <CustomMDX source={page.content} />

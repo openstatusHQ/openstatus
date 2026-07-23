@@ -1,10 +1,11 @@
-import { components } from "@/content/mdx";
+import type { Metadata } from "next";
+
+import { components } from "../../../content/mdx";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+} from "../../../lib/metadata/shared-metadata";
 import {
   ContentBoxDescription,
   ContentBoxLink,
@@ -57,6 +58,17 @@ const PLAY = [
     label: "Global Speed Checker",
     description: "Test the latency of your website worldwide",
     href: "/play/checker",
+  },
+  {
+    label: "CDN Cache Checker",
+    description:
+      "Check if your CDN is caching, and which edge served each region",
+    href: "/play/cdn-checker",
+  },
+  {
+    label: "MCP Server Health Check",
+    description: "JSON-RPC ping check for Model Context Protocol servers",
+    href: "/play/mcp-health",
   },
   {
     label: "cURL Builder",

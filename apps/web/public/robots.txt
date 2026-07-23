@@ -1,0 +1,9 @@
+# Content Signals — declare AI content usage preferences
+# https://contentsignals.org/
+# https://datatracker.ietf.org/doc/draft-romm-aipref-contentsignals/
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.openstatus.dev/sitemap.xml

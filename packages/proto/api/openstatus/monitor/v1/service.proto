@@ -80,6 +80,16 @@ service MonitorService {
   rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+
+  // ListMonitorHTTPResponseLogs returns paginated response logs for an HTTP monitor from the 14-day HTTP response-log window.
+  rpc ListMonitorHTTPResponseLogs(ListMonitorHTTPResponseLogsRequest) returns (ListMonitorHTTPResponseLogsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetMonitorHTTPResponseLog returns one response log for an HTTP monitor.
+  rpc GetMonitorHTTPResponseLog(GetMonitorHTTPResponseLogRequest) returns (GetMonitorHTTPResponseLogResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 }
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -311,4 +321,135 @@ message GetMonitorRequest {
 message GetMonitorResponse {
   // The monitor configuration (one of HTTP, TCP, or DNS).
   MonitorConfig monitor = 1;
+}
+
+// HTTPResponseLogRequestStatus is the result classification for an HTTP response log.
+enum HTTPResponseLogRequestStatus {
+  // Unspecified request status.
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_UNSPECIFIED = 0;
+  // The monitor response satisfied its assertions.
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_SUCCESS = 1;
+  // The monitor response failed its assertions or request.
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_ERROR = 2;
+  // The monitor response was slower than the degraded threshold.
+  HTTP_RESPONSE_LOG_REQUEST_STATUS_DEGRADED = 3;
+}
+
+// HTTPResponseLogTrigger describes what started the monitor check.
+enum HTTPResponseLogTrigger {
+  // Unspecified trigger.
+  HTTP_RESPONSE_LOG_TRIGGER_UNSPECIFIED = 0;
+  // Scheduled monitor run.
+  HTTP_RESPONSE_LOG_TRIGGER_CRON = 1;
+  // API-triggered monitor run.
+  HTTP_RESPONSE_LOG_TRIGGER_API = 2;
+}
+
+// HTTPResponseLogTiming contains calculated timing phases in milliseconds.
+message HTTPResponseLogTiming {
+  // DNS lookup duration.
+  int32 dns = 1;
+  // TCP connection duration.
+  int32 connect = 2;
+  // TLS handshake duration.
+  int32 tls = 3;
+  // Time to first byte duration.
+  int32 ttfb = 4;
+  // Response transfer duration.
+  int32 transfer = 5;
+}
+
+// HTTPResponseLogListItem is a compact response log entry.
+message HTTPResponseLogListItem {
+  // Response log ID.
+  optional string id = 1;
+  // Latency in milliseconds.
+  int32 latency = 2;
+  // HTTP status code.
+  optional int32 status_code = 3;
+  // Monitor ID.
+  string monitor_id = 4;
+  // Request status classification.
+  HTTPResponseLogRequestStatus request_status = 5;
+  // Region where the check ran.
+  Region region = 6;
+  // Cron bucket timestamp in Unix milliseconds.
+  int64 cron_timestamp = 7;
+  // Check trigger.
+  HTTPResponseLogTrigger trigger = 8;
+  // Response timestamp in Unix milliseconds.
+  int64 timestamp = 9;
+  // Timing phases.
+  optional HTTPResponseLogTiming timing = 10;
+}
+
+// HTTPResponseLogDetail contains full response log debugging data.
+message HTTPResponseLogDetail {
+  // Compact response log fields.
+  HTTPResponseLogListItem log = 1;
+  // Checked URL.
+  string url = 2;
+  // Whether the check errored.
+  bool error = 3;
+  // Error message, when present.
+  optional string message = 4;
+  // Redacted response headers.
+  map<string, string> headers = 5;
+  // Serialized assertions used for the check.
+  optional string assertions = 6;
+}
+
+// ListMonitorHTTPResponseLogsRequest is the request to list response logs within the 14-day HTTP response-log window.
+message ListMonitorHTTPResponseLogsRequest {
+  // Monitor ID to list response logs for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Start of the response log window as Unix milliseconds within the 14-day retention window.
+  optional int64 from_timestamp = 2;
+
+  // End of the response log window as Unix milliseconds within the 14-day retention window.
+  optional int64 to_timestamp = 3;
+
+  // Maximum number of logs to return (1-100, defaults to 25).
+  optional int32 limit = 4 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Number of logs to skip for pagination (defaults to 0).
+  optional int32 offset = 5 [(buf.validate.field).int32.gte = 0];
+}
+
+// HTTPResponseLogPagination contains offset pagination metadata.
+message HTTPResponseLogPagination {
+  // Requested page size.
+  int32 limit = 1;
+  // Requested offset.
+  int32 offset = 2;
+  // Whether more logs are available.
+  bool has_more = 3;
+  // Next offset if more logs are available.
+  optional int32 next_offset = 4;
+}
+
+// ListMonitorHTTPResponseLogsResponse is the response containing response logs.
+message ListMonitorHTTPResponseLogsResponse {
+  // Response logs.
+  repeated HTTPResponseLogListItem logs = 1;
+  // Pagination metadata.
+  HTTPResponseLogPagination pagination = 2;
+}
+
+// GetMonitorHTTPResponseLogRequest is the request to get one response log.
+message GetMonitorHTTPResponseLogRequest {
+  // Monitor ID to get a response log for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // Response log ID to retrieve (required).
+  string log_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetMonitorHTTPResponseLogResponse is the response containing one response log.
+message GetMonitorHTTPResponseLogResponse {
+  // Response log details.
+  HTTPResponseLogDetail log = 1;
 }

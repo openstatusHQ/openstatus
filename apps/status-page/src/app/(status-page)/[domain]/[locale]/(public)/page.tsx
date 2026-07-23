@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
+
 import { Client } from "./client";
 import { embedSearchParamsCache } from "./search-params";
 

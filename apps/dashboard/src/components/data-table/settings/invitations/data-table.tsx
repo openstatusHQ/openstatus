@@ -1,12 +1,4 @@
 import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { formatDate } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
-import {
   Table,
   TableBody,
   TableCell,
@@ -15,6 +7,15 @@ import {
   TableRow,
 } from "@openstatus/ui/components/ui/table";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
+import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function DataTable() {
   const trpc = useTRPC();

@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { handleZodError } from "@/libs/errors";
+
 import type { Variables } from "../index";
 import { registerDeleteStatusReport } from "./delete";
 import { regsiterGetStatusReport } from "./get";

@@ -1,27 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import {
-  Sortable,
-  SortableContent,
-  SortableItem,
-  SortableItemHandle,
-  SortableOverlay,
-} from "@/components/ui/sortable";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -75,6 +53,29 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import {
+  Sortable,
+  SortableContent,
+  SortableItem,
+  SortableItemHandle,
+  SortableOverlay,
+} from "@/components/ui/sortable";
 
 type Monitor = {
   id: number;
@@ -296,7 +297,7 @@ export function FormMonitors({
           <MonitorRow
             monitor={monitor}
             form={form}
-            className="border-transparent border-x px-2"
+            className="border-x border-transparent px-2"
           />
         );
       }
@@ -485,7 +486,7 @@ export function FormMonitors({
                       return (
                         <MonitorRow
                           key={`${item.id}-monitor`}
-                          className="border-transparent border-x px-2"
+                          className="border-x border-transparent px-2"
                           monitor={item}
                           form={form}
                         />
@@ -529,8 +530,10 @@ export function FormMonitors({
   );
 }
 
-interface MonitorRowProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof SortableItem>, "value"> {
+interface MonitorRowProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof SortableItem>,
+  "value"
+> {
   monitor: Monitor;
   form: UseFormReturn<FormValues>;
 }
@@ -559,10 +562,10 @@ function MonitorRow({ monitor, className, ...props }: MonitorRowProps) {
             </span>
           </span>
         </div>
-        <div className="self-center truncate text-muted-foreground text-sm">
+        <div className="text-muted-foreground self-center truncate text-sm">
           {monitor.url}
         </div>
-        <div className="self-center truncate text-muted-foreground text-sm">
+        <div className="text-muted-foreground self-center truncate text-sm">
           {monitor.active ? "Active" : "Inactive"}
         </div>
       </div>
@@ -570,8 +573,10 @@ function MonitorRow({ monitor, className, ...props }: MonitorRowProps) {
   );
 }
 
-interface MonitorGroupProps
-  extends Omit<React.ComponentPropsWithoutRef<typeof SortableItem>, "value"> {
+interface MonitorGroupProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof SortableItem>,
+  "value"
+> {
   group: MonitorGroup;
   groupIndex: number;
   onDeleteGroup: (groupId: number) => void;
@@ -632,7 +637,7 @@ function MonitorGroup({
   );
 
   return (
-    <SortableItem value={group.id} className="rounded-md border bg-muted">
+    <SortableItem value={group.id} className="bg-muted rounded-md border">
       <div className="grid grid-cols-3 gap-2 px-2 pt-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
@@ -652,7 +657,7 @@ function MonitorGroup({
                 <FormControl>
                   <Input
                     placeholder="Group Name"
-                    className="w-full bg-background"
+                    className="bg-background w-full"
                     {...field}
                   />
                 </FormControl>
@@ -753,7 +758,7 @@ function MonitorGroup({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:size-4 [&_svg]:text-destructive"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:text-destructive [&_svg]:size-4"
                 // NOTE: delete directly if no monitors are in the group
                 {...(data.length === 0
                   ? { onClick: () => onDeleteGroup(group.id) }
@@ -772,7 +777,7 @@ function MonitorGroup({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
+                  className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs"
                   onClick={() => onDeleteGroup(group.id)}
                 >
                   Delete

@@ -1,31 +1,59 @@
-import type { MDXData } from "@/content/utils";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type {
+  AggregateRating,
   BlogPosting,
   BreadcrumbList,
+  CollectionPage,
   FAQPage,
   Graph,
   HowTo,
   Organization,
   Person,
   Product,
+  Review,
+  Service,
   SoftwareApplication,
+  TechArticle,
   Thing,
   WebPage,
   WithContext,
 } from "schema-dts";
+
+import type { MDXData } from "../../content/utils";
 import { BASE_URL } from "./shared-metadata";
 
-export const getJsonLDWebPage = (page: MDXData): WithContext<WebPage> => {
+export const getJsonLDWebPage = (
+  input: MDXData | { name: string; url: string },
+): WithContext<WebPage> => {
+  if (!("metadata" in input)) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: input.name,
+      url: input.url,
+    };
+  }
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: `${page.metadata.title} | openstatus`,
-    headline: page.metadata.description,
+    name: `${input.metadata.title} | openstatus`,
+    headline: input.metadata.description,
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": BASE_URL,
     },
+  };
+};
+
+export const getJsonLDService = (input: {
+  name: string;
+  url: string;
+}): WithContext<Service> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: input.name,
+    url: input.url,
   };
 };
 
@@ -55,6 +83,33 @@ export const getJsonLDBlogPosting = (
   };
 };
 
+export const getJsonLDTechArticle = (
+  doc: MDXData,
+): WithContext<TechArticle> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: doc.metadata.title,
+    description: doc.metadata.description,
+    datePublished: doc.metadata.publishedAt.toISOString(),
+    dateModified: doc.metadata.publishedAt.toISOString(),
+    url: `${BASE_URL}${doc.href}`,
+    author: {
+      "@type": "Organization",
+      name: "openstatus",
+      url: BASE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "openstatus",
+      logo: {
+        "@type": "ImageObject",
+        url: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
+      },
+    },
+  };
+};
+
 export const getJsonLDOrganization = (): WithContext<Organization> => {
   return {
     "@context": "https://schema.org",
@@ -78,6 +133,35 @@ export const getJsonLDOrganization = (): WithContext<Organization> => {
   };
 };
 
+// Sourced from https://www.trustpilot.com/review/openstatus.dev
+const trustpilotReviews: Review[] = [
+  {
+    "@type": "Review",
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: 5,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    author: {
+      "@type": "Person",
+      name: "Johannes",
+    },
+    datePublished: "2024-06-11",
+    name: "Open source status page which works super well!",
+    reviewBody:
+      "Love that we have an open source alternative for our status page at Formbricks! Great team and execution, big fan of openstatus!",
+  },
+];
+
+const trustpilotAggregateRating: AggregateRating = {
+  "@type": "AggregateRating",
+  ratingValue: 5,
+  bestRating: 5,
+  worstRating: 1,
+  reviewCount: trustpilotReviews.length,
+};
+
 export const getJsonLDProduct = (): WithContext<Product> => {
   return {
     "@context": "https://schema.org",
@@ -99,6 +183,8 @@ export const getJsonLDProduct = (): WithContext<Product> => {
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     })),
+    aggregateRating: trustpilotAggregateRating,
+    review: trustpilotReviews,
   };
 };
 
@@ -132,6 +218,8 @@ export const getJsonLDSoftwareApplication =
         "Open-source",
       ],
       screenshot: `${BASE_URL}/assets/landing/dashboard.png`,
+      aggregateRating: trustpilotAggregateRating,
+      review: trustpilotReviews,
     };
   };
 
@@ -146,6 +234,46 @@ export const getJsonLDPerson = (item: {
     url: item.url,
   };
 };
+
+type ItemListEntry = { name: string; url: string; description?: string };
+
+export function getJsonLDItemList(
+  items: MDXData[],
+  prefix: string,
+): WithContext<CollectionPage>;
+export function getJsonLDItemList(
+  items: ItemListEntry[],
+): WithContext<CollectionPage>;
+export function getJsonLDItemList(
+  items: MDXData[] | ItemListEntry[],
+  prefix?: string,
+): WithContext<CollectionPage> {
+  // MDXData overload maps slug → URL via prefix; the entry overload carries
+  // pre-resolved URLs (used where card href ≠ slug, e.g. docs section hubs).
+  const entries: ItemListEntry[] =
+    prefix !== undefined
+      ? (items as MDXData[]).map((item) => ({
+          name: item.metadata.title,
+          url: `${BASE_URL}${prefix}/${item.slug}`,
+          description: item.metadata.description,
+        }))
+      : (items as ItemListEntry[]);
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: entries.length,
+      itemListElement: entries.map((entry, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: entry.url,
+        name: entry.name,
+        description: entry.description,
+      })),
+    },
+  };
+}
 
 export const getJsonLDBreadcrumbList = (
   items: { name: string; url: string }[],
@@ -162,19 +290,22 @@ export const getJsonLDBreadcrumbList = (
   };
 };
 
-export function getJsonLDFAQPage(input: MDXData): WithContext<FAQPage> | null {
-  if (!input.metadata.faq) {
+export function getJsonLDFAQPage(
+  input: MDXData | { question: string; answer: string }[],
+): WithContext<FAQPage> | null {
+  const faq = Array.isArray(input) ? input : input.metadata.faq;
+  if (!faq) {
     return null;
   }
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: input.metadata.faq.map((faq) => ({
+    mainEntity: faq.map((item) => ({
       "@type": "Question",
-      name: faq.question,
+      name: item.question,
       acceptedAnswer: {
         "@type": "Answer",
-        text: faq.answer,
+        text: item.answer,
       },
     })),
   };
@@ -202,20 +333,7 @@ export const getJsonLDHowTo = (post: MDXData): WithContext<HowTo> | null => {
   };
 };
 
-/**
- * Creates a unified JSON-LD graph from multiple schema objects
- * Combines multiple schemas into a single @graph structure
- *
- * @param items - Array of schema objects with @context
- * @returns A single schema object with @graph containing all items
- *
- * @example
- * const graph = createJsonLDGraph([
- *   getJsonLDWebPage(data),
- *   getJsonLDBlogPosting(data),
- *   getJsonLDFAQPage(faqs),
- * ]);
- */
+/** Merge schema objects into a single `@graph`, stripping their per-item `@context`. */
 export const createJsonLDGraph = (
   items: (WithContext<Thing> | null)[],
 ): Graph => {

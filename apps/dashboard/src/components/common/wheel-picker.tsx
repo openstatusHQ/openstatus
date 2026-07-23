@@ -1,7 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import * as React from "react";
+
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Context -------------------------------------------------------------------------------------------------------------
@@ -148,7 +149,7 @@ const WheelPickerSelect = React.forwardRef<
       aria-activedescendant={`wheel-option-${currentIndex}`}
       tabIndex={0}
       className={cn(
-        "relative h-6 w-full rounded-md border border-transparent text-left focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50",
+        "focus:border-ring focus:ring-ring/50 relative h-6 w-full rounded-md border border-transparent text-left focus:ring-2 focus:outline-none",
         className,
       )}
       onKeyDown={handleKeyDown}
@@ -208,7 +209,7 @@ const WheelPickerOptions = React.forwardRef<
               role="option"
               aria-selected={isSelected}
               className={cn(
-                "absolute inset-0 flex cursor-pointer select-none items-center justify-start transition-transform duration-500 ease-out [backface-visibility:hidden]",
+                "absolute inset-0 flex cursor-pointer items-center justify-start transition-transform duration-500 ease-out select-none [backface-visibility:hidden]",
               )}
               style={{
                 transform: `rotateX(${angle}rad) translateZ(${radius}px)`,
@@ -248,8 +249,7 @@ WheelPickerOptions.displayName = "WheelPickerOptions";
 
 type PlaceholderPosition = "first" | "last";
 
-export interface WheelPickerEmptyProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface WheelPickerEmptyProps extends React.HTMLAttributes<HTMLDivElement> {
   position: PlaceholderPosition;
 }
 

@@ -1,281 +1,59 @@
-import type {
-  Incident,
-  Maintenance,
-  PageComponent,
-  PageComponentType,
-  PageComponentWithMonitorRelation,
-  StatusReport,
-  StatusReportUpdate,
-} from "@openstatus/db/src/schema";
+import type { PageComponentImpact } from "@openstatus/db/src/schema";
+import { impactToStatusType, worstImpact } from "@openstatus/db/src/schema";
+import {
+  type Event,
+  MS_PER_DAY,
+  type StatusData,
+  type UptimeWindow,
+  dayCoverage,
+  durationDowntimeMs,
+  floorPct,
+  getHighestPriorityStatus,
+  getWorstVariant,
+  isDateWithinEvent,
+  reportEventDayImpact,
+  reportEventDayStatus,
+  reportsOnlyDowntimeMs,
+  requestsTally,
+} from "@openstatus/services/status-timeline";
 
-/**
- * Type for a monitor component with a non-null monitor relation
- */
-export type MonitorComponentWithNonNullMonitor =
-  PageComponentWithMonitorRelation & {
-    type: "monitor";
-    monitorId: number;
-    monitor: NonNullable<PageComponentWithMonitorRelation["monitor"]>;
-  };
+export * from "@openstatus/services/status-timeline";
 
-/**
- * Type guard to check if a pageComponent is a monitor type with a monitor relation
- * Works with any object that has the shape of a pageComponent with a valid monitor relation
- */
-export function isMonitorComponent(
-  component: PageComponentWithMonitorRelation,
-): component is MonitorComponentWithNonNullMonitor {
-  return (
-    component.type === "monitor" &&
-    component.monitor !== null &&
-    component.monitor !== undefined &&
-    component.monitor.active === true &&
-    component.monitor.deletedAt === null
-  );
-}
+// Status pages must render even when Tinybird is degraded. Read latency above
+// this budget is treated as an outage and the page falls back to manual mode.
+export const TINYBIRD_FALLBACK_TIMEOUT_MS = 5_000;
 
-export type StatusData = {
-  day: string;
-  count: number;
-  ok: number;
-  degraded: number;
-  error: number;
-  monitorId: string;
-};
+// Discriminated result of a guarded Tinybird read: `ok: true` carries the data,
+// `ok: false` (timeout or error) carries `null` and signals manual-mode fallback.
+export type TinybirdResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; data: null };
 
-export function fillStatusDataFor45Days(
-  data: Array<StatusData>,
-  monitorId: string,
-  lookbackPeriod = 45,
-): Array<StatusData> {
-  const result = [];
-  const dataByDay = new Map();
-
-  // Index existing data by day
-  data.forEach((item) => {
-    const dayKey = new Date(item.day).toISOString().split("T")[0]; // YYYY-MM-DD format
-    dataByDay.set(dayKey, item);
-  });
-
-  // Generate all 45 days from today backwards
-  const now = new Date();
-  for (let i = 0; i < lookbackPeriod; i++) {
-    const date = new Date(now);
-    date.setUTCDate(date.getUTCDate() - i);
-    date.setUTCHours(0, 0, 0, 0); // Set to start of day in UTC
-
-    const dayKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-    const isoString = date.toISOString();
-
-    if (dataByDay.has(dayKey)) {
-      // Use existing data but ensure the day is properly formatted
-      const existingData = dataByDay.get(dayKey);
-      result.push({
-        ...existingData,
-        day: isoString,
-      });
-    } else {
-      // Fill missing day with default values
-      result.push({
-        day: isoString,
-        count: 0,
-        ok: 0,
-        degraded: 0,
-        error: 0,
-        monitorId,
-      });
-    }
+// Races a Tinybird read against the fallback budget. `ok: false` (timeout or
+// thrown error) signals the caller to serve manual mode — DB-authored events
+// only — instead of hanging or 500ing on Tinybird.
+export async function withTinybirdFallback<T>(
+  fetch: () => Promise<T>,
+  timeoutMs = TINYBIRD_FALLBACK_TIMEOUT_MS,
+): Promise<TinybirdResult<T>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const data = await Promise.race([
+      fetch(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("tinybird timeout")),
+          timeoutMs,
+        );
+      }),
+    ]);
+    return { ok: true, data };
+  } catch (err) {
+    console.error("[status-page] tinybird unhealthy, using manual mode:", err);
+    return { ok: false, data: null };
+  } finally {
+    clearTimeout(timer);
   }
-
-  // Sort by day (oldest first)
-  return result.sort(
-    (a, b) => new Date(a.day).getTime() - new Date(b.day).getTime(),
-  );
-}
-
-export function fillStatusDataFor45DaysNoop({
-  errorDays,
-  degradedDays,
-  lookbackPeriod = 45,
-}: {
-  errorDays: number[];
-  degradedDays: number[];
-  lookbackPeriod?: number;
-}): Array<StatusData> {
-  const issueDays = [...errorDays, ...degradedDays];
-  const data: StatusData[] = Array.from({ length: 45 }, (_, i) => {
-    return {
-      day: new Date(new Date().setDate(new Date().getDate() - i)).toISOString(),
-      count: 1,
-      ok: issueDays.includes(i) ? 0 : 1,
-      degraded: degradedDays.includes(i) ? 1 : 0,
-      error: errorDays.includes(i) ? 1 : 0,
-      monitorId: "1",
-    };
-  });
-  return fillStatusDataFor45Days(data, "1", lookbackPeriod);
-}
-
-type Event = {
-  id: number;
-  name: string;
-  from: Date;
-  to: Date | null;
-  type: "maintenance" | "incident" | "report";
-  status: "success" | "degraded" | "error" | "info";
-};
-
-export function getEvents({
-  maintenances,
-  incidents,
-  reports,
-  pageComponentId,
-  monitorId,
-  componentType,
-  pastDays = 45,
-}: {
-  maintenances: (Maintenance & {
-    maintenancesToPageComponents: {
-      pageComponent: PageComponent | null;
-    }[];
-  })[];
-  incidents: Incident[];
-  reports: (StatusReport & {
-    statusReportsToPageComponents: {
-      pageComponent: PageComponent | null;
-    }[];
-    statusReportUpdates: StatusReportUpdate[];
-  })[];
-  pageComponentId?: number;
-  monitorId?: number;
-  componentType?: PageComponentType;
-  pastDays?: number;
-}): Event[] {
-  const events: Event[] = [];
-  const pastThreshod = new Date();
-  pastThreshod.setDate(pastThreshod.getDate() - pastDays);
-
-  // Filter maintenances - prioritize pageComponentId, fallback to monitorId for backward compatibility
-  maintenances
-    .filter((maintenance) => {
-      if (pageComponentId) {
-        return maintenance.maintenancesToPageComponents.some(
-          (m) => m.pageComponent?.id === pageComponentId,
-        );
-      }
-      if (monitorId) {
-        return maintenance.maintenancesToPageComponents.some(
-          (m) => m.pageComponent?.monitorId === monitorId,
-        );
-      }
-      return true;
-    })
-    .forEach((maintenance) => {
-      if (maintenance.from < pastThreshod) return;
-      events.push({
-        id: maintenance.id,
-        name: maintenance.title,
-        from: maintenance.from,
-        to: maintenance.to,
-        type: "maintenance",
-        status: "info" as const,
-      });
-    });
-
-  // Filter incidents - only for monitor-type components
-  // Static components don't have incidents
-  if (componentType !== "static") {
-    incidents
-      .filter((incident) =>
-        monitorId ? incident.monitorId === monitorId : true,
-      )
-      .forEach((incident) => {
-        if (!incident.createdAt || incident.createdAt < pastThreshod) return;
-        events.push({
-          id: incident.id,
-          name: "Downtime",
-          from: incident.createdAt,
-          to: incident.resolvedAt,
-          type: "incident",
-          status: "error" as const,
-        });
-      });
-  }
-
-  // Filter reports - prioritize pageComponentId, fallback to monitorId for backward compatibility
-  reports
-    .filter((report) => {
-      if (pageComponentId) {
-        return report.statusReportsToPageComponents.some(
-          (r) => r.pageComponent?.id === pageComponentId,
-        );
-      }
-      if (monitorId) {
-        return report.statusReportsToPageComponents.some(
-          (r) => r.pageComponent?.monitorId === monitorId,
-        );
-      }
-      return true;
-    })
-    .map((report) => {
-      const updates = report.statusReportUpdates.sort(
-        (a, b) => a.date.getTime() - b.date.getTime(),
-      );
-      if (updates.length === 0) return;
-
-      const firstUpdate = updates[0];
-      const lastUpdate = updates[updates.length - 1];
-
-      // NOTE: we don't check threshold here because we display all unresolved reports
-      if (!firstUpdate?.date) return;
-
-      // HACKY: LEGACY: we shouldn't have report.status anymore and instead use the update status for that.
-      // Ideally, we could replace the status with "downtime", "degraded", "operational" to indicate the gravity of the issue
-      if (report.status === "resolved") {
-        events.push({
-          id: report.id,
-          name: report.title,
-          from: firstUpdate?.date,
-          to: lastUpdate?.date,
-          type: "report",
-          status: "success" as const,
-        });
-        return;
-      }
-
-      events.push({
-        id: report.id,
-        name: report.title,
-        from: firstUpdate?.date,
-        to:
-          lastUpdate?.status === "resolved" ||
-          lastUpdate?.status === "monitoring"
-            ? lastUpdate?.date
-            : null,
-        type: "report",
-        status: "degraded" as const,
-      });
-    });
-
-  return events;
-}
-
-// Keep the old function name for backward compatibility
-export const getEventsByMonitorId = getEvents;
-
-export function getWorstVariant(
-  statuses: (keyof typeof STATUS_PRIORITY)[],
-): keyof typeof STATUS_PRIORITY {
-  if (statuses.length === 0) return "success";
-
-  return statuses.reduce(
-    (worst, current) => {
-      return STATUS_PRIORITY[current] > STATUS_PRIORITY[worst]
-        ? current
-        : worst;
-    },
-    "success" as keyof typeof STATUS_PRIORITY,
-  );
 }
 
 type UptimeData = {
@@ -288,32 +66,12 @@ type UptimeData = {
   card: {
     status: "success" | "degraded" | "error" | "info" | "empty";
     value: string;
+    /** Worst report impact of the day — refines the generic status label. */
+    impact?: PageComponentImpact;
   }[];
 };
 
-// Priority mapping for status types (higher number = higher priority)
-const STATUS_PRIORITY = {
-  error: 3,
-  degraded: 2,
-  info: 1,
-  success: 0,
-  empty: -1,
-} as const;
-
-// Constants for time calculations
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const MILLISECONDS_PER_MINUTE = 1000 * 60;
-
-// Helper to get highest priority status from data
-function getHighestPriorityStatus(
-  item: StatusData,
-): keyof typeof STATUS_PRIORITY {
-  if (item.error > 0) return "error";
-  if (item.degraded > 0) return "degraded";
-  if (item.ok > 0) return "success";
-
-  return "empty";
-}
 
 // Helper to format numbers
 function formatNumber(num: number): string {
@@ -339,23 +97,6 @@ function formatDuration(minutes: number): string {
   const remainingMinutes = minutes % 60;
   if (remainingMinutes === 0) return `${hours}h`;
   return `${hours}h ${remainingMinutes}m`;
-}
-
-// Helper to check if date is within event range
-function isDateWithinEvent(date: Date, event: Event): boolean {
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-
-  const endOfDay = new Date(date);
-  endOfDay.setUTCHours(23, 59, 59, 999);
-
-  const eventStart = new Date(event.from);
-  const eventEnd = event.to ? new Date(event.to) : new Date();
-
-  return (
-    eventStart.getTime() <= endOfDay.getTime() &&
-    eventEnd.getTime() >= startOfDay.getTime()
-  );
 }
 
 // Helper to calculate total minutes in a day (handles today vs past days)
@@ -429,7 +170,7 @@ function getTotalEventsDurationMs(events: Event[], date: Date): number {
   }, 0);
 
   // Cap at 24 hours per day
-  return Math.min(total, MILLISECONDS_PER_DAY);
+  return Math.min(total, MS_PER_DAY);
 }
 
 export function setDataByType({
@@ -450,10 +191,32 @@ export function setDataByType({
     maintenances: Event[],
     date: Date,
   ): Array<{ status: "info" | "degraded" | "error"; count: number }> {
+    // impact reports contribute per-interval slices to each color bucket, so a
+    // 1h major_outage inside a 24h report only paints 1h red; legacy reports
+    // keep their full duration in the degraded bucket; operational slices drop
+    const degradedSlices: Event[] = [];
+    const errorSlices: Event[] = [];
+    for (const report of reports) {
+      if (!report.impactIntervals) {
+        degradedSlices.push(report);
+        continue;
+      }
+      for (const iv of report.impactIntervals) {
+        const color = impactToStatusType(iv.impact);
+        if (color === "success") continue;
+        const slice = { ...report, from: iv.from, to: iv.to };
+        if (!isDateWithinEvent(date, slice)) continue;
+        (color === "error" ? errorSlices : degradedSlices).push(slice);
+      }
+    }
+
     const eventTypes = [
       { status: "info" as const, events: maintenances },
-      { status: "degraded" as const, events: reports },
-      { status: "error" as const, events: incidents },
+      { status: "degraded" as const, events: degradedSlices },
+      {
+        status: "error" as const,
+        events: [...incidents, ...errorSlices],
+      },
     ];
 
     return eventTypes
@@ -470,13 +233,11 @@ export function setDataByType({
     return [
       {
         status: "success" as const,
-        height:
-          ((MILLISECONDS_PER_DAY - errorSegmentCount) / MILLISECONDS_PER_DAY) *
-          100,
+        height: ((MS_PER_DAY - errorSegmentCount) / MS_PER_DAY) * 100,
       },
       {
         status: "error" as const,
-        height: (errorSegmentCount / MILLISECONDS_PER_DAY) * 100,
+        height: (errorSegmentCount / MS_PER_DAY) * 100,
       },
     ];
   }
@@ -484,16 +245,35 @@ export function setDataByType({
   function createProportionalBarData(
     segments: Array<{ status: "info" | "degraded" | "error"; count: number }>,
   ): UptimeData["bar"] {
-    const totalDuration = segments.reduce(
+    // Downtime keeps its true proportion of the day; maintenance/reports are
+    // highlight events that fill the remaining space (no uptime shown).
+    const errorMs = segments
+      .filter((segment) => segment.status === "error")
+      .reduce((sum, segment) => sum + segment.count, 0);
+    const errorHeight = (Math.min(errorMs, MS_PER_DAY) / MS_PER_DAY) * 100;
+    const remainingHeight = Math.max(0, 100 - errorHeight);
+
+    const highlightSegments = segments.filter(
+      (segment) => segment.status !== "error",
+    );
+    const highlightTotal = highlightSegments.reduce(
       (sum, segment) => sum + segment.count,
       0,
     );
 
-    return segments.map((segment) => ({
-      status: segment.status,
-      // NOTE: if totalDuration is 0 (single event without duration), we want to show 100% for the segment
-      height: totalDuration > 0 ? (segment.count / totalDuration) * 100 : 100,
-    }));
+    return segments.map((segment) => {
+      if (segment.status === "error") {
+        return { status: segment.status, height: errorHeight };
+      }
+      // instant highlight events (no duration) split the remaining space evenly
+      return {
+        status: segment.status,
+        height:
+          highlightTotal > 0
+            ? (segment.count / highlightTotal) * remainingHeight
+            : remainingHeight / highlightSegments.length,
+      };
+    });
   }
 
   function createStatusSegments(
@@ -603,7 +383,6 @@ export function setDataByType({
     if (status === "success") {
       // Calculate success duration as remaining time
       let totalEventMinutes = 0;
-      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       durationMap.forEach((minutes) => (totalEventMinutes += minutes));
 
       // Use adjusted total minutes accounting for maintenance
@@ -643,16 +422,20 @@ export function setDataByType({
     const maintenances = dayEvents.filter((e) => e.type === "maintenance");
 
     const hasIncidents = incidents.length > 0;
-    const hasReports = reports.length > 0;
     const hasMaintenances = maintenances.length > 0;
+
+    // worst impact color across the day's reports; "success" (operational all
+    // day) means reports don't color the day
+    const reportsDayStatus = reports.length
+      ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, date)))
+      : undefined;
+    const activeReportsDayStatus =
+      reportsDayStatus === "success" ? undefined : reportsDayStatus;
 
     const eventStatus = hasIncidents
       ? "error"
-      : hasReports
-        ? "degraded"
-        : hasMaintenances
-          ? "info"
-          : undefined;
+      : (activeReportsDayStatus ??
+        (hasMaintenances ? ("info" as const) : undefined));
 
     // Calculate bar data based on barType
     // TODO: transform into a new Map<type, number>();
@@ -705,11 +488,8 @@ export function setDataByType({
         ];
         break;
       case "manual":
-        const manualEventStatus = hasReports
-          ? "degraded"
-          : hasMaintenances
-            ? "info"
-            : undefined;
+        const manualEventStatus =
+          activeReportsDayStatus ?? (hasMaintenances ? "info" : undefined);
         barData = [
           {
             status: manualEventStatus || "success",
@@ -781,19 +561,29 @@ export function setDataByType({
         ];
         break;
 
-      case "manual":
-        const manualEventStatus = hasReports
-          ? "degraded"
-          : hasMaintenances
-            ? "info"
-            : undefined;
+      case "manual": {
+        const manualCardStatus =
+          activeReportsDayStatus ?? (hasMaintenances ? "info" : undefined);
+        const dayImpacts = reports
+          .map((e) => reportEventDayImpact(e, date))
+          .filter((i): i is PageComponentImpact => i !== null);
+        const worstDayImpact =
+          dayImpacts.length > 0 ? worstImpact(dayImpacts) : null;
         cardData = [
           {
-            status: manualEventStatus || "success",
+            status: manualCardStatus || "success",
             value: "",
+            // only when the impact agrees with the day color — a mixed
+            // legacy+impact day where legacy dominates keeps the generic label
+            impact:
+              worstDayImpact !== null &&
+              impactToStatusType(worstDayImpact) === manualCardStatus
+                ? worstDayImpact
+                : undefined,
           },
         ];
         break;
+      }
       default:
         // Default to requests behavior
         if (total === 0) {
@@ -822,6 +612,7 @@ export function setDataByType({
               ),
               type: "incident" as const,
               status: "error" as const,
+              isAggregated: true,
             },
           ]
         : incidents;
@@ -829,7 +620,15 @@ export function setDataByType({
     return {
       day: dayData.day,
       events: [
-        ...reports,
+        // row dot follows the day's worst impact; floors at degraded so an
+        // operational-only slice never renders a green row (mirrors calendar)
+        ...reports.map((e) => ({
+          ...e,
+          status:
+            reportEventDayStatus(e, date) === "error"
+              ? ("error" as const)
+              : ("degraded" as const),
+        })),
         ...maintenances,
         ...(barType === "absolute" ? bundledIncidents : []),
       ],
@@ -850,54 +649,27 @@ export function getUptime({
   barType: "absolute" | "dominant" | "manual";
   cardType: "requests" | "duration" | "dominant" | "manual";
 }): string {
-  // Clamp event durations to the data lookback window to avoid
-  // events outside the window producing negative uptime values.
-  const timestamps = data.map((d) => new Date(d.day).getTime());
-  const windowStart = timestamps.length > 0 ? Math.min(...timestamps) : 0;
-  const windowEndDate = new Date(
-    timestamps.length > 0 ? Math.max(...timestamps) : Date.now(),
-  );
-  windowEndDate.setUTCHours(23, 59, 59, 999);
-  const windowEnd = windowEndDate.getTime();
-
-  function clampedDuration(item: Event): number {
-    if (!item.from) return 0;
-    const from = Math.max(item.from.getTime(), windowStart);
-    const to = Math.min((item.to || new Date()).getTime(), windowEnd);
-    return Math.max(0, to - from);
+  if (barType === "manual" || cardType === "duration") {
+    // Clamp event durations to the data lookback window to avoid
+    // events outside the window producing negative uptime values.
+    const timestamps = data.map((d) => new Date(d.day).getTime());
+    const { segments: coverage, totalMs: total } = dayCoverage(timestamps);
+    if (total === 0) return "100%";
+    const windowEndDate = new Date(Math.max(...timestamps));
+    windowEndDate.setUTCHours(23, 59, 59, 999);
+    const window: UptimeWindow = {
+      start: Math.min(...timestamps),
+      end: windowEndDate.getTime(),
+      now: Date.now(),
+    };
+    const duration =
+      barType === "manual"
+        ? reportsOnlyDowntimeMs(events, window, coverage)
+        : durationDowntimeMs(events, window, coverage);
+    return `${floorPct((total - duration) / total)}%`;
   }
 
-  if (barType === "manual") {
-    const duration = events
-      // NOTE: we want only user events
-      .filter((e) => e.type === "report")
-      .reduce((acc, item) => acc + clampedDuration(item), 0);
-
-    const total = data.length * MILLISECONDS_PER_DAY;
-
-    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
-  }
-
-  if (cardType === "duration") {
-    const duration = events
-      .filter((e) => e.type === "incident")
-      .reduce((acc, item) => acc + clampedDuration(item), 0);
-
-    const total = data.length * MILLISECONDS_PER_DAY;
-    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
-  }
-
-  const { ok, total } = data.reduce(
-    (acc, item) => ({
-      ok: acc.ok + item.ok + item.degraded,
-      total: acc.total + item.ok + item.degraded + item.error,
-    }),
-    {
-      ok: 0,
-      total: 0,
-    },
-  );
-
+  const { up, total } = requestsTally(data);
   if (total === 0) return "100%";
-  return `${Math.floor((ok / total) * 10000) / 100}%`;
+  return `${floorPct(up / total)}%`;
 }

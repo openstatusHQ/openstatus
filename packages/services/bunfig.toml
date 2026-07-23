@@ -1,0 +1,4 @@
+[test]
+# Runs before every test file — stubs env vars required by transitive
+# imports from `@openstatus/subscriptions` → `@openstatus/emails`.
+preload = ["./test/preload.ts"]

@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useState } from "react";
+
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
   FormSheetContent,
@@ -14,21 +18,18 @@ import {
   FormStatusReport,
   type FormValues,
 } from "@/components/forms/status-report/form";
-import type { PageComponent } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { useState } from "react";
+import type { CheckboxTreeItem } from "@/components/ui/checkbox-tree";
 
 export function FormSheetStatusReport({
   children,
   defaultValues,
   onSubmit,
-  pageComponents,
+  items,
   warning,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  pageComponents: Pick<PageComponent, "id" | "name" | "type">[];
+  items: CheckboxTreeItem[];
   warning?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -45,7 +46,7 @@ export function FormSheetStatusReport({
         </FormSheetHeader>
         {warning ? (
           <>
-            <p className="px-4 py-4 text-sm text-warning">{warning}</p>
+            <p className="text-warning px-4 py-4 text-sm">{warning}</p>
             <Separator />
           </>
         ) : null}
@@ -59,7 +60,7 @@ export function FormSheetStatusReport({
                 setOpen(false);
               }}
               defaultValues={defaultValues}
-              pageComponents={pageComponents}
+              items={items}
             />
           </FormCard>
         </FormCardGroup>

@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq, inArray } from "@openstatus/db";
 import {
   maintenance,
@@ -19,9 +18,11 @@ import {
   MOCK_PAGES,
   MOCK_SUBSCRIBERS,
 } from "@openstatus/importers/statuspage/fixtures";
+import { clearAuditLogFor } from "@openstatus/services/test/helpers";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, test } from "@std/testing/bdd";
 
 import { edgeRouter } from "../edge";
-import { previewImport, runImport } from "../service/import";
 import { createInnerTRPCContext } from "../trpc";
 
 // ---------------------------------------------------------------------------
@@ -68,13 +69,20 @@ function restoreFetch() {
   globalThis.fetch = originalFetch;
 }
 
-function makeCaller(limitsOverride?: Partial<Limits>) {
+function makeCaller(limitsOverride?: Partial<Limits>, workspaceId = 1) {
   const limits = { ...allPlans.starter.limits, ...limitsOverride };
   const ctx = createInnerTRPCContext({
     req: undefined,
     session: { user: { id: "1" } },
     // @ts-expect-error - minimal workspace for test
-    workspace: { id: 1, limits },
+    workspace: { id: workspaceId, limits },
+    // Populate `user` too so the `NODE_ENV=test` escape hatch in
+    // `enforceUserIsAuthed` takes — otherwise the middleware would
+    // fall through to the DB read and replace our override limits
+    // with the seeded team-plan workspace, making every assertion
+    // below a no-op against the real team plan.
+    // @ts-expect-error - minimal user for test
+    user: { id: 1 },
   });
   return edgeRouter.createCaller(ctx);
 }
@@ -115,8 +123,21 @@ async function cleanup() {
       );
   }
 
-  // 3. statusReportUpdate (via statusReportId)
+  // 3. statusReportUpdate (via statusReportId). Capture ids first so we
+  // can wipe their audit rows — `statusReportUpdate.id` recycles after
+  // delete, and an orphan audit row would re-attribute a later
+  // unrelated update.
+  let statusReportUpdateIds: number[] = [];
   if (createdIds.statusReports.length > 0) {
+    statusReportUpdateIds = (
+      await db
+        .select({ id: statusReportUpdate.id })
+        .from(statusReportUpdate)
+        .where(
+          inArray(statusReportUpdate.statusReportId, createdIds.statusReports),
+        )
+        .all()
+    ).map((r) => r.id);
     await db
       .delete(statusReportUpdate)
       .where(
@@ -156,6 +177,35 @@ async function cleanup() {
   if (createdIds.pages.length > 0) {
     await db.delete(page).where(inArray(page.id, createdIds.pages));
   }
+
+  // 9. audit_log: the importer service emits one audit row per created
+  // entity. The entities are gone but the rows are not — and
+  // INTEGER PRIMARY KEY ids recycle, so a later test inserting into the
+  // same table can land on an id that already has an audit row,
+  // inheriting its actor attribution. See docs/adr/test-audit-cleanup.md.
+  await Promise.all([
+    clearAuditLogFor({ entityType: "page", entityIds: createdIds.pages }),
+    clearAuditLogFor({
+      entityType: "page_component_group",
+      entityIds: createdIds.componentGroups,
+    }),
+    clearAuditLogFor({
+      entityType: "page_component",
+      entityIds: createdIds.components,
+    }),
+    clearAuditLogFor({
+      entityType: "status_report",
+      entityIds: createdIds.statusReports,
+    }),
+    clearAuditLogFor({
+      entityType: "status_report_update",
+      entityIds: statusReportUpdateIds,
+    }),
+    clearAuditLogFor({
+      entityType: "maintenance",
+      entityIds: createdIds.maintenances,
+    }),
+  ]);
 
   // Reset trackers
   createdIds.pages = [];
@@ -414,48 +464,62 @@ test("run with includeStatusReports creates status reports", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Limit warnings (call service directly to control limits)
+// Limit warnings (go through the caller with custom workspace limits to
+// drive the service's plan gates)
 // ---------------------------------------------------------------------------
 
 const freeLimits = { ...allPlans.free.limits };
 const starterLimits = { ...allPlans.starter.limits };
 
 test("preview shows component limit warning on free plan", async () => {
-  const result = await previewImport({
+  // Use workspaceId 2 (free seed) so the workspace-wide component count
+  // starts at 0 — workspace 1 has 2 seeded page components from the
+  // shared seed, which would make `remaining = 1` instead of 3 and
+  // change the warning wording.
+  const c = makeCaller({ ...freeLimits, "page-components": 3 }, 2);
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "page-components": 3 },
   });
 
   expect(result.errors.length).toBeGreaterThan(0);
-  expect(result.errors.some((e) => e.includes("3 of 4"))).toBe(true);
+  // Warning was reworded to clarify the worst-case count (see
+  // `limits.ts` — dropped the `"X of Y"` fraction because it implied
+  // a hard rejection count when duplicates would actually be skipped).
+  expect(result.errors.some((e) => e.includes("3 new component"))).toBe(true);
 });
 
 test("preview shows custom domain warning on free plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller({ ...freeLimits, "custom-domain": false });
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "custom-domain": false },
   });
 
   expect(result.errors.some((e) => e.includes("Custom domain"))).toBe(true);
 });
 
 test("preview shows subscriber warning on free plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller({ ...freeLimits, "status-subscribers": false });
+  // Pass `options.includeSubscribers: true` explicitly — the warning
+  // fires only when the user *intends* to import subscribers (and the
+  // plan disallows it). Default `includeSubscribers` is `false`
+  // (matches `ImportOptions`), so without the override the preview
+  // correctly stays silent for users who aren't importing subscribers.
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "status-subscribers": false },
+    options: { includeSubscribers: true },
   });
 
   expect(result.errors.some((e) => e.includes("Subscribers"))).toBe(true);
 });
 
 test("preview shows no warnings on starter plan", async () => {
-  const result = await previewImport({
+  const c = makeCaller(starterLimits);
+  const result = await c.import.preview({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: starterLimits,
   });
 
   // Only informational warnings about non-email subscribers are expected
@@ -482,11 +546,11 @@ test("run enforces component limit by truncating", async () => {
   if (!testPage) throw new Error("Failed to create test page");
   createdIds.pages.push(testPage.id);
 
-  const result = await runImport({
+  const c = makeCaller({ ...starterLimits, "page-components": 2 });
+  const result = await c.import.run({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
     pageId: testPage.id,
-    limits: { ...starterLimits, "page-components": 2 },
     options: { includeStatusReports: false, includeSubscribers: false },
   });
 
@@ -515,10 +579,10 @@ test("run enforces component limit by truncating", async () => {
 });
 
 test("run skips subscribers on free plan", async () => {
-  const result = await runImport({
+  const c = makeCaller({ ...freeLimits, "status-subscribers": false });
+  const result = await c.import.run({
+    provider: "statuspage",
     apiKey: "test-key",
-    workspaceId: 1,
-    limits: { ...freeLimits, "status-subscribers": false },
     options: { includeStatusReports: false, includeSubscribers: true },
   });
 

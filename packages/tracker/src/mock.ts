@@ -1,6 +1,4 @@
-import type { Monitor } from "@openstatus/tinybird";
-
-import { Tracker } from "./tracker";
+import { type Monitor, Tracker } from "./tracker";
 
 export const mockMonitor: Monitor[] = [
   { day: "2024-02-21 00:00:00", count: 762, ok: 762 },

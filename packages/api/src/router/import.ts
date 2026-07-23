@@ -1,88 +1,31 @@
-import { and, db, eq } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { previewImport, runImport } from "../service/import";
+import {
+  PreviewImportInput,
+  RunImportInput,
+  previewImport,
+  runImport,
+} from "@openstatus/services/import";
+
+import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const importRouter = createTRPCRouter({
   preview: protectedProcedure
-    .input(
-      z.object({
-        provider: z.enum(["statuspage", "betterstack", "instatus"]),
-        apiKey: z.string().min(1),
-        statuspagePageId: z.string().nullish(),
-        betterstackStatusPageId: z.string().nullish(),
-        instatusPageId: z.string().nullish(),
-        pageId: z.number().optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      return previewImport({
-        provider: opts.input.provider,
-        apiKey: opts.input.apiKey,
-        statuspagePageId: opts.input.statuspagePageId ?? undefined,
-        betterstackStatusPageId:
-          opts.input.betterstackStatusPageId ?? undefined,
-        instatusPageId: opts.input.instatusPageId ?? undefined,
-        workspaceId: opts.ctx.workspace.id,
-        pageId: opts.input.pageId,
-        limits: opts.ctx.workspace.limits,
-      });
+    .input(PreviewImportInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await previewImport({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
     }),
 
   run: protectedProcedure
-    .input(
-      z.object({
-        provider: z.enum(["statuspage", "betterstack", "instatus"]),
-        apiKey: z.string().min(1),
-        pageId: z.number().optional(),
-        statuspagePageId: z.string().nullish(),
-        betterstackStatusPageId: z.string().nullish(),
-        instatusPageId: z.string().nullish(),
-        options: z
-          .object({
-            includeStatusReports: z.boolean().default(true),
-            includeSubscribers: z.boolean().default(false),
-            includeComponents: z.boolean().default(true),
-            includeMonitors: z.boolean().default(true),
-          })
-          .optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      // If pageId provided, verify it belongs to workspace
-      if (opts.input.pageId) {
-        const existing = await db
-          .select()
-          .from(page)
-          .where(
-            and(
-              eq(page.id, opts.input.pageId),
-              eq(page.workspaceId, opts.ctx.workspace.id),
-            ),
-          )
-          .get();
-
-        if (!existing) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Page not found or does not belong to this workspace",
-          });
-        }
+    .input(RunImportInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await runImport({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
       }
-
-      return runImport({
-        provider: opts.input.provider,
-        apiKey: opts.input.apiKey,
-        statuspagePageId: opts.input.statuspagePageId ?? undefined,
-        betterstackStatusPageId:
-          opts.input.betterstackStatusPageId ?? undefined,
-        instatusPageId: opts.input.instatusPageId ?? undefined,
-        workspaceId: opts.ctx.workspace.id,
-        pageId: opts.input.pageId,
-        options: opts.input.options,
-        limits: opts.ctx.workspace.limits,
-      });
     }),
 });

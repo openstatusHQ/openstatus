@@ -28,8 +28,8 @@ type HttpPrivateRegionData struct {
 }
 
 type JobRunner interface {
-	TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error)
-	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error)
+	TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region string) (*TCPPrivateRegionData, error)
+	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region string) (*HttpPrivateRegionData, error)
 	DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivateRegionData, error)
 }
 
@@ -37,4 +37,17 @@ type jobRunner struct{}
 
 func NewJobRunner() JobRunner {
 	return &jobRunner{}
+}
+
+func headersToMap(headers []*v1.Headers) map[string]string {
+	if len(headers) == 0 {
+		return nil
+	}
+
+	m := make(map[string]string, len(headers))
+	for _, header := range headers {
+		m[header.GetKey()] = header.GetValue()
+	}
+
+	return m
 }

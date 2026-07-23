@@ -1,7 +1,8 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { expect } from "@std/expect";
+import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";
@@ -13,7 +14,7 @@ beforeAll(async () => {
   const m = await db
     .insert(monitor)
     .values({
-      workspaceId: 2,
+      workspaceId: 3,
       name: "Other workspace monitor",
       jobType: "http",
       periodicity: "1m",

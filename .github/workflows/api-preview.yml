@@ -32,7 +32,7 @@ jobs:
       url: https://${{ env.APP_NAME }}.fly.dev
     steps:
       - name: Get code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Fly.io CLI
         uses: superfly/flyctl-actions/setup-flyctl@master

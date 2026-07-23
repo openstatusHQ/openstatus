@@ -1,16 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -42,6 +31,19 @@ import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { FormSheetMonitorTag } from "../monitor-tag/sheet";
 
 const schema = z.object({
@@ -151,13 +153,13 @@ export function FormTags({
                             !field.value?.length && "text-muted-foreground",
                           )}
                         >
-                          <div className="group/badges -space-x-2 flex flex-wrap">
+                          <div className="group/badges flex flex-wrap -space-x-2">
                             {field.value.length ? (
                               field.value.map((tag) => (
                                 <Badge
                                   key={tag.id}
                                   variant="outline"
-                                  className="relative flex translate-x-0 items-center gap-1.5 rounded-full bg-background transition-transform hover:z-10 hover:translate-x-1"
+                                  className="bg-background relative flex translate-x-0 items-center gap-1.5 rounded-full transition-transform hover:z-10 hover:translate-x-1"
                                 >
                                   <div
                                     className={cn("size-2.5 rounded-full")}

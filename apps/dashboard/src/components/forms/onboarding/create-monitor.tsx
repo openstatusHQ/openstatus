@@ -10,9 +10,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { isTRPCClientError } from "@trpc/client";
-import { useTransition } from "react";
+import { X } from "lucide-react";
+import { useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -37,6 +43,7 @@ export function CreateMonitorForm({
       url: "",
     },
   });
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function submitAction(values: FormValues) {
@@ -73,7 +80,30 @@ export function CreateMonitorForm({
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input placeholder="https://api.openstatus.dev" {...field} />
+                <InputGroup>
+                  <InputGroupInput
+                    placeholder="https://api.openstatus.dev"
+                    {...field}
+                    ref={(el) => {
+                      inputRef.current = el;
+                      field.ref(el);
+                    }}
+                  />
+                  {field.value ? (
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        size="icon-xs"
+                        aria-label="Clear URL"
+                        onClick={() => {
+                          field.onChange("");
+                          inputRef.current?.focus();
+                        }}
+                      >
+                        <X />
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  ) : null}
+                </InputGroup>
               </FormControl>
               <FormMessage />
               <FormDescription>

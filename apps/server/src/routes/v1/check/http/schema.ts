@@ -1,4 +1,5 @@
 import { z } from "@hono/zod-openapi";
+
 import { MonitorSchema } from "../../monitors/schema";
 
 export const CheckSchema = MonitorSchema.pick({

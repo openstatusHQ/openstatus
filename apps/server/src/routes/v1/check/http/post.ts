@@ -1,11 +1,12 @@
 import { createRoute, type z } from "@hono/zod-openapi";
 import { getLogger } from "@logtape/logtape";
-
-import { env } from "@/env";
-import { openApiErrorResponses } from "@/libs/errors";
 import { db } from "@openstatus/db";
 import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
+
+import { env } from "@/env";
+import { openApiErrorResponses } from "@/libs/errors";
+
 import type { checkApi } from "../index";
 
 const logger = getLogger("api-server");
@@ -94,13 +95,14 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
               if (!key) return acc; // key === "" is an invalid header
 
               return {
-                // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
                 ...acc,
                 [key]: value,
               };
             }, {}),
             body: input.body ? input.body : undefined,
           }),
+          // No per-check timeout in the input schema; bound with the checker default.
+          signal: AbortSignal.timeout(60_000),
         });
         currentFetch.push(r);
       }

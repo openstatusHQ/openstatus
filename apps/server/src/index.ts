@@ -10,18 +10,24 @@ import {
   withContext,
 } from "@logtape/logtape";
 import { getOpenTelemetrySink } from "@logtape/otel";
-import { Hono } from "hono";
-import { showRoutes } from "hono/dev";
-
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
+import {
+  BatchLogRecordProcessor,
+  LoggerProvider,
+} from "@opentelemetry/sdk-logs";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import { Scalar } from "@scalar/hono-api-reference";
+import { Hono } from "hono";
+import { showRoutes } from "hono/dev";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
+
 import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
-import openapiYaml from "../static/openapi.yaml" with { type: "text" };
 import { env } from "./env";
 import { handleError } from "./libs/errors";
+import { mcpRoute } from "./routes/mcp";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
 import { slackRoute } from "./routes/slack";
@@ -41,23 +47,39 @@ export const app = new Hono<Env>({
 const logger = getLogger("api-server");
 const otelLogger = getLogger("api-server-otel");
 
+const openapiYaml = await Deno.readTextFile(
+  new URL("../static/openapi.yaml", import.meta.url),
+);
+
 /**
  * Configure logging asynchronously without blocking module initialization.
  * This allows tests to import `app` immediately.
  */
 
-const defaultLogger = getOpenTelemetrySink({
-  serviceName: "openstatus-server",
-  otlpExporterConfig: {
-    url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-    headers: {
-      Authorization: `Bearer ${env.AXIOM_TOKEN}`,
-      "X-Axiom-Dataset": env.AXIOM_DATASET,
-    },
-  },
-  additionalResource: resourceFromAttributes({
+// Build the LoggerProvider with a static OTLP exporter import so `deno bundle`
+// includes it. Letting @logtape/otel create the exporter triggers a dynamic
+// import of a bare specifier, which the compiled --node-modules-dir=none binary
+// can't resolve.
+const loggerProvider = new LoggerProvider({
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: "openstatus-server",
     [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
   }),
+  processors: [
+    new BatchLogRecordProcessor(
+      new OTLPLogExporter({
+        url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+        headers: {
+          Authorization: `Bearer ${env.AXIOM_TOKEN}`,
+          "X-Axiom-Dataset": env.AXIOM_DATASET,
+        },
+      }),
+    ),
+  ],
+});
+
+const defaultLogger = getOpenTelemetrySink({
+  loggerProvider,
 });
 
 await configure({
@@ -85,7 +107,7 @@ await configure({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
+/* oxlint-disable-next-line typescript/no-explicit-any */
 function shouldSample(event: Record<string, any>): boolean {
   // Always keep errors
   if (event.status_code >= 500) return true;
@@ -165,7 +187,7 @@ app.use("*", async (c, next) => {
       // Console logging only for errors in production
       if (env.NODE_ENV !== "production" || c.res.status >= 500) {
         logger.info("request", {
-          request_id: requestId,
+          request_id: reqId,
           method: c.req.method,
           path: c.req.path,
           status_code: c.res.status,
@@ -246,18 +268,22 @@ app.route("/v1", api);
 app.route("/slack", slackRoute);
 
 /**
+ * MCP Server Routes
+ *
+ * Streamable HTTP transport — single endpoint authenticated by
+ * `x-openstatus-key`. Per-request `McpServer` instance scoped to the
+ * caller's workspace via closure capture. Tools wrap
+ * `@openstatus/services` verbs; mutations write `metadata.transport:
+ * "mcp"` to the audit log via the shared `emitAudit` plumbing.
+ */
+app.route("/mcp", mcpRoute);
+
+/**
  * TODO: move to `workflows` app
  * This route is used by our checker to update the status of the monitors,
  * create incidents, and send notifications.
  */
 
-const isDev = process.env.NODE_ENV === "development";
-const port = 3000;
-
-if (isDev) showRoutes(app, { verbose: true, colorize: true });
-
-logger.info("Starting server", { port, environment: env.NODE_ENV });
-
-const server = { port, fetch: app.fetch };
-
-export default server;
+if (process.env.NODE_ENV === "development") {
+  showRoutes(app, { verbose: true, colorize: true });
+}

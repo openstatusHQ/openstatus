@@ -1,12 +1,16 @@
+import type { ThemeKey } from "@openstatus/theme-store";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Info } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+
 import { Link } from "@/components/common/link";
 import { Note } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+
 import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
+import { FormCustomTheme } from "./form-custom-theme";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
@@ -66,6 +70,12 @@ export function FormStatusPageUpdate() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
+    }),
+  );
+
+  const updateCustomThemeMutation = useMutation(
+    trpc.page.updateCustomTheme.mutationOptions({
+      onSuccess: () => refetch(),
     }),
   );
 
@@ -145,7 +155,25 @@ export function FormStatusPageUpdate() {
           await updatePageAppearanceMutation.mutateAsync({
             id: Number.parseInt(id),
             forceTheme: values.forceTheme,
-            configuration: values.configuration,
+            // `FormAppearance` keeps its internal `theme` value as a
+            // loose `string`; cast to the canonical `ThemeKey` from
+            // `@openstatus/theme-store` (same source the service input
+            // enum is derived from). Invalid submits are caught by the
+            // router's zod parse.
+            configuration: {
+              theme: values.configuration.theme as ThemeKey,
+            },
+          });
+        }}
+      />
+      <FormCustomTheme
+        locked={workspace.limits["custom-theme"] === false}
+        themeKey={statusPage.configuration?.theme ?? "default"}
+        defaultValue={statusPage.customTheme}
+        onSubmit={async (values) => {
+          await updateCustomThemeMutation.mutateAsync({
+            id: Number.parseInt(id),
+            customTheme: values.customTheme,
           });
         }}
       />
@@ -191,7 +219,7 @@ export function FormStatusPageUpdate() {
             authEmailDomains: values.authEmailDomains,
             allowedIpRanges:
               values.accessType === "ip-restriction"
-                ? values.allowedIpRanges ?? null
+                ? (values.allowedIpRanges ?? null)
                 : null,
             allowIndex: values.allowIndex,
           });

@@ -1,6 +1,11 @@
 import type { NotificationProvider } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
 import {
+  sendAlert as sendWhatsappAlert,
+  sendDegraded as sendWhatsappDegraded,
+  sendRecovery as sendWhatsappRecovery,
+} from "@openstatus/notification-bird-whatsapp";
+import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,
   sendRecovery as sendDiscordRecovery,
@@ -20,6 +25,11 @@ import {
   sendDegraded as sendGrafanaOncallDegraded,
   sendRecovery as sendGrafanaOncallRecovery,
 } from "@openstatus/notification-grafana-oncall";
+import {
+  sendAlert as sendMsTeamsAlert,
+  sendDegraded as sendMsTeamsDegraded,
+  sendRecovery as sendMsTeamsRecovery,
+} from "@openstatus/notification-ms-teams";
 import {
   sendAlert as sendNtfyAlert,
   sendDegraded as sendNtfyDegraded,
@@ -50,11 +60,6 @@ import {
   sendDegraded as sendSmsDegraded,
   sendRecovery as sendSmsRecovery,
 } from "@openstatus/notification-twillio-sms";
-import {
-  sendAlert as sendWhatsappAlert,
-  sendDegraded as sendWhatsappDegraded,
-  sendRecovery as sendWhatsappRecovery,
-} from "@openstatus/notification-twillio-whatsapp";
 import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,
@@ -89,6 +94,11 @@ export const providerToFunction: Record<NotificationProvider, Notif> = {
     sendAlert: sendGrafanaOncallAlert,
     sendRecovery: sendGrafanaOncallRecovery,
     sendDegraded: sendGrafanaOncallDegraded,
+  },
+  "ms-teams": {
+    sendAlert: sendMsTeamsAlert,
+    sendRecovery: sendMsTeamsRecovery,
+    sendDegraded: sendMsTeamsDegraded,
   },
   ntfy: {
     sendAlert: sendNtfyAlert,

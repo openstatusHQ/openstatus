@@ -1,0 +1,98 @@
+---
+title: "Pingdom vs openstatus"
+publishedAt: "2026-06-19"
+author: "openstatus"
+description: "Looking for a Pingdom alternative? openstatus checks from 28 regions at once, includes a built-in status page, is open source, and starts free — while Pingdom has no free tier and starts at $15/month."
+category: "company"
+faq:
+  - question: "Is openstatus a good Pingdom alternative?"
+    answer: "Yes, for uptime monitoring and status pages. Openstatus monitors from 28 global regions simultaneously, is open-source and self-hostable, includes a built-in public status page, and starts free. Pingdom is a closed-source SolarWinds product with no free tier and no public status page, though it offers real user monitoring (RUM) and transaction checks that openstatus does not."
+  - question: "Does Pingdom still have a free plan?"
+    answer: "No. Pingdom discontinued its free tier after the SolarWinds acquisition. The cheapest paid plan starts at around $15/month (billed annually) for 10 uptime checks, with a 14-day trial. Openstatus has a permanent free plan with 1 monitor across 6 regions."
+  - question: "Does openstatus include a status page like Pingdom?"
+    answer: "Openstatus includes a built-in branded public status page with custom domains, maintenance windows, and subscriber notifications on every plan. Pingdom does not offer a public status page product — you would need a separate tool for incident communication."
+  - question: "Is openstatus open-source?"
+    answer: "Yes. Openstatus is AGPL-3.0-licensed and fully self-hostable. Pingdom is a closed-source SaaS owned by SolarWinds with no self-hosting option."
+---
+
+## Looking for a Pingdom alternative?
+
+**TL;DR:** Openstatus monitors from 28 regions simultaneously, includes a built-in status page, is open-source, and starts free. Pingdom is a mature closed-source SolarWinds product with real user monitoring and transaction checks — but no free tier and no public status page.
+
+If you're evaluating Pingdom and the lack of a free tier, the closed-source model, or the missing status page gives you pause, openstatus is the alternative worth a look. It's open-source, checks from 28 regions in parallel, bundles a public status page with every plan, and you can start for free.
+
+Openstatus and Pingdom overlap on uptime monitoring but diverge from there. Openstatus focuses on **uptime monitoring plus status pages** — HTTP, TCP, and DNS checks from 28 global regions, paired with a public page for incident communication. Pingdom is a broader, older **website-performance** suite that adds real user monitoring (RUM), transaction monitoring, and page-speed analysis on top of uptime checks.
+
+For teams that want global uptime checks, a status page, and developer tooling without a per-feature bill, openstatus is the more direct fit. For teams that specifically need real user monitoring or recorded transaction checks, Pingdom covers ground openstatus doesn't.
+
+## Feature Comparison
+
+| Feature                  | openstatus       | Pingdom              |
+| ------------------------ | ---------------- | -------------------- |
+| Free plan                | Yes              | No (14-day trial)    |
+| Multi-region             | 28 regions       | ~100 locations       |
+| Parallel scheduling      | Yes              | No (round-robin)     |
+| Status Page              | Yes (built-in)   | No                   |
+| Open-source              | Yes (AGPL-3.0)   | No                   |
+| Self-hostable            | Yes              | No                   |
+| Monitoring as code       | Yes (Terraform)  | No                   |
+| CLI                      | Yes              | No                   |
+| MCP server               | Yes              | No                   |
+| OpenTelemetry exporter   | Yes              | No                   |
+| Real user monitoring     | No               | Yes                  |
+| Transaction monitoring   | No               | Yes                  |
+
+Pingdom checks from many locations but cycles through them one at a time. Openstatus checks all selected regions **simultaneously**, so a regional outage is caught on the same run rather than whenever the rotation comes back around.
+
+## Pricing Comparison
+
+|                | openstatus              | Pingdom                       |
+| -------------- | ----------------------- | ----------------------------- |
+| Free plan      | 1 monitor, 6 regions    | None                          |
+| Entry paid     | $30/mo (20 monitors)    | ~$15/mo (10 uptime checks)    |
+| Status page    | Included                | Not available                 |
+| Team members   | Unlimited on paid plans | Per-plan limits               |
+| Open-source    | Self-host for $0        | Not available                 |
+
+Pingdom's entry price looks low, but RUM and advanced features sit on separate add-ons, and there's no free tier to start on. Openstatus offers flat pricing with a status page and unlimited team members included.
+
+## When to Choose openstatus
+
+- You want uptime monitoring **with a built-in status page**
+- You want **28 regions** checked in parallel, not in rotation
+- You prefer **open-source** software or need to self-host
+- You want **monitoring as code** (Terraform), a CLI, and an MCP server
+- You want a **free tier** and predictable, low-cost pricing
+
+## When to Choose Pingdom
+
+- You need **real user monitoring (RUM)** to measure actual visitor experience
+- You need **recorded transaction checks** for multi-step browser flows
+- You want a **long-established** brand and don't need a public status page
+
+## Switching from Pingdom to openstatus
+
+If your Pingdom usage is primarily uptime and page checks, the move is straightforward:
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Recreate your checks** in the dashboard, or define them as code with the [Terraform provider](/docs/reference/terraform) and the openstatus CLI
+3. **Set up your status page** — something Pingdom doesn't offer natively
+4. **Configure alerts** — openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, and more
+
+If you rely on Pingdom's RUM or transaction monitoring, openstatus is not a drop-in replacement for those — pair openstatus for uptime and status pages alongside a RUM tool.
+
+## Related Resources
+
+- [What Is Uptime Monitoring?](/guides/what-is-uptime-monitoring)
+- [Why Uptime Percentage Is Misleading](/guides/why-uptime-percentage-is-misleading)
+- [Why Every SaaS Needs a Status Page](/guides/why-every-saas-needs-a-status-page)
+- [Reduce Support Tickets with a Status Page](/use-case/reduce-support-tickets)
+- [Pricing](/pricing)
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=compare-pingdom">Get Started Free</ButtonLink>
+
+---

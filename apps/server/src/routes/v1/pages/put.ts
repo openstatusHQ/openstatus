@@ -1,8 +1,4 @@
 import { createRoute } from "@hono/zod-openapi";
-
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
-import { notEmpty } from "@/utils/not-empty";
 import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
@@ -12,6 +8,11 @@ import {
   pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+import { notEmpty } from "@/utils/not-empty";
+
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema, transformPageData } from "./schema";

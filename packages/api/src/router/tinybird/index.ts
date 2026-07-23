@@ -1,21 +1,47 @@
-import { z } from "zod";
-
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { OSTinybird } from "@openstatus/tinybird";
-
 import { type SQL, and, db, eq, inArray } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { OSTinybird } from "@openstatus/tinybird";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { calculatePeriod } from "./utils";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
-const periods = ["1d", "7d", "14d"] as const;
+const periods = ["1d", "7d", "14d", "30d", "90d"] as const;
 const types = ["http", "tcp", "dns"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
+
+// 30d/90d windows are paid-only; free workspaces are blocked server-side.
+function assertPaidPeriod(plan: string, period: Period) {
+  if (plan === "free" && (period === "30d" || period === "90d")) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Upgrade to a paid plan to access 30d and 90d data",
+    });
+  }
+}
+
+// Minimum bucket size (minutes) per period. Floors a client-supplied `interval`
+// so long windows can't be forced into pathological point counts (e.g. 5min over
+// 90d = ~26k buckets). Short windows keep a low floor so the interval picker still
+// works. Only applied when an interval is provided; otherwise the pipe default wins.
+const periodToMinInterval: Record<Period, number> = {
+  "1d": 5,
+  "7d": 5,
+  "14d": 5,
+  "30d": 240,
+  "90d": 1440,
+};
+
+function clampInterval(period: Period, interval?: number) {
+  if (interval == null) return interval;
+  return Math.max(interval, periodToMinInterval[period]);
+}
 
 // NEW: workspace-level counters helper
 export function getWorkspace30dProcedure(type: Type) {
@@ -23,7 +49,6 @@ export function getWorkspace30dProcedure(type: Type) {
 }
 // Helper functions to get the right procedure based on period and type
 export function getListProcedure(period: Period, type: Type) {
-  console.log({ period, type });
   switch (period) {
     case "1d":
       if (type === "http") return tb.httpListDaily;
@@ -65,6 +90,16 @@ export function getMetricsProcedure(period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsBiweekly;
       if (type === "tcp") return tb.tcpMetricsBiweekly;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    case "30d":
+      if (type === "dns") return tb.dnsMetrics30d;
+      if (type === "http") return tb.httpMetrics30d;
+      if (type === "tcp") return tb.tcpMetrics30d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    case "90d":
+      if (type === "dns") return tb.dnsMetrics90d;
+      if (type === "http") return tb.httpMetrics90d;
+      if (type === "tcp") return tb.tcpMetrics90d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsMetricsDaily;
       if (type === "http") return tb.httpMetricsDaily;
@@ -90,6 +125,16 @@ export function getMetricsRegionsProcedure(period: Period, type: Type) {
       if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
       if (type === "http") return tb.httpMetricsRegionsBiweekly;
       if (type === "tcp") return tb.tcpMetricsByIntervalBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    case "30d":
+      if (type === "dns") return tb.dnsMetricsRegions30d;
+      if (type === "http") return tb.httpMetricsRegions30d;
+      if (type === "tcp") return tb.tcpMetricsByInterval30d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    case "90d":
+      if (type === "dns") return tb.dnsMetricsRegions90d;
+      if (type === "http") return tb.httpMetricsRegions90d;
+      if (type === "tcp") return tb.tcpMetricsByInterval90d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
@@ -125,9 +170,10 @@ export function getGlobalMetricsProcedure(type: Type) {
   return type === "http" ? tb.httpGlobalMetricsDaily : tb.tcpGlobalMetricsDaily;
 }
 
-export function getUptimeProcedure(period: "7d" | "30d", type: Type) {
+export function getUptimeProcedure(period: "7d" | "30d" | "90d", type: Type) {
   switch (period) {
     case "7d":
+      // no 7d DNS uptime pipe; the 30d MV is filtered down by the client window
       if (type === "dns") return tb.dnsUptime30d;
       if (type === "http") return tb.httpUptimeWeekly;
       if (type === "tcp") return tb.tcpUptimeWeekly;
@@ -136,6 +182,11 @@ export function getUptimeProcedure(period: "7d" | "30d", type: Type) {
       if (type === "dns") return tb.dnsUptime30d;
       if (type === "http") return tb.httpUptime30d;
       if (type === "tcp") return tb.tcpUptime30d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    case "90d":
+      if (type === "dns") return tb.dnsUptime90d;
+      if (type === "http") return tb.httpUptime90d;
+      if (type === "tcp") return tb.tcpUptime90d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsUptime30d;
@@ -158,6 +209,18 @@ export function getMetricsLatencyProcedure(_period: Period, type: Type) {
       if (type === "http") return tb.httpMetricsLatency7d;
       if (type === "tcp") return tb.tcpMetricsLatency7d;
       throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    // no dedicated 14d latency pipe; 30d MV is the smallest window covering 14d
+    case "14d":
+    case "30d":
+      if (type === "dns") return tb.dnsMetricsLatency30d;
+      if (type === "http") return tb.httpMetricsLatency30d;
+      if (type === "tcp") return tb.tcpMetricsLatency30d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
+    case "90d":
+      if (type === "dns") return tb.dnsMetricsLatency90d;
+      if (type === "http") return tb.httpMetricsLatency90d;
+      if (type === "tcp") return tb.tcpMetricsLatency90d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
       if (type === "dns") return tb.dnsMetricsLatency7d;
       if (type === "http") return tb.httpMetricsLatency1d;
@@ -173,8 +236,16 @@ export function getMetricsLatencyMultiProcedure(_period: Period, type: Type) {
   throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
-export function getTimingPhasesProcedure(type: Type) {
-  return type === "http" ? tb.httpTimingPhases14d : null;
+export function getTimingPhasesProcedure(period: Period, type: Type) {
+  if (type !== "http") return null;
+  switch (period) {
+    case "30d":
+      return tb.httpTimingPhases30d;
+    case "90d":
+      return tb.httpTimingPhases90d;
+    default:
+      return tb.httpTimingPhases14d;
+  }
 }
 
 export const tinybirdRouter = createTRPCRouter({
@@ -227,7 +298,7 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.int().optional(), // in minutes, default 30
         regions: z.enum(monitorRegions).or(z.string()).array().optional(),
         type: z.enum(types).prefault("http"),
-        period: z.enum(["7d", "30d"]).prefault("30d"),
+        period: z.enum(["7d", "30d", "90d"]).prefault("30d"),
       }),
     )
     .query(async (opts) => {
@@ -244,6 +315,14 @@ export const tinybirdRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Monitor not found",
+        });
+      }
+
+      // only 90d is gated here; 30d is the default uptime MV used by all windows
+      if (opts.ctx.workspace.plan === "free" && opts.input.period === "90d") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to a paid plan to access 90d data",
         });
       }
 
@@ -312,6 +391,8 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
+      assertPaidPeriod(opts.ctx.workspace.plan, opts.input.period);
+
       const procedure = getMetricsProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),
@@ -350,6 +431,13 @@ export const tinybirdRouter = createTRPCRouter({
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
       }
+
+      assertPaidPeriod(opts.ctx.workspace.plan, opts.input.period);
+
+      opts.input.interval = clampInterval(
+        opts.input.period,
+        opts.input.interval,
+      );
 
       const procedure = getMetricsRegionsProcedure(
         opts.input.period,
@@ -450,6 +538,8 @@ export const tinybirdRouter = createTRPCRouter({
         opts.input.regions = undefined;
       }
 
+      assertPaidPeriod(opts.ctx.workspace.plan, opts.input.period);
+
       const procedure = getMetricsLatencyProcedure(
         opts.input.period,
         opts.input.type,
@@ -488,7 +578,17 @@ export const tinybirdRouter = createTRPCRouter({
         opts.input.regions = undefined;
       }
 
-      const procedure = getTimingPhasesProcedure(opts.input.type);
+      assertPaidPeriod(opts.ctx.workspace.plan, opts.input.period);
+
+      opts.input.interval = clampInterval(
+        opts.input.period,
+        opts.input.interval,
+      );
+
+      const procedure = getTimingPhasesProcedure(
+        opts.input.period,
+        opts.input.type,
+      );
 
       if (!procedure) {
         throw new TRPCError({

@@ -1,5 +1,3 @@
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull } from "@openstatus/db";
@@ -9,8 +7,18 @@ import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+
 import type { maintenancesApi } from "./index";
-import { MaintenanceSchema, ParamsSchema } from "./schema";
+import {
+  MaintenanceObjectSchema,
+  MaintenanceSchema,
+  ParamsSchema,
+  dateRangeError,
+  refineDateRange,
+} from "./schema";
 
 const putRoute = createRoute({
   method: "put",
@@ -23,7 +31,9 @@ const putRoute = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: MaintenanceSchema.omit({ id: true }).partial(),
+          schema: MaintenanceObjectSchema.omit({ id: true })
+            .partial()
+            .refine(refineDateRange, dateRangeError),
         },
       },
     },

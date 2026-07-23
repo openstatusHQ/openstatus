@@ -1,16 +1,25 @@
 {
   "name": "@openstatus/tinybird",
   "version": "0.0.0",
-  "main": "src/index.ts",
   "license": "MIT",
+  "main": "src/index.ts",
+  "scripts": {
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports"
+  },
   "dependencies": {
-    "@chronark/zod-bird": "1.0.0",
-    "zod": "4.1.13"
+    "@chronark/zod-bird": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@libsql/client": "catalog:",
+    "@openstatus/db": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@types/node": "22.10.2",
-    "typescript": "5.9.3"
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
+    "typescript": "catalog:"
   }
 }

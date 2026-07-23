@@ -1,14 +1,8 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
-import {
-  Body,
-  Button,
-  Head,
-  Html,
-  Preview,
-  Text,
-} from "@react-email/components";
+import { Body, Button, Head, Html, Preview, Text } from "react-email";
 import { z } from "zod";
+
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 

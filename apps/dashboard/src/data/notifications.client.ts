@@ -1,19 +1,8 @@
-import { FormDiscord } from "@/components/forms/notifications/form-discord";
-import { FormEmail } from "@/components/forms/notifications/form-email";
-import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
-import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
-import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
-import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
-import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
-import { FormSlack } from "@/components/forms/notifications/form-slack";
-import { FormSms } from "@/components/forms/notifications/form-sms";
-import { FormTelegram } from "@/components/forms/notifications/form-telegram";
-import { FormWebhook } from "@/components/forms/notifications/form-webhook";
-import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
 import {
   DiscordIcon,
   GoogleIcon,
   GrafanaIcon,
+  MicrosoftTeamsIcon,
   TelegramIcon,
   WhatsappIcon,
 } from "@openstatus/icons";
@@ -28,6 +17,20 @@ import {
   Trash2,
   Webhook,
 } from "lucide-react";
+
+import { FormDiscord } from "@/components/forms/notifications/form-discord";
+import { FormEmail } from "@/components/forms/notifications/form-email";
+import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
+import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
+import { FormMsTeams } from "@/components/forms/notifications/form-ms-teams";
+import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
+import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
+import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
+import { FormSlack } from "@/components/forms/notifications/form-slack";
+import { FormSms } from "@/components/forms/notifications/form-sms";
+import { FormTelegram } from "@/components/forms/notifications/form-telegram";
+import { FormWebhook } from "@/components/forms/notifications/form-webhook";
+import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
 
 export const actions = [
   {
@@ -62,6 +65,11 @@ export const config = {
     icon: SlackIcon,
     label: "Slack",
     form: FormSlack,
+  },
+  "ms-teams": {
+    icon: MicrosoftTeamsIcon,
+    label: "Microsoft Teams",
+    form: FormMsTeams,
   },
   discord: {
     icon: DiscordIcon,

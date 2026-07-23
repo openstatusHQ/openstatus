@@ -1,6 +1,14 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Gauge, Plus } from "lucide-react";
+import NextLink from "next/link";
+import { useParams } from "next/navigation";
+
 import { Link } from "@/components/common/link";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   Section,
   SectionDescription,
@@ -12,12 +20,9 @@ import {
 import { DataTable as UpdatesDataTable } from "@/components/data-table/status-report-updates/data-table";
 import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -30,18 +35,16 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.subscriberNotification.statusReport.mutationOptions(),
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
-      onSuccess: async (statusReport) => {
-        // TODO: move to server
+      onSuccess: (statusReport) => {
         if (statusReport.notifySubscribers) {
-          await sendStatusReportUpdateMutation.mutateAsync({
+          sendStatusReportUpdateMutation.mutate({
             id: statusReport.id,
           });
         }
-        //
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
@@ -58,6 +61,18 @@ export default function Page() {
 
   return (
     <SectionGroup>
+      <NoteDismissible cookieKey="note_status_reports_component_impacts">
+        <Gauge />
+        Status reports now support per-component impacts.
+        <NoteButton variant="default" asChild>
+          <NextLink
+            href="https://www.openstatus.dev/changelog/status-page-components-impact"
+            target="_blank"
+          >
+            Learn more
+          </NextLink>
+        </NoteButton>
+      </NoteDismissible>
       <Section>
         <SectionHeaderRow>
           <SectionHeader>
@@ -81,16 +96,32 @@ export default function Page() {
                   </>
                 ) : undefined
               }
-              pageComponents={page.pageComponents}
+              items={toCheckboxTreeItems(
+                page.pageComponents,
+                page.pageComponentGroups,
+              )}
               onSubmit={async (values) => {
                 // NOTE: for type safety, we need to check if the values have a date property
                 // because of the union type
                 if ("date" in values) {
+                  // every selected component gets an impact row — fresh
+                  // reports are never legacy; fallback must match the
+                  // picker's defaultImpact
+                  const componentImpacts = values.pageComponents.map(
+                    (pageComponentId) => ({
+                      pageComponentId,
+                      impact:
+                        values.componentImpacts?.find(
+                          (ci) => ci.pageComponentId === pageComponentId,
+                        )?.impact ?? ("degraded_performance" as const),
+                    }),
+                  );
                   await createStatusReportMutation.mutateAsync({
                     title: values.title,
                     status: values.status,
                     pageId: Number.parseInt(id),
                     pageComponents: values.pageComponents,
+                    componentImpacts,
                     date: values.date,
                     message: values.message,
                     notifySubscribers: values.notifySubscribers,
@@ -115,6 +146,10 @@ export default function Page() {
             <UpdatesDataTable
               updates={row.original.updates}
               reportId={row.original.id}
+              components={row.original.pageComponents.map((c) => ({
+                id: c.id,
+                name: c.name,
+              }))}
             />
           )}
         />

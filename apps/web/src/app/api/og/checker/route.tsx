@@ -4,8 +4,8 @@ import {
   getCheckerDataById,
   regionFormatter,
   timestampFormatter,
-} from "@/lib/checker/utils";
-import { cn } from "@/lib/utils";
+} from "../../../../lib/checker/utils";
+import { cn } from "../../../../lib/utils";
 import { BasicLayout } from "../_components/basic-layout";
 import {
   SIZE,
@@ -90,7 +90,7 @@ export async function GET(req: Request) {
             {min?.status && (
               <p
                 tw={cn(
-                  "text-lg border rounded-full px-3 mb-2",
+                  "mb-2 rounded-full border px-3 text-lg",
                   getStatusColor(min.status),
                 )}
               >
@@ -117,7 +117,7 @@ export async function GET(req: Request) {
             {max?.status && (
               <p
                 tw={cn(
-                  "text-lg border rounded-full px-3 mb-2",
+                  "mb-2 rounded-full border px-3 text-lg",
                   getStatusColor(max.status),
                 )}
               >

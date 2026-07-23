@@ -14,15 +14,18 @@
     "./instatus/fixtures": "./src/providers/instatus/fixtures.ts"
   },
   "scripts": {
-    "test": "bun test",
-    "test:watch": "bun test --watch",
+    "check": "deno check --sloppy-imports .",
+    "test": "deno test --parallel -A --no-check --sloppy-imports",
+    "test:watch": "deno test --parallel -A --no-check --sloppy-imports --watch",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "4.1.13"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
+    "@std/expect": "jsr:^1.0.19",
+    "@std/testing": "jsr:^1.0.19",
+    "typescript": "catalog:"
   }
 }

@@ -1,11 +1,12 @@
-import { components } from "@/content/mdx";
-import { getBlogPosts } from "@/content/utils";
+import type { Metadata } from "next";
+
+import { components } from "../../../../content/mdx";
+import { getBlogPosts } from "../../../../content/utils";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+} from "../../../../lib/metadata/shared-metadata";
 import { ContentBoxLink, ContentBoxTitle } from "../../content-box";
 
 const TITLE = "Blog Categories";

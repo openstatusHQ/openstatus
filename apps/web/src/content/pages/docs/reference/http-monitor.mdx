@@ -1,0 +1,232 @@
+---
+category: Reference
+title: HTTP Monitor Reference
+description: Complete technical specification for HTTP/HTTPS endpoint monitoring
+---
+
+An HTTP monitor checks the status of HTTP and HTTPS endpoints. Use it to monitor websites, APIs, webhooks, or any other HTTP-accessible service.
+
+**Use cases:**
+
+- Website uptime monitoring
+- API health checks
+- Webhook endpoint validation
+- CDN performance monitoring
+- Authentication endpoint testing
+
+## Configuration
+
+### URL
+
+**Type:** String (required)  
+**Format:** Full URL including protocol
+
+The URL of the HTTP endpoint you want to monitor.
+
+**Examples:**
+- `https://openstat.us`
+- `https://api.example.com/health`
+- `http://internal-service.local:8080/status`
+
+**Note:** We recommend using HTTPS for better security.
+
+### Method
+
+**Type:** String (required)
+**Default:** `GET`
+
+The HTTP method to use when making the request to the endpoint.
+
+**Available methods:**
+
+- `GET` — retrieve data (most common for health checks).
+- `POST` — send data to create/trigger actions.
+- `PUT` — update existing resources.
+- `DELETE` — remove resources.
+- `HEAD` — like `GET` but without response body.
+- `OPTIONS` — query supported methods.
+- `PATCH` — partial resource updates.
+- `TRACE` — echo request for debugging.
+
+**Common usage:**
+
+- Health checks: `GET`.
+- API testing: `POST`, `PUT`, `DELETE`.
+- Webhook testing: `POST`.
+
+### Body
+
+**Type:** String (optional)  
+**Available for:** `POST`, `PUT`, `PATCH` methods
+
+The request body to send with the HTTP request. Supports both text and binary data.
+
+**Text body examples:**
+```json
+{ "key": "value" }
+```
+
+**Binary data:**
+For binary content (e.g., images), use base64 encoding with data URI:
+```
+data:image/jpeg;base64,/9j...
+```
+
+**Content type:** Set the appropriate `Content-Type` header (e.g., `application/json`, `application/octet-stream`).
+### Headers
+
+**Type:** Key-value pairs (optional)
+
+Custom HTTP headers to include with your request.
+
+**Common examples:**
+```
+Content-Type: application/json
+Authorization: Bearer your_token_here
+Accept: application/json
+User-Agent: Custom-Agent/1.0
+```
+
+**Use cases:**
+
+- **Authentication** — send API tokens or credentials.
+- **Content negotiation** — specify accepted response formats.
+- **Custom identification** — add tracking or debugging headers.
+
+**Note:** openstatus automatically adds `User-Agent: openstatus/1.0` to all requests.
+
+### Regions
+
+**Type:** Array of strings (required)
+**Format:** Region identifiers (e.g., `iad`, `jnb`)
+
+The geographical regions from which the HTTP request will be triggered. This allows for monitoring global availability and performance. See the [Location Reference](/docs/reference/location) for the full list of regions and the IPs to allowlist.
+
+### Frequency
+
+**Type:** String (required)
+**Format:** Duration string (e.g., `30s`, `1m`, `1h`)
+
+The interval at which the HTTP monitor will perform checks. Supported frequencies:
+- `30 seconds`
+- `1 minute`
+- `5 minutes`
+- `10 minutes`
+- `30 minutes`
+- `1 hour`
+
+### Response time thresholds
+
+#### Timeout
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The maximum duration to wait for the HTTP request to complete. If the request exceeds this time, it is considered a failure.
+
+#### Degraded
+
+**Type:** Duration (optional)
+
+The duration after which the HTTP request is considered to be performing in a degraded state. This threshold allows for proactive alerting on performance issues before a complete outage.
+
+### Retry
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor will automatically retry the HTTP request upon failure before reporting a definitive error. For example: `3`
+
+### Assertions
+
+Assertions let you validate specific aspects of the HTTP response.
+
+#### Body assertions
+
+Validate the content of the HTTP response body.
+
+**Comparisons:**
+
+- `Contains` — the response body must include the specified string.
+- `Not Contains` — the response body must not include the specified string.
+- `Equal` — the response body must exactly match the specified string.
+- `Not Equal` — the response body must not exactly match the specified string.
+- `Empty` — the response body must be empty.
+
+#### Status code assertions
+
+Validate the HTTP status code of the response.
+
+**Comparisons:**
+
+- `Equal` — the status code must be exactly the specified value.
+- `Not Equal` — the status code must not be the specified value.
+- `Greater Than` — the status code must be greater than the specified value.
+- `Greater Than or Equal` — the status code must be greater than or equal to the specified value.
+- `Less Than` — the status code must be less than the specified value.
+- `Less Than or Equal` — the status code must be less than or equal to the specified value.
+
+#### Header assertions
+
+Validate the presence or content of specific HTTP response headers.
+
+**Purpose:** verify cache headers, check security headers (e.g., `X-Frame-Options`), validate content type.
+
+**Comparisons:**
+
+- `Contains` — a header's value must include the specified string.
+- `Not Contains` — a header's value must not include the specified string.
+- `Equal` — a header's value must exactly match the specified string.
+- `Not Equal` — a header's value must not exactly match the specified string.
+- `Empty` — a header's value must be empty or the header must not be present.
+
+**Example use cases:**
+
+- Verify `Cache-Control` headers are present and correct.
+- Check for the existence of security-related headers like `Strict-Transport-Security`.
+- Validate the `Content-Type` header in API responses.
+
+### OpenTelemetry
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
+#### OTLP endpoint
+
+**Type:** String (optional)
+**Protocol:** HTTP only
+
+The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported.
+
+**Example:** `https://otlp.example.com/v1/metrics`
+
+#### OTLP headers
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
+
+### Public
+
+**Type:** Boolean
+**Default:** `false`
+
+Controls the visibility of monitor data on your public status page.
+
+- `true` — monitor metrics and status are visible to all visitors of your status page.
+- `false` — monitor data remains private, accessible only within your openstatus dashboard.
+
+**Use cases for public visibility:**
+
+- Enhancing transparency with users regarding service health.
+- Providing public API status pages.
+- Displaying SaaS service availability to customers.
+
+## Related resources
+
+- **[Create your first monitor](/docs/tutorial/create-your-first-monitor)** — step-by-step tutorial on setting up a monitor.
+- **[CLI reference](/docs/reference/cli-reference)** — manage monitors programmatically from the command line.

@@ -1,23 +1,26 @@
 "use client";
 
 import {
-  ChartAreaPercentiles,
-  ChartAreaPercentilesSkeleton,
-} from "@/components/chart/chart-area-percentiles";
+  StatusComponentDescription,
+  StatusComponentTitle,
+} from "@openstatus/ui/components/blocks/status-component";
 import {
   Status,
   StatusContent,
   StatusDescription,
   StatusHeader,
   StatusTitle,
-} from "@/components/status-page/status";
-import { StatusBlankMonitors } from "@/components/status-page/status-blank";
-import { StatusMonitorTitle } from "@/components/status-page/status-monitor";
-import { StatusMonitorDescription } from "@/components/status-page/status-monitor";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/blocks/status-layout";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+
+import {
+  ChartAreaPercentiles,
+  ChartAreaPercentilesSkeleton,
+} from "../../../../../../components/chart/chart-area-percentiles";
+import { StatusBlankMonitors } from "../../../../../../components/status-page/status-blank";
+import { useTRPC } from "../../../../../../lib/trpc/client";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
@@ -66,12 +69,12 @@ export default function Page() {
                 href={`./monitors/${monitor.id}`}
                 className="rounded-lg"
               >
-                <div className="group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-border/50 hover:bg-muted/50">
+                <div className="group hover:border-border/50 hover:bg-muted/50 -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2">
                   <div className="flex flex-row items-center justify-start gap-2">
-                    <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
-                    <StatusMonitorDescription>
+                    <StatusComponentTitle>{monitor.name}</StatusComponentTitle>
+                    <StatusComponentDescription>
                       {monitor.description}
-                    </StatusMonitorDescription>
+                    </StatusComponentDescription>
                   </div>
                   {isLoading ? (
                     <ChartAreaPercentilesSkeleton className="h-[80px]" />

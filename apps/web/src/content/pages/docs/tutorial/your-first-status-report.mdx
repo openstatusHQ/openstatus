@@ -1,0 +1,85 @@
+---
+category: Tutorials
+title: Publish Your First Status Report
+description: "Open, update, and resolve a status report from the openstatus dashboard — the four-state workflow your users will see during an incident."
+---
+
+| | |
+|---|---|
+| **Time** | ~10 minutes |
+| **Level** | Beginner |
+| **Prerequisites** | openstatus account, a status page with at least one component (see [Create a status page](/docs/tutorial/create-your-first-status-page)) |
+
+In this tutorial, you'll publish a status report end-to-end: open it, post two updates as your investigation progresses, and resolve it. A status report is what your users actually read during an incident — the trace of "we noticed, we found it, we fixed it, we're done." Doing one in calm conditions, before you need it under pressure, is the cheapest way to learn the workflow.
+
+Status reports follow a four-state lifecycle: **investigating → identified → monitoring → resolved**. You'll walk through all four states in one short exercise.
+
+<Aside>
+The dashboard isn't the only way to manage status reports. The [openstatus CLI](/docs/reference/cli-reference#status-report-command) drives the same workflow from a terminal — handy during a real outage when you don't want to context-switch. This tutorial sticks to the dashboard because the goal is to learn the lifecycle, not the tooling.
+</Aside>
+
+## 1. Open the report
+
+Navigate to your status page in the dashboard and open the **Status Reports** tab. Click **Create Status Report**.
+
+Fill in three fields:
+
+- **Title** — short and specific. `API elevated latency` is better than `API issue`. Users skim titles; tell them which surface and what they should expect.
+- **Status** — start with `investigating`. You've noticed the problem and are looking into it.
+- **Message** — one or two sentences. What are you seeing, who's affected, are you actively on it? Don't speculate about root cause yet — that comes in the next update.
+- **Affected components** — select the component(s) the incident touches. This drives the visual state on the public status page (the green bar turns yellow or red next to those components).
+
+Save the report. If your status page subscribers are enabled and your page is public, this is the moment they get the first notification — make sure the message is one you'd be okay sending to every subscriber.
+
+**Checkpoint:** open your status page in a new tab. You should see a banner with the title, the `Investigating` label, and the affected components highlighted.
+
+## 2. Post an "identified" update
+
+Imagine ten minutes have passed and you've found the root cause. Back in the dashboard, open the report and click **Add update**.
+
+- **Status** — change to `identified`.
+- **Message** — name the cause in user-facing language. `Root cause is a misconfigured cache TTL on the API tier. Rolling back the change now.` is the right register: specific enough to be credible, generic enough not to leak internal terminology.
+
+Save. The update appears on the status page as a new timeline entry under the original one.
+
+<Aside type="tip">
+"Identified" doesn't mean "fixed" — it means you know what's wrong. Posting it as soon as you actually know is more valuable than a perfect, polished message ten minutes later. Users would rather see "we know what it is" than radio silence.
+</Aside>
+
+## 3. Post a "monitoring" update
+
+The fix is deployed and you're watching the metrics recover. Add another update:
+
+- **Status** — `monitoring`.
+- **Message** — describe what you deployed and what you're watching for. `Cache TTL change has been reverted. Response times are recovering. Continuing to monitor for the next 15 minutes.` sets an expectation, which is what users want from this state.
+
+This is the most-skipped state in real life — teams jump straight from `identified` to `resolved`. Don't. The `monitoring` state is your buffer: if recovery doesn't hold, you can flip the status back without having to reopen a "resolved" report. Use it.
+
+## 4. Resolve the report
+
+Recovery has held. Add the final update:
+
+- **Status** — `resolved`.
+- **Message** — close the loop. `Response times have been stable for 15 minutes. Incident resolved. A post-incident review will be published in the engineering blog.` is a good template — it confirms the state, gives a time window, and (optionally) points to what comes next.
+
+Save. The report is now archived. On the status page it moves out of the active banner into the history section, and the affected components flip back to their healthy state.
+
+**Checkpoint:** open the status page once more. The active incident banner should be gone, the components should be green, and the report should be visible under the incident history.
+
+## What you've accomplished
+
+- Walked a status report through all four lifecycle states
+- Practiced the kind of language each state calls for — neutral, specific, time-bounded
+- Built the muscle memory you actually want before a real incident, not during one
+
+## What's next
+
+- **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)** — create and update status reports by talking to the openstatus bot from Slack.
+- **[Wire up your first notification](/docs/tutorial/your-first-notification)** — make sure you find out about an incident before your users do.
+
+### Learn more
+
+- **[Status report reference](/docs/reference/status-report)** — every field on a status report and what the four states mean precisely.
+- **[Incident reference](/docs/reference/incident)** — how openstatus auto-detects incidents from monitor failures (the trigger side of the same workflow).
+- **[Building trust with status pages](/docs/concept/best-practices-status-page)** — the *why* behind the four-state cadence.
+- **[CLI reference — status-report](/docs/reference/cli-reference#status-report-command)** — the same workflow from a terminal.

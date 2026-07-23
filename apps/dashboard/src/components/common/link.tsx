@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import NextLink from "next/link";
+
+import { cn } from "@/lib/utils";
 
 // TODO: we could add cva variants for the link
 
@@ -15,7 +16,7 @@ export function Link({
 
   return (
     <NextLink
-      className={cn("font-medium text-foreground", className)}
+      className={cn("text-foreground font-medium", className)}
       {...externalProps}
       {...props}
     >

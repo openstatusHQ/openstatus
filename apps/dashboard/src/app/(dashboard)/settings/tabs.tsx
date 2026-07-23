@@ -1,7 +1,8 @@
 "use client";
 
+import { Blocks, Cog, CreditCard, Globe, ScanEye, User } from "lucide-react";
+
 import { NavTabs } from "@/components/nav/nav-tabs";
-import { Blocks, Cog, CreditCard, User } from "lucide-react";
 
 export function Tabs() {
   return (
@@ -30,6 +31,18 @@ export function Tabs() {
           label: "Integrations",
           icon: Blocks,
           href: "/settings/integrations",
+        },
+        {
+          value: "private-locations",
+          label: "Private Locations",
+          icon: Globe,
+          href: "/settings/private-locations",
+        },
+        {
+          value: "audit-logs",
+          label: "Audit Logs",
+          icon: ScanEye,
+          href: "/settings/audit-logs",
         },
       ]}
     />

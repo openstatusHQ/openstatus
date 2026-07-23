@@ -1,4 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { expect } from "@std/expect";
+import { describe, it } from "@std/testing/bdd";
+
 import { assertSafeUrl, assertSafeUrlSync, safeUrlSchema } from "./ssrf";
 
 // --- assertSafeUrlSync (no DNS, used in Zod schemas) ---
