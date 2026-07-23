@@ -48,7 +48,10 @@ export async function createPrivateLocation(args: {
       .values({
         name: input.name,
         token,
-        metadata: input.metadata ?? null,
+        metadata:
+          input.metadata && Object.keys(input.metadata).length > 0
+            ? input.metadata
+            : null,
         workspaceId: ctx.workspace.id,
       })
       .returning()

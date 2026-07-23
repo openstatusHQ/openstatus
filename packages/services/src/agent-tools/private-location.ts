@@ -53,7 +53,7 @@ export const listPrivateLocationsTool: AgentTool<
 > = {
   name: "list_private_locations",
   description:
-    'List private locations (self-hosted checker agents) in this workspace, with the monitors each one runs and when it last reported in. Read-only — agent tokens are NOT exposed. `status: "error"` means the agent has stopped reporting (stale heartbeat); use `lastSeenAt` to tell whether an agent is still alive before blaming a monitor for missing checks. `metadata` holds user-defined key/value labels.',
+    'List private locations (self-hosted checker agents) in this workspace, with the monitors each one runs and when it last reported in. Read-only — agent tokens are NOT exposed. `status: "error"` means the agent is not currently healthy (it may not have reported yet or may have a stale heartbeat); use `lastSeenAt` to tell whether an agent is still alive before blaming a monitor for missing checks. `metadata` holds user-defined key/value labels.',
   scope: "read",
   destructive: false,
   inputSchema: ListPrivateLocationsInputShape,
