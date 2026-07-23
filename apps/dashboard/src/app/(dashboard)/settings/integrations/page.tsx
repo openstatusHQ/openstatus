@@ -1,7 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { KeyRound } from "lucide-react";
+import Link from "next/link";
 
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   Section,
   SectionDescription,
@@ -36,6 +40,13 @@ export default function Page() {
             Connect third-party services to your workspace.
           </SectionDescription>
         </SectionHeader>
+        <NoteDismissible cookieKey="note_integrations_api_keys">
+          <KeyRound />
+          Looking for your API keys? They live in the General settings page.
+          <NoteButton variant="default" asChild>
+            <Link href="/settings/general#api-keys">Go API keys</Link>
+          </NoteButton>
+        </NoteDismissible>
         <FormCardGroup>
           <SlackIntegrationCard
             locked={!workspace?.limits["slack-agent"]}
