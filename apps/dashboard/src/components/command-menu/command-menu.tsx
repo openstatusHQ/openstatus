@@ -15,7 +15,7 @@ import {
 } from "@openstatus/ui/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
-import { Moon, Search, Sun, X } from "lucide-react";
+import { Close, Dark, Light, Search } from "@openstatus/icons";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -198,7 +198,7 @@ export function CommandMenu() {
                     className="opacity-60 hover:opacity-100"
                     onClick={pop}
                   >
-                    <X className="size-3" />
+                    <Close className="size-3" />
                   </button>
                 </span>
               ) : null}
@@ -374,7 +374,7 @@ export function CommandMenu() {
                           setTheme(resolvedTheme === "dark" ? "light" : "dark")
                         }
                       >
-                        {resolvedTheme === "dark" ? <Sun /> : <Moon />}
+                        {resolvedTheme === "dark" ? <Light /> : <Dark />}
                         <span>
                           Switch to{" "}
                           {resolvedTheme === "dark" ? "light" : "dark"} theme

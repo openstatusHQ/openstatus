@@ -1,10 +1,17 @@
-import type { LucideIcon } from "lucide-react";
-import { Blocks, Cog, CreditCard, Globe, ScanEye, User } from "lucide-react";
+import {
+  Account,
+  AuditLog,
+  Billing,
+  Globe,
+  type IconType,
+  Integrations,
+  Settings,
+} from "@openstatus/icons";
 
 export type SettingsTab = {
   value: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconType;
   href: string;
   keywords?: string[];
 };
@@ -15,28 +22,28 @@ export const SETTINGS_TABS = [
   {
     value: "general",
     label: "General",
-    icon: Cog,
+    icon: Settings,
     href: "/settings/general",
     keywords: ["workspace"],
   },
   {
     value: "account",
     label: "Account",
-    icon: User,
+    icon: Account,
     href: "/settings/account",
     keywords: ["profile", "user"],
   },
   {
     value: "billing",
     label: "Billing",
-    icon: CreditCard,
+    icon: Billing,
     href: "/settings/billing",
     keywords: ["plan", "subscription", "upgrade"],
   },
   {
     value: "integrations",
     label: "Integrations",
-    icon: Blocks,
+    icon: Integrations,
     href: "/settings/integrations",
   },
   {
@@ -49,7 +56,7 @@ export const SETTINGS_TABS = [
   {
     value: "audit-logs",
     label: "Audit Logs",
-    icon: ScanEye,
+    icon: AuditLog,
     href: "/settings/audit-logs",
     keywords: ["activity", "history"],
   },

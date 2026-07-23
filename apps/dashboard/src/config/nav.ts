@@ -1,19 +1,19 @@
-import type { LucideIcon } from "lucide-react";
 import {
-  Activity,
-  Bell,
-  Bot,
-  Cog,
-  LayoutGrid,
-  MessageSquare,
-  PanelTop,
+  Agent,
+  Chat,
+  type IconType,
+  Monitor,
+  Notification,
+  Overview,
+  Settings,
+  StatusPage,
   Terminal,
-} from "lucide-react";
+} from "@openstatus/icons";
 
 export type NavItem = {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: IconType;
   keywords?: string[];
 };
 
@@ -24,37 +24,37 @@ export const NAV = {
   overview: {
     label: "Overview",
     href: "/overview",
-    icon: LayoutGrid,
+    icon: Overview,
     keywords: ["home", "dashboard"],
   },
   monitors: {
     label: "Monitors",
     href: "/monitors",
-    icon: Activity,
+    icon: Monitor,
     keywords: ["checks", "uptime"],
   },
   statusPages: {
     label: "Status Pages",
     href: "/status-pages",
-    icon: PanelTop,
+    icon: StatusPage,
     keywords: ["pages"],
   },
   notifications: {
     label: "Notifications",
     href: "/notifications",
-    icon: Bell,
+    icon: Notification,
     keywords: ["notifiers", "alerts", "channels"],
   },
   chat: {
     label: "Chat",
     href: "/chat",
-    icon: MessageSquare,
+    icon: Chat,
     keywords: ["assistant", "ai"],
   },
   agents: {
     label: "Agents",
     href: "/agents",
-    icon: Bot,
+    icon: Agent,
     keywords: ["slack"],
   },
   cli: {
@@ -66,7 +66,7 @@ export const NAV = {
   settings: {
     label: "Settings",
     href: "/settings/general",
-    icon: Cog,
+    icon: Settings,
     keywords: ["workspace"],
   },
 } satisfies Record<string, NavItem>;

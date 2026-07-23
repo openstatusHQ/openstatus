@@ -6,7 +6,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { Search } from "lucide-react";
+import { Search } from "@openstatus/icons";
 
 import { useCommandMenu } from "@/components/command-menu/provider";
 

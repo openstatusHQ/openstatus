@@ -1,15 +1,15 @@
+import { Api, Docs, Schedule, Support } from "@openstatus/icons";
 import { DiscordIcon, GitHubIcon } from "@openstatus/icons/brand";
-import { Book, Braces, CalendarClock, LifeBuoy } from "lucide-react";
 import type * as React from "react";
 
-// Lucide icons and the custom brand icons both accept svg props.
+// Nucleo/lucide icons and the custom brand icons both accept svg props.
 export type HelpIcon = React.ComponentType<React.ComponentProps<"svg">>;
 
 // Single source of truth for the Get Help menu (sidebar nav-help) and the
 // command-menu "Get Help" group so their icons stay in sync.
 export const HELP_SUPPORT = {
   label: "Support",
-  icon: LifeBuoy as HelpIcon,
+  icon: Support as HelpIcon,
   keywords: ["feedback", "help", "contact"],
 };
 
@@ -24,19 +24,19 @@ export const HELP_LINKS = [
   {
     label: "Docs",
     href: "https://www.openstatus.dev/docs",
-    icon: Book,
+    icon: Docs,
     keywords: ["documentation"],
   },
   {
     label: "API Reference",
     href: "https://api.openstatus.dev/openapi",
-    icon: Braces,
+    icon: Api,
     keywords: ["openapi", "swagger"],
   },
   {
     label: "Book a Call",
     href: "https://openstatus.dev/cal",
-    icon: CalendarClock,
+    icon: Schedule,
     keywords: ["demo", "meeting"],
   },
   {
