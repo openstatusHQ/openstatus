@@ -208,6 +208,30 @@ describe("PrivateLocationService.CreatePrivateLocation", () => {
       .where(eq(privateLocation.id, Number(data.privateLocation.id)));
   });
 
+  test("roundtrips metadata and defaults status to error", async () => {
+    const res = await connectRequest(
+      "CreatePrivateLocation",
+      {
+        name: `${TEST_PREFIX}-metadata`,
+        metadata: { datacenter: "eu-west", rack: "A3" },
+      },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.privateLocation.metadata).toEqual({
+      datacenter: "eu-west",
+      rack: "A3",
+    });
+    expect(data.privateLocation.status).toBe("PRIVATE_LOCATION_STATUS_ERROR");
+
+    await db
+      .delete(privateLocation)
+      .where(eq(privateLocation.id, Number(data.privateLocation.id)));
+  });
+
   test("returns 403 for a workspace without the entitlement", async () => {
     const res = await connectRequest(
       "CreatePrivateLocation",
@@ -352,6 +376,20 @@ describe("PrivateLocationService.ListPrivateLocations", () => {
     expect(ids).toContain(String(testLocationId));
   });
 
+  test("includes status on summaries", async () => {
+    const res = await connectRequest(
+      "ListPrivateLocations",
+      {},
+      { "x-openstatus-key": authKey },
+    );
+
+    const data = await res.json();
+    const found = data.privateLocations.find(
+      (l: { id: string }) => l.id === String(testLocationId),
+    );
+    expect(found.status).toBe("PRIVATE_LOCATION_STATUS_ERROR");
+  });
+
   test("reports monitorCount for an attached location", async () => {
     const res = await connectRequest(
       "ListPrivateLocations",
@@ -484,6 +522,75 @@ describe("PrivateLocationService.UpdatePrivateLocation", () => {
 
     const data = await res.json();
     expect(data.privateLocation.monitorIds ?? []).toEqual([]);
+
+    await db.delete(privateLocation).where(eq(privateLocation.id, target));
+  });
+
+  test("replaces metadata when updateMetadata is true", async () => {
+    const target = await mkLocation(
+      `${TEST_PREFIX}-meta-update`,
+      entitledWorkspaceId,
+    );
+
+    const res = await connectRequest(
+      "UpdatePrivateLocation",
+      {
+        id: String(target),
+        metadata: { env: "prod" },
+        updateMetadata: true,
+      },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.privateLocation.metadata).toEqual({ env: "prod" });
+
+    await db.delete(privateLocation).where(eq(privateLocation.id, target));
+  });
+
+  test("ignores metadata when updateMetadata is absent", async () => {
+    const target = await mkLocation(
+      `${TEST_PREFIX}-meta-preserve`,
+      entitledWorkspaceId,
+    );
+    await db
+      .update(privateLocation)
+      .set({ metadata: { keep: "yes" } })
+      .where(eq(privateLocation.id, target));
+
+    const res = await connectRequest(
+      "UpdatePrivateLocation",
+      { id: String(target), metadata: { env: "prod" } },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.privateLocation.metadata).toEqual({ keep: "yes" });
+
+    await db.delete(privateLocation).where(eq(privateLocation.id, target));
+  });
+
+  test("clears metadata with an empty map and the flag set", async () => {
+    const target = await mkLocation(
+      `${TEST_PREFIX}-meta-clear`,
+      entitledWorkspaceId,
+    );
+    await db
+      .update(privateLocation)
+      .set({ metadata: { drop: "me" } })
+      .where(eq(privateLocation.id, target));
+
+    const res = await connectRequest(
+      "UpdatePrivateLocation",
+      { id: String(target), metadata: {}, updateMetadata: true },
+      { "x-openstatus-key": authKey },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.privateLocation.metadata ?? {}).toEqual({});
 
     await db.delete(privateLocation).where(eq(privateLocation.id, target));
   });

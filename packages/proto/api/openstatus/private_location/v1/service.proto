@@ -51,6 +51,13 @@ message CreatePrivateLocationRequest {
 
   // IDs of monitors this private location should run (optional).
   repeated string monitor_ids = 2;
+
+  // User-defined key/value labels (optional, up to 20 entries).
+  map<string, string> metadata = 3 [(buf.validate.field).map = {
+    max_pairs: 20
+    keys: {string: {min_len: 1, max_len: 64}}
+    values: {string: {max_len: 256}}
+  }];
 }
 
 // CreatePrivateLocationResponse is the response after creating a private location.
@@ -110,6 +117,17 @@ message UpdatePrivateLocationRequest {
   // clears all). When false or unset, monitor_ids is ignored and existing
   // associations are preserved.
   optional bool update_monitor_ids = 4;
+
+  // New key/value labels. Only applied when update_metadata is true.
+  map<string, string> metadata = 5 [(buf.validate.field).map = {
+    max_pairs: 20
+    keys: {string: {min_len: 1, max_len: 64}}
+    values: {string: {max_len: 256}}
+  }];
+
+  // When true, metadata replaces the current labels (an empty map clears all).
+  // When false or unset, metadata is ignored and existing labels are preserved.
+  optional bool update_metadata = 6;
 }
 
 // UpdatePrivateLocationResponse is the response after updating a private location.

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -20,7 +21,7 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Plus, X } from "lucide-react";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -41,6 +42,18 @@ const schema = z.object({
   name: z.string().min(1, "Name is required"),
   token: z.string(),
   monitors: z.array(z.number()),
+  metadata: z
+    .array(
+      z.object({
+        key: z.string().min(1, "Key is required").max(64),
+        value: z.string().max(256),
+      }),
+    )
+    .max(20, "At most 20 metadata entries")
+    .refine(
+      (rows) => new Set(rows.map((r) => r.key)).size === rows.length,
+      "Metadata keys must be unique",
+    ),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -62,6 +75,7 @@ export function FormPrivateLocation({
       name: "",
       token: crypto.randomUUID(),
       monitors: [],
+      metadata: [],
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -188,6 +202,74 @@ export function FormPrivateLocation({
                     <EmptyStateTitle>No monitors found</EmptyStateTitle>
                   </EmptyStateContainer>
                 )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent>
+          <FormField
+            control={form.control}
+            name="metadata"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Metadata</FormLabel>
+                <FormDescription>
+                  Optional key/value labels to store custom information about
+                  this location.
+                </FormDescription>
+                {field.value.map((entry, index) => (
+                  <div key={index} className="grid gap-2 sm:grid-cols-5">
+                    <Input
+                      placeholder="Key"
+                      className="col-span-2"
+                      value={entry.key}
+                      onChange={(e) => {
+                        const next = [...field.value];
+                        next[index] = { ...next[index], key: e.target.value };
+                        field.onChange(next);
+                      }}
+                    />
+                    <Input
+                      placeholder="Value"
+                      className="col-span-2"
+                      value={entry.value}
+                      onChange={(e) => {
+                        const next = [...field.value];
+                        next[index] = { ...next[index], value: e.target.value };
+                        field.onChange(next);
+                      }}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      type="button"
+                      aria-label="Remove metadata entry"
+                      onClick={() => {
+                        field.onChange(
+                          field.value.filter((_, i) => i !== index),
+                        );
+                      }}
+                    >
+                      <X />
+                    </Button>
+                  </div>
+                ))}
+                <div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    disabled={field.value.length >= 20}
+                    onClick={() => {
+                      field.onChange([...field.value, { key: "", value: "" }]);
+                    }}
+                  >
+                    <Plus />
+                    Add Metadata
+                  </Button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

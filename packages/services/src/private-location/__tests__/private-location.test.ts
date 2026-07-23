@@ -25,6 +25,7 @@ import { createPrivateLocation } from "../create";
 import { deletePrivateLocation } from "../delete";
 import { getPrivateLocation } from "../get";
 import { listPrivateLocations } from "../list";
+import { setPrivateLocationStatus } from "../set-status";
 import { updatePrivateLocation } from "../update";
 
 const TEST_PREFIX = "svc-private-location-test";
@@ -217,6 +218,84 @@ describe("createPrivateLocation", () => {
     });
   });
 
+  test("persists metadata and audits it", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createPrivateLocation({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-metadata`,
+          monitors: [],
+          metadata: { datacenter: "eu-west", rack: "A3" },
+        },
+      });
+
+      expect(row.metadata).toEqual({ datacenter: "eu-west", rack: "A3" });
+
+      const audit = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "private_location",
+        entityId: String(row.id),
+        db: tx,
+      });
+      const created = audit.find((r) => r.action === "private_location.create");
+      expect(
+        (created?.after as { metadata?: Record<string, string> } | undefined)
+          ?.metadata,
+      ).toEqual({ datacenter: "eu-west", rack: "A3" });
+    });
+  });
+
+  test("stores null metadata when none is supplied", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createPrivateLocation({
+        ctx: { ...teamCtx, db: tx },
+        input: { name: `${TEST_PREFIX}-no-metadata`, monitors: [] },
+      });
+
+      expect(row.metadata).toBeNull();
+    });
+  });
+
+  test("rejects metadata beyond the allowed limits", async () => {
+    await withTestTransaction(async (tx) => {
+      const tooMany = Object.fromEntries(
+        Array.from({ length: 21 }, (_, i) => [`k${i}`, "v"]),
+      );
+      await expect(
+        createPrivateLocation({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-too-many`,
+            monitors: [],
+            metadata: tooMany,
+          },
+        }),
+      ).rejects.toBeTruthy();
+
+      await expect(
+        createPrivateLocation({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            name: `${TEST_PREFIX}-long-value`,
+            monitors: [],
+            metadata: { k: "x".repeat(257) },
+          },
+        }),
+      ).rejects.toBeTruthy();
+    });
+  });
+
+  test("defaults status to error until the agent reports in", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createPrivateLocation({
+        ctx: { ...teamCtx, db: tx },
+        input: { name: `${TEST_PREFIX}-status-default`, monitors: [] },
+      });
+
+      expect(row.status).toBe("error");
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = {
@@ -370,6 +449,75 @@ describe("updatePrivateLocation", () => {
     });
   });
 
+  test("replaces metadata and audits the change", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPrivateLocation({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-meta-seed`,
+          monitors: [],
+          metadata: { a: "1" },
+        },
+      });
+
+      const updated = await updatePrivateLocation({
+        ctx,
+        input: { id: created.id, metadata: { b: "2", c: "3" } },
+      });
+      expect(updated.metadata).toEqual({ b: "2", c: "3" });
+
+      const audit = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "private_location",
+        entityId: String(created.id),
+        db: tx,
+      });
+      const row = audit.find((r) => r.action === "private_location.update");
+      expect(row?.changedFields).toContain("metadata");
+    });
+  });
+
+  test("clears metadata when given an empty object", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPrivateLocation({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-meta-clear`,
+          monitors: [],
+          metadata: { a: "1" },
+        },
+      });
+
+      const updated = await updatePrivateLocation({
+        ctx,
+        input: { id: created.id, metadata: {} },
+      });
+      expect(updated.metadata).toBeNull();
+    });
+  });
+
+  test("preserves metadata when the field is omitted", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPrivateLocation({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-meta-preserve`,
+          monitors: [],
+          metadata: { a: "1" },
+        },
+      });
+
+      const updated = await updatePrivateLocation({
+        ctx,
+        input: { id: created.id, name: `${TEST_PREFIX}-meta-renamed` },
+      });
+      expect(updated.metadata).toEqual({ a: "1" });
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const ctx = {
@@ -382,6 +530,99 @@ describe("updatePrivateLocation", () => {
       };
       await expect(
         updatePrivateLocation({ ctx, input: { id: 1, name: "nope" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("setPrivateLocationStatus", () => {
+  test("flips status and audits the change", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPrivateLocation({
+        ctx,
+        input: { name: `${TEST_PREFIX}-set-status`, monitors: [] },
+      });
+      expect(created.status).toBe("error");
+
+      const updated = await setPrivateLocationStatus({
+        ctx,
+        input: { id: created.id, status: "active" },
+      });
+      expect(updated.status).toBe("active");
+
+      const audit = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "private_location",
+        entityId: String(created.id),
+        db: tx,
+      });
+      const row = audit.find((r) => r.action === "private_location.update");
+      expect(row?.changedFields).toContain("status");
+    });
+  });
+
+  test("is a no-op when the status is unchanged", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPrivateLocation({
+        ctx,
+        input: { name: `${TEST_PREFIX}-set-status-noop`, monitors: [] },
+      });
+
+      await setPrivateLocationStatus({
+        ctx,
+        input: { id: created.id, status: "error" },
+      });
+
+      const rows = await readAuditLog({
+        workspaceId: teamCtx.workspace.id,
+        entityType: "private_location",
+        entityId: String(created.id),
+        db: tx,
+      });
+      expect(rows.some((r) => r.action === "private_location.update")).toBe(
+        false,
+      );
+    });
+  });
+
+  test("throws NotFoundError for another workspace's location", async () => {
+    await withTestTransaction(async (tx) => {
+      const other = await tx
+        .insert(privateLocation)
+        .values({
+          name: `${TEST_PREFIX}-set-status-foreign`,
+          token: "foreign-token-status",
+          workspaceId: otherWorkspaceId,
+        })
+        .returning()
+        .get();
+
+      await expect(
+        setPrivateLocationStatus({
+          ctx: { ...teamCtx, db: tx },
+          input: { id: other.id, status: "error" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        setPrivateLocationStatus({
+          ctx,
+          input: { id: 1, status: "error" },
+        }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });

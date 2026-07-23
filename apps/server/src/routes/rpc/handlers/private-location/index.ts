@@ -67,6 +67,7 @@ export const privateLocationServiceImpl: ServiceImpl<
         input: {
           name: req.name,
           monitors: parseMonitorIds(req.monitorIds),
+          metadata: req.metadata,
         },
       });
 
@@ -145,6 +146,7 @@ export const privateLocationServiceImpl: ServiceImpl<
           monitors: req.updateMonitorIds
             ? parseMonitorIds(req.monitorIds)
             : undefined,
+          metadata: req.updateMetadata ? req.metadata : undefined,
         },
       });
 

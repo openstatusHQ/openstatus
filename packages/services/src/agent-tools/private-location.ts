@@ -31,6 +31,8 @@ const ListPrivateLocationsOutput = z.object({
     z.object({
       id: z.number().int(),
       name: z.string(),
+      status: z.enum(["active", "error"]),
+      metadata: z.record(z.string(), z.string()).nullable(),
       monitorIds: z.array(z.number().int()),
       lastSeenAt: z.string().nullable(),
       createdAt: z.string().nullable(),
@@ -51,7 +53,7 @@ export const listPrivateLocationsTool: AgentTool<
 > = {
   name: "list_private_locations",
   description:
-    "List private locations (self-hosted checker agents) in this workspace, with the monitors each one runs and when it last reported in. Read-only — agent tokens are NOT exposed. Use `lastSeenAt` to tell whether an agent is still alive before blaming a monitor for missing checks.",
+    'List private locations (self-hosted checker agents) in this workspace, with the monitors each one runs and when it last reported in. Read-only — agent tokens are NOT exposed. `status: "error"` means the agent has stopped reporting (stale heartbeat); use `lastSeenAt` to tell whether an agent is still alive before blaming a monitor for missing checks. `metadata` holds user-defined key/value labels.',
   scope: "read",
   destructive: false,
   inputSchema: ListPrivateLocationsInputShape,
@@ -69,6 +71,8 @@ export const listPrivateLocationsTool: AgentTool<
       items: result.items.map((location) => ({
         id: location.id,
         name: location.name,
+        status: location.status,
+        metadata: location.metadata ?? null,
         monitorIds: location.monitors.map((m) => m.id),
         lastSeenAt: location.lastSeenAt?.toISOString() ?? null,
         createdAt: location.createdAt?.toISOString() ?? null,

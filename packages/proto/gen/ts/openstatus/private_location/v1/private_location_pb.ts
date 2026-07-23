@@ -2,15 +2,15 @@
 // @generated from file openstatus/private_location/v1/private_location.proto (package openstatus.private_location.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/private_location/v1/private_location.proto.
  */
 export const file_openstatus_private_location_v1_private_location: GenFile = /*@__PURE__*/
-  fileDesc("CjVvcGVuc3RhdHVzL3ByaXZhdGVfbG9jYXRpb24vdjEvcHJpdmF0ZV9sb2NhdGlvbi5wcm90bxIeb3BlbnN0YXR1cy5wcml2YXRlX2xvY2F0aW9uLnYxIo0BCg9Qcml2YXRlTG9jYXRpb24SCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRINCgV0b2tlbhgDIAEoCRITCgttb25pdG9yX2lkcxgEIAMoCRIUCgxsYXN0X3NlZW5fYXQYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRISCgp1cGRhdGVkX2F0GAcgASgJIocBChZQcml2YXRlTG9jYXRpb25TdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSFQoNbW9uaXRvcl9jb3VudBgDIAEoBRIUCgxsYXN0X3NlZW5fYXQYBCABKAkSEgoKY3JlYXRlZF9hdBgFIAEoCRISCgp1cGRhdGVkX2F0GAYgASgJQmRaYmdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9wcml2YXRlX2xvY2F0aW9uL3YxO3ByaXZhdGVsb2NhdGlvbnYxYgZwcm90bzM");
+  fileDesc("CjVvcGVuc3RhdHVzL3ByaXZhdGVfbG9jYXRpb24vdjEvcHJpdmF0ZV9sb2NhdGlvbi5wcm90bxIeb3BlbnN0YXR1cy5wcml2YXRlX2xvY2F0aW9uLnYxItYCCg9Qcml2YXRlTG9jYXRpb24SCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRINCgV0b2tlbhgDIAEoCRITCgttb25pdG9yX2lkcxgEIAMoCRIUCgxsYXN0X3NlZW5fYXQYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRISCgp1cGRhdGVkX2F0GAcgASgJEk8KCG1ldGFkYXRhGAggAygLMj0ub3BlbnN0YXR1cy5wcml2YXRlX2xvY2F0aW9uLnYxLlByaXZhdGVMb2NhdGlvbi5NZXRhZGF0YUVudHJ5EkUKBnN0YXR1cxgJIAEoDjI1Lm9wZW5zdGF0dXMucHJpdmF0ZV9sb2NhdGlvbi52MS5Qcml2YXRlTG9jYXRpb25TdGF0dXMaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBItcCChZQcml2YXRlTG9jYXRpb25TdW1tYXJ5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSFQoNbW9uaXRvcl9jb3VudBgDIAEoBRIUCgxsYXN0X3NlZW5fYXQYBCABKAkSEgoKY3JlYXRlZF9hdBgFIAEoCRISCgp1cGRhdGVkX2F0GAYgASgJEkUKBnN0YXR1cxgHIAEoDjI1Lm9wZW5zdGF0dXMucHJpdmF0ZV9sb2NhdGlvbi52MS5Qcml2YXRlTG9jYXRpb25TdGF0dXMSVgoIbWV0YWRhdGEYCCADKAsyRC5vcGVuc3RhdHVzLnByaXZhdGVfbG9jYXRpb24udjEuUHJpdmF0ZUxvY2F0aW9uU3VtbWFyeS5NZXRhZGF0YUVudHJ5Gi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASqHAQoVUHJpdmF0ZUxvY2F0aW9uU3RhdHVzEicKI1BSSVZBVEVfTE9DQVRJT05fU1RBVFVTX1VOU1BFQ0lGSUVEEAASIgoeUFJJVkFURV9MT0NBVElPTl9TVEFUVVNfQUNUSVZFEAESIQodUFJJVkFURV9MT0NBVElPTl9TVEFUVVNfRVJST1IQAkJkWmJnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvcHJpdmF0ZV9sb2NhdGlvbi92MTtwcml2YXRlbG9jYXRpb252MWIGcHJvdG8z");
 
 /**
  * PrivateLocation represents a self-hosted checker agent with full details.
@@ -67,6 +67,20 @@ export type PrivateLocation = Message<"openstatus.private_location.v1.PrivateLoc
    * @generated from field: string updated_at = 7;
    */
   updatedAt: string;
+
+  /**
+   * User-defined key/value labels attached to this private location.
+   *
+   * @generated from field: map<string, string> metadata = 8;
+   */
+  metadata: { [key: string]: string };
+
+  /**
+   * Computed health of the agent. Read-only.
+   *
+   * @generated from field: openstatus.private_location.v1.PrivateLocationStatus status = 9;
+   */
+  status: PrivateLocationStatus;
 };
 
 /**
@@ -124,6 +138,20 @@ export type PrivateLocationSummary = Message<"openstatus.private_location.v1.Pri
    * @generated from field: string updated_at = 6;
    */
   updatedAt: string;
+
+  /**
+   * Computed health of the agent. Read-only.
+   *
+   * @generated from field: openstatus.private_location.v1.PrivateLocationStatus status = 7;
+   */
+  status: PrivateLocationStatus;
+
+  /**
+   * User-defined key/value labels attached to this private location.
+   *
+   * @generated from field: map<string, string> metadata = 8;
+   */
+  metadata: { [key: string]: string };
 };
 
 /**
@@ -132,4 +160,39 @@ export type PrivateLocationSummary = Message<"openstatus.private_location.v1.Pri
  */
 export const PrivateLocationSummarySchema: GenMessage<PrivateLocationSummary> = /*@__PURE__*/
   messageDesc(file_openstatus_private_location_v1_private_location, 1);
+
+/**
+ * PrivateLocationStatus is the computed health of a private location, derived
+ * from the agent heartbeat. Read-only — it cannot be set through the API.
+ *
+ * @generated from enum openstatus.private_location.v1.PrivateLocationStatus
+ */
+export enum PrivateLocationStatus {
+  /**
+   * PRIVATE_LOCATION_STATUS_UNSPECIFIED indicates an unknown status.
+   *
+   * @generated from enum value: PRIVATE_LOCATION_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * PRIVATE_LOCATION_STATUS_ACTIVE means the agent is reporting normally.
+   *
+   * @generated from enum value: PRIVATE_LOCATION_STATUS_ACTIVE = 1;
+   */
+  ACTIVE = 1,
+
+  /**
+   * PRIVATE_LOCATION_STATUS_ERROR means the agent has stopped reporting.
+   *
+   * @generated from enum value: PRIVATE_LOCATION_STATUS_ERROR = 2;
+   */
+  ERROR = 2,
+}
+
+/**
+ * Describes the enum openstatus.private_location.v1.PrivateLocationStatus.
+ */
+export const PrivateLocationStatusSchema: GenEnum<PrivateLocationStatus> = /*@__PURE__*/
+  enumDesc(file_openstatus_private_location_v1_private_location, 0);
 

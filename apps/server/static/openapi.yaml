@@ -2342,9 +2342,29 @@ components:
             type: string
           title: monitor_ids
           description: IDs of monitors this private location should run (optional).
+        metadata:
+          type: object
+          title: metadata
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 256
+          description: User-defined key/value labels (optional, up to 20 entries).
       title: CreatePrivateLocationRequest
       additionalProperties: false
       description: CreatePrivateLocationRequest is the request to create a new private location.
+    openstatus.private_location.v1.CreatePrivateLocationRequest.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
     openstatus.private_location.v1.CreatePrivateLocationResponse:
       type: object
       properties:
@@ -2472,9 +2492,41 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the private location was last updated (RFC 3339 format).
+        metadata:
+          type: object
+          title: metadata
+          additionalProperties:
+            type: string
+            title: value
+          description: User-defined key/value labels attached to this private location.
+        status:
+          title: status
+          description: Computed health of the agent. Read-only.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationStatus'
       title: PrivateLocation
       additionalProperties: false
       description: PrivateLocation represents a self-hosted checker agent with full details.
+    openstatus.private_location.v1.PrivateLocation.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.PrivateLocationStatus:
+      type: string
+      title: PrivateLocationStatus
+      enum:
+        - PRIVATE_LOCATION_STATUS_UNSPECIFIED
+        - PRIVATE_LOCATION_STATUS_ACTIVE
+        - PRIVATE_LOCATION_STATUS_ERROR
+      description: |-
+        PrivateLocationStatus is the computed health of a private location, derived
+         from the agent heartbeat. Read-only — it cannot be set through the API.
     openstatus.private_location.v1.PrivateLocationSummary:
       type: object
       properties:
@@ -2503,11 +2555,33 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the private location was last updated (RFC 3339 format).
+        status:
+          title: status
+          description: Computed health of the agent. Read-only.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationStatus'
+        metadata:
+          type: object
+          title: metadata
+          additionalProperties:
+            type: string
+            title: value
+          description: User-defined key/value labels attached to this private location.
       title: PrivateLocationSummary
       additionalProperties: false
       description: |-
         PrivateLocationSummary represents metadata for a private location (used in
          list responses). The agent token is intentionally omitted.
+    openstatus.private_location.v1.PrivateLocationSummary.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
     openstatus.private_location.v1.UpdatePrivateLocationRequest:
       type: object
       properties:
@@ -2539,9 +2613,37 @@ components:
             When true, monitor_ids replaces the current associations (an empty list
              clears all). When false or unset, monitor_ids is ignored and existing
              associations are preserved.
+        metadata:
+          type: object
+          title: metadata
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 256
+          description: New key/value labels. Only applied when update_metadata is true.
+        updateMetadata:
+          type:
+            - boolean
+            - "null"
+          title: update_metadata
+          description: |-
+            When true, metadata replaces the current labels (an empty map clears all).
+             When false or unset, metadata is ignored and existing labels are preserved.
       title: UpdatePrivateLocationRequest
       additionalProperties: false
       description: UpdatePrivateLocationRequest is the request to update a private location.
+    openstatus.private_location.v1.UpdatePrivateLocationRequest.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
     openstatus.private_location.v1.UpdatePrivateLocationResponse:
       type: object
       properties:

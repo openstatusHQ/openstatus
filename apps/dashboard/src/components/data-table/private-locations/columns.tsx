@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
@@ -19,6 +20,25 @@ export const columns: ColumnDef<PrivateLocation>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
     enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    enableHiding: false,
+    cell: ({ row }) => {
+      const status = row.getValue("status");
+      const isError = status === "error";
+      return (
+        <Badge
+          variant={isError ? "destructive" : "outline"}
+          className={isError ? undefined : "border-green-500/40 text-green-600"}
+        >
+          {isError ? "Error" : "Active"}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "lastSeenAt",

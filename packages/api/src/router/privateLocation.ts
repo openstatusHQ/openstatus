@@ -31,6 +31,7 @@ export const privateLocationRouter = createTRPCRouter({
         name: z.string(),
         monitors: z.array(z.number()),
         token: z.string(),
+        metadata: z.record(z.string(), z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -41,6 +42,7 @@ export const privateLocationRouter = createTRPCRouter({
             name: input.name,
             token: input.token,
             monitors: input.monitors,
+            metadata: input.metadata,
           },
         });
       } catch (err) {
@@ -54,6 +56,7 @@ export const privateLocationRouter = createTRPCRouter({
         id: z.number(),
         name: z.string(),
         monitors: z.array(z.number()),
+        metadata: z.record(z.string(), z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

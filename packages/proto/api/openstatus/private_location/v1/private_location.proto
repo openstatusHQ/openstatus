@@ -4,6 +4,19 @@ package openstatus.private_location.v1;
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/private_location/v1;privatelocationv1";
 
+// PrivateLocationStatus is the computed health of a private location, derived
+// from the agent heartbeat. Read-only — it cannot be set through the API.
+enum PrivateLocationStatus {
+  // PRIVATE_LOCATION_STATUS_UNSPECIFIED indicates an unknown status.
+  PRIVATE_LOCATION_STATUS_UNSPECIFIED = 0;
+
+  // PRIVATE_LOCATION_STATUS_ACTIVE means the agent is reporting normally.
+  PRIVATE_LOCATION_STATUS_ACTIVE = 1;
+
+  // PRIVATE_LOCATION_STATUS_ERROR means the agent has stopped reporting.
+  PRIVATE_LOCATION_STATUS_ERROR = 2;
+}
+
 // PrivateLocation represents a self-hosted checker agent with full details.
 message PrivateLocation {
   // Unique identifier for the private location.
@@ -27,6 +40,12 @@ message PrivateLocation {
 
   // Timestamp when the private location was last updated (RFC 3339 format).
   string updated_at = 7;
+
+  // User-defined key/value labels attached to this private location.
+  map<string, string> metadata = 8;
+
+  // Computed health of the agent. Read-only.
+  PrivateLocationStatus status = 9;
 }
 
 // PrivateLocationSummary represents metadata for a private location (used in
@@ -49,4 +68,10 @@ message PrivateLocationSummary {
 
   // Timestamp when the private location was last updated (RFC 3339 format).
   string updated_at = 6;
+
+  // Computed health of the agent. Read-only.
+  PrivateLocationStatus status = 7;
+
+  // User-defined key/value labels attached to this private location.
+  map<string, string> metadata = 8;
 }

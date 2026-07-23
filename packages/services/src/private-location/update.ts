@@ -32,6 +32,11 @@ export async function updatePrivateLocation(args: {
     ? Array.from(new Set(input.monitors))
     : undefined;
 
+  const metadataUpdate =
+    input.metadata !== undefined
+      ? { metadata: Object.keys(input.metadata).length ? input.metadata : null }
+      : undefined;
+
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.privateLocation.findFirst({
       where: and(
@@ -57,11 +62,11 @@ export async function updatePrivateLocation(args: {
 
     const row = await tx
       .update(privateLocation)
-      .set(
-        input.name !== undefined
-          ? { name: input.name, updatedAt: new Date() }
-          : { updatedAt: new Date() },
-      )
+      .set({
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...metadataUpdate,
+        updatedAt: new Date(),
+      })
       .where(
         and(
           eq(privateLocation.id, input.id),
