@@ -25,6 +25,7 @@ import { z } from "zod";
 import { toAiSdkTools } from "@/lib/agent-tools/adapter";
 import { getChatServiceContext } from "@/lib/agent-tools/context";
 import { chatRateLimit } from "@/lib/rate-limit/chat";
+import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
 // Drop tool parts that have no result the SDK can turn into a tool_result
 // block. `ignoreIncompleteToolCalls` doesn't cover `approval-requested`, so
@@ -51,7 +52,7 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const workspaceSlug = (await cookies()).get("workspace-slug")?.value;
+  const workspaceSlug = (await cookies()).get(WORKSPACE_SLUG_COOKIE)?.value;
   const ctx = await getChatServiceContext({ workspaceSlug });
   if (!ctx || ctx.actor.type !== "user") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

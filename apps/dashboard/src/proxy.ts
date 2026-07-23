@@ -4,6 +4,7 @@ import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -74,7 +75,7 @@ export default auth(async (req) => {
     }
   }
 
-  const hasWorkspaceSlug = req.cookies.has("workspace-slug");
+  const hasWorkspaceSlug = req.cookies.has(WORKSPACE_SLUG_COOKIE);
 
   if (req.auth?.user?.id && !hasWorkspaceSlug) {
     const [query] = await db
@@ -89,11 +90,11 @@ export default auth(async (req) => {
       console.error(">> Should not happen, no workspace found for user");
     }
 
-    response.cookies.set("workspace-slug", query.workspace.slug);
+    response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug);
   }
 
   if (!req.auth && hasWorkspaceSlug) {
-    response.cookies.delete("workspace-slug");
+    response.cookies.delete(WORKSPACE_SLUG_COOKIE);
   }
 
   // auth-redirect is single-use and consumed by the /onboarding Server
