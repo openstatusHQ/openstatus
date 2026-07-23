@@ -14,6 +14,7 @@ export const env = createEnv({
     UNKEY_API_ID: z.string(),
     SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
     EXTERNAL_REPORT_SALT: z.string().optional(),
+    SELF_HOST: z.stringbool().prefault("false"),
   },
 
   runtimeEnv: {
@@ -28,6 +29,7 @@ export const env = createEnv({
     UNKEY_API_ID: process.env.UNKEY_API_ID,
     SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
     EXTERNAL_REPORT_SALT: process.env.EXTERNAL_REPORT_SALT,
+    SELF_HOST: process.env.SELF_HOST,
   },
   skipValidation: process.env.NODE_ENV === "test",
 });
