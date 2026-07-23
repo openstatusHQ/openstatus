@@ -1993,6 +1993,9 @@ importers:
 
   packages/emails:
     dependencies:
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.1.13)

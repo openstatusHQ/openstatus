@@ -13,6 +13,7 @@ export {
   MONITOR_JOB_TYPES,
 } from "./constants";
 export { yieldMany, iteratorToStream } from "./stream";
+export { statusLabel, type PageUpdateStatus } from "./status";
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0

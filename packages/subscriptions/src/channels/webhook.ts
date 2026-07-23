@@ -1,5 +1,5 @@
 import { COLORS, COLOR_DECIMALS } from "@openstatus/notification-base";
-import { assertSafeUrl } from "@openstatus/utils";
+import { assertSafeUrl, statusLabel } from "@openstatus/utils";
 import { z } from "zod";
 
 import { WEBHOOK_PAYLOAD_VERSION } from "../payload";
@@ -148,7 +148,7 @@ function buildSlackPayload(
       fields: [
         {
           type: "mrkdwn",
-          text: `*Status*\n${pageUpdate.status}`,
+          text: `*Status*\n${statusLabel(pageUpdate.status)}`,
         },
         {
           type: "mrkdwn",
@@ -242,7 +242,7 @@ function buildDiscordPayload(
         fields: [
           {
             name: "Status",
-            value: pageUpdate.status,
+            value: statusLabel(pageUpdate.status),
             inline: true,
           },
           {

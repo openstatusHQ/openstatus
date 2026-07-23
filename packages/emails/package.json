@@ -17,6 +17,7 @@
     "test": "deno test --parallel -A --no-check --sloppy-imports"
   },
   "dependencies": {
+    "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",

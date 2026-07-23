@@ -1,4 +1,5 @@
 import { COLORS } from "@openstatus/notification-base";
+import { statusLabel } from "@openstatus/utils";
 import type { KnownBlock, MessageAttachment } from "@slack/web-api";
 
 import type { PageUpdate, Subscription } from "../types";
@@ -11,14 +12,6 @@ const STATUS_EMOJI: Record<PageUpdate["status"], string> = {
   monitoring: "👀",
   resolved: "✅",
   maintenance: "🔧",
-};
-
-const STATUS_LABEL: Record<PageUpdate["status"], string> = {
-  investigating: "Investigating",
-  identified: "Identified",
-  monitoring: "Monitoring",
-  resolved: "Resolved",
-  maintenance: "Maintenance",
 };
 
 function statusColor(status: PageUpdate["status"]): StatusColor {
@@ -61,7 +54,7 @@ export function buildRootMessage(
   subscription: Subscription,
 ): SlackRootMessage {
   const emoji = STATUS_EMOJI[pageUpdate.status];
-  const label = STATUS_LABEL[pageUpdate.status];
+  const label = statusLabel(pageUpdate.status);
   const origin = pageOrigin(subscription);
 
   const blocks: KnownBlock[] = [
@@ -130,7 +123,7 @@ export function buildRootMessage(
 
 export function buildReplyMessage(pageUpdate: PageUpdate): SlackReplyMessage {
   const emoji = STATUS_EMOJI[pageUpdate.status];
-  const label = STATUS_LABEL[pageUpdate.status];
+  const label = statusLabel(pageUpdate.status);
   const heading = `${emoji} *${label}* · ${pageUpdate.date}`;
 
   return {

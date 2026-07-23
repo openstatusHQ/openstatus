@@ -1,5 +1,6 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
+import { statusLabel } from "@openstatus/utils";
 import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
 import { Resend } from "resend";
@@ -23,9 +24,10 @@ export function statusReportSubject(req: {
   status: StatusReportProps["status"];
   reportTitle: string;
 }): string {
-  return req.status === "resolved"
-    ? `RESOLVED: ${req.reportTitle}`
-    : req.reportTitle;
+  if (req.status === "resolved") return `RESOLVED: ${req.reportTitle}`;
+  if (req.status === "maintenance")
+    return `${statusLabel("maintenance")}: ${req.reportTitle}`;
+  return req.reportTitle;
 }
 
 // Deterministic Resend rejections: retrying the identical request can never

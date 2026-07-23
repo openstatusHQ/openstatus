@@ -1,5 +1,6 @@
 /** @jsxRuntime automatic @jsxImportSource react */
 
+import { statusLabel } from "@openstatus/utils";
 import { expect } from "@std/expect";
 import { describe, test } from "@std/testing/bdd";
 import { render } from "react-email";
@@ -94,19 +95,20 @@ describe("Status Report Email - Subject Line", () => {
     );
   });
 
-  test('does not prepend "RESOLVED:" for any non-resolved status', () => {
-    const nonResolved = [
-      "investigating",
-      "identified",
-      "monitoring",
-      "maintenance",
-    ] as const;
+  test("uses the bare report title for ongoing report statuses", () => {
+    const ongoing = ["investigating", "identified", "monitoring"] as const;
 
-    for (const status of nonResolved) {
+    for (const status of ongoing) {
       const subject = statusReportSubject({ status, reportTitle });
       expect(subject).toBe(reportTitle);
       expect(subject).not.toContain("RESOLVED:");
     }
+  });
+
+  test('prepends "Planned Maintenance:" when status is "maintenance"', () => {
+    expect(statusReportSubject({ status: "maintenance", reportTitle })).toBe(
+      `Planned Maintenance: ${reportTitle}`,
+    );
   });
 });
 
@@ -156,9 +158,7 @@ describe("Status Report Email - Email Content Validation", () => {
         />,
       );
 
-      // Should render without errors and contain the status
-      // Note: status is rendered lowercase in HTML with text-transform: uppercase CSS
-      expect(html).toContain(status);
+      expect(html).toContain(statusLabel(status));
     }
   });
 });
