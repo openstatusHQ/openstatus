@@ -1,11 +1,4 @@
-import {
-  AtSign,
-  KeyRound,
-  Palette,
-  Pencil,
-  Plus,
-  Users,
-} from "lucide-react";
+import { AtSign, KeyRound, Palette, Pencil, Plus, Users } from "lucide-react";
 import type * as React from "react";
 
 import { MONITOR_TABS } from "@/app/(dashboard)/monitors/[id]/constants";
