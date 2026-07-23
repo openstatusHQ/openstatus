@@ -105,6 +105,14 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           EUR: 300,
         },
       },
+      "custom-theme": {
+        title: "Custom Theme",
+        description: "Customize your status page colors and appearance.",
+        price: {
+          USD: 20,
+          EUR: 20,
+        },
+      },
       "status-pages": {
         title: "Status Pages",
         description: "Create and manage status pages for your workspace.",

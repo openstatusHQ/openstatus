@@ -91,6 +91,7 @@ export const addons = [
   "email-domain-protection",
   "ip-restriction",
   "white-label",
+  "custom-theme",
   "status-pages",
 ] as const satisfies Partial<keyof Limits>[];
 
