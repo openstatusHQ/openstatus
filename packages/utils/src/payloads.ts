@@ -24,6 +24,11 @@ export const httpPayloadSchema = z.object({
     .optional(),
   retry: z.number().prefault(3),
   followRedirects: z.boolean().prefault(true),
+  proxyUrl: z.string().optional(),
+  proxyRegion: z.string().optional(),
+  proxyHeaders: z
+    .array(z.object({ key: z.string(), value: z.string() }))
+    .optional(),
 });
 
 export type HttpPayload = z.infer<typeof httpPayloadSchema>;

@@ -51,6 +51,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
 }).extend({
   headers: headersToArraySchema.prefault([]),
   otelHeaders: headersToArraySchema.prefault([]),
+  proxyHeaders: headersToArraySchema.prefault([]),
   body: bodyToStringSchema.prefault(""),
   // for tcp monitors the method is not needed
   method: monitorMethodsSchema.prefault("GET"),
@@ -70,6 +71,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   regions: z.array(monitorRegionSchema).prefault([]).optional(),
   headers: headersSchema.prefault([]),
   otelHeaders: headersSchema.prefault([]),
+  proxyHeaders: headersSchema.prefault([]),
 }).extend({
   method: monitorMethodsSchema.prefault("GET"),
   notifications: z.array(z.number()).optional().prefault([]),

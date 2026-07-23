@@ -73,9 +73,23 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		return
 	}
+
+	// region recorded with the check result. A proxied check can pin a custom
+	// region or let the proxy report its own.
+	region := h.Region
+	if req.ProxyRegion != "" {
+		region = req.ProxyRegion
+	}
+
 	//  We need a new client for each request to avoid connection reuse.
+	timeout := time.Duration(req.Timeout) * time.Millisecond
+	if req.ProxyURL != "" {
+		// give the proxy hop some headroom: the proxy enforces the monitor
+		// timeout on the target itself.
+		timeout += 10 * time.Second
+	}
 	requestClient := &http.Client{
-		Timeout: time.Duration(req.Timeout) * time.Millisecond,
+		Timeout: timeout,
 	}
 
 	// Configure redirect policy based on FollowRedirects setting
@@ -119,7 +133,23 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 	op := func() error {
 		called++
-		res, err := checker.Http(ctx, requestClient, req)
+
+		var res checker.Response
+		var err error
+		if req.ProxyURL != "" {
+			// reset before each attempt so a retry cannot keep a stale
+			// auto-detected region from a previous proxy response
+			if req.ProxyRegion == "" {
+				region = h.Region
+			}
+			res, err = checker.HttpViaProxy(ctx, requestClient, req)
+			// auto-detect the region when it is not pinned on the monitor
+			if err == nil && req.ProxyRegion == "" && res.Region != "" {
+				region = res.Region
+			}
+		} else {
+			res, err = checker.Http(ctx, requestClient, req)
+		}
 
 		if err != nil {
 			return fmt.Errorf("unable to ping: %w", err)
@@ -156,7 +186,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
 			MonitorID:     req.MonitorID,
-			Region:        h.Region,
+			Region:        region,
 			WorkspaceID:   req.WorkspaceID,
 			Timestamp:     res.Timestamp,
 			CronTimestamp: req.CronTimestamp,
@@ -181,7 +211,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		}
 
 		result = res
-		result.Region = h.Region
+		result.Region = region
 		result.JobType = "http"
 
 		// it's in error if not successful
@@ -208,7 +238,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				MonitorId:     req.MonitorID,
 				Status:        "error",
 				StatusCode:    res.Status,
-				Region:        h.Region,
+				Region:        region,
 				Message:       res.Error,
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
@@ -220,7 +250,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "degraded",
-				Region:        h.Region,
+				Region:        region,
 				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
@@ -232,7 +262,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
-				Region:        h.Region,
+				Region:        region,
 				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
@@ -244,7 +274,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
-				Region:        h.Region,
+				Region:        region,
 				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
@@ -284,7 +314,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			ID:            id.String(),
 			URL:           req.URL,
 			Method:        req.Method,
-			Region:        h.Region,
+			Region:        region,
 			Message:       err.Error(),
 			CronTimestamp: req.CronTimestamp,
 			Timestamp:     req.CronTimestamp,
@@ -306,14 +336,14 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				MonitorId:     req.MonitorID,
 				Status:        "error",
 				Message:       err.Error(),
-				Region:        h.Region,
+				Region:        region,
 				CronTimestamp: req.CronTimestamp,
 			})
 		}
 	}
 
 	if req.OtelConfig.Endpoint != "" {
-		otelOS.RecordHTTPMetrics(ctx, req, result, h.Region)
+		otelOS.RecordHTTPMetrics(ctx, req, result, region)
 	}
 
 	returnData := c.Query("data")

@@ -27,7 +27,11 @@ import { createMonitor } from "../create";
 import { deleteMonitor, deleteMonitors } from "../delete";
 import { getMonitor, listMonitors } from "../list";
 import { updateMonitorNotifiers, updateMonitorTags } from "../relations";
-import { bulkUpdateMonitors, updateMonitorGeneral } from "../update";
+import {
+  bulkUpdateMonitors,
+  updateMonitorGeneral,
+  updateMonitorProxy,
+} from "../update";
 
 const TEST_PREFIX = "svc-monitor-test";
 
@@ -586,6 +590,112 @@ describe("updateMonitorGeneral", () => {
         entityId: row.id,
         db: tx,
       });
+    });
+  });
+});
+
+describe("updateMonitorProxy", () => {
+  test("stores proxy url / region / headers and audits", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-proxy`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      await updateMonitorProxy({
+        ctx,
+        input: {
+          id: row.id,
+          proxyUrl: "https://my-function.cn-hangzhou.fcapp.run/check",
+          proxyRegion: "cn-hangzhou",
+          proxyHeaders: [{ key: "X-Proxy-Token", value: "secret" }],
+        },
+      });
+
+      const updated = await getMonitor({ ctx, input: { id: row.id } });
+      expect(updated.proxyUrl).toBe(
+        "https://my-function.cn-hangzhou.fcapp.run/check",
+      );
+      expect(updated.proxyRegion).toBe("cn-hangzhou");
+      expect(updated.proxyHeaders).toEqual([
+        { key: "X-Proxy-Token", value: "secret" },
+      ]);
+
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "monitor.update",
+        entityType: "monitor",
+        entityId: row.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("clearing the proxy url disables proxy mode", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await createMonitor({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-proxy-clear`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      await updateMonitorProxy({
+        ctx,
+        input: {
+          id: row.id,
+          proxyUrl: "https://proxy.example.com/check",
+          proxyRegion: "me-south",
+        },
+      });
+      await updateMonitorProxy({
+        ctx,
+        input: { id: row.id, proxyUrl: "", proxyRegion: "" },
+      });
+
+      const updated = await getMonitor({ ctx, input: { id: row.id } });
+      expect(updated.proxyUrl).toBe("");
+      expect(updated.proxyRegion).toBe("");
+    });
+  });
+
+  test("throws NotFoundError for a monitor in another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          name: `${TEST_PREFIX}-proxy-foreign`,
+          jobType: "http",
+          url: "https://example.com",
+          method: "GET",
+          headers: [],
+          assertions: [],
+          active: false,
+        },
+      });
+
+      await expect(
+        updateMonitorProxy({
+          ctx: { ...freeCtx, db: tx },
+          input: { id: row.id, proxyUrl: "https://proxy.example.com" },
+        }),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

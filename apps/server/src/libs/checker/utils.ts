@@ -36,6 +36,9 @@ export function getCheckerPayload(
           : undefined,
         retry: monitor.retry ?? 0,
         followRedirects: monitor.followRedirects ?? false,
+        proxyUrl: monitor.proxyUrl || undefined,
+        proxyRegion: monitor.proxyRegion || undefined,
+        proxyHeaders: monitor.proxyUrl ? monitor.proxyHeaders : undefined,
       };
     case "tcp":
       return {

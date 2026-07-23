@@ -84,7 +84,22 @@ type HttpCheckerRequest struct {
 	DegradedAfter   int64             `json:"degradedAfter,omitempty"`
 	Retry           int64             `json:"retry,omitempty"`
 	FollowRedirects bool              `json:"followRedirects,omitempty"`
-	OtelConfig      struct {
+	// ProxyURL is an optional user-provided endpoint that performs the check
+	// from its own location and reports the measured result back to the
+	// checker. See checker.ProxyRequest / checker.ProxyResponse for the
+	// contract.
+	ProxyURL string `json:"proxyUrl,omitempty"`
+	// ProxyRegion overrides the region stored with the check result. When
+	// empty, the region reported by the proxy response is used, falling back
+	// to the checker's own region.
+	ProxyRegion string `json:"proxyRegion,omitempty"`
+	// ProxyHeaders are sent to the proxy itself (e.g. for authentication),
+	// not to the monitored URL.
+	ProxyHeaders []struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	} `json:"proxyHeaders,omitempty"`
+	OtelConfig struct {
 		Endpoint string            `json:"endpoint"`
 		Headers  map[string]string `json:"headers,omitempty"`
 	} `json:"otelConfig"`
