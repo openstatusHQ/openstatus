@@ -39,10 +39,13 @@ export function FormSheetMaintenanceCreate({
   children,
   open: controlledOpen,
   onOpenChange,
+  defaultPageId,
 }: {
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Pre-scopes the sheet to a page and hides the selector. */
+  defaultPageId?: number;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -53,7 +56,8 @@ export function FormSheetMaintenanceCreate({
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
 
   const pageId =
-    pages?.length === 1 ? pages[0].id : (selectedPageId ?? undefined);
+    defaultPageId ??
+    (pages?.length === 1 ? pages[0].id : (selectedPageId ?? undefined));
 
   const { data: page } = useQuery(
     trpc.page.get.queryOptions(
@@ -91,7 +95,7 @@ export function FormSheetMaintenanceCreate({
             Configure and update the maintenance.
           </FormSheetDescription>
         </FormSheetHeader>
-        {pages && pages.length > 1 ? (
+        {defaultPageId === undefined && pages && pages.length > 1 ? (
           <>
             <div className="grid gap-1.5 px-4 py-4">
               <Label htmlFor="maintenance-page-select">Status Page</Label>

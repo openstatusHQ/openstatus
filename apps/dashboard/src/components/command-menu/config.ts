@@ -18,16 +18,35 @@ export type CommandLink = {
   external?: boolean;
 };
 
+// Context each sheet needs when opened from the palette. Adding a sheet here
+// extends both `CommandSheet` and the palette's ActiveSheet handling.
+type CommandSheetContext = {
+  "status-report": { pageId?: number };
+  maintenance: { pageId?: number };
+  support: Record<never, never>;
+  "status-report-update": { reportId: number };
+};
+
+export type CommandSheet = {
+  [K in keyof CommandSheetContext]: { sheet: K } & CommandSheetContext[K];
+}[keyof CommandSheetContext];
+
 export type CommandSheetAction = {
   label: string;
   icon: CommandIcon;
   keywords?: string[];
-  sheet: "status-report" | "maintenance" | "support";
+  // Static config items can't provide runtime context (e.g. a reportId), so
+  // contextual sheets are excluded — they're opened from scoped views instead.
+  sheet: Exclude<CommandSheet["sheet"], "status-report-update">;
 };
 
 export type CommandPage =
   | { type: "monitor"; id: number; name: string }
   | { type: "status-page"; id: number; title: string };
+
+export function pageLabel(page: CommandPage): string {
+  return page.type === "monitor" ? page.name : page.title;
+}
 
 export const NAVIGATION: CommandLink[] = NAV_MENU_ITEMS.map((item) => ({
   label: item.label,

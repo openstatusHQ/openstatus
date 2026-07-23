@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { FormSheetMaintenanceCreate } from "@/components/forms/maintenance/sheet-create";
+import { FormSheetStatusReportUpdateCreate } from "@/components/forms/status-report-update/sheet-create";
 import { FormSheetStatusReportCreate } from "@/components/forms/status-report/sheet-create";
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { scrollToHash, useScrollToHash } from "@/hooks/use-scroll-to-hash";
@@ -30,19 +31,19 @@ import { switchWorkspace } from "@/lib/workspace-cookie";
 import {
   type CommandLink,
   type CommandPage,
+  type CommandSheet,
   type CommandSheetAction,
   CREATE_ACTIONS,
   CREATE_LINKS,
   HELP_LINK_ITEMS,
   HELP_SUPPORT_ACTION,
-  MONITOR_ACTIONS,
   NAVIGATION,
+  pageLabel,
   SETTINGS,
-  STATUS_PAGE_ACTIONS,
 } from "./config";
 import { useCommandMenu } from "./provider";
-
-type ActiveSheet = CommandSheetAction["sheet"] | null;
+import { MonitorScope } from "./scopes/monitor";
+import { StatusPageScope } from "./scopes/status-page";
 
 const IDLE_CAP = 5;
 
@@ -88,7 +89,9 @@ export function CommandMenu() {
   const { open, setOpen } = useCommandMenu();
   const [search, setSearch] = React.useState("");
   const [pages, setPages] = React.useState<CommandPage[]>([]);
-  const [activeSheet, setActiveSheet] = React.useState<ActiveSheet>(null);
+  const [activeSheet, setActiveSheet] = React.useState<CommandSheet | null>(
+    null,
+  );
   const [mounted, setMounted] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -98,10 +101,28 @@ export function CommandMenu() {
 
   useScrollToHash();
 
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
-  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
-  const { data: workspaces } = useQuery(trpc.workspace.list.queryOptions());
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  // `enabled: open` keeps the always-mounted palette from fetching on every
+  // dashboard load; data stays cached once fetched.
+  const { data: monitors } = useQuery(
+    trpc.monitor.list.queryOptions(undefined, { enabled: open }),
+  );
+  const { data: statusPages } = useQuery(
+    trpc.page.list.queryOptions(undefined, { enabled: open }),
+  );
+  const { data: workspaces } = useQuery(
+    trpc.workspace.list.queryOptions(undefined, { enabled: open }),
+  );
+  const { data: workspace } = useQuery(
+    trpc.workspace.get.queryOptions(undefined, { enabled: open }),
+  );
+  // Inputs match the overview/create-sheet queries so create mutations
+  // invalidate this cache entry too.
+  const { data: statusReports } = useQuery(
+    trpc.statusReport.list.queryOptions({}, { enabled: open }),
+  );
+  const { data: maintenances } = useQuery(
+    trpc.maintenance.list.queryOptions(undefined, { enabled: open }),
+  );
 
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
 
@@ -152,11 +173,11 @@ export function CommandMenu() {
     navigate(item.href);
   };
 
-  const openSheet = (sheet: Exclude<ActiveSheet, null>) => {
+  const openSheet = (next: CommandSheet) => {
     setOpen(false);
     // Defer so the palette Dialog releases focus + scroll lock before the
     // sheet/dialog claims them — otherwise Radix layers fight during overlap.
-    setTimeout(() => setActiveSheet(sheet), 0);
+    setTimeout(() => setActiveSheet(next), 0);
   };
 
   const idleCap = <T,>(items: T[]) =>
@@ -164,6 +185,32 @@ export function CommandMenu() {
 
   const otherWorkspaces =
     workspaces?.filter((w) => w.slug !== workspace?.slug) ?? [];
+
+  // Unresolved reports first; within each partition keep server order (desc).
+  const sortedStatusReports = statusReports
+    ? [
+        ...statusReports.filter((r) => r.status !== "resolved"),
+        ...statusReports.filter((r) => r.status === "resolved"),
+      ]
+    : undefined;
+
+  // Upcoming/active maintenances first, then past (server order desc).
+  // Orphans without a page are skipped — no route to navigate to.
+  const now = Date.now();
+  const withPage = maintenances?.filter((m) => m.pageId !== null);
+  const sortedMaintenances = withPage
+    ? [
+        ...withPage.filter((m) => m.to.getTime() >= now),
+        ...withPage.filter((m) => m.to.getTime() < now),
+      ]
+    : undefined;
+
+  const pageTitleById = new Map(statusPages?.map((p) => [p.id, p.title]) ?? []);
+
+  const reportForUpdate =
+    activeSheet?.sheet === "status-report-update"
+      ? statusReports?.find((r) => r.id === activeSheet.reportId)
+      : undefined;
 
   return (
     <>
@@ -191,7 +238,7 @@ export function CommandMenu() {
               <Search className="size-4 shrink-0 opacity-50" />
               {page ? (
                 <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-xs">
-                  {page.type === "monitor" ? page.name : page.title}
+                  {pageLabel(page)}
                   <button
                     type="button"
                     aria-label="Clear scope"
@@ -212,28 +259,30 @@ export function CommandMenu() {
                 className="placeholder:text-muted-foreground flex h-10 w-full bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
-            <CommandList>
+            {/* inline style: twMerge drops the ui default max-h when a class
+                overrides it, and a missed JIT class would leave the list
+                unbounded — the style prop can't silently fail */}
+            <CommandList style={{ maxHeight: "min(400px, 65vh)" }}>
               <CommandEmpty>No results found.</CommandEmpty>
 
-              {page ? (
-                <CommandGroup
-                  heading={page.type === "monitor" ? page.name : page.title}
-                >
-                  {(page.type === "monitor"
-                    ? MONITOR_ACTIONS(page.id)
-                    : STATUS_PAGE_ACTIONS(page.id)
-                  ).map((item) => (
-                    <CommandItem
-                      key={item.href}
-                      value={item.label}
-                      keywords={item.keywords}
-                      onSelect={() => navigate(item.href)}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+              {page?.type === "monitor" ? (
+                <MonitorScope page={page} navigate={navigate} />
+              ) : page?.type === "status-page" ? (
+                <StatusPageScope
+                  page={page}
+                  statusReports={statusReports}
+                  maintenances={maintenances}
+                  navigate={navigate}
+                  onCreateStatusReport={() =>
+                    openSheet({ sheet: "status-report", pageId: page.id })
+                  }
+                  onCreateMaintenance={() =>
+                    openSheet({ sheet: "maintenance", pageId: page.id })
+                  }
+                  onAddReportUpdate={(reportId) =>
+                    openSheet({ sheet: "status-report-update", reportId })
+                  }
+                />
               ) : (
                 <>
                   {monitors === undefined ? (
@@ -257,7 +306,7 @@ export function CommandMenu() {
                         >
                           <div className="grid min-w-0">
                             <span className="truncate">{m.name}</span>
-                            <span className="text-muted-foreground truncate text-xs">
+                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
                               {m.url}
                             </span>
                           </div>
@@ -285,8 +334,57 @@ export function CommandMenu() {
                         >
                           <div className="grid min-w-0">
                             <span className="truncate">{p.title}</span>
-                            <span className="text-muted-foreground truncate text-xs">
+                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
                               {p.slug}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : null}
+
+                  {sortedStatusReports && sortedStatusReports.length > 0 ? (
+                    <CommandGroup heading="Status Reports">
+                      {idleCap(sortedStatusReports).map((r) => (
+                        <CommandItem
+                          key={r.id}
+                          value={`status-report-${r.id}`}
+                          keywords={[r.title, r.status, r.page.title]}
+                          onSelect={() =>
+                            navigate(
+                              `/status-pages/${r.pageId}/status-reports/${r.id}`,
+                            )
+                          }
+                        >
+                          <div className="grid min-w-0">
+                            <span className="truncate">{r.title}</span>
+                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
+                              {r.status} · {r.page.title}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ) : null}
+
+                  {sortedMaintenances && sortedMaintenances.length > 0 ? (
+                    <CommandGroup heading="Maintenances">
+                      {idleCap(sortedMaintenances).map((m) => (
+                        <CommandItem
+                          key={m.id}
+                          value={`maintenance-${m.id}`}
+                          keywords={[
+                            m.title,
+                            pageTitleById.get(m.pageId ?? -1) ?? "",
+                          ].filter(Boolean)}
+                          onSelect={() =>
+                            navigate(`/status-pages/${m.pageId}/maintenances`)
+                          }
+                        >
+                          <div className="grid min-w-0">
+                            <span className="truncate">{m.title}</span>
+                            <span className="text-muted-foreground font-commit-mono truncate text-xs">
+                              {m.from.toLocaleString()}
                             </span>
                           </div>
                         </CommandItem>
@@ -316,7 +414,7 @@ export function CommandMenu() {
                       <ActionItem
                         key={action.sheet}
                         action={action}
-                        onSelect={() => openSheet(action.sheet)}
+                        onSelect={() => openSheet({ sheet: action.sheet })}
                       />
                     ))}
                   </CommandGroup>
@@ -343,7 +441,7 @@ export function CommandMenu() {
                           <span className="truncate">
                             {w.name || "Untitled Workspace"}
                           </span>
-                          <span className="text-muted-foreground truncate font-mono text-xs">
+                          <span className="text-muted-foreground font-commit-mono truncate text-xs">
                             {w.slug}
                           </span>
                         </CommandItem>
@@ -354,7 +452,7 @@ export function CommandMenu() {
                   <CommandGroup heading="Get Help">
                     <ActionItem
                       action={HELP_SUPPORT_ACTION}
-                      onSelect={() => openSheet("support")}
+                      onSelect={() => openSheet({ sheet: "support" })}
                     />
                     {HELP_LINK_ITEMS.map((item) => (
                       <LinkItem
@@ -390,17 +488,38 @@ export function CommandMenu() {
       </Dialog>
 
       <FormSheetStatusReportCreate
-        open={activeSheet === "status-report"}
-        onOpenChange={(o) => setActiveSheet(o ? "status-report" : null)}
+        open={activeSheet?.sheet === "status-report"}
+        onOpenChange={(o) =>
+          setActiveSheet(o ? { sheet: "status-report" } : null)
+        }
+        defaultPageId={
+          activeSheet?.sheet === "status-report"
+            ? activeSheet.pageId
+            : undefined
+        }
       />
       <FormSheetMaintenanceCreate
-        open={activeSheet === "maintenance"}
-        onOpenChange={(o) => setActiveSheet(o ? "maintenance" : null)}
+        open={activeSheet?.sheet === "maintenance"}
+        onOpenChange={(o) =>
+          setActiveSheet(o ? { sheet: "maintenance" } : null)
+        }
+        defaultPageId={
+          activeSheet?.sheet === "maintenance" ? activeSheet.pageId : undefined
+        }
       />
       <FormDialogSupportContact
-        open={activeSheet === "support"}
-        onOpenChange={(o) => setActiveSheet(o ? "support" : null)}
+        open={activeSheet?.sheet === "support"}
+        onOpenChange={(o) => setActiveSheet(o ? { sheet: "support" } : null)}
       />
+      {reportForUpdate ? (
+        <FormSheetStatusReportUpdateCreate
+          report={reportForUpdate}
+          open={activeSheet?.sheet === "status-report-update"}
+          onOpenChange={(o) => {
+            if (!o) setActiveSheet(null);
+          }}
+        />
+      ) : null}
     </>
   );
 }
