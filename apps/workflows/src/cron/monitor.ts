@@ -35,9 +35,9 @@ const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 function hasCloudTaskConfig() {
   return Boolean(
     env().GCP_PROJECT_ID.trim() &&
-      env().GCP_CLIENT_EMAIL.trim() &&
-      env().GCP_PRIVATE_KEY.trim() &&
-      env().GCP_LOCATION.trim(),
+    env().GCP_CLIENT_EMAIL.trim() &&
+    env().GCP_PRIVATE_KEY.trim() &&
+    env().GCP_LOCATION.trim(),
   );
 }
 

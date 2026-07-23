@@ -15,6 +15,7 @@ import {
   getCheckerRegion,
   isSelfHost,
 } from "@openstatus/utils";
+
 import {
   AggregatedResponseSchema,
   AggregatedResult,
