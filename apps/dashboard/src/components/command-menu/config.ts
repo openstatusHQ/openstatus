@@ -4,7 +4,6 @@ import {
   Palette,
   Pencil,
   Plus,
-  Trash2,
   Users,
 } from "lucide-react";
 import type * as React from "react";
@@ -112,11 +111,6 @@ const SETTINGS_ANCHORS: CommandLink[] = [
     href: "/settings/account#appearance",
     icon: Palette,
     keywords: ["theme", "dark mode"],
-  },
-  {
-    label: "Delete Account",
-    href: "/settings/account#delete-account",
-    icon: Trash2,
   },
 ];
 
