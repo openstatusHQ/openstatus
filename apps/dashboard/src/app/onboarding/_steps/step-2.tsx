@@ -1,9 +1,9 @@
 "use client";
 
-import type { ThemeKey } from "@openstatus/theme-store";
+import type { CheckResult } from "@openstatus/services/monitor";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   CreatePageForm,
@@ -22,6 +22,7 @@ import {
   OnboardingStepper,
 } from "@/components/layout/onboarding-layout";
 import { OnboardingStatusPagePreview } from "@/components/onboarding/status-page-preview";
+import { deriveTodayBar } from "@/lib/onboarding/live-status";
 
 import type { OnboardingPage } from "../client";
 
@@ -32,6 +33,7 @@ export function Step2({
   slugFallback,
   monitorSkipped,
   monitorName,
+  checkResults,
   isSubmitting,
   onSubmit,
   onSkip,
@@ -43,12 +45,18 @@ export function Step2({
   slugFallback: string;
   monitorSkipped: boolean;
   monitorName: string | null;
+  checkResults: CheckResult[];
   isSubmitting: boolean;
   onSubmit: (values: CreatePageFormValues) => Promise<void>;
   onSkip: () => void;
   onContinue: () => void;
 }) {
   const isLocked = pageStatus === "completed" && !!createdPageData;
+
+  const monitorTodayBar = useMemo(
+    () => (isLocked || monitorSkipped ? null : deriveTodayBar(checkResults)),
+    [isLocked, monitorSkipped, checkResults],
+  );
 
   // Live preview tracks the form values via `onValuesChange` below. Defaults
   // mirror the form's initial state so the preview renders something on first
@@ -130,7 +138,8 @@ export function Step2({
             ).replace(/-/g, " ")}
             components={lockedPreviewValues.components ?? []}
             monitorName={monitorName}
-            themeKey={lockedPreviewValues.theme as ThemeKey}
+            monitorTodayBar={monitorTodayBar}
+            themeKey={lockedPreviewValues.theme}
             className="h-full w-full"
           />
         </div>

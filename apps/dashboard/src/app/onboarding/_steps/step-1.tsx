@@ -27,7 +27,10 @@ import {
   OnboardingChecksTable,
 } from "@/components/onboarding/checks-table";
 import { checkResultToResponseLog } from "@/components/onboarding/checks-table-adapter";
-import type { useStreamChecks } from "@/components/onboarding/use-stream-checks";
+import type {
+  StreamChecksStatus,
+  useStreamChecks,
+} from "@/components/onboarding/use-stream-checks";
 import { exampleChecks } from "@/data/onboarding-checks";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +45,7 @@ export function Step1({
   isSubmitting,
   monitorData,
   checkResults,
-  isStreaming,
+  checksStatus,
   onSubmit,
   onSkip,
   onContinue,
@@ -54,7 +57,7 @@ export function Step1({
   isSubmitting: boolean;
   monitorData: OnboardingMonitor | undefined;
   checkResults: ReturnType<typeof useStreamChecks>["results"];
-  isStreaming: boolean;
+  checksStatus: StreamChecksStatus;
   onSubmit: (values: { url: string }) => Promise<void>;
   onSkip: () => void;
   onContinue: () => void;
@@ -81,7 +84,10 @@ export function Step1({
     [successfulResults, monitorData?.id, monitorData?.url],
   );
   const allFailed =
-    !isStreaming && checkResults.length > 0 && successfulResults.length === 0;
+    checksStatus === "completed" &&
+    checkResults.length > 0 &&
+    successfulResults.length === 0;
+  const checksComplete = checksStatus === "completed";
 
   return (
     <>
@@ -111,8 +117,14 @@ export function Step1({
         )}
         <OnboardingActions>
           {isLocked ? (
-            <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
+            <Button onClick={onContinue} disabled={!checksComplete}>
+              {checksComplete ? (
+                <>
+                  Continue <ArrowRight className="size-3" />
+                </>
+              ) : (
+                "Running checks…"
+              )}
             </Button>
           ) : (
             <>
@@ -138,7 +150,7 @@ export function Step1({
           <OnboardingChecksTable
             rows={checksRows}
             totalRegions={TOTAL_REGIONS}
-            isStreaming={isStreaming}
+            isStreaming={checksStatus === "streaming"}
             allFailed={allFailed}
             url={monitorData?.url}
             onRetry={onRetryChecks}

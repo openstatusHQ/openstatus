@@ -4,22 +4,26 @@ import type { CheckResult } from "@openstatus/services/monitor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+// Bound the run so a stalled stream (hung fetch/prime) can never leave the
+// step-1 gate disabled. Comfortably above the server's 10s per-region cap.
+const STREAM_TIMEOUT_MS = 20_000;
+
+export type StreamChecksStatus = "idle" | "streaming" | "completed";
+
 export function useStreamChecks() {
   const [results, setResults] = useState<CheckResult[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [status, setStatus] = useState<StreamChecksStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const fail = useCallback((message: string) => {
     setError(message);
-    setIsStreaming(false);
     toast.error(message);
   }, []);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setIsStreaming(false);
   }, []);
 
   const start = useCallback(
@@ -29,7 +33,8 @@ export function useStreamChecks() {
       abortRef.current = controller;
       setResults([]);
       setError(null);
-      setIsStreaming(true);
+      setStatus("streaming");
+      const timeout = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
 
       try {
         const res = await fetch("/api/onboarding/checks", {
@@ -83,7 +88,8 @@ export function useStreamChecks() {
         if ((err as Error)?.name === "AbortError") return;
         fail(err instanceof Error ? err.message : "Stream failed");
       } finally {
-        setIsStreaming(false);
+        clearTimeout(timeout);
+        setStatus("completed");
         abortRef.current = null;
       }
     },
@@ -96,5 +102,5 @@ export function useStreamChecks() {
     };
   }, []);
 
-  return { results, isStreaming, error, start, stop };
+  return { results, status, error, start, stop };
 }
