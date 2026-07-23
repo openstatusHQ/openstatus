@@ -142,8 +142,8 @@ export function CommandMenu() {
       ? monitorScopeGroups(page)
       : statusPageScopeGroups({
           page,
-          statusReports: data.statusReports,
-          maintenances: data.maintenances,
+          statusReports: data.sortedStatusReports,
+          maintenances: data.sortedMaintenances,
         })
     : [
         monitorsGroup(data.monitors),

@@ -82,7 +82,7 @@ export function maintenancesGroup(
       description: m.from.toLocaleString(),
       keywords: [m.title, pageTitleById.get(m.pageId ?? -1) ?? ""].filter(
         Boolean,
-      ) as string[],
+      ),
       action: {
         type: "navigate",
         href: `/status-pages/${m.pageId}/maintenances`,
