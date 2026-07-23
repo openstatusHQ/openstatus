@@ -4,6 +4,7 @@ import {
   page,
   pageComponent,
   pageSubscriber,
+  privateLocation,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -25,6 +26,7 @@ import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { toServiceCtx } from "../adapter";
 import { registerMaintenanceTools } from "./maintenance";
 import { registerPageTools } from "./page";
+import { registerPrivateLocationTools } from "./private-location";
 import { registerStatusReportTools } from "./status-report";
 
 /**
@@ -107,7 +109,7 @@ afterAll(async () => {
 
 /** Build a fresh McpServer + register a tool group, return the tool map. */
 function registered(
-  group: "page" | "status-report" | "maintenance",
+  group: "page" | "status-report" | "maintenance" | "private-location",
   ctx: ServiceContext,
 ) {
   const server = new McpServer(
@@ -121,6 +123,8 @@ function registered(
       return registerStatusReportTools(server, ctx);
     case "maintenance":
       return registerMaintenanceTools(server, ctx);
+    case "private-location":
+      return registerPrivateLocationTools(server, ctx);
   }
 }
 
@@ -581,6 +585,55 @@ describe("create_maintenance", () => {
   });
 });
 
+describe("list_private_locations", () => {
+  test("never exposes the agent token", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      await tx.insert(privateLocation).values({
+        name: `${TEST_PREFIX}-mcp-location`,
+        token: "super-secret-agent-token",
+        workspaceId: teamWorkspace.id,
+      });
+
+      const tools = registered("private-location", ctx);
+      const result = await callTool(tools, "list_private_locations", {
+        page: 1,
+        perPage: 50,
+      });
+
+      expect(result.isError).toBeFalsy();
+
+      const serialized = JSON.stringify(result);
+      expect(serialized).not.toContain("super-secret-agent-token");
+      expect(serialized).not.toContain("token");
+    });
+  });
+
+  test("returns locations for the workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = makeMcpToolCtx(teamWorkspace, { db: tx });
+      await tx.insert(privateLocation).values({
+        name: `${TEST_PREFIX}-mcp-listed`,
+        token: "another-token",
+        workspaceId: teamWorkspace.id,
+      });
+
+      const tools = registered("private-location", ctx);
+      const result = await callTool(tools, "list_private_locations", {
+        page: 1,
+        perPage: 50,
+      });
+
+      const structured = result.structuredContent as {
+        items: { name: string }[];
+      };
+      expect(structured.items.some((i) => i.name.includes("mcp-listed"))).toBe(
+        true,
+      );
+    });
+  });
+});
+
 describe("scope filter", () => {
   test("read-only key sees read tools, no write tools", async () => {
     const ctx = makeMcpToolCtx(teamWorkspace, { scopes: ["read"] });
@@ -592,6 +645,9 @@ describe("scope filter", () => {
     expect(pageTools.has("list_status_pages")).toBe(true);
     expect(reportTools.has("list_status_reports")).toBe(true);
     expect(maintenanceTools.has("list_maintenances")).toBe(true);
+    expect(
+      registered("private-location", ctx).has("list_private_locations"),
+    ).toBe(true);
 
     // Write tools must be filtered out — registry doesn't carry them
     // and `tools/list` will see only the read tools.

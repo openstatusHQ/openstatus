@@ -1,5 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { google } from "@google-cloud/tasks/build/protos";
 import {
   and,
   db,

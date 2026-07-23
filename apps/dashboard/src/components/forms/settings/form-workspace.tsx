@@ -68,7 +68,7 @@ export function FormWorkspace({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="workspace-name">
           <FormCardHeader>
             <FormCardTitle>Workspace</FormCardTitle>
             <FormCardDescription>

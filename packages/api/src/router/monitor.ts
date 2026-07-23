@@ -32,9 +32,14 @@ import {
 } from "@openstatus/services/monitor";
 import { z } from "zod";
 
+import { env } from "../env";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { testDns, testHttp, testTcp } from "./checker";
+
+// self-host has no access to the openstatus checker fleet, so the pre-save
+// endpoint test can never succeed — skip it entirely.
+const isSelfHost = env.SELF_HOST;
 
 // tRPC-side input schemas. These preserve the existing wire contract exactly.
 
@@ -315,7 +320,7 @@ export const monitorRouter = createTRPCRouter({
         // Pre-save endpoint check — kept at the tRPC layer because the
         // `testHttp` / `testTcp` / `testDns` helpers hit external URLs and
         // are tRPC-specific UX; services unconditionally save.
-        if (!input.skipCheck && input.active) {
+        if (!isSelfHost && !input.skipCheck && input.active) {
           if (input.jobType === "http") {
             await testHttp({
               url: input.url,
@@ -379,7 +384,7 @@ export const monitorRouter = createTRPCRouter({
     .input(newMonitorTRPCInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        if (!input.skipCheck) {
+        if (!isSelfHost && !input.skipCheck) {
           if (input.jobType === "http") {
             await testHttp({
               url: input.url,

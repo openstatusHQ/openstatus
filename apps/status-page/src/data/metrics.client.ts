@@ -310,6 +310,27 @@ export function mapLatency(
   });
 }
 
+// Reduce each public monitor's latency time-series to a single averaged
+// percentile, keyed by monitorId — for the status-page tracker latency chip.
+export function latencyByMonitorId(
+  monitors: RouterOutputs["statusPage"]["getMonitors"] = [],
+  percentile: (typeof PERCENTILES)[number] = "p75",
+) {
+  const field = PERCENTILE_MAP[percentile];
+  const map = new Map<string, string>();
+  for (const monitor of monitors ?? []) {
+    const points =
+      monitor.data
+        ?.map((metric) => metric[field])
+        .filter((value): value is number => value != null) ?? [];
+    if (points.length === 0) continue;
+    const avg = points.reduce((sum, value) => sum + value, 0) / points.length;
+    // compact chip: drop the unit space ("117 ms" -> "117ms")
+    map.set(monitor.id.toString(), formatMilliseconds(avg).replace(" ", ""));
+  }
+  return map;
+}
+
 export function mapTimingPhases(
   timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"],
   percentile: (typeof PERCENTILES)[number],

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Monitor,
-  Notification,
-  Agent,
-  Settings,
-  Overview,
-  Chat,
-  SidebarLeft,
-  StatusPage,
-} from "@openstatus/icons";
+import { SidebarLeft } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sidebar,
@@ -33,6 +24,7 @@ import { NavOverview } from "@/components/nav/nav-overview";
 import { NavStatusPages } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
+import { NAV } from "@/config/nav";
 
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
@@ -47,41 +39,21 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   overview: [
-    {
-      name: "Overview",
-      url: "/overview",
-      icon: Overview,
-    },
+    { name: "Overview", url: NAV.overview.href, icon: NAV.overview.icon },
     {
       name: "Status Pages",
-      url: "/status-pages",
-      icon: StatusPage,
+      url: NAV.statusPages.href,
+      icon: NAV.statusPages.icon,
     },
-    {
-      name: "Monitors",
-      url: "/monitors",
-      icon: Monitor,
-    },
+    { name: "Monitors", url: NAV.monitors.href, icon: NAV.monitors.icon },
     {
       name: "Notifications",
-      url: "/notifications",
-      icon: Notification,
+      url: NAV.notifications.href,
+      icon: NAV.notifications.icon,
     },
-    {
-      name: "Settings",
-      url: "/settings/general",
-      icon: Settings,
-    },
-    {
-      name: "Assistant",
-      url: "/chat",
-      icon: Chat,
-    },
-    {
-      name: "Slack agent",
-      url: "/agents",
-      icon: Agent,
-    },
+    { name: "Settings", url: NAV.settings.href, icon: NAV.settings.icon },
+    { name: "Assistant", url: NAV.chat.href, icon: NAV.chat.icon },
+    { name: "Slack agent", url: NAV.agents.href, icon: NAV.agents.icon },
   ],
 };
 

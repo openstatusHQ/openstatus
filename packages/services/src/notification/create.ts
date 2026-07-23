@@ -26,6 +26,14 @@ export async function createNotification(args: {
   const input = CreateNotificationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
+    // Ownership before quota: a cross-workspace monitor must fail with
+    // ForbiddenError regardless of the workspace's notification count.
+    const validatedMonitors = await validateMonitorIds({
+      tx,
+      workspaceId: ctx.workspace.id,
+      monitorIds: input.monitors,
+    });
+
     // Plan gate on notification count.
     const existing = await tx
       .select({ count: count() })
@@ -46,12 +54,6 @@ export async function createNotification(args: {
     assertProviderAllowed(ctx.workspace, input.provider);
 
     validateNotificationData(input.provider, input.data);
-
-    const validatedMonitors = await validateMonitorIds({
-      tx,
-      workspaceId: ctx.workspace.id,
-      monitorIds: input.monitors,
-    });
 
     const row = await tx
       .insert(notification)

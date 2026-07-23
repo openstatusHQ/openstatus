@@ -497,7 +497,13 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = monitorComponents
         .map((c) => ({
           ...c.monitor,
-          name: c.monitor?.externalName ?? c.monitor?.name ?? "",
+          // the page component carries the public-facing name/description;
+          // clear externalName so the schema transform keeps the override.
+          // description: NULL means never backfilled → fall back to the
+          // monitor's own; "" is a deliberately cleared field → stays blank.
+          name: c.name,
+          description: c.description ?? c.monitor?.description ?? "",
+          externalName: null,
         }))
         .sort((a, b) => {
           const aComp = monitorComponents.find((m) => m.monitor?.id === a.id);

@@ -7,6 +7,7 @@ export { default as WelcomeEmail } from "../emails/welcome";
 export { default as TeamInvitationEmail } from "../emails/team-invitation";
 export { default as MonitorPausedEmail } from "../emails/monitor-paused";
 export { default as MonitorDeactivationEmail } from "../emails/monitor-deactivation";
+export { default as PrivateLocationAlertEmail } from "../emails/private-location-alert";
 export { default as StatusPageMagicLinkEmail } from "../emails/status-page-magic-link";
 
 export { monitorDeactivationEmail } from "../hotfix/monitor-deactivation";

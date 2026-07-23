@@ -24,6 +24,7 @@ import { listMaintenancesTable } from "./list-maintenances";
 import { listMonitorsTable } from "./list-monitors";
 import { listNotificationsTable } from "./list-notifications";
 import { listPageComponentsTable } from "./list-page-components";
+import { listPrivateLocationsTable } from "./list-private-locations";
 import { listResponseLogsTable } from "./list-response-logs";
 import { listStatusPagesTable } from "./list-status-pages";
 import { listStatusReportsTable } from "./list-status-reports";
@@ -148,6 +149,12 @@ export const toolRenderers: ToolRendererRegistry = {
   list_notifications: {
     renderResult: ({ output }) => (
       <ResultTable {...listNotificationsTable(output)} />
+    ),
+    summary: (o) => itemsCountSummary(o.items),
+  },
+  list_private_locations: {
+    renderResult: ({ output }) => (
+      <ResultTable {...listPrivateLocationsTable(output)} />
     ),
     summary: (o) => itemsCountSummary(o.items),
   },

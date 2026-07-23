@@ -1,7 +1,10 @@
+import type { PageConfiguration as DBPageConfiguration } from "@openstatus/db/src/schema";
 import type { Locale } from "@openstatus/locales";
 import type {
+  CustomTheme,
   PageComponent,
   PageComponentGroup,
+  PageConfiguration,
   PageSubscriber,
   StatusPage,
   StatusPageSummary,
@@ -13,11 +16,17 @@ import {
   ComponentEventType,
   OverallStatus,
   PageAccessType,
+  PageBarType,
   PageComponentType,
+  PageMetricType,
   PageTheme,
   Locale as ProtoLocale,
   SubscriberSource,
 } from "@openstatus/proto/status_page/v1";
+import {
+  type CustomTheme as DbCustomTheme,
+  hasCustomTheme,
+} from "@openstatus/theme-store";
 
 /**
  * Database types
@@ -40,6 +49,7 @@ type DBPage = {
   defaultLocale: Locale;
   locales: Locale[] | null;
   allowIndex: boolean;
+  customTheme?: DbCustomTheme | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -153,6 +163,48 @@ export function protoThemeToDb(theme: PageTheme): "system" | "light" | "dark" {
     default:
       return "system";
   }
+}
+
+function metricTypeToProto(
+  value: DBPageConfiguration["value"],
+): PageMetricType {
+  switch (value) {
+    case "duration":
+      return PageMetricType.DURATION;
+    case "requests":
+      return PageMetricType.REQUESTS;
+    case "manual":
+      return PageMetricType.MANUAL;
+    default:
+      return PageMetricType.UNSPECIFIED;
+  }
+}
+
+function barTypeToProto(type: DBPageConfiguration["type"]): PageBarType {
+  switch (type) {
+    case "absolute":
+      return PageBarType.ABSOLUTE;
+    case "manual":
+      return PageBarType.MANUAL;
+    default:
+      return PageBarType.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert the DB page configuration (parsed via pageConfigurationSchema) to proto.
+ */
+export function dbConfigurationToProto(
+  configuration: DBPageConfiguration,
+): PageConfiguration {
+  return {
+    $typeName: "openstatus.status_page.v1.PageConfiguration" as const,
+    metricType: metricTypeToProto(configuration.value),
+    barType: barTypeToProto(configuration.type),
+    showUptime: configuration.uptime,
+    themeKey: configuration.theme,
+    days: configuration.days,
+  };
 }
 
 /**
@@ -304,6 +356,26 @@ export function dbPageToProto(page: DBPage): StatusPage {
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
     allowIndex: page.allowIndex ?? true,
     allowedIpRanges: page.allowedIpRanges ?? "",
+    customTheme: dbCustomThemeToProto(page.customTheme),
+  };
+}
+
+export function dbCustomThemeToProto(
+  customTheme: DbCustomTheme | null | undefined,
+): CustomTheme | undefined {
+  if (!hasCustomTheme(customTheme)) return undefined;
+  // ThemeVars values are `string | undefined`; proto maps require `string`.
+  const pick = (vars?: Record<string, string | undefined>) => {
+    const out: Record<string, string> = {};
+    for (const [name, value] of Object.entries(vars ?? {})) {
+      if (typeof value === "string") out[name] = value;
+    }
+    return out;
+  };
+  return {
+    $typeName: "openstatus.status_page.v1.CustomTheme" as const,
+    light: pick(customTheme.light),
+    dark: pick(customTheme.dark),
   };
 }
 

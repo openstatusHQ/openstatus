@@ -25,7 +25,7 @@ If your endpoint is already public and you only want geographic coverage, the [p
 
 A private location is not an inbound port openstatus calls into. The probe initiates everything:
 
-1. You deploy the openstatus probe container — typically `ghcr.io/openstatushq/probe:latest` — somewhere inside the network that needs to be monitored.
+1. You deploy the openstatus probe container — typically `ghcr.io/openstatushq/private-location:latest` — somewhere inside the network that needs to be monitored.
 2. The probe opens an outbound, authenticated connection to the openstatus platform using the token issued when you created the location.
 3. openstatus dispatches the checks assigned to that location down the connection. The probe runs them against your internal endpoints and streams the results back.
 

@@ -32,6 +32,10 @@
     "./notification/v1": {
       "import": "./gen/ts/openstatus/notification/v1/index.ts",
       "types": "./gen/ts/openstatus/notification/v1/index.ts"
+    },
+    "./private_location/v1": {
+      "import": "./gen/ts/openstatus/private_location/v1/index.ts",
+      "types": "./gen/ts/openstatus/private_location/v1/index.ts"
     }
   },
   "scripts": {

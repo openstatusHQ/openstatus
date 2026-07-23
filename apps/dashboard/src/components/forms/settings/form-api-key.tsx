@@ -164,7 +164,7 @@ export function FormApiKey() {
   }
 
   return (
-    <FormCard>
+    <FormCard id="api-keys">
       <FormCardHeader>
         <FormCardTitle>API Keys</FormCardTitle>
         <FormCardDescription>

@@ -9,7 +9,11 @@ import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validati
 import { HTTPException } from "hono/http-exception";
 
 import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
+import {
+  getCheckerPayload,
+  getCheckerTimeout,
+  getCheckerUrl,
+} from "@/libs/checker";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 
 import type { monitorsApi } from "..";
@@ -146,6 +150,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         },
         method: "POST",
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(getCheckerTimeout(row)),
       });
 
       allResult.push(result);

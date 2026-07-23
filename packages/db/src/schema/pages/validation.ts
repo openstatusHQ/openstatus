@@ -1,6 +1,11 @@
 import { locales } from "@openstatus/locales";
 import type { ThemeKey } from "@openstatus/theme-store";
-import { THEME_KEYS } from "@openstatus/theme-store";
+import {
+  hasCustomTheme,
+  sanitizeCustomTheme,
+  THEME_KEYS,
+  validateCustomTheme,
+} from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,6 +40,33 @@ const stringToArray = z.preprocess((val) => {
   return [];
 }, z.array(z.string()));
 
+// Loose { light, dark } var maps — write paths enforce the supported var
+// names / safe values; `.catch(null)` degrades corrupt stored json to "no
+// overrides" instead of tanking every page read.
+const themeVarsSchema = z.record(z.string(), z.string());
+export const customThemeSchema = z.object({
+  light: themeVarsSchema.optional(),
+  dark: themeVarsSchema.optional(),
+});
+
+// Strict write-side counterpart: only supported var names and values that
+// can't break out of the inline <style> tag the status page renders them
+// into. Empty / nullish input clears the column.
+export const customThemeWriteSchema = customThemeSchema
+  .superRefine((value, ctx) => {
+    const result = validateCustomTheme(value);
+    if (!result.valid) {
+      for (const message of result.errors) {
+        ctx.addIssue({ code: "custom", message });
+      }
+    }
+  })
+  .nullish()
+  .transform((v) => {
+    if (v == null || !hasCustomTheme(v)) return null;
+    return sanitizeCustomTheme(v);
+  });
+
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: customDomainSchema.prefault(""),
   accessType: z.enum(pageAccessTypes).prefault("public"),
@@ -67,6 +99,7 @@ export const insertPageSchema = createInsertSchema(page, {
       .nullish(),
     defaultLocale: z.enum(locales).optional().prefault("en"),
     locales: z.array(z.enum(locales)).nullable().optional(),
+    customTheme: customThemeWriteSchema,
   })
   .refine(
     (data) => {
@@ -111,15 +144,6 @@ export const pageConfigurationSchema = z.object({
     .transform((v) => v ?? 45),
 });
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
-
-// Loose { light, dark } var maps — write paths enforce the supported var
-// names / safe values; `.catch(null)` degrades corrupt stored json to "no
-// overrides" instead of tanking every page read.
-const themeVarsSchema = z.record(z.string(), z.string());
-export const customThemeSchema = z.object({
-  light: themeVarsSchema.optional(),
-  dark: themeVarsSchema.optional(),
-});
 
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().prefault(""),

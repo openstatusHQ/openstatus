@@ -2325,6 +2325,335 @@ components:
       title: WhatsappData
       additionalProperties: false
       description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.private_location.v1.CreatePrivateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - eu-west-agent
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the private location (required, 1-256 characters).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location should run (optional).
+        metadata:
+          type: object
+          title: metadata
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 256
+          description: User-defined key/value labels (optional, up to 20 entries).
+      title: CreatePrivateLocationRequest
+      additionalProperties: false
+      description: CreatePrivateLocationRequest is the request to create a new private location.
+    openstatus.private_location.v1.CreatePrivateLocationRequest.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.CreatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The created private location, including its generated agent token.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: CreatePrivateLocationResponse
+      additionalProperties: false
+      description: CreatePrivateLocationResponse is the response after creating a private location.
+    openstatus.private_location.v1.DeletePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to delete (required).
+      title: DeletePrivateLocationRequest
+      additionalProperties: false
+      description: DeletePrivateLocationRequest is the request to delete a private location.
+    openstatus.private_location.v1.DeletePrivateLocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeletePrivateLocationResponse
+      additionalProperties: false
+      description: DeletePrivateLocationResponse is the response after deleting a private location.
+    openstatus.private_location.v1.GetPrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to retrieve (required).
+      title: GetPrivateLocationRequest
+      additionalProperties: false
+      description: GetPrivateLocationRequest is the request to get a private location by ID.
+    openstatus.private_location.v1.GetPrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The requested private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: GetPrivateLocationResponse
+      additionalProperties: false
+      description: GetPrivateLocationResponse is the response containing the private location.
+    openstatus.private_location.v1.ListPrivateLocationsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of private locations to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of private locations to skip for pagination (defaults to 0).
+      title: ListPrivateLocationsRequest
+      additionalProperties: false
+      description: ListPrivateLocationsRequest is the request to list private locations.
+    openstatus.private_location.v1.ListPrivateLocationsResponse:
+      type: object
+      properties:
+        privateLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationSummary'
+          title: private_locations
+          description: List of private locations.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of private locations in the workspace.
+      title: ListPrivateLocationsResponse
+      additionalProperties: false
+      description: ListPrivateLocationsResponse is the response containing private location summaries.
+    openstatus.private_location.v1.PrivateLocation:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        token:
+          type: string
+          title: token
+          description: |-
+            Agent credential. Generated by the server on creation and used by the
+             agent to authenticate; treat it as a secret.
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+        metadata:
+          type: object
+          title: metadata
+          additionalProperties:
+            type: string
+            title: value
+          description: User-defined key/value labels attached to this private location.
+        status:
+          title: status
+          description: Computed health of the agent. Read-only.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationStatus'
+      title: PrivateLocation
+      additionalProperties: false
+      description: PrivateLocation represents a self-hosted checker agent with full details.
+    openstatus.private_location.v1.PrivateLocation.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.PrivateLocationStatus:
+      type: string
+      title: PrivateLocationStatus
+      enum:
+        - PRIVATE_LOCATION_STATUS_UNSPECIFIED
+        - PRIVATE_LOCATION_STATUS_ACTIVE
+        - PRIVATE_LOCATION_STATUS_ERROR
+      description: |-
+        PrivateLocationStatus is the computed health of a private location, derived
+         from the agent heartbeat. Read-only — it cannot be set through the API.
+    openstatus.private_location.v1.PrivateLocationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the private location.
+        name:
+          type: string
+          title: name
+          description: Display name for the private location.
+        monitorCount:
+          type: integer
+          title: monitor_count
+          format: int32
+          description: Number of monitors this private location runs.
+        lastSeenAt:
+          type: string
+          title: last_seen_at
+          description: Last time the agent reported a result (RFC 3339), empty if it never has.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the private location was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the private location was last updated (RFC 3339 format).
+        status:
+          title: status
+          description: Computed health of the agent. Read-only.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocationStatus'
+        metadata:
+          type: object
+          title: metadata
+          additionalProperties:
+            type: string
+            title: value
+          description: User-defined key/value labels attached to this private location.
+      title: PrivateLocationSummary
+      additionalProperties: false
+      description: |-
+        PrivateLocationSummary represents metadata for a private location (used in
+         list responses). The agent token is intentionally omitted.
+    openstatus.private_location.v1.PrivateLocationSummary.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.UpdatePrivateLocationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the private location to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: New display name for the private location (optional).
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: New list of monitor IDs. Only applied when update_monitor_ids is true.
+        updateMonitorIds:
+          type:
+            - boolean
+            - "null"
+          title: update_monitor_ids
+          description: |-
+            When true, monitor_ids replaces the current associations (an empty list
+             clears all). When false or unset, monitor_ids is ignored and existing
+             associations are preserved.
+        metadata:
+          type: object
+          title: metadata
+          maxProperties: 20
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 256
+          description: New key/value labels. Only applied when update_metadata is true.
+        updateMetadata:
+          type:
+            - boolean
+            - "null"
+          title: update_metadata
+          description: |-
+            When true, metadata replaces the current labels (an empty map clears all).
+             When false or unset, metadata is ignored and existing labels are preserved.
+      title: UpdatePrivateLocationRequest
+      additionalProperties: false
+      description: UpdatePrivateLocationRequest is the request to update a private location.
+    openstatus.private_location.v1.UpdatePrivateLocationRequest.MetadataEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: MetadataEntry
+      additionalProperties: false
+    openstatus.private_location.v1.UpdatePrivateLocationResponse:
+      type: object
+      properties:
+        privateLocation:
+          title: private_location
+          description: The updated private location.
+          $ref: '#/components/schemas/openstatus.private_location.v1.PrivateLocation'
+      title: UpdatePrivateLocationResponse
+      additionalProperties: false
+      description: UpdatePrivateLocationResponse is the response after updating a private location.
     openstatus.status_page.v1.AddMonitorComponentRequest:
       type: object
       properties:
@@ -2745,6 +3074,14 @@ components:
             - "null"
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: |-
+            Per-mode CSS variable overrides merged over the theme (optional).
+             Only supported variable names are accepted. Requires the custom-theme plan feature.
       title: CreateStatusPageRequest
       additionalProperties: false
       description: CreateStatusPageRequest is the request to create a new status page.
@@ -2758,6 +3095,48 @@ components:
       title: CreateStatusPageResponse
       additionalProperties: false
       description: CreateStatusPageResponse is the response after creating a status page.
+    openstatus.status_page.v1.CustomTheme:
+      type: object
+      properties:
+        light:
+          type: object
+          title: light
+          additionalProperties:
+            type: string
+            title: value
+          description: 'CSS variable overrides applied in light mode, keyed by variable name (e.g. "--primary": "hsl(24 94% 50%)").'
+        dark:
+          type: object
+          title: dark
+          additionalProperties:
+            type: string
+            title: value
+          description: CSS variable overrides applied in dark mode, keyed by variable name.
+      title: CustomTheme
+      additionalProperties: false
+      description: CustomTheme holds per-mode CSS variable overrides merged over the page theme.
+    openstatus.status_page.v1.CustomTheme.DarkEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: DarkEntry
+      additionalProperties: false
+    openstatus.status_page.v1.CustomTheme.LightEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: LightEntry
+      additionalProperties: false
     openstatus.status_page.v1.DeleteComponentGroupRequest:
       type: object
       properties:
@@ -2905,6 +3284,27 @@ components:
       title: GetPageComponentDailySummaryResponse
       additionalProperties: false
       description: GetPageComponentDailySummaryResponse is the response containing per-component summaries.
+    openstatus.status_page.v1.GetPageComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to retrieve (required).
+      title: GetPageComponentRequest
+      additionalProperties: false
+      description: GetPageComponentRequest is the request to fetch a single component by ID.
+    openstatus.status_page.v1.GetPageComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The requested component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: GetPageComponentResponse
+      additionalProperties: false
+      description: GetPageComponentResponse is the response containing the component.
     openstatus.status_page.v1.GetStatusPageContentRequest:
       type: object
       oneOf:
@@ -2963,6 +3363,65 @@ components:
       title: GetStatusPageContentResponse
       additionalProperties: false
       description: GetStatusPageContentResponse is the response containing the full status page content.
+    openstatus.status_page.v1.GetStatusPageOverviewRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page (required, workspace-scoped).
+      title: GetStatusPageOverviewRequest
+      additionalProperties: false
+      description: GetStatusPageOverviewRequest requests the full overview of a status page by id.
+    openstatus.status_page.v1.GetStatusPageOverviewResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The status page details.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+        configuration:
+          title: configuration
+          description: Rich rendering configuration of the page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageConfiguration'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          title: components
+          description: Components on the status page.
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          title: groups
+          description: Component groups on the status page.
+        statusReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          title: status_reports
+          description: Active and recent status reports.
+        maintenances:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+          title: maintenances
+          description: Scheduled maintenances.
+        overallStatus:
+          title: overall_status
+          description: Aggregated status across all components.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+        componentStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentStatus'
+          title: component_statuses
+          description: Status of individual components.
+      title: GetStatusPageOverviewResponse
+      additionalProperties: false
+      description: GetStatusPageOverviewResponse bundles all data for a single status page.
     openstatus.status_page.v1.GetStatusPageRequest:
       type: object
       properties:
@@ -3106,6 +3565,14 @@ components:
         - PAGE_ACCESS_TYPE_AUTHENTICATED
         - PAGE_ACCESS_TYPE_IP_RESTRICTED
       description: PageAccessType defines who can access the status page.
+    openstatus.status_page.v1.PageBarType:
+      type: string
+      title: PageBarType
+      enum:
+        - PAGE_BAR_TYPE_UNSPECIFIED
+        - PAGE_BAR_TYPE_ABSOLUTE
+        - PAGE_BAR_TYPE_MANUAL
+      description: PageBarType mirrors page.configuration.type (how the status bar is computed).
     openstatus.status_page.v1.PageComponent:
       type: object
       properties:
@@ -3232,6 +3699,44 @@ components:
         - PAGE_COMPONENT_TYPE_MONITOR
         - PAGE_COMPONENT_TYPE_STATIC
       description: PageComponentType defines the type of a component on a status page.
+    openstatus.status_page.v1.PageConfiguration:
+      type: object
+      properties:
+        metricType:
+          title: metric_type
+          description: Which metric the status bars represent (configuration.value).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageMetricType'
+        barType:
+          title: bar_type
+          description: How the status bar is computed (configuration.type).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageBarType'
+        showUptime:
+          type: boolean
+          title: show_uptime
+          description: Whether to show the uptime percentage (configuration.uptime).
+        themeKey:
+          type: string
+          title: theme_key
+          description: |-
+            Theme key from the theme store (configuration.theme), e.g. "default".
+             Free-form string rather than an enum because the theme catalog is dynamic.
+        days:
+          type: integer
+          title: days
+          format: int32
+          description: 'Number of uptime-bar days rendered on the page (configuration.days): 30 or 45.'
+      title: PageConfiguration
+      additionalProperties: false
+      description: PageConfiguration is the rich rendering config stored in page.configuration.
+    openstatus.status_page.v1.PageMetricType:
+      type: string
+      title: PageMetricType
+      enum:
+        - PAGE_METRIC_TYPE_UNSPECIFIED
+        - PAGE_METRIC_TYPE_DURATION
+        - PAGE_METRIC_TYPE_REQUESTS
+        - PAGE_METRIC_TYPE_MANUAL
+      description: PageMetricType mirrors page.configuration.value (which metric the status bars represent).
     openstatus.status_page.v1.PageSubscriber:
       type: object
       properties:
@@ -3419,6 +3924,12 @@ components:
           type: string
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (only set when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: Per-mode CSS variable overrides merged over the theme (only set when configured).
       title: StatusPage
       additionalProperties: false
       description: StatusPage represents a full status page with all details.
@@ -3734,6 +4245,14 @@ components:
             - "null"
           title: allowed_ip_ranges
           description: Comma-separated IPv4 CIDR ranges (required when access_type is IP_RESTRICTED).
+        customTheme:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.status_page.v1.CustomTheme'
+            - type: "null"
+          title: custom_theme
+          description: |-
+            New per-mode CSS variable overrides (optional). Omit to keep the current
+             value; send an empty message to clear. Requires the custom-theme plan feature.
       title: UpdateStatusPageRequest
       additionalProperties: false
       description: UpdateStatusPageRequest is the request to update a status page.
@@ -4191,6 +4710,10 @@ tags:
       notified automatically when maintenance is created.
   - name: HealthService
     description: Health check endpoint for load balancer probes. No authentication required.
+  - name: PrivateLocationService
+    description: |-
+      PrivateLocationService provides CRUD operations for private locations —
+       self-hosted checker agents that run monitors from your own network.
 paths:
   /rpc/openstatus.health.v1.HealthService/Check:
     get:
@@ -5210,6 +5733,196 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/CreatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: CreatePrivateLocation
+      description: Creates a private location. The agent token is generated by the server and returned in the response - it cannot be supplied by the caller. Use the token to configure the agent so it can pull its monitors and report results.
+      operationId: PrivateLocationService_CreatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.CreatePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/DeletePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: DeletePrivateLocation
+      description: DeletePrivateLocation removes a private location.
+      operationId: PrivateLocationService_DeletePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.DeletePrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/GetPrivateLocation:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: GetPrivateLocation
+      description: |-
+        GetPrivateLocation retrieves a single private location by ID, including
+         its agent token.
+      operationId: PrivateLocationService_GetPrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.GetPrivateLocationResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/ListPrivateLocations:
+    get:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+    post:
+      tags:
+        - PrivateLocationService
+      summary: ListPrivateLocations
+      description: |-
+        ListPrivateLocations returns a paginated list of private location
+         summaries. Agent tokens are not included - use GetPrivateLocation.
+      operationId: PrivateLocationService_ListPrivateLocations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.ListPrivateLocationsResponse'
+  /rpc/openstatus.private_location.v1.PrivateLocationService/UpdatePrivateLocation:
+    post:
+      tags:
+        - PrivateLocationService
+      summary: UpdatePrivateLocation
+      description: UpdatePrivateLocation updates a private location.
+      operationId: PrivateLocationService_UpdatePrivateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.private_location.v1.UpdatePrivateLocationResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
     post:
       tags:
@@ -5444,6 +6157,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetPageComponent
+      description: Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components.
+      operationId: StatusPageService_GetPageComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetPageComponentResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponentDailySummary:
     get:
       tags:
@@ -5600,6 +6365,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageOverview:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageOverview
+      description: 'Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that.'
+      operationId: StatusPageService_GetStatusPageOverview.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageOverview
+      description: 'Returns everything about a single status page in one authenticated call: the page, its rich rendering configuration, components, component groups, active/recent status reports, maintenances, and the computed overall + per-component statuses. Workspace-scoped by id; there is no public slug access path. Does not include uptime time-series — use GetPageComponentDailySummary for that.'
+      operationId: StatusPageService_GetStatusPageOverview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageOverviewResponse'
   /rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages:
     get:
       tags:

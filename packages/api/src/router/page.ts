@@ -31,87 +31,12 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { env } from "../env";
+import {
+  addDomainToVercel,
+  removeDomainFromVercelIfUnused,
+} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-
-// Vercel domain helpers — transport-layer external integrations that
-// don't belong in the service layer.
-async function addDomainToVercel(domain: string) {
-  const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
-    {
-      body: JSON.stringify({ name: domain }),
-      headers: {
-        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    },
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    const code = error?.error?.code;
-    console.error("Failed to add domain to Vercel:", { domain, error });
-    throw toDomainError(domain, code);
-  }
-
-  return response.json();
-}
-
-// Vercel messages leak internal project details, so map known codes to our own copy.
-function toDomainError(domain: string, code?: string): TRPCError {
-  switch (code) {
-    case "domain_already_in_use":
-      return new TRPCError({
-        code: "CONFLICT",
-        message: `The domain '${domain}' is already in use by another status page. Remove it there first or contact support.`,
-      });
-    case "invalid_domain":
-    case "not_found":
-      return new TRPCError({
-        code: "BAD_REQUEST",
-        message: `The domain '${domain}' is invalid.`,
-      });
-    case "forbidden":
-    case "domain_taken":
-      return new TRPCError({
-        code: "FORBIDDEN",
-        message: `The domain '${domain}' belongs to another team on our hosting provider. Contact support if you own it.`,
-      });
-    default:
-      return new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message:
-          "Failed to add custom domain. Please try again. If it continues, contact support.",
-      });
-  }
-}
-
-async function removeDomainFromVercel(domain: string) {
-  const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${env.TEAM_ID_VERCEL}`,
-    {
-      headers: {
-        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-      },
-      method: "DELETE",
-    },
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    console.error("Failed to remove domain from Vercel:", { domain, error });
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Failed to remove custom domain. Please try again. If it continues, contact support.",
-    });
-  }
-
-  return response.json();
-}
 
 export const pageRouter = createTRPCRouter({
   create: protectedProcedure
@@ -133,10 +58,27 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await deletePage({
-          ctx: toServiceCtx(ctx),
+        const sCtx = toServiceCtx(ctx);
+        const customDomain = await getPageCustomDomain({
+          ctx: sCtx,
           input: { id: input.id },
         });
+        await deletePage({
+          ctx: sCtx,
+          input: { id: input.id },
+        });
+        // best-effort: the page is gone either way, a leaked Vercel
+        // attachment is recoverable while a failed delete is not
+        if (customDomain) {
+          try {
+            await removeDomainFromVercelIfUnused(ctx.db, customDomain);
+          } catch (err) {
+            console.error("Failed to release domain from Vercel:", {
+              domain: customDomain,
+              error: err,
+            });
+          }
+        }
       } catch (err) {
         if (err instanceof NotFoundError) return;
         toTRPCError(err);
@@ -280,14 +222,20 @@ export const pageRouter = createTRPCRouter({
         });
         const newDomain = input.customDomain;
 
-        // unchanged saves must be a no-op — re-adding an existing domain fails on Vercel
-        if (newDomain === oldDomain) return;
+        // unchanged saves must be a no-op — re-adding an existing domain
+        // fails on Vercel; case-insensitive since DNS is and the schema
+        // doesn't lowercase, so a case-only re-save must not re-add either
+        if (newDomain.toLowerCase() === oldDomain.toLowerCase()) return;
 
         if (newDomain) {
           await addDomainToVercel(newDomain);
         }
         if (oldDomain) {
-          await removeDomainFromVercel(oldDomain);
+          // this page's row still holds oldDomain until the update below,
+          // so exclude it — any other holder keeps the domain on Vercel
+          await removeDomainFromVercelIfUnused(ctx.db, oldDomain, {
+            excludePageId: input.id,
+          });
         }
 
         await updatePageCustomDomain({

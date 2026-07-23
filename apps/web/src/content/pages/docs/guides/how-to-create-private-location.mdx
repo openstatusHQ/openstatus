@@ -37,7 +37,7 @@ docker run -d \
   --name openstatus-probe \
   --restart unless-stopped \
   -e OPENSTATUS_TOKEN=<your-token> \
-  ghcr.io/openstatushq/probe:latest
+  ghcr.io/openstatushq/private-location:latest
 ```
 
 Replace `<your-token>` with the token from Step 1.
@@ -51,8 +51,8 @@ docker ps --filter name=openstatus-probe
 You should see the container listed with a status of `Up`:
 
 ```
-CONTAINER ID   IMAGE                              STATUS         NAMES
-abc123         ghcr.io/openstatushq/probe:latest  Up 2 minutes   openstatus-probe
+CONTAINER ID   IMAGE                                          STATUS         NAMES
+abc123         ghcr.io/openstatushq/private-location:latest   Up 2 minutes   openstatus-probe
 ```
 
 ## Step 3: assign monitors to your private location
@@ -105,7 +105,7 @@ docker run -d \
   --restart unless-stopped \
   --network host \
   -e OPENSTATUS_TOKEN=<your-token> \
-  ghcr.io/openstatushq/probe:latest
+  ghcr.io/openstatushq/private-location:latest
 ```
 
 ## What's next

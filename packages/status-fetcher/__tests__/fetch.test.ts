@@ -4,7 +4,12 @@ import { spy } from "@std/testing/mock";
 import { Cause, Effect, Exit, Option } from "effect";
 import { z } from "zod";
 
-import { FetchError, fetchJson, fetchText } from "../src/fetch";
+import {
+  FetchError,
+  fetchJson,
+  fetchText,
+  fetchTextWithUrl,
+} from "../src/fetch";
 
 const TEST_URL = "https://api.example.com/status";
 
@@ -78,6 +83,7 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(404);
+    expect(err.kind).toBe("http");
     expect(err.fetcherName).toBe("test");
     expect(err.entryId).toBe("x");
     expect(fetchMock.calls.length).toBe(1);
@@ -106,6 +112,7 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.httpStatus).toBeUndefined();
+    expect(err.kind).toBe("network");
     expect(fetchMock.calls.length).toBe(4);
   });
 
@@ -119,7 +126,34 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.cause).toBeInstanceOf(Error);
+    expect(err.kind).toBe("parse");
     expect(fetchMock.calls.length).toBe(1);
+  });
+
+  it("classifies a non-JSON 200 body as parse", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => JSON.parse("<html>"),
+        text: async () => "<html>",
+      } as Response),
+    );
+    const schema = z.object({ name: z.string() });
+    const exit = await Effect.runPromiseExit(
+      fetchJson({ url: TEST_URL, schema }),
+    );
+    expect(expectFailure(exit).kind).toBe("parse");
+  });
+
+  it("classifies a timeout as timeout", async () => {
+    installMockFetch(() => new Promise<Response>(() => {}));
+    const schema = z.object({ name: z.string() });
+    const exit = await Effect.runPromiseExit(
+      fetchJson({ url: TEST_URL, schema, timeout: "20 millis" }),
+    );
+    expect(expectFailure(exit).kind).toBe("timeout");
   });
 
   it("applies default User-Agent and Accept headers", async () => {
@@ -202,6 +236,42 @@ describe("fetchText", () => {
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(500);
     expect(fetchMock.calls.length).toBe(4);
+  });
+});
+
+describe("fetchBody timeouts", () => {
+  it("times out a stalled body read", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: () => new Promise<string>(() => {}),
+        json: async () => ({}),
+      } as Response),
+    );
+    const exit = await Effect.runPromiseExit(
+      fetchText({ url: TEST_URL, timeout: "20 millis" }),
+    );
+    expect(expectFailure(exit).kind).toBe("timeout");
+  });
+});
+
+describe("fetchTextWithUrl", () => {
+  it("returns text and the final URL after redirects", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        url: "https://final.example.com/status",
+        text: async () => "<html>ok</html>",
+        json: async () => ({}),
+      } as Response),
+    );
+    const result = await Effect.runPromise(fetchTextWithUrl({ url: TEST_URL }));
+    expect(result.text).toBe("<html>ok</html>");
+    expect(result.finalUrl).toBe("https://final.example.com/status");
   });
 });
 

@@ -40,6 +40,7 @@ import { StatusComponentStatic } from "../../components/status-page/static/statu
 import { ThemePalettePicker } from "../../components/themes/theme-palette-picker";
 import { ThemeSelect } from "../../components/themes/theme-select";
 import { monitors } from "../../data/monitors";
+import { defaultLocale } from "../../i18n/config";
 import { useTRPC } from "../../lib/trpc/client";
 import { searchParamsParsers } from "./search-params";
 
@@ -247,7 +248,7 @@ export function Client() {
             onClick={() => {
               // NOTE: we use it to display the 'floating-theme' component
               sessionStorage.setItem("community-theme", "true");
-              window.location.href = "/status";
+              window.location.href = `/status/${defaultLocale}`;
             }}
           >
             Test it

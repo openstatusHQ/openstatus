@@ -1,4 +1,4 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
 import { Body, Head, Html, Link, Preview } from "react-email";
 

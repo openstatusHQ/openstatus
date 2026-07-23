@@ -15,11 +15,11 @@ effective: |
     build:
       fromImage:
         path: denoland/deno
-        digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
+        digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       label:
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.0
-        org.opencontainers.image.base.digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
         org.opencontainers.image.stage: build
+        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -52,8 +52,8 @@ effective: |
         digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
       label:
         org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - corepack enable pnpm
@@ -131,13 +131,13 @@ effective: |
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    io.dofigen.version: 2.8.0
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    io.dofigen.version: 2.8.0
   user:
     user: '1000'
     group: '1000'
@@ -164,17 +164,17 @@ effective: |
     retries: 3
 images:
   docker.io:
-    denoland:
-      deno:
-        2.9.0:
-          digest: sha256:8d24854de78a79c56e74b49aa4c5996c60e1fe3730efba8fbdd2692c582e6e29
     library:
       node:
         24-slim:
           digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+    denoland:
+      deno:
+        2.9.2:
+          digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
 resources:
   dofigen.yml:
-    hash: 3d98c3f4837321ccc3810b1644c53d6c17f057fb57ec5d7beafa6b3caef9f59b
+    hash: 701b8ce017bf416392a04d9b5c4b5776d55e55b04ebe31f493efd77d7c12fe9f
     content: |
       ignore:
         - node_modules
@@ -237,7 +237,7 @@ resources:
 
         # Stage 4: Build application (compile to binary with Deno)
         build:
-          fromImage: denoland/deno:2.9.0
+          fromImage: denoland/deno:2.9.2
           workdir: /app/apps/workflows
           labels:
             org.opencontainers.image.stage: build

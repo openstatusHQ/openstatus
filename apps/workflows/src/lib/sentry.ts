@@ -34,6 +34,78 @@ export async function reportBackgroundError(message: string): Promise<void> {
   await Sentry.flush();
 }
 
+export type DetectionOutcome =
+  | { kind: "applied"; provider: string }
+  | { kind: "config-cleared" }
+  | { kind: "suggest"; suggestion: string }
+  | { kind: "none" };
+
+// One event tells the whole story of a probed tick: the fetch failure plus
+// what detection concluded. Fingerprinted per (slug, outcome) so repeats
+// collapse into a single issue.
+export function reportDetectionStory(args: {
+  slug: string;
+  currentProvider: string;
+  fetchError?: FetchError;
+  outcome: DetectionOutcome;
+  evidence: string[];
+}): void {
+  const { slug, currentProvider, fetchError, outcome, evidence } = args;
+  const story = (() => {
+    switch (outcome.kind) {
+      case "applied":
+        return {
+          key: `applied:${outcome.provider}`,
+          level: "info" as const,
+          message: `provider auto-updated ${currentProvider} → ${outcome.provider}`,
+        };
+      case "config-cleared":
+        return {
+          key: "config-cleared",
+          level: "info" as const,
+          message: `stale api_config cleared (provider ${currentProvider})`,
+        };
+      case "suggest":
+        return {
+          key: outcome.suggestion,
+          level: "warning" as const,
+          message: `provider suggestion: ${outcome.suggestion} (currently ${currentProvider})`,
+        };
+      case "none":
+        return {
+          key: "none",
+          level: "error" as const,
+          message: `failing, no provider detected (currently ${currentProvider})`,
+        };
+    }
+  })();
+  Sentry.captureMessage(`external-status: ${slug} ${story.message}`, {
+    level: story.level,
+    fingerprint: ["external-status-detect", slug, story.key],
+    tags: {
+      cron: "external-status",
+      phase: "detect",
+      slug,
+      current_provider: currentProvider,
+      outcome: outcome.kind,
+    },
+    extra: {
+      evidence,
+      fetchError: fetchError?.message,
+      url: fetchError?.url,
+    },
+  });
+}
+
+export function reportDetectionWriteFailure(args: {
+  slug: string;
+  error: Error;
+}): void {
+  Sentry.captureException(args.error, {
+    tags: { cron: "external-status", phase: "detect", slug: args.slug },
+  });
+}
+
 // Fires inside the per-service fetch loop, so no flush here — the tick's
 // cronCompleted/cronFailed path flushes once the tick settles.
 export function reportFetchFailure(args: {

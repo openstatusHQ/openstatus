@@ -3,7 +3,11 @@ import { getLogger } from "@logtape/logtape";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
 
 import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
+import {
+  getCheckerPayload,
+  getCheckerTimeout,
+  getCheckerUrl,
+} from "@/libs/checker";
 import { openApiErrorResponses } from "@/libs/errors";
 
 const logger = getLogger("api-server");
@@ -145,11 +149,23 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         },
         method: "POST",
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(getCheckerTimeout(row)),
       });
       allResult.push(result);
     }
 
     if (noWait) {
+      // The promises keep running after the response; an uncaught rejection
+      // here would crash the Deno process, so swallow and log failures.
+      for (const result of allResult) {
+        result.catch((error: unknown) => {
+          logger.warn("Checker request failed", {
+            monitor_id: id,
+            workspace_id: workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      }
       return c.json([], 200);
     }
 

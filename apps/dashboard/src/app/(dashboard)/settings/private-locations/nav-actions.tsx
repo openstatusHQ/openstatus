@@ -49,6 +49,9 @@ export function NavActions() {
               name: values.name,
               monitors: values.monitors,
               token: values.token,
+              metadata: Object.fromEntries(
+                values.metadata.map((m) => [m.key, m.value]),
+              ),
             });
           }}
         >

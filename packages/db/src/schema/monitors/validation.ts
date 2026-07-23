@@ -43,7 +43,8 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.prefault("10m"),
   status: monitorStatusSchema.prefault("active"),
   jobType: monitorJobTypesSchema.prefault("http"),
-  timeout: z.number().prefault(45),
+  // milliseconds, matches the column default
+  timeout: z.number().prefault(45_000),
   followRedirects: z.boolean().prefault(true),
   retry: z.number().prefault(3),
   regions: regionsToArraySchema.prefault([]),

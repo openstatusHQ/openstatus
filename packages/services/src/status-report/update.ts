@@ -11,6 +11,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
+import { recomputeReportStatus } from "./derive-status";
 import {
   getComponentImpactsForUpdate,
   getPageComponentIdsForReport,
@@ -204,12 +205,16 @@ export async function updateStatusReportUpdate(args: {
       );
     }
 
+    // editing status or date can change which update is latest
+    await recomputeReportStatus(tx, existing.statusReportId);
+
     await emitAudit(tx, ctx, {
       action: "status_report_update.update",
       entityType: "status_report_update",
       entityId: updated.id,
       before: withComponentImpacts(existing, beforeImpacts),
       after: withComponentImpacts(updated, afterImpacts),
+      metadata: { statusReportId: existing.statusReportId },
     });
 
     return updated;

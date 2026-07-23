@@ -1,9 +1,10 @@
 import { appRouter, createTRPCContext } from "@openstatus/api";
+import { createTRPCOnError } from "@openstatus/api/src/trpc-errors";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { createOnError, guardTRPCSource } from "@/lib/trpc/shared";
+import { guardTRPCSource } from "@/lib/trpc/shared";
 
 // Runs on the Node.js runtime (Vercel Fluid compute). The whole tRPC surface
 // is served here — several routers pull Node-only deps (@slack/web-api, email
@@ -18,7 +19,7 @@ const handler = (req: NextRequest) => {
     router: appRouter,
     req: req,
     createContext: () => createTRPCContext({ req, auth }),
-    onError: createOnError("lambda"),
+    onError: createTRPCOnError("lambda"),
   });
 };
 

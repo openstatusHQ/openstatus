@@ -1,4 +1,4 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
 import { type Duration, Effect, Schedule } from "effect";
 import { render } from "react-email";
@@ -8,6 +8,8 @@ import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PrivateLocationAlertEmail from "../emails/private-location-alert";
+import type { PrivateLocationAlertProps } from "../emails/private-location-alert";
 import SlackFeedbackEmail from "../emails/slack-feedback";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
@@ -24,6 +26,19 @@ export function statusReportSubject(req: {
   return req.status === "resolved"
     ? `RESOLVED: ${req.reportTitle}`
     : req.reportTitle;
+}
+
+// Deterministic Resend rejections: retrying the identical request can never
+// succeed (e.g. 409 invalid_idempotent_request when a key is reused with a
+// different body), it only burns the backoff and re-logs the error.
+const NON_RETRYABLE_RESEND_ERRORS = new Set<string>([
+  "invalid_idempotent_request",
+  "invalid_idempotency_key",
+  "validation_error",
+]);
+
+function isRetryableSendError(error: { name: string }): boolean {
+  return !NON_RETRYABLE_RESEND_ERRORS.has(error.name);
 }
 
 // split an array into chunks of a given size.
@@ -226,6 +241,7 @@ export class EmailClient {
         Effect.retry({
           times: 3,
           schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -421,6 +437,7 @@ export class EmailClient {
         Effect.retry({
           times: 3,
           schedule: Schedule.exponential(this.retryBackoff),
+          while: isRetryableSendError,
         }),
       );
       await Effect.runPromise(sendEmail).catch(console.error);
@@ -429,5 +446,60 @@ export class EmailClient {
     console.log(
       `Sent maintenance notification email to ${req.subscribers.length} subscribers`,
     );
+  }
+
+  public async sendPrivateLocationAlert(
+    req: Omit<PrivateLocationAlertProps, "lastSeenAt"> & {
+      to: string[];
+      lastSeenAt: Date;
+    },
+  ) {
+    if (req.to.length === 0) return;
+
+    const subject =
+      req.status === "error"
+        ? `Your private location "${req.locationName}" is unhealthy`
+        : `Your private location "${req.locationName}" is healthy again`;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Sending private location ${req.status} email to ${req.to.join(", ")}`,
+      );
+      return;
+    }
+
+    try {
+      const html = await render(
+        <PrivateLocationAlertEmail
+          locationName={req.locationName}
+          status={req.status}
+          lastSeenAt={req.lastSeenAt.toISOString()}
+        />,
+      );
+      const result = await this.client.batch.send(
+        req.to.map((to) => ({
+          from: "OpenStatus <notifications@notifications.openstatus.dev>",
+          subject,
+          to,
+          html,
+        })),
+      );
+
+      if (result.error) {
+        if (result.error?.name === "rate_limit_exceeded") {
+          throw result.error;
+        }
+        console.error(
+          `Error sending private location alert to ${req.to}: ${result.error}`,
+        );
+        return;
+      }
+
+      console.log(`Sent private location ${req.status} email to ${req.to}`);
+    } catch (err) {
+      console.error(
+        `Error sending private location alert to ${req.to}: ${err}`,
+      );
+    }
   }
 }

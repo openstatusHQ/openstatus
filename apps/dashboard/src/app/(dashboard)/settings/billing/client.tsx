@@ -212,6 +212,14 @@ export function Client() {
                     workspace={workspace}
                   />
                 ) : null}
+                {planAddons["custom-theme"] ? (
+                  <BillingAddons
+                    label={planAddons["custom-theme"].title}
+                    description={planAddons["custom-theme"].description}
+                    addon="custom-theme"
+                    workspace={workspace}
+                  />
+                ) : null}
                 {planAddons["status-pages"] ? (
                   <BillingAddons
                     label={planAddons["status-pages"].title}

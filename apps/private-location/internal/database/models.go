@@ -41,5 +41,6 @@ type Monitor struct {
 }
 
 type PrivateLocation struct {
-	ID int `db:"id"`
+	ID   int    `db:"id"`
+	Name string `db:"name"`
 }

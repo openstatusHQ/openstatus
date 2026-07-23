@@ -1,6 +1,8 @@
 export * from "./types";
 export * from "./utils";
 export { FetchError } from "./fetch";
+export type { FetchErrorKind } from "./fetch";
+export * from "./detect";
 export { fetchers } from "./fetchers";
 export {
   atlassianIncidentSchema,

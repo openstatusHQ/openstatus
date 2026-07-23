@@ -15,7 +15,7 @@ func TestTCPJob_Success(t *testing.T) {
 		Timeout: 1,
 		Retry:   1,
 	}
-	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor)
+	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor, "test-region")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -35,7 +35,7 @@ func TestTCPJob_Failure(t *testing.T) {
 		Retry:   1,
 	}
 
-	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor)
+	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor, "test-region")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
