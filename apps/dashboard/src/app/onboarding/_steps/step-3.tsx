@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ApiKey,
   Monitor,
   Next,
   Notification,
@@ -11,9 +12,22 @@ import {
   Invite,
 } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { Code } from "@/components/common/code";
+import { Link as CommonLink } from "@/components/common/link";
+import { CreateApiKeyDialog } from "@/components/forms/api-key/dialog";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 import {
   OnboardingActions,
   OnboardingFormColumn,
@@ -28,6 +42,7 @@ import {
   FeatureBadgeWall,
   QuestionPanel,
 } from "@/components/onboarding/feature-badges";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function Step3({
   stepperSteps,
@@ -117,11 +132,94 @@ export function Step3({
             SOC2 audit incoming? Ping us for a 14-day free trial.
           </p>
         </div>
+        <NoClickopsCard />
       </OnboardingFormColumn>
       <OnboardingResultColumn>
         <QuestionPanel onSubmit={onQuestionnaireSubmit} />
         <FeatureBadgeWall />
       </OnboardingResultColumn>
     </>
+  );
+}
+
+const TERRAFORM_SNIPPET = `resource "openstatus_monitor" "api" {
+  name    = "api-health"
+  url     = "https://api.acme.dev/health"
+  regions = ["ams", "iad", "syd"]
+}
+
+$ terraform apply   # no clickops`;
+
+// `dark` re-scopes the theme tokens so the card stays dark in both themes.
+function NoClickopsCard() {
+  const trpc = useTRPC();
+  const { data: apiKeys } = useQuery(trpc.apiKeyRouter.getAll.queryOptions());
+  const hasKeys = (apiKeys?.length ?? 0) > 0;
+
+  return (
+    <FormCard className="">
+      <FormCardHeader>
+        <FormCardTitle>Agent-first, no clickops</FormCardTitle>
+        <FormCardDescription>
+          Monitors, status pages, notifications, private locations — all
+          manageable as code. Create an API key and hand it to your agent via{" "}
+          <CommonLink
+            href="https://www.openstatus.dev/docs/reference/mcp-server"
+            rel="noreferrer"
+            target="_blank"
+          >
+            MCP
+          </CommonLink>
+          , script it with the{" "}
+          <CommonLink
+            href="https://www.openstatus.dev/docs/reference/cli-reference"
+            rel="noreferrer"
+            target="_blank"
+          >
+            CLI
+          </CommonLink>
+          , or commit it with{" "}
+          <CommonLink
+            href="https://registry.terraform.io/providers/openstatusHQ/openstatus/latest"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Terraform
+          </CommonLink>
+          .
+        </FormCardDescription>
+      </FormCardHeader>
+      <FormCardContent>
+        <Code>{TERRAFORM_SNIPPET}</Code>
+      </FormCardContent>
+      <FormCardFooter>
+        <FormCardFooterInfo>
+          Read more in our{" "}
+          <CommonLink
+            href="https://www.openstatus.dev/docs"
+            rel="noreferrer"
+            target="_blank"
+          >
+            docs
+          </CommonLink>
+          .
+        </FormCardFooterInfo>
+        {hasKeys ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/settings/general#api-keys">
+              <ApiKey />
+              Manage API keys
+            </Link>
+          </Button>
+        ) : (
+          <CreateApiKeyDialog>
+            <Button size="sm">
+              <ApiKey />
+              Create API key
+            </Button>
+          </CreateApiKeyDialog>
+        )}
+      </FormCardFooter>
+    </FormCard>
   );
 }

@@ -5,6 +5,7 @@ import {
   Notification,
   BookOpen,
   Api,
+  Server,
   FileText,
   Globe,
   Theme,
@@ -116,7 +117,7 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
     items: [
       {
         name: "REST API",
-        href: `${DOCS}/api-reference`,
+        href: "https://api.openstatus.dev/openapi",
         icon: Api,
         external: true,
       },
@@ -130,6 +131,12 @@ const FEATURE_CATEGORIES: { label: string; items: FeatureLinkItem[] }[] = [
         name: "MCP server",
         href: `${DOCS}/reference/mcp-server`,
         icon: ModelContextProtocolIcon,
+        external: true,
+      },
+      {
+        name: "Terraform",
+        href: "https://registry.terraform.io/providers/openstatusHQ/openstatus/latest",
+        icon: Server,
         external: true,
       },
     ],
