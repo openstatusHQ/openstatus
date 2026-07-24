@@ -44,7 +44,7 @@ export function CreateApiKeyDialog({
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const createApiKeyMutation = useMutation(
-    trpc.apiKeyRouter.create.mutationOptions(),
+    trpc.apiKey.create.mutationOptions(),
   );
 
   return (
@@ -81,7 +81,7 @@ export function CreateApiKeyDialog({
                 throw new Error("Failed to create API key");
               }
               queryClient.invalidateQueries({
-                queryKey: trpc.apiKeyRouter.getAll.queryKey(),
+                queryKey: trpc.apiKey.list.queryKey(),
               });
               setResult({ token: data.token, key: data.key.name });
               setOpen(false);

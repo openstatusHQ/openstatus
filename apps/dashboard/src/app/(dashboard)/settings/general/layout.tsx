@@ -19,7 +19,7 @@ export default async function Layout({
   await Promise.all([
     queryClient.prefetchQuery(trpc.member.list.queryOptions()),
     queryClient.prefetchQuery(trpc.invitation.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.apiKeyRouter.getAll.queryOptions()),
+    queryClient.prefetchQuery(trpc.apiKey.list.queryOptions()),
   ]);
 
   return (

@@ -152,7 +152,7 @@ $ terraform apply   # no clickops`;
 
 function NoClickopsCard() {
   const trpc = useTRPC();
-  const { data: apiKeys } = useQuery(trpc.apiKeyRouter.getAll.queryOptions());
+  const { data: apiKeys } = useQuery(trpc.apiKey.list.queryOptions());
   const hasKeys = (apiKeys?.length ?? 0) > 0;
 
   return (

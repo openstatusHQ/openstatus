@@ -9,7 +9,7 @@ import { createTRPCRouter } from "./trpc";
 export const lambdaRouter = createTRPCRouter({
   stripeRouter: stripeRouter,
   emailRouter: emailRouter,
-  apiKeyRouter: apiKeyRouter,
+  apiKey: apiKeyRouter,
   integrationRouter: integrationRouter,
   blob: blobRouter,
   subscriberNotification: subscriberNotificationRouter,

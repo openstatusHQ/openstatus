@@ -27,7 +27,7 @@ import { useTRPC } from "@/lib/trpc/client";
 export function FormApiKey() {
   const trpc = useTRPC();
   const { data: apiKeys = [], refetch } = useQuery(
-    trpc.apiKeyRouter.getAll.queryOptions(),
+    trpc.apiKey.list.queryOptions(),
   );
 
   return (
