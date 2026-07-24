@@ -585,6 +585,12 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
       title: DNSMonitor
       additionalProperties: false
       description: DNSMonitor defines the configuration for a DNS monitor.
@@ -934,6 +940,12 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
       title: HTTPMonitor
       additionalProperties: false
       description: HTTPMonitor defines the configuration for an HTTP monitor.
@@ -1566,6 +1578,12 @@ components:
           title: status
           description: Current operational status of the monitor.
           $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+        privateLocationIds:
+          type: array
+          items:
+            type: string
+          title: private_location_ids
+          description: IDs of private locations that run this monitor. Read-only.
       title: TCPMonitor
       additionalProperties: false
       description: TCPMonitor defines the configuration for a TCP monitor.

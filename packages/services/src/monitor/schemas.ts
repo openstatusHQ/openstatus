@@ -178,3 +178,10 @@ export const GetResponseLogInput = z.object({
   logId: z.string().min(1),
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
+
+export const GetPrivateLocationIdsByMonitorInput = z.object({
+  monitorIds: z.array(z.number().int()),
+});
+export type GetPrivateLocationIdsByMonitorInput = z.infer<
+  typeof GetPrivateLocationIdsByMonitorInput
+>;

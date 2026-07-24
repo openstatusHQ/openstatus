@@ -26,6 +26,7 @@ import {
   deleteMonitor,
   getMonitorStatus,
   getMonitorSummary,
+  getPrivateLocationIdsByMonitor,
   getResponseLog,
   listResponseLogs,
 } from "@openstatus/services/monitor";
@@ -323,13 +324,21 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const dbMon = await validateAndGetMonitor(req.id, workspaceId, "http");
 
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: [dbMon.id] },
+    });
+    const privateLocationIds = plMap.get(dbMon.id) ?? [];
+
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
       const parsed = selectMonitorSchema.safeParse(dbMon);
       if (!parsed.success) {
         throw monitorParseFailedError(req.id);
       }
-      return { monitor: dbMonitorToHttpProto(parsed.data) };
+      return {
+        monitor: dbMonitorToHttpProto(parsed.data, privateLocationIds),
+      };
     }
 
     const mon = req.monitor;
@@ -385,11 +394,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       );
     }
 
-    return performUpdateAndReturn(
-      dbMon.id,
-      req.id,
-      updateValues,
-      dbMonitorToHttpProto,
+    return performUpdateAndReturn(dbMon.id, req.id, updateValues, (data) =>
+      dbMonitorToHttpProto(data, privateLocationIds),
     );
   },
 
@@ -400,13 +406,21 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const dbMon = await validateAndGetMonitor(req.id, workspaceId, "tcp");
 
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: [dbMon.id] },
+    });
+    const privateLocationIds = plMap.get(dbMon.id) ?? [];
+
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
       const parsed = selectMonitorSchema.safeParse(dbMon);
       if (!parsed.success) {
         throw monitorParseFailedError(req.id);
       }
-      return { monitor: dbMonitorToTcpProto(parsed.data) };
+      return {
+        monitor: dbMonitorToTcpProto(parsed.data, privateLocationIds),
+      };
     }
 
     const mon = req.monitor;
@@ -433,11 +447,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       updateValues.url = mon.uri;
     }
 
-    return performUpdateAndReturn(
-      dbMon.id,
-      req.id,
-      updateValues,
-      dbMonitorToTcpProto,
+    return performUpdateAndReturn(dbMon.id, req.id, updateValues, (data) =>
+      dbMonitorToTcpProto(data, privateLocationIds),
     );
   },
 
@@ -448,13 +459,21 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const dbMon = await validateAndGetMonitor(req.id, workspaceId, "dns");
 
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: [dbMon.id] },
+    });
+    const privateLocationIds = plMap.get(dbMon.id) ?? [];
+
     // If no monitor data provided, return current monitor
     if (!req.monitor) {
       const parsed = selectMonitorSchema.safeParse(dbMon);
       if (!parsed.success) {
         throw monitorParseFailedError(req.id);
       }
-      return { monitor: dbMonitorToDnsProto(parsed.data) };
+      return {
+        monitor: dbMonitorToDnsProto(parsed.data, privateLocationIds),
+      };
     }
 
     const mon = req.monitor;
@@ -486,11 +505,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       updateValues.assertions = dnsAssertionsToDbJson(mon.recordAssertions);
     }
 
-    return performUpdateAndReturn(
-      dbMon.id,
-      req.id,
-      updateValues,
-      dbMonitorToDnsProto,
+    return performUpdateAndReturn(dbMon.id, req.id, updateValues, (data) =>
+      dbMonitorToDnsProto(data, privateLocationIds),
     );
   },
 
@@ -627,27 +643,34 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .offset(offset)
       .all();
 
+    // Parse first so private-location ids can be resolved in one batched query
+    const parsedMonitors: ParsedMonitor[] = [];
+    for (const m of monitors) {
+      const parsed = selectMonitorSchema.safeParse(m);
+      if (parsed.success) parsedMonitors.push(parsed.data); // Skip invalid monitors
+    }
+
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: parsedMonitors.map((m) => m.id) },
+    });
+
     // Group monitors by type
     const httpMonitors: HTTPMonitor[] = [];
     const tcpMonitors: TCPMonitor[] = [];
     const dnsMonitors: DNSMonitor[] = [];
 
-    for (const m of monitors) {
-      // Parse through schema to transform fields
-      const parsed = selectMonitorSchema.safeParse(m);
-      if (!parsed.success) {
-        continue; // Skip invalid monitors
-      }
-
-      switch (parsed.data.jobType) {
+    for (const data of parsedMonitors) {
+      const privateLocationIds = plMap.get(data.id) ?? [];
+      switch (data.jobType) {
         case "http":
-          httpMonitors.push(dbMonitorToHttpProto(parsed.data));
+          httpMonitors.push(dbMonitorToHttpProto(data, privateLocationIds));
           break;
         case "tcp":
-          tcpMonitors.push(dbMonitorToTcpProto(parsed.data));
+          tcpMonitors.push(dbMonitorToTcpProto(data, privateLocationIds));
           break;
         case "dns":
-          dnsMonitors.push(dbMonitorToDnsProto(parsed.data));
+          dnsMonitors.push(dbMonitorToDnsProto(data, privateLocationIds));
           break;
       }
     }
@@ -699,6 +722,12 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const monitorData = parsed.data;
 
+    const plMap = await getPrivateLocationIdsByMonitor({
+      ctx: toServiceCtx(rpcCtx),
+      input: { monitorIds: [monitorData.id] },
+    });
+    const privateLocationIds = plMap.get(monitorData.id) ?? [];
+
     // Convert to appropriate proto type based on jobType
     let monitorConfig: MonitorConfig;
 
@@ -706,19 +735,28 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       case "http":
         monitorConfig = {
           $typeName: "openstatus.monitor.v1.MonitorConfig",
-          config: { case: "http", value: dbMonitorToHttpProto(monitorData) },
+          config: {
+            case: "http",
+            value: dbMonitorToHttpProto(monitorData, privateLocationIds),
+          },
         };
         break;
       case "tcp":
         monitorConfig = {
           $typeName: "openstatus.monitor.v1.MonitorConfig",
-          config: { case: "tcp", value: dbMonitorToTcpProto(monitorData) },
+          config: {
+            case: "tcp",
+            value: dbMonitorToTcpProto(monitorData, privateLocationIds),
+          },
         };
         break;
       case "dns":
         monitorConfig = {
           $typeName: "openstatus.monitor.v1.MonitorConfig",
-          config: { case: "dns", value: dbMonitorToDnsProto(monitorData) },
+          config: {
+            case: "dns",
+            value: dbMonitorToDnsProto(monitorData, privateLocationIds),
+          },
         };
         break;
       default:

@@ -12,6 +12,7 @@ export {
   type GetMonitorSummaryResult,
 } from "./get-monitor-summary";
 export { getResponseLog, type ResponseLogDetail } from "./get-response-log";
+export { getPrivateLocationIdsByMonitor } from "./private-locations";
 export {
   listResponseLogs,
   type ListResponseLogsResult,
@@ -56,6 +57,7 @@ export {
   GetMonitorInput,
   GetMonitorStatusInput,
   GetMonitorSummaryInput,
+  GetPrivateLocationIdsByMonitorInput,
   GetResponseLogInput,
   ListMonitorsInput,
   ListResponseLogsInput,

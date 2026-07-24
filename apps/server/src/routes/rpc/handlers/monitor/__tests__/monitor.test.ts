@@ -2246,6 +2246,124 @@ describe("MonitorService.GetMonitor", () => {
   });
 });
 
+describe("MonitorService - Private Locations", () => {
+  async function seedMonitorWithPrivateLocation(suffix: string) {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl-${suffix}`,
+        url: `https://pl-${suffix}.example.com`,
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+    const pl = await db
+      .insert(privateLocation)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-pl-loc-${suffix}`,
+        token: `${TEST_PREFIX}-pl-token-${suffix}-${mon.id}`,
+      })
+      .returning()
+      .get();
+    await db
+      .insert(privateLocationToMonitors)
+      .values({ privateLocationId: pl.id, monitorId: mon.id });
+    return { mon, pl };
+  }
+
+  async function cleanupMonitorWithPrivateLocation(
+    monitorId: number,
+    privateLocationId: number,
+  ) {
+    await db
+      .delete(privateLocationToMonitors)
+      .where(eq(privateLocationToMonitors.privateLocationId, privateLocationId));
+    await db
+      .delete(privateLocation)
+      .where(eq(privateLocation.id, privateLocationId));
+    await db.delete(monitor).where(eq(monitor.id, monitorId));
+  }
+
+  test("GetMonitor returns the attached private location id", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("get");
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(mon.id) },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.http.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("GetMonitor omits private_location_ids when none attached", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // proto3 JSON omits empty repeated fields
+    expect(data.monitor.http.privateLocationIds ?? []).toEqual([]);
+  });
+
+  test("ListMonitors returns private_location_ids per monitor", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("list");
+    try {
+      const res = await connectRequest(
+        "ListMonitors",
+        { limit: 100 },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const httpMonitors = (data.httpMonitors ?? []) as Array<{
+        id: string;
+        privateLocationIds?: string[];
+      }>;
+
+      const attached = httpMonitors.find((m) => m.id === String(mon.id));
+      expect(attached?.privateLocationIds).toEqual([String(pl.id)]);
+
+      const unattached = httpMonitors.find(
+        (m) => m.id === String(testHttpMonitorId),
+      );
+      expect(unattached?.privateLocationIds ?? []).toEqual([]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+
+  test("UpdateHTTPMonitor keeps the attached private location id", async () => {
+    const { mon, pl } = await seedMonitorWithPrivateLocation("update");
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { name: `${TEST_PREFIX}-pl-update-renamed` },
+        },
+        { "x-openstatus-key": "1" },
+      );
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.privateLocationIds).toEqual([String(pl.id)]);
+    } finally {
+      await cleanupMonitorWithPrivateLocation(mon.id, pl.id);
+    }
+  });
+});
+
 describe("MonitorService.GetMonitorSummary", () => {
   test("returns summary for HTTP monitor with correct structure", async () => {
     const res = await connectRequest(

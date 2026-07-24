@@ -141,4 +141,7 @@ message HTTPMonitor {
 
   // Current operational status of the monitor.
   MonitorStatus status = 20;
+
+  // IDs of private locations that run this monitor. Read-only.
+  repeated string private_location_ids = 21;
 }
