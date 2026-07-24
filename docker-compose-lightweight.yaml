@@ -33,25 +33,26 @@ services:
             start_period: 10s
         restart: unless-stopped
 
+    # Idempotent: drizzle skips already-applied migrations on every up
     db-migrate:
         container_name: openstatus-db-migrate
         build:
             context: .
-            dockerfile: apps/workflows/Dockerfile
-            target: build
+            dockerfile: packages/db/Dockerfile
+        image: openstatus/db-migrate:latest
+        # rebuild on every up so a stale image never skips new migrations
+        pull_policy: build
         networks:
             - openstatus
-        working_dir: /app/packages/db
         env_file:
             - .env.docker
         environment:
             - DATABASE_URL=http://libsql:8080
-        command: ["deno", "run", "-A", "src/migrate.mts"]
         depends_on:
             libsql:
                 condition: service_healthy
-        restart: "no"
-
+        # retries absorb transient DB races; still settles to failure for the gates
+        restart: on-failure:3
 
     dashboard:
         container_name: openstatus-dashboard

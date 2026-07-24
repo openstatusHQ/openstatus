@@ -54,6 +54,27 @@ services:
         restart: unless-stopped
 
     # Internal Services
+    # Idempotent: drizzle skips already-applied migrations on every up
+    db-migrate:
+        container_name: openstatus-db-migrate
+        build:
+            context: .
+            dockerfile: packages/db/Dockerfile
+        image: openstatus/db-migrate:latest
+        # rebuild on every up so a stale image never skips new migrations
+        pull_policy: build
+        networks:
+            - openstatus
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+        depends_on:
+            libsql:
+                condition: service_healthy
+        # retries absorb transient DB races; still settles to failure for the gates
+        restart: on-failure:3
+
     workflows:
         container_name: openstatus-workflows
         build:
@@ -72,6 +93,8 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
+            db-migrate:
+                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
         healthcheck:
@@ -98,6 +121,8 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
+            db-migrate:
+                condition: service_completed_successfully
             workflows:
                 condition: service_healthy
             libsql:
@@ -164,6 +189,8 @@ services:
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
         depends_on:
+            db-migrate:
+                condition: service_completed_successfully
             workflows:
                 condition: service_healthy
             libsql:
@@ -196,6 +223,8 @@ services:
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
         depends_on:
+            db-migrate:
+                condition: service_completed_successfully
             workflows:
                 condition: service_healthy
             libsql:

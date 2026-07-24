@@ -1,0 +1,62 @@
+ignore:
+  - node_modules
+builders:
+  install:
+    fromImage: node:24-slim
+    workdir: /app/
+    labels:
+      org.opencontainers.image.stage: install
+    bind:
+      - pnpm-workspace.yaml
+      - pnpm-lock.yaml
+      - package.json
+      - packages/db/package.json
+      - packages/assertions/package.json
+      - packages/locales/package.json
+      - packages/regions/package.json
+      - packages/theme-store/package.json
+      - packages/utils/package.json
+    run:
+      - corepack enable pnpm
+      - pnpm install --prod --frozen-lockfile --filter=@openstatus/db... --verbose
+    cache:
+      - /root/.local/share/pnpm/store
+
+# One-shot migration runner: drizzle's migrator reads drizzle/ from disk at
+# runtime, so the image ships source + node_modules instead of a compiled binary.
+fromImage: denoland/deno:2.9.2
+workdir: /app/packages/db
+
+labels:
+  org.opencontainers.image.title: OpenStatus DB Migrate
+  org.opencontainers.image.description: One-shot database migration runner for OpenStatus
+  org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+  org.opencontainers.image.vendor: OpenStatus
+  org.opencontainers.image.authors: OpenStatus Team
+
+# Workspace package sources ship too (not just their node_modules) so pnpm's
+# @openstatus/* symlinks resolve and seed.mts can run via the same image.
+copy:
+  - packages/db /app/packages/db
+  - packages/assertions /app/packages/assertions
+  - packages/locales /app/packages/locales
+  - packages/regions /app/packages/regions
+  - packages/theme-store /app/packages/theme-store
+  - packages/utils /app/packages/utils
+  - fromBuilder: install
+    source: /app/node_modules
+    target: /app/node_modules
+  - fromBuilder: install
+    source: /app/packages
+    target: /app/packages
+
+# /deno-dir (image default) is root-owned; the runtime user needs a writable
+# cache dir for the .mts transpile emit.
+env:
+  DENO_DIR: /tmp/deno-dir
+
+# deno task keeps package.json's migrate script the single source of truth.
+entrypoint:
+  - deno
+  - task
+  - migrate

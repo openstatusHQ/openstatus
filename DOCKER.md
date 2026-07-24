@@ -11,18 +11,18 @@ cp .env.docker.example .env.docker
 # 2. Configure required variables (see Configuration section)
 vim .env.docker
 
-# 3. Build and start services (migrations will run automatically)
+# 3. Build and start services (the db-migrate one-shot applies migrations before apps start)
 export DOCKER_BUILDKIT=1
 docker compose up -d
 
 # 4. Check service health
 docker compose ps
 
-# 5. (Optional) Seed database with test data
-docker run --rm --network openstatus \
-  -e DATABASE_URL=http://libsql:8080 \
-  $(docker build -q -f apps/workflows/Dockerfile --target build .) \
-  sh -c "cd /app/packages/db && deno run -A --sloppy-imports src/seed.mts"
+# 5. (Optional) Seed database with test data (uses libsql's host-published
+#    port — seed refuses non-localhost databases by design)
+docker run --rm --network host \
+  -e DATABASE_URL=http://localhost:8080 \
+  --entrypoint deno openstatus/db-migrate:latest task seed
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -51,6 +51,7 @@ docker builder prune
 
 | Service | Port | Purpose |
 |---------|------|---------|
+| db-migrate | — | One-shot DB migrations (exits after applying) |
 | workflows | 3000 | Background jobs |
 | server | 3001 | API backend (tRPC) |
 | dashboard | 3002 | Admin interface |
@@ -87,17 +88,15 @@ docker builder prune
 
 ### Automatic Migrations
 
-Migrations run **automatically** when you start the stack with `docker compose up -d`.
+Migrations run **automatically** when you start the stack with `docker compose up -d`: the `db-migrate` one-shot service applies all drizzle migrations and exits before the app services boot (they wait on its `service_completed_successfully` condition). Re-running `docker compose up -d` is safe — drizzle records applied migrations in the `__drizzle_migrations` table and skips them on subsequent runs.
 
 **Verifying migrations:**
 ```bash
-# Check workflows logs for migration output
-docker compose logs workflows | grep -A 5 "Running database migrations"
+docker compose logs db-migrate
 
 # Should show:
-# openstatus-workflows  | Running database migrations...
-# openstatus-workflows  | Migrated successfully
-# openstatus-workflows  | Starting workflows service...
+# openstatus-db-migrate  | Running migrations
+# openstatus-db-migrate  | Migrated successfully
 ```
 
 **Manual migration:**
@@ -105,12 +104,12 @@ docker compose logs workflows | grep -A 5 "Running database migrations"
 If you need to re-run migrations or troubleshoot:
 
 ```bash
-# Run migrations using workflows container
-docker compose exec workflows sh -c "cd /app/packages/db && deno run -A src/migrate.mts"
-
-# Or restart workflows to trigger migrations again
-docker compose restart workflows
+docker compose run --rm db-migrate
 ```
+
+**Troubleshooting `no such table` errors:**
+
+A `SQLITE_UNKNOWN: no such table` error from dashboard or status-page means the database is unmigrated. Check `docker compose logs db-migrate` for the failure — common causes are a wrong `DATABASE_AUTH_TOKEN` in `.env.docker` or libsql not being healthy. (`DATABASE_URL` is pinned to `http://libsql:8080` by the compose files, so it cannot be misconfigured via `.env.docker`.) Fix the cause, then run `docker compose up -d` again.
 
 ### Seeding Test Data (Optional)
 
@@ -119,15 +118,16 @@ docker compose restart workflows
 After migrations complete, seed the database with sample data:
 
 ```bash
-docker run --rm --network openstatus \
-  -e DATABASE_URL=http://libsql:8080 \
-  $(docker build -q -f apps/workflows/Dockerfile --target build .) \
-  sh -c "cd /app/packages/db && deno run -A --sloppy-imports src/seed.mts"
+# Uses libsql's host-published port 8080 — seed refuses non-localhost
+# databases by design, so it cannot run over the compose-internal network
+docker run --rm --network host \
+  -e DATABASE_URL=http://localhost:8080 \
+  --entrypoint deno openstatus/db-migrate:latest task seed
 ```
 
 This creates:
 - 3 workspaces (`love-openstatus`, `test2`, `test3`)
-- 5 sample monitors and 1 status page with slug `status`
+- Sample monitors and 2 status pages (slugs `status` and `acme`)
 - Test user account: `ping@openstatus.dev`
 - Sample incidents, status reports, and maintenance windows
 
@@ -137,7 +137,7 @@ This creates:
 curl -s http://localhost:8080/ -H "Content-Type: application/json" \
   -d '{"statements":["SELECT COUNT(*) FROM page"]}' | jq -r '.[0].results.rows[0][0]'
 
-# Should output: 1
+# Should output: 2
 ```
 
 **Accessing Seeded Data:**
