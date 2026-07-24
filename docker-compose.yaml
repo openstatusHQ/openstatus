@@ -35,6 +35,29 @@ services:
             start_period: 10s
         restart: unless-stopped
 
+    # One-shot migrations. The workflows runtime image is distroless (compiled
+    # binary entrypoint, no shell/Deno/source), so it cannot migrate itself and
+    # start.sh is unused. This runs the migrator from the workflows build stage
+    # once, before the app services start. Mirrors docker-compose-lightweight.yaml.
+    db-migrate:
+        container_name: openstatus-db-migrate
+        build:
+            context: .
+            dockerfile: apps/workflows/Dockerfile
+            target: build
+        networks:
+            - openstatus
+        working_dir: /app/packages/db
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+        command: ["deno", "run", "-A", "src/migrate.mts"]
+        depends_on:
+            libsql:
+                condition: service_healthy
+        restart: "no"
+
     tinybird-local:
         container_name: openstatus-tinybird
         image: tinybirdco/tinybird-local:latest
@@ -72,6 +95,8 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
+            db-migrate:
+                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
         healthcheck:

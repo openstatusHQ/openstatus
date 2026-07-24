@@ -11,7 +11,7 @@ cp .env.docker.example .env.docker
 # 2. Configure required variables (see Configuration section)
 vim .env.docker
 
-# 3. Build and start services (migrations will run automatically)
+# 3. Build and start services (database migrations run automatically)
 export DOCKER_BUILDKIT=1
 docker compose up -d
 
@@ -87,29 +87,26 @@ docker builder prune
 
 ### Automatic Migrations
 
-Migrations run **automatically** when you start the stack with `docker compose up -d`.
+Database migrations run **automatically** when you start the stack with
+`docker compose up -d`. A dedicated one-shot `db-migrate` service handles them:
 
-**Verifying migrations:**
+- It waits for `libsql` to become healthy, then applies the migrations and exits.
+- Application services start only after `db-migrate` completes successfully.
+- Migrations are idempotent — already-applied migrations are skipped, so re-running is safe.
+
+**Verification:**
+
 ```bash
-# Check workflows logs for migration output
-docker compose logs workflows | grep -A 5 "Running database migrations"
+docker compose logs db-migrate
 
-# Should show:
-# openstatus-workflows  | Running database migrations...
-# openstatus-workflows  | Migrated successfully
-# openstatus-workflows  | Starting workflows service...
+# Running migrations
+# Migrated successfully
 ```
 
-**Manual migration:**
-
-If you need to re-run migrations or troubleshoot:
+**Manual re-run:**
 
 ```bash
-# Run migrations using workflows container
-docker compose exec workflows sh -c "cd /app/packages/db && deno run -A src/migrate.mts"
-
-# Or restart workflows to trigger migrations again
-docker compose restart workflows
+docker compose up db-migrate
 ```
 
 ### Seeding Test Data (Optional)
