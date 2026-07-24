@@ -22,7 +22,7 @@ docker compose ps
 docker run --rm --network openstatus \
   -e DATABASE_URL=http://libsql:8080 \
   $(docker build -q -f apps/workflows/Dockerfile --target build .) \
-  sh -c "cd /app/packages/db && deno run -A src/seed.mts"
+  sh -c "cd /app/packages/db && deno run -A --sloppy-imports src/seed.mts"
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -122,7 +122,7 @@ After migrations complete, seed the database with sample data:
 docker run --rm --network openstatus \
   -e DATABASE_URL=http://libsql:8080 \
   $(docker build -q -f apps/workflows/Dockerfile --target build .) \
-  sh -c "cd /app/packages/db && deno run -A src/seed.mts"
+  sh -c "cd /app/packages/db && deno run -A --sloppy-imports src/seed.mts"
 ```
 
 This creates:
