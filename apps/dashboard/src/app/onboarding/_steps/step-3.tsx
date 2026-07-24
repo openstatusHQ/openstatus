@@ -150,14 +150,13 @@ const TERRAFORM_SNIPPET = `resource "openstatus_monitor" "api" {
 
 $ terraform apply   # no clickops`;
 
-// `dark` re-scopes the theme tokens so the card stays dark in both themes.
 function NoClickopsCard() {
   const trpc = useTRPC();
   const { data: apiKeys } = useQuery(trpc.apiKeyRouter.getAll.queryOptions());
   const hasKeys = (apiKeys?.length ?? 0) > 0;
 
   return (
-    <FormCard className="">
+    <FormCard>
       <FormCardHeader>
         <FormCardTitle>Agent-first, no clickops</FormCardTitle>
         <FormCardDescription>

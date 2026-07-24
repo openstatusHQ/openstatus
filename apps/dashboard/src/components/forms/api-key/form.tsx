@@ -72,9 +72,9 @@ export function ApiKeyForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: "",
-      description: "",
-      expiresAt: "",
+      name: defaultValues?.name ?? "",
+      description: defaultValues?.description ?? "",
+      expiresAt: defaultValues?.expiresAt ?? "",
       // Default Read-only: AI agents are the most common new use
       // case for keys, and read-only is the safer starting point.
       // CI/CD users actively pick "Read & write."
@@ -197,7 +197,10 @@ export function ApiKeyForm({
                         )}
                       >
                         {field.value ? (
-                          format(new Date(field.value), "PPP")
+                          format(
+                            parse(field.value, "yyyy-MM-dd", new Date()),
+                            "PPP",
+                          )
                         ) : (
                           <span>Pick a date</span>
                         )}
