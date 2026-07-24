@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { HowItWorks } from "../../components/marketing/how-it-works";
 import { LatencyChartTable } from "../latency-chart-table";
 import { Aside } from "./aside";
 import { ButtonLink } from "./button-link";
@@ -38,6 +39,7 @@ export const components = {
   CardGrid,
   LinkCard,
   ShowcaseYouTube,
+  HowItWorks,
   Details, // Capital D for JSX usage with props
   details: Details, // lowercase for HTML tag replacement
   SimpleChart: LatencyChartTable,
