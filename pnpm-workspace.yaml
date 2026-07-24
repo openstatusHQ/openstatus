@@ -148,7 +148,7 @@ catalog:
   lucide-react: 0.525.0
   nanoid: 5.1.11
   nanoid-dictionary: 5.0.0
-  next: 16.2.6
+  next: 16.2.11
   next-auth: 5.0.0-beta.31
   next-intl: 4.12.0
   next-mdx-remote: 6.0.0
@@ -206,3 +206,8 @@ catalog:
   validator: 13.15.35
   vaul: 1.1.2
   zod: 4.1.13
+
+# next 16.2.6 has critical CVEs; force transitive copies (react-email preview)
+# onto the patched release too
+overrides:
+  next: 16.2.11
