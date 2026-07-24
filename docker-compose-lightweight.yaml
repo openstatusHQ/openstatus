@@ -35,17 +35,18 @@ services:
 
     db-migrate:
         container_name: openstatus-db-migrate
-        image: oven/bun:1.3.6
+        build:
+            context: .
+            dockerfile: apps/workflows/Dockerfile
+            target: build
         networks:
             - openstatus
         working_dir: /app/packages/db
-        volumes:
-            - .:/app
         env_file:
             - .env.docker
         environment:
             - DATABASE_URL=http://libsql:8080
-        command: ["sh", "-c", "bun install && bun run migrate"]
+        command: ["deno", "run", "-A", "src/migrate.mts"]
         depends_on:
             libsql:
                 condition: service_healthy

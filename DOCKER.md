@@ -22,7 +22,7 @@ docker compose ps
 docker run --rm --network openstatus \
   -e DATABASE_URL=http://libsql:8080 \
   $(docker build -q -f apps/workflows/Dockerfile --target build .) \
-  sh -c "cd /app/packages/db && bun src/seed.mts"
+  sh -c "cd /app/packages/db && deno run -A src/seed.mts"
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -106,7 +106,7 @@ If you need to re-run migrations or troubleshoot:
 
 ```bash
 # Run migrations using workflows container
-docker compose exec workflows sh -c "cd /app/packages/db && bun src/migrate.mts"
+docker compose exec workflows sh -c "cd /app/packages/db && deno run -A src/migrate.mts"
 
 # Or restart workflows to trigger migrations again
 docker compose restart workflows
@@ -122,7 +122,7 @@ After migrations complete, seed the database with sample data:
 docker run --rm --network openstatus \
   -e DATABASE_URL=http://libsql:8080 \
   $(docker build -q -f apps/workflows/Dockerfile --target build .) \
-  sh -c "cd /app/packages/db && bun src/seed.mts"
+  sh -c "cd /app/packages/db && deno run -A src/seed.mts"
 ```
 
 This creates:
