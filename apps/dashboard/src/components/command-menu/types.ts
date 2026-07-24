@@ -1,7 +1,7 @@
-import type * as React from "react";
+import type { IconType } from "@openstatus/icons";
 
-// Lucide icons and the custom brand icons both accept svg props.
-export type CommandIcon = React.ComponentType<React.ComponentProps<"svg">>;
+// Shared across lucide + brand icons; keep in sync with the rest of the dashboard.
+export type CommandIcon = IconType;
 
 // Context each sheet needs when opened from the palette. Adding a sheet here
 // extends both `CommandSheet` and the palette's ActiveSheet handling.

@@ -60,9 +60,7 @@ export function useCommandMenuData({ open }: { open: boolean }) {
     statusReports,
     sortedStatusReports,
     sortedMaintenances,
-    maintenances,
     otherWorkspaces,
-    workspace,
     pageTitleById,
   };
 }
