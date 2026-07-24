@@ -2282,7 +2282,9 @@ describe("MonitorService - Private Locations", () => {
   ) {
     await db
       .delete(privateLocationToMonitors)
-      .where(eq(privateLocationToMonitors.privateLocationId, privateLocationId));
+      .where(
+        eq(privateLocationToMonitors.privateLocationId, privateLocationId),
+      );
     await db
       .delete(privateLocation)
       .where(eq(privateLocation.id, privateLocationId));
