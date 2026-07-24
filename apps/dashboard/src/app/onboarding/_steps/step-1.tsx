@@ -167,6 +167,7 @@ function ChecksPreviewPlaceholder(
           isStreaming={false}
           allFailed={false}
           onRetry={() => {}}
+          className="rounded-none border-0"
         />
       </OnboardingPreviewPlaceholderContent>
       <OnboardingPreviewPlaceholderOverlay>

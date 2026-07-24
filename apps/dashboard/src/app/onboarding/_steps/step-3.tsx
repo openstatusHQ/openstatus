@@ -156,7 +156,7 @@ function NoClickopsCard() {
   const hasKeys = (apiKeys?.length ?? 0) > 0;
 
   return (
-    <FormCard>
+    <FormCard className="shrink-0">
       <FormCardHeader>
         <FormCardTitle>Agent-first, no clickops</FormCardTitle>
         <FormCardDescription>
@@ -188,8 +188,8 @@ function NoClickopsCard() {
           .
         </FormCardDescription>
       </FormCardHeader>
-      <FormCardContent>
-        <Code>{TERRAFORM_SNIPPET}</Code>
+      <FormCardContent className="flex-1">
+        <Code className="h-full">{TERRAFORM_SNIPPET}</Code>
       </FormCardContent>
       <FormCardFooter>
         <FormCardFooterInfo>
