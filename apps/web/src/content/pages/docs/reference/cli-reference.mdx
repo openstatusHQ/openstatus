@@ -21,7 +21,7 @@ Global flags:
 | `--quiet` (`-q`) | Suppress non-error output | bool |    `false`    |        *none*         |
 | `--debug`        | Enable debug output       | bool |    `false`    |        *none*         |
 
-### `check` command (aliases: `c`)
+## `check` command (aliases: `c`)
 
 Run an HTTP check against a URL from 28 global regions.
 
@@ -49,7 +49,7 @@ The following flags are supported:
 | `--body="…"` (`-d`)   | Request body. Use @filename to read a file, @- for stdin | string |               |        *none*         |
 | `--timing`            | Show DNS/Connection/TLS/TTFB/Transfer phases             | bool   |    `false`    |        *none*         |
 
-### `monitors` command (aliases: `m`)
+## `monitors` command (aliases: `m`)
 
 Manage your monitors.
 
@@ -264,7 +264,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `status-report` command (aliases: `sr`)
+## `status-report` command (aliases: `sr`)
 
 Manage status reports.
 
@@ -401,7 +401,7 @@ The following flags are supported:
 | `--date="…"`                | Date for the update (RFC 3339 format, defaults to now)       | string |               |         *none*         |
 | `--notify`                  | Notify subscribers about this update                         | bool   |    `false`    |         *none*         |
 
-### `maintenance` command (aliases: `mt`)
+## `maintenance` command (aliases: `mt`)
 
 Manage maintenance windows.
 
@@ -519,7 +519,7 @@ The following flags are supported:
 | `--access-token="…"` (`-t`) | openstatus API Access Token     | string |               | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt | bool   |    `false`    |         *none*         |
 
-### `status-page` command (aliases: `sp`)
+## `status-page` command (aliases: `sp`)
 
 Manage status pages.
 
@@ -568,7 +568,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `notification` command (aliases: `n`)
+## `notification` command (aliases: `n`)
 
 Manage notifications.
 
@@ -617,7 +617,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `run` command (aliases: `r`)
+## `run` command (aliases: `r`)
 
 Run your uptime tests.
 
@@ -639,7 +639,7 @@ The following flags are supported:
 | `--config="…"`              | The configuration file      | string | `"config.openstatus.yaml"` |         *none*         |
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |                            | `OPENSTATUS_API_TOKEN` |
 
-### `whoami` command (aliases: `w`)
+## `whoami` command (aliases: `w`)
 
 Get your workspace information.
 
@@ -659,7 +659,7 @@ The following flags are supported:
 |-----------------------------|-----------------------------|--------|:-------------:|:----------------------:|
 | `--access-token="…"` (`-t`) | openstatus API Access Token | string |               | `OPENSTATUS_API_TOKEN` |
 
-### `login` command
+## `login` command
 
 Save your API token.
 
@@ -673,7 +673,7 @@ Usage:
 $ openstatus [GLOBAL FLAGS] login [ARGUMENTS...]
 ```
 
-### `logout` command
+## `logout` command
 
 Remove saved API token.
 
@@ -685,7 +685,7 @@ Usage:
 $ openstatus [GLOBAL FLAGS] logout [ARGUMENTS...]
 ```
 
-### `terraform` command (aliases: `tf`)
+## `terraform` command (aliases: `tf`)
 
 Generate Terraform configuration.
 
