@@ -55,7 +55,7 @@ export default async function Page({
   const [monitors, pages] = await Promise.all([
     queryClient.fetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.fetchQuery(trpc.page.list.queryOptions()),
-    queryClient.prefetchQuery(trpc.apiKeyRouter.getAll.queryOptions()),
+    queryClient.fetchQuery(trpc.apiKeyRouter.getAll.queryOptions()),
   ]);
 
   const updates: {

@@ -80,7 +80,7 @@ export function CreateApiKeyDialog({
               if (!data) {
                 throw new Error("Failed to create API key");
               }
-              await queryClient.invalidateQueries({
+              queryClient.invalidateQueries({
                 queryKey: trpc.apiKeyRouter.getAll.queryKey(),
               });
               setResult({ token: data.token, key: data.key.name });
