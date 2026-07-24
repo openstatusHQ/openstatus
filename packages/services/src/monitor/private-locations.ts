@@ -1,5 +1,9 @@
 import { and, eq, inArray, isNull } from "@openstatus/db";
-import { privateLocation, privateLocationToMonitors } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  privateLocation,
+  privateLocationToMonitors,
+} from "@openstatus/db/src/schema";
 
 import { type ServiceContext, getReadDb } from "../context";
 import { GetPrivateLocationIdsByMonitorInput } from "./schemas";
@@ -30,12 +34,18 @@ export async function getPrivateLocationIdsByMonitor(args: {
       privateLocation,
       eq(privateLocationToMonitors.privateLocationId, privateLocation.id),
     )
+    .innerJoin(monitor, eq(privateLocationToMonitors.monitorId, monitor.id))
     .where(
       and(
         inArray(privateLocationToMonitors.monitorId, ids),
+        // Scope both sides to the workspace so a legacy/corrupt pivot row can't
+        // surface a foreign private location or monitor.
         eq(privateLocation.workspaceId, args.ctx.workspace.id),
-        // Match the checker: a soft-deleted attachment no longer runs the monitor.
+        eq(monitor.workspaceId, args.ctx.workspace.id),
+        // Match the checker/monitor reads: a soft-deleted attachment or monitor
+        // no longer runs the monitor.
         isNull(privateLocationToMonitors.deletedAt),
+        isNull(monitor.deletedAt),
       ),
     )
     .all();

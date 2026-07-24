@@ -589,8 +589,10 @@ components:
           type: array
           items:
             type: string
+            readOnly: true
           title: private_location_ids
           description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: DNSMonitor
       additionalProperties: false
       description: DNSMonitor defines the configuration for a DNS monitor.
@@ -944,8 +946,10 @@ components:
           type: array
           items:
             type: string
+            readOnly: true
           title: private_location_ids
           description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: HTTPMonitor
       additionalProperties: false
       description: HTTPMonitor defines the configuration for an HTTP monitor.
@@ -1582,8 +1586,10 @@ components:
           type: array
           items:
             type: string
+            readOnly: true
           title: private_location_ids
           description: IDs of private locations that run this monitor. Read-only.
+          readOnly: true
       title: TCPMonitor
       additionalProperties: false
       description: TCPMonitor defines the configuration for a TCP monitor.

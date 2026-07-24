@@ -1,4 +1,6 @@
+import { eq } from "@openstatus/db";
 import {
+  monitor,
   monitorStatusTable,
   privateLocation,
   privateLocationToMonitors,
@@ -531,6 +533,65 @@ describe("getPrivateLocationIdsByMonitor", () => {
       });
 
       expect(map.has(mon.id)).toBe(false);
+    });
+  });
+
+  test("excludes attachments whose monitor was soft-deleted", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx: ServiceContext = { ...teamCtx, db: tx };
+      const mon = await createHttpMonitor(ctx, "deleted-monitor");
+
+      const [pl] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-deleted-monitor-pl`,
+          token: `${TEST_PREFIX}-deleted-monitor-pl-token`,
+        })
+        .returning();
+      await tx
+        .insert(privateLocationToMonitors)
+        .values({ privateLocationId: pl.id, monitorId: mon.id });
+      await tx
+        .update(monitor)
+        .set({ deletedAt: new Date() })
+        .where(eq(monitor.id, mon.id));
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx,
+        input: { monitorIds: [mon.id] },
+      });
+
+      expect(map.has(mon.id)).toBe(false);
+    });
+  });
+
+  test("excludes attachments whose monitor belongs to another workspace", async () => {
+    await withTestTransaction(async (tx) => {
+      // Legacy/corrupt pivot: a team private location wired to a free-workspace
+      // monitor. The workspace-scoped monitor join must drop it.
+      const foreignMon = await createHttpMonitor(
+        { ...freeCtx, db: tx },
+        "foreign-monitor",
+      );
+      const [pl] = await tx
+        .insert(privateLocation)
+        .values({
+          workspaceId: teamCtx.workspace.id,
+          name: `${TEST_PREFIX}-foreign-monitor-pl`,
+          token: `${TEST_PREFIX}-foreign-monitor-pl-token`,
+        })
+        .returning();
+      await tx
+        .insert(privateLocationToMonitors)
+        .values({ privateLocationId: pl.id, monitorId: foreignMon.id });
+
+      const map = await getPrivateLocationIdsByMonitor({
+        ctx: { ...teamCtx, db: tx },
+        input: { monitorIds: [foreignMon.id] },
+      });
+
+      expect(map.has(foreignMon.id)).toBe(false);
     });
   });
 
