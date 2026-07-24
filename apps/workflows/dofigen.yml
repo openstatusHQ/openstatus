@@ -9,7 +9,6 @@ ignore:
   - /packages/analytics
   - /packages/api
   - /packages/error
-  - /packages/tracker
 builders:
   install:
     fromImage: node:24-slim

@@ -13,10 +13,10 @@ effective: |
     install:
       fromImage:
         path: node
-        digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+        digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
       label:
+        org.opencontainers.image.base.digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
         org.opencontainers.image.base.name: docker.io/node:24-slim
-        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
         org.opencontainers.image.stage: install
       workdir: /app/
       run:
@@ -75,8 +75,6 @@ effective: |
         source: packages/regions/package.json
       - target: packages/tinybird/package.json
         source: packages/tinybird/package.json
-      - target: packages/tracker/package.json
-        source: packages/tracker/package.json
       - target: packages/upstash/package.json
         source: packages/upstash/package.json
       - target: packages/utils/package.json
@@ -100,9 +98,9 @@ effective: |
         path: denoland/deno
         digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       label:
+        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
         org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
         org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -131,13 +129,13 @@ effective: |
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus Server
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.title: OpenStatus Server
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   user:
     user: '1000'
     group: '1000'
@@ -159,17 +157,17 @@ effective: |
     retries: 3
 images:
   docker.io:
-    library:
-      node:
-        24-slim:
-          digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
     denoland:
       deno:
         2.9.2:
           digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+    library:
+      node:
+        24-slim:
+          digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
 resources:
   dofigen.yml:
-    hash: e62db1a487a23f2bce5f3353470c8923b67cd6b5a1a78bef29bc448bd3571094
+    hash: 0e7eb2edfd3c09393dca866cd90f058272276c48f1a0a5e9ffb235f4493755ae
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -216,7 +214,6 @@ resources:
             - packages/error/package.json
             - packages/regions/package.json
             - packages/tinybird/package.json
-            - packages/tracker/package.json
             - packages/upstash/package.json
             - packages/utils/package.json
             - packages/tsconfig/package.json

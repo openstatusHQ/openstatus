@@ -1,13 +1,11 @@
 import { getLogger } from "@logtape/logtape";
-import { db, eq } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { Status, currentStatus } from "@openstatus/services/status-page";
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-const logger = getLogger("api-server");
-import { Status, Tracker } from "@openstatus/tracker";
-
 import { redis } from "../../libs/clients";
+
+const logger = getLogger("api-server");
 
 // TODO: include ratelimiting
 
@@ -25,69 +23,14 @@ status.get("/:slug", async (c) => {
     }
 
     startTime(c, "database");
-
-    // Single query with all relations
-    const currentPage = await db.query.page.findFirst({
-      where: eq(page.slug, slug),
-      with: {
-        pageComponents: {
-          with: {
-            monitor: {
-              with: {
-                incidents: true,
-              },
-            },
-          },
-        },
-        statusReports: true,
-        maintenances: true,
-      },
-    });
-
+    const status = await currentStatus({ ctx: {}, input: { slug } });
     endTime(c, "database");
 
-    if (!currentPage) {
-      return c.json({ status: Status.Unknown });
+    // missing / non-public pages stay uncached so a newly published page is
+    // visible immediately rather than after the TTL
+    if (status !== Status.Unknown) {
+      await redis.set(slug, status, { ex: 60 }); // 1m cache
     }
-
-    if (currentPage.accessType !== "public") {
-      return c.json({ status: Status.Unknown });
-    }
-
-    // Extract active monitor components
-    const monitorComponents = currentPage.pageComponents.filter(
-      (c) =>
-        c.type === "monitor" &&
-        c.monitor &&
-        c.monitor.active &&
-        !c.monitor.deletedAt,
-    );
-
-    // Extract all ongoing incidents from active monitors
-    const ongoingIncidents = monitorComponents.flatMap(
-      (c) => c.monitor?.incidents?.filter((inc) => !inc.resolvedAt) ?? [],
-    );
-
-    // Filter for unresolved status reports
-    const unresolvedStatusReports = currentPage.statusReports.filter(
-      (report) => report.status !== "resolved",
-    );
-
-    // Filter for ongoing maintenances
-    const now = new Date();
-    const ongoingMaintenances = currentPage.maintenances.filter(
-      (m) => m.from <= now && m.to >= now,
-    );
-
-    // Use the tracker to determine status
-    const tracker = new Tracker({
-      incidents: ongoingIncidents,
-      statusReports: unresolvedStatusReports,
-      maintenances: ongoingMaintenances,
-    });
-
-    const status = tracker.currentStatus;
-    await redis.set(slug, status, { ex: 60 }); // 1m cache
 
     return c.json({ status });
   } catch (e) {

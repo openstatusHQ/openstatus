@@ -49,7 +49,6 @@
     "@openstatus/subscriptions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@opentelemetry/exporter-logs-otlp-http": "catalog:",

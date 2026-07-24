@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM node@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS install
+FROM node@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc" \
+    org.opencontainers.image.base.digest="sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d" \
     org.opencontainers.image.base.name="docker.io/node:24-slim" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/

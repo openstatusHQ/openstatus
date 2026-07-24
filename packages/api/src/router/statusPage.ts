@@ -23,23 +23,25 @@ import {
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "@openstatus/services/page-subscriber";
-import { TRPCError } from "@trpc/server";
-import { endOfDay, startOfDay, subDays } from "date-fns";
-import { z } from "zod";
-
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import {
+  getUptime,
+  setDataByType,
+  withTinybirdFallback,
+} from "@openstatus/services/status-page";
 import {
   type StatusData,
   activeReportStatus,
   fillStatusDataFor45Days,
   fillStatusDataFor45DaysNoop,
   getEvents,
-  getUptime,
   getWorstVariant,
   isMonitorComponent,
-  setDataByType,
-  withTinybirdFallback,
-} from "./statusPage.utils";
+} from "@openstatus/services/status-timeline";
+import { TRPCError } from "@trpc/server";
+import { endOfDay, startOfDay, subDays } from "date-fns";
+import { z } from "zod";
+
+import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   getMetricsLatencyMultiProcedure,
   getMetricsLatencyProcedure,
@@ -417,7 +419,7 @@ export const statusPageRouter = createTRPCRouter({
 
       // In "manual" mode the page only surfaces user-authored events, so drop
       // monitor-derived incidents from the components consumers read (e.g. the
-      // calendar). Mirrors the bar/uptime gating in statusPage.utils.ts.
+      // calendar). Mirrors the bar/uptime gating in @openstatus/services/status-page.
       const publicPageComponents =
         barType === "manual"
           ? pageComponents.map((c) =>

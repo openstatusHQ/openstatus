@@ -10,48 +10,13 @@ effective: |
   - /packages/analytics
   - /packages/api
   - /packages/error
-  - /packages/tracker
   builders:
-    build:
-      fromImage:
-        path: denoland/deno
-        digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
-      label:
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
-        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/workflows/node_modules
-        target: /app/apps/workflows/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - mkdir -p /tmp/sc
-      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
-      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
-      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
-      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
-      - mkdir -p /app/data
     install:
       fromImage:
         path: node
-        digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+        digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
       label:
-        org.opencontainers.image.base.digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+        org.opencontainers.image.base.digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
         org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.stage: install
       workdir: /app/
@@ -125,19 +90,53 @@ effective: |
         source: packages/locales/package.json
       - target: packages/status-fetcher/package.json
         source: packages/status-fetcher/package.json
+    build:
+      fromImage:
+        path: denoland/deno
+        digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+      label:
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/denoland/deno:2.9.2
+        org.opencontainers.image.base.digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/workflows/node_modules
+        target: /app/apps/workflows/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - mkdir -p /tmp/sc
+      - deno eval 'const p="/app/node_modules/.pnpm";const v=(x)=>{for(const e of Deno.readDirSync(p))if(e.name.startsWith(x+"@"))return e.name.slice(x.length+1).split("_")[0]};Deno.writeTextFileSync("/tmp/sc/package.json",JSON.stringify({dependencies:{"@libsql/client":v("@libsql+client"),libsql:v("libsql"),"@google-cloud/tasks":v("@google-cloud+tasks")}}))'
+      - cd /tmp/sc && deno install --node-modules-dir=auto --allow-scripts
+      - cd /app/apps/workflows && deno bundle --platform=deno --minify --sloppy-imports --node-modules-dir=manual --external '@libsql/client' --external 'libsql' --external '@google-cloud/tasks' --output /tmp/sc/_serve.bundle.mjs src/serve.ts
+      - cd /tmp/sc && deno compile --no-check -A --node-modules-dir=manual --output /app/apps/workflows/app /tmp/sc/_serve.bundle.mjs
+      - mkdir -p /app/data
   fromImage:
     host: registry.access.redhat.com
     port: 443
     path: hi/curl
     digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
   label:
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.digest: sha256:848b81ab5d5e55371d7193fd4f1ea7b605d14dbb039344ffad34a4c1f0d880f4
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     io.dofigen.version: 2.8.0
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.vendor: OpenStatus
   user:
     user: '1000'
     group: '1000'
@@ -164,17 +163,17 @@ effective: |
     retries: 3
 images:
   docker.io:
-    library:
-      node:
-        24-slim:
-          digest: sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
     denoland:
       deno:
         2.9.2:
           digest: sha256:69a9f3033e3f381770452648b1cbf4ae96ea409f7ef24f30afeff3d380705f62
+    library:
+      node:
+        24-slim:
+          digest: sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
 resources:
   dofigen.yml:
-    hash: 701b8ce017bf416392a04d9b5c4b5776d55e55b04ebe31f493efd77d7c12fe9f
+    hash: e26996aaf40dc745e957c15b89a0cfe56bc884ef554207032947b679fef57775
     content: |
       ignore:
         - node_modules
@@ -187,7 +186,6 @@ resources:
         - /packages/analytics
         - /packages/api
         - /packages/error
-        - /packages/tracker
       builders:
         install:
           fromImage: node:24-slim
