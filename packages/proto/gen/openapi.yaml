@@ -3566,6 +3566,9 @@ components:
         - LOCALE_EN
         - LOCALE_FR
         - LOCALE_DE
+        - LOCALE_TR
+        - LOCALE_HI
+        - LOCALE_KO
       description: Locale defines the supported languages for a status page.
     openstatus.status_page.v1.OverallStatus:
       type: string

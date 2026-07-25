@@ -32,6 +32,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
+    "@openstatus/locales": "workspace:*",
     "@openstatus/notification-bird-whatsapp": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-google-chat": "workspace:*",
@@ -70,7 +71,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@openstatus/locales": "workspace:*",
     "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@std/expect": "jsr:^1.0.19",
