@@ -1173,6 +1173,72 @@ describe("StatusPageService locale fields", () => {
       .set({ defaultLocale: "en", locales: null })
       .where(eq(page.id, testPageToUpdateId));
   });
+
+  test("returns distinct enum values for tr, hi and ko", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "ko", locales: ["en", "tr", "hi", "ko"] })
+      .where(eq(page.id, testPageId));
+
+    const res = await connectRequest(
+      "GetStatusPage",
+      { id: String(testPageId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_KO");
+    expect(data.statusPage.locales).toEqual([
+      "LOCALE_EN",
+      "LOCALE_TR",
+      "LOCALE_HI",
+      "LOCALE_KO",
+    ]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageId));
+  });
+
+  test("round-trips tr, hi and ko through update", async () => {
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_TR",
+        locales: ["LOCALE_TR", "LOCALE_HI", "LOCALE_KO"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_TR");
+    expect(data.statusPage.locales).toEqual([
+      "LOCALE_TR",
+      "LOCALE_HI",
+      "LOCALE_KO",
+    ]);
+
+    const stored = await db
+      .select()
+      .from(page)
+      .where(eq(page.id, testPageToUpdateId))
+      .get();
+    expect(stored?.defaultLocale).toBe("tr");
+    expect(stored?.locales).toEqual(["tr", "hi", "ko"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
 });
 
 // ==========================================================================

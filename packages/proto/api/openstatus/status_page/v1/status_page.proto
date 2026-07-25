@@ -29,6 +29,9 @@ enum Locale {
   LOCALE_EN = 1;
   LOCALE_FR = 2;
   LOCALE_DE = 3;
+  LOCALE_TR = 4;
+  LOCALE_HI = 5;
+  LOCALE_KO = 6;
 }
 
 

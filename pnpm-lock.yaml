@@ -943,6 +943,9 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../../packages/error
+      '@openstatus/locales':
+        specifier: workspace:*
+        version: link:../../packages/locales
       '@openstatus/notification-bird-whatsapp':
         specifier: workspace:*
         version: link:../../packages/notifications/bird-whatsapp
@@ -1052,9 +1055,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.13
     devDependencies:
-      '@openstatus/locales':
-        specifier: workspace:*
-        version: link:../../packages/locales
       '@openstatus/test-utils':
         specifier: workspace:*
         version: link:../../packages/test-utils
