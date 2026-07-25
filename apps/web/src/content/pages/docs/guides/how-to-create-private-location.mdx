@@ -36,7 +36,7 @@ Run the monitoring probe on your server using Docker:
 docker run -d \
   --name openstatus-probe \
   --restart unless-stopped \
-  -e OPENSTATUS_TOKEN=<your-token> \
+  -e OPENSTATUS_KEY=<your-token> \
   ghcr.io/openstatushq/private-location:latest
 ```
 
@@ -87,13 +87,14 @@ docker logs openstatus-probe
 Common causes:
 
 - **Invalid token** — double-check the token value; ensure no extra spaces or newlines.
-- **Network issues** — ensure the container can reach `api.openstatus.dev` on port 443.
+- **Wrong variable name** — the probe reads `OPENSTATUS_KEY`. `OPENSTATUS_TOKEN` is ignored, so the probe starts unauthenticated and fetches no monitors.
+- **Network issues** — ensure the container can reach `openstatus-private-location.fly.dev` on port 443.
 
 ### No data appearing in the dashboard
 
 1. Verify the container is running: `docker ps --filter name=openstatus-probe`
 2. Check that you've assigned at least one monitor to the private location
-3. Wait 2-3 minutes — there may be a short delay before the first check runs
+3. Wait for the probe to pick up the change. It fetches its monitor list on startup and then every 10 minutes, so a monitor assigned after the probe started can take that long to appear. Restart the container to apply it immediately.
 
 ### Container can't reach internal services
 
@@ -104,7 +105,7 @@ docker run -d \
   --name openstatus-probe \
   --restart unless-stopped \
   --network host \
-  -e OPENSTATUS_TOKEN=<your-token> \
+  -e OPENSTATUS_KEY=<your-token> \
   ghcr.io/openstatushq/private-location:latest
 ```
 
