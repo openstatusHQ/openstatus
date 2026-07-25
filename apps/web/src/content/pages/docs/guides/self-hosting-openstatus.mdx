@@ -183,7 +183,7 @@ openstatus ships an in-dashboard AI assistant. It is **off by default** when sel
 
 ### Option 1: OpenAI-compatible endpoint (bring your own model)
 
-Use any OpenAI-compatible API — [NVIDIA NIM](https://build.nvidia.com/), vLLM, Ollama, OpenRouter, LM Studio, or a private gateway. This is the recommended path for self-hosting: the model and key stay on your own infrastructure.
+Use any OpenAI-compatible API — [NVIDIA NIM](https://build.nvidia.com/), vLLM, Ollama, OpenRouter, [Neon AI Gateway](https://neon.com/docs/ai-gateway/overview), LM Studio, or a private gateway. This is the recommended path for self-hosting: the model and key stay on your own infrastructure.
 
 ```env
 AI_BASE_URL=https://integrate.api.nvidia.com/v1
@@ -201,6 +201,16 @@ A fully local, keyless setup with Ollama:
 AI_BASE_URL=http://localhost:11434/v1
 AI_MODEL=llama3.1
 ```
+
+Each Neon branch has its own [Neon AI Gateway](https://neon.com/docs/ai-gateway/overview) host, so `AI_BASE_URL` is that host plus `/v1` and `AI_API_KEY` is a Neon credential with the `ai_gateway:invoke` scope:
+
+```env
+AI_BASE_URL=https://br-winter-pond-aptw82ef-api.ai.c-2.us-east-2.aws.neon.tech/v1
+AI_API_KEY=nt_live_xxxxx
+AI_MODEL=gpt-5-mini
+```
+
+Neon's own docs call these two values `NEON_AI_GATEWAY_BASE_URL` and `NEON_AI_GATEWAY_TOKEN`, and the base URL they show is the bare host, so add `/v1` when you copy it. Pick an `AI_MODEL` from the [Neon model catalog](https://neon.com/docs/ai-gateway/models) that lists `chat/completions` among its endpoints. AI Gateway is in beta, requires a paid Neon plan, and runs only in AWS US East (Ohio) (`aws-us-east-2`).
 
 ### Option 2: Vercel AI Gateway
 
