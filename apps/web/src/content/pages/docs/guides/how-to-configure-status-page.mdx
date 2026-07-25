@@ -18,11 +18,10 @@ openstatus offers enhanced status page customisation with multiple themes and di
 
 ## Get started
 
-Go to the **Status Page Redesign** section in your status page settings and toggle `Enable New Version`. Once enabled, you'll see three subsections:
+Open your status page in the dashboard. Configuration is split across two places:
 
-1. **Tracker configuration**
-2. **Theme explorer**
-3. **Links**
+- The **Components** page holds **Components Configuration** — how trackers render each component's data.
+- The status page **Settings** hold General, Appearance, Custom Theme, Links, Locales, Page Access, Custom Domain, and the Danger Zone.
 
 <Image
     src="/docs/tutorial/configure-status-page/configure-status-page-1.png"
@@ -31,7 +30,7 @@ Go to the **Status Page Redesign** section in your status page settings and togg
 
 ### View and configure status page
 
-Before choosing to enable the new page, you can check the configuration first. Click on **View and configure status page** and you'll be forwarded to your status page with a floating button in the bottom right. Once you're done, click on **Dashboard** to be forwarded to your page where you'll be asked to save the config before continuing.
+You can preview changes before committing to them. Click **View and configure status page** and you'll be forwarded to your status page with a floating button in the bottom right. Once you're done, click **Dashboard** to be forwarded back to your page, where you'll be asked to save the config before continuing.
 
 <Image
     src="/docs/tutorial/configure-status-page/status-page-floating.png"
@@ -41,15 +40,13 @@ Before choosing to enable the new page, you can check the configuration first. C
 
 ---
 
-<Aside>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. **If you decide to deactivate the new version, it might take up to 10 minutes for the user to see the old page.**</Aside>
+### 1. Components configuration
 
-### 1. Tracker configuration
-
-The tracker configuration is split into two groups: how each component's **bars and cards** display its data, and the page-wide **uptime and history** view. They live in separate containers because they answer two different questions.
+The **Components Configuration** card, on the **Components** page, controls two related things: how each component's **bars and cards** display its data, and the page-wide **uptime and history** view.
 
 #### Bars and cards
 
-These settings only apply to **monitor components** — the container is disabled until your status page has at least one.
+These settings only apply to **monitor components** — the fields are disabled until your status page has at least one.
 
 **Bar type** — how every day is displayed in a status tracker. Either **absolute** or **manual**.
 
@@ -84,13 +81,15 @@ Example of **manual bar** with **simple card** and **hiding uptime**
     alt="manual bar type and hiding uptime"
 />
 
-### 2. Theme explorer
+### 2. Appearance
 
-You can choose between different themes. The starting set is:
+Pick a theme under **Settings → Appearance**, in the **Style** field. The shipped set is:
 
 - `default` (openstatus)
+- `default-rounded`
 - `supabase`
-- `github-high-contrast`
+- `github-contrast`
+- `dracula`
 
 Visit [themes.openstatus.dev](https://themes.openstatus.dev) to see the list of supported themes. You can also [create and contribute your own](/docs/guides/how-to-create-status-page-theme).
 

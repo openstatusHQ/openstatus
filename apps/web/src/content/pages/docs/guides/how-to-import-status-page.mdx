@@ -74,11 +74,11 @@ Importing incidents and maintenances creates historical records in openstatus. T
 
 Click **Import** to start the process. The import runs in phases:
 
-1. **Components and groups** — structural elements are created first so that incidents and maintenances can reference them.
-2. **Incidents** — historical and active incidents, including updates and component impact.
-3. **Maintenances** — scheduled and completed maintenance windows.
-4. **Subscribers** — email subscribers (where supported by the source provider).
-5. **Monitors** — existing monitoring checks (Better Stack and Checkly).
+1. **Monitors** — existing monitoring checks. Better Stack and Checkly only; imported first so components can link to them.
+2. **Components and groups** — structural elements, created before incidents and maintenances so those can reference them.
+3. **Incidents** — historical and active incidents, including updates and component impact.
+4. **Maintenances** — scheduled and completed maintenance windows.
+5. **Subscribers** — email subscribers. Statuspage and Instatus only.
 
 A progress indicator shows the current phase and any errors encountered. When the import finishes, you are redirected to your status page configuration with all imported data in place.
 

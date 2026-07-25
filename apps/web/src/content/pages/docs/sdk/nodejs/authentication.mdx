@@ -66,7 +66,7 @@ Scope is set when the key is created and is **immutable** — to change it, revo
 }
 ```
 
-A read-only key can revoke itself via `DELETE /v1/api-key/{id}` (the only carve-out — without it, a leaked read-only key would have no rotation path other than the dashboard). Revoking a *different* key from a read-only actor returns `403 Forbidden`.
+API keys are managed from the dashboard (**Settings → General → API Keys**); there is no public REST or ConnectRPC endpoint for creating or revoking them. Internally, revocation carries one carve-out: a read-only key is allowed to revoke *itself*, so a leaked key always has a rotation path. Revoking a *different* key from a read-only actor is forbidden.
 
 ## Custom Base URL
 

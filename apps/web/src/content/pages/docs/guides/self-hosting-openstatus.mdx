@@ -65,7 +65,7 @@ This guide is divided into three parts: launching the services, setting up analy
     ```bash
     cp .env.docker.example .env.docker
     ```
-    Open `.env.docker` in a text editor. At a minimum, you **must** set a value for `AUTH_SECRET` for authentication to work. For a complete setup, review the file for other variables like OAuth providers or email services.
+    Open `.env.docker` in a text editor. Four values are marked `[REQUIRED]` and must be set: `AUTH_SECRET`, `RESEND_API_KEY` (magic-link login won't work without it), `SELF_HOST`, and `NEXT_PUBLIC_URL`. For a complete setup, review the file for other variables like OAuth providers or email services.
 
     Two values matter for the rest of this guide — set them now:
     ```env
@@ -300,7 +300,7 @@ openstatus consists of multiple services running together:
 |---------|------|---------|
 | db-migrate | — | One-shot database migrations; exits after applying |
 | workflows | 3000 | Background jobs and scheduled tasks |
-| server | 3001 | API backend (tRPC) |
+| server | 3001 | API backend (ConnectRPC + REST v1) |
 | dashboard | 3002 | Admin interface for configuration |
 | status-page | 3003 | Public status pages |
 | private-location | 8081 | **Ingest server** — receives results from probes |
