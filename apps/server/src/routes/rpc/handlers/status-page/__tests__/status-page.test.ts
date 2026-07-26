@@ -1937,7 +1937,9 @@ describe("StatusPageService — component group must be on the same page", () =>
     await db
       .delete(pageComponentGroup)
       .where(eq(pageComponentGroup.name, `${TEST_PREFIX}-other-group`));
-    await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-other-page-slug`));
+    await db
+      .delete(page)
+      .where(eq(page.slug, `${TEST_PREFIX}-other-page-slug`));
 
     const otherPage = await db
       .insert(page)
