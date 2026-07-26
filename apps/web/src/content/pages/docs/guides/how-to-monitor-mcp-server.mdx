@@ -98,7 +98,7 @@ A healthy server should return a JSON response like `{"result":{},"jsonrpc":"2.0
 Once your `openstatus.yaml` file is ready, use the openstatus CLI to create the monitor:
 
 ```bash
-openstatus create openstatus.yaml
+openstatus monitors apply --config openstatus.yaml
 ```
 
 This command uploads your configuration, and monitoring will begin immediately.

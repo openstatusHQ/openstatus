@@ -84,9 +84,9 @@ Assertions let you validate the records returned by a DNS lookup. A check fails 
 
 Validate the values returned for a specific DNS record type.
 
-**Supported record types:** `A`, `AAAA`, `CNAME`, `MX`, `TXT`.
+**Supported record types:** `A`, `AAAA`, `CNAME`, `MX`, `TXT`, `NS`.
 
-> `NS` records can be looked up but cannot be asserted on.
+> `NS` assertions are available in the dashboard and the v1 REST API. The ConnectRPC `RecordAssertion` message does not accept them yet.
 
 **Comparisons:**
 

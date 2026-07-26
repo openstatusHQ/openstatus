@@ -9,7 +9,7 @@ description: "A step-by-step tutorial to install the openstatus Slack agent and 
 |---|---|
 | **Time** | ~5 minutes |
 | **Level** | Beginner |
-| **Prerequisites** | openstatus account, Slack workspace where you have permission to install apps |
+| **Prerequisites** | openstatus account on a paid plan (the Slack agent is not available on Hobby), Slack workspace where you have permission to install apps |
 
 In this guide, you'll install the openstatus Slack agent so you can manage incidents directly from your Slack workspace — no need to switch to the dashboard. The agent uses an LLM to interpret natural-language messages like *"create an incident for the payment API"* and turn them into status page actions.
 
@@ -23,15 +23,31 @@ Navigate to **Settings** > **Integrations** in your openstatus dashboard.
 
 ### 2. Install the Slack integration
 
-Click the **Install Slack** button. You'll be redirected to Slack's authorization page where you can select the workspace and channel you want to connect.
+Click the **Add to Slack** button. You'll be redirected to Slack's authorization page where you can select the workspace you want to connect. (If you see an **Upgrade** button instead, your plan doesn't include the Slack agent.)
 
 Grant the requested permissions and click **Allow** to complete the installation.
 
 <Aside>Make sure you select the correct Slack workspace if you belong to multiple workspaces.</Aside>
 
-### 3. Verify the installation
+### 3. Add the bot to a channel
 
-After completing the OAuth flow, go to the Slack channel you selected and type:
+Installing the app doesn't pick a channel — no channel is selected during the OAuth flow. Invite the bot to the channel you want to use, either by running the subscribe command there:
+
+```
+/openstatus subscribe https://acme.openstatus.dev
+```
+
+which subscribes the channel to a status page and joins the bot at the same time, or by `/invite @openstatus` for a private channel the bot can't self-join.
+
+The available slash commands are:
+
+- `/openstatus subscribe <status-page-url>` — subscribe this channel to a status page
+- `/openstatus unsubscribe <status-page-url>` — unsubscribe
+- `/openstatus subscriptions` — show this channel's subscriptions
+
+### 4. Verify the installation
+
+In that channel, type:
 
 ```
 @openstatus what's the status of my monitors?
@@ -41,7 +57,7 @@ The bot should respond with a summary of your monitors. If you see a response, t
 
 <Aside type="tip">The bot only responds when mentioned with `@openstatus` — it won't interrupt your conversations.</Aside>
 
-### 4. Start managing incidents from Slack
+### 5. Start managing incidents from Slack
 
 Here are some examples of what you can do:
 
@@ -87,9 +103,9 @@ Plan downtime so subscribers are informed in advance.
 
 ### The bot doesn't respond when mentioned
 
-1. **Check the channel** — make sure you're mentioning `@openstatus` in the channel you selected during installation.
+1. **Check the channel** — make sure the bot has been added to it. Run `/openstatus subscriptions` there, or re-run `/openstatus subscribe <status-page-url>` to join it. Private channels can't be self-joined; use `/invite @openstatus`.
 2. **Check permissions** — go to **Settings** > **Integrations** and verify the Slack integration shows as connected.
-3. **Reinstall** — if the integration appears disconnected, click **Install Slack** again to re-authorise.
+3. **Reinstall** — if the integration appears disconnected, click **Add to Slack** again to re-authorise.
 
 ### "Not authorized" or permission errors
 

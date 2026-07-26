@@ -11,6 +11,7 @@ The openstatus Terraform provider lets you manage your monitoring infrastructure
 - Manage HTTP, TCP, and DNS monitors with assertions.
 - Configure notification channels (Slack, PagerDuty, email, webhooks, and more).
 - Create and manage status pages with component groups.
+- Provision private locations and assign monitors to them.
 - Import existing resources into Terraform state.
 
 ## Installation
@@ -307,7 +308,7 @@ terraform import openstatus_dns_monitor.main_domain <monitor_id>
 
 ### `openstatus_notification`
 
-Manages a notification channel. Supports 12 provider types: Discord, Email, Slack, PagerDuty, OpsGenie, Webhook, Telegram, SMS, WhatsApp, Google Chat, Grafana OnCall, and ntfy.
+Manages a notification channel. Supports 13 provider types: Discord, Email, Slack, PagerDuty, OpsGenie, Webhook, Telegram, SMS, WhatsApp, Google Chat, Grafana OnCall, Microsoft Teams, and ntfy.
 
 **Arguments:**
 
@@ -442,11 +443,17 @@ Manages a status page with access control and branding.
 | `contact_url`        | `string`       | No       | Link to your contact page.                                                     |
 | `icon`               | `string`       | No       | URL of the icon to display.                                                    |
 | `custom_domain`      | `string`       | No       | Custom domain (DNS must point to openstatus first).                            |
-| `access_type`        | `string`       | No       | Access control: `public`, `password`, or `email-domain`.                       |
+| `access_type`        | `string`       | No       | Access control: `public`, `password`, `email-domain`, or `ip-restriction`.                  |
 | `password`           | `string`       | No       | Required when `access_type` is `password`. Sensitive.                          |
 | `auth_email_domains` | `list(string)` | No       | Required when `access_type` is `email-domain`.                                 |
+| `allowed_ip_ranges`  | `string`       | No       | Comma-separated IPv4 CIDR ranges. Required when `access_type` is `ip`.          |
+| `theme`              | `string`       | No       | Theme key applied to the page.                                                 |
+| `custom_theme`       | `object`       | No       | Per-mode CSS variable overrides merged over `theme`, with `light` and `dark` maps. Requires the custom-theme plan feature. |
+| `default_locale`     | `string`       | No       | Default language for the page.                                                 |
+| `locales`            | `list(string)` | No       | Locales offered in the language switcher.                                      |
+| `allow_index`        | `bool`         | No       | Whether search engines may index the page.                                     |
 
-**Read-only attributes:** `id` (string), `published` (bool), `theme` (string: `system`, `light`, `dark`), `created_at` (string), `updated_at` (string).
+**Read-only attributes:** `id` (string), `published` (bool), `created_at` (string), `updated_at` (string).
 
 **Example — Public status page:**
 
@@ -480,6 +487,17 @@ resource "openstatus_status_page" "company" {
   slug               = "company-status"
   access_type        = "email-domain"
   auth_email_domains = ["example.com", "subsidiary.com"]
+}
+```
+
+**Example — IP-restricted status page:**
+
+```terraform
+resource "openstatus_status_page" "internal" {
+  title             = "Internal Status"
+  slug              = "internal-status"
+  access_type       = "ip-restriction"
+  allowed_ip_ranges = "10.0.0.0/8,192.168.0.0/16"
 }
 ```
 
@@ -575,6 +593,42 @@ resource "openstatus_status_page_component_group" "applications" {
 terraform import openstatus_status_page_component_group.infrastructure <page_id>/<group_id>
 ```
 
+---
+
+### `openstatus_private_location`
+
+Manages a private location: a self-hosted checker agent that runs the monitors you assign to it.
+
+Terraform owns `monitor_ids` and `metadata` — removing either from the configuration clears it on the next apply. Liveness (`status`, `last_seen_at`) is only available on the `openstatus_private_location` data source.
+
+**Arguments:**
+
+| Argument      | Type          | Required | Description                                                  |
+| :------------ | :------------ | :------- | :----------------------------------------------------------- |
+| `name`        | `string`      | Yes      | Display name for the private location.                        |
+| `monitor_ids` | `set(string)` | No       | IDs of the monitors this private location runs.                |
+| `metadata`    | `map(string)` | No       | User-defined key/value labels attached to this location.       |
+
+**Read-only attributes:** `id` (string), `token` (string, sensitive), `created_at` (string), `updated_at` (string).
+
+```terraform
+resource "openstatus_private_location" "eu_dc" {
+  name        = "EU Datacenter"
+  monitor_ids = [openstatus_http_monitor.api.id]
+
+  metadata = {
+    env    = "prod"
+    region = "eu-west-1"
+  }
+}
+
+# The agent token is generated by openstatus. Pass it to the checker agent.
+output "agent_token" {
+  value     = openstatus_private_location.eu_dc.token
+  sensitive = true
+}
+```
+
 ## Data Sources
 
 ### `openstatus_monitor`
@@ -656,6 +710,47 @@ output "status_page_url" {
 ```
 
 **Computed attributes:** `title`, `slug`, `description`, `homepage_url`, `contact_url`, `icon`, `custom_domain`, `published`, `access_type`, `password` (sensitive), `auth_email_domains`, `theme`, `created_at`, `updated_at`.
+
+---
+
+### `openstatus_private_location`
+
+Look up a single private location by ID. Unlike the resource, this data source exposes agent liveness.
+
+```terraform
+data "openstatus_private_location" "eu_dc" {
+  id = "12"
+}
+
+output "agent_last_seen" {
+  value = data.openstatus_private_location.eu_dc.last_seen_at
+}
+```
+
+**Computed attributes:** `name`, `monitor_ids`, `metadata`, `status` (`active`, `error`, or `unknown`), `last_seen_at` (RFC 3339, null if the agent has never reported), `token` (sensitive), `created_at`, `updated_at`.
+
+---
+
+### `openstatus_private_locations`
+
+List all private locations with pagination.
+
+```terraform
+data "openstatus_private_locations" "all" {
+  limit = 100
+}
+
+output "private_location_names" {
+  value = [for l in data.openstatus_private_locations.all.private_locations : l.name]
+}
+```
+
+| Argument | Type     | Required | Default | Description        |
+| :------- | :------- | :------- | :------ | :----------------- |
+| `limit`  | `number` | No       | `50`    | Max results.       |
+| `offset` | `number` | No       | `0`     | Pagination offset. |
+
+**Computed:** `private_locations` — list of objects with `id`, `name`, `metadata`, `status`, `last_seen_at`, `monitor_count`, `created_at`, `updated_at`. Agent tokens are not returned by the list endpoint; use the singular data source to fetch one.
 
 ## Available Regions
 
