@@ -301,6 +301,24 @@ async function getGroupById(id: number, workspaceId: number) {
 }
 
 /**
+ * Resolve a component group and assert it belongs to `pageId`. Workspace scope
+ * alone isn't enough — a group from a sibling page would otherwise be accepted
+ * and the component would render under a group it isn't on. Reported as
+ * not-found so the check doesn't confirm the group exists on another page.
+ */
+async function getGroupForPage(
+  groupId: string,
+  workspaceId: number,
+  pageId: number,
+) {
+  const group = await getGroupById(Number(groupId), workspaceId);
+  if (!group || group.pageId !== pageId) {
+    throw componentGroupNotFoundError(groupId);
+  }
+  return group;
+}
+
+/**
  * Helper to get a monitor by ID with workspace scope.
  */
 async function getMonitorById(id: number, workspaceId: number) {
@@ -786,30 +804,35 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       }
       if (req.icon !== undefined && req.icon) validateIconUrl(req.icon);
 
-      // Locale merge + cross-field validation.
+      // Locale merge + cross-field validation. `default_locale` is an enum and
+      // `locales` is `repeated`, so an omitted field decodes to UNSPECIFIED /
+      // `[]` — treat both as "not provided" and keep what is stored, or
+      // updating a title would silently reset the page's languages. Same
+      // presence test the theme / access-type fields below use. Trade-off:
+      // locales can't be cleared over this RPC until the proto carries
+      // explicit presence.
+      const reqDefaultLocale =
+        req.defaultLocale !== undefined && req.defaultLocale !== 0
+          ? req.defaultLocale
+          : undefined;
       const nextDefaultLocale =
-        req.defaultLocale !== undefined
-          ? protoLocaleToDb(req.defaultLocale)
+        reqDefaultLocale !== undefined
+          ? protoLocaleToDb(reqDefaultLocale)
           : existing.defaultLocale;
       const validLocales = req.locales.filter((l) => l !== 0);
       const nextLocales =
         validLocales.length > 0
           ? [...new Set(validLocales.map(protoLocaleToDb))]
-          : null;
+          : existing.locales;
       if (nextLocales && !nextLocales.includes(nextDefaultLocale)) {
         throw new ConnectError(
           "Default locale must be included in the locales list",
           Code.InvalidArgument,
         );
       }
-      // `UpdateStatusPage` syncs locales on every call when the
-      // workspace has i18n — proto can't distinguish "field omitted"
-      // from "field = []", so the wire contract is "empty locales
-      // means clear". Gating on `req.locales.length > 0` meant omit
-      // and empty both became no-ops, leaving stale locales on the
-      // page. Skip the call only on plans without i18n, where the
-      // service would throw `LimitExceededError` regardless.
-      const localesChanged = limits.i18n === true;
+      const localesChanged =
+        limits.i18n === true &&
+        (reqDefaultLocale !== undefined || validLocales.length > 0);
 
       const generalChanged =
         (req.title !== undefined && req.title !== "") ||
@@ -1024,10 +1047,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Validate group exists if provided
     if (req.groupId) {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
+      await getGroupForPage(req.groupId, workspaceId, pageData.id);
     }
 
     // Create the component
@@ -1071,10 +1091,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Validate group exists if provided
     if (req.groupId) {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
+      await getGroupForPage(req.groupId, workspaceId, pageData.id);
     }
 
     // Create the component
@@ -1139,10 +1156,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     // Validate group exists if provided
     if (req.groupId !== undefined && req.groupId !== "") {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
+      await getGroupForPage(req.groupId, workspaceId, component.pageId);
     }
 
     // Build update values

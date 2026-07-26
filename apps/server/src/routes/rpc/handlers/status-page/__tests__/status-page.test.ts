@@ -778,14 +778,15 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("clears locales when field is omitted", async () => {
-    // Set some locales
+  // `locales` is `repeated`, so an omitted field is indistinguishable from an
+  // empty one — both have to mean "keep", or every partial update would drop
+  // the page's languages.
+  test("keeps locales when field is omitted", async () => {
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: ["en", "fr"] })
       .where(eq(page.id, testPageToUpdateId));
 
-    // Omitting locales clears them (same as sending [])
     const res = await connectRequest(
       "UpdateStatusPage",
       {
@@ -798,7 +799,8 @@ describe("StatusPageService.UpdateStatusPage", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.locales ?? []).toEqual([]);
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_EN");
 
     // Restore defaults
     await db
@@ -811,14 +813,12 @@ describe("StatusPageService.UpdateStatusPage", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("resets locales to null when empty list is sent", async () => {
-    // First set some locales
+  test("keeps locales when an empty list is sent", async () => {
     await db
       .update(page)
       .set({ defaultLocale: "en", locales: ["en", "fr"] })
       .where(eq(page.id, testPageToUpdateId));
 
-    // Send empty locales to clear them
     const res = await connectRequest(
       "UpdateStatusPage",
       {
@@ -831,7 +831,65 @@ describe("StatusPageService.UpdateStatusPage", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.locales ?? []).toEqual([]);
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("keeps the default locale when LOCALE_UNSPECIFIED is sent", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "fr", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_UNSPECIFIED",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // Must not silently fall back to "en"
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_FR");
+    expect(data.statusPage.locales).toEqual(["LOCALE_EN", "LOCALE_FR"]);
+
+    // Restore defaults
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: null })
+      .where(eq(page.id, testPageToUpdateId));
+  });
+
+  test("still replaces locales when a non-empty list is sent", async () => {
+    await db
+      .update(page)
+      .set({ defaultLocale: "en", locales: ["en", "fr"] })
+      .where(eq(page.id, testPageToUpdateId));
+
+    const res = await connectRequest(
+      "UpdateStatusPage",
+      {
+        id: String(testPageToUpdateId),
+        defaultLocale: "LOCALE_DE",
+        locales: ["LOCALE_DE", "LOCALE_EN"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_DE");
+    expect(data.statusPage.locales).toEqual(["LOCALE_DE", "LOCALE_EN"]);
 
     // Restore defaults
     await db
@@ -1866,6 +1924,121 @@ describe("StatusPageService.UpdateComponent", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+});
+
+// A group belongs to exactly one page. Workspace scope alone would let a
+// component be filed under a group from a sibling page.
+describe("StatusPageService — component group must be on the same page", () => {
+  let otherPageId: number;
+  let otherGroupId: number;
+
+  beforeAll(async () => {
+    await db
+      .delete(pageComponentGroup)
+      .where(eq(pageComponentGroup.name, `${TEST_PREFIX}-other-group`));
+    await db.delete(page).where(eq(page.slug, `${TEST_PREFIX}-other-page-slug`));
+
+    const otherPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-other-page`,
+        slug: `${TEST_PREFIX}-other-page-slug`,
+        description: "Second page, owns a group of its own",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+    otherPageId = otherPage.id;
+
+    const otherGroup = await db
+      .insert(pageComponentGroup)
+      .values({
+        workspaceId: 1,
+        pageId: otherPageId,
+        name: `${TEST_PREFIX}-other-group`,
+      })
+      .returning()
+      .get();
+    otherGroupId = otherGroup.id;
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(pageComponentGroup)
+      .where(eq(pageComponentGroup.id, otherGroupId));
+    await db.delete(page).where(eq(page.id, otherPageId));
+  });
+
+  test("AddMonitorComponent rejects a group from another page", async () => {
+    const res = await connectRequest(
+      "AddMonitorComponent",
+      {
+        pageId: String(testPageId),
+        monitorId: String(testMonitorId),
+        name: `${TEST_PREFIX}-cross-page-monitor`,
+        groupId: String(otherGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("AddStaticComponent rejects a group from another page", async () => {
+    const res = await connectRequest(
+      "AddStaticComponent",
+      {
+        pageId: String(testPageId),
+        name: `${TEST_PREFIX}-cross-page-static`,
+        groupId: String(otherGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("UpdateComponent rejects a group from another page", async () => {
+    const res = await connectRequest(
+      "UpdateComponent",
+      {
+        id: String(testComponentToUpdateId),
+        groupId: String(otherGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+
+    const stored = await db
+      .select()
+      .from(pageComponent)
+      .where(eq(pageComponent.id, testComponentToUpdateId))
+      .get();
+    expect(stored?.groupId ?? null).toBe(null);
+  });
+
+  test("a group on the same page is still accepted", async () => {
+    const res = await connectRequest(
+      "AddStaticComponent",
+      {
+        pageId: String(testPageId),
+        name: `${TEST_PREFIX}-same-page-static`,
+        groupId: String(testGroupId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.component.groupId).toBe(String(testGroupId));
+
+    await db
+      .delete(pageComponent)
+      .where(eq(pageComponent.id, Number(data.component.id)));
   });
 });
 

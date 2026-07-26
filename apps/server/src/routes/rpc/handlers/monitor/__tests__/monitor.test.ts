@@ -979,6 +979,47 @@ describe("MonitorService.UpdateHTTPMonitor", () => {
 
     expect(res.status).toBe(401);
   });
+
+  // These three fields have implicit presence in the proto, so an omitted
+  // field decodes to false/false/"" — a name-only update used to persist that.
+  test("partial update preserves active, public and description", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-preserve`,
+        url: "https://preserve.example.com",
+        periodicity: "1m",
+        active: true,
+        public: true,
+        description: "keep me",
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { name: `${TEST_PREFIX}-preserve-renamed` },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.monitor.name).toBe(`${TEST_PREFIX}-preserve-renamed`);
+      expect(data.monitor.active).toBe(true);
+      expect(data.monitor.public).toBe(true);
+      expect(data.monitor.description).toBe("keep me");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
 });
 
 describe("MonitorService.UpdateTCPMonitor", () => {
@@ -1778,6 +1819,100 @@ describe("MonitorService - Limits", () => {
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.message).toContain("periodicity");
+  });
+
+  // The free plan allows a single monitor, so one row puts workspace 2 at its
+  // cap — which is the normal state for any workspace on its plan limit.
+  async function seedFreePlanMonitorAtCap(suffix: string) {
+    return db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-at-cap-${suffix}`,
+        url: `https://at-cap-${suffix}.example.com`,
+        periodicity: "10m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+  }
+
+  // Regression: the row-count cap is a create-time check. A workspace sitting
+  // at its monitor limit must still be able to edit the monitors it has.
+  test("workspace at its monitor cap can still update an existing monitor", async () => {
+    const mon = await seedFreePlanMonitorAtCap("update");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { periodicity: "PERIODICITY_30M" },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.monitor.periodicity).toBe("PERIODICITY_30M");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update still enforces the plan's periodicity limit", async () => {
+    const mon = await seedFreePlanMonitorAtCap("periodicity");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { periodicity: "PERIODICITY_30S" },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.message).toContain("periodicity");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update still enforces the plan's max-regions limit", async () => {
+    const mon = await seedFreePlanMonitorAtCap("regions");
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: {
+            regions: [
+              "REGION_FLY_AMS",
+              "REGION_FLY_IAD",
+              "REGION_FLY_SIN",
+              "REGION_FLY_LHR",
+              "REGION_FLY_SYD",
+              "REGION_FLY_NRT",
+              "REGION_FLY_FRA",
+              "REGION_FLY_GRU",
+            ],
+          },
+        },
+        { "x-openstatus-key": FREE_PLAN_KEY },
+      );
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.message).toContain("region");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
   });
 });
 
