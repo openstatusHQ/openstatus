@@ -1,17 +1,23 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { cn } from "@/lib/utils";
 
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellText } from "../table-cell-text";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type PrivateLocation = RouterOutputs["privateLocation"]["list"][number];
+
+const statusClassName: Record<string, string> = {
+  active: "text-success",
+  error: "text-destructive",
+};
 
 export const columns: ColumnDef<PrivateLocation>[] = [
   {
@@ -28,15 +34,12 @@ export const columns: ColumnDef<PrivateLocation>[] = [
     ),
     enableHiding: false,
     cell: ({ row }) => {
-      const status = row.getValue("status");
-      const isError = status === "error";
+      const value = String(row.getValue("status"));
       return (
-        <Badge
-          variant={isError ? "destructive" : "outline"}
-          className={isError ? undefined : "border-green-500/40 text-green-600"}
-        >
-          {isError ? "Error" : "Active"}
-        </Badge>
+        <TableCellText
+          value={value}
+          className={cn("font-mono", statusClassName[value])}
+        />
       );
     },
   },
