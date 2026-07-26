@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { HowItWorks } from "../../components/marketing/how-it-works";
 import { LatencyChartTable } from "../latency-chart-table";
 import { Aside } from "./aside";
 import { ButtonLink } from "./button-link";
@@ -34,6 +35,7 @@ export const components = {
   table: Table,
   Grid,
   Aside,
+  HowItWorks,
   Card,
   CardGrid,
   LinkCard,
