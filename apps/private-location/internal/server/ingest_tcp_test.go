@@ -2,15 +2,67 @@ package server_test
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 
 	"github.com/openstatushq/openstatus/apps/private-location/internal/server"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/workflows"
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
+	"github.com/stretchr/testify/require"
 )
+
+// TestIngestTCP_ForwardsErrorMessage guards against the probe's failure message
+// being dropped: it never reached Tinybird or the alert body.
+func TestIngestTCP_ForwardsErrorMessage(t *testing.T) {
+	var capturedBody []byte
+	interceptor := &interceptorHTTPClient{
+		f: func(req *http.Request) (*http.Response, error) {
+			if req.Body != nil {
+				capturedBody, _ = io.ReadAll(req.Body)
+			}
+			return &http.Response{StatusCode: http.StatusAccepted}, nil
+		},
+	}
+	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(interceptor.GetHTTPClient(), "apiKey"))
+	workflowsClient := recordingWorkflows{called: make(chan workflows.Payload, 1)}
+	h.WorkflowsClient = workflowsClient
+
+	const message = "dial tcp 10.0.0.1:5432: connect: connection refused"
+	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{
+		Id:            "tcp-err",
+		MonitorId:     "6",
+		Timestamp:     1234567890,
+		CronTimestamp: 1234567800,
+		Uri:           "10.0.0.1:5432",
+		RequestStatus: "error",
+		Error:         1,
+		Message:       message,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	_, err := h.IngestTCP(context.Background(), req)
+	require.NoError(t, err)
+
+	var event struct {
+		ErrorMessage string `json:"errorMessage"`
+	}
+	require.NoError(t, json.Unmarshal(capturedBody, &event))
+	require.Equal(t, message, event.ErrorMessage)
+
+	select {
+	case payload := <-workflowsClient.called:
+		require.Equal(t, "error", payload.Status)
+		require.Equal(t, message, payload.Message)
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected the failed check to be forwarded to the workflows service")
+	}
+}
 
 func TestIngestTCP_Unauthenticated(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(http.DefaultClient, ""))

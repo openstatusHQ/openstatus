@@ -198,3 +198,60 @@ func TestHTTPJob_HeaderAssertions(t *testing.T) {
 		assert.Equal(t, uint8(0), data.Error)
 	})
 }
+
+// A failed check has to carry a message: it ends up as the alert body, which
+// was empty for every private location HTTP monitor.
+func TestHTTPJob_FailureMessage(t *testing.T) {
+	t.Run("reports the status code", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer srv.Close()
+
+		monitor := &v1.HTTPMonitor{Url: srv.URL, Method: "GET", Timeout: 10000, Retry: 1}
+
+		data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		assert.Equal(t, uint8(1), data.Error)
+		assert.Equal(t, "Request failed with status code 500", data.Message)
+	})
+
+	t.Run("reports a failed assertion on a 2xx", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer srv.Close()
+
+		monitor := &v1.HTTPMonitor{
+			Url: srv.URL, Method: "GET", Timeout: 10000, Retry: 1,
+			HeaderAssertions: []*v1.HeaderAssertion{
+				{Key: "X-Missing", Comparator: v1.StringComparator_STRING_COMPARATOR_EQUAL, Target: "expected"},
+			},
+		}
+
+		data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		assert.Equal(t, uint8(1), data.Error)
+		assert.Equal(t, "Assertions failed", data.Message)
+	})
+
+	t.Run("keeps a successful check message empty", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer srv.Close()
+
+		monitor := &v1.HTTPMonitor{Url: srv.URL, Method: "GET", Timeout: 10000, Retry: 1}
+
+		data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		assert.Equal(t, uint8(0), data.Error)
+		assert.Empty(t, data.Message)
+	})
+}

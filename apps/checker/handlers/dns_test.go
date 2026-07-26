@@ -10,7 +10,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/handlers"
 )
 
-// Mock DNSResult struct to match the expected input for FormatDNSResult.
+// Mock DNSResult struct to match the expected input for FormatDNSRecords.
 // If the real struct is in another package, import it accordingly.
 type DNSResult struct {
 	A     []string
@@ -21,7 +21,7 @@ type DNSResult struct {
 	TXT   []string
 }
 
-func TestFormatDNSResult(t *testing.T) {
+func TestFormatDNSRecords(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    DNSResult
@@ -88,7 +88,7 @@ func TestFormatDNSResult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := handlers.FormatDNSResult(&checker.DnsResponse{
+			got := checker.FormatDNSRecords(&checker.DnsResponse{
 				A:     tt.input.A,
 				AAAA:  tt.input.AAAA,
 				CNAME: tt.input.CNAME,
@@ -97,7 +97,7 @@ func TestFormatDNSResult(t *testing.T) {
 				TXT:   tt.input.TXT,
 			})
 			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("FormatDNSResult() = %v, want %v", got, tt.expected)
+				t.Errorf("FormatDNSRecords() = %v, want %v", got, tt.expected)
 			}
 		})
 	}

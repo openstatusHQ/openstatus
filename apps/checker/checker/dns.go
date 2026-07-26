@@ -67,6 +67,19 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 
 
 
+// FormatDNSRecords flattens a lookup into the per-record-type map shape that
+// both the public handler and the private-location probe report.
+func FormatDNSRecords(result *DnsResponse) map[string][]string {
+	return map[string][]string{
+		"A":     append([]string{}, result.A...),
+		"AAAA":  append([]string{}, result.AAAA...),
+		"CNAME": {result.CNAME},
+		"MX":    append([]string{}, result.MX...),
+		"NS":    append([]string{}, result.NS...),
+		"TXT":   append([]string{}, result.TXT...),
+	}
+}
+
 func lookupCNAME(domain string) (string, error) {
 	cname, err := net.LookupCNAME(domain)
 	if err != nil {
