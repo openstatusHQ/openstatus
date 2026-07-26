@@ -443,7 +443,7 @@ Manages a status page with access control and branding.
 | `contact_url`        | `string`       | No       | Link to your contact page.                                                     |
 | `icon`               | `string`       | No       | URL of the icon to display.                                                    |
 | `custom_domain`      | `string`       | No       | Custom domain (DNS must point to openstatus first).                            |
-| `access_type`        | `string`       | No       | Access control: `public`, `password`, `email-domain`, or `ip`.                  |
+| `access_type`        | `string`       | No       | Access control: `public`, `password`, `email-domain`, or `ip-restriction`.                  |
 | `password`           | `string`       | No       | Required when `access_type` is `password`. Sensitive.                          |
 | `auth_email_domains` | `list(string)` | No       | Required when `access_type` is `email-domain`.                                 |
 | `allowed_ip_ranges`  | `string`       | No       | Comma-separated IPv4 CIDR ranges. Required when `access_type` is `ip`.          |
