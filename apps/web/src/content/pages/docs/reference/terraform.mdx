@@ -496,7 +496,7 @@ resource "openstatus_status_page" "company" {
 resource "openstatus_status_page" "internal" {
   title             = "Internal Status"
   slug              = "internal-status"
-  access_type       = "ip"
+  access_type       = "ip-restriction"
   allowed_ip_ranges = "10.0.0.0/8,192.168.0.0/16"
 }
 ```
