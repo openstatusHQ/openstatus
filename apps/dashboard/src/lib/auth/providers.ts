@@ -1,8 +1,8 @@
 import type { Profile } from "next-auth";
+import type { OIDCConfig } from "next-auth/providers";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
-import type { OIDCConfig } from "next-auth/providers";
 
 export const GitHubProvider = GitHub({
   allowDangerousEmailAccountLinking: true,
