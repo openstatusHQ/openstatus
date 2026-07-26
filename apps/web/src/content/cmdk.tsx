@@ -314,7 +314,7 @@ export function CmdK({
         onClick={() => setOpen(true)}
       >
         <span className="text-muted-foreground truncate">
-          SearchIcon<span className="text-xs">...</span>
+          Search<span className="text-xs">...</span>
         </span>
         <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
           <span className="text-xs">⌘</span>K
@@ -328,7 +328,7 @@ export function CmdK({
           }}
           className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl lg:max-w-2xl xl:max-w-3xl"
         >
-          <DialogTitle className="sr-only">SearchIcon</DialogTitle>
+          <DialogTitle className="sr-only">Search</DialogTitle>
           <Command
             onKeyDown={(e) => {
               // e.key === "Escape" ||
