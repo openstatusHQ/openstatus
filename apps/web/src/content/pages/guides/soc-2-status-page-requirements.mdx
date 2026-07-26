@@ -1,6 +1,7 @@
 ---
-title: "SOC 2 and Your Status Page: What Auditors Actually Ask For"
-description: "Which SOC 2 Trust Services Criteria a status page can evidence, which ones it cannot, and the specific artifacts an auditor will request during fieldwork."
+title: "SOC 2 Status Page Requirements"
+hero: "SOC 2 and Your Status Page: What Auditors Actually Ask For"
+description: "Which SOC 2 criteria a status page can evidence, which it cannot, and the artifacts an auditor requests during Type II fieldwork."
 author: "openstatus"
 publishedAt: "2026-07-26"
 category: "compliance"
@@ -8,7 +9,7 @@ faq:
   - question: "Does SOC 2 require a status page?"
     answer: "No. No Trust Services Criterion names a status page. CC2.3 requires you to communicate relevant information to external parties, including how they can report failures and how you inform them of incidents. A status page is one way to evidence that control — email distribution lists and support portals are others. What the auditor tests is whether the process exists, is followed, and produces records."
   - question: "Which SOC 2 criteria does a status page help with?"
-    answer: "Primarily CC2.3 (communication with external parties) and CC7.4/CC7.5 (incident response and recovery), plus A1.2 if you carry the Availability criterion. It contributes evidence to those controls. It does not satisfy CC1 (control environment), CC3 (risk assessment), CC5 (control activities), CC6 (logical access), or CC8 (change management)."
+    answer: "Primarily CC2.3 (communication with external parties) and CC7.4/CC7.5 (incident response and recovery), plus A1.1 if you carry the Availability category. It contributes evidence to those controls. It does not satisfy CC1 (control environment), CC3 (risk assessment), CC5 (control activities), CC6 (logical access), or CC8 (change management)."
   - question: "What evidence will an auditor actually request?"
     answer: "A population of incidents for the audit period, and for a sample of those, timestamped proof of when each was detected, when customers were notified, what was said, and when it was resolved. They will compare your status page timeline against your internal ticket or alert record to confirm the two agree."
   - question: "How far back does a SOC 2 Type II audit look?"
@@ -25,7 +26,7 @@ Criteria are quoted from the AICPA's 2017 Trust Services Criteria with revised p
 
 ## First, the scope boundary
 
-A status page is evidence for a handful of criteria. SOC 2 has over sixty points of focus across five categories. Being precise about the boundary is what makes the rest of this guide useful.
+A status page is evidence for a handful of criteria. SOC 2 has around sixty criteria across five categories, with several hundred points of focus beneath them. Being precise about the boundary is what makes the rest of this guide useful.
 
 <Aside type="caution" title="What a status page does not do">
 It does not scope your system, define your control environment, assess risk, manage access, review vendors, or track changes. It does not generate policies. It does not make you compliant. If a vendor tells you a status page gets you "SOC 2 ready," they are describing one control out of many.
@@ -40,10 +41,11 @@ Here is the honest mapping.
 | CC7.3 | Evaluate security events to determine whether they constitute an incident | No — this is your triage process |
 | CC7.4 | Respond to identified incidents by executing a defined program | Supporting — external comms is one step in that program |
 | CC7.5 | Restore operations and communicate resolution | Supporting evidence |
-| A1.2 | Recover and maintain availability commitments (Availability category only) | Supporting — uptime record |
+| A1.1 | Maintain, monitor, and evaluate current processing capacity and use of system components (Availability only) | Supporting — the uptime and latency record |
+| A1.2 | Backup, recovery infrastructure, and environmental protections (Availability only) | Minimal — recovery evidence at most |
 | CC1, CC3, CC5, CC6, CC8 | Control environment, risk assessment, control activities, logical access, change management | **None** |
 
-If you carry only the Security category, a status page touches CC2.3 and parts of CC7. If you carry Availability — most infrastructure vendors do, because customers ask for it — it also feeds A1.2.
+If you carry only the Security category, a status page touches CC2.3 and parts of CC7. If you carry Availability — most infrastructure vendors do, because customers ask for it — it also feeds A1.1.
 
 ## What CC2.3 actually says
 

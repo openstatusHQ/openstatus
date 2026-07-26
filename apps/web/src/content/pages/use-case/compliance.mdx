@@ -14,7 +14,7 @@ faq:
   - question: "Can I use openstatus alongside Vanta or Drata?"
     answer: "Yes. openstatus handles the incident communication side of compliance while Vanta or Drata manage the broader audit automation. Your status page URL and incident history can be referenced in your compliance platform as evidence of your communication controls."
   - question: "How quickly can I be compliant?"
-    answer: "You can have a branded status page with custom domain, incident history, and subscriber notifications live in under 10 minutes. Every paid plan includes everything you need for SOC 2 incident communication compliance."
+    answer: "You can have a branded status page with custom domain, incident history, and subscriber notifications live in under 10 minutes. That covers the incident communication side — CC2.3 and parts of CC7 — not your whole SOC 2 scope. Check that your plan's data retention spans your audit period: a Type II observation window runs 3 to 12 months."
 ---
 
 ## Why SOC 2 auditors care about incident communication
@@ -36,7 +36,7 @@ When reviewing your incident communication controls, SOC 2 auditors typically ve
 - **Subscriber management**: Do affected parties have a way to receive updates?
 - **Consistent process**: Is your incident communication repeatable and reliable?
 
-Openstatus checks every box automatically.
+Openstatus covers all four. That is the incident communication control — the rest of your SOC 2 scope is a separate exercise.
 
 ## How openstatus helps
 
@@ -68,7 +68,7 @@ For internal services or client-specific deployments, protect your status page w
 4. Enable subscriber notifications
 5. You're audit-ready
 
-Every paid plan includes custom domain, incident history, subscriber notifications, and password protection — everything you need to satisfy SOC 2's incident communication requirements.
+Every paid plan includes custom domain, incident history, subscriber notifications, and password protection — the pieces SOC 2's incident communication criteria ask for. One thing to get right before you choose:
 
 <Aside type="caution" title="One thing to check before you pick a plan">
 Retention has to cover your audit period. A SOC 2 Type II observation window runs 3 to 12 months, and you cannot evidence availability for a period longer than your data goes back. Openstatus retains 14 days on Hobby, 3 months on Starter, 12 months on Pro, and 24 months on Scale. The [SOC 2 guide](/guides/soc-2-status-page-requirements) covers why this catches teams out.
@@ -83,7 +83,7 @@ SOC 2 is the most common trigger, but it is not the only regime with an incident
 
 **SOC 2**
 
-CC2.3 for external communication, plus the CC7 incident response series and A1.2 if you carry Availability.
+CC2.3 for external communication, plus the CC7 incident response series and A1.1 if you carry Availability.
 
 [Read the guide](/guides/soc-2-status-page-requirements)
 
