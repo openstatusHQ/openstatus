@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -78,6 +79,11 @@ func evaluateRecordAssertions(recordAssertions []*v1.RecordAssertion, res *check
 	return true, nil
 }
 
+// Cancellation cause for the retry budget, so an expiry we imposed can be told
+// apart from the caller cancelling us (shutdown), which must not be reported as
+// an outage.
+var errRetryBudgetExpired = errors.New("DNS retry budget expired")
+
 func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivateRegionData, error) {
 	retry := monitor.Retry
 	if retry == 0 {
@@ -89,15 +95,16 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 		degradedAfter = *monitor.DegradedAt
 	}
 
-	// checker.Dns resolves through net.Lookup*, which ignores ctx, so this
-	// deadline bounds the retry loop rather than an individual lookup.
+	// One budget for the whole retry loop: checker.Dns honours the deadline, so
+	// each attempt is bounded by whatever is left of it.
 	if monitor.Timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(monitor.Timeout)*time.Millisecond)
+		ctx, cancel = context.WithTimeoutCause(ctx, time.Duration(monitor.Timeout)*time.Millisecond, errRetryBudgetExpired)
 		defer cancel()
 	}
 
 	var called int
+	var lastFailure *DNSPrivateRegionData
 
 	op := func() (*DNSPrivateRegionData, error) {
 		called++
@@ -111,33 +118,43 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 		}
 
 		if lookupErr != nil {
-			if called < int(retry) {
-				return nil, fmt.Errorf("DNS lookup failed for %s: %w", monitor.Uri, lookupErr)
-			}
-			// Report the failure on the last attempt instead of returning an
-			// error: a dropped result never reaches the platform, so a resolver
-			// outage would go unalerted.
+			// Build the reportable failure on every attempt, not just the last:
+			// a dropped result never reaches the platform, so a resolver outage
+			// would go unalerted.
 			data.RequestStatus = "error"
 			data.Error = 1
 			data.Message = lookupErr.Error()
+			lastFailure = data
+
+			if called < int(retry) {
+				return nil, fmt.Errorf("DNS lookup failed for %s: %w", monitor.Uri, lookupErr)
+			}
 			return data, nil
 		}
 
 		data.Records = checker.FormatDNSRecords(res)
 
-		isSuccessful, err := evaluateRecordAssertions(monitor.RecordAssertions, res)
-		if err != nil {
-			return nil, backoff.Permanent(err)
+		isSuccessful, assertErr := evaluateRecordAssertions(monitor.RecordAssertions, res)
+		if assertErr != nil {
+			// Returning nil here would stop the monitor reporting entirely and
+			// leave it looking healthy. Retrying can't help — a malformed
+			// assertion stays malformed — so report it and stop.
+			data.RequestStatus = "error"
+			data.Error = 1
+			data.Message = fmt.Sprintf("invalid DNS assertion for %s: %s", monitor.Uri, assertErr)
+			return data, nil
 		}
 
 		switch {
 		case !isSuccessful:
-			if called < int(retry) {
-				return nil, fmt.Errorf("DNS assertions failed for %s", monitor.Uri)
-			}
 			data.RequestStatus = "error"
 			data.Error = 1
 			data.Message = fmt.Sprintf("DNS assertions failed for %s", monitor.Uri)
+			lastFailure = data
+
+			if called < int(retry) {
+				return nil, errors.New(data.Message)
+			}
 		case degradedAfter > 0 && latency > degradedAfter:
 			data.RequestStatus = "degraded"
 		default:
@@ -147,10 +164,17 @@ func (jobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivat
 		return data, nil
 	}
 
-	return backoff.Retry(ctx, op,
+	data, err := backoff.Retry(ctx, op,
 		backoff.WithMaxTries(uint(retry)),
 		backoff.WithBackOff(backoff.NewExponentialBackOff()),
 	)
+	// backoff.Retry discards the operation result when the context expires, so
+	// without this the pending failure is lost and no outage is ingested.
+	if err != nil && lastFailure != nil && errors.Is(err, errRetryBudgetExpired) {
+		return lastFailure, nil
+	}
+
+	return data, err
 }
 
 func newDNSData(uri string, start, latency int64) (*DNSPrivateRegionData, error) {
