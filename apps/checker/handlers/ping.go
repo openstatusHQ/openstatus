@@ -112,11 +112,6 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 			return fmt.Errorf("unable to ping: %w", err)
 		}
 
-		// Check for transport failures which are now in Response.Error
-		if r.Error != "" {
-			return fmt.Errorf("unable to ping: %s", r.Error)
-		}
-
 		timingAsString, err := json.Marshal(r.Timing)
 		if err != nil {
 			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
