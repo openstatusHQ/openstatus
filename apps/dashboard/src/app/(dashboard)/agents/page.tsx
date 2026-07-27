@@ -38,6 +38,21 @@ const messages = [
   },
 ];
 
+const commands = [
+  {
+    command: "/openstatus subscribe <status-page-url>",
+    description: "Subscribe this channel to a status page.",
+  },
+  {
+    command: "/openstatus unsubscribe <status-page-url>",
+    description: "Unsubscribe this channel from a status page.",
+  },
+  {
+    command: "/openstatus subscriptions",
+    description: "Show this channel's subscriptions.",
+  },
+];
+
 export default function Page() {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -87,6 +102,30 @@ export default function Page() {
                 {message.description}
               </p>
               <Code>{message.message}</Code>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Commands</SectionTitle>
+          <SectionDescription>
+            Slash commands to manage which status pages notify this channel.
+            Also useful for Slack Connect channels shared with customers.
+          </SectionDescription>
+        </SectionHeader>
+        <Note size="sm">
+          <Info />
+          Subscribing also joins the bot to the channel. Private channels
+          require /invite @openstatus first.
+        </Note>
+        <ul className="flex flex-col gap-2">
+          {commands.map((command, i) => (
+            <li key={i} className="flex flex-col gap-0.5">
+              <p className="text-muted-foreground text-xs">
+                {command.description}
+              </p>
+              <Code>{command.command}</Code>
             </li>
           ))}
         </ul>
