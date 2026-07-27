@@ -11,7 +11,10 @@ import { type NextRequest, after } from "next/server.js";
 import superjson from "superjson";
 import { ZodError, treeifyError } from "zod";
 
-import { resolveActiveWorkspace } from "./auth/resolve-active-workspace";
+import {
+  type ResolveActiveWorkspaceResult,
+  resolveActiveWorkspace,
+} from "./auth/resolve-active-workspace";
 
 // Generic session type that works with both User and Viewer
 type Session = {
@@ -39,6 +42,7 @@ type CreateContextOptions = {
     userAgent?: string;
     location?: string;
   };
+  resolveWorkspace?: typeof resolveActiveWorkspace;
 };
 
 type Meta = {
@@ -77,10 +81,19 @@ export const createTRPCContext = async (opts: {
   const workspace = null;
   const user = null;
 
+  // Context is per HTTP request while middleware runs per procedure — a
+  // batched request would otherwise re-run the same user×workspaces query
+  // once per procedure. userId/slug are constant within a request, so the
+  // first call's promise is safe to share.
+  let resolution: Promise<ResolveActiveWorkspaceResult> | undefined;
+  const resolveWorkspace: typeof resolveActiveWorkspace = (args) =>
+    (resolution ??= resolveActiveWorkspace(args));
+
   return createInnerTRPCContext({
     session,
     workspace,
     user,
+    resolveWorkspace,
     req: opts.req,
     metadata: {
       userAgent: opts.req.headers.get("user-agent") ?? undefined,
@@ -174,7 +187,8 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
    */
   const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
 
-  const resolved = await resolveActiveWorkspace({
+  const resolve = ctx.resolveWorkspace ?? resolveActiveWorkspace;
+  const resolved = await resolve({
     userId: Number(ctx.session.user.id),
     workspaceSlug,
   });
