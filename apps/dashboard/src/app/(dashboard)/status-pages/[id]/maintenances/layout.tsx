@@ -4,7 +4,7 @@ import {
   RIGHT_SIDEBAR_COOKIE,
   getSidebarDefaultOpen,
 } from "@/lib/sidebar-cookie";
-import { HydrateClient, prefetch, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Sidebar } from "../sidebar";
 
@@ -16,8 +16,9 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const queryClient = getQueryClient();
 
-  prefetch(
+  await queryClient.prefetchQuery(
     trpc.maintenance.list.queryOptions({
       pageId: Number.parseInt(id),
     }),
