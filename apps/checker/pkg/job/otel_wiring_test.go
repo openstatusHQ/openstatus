@@ -148,7 +148,7 @@ func TestTCPJob_RecordsOTelMetrics(t *testing.T) {
 
 	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor, "test-region")
 	require.NoError(t, err)
-	assert.Equal(t, "active", data.RequestStatus)
+	assert.Equal(t, "success", data.RequestStatus)
 	otlp.requireMetric(t, "openstatus.status")
 }
 
