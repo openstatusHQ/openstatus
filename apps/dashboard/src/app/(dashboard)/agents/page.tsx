@@ -111,6 +111,7 @@ export default function Page() {
           <SectionTitle>Commands</SectionTitle>
           <SectionDescription>
             Slash commands to manage which status pages notify this channel.
+            Also useful for Slack Connect channels shared with customers.
           </SectionDescription>
         </SectionHeader>
         <Note size="sm">
