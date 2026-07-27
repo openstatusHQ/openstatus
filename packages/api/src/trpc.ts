@@ -42,7 +42,7 @@ type CreateContextOptions = {
     userAgent?: string;
     location?: string;
   };
-  resolveWorkspace?: typeof resolveActiveWorkspace;
+  resolveWorkspace?: () => Promise<ResolveActiveWorkspaceResult>;
 };
 
 type Meta = {
@@ -83,11 +83,14 @@ export const createTRPCContext = async (opts: {
 
   // Context is per HTTP request while middleware runs per procedure — a
   // batched request would otherwise re-run the same user×workspaces query
-  // once per procedure. userId/slug are constant within a request, so the
-  // first call's promise is safe to share.
+  // once per procedure. Zero-arg by design: userId/slug are bound here so
+  // the first call's promise is safe to share across the whole batch.
   let resolution: Promise<ResolveActiveWorkspaceResult> | undefined;
-  const resolveWorkspace: typeof resolveActiveWorkspace = (args) =>
-    (resolution ??= resolveActiveWorkspace(args));
+  const resolveWorkspace = () =>
+    (resolution ??= resolveActiveWorkspace({
+      userId: Number(session?.user?.id),
+      workspaceSlug: opts.req.cookies.get("workspace-slug")?.value,
+    }));
 
   return createInnerTRPCContext({
     session,
@@ -187,11 +190,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
    */
   const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
 
-  const resolve = ctx.resolveWorkspace ?? resolveActiveWorkspace;
-  const resolved = await resolve({
-    userId: Number(ctx.session.user.id),
-    workspaceSlug,
-  });
+  const resolved = await (ctx.resolveWorkspace
+    ? ctx.resolveWorkspace()
+    : resolveActiveWorkspace({
+        userId: Number(ctx.session.user.id),
+        workspaceSlug,
+      }));
 
   if (!resolved.ok) {
     throw new TRPCError({

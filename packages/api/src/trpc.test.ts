@@ -60,8 +60,8 @@ test("resolveWorkspace memoizes the resolution within one request context", asyn
     auth: async () => ({ user: { id: "1" } }),
   });
 
-  const first = ctx.resolveWorkspace?.({ userId: 1 });
-  const second = ctx.resolveWorkspace?.({ userId: 1 });
+  const first = ctx.resolveWorkspace?.();
+  const second = ctx.resolveWorkspace?.();
 
   expect(second).toBe(first);
 
@@ -74,8 +74,8 @@ test("resolveWorkspace is not shared across request contexts", async () => {
   const a = await createTRPCContext({ req: makeRequest(), auth });
   const b = await createTRPCContext({ req: makeRequest(), auth });
 
-  const resolvedA = a.resolveWorkspace?.({ userId: 1 });
-  const resolvedB = b.resolveWorkspace?.({ userId: 1 });
+  const resolvedA = a.resolveWorkspace?.();
+  const resolvedB = b.resolveWorkspace?.();
 
   expect(resolvedB).not.toBe(resolvedA);
   await Promise.all([resolvedA, resolvedB]);
@@ -83,10 +83,7 @@ test("resolveWorkspace is not shared across request contexts", async () => {
 
 test("middleware uses the context resolver instead of querying directly", async () => {
   let calls = 0;
-  const resolveWorkspace = (_args: {
-    userId: number;
-    workspaceSlug?: string;
-  }): Promise<ResolveActiveWorkspaceResult> => {
+  const resolveWorkspace = (): Promise<ResolveActiveWorkspaceResult> => {
     calls++;
     // safe because the middleware only reads user.id and workspace.slug
     return Promise.resolve({
