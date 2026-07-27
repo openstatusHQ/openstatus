@@ -1,8 +1,11 @@
 import crypto from "node:crypto";
 
 import { expect } from "@std/expect";
-import { beforeEach, describe, test } from "@std/testing/bdd";
+import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
+
+import type { SlackConfig } from "./config";
+import { createSlackRoute } from "./index";
 
 const SIGNING_SECRET = "test-signing-secret";
 
@@ -24,19 +27,22 @@ function makeInstallToken(workspaceId: number): string {
   return Buffer.from(`${payload}.${sig}`).toString("base64url");
 }
 
+const BASE_CONFIG: SlackConfig = {
+  signingSecret: SIGNING_SECRET,
+  clientId: "test-client-id",
+  aiGatewayApiKey: "test-key",
+  dashboardUrl: "http://localhost:3000",
+};
+
+function makeApp(overrides: Partial<SlackConfig> = {}) {
+  const app = new Hono();
+  app.route("/slack", createSlackRoute({ ...BASE_CONFIG, ...overrides }));
+  return app;
+}
+
 describe("slack route middleware", () => {
-  beforeEach(() => {
-    process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
-    process.env.AI_GATEWAY_API_KEY = "test-key";
-    process.env.SLACK_CLIENT_ID = "test-client-id";
-  });
-
   test("returns 503 when SLACK_SIGNING_SECRET is missing", async () => {
-    process.env.SLACK_SIGNING_SECRET = "";
-
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp({ signingSecret: "" });
 
     const res = await app.request("/slack/install?token=invalid");
 
@@ -46,11 +52,7 @@ describe("slack route middleware", () => {
   });
 
   test("returns 503 when AI_GATEWAY_API_KEY is missing", async () => {
-    process.env.AI_GATEWAY_API_KEY = "";
-
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp({ aiGatewayApiKey: "" });
 
     const res = await app.request("/slack/install?token=invalid");
 
@@ -58,9 +60,7 @@ describe("slack route middleware", () => {
   });
 
   test("GET /install is accessible with valid token", async () => {
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp();
 
     const token = makeInstallToken(1);
     const res = await app.request(`/slack/install?token=${token}`);
@@ -69,18 +69,14 @@ describe("slack route middleware", () => {
   });
 
   test("GET /install rejects invalid token", async () => {
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp();
 
     const res = await app.request("/slack/install?token=invalid");
     expect(res.status).toBe(403);
   });
 
   test("POST /events requires signature verification", async () => {
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp();
 
     // POST without signature headers should fail
     const res = await app.request("/slack/events", {
@@ -93,9 +89,7 @@ describe("slack route middleware", () => {
   });
 
   test("POST /events accepts valid signed request", async () => {
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp();
 
     const body = JSON.stringify({
       type: "url_verification",
@@ -120,9 +114,7 @@ describe("slack route middleware", () => {
   });
 
   test("POST /interactions requires signature verification", async () => {
-    const { slackRoute } = await import("./index");
-    const app = new Hono();
-    app.route("/slack", slackRoute);
+    const app = makeApp();
 
     const res = await app.request("/slack/interactions", {
       method: "POST",

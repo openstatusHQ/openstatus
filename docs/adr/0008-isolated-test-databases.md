@@ -4,7 +4,7 @@ date: 2026-07-27
 decision-makers: openstatus maintainers
 ---
 
-# One test database per package, one workspace per suite
+# One test database per package, one workspace per suite, injected route config
 
 ## Context and Problem Statement
 
@@ -45,7 +45,8 @@ could not close it.
 
 ## Decision
 
-Two independent layers.
+Three independent layers, one per axis of shared state: the database, the
+dataset inside it, and the process environment.
 
 **Isolate at the process boundary: one database per package.** `test.yml` is a
 job matrix with one leg per DB-touching package (`services`, `server`, `api`,
@@ -69,6 +70,19 @@ A `team` fixture carries the same limits override the seeded team workspace has
 suites keep the headroom they were written against. A `free` fixture keeps the
 stock plan defaults, because the quota-rejection tests need to hit the caps.
 
+**Isolate at the process environment: inject the slack route's config.** The
+slack route read its credentials from `env` (a proxy over `process.env`) at
+request time, and its suites drove the "not configured" branches by assigning to
+`process.env` mid-test. Deno's `--parallel` runs test files in workers that share
+one process environment, so those assignments leaked across files — the suite had
+to run as a serial second pass.
+
+`createSlackRoute(config)` now takes a `SlackConfig` and puts it on the request
+context; `verify.ts` and `oauth.ts` read `c.get("slackConfig")` instead of `env`.
+Production still calls `slackConfigFromEnv()` at module scope. Tests build a route
+with explicit config, so "signing secret missing" is a value passed in rather than
+a global mutated, and the 9 slack files join the parallel pass.
+
 ## Consequences
 
 - `loadSeededWorkspace` is gone. Suites that reached for a seeded workspace now
@@ -79,7 +93,12 @@ stock plan defaults, because the quota-rejection tests need to hit the caps.
   every table locally — so the rows are harmless. Adding a workspace-scoped table
   does not require touching test teardown.
 - `apps/workflows` and `packages/subscriptions` gained `--parallel`; they were
-  serial only because their fixtures were shared.
+  serial only because their fixtures were shared. `apps/server` collapsed from
+  two commands to one, since the slack carve-out is no longer needed. Every
+  package now runs its test files in parallel.
+- Reading config at request time from a live `process.env` proxy is what made the
+  slack route untestable in parallel. New routes should resolve config once and
+  pass it in.
 - The seeded dataset still exists and is still what local development and the
   dashboard run against. Tests no longer depend on its *contents* — only
   `with-transaction` and `with-test-transaction`, which exercise the transaction

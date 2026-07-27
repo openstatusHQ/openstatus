@@ -9,7 +9,7 @@ import {
 import { installSlackAgent } from "@openstatus/services/integration";
 import type { Context } from "hono";
 
-import { env } from "@/env";
+import type { SlackConfig, SlackEnv } from "./config";
 
 const logger = getLogger(["api-server", "slack", "oauth"]);
 
@@ -48,29 +48,30 @@ interface SlackOAuthResponse {
   enterprise?: { id: string; name: string } | null;
 }
 
-export async function handleSlackInstall(c: Context) {
+export async function handleSlackInstall(c: Context<SlackEnv>) {
+  const config = c.get("slackConfig");
   const token = c.req.query("token");
   if (!token) {
     return c.json({ error: "token is required" }, 400);
   }
 
-  const installPayload = verifyInstallToken(token);
+  const installPayload = verifyInstallToken(config, token);
   if (!installPayload) {
     return c.json({ error: "Invalid or expired token" }, 403);
   }
 
-  if (!env.SLACK_CLIENT_ID) {
+  if (!config.clientId) {
     return c.json({ error: "Slack OAuth not configured" }, 503);
   }
 
-  const state = encodeState({
+  const state = encodeState(config, {
     workspaceId: installPayload.workspaceId,
     userId: installPayload.userId,
     ts: Date.now(),
   });
 
   const params = new URLSearchParams({
-    client_id: env.SLACK_CLIENT_ID,
+    client_id: config.clientId,
     scope: BOT_SCOPES,
     redirect_uri: getRedirectUri(c),
     state,
@@ -79,25 +80,28 @@ export async function handleSlackInstall(c: Context) {
   return c.redirect(`${SLACK_OAUTH_URL}?${params.toString()}`);
 }
 
-export async function handleSlackOAuthCallback(c: Context) {
+export async function handleSlackOAuthCallback(c: Context<SlackEnv>) {
+  const config = c.get("slackConfig");
   const code = c.req.query("code");
   const stateParam = c.req.query("state");
   const error = c.req.query("error");
 
   if (error) {
-    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+    return c.redirect(
+      `${config.dashboardUrl}/settings/integrations?slack=error`,
+    );
   }
 
   if (!code || !stateParam) {
     return c.json({ error: "Missing code or state" }, 400);
   }
 
-  const state = decodeState(stateParam);
+  const state = decodeState(config, stateParam);
   if (!state || Date.now() - state.ts > 10 * 60 * 1000) {
     return c.json({ error: "Invalid or expired state" }, 400);
   }
 
-  if (!env.SLACK_CLIENT_ID || !env.SLACK_CLIENT_SECRET) {
+  if (!config.clientId || !config.clientSecret) {
     return c.json({ error: "Slack OAuth not configured" }, 503);
   }
 
@@ -105,8 +109,8 @@ export async function handleSlackOAuthCallback(c: Context) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: env.SLACK_CLIENT_ID,
-      client_secret: env.SLACK_CLIENT_SECRET,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
       code,
       redirect_uri: getRedirectUri(c),
     }),
@@ -115,7 +119,9 @@ export async function handleSlackOAuthCallback(c: Context) {
   const tokenData = (await tokenRes.json()) as SlackOAuthResponse;
   if (!tokenData.ok) {
     logger.error("token exchange failed", { error: tokenData.error });
-    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+    return c.redirect(
+      `${config.dashboardUrl}/settings/integrations?slack=error`,
+    );
   }
 
   const workspaceRow = await db
@@ -127,7 +133,9 @@ export async function handleSlackOAuthCallback(c: Context) {
     logger.error("workspace not found at callback", {
       workspaceId: state.workspaceId,
     });
-    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+    return c.redirect(
+      `${config.dashboardUrl}/settings/integrations?slack=error`,
+    );
   }
 
   const workspaceParsed = selectWorkspaceSchema.safeParse(workspaceRow);
@@ -136,7 +144,9 @@ export async function handleSlackOAuthCallback(c: Context) {
       workspaceId: state.workspaceId,
       issues: workspaceParsed.error.issues,
     });
-    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+    return c.redirect(
+      `${config.dashboardUrl}/settings/integrations?slack=error`,
+    );
   }
 
   try {
@@ -170,31 +180,30 @@ export async function handleSlackOAuthCallback(c: Context) {
       workspaceId: state.workspaceId,
       err: err instanceof Error ? err.message : String(err),
     });
-    return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=error`);
+    return c.redirect(
+      `${config.dashboardUrl}/settings/integrations?slack=error`,
+    );
   }
 
-  return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=success`);
+  return c.redirect(
+    `${config.dashboardUrl}/settings/integrations?slack=success`,
+  );
 }
 
-function getRedirectUri(c: Context): string {
-  if (env.SLACK_REDIRECT_URI) return env.SLACK_REDIRECT_URI;
+function getRedirectUri(c: Context<SlackEnv>): string {
+  const configured = c.get("slackConfig").redirectUri;
+  if (configured) return configured;
   const url = new URL(c.req.url);
   return `${url.origin}/slack/oauth/callback`;
 }
 
-function getDashboardUrl(): string {
-  return env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
-}
-
-function encodeState(state: OAuthState): string {
+function encodeState(config: SlackConfig, state: OAuthState): string {
   const payload = JSON.stringify(state);
-  const signature = computeHmac(payload);
+  const signature = computeHmac(config, payload);
   return Buffer.from(`${payload}.${signature}`).toString("base64url");
 }
 
-function decodeState(encoded: string): OAuthState | null {
+function decodeState(config: SlackConfig, encoded: string): OAuthState | null {
   try {
     const decoded = Buffer.from(encoded, "base64url").toString();
     const dotIdx = decoded.lastIndexOf(".");
@@ -203,7 +212,7 @@ function decodeState(encoded: string): OAuthState | null {
     const payload = decoded.slice(0, dotIdx);
     const signature = decoded.slice(dotIdx + 1);
 
-    if (!verifyHmac(payload, signature)) return null;
+    if (!verifyHmac(config, payload, signature)) return null;
 
     return JSON.parse(payload) as OAuthState;
   } catch {
@@ -211,14 +220,18 @@ function decodeState(encoded: string): OAuthState | null {
   }
 }
 
-function computeHmac(payload: string): string {
-  const secret = env.SLACK_SIGNING_SECRET;
+function computeHmac(config: SlackConfig, payload: string): string {
+  const secret = config.signingSecret;
   if (!secret) throw new Error("Slack signing secret not configured");
   return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }
 
-function verifyHmac(payload: string, signature: string): boolean {
-  const expected = computeHmac(payload);
+function verifyHmac(
+  config: SlackConfig,
+  payload: string,
+  signature: string,
+): boolean {
+  const expected = computeHmac(config, payload);
   if (expected.length !== signature.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
@@ -226,6 +239,7 @@ function verifyHmac(payload: string, signature: string): boolean {
 const INSTALL_TOKEN_TTL_MS = 5 * 60 * 1000;
 
 function verifyInstallToken(
+  config: SlackConfig,
   token: string,
 ): { workspaceId: number; userId?: number } | null {
   try {
@@ -236,7 +250,7 @@ function verifyInstallToken(
     const payload = decoded.slice(0, dotIdx);
     const signature = decoded.slice(dotIdx + 1);
 
-    if (!verifyHmac(payload, signature)) return null;
+    if (!verifyHmac(config, payload, signature)) return null;
 
     const data = JSON.parse(payload) as {
       workspaceId: number;
