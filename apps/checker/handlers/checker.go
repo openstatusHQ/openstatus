@@ -167,6 +167,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Body:          string(res.Body),
 			Trigger:       trigger,
 			RequestStatus: requestStatus,
+			Message:       res.Error,
 		}
 
 		var isSuccessfull bool = true
@@ -332,6 +333,12 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 }
 
 func EvaluateHTTPAssertions(raw []json.RawMessage, data PingData, res checker.Response) (bool, error) {
+	// If there's a transport error, always fail regardless of assertions
+	// This prevents false positives where empty responses might satisfy assertions
+	if res.Error != "" {
+		return false, nil
+	}
+
 	statusCode := statusCode(res.Status)
 	if len(raw) == 0 {
 		return statusCode.IsSuccessful(), nil
