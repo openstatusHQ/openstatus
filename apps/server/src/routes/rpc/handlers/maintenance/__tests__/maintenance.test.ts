@@ -7,6 +7,7 @@ import {
   pageSubscriber,
   workspace,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { mock } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
@@ -61,7 +62,14 @@ let testSubscriberId: number;
 let testPage2Id: number;
 let testPage2ComponentId: number;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   const ws = await db
     .insert(workspace)
     .values({
@@ -689,7 +697,7 @@ describe("MaintenanceService.GetMaintenance", () => {
     const otherRecord = await db
       .insert(maintenance)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace`,
         message: "Other workspace maintenance",
         from: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -845,7 +853,7 @@ describe("MaintenanceService.ListMaintenances", () => {
     const otherRecord = await db
       .insert(maintenance)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-list`,
         message: "Other workspace maintenance",
         from: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -984,7 +992,7 @@ describe("MaintenanceService.UpdateMaintenance", () => {
     const otherRecord = await db
       .insert(maintenance)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-update`,
         message: "Other workspace maintenance",
         from: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -1300,7 +1308,7 @@ describe("MaintenanceService.DeleteMaintenance", () => {
     const otherRecord = await db
       .insert(maintenance)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-delete`,
         message: "Other workspace maintenance",
         from: new Date(Date.now() + 24 * 60 * 60 * 1000),

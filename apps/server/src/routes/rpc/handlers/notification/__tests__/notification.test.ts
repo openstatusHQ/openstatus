@@ -3,6 +3,7 @@ import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
@@ -35,7 +36,14 @@ let testNotificationId: number;
 let testNotificationToDeleteId: number;
 let testNotificationToUpdateId: number;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   // Clean up any existing test data
   await db
     .delete(notification)
@@ -347,7 +355,7 @@ describe("NotificationService.GetNotification", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -475,7 +483,7 @@ describe("NotificationService.ListNotifications", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace-list`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -597,7 +605,7 @@ describe("NotificationService.UpdateNotification", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace-update`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -754,7 +762,7 @@ describe("NotificationService.DeleteNotification", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace-delete`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),

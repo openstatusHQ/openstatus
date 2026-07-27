@@ -47,7 +47,17 @@
       "cache": false
     },
     "test": {
-      "cache": false
+      "cache": false,
+      // Strict env mode would drop these, and packages/db then silently falls
+      // back to the default local sqld URL — pointing tests at whatever
+      // database happens to be on port 8080.
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_AUTH_TOKEN",
+        "NODE_ENV",
+        "RESEND_API_KEY",
+        "CRON_SECRET"
+      ]
     },
     "dx": {
       "cache": false,

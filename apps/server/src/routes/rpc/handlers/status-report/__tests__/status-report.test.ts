@@ -9,6 +9,7 @@ import {
   statusReportsToPageComponents,
   workspace,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { createWorkspace } from "@openstatus/db/src/test/factories";
 import {
   PageComponentImpact,
@@ -64,7 +65,14 @@ let testSubscriberId: number;
 let testPage2Id: number;
 let testPage2ComponentId: number;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   // Clean up any existing test data
   await db
     .delete(statusReport)
@@ -732,7 +740,7 @@ describe("StatusReportService.GetStatusReport", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace`,
         status: "investigating",
       })
@@ -914,7 +922,7 @@ describe("StatusReportService.ListStatusReports", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-list`,
         status: "investigating",
       })
@@ -1119,7 +1127,7 @@ describe("StatusReportService.UpdateStatusReport", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-update`,
         status: "investigating",
       })
@@ -1441,7 +1449,7 @@ describe("StatusReportService.DeleteStatusReport", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-delete`,
         status: "investigating",
       })
@@ -1586,7 +1594,7 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
     const otherReport = await db
       .insert(statusReport)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-add-update`,
         status: "investigating",
       })

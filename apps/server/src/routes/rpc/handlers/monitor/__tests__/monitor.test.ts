@@ -8,6 +8,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   createMonitor,
   createWorkspace,
@@ -43,7 +44,7 @@ async function connectRequest(
 }
 
 const TEST_PREFIX = "rpc-monitor-test";
-const FREE_PLAN_KEY = "2";
+let FREE_PLAN_KEY: string;
 let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
@@ -105,7 +106,15 @@ beforeEach(() => {
   calls.httpGetBiweekly = [];
 });
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
+  FREE_PLAN_KEY = String(OTHER_WORKSPACE_ID);
   // Clean up any existing test data
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
@@ -423,7 +432,7 @@ describe("MonitorService.ListMonitors", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace`,
         url: "https://other-workspace.example.com",
         periodicity: "1m",
@@ -1748,7 +1757,6 @@ describe("MonitorService - Default Values", () => {
 });
 
 describe("MonitorService - Limits", () => {
-  // Workspace 2 has free plan with limited periodicity (10m, 30m, 1h) and max 6 regions
   test("returns error when periodicity is not allowed by plan", async () => {
     // Free plan only allows 10m, 30m, 1h - PERIODICITY_30S is not allowed
     const res = await connectRequest(
@@ -1868,7 +1876,7 @@ describe("MonitorService - Limits", () => {
     return db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-at-cap-${suffix}`,
         url: `https://at-cap-${suffix}.example.com`,
         periodicity: "10m",
@@ -2209,7 +2217,7 @@ describe("MonitorService.GetMonitorStatus", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-status-other-ws`,
         url: "https://other-ws-status.example.com",
         periodicity: "1m",
@@ -2355,7 +2363,7 @@ describe("MonitorService.GetMonitor", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-get-other-ws`,
         url: "https://other-ws-get.example.com",
         periodicity: "1m",
@@ -2699,7 +2707,7 @@ describe("MonitorService.GetMonitorSummary", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-summary-other-ws`,
         url: "https://other-ws-summary.example.com",
         periodicity: "1m",
@@ -2812,7 +2820,7 @@ describe("MonitorService.ListMonitorHTTPResponseLogs", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-response-logs-other-ws`,
         url: "https://other-ws-response-logs.example.com",
         periodicity: "1m",
@@ -2921,7 +2929,7 @@ describe("MonitorService.GetMonitorHTTPResponseLog", () => {
     const otherWorkspaceMon = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-response-log-detail-other-ws`,
         url: "https://other-ws-response-log-detail.example.com",
         periodicity: "1m",

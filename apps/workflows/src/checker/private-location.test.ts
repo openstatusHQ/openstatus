@@ -8,6 +8,7 @@ import {
   privateLocationMonitorStatus,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
@@ -32,6 +33,7 @@ type AnyStub = Stub<any>;
 // Dedicated fixtures, not seed monitor 1: other suites (api/server maintenance
 // tests) put seed monitor 1 under active maintenance on the shared CI database,
 // which makes updateStatusPrivate suppress notifications and drop the write.
+let workspaceId: number;
 const TEST_MONITOR_ID = 9101;
 const INACTIVE_MONITOR_ID = 9102;
 const TEST_NOTIFICATION_ID = 9101;
@@ -81,12 +83,13 @@ describe("updateStatusPrivate", () => {
   let mockEmailSendDegraded: AnyStub;
 
   beforeAll(async () => {
+    workspaceId = (await createTestWorkspace()).workspace.id;
     await db
       .insert(monitor)
       .values([
         {
           id: TEST_MONITOR_ID,
-          workspaceId: 1,
+          workspaceId,
           active: true,
           url: "https://private-location.test",
           name: "Private Location Test Monitor",
@@ -95,7 +98,7 @@ describe("updateStatusPrivate", () => {
         },
         {
           id: INACTIVE_MONITOR_ID,
-          workspaceId: 1,
+          workspaceId,
           active: false,
           url: "https://private-location-inactive.test",
           name: "Private Location Inactive Monitor",
@@ -112,7 +115,7 @@ describe("updateStatusPrivate", () => {
         provider: "email",
         name: "private location test notification",
         data: '{"email":"ping@openstatus.dev"}',
-        workspaceId: 1,
+        workspaceId,
       })
       .onConflictDoNothing()
       .run();
@@ -130,7 +133,7 @@ describe("updateStatusPrivate", () => {
         id: TEST_LOCATION_ID,
         name: "Test Office",
         token: "test-private-location-token",
-        workspaceId: 1,
+        workspaceId,
         createdAt: new Date(),
       })
       .onConflictDoNothing()

@@ -10,13 +10,10 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import type { ServiceContext } from "@openstatus/services";
-import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "@openstatus/services/test/fixtures";
+import { SEEDED_WORKSPACE_FREE_ID } from "@openstatus/services/test/fixtures";
 import {
   expectAuditRow,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   readAuditLog,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
@@ -65,7 +62,7 @@ let testPageId: number;
 let testPageComponentId: number;
 
 beforeAll(async () => {
-  teamWorkspace = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  teamWorkspace = (await createWorkspaceFixture("team")).workspace;
   const pageRow = await db
     .insert(page)
     .values({

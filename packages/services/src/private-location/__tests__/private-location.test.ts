@@ -10,10 +10,9 @@ import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
   expectAuditRow,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
   readAuditLog,
@@ -40,7 +39,7 @@ let otherWorkspaceId: number;
 const OTHER_WS_SLUG = `${TEST_PREFIX}-other-ws`;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
 
   const mk = async (name: string, workspaceId: number, deleted?: boolean) => {

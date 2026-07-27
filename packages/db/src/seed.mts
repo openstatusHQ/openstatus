@@ -22,6 +22,7 @@ import {
   workspace,
 } from "./schema";
 import { externalServicesSeed } from "./seed/external-services";
+import { TEAM_WORKSPACE_LIMITS } from "./seed/limits";
 
 async function main() {
   if (
@@ -66,8 +67,7 @@ async function main() {
         plan: "team",
         endsAt: null,
         paidUntil: null,
-        limits:
-          '{"monitors":50,"synthetic-checks":150000,"periodicity":["30s","1m","5m","10m","30m","1h"],"multi-region":true,"max-regions":35,"data-retention":"24 months","status-pages":20,"maintenance":true,"status-subscribers":true,"custom-domain":true,"password-protection":true,"email-domain-protection":true,"white-label":true,"notifications":true,"sms":true,"pagerduty":true,"notification-channels":50,"members":"Unlimited","audit-log":true,"regions":["ams","arn","atl","bog","bom","bos","cdg","den","dfw","ewr","eze","fra","gdl","gig","gru","hkg","iad","jnb","lax","lhr","mad","mia","nrt","ord","otp","phx","qro","scl","sea","sin","sjc","syd","waw","yul","yyz"]}',
+        limits: TEAM_WORKSPACE_LIMITS,
       },
       {
         id: 2,
