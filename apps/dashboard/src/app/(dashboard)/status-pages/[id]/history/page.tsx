@@ -1,6 +1,6 @@
 import type { SearchParams } from "nuqs";
 
-import { HydrateClient, prefetch, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
@@ -13,12 +13,13 @@ export default async function Page({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const queryClient = getQueryClient();
 
-  prefetch(
-    trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
-  );
   // NOTE: store in cache to avoid flicker on clients first render
   await searchParamsCache.parse(searchParams);
+  await queryClient.prefetchQuery(
+    trpc.page.getUptimeHistory.queryOptions({ id: Number.parseInt(id) }),
+  );
 
   return (
     <HydrateClient>

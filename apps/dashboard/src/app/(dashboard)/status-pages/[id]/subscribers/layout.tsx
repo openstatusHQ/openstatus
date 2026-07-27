@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,
@@ -7,9 +7,10 @@ export default async function Layout({
   children: React.ReactNode;
   params: Promise<{ id: string }>;
 }) {
+  const queryClient = getQueryClient();
   const { id } = await params;
 
-  prefetch(
+  await queryClient.prefetchQuery(
     trpc.pageSubscriber.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
 
