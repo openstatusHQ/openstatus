@@ -150,17 +150,19 @@ export const mergeRouters = t.mergeRouters;
 const timingMiddleware = t.middleware(async (opts) => {
   const start = performance.now();
   const result = await opts.next();
-  const durationMs = Math.round(performance.now() - start);
-  console.info(
-    JSON.stringify({
-      msg: "trpc.timing",
-      path: opts.path,
-      type: opts.type,
-      durationMs,
-      ok: result.ok,
-      region: process.env.VERCEL_REGION,
-    }),
-  );
+  if (process.env.NODE_ENV !== "test") {
+    const durationMs = Math.round(performance.now() - start);
+    console.info(
+      JSON.stringify({
+        msg: "trpc.timing",
+        path: opts.path,
+        type: opts.type,
+        durationMs,
+        ok: result.ok,
+        region: process.env.VERCEL_REGION,
+      }),
+    );
+  }
   return result;
 });
 
