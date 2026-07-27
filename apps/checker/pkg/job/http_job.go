@@ -154,7 +154,14 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, region
 		}
 
 		status := statusCode(res.Status)
+		// Only use default 2xx check if no status assertions exist
+		// If status assertions are configured, let them determine success
+		hasStatusAssertions := len(monitor.StatusCodeAssertions) > 0
 		isSuccessful := status.IsSuccessful()
+		if hasStatusAssertions {
+			isSuccessful = true // Start with true, assertions will override
+		}
+
 		if len(monitor.HeaderAssertions) > 0 {
 			headersAsString, err := json.Marshal(res.Headers)
 			if err != nil {
