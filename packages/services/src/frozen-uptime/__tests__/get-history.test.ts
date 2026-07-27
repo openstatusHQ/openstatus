@@ -14,11 +14,7 @@ import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -34,12 +30,14 @@ const noSleep = () => Promise.resolve();
 
 let userCtx: ServiceContext;
 let freeCtx: ServiceContext;
+let teamWorkspaceId: number;
 
 beforeAll(async () => {
-  userCtx = makeUserCtx(await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID));
-  freeCtx = makeUserCtx(await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID), {
-    userId: 2,
-  });
+  const team = await createWorkspaceFixture("team");
+  teamWorkspaceId = team.workspace.id;
+  userCtx = makeUserCtx(team.workspace, { userId: team.userId });
+  const free = await createWorkspaceFixture("free");
+  freeCtx = makeUserCtx(free.workspace, { userId: free.userId });
 });
 
 // tests anchor months to the real clock: getEvents filters against `new
@@ -98,7 +96,7 @@ async function insertPage(
   return tx
     .insert(page)
     .values({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: teamWorkspaceId,
       title: "svc-history-page",
       description: "",
       slug: `svc-history-${Date.now()}-${slugCounter++}`,
@@ -113,7 +111,7 @@ async function insertMonitor(tx: Tx) {
   return tx
     .insert(monitor)
     .values({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: teamWorkspaceId,
       active: true,
       url: "https://example.com",
       name: "svc-history-monitor",
@@ -138,7 +136,7 @@ async function insertComponent(
   return tx
     .insert(pageComponent)
     .values({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: teamWorkspaceId,
       pageId: args.pageId,
       type: args.monitorId ? "monitor" : "static",
       monitorId: args.monitorId ?? null,
@@ -155,7 +153,7 @@ async function insertFrozen(
 ) {
   return tx
     .insert(frozenMonitorUptime)
-    .values({ workspaceId: SEEDED_WORKSPACE_TEAM_ID, ...args })
+    .values({ workspaceId: teamWorkspaceId, ...args })
     .returning()
     .get();
 }
@@ -174,7 +172,7 @@ async function insertImpactReport(
   const report = await tx
     .insert(statusReport)
     .values({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: teamWorkspaceId,
       pageId: args.pageId,
       status: "resolved",
       title: "svc-history-report",
@@ -231,7 +229,7 @@ async function insertLegacyReport(
   const report = await tx
     .insert(statusReport)
     .values({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: teamWorkspaceId,
       pageId: args.pageId,
       status: "resolved",
       title: "svc-history-legacy-report",
@@ -534,7 +532,7 @@ describe("getUptimeHistory", () => {
       const twoHours = 2 * 3_600_000;
       // incident and major report describe the same 2h outage → merged once
       await tx.insert(incidentTable).values({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamWorkspaceId,
         monitorId: testMonitor.id,
         startedAt: new Date(base),
         createdAt: new Date(base),
@@ -657,7 +655,7 @@ describe("getUptimeHistory", () => {
       ]);
       const twoHours = 2 * 3_600_000;
       await tx.insert(incidentTable).values({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamWorkspaceId,
         monitorId: testMonitor.id,
         startedAt: new Date(start + twoHours),
         createdAt: new Date(start + twoHours),

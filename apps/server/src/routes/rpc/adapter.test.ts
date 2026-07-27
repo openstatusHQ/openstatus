@@ -7,9 +7,8 @@ import {
   ValidationError,
 } from "@openstatus/services";
 import { createApiKey } from "@openstatus/services/api-key";
-import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
 import { expect } from "@std/expect";
@@ -119,7 +118,7 @@ describe("RPC runtime — read-only key on a write service verb", () => {
   let teamWorkspace: Workspace;
 
   beforeAll(async () => {
-    teamWorkspace = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+    teamWorkspace = (await createWorkspaceFixture("team")).workspace;
   });
 
   test("throws ForbiddenError → ConnectError(PermissionDenied)", async () => {

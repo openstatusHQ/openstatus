@@ -6,17 +6,17 @@ import { Hono } from "hono";
 // workspace-resolver / @slack/web-api / agent are swapped for doubles via the
 // test import map; behavior is driven through this shared mutable state.
 import { slackTestState } from "@/libs/test/doubles/slack-test-state";
+import {
+  TEST_SIGNING_SECRET as SIGNING_SECRET,
+  withSlackConfig,
+} from "@/libs/test/slack-config";
 
+import type { SlackEnv } from "./config";
 import { handleSlackEvent } from "./handler";
 import { verifySlackSignature } from "./verify";
 
-const SIGNING_SECRET = "test-signing-secret";
-
-process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
-process.env.AI_GATEWAY_API_KEY = "test-key";
-
 function createTestApp() {
-  const app = new Hono<{ Variables: { slackBody: unknown } }>();
+  const app = withSlackConfig(new Hono<SlackEnv>());
   app.post("/slack/events", verifySlackSignature, handleSlackEvent);
   return app;
 }

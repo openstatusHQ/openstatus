@@ -5,6 +5,10 @@ import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
+import {
+  createPage,
+  createPageComponent,
+} from "@openstatus/db/src/test/factories";
 import { expect } from "@std/expect";
 import {
   afterAll,
@@ -16,13 +20,9 @@ import {
 } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
   clearAuditLog,
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   readAuditLog,
   withTestTransaction,
@@ -38,13 +38,14 @@ import {
   verifySelfSignupSubscriber,
 } from "../index.ts";
 
-// Seeded data we lean on (see packages/db/src/seed.mts):
-//   workspace 1 = team plan, has status-subscribers=true
-//   page 1      = slug "status", workspaceId 1, components 1 & 2
-const PAGE_ID = 1;
-const PAGE_SLUG = "status";
-const COMPONENT_1 = 1;
-const COMPONENT_2 = 2;
+// Built in `beforeAll` — this suite owns its workspace, page and components so
+// its committed rows and audit trail can't be observed or wiped by siblings.
+let WORKSPACE_ID: number;
+let FREE_WORKSPACE_ID: number;
+let PAGE_ID: number;
+let PAGE_SLUG: string;
+let COMPONENT_1: number;
+let COMPONENT_2: number;
 
 // Each describe block owns its own email so suites are independent.
 const EMAILS = {
@@ -67,10 +68,23 @@ async function cleanAll() {
   for (const email of Object.values(EMAILS)) {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
   }
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
+  await clearAuditLog(WORKSPACE_ID);
 }
 
-beforeAll(cleanAll);
+beforeAll(async () => {
+  const team = await createWorkspaceFixture("team");
+  WORKSPACE_ID = team.workspace.id;
+  FREE_WORKSPACE_ID = (await createWorkspaceFixture("free")).workspace.id;
+
+  const p = await createPage(WORKSPACE_ID);
+  PAGE_ID = p.id;
+  PAGE_SLUG = p.slug;
+  COMPONENT_1 = (await createPageComponent(WORKSPACE_ID, PAGE_ID)).id;
+  COMPONENT_2 = (await createPageComponent(WORKSPACE_ID, PAGE_ID, { order: 1 }))
+    .id;
+
+  await cleanAll();
+});
 afterAll(cleanAll);
 
 // ─── upsertSelfSignupSubscriber ──────────────────────────────────────────────
@@ -80,7 +94,7 @@ describe("upsertSelfSignupSubscriber", () => {
 
   beforeAll(async () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
-    await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
+    await clearAuditLog(WORKSPACE_ID);
   });
 
   test("creates a new subscription for an unknown email", async () => {
@@ -96,7 +110,7 @@ describe("upsertSelfSignupSubscriber", () => {
 
     // Audit row written, attributed to the subscriber (not a workspace user).
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.create",
       entityType: "page_subscriber",
       entityId: result.id,
@@ -113,7 +127,7 @@ describe("upsertSelfSignupSubscriber", () => {
     });
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: result.id,
     });
@@ -143,7 +157,7 @@ describe("upsertSelfSignupSubscriber", () => {
 
     // Component-merge path emits an `update` audit row.
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.update",
       entityType: "page_subscriber",
       entityId: result.id,
@@ -153,7 +167,7 @@ describe("upsertSelfSignupSubscriber", () => {
     // Metadata records the merged component-id set so the change isn't
     // dropped by the empty-diff guard in `emitAudit`.
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: result.id,
     });
@@ -252,7 +266,7 @@ describe("upsertSelfSignupSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(initial.id)),
         ),
       );
@@ -264,7 +278,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.acceptedAt).not.toBeNull();
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: initial.id,
     });
@@ -297,7 +311,7 @@ describe("upsertSelfSignupSubscriber", () => {
       const freePage = await tx
         .insert(page)
         .values({
-          workspaceId: SEEDED_WORKSPACE_FREE_ID,
+          workspaceId: FREE_WORKSPACE_ID,
           title: "plan-gate",
           description: "plan-gate",
           slug: `plan-gate-${Date.now()}`,
@@ -354,7 +368,7 @@ describe("verifySelfSignupSubscriber", () => {
     expect(result?.acceptedAt).toBeDefined();
 
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.update",
       entityType: "page_subscriber",
       entityId: pendingId,
@@ -368,7 +382,7 @@ describe("verifySelfSignupSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(pendingId)),
         ),
       );
@@ -380,7 +394,7 @@ describe("verifySelfSignupSubscriber", () => {
     expect(result?.acceptedAt).toBeDefined();
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: pendingId,
     });
@@ -458,12 +472,10 @@ describe("getSubscriberByToken", () => {
   });
 
   test("never emits an audit row (read-only)", async () => {
-    await db
-      .delete(auditLog)
-      .where(eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID));
+    await db.delete(auditLog).where(eq(auditLog.workspaceId, WORKSPACE_ID));
     await getSubscriberByToken({ input: { token, domain: PAGE_SLUG } });
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
     });
     expect(rows).toHaveLength(0);
@@ -493,7 +505,7 @@ describe("updateSubscriberScope", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(subscriberId)),
         ),
       );
@@ -554,7 +566,7 @@ describe("updateSubscriberScope", () => {
     expect(rowsAfter.map((r) => r.pageComponentId)).toEqual([COMPONENT_2]);
 
     const auditRows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: subscriberId,
     });
@@ -626,7 +638,7 @@ describe("unsubscribeSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(subscriberId)),
         ),
       );
@@ -641,7 +653,7 @@ describe("unsubscribeSubscriber", () => {
     expect(row?.unsubscribedAt).toBeDefined();
 
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.update",
       entityType: "page_subscriber",
       entityId: subscriberId,
@@ -654,7 +666,7 @@ describe("unsubscribeSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(subscriberId)),
         ),
       );
@@ -664,7 +676,7 @@ describe("unsubscribeSubscriber", () => {
     ).resolves.toBeUndefined();
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: subscriberId,
     });
@@ -756,7 +768,7 @@ describe("hasPendingSubscriber", () => {
 describe("createPageSubscriber", () => {
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+      const team = (await createWorkspaceFixture("team")).workspace;
       const readOnlyCtx = {
         ...makeApiKeyCtx(team, {
           keyId: "k-read",

@@ -1,8 +1,10 @@
 import { db, eq } from "@openstatus/db";
 import { auditLog, privateLocation } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
   afterEach,
   assertSpyCalls,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -18,7 +20,7 @@ import {
 } from "./private-location-health";
 
 const TEST_LOCATION_ID = 9301;
-const TEST_WORKSPACE_ID = 1;
+let TEST_WORKSPACE_ID: number;
 const NOW = new Date("2026-07-23T12:00:00Z");
 const FRESH = new Date(NOW.getTime() - 60 * 1000);
 const STALE = new Date(NOW.getTime() - STALE_THRESHOLD_MS - 60 * 1000);
@@ -57,6 +59,10 @@ function readStatus() {
 
 describe("runPrivateLocationHealth", () => {
   let mockEmail: AnyStub;
+
+  beforeAll(async () => {
+    TEST_WORKSPACE_ID = (await createTestWorkspace()).workspace.id;
+  });
 
   beforeEach(() => {
     mockEmail = stub(emailClient, "sendPrivateLocationAlert", () =>

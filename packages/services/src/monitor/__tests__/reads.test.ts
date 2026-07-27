@@ -9,11 +9,7 @@ import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -33,8 +29,8 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
+  const free = (await createWorkspaceFixture("free")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
   freeCtx = makeUserCtx(free, { userId: 2 });
 });

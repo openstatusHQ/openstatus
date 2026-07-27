@@ -9,6 +9,7 @@ import {
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import { mock } from "@openstatus/test-utils";
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
@@ -53,7 +54,14 @@ let testSubscriberId: number;
 let testPasswordPageId: number;
 let testPasswordPageSlug: string;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   // Enable plan features needed for tests
   await db.run(
     sql`UPDATE workspace SET limits = json_set(COALESCE(limits, '{}'), '$."email-domain-protection"', json('true')) WHERE id = 1`,
@@ -395,12 +403,11 @@ describe("StatusPageService.CreateStatusPage", () => {
   });
 
   test("returns 403 when status page limit is exceeded", async () => {
-    // Workspace 2 is on free plan with status-pages limit of 1
     // First, create a page for workspace 2 to hit the limit
     const firstPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-limit-test`,
         slug: `${TEST_PREFIX}-limit-test-slug`,
         description: "First page for limit test",
@@ -418,7 +425,7 @@ describe("StatusPageService.CreateStatusPage", () => {
           description: "Should fail due to limit",
           slug: `${TEST_PREFIX}-limit-exceeded-slug`,
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403); // PermissionDenied
@@ -461,7 +468,7 @@ describe("StatusPageService.CreateStatusPage", () => {
         slug: `${TEST_PREFIX}-custom-theme-denied-slug`,
         customTheme: { light: { "--primary": "red" } },
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -520,7 +527,7 @@ describe("StatusPageService.GetStatusPage", () => {
     const otherPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace`,
         slug: `${TEST_PREFIX}-other-workspace-slug`,
         description: "Other workspace page",
@@ -596,7 +603,7 @@ describe("StatusPageService.GetPageComponent", () => {
     const otherPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-other-workspace-component`,
         slug: `${TEST_PREFIX}-other-workspace-component-slug`,
         description: "Other workspace page",
@@ -608,7 +615,7 @@ describe("StatusPageService.GetPageComponent", () => {
     const otherComponent = await db
       .insert(pageComponent)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         pageId: otherPage.id,
         type: "static",
         name: `${TEST_PREFIX}-other-workspace-component`,
@@ -1021,7 +1028,7 @@ describe("StatusPageService.UpdateStatusPage", () => {
     const freePage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-free-theme`,
         slug: `${TEST_PREFIX}-free-theme-slug`,
         description: "",
@@ -1037,7 +1044,7 @@ describe("StatusPageService.UpdateStatusPage", () => {
           id: String(freePage.id),
           customTheme: { light: { "--primary": "red" } },
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403);
@@ -1312,7 +1319,7 @@ describe("StatusPageService i18n plan limits", () => {
         slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
         defaultLocale: "LOCALE_DE",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -1329,7 +1336,7 @@ describe("StatusPageService i18n plan limits", () => {
         slug: `${TEST_PREFIX}-i18n-limit-create-slug`,
         locales: ["LOCALE_EN", "LOCALE_FR"],
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -1343,7 +1350,7 @@ describe("StatusPageService i18n plan limits", () => {
     const testPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-i18n-limit-update`,
         slug: `${TEST_PREFIX}-i18n-limit-update-slug`,
         description: "",
@@ -1359,7 +1366,7 @@ describe("StatusPageService i18n plan limits", () => {
           id: String(testPage.id),
           defaultLocale: "LOCALE_FR",
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403);
@@ -1376,7 +1383,7 @@ describe("StatusPageService i18n plan limits", () => {
     const testPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-i18n-limit-update`,
         slug: `${TEST_PREFIX}-i18n-limit-update-slug`,
         description: "",
@@ -1392,7 +1399,7 @@ describe("StatusPageService i18n plan limits", () => {
           id: String(testPage.id),
           locales: ["LOCALE_EN", "LOCALE_FR"],
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403);
@@ -1585,7 +1592,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
     const limitTestPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-component-limit-test`,
         slug: `${TEST_PREFIX}-component-limit-test-slug`,
         description: "Page for component limit test",
@@ -1598,7 +1605,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
     const limitTestMonitor = await db
       .insert(monitor)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-limit-monitor`,
         url: "https://example.com",
         periodicity: "1m",
@@ -1614,7 +1621,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
       const component = await db
         .insert(pageComponent)
         .values({
-          workspaceId: 2,
+          workspaceId: OTHER_WORKSPACE_ID,
           pageId: limitTestPage.id,
           type: "static",
           name: `${TEST_PREFIX}-limit-component-${i}`,
@@ -1634,7 +1641,7 @@ describe("StatusPageService.AddMonitorComponent", () => {
           monitorId: String(limitTestMonitor.id),
           name: `${TEST_PREFIX}-limit-exceeded-component`,
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403); // PermissionDenied
@@ -1707,7 +1714,7 @@ describe("StatusPageService.AddStaticComponent", () => {
     const limitTestPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-static-limit-test`,
         slug: `${TEST_PREFIX}-static-limit-test-slug`,
         description: "Page for static component limit test",
@@ -1722,7 +1729,7 @@ describe("StatusPageService.AddStaticComponent", () => {
       const component = await db
         .insert(pageComponent)
         .values({
-          workspaceId: 2,
+          workspaceId: OTHER_WORKSPACE_ID,
           pageId: limitTestPage.id,
           type: "static",
           name: `${TEST_PREFIX}-static-limit-component-${i}`,
@@ -1742,7 +1749,7 @@ describe("StatusPageService.AddStaticComponent", () => {
           name: `${TEST_PREFIX}-static-limit-exceeded`,
           description: "Should fail due to limit",
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).toBe(403); // PermissionDenied
@@ -2326,7 +2333,7 @@ describe("StatusPageService.SubscribeToPage", () => {
         pageId: "1",
         email: "test@example.com",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -2744,7 +2751,7 @@ describe("StatusPageService.CreatePageSubscription", () => {
     const freePage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-plan-gate`,
         slug: `${TEST_PREFIX}-plan-gate`,
         description: "Test page for plan gate",
@@ -2761,7 +2768,7 @@ describe("StatusPageService.CreatePageSubscription", () => {
             email: `${TEST_PREFIX}-plan-gate@example.com`,
           },
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
       expect(res.status).toBe(403);
     } finally {
@@ -3329,7 +3336,7 @@ describe("StatusPageService.GetStatusPageOverview", () => {
     const otherPage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-overview-other-ws`,
         slug: `${TEST_PREFIX}-overview-other-ws-slug`,
         description: "",
@@ -3903,7 +3910,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         slug: `${TEST_PREFIX}-limit-ws2-slug`,
         customDomain: "status.freeplan.com",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3918,7 +3925,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
         password: "secret",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3933,7 +3940,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
         authEmailDomains: ["example.com"],
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3948,7 +3955,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
     const ws2Page = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-limit-update-ws2-cd`,
         slug: `${TEST_PREFIX}-limit-update-ws2-cd-slug`,
         description: "Free plan page",
@@ -3963,7 +3970,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         id: String(ws2Page.id),
         customDomain: "status.freeplan.com",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -3975,7 +3982,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
     const ws2Page = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-limit-update-ws2-pw`,
         slug: `${TEST_PREFIX}-limit-update-ws2-pw-slug`,
         description: "Free plan page",
@@ -3991,7 +3998,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         accessType: "PAGE_ACCESS_TYPE_PASSWORD_PROTECTED",
         password: "secret",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -4003,7 +4010,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
     const ws2Page = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-limit-update-ws2-auth`,
         slug: `${TEST_PREFIX}-limit-update-ws2-auth-slug`,
         description: "Free plan page",
@@ -4019,7 +4026,7 @@ describe("StatusPageService — new fields limit enforcement (workspace 2 / free
         accessType: "PAGE_ACCESS_TYPE_AUTHENTICATED",
         authEmailDomains: ["example.com"],
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -4306,7 +4313,7 @@ describe("StatusPageService — allow_index", () => {
     const freePage = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-no-index`,
         slug: `${TEST_PREFIX}-no-index`,
         description: "Test page for no-index gate",
@@ -4321,7 +4328,7 @@ describe("StatusPageService — allow_index", () => {
           id: String(freePage.id),
           allowIndex: false,
         },
-        { "x-openstatus-key": "2" },
+        { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
       );
 
       expect(res.status).not.toBe(200);
@@ -4582,7 +4589,7 @@ describe("StatusPageService — IP restriction limit enforcement (workspace 2 / 
         accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
         allowedIpRanges: "10.0.0.0/8",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);
@@ -4592,7 +4599,7 @@ describe("StatusPageService — IP restriction limit enforcement (workspace 2 / 
     const ws2Page = await db
       .insert(page)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         title: `${TEST_PREFIX}-ip-limit-update-ws2`,
         slug: `${TEST_PREFIX}-ip-limit-ws2-slug`,
         description: "Free plan page",
@@ -4608,7 +4615,7 @@ describe("StatusPageService — IP restriction limit enforcement (workspace 2 / 
         accessType: "PAGE_ACCESS_TYPE_IP_RESTRICTED",
         allowedIpRanges: "10.0.0.0/8",
       },
-      { "x-openstatus-key": "2" },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
     );
 
     expect(res.status).toBe(403);

@@ -8,10 +8,9 @@ import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { expect } from "@std/expect";
 import { beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   makeSystemCtx,
   makeUserCtx,
@@ -30,17 +29,19 @@ import {
 } from "../index.ts";
 
 let teamCtx: ServiceContext;
+let teamUserId: number;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
+  const team = await createWorkspaceFixture("team");
+  teamUserId = team.userId;
+  teamCtx = makeUserCtx(team.workspace, { userId: teamUserId });
 });
 
 describe("getWorkspace", () => {
   test("returns the caller's workspace", async () => {
     await withTestTransaction(async (tx) => {
       const result = await getWorkspace({ ctx: { ...teamCtx, db: tx } });
-      expect(result.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(result.id).toBe(teamCtx.workspace.id);
       expect(typeof result.limits).toBe("object");
     });
   });
@@ -52,7 +53,7 @@ describe("getWorkspaceWithUsage", () => {
       const result = await getWorkspaceWithUsage({
         ctx: { ...teamCtx, db: tx },
       });
-      expect(result.id).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(result.id).toBe(teamCtx.workspace.id);
 
       // Iterate the usage object *before* any `toMatchObject` call —
       // the `toMatchObject` implementation mutates the received
@@ -82,7 +83,7 @@ describe("getWorkspaceWithUsage", () => {
   test("counts workspace-scoped status reports", async () => {
     await withTestTransaction(async (tx) => {
       await tx.insert(statusReport).values({
-        workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+        workspaceId: teamCtx.workspace.id,
         status: "investigating",
         title: "svc-ws-test-status-report",
       });
@@ -99,10 +100,10 @@ describe("listWorkspaces", () => {
     await withTestTransaction(async (tx) => {
       const rows = await listWorkspaces({
         ctx: { ...teamCtx, db: tx },
-        input: { userId: 1 },
+        input: { userId: teamUserId },
       });
       const ids = rows.map((r) => r.id);
-      expect(ids).toContain(SEEDED_WORKSPACE_TEAM_ID);
+      expect(ids).toContain(teamCtx.workspace.id);
     });
   });
 
@@ -149,7 +150,7 @@ describe("updateWorkspaceName", () => {
       const row = await tx
         .select()
         .from(workspace)
-        .where(eq(workspace.id, SEEDED_WORKSPACE_TEAM_ID))
+        .where(eq(workspace.id, teamCtx.workspace.id))
         .get();
       expect(row?.name).toBe(nextName);
 
@@ -157,7 +158,7 @@ describe("updateWorkspaceName", () => {
         workspaceId: teamCtx.workspace.id,
         action: "workspace.update",
         entityType: "workspace",
-        entityId: SEEDED_WORKSPACE_TEAM_ID,
+        entityId: teamCtx.workspace.id,
         actorType: "user",
         db: tx,
       });

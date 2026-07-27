@@ -7,9 +7,8 @@ import {
 import { expect } from "@std/expect";
 import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   readAuditLog,
   withTestTransaction,
@@ -30,7 +29,7 @@ let testPageId: number;
 // inserting it inside each one lengthens the write lock and starves the
 // other suites running in parallel (SQLITE_BUSY)
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
 
   const pageRow = await db
