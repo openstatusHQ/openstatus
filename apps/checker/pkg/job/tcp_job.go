@@ -81,7 +81,7 @@ func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor, region stri
 		latency := res.TCPDone - res.TCPStart
 		lastResult = checker.TCPResponse{Latency: latency, Timing: res}
 
-		var requestStatus = "active"
+		var requestStatus = "success"
 
 		if degradedAfter > 0 && latency > degradedAfter {
 			requestStatus = "degraded"

@@ -19,8 +19,8 @@ func TestTCPJob_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if data.RequestStatus != "active" {
-		t.Errorf("expected RequestStatus 'active', got '%s'", data.RequestStatus)
+	if data.RequestStatus != "success" {
+		t.Errorf("expected RequestStatus 'success', got '%s'", data.RequestStatus)
 	}
 	if data.Error != 0 {
 		t.Errorf("expected Error 0, got %d", data.Error)
