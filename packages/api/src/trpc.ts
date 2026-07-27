@@ -147,6 +147,25 @@ export const t = initTRPC
 export const createTRPCRouter = t.router;
 export const mergeRouters = t.mergeRouters;
 
+const timingMiddleware = t.middleware(async (opts) => {
+  const start = performance.now();
+  const result = await opts.next();
+  if (process.env.NODE_ENV !== "test") {
+    const durationMs = Math.round(performance.now() - start);
+    console.info(
+      JSON.stringify({
+        msg: "trpc.timing",
+        path: opts.path,
+        type: opts.type,
+        durationMs,
+        ok: result.ok,
+        region: process.env.VERCEL_REGION,
+      }),
+    );
+  }
+  return result;
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -154,7 +173,7 @@ export const mergeRouters = t.mergeRouters;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Reusable middleware that enforces users are logged in before running the
@@ -278,4 +297,6 @@ export const formdataMiddleware = t.middleware(async (opts) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(enforceUserIsAuthed);
