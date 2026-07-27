@@ -181,7 +181,12 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	}
 
 	var location database.PrivateLocation
-	if err := h.db.Get(&location, "SELECT id, name FROM private_location WHERE token = ?", token); err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err := h.db.Get(&location, "SELECT id, name FROM private_location WHERE token = ?", token); err != nil {
+		// An unknown token used to fall through to an empty monitor list, so a
+		// probe configured with a typo looked healthy while checking nothing.
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, connect.NewError(connect.CodeUnauthenticated, ErrPrivateLocationNotFound)
+		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 

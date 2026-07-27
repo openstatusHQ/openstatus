@@ -204,30 +204,30 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				monitor := m
 				c := context.Background()
 				log.Printf("Starting DNS job for monitor %s (%s)", monitor.Id, monitor.Uri)
-				_, err := mm.JobRunner.DNSJob(c, monitor)
+				data, err := mm.JobRunner.DNSJob(c, monitor)
 				if err != nil {
 					log.Printf("DNS monitor check failed for %s (%s): %v", monitor.Id, monitor.Uri, err)
 					return err
 				}
 				resp, ingestErr := mm.Client.IngestDNS(c, &connect.Request[v1.IngestDNSRequest]{
 					Msg: &v1.IngestDNSRequest{
-						MonitorId: monitor.Id,
-
-						// Id:            data.ID,
-						// Uri:           monitor.Uri,
-						// Message:       data.Message,
-						// Latency:       data.Latency,
-						// RequestStatus: data.RequestStatus,
-						// Error:         int64(data.Error),
-						// CronTimestamp: data.CronTimestamp,
-						// Timestamp:     data.Timestamp,
+						MonitorId:     monitor.Id,
+						Id:            data.ID,
+						Uri:           monitor.Uri,
+						Message:       data.Message,
+						Latency:       data.Latency,
+						RequestStatus: data.RequestStatus,
+						Error:         int64(data.Error),
+						CronTimestamp: data.CronTimestamp,
+						Timestamp:     data.Timestamp,
+						Records:       toProtoRecords(data.Records),
 					},
 				})
 				if ingestErr != nil {
 					log.Printf("Failed to ingest DNS result for %s (%s): %v", monitor.Id, monitor.Uri, ingestErr)
 					return ingestErr
 				}
-				log.Printf("DNS monitor check for %s (%s) ingested, ingest response: %v", monitor.Id, monitor.Uri, resp)
+				log.Printf("DNS monitor check for %s (%s) ingested with status %q, ingest response: %v", monitor.Id, monitor.Uri, data.RequestStatus, resp)
 
 				return nil
 			},
@@ -249,6 +249,19 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 	}
 	mm.mu.Unlock()
 
+}
+
+func toProtoRecords(records map[string][]string) map[string]*v1.Records {
+	if len(records) == 0 {
+		return nil
+	}
+
+	protoRecords := make(map[string]*v1.Records, len(records))
+	for recordType, values := range records {
+		protoRecords[recordType] = &v1.Records{Record: values}
+	}
+
+	return protoRecords
 }
 
 func intervalToSecond(interval string) int {

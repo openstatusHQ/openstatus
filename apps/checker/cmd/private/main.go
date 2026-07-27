@@ -20,9 +20,16 @@ import (
 
 const (
 	configRefreshInterval = 10 * time.Minute
+	platformTimeout       = 30 * time.Second
 )
 
 func main() {
+	apiKey := getEnv("OPENSTATUS_KEY", "")
+	if apiKey == "" {
+		fmt.Fprintln(os.Stderr, "OPENSTATUS_KEY is required: the probe cannot authenticate against openstatus")
+		os.Exit(1)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -36,8 +43,6 @@ func main() {
 	fmt.Println("Launching openstatus private location checker")
 	s := tasks.New()
 	defer s.Stop()
-
-	apiKey := getEnv("OPENSTATUS_KEY", "")
 
 	monitorManager := scheduler.MonitorManager{
 		Client:    getClient(apiKey),
@@ -69,8 +74,12 @@ func getEnv(key, fallback string) string {
 func getClient(apiKey string) v1.PrivateLocationServiceClient {
 	ingestUrl := getEnv("OPENSTATUS_INGEST_URL", "https://openstatus-private-location.fly.dev")
 
+	// Tasks run with RunSingleInstance, so an untimed request that hangs would
+	// wedge that monitor: it never checks again until the probe restarts.
+	httpClient := &http.Client{Timeout: platformTimeout}
+
 	client := v1.NewPrivateLocationServiceClient(
-		http.DefaultClient,
+		httpClient,
 		ingestUrl,
 		connect.WithHTTPGet(),
 		connect.WithInterceptors(NewAuthInterceptor(apiKey)),

@@ -6,10 +6,12 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/server"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/workflows"
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 	"github.com/stretchr/testify/require"
 )
@@ -238,6 +240,50 @@ func TestIngestDNS_RecordsKeyedByType(t *testing.T) {
 
 	require.Equal(t, []string{"192.168.1.1"}, records["A"])
 	require.Equal(t, []string{"::1"}, records["AAAA"])
+}
+
+type recordingWorkflows struct {
+	called chan workflows.Payload
+}
+
+func (c recordingWorkflows) Report(ctx context.Context, payload workflows.Payload) error {
+	c.called <- payload
+	return nil
+}
+
+// TestIngestDNS_ForwardsStatusUpdate guards against DNS results reaching
+// Tinybird without ever reaching the alerting pipeline.
+func TestIngestDNS_ForwardsStatusUpdate(t *testing.T) {
+	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
+	client := recordingWorkflows{called: make(chan workflows.Payload, 1)}
+	h.WorkflowsClient = client
+
+	req := connect.NewRequest(&private_locationv1.IngestDNSRequest{
+		Id:            "dns-result-4",
+		MonitorId:     "5",
+		Timestamp:     1234567890,
+		Latency:       12,
+		CronTimestamp: 1234567800,
+		Uri:           "openstatus.dev",
+		RequestStatus: "error",
+		Error:         1,
+		Message:       "DNS assertions failed for openstatus.dev",
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	_, err := h.IngestDNS(context.Background(), req)
+	require.NoError(t, err)
+
+	select {
+	case payload := <-client.called:
+		require.Equal(t, "5", payload.MonitorID)
+		require.Equal(t, "error", payload.Status)
+		require.Equal(t, "DNS assertions failed for openstatus.dev", payload.Message)
+		require.Equal(t, int64(1234567800), payload.CronTimestamp)
+		require.Equal(t, int64(12), payload.Latency)
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected the DNS result to be forwarded to the workflows service")
+	}
 }
 
 func TestIngestDNS_WithError(t *testing.T) {

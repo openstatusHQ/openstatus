@@ -152,6 +152,9 @@ func TestMonitors_Unauthenticated(t *testing.T) {
 	}
 }
 
+// An unknown token has to be rejected rather than answered with an empty
+// monitor list: a probe with a mistyped token would otherwise report healthy
+// while silently checking nothing.
 func TestMonitors_InvalidToken(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
 
@@ -159,20 +162,14 @@ func TestMonitors_InvalidToken(t *testing.T) {
 	req.Header().Set("openstatus-token", "invalid-token")
 
 	resp, err := h.Monitors(context.Background(), req)
-	if err != nil {
-		t.Fatalf("expected no error for invalid token (just empty results), got %v", err)
+	if err == nil {
+		t.Fatalf("expected an error for an unknown token, got nil")
 	}
-	if resp == nil {
-		t.Fatalf("expected non-nil response")
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Errorf("expected unauthenticated code, got %v", connect.CodeOf(err))
 	}
-	if len(resp.Msg.HttpMonitors) != 0 {
-		t.Errorf("expected 0 HTTP monitors for invalid token, got %d", len(resp.Msg.HttpMonitors))
-	}
-	if len(resp.Msg.TcpMonitors) != 0 {
-		t.Errorf("expected 0 TCP monitors for invalid token, got %d", len(resp.Msg.TcpMonitors))
-	}
-	if len(resp.Msg.DnsMonitors) != 0 {
-		t.Errorf("expected 0 DNS monitors for invalid token, got %d", len(resp.Msg.DnsMonitors))
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
 	}
 }
 
