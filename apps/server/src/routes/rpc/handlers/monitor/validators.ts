@@ -131,21 +131,17 @@ export function getCommonDbValuesForUpdate(mon: {
     result.degradedAfter = Number(mon.degradedAt);
   }
 
-  // `active`, `public` and `description` have implicit presence in the proto,
-  // so a decoded message always carries false/false/"" when the client omits
-  // them — `!== undefined` can't tell "omitted" from "sent as the zero value".
-  // Treat the zero value as omitted, like the fields above, so renaming a
-  // monitor doesn't also disable it. Cost: these three can't be reset to their
-  // zero value here until the proto gains explicit presence or an update mask.
-  if (mon.active !== undefined && mon.active !== false) {
+  // `active`, `public` and `description` have explicit presence in the proto,
+  // so `undefined` means omitted and an explicit false/"" is applied.
+  if (mon.active !== undefined) {
     result.active = mon.active;
   }
 
-  if (mon.description !== undefined && mon.description !== "") {
+  if (mon.description !== undefined) {
     result.description = mon.description;
   }
 
-  if (mon.public !== undefined && mon.public !== false) {
+  if (mon.public !== undefined) {
     result.public = mon.public;
   }
 

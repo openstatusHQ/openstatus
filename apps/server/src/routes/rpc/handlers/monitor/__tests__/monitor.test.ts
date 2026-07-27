@@ -980,8 +980,6 @@ describe("MonitorService.UpdateHTTPMonitor", () => {
     expect(res.status).toBe(401);
   });
 
-  // These three fields have implicit presence in the proto, so an omitted
-  // field decodes to false/false/"" — a name-only update used to persist that.
   test("partial update preserves active, public and description", async () => {
     const mon = await db
       .insert(monitor)
@@ -1016,6 +1014,49 @@ describe("MonitorService.UpdateHTTPMonitor", () => {
       expect(data.monitor.active).toBe(true);
       expect(data.monitor.public).toBe(true);
       expect(data.monitor.description).toBe("keep me");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, mon.id));
+    }
+  });
+
+  test("update applies explicit false for active and public", async () => {
+    const mon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-explicit-false`,
+        url: "https://explicit-false.example.com",
+        periodicity: "1m",
+        active: true,
+        public: true,
+        description: "clear me",
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateHTTPMonitor",
+        {
+          id: String(mon.id),
+          monitor: { active: false, public: false, description: "" },
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const updated = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, mon.id))
+        .get();
+
+      expect(updated?.active).toBe(false);
+      expect(updated?.public).toBe(false);
+      expect(updated?.description).toBe("");
     } finally {
       await db.delete(monitor).where(eq(monitor.id, mon.id));
     }
