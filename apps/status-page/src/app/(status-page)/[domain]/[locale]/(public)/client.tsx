@@ -432,6 +432,7 @@ function ComponentCard({
       <StatusComponentHeader>
         <StatusComponentHeaderLeft>
           <StatusComponentTitle>{name}</StatusComponentTitle>
+          <StatusComponentDescription>{description}</StatusComponentDescription>
           {latency ? (
             latency.value ? (
               <Link
@@ -451,7 +452,6 @@ function ComponentCard({
               <StatusComponentLatencySkeleton className="shrink-0" />
             ) : null
           ) : null}
-          <StatusComponentDescription>{description}</StatusComponentDescription>
         </StatusComponentHeaderLeft>
         <StatusComponentHeaderRight>
           {showUptime ? (
