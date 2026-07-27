@@ -3,6 +3,8 @@ import type { ServiceContext } from "@openstatus/services";
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
 
+import { tb } from "@/libs/clients";
+
 import { buildSlackTools } from "./registry-runner";
 import { buildSystemPrompt } from "./system-prompt";
 
@@ -60,6 +62,7 @@ export async function runAgent(
       teamId: origin?.teamId ?? "",
       slackUserId: origin?.slackUserId ?? "",
     },
+    tb,
   };
   const tools = buildSlackTools(ctx);
   let messages = convertThreadToMessages(thread, botUserId);

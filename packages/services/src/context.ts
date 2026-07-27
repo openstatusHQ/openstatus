@@ -30,7 +30,14 @@ export type ServiceContext = {
   tb?: OSTinybird;
 };
 
-export const defaultTb = new OSTinybird(process.env.TINY_BIRD_API_KEY ?? "");
+// Fallback for callers with no app env to read from (scripts, tests). Request
+// paths must inject their app's configured client via `ctx.tb` — this one has
+// no validated env behind it.
+export const defaultTb = new OSTinybird({
+  token: process.env.TINY_BIRD_API_KEY ?? "",
+  baseUrl: process.env.TINYBIRD_URL,
+  noop: process.env.TINYBIRD_NOOP,
+});
 
 // drizzle's `is()` helper is identity-safe across module copies (uses a
 // symbol-based entityKind), which `instanceof` is not under pnpm when multiple

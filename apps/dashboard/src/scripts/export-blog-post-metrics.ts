@@ -21,7 +21,11 @@ async function main() {
     throw new Error("TINY_BIRD_API_KEY environment variable is required");
   }
 
-  const tb = new OSTinybird(tinybirdApiKey);
+  const tb = new OSTinybird({
+    token: tinybirdApiKey,
+    baseUrl: process.env.TINYBIRD_URL,
+    noop: process.env.TINYBIRD_NOOP,
+  });
 
   console.log(`Fetching data for monitor ID: ${MONITOR_ID}`);
 

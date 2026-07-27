@@ -6,6 +6,8 @@ import "@openstatus/db/env.mjs";
 export const env = createEnv({
   server: {
     TINY_BIRD_API_KEY: z.string().min(1),
+    TINYBIRD_URL: z.string().default("https://api.tinybird.co"),
+    TINYBIRD_NOOP: z.stringbool().catch(false),
     RESEND_API_KEY: z.string().min(1),
     QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
     QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
@@ -34,6 +36,8 @@ export const env = createEnv({
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID:
       process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
     TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
+    TINYBIRD_URL: process.env.TINYBIRD_URL,
+    TINYBIRD_NOOP: process.env.TINYBIRD_NOOP,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
     QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,

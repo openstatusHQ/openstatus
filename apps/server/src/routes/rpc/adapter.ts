@@ -2,6 +2,8 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { ZodError } from "zod";
 
+import { tb } from "@/libs/clients";
+
 import type { RpcContext } from "./interceptors";
 
 /**
@@ -19,6 +21,7 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
       scopes: rpcCtx.apiKey.scopes,
     },
     requestId: rpcCtx.requestId,
+    tb,
   };
 }
 

@@ -1,15 +1,12 @@
 import { type SQL, and, db, eq, inArray } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { OSTinybird } from "@openstatus/tinybird";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { env } from "../../env";
+import { tb } from "../../tb";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { calculatePeriod } from "./utils";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const periods = ["1d", "7d", "14d", "30d", "90d"] as const;
 const types = ["http", "tcp", "dns"] as const;
