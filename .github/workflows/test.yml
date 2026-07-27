@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   # Every DB-touching package gets its own job, and therefore its own sqld
   # container. Sharing one database across turbo tasks let suites clobber each
