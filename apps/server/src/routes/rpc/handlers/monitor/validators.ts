@@ -131,6 +131,8 @@ export function getCommonDbValuesForUpdate(mon: {
     result.degradedAfter = Number(mon.degradedAt);
   }
 
+  // `active`, `public` and `description` have explicit presence in the proto,
+  // so `undefined` means omitted and an explicit false/"" is applied.
   if (mon.active !== undefined) {
     result.active = mon.active;
   }

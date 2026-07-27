@@ -558,16 +558,22 @@ components:
           maxItems: 10
           description: DNS record assertions for validation.
         description:
-          type: string
+          type:
+            - string
+            - "null"
           title: description
           maxLength: 1024
           description: Description of the monitor (optional).
         active:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: active
           description: Whether the monitor is active (defaults to false).
         public:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: public
           description: Whether the monitor is publicly visible (defaults to false).
         regions:
@@ -915,16 +921,22 @@ components:
           maxItems: 10
           description: Header assertions for the response.
         description:
-          type: string
+          type:
+            - string
+            - "null"
           title: description
           maxLength: 1024
           description: Description of the monitor (optional).
         active:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: active
           description: Whether the monitor is active (defaults to false).
         public:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: public
           description: Whether the monitor is publicly visible (defaults to false).
         regions:
@@ -1555,16 +1567,22 @@ components:
           format: int64
           description: Number of retry attempts (0-10, defaults to 3).
         description:
-          type: string
+          type:
+            - string
+            - "null"
           title: description
           maxLength: 1024
           description: Description of the monitor (optional).
         active:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: active
           description: Whether the monitor is active (defaults to false).
         public:
-          type: boolean
+          type:
+            - boolean
+            - "null"
           title: public
           description: Whether the monitor is publicly visible (defaults to false).
         regions:

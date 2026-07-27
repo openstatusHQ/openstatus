@@ -47,6 +47,10 @@ jobs:
       - name: 📥 Download deps
         run: pnpm install
 
+      - name: 🧹 Lint api protos
+        working-directory: ./packages/proto
+        run: pnpm buf:lint:api
+
       - name: 🔄 Regenerate proto files
         working-directory: ./packages/proto
         run: |

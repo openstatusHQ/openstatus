@@ -68,7 +68,7 @@ import {
   responseLogNotFoundError,
   responseLogsNotEnabledError,
 } from "./errors";
-import { checkMonitorLimits } from "./limits";
+import { checkMonitorConfigLimits, checkMonitorLimits } from "./limits";
 import {
   toHTTPResponseLogDetail,
   toHTTPResponseLogListItem,
@@ -347,14 +347,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     validateCommonMonitorFields(mon);
 
     // Check workspace limits if periodicity or regions are changing
-    if (mon.periodicity || (mon.regions && mon.regions.length > 0)) {
-      await checkMonitorLimits(
-        workspaceId,
-        limits,
-        mon.periodicity || undefined,
-        mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
-      );
-    }
+    checkMonitorConfigLimits(
+      limits,
+      mon.periodicity || undefined,
+      mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+    );
 
     // Build update values - only include fields that are provided
     const updateValues: Record<string, unknown> =
@@ -429,14 +426,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     validateCommonMonitorFields(mon);
 
     // Check workspace limits if periodicity or regions are changing
-    if (mon.periodicity || (mon.regions && mon.regions.length > 0)) {
-      await checkMonitorLimits(
-        workspaceId,
-        limits,
-        mon.periodicity || undefined,
-        mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
-      );
-    }
+    checkMonitorConfigLimits(
+      limits,
+      mon.periodicity || undefined,
+      mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+    );
 
     // Build update values - only include fields that are provided
     const updateValues: Record<string, unknown> =
@@ -482,14 +476,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     validateCommonMonitorFields(mon);
 
     // Check workspace limits if periodicity or regions are changing
-    if (mon.periodicity || (mon.regions && mon.regions.length > 0)) {
-      await checkMonitorLimits(
-        workspaceId,
-        limits,
-        mon.periodicity || undefined,
-        mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
-      );
-    }
+    checkMonitorConfigLimits(
+      limits,
+      mon.periodicity || undefined,
+      mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+    );
 
     // Build update values - only include fields that are provided
     const updateValues: Record<string, unknown> =
