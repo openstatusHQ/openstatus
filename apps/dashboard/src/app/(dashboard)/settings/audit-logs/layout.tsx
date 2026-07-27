@@ -4,19 +4,14 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, prefetch, trpc } from "@/lib/trpc/server";
 
 import { Tabs } from "../tabs";
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 
-export default async function Layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.auditLog.list.queryOptions({}));
+export default function Layout({ children }: { children: React.ReactNode }) {
+  prefetch(trpc.auditLog.list.queryOptions({}));
   return (
     <HydrateClient>
       <div>
