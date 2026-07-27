@@ -32,11 +32,6 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         // tRPC's link will never invoke — cast the call-signature wrapper.
         fetch: (async (url, options) => {
           const cookieStore = await cookies();
-          console.log("[dashboard trpc server] fetch", {
-            hasSessionToken:
-              !!cookieStore.get("__Secure-authjs.session-token")?.value ||
-              !!cookieStore.get("authjs.session-token")?.value,
-          });
           return fetch(url, {
             ...options,
             credentials: "include",
