@@ -87,8 +87,12 @@ export async function getMonitorSummary(args: {
     );
   }
 
-  const regions =
-    input.regions && input.regions.length > 0 ? input.regions : parsed.regions;
+  // only filter when the caller asked for specific regions: defaulting to the
+  // monitor's configured list silently drops every check whenever that list
+  // drifts from what was ingested (region removed, renamed, private location)
+  const regionFilter =
+    input.regions && input.regions.length > 0 ? input.regions : undefined;
+  const regions = regionFilter ?? parsed.regions;
 
   const result = await fetchMetrics(
     ctx.tb ?? defaultTb,
@@ -96,11 +100,15 @@ export async function getMonitorSummary(args: {
     input.timeRange,
     {
       monitorId: String(record.id),
-      regions: regions.length > 0 ? regions : undefined,
+      regions: regionFilter,
     },
   );
 
-  const row = result.data[0];
+  // the metrics pipes UNION ALL the current window with the preceding one so
+  // callers can compute deltas, and ClickHouse guarantees no order without an
+  // ORDER BY. Only the current-window row selects a `lastTimestamp`.
+  const row =
+    result.data.find((r) => r.lastTimestamp !== null) ?? result.data[0];
   if (!row) {
     return {
       monitorId: record.id,

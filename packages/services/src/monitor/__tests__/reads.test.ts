@@ -169,6 +169,109 @@ describe("getMonitorSummary", () => {
       ).rejects.toBeInstanceOf(ValidationError);
     });
   });
+
+  type MetricsParams = { monitorId: string; regions?: string[] };
+
+  function stubTb(data: Record<string, unknown>[]) {
+    const calls: MetricsParams[] = [];
+    const tb = {
+      httpMetricsWeekly: (params: MetricsParams) => {
+        calls.push(params);
+        return Promise.resolve({ data });
+      },
+    } as unknown as NonNullable<ServiceContext["tb"]>;
+    return { tb, calls };
+  }
+
+  const metricsRow = (over: Record<string, unknown>) => ({
+    p50Latency: 0,
+    p75Latency: 0,
+    p90Latency: 0,
+    p95Latency: 0,
+    p99Latency: 0,
+    count: 0,
+    success: 0,
+    degraded: 0,
+    error: 0,
+    lastTimestamp: null,
+    ...over,
+  });
+
+  function createHttpMonitor(tx: ServiceContext["db"], name: string) {
+    return createMonitor({
+      ctx: { ...teamCtx, db: tx },
+      input: {
+        name: `${TEST_PREFIX}-${name}`,
+        jobType: "http",
+        url: "https://example.com",
+        method: "GET",
+        headers: [],
+        assertions: [],
+        active: false,
+        regions: ["ams", "iad"],
+      },
+    });
+  }
+
+  test("reads the current window, not the delta row, whatever the pipe order", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHttpMonitor(tx, "union-order");
+      const { tb } = stubTb([
+        metricsRow({ p50Latency: 999, success: 7, lastTimestamp: null }),
+        metricsRow({
+          p50Latency: 42,
+          success: 3,
+          error: 1,
+          lastTimestamp: 1_700_000_000_000,
+        }),
+      ]);
+
+      const result = await getMonitorSummary({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "7d" },
+      });
+
+      expect(result.p50).toBe(42);
+      expect(result.totalSuccessful).toBe(3);
+      expect(result.totalFailed).toBe(1);
+      expect(result.lastPingAt).toBe(new Date(1_700_000_000_000).toISOString());
+    });
+  });
+
+  test("does not filter by the monitor's configured regions", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHttpMonitor(tx, "no-region-filter");
+      const { tb, calls } = stubTb([
+        metricsRow({ p50Latency: 12, success: 5, lastTimestamp: 1 }),
+      ]);
+
+      const result = await getMonitorSummary({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "7d" },
+      });
+
+      expect(calls[0].regions).toBeUndefined();
+      expect(result.totalSuccessful).toBe(5);
+      expect(result.regions).toEqual(["ams", "iad"]);
+    });
+  });
+
+  test("filters by the caller's regions when given", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createHttpMonitor(tx, "region-filter");
+      const { tb, calls } = stubTb([
+        metricsRow({ p50Latency: 12, success: 5, lastTimestamp: 1 }),
+      ]);
+
+      const result = await getMonitorSummary({
+        ctx: { ...teamCtx, db: tx, tb },
+        input: { monitorId: row.id, timeRange: "7d", regions: ["ams"] },
+      });
+
+      expect(calls[0].regions).toEqual(["ams"]);
+      expect(result.regions).toEqual(["ams"]);
+    });
+  });
 });
 
 describe("fetchMonitorDailyStats", () => {
