@@ -11,7 +11,7 @@ import {
   RIGHT_SIDEBAR_COOKIE,
   getSidebarDefaultOpen,
 } from "@/lib/sidebar-cookie";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, prefetch, trpc } from "@/lib/trpc/server";
 
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
@@ -23,8 +23,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   // Prefetch the conversation list so the right sidebar paints immediately.
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.chatSession.list.queryOptions());
+  prefetch(trpc.chatSession.list.queryOptions());
   const defaultOpen = await getSidebarDefaultOpen(RIGHT_SIDEBAR_COOKIE, false);
 
   return (
