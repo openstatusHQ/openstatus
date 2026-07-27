@@ -47,11 +47,14 @@ func TestHTTPJob_Failure(t *testing.T) {
 	}
 
 	data, err := job.NewJobRunner().HTTPJob(context.Background(), monitor, "test-region")
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if err != nil {
+		t.Fatalf("expected no Go error, got %v", err)
 	}
-	if data != nil {
-		t.Errorf("expected data to be nil on error, got %+v", data)
+	if data == nil {
+		t.Fatalf("expected data to be populated, got nil")
+	}
+	if data.Message == "" {
+		t.Errorf("expected error message to be populated for transport failure")
 	}
 }
 
