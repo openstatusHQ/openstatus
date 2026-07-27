@@ -16,6 +16,22 @@ import {
 
 export type { DefaultSession };
 
+async function syncUser(
+  userId: number,
+  fields: {
+    firstName?: string | null;
+    lastName?: string | null;
+    photoUrl?: string | null;
+    name?: string | null;
+  },
+) {
+  await db
+    .update(user)
+    .set({ ...fields, updatedAt: new Date() })
+    .where(eq(user.id, userId))
+    .run();
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // debug: true,
   adapter,
@@ -54,55 +70,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
 
-        await db
-          .update(user)
-          .set({
-            firstName: params.profile.given_name,
-            lastName: params.profile.family_name || "",
-            photoUrl: params.profile.picture,
-            // keep the name in sync
-            name: `${params.profile.given_name} ${
-              params.profile.family_name || ""
-            }`.trim(),
-            updatedAt: new Date(),
-          })
-          .where(eq(user.id, Number(params.user.id)))
-          .run();
+        await syncUser(Number(params.user.id), {
+          firstName: params.profile.given_name,
+          lastName: params.profile.family_name || "",
+          photoUrl: params.profile.picture,
+          // keep the name in sync
+          name: `${params.profile.given_name} ${
+            params.profile.family_name || ""
+          }`.trim(),
+        });
       }
       if (params.account?.provider === "github") {
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
 
-        await db
-          .update(user)
-          .set({
-            name: params.profile.name,
-            photoUrl: String(params.profile.avatar_url),
-            updatedAt: new Date(),
-          })
-          .where(eq(user.id, Number(params.user.id)))
-          .run();
+        await syncUser(Number(params.user.id), {
+          name: params.profile.name,
+          photoUrl: String(params.profile.avatar_url),
+        });
       }
 
       if (params.account?.provider === "oidc") {
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
 
-        const fullName = [params.profile.given_name, params.profile.family_name]
-          .filter(Boolean)
-          .join(" ");
+        const { given_name, family_name, name, picture } = params.profile;
+        // some IdPs only send a combined `name` claim
+        const [nameFirst, ...nameRest] = name?.split(" ") ?? [];
+        const fullName = [given_name, family_name].filter(Boolean).join(" ");
 
-        await db
-          .update(user)
-          .set({
-            firstName: params.profile.given_name,
-            lastName: params.profile.family_name || "",
-            photoUrl: params.profile.picture,
-            name: fullName || params.profile.name,
-            updatedAt: new Date(),
-          })
-          .where(eq(user.id, Number(params.user.id)))
-          .run();
+        await syncUser(Number(params.user.id), {
+          firstName: given_name ?? nameFirst,
+          lastName: family_name || nameRest.join(" "),
+          photoUrl: picture,
+          name: fullName || name,
+        });
       }
 
       // REMINDER: only used in dev mode

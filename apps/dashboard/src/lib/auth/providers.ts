@@ -27,7 +27,6 @@ export const OIDCProvider: OIDCConfig<Profile> = {
   issuer: process.env.AUTH_OIDC_ISSUER,
   clientId: process.env.AUTH_OIDC_ID,
   clientSecret: process.env.AUTH_OIDC_SECRET,
-  allowDangerousEmailAccountLinking: true,
 };
 
 export const ResendProvider = Resend({
