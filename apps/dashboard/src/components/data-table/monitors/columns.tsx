@@ -4,13 +4,14 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatDistanceToNow } from "date-fns";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { formatDistanceToNowShort } from "@/lib/formatter";
 
 import { TableCellSkeleton } from "../dable-cell-skeleton";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellIndicator } from "../table-cell-indicator";
 import { TableCellNumber } from "../table-cell-number";
 import { TableCellUnavailable } from "../table-cell-unavailable";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -46,6 +47,44 @@ export const columns: ColumnDef<Monitor>[] = [
     enableHiding: false,
   },
   {
+    id: "status",
+    accessorFn: (row) => (row.active ? row.status : "inactive"),
+    header: () => <span className="sr-only">Status</span>,
+    cell: ({ row }) => {
+      const value = String(row.getValue("status"));
+
+      switch (value) {
+        case "active":
+          return <TableCellIndicator variant="success" label={value} />;
+        case "degraded":
+          return <TableCellIndicator variant="warning" label={value} />;
+        case "error":
+          return <TableCellIndicator variant="destructive" label={value} />;
+        default:
+          return <TableCellIndicator variant="muted" label={value} />;
+      }
+    },
+    filterFn: (row, _, value) => {
+      if (Array.isArray(value)) {
+        if (value.includes("inactive")) {
+          return !row.original.active;
+        }
+        if (value.includes("active")) {
+          return !!row.original.active && row.original.status === "active";
+        }
+        return value.includes(row.original.status);
+      }
+      return row.original.status === value;
+    },
+    enableSorting: false,
+    enableHiding: false,
+    enableGlobalFilter: false,
+    meta: {
+      headerClassName: "pr-0",
+      cellClassName: "w-8 pr-0",
+    },
+  },
+  {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
@@ -60,7 +99,7 @@ export const columns: ColumnDef<Monitor>[] = [
     },
     enableHiding: false,
     meta: {
-      cellClassName: "max-w-[150px] min-w-max",
+      cellClassName: "max-w-[200px] min-w-max",
     },
   },
   {
@@ -82,43 +121,6 @@ export const columns: ColumnDef<Monitor>[] = [
     accessorKey: "jobType",
     header: "Type",
     enableHiding: true,
-  },
-  {
-    id: "status",
-    accessorFn: (row) => {
-      console.log(row);
-      return row.active ? row.status : "inactive";
-    },
-    header: "Status",
-    cell: ({ row }) => {
-      const value = String(row.getValue("status"));
-
-      switch (value) {
-        case "active":
-          return <div className="text-success font-mono">{value}</div>;
-        case "degraded":
-          return <div className="text-warning font-mono">{value}</div>;
-        case "error":
-          return <div className="text-destructive font-mono">{value}</div>;
-        default:
-          return <div className="text-muted-foreground font-mono">{value}</div>;
-      }
-    },
-    filterFn: (row, _, value) => {
-      if (Array.isArray(value)) {
-        if (value.includes("inactive")) {
-          return !row.original.active;
-        }
-        if (value.includes("active")) {
-          return !!row.original.active && row.original.status === "active";
-        }
-        return value.includes(row.original.status);
-      }
-      return row.original.status === value;
-    },
-    enableSorting: false,
-    enableHiding: false,
-    enableGlobalFilter: false,
   },
   {
     accessorKey: "active",
@@ -204,7 +206,7 @@ export const columns: ColumnDef<Monitor>[] = [
         <TableCellDate
           value={
             typeof value === "number"
-              ? formatDistanceToNow(new Date(value), { addSuffix: true })
+              ? formatDistanceToNowShort(new Date(value))
               : value
           }
         />
