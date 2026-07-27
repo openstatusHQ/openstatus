@@ -147,6 +147,9 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 			RunOnce:  false,
 			// StartAfter: time.Now().Add(5 * time.Millisecond),
 			RunSingleInstance: true,
+			ErrFunc: func(e error) {
+				log.Printf("An error occurred when executing TCP task  %s", e)
+			},
 			FuncWithTaskContext: func(ctx tasks.TaskContext) error {
 
 				monitor := m
