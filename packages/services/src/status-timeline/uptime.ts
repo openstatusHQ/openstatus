@@ -148,3 +148,49 @@ export function reportsOnlyDowntimeMs(
     coverage ? clipToCoverage(intervals, coverage) : intervals,
   );
 }
+
+export type StatusData = {
+  day: string;
+  ok: number;
+  degraded: number;
+  error: number;
+};
+
+/**
+ * Probe-based downtime: calculates downtime from actual probe failures in
+ * the StatusData array. Each day's downtime is proportional to the error
+ * ratio of that day's checks. This captures automated probe failures that
+ * may not have corresponding manual incidents/reports.
+ */
+export function probeDowntimeMs(
+  data: StatusData[],
+  window: UptimeWindow,
+): number {
+  const intervals: WeightedInterval[] = [];
+
+  for (const item of data) {
+    const dayStart = new Date(item.day).getTime();
+    const dayEnd = dayStart + MS_PER_DAY;
+
+    // Clamp to window
+    const start = Math.max(dayStart, window.start);
+    const end = Math.min(dayEnd, window.end);
+    if (end <= start) continue;
+
+    const totalChecks = item.ok + item.degraded + item.error;
+    if (totalChecks === 0) continue;
+
+    // Calculate error ratio as the weight
+    // degraded counts as "up" (like in requestsTally), only errors count as down
+    const errorRatio = item.error / totalChecks;
+    if (errorRatio === 0) continue;
+
+    intervals.push({
+      from: start,
+      to: end,
+      weight: errorRatio,
+    });
+  }
+
+  return mergedDowntimeMs(intervals);
+}
