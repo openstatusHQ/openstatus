@@ -2,6 +2,7 @@ import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { TRPCError } from "@trpc/server";
 import { ZodError } from "zod";
 
+import { tb } from "./tb";
 import type { Context } from "./trpc";
 
 type AuthedContext = Context & {
@@ -19,6 +20,7 @@ export function toServiceCtx(ctx: AuthedContext): ServiceContext {
     workspace: ctx.workspace,
     actor: { type: "user", userId: ctx.user.id },
     requestId: ctx.req?.headers.get("x-request-id") ?? undefined,
+    tb,
   };
 }
 

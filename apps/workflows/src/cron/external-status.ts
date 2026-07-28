@@ -44,7 +44,11 @@ import {
 
 const logger = getLogger(["workflow", "external-status"]);
 
-const tb = new OSTinybird(env().TINY_BIRD_API_KEY);
+const tb = new OSTinybird({
+  token: env().TINY_BIRD_API_KEY,
+  baseUrl: env().TINYBIRD_URL,
+  noop: env().TINYBIRD_NOOP,
+});
 
 // 10 per phase × 3 phases = peak 30 concurrent HTTP requests upstream; keeps
 // Atlassian/Incident.io CDNs comfortable while still parallelising heavily.

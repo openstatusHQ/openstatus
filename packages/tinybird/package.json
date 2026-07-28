@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "check": "deno check --sloppy-imports .",
-    "test": "deno test --parallel -A --no-check --sloppy-imports"
+    "test": "NODE_ENV=test deno test --parallel -A --no-check --sloppy-imports"
   },
   "dependencies": {
     "@chronark/zod-bird": "catalog:",

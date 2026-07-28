@@ -22,24 +22,45 @@ const externalStatusHistoryDailyShape = {
   snapshot_count: z.int(),
 };
 
+export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
+
+/**
+ * A `TINYBIRD_NOOP` env value. Apps hand this over in two shapes: a real
+ * boolean where the env schema validated it, a raw string where the schema ran
+ * with `skipValidation` — and the string `"false"` is truthy, so it can never
+ * be tested directly. Anything unset or unrecognised means disabled.
+ */
+export const noopFlagSchema = z.stringbool().or(z.boolean()).catch(false);
+
+export type OSTinybirdConfig = {
+  token: string;
+  /** Instance to query. Callers pass their app's validated env value. */
+  baseUrl?: string;
+  /** Resolve every pipe and ingest to empty — tests and offline dev. */
+  noop?: boolean | string;
+};
+
 export class OSTinybird {
   private readonly tb: Client;
 
-  constructor(token: string) {
-    const tinybirdUrl = process.env.TINYBIRD_URL;
-    // Empty token → noop unconditionally; pipes resolve empty rather than
-    // failing authn. Dev/test without a TINYBIRD_URL also gets a noop.
-    if (
-      !token ||
-      ((process.env.NODE_ENV === "development" ||
-        process.env.NODE_ENV === "test") &&
-        !tinybirdUrl)
-    ) {
+  constructor(config: OSTinybirdConfig) {
+    // Tests must never reach a real instance whatever token sits in the env —
+    // checked here so no call site can forget it.
+    const noop =
+      process.env.NODE_ENV === "test" || noopFlagSchema.parse(config.noop);
+    // An empty token cannot authenticate, so noop keeps pipes resolving empty
+    // instead of throwing at every call site.
+    if (noop || !config.token) {
+      if (!noop) {
+        console.warn(
+          "[tinybird] no token configured — every pipe will return empty data",
+        );
+      }
       this.tb = new NoopTinybird();
     } else {
       this.tb = new Client({
-        token,
-        baseUrl: tinybirdUrl || "https://api.tinybird.co",
+        token: config.token,
+        baseUrl: config.baseUrl || TINYBIRD_DEFAULT_URL,
       });
     }
   }
