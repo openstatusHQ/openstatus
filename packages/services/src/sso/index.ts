@@ -13,7 +13,11 @@ export {
   normalizeSsoDomain,
 } from "./lookup";
 export { createSsoPortalLink } from "./portal-link";
-export { removeSsoDomain, syncSsoDomain } from "./sync-domains";
+export {
+  reconcileSsoDomains,
+  removeSsoDomain,
+  syncSsoDomain,
+} from "./sync-domains";
 export {
   CreateSsoPortalLinkInput,
   DisableSsoInput,

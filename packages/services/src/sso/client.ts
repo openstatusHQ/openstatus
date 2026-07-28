@@ -16,6 +16,9 @@ export type WorkOSConnectionState =
 export type WorkOSClient = {
   organizations: {
     createOrganization(payload: { name: string }): Promise<{ id: string }>;
+    getOrganization(id: string): Promise<{
+      domains: { domain: string; state: string }[];
+    }>;
   };
   adminPortal: {
     generateLink(options: {

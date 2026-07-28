@@ -20,9 +20,9 @@ export function normalizeSsoDomain(input: string): string | null {
 /**
  * Resolve the SSO-enabled workspace that owns a *verified* domain.
  *
- * Unverified rows are never matched: `verifiedAt` is written only from the
- * WorkOS `organization_domain.verified` webhook, and that DNS proof is what
- * stops one workspace claiming another's domain.
+ * Unverified rows are never matched: `verifiedAt` mirrors WorkOS's verified
+ * state, and that DNS proof is what stops one workspace claiming another's
+ * domain.
  */
 export async function getWorkspaceByVerifiedSsoDomain(
   emailOrDomain: string,

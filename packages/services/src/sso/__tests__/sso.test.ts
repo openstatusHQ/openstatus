@@ -26,18 +26,29 @@ import {
   normalizeSsoDomain,
 } from "../lookup";
 import { createSsoPortalLink } from "../portal-link";
-import { removeSsoDomain, syncSsoDomain } from "../sync-domains";
+import {
+  reconcileSsoDomains,
+  removeSsoDomain,
+  syncSsoDomain,
+} from "../sync-domains";
 
 let scaleCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let SCALE_OWNER_ID: number;
 let SCALE_MEMBER_ID: number;
 
-function fakeWorkOS(overrides: { organizationId?: string } = {}): WorkOSClient {
+function fakeWorkOS(
+  overrides: {
+    organizationId?: string;
+    domains?: { domain: string; state: string }[];
+  } = {},
+): WorkOSClient {
   const organizationId = overrides.organizationId ?? "org_test_1";
   return {
     organizations: {
       createOrganization: () => Promise.resolve({ id: organizationId }),
+      getOrganization: () =>
+        Promise.resolve({ domains: overrides.domains ?? [] }),
     },
     adminPortal: {
       generateLink: () =>
@@ -254,6 +265,76 @@ describe("syncSsoDomain", () => {
         .where(eq(workspaceSsoDomain.workspaceId, scaleCtx.workspace.id))
         .all();
       expect(rows.length).toBe(0);
+    });
+  });
+});
+
+describe("reconcileSsoDomains", () => {
+  test("mirrors a domain the webhook never delivered", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+
+      const domains = await reconcileSsoDomains({
+        ctx: { ...scaleCtx, db: tx },
+        organizationId: "org_test_1",
+        workos: fakeWorkOS({
+          domains: [
+            { domain: "acme.test", state: "verified" },
+            { domain: "later.test", state: "pending" },
+          ],
+        }),
+        local: [],
+      });
+
+      expect(domains.length).toBe(2);
+      expect(
+        domains.find((entry) => entry.domain === "acme.test")?.verifiedAt,
+      ).toBeInstanceOf(Date);
+      expect(
+        domains.find((entry) => entry.domain === "later.test")?.verifiedAt,
+      ).toBe(null);
+
+      const allowed = await isEmailAllowedForWorkspace(
+        scaleCtx.workspace.id,
+        "jane@acme.test",
+        tx,
+      );
+      expect(allowed).toBe(true);
+    });
+  });
+
+  test("keeps the first verification timestamp and drops removed domains", async () => {
+    await withTestTransaction(async (tx) => {
+      await enableSso({ ctx: { ...scaleCtx, db: tx, workos: fakeWorkOS() } });
+      const verifiedAt = new Date(1_700_000_000_000);
+
+      await syncSsoDomain({
+        ctx: {
+          ...makeSystemCtx(scaleCtx.workspace, { job: "workos-webhook" }),
+          db: tx,
+        },
+        input: {
+          organizationId: "org_test_1",
+          domain: "acme.test",
+          verifiedAt,
+        },
+      });
+
+      const domains = await reconcileSsoDomains({
+        ctx: { ...scaleCtx, db: tx },
+        organizationId: "org_test_1",
+        workos: fakeWorkOS({
+          domains: [{ domain: "acme.test", state: "verified" }],
+        }),
+        local: [
+          { domain: "acme.test", verifiedAt },
+          { domain: "gone.test", verifiedAt },
+        ],
+      });
+
+      expect(domains.length).toBe(1);
+      expect(domains[0].domain).toBe("acme.test");
+      expect(domains[0].verifiedAt?.getTime()).toBe(verifiedAt.getTime());
     });
   });
 });

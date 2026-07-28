@@ -4,7 +4,8 @@ import { workspaceSsoDomain } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { getWorkspaceByWorkosOrganization } from "./internal";
+import type { WorkOSClient } from "./client";
+import { getWorkspaceByWorkosOrganization, listSsoDomains } from "./internal";
 import { RemoveSsoDomainInput, SyncSsoDomainInput } from "./schemas";
 
 /**
@@ -76,6 +77,77 @@ export async function syncSsoDomain(args: {
       metadata: { domain: input.domain },
     });
   });
+}
+
+export type SsoDomainState = {
+  domain: string;
+  verifiedAt: Date | null;
+};
+
+/**
+ * Re-mirror WorkOS domains onto our rows. The webhook is the fast path but it
+ * can be unconfigured or dropped, and a domain that never lands here is a
+ * domain nobody can sign in from — so reads reconcile what it missed.
+ */
+export async function reconcileSsoDomains(args: {
+  ctx: ServiceContext;
+  organizationId: string;
+  workos: WorkOSClient;
+  local: SsoDomainState[];
+}): Promise<SsoDomainState[]> {
+  const { ctx, organizationId, workos, local } = args;
+
+  const organization =
+    await workos.organizations.getOrganization(organizationId);
+  const remote = organization.domains.map((entry) => ({
+    domain: entry.domain.trim().toLowerCase(),
+    verified: entry.state === "verified",
+  }));
+
+  const systemCtx: ServiceContext = {
+    ...ctx,
+    actor: { type: "system", job: "workos-reconcile" },
+  };
+  const byDomain = new Map(local.map((row) => [row.domain, row]));
+  const remoteDomains = new Set(remote.map((entry) => entry.domain));
+  let changed = false;
+
+  for (const entry of remote) {
+    const existing = byDomain.get(entry.domain);
+    // WorkOS exposes no verification timestamp, so keep the one we first saw.
+    const verifiedAt = entry.verified
+      ? (existing?.verifiedAt ?? new Date())
+      : null;
+
+    if (existing && existing.verifiedAt?.getTime() === verifiedAt?.getTime()) {
+      continue;
+    }
+
+    changed = true;
+    await syncSsoDomain({
+      ctx: systemCtx,
+      input: { organizationId, domain: entry.domain, verifiedAt },
+    });
+  }
+
+  for (const row of local) {
+    if (remoteDomains.has(row.domain)) continue;
+    changed = true;
+    await removeSsoDomain({
+      ctx: systemCtx,
+      input: { organizationId, domain: row.domain },
+    });
+  }
+
+  if (!changed) return local;
+
+  // Re-read rather than trust `remote`: a domain already claimed by another
+  // workspace is rejected by the sync, and must not be reported as ours.
+  const rows = await listSsoDomains(ctx);
+  return rows.map((row) => ({
+    domain: row.domain,
+    verifiedAt: row.verifiedAt,
+  }));
 }
 
 export async function removeSsoDomain(args: {
