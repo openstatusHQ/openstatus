@@ -18,10 +18,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async authorized({ auth, request }) {
       // Extract the page slug from the request
-      const { prefix } = getValidCustomDomain(request);
+      // IMPORTANT: Use x-forwarded-host to get the ORIGINAL host before any rewrites
+      const host = request.headers.get("x-forwarded-host");
+      const url = new URL(request.url);
+      
+      console.log("[auth] authorized callback", {
+        host,
+        urlHost: url.host,
+        hasAuth: !!auth,
+        url: request.url,
+      });
+
+      // Extract prefix using the forwarded host, not the rewritten URL host
+      const subdomain = host ? getValidSubdomain(host) : null;
+      const prefix = subdomain || url.pathname.split("/")[1];
+
+      console.log("[auth] extracted prefix", { prefix, subdomain });
 
       if (!prefix) {
         // No valid slug found, allow through to let routing handle it
+        console.log("[auth] no prefix, allowing through");
         return true;
       }
 
@@ -33,13 +49,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       });
 
+      console.log("[auth] page data", { pageData });
+
       if (!pageData) {
         // Page not found, allow through to let routing handle 404
+        console.log("[auth] page not found, allowing through");
         return true;
       }
 
+      const allowed = pageData.accessType === "public" || !!auth;
+      console.log("[auth] authorization result", { 
+        accessType: pageData.accessType,
+        hasAuth: !!auth,
+        allowed,
+      });
+
       // Allow access if the page is public OR if the user is authenticated
-      return pageData.accessType === "public" || !!auth;
+      return allowed;
     },
     async signIn(params) {
       const _headers = await headers();
