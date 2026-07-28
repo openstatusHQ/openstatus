@@ -19,7 +19,12 @@ export const monitorRun = sqliteTable(
     ),
   },
   (t) => [
-    index("monitor_run_workspace_id_idx").on(t.workspaceId),
+    // Composite, not workspace_id alone: the monthly quota count(*) filters on
+    // both, and monitor_run is append-only so the scan only ever grows.
+    index("monitor_run_workspace_id_created_at_idx").on(
+      t.workspaceId,
+      t.createdAt,
+    ),
     index("monitor_run_monitor_id_idx").on(t.monitorId),
   ],
 );
