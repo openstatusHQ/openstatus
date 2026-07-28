@@ -67,7 +67,21 @@ export default auth(async (req) => {
   }
 
   const _page = validation.data;
-  const route = applyPageLocaleOverride(initialRoute, _page);
+  let route = applyPageLocaleOverride(initialRoute, _page);
+
+  // Fix route prefix for self-hosted custom domains
+  // When accessing via custom domain, route.prefix is set to the custom domain
+  // instead of the slug, breaking all downstream rewrite logic
+  if (isSelfHosted && _page.customDomain && route.prefix === _page.customDomain) {
+    route = {
+      ...route,
+      prefix: _page.slug,
+      rewritePath: route.rewritePath.replace(
+        `/${_page.customDomain}`,
+        `/${_page.slug}`
+      ),
+    };
+  }
 
   const clientIp = resolveClientIp(req.headers);
 
