@@ -669,7 +669,7 @@ export function getUptime({
       end: windowEndDate.getTime(),
       now: Date.now(),
     };
-    
+
     let duration: number;
     if (barType === "manual") {
       // Manual mode: only count manually created reports
@@ -684,7 +684,7 @@ export function getUptime({
         coverage ? clipToCoverage(allIntervals, coverage) : allIntervals,
       );
     }
-    
+
     return `${floorPct((total - duration) / total)}%`;
   }
 
@@ -742,7 +742,7 @@ function downtimeIntervals(
       return [{ from, to, weight: 1 }];
     }
     if (e.type !== "report") return [];
-    
+
     if (e.impactIntervals?.length) {
       return e.impactIntervals.flatMap((iv) => {
         const from = Math.max(iv.from.getTime(), window.start);
@@ -752,7 +752,7 @@ function downtimeIntervals(
         return [{ from, to, weight }];
       });
     }
-    
+
     // legacy report: counts in reports-only, ignored in duration
     if (!reportsOnly) return [];
     const from = Math.max(e.from.getTime(), window.start);
