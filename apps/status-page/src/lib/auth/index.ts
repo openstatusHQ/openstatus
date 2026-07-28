@@ -4,7 +4,6 @@ import type { DefaultSession } from "next-auth";
 import NextAuth, { AuthError } from "next-auth";
 import { headers } from "next/headers";
 
-import { getValidCustomDomain, getValidSubdomain } from "../domain";
 import { getQueryClient, trpc } from "../trpc/server";
 import { adapter } from "./adapter";
 import { ResendProvider } from "./providers";
@@ -16,55 +15,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter,
   providers: [ResendProvider],
   callbacks: {
-    async authorized({ auth, request }) {
-      // Extract the page slug from the request
-      // IMPORTANT: Use x-forwarded-host to get the ORIGINAL host before any rewrites
-      const host = request.headers.get("x-forwarded-host");
-      const url = new URL(request.url);
-      
-      console.log("[auth] authorized callback", {
-        host,
-        urlHost: url.host,
-        hasAuth: !!auth,
-        url: request.url,
-      });
-
-      // For custom domains, query by customDomain instead of slug
-      // For subdomains/pathnames, query by slug
-      console.log("[auth] checking", { host, subdomain: getValidSubdomain(host) });
-
-      if (!host) {
-        // No forwarded host, allow through
-        console.log("[auth] no forwarded host, allowing through");
-        return true;
-      }
-
-      // Query the database - try customDomain first for custom domain requests
-      const pageData = await db.query.page.findFirst({
-        where: eq(page.customDomain, host),
-        columns: {
-          accessType: true,
-        },
-      });
-
-      console.log("[auth] page data", { pageData });
-
-      if (!pageData) {
-        // Page not found, allow through to let routing handle 404
-        console.log("[auth] page not found, allowing through");
-        return true;
-      }
-
-      const allowed = pageData.accessType === "public" || !!auth;
-      console.log("[auth] authorization result", { 
-        accessType: pageData.accessType,
-        hasAuth: !!auth,
-        allowed,
-      });
-
-      // Allow access if the page is public OR if the user is authenticated
-      return allowed;
-    },
     async signIn(params) {
       const _headers = await headers();
       const host = _headers.get("host");

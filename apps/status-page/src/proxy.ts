@@ -1,6 +1,7 @@
 import { db, sql } from "@openstatus/db";
 import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { auth } from "./lib/auth";
 import { resolveClientIp } from "./lib/http/client-ip";
@@ -13,7 +14,10 @@ import { resolveRoute } from "./lib/resolve-route";
 
 const isSelfHosted = process.env.SELF_HOST === "true";
 
-export default auth(async (req) => {
+export default async function middleware(req: NextRequest) {
+  // Get auth session for access control checks
+  const session = await auth();
+  
   const url = req.nextUrl.clone();
   const passthroughResponse = NextResponse.next();
   // HTML and markdown share the same URL (negotiated by Accept) — tell shared
@@ -120,7 +124,7 @@ export default auth(async (req) => {
     customDomain: _page.customDomain || null,
     accessType: _page.accessType,
     route,
-    authEmailPresent: !!req.auth?.user?.email,
+    authEmailPresent: !!session?.user?.email,
     clientIp: clientIp ?? null,
     isSelfHosted,
     redirectBaseUrl,
@@ -142,7 +146,7 @@ export default auth(async (req) => {
       ?.value,
     queryPassword: url.searchParams.get("pw"),
     redirectParam: sanitizeRedirectParam(url.searchParams.get("redirect")),
-    authEmail: req.auth?.user?.email,
+    authEmail: session?.user?.email,
     clientIp,
   });
 
@@ -165,7 +169,7 @@ export default auth(async (req) => {
     case "passthrough":
       return passthroughResponse;
   }
-});
+}
 
 export const config = {
   matcher: [
