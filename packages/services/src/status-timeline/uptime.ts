@@ -4,7 +4,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { type WeightedInterval, mergedDowntimeMs } from "./downtime";
-import type { Event } from "./events";
+import type { Event, StatusData } from "./events";
 
 export const MS_PER_DAY = 86_400_000;
 
