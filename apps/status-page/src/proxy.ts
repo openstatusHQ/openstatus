@@ -100,6 +100,19 @@ export default auth(async (req) => {
 
   const clientIp = resolveClientIp(req.headers);
 
+  // In self-hosted mode with custom domains, use the custom domain host for
+  // building redirect/rewrite URLs instead of the internal host. This ensures
+  // redirects go to status.zptx.net instead of os.zptx.net.
+  let effectiveOrigin = req.nextUrl.origin;
+  let effectiveRequestUrl = req.url;
+  if (isSelfHosted && _page.customDomain && host) {
+    const protocol = req.nextUrl.protocol || "https:";
+    effectiveOrigin = `${protocol}//${host}`;
+    // Reconstruct requestUrl with the custom domain host
+    const parsedUrl = new URL(req.url);
+    effectiveRequestUrl = `${protocol}//${host}${parsedUrl.pathname}${parsedUrl.search}`;
+  }
+
   console.log("[proxy] request", {
     host,
     pathname: url.pathname,
@@ -110,6 +123,7 @@ export default auth(async (req) => {
     authEmailPresent: !!req.auth?.user?.email,
     clientIp: clientIp ?? null,
     isSelfHosted,
+    effectiveOrigin,
   });
 
   const action = composePageAction({
@@ -120,8 +134,8 @@ export default auth(async (req) => {
     pathname: url.pathname,
     search: url.search,
     isSelfHosted,
-    requestUrl: req.url,
-    origin: req.nextUrl.origin,
+    requestUrl: effectiveRequestUrl,
+    origin: effectiveOrigin,
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
       ?.value,
     queryPassword: url.searchParams.get("pw"),
