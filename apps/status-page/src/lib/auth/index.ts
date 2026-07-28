@@ -1,5 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import { page, viewer } from "@openstatus/db/src/schema";
+import { viewer } from "@openstatus/db/src/schema";
 import type { DefaultSession } from "next-auth";
 import NextAuth, { AuthError } from "next-auth";
 import { headers } from "next/headers";

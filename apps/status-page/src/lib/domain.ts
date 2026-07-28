@@ -12,17 +12,6 @@ export function isSelfHosted(): boolean {
   return process.env.SELF_HOST === "true";
 }
 
-/**
- * Returns true when the request host is the SaaS-managed subdomain for the
- * given page slug (i.e. `{slug}.stpg.dev`).
- *
- * In self-hosted mode (`SELF_HOST=true`) this always returns false because
- * the SaaS subdomain infrastructure is not available.
- */
-export function isSaasSubdomain(host: string | null, slug: string): boolean {
-  if (isSelfHosted()) return false;
-  return host === `${slug}.stpg.dev`;
-}
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
@@ -79,13 +68,6 @@ export const getValidCustomDomain = (req: NextRequest | Request) => {
   const pathnames = url.pathname.split("/");
 
   const subdomain = getValidSubdomain(url.host);
-  console.log({
-    hostnames,
-    pathnames,
-    host,
-    urlHost: url.host,
-    subdomain,
-  });
 
   if (
     hostnames.length > 2 &&
@@ -102,8 +84,6 @@ export const getValidCustomDomain = (req: NextRequest | Request) => {
   if (subdomain !== null) {
     prefix = subdomain.toLowerCase();
   }
-
-  console.log({ type, prefix });
 
   return { type, prefix };
 };
