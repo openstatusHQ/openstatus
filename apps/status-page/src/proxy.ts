@@ -100,17 +100,14 @@ export default auth(async (req) => {
 
   const clientIp = resolveClientIp(req.headers);
 
-  // In self-hosted mode with custom domains, use the custom domain host for
-  // building redirect/rewrite URLs instead of the internal host. This ensures
-  // redirects go to status.zptx.net instead of os.zptx.net.
-  let effectiveOrigin = req.nextUrl.origin;
-  let effectiveRequestUrl = req.url;
+  // In self-hosted mode with custom domains, we need to handle redirects and
+  // rewrites differently:
+  // - Redirects (user-facing): Use the custom domain so users stay on status.zptx.net
+  // - Rewrites (internal): Use the internal origin so Next.js doesn't make external requests
+  let redirectOrigin = req.nextUrl.origin;
   if (isSelfHosted && _page.customDomain && host) {
     const protocol = req.nextUrl.protocol || "https:";
-    effectiveOrigin = `${protocol}//${host}`;
-    // Reconstruct requestUrl with the custom domain host
-    const parsedUrl = new URL(req.url);
-    effectiveRequestUrl = `${protocol}//${host}${parsedUrl.pathname}${parsedUrl.search}`;
+    redirectOrigin = `${protocol}//${host}`;
   }
 
   console.log("[proxy] request", {
@@ -123,7 +120,7 @@ export default auth(async (req) => {
     authEmailPresent: !!req.auth?.user?.email,
     clientIp: clientIp ?? null,
     isSelfHosted,
-    effectiveOrigin,
+    redirectOrigin,
   });
 
   const action = composePageAction({
@@ -134,8 +131,8 @@ export default auth(async (req) => {
     pathname: url.pathname,
     search: url.search,
     isSelfHosted,
-    requestUrl: effectiveRequestUrl,
-    origin: effectiveOrigin,
+    requestUrl: req.url,  // Keep internal origin for rewrites
+    origin: redirectOrigin,  // Use custom domain for redirects
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
       ?.value,
     queryPassword: url.searchParams.get("pw"),
