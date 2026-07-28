@@ -575,6 +575,13 @@
       "when": 1784808228044,
       "tag": "0081_charming_unus",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "6",
+      "when": 1785225964591,
+      "tag": "0082_cooing_karma",
+      "breakpoints": true
     }
   ]
 }

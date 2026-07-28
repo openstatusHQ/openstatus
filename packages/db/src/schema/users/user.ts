@@ -10,28 +10,34 @@ import type { AdapterAccount } from "next-auth/adapters";
 
 import { workspace, workspaceRole } from "../workspaces";
 
-export const user = sqliteTable("user", {
-  id: integer("id").primaryKey(),
+export const user = sqliteTable(
+  "user",
+  {
+    id: integer("id").primaryKey(),
 
-  // clerk fields
-  tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
-  firstName: text("first_name").default(""),
-  lastName: text("last_name").default(""),
-  photoUrl: text("photo_url").default(""),
+    // clerk fields
+    tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
+    firstName: text("first_name").default(""),
+    lastName: text("last_name").default(""),
+    photoUrl: text("photo_url").default(""),
 
-  // next-auth fields
-  name: text("name"),
-  email: text("email").default(""),
-  emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
+    // next-auth fields
+    name: text("name"),
+    email: text("email").default(""),
+    emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
 
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-  deletedAt: integer("deleted_at", { mode: "timestamp" }),
-});
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  },
+  // Plain, not LOWER(email): @auth/drizzle-adapter's getUserByEmail does an
+  // exact eq() match, which an expression index would not serve.
+  (table) => [index("user_email_idx").on(table.email)],
+);
 
 export const userRelations = relations(user, ({ many }) => ({
   usersToWorkspaces: many(usersToWorkspaces),
@@ -97,13 +103,17 @@ export const account = sqliteTable(
   ],
 );
 
-export const session = sqliteTable("session", {
-  sessionToken: text("session_token").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
-});
+export const session = sqliteTable(
+  "session",
+  {
+    sessionToken: text("session_token").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("session_user_id_idx").on(table.userId)],
+);
 
 export const verificationToken = sqliteTable(
   "verification_token",

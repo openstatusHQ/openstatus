@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   sqliteTable,
   text,
@@ -60,6 +61,10 @@ export const pageSubscriber = sqliteTable(
     ),
   },
   (table) => ({
+    // Plain, not partial: the three partial uniques below all lead with a
+    // channel identifier, so nothing could serve a page_id lookup.
+    pageIdIdx: index("page_subscriber_page_id_idx").on(table.pageId),
+
     // Partial unique index: one active email subscription per page
     emailPageActiveIdx: uniqueIndex("idx_page_subscriber_email_page_active")
       .on(sql`LOWER(${table.email})`, table.pageId)
