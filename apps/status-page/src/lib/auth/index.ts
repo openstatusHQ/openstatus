@@ -29,21 +29,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         url: request.url,
       });
 
-      // Extract prefix using the forwarded host, not the rewritten URL host
-      const subdomain = host ? getValidSubdomain(host) : null;
-      const prefix = subdomain || url.pathname.split("/")[1];
+      // For custom domains, query by customDomain instead of slug
+      // For subdomains/pathnames, query by slug
+      console.log("[auth] checking", { host, subdomain: getValidSubdomain(host) });
 
-      console.log("[auth] extracted prefix", { prefix, subdomain });
-
-      if (!prefix) {
-        // No valid slug found, allow through to let routing handle it
-        console.log("[auth] no prefix, allowing through");
+      if (!host) {
+        // No forwarded host, allow through
+        console.log("[auth] no forwarded host, allowing through");
         return true;
       }
 
-      // Query the database to check if the page requires authentication
+      // Query the database - try customDomain first for custom domain requests
       const pageData = await db.query.page.findFirst({
-        where: eq(page.slug, prefix),
+        where: eq(page.customDomain, host),
         columns: {
           accessType: true,
         },
