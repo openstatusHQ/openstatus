@@ -73,13 +73,28 @@ export default auth(async (req) => {
   // When accessing via custom domain, route.prefix is set to the custom domain
   // instead of the slug, breaking all downstream rewrite logic
   if (isSelfHosted && _page.customDomain && route.prefix === _page.customDomain) {
+    const customDomainPrefix = `/${_page.customDomain}`;
+    const slugPrefix = `/${_page.slug}`;
+    
+    // Replace the custom domain prefix with slug at the start of the path
+    // This is more precise than replace() and only affects the prefix
+    let correctedPath = route.rewritePath;
+    if (correctedPath.startsWith(customDomainPrefix)) {
+      correctedPath = slugPrefix + correctedPath.slice(customDomainPrefix.length);
+    }
+    
+    console.log("[proxy] self-hosted custom domain correction", {
+      originalPrefix: route.prefix,
+      correctedPrefix: _page.slug,
+      originalPath: route.rewritePath,
+      correctedPath,
+      customDomain: _page.customDomain,
+    });
+    
     route = {
       ...route,
       prefix: _page.slug,
-      rewritePath: route.rewritePath.replace(
-        `/${_page.customDomain}`,
-        `/${_page.slug}`
-      ),
+      rewritePath: correctedPath,
     };
   }
 
