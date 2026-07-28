@@ -1,6 +1,7 @@
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import { and, eq } from "@openstatus/db";
+import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { SsoDisabledEmail, sendEmail } from "@openstatus/emails";
 import type { ServiceContext } from "@openstatus/services";
 import {
   downgradeWorkspaceToFree,
@@ -250,7 +251,42 @@ export const webhookRouter = createTRPCRouter({
       db: opts.ctx.db,
     };
 
-    const { customDomains } = await downgradeWorkspaceToFree({ ctx });
+    const { customDomains, ssoDisabled } = await downgradeWorkspaceToFree({
+      ctx,
+    });
+
+    // Best-effort after commit: owners must know SSO stopped working, but a
+    // mail failure must not fail the webhook into Stripe retries.
+    if (ssoDisabled) {
+      try {
+        const owners = await opts.ctx.db
+          .select({ email: user.email })
+          .from(usersToWorkspaces)
+          .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+          .where(
+            and(
+              eq(usersToWorkspaces.workspaceId, ws.id),
+              eq(usersToWorkspaces.role, "owner"),
+            ),
+          )
+          .all();
+
+        const to = owners
+          .map((owner) => owner.email)
+          .filter((email): email is string => Boolean(email));
+
+        if (to.length > 0) {
+          await sendEmail({
+            from: "Thibault from OpenStatus <thibault@openstatus.dev>",
+            subject: "SSO has been disabled for your workspace",
+            to,
+            react: SsoDisabledEmail(),
+          });
+        }
+      } catch (err) {
+        console.error("Failed to notify owners about SSO being disabled:", err);
+      }
+    }
 
     // Free plan has no custom-domain feature — release each domain on Vercel
     // unless another workspace's page still holds it. Best-effort after

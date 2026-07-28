@@ -1,9 +1,10 @@
-import { db, eq } from "@openstatus/db";
+import { asc, db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { SSO_ORG_COOKIE } from "@/lib/sso-cookie";
 import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
 export default auth(async (req) => {
@@ -76,21 +77,34 @@ export default auth(async (req) => {
   }
 
   const hasWorkspaceSlug = req.cookies.has(WORKSPACE_SLUG_COOKIE);
+  const ssoOrg = req.cookies.get(SSO_ORG_COOKIE)?.value;
 
-  if (req.auth?.user?.id && !hasWorkspaceSlug) {
-    const [query] = await db
+  if (req.auth?.user?.id && (!hasWorkspaceSlug || ssoOrg)) {
+    const rows = await db
       .select()
       .from(usersToWorkspaces)
       .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
       .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
       .where(eq(user.id, Number.parseInt(req.auth.user.id)))
+      .orderBy(asc(usersToWorkspaces.createdAt))
       .all();
+
+    // The cookie only *selects* among workspaces the user already belongs to —
+    // it can never grant access, so a forged value is inert.
+    const target = ssoOrg
+      ? rows.find((row) => row.workspace.workosOrganizationId === ssoOrg)
+      : undefined;
+    const query = target ?? rows[0];
 
     if (!query) {
       console.error(">> Should not happen, no workspace found for user");
+    } else if (target || !hasWorkspaceSlug) {
+      response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug);
     }
+  }
 
-    response.cookies.set(WORKSPACE_SLUG_COOKIE, query.workspace.slug);
+  if (ssoOrg) {
+    response.cookies.delete(SSO_ORG_COOKIE);
   }
 
   if (!req.auth && hasWorkspaceSlug) {

@@ -46,6 +46,7 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
      * If omitted, no type-to-confirm step is shown.
      */
     confirmationValue?: string;
+    description?: React.ReactNode;
     submitAction?: () => Promise<void>;
   };
 }
@@ -152,8 +153,8 @@ export function QuickActions({
               : "Are you sure?"}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently remove the entry
-            from the database.
+            {deleteAction?.description ??
+              "This action cannot be undone. This will permanently remove the entry from the database."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {deleteAction?.confirmationValue ? (

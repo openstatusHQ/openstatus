@@ -150,6 +150,10 @@ export const config: Record<
         value: "audit-log",
         label: "Audit log",
       },
+      {
+        value: "sso",
+        label: "SAML single sign-on",
+      },
     ],
   },
 };

@@ -179,6 +179,16 @@ const privateLocationActions = [
   action("private_location.delete", "private_location", intId),
 ] as const;
 
+// `entityId` is the workspace id — SSO config has no surrogate key of its own.
+const ssoActions = [
+  action("workspace_sso.create", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+  action("workspace_sso.update", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorActions,
   ...pageActions,
@@ -198,6 +208,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
+  ...ssoActions,
 ]);
 
 /**

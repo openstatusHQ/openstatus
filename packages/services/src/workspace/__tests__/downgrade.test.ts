@@ -427,4 +427,43 @@ describe("downgradeWorkspaceToFree", () => {
       );
     });
   });
+
+  test("disables SSO so JIT cannot re-add the trimmed members", async () => {
+    await withTestTransaction(async (tx) => {
+      const s = await seedTeamWorkspace(tx);
+
+      const withSso = await tx
+        .update(workspace)
+        .set({ workosOrganizationId: "org_downgrade_test", ssoEnabled: true })
+        .where(eq(workspace.id, s.ws.id))
+        .returning()
+        .get();
+
+      const ctx: ServiceContext = {
+        workspace: selectWorkspaceSchema.parse(withSso),
+        actor: { type: "system", job: "stripe-subscription-deleted" },
+        db: tx,
+      };
+
+      const result = await downgradeWorkspaceToFree({ ctx });
+      expect(result.ssoDisabled).toBe(true);
+
+      const after = await tx
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, s.ws.id))
+        .get();
+      expect(after?.ssoEnabled).toBe(false);
+      // Organization link is kept so a re-upgrade doesn't require reconnecting.
+      expect(after?.workosOrganizationId).toBe("org_downgrade_test");
+
+      await expectAuditRow({
+        workspaceId: s.ws.id,
+        action: "workspace_sso.update",
+        entityType: "workspace_sso",
+        entityId: s.ws.id,
+        db: tx,
+      });
+    });
+  });
 });

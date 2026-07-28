@@ -59,6 +59,7 @@ export const limitsSchema = z.object({
    */
   members: z.literal("Unlimited").or(z.number()).prefault(1),
   "audit-log": z.boolean().prefault(false),
+  sso: z.boolean().prefault(false),
 
   /**
    * Other limits

@@ -104,7 +104,7 @@ export type WorkspaceFixture = {
  * assertions deterministic.
  */
 export async function createWorkspaceFixture(
-  plan: "team" | "free" = "team",
+  plan: "team" | "free" | "scale" = "team",
 ): Promise<WorkspaceFixture> {
   const { workspace, user } = await createTestWorkspace({ plan });
   return {

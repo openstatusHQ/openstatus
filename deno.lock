@@ -236,7 +236,8 @@
         "packageJson": {
           "dependencies": [
             "npm:@jsr/std__expect@^1.0.19",
-            "npm:@jsr/std__testing@^1.0.19"
+            "npm:@jsr/std__testing@^1.0.19",
+            "npm:@workos-inc/node@^10.8.0"
           ]
         }
       },
