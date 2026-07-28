@@ -42,7 +42,7 @@ export function dayCoverage(
 // downtime during a coverage gap (paused monitor, missing data days) would
 // exceed a days-with-checks denominator and fake 0% for a healthy monitor —
 // clip every interval to the covered segments before merging
-function clipToCoverage(
+export function clipToCoverage(
   intervals: WeightedInterval[],
   coverage: CoverageSegment[],
 ): WeightedInterval[] {
@@ -73,7 +73,7 @@ export function requestsTally(counts: CheckCounts[]): {
   return { up, total };
 }
 
-function clampInterval(
+export function clampInterval(
   from: Date,
   to: Date | null,
   weight: number,
@@ -85,7 +85,7 @@ function clampInterval(
   return { from: start, to: end, weight };
 }
 
-function downtimeIntervals(
+export function downtimeIntervals(
   events: Event[],
   window: UptimeWindow,
   reportsOnly: boolean,
@@ -150,15 +150,14 @@ export function reportsOnlyDowntimeMs(
 }
 
 /**
- * Probe-based downtime: calculates downtime from actual probe failures in
- * the StatusData array. Each day's downtime is proportional to the error
- * ratio of that day's checks. This captures automated probe failures that
- * may not have corresponding manual incidents/reports.
+ * Probe-based downtime intervals: converts probe failure data into weighted
+ * downtime intervals. Each day's error ratio becomes the weight for that day's
+ * interval, allowing it to be merged with event-based downtime.
  */
-export function probeDowntimeMs(
+export function probeDowntimeIntervals(
   data: StatusData[],
   window: UptimeWindow,
-): number {
+): WeightedInterval[] {
   const intervals: WeightedInterval[] = [];
 
   for (const item of data) {
@@ -185,5 +184,5 @@ export function probeDowntimeMs(
     });
   }
 
-  return mergedDowntimeMs(intervals);
+  return intervals;
 }

@@ -6,11 +6,15 @@ import {
   worstImpact,
 } from "@openstatus/db/src/schema";
 import {
+  clipToCoverage,
   type CoverageSegment,
+  downtimeIntervals,
   type Event,
   MS_PER_DAY,
+  probeDowntimeIntervals,
   type StatusData,
   type UptimeWindow,
+  type WeightedInterval,
   dayCoverage,
   durationDowntimeMs,
   floorPct,
@@ -693,87 +697,6 @@ export function getUptime({
   return `${floorPct(up / total)}%`;
 }
 
-// Helper function to convert probe data into weighted downtime intervals
-function probeDowntimeIntervals(
-  data: StatusData[],
-  window: UptimeWindow,
-): WeightedInterval[] {
-  const intervals: WeightedInterval[] = [];
 
-  for (const item of data) {
-    const dayStart = new Date(item.day).getTime();
-    const dayEnd = dayStart + MS_PER_DAY;
 
-    // Clamp to window
-    const start = Math.max(dayStart, window.start);
-    const end = Math.min(dayEnd, window.end);
-    if (end <= start) continue;
 
-    const totalChecks = item.ok + item.degraded + item.error;
-    if (totalChecks === 0) continue;
-
-    // Calculate error ratio as the weight
-    // degraded counts as "up" (like in requestsTally), only errors count as down
-    const errorRatio = item.error / totalChecks;
-    if (errorRatio === 0) continue;
-
-    intervals.push({
-      from: start,
-      to: end,
-      weight: errorRatio,
-    });
-  }
-
-  return intervals;
-}
-
-// Helper to extract downtime intervals from events (incidents + reports)
-function downtimeIntervals(
-  events: Event[],
-  window: UptimeWindow,
-  reportsOnly: boolean,
-): WeightedInterval[] {
-  return events.flatMap((e) => {
-    if (e.type === "incident") {
-      if (reportsOnly) return [];
-      const from = Math.max(e.from.getTime(), window.start);
-      const to = Math.min(e.to ? e.to.getTime() : window.now, window.end);
-      if (to <= from) return [];
-      return [{ from, to, weight: 1 }];
-    }
-    if (e.type !== "report") return [];
-    
-    if (e.impactIntervals?.length) {
-      return e.impactIntervals.flatMap((iv) => {
-        const from = Math.max(iv.from.getTime(), window.start);
-        const to = Math.min(iv.to ? iv.to.getTime() : window.now, window.end);
-        const weight = impactUptimeWeight(iv.impact);
-        if (to <= from || weight === 0) return [];
-        return [{ from, to, weight }];
-      });
-    }
-    
-    // legacy report: counts in reports-only, ignored in duration
-    if (!reportsOnly) return [];
-    const from = Math.max(e.from.getTime(), window.start);
-    const to = Math.min(e.to ? e.to.getTime() : window.now, window.end);
-    if (to <= from) return [];
-    return [{ from, to, weight: LEGACY_IMPACT_WEIGHT }];
-  });
-}
-
-type WeightedInterval = { from: number; to: number; weight: number };
-
-// Helper to clip intervals to coverage segments
-function clipToCoverage(
-  intervals: WeightedInterval[],
-  coverage: CoverageSegment[],
-): WeightedInterval[] {
-  return intervals.flatMap((iv) =>
-    coverage.flatMap((segment) => {
-      const from = Math.max(iv.from, segment.start);
-      const to = Math.min(iv.to, segment.end);
-      return to > from ? [{ from, to, weight: iv.weight }] : [];
-    }),
-  );
-}
