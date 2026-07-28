@@ -149,13 +149,6 @@ export function reportsOnlyDowntimeMs(
   );
 }
 
-export type StatusData = {
-  day: string;
-  ok: number;
-  degraded: number;
-  error: number;
-};
-
 /**
  * Probe-based downtime: calculates downtime from actual probe failures in
  * the StatusData array. Each day's downtime is proportional to the error
