@@ -17,7 +17,7 @@ const isSelfHosted = process.env.SELF_HOST === "true";
 export default async function middleware(req: NextRequest) {
   // Get auth session for access control checks
   const session = await auth();
-  
+
   const url = req.nextUrl.clone();
   const passthroughResponse = NextResponse.next();
   // HTML and markdown share the same URL (negotiated by Accept) — tell shared
@@ -76,17 +76,22 @@ export default async function middleware(req: NextRequest) {
   // Fix route prefix for self-hosted custom domains
   // When accessing via custom domain, route.prefix is set to the custom domain
   // instead of the slug, breaking all downstream rewrite logic
-  if (isSelfHosted && _page.customDomain && route.prefix === _page.customDomain) {
+  if (
+    isSelfHosted &&
+    _page.customDomain &&
+    route.prefix === _page.customDomain
+  ) {
     const customDomainPrefix = `/${_page.customDomain}`;
     const slugPrefix = `/${_page.slug}`;
-    
+
     // Replace the custom domain prefix with slug at the start of the path
     // This is more precise than replace() and only affects the prefix
     let correctedPath = route.rewritePath;
     if (correctedPath.startsWith(customDomainPrefix)) {
-      correctedPath = slugPrefix + correctedPath.slice(customDomainPrefix.length);
+      correctedPath =
+        slugPrefix + correctedPath.slice(customDomainPrefix.length);
     }
-    
+
     console.log("[proxy] self-hosted custom domain correction", {
       originalPrefix: route.prefix,
       correctedPrefix: _page.slug,
@@ -94,7 +99,7 @@ export default async function middleware(req: NextRequest) {
       correctedPath,
       customDomain: _page.customDomain,
     });
-    
+
     route = {
       ...route,
       prefix: _page.slug,
@@ -117,8 +122,6 @@ export default async function middleware(req: NextRequest) {
     redirectOrigin = `${protocol}//${host}`;
   }
 
-
-
   const action = composePageAction({
     route,
     page: _page,
@@ -127,9 +130,9 @@ export default async function middleware(req: NextRequest) {
     pathname: url.pathname,
     search: url.search,
     isSelfHosted,
-    requestUrl: req.url,  // Keep internal origin for rewrites
-    redirectBaseUrl,  // Use custom domain for redirects
-    origin: redirectOrigin,  // Use custom domain for redirects
+    requestUrl: req.url, // Keep internal origin for rewrites
+    redirectBaseUrl, // Use custom domain for redirects
+    origin: redirectOrigin, // Use custom domain for redirects
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
       ?.value,
     queryPassword: url.searchParams.get("pw"),
@@ -137,8 +140,6 @@ export default async function middleware(req: NextRequest) {
     authEmail: session?.user?.email,
     clientIp,
   });
-
-
 
   switch (action.type) {
     case "redirect":
