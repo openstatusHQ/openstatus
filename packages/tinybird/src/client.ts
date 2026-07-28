@@ -44,7 +44,10 @@ export class OSTinybird {
   private readonly tb: Client;
 
   constructor(config: OSTinybirdConfig) {
-    const noop = noopFlagSchema.parse(config.noop);
+    // Tests must never reach a real instance whatever token sits in the env —
+    // checked here so no call site can forget it.
+    const noop =
+      process.env.NODE_ENV === "test" || noopFlagSchema.parse(config.noop);
     // An empty token cannot authenticate, so noop keeps pipes resolving empty
     // instead of throwing at every call site.
     if (noop || !config.token) {
