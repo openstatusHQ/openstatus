@@ -117,19 +117,7 @@ export default async function middleware(req: NextRequest) {
     redirectOrigin = `${protocol}//${host}`;
   }
 
-  console.log("[proxy] request", {
-    host,
-    pathname: url.pathname,
-    slug: _page.slug,
-    customDomain: _page.customDomain || null,
-    accessType: _page.accessType,
-    route,
-    authEmailPresent: !!session?.user?.email,
-    clientIp: clientIp ?? null,
-    isSelfHosted,
-    redirectBaseUrl,
-    redirectOrigin,
-  });
+
 
   const action = composePageAction({
     route,
@@ -150,11 +138,7 @@ export default async function middleware(req: NextRequest) {
     clientIp,
   });
 
-  console.log("[proxy] action", {
-    type: action.type,
-    reason: action.reason,
-    url: action.url?.toString() ?? null,
-  });
+
 
   switch (action.type) {
     case "redirect":
