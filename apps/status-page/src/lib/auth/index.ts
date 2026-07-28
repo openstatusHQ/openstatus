@@ -1,5 +1,5 @@
 import { db, eq } from "@openstatus/db";
-import { viewer } from "@openstatus/db/src/schema";
+import { page, viewer } from "@openstatus/db/src/schema";
 import type { DefaultSession } from "next-auth";
 import NextAuth, { AuthError } from "next-auth";
 import { headers } from "next/headers";
@@ -16,6 +16,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter,
   providers: [ResendProvider],
   callbacks: {
+    async authorized({ auth, request }) {
+      // Extract the page slug from the request
+      const { prefix } = getValidCustomDomain(request);
+
+      if (!prefix) {
+        // No valid slug found, allow through to let routing handle it
+        return true;
+      }
+
+      // Query the database to check if the page requires authentication
+      const pageData = await db.query.page.findFirst({
+        where: eq(page.slug, prefix),
+        columns: {
+          accessType: true,
+        },
+      });
+
+      if (!pageData) {
+        // Page not found, allow through to let routing handle 404
+        return true;
+      }
+
+      // Allow access if the page is public OR if the user is authenticated
+      return pageData.accessType === "public" || !!auth;
+    },
     async signIn(params) {
       const _headers = await headers();
       const host = _headers.get("host");
