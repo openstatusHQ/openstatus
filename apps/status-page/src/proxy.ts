@@ -104,9 +104,12 @@ export default auth(async (req) => {
   // rewrites differently:
   // - Redirects (user-facing): Use the custom domain so users stay on status.zptx.net
   // - Rewrites (internal): Use the internal origin so Next.js doesn't make external requests
+  let redirectBaseUrl = req.url;
   let redirectOrigin = req.nextUrl.origin;
   if (isSelfHosted && _page.customDomain && host) {
     const protocol = req.nextUrl.protocol || "https:";
+    const parsedUrl = new URL(req.url);
+    redirectBaseUrl = `${protocol}//${host}${parsedUrl.pathname}${parsedUrl.search}`;
     redirectOrigin = `${protocol}//${host}`;
   }
 
@@ -120,6 +123,7 @@ export default auth(async (req) => {
     authEmailPresent: !!req.auth?.user?.email,
     clientIp: clientIp ?? null,
     isSelfHosted,
+    redirectBaseUrl,
     redirectOrigin,
   });
 
@@ -132,6 +136,7 @@ export default auth(async (req) => {
     search: url.search,
     isSelfHosted,
     requestUrl: req.url,  // Keep internal origin for rewrites
+    redirectBaseUrl,  // Use custom domain for redirects
     origin: redirectOrigin,  // Use custom domain for redirects
     cookiePassword: req.cookies.get(createProtectedCookieKey(_page.slug))
       ?.value,
