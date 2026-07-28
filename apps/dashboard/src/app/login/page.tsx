@@ -68,6 +68,19 @@ export default async function Page(props: {
             Sign in with Google <GoogleIcon className="ml-2 h-4 w-4" />
           </LoginButton>
         </form>
+        {process.env.AUTH_OIDC_ISSUER ? (
+          <form
+            action={async () => {
+              "use server";
+              await signIn("oidc", { redirectTo: redirectTo ?? undefined });
+            }}
+            className="w-full"
+          >
+            <LoginButton type="submit" provider="oidc">
+              Sign in with {process.env.AUTH_OIDC_NAME ?? "SSO"}
+            </LoginButton>
+          </form>
+        ) : null}
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         By clicking continue, you agree to our{" "}

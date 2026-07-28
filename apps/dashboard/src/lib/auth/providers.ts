@@ -1,3 +1,5 @@
+import type { Profile } from "next-auth";
+import type { OIDCConfig } from "next-auth/providers";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
@@ -17,6 +19,15 @@ export const GoogleProvider = Google({
     },
   },
 });
+
+export const OIDCProvider: OIDCConfig<Profile> = {
+  id: "oidc",
+  name: process.env.AUTH_OIDC_NAME ?? "SSO",
+  type: "oidc",
+  issuer: process.env.AUTH_OIDC_ISSUER,
+  clientId: process.env.AUTH_OIDC_ID,
+  clientSecret: process.env.AUTH_OIDC_SECRET,
+};
 
 export const ResendProvider = Resend({
   apiKey: undefined, // REMINDER: keep undefined to avoid sending emails
