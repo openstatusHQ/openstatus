@@ -257,6 +257,89 @@ Now that the services are running, you can access the dashboard and perform the 
   />
   
 
+### Part 4: scheduled tasks (required)
+
+Self-hosted deployments need external cron scheduling for background tasks. Without these, critical features like private location health monitoring won't work.
+
+12. **Set up the private location health cron**
+
+    The `private-location-health` cron job monitors your private location probes and sends email notifications when they go offline or recover.
+
+    **What it does:**
+    - Checks if private location agents have reported recently (within the last 15 minutes)
+    - Transitions status from `active` → `error` when an agent stops reporting
+    - Transitions status from `error` → `active` when an agent resumes reporting  
+    - Sends email notifications to workspace members on status transitions
+    - Creates audit log entries for status changes
+
+    **Without this cron**, private location status will never update from "error" to "active", and recovery notifications will not be sent.
+
+    **Setup with system cron (Linux/Unix):**
+
+    Add this to your crontab (`crontab -e`):
+    ```bash
+    # Run private location health check every 5 minutes
+    */5 * * * * curl -sS -H "Authorization: YOUR_CRON_SECRET" http://localhost:3000/private-location-health
+    ```
+
+    Replace `YOUR_CRON_SECRET` with the value you set in `.env.docker` (step 2), and adjust the URL if your workflows service runs on a different host or port.
+
+    **Setup with Docker cron container:**
+
+    Create a `cron/` directory in your openstatus folder:
+    ```bash
+    mkdir cron
+    ```
+
+    Create `cron/Dockerfile`:
+    ```dockerfile
+    FROM alpine:latest
+    RUN apk add --no-cache curl
+    COPY crontab /etc/crontabs/root
+    CMD ["crond", "-f", "-l", "2"]
+    ```
+
+    Create `cron/crontab`:
+    ```
+    */5 * * * * curl -sS -H "Authorization: ${CRON_SECRET}" http://workflows:3000/private-location-health
+    ```
+
+    Add to your `docker-compose.yaml`:
+    ```yaml
+    services:
+      # ... existing services ...
+
+      cron:
+        build: ./cron
+        container_name: openstatus-cron
+        environment:
+          - CRON_SECRET=${CRON_SECRET}
+        networks:
+          - openstatus
+        restart: unless-stopped
+    ```
+
+    Then restart your stack:
+    ```bash
+    docker compose up -d
+    ```
+
+    **Verification:**
+
+    Check the workflows logs to confirm the cron is running:
+    ```bash
+    docker compose logs workflows | grep "private-location-health"
+    ```
+
+    You should see entries every 5 minutes like:
+    ```
+    private-location-health complete: checked=2 toError=0 toActive=0
+    ```
+
+    <Aside type="caution">
+    If you skip this step, your private locations will show "error" status permanently even when actively reporting. This is the most common self-hosting oversight after the Tinybird token issue.
+    </Aside>
+
 ## Configuring the AI assistant (optional)
 
 openstatus ships an in-dashboard AI assistant. It is **off by default** when self-hosting — the chat endpoint returns `503 "Chat is not configured"` until you point it at a model provider. Configure **one** of the two options below in your `.env.docker` (root) — or `apps/dashboard/.env` for a manual setup — then restart the dashboard.
