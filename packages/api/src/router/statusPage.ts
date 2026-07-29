@@ -127,9 +127,11 @@ async function getRecentProbeStatus(
     for (const check of result.data) {
       // Determine the region/location identifier
       // Cloud monitors use 'region', private locations might use 'locationId' or 'region'
-      const regionId =
+      const regionId: string =
         check.region ||
-        ("locationId" in check ? check.locationId : null) ||
+        ("locationId" in check && typeof check.locationId === "string"
+          ? check.locationId
+          : "") ||
         "default";
 
       // Determine status from the check
