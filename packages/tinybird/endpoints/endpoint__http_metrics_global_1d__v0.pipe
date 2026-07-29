@@ -17,7 +17,7 @@ SQL >
         max(cronTimestamp) as lastTimestamp,
         count() as count,
         monitorId
-    FROM mv__http_1d__v0
+    FROM mv__http_1d__v1
     WHERE monitorId IN {{ Array(monitorIds, 'String', '1') }}
     GROUP BY monitorId
 
