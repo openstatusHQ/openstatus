@@ -1,6 +1,10 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
+  // Vercel disables corepack unless it can confirm turbo >= 2.1.3 or sees this
+  // passthrough; without corepack it falls back to pnpm 9, which can't read
+  // `overrides` from pnpm-workspace.yaml and fails the frozen install.
+  "globalPassThroughEnv": ["COREPACK_HOME"],
   "tasks": {
     "registry:build": {
       "outputs": ["public/r/**"]
