@@ -347,8 +347,6 @@ export const statusPageRouter = createTRPCRouter({
               )
                 ? "info"
                 : "success"));
-<<<<<<< HEAD
-=======
 
         // Merge probe-based status with event-based status (worst wins)
         const probeStatus = probeStatusMap.get(c.monitor.id.toString());
@@ -361,7 +359,6 @@ export const statusPageRouter = createTRPCRouter({
           status = eventBasedStatus;
         }
 
->>>>>>> 53aedbf3 (feat: implement >50% region consensus for probe status)
         return {
           ...c.monitor,
           status,
