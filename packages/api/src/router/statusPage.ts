@@ -91,7 +91,7 @@ const gateFieldsSchema = selectPageSchema.pick({
  * Check recent probe status for a monitor using >50% region consensus.
  * A monitor is down/degraded/up if >50% of regions share that status.
  * Bias towards "success" - requires majority to change to error/degraded.
- * 
+ *
  * For hybrid monitors (with cloud regions), returns null to prevent private
  * location probe data from overriding cloud-based status.
  */
