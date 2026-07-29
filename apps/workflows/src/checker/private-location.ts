@@ -164,10 +164,13 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     const regions = [attachment.name];
 
+    // Check if monitor has cloud regions - only update status for private-only monitors
+    const hasCloudRegions = monitor.regions && monitor.regions.trim().length > 0;
+
     switch (status) {
       case "error":
-        // Update monitor status if transitioning to error
-        if (monitor.status !== "error") {
+        // Only update monitor status for private-only monitors (no cloud regions)
+        if (!hasCloudRegions && monitor.status !== "error") {
           logger.info("Monitor status changed to error", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -201,8 +204,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "degraded":
-        // Update monitor status if transitioning to degraded
-        if (monitor.status !== "degraded") {
+        // Only update monitor status for private-only monitors (no cloud regions)
+        if (!hasCloudRegions && monitor.status !== "degraded") {
           logger.info("Monitor status changed to degraded", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
@@ -235,8 +238,8 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "active":
-        // Update monitor status if transitioning to active
-        if (monitor.status !== "active") {
+        // Only update monitor status for private-only monitors (no cloud regions)
+        if (!hasCloudRegions && monitor.status !== "active") {
           logger.info("Monitor status changed to active", {
             monitor_id: monitor.id,
             workspace_id: monitor.workspaceId,
