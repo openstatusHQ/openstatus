@@ -86,6 +86,106 @@ const gateFieldsSchema = selectPageSchema.pick({
   contactUrl: true,
 });
 
+/**
+ * Check recent probe status for a monitor using >50% region consensus.
+ * A monitor is down/degraded/up if >50% of regions share that status.
+ * Bias towards "success" - requires majority to change to error/degraded.
+ */
+async function getRecentProbeStatus(
+  monitorId: string,
+  jobType: "http" | "tcp" | "icmp" | "udp" | "dns" | "ssl",
+): Promise<"success" | "degraded" | "error" | null> {
+  try {
+    // Query the appropriate Tinybird endpoint
+    let procedure;
+    if (jobType === "http") procedure = tb.httpListDaily;
+    else if (jobType === "tcp") procedure = tb.tcpListDaily;
+    else if (jobType === "dns") procedure = tb.dnsListBiweekly;
+    else {
+      // Unsupported job types (icmp, udp, ssl) - no Tinybird procedures available
+      return null;
+    }
+
+    const result = await procedure({
+      monitorId,
+    });
+
+    if (!result?.data || result.data.length === 0) {
+      return null; // No data
+    }
+
+    // Group by region and keep only the most recent check from each region
+    const mostRecentByRegion = new Map<string, {
+      status: "success" | "degraded" | "error";
+      timestamp: number;
+    }>();
+
+    for (const check of result.data) {
+      // Determine the region/location identifier
+      // Cloud monitors use 'region', private locations might use 'locationId' or 'region'
+      const regionId = check.region || check.locationId || "default";
+      
+      // Determine status from the check
+      let status: "success" | "degraded" | "error" | null = null;
+      
+      // v1 endpoint with requestStatus field
+      if ("requestStatus" in check && check.requestStatus) {
+        status = check.requestStatus;
+      }
+      // v0 endpoint with boolean error field
+      else if ("error" in check && typeof check.error === "boolean") {
+        status = check.error ? "error" : "success";
+      }
+
+      if (!status) continue; // Skip checks without clear status
+
+      const timestamp = check.timestamp || 0;
+      const existing = mostRecentByRegion.get(regionId);
+
+      // Keep this check if it's newer (or first for this region)
+      if (!existing || timestamp > existing.timestamp) {
+        mostRecentByRegion.set(regionId, { status, timestamp });
+      }
+    }
+
+    if (mostRecentByRegion.size === 0) {
+      return null; // No valid checks with status
+    }
+
+    // Apply >50% majority logic
+    const total = mostRecentByRegion.size;
+    const counts = { error: 0, degraded: 0, success: 0 };
+    
+    for (const { status } of mostRecentByRegion.values()) {
+      counts[status]++;
+    }
+
+    // >50% means strictly greater than half
+    const threshold = total / 2;
+    
+    console.log(`[status-page] Monitor ${monitorId}: ${total} regions - error:${counts.error} degraded:${counts.degraded} success:${counts.success} (threshold:${threshold})`);
+    
+    // Priority: error > degraded > success (check in order)
+    // This ensures if >50% are error, we return error (most severe)
+    if (counts.error > threshold) {
+      console.log(`[status-page] Monitor ${monitorId}: Majority ERROR (${counts.error}/${total} > ${threshold})`);
+      return "error";
+    }
+    if (counts.degraded > threshold) {
+      console.log(`[status-page] Monitor ${monitorId}: Majority DEGRADED (${counts.degraded}/${total} > ${threshold})`);
+      return "degraded";
+    }
+    
+    // Default to success if no majority (bias towards up)
+    // This handles cases like: 1 error, 1 success (tie) → success
+    console.log(`[status-page] Monitor ${monitorId}: No majority or tie - defaulting to SUCCESS (bias towards up)`);
+    return "success";
+  } catch (err) {
+    // Tinybird errors should not block status page rendering
+    return null;
+  }
+}
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -159,6 +259,22 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
+<<<<<<< HEAD
+=======
+      // Query recent probe status for all monitors (unless in manual mode)
+      const probeStatusMap = new Map<string, "success" | "degraded" | "error">();
+      if (barType !== "manual") {
+        const probeStatusPromises = monitorComponents.map(async (c) => {
+          const monitorId = c.monitor.id.toString();
+          const probeStatus = await getRecentProbeStatus(monitorId, c.monitor.jobType);
+          if (probeStatus) {
+            probeStatusMap.set(monitorId, probeStatus);
+          }
+        });
+        await Promise.all(probeStatusPromises);
+      }
+
+>>>>>>> 53aedbf3 (feat: implement >50% region consensus for probe status)
       // Transform all page components (both monitor and static types)
       const components = pageComponents.map((c) => {
         const events = getEvents({
@@ -237,6 +353,21 @@ export const statusPageRouter = createTRPCRouter({
               )
                 ? "info"
                 : "success"));
+<<<<<<< HEAD
+=======
+
+        // Merge probe-based status with event-based status (worst wins)
+        const probeStatus = probeStatusMap.get(c.monitor.id.toString());
+        let status: "success" | "degraded" | "error" | "info";
+        if (probeStatus === "error" || eventBasedStatus === "error") {
+          status = "error";
+        } else if (probeStatus === "degraded" || eventBasedStatus === "degraded") {
+          status = "degraded";
+        } else {
+          status = eventBasedStatus;
+        }
+
+>>>>>>> 53aedbf3 (feat: implement >50% region consensus for probe status)
         return {
           ...c.monitor,
           status,
