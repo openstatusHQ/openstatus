@@ -1,5 +1,15 @@
 import { getLogger } from "@logtape/logtape";
-import { and, db, eq, gte, inArray, isNull, lte, schema, sql } from "@openstatus/db";
+import {
+  and,
+  db,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  schema,
+  sql,
+} from "@openstatus/db";
 import { monitorStatusSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type { Context } from "hono";
 import { z } from "zod";
