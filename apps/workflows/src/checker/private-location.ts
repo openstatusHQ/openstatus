@@ -170,43 +170,91 @@ export async function updateStatusPrivate(c: Context<Env>) {
 
     const regions = [attachment.name];
 
+    // Check if monitor has cloud regions
+    const hasCloudRegions = monitor.regions && monitor.regions.trim().length > 0;
+
+    // Query all private locations for threshold check
+    const allLocations = await db
+      .select({ id: schema.privateLocationToMonitors.privateLocationId })
+      .from(schema.privateLocationToMonitors)
+      .where(
+        and(
+          eq(schema.privateLocationToMonitors.monitorId, monitorIdNumber),
+          isNull(schema.privateLocationToMonitors.deletedAt),
+        ),
+      )
+      .all();
+
+    const numberOfLocations = allLocations.length;
+    const locationIds = allLocations.map((loc) => loc.id);
+
+    // Count how many locations report this status
+    const locationsWithStatus = await db
+      .select({
+        privateLocationId:
+          schema.privateLocationMonitorStatus.privateLocationId,
+      })
+      .from(schema.privateLocationMonitorStatus)
+      .where(
+        and(
+          eq(schema.privateLocationMonitorStatus.monitorId, monitorIdNumber),
+          eq(schema.privateLocationMonitorStatus.status, status),
+          inArray(
+            schema.privateLocationMonitorStatus.privateLocationId,
+            locationIds,
+          ),
+        ),
+      )
+      .all();
+
+    const affectedLocationCount = locationsWithStatus.length;
+
+    // Apply ≥50% threshold (matching cloud checker logic)
+    const shouldTriggerIncident =
+      !hasCloudRegions &&
+      (affectedLocationCount >= numberOfLocations / 2 || numberOfLocations === 1);
+
     switch (status) {
       case "error":
-        // Create incident if one doesn't exist
-        try {
-          const existingIncident = await findOpenIncident(monitorIdNumber);
-          if (!existingIncident) {
-            const [newIncident] = await db
-              .insert(schema.incidentTable)
-              .values({
-                monitorId: monitorIdNumber,
-                workspaceId: monitor.workspaceId,
-                startedAt: new Date(cronTimestamp),
-              })
-              .returning();
+        // Create incident only if private-only monitor AND threshold met
+        if (shouldTriggerIncident) {
+          try {
+            const existingIncident = await findOpenIncident(monitorIdNumber);
+            if (!existingIncident) {
+              const [newIncident] = await db
+                .insert(schema.incidentTable)
+                .values({
+                  monitorId: monitorIdNumber,
+                  workspaceId: monitor.workspaceId,
+                  startedAt: new Date(cronTimestamp),
+                })
+                .returning();
 
-            if (newIncident?.id) {
-              await checkerAudit.publishAuditLog({
-                id: `monitor:${monitorId}`,
-                action: "incident.created",
-                targets: [{ id: monitorId, type: "monitor" }],
-                metadata: { cronTimestamp, incidentId: newIncident.id },
-              });
-              logger.info("Created incident", {
-                incident_id: newIncident.id,
-                monitor_id: monitorId,
+              if (newIncident?.id) {
+                await checkerAudit.publishAuditLog({
+                  id: `monitor:${monitorId}`,
+                  action: "incident.created",
+                  targets: [{ id: monitorId, type: "monitor" }],
+                  metadata: { cronTimestamp, incidentId: newIncident.id },
+                });
+                logger.info("Created incident", {
+                  incident_id: newIncident.id,
+                  monitor_id: monitorId,
+                  affected_location_count: affectedLocationCount,
+                  total_locations: numberOfLocations,
+                });
+              }
+            } else {
+              logger.info("Already in incident", {
+                incident_id: existingIncident.id,
               });
             }
-          } else {
-            logger.info("Already in incident", {
-              incident_id: existingIncident.id,
+          } catch (error) {
+            logger.error("Failed to create incident", {
+              monitor_id: monitorId,
+              error_message: error instanceof Error ? error.message : String(error),
             });
           }
-        } catch (error) {
-          logger.error("Failed to create incident", {
-            monitor_id: monitorId,
-            error_message: error instanceof Error ? error.message : String(error),
-          });
         }
 
         await checkerAudit.publishAuditLog({
@@ -254,39 +302,43 @@ export async function updateStatusPrivate(c: Context<Env>) {
         });
         break;
       case "active":
-        // Resolve incident if one exists
-        try {
-          const existingIncident = await findOpenIncident(monitorIdNumber);
-          if (existingIncident && !existingIncident.resolvedAt) {
-            await db
-              .update(schema.incidentTable)
-              .set({
-                resolvedAt: new Date(cronTimestamp),
-                autoResolved: true,
-              })
-              .where(eq(schema.incidentTable.id, existingIncident.id))
-              .run();
+        // Resolve incident only if private-only monitor AND threshold met
+        if (shouldTriggerIncident) {
+          try {
+            const existingIncident = await findOpenIncident(monitorIdNumber);
+            if (existingIncident && !existingIncident.resolvedAt) {
+              await db
+                .update(schema.incidentTable)
+                .set({
+                  resolvedAt: new Date(cronTimestamp),
+                  autoResolved: true,
+                })
+                .where(eq(schema.incidentTable.id, existingIncident.id))
+                .run();
 
-            await checkerAudit.publishAuditLog({
-              id: `monitor:${monitorId}`,
-              action: "incident.resolved",
-              targets: [{ id: monitorId, type: "monitor" }],
-              metadata: { 
-                cronTimestamp, 
-                incidentId: existingIncident.id,
-                autoResolved: true,
-              },
-            });
-            logger.info("Resolved incident", {
-              incident_id: existingIncident.id,
+              await checkerAudit.publishAuditLog({
+                id: `monitor:${monitorId}`,
+                action: "incident.resolved",
+                targets: [{ id: monitorId, type: "monitor" }],
+                metadata: { 
+                  cronTimestamp, 
+                  incidentId: existingIncident.id,
+                  autoResolved: true,
+                },
+              });
+              logger.info("Resolved incident", {
+                incident_id: existingIncident.id,
+                monitor_id: monitorId,
+                affected_location_count: affectedLocationCount,
+                total_locations: numberOfLocations,
+              });
+            }
+          } catch (error) {
+            logger.error("Failed to resolve incident", {
               monitor_id: monitorId,
+              error_message: error instanceof Error ? error.message : String(error),
             });
           }
-        } catch (error) {
-          logger.error("Failed to resolve incident", {
-            monitor_id: monitorId,
-            error_message: error instanceof Error ? error.message : String(error),
-          });
         }
 
         await checkerAudit.publishAuditLog({
