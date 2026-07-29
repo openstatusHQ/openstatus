@@ -335,59 +335,19 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
 
-      // Keep monitors for backward compatibility with existing fields
-      const monitors = monitorComponents.map((c) => {
-        const events = getEvents({
-          maintenances: _page.maintenances,
-          incidents: c.monitor.incidents ?? [],
-          reports: _page.statusReports,
-          monitorId: c.monitor.id,
-        });
-        const status =
-          events.some((e) => e.type === "incident" && !e.to) &&
-          barType !== "manual"
-            ? "error"
-            : (activeReportStatus(events) ??
-              (events.some(
-                (e) =>
-                  e.type === "maintenance" &&
-                  e.to &&
-                  e.from.getTime() <= new Date().getTime() &&
-                  e.to.getTime() >= new Date().getTime(),
-              )
-                ? "info"
-                : "success"));
 
-        // Merge probe-based status with event-based status (worst wins)
-        const probeStatus = probeStatusMap.get(c.monitor.id.toString());
-        let status: "success" | "degraded" | "error" | "info";
-        if (probeStatus === "error" || eventBasedStatus === "error") {
-          status = "error";
-        } else if (probeStatus === "degraded" || eventBasedStatus === "degraded") {
-          status = "degraded";
-        } else {
-          status = eventBasedStatus;
-        }
-
-        return {
-          ...c.monitor,
-          status,
-          events,
-          monitorGroupId: c.groupId,
-          order: c.order,
-          groupOrder: c.groupOrder,
-        };
-      });
-
+      // Calculate page-wide status from all monitor components
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
-      const status = monitors.some((m) => m.status === "error")
+      const monitorComponentsWithStatus = components.filter((c) => c.monitor);
+      const status = monitorComponentsWithStatus.some((m) => m.status === "error")
         ? "error"
-        : monitors.some((m) => m.status === "degraded")
+        : monitorComponentsWithStatus.some((m) => m.status === "degraded")
           ? "degraded"
-          : monitors.some((m) => m.status === "info")
+          : monitorComponentsWithStatus.some((m) => m.status === "info")
             ? "info"
             : "success";
+
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
