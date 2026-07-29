@@ -1,5 +1,5 @@
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   maintenance,
   page,
@@ -246,6 +246,35 @@ export const statusPageRouter = createTRPCRouter({
           groupOrder: c.groupOrder,
         };
       });
+
+      // Add privateLocationCount to each monitor
+      if (monitors.length > 0) {
+        const monitorIds = monitors.map((m) => m.id);
+        const privateLocations = await opts.ctx.db.query.privateLocationToMonitors.findMany({
+          where: and(
+            inArray(privateLocationToMonitors.monitorId, monitorIds),
+            isNull(privateLocationToMonitors.deletedAt)
+          ),
+          columns: {
+            monitorId: true,
+          },
+        });
+
+        // Count private locations per monitor
+        const privateLocationCounts = new Map<number, number>();
+        for (const pl of privateLocations) {
+          if (pl.monitorId === null) continue;
+          privateLocationCounts.set(
+            pl.monitorId,
+            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1
+          );
+        }
+
+        // Add count to each monitor
+        for (const monitor of monitors) {
+          (monitor as any).privateLocationCount = privateLocationCounts.get(monitor.id) ?? 0;
+        }
+      }
 
       // no barType gate: incident-driven error is already suppressed per
       // monitor in manual mode; report-driven error (major_outage) must show
