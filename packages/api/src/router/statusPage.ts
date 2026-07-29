@@ -251,15 +251,16 @@ export const statusPageRouter = createTRPCRouter({
       // Add privateLocationCount to each monitor
       if (monitors.length > 0) {
         const monitorIds = monitors.map((m) => m.id);
-        const privateLocations = await opts.ctx.db.query.privateLocationToMonitors.findMany({
-          where: and(
-            inArray(privateLocationToMonitors.monitorId, monitorIds),
-            isNull(privateLocationToMonitors.deletedAt)
-          ),
-          columns: {
-            monitorId: true,
-          },
-        });
+        const privateLocations =
+          await opts.ctx.db.query.privateLocationToMonitors.findMany({
+            where: and(
+              inArray(privateLocationToMonitors.monitorId, monitorIds),
+              isNull(privateLocationToMonitors.deletedAt),
+            ),
+            columns: {
+              monitorId: true,
+            },
+          });
 
         // Count private locations per monitor
         const privateLocationCounts = new Map<number, number>();
@@ -267,13 +268,14 @@ export const statusPageRouter = createTRPCRouter({
           if (pl.monitorId === null) continue;
           privateLocationCounts.set(
             pl.monitorId,
-            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1
+            (privateLocationCounts.get(pl.monitorId) ?? 0) + 1,
           );
         }
 
         // Add count to each monitor
         for (const monitor of monitors) {
-          (monitor as Record<string, unknown>).privateLocationCount = privateLocationCounts.get(monitor.id) ?? 0;
+          (monitor as Record<string, unknown>).privateLocationCount =
+            privateLocationCounts.get(monitor.id) ?? 0;
         }
       }
 
